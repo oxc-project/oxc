@@ -1,8 +1,8 @@
 //! Differential test of the incubating `oxc_lexer` crate against the parser's own lexer.
 //!
-//! Each fixture is lexed twice. The parser is the oracle: its token stream is what `oxc_lexer`
-//! must reproduce. Trivia and `Eof` are dropped from `oxc_lexer`'s output first, because the
-//! parser never surfaces them as tokens.
+//! Each fixture is lexed twice. The parser is the oracle: its token stream and comments are what
+//! `oxc_lexer` must reproduce. Trivia and `Eof` are dropped from `oxc_lexer`'s tokens first,
+//! because the parser never surfaces them as tokens.
 //!
 //! Sources that both sides reject identically still count as a pass - see [`lex_diff`].
 
@@ -14,6 +14,7 @@ use std::{
 
 use oxc::{
     allocator::Allocator,
+    ast::{Comment, CommentContent, CommentPosition},
     diagnostics::{LabeledSpan, OxcDiagnostic},
     parser::{Parser, Token, config::TokensParserConfig},
     span::{SourceType, Span},
@@ -96,17 +97,37 @@ pub fn run_lexer_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
 }
 
 fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
-    // If parser cannot parse `code`, there is nothing to compare against, so skip fixture
-    let Ok(Some((old_spans, old_error))) =
+    // If parser panics, there is nothing to compare against, so skip fixture
+    let Ok((old_spans, mut old_comments, old_error, old_last_error_start)) =
         catch_unwind(AssertUnwindSafe(|| parser_stream(code, source_type)))
     else {
         return TestResult::Passed;
     };
 
-    let Ok((new_spans, new_error)) =
+    let Ok((new_spans, mut new_comments, new_error)) =
         catch_unwind(AssertUnwindSafe(|| lexer_stream(code, source_type)))
     else {
         return TestResult::ParseError("`oxc_lexer` panicked".to_string(), true);
+    };
+
+    // Only compare comments which start before the parser's last error.
+    //
+    // This isn't ideal, but the parser can stop lexing at an error without reporting a fatal error.
+    // A lexer error at a statement boundary, for example, ends parsing as if it was EOF,
+    // and `fatal_error` is `false`. The parser's output contains no comments after that point,
+    // and nothing in `ParserReturn` says that lexing stopped early.
+    // An unterminated block comment is a similar case. The parser doesn't record it at all.
+    //
+    // The cost is that comments after the last error are never checked,
+    // even when all errors are recoverable and the parser did lex to the end.
+    if let Some(end) = old_last_error_start {
+        old_comments.retain(|comment| comment.span.start < end);
+        new_comments.retain(|comment| comment.span.start < end);
+    }
+
+    // A fatal error discards the parser's tokens, so only comments can be compared
+    let Some(old_spans) = old_spans else {
+        return comment_diff(code, &new_comments, &old_comments);
     };
 
     if new_spans == old_spans {
@@ -116,7 +137,7 @@ fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
                 format!("first error: {}\n", fmt_diagnostic(new_error)),
                 "(parser reported no errors)\n".to_string(),
             ),
-            _ => TestResult::Passed,
+            _ => comment_diff(code, &new_comments, &old_comments),
         };
     }
 
@@ -124,14 +145,17 @@ fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
         && diagnostic_key(new_error) == diagnostic_key(old_error)
         && prefix_matches(&new_spans, &old_spans, label_start(old_error))
     {
-        return TestResult::Passed;
+        return comment_diff(code, &new_comments, &old_comments);
     }
 
     token_mismatch(code, &new_spans, &old_spans, new_error.as_ref(), old_error.as_ref())
 }
 
-/// Get token stream from `oxc_lexer`, plus the first error (if any).
-fn lexer_stream(code: &str, source_type: SourceType) -> (Vec<Span>, Option<OxcDiagnostic>) {
+/// Get token stream and comments from `oxc_lexer`, plus the first error (if any).
+fn lexer_stream(
+    code: &str,
+    source_type: SourceType,
+) -> (Vec<Span>, Vec<Comment>, Option<OxcDiagnostic>) {
     let len = code.len();
     let len_u32 = u32::try_from(len).expect("source longer than `u32::MAX`");
 
@@ -160,30 +184,66 @@ fn lexer_stream(code: &str, source_type: SourceType) -> (Vec<Span>, Option<OxcDi
         })
         .collect();
 
+    let comments = result.comments(&arena).to_vec();
+
     let error = result
         .diagnostics()
         .iter()
         .min_by_key(|error| error.off)
         .map(|error| to_oxc_diagnostic(error, code));
 
-    (spans, error)
+    (spans, comments, error)
 }
 
-/// Get token stream from `oxc_parser`, plus the first error (if any).
+/// Get token stream and comments from `oxc_parser`,
+/// plus the first error and the start of the last error (if any).
+/// Token stream is `None` if parser hit a fatal error.
 fn parser_stream(
     code: &str,
     source_type: SourceType,
-) -> Option<(Vec<Span>, Option<OxcDiagnostic>)> {
+) -> (Option<Vec<Span>>, Vec<Comment>, Option<OxcDiagnostic>, Option<u32>) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, code, source_type).with_config(TokensParserConfig).parse();
-    if ret.fatal_error {
-        return None;
-    }
 
-    let spans = ret.tokens.iter().map(Token::span).collect();
+    let spans =
+        if ret.fatal_error { None } else { Some(ret.tokens.iter().map(Token::span).collect()) };
+    let comments = ret.program.comments.iter().map(conform_comment).collect();
+    let last_error_start = ret.diagnostics.iter().map(label_start).max();
     let error = ret.diagnostics.into_iter().min_by_key(label_start);
 
-    Some((spans, error))
+    (spans, comments, error, last_error_start)
+}
+
+/// Copy of a comment from the parser, with the fields which only the parser sets reset to the values
+/// `Comment::new` gives them. `oxc_lexer` creates its comments with `Comment::new`.
+/// All other fields are compared.
+#[expect(clippy::default_trait_access)]
+fn conform_comment(comment: &Comment) -> Comment {
+    let mut comment = comment.clone();
+    comment.attached_to = Default::default();
+    comment.node_id = Default::default();
+    comment.placement = Default::default();
+    // Not the default - `Comment::new` sets `Trailing`
+    comment.position = CommentPosition::Trailing;
+    // The parser marks `#__PURE__` and `#__NO_SIDE_EFFECTS__` comments "not applied",
+    // until it finds the call or function they annotate
+    match comment.content {
+        CommentContent::PureNotApplied => comment.content = CommentContent::Pure,
+        CommentContent::NoSideEffectsNotApplied => comment.content = CommentContent::NoSideEffects,
+        _ => {}
+    }
+    comment
+}
+
+fn comment_diff(code: &str, new_comments: &[Comment], old_comments: &[Comment]) -> TestResult {
+    if new_comments == old_comments {
+        return TestResult::Passed;
+    }
+    TestResult::Mismatch(
+        "Comments",
+        fmt_comments(new_comments, code),
+        fmt_comments(old_comments, code),
+    )
 }
 
 fn diagnostic_key(error: &OxcDiagnostic) -> (String, Vec<Span>) {
@@ -212,6 +272,33 @@ fn fmt_spans(spans: &[Span], code: &str) -> String {
     for &span in spans {
         let slice = code.get(span.start as usize..span.end as usize).unwrap_or("<out-of-bounds>");
         writeln!(out, "{}..{} {:?}", span.start, span.end, slice).unwrap();
+    }
+    out
+}
+
+fn fmt_comments(comments: &[Comment], code: &str) -> String {
+    const MAX_TEXT_LEN: usize = 60;
+
+    let mut out = String::new();
+    for comment in comments {
+        let Span { start, end, .. } = comment.span;
+        let mut text = code.get(start as usize..end as usize).unwrap_or("<out-of-bounds>");
+        if text.len() > MAX_TEXT_LEN {
+            let mut len = MAX_TEXT_LEN;
+            while !text.is_char_boundary(len) {
+                len -= 1;
+            }
+            text = &text[..len];
+        }
+        writeln!(
+            out,
+            "{start}..{end} {:?} {:?} newline_before={} newline_after={} {text:?}",
+            comment.kind,
+            comment.content,
+            comment.preceded_by_newline(),
+            comment.followed_by_newline(),
+        )
+        .unwrap();
     }
     out
 }

@@ -1,0 +1,21 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div class="  a   b  "></div>
+<img srcset="a.png 1x,b.png   2x">
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div class="a b"></div>
+<img srcset="a.png 1x, b.png 2x" />
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div class="a b"></div>
+<img srcset="a.png 1x, b.png 2x" />
+
+===================== End =====================

@@ -3,7 +3,11 @@ use oxc_formatter_core::{FormatElement, SourceText};
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{options::JsFormatOptions, utils::assignment_like::AssignmentLikeLayout};
+use crate::{
+    JsEmbeddedIn,
+    options::{JsFormatOptions, QuoteStyle},
+    utils::assignment_like::AssignmentLikeLayout,
+};
 
 use super::Comments;
 
@@ -103,6 +107,8 @@ pub struct JsFormatContext<'ast> {
     /// Set only for an embedded program (see [`crate::format_to_ir`]):
     /// its sole statement prints without its semicolon.
     embedding_omits_semicolon: bool,
+    /// What an embedded program is embedded in (see [`crate::format_to_ir`]).
+    embedded_in: Option<JsEmbeddedIn>,
 }
 
 impl std::fmt::Debug for JsFormatContext<'_> {
@@ -148,6 +154,7 @@ impl<'ast> JsFormatContext<'ast> {
             quote_needed_stack: Vec::new(),
             tailwind_context_stack: Vec::new(),
             embedding_omits_semicolon: false,
+            embedded_in: None,
         }
     }
 
@@ -239,6 +246,23 @@ impl<'ast> JsFormatContext<'ast> {
 
     pub(crate) fn embedding_omits_semicolon(&self) -> bool {
         self.embedding_omits_semicolon
+    }
+
+    pub(crate) fn set_embedded_in(&mut self, embedded_in: Option<JsEmbeddedIn>) {
+        self.embedded_in = embedded_in;
+    }
+
+    /// An HTML attribute's value (see [`JsEmbeddedIn::HtmlEventHandler`]):
+    /// strings print in `'`, whatever they hold, as the attribute's quote is `"`.
+    pub(crate) fn in_html_attribute(&self) -> bool {
+        self.embedded_in == Some(JsEmbeddedIn::HtmlEventHandler)
+    }
+
+    /// The quote a string prints in, the formatter's own too (a quoted property key):
+    /// the configured one, but `'` in an HTML attribute.
+    /// A JSX attribute and a directive have their own (`FormatLiteralStringToken`).
+    pub(crate) fn string_quote_style(&self) -> QuoteStyle {
+        if self.in_html_attribute() { QuoteStyle::Single } else { self.options.quote_style }
     }
 
     /// Push a Tailwind context entry onto the stack.

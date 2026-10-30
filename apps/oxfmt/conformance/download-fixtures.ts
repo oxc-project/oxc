@@ -1,0 +1,190 @@
+// oxlint-disable no-console, no-await-in-loop
+
+import { exec, spawn } from "node:child_process";
+import { once } from "node:events";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { createInterface } from "node:readline";
+import { promisify } from "node:util";
+import pkg from "../package.json" with { type: "json" };
+
+const execAsync = promisify(exec);
+
+const externalsDir = join(import.meta.dirname, "fixtures", "externals");
+
+// `repo` is `<owner>/<name>` plus the directory to take, `version` is any ref (a tag or a commit)
+export const sources = [
+  // Prettier's own suite (`run_prettier.ts`)
+  {
+    name: "prettier",
+    repo: "prettier/prettier/tests/format",
+    version: pkg.dependencies.prettier,
+  },
+  // js-in-vue
+  {
+    name: "vue-vben-admin",
+    repo: "vbenjs/vue-vben-admin/packages",
+    version: "v5.6.0",
+  },
+  // html-in-js
+  {
+    name: "webawesome",
+    repo: "shoelace-style/webawesome/packages/webawesome/src/components",
+    version: "v3.6.0",
+  },
+  // svelte
+  {
+    name: "plugin-svelte",
+    repo: "sveltejs/prettier-plugin-svelte/test/formatting/samples",
+    version: `prettier-plugin-svelte@${pkg.dependencies["prettier-plugin-svelte"]}`,
+  },
+  // astro
+  {
+    name: "plugin-astro",
+    repo: "withastro/prettier-plugin-astro/test/fixtures",
+    version: `v${pkg.dependencies["prettier-plugin-astro"]}`,
+  },
+  // graphql
+  {
+    name: "gitlab",
+    repo: "gitlabhq/gitlabhq/app/assets",
+    version: "v16.9.0",
+  },
+  // less
+  {
+    name: "ng-zorro-antd",
+    repo: "NG-ZORRO/ng-zorro-antd",
+    version: "21.3.1",
+  },
+  // yaml
+  {
+    name: "aws-cloudformation-templates",
+    repo: "aws-cloudformation/aws-cloudformation-templates",
+    // No maintained tags; pin to a commit (2026-07 main)
+    version: "a0f43bc6d20813052892546f445037cf84c75b54",
+  },
+  {
+    name: "gitlab-ci-templates",
+    repo: "gitlabhq/gitlabhq/lib/gitlab/ci/templates",
+    version: "v16.9.0",
+  },
+  // css (css modules)
+  {
+    name: "mantine",
+    repo: "mantinedev/mantine/packages/@mantine",
+    version: "9.3.2",
+  },
+  {
+    name: "docusaurus",
+    repo: "facebook/docusaurus/packages/docusaurus-theme-classic/src",
+    version: "v3.9.2",
+  },
+  // markdown
+  {
+    name: "mdn-learn",
+    repo: "mdn/content/files/en-us/learn_web_development/core",
+    // No tags; pin to a commit (2026-10 main)
+    version: "5137b45128dcf07ac636da68184f00aab30ec1cc",
+  },
+  {
+    name: "mdn-css-guides",
+    repo: "mdn/content/files/en-us/web/css/guides",
+    version: "5137b45128dcf07ac636da68184f00aab30ec1cc",
+  },
+  // html
+  {
+    name: "vite",
+    repo: "vitejs/vite/playground",
+    version: "v8.3.5",
+  },
+  {
+    name: "mdn-learning-area",
+    repo: "mdn/learning-area",
+    // No tags; pin to a commit (2026-10 main)
+    version: "21973263ba859ff3477919087b488157f9d618a6",
+  },
+  {
+    name: "mdn-dom-examples",
+    repo: "mdn/dom-examples",
+    // No tags; pin to a commit (2026-10 main)
+    version: "03ae1ffb325a9202d3a64f26ab5b8361392a5368",
+  },
+  // jsdoc
+  {
+    name: "svelte",
+    repo: "sveltejs/svelte/packages/svelte/src",
+    version: "svelte@5.57.0",
+  },
+];
+
+type Source = (typeof sources)[number];
+
+/** By its stamp, written last, so a half-downloaded tree never counts. */
+const isDownloaded = ({ name, repo, version }: Source) => {
+  const stamp = join(externalsDir, name, ".version");
+  return existsSync(stamp) && readFileSync(stamp, "utf8").trim() === `${repo}#${version}`;
+};
+
+/** Throws unless every source in `names` is downloaded at its pinned version, a runner reading an older one reports wrong. */
+export function assertDownloaded(names: string[]) {
+  const stale = sources.filter((source) => names.includes(source.name) && !isDownloaded(source));
+  if (stale.length > 0) {
+    const list = stale.map(({ name, version }) => `${name}@${version}`).join(", ");
+    throw new Error(`Not downloaded: ${list}, run \`download-fixtures\``);
+  }
+}
+
+// @ts-expect-error -- `import.meta.main` is newer than the `@types/node` (24.1) here
+if (import.meta.main) {
+  // Names given as arguments (e.g. `prettier`) narrow the download, none means every source
+  const names = process.argv.slice(2);
+
+  // Group sources by archive, so an archive shared by several sources downloads once.
+  const sourcesByArchive = Map.groupBy(
+    names.length === 0 ? sources : sources.filter(({ name }) => names.includes(name)),
+    ({ repo, version }) => `${repo.split("/").slice(0, 2).join("/")}#${version}`,
+  );
+
+  await Promise.all(
+    [...sourcesByArchive.values()].map(async (group) => {
+      const stale = group.filter((source) => {
+        const upToDate = isDownloaded(source);
+        if (upToDate) console.log(`Up-to-date: ${source.name}@${source.version}`);
+        return !upToDate;
+      });
+      if (stale.length === 0) return;
+
+      const [owner, repoName] = group[0].repo.split("/");
+      const { version } = group[0];
+      console.log(`Downloading ${owner}/${repoName}@${version}...`);
+      const tmp = mkdtempSync(join(tmpdir(), "oxfmt-fixtures-"));
+      const tarball = join(tmp, "archive.tar.gz");
+      await execAsync(
+        `curl -fsSL -o "${tarball}" https://codeload.github.com/${owner}/${repoName}/tar.gz/${version}`,
+      );
+      const top = await topDirectory(tarball);
+
+      for (const { name, repo } of stale) {
+        const dest = join(externalsDir, name);
+        rmSync(dest, { recursive: true, force: true });
+        mkdirSync(dest, { recursive: true });
+        const subdir = repo.split("/").slice(2);
+        await execAsync(
+          `tar -xzf "${tarball}" -C "${dest}" --strip-components=${subdir.length + 1} "${[top, ...subdir].join("/")}"`,
+        );
+        writeFileSync(join(dest, ".version"), `${repo}#${version}`);
+        console.log(`Done: ${name}@${version}`);
+      }
+      rmSync(tmp, { recursive: true });
+    }),
+  );
+}
+
+/** The archive's top directory, GitHub's `<name>-<ref>` with the ref normalized (e.g. no leading `v`). */
+async function topDirectory(tarball: string) {
+  const tar = spawn("tar", ["-tzf", tarball]);
+  const [line] = await once(createInterface({ input: tar.stdout }), "line");
+  tar.kill();
+  return line.split("/")[0];
+}

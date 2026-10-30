@@ -556,6 +556,24 @@ fn dropped_direct_eval_converges_after_liveness_refresh() {
 }
 
 #[test]
+fn block_unwrap_needs_no_extra_pass() {
+    test_with_iterations("if (a) { foo() }", "if (a) foo();", 0);
+    test_with_iterations("for (;;) { if (a) { { foo() } } }", "for (;;) if (a) foo();", 0);
+    test_with_iterations(
+        "export function f() { if (a) { return b } }",
+        "export function f() { if (a) return b; }",
+        0,
+    );
+    // A direct body-list item keeps the conservative revisit: `var` symbol
+    // values depend on that position.
+    test_with_iterations(
+        "export function f() { { var x = 0; } return [x, x]; }",
+        "export function f() { var x = 0; return [x, x]; }",
+        1,
+    );
+}
+
+#[test]
 fn drop_labels() {
     let mut options = CompressOptions::dce();
     let mut drop_labels = FxHashSet::default();

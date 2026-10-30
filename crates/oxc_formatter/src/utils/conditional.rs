@@ -36,11 +36,6 @@ impl<'a> ConditionalLike<'a, '_> {
             ConditionalLike::TSConditionalType(ty) => ty.parent(),
         }
     }
-
-    #[inline]
-    fn is_conditional_expression(&self) -> bool {
-        matches!(self, ConditionalLike::ConditionalExpression(_))
-    }
 }
 
 /// Layout information for a conditional expression to determine formatting strategy
@@ -270,21 +265,9 @@ impl<'a> FormatConditionalLike<'a, '_> {
                         break;
                     }
                 }
-                AstNodes::StaticMemberExpression(member) => {
-                    if member.object.span() == expression_span {
-                        expression_span = member.span();
-                        parent = member.parent();
-                    } else {
-                        break;
-                    }
-                }
-                AstNodes::ComputedMemberExpression(member) => {
-                    if member.object.span() == expression_span {
-                        expression_span = member.span();
-                        parent = member.parent();
-                    } else {
-                        break;
-                    }
+                member if member.is_member_object_span(expression_span) => {
+                    expression_span = member.span();
+                    parent = member.parent();
                 }
                 AstNodes::CallExpression(call) => {
                     if call.callee.span() == expression_span {
@@ -349,14 +332,6 @@ impl<'a> FormatConditionalLike<'a, '_> {
             AstNodes::AssignmentExpression(assign) => assign.right.span() == expression_span,
             _ => false,
         }
-    }
-
-    /// Returns `true` if this is the root conditional expression and the parent is a [`StaticMemberExpression`].
-    #[inline]
-    fn is_parent_static_member_expression(&self, layout: ConditionalLayout) -> bool {
-        layout.is_root()
-            && self.is_conditional_expression()
-            && matches!(self.parent(), AstNodes::StaticMemberExpression(_))
     }
 
     /// Formats the test part of the conditional
@@ -562,16 +537,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatConditionalLike<'a, '_> {
 
             format_tail_with_indent.fmt(f);
 
-            // Add a soft line break in front of the closing `)` in case the parent is a static member expression
+            // Add a soft line break in front of the closing `)` in case it is the object of a member expression
             // ```text
             // (veryLongCondition
             //      ? a
             //      : b // <- enforce line break here if the conditional breaks
-            // ).more
+            // ).more // or `)[more]`
             // ```
             if !should_extra_indent
                 && !is_jsx_chain
-                && self.is_parent_static_member_expression(layout)
+                && self.parent().is_member_object_span(self.span())
             {
                 write!(f, [soft_line_break()]);
             }

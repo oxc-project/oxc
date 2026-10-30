@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.156.0] - 2026-10-27
+
+### 💥 BREAKING CHANGES
+
+- cf8296f ecmascript: [**BREAKING**] Fold surrogate strings with JSStr constants (#27098) (Dunqing)
+
+### 🚀 Features
+
+- dd6cb2b minifier: Fold out-of-bounds string indices to `void 0` (#28004) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 9ec6617 minifier: Keep brackets on negative and non-finite numeric keys (#27855) (Yunus Ozen)
+- 520a26e minifier: Keep the default in shorthand assignment targets (#28183) (waltu)
+- 6d7b372 minifier: Handle sequence exprs when folding if to expr statement (#27939) (Armano)
+- 09bdb80 minifier: Allow argument rewrite with with leading var assignments (#28056) (Armano)
+- ebcdcd9 minifier: Preserve rest destructuring side effects (#27981) (camc314)
+- bd70a9b ecmascript: Use ECMAScript whitespace when folding `parseFloat`/`parseInt`/`trim` (#27719) (Dunqing)
+- 4c0fa90 minifier,linter: Keep `delete` of constant members and later JSX keys (#27990) (Dunqing)
+
+### ⚡ Performance
+
+- 3493ce3 minifier: Reuse is_error_constructor and simplify substitute_global_new_expression (#28149) (Armano)
+
 ## [0.155.0] - 2026-10-19
 
 ### 🚀 Features

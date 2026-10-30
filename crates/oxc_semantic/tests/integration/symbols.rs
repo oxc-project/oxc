@@ -1,4 +1,5 @@
 use oxc_semantic::{Reference, ReferenceFlags, SymbolFlags};
+use oxc_span::SourceType;
 
 use crate::util::SemanticTester;
 
@@ -57,6 +58,80 @@ fn test_delete_member_write_target() {
 }
 
 #[test]
+fn test_type_assertion_reference_flags() {
+    for (annotation, type_references) in [
+        ("any", &[][..]),
+        ("T", &["T"][..]),
+        ("T[]", &["T"][..]),
+        ("Box<T>", &["Box", "T"][..]),
+        ("typeof typeValue", &["typeValue"][..]),
+    ] {
+        for (expression, expected_flags) in [
+            (format!("[<{annotation}>value] = []"), ReferenceFlags::Write),
+            (format!("({{ key: <{annotation}>value }} = {{}})"), ReferenceFlags::Write),
+            (format!("(<{annotation}>value) += 1"), ReferenceFlags::read_write()),
+            (format!("(<{annotation}>value)++"), ReferenceFlags::read_write()),
+            (format!("for (<{annotation}>value of []) {{}}"), ReferenceFlags::Write),
+            (
+                format!("(<{annotation}>value).key = 1"),
+                ReferenceFlags::Read | ReferenceFlags::MemberWriteTarget,
+            ),
+            (format!("<{annotation}>value"), ReferenceFlags::Read),
+            (format!("[other = <{annotation}>value] = []"), ReferenceFlags::Read),
+            (format!("({{ [<{annotation}>value]: other }} = {{}})"), ReferenceFlags::Read),
+        ] {
+            let source = format!(
+                "type T = any; type Box<V> = V; let typeValue, value, other; {expression};"
+            );
+            let tester = SemanticTester::new(&source, SourceType::ts());
+            let semantic = tester.build();
+            let scoping = semantic.scoping();
+            for (name, expected) in std::iter::once(("value", expected_flags))
+                .chain(type_references.iter().map(|&name| (name, ReferenceFlags::Type)))
+            {
+                let symbol = scoping.get_root_binding(name.into()).unwrap();
+                let flags: Vec<_> =
+                    scoping.get_resolved_references(symbol).map(Reference::flags).collect();
+                assert_eq!(flags, vec![expected], "{source}: {name}");
+            }
+        }
+    }
+}
+
+#[test]
+fn test_strict_type_assertion_assignments() {
+    for name in ["eval", "arguments"] {
+        for annotation in ["any", "T", "T[]", "typeof eval"] {
+            for (expression, is_write) in [
+                (format!("[<{annotation}>{name}] = []"), true),
+                (format!("({{ value: <{annotation}>{name} }} = {{}})"), true),
+                (format!("[...<{annotation}>{name}] = []"), true),
+                (format!("[<{annotation}>{name} = value] = []"), true),
+                (format!("[<{annotation}><{annotation}>{name}] = []"), true),
+                (format!("for (<{annotation}>{name} of []) {{}}"), true),
+                (format!("(<{annotation}>{name})++"), true),
+                (format!("<{annotation}>{name}"), false),
+                (format!("[value = <{annotation}>{name}] = []"), false),
+                (format!("({{ [<{annotation}>{name}]: value }} = {{}})"), false),
+                (format!("(<{annotation}>{name}).prop = 1"), false),
+                (format!("[<{annotation}>{name}.prop] = []"), false),
+            ] {
+                let source = format!("\"use strict\"; type T = any; let value; {expression};");
+                let tester = SemanticTester::new(&source, SourceType::ts()).with_script(true);
+                let result = tester.build_with_errors();
+                let messages: Vec<_> = result.diagnostics.iter().map(ToString::to_string).collect();
+                let expected = if is_write {
+                    vec![format!("Cannot assign to '{name}' in strict mode")]
+                } else {
+                    vec![]
+                };
+                assert_eq!(messages, expected, "{source}");
+            }
+        }
+    }
+}
+
+#[test]
 fn test_class_simple() {
     SemanticTester::js("export class Foo {};")
         .has_root_symbol("Foo")
@@ -97,6 +172,36 @@ fn test_var_simple() {
         .intersects_flags(SymbolFlags::Variable)
         .contains_flags(SymbolFlags::BlockScopedVariable)
         .test();
+}
+
+#[test]
+fn test_hoisted_var_does_not_reuse_block_type_binding() {
+    for source in [
+        "function f() { { type X = string; var X = 1; type Y = X; X; } X; }",
+        "function f() { { interface X {} var X = 1; type Y = X; X; } X; }",
+        "function f() { { type X = string; { var X = 1; } type Y = X; X; } X; }",
+    ] {
+        let tester = SemanticTester::ts(source);
+        let semantic = tester.build();
+        let scoping = semantic.scoping();
+        let symbols = scoping
+            .symbol_ids()
+            .filter(|&symbol| scoping.symbol_name(symbol) == "X")
+            .collect::<Vec<_>>();
+        assert_eq!(symbols.len(), 2, "{source}");
+        let value_symbol = symbols
+            .iter()
+            .copied()
+            .find(|&symbol| scoping.symbol_flags(symbol).is_function_scoped_declaration())
+            .unwrap();
+        let type_symbol = symbols.into_iter().find(|&symbol| symbol != value_symbol).unwrap();
+        assert_ne!(scoping.symbol_scope_id(value_symbol), scoping.symbol_scope_id(type_symbol));
+        assert_eq!(scoping.get_resolved_references(value_symbol).count(), 2);
+        assert_eq!(scoping.get_resolved_references(type_symbol).count(), 1);
+        assert!(scoping.get_resolved_references(value_symbol).all(Reference::is_read));
+        assert!(scoping.get_resolved_references(type_symbol).all(Reference::is_type));
+        assert!(!scoping.root_unresolved_references().contains_key("X"));
+    }
 }
 
 #[test]

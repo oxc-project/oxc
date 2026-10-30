@@ -18,7 +18,7 @@ pub fn with_number_literal<R>(value: f64, f: impl FnOnce(&str) -> R) -> R {
 
 #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
 fn number_literal(value: f64) -> LiteralString {
-    let mut buffer = dragonbox_ecma::Buffer::new();
+    let mut buffer = zmij_ecma::Buffer::new();
     let formatted = buffer.format(value);
     let mut best_candidate = LiteralString::new();
     for (index, byte) in formatted.bytes().enumerate() {

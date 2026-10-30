@@ -944,24 +944,6 @@ where
 }
 
 #[cold]
-pub fn todo_build_hir_lower_expression_handle_update_expression_variables_captured_within_lambdas<
-    L,
-    T,
->(
-    labels: T,
-) -> OxcDiagnostic
-where
-    L: Into<oxc_diagnostics::LabeledSpan>,
-    T: IntoIterator<Item = L>,
-{
-    diagnostic(
-        ErrorCategory::Todo,
-        "(BuildHIR::lowerExpression) Handle UpdateExpression to variables captured within lambdas.",
-    )
-    .with_labels(labels)
-}
-
-#[cold]
 pub fn todo_update_expression_where_argument_global_not_yet_supported<L, T>(
     labels: T,
 ) -> OxcDiagnostic
@@ -1447,6 +1429,15 @@ pub fn local_fbt_variable(span: Option<Span>) -> OxcDiagnostic {
             "Local variables named `fbt` may conflict with the fbt plugin and are not yet supported",
         )
         .with_labels(span.map(|span| span.primary_label("Local variables named `fbt` are not supported")))
+}
+
+#[cold]
+pub fn todo_member_expression_chain_too_long(span: Span, max_length: usize) -> OxcDiagnostic {
+    diagnostic(
+        ErrorCategory::Todo,
+        format!("Support member expression chains longer than {max_length} members"),
+    )
+    .with_label(span.primary_label("This member expression chain is too long"))
 }
 
 #[cold]

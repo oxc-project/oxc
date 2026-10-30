@@ -282,10 +282,12 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     /// Update annotation state for the comment at `index`.
-    fn set_annotation_flags(&mut self, comment: &Comment, index: usize) {
-        let range = match comment.content {
-            CommentContent::PureNotApplied => &mut self.pure_comments,
-            CommentContent::NoSideEffectsNotApplied => &mut self.no_side_effects_comments,
+    fn set_annotation_flags(&mut self, content: CommentContent, index: usize) {
+        let range = match content {
+            CommentContent::Pure | CommentContent::PureNotApplied => &mut self.pure_comments,
+            CommentContent::NoSideEffects | CommentContent::NoSideEffectsNotApplied => {
+                &mut self.no_side_effects_comments
+            }
             _ => return,
         };
 
@@ -302,23 +304,29 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     fn add_comment(&mut self, mut comment: Comment, source_text: &str) {
-        Self::parse_annotation(&mut comment, source_text);
         // The comments array is an ordered vec, only add the comment if its not added before,
         // to avoid situations where the parser needs to rewind and tries to reinsert the comment.
         if let Some(last_comment) = self.comments.last()
             && comment.span.start <= last_comment.span.start
         {
-            // Duplicate from parser lookahead/rewind — update annotation flags
-            // to point to the existing comment.
-            if let Ok(index) = self
-                .comments
-                .binary_search_by_key(&comment.span.start, |existing| existing.span.start)
+            // Reuse the classification from before lookahead/rewind, including annotations
+            // that have already been applied. Usually this is the most recent comment.
+            let index = if comment.span.start == last_comment.span.start {
+                Some(self.comments.len() - 1)
+            } else {
+                self.comments
+                    .binary_search_by_key(&comment.span.start, |existing| existing.span.start)
+                    .ok()
+            };
+            if let Some(index) = index
                 && self.comments[index].span == comment.span
             {
-                self.set_annotation_flags(&comment, index);
+                self.set_annotation_flags(self.comments[index].content, index);
             }
             return;
         }
+
+        Self::parse_annotation(&mut comment, source_text);
 
         // This newly added comment may be preceded by a newline.
         // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
@@ -341,7 +349,7 @@ impl<'a> TriviaBuilder<'a> {
 
         // Set annotation flags here (not in `parse_annotation`) so the index is correct
         // even when the dedup check above skips a duplicate from parser lookahead/rewind.
-        self.set_annotation_flags(&comment, self.comments.len());
+        self.set_annotation_flags(comment.content, self.comments.len());
         self.comments.push(comment);
         if becomes_trailing {
             self.attach_pending_comments(
@@ -561,6 +569,64 @@ mod test {
     use oxc_syntax::node::NodeId;
 
     use crate::Parser;
+
+    use super::TriviaBuilder;
+
+    #[test]
+    fn annotation_flags_restored_when_replaying_comments() {
+        for annotation in ["/* @__PURE__ */", "/* @__NO_SIDE_EFFECTS__ */"] {
+            for applied in [false, true] {
+                for suffix in ["", "/* later comment */"] {
+                    let source = format!("{annotation}{suffix}");
+                    let annotation_end = u32::try_from(annotation.len()).unwrap();
+                    let source_end = u32::try_from(source.len()).unwrap();
+                    let allocator = Allocator::default();
+                    let mut builder = TriviaBuilder::new_in(&allocator);
+                    builder.add_block_comment(
+                        0,
+                        annotation_end,
+                        CommentKind::SingleLineBlock,
+                        &source,
+                    );
+                    if !suffix.is_empty() {
+                        builder.add_block_comment(
+                            annotation_end,
+                            source_end,
+                            CommentKind::SingleLineBlock,
+                            &source,
+                        );
+                    }
+
+                    let pure = builder.previous_token_pure_comments();
+                    let no_side_effects = builder.previous_token_no_side_effects_comments();
+                    if applied {
+                        if let Some(range) = pure {
+                            builder.mark_pure_comments_applied(range);
+                        }
+                        if let Some(range) = no_side_effects {
+                            builder.mark_no_side_effects_comments_applied(range);
+                        }
+                    }
+                    let content = builder.comments[0].content;
+                    builder.clear_pure_comments();
+                    builder.clear_no_side_effects_comments();
+
+                    // Replaying the annotation must restore its range without changing
+                    // whether it was already applied, even when a later comment exists.
+                    builder.add_block_comment(
+                        0,
+                        annotation_end,
+                        CommentKind::SingleLineBlock,
+                        &source,
+                    );
+                    assert_eq!(builder.previous_token_pure_comments(), pure);
+                    assert_eq!(builder.previous_token_no_side_effects_comments(), no_side_effects);
+                    assert_eq!(builder.comments[0].content, content);
+                    assert_eq!(builder.comments.len(), 1 + usize::from(!suffix.is_empty()));
+                }
+            }
+        }
+    }
 
     fn get_comments(source_text: &str) -> Vec<Comment> {
         let allocator = Allocator::default();

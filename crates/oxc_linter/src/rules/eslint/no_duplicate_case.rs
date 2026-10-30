@@ -2,6 +2,7 @@ use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ContentEq, GetSpan, Span};
+use smallvec::SmallVec;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -85,7 +86,7 @@ declare_oxc_lint!(
 impl Rule for NoDuplicateCase {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let Some(ss) = node.kind().as_switch_statement() else { return };
-        let mut previous_tests: Vec<&Expression<'_>> = vec![];
+        let mut previous_tests: SmallVec<[&Expression<'_>; 8]> = SmallVec::new();
         for test in ss.cases.iter().filter_map(|c| c.test.as_ref()) {
             let test = test.without_parentheses();
             if let Some(prev) = previous_tests.iter().find(|t| t.content_eq(test)) {

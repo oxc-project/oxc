@@ -1,0 +1,16 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-map-foreach-unused-value.js
+---
+function Component() {
+	let count = 0;
+	const cb = () => count++;
+	const callbacks = new Map([[_temp, cb]]);
+	callbacks.forEach(_temp2);
+	return null;
+}
+async function _temp2(_, key) {
+	await 0;
+	key();
+}
+function _temp() {}

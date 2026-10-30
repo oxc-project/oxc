@@ -96,7 +96,7 @@ impl<'a> PeepholeOptimizations {
         prop: &mut AssignmentTargetProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // `a: a` -> `a`
+        // `a: a` -> `a`, `a: a = b` -> `a = b`
         if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(assign_target_prop_prop) =
             prop
         {
@@ -105,11 +105,16 @@ impl<'a> PeepholeOptimizations {
                 return;
             };
             if prop_name == ident.name {
+                let ident = ident.take_in(ctx);
+                // `identifier_mut` also matches `a: a = b`, so keep its default.
+                let init = match &mut assign_target_prop_prop.binding {
+                    AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(target) => {
+                        Some(target.init.take_in(ctx))
+                    }
+                    _ => None,
+                };
                 let new_prop = AssignmentTargetProperty::new_assignment_target_property_identifier(
-                    ident.span,
-                    ident.take_in(ctx),
-                    None,
-                    ctx,
+                    ident.span, ident, init, ctx,
                 );
                 ctx.replace_assignment_target_property(prop, new_prop);
             }
@@ -1174,7 +1179,7 @@ impl<'a> PeepholeOptimizations {
             // `BigInt(1n)` -> `1n`
             "BigInt" => match arg {
                 None => None,
-                Some(arg) => matches!(arg, Expression::BigIntLiteral(_)).then(|| arg.take_in(ctx)),
+                Some(arg) => arg.is_big_int_literal().then(|| arg.take_in(ctx)),
             },
             _ => None,
         };
@@ -1405,7 +1410,10 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         match key {
-            PropertyKey::NumericLiteral(_) if *computed => {
+            // `-2`, `-0`, `Infinity` and `NaN` are not valid literal keys, so they keep their brackets.
+            PropertyKey::NumericLiteral(n)
+                if *computed && n.value.is_finite() && n.value.is_sign_positive() =>
+            {
                 // Bool field flip on an existing AST node, not a slot replacement.
                 *computed = false;
             }

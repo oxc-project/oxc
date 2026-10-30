@@ -7,35 +7,36 @@ import { c as _c } from "react/compiler-runtime";
 import { identity, ValidateMemoization } from "shared-runtime";
 import { useMemo } from "react";
 function Component(t0) {
-	const $ = _c(7);
+	const $ = _c(8);
 	const { arg } = t0;
 	arg?.items.edges?.nodes;
 	let t1;
-	if ($[0] !== arg?.items.edges?.nodes) {
+	if ($[0] !== arg?.items.edges?.nodes || $[1] !== arg?.items.edges?.nodes.map) {
 		t1 = arg?.items.edges?.nodes.map(identity);
 		$[0] = arg?.items.edges?.nodes;
-		$[1] = t1;
+		$[1] = arg?.items.edges?.nodes.map;
+		$[2] = t1;
 	} else {
-		t1 = $[1];
+		t1 = $[2];
 	}
 	const data = t1;
 	const t2 = arg?.items.edges?.nodes;
 	let t3;
-	if ($[2] !== t2) {
+	if ($[3] !== t2) {
 		t3 = [t2];
-		$[2] = t2;
-		$[3] = t3;
+		$[3] = t2;
+		$[4] = t3;
 	} else {
-		t3 = $[3];
+		t3 = $[4];
 	}
 	let t4;
-	if ($[4] !== data || $[5] !== t3) {
+	if ($[5] !== data || $[6] !== t3) {
 		t4 = <ValidateMemoization inputs={t3} output={data} />;
-		$[4] = data;
-		$[5] = t3;
-		$[6] = t4;
+		$[5] = data;
+		$[6] = t3;
+		$[7] = t4;
 	} else {
-		t4 = $[6];
+		t4 = $[7];
 	}
 	return t4;
 }

@@ -1,0 +1,63 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A comment inside any signed number, not only the first one, prints one element per line.
+x = [
+  -1,
+  -(
+    // comment
+    2
+  ),
+  -3,
+];
+y = [-1, -2, -(/* comment */ 3), -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16, -17];
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A comment inside any signed number, not only the first one, prints one element per line.
+x = [
+  -1,
+  -(
+    // comment
+    2
+  ),
+  -3,
+];
+y = [
+  -1,
+  -2,
+  -(/* comment */ 3),
+  -4,
+  -5,
+  -6,
+  -7,
+  -8,
+  -9,
+  -10,
+  -11,
+  -12,
+  -13,
+  -14,
+  -15,
+  -16,
+  -17,
+];
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A comment inside any signed number, not only the first one, prints one element per line.
+x = [
+  -1,
+  -(
+    // comment
+    2
+  ),
+  -3,
+];
+y = [-1, -2, -(/* comment */ 3), -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16, -17];
+
+===================== End =====================

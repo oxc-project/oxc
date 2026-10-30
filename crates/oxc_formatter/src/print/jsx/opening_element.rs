@@ -3,11 +3,7 @@ use std::ops::Deref;
 use oxc_ast::ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement, StringLiteral};
 use oxc_span::GetSpan;
 
-use crate::{
-    ast_nodes::AstNode,
-    formatter::{prelude::*, trivia::FormatTrailingComments},
-    write,
-};
+use crate::{ast_nodes::AstNode, formatter::prelude::*, write};
 
 pub struct FormatOpeningElement<'a, 'b> {
     element: &'b AstNode<'b, 'a, JSXOpeningElement<'a>>,
@@ -102,9 +98,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatOpeningElement<'a, '_> {
                     if !attributes.is_empty() {
                         write!(f, [soft_line_indent_or_space(&attributes)]);
                     }
-
-                    let comments = f.context().comments().comments_before(self.span.end);
-                    FormatTrailingComments::Comments(comments).fmt(f);
 
                     let force_bracket_same_line = f.options().bracket_same_line.value();
                     let wants_bracket_same_line = attributes.is_empty() && !name_has_comment;

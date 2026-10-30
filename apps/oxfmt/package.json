@@ -1,6 +1,6 @@
 {
   "name": "oxfmt-app",
-  "version": "0.74.0",
+  "version": "0.75.0",
   "private": true,
   "description": "Internal development package for oxfmt. For the published package.json template, see `npm/oxfmt/package.json`.",
   "license": "MIT",
@@ -15,13 +15,15 @@
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.js",
     "test": "vitest run",
-    "conformance": "node conformance/run.ts",
-    "download-fixtures": "node conformance/download-fixtures.js",
+    "conformance": "pnpm run conformance:prettier && pnpm run conformance:live",
+    "conformance:live": "node conformance/run_live.ts",
+    "conformance:prettier": "node conformance/run_prettier.ts",
+    "download-fixtures": "node conformance/download-fixtures.ts",
     "generate-config-types": "node scripts/generate-config-types.ts"
   },
   "dependencies": {
     "prettier": "3.9.10",
-    "prettier-plugin-astro": "1.1.1",
+    "prettier-plugin-astro": "1.1.2",
     "prettier-plugin-svelte": "4.1.1",
     "prettier-plugin-tailwindcss": "0.0.0-insiders.5b27f94",
     "tinypool": "2.2.0"

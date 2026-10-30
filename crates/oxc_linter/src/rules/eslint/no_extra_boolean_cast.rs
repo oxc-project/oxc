@@ -4,8 +4,8 @@ use serde::Deserialize;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, ChainElement, ConditionalExpression, DoWhileStatement, Expression,
-        ForStatement, IfStatement, NewExpression, WhileStatement,
+        CallExpression, ConditionalExpression, DoWhileStatement, Expression, ForStatement,
+        IfStatement, NewExpression, WhileStatement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -99,19 +99,17 @@ impl Rule for NoExtraBooleanCast {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::CallExpression(expr)
-                if !expr.optional
-                    && expr.callee.is_specific_id("Boolean")
-                    && is_flagged_ctx(node, ctx, self.enforce_for_inner_expressions) =>
-            {
-                report_boolean_call(expr, node, ctx);
-            }
-            AstKind::ChainExpression(chain)
-                if is_flagged_ctx(node, ctx, self.enforce_for_inner_expressions) =>
-            {
-                if let ChainElement::CallExpression(expr) = &chain.expression
-                    && expr.callee.is_specific_id("Boolean")
-                {
+            AstKind::CallExpression(expr) if expr.callee.is_specific_id("Boolean") => {
+                let node = if expr.optional {
+                    let parent = ctx.nodes().parent_node(node.id());
+                    if !matches!(parent.kind(), AstKind::ChainExpression(_)) {
+                        return;
+                    }
+                    parent
+                } else {
+                    node
+                };
+                if is_flagged_ctx(node, ctx, self.enforce_for_inner_expressions) {
                     report_boolean_call(expr, node, ctx);
                 }
             }
@@ -362,6 +360,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("if (Boolean?.(foo).value) {}", None),
+        ("if (Boolean?.(foo)()) {}", None),
         ("Boolean(bar, !!baz);", None),
         ("var foo = !!bar;", None),
         ("function foo() { return !!bar; }", None),
@@ -1527,6 +1527,7 @@ fn test() {
     ];
 
     let fix = vec![
+        ("while (Boolean?.(foo)) {}", "while (foo) {}", None),
         ("if (!!foo) {}", "if (foo) {}", None),
         ("do {} while (!!foo)", "do {} while (foo)", None),
         ("while (!!foo) {}", "while (foo) {}", None),

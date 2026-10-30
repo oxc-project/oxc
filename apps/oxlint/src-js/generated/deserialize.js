@@ -64,46 +64,36 @@ export function resetBuffer() {
 }
 
 function deserializeProgram(pos) {
-  let end = deserializeI32(pos + 4),
-    program = (parent = {
-      __proto__: NodeProto,
-      type: "Program",
-      body: null,
-      sourceType: deserializeModuleKind(pos + 137),
-      get comments() {
-        comments === null && initComments();
-        return comments;
-      },
-      get tokens() {
-        tokens === null && initTokens();
-        return tokens;
-      },
-      start: 0,
-      end,
-      range: [0, end],
-      parent: null,
-    }),
-    body = (program.body = deserializeVecDirective(pos + 88));
-  body.push(...deserializeVecStatement(pos + 112));
-  {
-    let start;
-    if (body.length > 0) {
-      let first = body[0];
-      start = first.start;
-      if (first.type === "ExportNamedDeclaration" || first.type === "ExportDefaultDeclaration") {
-        let { declaration } = first;
-        if (
-          declaration !== null
-          && declaration.type === "ClassDeclaration"
-          && declaration.decorators.length > 0
-        ) {
-          let decoratorStart = declaration.decorators[0].start;
-          decoratorStart < start && (start = decoratorStart);
-        }
-      }
-    } else start = end;
-    program.start = program.range[0] = start;
-  }
+  let node$0,
+    start = deserializeI32(pos),
+    end = deserializeI32(pos + 4),
+    program = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Program"),
+      (node$0.body = null),
+      (node$0.sourceType = deserializeModuleKind(pos + 137)),
+      Object.defineProperty(node$0, "comments", {
+        get() {
+          comments === null && initComments();
+          return comments;
+        },
+        enumerable: true,
+        configurable: true,
+      }),
+      Object.defineProperty(node$0, "tokens", {
+        get() {
+          tokens === null && initTokens();
+          return tokens;
+        },
+        enumerable: true,
+        configurable: true,
+      }),
+      (node$0.start = start),
+      (node$0.end = end),
+      (node$0.range = [start, end]),
+      (node$0.parent = null),
+      node$0));
+  (program.body = deserializeVecDirective(pos + 88)).push(...deserializeVecStatement(pos + 112));
   parent = null;
   return program;
 }
@@ -204,94 +194,100 @@ function deserializeExpression(pos) {
 }
 
 function deserializeIdentifierName(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "Identifier",
-    decorators: [],
-    name: deserializeStr(pos + 16),
-    optional: false,
-    typeAnnotation: null,
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "Identifier"),
+    (node$0.decorators = []),
+    (node$0.name = deserializeStr(pos + 16)),
+    (node$0.optional = false),
+    (node$0.typeAnnotation = null),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeIdentifierReference(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "Identifier",
-    decorators: [],
-    name: deserializeStr(pos + 16),
-    optional: false,
-    typeAnnotation: null,
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "Identifier"),
+    (node$0.decorators = []),
+    (node$0.name = deserializeStr(pos + 16)),
+    (node$0.optional = false),
+    (node$0.typeAnnotation = null),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeBindingIdentifier(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "Identifier",
-    decorators: [],
-    name: deserializeStr(pos + 16),
-    optional: false,
-    typeAnnotation: null,
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "Identifier"),
+    (node$0.decorators = []),
+    (node$0.name = deserializeStr(pos + 16)),
+    (node$0.optional = false),
+    (node$0.typeAnnotation = null),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeLabelIdentifier(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "Identifier",
-    decorators: [],
-    name: deserializeStr(pos + 16),
-    optional: false,
-    typeAnnotation: null,
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "Identifier"),
+    (node$0.decorators = []),
+    (node$0.name = deserializeStr(pos + 16)),
+    (node$0.optional = false),
+    (node$0.typeAnnotation = null),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeThisExpression(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "ThisExpression",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "ThisExpression"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeArrayExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ArrayExpression",
-      elements: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ArrayExpression"),
+      (node$0.elements = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.elements = deserializeVecArrayExpressionElement(pos + 16);
   parent = previousParent;
   return node;
@@ -401,18 +397,19 @@ function deserializeElision(pos) {
 }
 
 function deserializeObjectExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ObjectExpression",
-      properties: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ObjectExpression"),
+      (node$0.properties = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.properties = deserializeVecObjectPropertyKind(pos + 16);
   parent = previousParent;
   return node;
@@ -430,24 +427,25 @@ function deserializeObjectPropertyKind(pos) {
 }
 
 function deserializeObjectProperty(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Property",
-      kind: deserializePropertyKind(pos + 12),
-      key: null,
-      value: null,
-      method: deserializeBool(pos + 13),
-      shorthand: deserializeBool(pos + 14),
-      computed: deserializeBool(pos + 15),
-      optional: false,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Property"),
+      (node$0.kind = deserializePropertyKind(pos + 12)),
+      (node$0.key = null),
+      (node$0.value = null),
+      (node$0.method = deserializeBool(pos + 13)),
+      (node$0.shorthand = deserializeBool(pos + 14)),
+      (node$0.computed = deserializeBool(pos + 15)),
+      (node$0.optional = false),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.key = deserializePropertyKey(pos + 16);
   node.value = deserializeExpression(pos + 32);
   parent = previousParent;
@@ -567,19 +565,20 @@ function deserializePropertyKind(pos) {
 }
 
 function deserializeTemplateLiteral(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TemplateLiteral",
-      quasis: null,
-      expressions: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TemplateLiteral"),
+      (node$0.quasis = null),
+      (node$0.expressions = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.quasis = deserializeVecTemplateElement(pos + 16);
   node.expressions = deserializeVecExpression(pos + 40);
   parent = previousParent;
@@ -587,20 +586,21 @@ function deserializeTemplateLiteral(pos) {
 }
 
 function deserializeTaggedTemplateExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TaggedTemplateExpression",
-      tag: null,
-      typeArguments: null,
-      quasi: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TaggedTemplateExpression"),
+      (node$0.tag = null),
+      (node$0.typeArguments = null),
+      (node$0.quasi = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.tag = deserializeExpression(pos + 16);
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 32);
   node.quasi = deserializeTemplateLiteral(pos + 40);
@@ -609,20 +609,22 @@ function deserializeTaggedTemplateExpression(pos) {
 }
 
 function deserializeTemplateElement(pos) {
-  let tail = deserializeBool(pos + 12),
+  let node$0,
+    tail = deserializeBool(pos + 12),
     start = deserializeI32(pos) - 1,
     end = deserializeI32(pos + 4) + 2 - tail,
     value = deserializeTemplateElementValue(pos + 16);
-  return {
-    __proto__: NodeProto,
-    type: "TemplateElement",
-    value,
-    tail,
-    start,
-    end,
-    range: [start, end],
-    parent,
-  };
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TemplateElement"),
+    (node$0.value = value),
+    (node$0.tail = tail),
+    (node$0.start = start),
+    (node$0.end = end),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTemplateElementValue(pos) {
@@ -633,21 +635,22 @@ function deserializeTemplateElementValue(pos) {
 }
 
 function deserializeComputedMemberExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "MemberExpression",
-      object: null,
-      property: null,
-      optional: deserializeBool(pos + 12),
-      computed: true,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "MemberExpression"),
+      (node$0.object = null),
+      (node$0.property = null),
+      (node$0.optional = deserializeBool(pos + 12)),
+      (node$0.computed = true),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.object = deserializeExpression(pos + 16);
   node.property = deserializeExpression(pos + 32);
   parent = previousParent;
@@ -655,21 +658,22 @@ function deserializeComputedMemberExpression(pos) {
 }
 
 function deserializeStaticMemberExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "MemberExpression",
-      object: null,
-      property: null,
-      optional: deserializeBool(pos + 12),
-      computed: false,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "MemberExpression"),
+      (node$0.object = null),
+      (node$0.property = null),
+      (node$0.optional = deserializeBool(pos + 12)),
+      (node$0.computed = false),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.object = deserializeExpression(pos + 16);
   node.property = deserializeIdentifierName(pos + 32);
   parent = previousParent;
@@ -677,21 +681,22 @@ function deserializeStaticMemberExpression(pos) {
 }
 
 function deserializePrivateFieldExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "MemberExpression",
-      object: null,
-      property: null,
-      optional: deserializeBool(pos + 12),
-      computed: false,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "MemberExpression"),
+      (node$0.object = null),
+      (node$0.property = null),
+      (node$0.optional = deserializeBool(pos + 12)),
+      (node$0.computed = false),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.object = deserializeExpression(pos + 16);
   node.property = deserializePrivateIdentifier(pos + 32);
   parent = previousParent;
@@ -699,21 +704,22 @@ function deserializePrivateFieldExpression(pos) {
 }
 
 function deserializeCallExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "CallExpression",
-      callee: null,
-      typeArguments: null,
-      arguments: null,
-      optional: deserializeBool(pos + 12),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "CallExpression"),
+      (node$0.callee = null),
+      (node$0.typeArguments = null),
+      (node$0.arguments = null),
+      (node$0.optional = deserializeBool(pos + 12)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.callee = deserializeExpression(pos + 16);
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 32);
   node.arguments = deserializeVecArgument(pos + 40);
@@ -722,20 +728,21 @@ function deserializeCallExpression(pos) {
 }
 
 function deserializeNewExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "NewExpression",
-      callee: null,
-      typeArguments: null,
-      arguments: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "NewExpression"),
+      (node$0.callee = null),
+      (node$0.typeArguments = null),
+      (node$0.arguments = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.callee = deserializeExpression(pos + 16);
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 32);
   node.arguments = deserializeVecArgument(pos + 40);
@@ -744,47 +751,48 @@ function deserializeNewExpression(pos) {
 }
 
 function deserializeImportMeta(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "MetaProperty",
-      meta: null,
-      property: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "MetaProperty"),
+      (node$0.meta = null),
+      (node$0.property = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     importStart = deserializeI32(pos),
     importEnd = deserializeI32(pos + 4) === 0 ? 0 : importStart + 6,
-    importIdent = {
-      __proto__: NodeProto,
-      type: "Identifier",
-      decorators: [],
-      name: "import",
-      optional: false,
-      typeAnnotation: null,
-      start: importStart,
-      end: importEnd,
-      range: [importStart, importEnd],
-      parent,
-    },
+    importIdent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Identifier"),
+      (node$0.decorators = []),
+      (node$0.name = "import"),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.start = importStart),
+      (node$0.end = importEnd),
+      (node$0.range = [importStart, importEnd]),
+      (node$0.parent = parent),
+      node$0),
     metaEnd = deserializeI32(pos + 4),
     metaStart = metaEnd === 0 ? 0 : metaEnd - 4,
-    metaIdent = {
-      __proto__: NodeProto,
-      type: "Identifier",
-      decorators: [],
-      name: "meta",
-      optional: false,
-      typeAnnotation: null,
-      start: metaStart,
-      end: metaEnd,
-      range: [metaStart, metaEnd],
-      parent,
-    };
+    metaIdent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Identifier"),
+      (node$0.decorators = []),
+      (node$0.name = "meta"),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.start = metaStart),
+      (node$0.end = metaEnd),
+      (node$0.range = [metaStart, metaEnd]),
+      (node$0.parent = parent),
+      node$0);
   node.meta = importIdent;
   node.property = metaIdent;
   parent = previousParent;
@@ -792,47 +800,48 @@ function deserializeImportMeta(pos) {
 }
 
 function deserializeNewTarget(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "MetaProperty",
-      meta: null,
-      property: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "MetaProperty"),
+      (node$0.meta = null),
+      (node$0.property = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     newStart = deserializeI32(pos),
     newEnd = deserializeI32(pos + 4) === 0 ? 0 : newStart + 3,
-    newIdent = {
-      __proto__: NodeProto,
-      type: "Identifier",
-      decorators: [],
-      name: "new",
-      optional: false,
-      typeAnnotation: null,
-      start: newStart,
-      end: newEnd,
-      range: [newStart, newEnd],
-      parent,
-    },
+    newIdent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Identifier"),
+      (node$0.decorators = []),
+      (node$0.name = "new"),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.start = newStart),
+      (node$0.end = newEnd),
+      (node$0.range = [newStart, newEnd]),
+      (node$0.parent = parent),
+      node$0),
     targetEnd = deserializeI32(pos + 4),
     targetStart = targetEnd === 0 ? 0 : targetEnd - 6,
-    targetIdent = {
-      __proto__: NodeProto,
-      type: "Identifier",
-      decorators: [],
-      name: "target",
-      optional: false,
-      typeAnnotation: null,
-      start: targetStart,
-      end: targetEnd,
-      range: [targetStart, targetEnd],
-      parent,
-    };
+    targetIdent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Identifier"),
+      (node$0.decorators = []),
+      (node$0.name = "target"),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.start = targetStart),
+      (node$0.end = targetEnd),
+      (node$0.range = [targetStart, targetEnd]),
+      (node$0.parent = parent),
+      node$0);
   node.meta = newIdent;
   node.property = targetIdent;
   parent = previousParent;
@@ -840,18 +849,19 @@ function deserializeNewTarget(pos) {
 }
 
 function deserializeSpreadElement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "SpreadElement",
-      argument: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "SpreadElement"),
+      (node$0.argument = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.argument = deserializeExpression(pos + 16);
   parent = previousParent;
   return node;
@@ -955,60 +965,63 @@ function deserializeArgument(pos) {
 }
 
 function deserializeUpdateExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "UpdateExpression",
-      operator: deserializeUpdateOperator(pos + 12),
-      prefix: deserializeBool(pos + 13),
-      argument: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "UpdateExpression"),
+      (node$0.operator = deserializeUpdateOperator(pos + 12)),
+      (node$0.prefix = deserializeBool(pos + 13)),
+      (node$0.argument = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.argument = deserializeSimpleAssignmentTarget(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeUnaryExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "UnaryExpression",
-      operator: deserializeUnaryOperator(pos + 12),
-      argument: null,
-      prefix: true,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "UnaryExpression"),
+      (node$0.operator = deserializeUnaryOperator(pos + 12)),
+      (node$0.argument = null),
+      (node$0.prefix = true),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.argument = deserializeExpression(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeBinaryExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "BinaryExpression",
-      left: null,
-      operator: deserializeBinaryOperator(pos + 12),
-      right: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "BinaryExpression"),
+      (node$0.left = null),
+      (node$0.operator = deserializeBinaryOperator(pos + 12)),
+      (node$0.right = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.left = deserializeExpression(pos + 16);
   node.right = deserializeExpression(pos + 32);
   parent = previousParent;
@@ -1016,20 +1029,21 @@ function deserializeBinaryExpression(pos) {
 }
 
 function deserializePrivateInExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "BinaryExpression",
-      left: null,
-      operator: "in",
-      right: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "BinaryExpression"),
+      (node$0.left = null),
+      (node$0.operator = "in"),
+      (node$0.right = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.left = deserializePrivateIdentifier(pos + 16);
   node.right = deserializeExpression(pos + 48);
   parent = previousParent;
@@ -1037,20 +1051,21 @@ function deserializePrivateInExpression(pos) {
 }
 
 function deserializeLogicalExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "LogicalExpression",
-      left: null,
-      operator: deserializeLogicalOperator(pos + 12),
-      right: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "LogicalExpression"),
+      (node$0.left = null),
+      (node$0.operator = deserializeLogicalOperator(pos + 12)),
+      (node$0.right = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.left = deserializeExpression(pos + 16);
   node.right = deserializeExpression(pos + 32);
   parent = previousParent;
@@ -1058,20 +1073,21 @@ function deserializeLogicalExpression(pos) {
 }
 
 function deserializeConditionalExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ConditionalExpression",
-      test: null,
-      consequent: null,
-      alternate: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ConditionalExpression"),
+      (node$0.test = null),
+      (node$0.consequent = null),
+      (node$0.alternate = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.test = deserializeExpression(pos + 16);
   node.consequent = deserializeExpression(pos + 32);
   node.alternate = deserializeExpression(pos + 48);
@@ -1080,20 +1096,21 @@ function deserializeConditionalExpression(pos) {
 }
 
 function deserializeAssignmentExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "AssignmentExpression",
-      operator: deserializeAssignmentOperator(pos + 12),
-      left: null,
-      right: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "AssignmentExpression"),
+      (node$0.operator = deserializeAssignmentOperator(pos + 12)),
+      (node$0.left = null),
+      (node$0.right = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.left = deserializeAssignmentTarget(pos + 16);
   node.right = deserializeExpression(pos + 32);
   parent = previousParent;
@@ -1151,21 +1168,22 @@ function deserializeSimpleAssignmentTarget(pos) {
 }
 
 function deserializeArrayAssignmentTarget(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ArrayPattern",
-      decorators: [],
-      elements: null,
-      optional: false,
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ArrayPattern"),
+      (node$0.decorators = []),
+      (node$0.elements = null),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     elements = deserializeVecOptionAssignmentTargetMaybeDefault(pos + 16),
     rest = deserializeOptionBoxAssignmentTargetRest(pos + 40);
   rest !== null && elements.push(rest);
@@ -1175,21 +1193,22 @@ function deserializeArrayAssignmentTarget(pos) {
 }
 
 function deserializeObjectAssignmentTarget(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ObjectPattern",
-      decorators: [],
-      properties: null,
-      optional: false,
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ObjectPattern"),
+      (node$0.decorators = []),
+      (node$0.properties = null),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     properties = deserializeVecAssignmentTargetProperty(pos + 16),
     rest = deserializeOptionBoxAssignmentTargetRest(pos + 40);
   rest !== null && properties.push(rest);
@@ -1199,22 +1218,23 @@ function deserializeObjectAssignmentTarget(pos) {
 }
 
 function deserializeAssignmentTargetRest(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "RestElement",
-      decorators: [],
-      argument: null,
-      optional: false,
-      typeAnnotation: null,
-      value: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "RestElement"),
+      (node$0.decorators = []),
+      (node$0.argument = null),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.value = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.argument = deserializeAssignmentTarget(pos + 16);
   parent = previousParent;
   return node;
@@ -1250,22 +1270,23 @@ function deserializeAssignmentTargetMaybeDefault(pos) {
 }
 
 function deserializeAssignmentTargetWithDefault(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "AssignmentPattern",
-      decorators: [],
-      left: null,
-      right: null,
-      optional: false,
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "AssignmentPattern"),
+      (node$0.decorators = []),
+      (node$0.left = null),
+      (node$0.right = null),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.left = deserializeAssignmentTarget(pos + 16);
   node.right = deserializeExpression(pos + 32);
   parent = previousParent;
@@ -1284,55 +1305,56 @@ function deserializeAssignmentTargetProperty(pos) {
 }
 
 function deserializeAssignmentTargetPropertyIdentifier(pos) {
-  let start = deserializeI32(pos),
+  let node$0,
+    start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Property",
-      kind: "init",
-      key: null,
-      value: null,
-      method: false,
-      shorthand: true,
-      computed: false,
-      optional: false,
-      start,
-      end,
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Property"),
+      (node$0.kind = "init"),
+      (node$0.key = null),
+      (node$0.value = null),
+      (node$0.method = false),
+      (node$0.shorthand = true),
+      (node$0.computed = false),
+      (node$0.optional = false),
+      (node$0.start = start),
+      (node$0.end = end),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     key = deserializeIdentifierReference(pos + 16),
     keyStart,
     keyEnd,
-    value = {
-      __proto__: NodeProto,
-      type: "Identifier",
-      decorators: [],
-      name: key.name,
-      optional: false,
-      typeAnnotation: null,
-      start: (keyStart = key.start),
-      end: (keyEnd = key.end),
-      range: [keyStart, keyEnd],
-      parent,
-    },
+    value =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Identifier"),
+      (node$0.decorators = []),
+      (node$0.name = key.name),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.start = keyStart = key.start),
+      (node$0.end = keyEnd = key.end),
+      (node$0.range = [keyStart, keyEnd]),
+      (node$0.parent = parent),
+      node$0),
     init = deserializeOptionExpression(pos + 48);
   if (init !== null) {
     let left = value;
-    value = {
-      __proto__: NodeProto,
-      type: "AssignmentPattern",
-      decorators: [],
-      left,
-      right: init,
-      optional: false,
-      typeAnnotation: null,
-      start,
-      end,
-      range: [start, end],
-      parent,
-    };
+    value =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "AssignmentPattern"),
+      (node$0.decorators = []),
+      (node$0.left = left),
+      (node$0.right = init),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start),
+      (node$0.end = end),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0);
     left.parent = value;
     init.parent = value;
   }
@@ -1343,24 +1365,25 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
 }
 
 function deserializeAssignmentTargetPropertyProperty(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Property",
-      kind: "init",
-      key: null,
-      value: null,
-      method: false,
-      shorthand: false,
-      computed: deserializeBool(pos + 12),
-      optional: false,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Property"),
+      (node$0.kind = "init"),
+      (node$0.key = null),
+      (node$0.value = null),
+      (node$0.method = false),
+      (node$0.shorthand = false),
+      (node$0.computed = deserializeBool(pos + 12)),
+      (node$0.optional = false),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.key = deserializePropertyKey(pos + 16);
   node.value = deserializeAssignmentTargetMaybeDefault(pos + 32);
   parent = previousParent;
@@ -1368,66 +1391,70 @@ function deserializeAssignmentTargetPropertyProperty(pos) {
 }
 
 function deserializeSequenceExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "SequenceExpression",
-      expressions: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "SequenceExpression"),
+      (node$0.expressions = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.expressions = deserializeVecExpression(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeSuper(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "Super",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "Super"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeAwaitExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "AwaitExpression",
-      argument: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "AwaitExpression"),
+      (node$0.argument = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.argument = deserializeExpression(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeChainExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ChainExpression",
-      expression: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ChainExpression"),
+      (node$0.expression = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.expression = deserializeChainElement(pos + 16);
   parent = previousParent;
   return node;
@@ -1536,37 +1563,39 @@ function deserializeStatement(pos) {
 }
 
 function deserializeDirective(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ExpressionStatement",
-      expression: null,
-      directive: deserializeStr(pos + 64),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ExpressionStatement"),
+      (node$0.expression = null),
+      (node$0.directive = deserializeStr(pos + 64)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.expression = deserializeStringLiteral(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeBlockStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "BlockStatement",
-      body: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "BlockStatement"),
+      (node$0.body = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.body = deserializeVecStatement(pos + 16);
   parent = previousParent;
   return node;
@@ -1600,20 +1629,21 @@ function deserializeDeclaration(pos) {
 }
 
 function deserializeVariableDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "VariableDeclaration",
-      kind: deserializeVariableDeclarationKind(pos + 12),
-      declarations: null,
-      declare: deserializeBool(pos + 13),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "VariableDeclaration"),
+      (node$0.kind = deserializeVariableDeclarationKind(pos + 12)),
+      (node$0.declarations = null),
+      (node$0.declare = deserializeBool(pos + 13)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.declarations = deserializeVecVariableDeclarator(pos + 16);
   parent = previousParent;
   return node;
@@ -1637,20 +1667,21 @@ function deserializeVariableDeclarationKind(pos) {
 }
 
 function deserializeVariableDeclarator(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "VariableDeclarator",
-      id: null,
-      init: null,
-      definite: deserializeBool(pos + 12),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "VariableDeclarator"),
+      (node$0.id = null),
+      (node$0.init = null),
+      (node$0.definite = deserializeBool(pos + 12)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     pattern = deserializeBindingPattern(pos + 16);
   {
     let previousParent = parent;
@@ -1669,51 +1700,54 @@ function deserializeVariableDeclarator(pos) {
 }
 
 function deserializeEmptyStatement(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "EmptyStatement",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "EmptyStatement"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeExpressionStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ExpressionStatement",
-      expression: null,
-      directive: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ExpressionStatement"),
+      (node$0.expression = null),
+      (node$0.directive = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.expression = deserializeExpression(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeIfStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "IfStatement",
-      test: null,
-      consequent: null,
-      alternate: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "IfStatement"),
+      (node$0.test = null),
+      (node$0.consequent = null),
+      (node$0.alternate = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.test = deserializeExpression(pos + 16);
   node.consequent = deserializeStatement(pos + 32);
   node.alternate = deserializeOptionStatement(pos + 48);
@@ -1722,19 +1756,20 @@ function deserializeIfStatement(pos) {
 }
 
 function deserializeDoWhileStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "DoWhileStatement",
-      body: null,
-      test: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "DoWhileStatement"),
+      (node$0.body = null),
+      (node$0.test = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.body = deserializeStatement(pos + 16);
   node.test = deserializeExpression(pos + 32);
   parent = previousParent;
@@ -1742,19 +1777,20 @@ function deserializeDoWhileStatement(pos) {
 }
 
 function deserializeWhileStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "WhileStatement",
-      test: null,
-      body: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "WhileStatement"),
+      (node$0.test = null),
+      (node$0.body = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.test = deserializeExpression(pos + 16);
   node.body = deserializeStatement(pos + 32);
   parent = previousParent;
@@ -1762,21 +1798,22 @@ function deserializeWhileStatement(pos) {
 }
 
 function deserializeForStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ForStatement",
-      init: null,
-      test: null,
-      update: null,
-      body: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ForStatement"),
+      (node$0.init = null),
+      (node$0.test = null),
+      (node$0.update = null),
+      (node$0.body = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.init = deserializeOptionForStatementInit(pos + 16);
   node.test = deserializeOptionExpression(pos + 32);
   node.update = deserializeOptionExpression(pos + 48);
@@ -1883,20 +1920,21 @@ function deserializeForStatementInit(pos) {
 }
 
 function deserializeForInStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ForInStatement",
-      left: null,
-      right: null,
-      body: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ForInStatement"),
+      (node$0.left = null),
+      (node$0.right = null),
+      (node$0.body = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.left = deserializeForStatementLeft(pos + 16);
   node.right = deserializeExpression(pos + 32);
   node.body = deserializeStatement(pos + 48);
@@ -1934,21 +1972,22 @@ function deserializeForStatementLeft(pos) {
 }
 
 function deserializeForOfStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ForOfStatement",
-      await: deserializeBool(pos + 64),
-      left: null,
-      right: null,
-      body: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ForOfStatement"),
+      (node$0.await = deserializeBool(pos + 64)),
+      (node$0.left = null),
+      (node$0.right = null),
+      (node$0.body = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.left = deserializeForStatementLeft(pos + 16);
   node.right = deserializeExpression(pos + 32);
   node.body = deserializeStatement(pos + 48);
@@ -1957,73 +1996,77 @@ function deserializeForOfStatement(pos) {
 }
 
 function deserializeContinueStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ContinueStatement",
-      label: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ContinueStatement"),
+      (node$0.label = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.label = deserializeOptionLabelIdentifier(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeBreakStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "BreakStatement",
-      label: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "BreakStatement"),
+      (node$0.label = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.label = deserializeOptionLabelIdentifier(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeReturnStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ReturnStatement",
-      argument: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ReturnStatement"),
+      (node$0.argument = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.argument = deserializeOptionExpression(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeWithStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "WithStatement",
-      object: null,
-      body: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "WithStatement"),
+      (node$0.object = null),
+      (node$0.body = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.object = deserializeExpression(pos + 16);
   node.body = deserializeStatement(pos + 32);
   parent = previousParent;
@@ -2031,19 +2074,20 @@ function deserializeWithStatement(pos) {
 }
 
 function deserializeSwitchStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "SwitchStatement",
-      discriminant: null,
-      cases: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "SwitchStatement"),
+      (node$0.discriminant = null),
+      (node$0.cases = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.discriminant = deserializeExpression(pos + 16);
   node.cases = deserializeVecSwitchCase(pos + 32);
   parent = previousParent;
@@ -2051,19 +2095,20 @@ function deserializeSwitchStatement(pos) {
 }
 
 function deserializeSwitchCase(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "SwitchCase",
-      test: null,
-      consequent: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "SwitchCase"),
+      (node$0.test = null),
+      (node$0.consequent = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.test = deserializeOptionExpression(pos + 16);
   node.consequent = deserializeVecStatement(pos + 32);
   parent = previousParent;
@@ -2071,19 +2116,20 @@ function deserializeSwitchCase(pos) {
 }
 
 function deserializeLabeledStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "LabeledStatement",
-      label: null,
-      body: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "LabeledStatement"),
+      (node$0.label = null),
+      (node$0.body = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.label = deserializeLabelIdentifier(pos + 16);
   node.body = deserializeStatement(pos + 48);
   parent = previousParent;
@@ -2091,38 +2137,40 @@ function deserializeLabeledStatement(pos) {
 }
 
 function deserializeThrowStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ThrowStatement",
-      argument: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ThrowStatement"),
+      (node$0.argument = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.argument = deserializeExpression(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTryStatement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TryStatement",
-      block: null,
-      handler: null,
-      finalizer: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TryStatement"),
+      (node$0.block = null),
+      (node$0.handler = null),
+      (node$0.finalizer = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.block = deserializeBoxBlockStatement(pos + 16);
   node.handler = deserializeOptionBoxCatchClause(pos + 24);
   node.finalizer = deserializeOptionBoxBlockStatement(pos + 32);
@@ -2131,19 +2179,20 @@ function deserializeTryStatement(pos) {
 }
 
 function deserializeCatchClause(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "CatchClause",
-      param: null,
-      body: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "CatchClause"),
+      (node$0.param = null),
+      (node$0.body = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.param = deserializeOptionCatchParameter(pos + 16);
   node.body = deserializeBoxBlockStatement(pos + 56);
   parent = previousParent;
@@ -2167,15 +2216,16 @@ function deserializeCatchParameter(pos) {
 }
 
 function deserializeDebuggerStatement(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "DebuggerStatement",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "DebuggerStatement"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeBindingPattern(pos) {
@@ -2194,22 +2244,23 @@ function deserializeBindingPattern(pos) {
 }
 
 function deserializeAssignmentPattern(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "AssignmentPattern",
-      decorators: [],
-      left: null,
-      right: null,
-      optional: false,
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "AssignmentPattern"),
+      (node$0.decorators = []),
+      (node$0.left = null),
+      (node$0.right = null),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.left = deserializeBindingPattern(pos + 16);
   node.right = deserializeExpression(pos + 32);
   parent = previousParent;
@@ -2217,21 +2268,22 @@ function deserializeAssignmentPattern(pos) {
 }
 
 function deserializeObjectPattern(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ObjectPattern",
-      decorators: [],
-      properties: null,
-      optional: false,
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ObjectPattern"),
+      (node$0.decorators = []),
+      (node$0.properties = null),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     properties = deserializeVecBindingProperty(pos + 16),
     rest = deserializeOptionBoxBindingRestElement(pos + 40);
   rest !== null && properties.push(rest);
@@ -2241,24 +2293,25 @@ function deserializeObjectPattern(pos) {
 }
 
 function deserializeBindingProperty(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Property",
-      kind: "init",
-      key: null,
-      value: null,
-      method: false,
-      shorthand: deserializeBool(pos + 12),
-      computed: deserializeBool(pos + 13),
-      optional: false,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Property"),
+      (node$0.kind = "init"),
+      (node$0.key = null),
+      (node$0.value = null),
+      (node$0.method = false),
+      (node$0.shorthand = deserializeBool(pos + 12)),
+      (node$0.computed = deserializeBool(pos + 13)),
+      (node$0.optional = false),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.key = deserializePropertyKey(pos + 16);
   node.value = deserializeBindingPattern(pos + 32);
   parent = previousParent;
@@ -2266,21 +2319,22 @@ function deserializeBindingProperty(pos) {
 }
 
 function deserializeArrayPattern(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ArrayPattern",
-      decorators: [],
-      elements: null,
-      optional: false,
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ArrayPattern"),
+      (node$0.decorators = []),
+      (node$0.elements = null),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     elements = deserializeVecOptionBindingPattern(pos + 16),
     rest = deserializeOptionBoxBindingRestElement(pos + 40);
   rest !== null && elements.push(rest);
@@ -2290,48 +2344,50 @@ function deserializeArrayPattern(pos) {
 }
 
 function deserializeBindingRestElement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "RestElement",
-      decorators: [],
-      argument: null,
-      optional: false,
-      typeAnnotation: null,
-      value: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "RestElement"),
+      (node$0.decorators = []),
+      (node$0.argument = null),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.value = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.argument = deserializeBindingPattern(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeFunction(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: deserializeFunctionType(pos + 88),
-      id: null,
-      generator: deserializeBool(pos + 89),
-      async: deserializeBool(pos + 90),
-      declare: deserializeBool(pos + 91),
-      typeParameters: null,
-      params: null,
-      returnType: null,
-      body: null,
-      expression: false,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = deserializeFunctionType(pos + 88)),
+      (node$0.id = null),
+      (node$0.generator = deserializeBool(pos + 89)),
+      (node$0.async = deserializeBool(pos + 90)),
+      (node$0.declare = deserializeBool(pos + 91)),
+      (node$0.typeParameters = null),
+      (node$0.params = null),
+      (node$0.returnType = null),
+      (node$0.body = null),
+      (node$0.expression = false),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     params = deserializeBoxFormalParameters(pos + 64);
   {
     let thisParam = deserializeOptionBoxTSThisParameter(pos + 56);
@@ -2362,26 +2418,27 @@ function deserializeFunctionType(pos) {
 }
 
 function deserializeFormalParameters(pos) {
-  let params = deserializeVecFormalParameter(pos + 16),
+  let node$0,
+    params = deserializeVecFormalParameter(pos + 16),
     restFieldPos32 = (pos >> 2) + 10;
   if (int32[restFieldPos32] !== 0 && int32[restFieldPos32 + 1] !== 0) {
     pos = int32[restFieldPos32];
     let start,
       end,
       previousParent = parent,
-      rest = (parent = {
-        __proto__: NodeProto,
-        type: "RestElement",
-        decorators: [],
-        argument: null,
-        optional: false,
-        typeAnnotation: null,
-        value: null,
-        start: (start = deserializeI32(pos + 40)),
-        end: (end = deserializeI32(pos + 44)),
-        range: [start, end],
-        parent: previousParent,
-      });
+      rest = (parent =
+        ((node$0 = Object.create(NodeProto)),
+        (node$0.type = "RestElement"),
+        (node$0.decorators = []),
+        (node$0.argument = null),
+        (node$0.optional = false),
+        (node$0.typeAnnotation = null),
+        (node$0.value = null),
+        (node$0.start = start = deserializeI32(pos + 40)),
+        (node$0.end = end = deserializeI32(pos + 44)),
+        (node$0.range = [start, end]),
+        (node$0.parent = previousParent),
+        node$0));
     rest.argument = deserializeBindingPattern(pos + 56);
     rest.decorators = deserializeVecDecorator(pos + 16);
     rest.decorators.length !== 0 && (start = rest.decorators[0].start);
@@ -2397,7 +2454,8 @@ function deserializeFormalParameters(pos) {
 }
 
 function deserializeFormalParameter(pos) {
-  let param,
+  let node$0,
+    param,
     previousParent = parent,
     initializerFieldPos32 = (pos >> 2) + 16,
     hasInitializer = int32[initializerFieldPos32] !== 0 && int32[initializerFieldPos32 + 1] !== 0;
@@ -2409,19 +2467,19 @@ function deserializeFormalParameter(pos) {
       let optional = deserializeBool(pos + 12);
       if (hasInitializer) {
         let start, end;
-        param = parent = {
-          __proto__: NodeProto,
-          type: "AssignmentPattern",
-          decorators: null,
-          left: null,
-          right: null,
-          optional,
-          typeAnnotation: null,
-          start: (start = deserializeI32(pos)),
-          end: (end = deserializeI32(pos + 4)),
-          range: [start, end],
-          parent: previousParent,
-        };
+        param = parent =
+          ((node$0 = Object.create(NodeProto)),
+          (node$0.type = "AssignmentPattern"),
+          (node$0.decorators = null),
+          (node$0.left = null),
+          (node$0.right = null),
+          (node$0.optional = optional),
+          (node$0.typeAnnotation = null),
+          (node$0.start = start = deserializeI32(pos)),
+          (node$0.end = end = deserializeI32(pos + 4)),
+          (node$0.range = [start, end]),
+          (node$0.parent = previousParent),
+          node$0);
         param.decorators = deserializeVecDecorator(pos + 16);
         param.left = deserializeBindingPattern(pos + 40);
         param.left.decorators = [];
@@ -2454,39 +2512,39 @@ function deserializeFormalParameter(pos) {
       }
     } else {
       let start, end;
-      param = parent = {
-        __proto__: NodeProto,
-        type: "TSParameterProperty",
-        accessibility,
-        decorators: null,
-        override,
-        parameter: null,
-        readonly,
-        static: false,
-        start: (start = deserializeI32(pos)),
-        end: (end = deserializeI32(pos + 4)),
-        range: [start, end],
-        parent: previousParent,
-      };
+      param = parent =
+        ((node$0 = Object.create(NodeProto)),
+        (node$0.type = "TSParameterProperty"),
+        (node$0.accessibility = accessibility),
+        (node$0.decorators = null),
+        (node$0.override = override),
+        (node$0.parameter = null),
+        (node$0.readonly = readonly),
+        (node$0.static = false),
+        (node$0.start = start = deserializeI32(pos)),
+        (node$0.end = end = deserializeI32(pos + 4)),
+        (node$0.range = [start, end]),
+        (node$0.parent = previousParent),
+        node$0);
       param.decorators = deserializeVecDecorator(pos + 16);
       if (hasInitializer) {
         let pattern = deserializeBindingPattern(pos + 40),
           initializer = deserializeOptionBoxExpression(pos + 64),
           assignStart,
           assignEnd,
-          assignParam = (parent = {
-            __proto__: NodeProto,
-            type: "AssignmentPattern",
-            decorators: [],
-            left: null,
-            right: null,
-            optional: false,
-            typeAnnotation: null,
-            start: (assignStart = pattern.start),
-            end: (assignEnd = initializer.end),
-            range: [assignStart, assignEnd],
-            parent: param,
-          });
+          assignParam = (parent =
+            ((node$0 = Object.create(NodeProto)),
+            (node$0.type = "AssignmentPattern"),
+            (node$0.decorators = []),
+            (node$0.left = null),
+            (node$0.right = null),
+            (node$0.optional = false),
+            (node$0.typeAnnotation = null),
+            (node$0.start = assignStart = pattern.start),
+            (node$0.end = assignEnd = initializer.end),
+            (node$0.range = [assignStart, assignEnd]),
+            (node$0.parent = param),
+            node$0));
         assignParam.left = pattern;
         pattern.parent = assignParam;
         pattern.decorators = [];
@@ -2527,18 +2585,19 @@ function deserializeFormalParameter(pos) {
 }
 
 function deserializeFunctionBody(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "BlockStatement",
-      body: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "BlockStatement"),
+      (node$0.body = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     body = deserializeVecDirective(pos + 16);
   body.push(...deserializeVecStatement(pos + 40));
   node.body = body;
@@ -2644,25 +2703,26 @@ function deserializeArrowFunctionBody(pos) {
 }
 
 function deserializeArrowFunctionExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ArrowFunctionExpression",
-      expression: uint8[pos + 40] !== 64,
-      async: deserializeBool(pos + 56),
-      typeParameters: null,
-      params: null,
-      returnType: null,
-      body: null,
-      id: null,
-      generator: false,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ArrowFunctionExpression"),
+      (node$0.expression = uint8[pos + 40] !== 64),
+      (node$0.async = deserializeBool(pos + 56)),
+      (node$0.typeParameters = null),
+      (node$0.params = null),
+      (node$0.returnType = null),
+      (node$0.body = null),
+      (node$0.id = null),
+      (node$0.generator = false),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 16);
   node.params = deserializeBoxFormalParameters(pos + 24);
   node.returnType = deserializeOptionBoxTSTypeAnnotation(pos + 32);
@@ -2672,45 +2732,47 @@ function deserializeArrowFunctionExpression(pos) {
 }
 
 function deserializeYieldExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "YieldExpression",
-      delegate: deserializeBool(pos + 12),
-      argument: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "YieldExpression"),
+      (node$0.delegate = deserializeBool(pos + 12)),
+      (node$0.argument = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.argument = deserializeOptionExpression(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeClass(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: deserializeClassType(pos + 136),
-      decorators: null,
-      id: null,
-      typeParameters: null,
-      superClass: null,
-      superTypeArguments: null,
-      implements: null,
-      body: null,
-      abstract: deserializeBool(pos + 137),
-      declare: deserializeBool(pos + 138),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = deserializeClassType(pos + 136)),
+      (node$0.decorators = null),
+      (node$0.id = null),
+      (node$0.typeParameters = null),
+      (node$0.superClass = null),
+      (node$0.superTypeArguments = null),
+      (node$0.implements = null),
+      (node$0.body = null),
+      (node$0.abstract = deserializeBool(pos + 137)),
+      (node$0.declare = deserializeBool(pos + 138)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     superClass = deserializeOptionExpression(pos + 80);
   node.decorators = deserializeVecDecorator(pos + 16);
   node.id = deserializeOptionBindingIdentifier(pos + 40);
@@ -2738,18 +2800,19 @@ function deserializeClassType(pos) {
 }
 
 function deserializeClassBody(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ClassBody",
-      body: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ClassBody"),
+      (node$0.body = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.body = deserializeVecClassElement(pos + 16);
   parent = previousParent;
   return node;
@@ -2773,26 +2836,27 @@ function deserializeClassElement(pos) {
 }
 
 function deserializeMethodDefinition(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: deserializeMethodDefinitionType(pos + 12),
-      decorators: null,
-      key: null,
-      value: null,
-      kind: deserializeMethodDefinitionKind(pos + 13),
-      computed: deserializeBool(pos + 14),
-      static: deserializeBool(pos + 15),
-      override: deserializeBool(pos + 64),
-      optional: deserializeBool(pos + 65),
-      accessibility: deserializeOptionTSAccessibility(pos + 66),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = deserializeMethodDefinitionType(pos + 12)),
+      (node$0.decorators = null),
+      (node$0.key = null),
+      (node$0.value = null),
+      (node$0.kind = deserializeMethodDefinitionKind(pos + 13)),
+      (node$0.computed = deserializeBool(pos + 14)),
+      (node$0.static = deserializeBool(pos + 15)),
+      (node$0.override = deserializeBool(pos + 64)),
+      (node$0.optional = deserializeBool(pos + 65)),
+      (node$0.accessibility = deserializeOptionTSAccessibility(pos + 66)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.decorators = deserializeVecDecorator(pos + 16);
   node.key = deserializePropertyKey(pos + 40);
   node.value = deserializeBoxFunction(pos + 56);
@@ -2812,29 +2876,30 @@ function deserializeMethodDefinitionType(pos) {
 }
 
 function deserializePropertyDefinition(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: deserializePropertyDefinitionType(pos + 12),
-      decorators: null,
-      key: null,
-      typeAnnotation: null,
-      value: null,
-      computed: deserializeBool(pos + 13),
-      static: deserializeBool(pos + 14),
-      declare: deserializeBool(pos + 15),
-      override: deserializeBool(pos + 80),
-      optional: deserializeBool(pos + 81),
-      definite: deserializeBool(pos + 82),
-      readonly: deserializeBool(pos + 83),
-      accessibility: deserializeOptionTSAccessibility(pos + 84),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = deserializePropertyDefinitionType(pos + 12)),
+      (node$0.decorators = null),
+      (node$0.key = null),
+      (node$0.typeAnnotation = null),
+      (node$0.value = null),
+      (node$0.computed = deserializeBool(pos + 13)),
+      (node$0.static = deserializeBool(pos + 14)),
+      (node$0.declare = deserializeBool(pos + 15)),
+      (node$0.override = deserializeBool(pos + 80)),
+      (node$0.optional = deserializeBool(pos + 81)),
+      (node$0.definite = deserializeBool(pos + 82)),
+      (node$0.readonly = deserializeBool(pos + 83)),
+      (node$0.accessibility = deserializeOptionTSAccessibility(pos + 84)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.decorators = deserializeVecDecorator(pos + 16);
   node.key = deserializePropertyKey(pos + 40);
   node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 56);
@@ -2870,31 +2935,33 @@ function deserializeMethodDefinitionKind(pos) {
 }
 
 function deserializePrivateIdentifier(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "PrivateIdentifier",
-    name: deserializeStr(pos + 16),
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "PrivateIdentifier"),
+    (node$0.name = deserializeStr(pos + 16)),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeStaticBlock(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "StaticBlock",
-      body: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "StaticBlock"),
+      (node$0.body = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.body = deserializeVecStatement(pos + 16);
   parent = previousParent;
   return node;
@@ -2912,29 +2979,30 @@ function deserializeAccessorPropertyType(pos) {
 }
 
 function deserializeAccessorProperty(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: deserializeAccessorPropertyType(pos + 12),
-      decorators: null,
-      key: null,
-      typeAnnotation: null,
-      value: null,
-      computed: deserializeBool(pos + 13),
-      static: deserializeBool(pos + 14),
-      override: deserializeBool(pos + 15),
-      definite: deserializeBool(pos + 80),
-      accessibility: deserializeOptionTSAccessibility(pos + 81),
-      declare: false,
-      optional: false,
-      readonly: false,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = deserializeAccessorPropertyType(pos + 12)),
+      (node$0.decorators = null),
+      (node$0.key = null),
+      (node$0.typeAnnotation = null),
+      (node$0.value = null),
+      (node$0.computed = deserializeBool(pos + 13)),
+      (node$0.static = deserializeBool(pos + 14)),
+      (node$0.override = deserializeBool(pos + 15)),
+      (node$0.definite = deserializeBool(pos + 80)),
+      (node$0.accessibility = deserializeOptionTSAccessibility(pos + 81)),
+      (node$0.declare = false),
+      (node$0.optional = false),
+      (node$0.readonly = false),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.decorators = deserializeVecDecorator(pos + 16);
   node.key = deserializePropertyKey(pos + 40);
   node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 56);
@@ -2944,20 +3012,21 @@ function deserializeAccessorProperty(pos) {
 }
 
 function deserializeImportExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ImportExpression",
-      source: null,
-      options: null,
-      phase: deserializeOptionImportPhase(pos + 12),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ImportExpression"),
+      (node$0.source = null),
+      (node$0.options = null),
+      (node$0.phase = deserializeOptionImportPhase(pos + 12)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.source = deserializeExpression(pos + 16);
   node.options = deserializeOptionExpression(pos + 32);
   parent = previousParent;
@@ -2965,22 +3034,23 @@ function deserializeImportExpression(pos) {
 }
 
 function deserializeImportDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ImportDeclaration",
-      specifiers: null,
-      source: null,
-      phase: deserializeOptionImportPhase(pos + 12),
-      attributes: null,
-      importKind: deserializeImportOrExportKind(pos + 13),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ImportDeclaration"),
+      (node$0.specifiers = null),
+      (node$0.source = null),
+      (node$0.phase = deserializeOptionImportPhase(pos + 12)),
+      (node$0.attributes = null),
+      (node$0.importKind = deserializeImportOrExportKind(pos + 13)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     specifiers = deserializeOptionVecImportDeclarationSpecifier(pos + 16);
   specifiers === null && (specifiers = []);
   let withClause = deserializeOptionBoxWithClause(pos + 88);
@@ -3016,20 +3086,21 @@ function deserializeImportDeclarationSpecifier(pos) {
 }
 
 function deserializeImportSpecifier(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ImportSpecifier",
-      imported: null,
-      local: null,
-      importKind: deserializeImportOrExportKind(pos + 12),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ImportSpecifier"),
+      (node$0.imported = null),
+      (node$0.local = null),
+      (node$0.importKind = deserializeImportOrExportKind(pos + 12)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.imported = deserializeModuleExportName(pos + 16);
   node.local = deserializeBindingIdentifier(pos + 72);
   parent = previousParent;
@@ -3037,36 +3108,38 @@ function deserializeImportSpecifier(pos) {
 }
 
 function deserializeImportDefaultSpecifier(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ImportDefaultSpecifier",
-      local: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ImportDefaultSpecifier"),
+      (node$0.local = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.local = deserializeBindingIdentifier(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeImportNamespaceSpecifier(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ImportNamespaceSpecifier",
-      local: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ImportNamespaceSpecifier"),
+      (node$0.local = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.local = deserializeBindingIdentifier(pos + 16);
   parent = previousParent;
   return node;
@@ -3077,19 +3150,20 @@ function deserializeWithClause(pos) {
 }
 
 function deserializeImportAttribute(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ImportAttribute",
-      key: null,
-      value: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ImportAttribute"),
+      (node$0.key = null),
+      (node$0.value = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.key = deserializeImportAttributeKey(pos + 16);
   node.value = deserializeStringLiteral(pos + 72);
   parent = previousParent;
@@ -3108,22 +3182,23 @@ function deserializeImportAttributeKey(pos) {
 }
 
 function deserializeExportDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ExportNamedDeclaration",
-      declaration: null,
-      specifiers: [],
-      source: null,
-      exportKind: null,
-      attributes: [],
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ExportNamedDeclaration"),
+      (node$0.declaration = null),
+      (node$0.specifiers = []),
+      (node$0.source = null),
+      (node$0.exportKind = null),
+      (node$0.attributes = []),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     declaration = deserializeDeclaration(pos + 16);
   node.declaration = declaration;
   node.exportKind =
@@ -3137,44 +3212,46 @@ function deserializeExportDeclaration(pos) {
 }
 
 function deserializeExportNamedDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ExportNamedDeclaration",
-      declaration: null,
-      specifiers: null,
-      source: null,
-      exportKind: deserializeImportOrExportKind(pos + 12),
-      attributes: [],
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ExportNamedDeclaration"),
+      (node$0.declaration = null),
+      (node$0.specifiers = null),
+      (node$0.source = null),
+      (node$0.exportKind = deserializeImportOrExportKind(pos + 12)),
+      (node$0.attributes = []),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.specifiers = deserializeVecExportSpecifier(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeExportFromDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ExportNamedDeclaration",
-      declaration: null,
-      specifiers: null,
-      source: null,
-      exportKind: deserializeImportOrExportKind(pos + 12),
-      attributes: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ExportNamedDeclaration"),
+      (node$0.declaration = null),
+      (node$0.specifiers = null),
+      (node$0.source = null),
+      (node$0.exportKind = deserializeImportOrExportKind(pos + 12)),
+      (node$0.attributes = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     withClause = deserializeOptionBoxWithClause(pos + 88);
   node.specifiers = deserializeVecExportSpecifier(pos + 16);
   node.source = deserializeStringLiteral(pos + 40);
@@ -3184,40 +3261,42 @@ function deserializeExportFromDeclaration(pos) {
 }
 
 function deserializeExportDefaultDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ExportDefaultDeclaration",
-      declaration: null,
-      exportKind: "value",
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ExportDefaultDeclaration"),
+      (node$0.declaration = null),
+      (node$0.exportKind = "value"),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.declaration = deserializeExportDefaultDeclarationKind(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeExportAllDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ExportAllDeclaration",
-      exported: null,
-      source: null,
-      attributes: null,
-      exportKind: deserializeImportOrExportKind(pos + 12),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ExportAllDeclaration"),
+      (node$0.exported = null),
+      (node$0.source = null),
+      (node$0.attributes = null),
+      (node$0.exportKind = deserializeImportOrExportKind(pos + 12)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     withClause = deserializeOptionBoxWithClause(pos + 120);
   node.exported = deserializeOptionModuleExportName(pos + 16);
   node.source = deserializeStringLiteral(pos + 72);
@@ -3227,20 +3306,21 @@ function deserializeExportAllDeclaration(pos) {
 }
 
 function deserializeExportSpecifier(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "ExportSpecifier",
-      local: null,
-      exported: null,
-      exportKind: deserializeImportOrExportKind(pos + 12),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "ExportSpecifier"),
+      (node$0.local = null),
+      (node$0.exported = null),
+      (node$0.exportKind = deserializeImportOrExportKind(pos + 12)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.local = deserializeModuleExportName(pos + 16);
   node.exported = deserializeModuleExportName(pos + 72);
   parent = previousParent;
@@ -3362,19 +3442,20 @@ function deserializeModuleExportName(pos) {
 }
 
 function deserializeV8IntrinsicExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "V8IntrinsicExpression",
-      name: null,
-      arguments: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "V8IntrinsicExpression"),
+      (node$0.name = null),
+      (node$0.arguments = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.name = deserializeIdentifierName(pos + 16);
   node.arguments = deserializeVecArgument(pos + 48);
   parent = previousParent;
@@ -3382,114 +3463,124 @@ function deserializeV8IntrinsicExpression(pos) {
 }
 
 function deserializeBooleanLiteral(pos) {
-  let value = deserializeBool(pos + 12),
+  let node$0,
+    value = deserializeBool(pos + 12),
     start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Literal",
-      value,
-      raw: null,
-      start,
-      end,
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Literal"),
+      (node$0.value = value),
+      (node$0.raw = null),
+      (node$0.start = start),
+      (node$0.end = end),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.raw = start === 0 && end === 0 ? null : value + "";
   parent = previousParent;
   return node;
 }
 
 function deserializeNullLiteral(pos) {
-  let start = deserializeI32(pos),
+  let node$0,
+    start = deserializeI32(pos),
     end = deserializeI32(pos + 4);
-  return {
-    __proto__: NodeProto,
-    type: "Literal",
-    value: null,
-    raw: start === 0 && end === 0 ? null : "null",
-    start,
-    end,
-    range: [start, end],
-    parent,
-  };
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "Literal"),
+    (node$0.value = null),
+    (node$0.raw = start === 0 && end === 0 ? null : "null"),
+    (node$0.start = start),
+    (node$0.end = end),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeNumericLiteral(pos) {
-  let start = deserializeI32(pos),
+  let node$0,
+    start = deserializeI32(pos),
     end = deserializeI32(pos + 4);
-  return {
-    __proto__: NodeProto,
-    type: "Literal",
-    value: deserializeF64(pos + 32),
-    raw:
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "Literal"),
+    (node$0.value = deserializeF64(pos + 32)),
+    (node$0.raw =
       int32[(pos >> 2) + 4] === 0 && int32[(pos >> 2) + 5] === 0
         ? null
-        : sourceText.slice(start, end),
-    start,
-    end,
-    range: [start, end],
-    parent,
-  };
+        : sourceText.slice(start, end)),
+    (node$0.start = start),
+    (node$0.end = end),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeStringLiteral(pos) {
-  let start = deserializeI32(pos),
+  let node$0,
+    start = deserializeI32(pos),
     end = deserializeI32(pos + 4);
-  return {
-    __proto__: NodeProto,
-    type: "Literal",
-    value: deserializeJSStr(pos + 16),
-    raw:
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "Literal"),
+    (node$0.value = deserializeJSStr(pos + 16)),
+    (node$0.raw =
       int32[(pos >> 2) + 8] === 0 && int32[(pos >> 2) + 9] === 0
         ? null
-        : sourceText.slice(start, end),
-    start,
-    end,
-    range: [start, end],
-    parent,
-  };
+        : sourceText.slice(start, end)),
+    (node$0.start = start),
+    (node$0.end = end),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeBigIntLiteral(pos) {
-  let start = deserializeI32(pos),
+  let node$0,
+    start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
     bigint = deserializeStr(pos + 16);
-  return {
-    __proto__: NodeProto,
-    type: "Literal",
-    value: BigInt(bigint),
-    raw:
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "Literal"),
+    (node$0.value = BigInt(bigint)),
+    (node$0.raw =
       int32[(pos >> 2) + 8] === 0 && int32[(pos >> 2) + 9] === 0
         ? null
-        : sourceText.slice(start, end),
-    bigint,
-    start,
-    end,
-    range: [start, end],
-    parent,
-  };
+        : sourceText.slice(start, end)),
+    (node$0.bigint = bigint),
+    (node$0.start = start),
+    (node$0.end = end),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeRegExpLiteral(pos) {
-  let start = deserializeI32(pos),
+  let node$0,
+    start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Literal",
-      value: null,
-      raw:
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Literal"),
+      (node$0.value = null),
+      (node$0.raw =
         int32[(pos >> 2) + 12] === 0 && int32[(pos >> 2) + 13] === 0
           ? null
-          : sourceText.slice(start, end),
-      regex: null,
-      start,
-      end,
-      range: [start, end],
-      parent,
-    }),
+          : sourceText.slice(start, end)),
+      (node$0.regex = null),
+      (node$0.start = start),
+      (node$0.end = end),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     regex = deserializeRegExp(pos + 16),
     value = null;
   try {
@@ -3524,20 +3615,21 @@ function deserializeRegExpFlags(pos) {
 }
 
 function deserializeJSXElement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "JSXElement",
-      openingElement: null,
-      children: null,
-      closingElement: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "JSXElement"),
+      (node$0.openingElement = null),
+      (node$0.children = null),
+      (node$0.closingElement = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     closingElement = deserializeOptionBoxJSXClosingElement(pos + 48),
     openingElement = deserializeBoxJSXOpeningElement(pos + 16);
   closingElement === null && (openingElement.selfClosing = true);
@@ -3549,21 +3641,22 @@ function deserializeJSXElement(pos) {
 }
 
 function deserializeJSXOpeningElement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "JSXOpeningElement",
-      name: null,
-      typeArguments: null,
-      attributes: null,
-      selfClosing: false,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "JSXOpeningElement"),
+      (node$0.name = null),
+      (node$0.typeArguments = null),
+      (node$0.attributes = null),
+      (node$0.selfClosing = false),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.name = deserializeJSXElementName(pos + 16);
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 32);
   node.attributes = deserializeVecJSXAttributeItem(pos + 40);
@@ -3572,38 +3665,40 @@ function deserializeJSXOpeningElement(pos) {
 }
 
 function deserializeJSXClosingElement(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "JSXClosingElement",
-      name: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "JSXClosingElement"),
+      (node$0.name = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.name = deserializeJSXElementName(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeJSXFragment(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "JSXFragment",
-      openingFragment: null,
-      children: null,
-      closingFragment: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "JSXFragment"),
+      (node$0.openingFragment = null),
+      (node$0.children = null),
+      (node$0.closingFragment = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.openingFragment = deserializeJSXOpeningFragment(pos + 16);
   node.children = deserializeVecJSXChild(pos + 32);
   node.closingFragment = deserializeJSXClosingFragment(pos + 56);
@@ -3612,78 +3707,84 @@ function deserializeJSXFragment(pos) {
 }
 
 function deserializeJSXOpeningFragment(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "JSXOpeningFragment",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "JSXOpeningFragment"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeJSXClosingFragment(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "JSXClosingFragment",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "JSXClosingFragment"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeJSXElementName(pos) {
+  let node$0;
   switch (uint8[pos]) {
     case 0:
       return deserializeBoxJSXIdentifier(pos + 8);
     case 1:
       let ident = deserializeBoxIdentifierReference(pos + 8);
-      return {
-        __proto__: NodeProto,
-        type: "JSXIdentifier",
-        name: ident.name,
-        start: ident.start,
-        end: ident.end,
-        range: ident.range,
-        parent,
-      };
+      return (
+        (node$0 = Object.create(NodeProto)),
+        (node$0.type = "JSXIdentifier"),
+        (node$0.name = ident.name),
+        (node$0.start = ident.start),
+        (node$0.end = ident.end),
+        (node$0.range = ident.range),
+        (node$0.parent = parent),
+        node$0
+      );
     case 2:
       return deserializeBoxJSXNamespacedName(pos + 8);
     case 3:
       return deserializeBoxJSXMemberExpression(pos + 8);
     case 4:
       let thisExpr = deserializeBoxThisExpression(pos + 8);
-      return {
-        __proto__: NodeProto,
-        type: "JSXIdentifier",
-        name: "this",
-        start: thisExpr.start,
-        end: thisExpr.end,
-        range: thisExpr.range,
-        parent,
-      };
+      return (
+        (node$0 = Object.create(NodeProto)),
+        (node$0.type = "JSXIdentifier"),
+        (node$0.name = "this"),
+        (node$0.start = thisExpr.start),
+        (node$0.end = thisExpr.end),
+        (node$0.range = thisExpr.range),
+        (node$0.parent = parent),
+        node$0
+      );
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for JSXElementName`);
   }
 }
 
 function deserializeJSXNamespacedName(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "JSXNamespacedName",
-      namespace: null,
-      name: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "JSXNamespacedName"),
+      (node$0.namespace = null),
+      (node$0.name = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.namespace = deserializeJSXIdentifier(pos + 16);
   node.name = deserializeJSXIdentifier(pos + 48);
   parent = previousParent;
@@ -3691,19 +3792,20 @@ function deserializeJSXNamespacedName(pos) {
 }
 
 function deserializeJSXMemberExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "JSXMemberExpression",
-      object: null,
-      property: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "JSXMemberExpression"),
+      (node$0.object = null),
+      (node$0.property = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.object = deserializeJSXMemberExpressionObject(pos + 16);
   node.property = deserializeJSXIdentifier(pos + 32);
   parent = previousParent;
@@ -3711,49 +3813,53 @@ function deserializeJSXMemberExpression(pos) {
 }
 
 function deserializeJSXMemberExpressionObject(pos) {
+  let node$0;
   switch (uint8[pos]) {
     case 0:
       let ident = deserializeBoxIdentifierReference(pos + 8);
-      return {
-        __proto__: NodeProto,
-        type: "JSXIdentifier",
-        name: ident.name,
-        start: ident.start,
-        end: ident.end,
-        range: ident.range,
-        parent,
-      };
+      return (
+        (node$0 = Object.create(NodeProto)),
+        (node$0.type = "JSXIdentifier"),
+        (node$0.name = ident.name),
+        (node$0.start = ident.start),
+        (node$0.end = ident.end),
+        (node$0.range = ident.range),
+        (node$0.parent = parent),
+        node$0
+      );
     case 1:
       return deserializeBoxJSXMemberExpression(pos + 8);
     case 2:
       let thisExpr = deserializeBoxThisExpression(pos + 8);
-      return {
-        __proto__: NodeProto,
-        type: "JSXIdentifier",
-        name: "this",
-        start: thisExpr.start,
-        end: thisExpr.end,
-        range: thisExpr.range,
-        parent,
-      };
+      return (
+        (node$0 = Object.create(NodeProto)),
+        (node$0.type = "JSXIdentifier"),
+        (node$0.name = "this"),
+        (node$0.start = thisExpr.start),
+        (node$0.end = thisExpr.end),
+        (node$0.range = thisExpr.range),
+        (node$0.parent = parent),
+        node$0
+      );
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for JSXMemberExpressionObject`);
   }
 }
 
 function deserializeJSXExpressionContainer(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "JSXExpressionContainer",
-      expression: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "JSXExpressionContainer"),
+      (node$0.expression = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.expression = deserializeJSXExpression(pos + 16);
   parent = previousParent;
   return node;
@@ -3857,15 +3963,16 @@ function deserializeJSXExpression(pos) {
 }
 
 function deserializeJSXEmptyExpression(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "JSXEmptyExpression",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "JSXEmptyExpression"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeJSXAttributeItem(pos) {
@@ -3880,19 +3987,20 @@ function deserializeJSXAttributeItem(pos) {
 }
 
 function deserializeJSXAttribute(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "JSXAttribute",
-      name: null,
-      value: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "JSXAttribute"),
+      (node$0.name = null),
+      (node$0.value = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.name = deserializeJSXAttributeName(pos + 16);
   node.value = deserializeOptionJSXAttributeValue(pos + 32);
   parent = previousParent;
@@ -3900,18 +4008,19 @@ function deserializeJSXAttribute(pos) {
 }
 
 function deserializeJSXSpreadAttribute(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "JSXSpreadAttribute",
-      argument: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "JSXSpreadAttribute"),
+      (node$0.argument = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.argument = deserializeExpression(pos + 16);
   parent = previousParent;
   return node;
@@ -3944,16 +4053,17 @@ function deserializeJSXAttributeValue(pos) {
 }
 
 function deserializeJSXIdentifier(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "JSXIdentifier",
-    name: deserializeStr(pos + 16),
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "JSXIdentifier"),
+    (node$0.name = deserializeStr(pos + 16)),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeJSXChild(pos) {
@@ -3974,78 +4084,83 @@ function deserializeJSXChild(pos) {
 }
 
 function deserializeJSXSpreadChild(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "JSXSpreadChild",
-      expression: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "JSXSpreadChild"),
+      (node$0.expression = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.expression = deserializeExpression(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeJSXText(pos) {
-  let start = deserializeI32(pos),
+  let node$0,
+    start = deserializeI32(pos),
     end = deserializeI32(pos + 4);
-  return {
-    __proto__: NodeProto,
-    type: "JSXText",
-    value: deserializeStr(pos + 16),
-    raw:
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "JSXText"),
+    (node$0.value = deserializeStr(pos + 16)),
+    (node$0.raw =
       int32[(pos >> 2) + 8] === 0 && int32[(pos >> 2) + 9] === 0
         ? null
-        : sourceText.slice(start, end),
-    start,
-    end,
-    range: [start, end],
-    parent,
-  };
+        : sourceText.slice(start, end)),
+    (node$0.start = start),
+    (node$0.end = end),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSThisParameter(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Identifier",
-      decorators: [],
-      name: "this",
-      optional: false,
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Identifier"),
+      (node$0.decorators = []),
+      (node$0.name = "this"),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 24);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSEnumDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSEnumDeclaration",
-      id: null,
-      body: null,
-      const: deserializeBool(pos + 12),
-      declare: deserializeBool(pos + 13),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSEnumDeclaration"),
+      (node$0.id = null),
+      (node$0.body = null),
+      (node$0.const = deserializeBool(pos + 12)),
+      (node$0.declare = deserializeBool(pos + 13)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.id = deserializeBindingIdentifier(pos + 16);
   node.body = deserializeTSEnumBody(pos + 48);
   parent = previousParent;
@@ -4053,38 +4168,40 @@ function deserializeTSEnumDeclaration(pos) {
 }
 
 function deserializeTSEnumBody(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSEnumBody",
-      members: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSEnumBody"),
+      (node$0.members = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.members = deserializeVecTSEnumMember(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSEnumMember(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSEnumMember",
-      id: null,
-      initializer: null,
-      computed: deserializeU8(pos + 16) > 1,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSEnumMember"),
+      (node$0.id = null),
+      (node$0.initializer = null),
+      (node$0.computed = deserializeU8(pos + 16) > 1),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.id = deserializeTSEnumMemberName(pos + 16);
   node.initializer = deserializeOptionExpression(pos + 32);
   parent = previousParent;
@@ -4107,36 +4224,38 @@ function deserializeTSEnumMemberName(pos) {
 }
 
 function deserializeTSTypeAnnotation(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSTypeAnnotation",
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSTypeAnnotation"),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.typeAnnotation = deserializeTSType(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSLiteralType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSLiteralType",
-      literal: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSLiteralType"),
+      (node$0.literal = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.literal = deserializeTSLiteral(pos + 16);
   parent = previousParent;
   return node;
@@ -4243,21 +4362,22 @@ function deserializeTSType(pos) {
 }
 
 function deserializeTSConditionalType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSConditionalType",
-      checkType: null,
-      extendsType: null,
-      trueType: null,
-      falseType: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSConditionalType"),
+      (node$0.checkType = null),
+      (node$0.extendsType = null),
+      (node$0.trueType = null),
+      (node$0.falseType = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.checkType = deserializeTSType(pos + 16);
   node.extendsType = deserializeTSType(pos + 32);
   node.trueType = deserializeTSType(pos + 48);
@@ -4267,36 +4387,38 @@ function deserializeTSConditionalType(pos) {
 }
 
 function deserializeTSUnionType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSUnionType",
-      types: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSUnionType"),
+      (node$0.types = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.types = deserializeVecTSType(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSIntersectionType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSIntersectionType",
-      types: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSIntersectionType"),
+      (node$0.types = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.types = deserializeVecTSType(pos + 16);
   parent = previousParent;
   return node;
@@ -4309,19 +4431,20 @@ function deserializeTSParenthesizedType(pos) {
 }
 
 function deserializeTSTypeOperator(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSTypeOperator",
-      operator: deserializeTSTypeOperatorOperator(pos + 12),
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSTypeOperator"),
+      (node$0.operator = deserializeTSTypeOperatorOperator(pos + 12)),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.typeAnnotation = deserializeTSType(pos + 16);
   parent = previousParent;
   return node;
@@ -4341,37 +4464,39 @@ function deserializeTSTypeOperatorOperator(pos) {
 }
 
 function deserializeTSArrayType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSArrayType",
-      elementType: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSArrayType"),
+      (node$0.elementType = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.elementType = deserializeTSType(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSIndexedAccessType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSIndexedAccessType",
-      objectType: null,
-      indexType: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSIndexedAccessType"),
+      (node$0.objectType = null),
+      (node$0.indexType = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.objectType = deserializeTSType(pos + 16);
   node.indexType = deserializeTSType(pos + 32);
   parent = previousParent;
@@ -4379,38 +4504,40 @@ function deserializeTSIndexedAccessType(pos) {
 }
 
 function deserializeTSTupleType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSTupleType",
-      elementTypes: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSTupleType"),
+      (node$0.elementTypes = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.elementTypes = deserializeVecTSTupleElement(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSNamedTupleMember(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSNamedTupleMember",
-      label: null,
-      elementType: null,
-      optional: deserializeBool(pos + 12),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSNamedTupleMember"),
+      (node$0.label = null),
+      (node$0.elementType = null),
+      (node$0.optional = deserializeBool(pos + 12)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.label = deserializeIdentifierName(pos + 16);
   node.elementType = deserializeTSTupleElement(pos + 48);
   parent = previousParent;
@@ -4418,36 +4545,38 @@ function deserializeTSNamedTupleMember(pos) {
 }
 
 function deserializeTSOptionalType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSOptionalType",
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSOptionalType"),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.typeAnnotation = deserializeTSType(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSRestType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSRestType",
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSRestType"),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.typeAnnotation = deserializeTSType(pos + 16);
   parent = previousParent;
   return node;
@@ -4539,187 +4668,202 @@ function deserializeTSTupleElement(pos) {
 }
 
 function deserializeTSAnyKeyword(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSAnyKeyword",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSAnyKeyword"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSStringKeyword(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSStringKeyword",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSStringKeyword"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSBooleanKeyword(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSBooleanKeyword",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSBooleanKeyword"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSNumberKeyword(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSNumberKeyword",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSNumberKeyword"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSNeverKeyword(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSNeverKeyword",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSNeverKeyword"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSIntrinsicKeyword(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSIntrinsicKeyword",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSIntrinsicKeyword"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSUnknownKeyword(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSUnknownKeyword",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSUnknownKeyword"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSNullKeyword(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSNullKeyword",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSNullKeyword"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSUndefinedKeyword(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSUndefinedKeyword",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSUndefinedKeyword"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSVoidKeyword(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSVoidKeyword",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSVoidKeyword"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSSymbolKeyword(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSSymbolKeyword",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSSymbolKeyword"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSThisType(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSThisType",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSThisType"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSObjectKeyword(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSObjectKeyword",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSObjectKeyword"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSBigIntKeyword(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSBigIntKeyword",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSBigIntKeyword"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeTSTypeReference(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSTypeReference",
-      typeName: null,
-      typeArguments: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSTypeReference"),
+      (node$0.typeName = null),
+      (node$0.typeArguments = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.typeName = deserializeTSTypeName(pos + 16);
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 32);
   parent = previousParent;
@@ -4740,19 +4884,20 @@ function deserializeTSTypeName(pos) {
 }
 
 function deserializeTSQualifiedName(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSQualifiedName",
-      left: null,
-      right: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSQualifiedName"),
+      (node$0.left = null),
+      (node$0.right = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.left = deserializeTSTypeName(pos + 16);
   node.right = deserializeIdentifierName(pos + 32);
   parent = previousParent;
@@ -4760,41 +4905,43 @@ function deserializeTSQualifiedName(pos) {
 }
 
 function deserializeTSTypeParameterInstantiation(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSTypeParameterInstantiation",
-      params: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSTypeParameterInstantiation"),
+      (node$0.params = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.params = deserializeVecTSType(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSTypeParameter(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSTypeParameter",
-      name: null,
-      constraint: null,
-      default: null,
-      in: deserializeBool(pos + 12),
-      out: deserializeBool(pos + 13),
-      const: deserializeBool(pos + 14),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSTypeParameter"),
+      (node$0.name = null),
+      (node$0.constraint = null),
+      (node$0.default = null),
+      (node$0.in = deserializeBool(pos + 12)),
+      (node$0.out = deserializeBool(pos + 13)),
+      (node$0.const = deserializeBool(pos + 14)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.name = deserializeBindingIdentifier(pos + 16);
   node.constraint = deserializeOptionTSType(pos + 48);
   node.default = deserializeOptionTSType(pos + 64);
@@ -4803,39 +4950,41 @@ function deserializeTSTypeParameter(pos) {
 }
 
 function deserializeTSTypeParameterDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSTypeParameterDeclaration",
-      params: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSTypeParameterDeclaration"),
+      (node$0.params = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.params = deserializeVecTSTypeParameter(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSTypeAliasDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSTypeAliasDeclaration",
-      id: null,
-      typeParameters: null,
-      typeAnnotation: null,
-      declare: deserializeBool(pos + 72),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSTypeAliasDeclaration"),
+      (node$0.id = null),
+      (node$0.typeParameters = null),
+      (node$0.typeAnnotation = null),
+      (node$0.declare = deserializeBool(pos + 72)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.id = deserializeBindingIdentifier(pos + 16);
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 48);
   node.typeAnnotation = deserializeTSType(pos + 56);
@@ -4857,37 +5006,38 @@ function deserializeTSAccessibility(pos) {
 }
 
 function deserializeTSClassImplements(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSClassImplements",
-      expression: null,
-      typeArguments: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSClassImplements"),
+      (node$0.expression = null),
+      (node$0.typeArguments = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     expression = deserializeTSTypeName(pos + 16);
   if (expression.type === "TSQualifiedName") {
     let object = expression.left,
       { right } = expression,
       start,
       end,
-      previous = (expression = {
-        __proto__: NodeProto,
-        type: "MemberExpression",
-        object,
-        property: right,
-        optional: false,
-        computed: false,
-        start: (start = expression.start),
-        end: (end = expression.end),
-        range: [start, end],
-        parent,
-      });
+      previous = (expression =
+        ((node$0 = Object.create(NodeProto)),
+        (node$0.type = "MemberExpression"),
+        (node$0.object = object),
+        (node$0.property = right),
+        (node$0.optional = false),
+        (node$0.computed = false),
+        (node$0.start = start = expression.start),
+        (node$0.end = end = expression.end),
+        (node$0.range = [start, end]),
+        (node$0.parent = parent),
+        node$0));
     right.parent = previous;
     for (;;) {
       if (object.type !== "TSQualifiedName") {
@@ -4895,18 +5045,18 @@ function deserializeTSClassImplements(pos) {
         break;
       }
       let { left, right } = object;
-      previous = previous.object = {
-        __proto__: NodeProto,
-        type: "MemberExpression",
-        object: left,
-        property: right,
-        optional: false,
-        computed: false,
-        start: (start = object.start),
-        end: (end = object.end),
-        range: [start, end],
-        parent: previous,
-      };
+      previous = previous.object =
+        ((node$0 = Object.create(NodeProto)),
+        (node$0.type = "MemberExpression"),
+        (node$0.object = left),
+        (node$0.property = right),
+        (node$0.optional = false),
+        (node$0.computed = false),
+        (node$0.start = start = object.start),
+        (node$0.end = end = object.end),
+        (node$0.range = [start, end]),
+        (node$0.parent = previous),
+        node$0);
       right.parent = previous;
       object = left;
     }
@@ -4918,22 +5068,23 @@ function deserializeTSClassImplements(pos) {
 }
 
 function deserializeTSInterfaceDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSInterfaceDeclaration",
-      id: null,
-      typeParameters: null,
-      extends: null,
-      body: null,
-      declare: deserializeBool(pos + 88),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSInterfaceDeclaration"),
+      (node$0.id = null),
+      (node$0.typeParameters = null),
+      (node$0.extends = null),
+      (node$0.body = null),
+      (node$0.declare = deserializeBool(pos + 88)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.id = deserializeBindingIdentifier(pos + 16);
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 48);
   node.extends = deserializeVecTSInterfaceHeritage(pos + 56);
@@ -4943,42 +5094,44 @@ function deserializeTSInterfaceDeclaration(pos) {
 }
 
 function deserializeTSInterfaceBody(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSInterfaceBody",
-      body: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSInterfaceBody"),
+      (node$0.body = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.body = deserializeVecTSSignature(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSPropertySignature(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSPropertySignature",
-      computed: deserializeBool(pos + 12),
-      optional: deserializeBool(pos + 13),
-      readonly: deserializeBool(pos + 14),
-      key: null,
-      typeAnnotation: null,
-      accessibility: null,
-      static: false,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSPropertySignature"),
+      (node$0.computed = deserializeBool(pos + 12)),
+      (node$0.optional = deserializeBool(pos + 13)),
+      (node$0.readonly = deserializeBool(pos + 14)),
+      (node$0.key = null),
+      (node$0.typeAnnotation = null),
+      (node$0.accessibility = null),
+      (node$0.static = false),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.key = deserializePropertyKey(pos + 16);
   node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 32);
   parent = previousParent;
@@ -5003,22 +5156,23 @@ function deserializeTSSignature(pos) {
 }
 
 function deserializeTSIndexSignature(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSIndexSignature",
-      parameters: null,
-      typeAnnotation: null,
-      readonly: deserializeBool(pos + 12),
-      static: deserializeBool(pos + 13),
-      accessibility: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSIndexSignature"),
+      (node$0.parameters = null),
+      (node$0.typeAnnotation = null),
+      (node$0.readonly = deserializeBool(pos + 12)),
+      (node$0.static = deserializeBool(pos + 13)),
+      (node$0.accessibility = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.parameters = [deserializeTSIndexSignatureName(pos + 16)];
   node.typeAnnotation = deserializeBoxTSTypeAnnotation(pos + 56);
   parent = previousParent;
@@ -5026,20 +5180,21 @@ function deserializeTSIndexSignature(pos) {
 }
 
 function deserializeTSCallSignatureDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSCallSignatureDeclaration",
-      typeParameters: null,
-      params: null,
-      returnType: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSCallSignatureDeclaration"),
+      (node$0.typeParameters = null),
+      (node$0.params = null),
+      (node$0.returnType = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     params = deserializeBoxFormalParameters(pos + 32),
     thisParam = deserializeOptionBoxTSThisParameter(pos + 24);
   thisParam !== null && params.unshift(thisParam);
@@ -5064,27 +5219,28 @@ function deserializeTSMethodSignatureKind(pos) {
 }
 
 function deserializeTSMethodSignature(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSMethodSignature",
-      key: null,
-      computed: deserializeBool(pos + 64),
-      optional: deserializeBool(pos + 65),
-      kind: deserializeTSMethodSignatureKind(pos + 66),
-      typeParameters: null,
-      params: null,
-      returnType: null,
-      accessibility: null,
-      readonly: false,
-      static: false,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSMethodSignature"),
+      (node$0.key = null),
+      (node$0.computed = deserializeBool(pos + 64)),
+      (node$0.optional = deserializeBool(pos + 65)),
+      (node$0.kind = deserializeTSMethodSignatureKind(pos + 66)),
+      (node$0.typeParameters = null),
+      (node$0.params = null),
+      (node$0.returnType = null),
+      (node$0.accessibility = null),
+      (node$0.readonly = false),
+      (node$0.static = false),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     params = deserializeBoxFormalParameters(pos + 48),
     thisParam = deserializeOptionBoxTSThisParameter(pos + 40);
   thisParam !== null && params.unshift(thisParam);
@@ -5097,20 +5253,21 @@ function deserializeTSMethodSignature(pos) {
 }
 
 function deserializeTSConstructSignatureDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSConstructSignatureDeclaration",
-      typeParameters: null,
-      params: null,
-      returnType: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSConstructSignatureDeclaration"),
+      (node$0.typeParameters = null),
+      (node$0.params = null),
+      (node$0.returnType = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 16);
   node.params = deserializeBoxFormalParameters(pos + 24);
   node.returnType = deserializeOptionBoxTSTypeAnnotation(pos + 32);
@@ -5119,58 +5276,60 @@ function deserializeTSConstructSignatureDeclaration(pos) {
 }
 
 function deserializeTSIndexSignatureName(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Identifier",
-      decorators: [],
-      name: deserializeStr(pos + 16),
-      optional: false,
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Identifier"),
+      (node$0.decorators = []),
+      (node$0.name = deserializeStr(pos + 16)),
+      (node$0.optional = false),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.typeAnnotation = deserializeBoxTSTypeAnnotation(pos + 32);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSInterfaceHeritage(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSInterfaceHeritage",
-      expression: null,
-      typeArguments: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSInterfaceHeritage"),
+      (node$0.expression = null),
+      (node$0.typeArguments = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     expression = deserializeTSTypeName(pos + 16);
   if (expression.type === "TSQualifiedName") {
     let object = expression.left,
       { right } = expression,
       start,
       end,
-      previous = (expression = {
-        __proto__: NodeProto,
-        type: "MemberExpression",
-        object,
-        property: right,
-        optional: false,
-        computed: false,
-        start: (start = expression.start),
-        end: (end = expression.end),
-        range: [start, end],
-        parent,
-      });
+      previous = (expression =
+        ((node$0 = Object.create(NodeProto)),
+        (node$0.type = "MemberExpression"),
+        (node$0.object = object),
+        (node$0.property = right),
+        (node$0.optional = false),
+        (node$0.computed = false),
+        (node$0.start = start = expression.start),
+        (node$0.end = end = expression.end),
+        (node$0.range = [start, end]),
+        (node$0.parent = parent),
+        node$0));
     right.parent = previous;
     for (;;) {
       if (object.type !== "TSQualifiedName") {
@@ -5178,18 +5337,18 @@ function deserializeTSInterfaceHeritage(pos) {
         break;
       }
       let { left, right } = object;
-      previous = previous.object = {
-        __proto__: NodeProto,
-        type: "MemberExpression",
-        object: left,
-        property: right,
-        optional: false,
-        computed: false,
-        start: (start = object.start),
-        end: (end = object.end),
-        range: [start, end],
-        parent: previous,
-      };
+      previous = previous.object =
+        ((node$0 = Object.create(NodeProto)),
+        (node$0.type = "MemberExpression"),
+        (node$0.object = left),
+        (node$0.property = right),
+        (node$0.optional = false),
+        (node$0.computed = false),
+        (node$0.start = start = object.start),
+        (node$0.end = end = object.end),
+        (node$0.range = [start, end]),
+        (node$0.parent = previous),
+        node$0);
       right.parent = previous;
       object = left;
     }
@@ -5201,20 +5360,21 @@ function deserializeTSInterfaceHeritage(pos) {
 }
 
 function deserializeTSTypePredicate(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSTypePredicate",
-      parameterName: null,
-      asserts: deserializeBool(pos + 12),
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSTypePredicate"),
+      (node$0.parameterName = null),
+      (node$0.asserts = deserializeBool(pos + 12)),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.parameterName = deserializeTSTypePredicateName(pos + 16);
   node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 32);
   parent = previousParent;
@@ -5233,24 +5393,25 @@ function deserializeTSTypePredicateName(pos) {
 }
 
 function deserializeTSExternalModuleDeclaration(pos) {
-  let start = deserializeI32(pos),
+  let node$0,
+    start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
     declare = deserializeBool(pos + 72),
     previousParent = parent,
     body = deserializeOptionBoxTSModuleBlock(pos + 64),
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSModuleDeclaration",
-      id: null,
-      ...(body !== null && { body }),
-      kind: "module",
-      declare,
-      global: false,
-      start,
-      end,
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSModuleDeclaration"),
+      (node$0.id = null),
+      body !== null && (node$0.body = body),
+      (node$0.kind = "module"),
+      (node$0.declare = declare),
+      (node$0.global = false),
+      (node$0.start = start),
+      (node$0.end = end),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.id = deserializeStringLiteral(pos + 16);
   body !== null && (body.parent = node);
   parent = previousParent;
@@ -5258,25 +5419,26 @@ function deserializeTSExternalModuleDeclaration(pos) {
 }
 
 function deserializeTSNamespaceDeclaration(pos) {
-  let kind = deserializeTSNamespaceDeclarationKind(pos + 64),
+  let node$0,
+    kind = deserializeTSNamespaceDeclarationKind(pos + 64),
     start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
     declare = deserializeBool(pos + 65),
     previousParent = parent,
     body = deserializeTSNamespaceDeclarationBody(pos + 48),
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSModuleDeclaration",
-      id: null,
-      body,
-      kind,
-      declare,
-      global: false,
-      start,
-      end,
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSModuleDeclaration"),
+      (node$0.id = null),
+      (node$0.body = body),
+      (node$0.kind = kind),
+      (node$0.declare = declare),
+      (node$0.global = false),
+      (node$0.start = start),
+      (node$0.end = end),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     id = deserializeBindingIdentifier(pos + 16);
   if (body.type === "TSModuleBlock") {
     node.id = id;
@@ -5289,16 +5451,15 @@ function deserializeTSNamespaceDeclaration(pos) {
         outerId =
           (node.id =
           parent =
-            {
-              __proto__: NodeProto,
-              type: "TSQualifiedName",
-              left: id,
-              right: innerId,
-              start: (start = id.start),
-              end: (end = innerId.end),
-              range: [start, end],
-              parent: node,
-            });
+            ((node$0 = Object.create(NodeProto)),
+            (node$0.type = "TSQualifiedName"),
+            (node$0.left = id),
+            (node$0.right = innerId),
+            (node$0.start = start = id.start),
+            (node$0.end = end = innerId.end),
+            (node$0.range = [start, end]),
+            (node$0.parent = node),
+            node$0));
       id.parent = innerId.parent = outerId;
     } else {
       // Replace `left` of innermost `TSQualifiedName` with a nested `TSQualifiedName` with
@@ -5316,16 +5477,15 @@ function deserializeTSNamespaceDeclaration(pos) {
       id.parent =
         right.parent =
         innerId.left =
-          {
-            __proto__: NodeProto,
-            type: "TSQualifiedName",
-            left: id,
-            right,
-            start,
-            end: (end = right.end),
-            range: [start, end],
-            parent: innerId,
-          };
+          ((node$0 = Object.create(NodeProto)),
+          (node$0.type = "TSQualifiedName"),
+          (node$0.left = id),
+          (node$0.right = right),
+          (node$0.start = start),
+          (node$0.end = end = right.end),
+          (node$0.range = [start, end]),
+          (node$0.parent = innerId),
+          node$0);
     }
     body = body.body;
     node.body = body;
@@ -5358,54 +5518,56 @@ function deserializeTSNamespaceDeclarationBody(pos) {
 }
 
 function deserializeTSGlobalDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSModuleDeclaration",
-      id: null,
-      body: null,
-      kind: "global",
-      declare: deserializeBool(pos + 88),
-      global: true,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSModuleDeclaration"),
+      (node$0.id = null),
+      (node$0.body = null),
+      (node$0.kind = "global"),
+      (node$0.declare = deserializeBool(pos + 88)),
+      (node$0.global = true),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     keywordStart,
     keywordEnd;
-  node.id = {
-    __proto__: NodeProto,
-    type: "Identifier",
-    decorators: [],
-    name: "global",
-    optional: false,
-    typeAnnotation: null,
-    start: (keywordStart = deserializeI32(pos + 16)),
-    end: (keywordEnd = deserializeI32(pos + 20)),
-    range: [keywordStart, keywordEnd],
-    parent,
-  };
+  node.id =
+    ((node$0 = Object.create(NodeProto)),
+    (node$0.type = "Identifier"),
+    (node$0.decorators = []),
+    (node$0.name = "global"),
+    (node$0.optional = false),
+    (node$0.typeAnnotation = null),
+    (node$0.start = keywordStart = deserializeI32(pos + 16)),
+    (node$0.end = keywordEnd = deserializeI32(pos + 20)),
+    (node$0.range = [keywordStart, keywordEnd]),
+    (node$0.parent = parent),
+    node$0);
   node.body = deserializeTSModuleBlock(pos + 24);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSModuleBlock(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSModuleBlock",
-      body: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSModuleBlock"),
+      (node$0.body = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     body = deserializeVecDirective(pos + 16);
   body.push(...deserializeVecStatement(pos + 40));
   node.body = body;
@@ -5414,55 +5576,58 @@ function deserializeTSModuleBlock(pos) {
 }
 
 function deserializeTSTypeLiteral(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSTypeLiteral",
-      members: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSTypeLiteral"),
+      (node$0.members = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.members = deserializeVecTSSignature(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSInferType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSInferType",
-      typeParameter: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSInferType"),
+      (node$0.typeParameter = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.typeParameter = deserializeBoxTSTypeParameter(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSTypeQuery(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSTypeQuery",
-      exprName: null,
-      typeArguments: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSTypeQuery"),
+      (node$0.exprName = null),
+      (node$0.typeArguments = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.exprName = deserializeTSTypeQueryExprName(pos + 16);
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 32);
   parent = previousParent;
@@ -5485,21 +5650,22 @@ function deserializeTSTypeQueryExprName(pos) {
 }
 
 function deserializeTSImportType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSImportType",
-      source: null,
-      options: null,
-      qualifier: null,
-      typeArguments: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSImportType"),
+      (node$0.source = null),
+      (node$0.options = null),
+      (node$0.qualifier = null),
+      (node$0.typeArguments = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.source = deserializeStringLiteral(pos + 16);
   node.options = deserializeOptionBoxObjectExpression(pos + 64);
   node.qualifier = deserializeOptionTSImportTypeQualifier(pos + 72);
@@ -5520,19 +5686,20 @@ function deserializeTSImportTypeQualifier(pos) {
 }
 
 function deserializeTSImportTypeQualifiedName(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSQualifiedName",
-      left: null,
-      right: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSQualifiedName"),
+      (node$0.left = null),
+      (node$0.right = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.left = deserializeTSImportTypeQualifier(pos + 16);
   node.right = deserializeIdentifierName(pos + 32);
   parent = previousParent;
@@ -5540,20 +5707,21 @@ function deserializeTSImportTypeQualifiedName(pos) {
 }
 
 function deserializeTSFunctionType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSFunctionType",
-      typeParameters: null,
-      params: null,
-      returnType: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSFunctionType"),
+      (node$0.typeParameters = null),
+      (node$0.params = null),
+      (node$0.returnType = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     params = deserializeBoxFormalParameters(pos + 32),
     thisParam = deserializeOptionBoxTSThisParameter(pos + 24);
   thisParam !== null && params.unshift(thisParam);
@@ -5565,21 +5733,22 @@ function deserializeTSFunctionType(pos) {
 }
 
 function deserializeTSConstructorType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSConstructorType",
-      abstract: deserializeBool(pos + 40),
-      typeParameters: null,
-      params: null,
-      returnType: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSConstructorType"),
+      (node$0.abstract = deserializeBool(pos + 40)),
+      (node$0.typeParameters = null),
+      (node$0.params = null),
+      (node$0.returnType = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 16);
   node.params = deserializeBoxFormalParameters(pos + 24);
   node.returnType = deserializeBoxTSTypeAnnotation(pos + 32);
@@ -5588,23 +5757,24 @@ function deserializeTSConstructorType(pos) {
 }
 
 function deserializeTSMappedType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSMappedType",
-      key: null,
-      constraint: null,
-      nameType: null,
-      typeAnnotation: null,
-      optional: null,
-      readonly: deserializeOptionTSMappedTypeModifierOperator(pos + 97),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    }),
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSMappedType"),
+      (node$0.key = null),
+      (node$0.constraint = null),
+      (node$0.nameType = null),
+      (node$0.typeAnnotation = null),
+      (node$0.optional = null),
+      (node$0.readonly = deserializeOptionTSMappedTypeModifierOperator(pos + 97)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0)),
     optional = deserializeOptionTSMappedTypeModifierOperator(pos + 96);
   optional === null && (optional = false);
   node.key = deserializeBindingIdentifier(pos + 16);
@@ -5630,19 +5800,20 @@ function deserializeTSMappedTypeModifierOperator(pos) {
 }
 
 function deserializeTSTemplateLiteralType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSTemplateLiteralType",
-      quasis: null,
-      types: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSTemplateLiteralType"),
+      (node$0.quasis = null),
+      (node$0.types = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.quasis = deserializeVecTemplateElement(pos + 16);
   node.types = deserializeVecTSType(pos + 40);
   parent = previousParent;
@@ -5650,19 +5821,20 @@ function deserializeTSTemplateLiteralType(pos) {
 }
 
 function deserializeTSAsExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSAsExpression",
-      expression: null,
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSAsExpression"),
+      (node$0.expression = null),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.expression = deserializeExpression(pos + 16);
   node.typeAnnotation = deserializeTSType(pos + 32);
   parent = previousParent;
@@ -5670,19 +5842,20 @@ function deserializeTSAsExpression(pos) {
 }
 
 function deserializeTSSatisfiesExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSSatisfiesExpression",
-      expression: null,
-      typeAnnotation: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSSatisfiesExpression"),
+      (node$0.expression = null),
+      (node$0.typeAnnotation = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.expression = deserializeExpression(pos + 16);
   node.typeAnnotation = deserializeTSType(pos + 32);
   parent = previousParent;
@@ -5690,19 +5863,20 @@ function deserializeTSSatisfiesExpression(pos) {
 }
 
 function deserializeTSTypeAssertion(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSTypeAssertion",
-      typeAnnotation: null,
-      expression: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSTypeAssertion"),
+      (node$0.typeAnnotation = null),
+      (node$0.expression = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.typeAnnotation = deserializeTSType(pos + 16);
   node.expression = deserializeExpression(pos + 32);
   parent = previousParent;
@@ -5710,20 +5884,21 @@ function deserializeTSTypeAssertion(pos) {
 }
 
 function deserializeTSImportEqualsDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSImportEqualsDeclaration",
-      id: null,
-      moduleReference: null,
-      importKind: deserializeImportOrExportKind(pos + 12),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSImportEqualsDeclaration"),
+      (node$0.id = null),
+      (node$0.moduleReference = null),
+      (node$0.importKind = deserializeImportOrExportKind(pos + 12)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.id = deserializeBindingIdentifier(pos + 16);
   node.moduleReference = deserializeTSModuleReference(pos + 48);
   parent = previousParent;
@@ -5744,109 +5919,115 @@ function deserializeTSModuleReference(pos) {
 }
 
 function deserializeTSExternalModuleReference(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSExternalModuleReference",
-      expression: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSExternalModuleReference"),
+      (node$0.expression = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.expression = deserializeStringLiteral(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSNonNullExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSNonNullExpression",
-      expression: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSNonNullExpression"),
+      (node$0.expression = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.expression = deserializeExpression(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeDecorator(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Decorator",
-      expression: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Decorator"),
+      (node$0.expression = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.expression = deserializeExpression(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSExportAssignment(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSExportAssignment",
-      expression: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSExportAssignment"),
+      (node$0.expression = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.expression = deserializeExpression(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSNamespaceExportDeclaration(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSNamespaceExportDeclaration",
-      id: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSNamespaceExportDeclaration"),
+      (node$0.id = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.id = deserializeIdentifierName(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeTSInstantiationExpression(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSInstantiationExpression",
-      expression: null,
-      typeArguments: null,
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSInstantiationExpression"),
+      (node$0.expression = null),
+      (node$0.typeArguments = null),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.expression = deserializeExpression(pos + 16);
   node.typeArguments = deserializeBoxTSTypeParameterInstantiation(pos + 32);
   parent = previousParent;
@@ -5865,53 +6046,56 @@ function deserializeImportOrExportKind(pos) {
 }
 
 function deserializeJSDocNullableType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSJSDocNullableType",
-      typeAnnotation: null,
-      postfix: deserializeBool(pos + 12),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSJSDocNullableType"),
+      (node$0.typeAnnotation = null),
+      (node$0.postfix = deserializeBool(pos + 12)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.typeAnnotation = deserializeTSType(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeJSDocNonNullableType(pos) {
-  let start,
+  let node$0,
+    start,
     end,
     previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSJSDocNonNullableType",
-      typeAnnotation: null,
-      postfix: deserializeBool(pos + 12),
-      start: (start = deserializeI32(pos)),
-      end: (end = deserializeI32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "TSJSDocNonNullableType"),
+      (node$0.typeAnnotation = null),
+      (node$0.postfix = deserializeBool(pos + 12)),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
   node.typeAnnotation = deserializeTSType(pos + 16);
   parent = previousParent;
   return node;
 }
 
 function deserializeJSDocUnknownType(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "TSJSDocUnknownType",
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
+  let node$0, start, end;
+  return (
+    (node$0 = Object.create(NodeProto)),
+    (node$0.type = "TSJSDocUnknownType"),
+    (node$0.start = start = deserializeI32(pos)),
+    (node$0.end = end = deserializeI32(pos + 4)),
+    (node$0.range = [start, end]),
+    (node$0.parent = parent),
+    node$0
+  );
 }
 
 function deserializeModuleKind(pos) {

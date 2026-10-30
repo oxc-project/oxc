@@ -97,11 +97,20 @@ impl PartialEq for RefAccessRefType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+/// PartialEq matches the TS `tyEqual` semantics and ignores `ref_access_span`, which is only
+/// diagnostic metadata. Comparing it would prevent the environment from stabilizing when joins
+/// alternate between functions that access refs at different locations.
+#[derive(Debug, Clone)]
 struct RefFnType {
     read_ref_effect: bool,
     ref_access_span: Option<Span>,
     return_type: Box<RefAccessType>,
+}
+
+impl PartialEq for RefFnType {
+    fn eq(&self, other: &Self) -> bool {
+        self.read_ref_effect == other.read_ref_effect && self.return_type == other.return_type
+    }
 }
 
 impl RefAccessType {

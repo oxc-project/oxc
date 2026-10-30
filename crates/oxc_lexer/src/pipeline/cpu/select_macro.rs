@@ -51,7 +51,7 @@
 /// Macro expands to:
 ///
 /// ```ignore
-/// match Cpu::to_dyn(cpu) {
+/// match to_dyn(cpu) {
 ///     #[cfg(target_arch = "x86_64")]
 ///     DynCpu::Avx2(cpu) => classify_avx2(self, cpu),
 ///
@@ -228,7 +228,7 @@ macro_rules! cpu_select {
         arms = [ $($arms:tt)* ]
         cpu = $cpu:tt
     ) => {
-        match crate::pipeline::cpu::Cpu::to_dyn($cpu) {
+        match crate::pipeline::cpu::to_dyn($cpu) {
             $($arms)*
         }
     };

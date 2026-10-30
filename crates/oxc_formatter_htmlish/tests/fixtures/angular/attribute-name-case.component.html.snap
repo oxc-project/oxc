@@ -1,0 +1,21 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div CLASS="a   b" class="c   d"></div>
+<iframe ALLOW="a;  b"></iframe>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div CLASS="a   b" class="c d"></div>
+<iframe ALLOW="a;  b"></iframe>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div CLASS="a   b" class="c d"></div>
+<iframe ALLOW="a;  b"></iframe>
+
+===================== End =====================

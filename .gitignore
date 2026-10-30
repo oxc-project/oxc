@@ -1,6 +1,7 @@
 # Rust
 target/
 **/*.rs.bk
+/tasks/track_memory_allocations/allocs_linter.yaml
 
 # Wasm
 **/*.wasm
@@ -30,7 +31,6 @@ tasks/coverage/typescript/
 tasks/coverage/estree-conformance/
 tasks/coverage/estree-conformance-diff/
 tasks/coverage/node-compat-table/
-crates/oxc_formatter_tests/prettier/
 
 # Ignore accidental files from the root
 /*.js

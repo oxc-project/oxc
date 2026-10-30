@@ -7,6 +7,7 @@ use std::{
 
 use cow_utils::CowUtils;
 use rayon::prelude::*;
+use tracing::debug_span;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 
@@ -44,7 +45,9 @@ impl FormatService {
             let start_time = matches!(self.format_mode, OutputMode::Check).then(Instant::now);
 
             let path = Arc::clone(&plan.path);
-            let Ok(source_text) = utils::read_to_string(&path) else {
+            let Ok(source_text) = debug_span!("oxfmt::read", path = %path.display())
+                .in_scope(|| utils::read_to_string(&path))
+            else {
                 // This happens if binary file is attempted to be formatted
                 // e.g. `.ts` for MPEG-TS video file
                 let diagnostics = DiagnosticService::wrap_diagnostics(

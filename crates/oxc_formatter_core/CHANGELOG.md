@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- 5f1fd3d formatter: Measure width heuristics by display width (#28098) (leaysgur)
+- 999496e formatter: Measure a short key by its display width (#28026) (vidigoat)
+- eb1d9f9 formatter_core: Count a flat `line` space in `fits` only when text follows (#27987) (leaysgur)
+
+### ⚡ Performance
+
+- 1ed93af data_structures: Copy short strings without a memcpy call (#27953) (leaysgur)
+- 7948f0b formatter_core: Shrink `FormatElement` to 16B (#28012) (leaysgur)
+
+### 📚 Documentation
+
+- db55461 formatter_core: Document text width divergence (#28095) (leaysgur)
+
 ## [0.74.0] - 2026-10-19
 
 ### 🐛 Bug Fixes

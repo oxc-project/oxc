@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, MemberExpression, RegExpFlags, RegExpLiteral},
+    ast::{CallExpression, Expression, RegExpFlags, RegExpLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -9,6 +9,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
+    ast_util::{iter_outer_expressions, outermost_paren_parent},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
@@ -62,29 +63,32 @@ declare_oxc_lint!(
 
 impl Rule for PreferStringStartsEndsWith {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
+        let AstKind::RegExpLiteral(regex) = node.kind() else {
             return;
         };
-
-        if call_expr.optional {
+        let Some(member_node) = outermost_paren_parent(node, ctx) else {
+            return;
+        };
+        let AstKind::StaticMemberExpression(member_expr) = member_node.kind() else {
+            return;
+        };
+        if member_expr.property.name != "test" {
             return;
         }
-
-        let Some(member_expr) = call_expr.callee.get_member_expr() else {
+        let Some(AstKind::CallExpression(call_expr)) =
+            iter_outer_expressions(ctx.nodes(), member_node.id())
+                .find(|kind| !matches!(kind, AstKind::ChainExpression(_)))
+        else {
             return;
         };
-
-        let MemberExpression::StaticMemberExpression(static_member_expr) = &member_expr else {
-            return;
-        };
-
-        if !matches!(static_member_expr.property.name.as_str(), "test") {
+        if call_expr.optional
+            || call_expr
+                .callee
+                .get_member_expr()
+                .is_none_or(|callee| callee.span() != member_expr.span)
+        {
             return;
         }
-
-        let Expression::RegExpLiteral(regex) = &member_expr.object().without_parentheses() else {
-            return;
-        };
 
         let Some(err_kind) = check_regex(regex) else {
             return;
@@ -215,6 +219,11 @@ fn test() {
         r#"startWith("bar")"#,
         r"foo()()",
         r"if (foo.match(/^foo/)) {}",
+        r"obj.test(/^foo/)",
+        r"fn(/^foo/.test)",
+        r"new (/^foo/.test)(bar)",
+        r"/^foo/.test?.(bar)",
+        r"(/^foo/ as RegExp).test(bar)",
         r"if (/^foo/.exec(foo)) {}",
         r"/foo/.test(bar)",
         r"/^foo$/.test(bar)",
@@ -289,6 +298,10 @@ fn test() {
 
     let fix = vec![
         ("/^foo/.test(x)", r"x.startsWith('foo')"),
+        ("((/^foo/)).test(x)", r"x.startsWith('foo')"),
+        ("(/^foo/.test)(x)", r"x.startsWith('foo')"),
+        ("(/^foo/?.test)(x)", r"x.startsWith('foo')"),
+        ("(/^foo/.test as Function)(x)", r"x.startsWith('foo')"),
         ("/foo$/.test(x)", r"x.endsWith('foo')"),
         ("/^foo/.test(x.y)", r"x.y.startsWith('foo')"),
         ("/foo$/.test(x.y)", r"x.y.endsWith('foo')"),
