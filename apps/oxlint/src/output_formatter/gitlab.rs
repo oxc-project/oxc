@@ -37,6 +37,7 @@ struct GitlabErrorJson {
     location: GitlabErrorLocationJson,
 }
 
+// Keeps the default `reports_config_warnings`: a Code Quality issue requires `location.path`.
 impl InternalFormatter for GitlabOutputFormatter {
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(GitlabReporter::default())
