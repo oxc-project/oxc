@@ -59,15 +59,20 @@ pub(super) unsafe fn lex_block_comment(
         bm_clear_range(st, s + 1, end - 1);
     }
 
-    let body = comment_body(&srcs[..n], s as u32, end as u32, true);
+    let body = if e < n {
+        comment_body(&srcs[..n], s as u32, end as u32, true)
+    } else {
+        // An unterminated comment has no closing delimiter to exclude from the body.
+        &srcs[s + 2..end]
+    };
     let m = if e < n {
         let lic = lic_q >= 0 && (lic_q as usize) + 8 < e - 1;
         let m = classify(body, true, lic);
         debug_assert_eq!(m, classify_exact(body, true), "BCOM content fused != exact at {s}");
-        debug_assert_eq!(saw_nl, has_nl_cr(body), "BCOM saw_nl != exact at {s}");
+        debug_assert_eq!(saw_nl, has_line_terminator(body), "BCOM saw_nl != exact at {s}");
         m
     } else {
-        saw_nl = has_nl_cr(body);
+        saw_nl = has_line_terminator(body);
         classify_exact(body, true)
     };
 
@@ -210,7 +215,14 @@ fn html_close_at_line_start(src: &[u8], mut q: usize) -> bool {
                         break;
                     }
                     let b = src[m - 1];
-                    if b == b'\n' || b == b'\r' {
+                    if b == b'\n'
+                        || b == b'\r'
+                        // LS/PS ending at m-1.
+                        || ((b == 0xA8 || b == 0xA9)
+                            && m >= 3
+                            && src[m - 2] == 0x80
+                            && src[m - 3] == 0xE2)
+                    {
                         saw_nl = true;
                     }
                     m -= 1;
@@ -363,8 +375,10 @@ fn is_coverage_ignore_file(source: &[u8]) -> bool {
         || starts_with_directive(source, b"istanbul ignore file")
 }
 
-fn has_nl_cr(bytes: &[u8]) -> bool {
+/// Does `bytes` hold a LineTerminator (LF, CR, or the 3-byte LS or PS)?
+fn has_line_terminator(bytes: &[u8]) -> bool {
     bytes.iter().any(|&b| b == b'\n' || b == b'\r')
+        || bytes.windows(3).any(|w| matches!(w, [0xE2, 0x80, 0xA8 | 0xA9]))
 }
 
 #[inline]

@@ -4,6 +4,11 @@ use crate::pipeline::chunk::{load256, mm, veq};
 
 use super::common::lic_verify_at;
 
+/// Scan a `/*` block comment to its `*/`, noting whether the body holds a
+/// LineTerminator (LF, CR, or LS/PS), and tracking the first `@license` /
+/// `@preserve` position for comment metadata. A 0xE2 that isn't LS/PS
+/// (typographic punctuation in prose) is no line break; the LS/PS confirm can
+/// read the pad, which never matches 0x80.
 pub unsafe fn scan_block_comment_avx2(
     src: *const u8,
     n: usize,
@@ -15,12 +20,16 @@ pub unsafe fn scan_block_comment_avx2(
         let v = load256(src, i);
         let vn = load256(src, i + 1);
         let term = mm(_mm256_and_si256(veq(v, b'*'), veq(vn, b'/')));
-        let nl = if saw_nl { 0 } else { mm(_mm256_or_si256(veq(v, b'\n'), veq(v, b'\r'))) };
+        let nl = if saw_nl {
+            0
+        } else {
+            mm(_mm256_or_si256(_mm256_or_si256(veq(v, b'\n'), veq(v, b'\r')), veq(v, 0xE2)))
+        };
         let at = if lic_q < 0 { mm(veq(v, b'@')) } else { 0 };
         if term != 0 {
             let j = term.trailing_zeros() as usize;
             let bodymask: u32 = if j > 0 { (1u32 << j) - 1 } else { 0 };
-            saw_nl |= (nl & bodymask) != 0;
+            saw_nl |= any_nl(src, i, nl & bodymask);
             if lic_q < 0 {
                 let am = at & bodymask;
                 if am != 0 {
@@ -29,7 +38,7 @@ pub unsafe fn scan_block_comment_avx2(
             }
             return (i + j + 1, saw_nl, lic_q);
         }
-        saw_nl |= nl != 0;
+        saw_nl |= any_nl(src, i, nl);
         if lic_q < 0 && at != 0 {
             lic_q = lic_first(src, i, at);
         }
@@ -40,7 +49,12 @@ pub unsafe fn scan_block_comment_avx2(
         if c == b'*' && *src.add(i + 1) == b'/' {
             return (i + 1, saw_nl, lic_q);
         }
-        if c == b'\n' || c == b'\r' {
+        if c == b'\n'
+            || c == b'\r'
+            || (c == 0xE2
+                && *src.add(i + 1) == 0x80
+                && (*src.add(i + 2) == 0xA8 || *src.add(i + 2) == 0xA9))
+        {
             saw_nl = true;
         }
         if c == b'@' && lic_q < 0 && lic_verify_at(src, i) {
@@ -115,4 +129,20 @@ unsafe fn lic_first(src: *const u8, base: usize, mut am: u32) -> i64 {
         }
     }
     -1
+}
+
+/// Is any LF, CR or 0xE2 marked in `nm` a LineTerminator? A 0xE2 is one only
+/// as the lead byte of LS/PS.
+#[inline(always)]
+unsafe fn any_nl(src: *const u8, base: usize, mut nm: u32) -> bool {
+    while nm != 0 {
+        let q = base + nm.trailing_zeros() as usize;
+        nm &= nm - 1;
+        if *src.add(q) != 0xE2
+            || (*src.add(q + 1) == 0x80 && (*src.add(q + 2) == 0xA8 || *src.add(q + 2) == 0xA9))
+        {
+            return true;
+        }
+    }
+    false
 }
