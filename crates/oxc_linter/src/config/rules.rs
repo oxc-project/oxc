@@ -1,8 +1,8 @@
-use std::{borrow::Cow, fmt};
+use std::{borrow::Cow, fmt, sync::LazyLock};
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::{
     JsonSchema,
     r#gen::SchemaGenerator,
@@ -95,7 +95,42 @@ impl OxlintRules {
     pub fn is_empty(&self) -> bool {
         self.rules.is_empty()
     }
+
+    /// Names of the type-aware (`tsgolint`) rules this config turns on by naming them in `rules`.
+    ///
+    /// Rules turned on through a category are not reported: several type-aware rules are part of
+    /// `correctness`, which is on by default, so every config would match.
+    ///
+    /// Only this config's own top-level `rules` are read: rules turned on in `overrides` or in a
+    /// config it `extends` are not, so this is a best-effort list.
+    pub fn explicitly_enabled_type_aware_rules(&self) -> Vec<String> {
+        self.rules
+            .iter()
+            .filter(|rule_config| rule_config.severity.is_warn_deny())
+            .filter(|rule_config| {
+                let (rule_name, plugin_name) = transform_rule_and_plugin_name(
+                    &rule_config.rule_name,
+                    &rule_config.plugin_name,
+                );
+                TSGOLINT_RULE_NAMES
+                    .get(plugin_name)
+                    .is_some_and(|rule_names| rule_names.contains(rule_name))
+            })
+            .map(|rule_config| rule_config.full_name().into_owned())
+            .collect()
+    }
 }
+
+/// The names of the type-aware (`tsgolint`) rules, by plugin name, to look a rule up without
+/// scanning [`RULES`].
+static TSGOLINT_RULE_NAMES: LazyLock<FxHashMap<&'static str, FxHashSet<&'static str>>> =
+    LazyLock::new(|| {
+        let mut names = FxHashMap::<&'static str, FxHashSet<&'static str>>::default();
+        for rule in RULES.iter().filter(|rule| rule.is_tsgolint_rule()) {
+            names.entry(rule.plugin_name()).or_default().insert(rule.name());
+        }
+        names
+    });
 
 /// A fully qualified rule name.
 ///
