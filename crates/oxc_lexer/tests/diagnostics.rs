@@ -888,3 +888,21 @@ fn block_comment_star_plus_slash_is_not_a_terminator() {
         assert_eq!(res.diagnostic_count, 0, "{code:?}: {:?}", res.diagnostics());
     }
 }
+
+fn lex_count(code: &str, options: LexOptions) -> (u32, bool) {
+    let mut buf = code.as_bytes().to_vec();
+    let len = buf.len() as u32;
+    buf.resize(buf.len() + PAD, 0);
+    let (res, _arena) = lex_utf8(&buf, len, options);
+    (res.diagnostic_count, res.hit_resource_limit)
+}
+
+#[test]
+fn diagnostics_past_max_diagnostic_count_are_dropped() {
+    // Each `1a` is an `InvalidNumericLiteral` diagnostic.
+    assert_eq!(lex_count(&"1a;\n".repeat(1024), LexOptions::default()), (1024, false));
+    assert_eq!(lex_count(&"1a;\n".repeat(1025), LexOptions::default()), (1024, true));
+    let opts = LexOptions { max_diagnostic_count: 10, ..Default::default() };
+    assert_eq!(lex_count(&"1a;\n".repeat(10), opts), (10, false));
+    assert_eq!(lex_count(&"1a;\n".repeat(11), opts), (10, true));
+}
