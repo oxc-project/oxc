@@ -5,7 +5,7 @@ use oxc_diagnostics::{OxcCode, OxcDiagnostic, Severity};
 use oxc_language_server::ClientMessage;
 use tower_lsp_server::gen_lsp_types::{MessageType, Range};
 
-use crate::config_loader::ConfigLoadError;
+use crate::config_loader::{ConfigLoadDiagnostic, ConfigLoadError};
 
 /// Returns `true` if LSP ranges `a` and `b` overlap or touch (share a boundary point).
 ///
@@ -87,6 +87,19 @@ pub fn config_loader_error_to_message(error: ConfigLoadError) -> String {
         }
         ConfigLoadError::Diagnostic(diag) => {
             format!("Failed to load config: {}", get_oxc_diagnostic_full_message(&diag))
+        }
+    }
+}
+
+/// Converts a `ConfigLoadDiagnostic` to a `ClientMessage`, whose type follows its severity.
+pub fn config_load_diagnostic_to_client_message(diagnostic: ConfigLoadDiagnostic) -> ClientMessage {
+    match diagnostic {
+        ConfigLoadDiagnostic::Error(error) => ClientMessage {
+            message: config_loader_error_to_message(error),
+            r#type: MessageType::Error,
+        },
+        ConfigLoadDiagnostic::Warning(warning) => {
+            oxc_diagnostic_to_client_message(&warning.diagnostic)
         }
     }
 }

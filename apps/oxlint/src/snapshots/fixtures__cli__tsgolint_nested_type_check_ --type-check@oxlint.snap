@@ -1,0 +1,22 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/tsgolint_nested_type_check
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
+
+########## 
+arguments: --type-check
+working directory: fixtures/cli/tsgolint_nested_type_check
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
