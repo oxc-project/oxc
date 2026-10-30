@@ -216,15 +216,13 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
 impl<'a, C: Config> CoverGrammar<'a, ObjectProperty<'a>, C> for AssignmentTargetProperty<'a> {
     fn cover(property: ObjectProperty<'a>, p: &mut ParserImpl<'a, C>) -> Self {
         if property.shorthand {
-            let binding = match property.key {
-                PropertyKey::StaticIdentifier(ident) => {
-                    let ident = ident.unbox();
-                    IdentifierReference::new(ident.span, ident.name, p)
-                }
+            let binding = match property.value {
+                Expression::Identifier(ident) => ident.unbox(),
                 _ => return p.unexpected(),
             };
             // convert `CoverInitializedName`
-            let init = p.state.cover_initialized_name.remove(&property.span.start).map(|e| e.right);
+            let init =
+                p.state.cover_initialized_name.remove(&property.span.start).map(|(_, init)| init);
             AssignmentTargetProperty::new_assignment_target_property_identifier(
                 property.span,
                 binding,
