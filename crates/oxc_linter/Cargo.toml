@@ -17,6 +17,7 @@ description.workspace = true
 default = []
 ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
 force_test_reporter = []
+debug_allocs = [] # Per-rule heap allocation profiling; requires installing TrackingAllocator
 
 [lints]
 workspace = true
@@ -81,4 +82,3 @@ url = { workspace = true }
 [dev-dependencies]
 insta = { workspace = true }
 markdown = { workspace = true }
-

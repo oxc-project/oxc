@@ -125,6 +125,7 @@ Arguments:
   Enable debug output options. Options are comma-separated. Possible values:
  * `files` - Print the list of files that will be linted, then exit.
  * `timings` - Enable per-rule timing information.
+ * `memory` - Enable native per-rule allocation counts and bytes (requires compiling oxlint with the `debug_allocs` Cargo feature enabled).
 
 
 
