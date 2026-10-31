@@ -46,8 +46,14 @@ impl<'a> FormatLiteralStringToken<'a> {
         let options = f.options();
         let source_type = f.context().source_type();
 
-        let chosen_quote_style =
-            if self.jsx { options.jsx_quote_style } else { options.quote_style };
+        // In an HTML attribute, `'` whatever the string holds, but a directive as usual
+        let (chosen_quote_style, force_chosen_quote) = if self.jsx {
+            (options.jsx_quote_style, false)
+        } else if self.parent_kind == StringLiteralParentKind::Directive {
+            (options.quote_style, false)
+        } else {
+            (f.context().string_quote_style(), f.context().in_html_attribute())
+        };
 
         let is_quote_needed = match options.quote_properties {
             QuoteProperties::AsNeeded => false,
@@ -55,8 +61,13 @@ impl<'a> FormatLiteralStringToken<'a> {
             QuoteProperties::Consistent => f.context().is_quote_needed(),
         };
 
-        let string_cleaner =
-            LiteralStringNormalizer::new(*self, chosen_quote_style, is_quote_needed, f.allocator());
+        let string_cleaner = LiteralStringNormalizer {
+            token: *self,
+            chosen_quote_style,
+            force_chosen_quote,
+            is_quote_needed,
+            allocator: f.allocator(),
+        };
 
         let content = string_cleaner.normalize_text(source_type);
 
@@ -187,6 +198,8 @@ struct LiteralStringNormalizer<'a> {
     token: FormatLiteralStringToken<'a>,
     /// The quote that was set inside the configuration
     chosen_quote_style: QuoteStyle,
+    /// Use `chosen_quote_style` even where the other one would need fewer escapes.
+    force_chosen_quote: bool,
     /// State whether we need to print the quotes or not.
     is_quote_needed: bool,
     /// Arena for the strings with other quotes, so that `fmt` does not copy them again.
@@ -194,22 +207,16 @@ struct LiteralStringNormalizer<'a> {
 }
 
 impl<'a> LiteralStringNormalizer<'a> {
-    pub fn new(
-        token: FormatLiteralStringToken<'a>,
-        chosen_quote_style: QuoteStyle,
-        is_quote_needed: bool,
-        allocator: &'a Allocator,
-    ) -> Self {
-        Self { token, chosen_quote_style, is_quote_needed, allocator }
-    }
-
     fn normalize_text(&self, source_type: SourceType) -> Cow<'a, str> {
         // Handle JSX attribute strings specially - they use HTML entity escaping
         if self.token.jsx && self.token.parent_kind == StringLiteralParentKind::Expression {
             return self.normalize_jsx_attribute();
         }
 
-        let str_info = self.token.compute_string_information(self.chosen_quote_style);
+        let mut str_info = self.token.compute_string_information(self.chosen_quote_style);
+        if self.force_chosen_quote {
+            str_info.preferred_quote = self.chosen_quote_style;
+        }
         match self.token.parent_kind {
             StringLiteralParentKind::Expression => self.normalize_string_literal(str_info),
             StringLiteralParentKind::Directive => self.normalize_directive(str_info),

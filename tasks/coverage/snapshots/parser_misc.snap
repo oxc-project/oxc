@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 130/130 (100.00%)
-Positive Passed: 130/130 (100.00%)
-Negative Passed: 265/265 (100.00%)
+AST Parsed     : 134/134 (100.00%)
+Positive Passed: 134/134 (100.00%)
+Negative Passed: 270/270 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -507,6 +507,14 @@ Negative Passed: 265/265 (100.00%)
         If you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code.
         If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
         If you have nested conflicts, resolve the outermost conflict first.
+
+  × Identifier `value` has already been declared
+   ╭─[misc/fail/duplicate-parameter-after-nested-default.cjs:1:16]
+ 1 │ function outer(value = function (inner, inner) {}, value) {}
+   ·                ──┬──                               ──┬──
+   ·                  │                                   ╰── It can not be redeclared here
+   ·                  ╰── `value` has already been declared here
+   ╰────
 
   × Identifier `#x` has already been declared
    ╭─[misc/fail/duplicate-private-declarations.js:1:24]
@@ -1191,6 +1199,20 @@ Negative Passed: 265/265 (100.00%)
  1 │ type T<X> = X extends infer string ? string : never;
    ·                             ──────
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/js-export-default-abstract-class.js:1:24]
+ 1 │ export default abstract class C {}
+   ·                        ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/js-export-default-interface.js:1:25]
+ 1 │ export default interface I {}
+   ·                         ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × Adjacent JSX elements must be wrapped in an enclosing tag.
    ╭─[misc/fail/jsx-adjacent-elements.jsx:3:3]
@@ -5144,12 +5166,12 @@ Negative Passed: 265/265 (100.00%)
    ╰────
   help: This character or escape sequence is not valid inside a character class
 
-  × Invalid regular expression: Could not parse the entire pattern
-   ╭─[misc/fail/regexp-unicode-leading-zero-reference.js:1:5]
+  × Invalid regular expression: Invalid escape sequence
+   ╭─[misc/fail/regexp-unicode-leading-zero-reference.js:1:4]
  1 │ /()\01/u;
-   ·     ▲
+   ·    ─
    ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid rest element target in destructuring assignment
    ╭─[misc/fail/rest-assignment-target.js:1:6]
@@ -5196,6 +5218,22 @@ Negative Passed: 265/265 (100.00%)
    ·       ───────────────────────────
  5 │     }
    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[misc/fail/strict-arguments-for-of.js:2:6]
+ 1 │ "use strict";
+ 2 │ for (arguments of []) {}
+   ·      ─────────
+   ╰────
+  note: This is strict mode code
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[misc/fail/strict-eval-for-in.js:2:6]
+ 1 │ "use strict";
+ 2 │ for (eval in {}) {}
+   ·      ────
+   ╰────
+  note: This is strict mode code
 
   × Expected switch clause
    ╭─[misc/fail/switch-invalid-clause.js:2:3]

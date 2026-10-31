@@ -2,6 +2,7 @@ use oxc_formatter_core::{FormatContext, SourceText};
 
 use crate::{
     comments::{Comments, CssComment},
+    format::CssEmbeddedIn,
     options::CssFormatOptions,
 };
 
@@ -16,9 +17,9 @@ pub struct CssFormatContext<'a> {
     /// Inside an ICSS rule (`:import(...)` / `:export`): property names keep
     /// their case (Prettier's `insideIcssRuleNode`).
     in_icss_rule: std::cell::Cell<bool>,
-    /// The source may contain css-in-js `${}` placeholder markers
-    /// (embedded entry point only); gates the printer's placeholder handling.
-    template_placeholders: bool,
+    /// What the part is embedded in (embedded entry point only);
+    /// css-in-js gates the printer's placeholder handling.
+    embedded_in: Option<CssEmbeddedIn>,
 }
 
 impl<'a> CssFormatContext<'a> {
@@ -26,7 +27,7 @@ impl<'a> CssFormatContext<'a> {
         options: CssFormatOptions,
         source_code: &'a str,
         comments: &'a [CssComment],
-        template_placeholders: bool,
+        embedded_in: Option<CssEmbeddedIn>,
     ) -> Self {
         Self {
             options,
@@ -34,13 +35,18 @@ impl<'a> CssFormatContext<'a> {
             comments: Comments::new(comments),
             in_less_detached: std::cell::Cell::new(false),
             in_icss_rule: std::cell::Cell::new(false),
-            template_placeholders,
+            embedded_in,
         }
     }
 
     /// Whether the source may contain css-in-js `${}` placeholder markers.
     pub fn template_placeholders(&self) -> bool {
-        self.template_placeholders
+        self.embedded_in == Some(CssEmbeddedIn::CssInJsTemplate)
+    }
+
+    /// The source is an HTML `style` attribute's value.
+    pub fn is_style_attribute(&self) -> bool {
+        self.embedded_in == Some(CssEmbeddedIn::HtmlStyleAttribute)
     }
 
     pub fn in_less_detached(&self) -> &std::cell::Cell<bool> {

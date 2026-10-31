@@ -1,7 +1,7 @@
 /**
  * Prettier plugin that uses `oxc_formatter` for (j|t)s-in-xxx part.
  *
- * When Prettier formats Vue/HTML (which can embed JS/TS code inside) files,
+ * When Prettier formats Vue/Angular (which can embed JS/TS code inside) files,
  * it calls the `embed()` function for each block.
  *
  * By default, it uses the `babel` or `typescript` parser and `estree` printer.

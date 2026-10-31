@@ -12,8 +12,11 @@ use crate::pipeline::{
 
 use super::comments::{lex_block_comment, lex_line_comment};
 
-pub(super) const OPENER_BYTES: [u8; 6] = [b'"', b'\'', b'`', b'/', b'<', b'>'];
-pub(super) const OPENER8_BYTES: [u8; 8] = [b'"', b'\'', b'`', b'/', b'{', b'}', b'<', b'>'];
+/// Ordered for speed, pairing `'` with `/` and `<` with `>` (see `any_of` in `find/avx2.rs`).
+pub(super) const OPENER_BYTES: [u8; 6] = [b'"', b'`', b'\'', b'/', b'<', b'>'];
+
+/// Ordered for speed, pairing `'` with `/` and `<` with `>` (see `any_of` in `find/avx2.rs`).
+pub(super) const OPENER8_BYTES: [u8; 8] = [b'"', b'`', b'\'', b'/', b'{', b'}', b'<', b'>'];
 
 /// Lex the string literal opening at `s`. Returns the resume index. Shared
 /// by `carve` and `carve_jsx` JS mode.

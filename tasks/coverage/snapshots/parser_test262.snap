@@ -24615,13 +24615,13 @@ Negative Passed: 4653/4653 (100.00%)
     ╰────
   help: Add the missing closing delimiter
 
-  × Invalid regular expression: Unterminated capturing group
-    ╭─[test262/test/language/literals/regexp/named-groups/invalid-identity-escape-in-capture-u.js:16:2]
+  × Invalid regular expression: Invalid escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-identity-escape-in-capture-u.js:16:7]
  15 │ 
  16 │ /(?<a>\a)/u;
-    ·  ──────
+    ·       ─
     ╰────
-  help: Add the missing closing delimiter
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-2-u.js:16:11]
@@ -24991,13 +24991,13 @@ Negative Passed: 4653/4653 (100.00%)
  34 │ ╰─▶ */
     ╰────
 
-  × Invalid regular expression: Could not parse the entire pattern
-    ╭─[test262/test/language/literals/regexp/u-invalid-class-escape.js:24:3]
+  × Invalid regular expression: Invalid escape sequence
+    ╭─[test262/test/language/literals/regexp/u-invalid-class-escape.js:24:2]
  23 │ 
  24 │ /\c0/u;
-    ·   ▲
+    ·  ─
     ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[test262/test/language/literals/regexp/u-invalid-extended-pattern-char.js:21:2]
@@ -25007,13 +25007,13 @@ Negative Passed: 4653/4653 (100.00%)
     ╰────
   help: Check for unbalanced brackets or invalid escape sequences
 
-  × Invalid regular expression: Could not parse the entire pattern
-    ╭─[test262/test/language/literals/regexp/u-invalid-identity-escape.js:23:3]
+  × Invalid regular expression: Invalid escape sequence
+    ╭─[test262/test/language/literals/regexp/u-invalid-identity-escape.js:23:2]
  22 │ 
  23 │ /\M/u;
-    ·   ▲
+    ·  ─
     ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Invalid indexed reference
     ╭─[test262/test/language/literals/regexp/u-invalid-legacy-octal-escape.js:26:2]

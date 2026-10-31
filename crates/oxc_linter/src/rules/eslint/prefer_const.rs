@@ -7,6 +7,7 @@ use oxc_ast::{
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
@@ -136,7 +137,7 @@ impl Rule for PreferConst {
         if is_for_statement_init && decl.declarations.len() > 1 {
             let any_reassigned = decl.declarations.iter().any(|declarator| {
                 let has_init = declarator.init.is_some();
-                declarator.id.get_binding_identifiers().iter().any(|ident| {
+                declarator.id.any_binding_identifiers(&mut |ident| {
                     !self.should_be_const(ident.symbol_id(), has_init, is_for_in_of_init, ctx)
                 })
             });
@@ -148,11 +149,10 @@ impl Rule for PreferConst {
 
         let mut all_declarators_const = true;
         for (declarator_index, declarator) in decl.declarations.iter().enumerate() {
-            let binding_identifiers = declarator.id.get_binding_identifiers();
             let has_init = declarator.init.is_some();
             let is_destructuring = declarator.id.is_destructuring_pattern();
 
-            let all_const = binding_identifiers.iter().all(|ident| {
+            let all_const = declarator.id.all_binding_identifiers(&mut |ident| {
                 let symbol_id = ident.symbol_id();
                 self.should_be_const(symbol_id, has_init, is_for_in_of_init, ctx)
             });
@@ -162,7 +162,7 @@ impl Rule for PreferConst {
             if matches!(self.0.destructuring, Destructuring::All) && is_destructuring {
                 if all_const {
                     // Flag all variables in the destructuring pattern
-                    for ident in binding_identifiers {
+                    declarator.id.bound_names(&mut |ident| {
                         ctx.diagnostic_with_fix(
                             prefer_const_diagnostic(ident.name.as_str(), ident.span),
                             |fixer| {
@@ -176,12 +176,12 @@ impl Rule for PreferConst {
                                 )
                             },
                         );
-                    }
+                    });
                 }
                 // If not all_const, don't flag any of them in "all" mode
             } else {
                 // "any" mode (default): check each binding identifier independently
-                for ident in binding_identifiers {
+                declarator.id.bound_names(&mut |ident| {
                     if self.should_be_const(ident.symbol_id(), has_init, is_for_in_of_init, ctx) {
                         ctx.diagnostic_with_fix(
                             prefer_const_diagnostic(ident.name.as_str(), ident.span),
@@ -197,7 +197,7 @@ impl Rule for PreferConst {
                             },
                         );
                     }
-                }
+                });
             }
         }
     }

@@ -1,5 +1,5 @@
 /* A Css property name is postcss's glued token run, not necessarily an ident
-   (oxc-css-parser README "Acceptance"). Prettier prints it verbatim, lowercased. */
+   (oxc-css-parser AGENTS.md "Acceptance"). Prettier prints it verbatim, lowercased. */
 .hacks {
   *zoom: 1;
   _width: 200px;

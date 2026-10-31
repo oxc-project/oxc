@@ -18,6 +18,7 @@ use oxc_ast::ast as oxc;
 use oxc_ast::ast::BinaryOperator;
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, JSChar, JSStr, JSStrBuilder, Str, format_ident, static_ident};
 use oxc_syntax::xml_entities::{decode_entities, decode_entity};
@@ -168,32 +169,11 @@ fn collect_binding_names_from_pattern(
     scope: &ScopeResolver<'_, '_>,
     out: &mut FxHashSet<SymbolId>,
 ) {
-    match pattern {
-        oxc::BindingPattern::BindingIdentifier(id) => {
-            if let Some(symbol_id) = resolve_declared_binding(id, scope_id, scope) {
-                out.insert(symbol_id);
-            }
+    pattern.bound_names(&mut |id| {
+        if let Some(symbol_id) = resolve_declared_binding(id, scope_id, scope) {
+            out.insert(symbol_id);
         }
-        oxc::BindingPattern::ObjectPattern(obj) => {
-            for prop in &obj.properties {
-                collect_binding_names_from_pattern(&prop.value, scope_id, scope, out);
-            }
-            if let Some(rest) = &obj.rest {
-                collect_binding_names_from_pattern(&rest.argument, scope_id, scope, out);
-            }
-        }
-        oxc::BindingPattern::ArrayPattern(arr) => {
-            for elem in arr.elements.iter().flatten() {
-                collect_binding_names_from_pattern(elem, scope_id, scope, out);
-            }
-            if let Some(rest) = &arr.rest {
-                collect_binding_names_from_pattern(&rest.argument, scope_id, scope, out);
-            }
-        }
-        oxc::BindingPattern::AssignmentPattern(assign) => {
-            collect_binding_names_from_pattern(&assign.left, scope_id, scope, out);
-        }
-    }
+    });
 }
 
 // =============================================================================
@@ -2080,18 +2060,7 @@ fn simple_assignment_target_ref_from_simple<'b, 'a>(
         | oxc::SimpleAssignmentTarget::PrivateFieldExpression(_) => {
             Some(SimpleAssignmentTargetRef::Member(target.to_member_expression()))
         }
-        oxc::SimpleAssignmentTarget::TSAsExpression(node) => {
-            simple_assignment_target_expression_ref(&node.expression)
-        }
-        oxc::SimpleAssignmentTarget::TSSatisfiesExpression(node) => {
-            simple_assignment_target_expression_ref(&node.expression)
-        }
-        oxc::SimpleAssignmentTarget::TSNonNullExpression(node) => {
-            simple_assignment_target_expression_ref(&node.expression)
-        }
-        oxc::SimpleAssignmentTarget::TSTypeAssertion(node) => {
-            simple_assignment_target_expression_ref(&node.expression)
-        }
+        _ => target.get_expression().and_then(simple_assignment_target_expression_ref),
     }
 }
 
@@ -4871,15 +4840,10 @@ fn lower_jsx_element_expr<'a>(
             _ => Ident::from("fbt"),
         };
         // Get the opening element's name identifier and resolve any local binding.
-        let jsx_id_name = match &jsx_element.opening_element.name {
-            oxc::JSXElementName::Identifier(id) => Some((id.name.as_str(), id.span)),
-            oxc::JSXElementName::IdentifierReference(id) => Some((id.name.as_str(), id.span)),
-            _ => None,
-        };
-        if let Some((name, span)) = jsx_id_name {
-            let id_span = Some(span);
+        if let Some(name) = jsx_element.opening_element.name.get_identifier_name() {
+            let id_span = Some(jsx_element.opening_element.name.span());
             // JSX identifiers have no semantic reference, so resolve by name.
-            if builder.resolve_local_binding_by_name(name, id_span)?.is_some() {
+            if builder.resolve_local_binding_by_name(name.as_str(), id_span)?.is_some() {
                 return Err(diagnostics::local_fbt_tag(&tag_name, id_span));
             }
         }

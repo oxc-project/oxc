@@ -629,6 +629,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let optional_span = (cur_token.kind() == Kind::Question).then(|| {
             let span = cur_token.span();
             self.bump_any();
+            if !self.is_ts {
+                self.error(diagnostics::optional_class_member_in_ts(span));
+            }
             span
         });
 

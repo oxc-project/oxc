@@ -8,6 +8,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_formatter_css::CssVariant;
+use oxc_formatter_htmlish::HtmlishVariant;
 use oxc_formatter_json::JsonVariant;
 use oxc_span::{FileExtension, SourceType};
 
@@ -159,7 +160,7 @@ impl Language {
             Self::Yaml => Route::Native(NativeLanguage::Yaml),
             Self::Markdown => Route::Native(NativeLanguage::Markdown),
             Self::Toml => Route::Native(NativeLanguage::Toml),
-            Self::Html => Route::Prettier(PrettierLanguage::Html),
+            Self::Html => Route::Native(NativeLanguage::Html(HtmlishVariant::Html)),
             Self::AngularHtml => Route::Prettier(PrettierLanguage::Angular),
             Self::Vue => Route::Prettier(PrettierLanguage::Vue),
             Self::Svelte => Route::Prettier(PrettierLanguage::Svelte),
@@ -192,7 +193,6 @@ mod tests {
     #[test]
     fn prettier_fences_and_lsp_ids() {
         for (fence, parser) in [
-            ("html", "html"),
             ("angular", "angular"),
             ("angular-html", "angular"),
             ("vue", "vue"),

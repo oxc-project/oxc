@@ -158,16 +158,19 @@ fn parse_capturing_groups<'a>(
                     };
                     let alternative_path = tracker.get_alternative_path();
 
-                    // Check for duplicates with existing groups
-                    for existing in &named_groups {
-                        if existing.name == group_name {
-                            // Check if they can participate together
-                            if AlternativeTracker::can_participate(
-                                &existing.alternative_path,
-                                &alternative_path,
-                            ) {
-                                // True duplicate - return error
-                                return Err(vec![existing.span, (span_start, span_end)]);
+                    // A newly seen name cannot be a duplicate. Avoid scanning all prior
+                    // groups, which would be quadratic for many distinct names.
+                    if !group_names.insert(group_name) {
+                        for existing in &named_groups {
+                            if existing.name == group_name {
+                                // Check if they can participate together
+                                if AlternativeTracker::can_participate(
+                                    &existing.alternative_path,
+                                    &alternative_path,
+                                ) {
+                                    // True duplicate - return error
+                                    return Err(vec![existing.span, (span_start, span_end)]);
+                                }
                             }
                         }
                     }
@@ -177,8 +180,6 @@ fn parse_capturing_groups<'a>(
                         span: (span_start, span_end),
                         alternative_path,
                     });
-                    group_names.insert(group_name);
-
                     continue;
                 }
             }

@@ -234,30 +234,37 @@ fn binary_operation_evaluate_value_to<'a>(
             use crate::to_primitive::ToPrimitive;
             let left_to_primitive = left.to_primitive(ctx);
             let right_to_primitive = right.to_primitive(ctx);
-            if left_to_primitive.is_string() == Some(true)
-                || right_to_primitive.is_string() == Some(true)
-            {
-                let lval = left.evaluate_value_to_string(ctx)?;
-                let rval = right.evaluate_value_to_string(ctx)?;
-                // Concatenation repairs a surrogate pair split across the operand boundary.
-                return Some(ConstantValue::String(JSStr::from_js_strs_array_in(
-                    [lval, rval],
-                    ctx,
-                )));
+            match (left_to_primitive.is_string(), right_to_primitive.is_string()) {
+                (Some(true), _) | (_, Some(true)) => {
+                    let lval = left.evaluate_value_to_string(ctx)?;
+                    let rval = right.evaluate_value_to_string(ctx)?;
+                    // Concatenation repairs a surrogate pair split across the operand boundary.
+                    Some(ConstantValue::String(JSStr::from_js_strs_array_in([lval, rval], ctx)))
+                }
+                (Some(false), Some(false)) => {
+                    let left_to_numeric_type = left_to_primitive.to_numeric(ctx);
+                    let right_to_numeric_type = right_to_primitive.to_numeric(ctx);
+                    if left_to_numeric_type.is_number() && right_to_numeric_type.is_number() {
+                        let lval = left.evaluate_value_to_number(ctx)?;
+                        let rval = right.evaluate_value_to_number(ctx)?;
+                        return Some(ConstantValue::Number(lval + rval));
+                    }
+                    if left_to_numeric_type.is_bigint() && right_to_numeric_type.is_bigint() {
+                        let lval = left.evaluate_value_to_bigint(ctx)?;
+                        let rval = right.evaluate_value_to_bigint(ctx)?;
+                        return Some(ConstantValue::BigInt(lval + rval));
+                    }
+                    None
+                }
+                // An operand of unknown type may still evaluate to a string, which makes `+`
+                // concatenate. Use the evaluated primitive values instead. Evaluate the right
+                // operand first so an unknown operand in a left-nested chain bails out early.
+                _ => {
+                    let rval = right.evaluate_value(ctx)?;
+                    let lval = left.evaluate_value(ctx)?;
+                    add_primitive_values(lval, rval, ctx)
+                }
             }
-            let left_to_numeric_type = left_to_primitive.to_numeric(ctx);
-            let right_to_numeric_type = right_to_primitive.to_numeric(ctx);
-            if left_to_numeric_type.is_number() || right_to_numeric_type.is_number() {
-                let lval = left.evaluate_value_to_number(ctx)?;
-                let rval = right.evaluate_value_to_number(ctx)?;
-                return Some(ConstantValue::Number(lval + rval));
-            }
-            if left_to_numeric_type.is_bigint() && right_to_numeric_type.is_bigint() {
-                let lval = left.evaluate_value_to_bigint(ctx)?;
-                let rval = right.evaluate_value_to_bigint(ctx)?;
-                return Some(ConstantValue::BigInt(lval + rval));
-            }
-            None
         }
         BinaryOperator::Subtraction => {
             let lval = left.evaluate_value_to_number(ctx)?;
@@ -430,6 +437,32 @@ fn binary_operation_evaluate_value_to<'a>(
             Some(ConstantValue::Boolean(!value))
         }
         BinaryOperator::In => None,
+    }
+}
+
+/// Apply `+` to primitive values.
+///
+/// <https://tc39.es/ecma262/#sec-applystringornumericbinaryoperator>
+fn add_primitive_values<'a>(
+    left: ConstantValue<'a>,
+    right: ConstantValue<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    match (left, right) {
+        (ConstantValue::String(lval), rval) => {
+            let rval = rval.into_js_str(ctx)?;
+            Some(ConstantValue::String(JSStr::from_js_strs_array_in([lval, rval], ctx)))
+        }
+        (lval, ConstantValue::String(rval)) => {
+            let lval = lval.into_js_str(ctx)?;
+            Some(ConstantValue::String(JSStr::from_js_strs_array_in([lval, rval], ctx)))
+        }
+        (ConstantValue::BigInt(lval), ConstantValue::BigInt(rval)) => {
+            Some(ConstantValue::BigInt(lval + rval))
+        }
+        // Mixing BigInt and other numeric values throws.
+        (ConstantValue::BigInt(_), _) | (_, ConstantValue::BigInt(_)) => None,
+        (lval, rval) => Some(ConstantValue::Number(lval.to_number(ctx)? + rval.to_number(ctx)?)),
     }
 }
 

@@ -187,7 +187,7 @@ impl<'a> TypeScriptEnum {
         let id = param_binding.create_binding_pattern(ctx);
 
         // ((Foo) => {
-        let param = FormalParameter::new(SPAN, [], id, None, None, false, None, false, false, ctx);
+        let param = FormalParameter::new_plain(SPAN, id, ctx);
         let params = FormalParameters::boxed(
             SPAN,
             FormalParameterKind::ArrowFormalParameters,

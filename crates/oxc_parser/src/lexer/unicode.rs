@@ -37,8 +37,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             '\u{FFFD}' => self.handle_binary_file(),
             c if is_identifier_start_unicode(c) => {
                 let start_pos = self.source.position();
-                self.consume_char();
-                self.identifier_tail_after_unicode(start_pos);
+                self.identifier_tail_after_unicode(start_pos, c);
                 Kind::Ident
             }
             c if is_irregular_whitespace(c) => self.handle_irregular_whitespace(c),

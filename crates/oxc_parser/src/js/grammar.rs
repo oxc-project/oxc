@@ -98,7 +98,13 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
     #[inline(never)]
     fn cover(expr: ArrayExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
         let len = expr.elements.len();
-        let mut elements = ArenaVec::with_capacity_in(len, p);
+        // A final spread becomes `rest`, so it needs no slot in `elements`.
+        let capacity = len
+            - usize::from(matches!(
+                expr.elements.last(),
+                Some(ArrayExpressionElement::SpreadElement(_))
+            ));
+        let mut elements = ArenaVec::with_capacity_in(capacity, p);
         let mut rest = None;
 
         for (i, elem) in expr.elements.into_iter().enumerate() {
@@ -175,7 +181,13 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
     #[inline(never)]
     fn cover(expr: ObjectExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
         let len = expr.properties.len();
-        let mut properties = ArenaVec::with_capacity_in(len, p);
+        // A final spread becomes `rest`, so it needs no slot in `properties`.
+        let capacity = len
+            - usize::from(matches!(
+                expr.properties.last(),
+                Some(ObjectPropertyKind::SpreadProperty(_))
+            ));
+        let mut properties = ArenaVec::with_capacity_in(capacity, p);
         let mut rest = None;
 
         for (i, elem) in expr.properties.into_iter().enumerate() {
@@ -216,15 +228,16 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
 impl<'a, C: Config> CoverGrammar<'a, ObjectProperty<'a>, C> for AssignmentTargetProperty<'a> {
     fn cover(property: ObjectProperty<'a>, p: &mut ParserImpl<'a, C>) -> Self {
         if property.shorthand {
-            let binding = match property.key {
-                PropertyKey::StaticIdentifier(ident) => {
-                    let ident = ident.unbox();
-                    IdentifierReference::new(ident.span, ident.name, p)
-                }
+            let binding = match property.value {
+                Expression::Identifier(ident) => ident.unbox(),
                 _ => return p.unexpected(),
             };
             // convert `CoverInitializedName`
-            let init = p.state.cover_initialized_name.remove(&property.span.start).map(|e| e.right);
+            let init = p
+                .state
+                .cover_initialized_name
+                .remove(&property.span.start)
+                .map(|cover| cover.initializer);
             AssignmentTargetProperty::new_assignment_target_property_identifier(
                 property.span,
                 binding,

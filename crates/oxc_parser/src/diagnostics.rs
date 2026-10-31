@@ -1186,6 +1186,11 @@ parser_diagnostics! {
             .with_label(span)
     };
 
+    optional_class_member_in_ts(span: Span) => {
+        OxcDiagnostic::error("Optional class members can only be used in TypeScript files.")
+            .with_label(span)
+    };
+
     parameter_modifiers_in_ts(modifier: Modifier, allowed: Option<ModifierKinds>) => {
         ts_error("8012", "Parameter modifiers can only be used in TypeScript files.")
             .with_label(modifier.span())

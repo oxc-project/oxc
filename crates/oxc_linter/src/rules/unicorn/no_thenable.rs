@@ -6,6 +6,7 @@ use oxc_ast::{
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -215,34 +216,11 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
 }
 
 fn check_binding_pattern(pat: &BindingPattern, ctx: &LintContext) {
-    match pat {
-        BindingPattern::BindingIdentifier(bind) => {
-            if bind.name == "then" {
-                ctx.diagnostic(export(bind.span));
-            }
+    pat.bound_names(&mut |bind| {
+        if bind.name == "then" {
+            ctx.diagnostic(export(bind.span));
         }
-        BindingPattern::ObjectPattern(obj) => {
-            for prop in &obj.properties {
-                check_binding_pattern(&prop.value, ctx);
-            }
-            if let Some(elem) = obj.rest.as_ref() {
-                check_binding_pattern(&elem.argument, ctx);
-            }
-        }
-        BindingPattern::ArrayPattern(arr) => {
-            for pat in &arr.elements {
-                if let Some(pat) = pat.as_ref() {
-                    check_binding_pattern(pat, ctx);
-                }
-            }
-            if let Some(elem) = arr.rest.as_ref() {
-                check_binding_pattern(&elem.argument, ctx);
-            }
-        }
-        BindingPattern::AssignmentPattern(assign) => {
-            check_binding_pattern(&assign.left, ctx);
-        }
-    }
+    });
 }
 
 fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span::Span> {

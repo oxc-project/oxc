@@ -8,6 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::{FxBuildHasher, FxHashMap};
+use smallvec::SmallVec;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -71,6 +72,8 @@ declare_oxc_lint!(
     short_description = "Disallow duplicate keys in object literals.",
 );
 
+const INLINE_CAPACITY: usize = 8;
+
 impl Rule for NoDupeKeys {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ObjectExpression(obj_expr) = node.kind() else {
@@ -80,7 +83,14 @@ impl Rule for NoDupeKeys {
         if len <= 1 {
             return;
         }
-        let mut map = FxHashMap::with_capacity_and_hasher(len, FxBuildHasher);
+        let mut inline: SmallVec<
+            [(StaticPropertyName<'_>, (PropertyKind, Span)); INLINE_CAPACITY],
+        > = SmallVec::new();
+        // Bound linear searches to small objects; retain hashing for larger ones.
+        let mut map = FxHashMap::with_capacity_and_hasher(
+            if len > INLINE_CAPACITY { len } else { 0 },
+            FxBuildHasher,
+        );
         for prop in &obj_expr.properties {
             let ObjectPropertyKind::ObjectProperty(prop) = prop else {
                 continue;
@@ -91,7 +101,18 @@ impl Rule for NoDupeKeys {
             if is_proto_setter_property(prop, &name) {
                 continue;
             }
-            if let Some((prev_kind, prev_span)) = map.insert(name, (prop.kind, prop.key.span()))
+            let value = (prop.kind, prop.key.span());
+            let previous = if len <= INLINE_CAPACITY {
+                if let Some((_, previous)) = inline.iter_mut().find(|(key, _)| *key == name) {
+                    Some(std::mem::replace(previous, value))
+                } else {
+                    inline.push((name, value));
+                    None
+                }
+            } else {
+                map.insert(name, value)
+            };
+            if let Some((prev_kind, prev_span)) = previous
                 && (prev_kind == PropertyKind::Init
                     || prop.kind == PropertyKind::Init
                     || prev_kind == prop.kind)

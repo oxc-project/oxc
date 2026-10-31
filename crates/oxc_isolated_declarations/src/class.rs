@@ -765,8 +765,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         kind: BindingPattern<'a>,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
-        let parameter =
-            FormalParameter::new(SPAN, [], kind, None, None, false, None, false, false, self);
+        let parameter = FormalParameter::new_plain(SPAN, kind, self);
         FormalParameters::boxed(SPAN, FormalParameterKind::Signature, [parameter], None, self)
     }
 }
