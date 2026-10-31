@@ -12,6 +12,7 @@ impl Walk {
     }
 
     /// End the type region on top because the token after it belongs to the expression.
+    #[inline(always)]
     pub(super) fn end_region_for(&mut self) {
         if self.top_kind() != FrameKind::TypeRegion {
             return;

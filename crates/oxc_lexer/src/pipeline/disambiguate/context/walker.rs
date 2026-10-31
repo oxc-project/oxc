@@ -114,6 +114,7 @@ impl Walk {
         self.frames.last_mut().unwrap()
     }
 
+    #[inline(always)]
     pub(super) fn pop(&mut self) -> Frame {
         if self.frames.len() > 1 { self.frames.pop().unwrap() } else { *self.top() }
     }
@@ -197,6 +198,7 @@ impl Walk {
     }
 
     /// Pop concise arrow bodies sitting on top of the stack.
+    #[inline(always)]
     pub(super) fn pop_concise(&mut self) {
         while self.top_kind() == FrameKind::Concise {
             self.pop();

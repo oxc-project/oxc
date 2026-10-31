@@ -127,6 +127,7 @@ impl Walk {
         end
     }
 
+    #[inline(always)]
     fn asi(&mut self, tokens: &Tokens, pos: usize) {
         let cpu = BASELINE;
 
@@ -170,6 +171,7 @@ impl Walk {
     }
 
     /// Can the token at pos go on after a type that ended the previous line?
+    #[inline(always)]
     fn continues_after_type_break(&self, tokens: &Tokens, pos: usize) -> bool {
         let cpu = BASELINE;
 
