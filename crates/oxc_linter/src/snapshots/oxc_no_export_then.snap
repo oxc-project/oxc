@@ -1,0 +1,164 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:12]
+ 1 │ export let then;
+   ·            ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:12]
+ 1 │ export var then = 1;
+   ·            ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:14]
+ 1 │ export const then = () => {};
+   ·              ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:17]
+ 1 │ export function then() {}
+   ·                 ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:23]
+ 1 │ export async function then() {}
+   ·                       ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:14]
+ 1 │ export class then {}
+   ·              ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:20]
+ 1 │ let then; export { then };
+   ·                    ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:49]
+ 1 │ const callback = () => {}; export { callback as then };
+   ·                                                 ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:49]
+ 1 │ const callback = () => {}; export { callback as "then" };
+   ·                                                 ──────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:49]
+ 1 │ const callback = () => {}; export { callback as "th\u0065n" };
+   ·                                                 ───────────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:10]
+ 1 │ export { then } from './module';
+   ·          ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:22]
+ 1 │ export { callback as then } from './module';
+   ·                      ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:21]
+ 1 │ export { default as then } from './module';
+   ·                     ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:13]
+ 1 │ export * as then from './module';
+   ·             ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:59]
+ 1 │ import { callback } from './module'; export { callback as then };
+   ·                                                           ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:62]
+ 1 │ import * as callbacks from './module'; export { callbacks as then };
+   ·                                                              ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:16]
+ 1 │ export const { then } = object;
+   ·                ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:26]
+ 1 │ export const { callback: then } = object;
+   ·                          ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:26]
+ 1 │ export const { nested: { then = 1 } } = object;
+   ·                          ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:25]
+ 1 │ export const [other, ...then] = array;
+   ·                         ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:13]
+ 1 │ export enum then { Value }
+   ·             ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:18]
+ 1 │ export namespace then { export const value = 1; }
+   ·                  ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
+
+  ⚠ oxc(no-export-then): Do not export a binding named `then`.
+   ╭─[no_export_then.tsx:1:51]
+ 1 │ interface then {} const then = () => {}; export { then };
+   ·                                                   ────
+   ╰────
+  help: Rename this export to prevent unexpected behavior when the module is dynamically imported.
