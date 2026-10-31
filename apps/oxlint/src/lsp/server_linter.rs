@@ -37,7 +37,6 @@ use crate::{
         code_actions::{
             CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
             apply_all_fix_code_action, apply_dangerous_fix_code_action, apply_fix_code_actions,
-            fix_all_text_edit,
         },
         commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
         error_with_position::{
@@ -590,18 +589,8 @@ impl Tool for ServerLinter {
             return Ok(None);
         }
 
-        let text_edits = fix_all_text_edit(actions.into_iter());
-
-        if text_edits.is_empty() {
-            return Ok(None);
-        }
-
-        Ok(Some(WorkspaceEdit {
-            #[expect(clippy::disallowed_types)]
-            changes: Some(std::collections::HashMap::from([(uri, text_edits)])),
-            document_changes: None,
-            change_annotations: None,
-        }))
+        Ok(apply_all_fix_code_action(actions.into_iter(), uri, self.rules_customization.as_ref())
+            .and_then(|action| action.edit))
     }
 
     fn get_code_actions_or_commands(&self, params: CodeActionParams) -> Vec<CodeActionResponse> {
@@ -827,7 +816,9 @@ impl ServerLinter {
         // - tsgolint internal diagnostics
         let mut code_actions = vec![];
         for report in reports {
-            diagnostics.push(report.diagnostic);
+            if let Some(diagnostic) = report.diagnostic {
+                diagnostics.push(diagnostic);
+            }
 
             if let Some(code_action) = report.code_action {
                 code_actions.push(code_action);
@@ -860,7 +851,7 @@ impl ServerLinter {
             match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
                 Ok(results) => results
                     .into_iter()
-                    .filter_map(|message| {
+                    .map(|message| {
                         message_to_lsp_diagnostic(
                             message,
                             uri,
@@ -1140,13 +1131,15 @@ mod test {
     use rustc_hash::FxHashSet;
     use serde_json::json;
     use tower_lsp_server::gen_lsp_types::{
-        CodeActionContext, CodeActionKind, CodeActionTriggerKind, Position, Range,
+        CodeActionContext, CodeActionKind, CodeActionResponse, CodeActionTriggerKind, Position,
+        Range,
     };
 
     use crate::lsp::{
         code_actions::{
             CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
         },
+        commands::FIX_ALL_COMMAND_ID,
         server_linter::ServerLinterBuilder,
         tester::{Tester, get_file_path},
     };
@@ -1625,6 +1618,92 @@ mod test {
             }),
         );
         tester.test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
+    fn test_rules_customization_hidden_diagnostics_autofix() {
+        for (severity, autofix, expect_fix) in [
+            ("off", Some(true), true),
+            ("off", None, true),
+            ("off", Some(false), false),
+            ("hint", Some(true), true),
+            ("hint", Some(false), false),
+        ] {
+            let tester = Tester::new(
+                "fixtures/lsp/rules_customization/silent_autofix",
+                json!({
+                    "rulesCustomization": {
+                        "typescript/no-import-type-side-effects": {
+                            "severity": severity,
+                            "autofix": autofix
+                        }
+                    }
+                }),
+            );
+            let linter = tester.create_linter();
+            let uri = tester.get_file_uri("test.ts");
+            let reports = linter
+                .run_diagnostic(TextDocument {
+                    uri: &uri,
+                    language_id: LanguageId::default(),
+                    text: Some("import { type Foo } from './foo.ts';".into()),
+                })
+                .unwrap();
+            assert_eq!(reports.len(), 1);
+            assert_eq!(reports[0].1.len(), usize::from(severity != "off"));
+
+            for kind in [CodeActionKind::SourceFixAll, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC] {
+                let actions = linter.get_code_actions_or_commands(code_action_params(
+                    &uri,
+                    Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX)),
+                    CodeActionContext { only: Some(vec![kind]), ..Default::default() },
+                ));
+                assert_eq!(actions.len(), usize::from(expect_fix), "{severity}, {autofix:?}");
+                if expect_fix {
+                    let CodeActionResponse::CodeAction(action) = &actions[0] else {
+                        panic!("expected a fix-all code action");
+                    };
+                    let edits = &action.edit.as_ref().unwrap().changes.as_ref().unwrap()[&uri];
+                    assert_eq!(edits.len(), 1);
+                    assert_eq!(edits[0].new_text, "import type { Foo } from './foo.ts';");
+                }
+            }
+
+            let edit = linter
+                .execute_command(FIX_ALL_COMMAND_ID, vec![json!({ "uri": uri.as_str() })])
+                .unwrap();
+            assert_eq!(edit.is_some(), expect_fix, "{severity}, {autofix:?}");
+            if let Some(edit) = edit {
+                let edits = &edit.changes.as_ref().unwrap()[&uri];
+                assert_eq!(edits.len(), 1);
+                assert_eq!(edits[0].new_text, "import type { Foo } from './foo.ts';");
+            }
+        }
+    }
+
+    #[test]
+    fn test_rules_customization_hidden_related_diagnostics() {
+        for severity in ["off", "hint"] {
+            let tester = Tester::new(
+                "fixtures/lsp/code_action",
+                json!({ "rulesCustomization": { "no-dupe-keys": { "severity": severity } } }),
+            );
+            let linter = tester.create_linter();
+            let uri = tester.get_file_uri("test.js");
+            let reports = linter
+                .run_diagnostic(TextDocument {
+                    uri: &uri,
+                    language_id: LanguageId::default(),
+                    text: Some("console.log({ foo: 1, foo: 2 });".into()),
+                })
+                .unwrap();
+            assert_eq!(reports.len(), 1);
+            if severity == "off" {
+                assert_eq!(reports[0].1, []);
+            } else {
+                assert!(reports[0].1.len() > 1, "expected related diagnostics");
+            }
+        }
     }
 
     #[test]

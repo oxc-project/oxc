@@ -19,7 +19,7 @@ use crate::lsp::{
 
 #[derive(Debug, Clone, Default)]
 pub struct DiagnosticReport {
-    pub diagnostic: Diagnostic,
+    pub diagnostic: Option<Diagnostic>,
     pub code_action: Option<LinterCodeAction>,
 }
 
@@ -61,7 +61,7 @@ impl TryFrom<RuleCustomizationSeverity> for DiagnosticSeverity {
             RuleCustomizationSeverity::Hint => Ok(DiagnosticSeverity::Hint),
             RuleCustomizationSeverity::Info => Ok(DiagnosticSeverity::Information),
             RuleCustomizationSeverity::Off => Err(
-                "Off severity should not be converted to DiagnosticSeverity as it means the rule is disabled and should not produce diagnostics.",
+                "Off severity should not be converted to DiagnosticSeverity as it means the diagnostic is hidden.",
             ),
         }
     }
@@ -79,70 +79,69 @@ pub fn message_to_lsp_diagnostic(
     uri: &Uri,
     source_text: &str,
     rules_customization: Option<&RulesCustomization>,
-) -> Option<DiagnosticReport> {
-    let severity = if let Some(rules_customization) = rules_customization {
-        if let Some(severity) = rules_customization.get_severity_for_rule(&message.error.code) {
-            // filter off rules early
-            DiagnosticSeverity::try_from(severity).ok()?
-        } else {
-            severity_to_lsp_severity(message.error.severity)
-        }
-    } else {
-        severity_to_lsp_severity(message.error.severity)
-    };
-
-    let related_information = if message.error.labels.is_empty() {
-        None
-    } else {
-        Some(
-            message
-                .error
-                .labels
-                .iter()
-                .map(|span| {
-                    let offset = span.offset();
-                    let start_position = lsp_offset_to_position(source_text, offset);
-                    let end_position = lsp_offset_to_position(source_text, offset + span.len());
-
-                    DiagnosticRelatedInformation {
-                        location: Location {
-                            uri: uri.clone(),
-                            range: Range::new(start_position, end_position),
-                        },
-                        message: span
-                            .label()
-                            .map_or_else(String::new, std::string::ToString::to_string),
-                    }
-                })
-                .collect(),
-        )
+) -> DiagnosticReport {
+    let severity = match rules_customization
+        .and_then(|customization| customization.get_severity_for_rule(&message.error.code))
+    {
+        Some(severity) => DiagnosticSeverity::try_from(severity).ok(),
+        None => Some(severity_to_lsp_severity(message.error.severity)),
     };
 
     let start_position = lsp_offset_to_position(source_text, message.span.start);
     let end_position = lsp_offset_to_position(source_text, message.span.end);
     let range = Range::new(start_position, end_position);
 
-    let code = message.error.code.to_string();
-    let code_description = message
-        .error
-        .url
-        .as_ref()
-        .and_then(|url| url.parse().ok())
-        .map(|href| CodeDescription { href });
+    // Hiding a diagnostic must not discard its fixes: autofix is customized separately.
+    let diagnostic = severity.map(|severity| {
+        let related_information = if message.error.labels.is_empty() {
+            None
+        } else {
+            Some(
+                message
+                    .error
+                    .labels
+                    .iter()
+                    .map(|span| {
+                        let offset = span.offset();
+                        let start_position = lsp_offset_to_position(source_text, offset);
+                        let end_position = lsp_offset_to_position(source_text, offset + span.len());
 
-    let diagnostic_message = get_oxc_diagnostic_full_message(&message.error);
+                        DiagnosticRelatedInformation {
+                            location: Location {
+                                uri: uri.clone(),
+                                range: Range::new(start_position, end_position),
+                            },
+                            message: span
+                                .label()
+                                .map_or_else(String::new, std::string::ToString::to_string),
+                        }
+                    })
+                    .collect(),
+            )
+        };
 
-    let diagnostic = Diagnostic {
-        range,
-        severity: Some(severity),
-        code: Some(Code::String(code)),
-        message: LspMessage::String(diagnostic_message),
-        source: Some("oxc".into()),
-        code_description,
-        related_information,
-        tags: None,
-        data: None,
-    };
+        let code = message.error.code.to_string();
+        let code_description = message
+            .error
+            .url
+            .as_ref()
+            .and_then(|url| url.parse().ok())
+            .map(|href| CodeDescription { href });
+
+        let diagnostic_message = get_oxc_diagnostic_full_message(&message.error);
+
+        Diagnostic {
+            range,
+            severity: Some(severity),
+            code: Some(Code::String(code)),
+            message: LspMessage::String(diagnostic_message),
+            source: Some("oxc".into()),
+            code_description,
+            related_information,
+            tags: None,
+            data: None,
+        }
+    });
 
     let mut fixed_content = Vec::with_capacity(message.fixes.len());
 
@@ -173,7 +172,7 @@ pub fn message_to_lsp_diagnostic(
         Some(LinterCodeAction { range, fixed_content })
     };
 
-    Some(DiagnosticReport { diagnostic, code_action })
+    DiagnosticReport { diagnostic, code_action }
 }
 
 fn fix_to_fixed_content(fix: Fix, source_text: &str, fix_kind: FixedContentKind) -> FixedContent {
@@ -204,16 +203,19 @@ pub fn generate_inverted_diagnostics(
     uri: &Uri,
 ) -> Vec<DiagnosticReport> {
     let mut inverted_diagnostics = vec![];
-    for d in diagnostics {
-        let Some(related_info) = &d.diagnostic.related_information else {
+    for report in diagnostics {
+        let Some(diagnostic) = &report.diagnostic else {
+            continue;
+        };
+        let Some(related_info) = &diagnostic.related_information else {
             continue;
         };
         let related_information = Some(vec![DiagnosticRelatedInformation {
-            location: Location { uri: uri.clone(), range: d.diagnostic.range },
+            location: Location { uri: uri.clone(), range: diagnostic.range },
             message: "original diagnostic".to_string(),
         }]);
         for r in related_info {
-            if r.location.range == d.diagnostic.range {
+            if r.location.range == diagnostic.range {
                 continue;
             }
             // If there is no message content for this span, then don't produce an additional diagnostic
@@ -222,17 +224,17 @@ pub fn generate_inverted_diagnostics(
                 continue;
             }
             inverted_diagnostics.push(DiagnosticReport {
-                diagnostic: Diagnostic {
+                diagnostic: Some(Diagnostic {
                     range: r.location.range,
                     severity: Some(DiagnosticSeverity::Hint),
                     code: None,
                     message: LspMessage::String(r.message.clone()),
-                    source: d.diagnostic.source.clone(),
+                    source: diagnostic.source.clone(),
                     code_description: None,
                     related_information: related_information.clone(),
                     tags: None,
                     data: None,
-                },
+                }),
                 code_action: None,
             });
         }
@@ -318,7 +320,7 @@ fn build_unused_disable_diagnostic_report(
     let range = Range::new(start_position, end_position);
 
     DiagnosticReport {
-        diagnostic: Diagnostic {
+        diagnostic: Some(Diagnostic {
             range,
             severity: Some(severity),
             code: Some("".into()),
@@ -328,7 +330,7 @@ fn build_unused_disable_diagnostic_report(
             related_information: None,
             tags: None,
             data: None,
-        },
+        }),
         code_action: fix.map(|fix| LinterCodeAction {
             range,
             fixed_content: vec![fix_to_fixed_content(
