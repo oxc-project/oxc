@@ -1,0 +1,14 @@
+{
+  "plugins": ["typescript"],
+  "categories": { "correctness": "error" },
+  "overrides": [
+    {
+      "files": ["src/**"],
+      "plugins": ["jsx-a11y"]
+    },
+    {
+      "files": ["src/components/Logo.jsx"],
+      "rules": { "jsx-a11y/alt-text": "off" }
+    }
+  ]
+}
