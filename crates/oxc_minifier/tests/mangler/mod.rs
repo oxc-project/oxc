@@ -137,6 +137,7 @@ fn mangler() {
         "function _() { var x; try { throw 0 } catch { var e } }",     // e should not shadow x
         "function _(x) { function g(y) { try { throw 0 } catch (y) { var y = 2; y } return x } }", // catch y should use the name of parameter y
         "function _() { var y; { let z; try { throw 0 } catch (y) { var y = 2; z } } }", // z should not use the name of var y
+        "function _() { var y; try { throw 0 } catch (y) { var y = 2; () => { let w; y } } }", // w should not use the name of var y
         "function _() { var x; var y; }", // x and y should have different names
         "function _() { var x; let y; }", // x and y should have different names
         "function _() { { var x; var y; } }", // x and y should have different names

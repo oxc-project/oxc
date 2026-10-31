@@ -192,6 +192,20 @@ function _() {
 	}
 }
 
+function _() { var y; try { throw 0 } catch (y) { var y = 2; () => { let w; y } } }
+function _() {
+	var e;
+	try {
+		throw 0;
+	} catch (e) {
+		var e = 2;
+		() => {
+			let t;
+			e;
+		};
+	}
+}
+
 function _() { var x; var y; }
 function _() {
 	var e;

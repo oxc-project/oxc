@@ -681,18 +681,8 @@ impl<'a> SlotAssignment<'a> {
             }
 
             let scope_id_index = scope_id.index();
-            for (&symbol_id, &reusable_slot) in tmp_bindings.iter().zip(&reusable_slots) {
+            for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
                 debug_assert!(constraints.is_mangle_candidate(symbol_id, scoping));
-                let assigned_slot = match catch_param_outer_bindings
-                    .iter()
-                    .find(|&&(catch_param, _)| catch_param == symbol_id)
-                {
-                    // The catch parameter must use the name of the outer binding, because the
-                    // printed `var` declares that name in the outer scope as well.
-                    Some(&(_, outer)) if slots[outer.index()] == SLOT_UNASSIGNED => continue,
-                    Some(&(_, outer)) => slots[outer.index()],
-                    None => reusable_slot,
-                };
                 slots[symbol_id.index()] = assigned_slot;
 
                 // `var` is hoisted, so include the scope where it is declared
@@ -705,19 +695,12 @@ impl<'a> SlotAssignment<'a> {
                     .map(|r| ast_nodes.get_node(r.declaration).scope_id());
                 let referenced_scope_ids =
                     scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
-                // The `var` in `catch (e) { var e }` also declares the outer binding `e`, so
-                // the outer binding is live from that catch clause up to its own scope.
-                let catch_scope_ids = catch_param_outer_bindings
-                    .iter()
-                    .filter(|&&(_, outer)| outer == symbol_id)
-                    .map(|&(catch_param, _)| scoping.symbol_scope_id(catch_param));
 
                 // The scopes this symbol is alive in: for each use, walk up to (but not including)
                 // `scope_id`, marking the descendant scopes it passes through.
                 let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
                 for used_scope_id in referenced_scope_ids
                     .chain(redeclared_scope_ids)
-                    .chain(catch_scope_ids)
                     .chain([scope_id, declared_scope_id])
                 {
                     for ancestor_id in scoping.scope_ancestors(used_scope_id) {
@@ -744,6 +727,38 @@ impl<'a> SlotAssignment<'a> {
                 }
             }
 
+            // The `var` in `catch (e) { var e }` also declares the outer binding `e`, so the outer
+            // binding is live in the catch clause and in every scope that uses the catch parameter.
+            for &(catch_param, outer) in &catch_param_outer_bindings {
+                let outer_slot = slots[outer.index()];
+                if outer_slot == SLOT_UNASSIGNED || scoping.symbol_scope_id(outer) != scope_id {
+                    continue;
+                }
+                let slot_liveness_bitset = &mut slot_liveness[outer_slot as usize];
+                let used_scope_ids = scoping
+                    .get_resolved_references(catch_param)
+                    .map(Reference::scope_id)
+                    .chain(
+                        scoping
+                            .symbol_redeclarations(catch_param)
+                            .iter()
+                            .map(|r| ast_nodes.get_node(r.declaration).scope_id()),
+                    )
+                    .chain([scoping.symbol_scope_id(catch_param)]);
+                for used_scope_id in used_scope_ids {
+                    for ancestor_id in scoping.scope_ancestors(used_scope_id) {
+                        let ancestor_index = ancestor_id.index();
+                        if ancestor_index == scope_id_index
+                            || ancestor_set.has_bit(ancestor_index)
+                            || slot_liveness_bitset.has_bit(ancestor_index)
+                        {
+                            break;
+                        }
+                        slot_liveness_bitset.set_bit(ancestor_index);
+                    }
+                }
+            }
+
             // Repair an orphaned named-fn-expr name: a same-named body declaration
             // (`var foo`, parameter `foo`) overwrites the fn-expr's binding-map entry,
             // so the fn-expr symbol never appears in `bindings` and the main pass leaves
@@ -761,6 +776,15 @@ impl<'a> SlotAssignment<'a> {
                 && slots[shadower.index()] != SLOT_UNASSIGNED
             {
                 slots[id.symbol_id().index()] = slots[shadower.index()];
+            }
+        }
+
+        // The catch parameter must use the name of the outer binding, because the printed `var`
+        // declares that name in the outer scope as well. If the outer binding keeps its name, the
+        // catch parameter keeps its name too.
+        for &(catch_param, outer) in &catch_param_outer_bindings {
+            if slots[catch_param.index()] != SLOT_UNASSIGNED {
+                slots[catch_param.index()] = slots[outer.index()];
             }
         }
 
