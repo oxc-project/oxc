@@ -34,7 +34,11 @@ describe("oxfmt CLI", () => {
         reject: false,
       });
 
-      const pids = (await fs.readFile(pidFile, "utf8")).trim().split("\n").map(Number);
+      const pids = (await fs.readFile(pidFile, "utf8")).split("\n").filter(Boolean).map(Number);
+      // Never signal PID 0 or a negative PID: that would target a process group, including this one.
+      if (pids.length === 0 || !pids.every((pid) => Number.isInteger(pid) && pid > 0)) {
+        throw new Error(`No valid worker PID was recorded: ${JSON.stringify(pids)}`);
+      }
       // Workers exit after the CLI is gone, so poll for up to 2 s.
       let alive = pids;
       for (let i = 0; i < 40 && alive.length > 0; i++) {
