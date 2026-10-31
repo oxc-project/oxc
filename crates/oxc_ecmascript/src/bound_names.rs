@@ -1,7 +1,7 @@
 use oxc_ast::ast::{
     ArrayPattern, AssignmentPattern, BindingIdentifier, BindingPattern, BindingRestElement, Class,
     Declaration, ExportDeclaration, FormalParameter, FormalParameters, Function, ImportDeclaration,
-    ImportDeclarationSpecifier, ModuleDeclaration, ObjectPattern, VariableDeclaration,
+    ModuleDeclaration, ObjectPattern, VariableDeclaration,
 };
 
 /// [`BoundName`](https://tc39.es/ecma262/#sec-static-semantics-boundnames)
@@ -142,17 +142,7 @@ impl<'a> BoundNames<'a> for ImportDeclaration<'a> {
     fn bound_names<F: FnMut(&BindingIdentifier<'a>)>(&self, f: &mut F) {
         if let Some(specifiers) = &self.specifiers {
             for specifier in specifiers {
-                match specifier {
-                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                        f(&specifier.local);
-                    }
-                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                        f(&specifier.local);
-                    }
-                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
-                        f(&specifier.local);
-                    }
-                }
+                f(specifier.local());
             }
         }
     }
