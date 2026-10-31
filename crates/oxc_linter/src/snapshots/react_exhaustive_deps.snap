@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ react-hooks(exhaustive-deps): React hook useCallback depends on `value`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function MyComponent(props) {
  2 │           const value = props.flag ? {} : {};
    ·                 ──┬──
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useCallback depends on `value`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function MyComponent(props) {
  2 │           const value = props.cached || {};
    ·                 ──┬──
@@ -311,7 +311,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `local2`, which changes every render
-   ╭─[exhaustive_deps.tsx:6:23]
+   ╭─[exhaustive_deps.tsx:3:17]
  2 │           const local1 = {};
  3 │           const local2 = {};
    ·                 ───┬──
@@ -760,7 +760,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Either include it or remove the dependency array.
 
   ⚠ react-hooks(exhaustive-deps): React hook useCallback depends on `local`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:25]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function MyComponent() {
  2 │           const local = {id: 42};
    ·                 ──┬──
@@ -864,7 +864,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the duplicate dependency from the array.
 
   ⚠ react-hooks(exhaustive-deps): React hook useEffect depends on `local`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function MyComponent() {
  2 │           const local = {};
    ·                 ──┬──
@@ -905,7 +905,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Either include it or remove the dependency array.
 
   ⚠ react-hooks(exhaustive-deps): React hook useCallback depends on `local1`, which changes every render
-   ╭─[exhaustive_deps.tsx:3:34]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function MyComponent() {
  2 │           const local1 = {};
    ·                 ───┬──
@@ -2179,7 +2179,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useEffect depends on `handleNext2`, which changes every render
-    ╭─[exhaustive_deps.tsx:11:28]
+    ╭─[exhaustive_deps.tsx:5:20]
   4 │           };
   5 │           function handleNext2() {
     ·                    ─────┬─────
@@ -2640,7 +2640,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Either include it or remove the dependency array.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:3:31]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Component() {
  2 │           const foo = {};
    ·                 ─┬─
@@ -2653,7 +2653,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:3:31]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Component() {
  2 │           const foo = [];
    ·                 ─┬─
@@ -2666,7 +2666,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:3:31]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Component() {
  2 │           const foo = () => {};
    ·                 ─┬─
@@ -2679,7 +2679,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:3:31]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Component() {
  2 │           const foo = function bar(){};
    ·                 ─┬─
@@ -2692,7 +2692,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:3:31]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Component() {
  2 │           const foo = class {};
    ·                 ─┬─
@@ -2705,7 +2705,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:3:31]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Component() {
  2 │           const foo = true ? {} : 'fine';
    ·                 ─┬─
@@ -2718,7 +2718,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:3:31]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Component() {
  2 │           const foo = bar || {};
    ·                 ─┬─
@@ -2731,7 +2731,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:3:31]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Component() {
  2 │           const foo = bar ?? {};
    ·                 ─┬─
@@ -2744,7 +2744,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:3:31]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Component() {
  2 │           const foo = bar && {};
    ·                 ─┬─
@@ -2757,7 +2757,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:3:31]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Component() {
  2 │           const foo = bar ? baz ? {} : null : null;
    ·                 ─┬─
@@ -2770,7 +2770,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:3:31]
+   ╭─[exhaustive_deps.tsx:2:15]
  1 │ function Component() {
  2 │           let foo = {};
    ·               ─┬─
@@ -2783,7 +2783,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:3:31]
+   ╭─[exhaustive_deps.tsx:2:15]
  1 │ function Component() {
  2 │           var foo = {};
    ·               ─┬─
@@ -2796,7 +2796,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useCallback depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Component() {
  2 │           const foo = {};
    ·                 ─┬─
@@ -2811,7 +2811,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useEffect depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Component() {
  2 │           const foo = {};
    ·                 ─┬─
@@ -2826,7 +2826,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useLayoutEffect depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Component() {
  2 │           const foo = {};
    ·                 ─┬─
@@ -2858,7 +2858,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useEffect depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Foo(section) {
  2 │           const foo = section.section_components?.edges ?? [];
    ·                 ─┬─
@@ -2890,7 +2890,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Foo() {
  2 │           const foo = <>Hi!</>;
    ·                 ─┬─
@@ -2905,7 +2905,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Foo() {
  2 │           const foo = <div>Hi!</div>;
    ·                 ─┬─
@@ -2920,7 +2920,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Foo() {
  2 │           const foo = bar = {};
    ·                 ─┬─
@@ -2935,7 +2935,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Foo() {
  2 │           const foo = new String('foo'); // Note 'foo' will be boxed, and thus an object and thus compared by reference.
    ·                 ─┬─
@@ -2950,7 +2950,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Foo() {
  2 │           const foo = new Map([]);
    ·                 ─┬─
@@ -2965,7 +2965,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Foo() {
  2 │           const foo = /reg/;
    ·                 ─┬─
@@ -2980,7 +2980,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useMemo depends on `Bar`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Foo() {
  2 │           class Bar {};
    ·                 ─┬─
@@ -2995,7 +2995,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
   ⚠ react-hooks(exhaustive-deps): React hook useLayoutEffect depends on `foo`, which changes every render
-   ╭─[exhaustive_deps.tsx:5:15]
+   ╭─[exhaustive_deps.tsx:2:17]
  1 │ function Foo() {
  2 │           const foo = {};
    ·                 ─┬─
