@@ -68,38 +68,77 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             self.id.bound_names(&mut |ident| {
                 let span = ident.span;
                 let name = ident.name;
-                let mut declared_symbol_id = None;
+                let mut declared_symbol = None;
 
+                // First validate every StatementList that contains this declaration in its
+                // VarDeclaredNames. Selecting a symbol to reuse is deliberately side-effect free:
+                // mutating bindings while walking could hide a later conflict or make the target
+                // check observe a binding that was not originally there.
                 for &scope_id in &var_scope_ids {
                     // Type-only bindings (type aliases, interfaces) live in a separate
                     // declaration space, so a hoisted `var` must not merge into them.
-                    if let Some(symbol_id) =
-                        builder.check_redeclaration(scope_id, span, name, excludes)
+                    //
+                    // A block-level function is lexical in that block's StatementList.
+                    // A `var` nested anywhere in that StatementList contributes to its
+                    // VarDeclaredNames, so crossing that lexical function while hoisting is
+                    // a syntax error. Function + var remains allowed in the target var scope.
+                    let scope_excludes =
+                        if builder.lexical_function_bindings.contains(&(scope_id, name)) {
+                            excludes | SymbolFlags::Function
+                        } else {
+                            excludes
+                        };
+                    let Some(symbol_id) =
+                        builder.check_redeclaration(scope_id, span, name, scope_excludes)
+                    else {
+                        continue;
+                    };
+
+                    if declared_symbol.is_none()
                         && builder.scoping.symbol_flags(symbol_id).can_be_referenced_by_value()
                         && builder.scoping.symbol_flags(symbol_id).is_value()
                     {
-                        builder.add_redeclare_variable(symbol_id, includes, span);
-                        declared_symbol_id = Some(symbol_id);
-
-                        // Hoist current symbol to target scope when it is not already declared
-                        // in the target scope.
-                        if !builder.scoping.scope_has_binding(target_scope_id, name) {
-                            // remove current scope binding and add to target scope
-                            // avoid same symbols appear in multi-scopes
-                            builder.scoping.remove_binding(scope_id, name);
-                            builder.scoping.add_binding(target_scope_id, name, symbol_id);
-                            builder.scoping.set_symbol_scope_id(symbol_id, target_scope_id);
-                        }
-                        break;
+                        declared_symbol = Some((scope_id, symbol_id));
                     }
                 }
 
-                // If a variable is already declared in the hoisted scopes,
-                // we don't need to create another symbol with the same name
-                // to make sure they point to the same symbol.
-                let symbol_id = declared_symbol_id.unwrap_or_else(|| {
-                    builder.declare_symbol_on_scope(span, name, target_scope_id, includes, excludes)
-                });
+                // At module top level, FunctionDeclarations are lexical even though `var`
+                // targets the same top scope. Validate the target independently of whether an
+                // intermediate scope supplied the symbol that this `var` will reuse.
+                let target_excludes =
+                    if builder.lexical_function_bindings.contains(&(target_scope_id, name)) {
+                        excludes | SymbolFlags::Function
+                    } else {
+                        excludes
+                    };
+                let symbol_id = if let Some((scope_id, symbol_id)) = declared_symbol {
+                    // An intermediate candidate means `declare_symbol_on_scope` will not run, so
+                    // validate the untouched target explicitly before moving anything. Keeping this
+                    // on the uncommon candidate path avoids an extra target lookup for ordinary vars.
+                    let _ =
+                        builder.check_redeclaration(target_scope_id, span, name, target_excludes);
+                    builder.add_redeclare_variable(symbol_id, includes, span);
+
+                    // Preserve the existing recovery model: the nearest reusable value binding
+                    // supplies this declaration's symbol. Only move it after all early-error
+                    // checks have observed the original scope graph.
+                    if !builder.scoping.scope_has_binding(target_scope_id, name) {
+                        builder.scoping.remove_binding(scope_id, name);
+                        builder.scoping.add_binding(target_scope_id, name, symbol_id);
+                        builder.scoping.set_symbol_scope_id(symbol_id, target_scope_id);
+                    }
+                    symbol_id
+                } else {
+                    // Common path: declaration performs the target check and creates/merges the
+                    // symbol in one lookup, exactly as before this change.
+                    builder.declare_symbol_on_scope(
+                        span,
+                        name,
+                        target_scope_id,
+                        includes,
+                        target_excludes,
+                    )
+                };
                 ident.symbol_id.set(Some(symbol_id));
 
                 // Finally, add the variable to all hoisted scopes
@@ -159,9 +198,11 @@ impl<'a> Binder<'a> for Function<'a> {
                 includes |= SymbolFlags::AsyncOrGeneratorFunction;
             }
 
+            let is_annex_b_if_function =
+                is_declaration && is_function_decl_part_of_if_statement(self, builder);
             let excludes = if builder.source_type.is_typescript() {
                 SymbolFlags::FunctionExcludes
-            } else if is_declaration && is_function_decl_part_of_if_statement(self, builder) {
+            } else if is_annex_b_if_function {
                 SymbolFlags::empty()
             } else {
                 // `var x; function x() {}` is valid in non-strict mode, but `TypeScript`
@@ -174,6 +215,21 @@ impl<'a> Binder<'a> for Function<'a> {
             ident.symbol_id.set(Some(symbol_id));
 
             let scope_flags = builder.current_scope_flags();
+
+            // A FunctionDeclaration contributes to LexicallyDeclaredNames in block scopes
+            // and at module top level. Annex B.3.3 treats a legacy function used directly as
+            // an `if` branch as if it were wrapped in a synthetic block, so it does not
+            // create this lexical collision in the surrounding StatementList.
+            let is_lexical_function_scope =
+                !scope_flags.is_var() || (builder.source_type.is_module() && scope_flags.is_top());
+            if builder.check_syntax_error()
+                && !builder.source_type.is_typescript()
+                && is_declaration
+                && is_lexical_function_scope
+                && !is_annex_b_if_function
+            {
+                builder.lexical_function_bindings.insert((builder.current_scope_id, ident.name));
+            }
 
             // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
             // scopes also create an implicit var-like binding in the enclosing function

@@ -701,9 +701,87 @@ fn test_redeclaration() {
 // https://github.com/oxc-project/oxc/issues/18719
 #[test]
 fn test_function_var_redeclaration_in_module() {
-    // Both orderings should produce a redeclaration error in module mode
-    SemanticTester::js("function a() {} var a = ''").has_error("already been declared");
-    SemanticTester::js("var a = ''; function a() {}").has_error("already been declared");
+    // Both orderings should produce a redeclaration error in module mode, including when
+    // the `var` is nested in a block and hoists to module top level.
+    for source in [
+        "function a() {} var a = ''",
+        "var a = ''; function a() {}",
+        "function a() {} if (true) { var a; }",
+        "if (true) { var a; } function a() {}",
+    ] {
+        SemanticTester::js(source).has_error("already been declared");
+    }
+}
+
+#[test]
+fn test_function_var_redeclaration_across_script_blocks() {
+    for source in [
+        "function n() {} if (true) { var n; }",
+        "function outer() { function n() {} if (true) { var n = n(); } }",
+        "function outer() { if (true) { { function n() {} } var n; } }",
+        "function outer() { if (true) { var n; { function n() {} } } }",
+        "function outer() { { if (true) function n() {} { var n; } } }",
+        "function outer() { { if (true) function n() {} var n; } }",
+        "function outer() { async function n() {} if (true) { var n; } }",
+        "function outer() { function* n() {} if (true) { var n; } }",
+        "class C { static { function n() {} if (true) { var n; } } }",
+    ] {
+        SemanticTester::js(source).with_script(true).build();
+    }
+
+    for source in [
+        "function outer() { if (true) { function n() {} var n; } }",
+        "function outer() { if (true) { var n; function n() {} } }",
+        "function outer() { if (true) { function n() {} { var n; } } }",
+        "function outer() { if (true) { { var n; } function n() {} } }",
+        "function outer() { if (true) { async function n() {} { var n; } } }",
+        "function outer() { if (true) { function* n() {} { var n; } } }",
+        "function outer() { { label: function n() {} { var n; } } }",
+        "class C { static { { function n() {} { var n; } } } }",
+    ] {
+        SemanticTester::js(source).with_script(true).has_error("already been declared");
+    }
+}
+
+#[test]
+fn test_var_redeclaration_checks_all_hoisting_scopes() {
+    // Finding a compatible binding only decides which symbol the `var` reuses. It must not stop
+    // validation of outer StatementLists that also include the declaration in VarDeclaredNames.
+    for source in [
+        "function outer() { { function n() {} { if (true) function n() {} { var n; } } } }",
+        "function outer() { { let n; { if (true) function n() {} { var n; } } } }",
+        "function outer() { { class n {} { if (true) function n() {} { var n; } } } }",
+    ] {
+        SemanticTester::js(source).with_script(true).has_error("already been declared");
+    }
+
+    // The same applies to the target var scope. A compatible simple catch binding cannot hide a
+    // lexical declaration at module top level.
+    for source in [
+        "let a; try {} catch (a) { var a; }",
+        "class a {} try {} catch (a) { var a; }",
+        "function a() {} try {} catch (a) { var a; }",
+    ] {
+        SemanticTester::js(source).has_error("already been declared");
+    }
+
+    // Each conflicting StatementList is diagnosed once; validating the target after an
+    // intermediate candidate must not re-diagnose a binding moved there for recovery.
+    assert_eq!(
+        SemanticTester::js("function outer() { { let n; { var n; } } }")
+            .with_script(true)
+            .build_with_errors()
+            .diagnostics
+            .len(),
+        1
+    );
+    assert_eq!(
+        SemanticTester::js("let a; try {} catch (a) { var a; }")
+            .build_with_errors()
+            .diagnostics
+            .len(),
+        1
+    );
 }
 
 #[test]
