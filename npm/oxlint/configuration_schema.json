@@ -4245,6 +4245,9 @@
         "jsx-a11y/scope": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jsx-a11y/svg-has-title": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "jsx-a11y/tabindex-no-positive": {
           "$ref": "#/definitions/RuleNoConfig"
         },

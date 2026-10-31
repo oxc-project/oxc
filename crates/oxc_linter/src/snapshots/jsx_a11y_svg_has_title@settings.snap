@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <Icon />
+   ·  ────
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.
+
+  ⚠ jsx-a11y(svg-has-title): SVG elements must have an accessible name.
+   ╭─[svg_has_title.tsx:1:2]
+ 1 │ <Box as="svg" />
+   ·  ───
+   ╰────
+  help: Add a non-empty `title` as the first child, or use `role="img"` with `aria-label` or `aria-labelledby`. Mark decorative SVGs with `aria-hidden="true"`.

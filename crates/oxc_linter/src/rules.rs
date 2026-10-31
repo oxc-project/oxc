@@ -738,6 +738,7 @@ pub(crate) mod jsx_a11y {
     pub mod role_has_required_aria_props;
     pub mod role_supports_aria_props;
     pub mod scope;
+    pub mod svg_has_title;
     pub mod tabindex_no_positive;
 }
 
