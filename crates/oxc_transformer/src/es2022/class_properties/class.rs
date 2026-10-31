@@ -95,13 +95,11 @@ impl<'a> ClassProperties<'a> {
                     }
 
                     // Create binding for private property key
-                    if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
+                    if let Some(name) = prop.key.private_name() {
                         // Note: Current scope is outside class.
-                        let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
-                        private_props.insert(
-                            ident.name,
-                            PrivateProp::new(binding, prop.r#static, None, false),
-                        );
+                        let binding = ctx.generate_uid_in_current_hoist_scope(&name);
+                        private_props
+                            .insert(name, PrivateProp::new(binding, prop.r#static, None, false));
                     }
 
                     if prop.r#static {
@@ -117,7 +115,7 @@ impl<'a> ClassProperties<'a> {
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
-                    if let PropertyKey::PrivateIdentifier(ident) = &method.key {
+                    if let Some(private_name) = method.key.private_name() {
                         if method.r#static {
                             has_static_private_method_or_static_block = true;
                         } else {
@@ -125,9 +123,9 @@ impl<'a> ClassProperties<'a> {
                         }
 
                         let name = match method.kind {
-                            MethodDefinitionKind::Method => ident.name.as_str(),
-                            MethodDefinitionKind::Get => &format!("get_{}", ident.name),
-                            MethodDefinitionKind::Set => &format!("set_{}", ident.name),
+                            MethodDefinitionKind::Method => private_name.as_str(),
+                            MethodDefinitionKind::Get => &format!("get_{private_name}"),
+                            MethodDefinitionKind::Set => &format!("set_{private_name}"),
                             MethodDefinitionKind::Constructor => unreachable!(),
                         };
                         let (scope_id, flags) = if private_method_helpers_in_class_sequence {
@@ -137,13 +135,13 @@ impl<'a> ClassProperties<'a> {
                         };
                         let binding = ctx.generate_uid(name, scope_id, flags);
 
-                        if let Some(prop) = private_props.get_mut(&ident.name) {
+                        if let Some(prop) = private_props.get_mut(&private_name) {
                             // If there's already a binding for this private property,
                             // it's a setter or getter, so store the binding in `binding2`.
                             prop.set_binding2(binding);
                         } else {
                             private_props.insert(
-                                ident.name,
+                                private_name,
                                 PrivateProp::new(
                                     binding,
                                     method.r#static,
@@ -157,10 +155,10 @@ impl<'a> ClassProperties<'a> {
                 ClassElement::AccessorProperty(prop) => {
                     // TODO: Not sure what we should do here.
                     // Only added this to prevent panics in TS conformance tests.
-                    if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
+                    if let Some(name) = prop.key.private_name() {
                         let dummy_binding = BoundIdentifier::new(Ident::empty(), SymbolId::new(0));
                         private_props.insert(
-                            ident.name,
+                            name,
                             PrivateProp::new(dummy_binding, prop.r#static, None, true),
                         );
                     }
