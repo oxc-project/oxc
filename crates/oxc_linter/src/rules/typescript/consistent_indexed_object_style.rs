@@ -351,13 +351,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                         mapped.span,
                     ),
                     |fixer| {
-                        let unwrapped_constraint = {
-                            let mut current = constraint;
-                            while let TSType::TSParenthesizedType(p) = current {
-                                current = &p.type_annotation;
-                            }
-                            current
-                        };
+                        let unwrapped_constraint = constraint.without_parenthesized();
                         let key_type = fixer.source_range(unwrapped_constraint.span());
                         let value_type = mapped
                             .type_annotation
