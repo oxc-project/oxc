@@ -815,6 +815,17 @@ export interface OxlintOptions {
    */
   reportUnusedDisableDirectives?: AllowWarnDeny;
   /**
+   * Rule ids that are exempt from unused-disable-directive reporting.
+   *
+   * A disable directive that suppresses no violation is normally reported when
+   * `reportUnusedDisableDirectives` is enabled. Rules listed here are skipped, so contributors
+   * can add disable directives for an in-flight rule (e.g. during a large-scale migration)
+   * without them turning into "unused directive" errors.
+   *
+   * Only supported in the root configuration file.
+   */
+  reportUnusedDisableDirectivesExempt?: string[];
+  /**
    * Whether oxlint should respect `eslint-disable*` and `eslint-enable*`
    * directives in addition to its native `oxlint-*` directives.
    *
