@@ -74,9 +74,8 @@ pub(super) fn line_terminator_after(src: &[u8], n: usize, mut i: usize, _cpu: im
     n
 }
 
-#[apply(cpu_versions)]
-#[inline]
 /// Does src[a..b] hold a line terminator (LF, CR, or the 3-byte LS or PS)?
+#[inline(always)]
 pub(super) fn line_break_in(src: &[u8], a: usize, b: usize, cpu: impl Cpu) -> bool {
     line_terminator_after(src, b, a, cpu) < b
 }
