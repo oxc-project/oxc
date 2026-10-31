@@ -8,7 +8,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{Statement, SwitchCase, SwitchStatement},
 };
 use oxc_cfg::{
@@ -26,6 +26,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::effective_unreachable_blocks,
 };
 
 fn no_fallthrough_case_diagnostic(span: Span) -> OxcDiagnostic {
@@ -274,6 +275,10 @@ impl Rule for NoFallthrough {
             return;
         };
 
+        let has_loops = ctx.nodes().contains(AstType::WhileStatement)
+            || ctx.nodes().contains(AstType::ForStatement);
+        let mut unreachable = None;
+
         let fallthroughs: FxHashSet<BlockNodeId> = neighbors_filtered_by_edge_weight(
             graph,
             switch_id,
@@ -308,7 +313,18 @@ impl Rule for NoFallthrough {
                         .map(|edge| edge.target())
                         .find(|target| Some(*target) == default || tests.contains_key(target));
 
-                    (fallthrough, fallthrough.is_none())
+                    // The CFG does not mark code after infinite loops as unreachable.
+                    // Compute effective reachability only for a possible fallthrough,
+                    // and reuse it for the remaining paths through this switch.
+                    if fallthrough.is_some()
+                        && has_loops
+                        && unreachable.get_or_insert_with(|| effective_unreachable_blocks(ctx))
+                            [node.index()]
+                    {
+                        (None, false)
+                    } else {
+                        (fallthrough, fallthrough.is_none())
+                    }
                 }
             },
         )
@@ -617,6 +633,31 @@ fn test() {
       } });"#,
             None,
         ),
+        // Issue #28579: an infinite loop cannot fall through to the next case.
+        (
+            "export async function run(cmd: string, poll: () => Promise<boolean>) {
+                switch (cmd) {
+                    case 'wait': {
+                        while (true) {
+                            if (await poll()) return 0;
+                        }
+                    }
+                    case 'other': return 1;
+                }
+                return 2;
+            }",
+            None,
+        ),
+        ("switch (foo) { case 0: while (true) {} case 1: b(); }", None),
+        ("switch (foo) { case 0: for (;;) {} default: b(); }", None),
+        ("switch (foo) { default: while (true) { a(); } case 1: b(); }", None),
+        ("switch (foo) { case 0: while (true) { if (a) continue; } case 1: b(); }", None),
+        ("switch (foo) { case 0: while (true) { while (a) { break; } } case 1: b(); }", None),
+        (
+            "switch (foo) { case 0: while (true) { label: { if (a) break label; } } case 1: b(); }",
+            None,
+        ),
+        ("switch (foo) { case 0: while (true) {} a(); case 1: b(); }", None),
         // Issue #21320: breaks on multi-line case statements
         ("switch(foo) {\n  case A\n    .B:\n  case B.A:\n    break;\n}", None),
     ];
@@ -689,6 +730,22 @@ fn test() {
         // Issue #6417: switch with logical operators should detect fallthrough
         ("switch(true) { case x === 1 || x === 2: a(); case x === 3: b(); }", None),
         ("switch(true) { case x === 1 && y: a(); case x === 3: b(); }", None),
+        // Infinite-loop conditions still allow fallthrough when the body can break.
+        ("switch (foo) { case 0: while (true) { if (a) break; } case 1: b(); }", None),
+        ("switch (foo) { case 0: for (;;) { break; } default: b(); }", None),
+        ("switch (foo) { default: do { if (a) break; } while (true); case 1: b(); }", None),
+        (
+            "switch (foo) { case 0: label: while (true) { while (a) { break label; } } case 1: b(); }",
+            None,
+        ),
+        ("switch (foo) { case 0: if (a) { while (true) {} } case 1: b(); }", None),
+        ("switch (foo) { case 0: while (a) {} case 1: b(); }", None),
+        ("switch (foo) { case 0: while (true) {} case 1: b(); case 2: c(); }", None),
+        ("switch (foo) { case 0: try { while (true) { throw a; } } catch {} case 1: b(); }", None),
+        (
+            "switch (foo) { case 0: while (true) {} /* falls through */ case 1: b(); }",
+            Some(serde_json::json!([{ "reportUnusedFallthroughComment": true }])),
+        ),
         // TODO: it should fail but doesn't, we ignore conditional discriminants for now.
         // ("switch (a === b ? c : d) { case 1: ; case 2: ; case 3: ; }", None)
     ];
