@@ -1033,6 +1033,30 @@ When an ancestor gets its own parens, a leading `{`/`function`/`class`/`let[` in
 Prettier already does this after `export default` (`` export default (function () {} + foo)`` ``) and for a sequence arrow body (`() => ({}, 1)`),
 but not at statement start or for other arrow bodies, e.g. the object lookup idiom above.
 
+This also applies when the object or its `as` / `satisfies` expression spans multiple lines (oxc#28580).
+The member access already requires parentheses around the cast, so the object needs no inner pair:
+
+```ts
+// ours
+const get = (key: string) =>
+  (
+    {
+      a: 1,
+    } as Record<string, number>
+  )[key];
+
+// prettier
+const get = (key: string) =>
+  (
+    ({
+      a: 1,
+    }) as Record<string, number>
+  )[key];
+```
+
+When the cast itself is the arrow body, the object still needs parentheses to distinguish it from a block.
+`tests/fixtures/ts/parenthesis/object-cast-member/multiline.ts` covers the multiline casts, computed and static member access, optional chaining, and a property comment.
+
 ## inline-logical-chain-indent
 
 - Why: uniform-rule (same construct, same output: a single-link inline chain `a ?? [...]`; prettier/prettier#5183, prettier/prettier#19792)
