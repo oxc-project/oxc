@@ -146,9 +146,10 @@ impl<C: Config> Lexer<'_, C> {
 
     fn read_decimal_digits(&mut self) {
         if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
-            self.consume_char();
+            // SAFETY: The peeked byte is an ASCII digit or separator.
+            unsafe { self.source.next_byte_unchecked() };
         } else {
-            self.unexpected_err();
+            cold_branch(|| self.unexpected_err());
             return;
         }
 
@@ -159,21 +160,24 @@ impl<C: Config> Lexer<'_, C> {
         while let Some(b) = self.peek_byte() {
             match b {
                 b'_' => {
-                    self.consume_char();
+                    // SAFETY: The peeked byte is an ASCII digit or separator.
+                    unsafe { self.source.next_byte_unchecked() };
                     // NOTE: it looks invalid numeric tokens are still parsed.
                     // This seems to be a waste. It also requires us to put this
                     // call here instead of after we ensure the next character
                     // is an ASCII digit
                     self.token.set_has_separator(true);
                     if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
-                        self.consume_char();
+                        // SAFETY: The peeked byte is an ASCII digit or separator.
+                        unsafe { self.source.next_byte_unchecked() };
                     } else {
-                        self.unexpected_err();
+                        cold_branch(|| self.unexpected_err());
                         return;
                     }
                 }
                 b'0'..=b'9' => {
-                    self.consume_char();
+                    // SAFETY: The peeked byte is an ASCII digit or separator.
+                    unsafe { self.source.next_byte_unchecked() };
                 }
                 _ => break,
             }
@@ -197,7 +201,8 @@ impl<C: Config> Lexer<'_, C> {
 
     fn optional_decimal_digits(&mut self) {
         if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
-            self.consume_char();
+            // SAFETY: The peeked byte is an ASCII digit.
+            unsafe { self.source.next_byte_unchecked() };
             self.read_decimal_digits_after_first_digit();
         }
     }
