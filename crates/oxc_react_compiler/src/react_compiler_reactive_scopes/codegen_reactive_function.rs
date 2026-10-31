@@ -543,16 +543,9 @@ fn ox_convert_parameters<'a>(
                 } else {
                     ox_binding_for_identifier_at_span(cx, place.identifier, SPAN)?
                 };
-                items.push(oxc_ast::ast::FormalParameter::new(
+                items.push(oxc_ast::ast::FormalParameter::new_plain(
                     place.span.unwrap_or_default(),
-                    [],
                     binding,
-                    None,
-                    None,
-                    false,
-                    None,
-                    false,
-                    false,
                     &cx.ast,
                 ));
             }
