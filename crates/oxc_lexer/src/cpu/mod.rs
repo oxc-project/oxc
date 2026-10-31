@@ -57,17 +57,19 @@ mod versions_macro;
 #[cfg(test)]
 mod tests;
 
-pub(super) use select_macro::cpu_select;
-pub(super) use versions_macro::{__cpu_versions, apply, cpu_versions};
+pub(crate) use select_macro::cpu_select;
+pub(crate) use versions_macro::cpu_versions;
+pub use versions_macro::{__cpu_versions, apply};
 
 /// Trait for types representing a CPU feature set.
 ///
 /// Implemented by all types representing specific CPU feature sets, and by [`DynCpu`].
 #[expect(private_bounds)]
-pub(super) trait Cpu: CpuPrivate + Copy {
+pub trait Cpu: CpuPrivate + Copy {
     /// Get the [`DynCpu`] for this type.
     ///
     /// Same as the [`to_dyn`] function, which works in `const` code too.
+    #[expect(clippy::inline_always, reason = "only calls `to_dyn`, which folds to a constant")]
     #[inline(always)]
     fn to_dyn(self) -> DynCpu {
         to_dyn(self)
@@ -99,8 +101,9 @@ trait CpuPrivate {
 ///
 /// Only [`DynCpu`] needs `cpu`. It's taken for all types so that this can only be called
 /// by code which already has one of these types.
+#[expect(clippy::inline_always, reason = "folds to a constant, except for `DynCpu`")]
 #[inline(always)]
-pub(super) const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {
+pub const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {
     match C::DYN_CPU {
         Some(dyn_cpu) => dyn_cpu,
         // SAFETY: `DYN_CPU` is `None` only for `DynCpu`, and for `Generic` when it's uninhabited.
@@ -118,7 +121,7 @@ pub(super) const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {
 ///
 /// [`detect`]: Self::detect
 #[derive(Clone, Copy, Debug)]
-pub(super) enum DynCpu {
+pub enum DynCpu {
     /// AVX2 feature set. Only available on x86_64.
     #[cfg(target_arch = "x86_64")]
     Avx2(Avx2),
@@ -177,7 +180,7 @@ mod generic {
     pub(super) const GENERIC: Generic = Generic(());
 }
 
-pub(super) use generic::Generic;
+pub use generic::Generic;
 
 /// x86_64 features.
 /// AVX2 or generic.
@@ -218,7 +221,7 @@ mod x86_64 {
 }
 
 #[cfg(target_arch = "x86_64")]
-pub(super) use x86_64::{Avx2, BASELINE};
+pub use x86_64::{Avx2, BASELINE};
 
 /// aarch64 features.
 /// Neon or generic.
@@ -260,7 +263,7 @@ mod aarch64 {
 }
 
 #[cfg(target_arch = "aarch64")]
-pub(super) use aarch64::{BASELINE, Neon};
+pub use aarch64::{BASELINE, Neon};
 
 /// Fallback implementation for other platforms.
 ///
@@ -285,4 +288,4 @@ mod other {
 }
 
 #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
-pub(super) use other::BASELINE;
+pub use other::BASELINE;

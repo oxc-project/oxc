@@ -1,10 +1,12 @@
 //! The token stream as the disambiguation questions read it.
 
-use crate::token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk};
+use crate::{
+    cpu::{BASELINE, Cpu, apply, cpu_versions},
+    token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk},
+};
 
 use crate::pipeline::{
     bytes::{is_digit, line_break_in},
-    cpu::{BASELINE, Cpu, apply, cpu_versions},
     keywords::kw_match_at,
     operators::opmap_longest,
 };

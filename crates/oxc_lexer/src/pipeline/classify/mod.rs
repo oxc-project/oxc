@@ -1,4 +1,4 @@
-use super::cpu::{Cpu, cpu_select};
+use crate::cpu::{Cpu, cpu_select};
 
 #[cfg(target_arch = "x86_64")]
 mod avx2;

@@ -1,6 +1,6 @@
 use std::iter;
 
-use crate::pipeline::cpu::DynCpu;
+use crate::cpu::DynCpu;
 
 use super::{compress_blocks_avx2, init_pair_luts_avx2};
 

@@ -14,18 +14,18 @@
 //! [`type_list`]: super::type_list
 //! [`context`]: crate::pipeline::disambiguate::context
 
-use crate::token::{OP_KIND_BASE, matches_tk, tk};
+use crate::{
+    cpu::{Cpu, apply, cpu_versions},
+    token::{OP_KIND_BASE, matches_tk, tk},
+};
 
 use super::type_list::type_args_at;
 
 pub use super::bytes::lt_run_split;
-use crate::pipeline::{
-    cpu::{Cpu, apply, cpu_versions},
-    disambiguate::{
-        RULE_SCAN_CAP,
-        common::{Prev, Tokens},
-        context::{self, Walks},
-    },
+use crate::pipeline::disambiguate::{
+    RULE_SCAN_CAP,
+    common::{Prev, Tokens},
+    context::{self, Walks},
 };
 
 /// `coalesce` entry for a `>` run (`>>`, `>>>`, and a `>` glued to `=`): how many leading `>` bytes

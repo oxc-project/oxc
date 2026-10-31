@@ -6,12 +6,12 @@
 
 use std::ptr;
 
-use crate::token::TokenKind;
-
-use crate::pipeline::{
+use crate::{
     cpu::{Cpu, apply, cpu_versions},
-    keywords::kw_match,
+    token::TokenKind,
 };
+
+use crate::pipeline::keywords::kw_match;
 
 pub const KWB: usize = 64;
 
@@ -109,7 +109,7 @@ unsafe fn word_len(word: *const u64, pos: usize) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use crate::{pipeline::cpu::DynCpu, token::tk};
+    use crate::{cpu::DynCpu, token::tk};
 
     use super::*;
 

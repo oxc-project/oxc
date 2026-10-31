@@ -3,10 +3,9 @@ use std::{
     mem::{self, MaybeUninit},
 };
 
-use crate::pipeline::{
-    chunk::{load256, mm, veq},
-    cpu::Avx2,
-};
+use crate::cpu::Avx2;
+
+use crate::pipeline::chunk::{load256, mm, veq};
 
 /// Ordered for speed, pairing `(` with `)`, `[` with `{` and `]` with `}` (see [`any_of`]).
 const BRACKET_BYTES: [u8; 6] = [b'(', b')', b'[', b'{', b']', b'}'];

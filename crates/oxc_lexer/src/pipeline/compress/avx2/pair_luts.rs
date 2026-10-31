@@ -6,7 +6,7 @@ use std::{
     sync::OnceLock,
 };
 
-use crate::pipeline::cpu::{Avx2, Cpu, apply, cpu_versions};
+use crate::cpu::{Avx2, Cpu, apply, cpu_versions};
 
 /// Single copy of [`PairLuts`], shared across all threads.
 ///

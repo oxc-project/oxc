@@ -1,9 +1,11 @@
-use crate::error::DiagCode;
+use crate::{
+    cpu::{Cpu, apply, cpu_versions},
+    error::DiagCode,
+};
 
 use crate::pipeline::{
     bitmap::bm_get,
     bytes::{is_id_start, is_word, line_break_in},
-    cpu::{Cpu, apply, cpu_versions},
     disambiguate::jsx_over_generic,
     lanes::Lanes,
     token_view,

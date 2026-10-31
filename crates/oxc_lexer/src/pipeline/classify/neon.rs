@@ -1,8 +1,6 @@
 use std::arch::aarch64::*;
 
-use crate::token::tk;
-
-use crate::pipeline::cpu::Neon;
+use crate::{cpu::Neon, token::tk};
 
 use super::{
     luts::{MERGED_LUTS, WORD_LUTS},

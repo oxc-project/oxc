@@ -1,4 +1,4 @@
-use crate::pipeline::cpu::{Cpu, apply, cpu_versions};
+use crate::cpu::{Cpu, apply, cpu_versions};
 
 #[inline(always)]
 pub(super) const fn is_ws(c: u8) -> bool {

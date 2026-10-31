@@ -1,10 +1,11 @@
 use std::ptr;
 
+use crate::cpu::{Cpu, apply, cpu_versions};
+
 use crate::pipeline::{
     bitmap::bm_next0,
     bytes::{is_word, is_ws, unicode_ws_len_at_unchecked},
     carve::common::find_line_terminator,
-    cpu::{Cpu, apply, cpu_versions},
     scan::scan_block_comment,
 };
 

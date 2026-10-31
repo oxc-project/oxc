@@ -2,7 +2,7 @@
 mod primitives_avx2 {
     use std::arch::x86_64::*;
 
-    use crate::pipeline::cpu::Avx2;
+    use crate::cpu::Avx2;
 
     /// Load 256 bits starting at byte `i` as an `__m256i`.
     ///

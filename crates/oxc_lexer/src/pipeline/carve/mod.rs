@@ -1,7 +1,6 @@
-use crate::pipeline::{
-    cpu::{Cpu, apply, cpu_versions},
-    lanes::Lanes,
-};
+use crate::cpu::{Cpu, apply, cpu_versions};
+
+use crate::pipeline::lanes::Lanes;
 
 mod comments;
 mod common;

@@ -13,6 +13,7 @@
 //! [`match_delim_back`]: crate::pipeline::disambiguate::common::Tokens::match_delim_back
 
 use crate::{
+    cpu::{Cpu, apply, cpu_versions},
     pipeline::bytes::{
         block_comment_end, is_id_start, is_ws, line_break_in, line_terminator_after,
         unicode_ws_len_at,
@@ -20,12 +21,9 @@ use crate::{
     token::{OP_KIND_BASE, matches_tk, tk},
 };
 
-use crate::pipeline::{
-    cpu::{Cpu, apply, cpu_versions},
-    disambiguate::{
-        FORWARD_SCAN_CAP,
-        common::{Closers, Open, Tokens, bits},
-    },
+use crate::pipeline::disambiguate::{
+    FORWARD_SCAN_CAP,
+    common::{Closers, Open, Tokens, bits},
 };
 
 /// Bytes the forward angle match reacts to. Everything else is skipped without touching a bitmap.

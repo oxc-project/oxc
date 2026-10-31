@@ -12,17 +12,15 @@ use oxc_ast::ast::{Comment, RegExpFlags};
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 use crate::{
+    cpu::{Cpu, apply, cpu_select, cpu_versions},
     error::{DiagCode, DiagSeverity, Diagnostic},
     token::StringSpan,
 };
 
-use crate::pipeline::{
-    cpu::{Cpu, apply, cpu_select, cpu_versions},
-    disambiguate::DisambiguateState,
-};
+use crate::pipeline::disambiguate::DisambiguateState;
 
 #[cfg(target_arch = "x86_64")]
-use crate::pipeline::cpu::Avx2;
+use crate::cpu::Avx2;
 
 #[derive(Default)]
 pub(crate) struct Lanes {
@@ -1199,7 +1197,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
 
 #[cfg(test)]
 mod tests {
-    use crate::pipeline::cpu::BASELINE;
+    use crate::cpu::BASELINE;
 
     use super::*;
 

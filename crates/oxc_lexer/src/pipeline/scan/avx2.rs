@@ -1,9 +1,8 @@
 use std::arch::x86_64::*;
 
-use crate::pipeline::{
-    chunk::{load256, mm, veq},
-    cpu::Avx2,
-};
+use crate::cpu::Avx2;
+
+use crate::pipeline::chunk::{load256, mm, veq};
 
 use super::common::lic_verify_at;
 
