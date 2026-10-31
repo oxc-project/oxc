@@ -400,12 +400,16 @@ impl CliRunner {
         let mut options =
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
-        let mut suppression_manager = SuppressionManager::load(
-            options.cwd(),
-            "oxlint-suppressions.json",
-            suppression_options.suppress_all,
-            suppression_options.prune_suppressions || fix_options.is_enabled(),
-        );
+        let mut suppression_manager = if suppression_options.no_suppressions {
+            SuppressionManager::disabled()
+        } else {
+            SuppressionManager::load(
+                options.cwd(),
+                "oxlint-suppressions.json",
+                suppression_options.suppress_all,
+                suppression_options.prune_suppressions || fix_options.is_enabled(),
+            )
+        };
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
         let type_check_only = self.options.type_check_only;
@@ -2100,6 +2104,66 @@ export { redundant };
 
 #[cfg(test)]
 mod suppression {
+    #[test]
+    fn test_no_suppressions_ignores_baseline_without_hiding_errors() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("index.js");
+        let baseline = dir.path().join("oxlint-suppressions.json");
+        std::fs::write(&source, "console.log('hello');\n").unwrap();
+        let contents = br#"{"index.js":{"no-console":{"count":1}}}"#;
+        std::fs::write(&baseline, contents).unwrap();
+        let tester = Tester::new().with_cwd(dir.path().to_path_buf());
+        let (_, result) = tester.test_output(&["-A", "all", "-D", "no-console", "index.js"]);
+        assert!(matches!(result, CliRunResult::LintSucceeded));
+        let (output, result) = tester.test_output(&["-A", "all", "index.js"]);
+        assert!(matches!(result, CliRunResult::LintUnprunedSuppressions), "{output}");
+        let (_, result) = tester.test_output(&["--no-suppressions", "-A", "all", "index.js"]);
+        assert!(matches!(result, CliRunResult::LintSucceeded));
+        let (output, result) =
+            tester.test_output(&["--no-suppressions", "-A", "all", "-D", "no-console", "index.js"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{output}");
+        let output = tester.test_output_verbose(&[
+            "--no-suppressions",
+            "-A",
+            "all",
+            "-D",
+            "no-console",
+            "index.js",
+        ]);
+        assert!(output.contains("no-console"), "{output}");
+        assert_eq!(std::fs::read(&baseline).unwrap(), contents);
+        std::fs::write(&baseline, "not json").unwrap();
+        let (_, result) = tester.test_output(&["--no-suppressions", "-A", "all", "index.js"]);
+        assert!(matches!(result, CliRunResult::LintSucceeded));
+        assert_eq!(std::fs::read(&baseline).unwrap(), b"not json");
+        std::fs::write(&source, "/* eslint-disable no-console */\nconsole.log('hello');\n")
+            .unwrap();
+        let (_, result) =
+            tester.test_output(&["--no-suppressions", "-A", "all", "-D", "no-console", "index.js"]);
+        assert!(matches!(result, CliRunResult::LintSucceeded));
+    }
+
+    #[test]
+    fn test_no_suppressions_fix_does_not_prune_baseline() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("index.js");
+        let baseline = dir.path().join("oxlint-suppressions.json");
+        std::fs::write(&source, "var value = 1;\n").unwrap();
+        let contents = br#"{"index.js":{"no-var":{"count":1}}}"#;
+        std::fs::write(&baseline, contents).unwrap();
+        let (_, result) = Tester::new().with_cwd(dir.path().to_path_buf()).test_output(&[
+            "--no-suppressions",
+            "--fix",
+            "-A",
+            "all",
+            "-D",
+            "no-var",
+            "index.js",
+        ]);
+        assert!(matches!(result, CliRunResult::LintSucceeded));
+        assert_ne!(std::fs::read(&source).unwrap(), b"var value = 1;\n");
+        assert_eq!(std::fs::read(&baseline).unwrap(), contents);
+    }
 
     use crate::{
         cli::CliRunResult,

@@ -78,6 +78,18 @@ pub struct SuppressionManager {
 }
 
 impl SuppressionManager {
+    /// Disable bulk suppression tracking without accessing the filesystem.
+    pub fn disabled() -> Self {
+        Self {
+            suppressions_by_file: None,
+            file_action: OxlintSuppressionFileAction::None,
+            suppression_file_path: PathBuf::new(),
+            suppress_all: false,
+            prune_suppression: false,
+            file_exists: false,
+        }
+    }
+
     pub fn load(cwd: &Path, file_path: &str, suppress_all: bool, prune_suppression: bool) -> Self {
         let suppression_file_path = cwd.join(file_path);
         let file_exists = suppression_file_path.exists();
