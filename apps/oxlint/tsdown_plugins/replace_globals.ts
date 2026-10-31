@@ -19,7 +19,14 @@ const GLOBALS = new Set([
 // Global properties which cannot be converted to top-level vars when used as callee of a `CallExpression`,
 // because they're methods which use `this`.
 // e.g. `const r = Promise.resolve; r(1);` throws "TypeError: PromiseResolve called on non-object".
-const SKIP_WHEN_CALLEE = new Set(["Promise.resolve", "Promise.allSettled"]);
+const SKIP_WHEN_CALLEE = new Set([
+  "Promise.resolve",
+  "Promise.reject",
+  "Promise.all",
+  "Promise.allSettled",
+  "Promise.any",
+  "Promise.race",
+]);
 
 // `Function.prototype` methods which use the function they're called on as `this`, so break when detached.
 // A trailing one is left attached rather than folded into the var name, e.g. `Array.prototype.slice.call(x)`

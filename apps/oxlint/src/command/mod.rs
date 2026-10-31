@@ -31,6 +31,13 @@ pub struct MiscOptions {
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,
 
+    /// Number of JS threads to run JS plugins on in parallel (experimental).
+    /// Each additional JS thread is a Node.js worker thread with its own copy of all JS plugins,
+    /// so plugins which keep state across files only see the files linted on their own thread.
+    /// Defaults to 1. Capped at the number of threads. Has no effect without JS plugins, or in `--lsp` mode.
+    #[bpaf(long("js-threads"), argument("INT"), hide_usage)]
+    pub js_threads: Option<std::num::NonZeroUsize>,
+
     /// This option outputs the configuration to be used.
     /// When present, no linting is performed and only config-related options are valid.
     #[bpaf(switch, hide_usage)]

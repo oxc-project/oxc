@@ -51,7 +51,7 @@ const definedGlobals = {
 };
 
 // Base config for `@oxlint/plugins` package.
-// "node12" target to match `engines` field of last ESLint 8 release (8.57.1).
+// "node12" target to match `JS threads` field of last ESLint 8 release (8.57.1).
 const pluginsPkgConfig = defineConfig({
   ...commonConfig,
   entry: {
@@ -95,7 +95,12 @@ export default defineConfig([
   // Main build
   {
     ...commonConfig,
-    entry: ["src-js/cli.ts", "src-js/index.ts", "src-js/plugins-dev.ts"],
+    entry: [
+      "src-js/cli.ts",
+      "src-js/js_plugin_worker.ts",
+      "src-js/index.ts",
+      "src-js/plugins-dev.ts",
+    ],
     format: "esm",
     deps: {
       ...commonConfig.deps,
