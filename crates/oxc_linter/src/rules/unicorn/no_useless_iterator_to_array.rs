@@ -1,8 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, ForOfStatement, FormalParameters, NewExpression, SpreadElement,
-        YieldExpression,
+        CallExpression, Expression, ForOfStatement, NewExpression, SpreadElement, YieldExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -371,10 +370,10 @@ fn check_call_expr(call_expr: &CallExpression, ctx: &LintContext) {
             .map(Expression::get_inner_expression)
             .and_then(|callback| match callback {
                 Expression::ArrowFunctionExpression(callback) => {
-                    Some(formal_parameters_len(&callback.params))
+                    Some(callback.params.parameters_count())
                 }
                 Expression::FunctionExpression(callback) => {
-                    Some(formal_parameters_len(&callback.params))
+                    Some(callback.params.parameters_count())
                 }
                 _ => None,
             });
@@ -388,10 +387,6 @@ fn check_call_expr(call_expr: &CallExpression, ctx: &LintContext) {
             |fixer| to_array_fix.fix(fixer),
         );
     }
-}
-
-fn formal_parameters_len(params: &FormalParameters) -> usize {
-    params.items.len() + usize::from(params.rest.is_some())
 }
 
 // Case 3: `for (const x of iterator.toArray())`

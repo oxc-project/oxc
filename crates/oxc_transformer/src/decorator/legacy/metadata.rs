@@ -428,10 +428,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         params: &FormalParameters<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut elements = ArenaVec::with_capacity_in(
-            params.items.len() + usize::from(params.rest.is_some()),
-            ctx,
-        );
+        let mut elements = ArenaVec::with_capacity_in(params.parameters_count(), ctx);
         elements.extend(params.items.iter().map(|param| {
             ArrayExpressionElement::from(self.serialize_parameter_types_of_node(param, ctx))
         }));
