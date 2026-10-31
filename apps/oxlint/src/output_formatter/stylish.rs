@@ -9,11 +9,14 @@ use rustc_hash::FxHashMap;
 use crate::output_formatter::InternalFormatter;
 
 #[derive(Debug, Default)]
-pub struct StylishOutputFormatter;
+pub struct StylishOutputFormatter {
+    pub no_summary: bool,
+}
 
 impl InternalFormatter for StylishOutputFormatter {
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
-        let reporter = StylishReporter::default();
+        let reporter =
+            StylishReporter { no_summary: self.no_summary, ..StylishReporter::default() };
         // Keep CLI snapshots readable and independent of the test process's NO_COLOR setting.
         #[cfg(test)]
         let reporter = reporter.with_no_color(true);
@@ -24,11 +27,16 @@ impl InternalFormatter for StylishOutputFormatter {
 struct StylishReporter {
     diagnostics: Vec<Error>,
     no_color: bool,
+    no_summary: bool,
 }
 
 impl Default for StylishReporter {
     fn default() -> Self {
-        Self { diagnostics: Vec::new(), no_color: std::env::var("NO_COLOR").is_ok() }
+        Self {
+            diagnostics: Vec::new(),
+            no_color: std::env::var("NO_COLOR").is_ok(),
+            no_summary: false,
+        }
     }
 }
 
@@ -127,7 +135,7 @@ impl StylishReporter {
         }
 
         let total = total_errors + total_warnings;
-        if total > 0 {
+        if total > 0 && !self.no_summary {
             let summary_color = if no_color {
                 ""
             } else if total_errors > 0 {

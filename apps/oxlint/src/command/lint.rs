@@ -281,6 +281,10 @@ pub struct OutputOptions {
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
 
+    /// Do not display the diagnostic count or execution summary
+    #[bpaf(switch, hide_usage)]
+    pub no_summary: bool,
+
     #[bpaf(
         long("debug"),
         argument::<DebugOptions>("OPTIONS"),
@@ -650,6 +654,7 @@ mod lint_options {
         assert!(!options.fix_options.fix);
         assert!(!options.list_rules);
         assert_eq!(options.output_options.format, OutputFormat::Default);
+        assert!(!options.output_options.no_summary);
         assert_eq!(options.output_options.debug, DebugOptions::default());
     }
 
