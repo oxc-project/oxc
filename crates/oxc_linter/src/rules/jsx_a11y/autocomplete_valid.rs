@@ -100,13 +100,19 @@ static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf::phf_set![
     "cc-name",
     "cc-number",
     "cc-type",
+    "additional-name",
     "country",
     "country-name",
     "current-password",
     "email",
+    "family-name",
+    "given-name",
+    "honorific-prefix",
+    "honorific-suffix",
     "impp",
     "language",
     "name",
+    "nickname",
     "new-password",
     "off",
     "on",
@@ -122,6 +128,8 @@ static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf::phf_set![
     "tel-country-code",
     "tel-extension",
     "tel-local",
+    "tel-local-prefix",
+    "tel-local-suffix",
     "tel-national",
     "transaction-amount",
     "transaction-currency",
@@ -130,29 +138,61 @@ static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf::phf_set![
     "webauthn",
 ];
 
-static BILLING_AND_SHIPPING: [&str; 11] = [
-    "address-level1",
-    "address-level2",
-    "address-level3",
-    "address-level4",
-    "address-line1",
-    "address-line2",
-    "address-line3",
-    "country",
-    "country-name",
-    "postal-code",
-    "street-address",
+const BILLING_OR_SHIPPING: [&str; 2] = ["billing", "shipping"];
+
+/// Contact-type tokens may precede a contact field per the WHATWG autofill grammar.
+const CONTACT_GROUPING_PREFIXES: [&str; 5] = ["home", "work", "mobile", "fax", "pager"];
+
+const CONTACT_FIELDS: [&str; 10] = [
+    "tel",
+    "tel-country-code",
+    "tel-national",
+    "tel-area-code",
+    "tel-local",
+    "tel-local-prefix",
+    "tel-local-suffix",
+    "tel-extension",
+    "email",
+    "impp",
 ];
 
 fn is_valid_autocomplete_value(value: &str) -> bool {
-    let parts: Vec<&str> = value.split_whitespace().collect();
+    let mut parts: Vec<&str> = value.split_whitespace().collect();
 
-    match parts.len() {
-        1 => VALID_AUTOCOMPLETE_VALUES.contains(parts[0]),
-        2 if ["billing", "shipping"].contains(&parts[0]) => {
-            BILLING_AND_SHIPPING.contains(&parts[1])
-        }
-        _ => false,
+    // `webauthn` is only allowed as the final token.
+    let stripped_webauthn = parts.len() > 1 && parts.last() == Some(&"webauthn");
+    if stripped_webauthn {
+        parts.pop();
+    }
+
+    let mut index = 0;
+    if parts.get(index).is_some_and(|token| token.starts_with("section-")) {
+        index += 1;
+    }
+    if parts.get(index).is_some_and(|token| BILLING_OR_SHIPPING.contains(token)) {
+        index += 1;
+    }
+    if parts.get(index).is_some_and(|token| CONTACT_GROUPING_PREFIXES.contains(token)) {
+        index += 1;
+        // A contact grouping only applies to contact fields.
+        return parts.get(index).is_some_and(|field| CONTACT_FIELDS.contains(field))
+            && index + 1 == parts.len();
+    }
+
+    let Some(&field) = parts.get(index) else {
+        return false;
+    };
+    if index + 1 != parts.len() {
+        return false;
+    }
+    if index == 0 {
+        // A lone field token; `on`, `off`, and `webauthn` cannot combine
+        // with a trailing `webauthn`.
+        VALID_AUTOCOMPLETE_VALUES.contains(field)
+            && !(stripped_webauthn && matches!(field, "on" | "off" | "webauthn"))
+    } else {
+        // After a `section-` or billing modifier the token must be a field name.
+        VALID_AUTOCOMPLETE_VALUES.contains(field) && !matches!(field, "on" | "off" | "webauthn")
     }
 }
 
@@ -213,9 +253,31 @@ fn test() {
         // ("<input type='text' autocomplete='' />;", None, None),
         ("<input type='text' autocomplete='off' />;", None, None),
         ("<input type='text' autocomplete='on' />;", None, None),
-        // ("<input type='text' autocomplete='billing family-name' />;", None, None),
-        // ("<input type='text' autocomplete='section-blue shipping street-address' />;", None, None),
-        // ("<input type='text' autocomplete='section-somewhere shipping work email' />;", None, None),
+        ("<input type='text' autocomplete='billing family-name' />;", None, None),
+        ("<input type='text' autocomplete='section-blue shipping street-address' />;", None, None),
+        ("<input type='text' autocomplete='section-somewhere shipping work email' />;", None, None),
+        ("<input type='text' autocomplete='given-name' />;", None, None),
+        ("<input type='text' autocomplete='additional-name' />;", None, None),
+        ("<input type='text' autocomplete='family-name' />;", None, None),
+        ("<input type='text' autocomplete='honorific-prefix' />;", None, None),
+        ("<input type='text' autocomplete='honorific-suffix' />;", None, None),
+        ("<input type='text' autocomplete='nickname' />;", None, None),
+        ("<input type='text' autocomplete='tel-local-prefix' />;", None, None),
+        ("<input type='text' autocomplete='tel-local-suffix' />;", None, None),
+        ("<input type='text' autocomplete='section-billing email' />;", None, None),
+        ("<input type='text' autocomplete='work email' />;", None, None),
+        ("<input type='text' autocomplete='home tel' />;", None, None),
+        ("<input type='text' autocomplete='billing name' />;", None, None),
+        ("<input type='text' autocomplete='shipping tel' />;", None, None),
+        ("<input type='text' autocomplete='mobile tel-extension' />;", None, None),
+        ("<input type='text' autocomplete='fax impp' />;", None, None),
+        ("<input type='text' autocomplete='pager tel-local' />;", None, None),
+        ("<input type='text' autocomplete='current-password webauthn' />;", None, None),
+        (
+            "<input type='text' autocomplete='section-a shipping street-address webauthn' />;",
+            None,
+            None,
+        ),
         ("<input type='text' autocomplete />;", None, None),
         ("<input type='text' autocomplete={autocompl} />;", None, None),
         ("<input type='text' autocomplete={autocompl || 'name'} />;", None, None),
@@ -239,6 +301,12 @@ fn test() {
         ("<input type='text' autocomplete='name invalid' />;", None, None),
         ("<input type='text' autocomplete='invalid name' />;", None, None),
         ("<input type='text' autocomplete='home url' />;", None, None),
+        ("<input type='text' autocomplete='work name' />;", None, None),
+        ("<input type='text' autocomplete='shipping section-a street-address' />;", None, None),
+        ("<input type='text' autocomplete='section-a billing' />;", None, None),
+        ("<input type='text' autocomplete='on webauthn' />;", None, None),
+        ("<input type='text' autocomplete='billing on' />;", None, None),
+        ("<input type='text' autocomplete='email webauthn webauthn' />;", None, None),
         (
             "<Bar autocomplete='baz'></Bar>;",
             Some(serde_json::json!([{ "inputComponents": ["Bar"] }])),
