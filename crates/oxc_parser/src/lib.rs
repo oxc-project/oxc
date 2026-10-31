@@ -1322,6 +1322,57 @@ mod test {
     }
 
     #[test]
+    fn html_comment_in_regex_after_paren() {
+        // https://github.com/oxc-project/oxc/issues/28158
+        // `<!--` inside a regular expression is not an HTML-like comment, in any goal.
+        // Arrow function lookahead at `(` must not lex past the `/` that starts the regex.
+        let allocator = Allocator::default();
+        let module_sources = [
+            "export {}; const a = (/<!-- x -->/);",
+            "export {}; (/<!-- x -->/).exec('x');",
+            "export {}; const a = async (/<!-- x -->/);",
+        ];
+        let script_sources = ["const a = (/<!-- x -->/);", "(/<!-- x -->/).exec('x');"];
+        let module_types = [
+            SourceType::unambiguous(),
+            SourceType::ts(),
+            SourceType::mjs(),
+            SourceType::ts().with_module(true),
+        ];
+        let script_types = [
+            SourceType::unambiguous(),
+            SourceType::ts(),
+            SourceType::script(),
+            SourceType::ts().with_script(true),
+        ];
+        for (sources, source_types) in
+            [(&module_sources[..], module_types), (&script_sources[..], script_types)]
+        {
+            for &source in sources {
+                for source_type in source_types {
+                    let ret = Parser::new(&allocator, source, source_type).parse();
+                    assert!(ret.diagnostics.is_empty(), "{source} {source_type:?}");
+                    assert!(ret.program.comments.is_empty(), "{source} {source_type:?}");
+                }
+            }
+        }
+
+        // HTML-like comments outside a regular expression are still comments in scripts,
+        // and still an error once an unambiguous file is found to be a module.
+        let source = "<!-- x\nconst a = (/<!-- x -->/);";
+        for source_type in [SourceType::unambiguous(), SourceType::script()] {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(ret.diagnostics.is_empty(), "{source_type:?}");
+            assert_eq!(ret.program.comments.len(), 1, "{source_type:?}");
+            assert_eq!(ret.program.comments[0].kind, CommentKind::HtmlOpen);
+        }
+        let source = "<!-- x\nexport {}; const a = (/<!-- x -->/);";
+        let ret = Parser::new(&allocator, source, SourceType::unambiguous()).parse();
+        assert_eq!(ret.diagnostics.len(), 1);
+        assert_eq!(ret.diagnostics[0].to_string(), "HTML comments are not allowed in modules");
+    }
+
+    #[test]
     fn binary_file() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
