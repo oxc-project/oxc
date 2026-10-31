@@ -2660,12 +2660,7 @@ pub mod walk {
         visitor.visit_decorators(&it.decorators);
         visitor.visit_property_key(&it.key);
         {
-            let flags = match it.kind {
-                MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
-                MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
-                MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
-                MethodDefinitionKind::Method => ScopeFlags::Function,
-            };
+            let flags = it.kind.scope_flags();
             visitor.visit_function(&it.value, flags);
         }
         visitor.leave_node(kind);
