@@ -221,15 +221,13 @@ impl Lanes {
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone), nes)
     }
 
-    #[apply(cpu_versions)]
-    #[inline]
+    #[inline(always)]
     pub(super) fn push_string(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let (sp, _) = self.cook::<true, false>(src, bs as u32, be as u32, cpu);
         self.strings.push(sp);
     }
 
-    #[apply(cpu_versions)]
-    #[inline]
+    #[inline(always)]
     pub(super) fn push_template(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let (sp, nes) = self.cook::<false, true>(src, bs as u32, be as u32, cpu);
         // A NotEscapeSequence means cooked = None per the grammar; legality
@@ -259,8 +257,7 @@ impl Lanes {
         self.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false));
     }
 
-    #[apply(cpu_versions)]
-    #[inline]
+    #[inline(always)]
     pub(super) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         // Escaped-identifier atoms are the one funnel every code-level
         // identifier escape passes through, so validation rides here.
