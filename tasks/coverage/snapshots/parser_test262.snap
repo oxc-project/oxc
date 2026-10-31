@@ -1,8 +1,8 @@
-commit: 7ab7fafa
+commit: d53ebc8b
 
 parser_test262 Summary:
-AST Parsed     : 47455/47455 (100.00%)
-Positive Passed: 47455/47455 (100.00%)
+AST Parsed     : 47474/47474 (100.00%)
+Positive Passed: 47474/47474 (100.00%)
 Negative Passed: 4653/4653 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -22809,13 +22809,12 @@ Negative Passed: 4653/4653 (100.00%)
     ·   ▲
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
+  × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/exponent-part.js:17:4]
  16 │ 
  17 │ 0e0n;
-    ·    ▲
+    ·    ─
     ╰────
-  help: Try inserting a semicolon here
 
   × Invalid Character `g`
     ╭─[test262/test/language/literals/bigint/hexadecimal-invalid-digit.js:27:3]
@@ -24616,13 +24615,13 @@ Negative Passed: 4653/4653 (100.00%)
     ╰────
   help: Add the missing closing delimiter
 
-  × Invalid regular expression: Unterminated capturing group
-    ╭─[test262/test/language/literals/regexp/named-groups/invalid-identity-escape-in-capture-u.js:16:2]
+  × Invalid regular expression: Invalid escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-identity-escape-in-capture-u.js:16:7]
  15 │ 
  16 │ /(?<a>\a)/u;
-    ·  ──────
+    ·       ─
     ╰────
-  help: Add the missing closing delimiter
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-2-u.js:16:11]
@@ -24992,13 +24991,13 @@ Negative Passed: 4653/4653 (100.00%)
  34 │ ╰─▶ */
     ╰────
 
-  × Invalid regular expression: Could not parse the entire pattern
-    ╭─[test262/test/language/literals/regexp/u-invalid-class-escape.js:24:3]
+  × Invalid regular expression: Invalid escape sequence
+    ╭─[test262/test/language/literals/regexp/u-invalid-class-escape.js:24:2]
  23 │ 
  24 │ /\c0/u;
-    ·   ▲
+    ·  ─
     ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[test262/test/language/literals/regexp/u-invalid-extended-pattern-char.js:21:2]
@@ -25008,13 +25007,13 @@ Negative Passed: 4653/4653 (100.00%)
     ╰────
   help: Check for unbalanced brackets or invalid escape sequences
 
-  × Invalid regular expression: Could not parse the entire pattern
-    ╭─[test262/test/language/literals/regexp/u-invalid-identity-escape.js:23:3]
+  × Invalid regular expression: Invalid escape sequence
+    ╭─[test262/test/language/literals/regexp/u-invalid-identity-escape.js:23:2]
  22 │ 
  23 │ /\M/u;
-    ·   ▲
+    ·  ─
     ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Invalid indexed reference
     ╭─[test262/test/language/literals/regexp/u-invalid-legacy-octal-escape.js:26:2]
@@ -25811,41 +25810,44 @@ Negative Passed: 4653/4653 (100.00%)
  22 │ 
     ╰────
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
     ╭─[test262/test/language/module-code/import-attributes/early-dup-attribute-key-export.js:21:3]
  20 │ export * from './import-attribute-3_FIXTURE.js' with {
  21 │   type: 'json',
     ·   ──┬─
-    ·     ╰── `type` has already been declared here
+    ·     ╰── `type` was already specified here
  22 │   'typ\u0065': ''
     ·   ─────┬─────
-    ·        ╰── It can not be redeclared here
+    ·        ╰── This key is repeated
  23 │ };
     ╰────
+  help: Each import attribute key must be unique
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
     ╭─[test262/test/language/module-code/import-attributes/early-dup-attribute-key-import-nobinding.js:22:3]
  21 │ import './import-attribute-2_FIXTURE.js' with {
  22 │   type: 'json',
     ·   ──┬─
-    ·     ╰── `type` has already been declared here
+    ·     ╰── `type` was already specified here
  23 │   'typ\u0065': ''
     ·   ─────┬─────
-    ·        ╰── It can not be redeclared here
+    ·        ╰── This key is repeated
  24 │ };
     ╰────
+  help: Each import attribute key must be unique
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
     ╭─[test262/test/language/module-code/import-attributes/early-dup-attribute-key-import-withbinding.js:22:3]
  21 │ import x from './import-attribute-1_FIXTURE.js' with {
  22 │   type: 'json',
     ·   ──┬─
-    ·     ╰── `type` has already been declared here
+    ·     ╰── `type` was already specified here
  23 │   'typ\u0065': ''
     ·   ─────┬─────
-    ·        ╰── It can not be redeclared here
+    ·        ╰── This key is repeated
  24 │ };
     ╰────
+  help: Each import attribute key must be unique
 
   × Private identifier '#x' is not allowed outside class bodies
     ╭─[test262/test/language/module-code/invalid-private-names-call-expression-bad-reference.js:40:14]

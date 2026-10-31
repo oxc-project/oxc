@@ -39,6 +39,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:8]
+ 1 │ (foo + 'a') + ('b' + 'c')
+   ·        ───────────
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:1:16]
  1 │ (foo + 'a') + ('b' + 'c')
    ·                ─────────
@@ -128,5 +135,101 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_concat.tsx:1:5]
  1 │ foo['a' + 'b']
    ·     ─────────
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:9]
+ 1 │ var a = 'a' + ('b');
+   ·         ──────────
+ 2 │ var b = ('a') + 'b';
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:2:10]
+ 1 │ var a = 'a' + ('b');
+ 2 │ var b = ('a') + 'b';
+   ·          ──────────
+ 3 │ var c = (foo + 'a') + ('b' + 'c');
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:3:16]
+ 2 │ var b = ('a') + 'b';
+ 3 │ var c = (foo + 'a') + ('b' + 'c');
+   ·                ───────────
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:3:24]
+ 2 │ var b = ('a') + 'b';
+ 3 │ var c = (foo + 'a') + ('b' + 'c');
+   ·                        ─────────
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:1]
+ 1 │ 'a' + ('b')
+   · ──────────
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:2]
+ 1 │ ('a') + 'b'
+   ·  ──────────
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:2]
+ 1 │ ('a') + ('b')
+   ·  ───────────
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:4]
+ 1 │ ((('a'))) + 'b'
+   ·    ────────────
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:8]
+ 1 │ (foo + 'a') + 'b'
+   ·        ──────────
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:1]
+ 1 │ 'a' + ('b' + 'c')
+   · ──────────
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:8]
+ 1 │ 'a' + ('b' + 'c')
+   ·        ─────────
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:8]
+ 1 │ foo + ('a' + 'b')
+   ·        ─────────
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:1]
+ 1 │ 'a' + ('b' + foo)
+   · ──────────
    ╰────
   help: Rewrite into one string literal.

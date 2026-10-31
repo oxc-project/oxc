@@ -293,8 +293,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 ClassElement::TSIndexSignature(_) => continue,
             };
 
-            if let PropertyKey::PrivateIdentifier(id) = key {
-                keys.reserve(id.name.as_str());
+            if let Some(name) = key.private_name() {
+                keys.reserve(name.as_str());
             }
         }
 
@@ -885,18 +885,7 @@ impl<'a> ClassStaticBlock<'a> {
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let params = bindings.map(|binding| {
-            FormalParameter::new(
-                SPAN,
-                [],
-                binding.create_binding_pattern(ctx),
-                None,
-                None,
-                false,
-                None,
-                false,
-                false,
-                ctx,
-            )
+            FormalParameter::new_plain(SPAN, binding.create_binding_pattern(ctx), ctx)
         });
         let params = FormalParameters::boxed(
             SPAN,

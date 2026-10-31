@@ -6,7 +6,13 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 
 - Why: uniform-rule (source order of user tokens is preserved; prettier/prettier#19524, prettier/prettier#19599)
 - Pin: `tests/fixtures/yaml/anchor-tag-order.yaml`
-- Conformance: `yaml/spec/anchors-and-tags.yml`, `yaml/spec/node-anchor-and-tag-on-seperate-lines.yml`, `yaml/spec/various-combinations-of-tags-and-anchors.yml` and yaml-test-suite `9KAX`, `BU8L`, `F2C7`
+- Conformance:
+  - `externals/prettier/yaml/spec/anchors-and-tags.yml`
+  - `externals/prettier/yaml/spec/node-anchor-and-tag-on-seperate-lines.yml`
+  - `externals/prettier/yaml/spec/various-combinations-of-tags-and-anchors.yml`
+  - `externals/prettier/yaml/yaml-test-suite/snippet: 9KAX.yaml*`
+  - `externals/prettier/yaml/yaml-test-suite/snippet: BU8L.yaml*`
+  - `externals/prettier/yaml/yaml-test-suite/snippet: F2C7.yaml*`
 
 ```yaml
 # input
@@ -25,10 +31,19 @@ Anchor/tag source order is preserved, never reordered, as mapping keys and seque
 
 - Why: semantics (prettier/prettier#19764)
 - Pin: `tests/fixtures/yaml/block-scalar-trailing-spaces.yaml`, `tests/fixtures/yaml/prose-wrap/trailing-spaces.yaml`
-- Conformance: `yaml/block-folded/block-folded-strip.yml`, the `yaml/block-value` snippets whose scalar ends in a space/tab-only line (64 rows),
-  and yaml-test-suite `L24T`, `L24T-2`, `Y79Y-2`, whose JSON keeps that line as content
-- Oxfmt: `externals/aws-cloudformation-templates/ElasticLoadBalancing/ELB_Access_Logs_And_Connection_Draining.yaml`, `externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBGuidedAutoScalingRollingUpgrade.yaml`, `externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBStickinessSample.yaml`, `externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBWithLockedDownAutoScaledInstances.yaml`,
-  `externals/aws-cloudformation-templates/RainModules/bucket.yml`, `externals/aws-cloudformation-templates/Solutions/OperatingSystems/ubuntu20.04_cfn-hup.yaml`
+- Conformance:
+  - `externals/prettier/yaml/block-folded/block-folded-strip.yml`
+  - `externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n   \n*`
+  - `externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n  \t\n*`
+  - `externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n   \n*`
+  - `externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n  \t\n*`
+  - `externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n   \n*`
+  - `externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n  \t\n*`
+  - `externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n   \n*`
+  - `externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n  \t\n*`
+  - `externals/prettier/yaml/yaml-test-suite/snippet: L24T.yaml*` (its JSON keeps that line as content)
+  - `externals/prettier/yaml/yaml-test-suite/snippet: L24T-2.yaml*` (its JSON keeps that line as content)
+  - `externals/prettier/yaml/yaml-test-suite/snippet: Y79Y-2.yaml*` (its JSON keeps that line as content)
 
 ```yaml
 # input ("␣" marks a real space)
@@ -47,7 +62,10 @@ When converging, keep the blank line after such a scalar: post-prettier/prettier
 
 - Why: uniform-rule (one final newline)
 - Pin: `tests/fixtures/yaml/eof-blank-lines.yaml`
-- Conformance: `yaml/block-value` `"foo: >+\n"` / `"foo: |+\n"` and yaml-test-suite `2G84-4`, where Prettier prints NO final newline after a contentless keep-chomped scalar
+- Conformance:
+  - `externals/prettier/yaml/block-value/snippet: "foo: >+\n"`
+  - `externals/prettier/yaml/block-value/snippet: "foo: |+\n"`
+  - `externals/prettier/yaml/yaml-test-suite/snippet: 2G84-4.yaml*`
 
 ```yaml
 # input
@@ -61,12 +79,14 @@ a: 1
 ```
 
 Like every other formatter crate, the file always ends with exactly one newline (`|+` keep-chomped verbatim tails excepted); Prettier YAML alone preserves EOF blank lines.
+After a contentless keep-chomped scalar (its conformance failures), Prettier prints no final newline at all.
 
 ## keep-chomped-space-only-eof-line
 
 - Why: semantics (prettier/prettier#19256)
 - Pin: `tests/fixtures/yaml/keep-chomped-eos-spaces-only.yaml`, `tests/fixtures/yaml/keep-chomped-eos-trailing-spaces.yaml`
-- Conformance: yaml-test-suite `JEF9-3`, for which the suite asserts no JSON value, only yaml@2's dump
+- Conformance:
+  - `externals/prettier/yaml/yaml-test-suite/snippet: JEF9-3.yaml*` (the suite asserts no JSON value, only yaml@2's dump)
 
 ```yaml
 # input (no final newline; the last line is two spaces)
@@ -83,7 +103,8 @@ A space-only EOF line at-or-below the block's indent holds no line break, so it 
 
 - Why: uniform-rule (blank lines are never invented; see "blank-lines")
 - Pin: `tests/fixtures/yaml/empty-document-end-marker.yaml`
-- Conformance: yaml-test-suite `HWV9`
+- Conformance:
+  - `externals/prettier/yaml/yaml-test-suite/snippet: HWV9.yaml*`
 
 ```yaml
 # input
@@ -148,7 +169,8 @@ A suppression comment freezes exactly ONE node, never everything after it; the s
 
 - Why: uniform-rule (blank-line preservation; prettier/prettier#15528)
 - Pin: `tests/fixtures/yaml/blank-lines.yaml`, `tests/fixtures/yaml/nested-end-comment-blank.yaml`
-- Conformance: `yaml/mapping/duplicated-keys/flow-mapping.yml` (a blank after a flow mapping, before `---`)
+- Conformance:
+  - `externals/prettier/yaml/mapping/duplicated-keys/flow-mapping.yml` (a blank after a flow mapping, before `---`)
 
 ```yaml
 # input
@@ -197,8 +219,15 @@ More-indented lines in a folded scalar are never re-flowed under `proseWrap: alw
 
 - Why: uniform-rule (a group is flat or fully expanded)
 - Pin: `tests/fixtures/yaml/flow-multiline-pair.yaml`, `tests/fixtures/yaml/flow-comments.yaml`
-- Conformance: `yaml/spec/spec-example-7-20-single-pair-explicit-entry.yml`, `yaml/spec/spec-example-9-4-explicit-documents.yml` and yaml-test-suite `CT4Q`, `UT92`, `NJ66`, `9SA2` (multiline pairs),
-  `yaml/flow-mapping/comments/key.yml` and yaml-test-suite `K3WX` (key trailing comment)
+- Conformance:
+  - `externals/prettier/yaml/spec/spec-example-7-20-single-pair-explicit-entry.yml`
+  - `externals/prettier/yaml/spec/spec-example-9-4-explicit-documents.yml`
+  - `externals/prettier/yaml/yaml-test-suite/snippet: CT4Q.yaml*` (multiline pairs)
+  - `externals/prettier/yaml/yaml-test-suite/snippet: UT92.yaml*` (multiline pairs)
+  - `externals/prettier/yaml/yaml-test-suite/snippet: NJ66.yaml*` (multiline pairs)
+  - `externals/prettier/yaml/yaml-test-suite/snippet: 9SA2.yaml*` (multiline pairs)
+  - `externals/prettier/yaml/flow-mapping/comments/key.yml` (key trailing comment)
+  - `externals/prettier/yaml/yaml-test-suite/snippet: K3WX.yaml*` (key trailing comment)
 
 ```yaml
 # input
@@ -226,7 +255,9 @@ Prettier sometimes emits a newline inside flow brackets while keeping them flat 
 
 - Why: invariant
 - Pin: `tests/fixtures/yaml/flow-comments.yaml`
-- Conformance: `yaml/spec/spec-example-6-1-indentation-spaces.yml` and yaml-test-suite `6HB6`, the same example
+- Conformance:
+  - `externals/prettier/yaml/spec/spec-example-6-1-indentation-spaces.yml`
+  - `externals/prettier/yaml/yaml-test-suite/snippet: 6HB6.yaml*` (the same example)
 
 ```yaml
 # input
@@ -252,7 +283,8 @@ A comment stays at its syntactic position; Prettier's attachment hoists a commen
 
 - Why: uniform-rule (comment presence never changes layout)
 - Pin: `tests/fixtures/yaml/comment-over-indented.yaml`
-- Oxfmt: `externals/aws-cloudformation-templates/RainModules/load-balancer.yml`
+- Conformance:
+  - `externals/aws-cloudformation-templates/RainModules/load-balancer.yml`
 
 ```yaml
 # input

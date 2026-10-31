@@ -1,10 +1,11 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     utils::{
         JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call,
@@ -53,21 +54,27 @@ declare_oxc_lint!(
 );
 
 impl Rule for WarnTodo {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        WarnTodo::run(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        WarnTodo::run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
 impl WarnTodo {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call_expr) = possible_jest_node.node.kind() {
+    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::CallExpression(call_expr) = node.kind() {
+            let Some(possible_jest_node) =
+                PossibleJestNode::from_call_expression(node, call_expr, ctx)
+            else {
+                return;
+            };
             if !is_type_of_jest_fn_call(
                 call_expr,
-                possible_jest_node,
+                &possible_jest_node,
                 ctx,
                 &[
                     JestFnKind::General(JestGeneralFnKind::Describe),
@@ -78,7 +85,7 @@ impl WarnTodo {
             }
 
             let Some(parsed_vi_fn_call) =
-                parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)
+                parse_general_jest_fn_call(call_expr, &possible_jest_node, ctx)
             else {
                 return;
             };

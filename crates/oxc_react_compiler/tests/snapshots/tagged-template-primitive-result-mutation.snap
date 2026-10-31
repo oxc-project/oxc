@@ -8,7 +8,9 @@ function Component(t0) {
 	const { initial } = t0;
 	const object = { value: initial };
 	const tag = function tag() {
-		object.value = object.value + 1;
+		let t1 = object.value;
+		t1++;
+		object.value = t1;
 		return 0;
 	};
 	tag`value`;

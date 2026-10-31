@@ -1,0 +1,62 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// DIVERGENCES.md#html-close-comment-newline
+let
+--> comment between keyword and binding
+x = 1;
+
+const
+--> another binding
+value = 2;
+
+var
+--> destructuring binding
+{ a } = object;
+
+foo();
+/* block */ --> after a block comment on the same line
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// DIVERGENCES.md#html-close-comment-newline
+let
+  --> comment between keyword and binding
+  x = 1;
+
+const
+  --> another binding
+  value = 2;
+
+var
+  --> destructuring binding
+  { a } = object;
+
+foo();
+/* block */
+--> after a block comment on the same line
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// DIVERGENCES.md#html-close-comment-newline
+let
+  --> comment between keyword and binding
+  x = 1;
+
+const
+  --> another binding
+  value = 2;
+
+var
+  --> destructuring binding
+  { a } = object;
+
+foo();
+/* block */
+--> after a block comment on the same line
+
+===================== End =====================

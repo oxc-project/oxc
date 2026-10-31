@@ -1,0 +1,33 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/try-catch-unreachable-catch-without-reassignment.js
+---
+import { c as _c } from "react/compiler-runtime";
+// The `try` body cannot throw, so the `catch` is pruned. The code after the `try`
+// must survive even though no variable needs a phi at the join.
+function Component(props) {
+	const $ = _c(2);
+	let t0;
+	if ($[0] !== props.value) {
+		t0 = <div>{props.value}</div>;
+		$[0] = props.value;
+		$[1] = t0;
+	} else {
+		t0 = $[1];
+	}
+	return t0;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{
+		value: "a",
+		cond: true
+	}],
+	sequentialRenders: [{
+		value: "a",
+		cond: true
+	}, {
+		value: "b",
+		cond: false
+	}]
+};

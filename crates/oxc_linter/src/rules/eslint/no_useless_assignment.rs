@@ -6,7 +6,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentTarget as AstAssignmentTarget, BindingPattern, Expression,
-        VariableDeclarationKind, VariableDeclarator,
+        VariableDeclarator,
     },
 };
 use oxc_cfg::{
@@ -167,7 +167,7 @@ impl Rule for NoUselessAssignment {
             if let Some(var_decl) = var_decl {
                 if let AstKind::VariableDeclaration(var_declaration) =
                     ctx.nodes().parent_node(decl_node.id()).kind()
-                    && var_declaration.kind == VariableDeclarationKind::Const
+                    && var_declaration.kind.is_const()
                 {
                     continue;
                 }

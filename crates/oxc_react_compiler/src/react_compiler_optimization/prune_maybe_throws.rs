@@ -10,41 +10,57 @@
 //!
 //! Analogous to TS `Optimization/PruneMaybeThrows.ts`.
 
-use oxc_allocator::Allocator;
-use oxc_index::{IndexSlice, IndexVec};
+use oxc_index::IndexVec;
+use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
 
 use crate::diagnostics;
+use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
-    ArrayElement, BlockId, FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue,
-    ObjectPropertyKey, ObjectPropertyOrSpread, Terminal, assert_consistent_identifiers,
+    ArrayElement, BlockId, HirFunction, InstructionValue, ObjectPropertyKey,
+    ObjectPropertyOrSpread, Terminal, assert_consistent_identifiers,
     assert_terminal_successors_exist,
 };
 use crate::react_compiler_lowering::{
-    get_reverse_postordered_blocks, mark_instruction_ids, remove_dead_do_while_statements,
-    remove_unnecessary_try_catch, remove_unreachable_for_updates,
+    get_reverse_postordered_blocks, mark_instruction_ids, mark_predecessors,
+    remove_dead_do_while_statements, remove_unnecessary_try_catch, remove_unreachable_for_updates,
 };
 
 use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecutive_blocks;
+use crate::react_compiler_ssa::eliminate_redundant_phi;
 
 /// Prune `MaybeThrow` terminals for blocks that cannot throw, then clean up the CFG.
 pub fn prune_maybe_throws<'a>(
     func: &mut HirFunction<'a>,
-    functions: &mut IndexSlice<FunctionId, [HirFunction<'a>]>,
-    identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
-    alloc: &'a Allocator,
+    env: &mut Environment<'a>,
 ) -> Result<(), OxcDiagnostic> {
     let terminal_mapping = prune_maybe_throws_impl(func);
     if let Some(terminal_mapping) = terminal_mapping {
         // If terminals have changed then blocks may have become newly unreachable.
         // Re-run minification of the graph (incl reordering instruction ids).
-        func.body.blocks = get_reverse_postordered_blocks(&func.body, alloc);
+        func.body.blocks = get_reverse_postordered_blocks(&func.body, env.allocator);
         remove_unreachable_for_updates(&mut func.body);
         remove_dead_do_while_statements(&mut func.body);
         remove_unnecessary_try_catch(&mut func.body);
+
+        // Pruning a handler makes the catch block, and every block only it reaches,
+        // unreachable. Divergence from TS, which keeps references to those blocks:
+        // - Recompute predecessors, so the join after the `try` no longer counts
+        //   the removed blocks and can be merged into its only real predecessor.
+        //   A stale count leaves it unmerged as the target of a `break` that no
+        //   longer has a matching `try` fallthrough, and the code after the `try`
+        //   is silently dropped from the output.
+        // - Prune their phi operands and eliminate the phis this makes redundant,
+        //   as constant propagation does. Otherwise the join is left with a single
+        //   predecessor but a multi-operand phi, which MergeConsecutiveBlocks rejects.
+        mark_predecessors(&mut func.body);
+        if prune_unreachable_phi_operands(func) {
+            eliminate_redundant_phi(func, env);
+        }
+
         mark_instruction_ids(&mut func.body, &mut func.instructions);
-        merge_consecutive_blocks(func, functions, alloc);
+        merge_consecutive_blocks(func, &mut env.functions, env.allocator)?;
 
         // Rewrite phi operands to reference the updated predecessor blocks
         for block in func.body.blocks.values_mut() {
@@ -80,10 +96,26 @@ pub fn prune_maybe_throws<'a>(
             }
         }
 
-        assert_consistent_identifiers(func, identifiers)?;
+        assert_consistent_identifiers(func, &env.identifiers)?;
         assert_terminal_successors_exist(func)?;
     }
     Ok(())
+}
+
+/// Remove phi operands whose predecessor block is no longer in the CFG.
+/// Returns whether any operand was removed.
+fn prune_unreachable_phi_operands(func: &mut HirFunction) -> bool {
+    let blocks = &mut func.body.blocks;
+    let live_blocks: FxHashSet<BlockId> = blocks.keys().copied().collect();
+    let mut pruned = false;
+    for block in blocks.values_mut() {
+        for phi in &mut block.phis {
+            let len = phi.operands.len();
+            phi.operands.retain(|pred, _operand| live_blocks.contains(pred));
+            pruned |= phi.operands.len() != len;
+        }
+    }
+    pruned
 }
 
 fn prune_maybe_throws_impl(func: &mut HirFunction) -> Option<IndexVec<BlockId, Option<BlockId>>> {

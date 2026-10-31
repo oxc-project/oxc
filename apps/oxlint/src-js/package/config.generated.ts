@@ -1323,7 +1323,7 @@ export interface DummyRuleMap {
   "react-perf/jsx-no-new-function-as-prop"?: RuleNoConfig | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-object-as-prop"?: RuleNoConfig | [AllowWarnDeny, ReactPerfConfig];
   "react/button-has-type"?: RuleNoConfig | [AllowWarnDeny, ButtonHasType];
-  "react/capitalized-calls"?: RuleNoConfig;
+  "react/capitalized-calls"?: RuleNoConfig | [AllowWarnDeny, CapitalizedCallsConfig];
   "react/checked-requires-onchange-or-readonly"?: RuleNoConfig | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly];
   "react/display-name"?: RuleNoConfig | [AllowWarnDeny, DisplayNameConfig];
   "react/error-boundaries"?: RuleNoConfig;
@@ -1425,7 +1425,7 @@ export interface DummyRuleMap {
   "symbol-description"?: RuleNoConfig;
   "typescript/adjacent-overload-signatures"?: RuleNoConfig;
   "typescript/array-type"?: RuleNoConfig | [AllowWarnDeny, ArrayTypeConfig];
-  "typescript/await-thenable"?: RuleNoConfig;
+  "typescript/await-thenable"?: RuleNoConfig | [AllowWarnDeny, AwaitThenableConfig];
   "typescript/ban-ts-comment"?: RuleNoConfig | [AllowWarnDeny, BanTsCommentConfig];
   "typescript/ban-tslint-comment"?: RuleNoConfig;
   "typescript/ban-types"?: RuleNoConfig;
@@ -1490,6 +1490,7 @@ export interface DummyRuleMap {
   "typescript/no-unsafe-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-call"?: RuleNoConfig;
   "typescript/no-unsafe-declaration-merging"?: RuleNoConfig;
+  "typescript/no-unsafe-enum-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-enum-comparison"?: RuleNoConfig;
   "typescript/no-unsafe-function-type"?: RuleNoConfig;
   "typescript/no-unsafe-member-access"?: RuleNoConfig | [AllowWarnDeny, NoUnsafeMemberAccessConfig];
@@ -1996,6 +1997,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, RadixType]
     | [AllowWarnDeny, ReactPerfConfig]
     | [AllowWarnDeny, ButtonHasType]
+    | [AllowWarnDeny, CapitalizedCallsConfig]
     | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly]
     | [AllowWarnDeny, DisplayNameConfig]
     | [AllowWarnDeny, ExhaustiveDepsConfig]
@@ -2036,6 +2038,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, SortOrder, SortKeysOptions]
     | [AllowWarnDeny, SortVars]
     | [AllowWarnDeny, ArrayTypeConfig]
+    | [AllowWarnDeny, AwaitThenableConfig]
     | [AllowWarnDeny, BanTsCommentConfig]
     | [AllowWarnDeny, ClassLiteralPropertyStyleOption]
     | [AllowWarnDeny, PreferGenericType]
@@ -4969,6 +4972,21 @@ export interface ButtonHasType {
    */
   submit?: boolean;
 }
+export interface CapitalizedCallsConfig {
+  /**
+   * Exact names of capitalized functions that may be called directly.
+   * Forwarded to the React Compiler's `validateNoCapitalizedCalls`
+   * environment option.
+   */
+  allow?: string[];
+  /**
+   * A regex pattern; capitalized functions whose name matches may be called
+   * directly, checked alongside `allow`. Useful when a codebase has a
+   * naming convention for capitalized non-component factories, such as
+   * generated event or schema builders (e.g. `"Event$"`).
+   */
+  allowPattern?: string;
+}
 export interface CheckedRequiresOnchangeOrReadonly {
   /**
    * Ignore the restriction that `checked` and `defaultChecked` should not be used together.
@@ -5604,6 +5622,14 @@ export interface ArrayTypeConfig {
    * The array type expected for readonly cases. If omitted, the value for `default` will be used.
    */
   readonly?: ReadonlyArrayOption;
+}
+export interface AwaitThenableConfig {
+  /**
+   * Allow Promise aggregators such as `Promise.all` to receive mixed arrays or
+   * iterables containing at least one potentially Promise-like value.
+   * Inputs containing only synchronous values are still reported.
+   */
+  allowMixedPromiseArrays?: boolean;
 }
 /**
  * This rule allows you to specify how different TypeScript directive comments

@@ -47,6 +47,19 @@ fn test() {
         // A named function expression can capture its private name in a callback.
         "export const ExportedName = function Node() { return <Tree renderItem={() => <Node />} />; };",
         "export const ExportedName = function Node({ value }) { return <Tree renderItem={() => () => <Node value={value} />} />; };",
+        // A `try` that cannot throw, with a `catch` that reassigns an outer variable.
+        // https://github.com/oxc-project/oxc/issues/27404
+        "
+export function Component() {
+  let x = 0;
+  try {
+    const unused = 1;
+  } catch {
+    x = 2;
+  }
+  return <div>{x}</div>;
+}
+",
         // ---- PluginTest-test.ts ----
         // [Invariant] Defined after use
         // (OK because invariants are only meant for the compiler team's consumption)

@@ -1,0 +1,22 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div><p>Hello <b>world</b>!</p></div>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div>
+  <p>Hello <b>world</b>!</p>
+</div>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div>
+  <p>Hello <b>world</b>!</p>
+</div>
+
+===================== End =====================

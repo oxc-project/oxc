@@ -7,6 +7,7 @@ use oxc_ast::{
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
@@ -131,41 +132,37 @@ impl Rule for PreferConst {
         let is_for_in_of_init =
             matches!(parent.kind(), AstKind::ForInStatement(_) | AstKind::ForOfStatement(_));
 
-        // For regular for loops (for (let i = 0, j = 1; ...)), we need special handling
-        // If ANY variable in the declaration is reassigned, we can't fix the whole declaration
         let is_for_statement_init = matches!(parent.kind(), AstKind::ForStatement(_));
 
         if is_for_statement_init && decl.declarations.len() > 1 {
-            // Check if any declarator is reassigned
             let any_reassigned = decl.declarations.iter().any(|declarator| {
                 let has_init = declarator.init.is_some();
-                declarator.id.get_binding_identifiers().iter().any(|ident| {
-                    let symbol_id = ident.symbol_id();
-                    !self.should_be_const(symbol_id, has_init, is_for_in_of_init, ctx)
+                declarator.id.any_binding_identifiers(&mut |ident| {
+                    !self.should_be_const(ident.symbol_id(), has_init, is_for_in_of_init, ctx)
                 })
             });
 
-            // If any variable is reassigned, we can't convert any of them
             if any_reassigned {
                 return;
             }
         }
 
+        let mut all_declarators_const = true;
         for (declarator_index, declarator) in decl.declarations.iter().enumerate() {
-            let binding_identifiers = declarator.id.get_binding_identifiers();
             let has_init = declarator.init.is_some();
             let is_destructuring = declarator.id.is_destructuring_pattern();
 
-            let all_const = binding_identifiers.iter().all(|ident| {
+            let all_const = declarator.id.all_binding_identifiers(&mut |ident| {
                 let symbol_id = ident.symbol_id();
                 self.should_be_const(symbol_id, has_init, is_for_in_of_init, ctx)
             });
+            all_declarators_const &= all_const;
 
             // For destructuring patterns with "all" mode, check if ALL variables should be const
             if matches!(self.0.destructuring, Destructuring::All) && is_destructuring {
                 if all_const {
                     // Flag all variables in the destructuring pattern
-                    for ident in binding_identifiers {
+                    declarator.id.bound_names(&mut |ident| {
                         ctx.diagnostic_with_fix(
                             prefer_const_diagnostic(ident.name.as_str(), ident.span),
                             |fixer| {
@@ -173,18 +170,18 @@ impl Rule for PreferConst {
                                     fixer,
                                     decl,
                                     declarator_index,
-                                    true,
+                                    all_declarators_const,
                                     is_for_in_of_init,
                                     ctx,
                                 )
                             },
                         );
-                    }
+                    });
                 }
                 // If not all_const, don't flag any of them in "all" mode
             } else {
                 // "any" mode (default): check each binding identifier independently
-                for ident in binding_identifiers {
+                declarator.id.bound_names(&mut |ident| {
                     if self.should_be_const(ident.symbol_id(), has_init, is_for_in_of_init, ctx) {
                         ctx.diagnostic_with_fix(
                             prefer_const_diagnostic(ident.name.as_str(), ident.span),
@@ -193,14 +190,14 @@ impl Rule for PreferConst {
                                     fixer,
                                     decl,
                                     declarator_index,
-                                    all_const,
+                                    all_declarators_const,
                                     is_for_in_of_init,
                                     ctx,
                                 )
                             },
                         );
                     }
-                }
+                });
             }
         }
     }
@@ -1651,6 +1648,17 @@ fn test_oxc() {
         ("let [x = -1, y] = [1,2]; y = 0;", "let [x = -1, y] = [1,2]; y = 0;", None),
         ("let {a, b} = c, d;", "let {a, b} = c, d;", None),
         ("let {a, b, c} = {}, e, f;", "let {a, b, c} = {}, e, f;", None),
+        ("let x = 'x', y = 'y'; x = 1", "let x = 'x', y = 'y'; x = 1", None),
+        (
+            "let a = 1, b = 2; a++; console.log(a + b);",
+            "let a = 1, b = 2; a++; console.log(a + b);",
+            None,
+        ),
+        (
+            "let { a, b } = obj, c = 1; a = 2; console.log(a, b, c);",
+            "let { a, b } = obj, c = 1; a = 2; console.log(a, b, c);",
+            Some(serde_json::json!([{ "destructuring": "all" }])),
+        ),
     ];
 
     Tester::new(PreferConst::NAME, PreferConst::PLUGIN, pass, fail)

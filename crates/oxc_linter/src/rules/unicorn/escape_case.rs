@@ -67,18 +67,25 @@ fn is_hex(iter: &Chars, count: usize) -> bool {
 
 // /(?<=(?:^|[^\\])(?:\\\\)*\\)(?<data>x[\dA-Fa-f]{2}|u[\dA-Fa-f]{4}|u{[\dA-Fa-f]+})/g
 fn check_case(value: &str, is_regex: bool) -> Option<String> {
-    let mut result = String::with_capacity(value.len());
+    let mut result = None::<String>;
+    let mut uppercase = |iter: &mut Chars<'_>, count| {
+        let start = value.len() - iter.as_str().len();
+        for _ in 0..count {
+            iter.next().unwrap();
+        }
+        let end = value.len() - iter.as_str().len();
+        if value[start..end].bytes().any(|byte| byte.is_ascii_lowercase()) {
+            result.get_or_insert_with(|| value.to_string())[start..end].make_ascii_uppercase();
+        }
+    };
 
     let mut in_escape = false;
     let mut p = value.chars();
     while let Some(c) = p.next() {
-        result.push(c);
         if in_escape {
             match c {
                 'x' if is_hex(&p, 2) => {
-                    for _ in 0..2 {
-                        result.push(p.next().unwrap().to_ascii_uppercase());
-                    }
+                    uppercase(&mut p, 2);
                 }
                 'u' => {
                     let mut iter = p.clone();
@@ -98,22 +105,16 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
                         }
                         if is_match {
                             p.next();
-                            result.push('{');
-                            for _ in 0..count {
-                                result.push(p.next().unwrap().to_ascii_uppercase());
-                            }
+                            uppercase(&mut p, count);
                             p.next();
-                            result.push('}');
                         }
                     } else if is_hex(&p, 4) {
-                        for _ in 0..4 {
-                            result.push(p.next().unwrap().to_ascii_uppercase());
-                        }
+                        uppercase(&mut p, 4);
                     }
                 }
                 'c' if is_regex => {
                     if matches!(p.clone().next(), Some(c) if c.is_ascii_lowercase()) {
-                        result.push(p.next().unwrap().to_ascii_uppercase());
+                        uppercase(&mut p, 1);
                     }
                 }
                 _ => {}
@@ -124,7 +125,7 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
         }
     }
 
-    (result != value).then_some(result)
+    result
 }
 
 impl Rule for EscapeCase {

@@ -279,9 +279,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
                 let value = format_str!(self.allocator(), "{bigint}");
                 Expression::new_big_int_literal(span, value, None, BigintBase::Decimal, self)
             }
-            ConstantValue::String(s) => {
-                Expression::new_string_literal(span, Str::from_cow_in(&s, self), None, self)
-            }
+            ConstantValue::String(s) => Expression::new_string_literal(span, s, None, self),
             ConstantValue::Boolean(b) => Expression::new_boolean_literal(span, b, self),
             ConstantValue::Undefined => Expression::new_void_0(span, self),
             ConstantValue::Null => Expression::new_null_literal(span, self),
@@ -479,6 +477,19 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.dropped_subtree_collector().visit_statement(slot);
         *slot = new;
         self.state.record_ast_change();
+    }
+
+    /// Replace a statement slot without requesting another pass.
+    ///
+    /// Only for rewrites the rest of the current pass fully consumes: every
+    /// node that could react to the new shape has not exited yet, and the
+    /// rewrite changes no fact that already-visited nodes read (resolved
+    /// references, symbol values, side effects). Dropped-subtree bookkeeping
+    /// still runs, so the caller must not drop any references.
+    #[inline]
+    pub fn replace_statement_settled(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
+        self.dropped_subtree_collector().visit_statement(slot);
+        *slot = new;
     }
 
     /// Replace a statement slot with a value built from the owned old statement.

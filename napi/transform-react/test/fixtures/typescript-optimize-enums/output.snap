@@ -1,0 +1,18 @@
+## Code
+
+import { jsxs as _jsxs } from "react/jsx-runtime";
+export function App() {
+	return /* @__PURE__ */ _jsxs("div", { children: [
+		1,
+		":",
+		"active"
+	] });
+}
+
+## Errors
+
+(none)
+
+## Fatal
+
+false

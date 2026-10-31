@@ -1,0 +1,50 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+(<div className="some-long-class-name">{someVeryLongContentExpressionnnnnnnnnnnnnnnnnnnnnnn}</div>)?.b;
+(<div className="some-long-class-name">{someVeryLongContentExpressionnnnnnnnnnnnnnnnnnnnnnn}</div>)?.[0];
+(<div className="some-long-class-name">{someVeryLongContentExpressionnnnnnnnnnnnnnnnnnnnnnn}</div>)?.b();
+x = (<div className="some-long-class-name">{someVeryLongContentExpressionnnnnnnnnnnnnnnnnnnnnn}</div>)?.b;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+(
+  <div className="some-long-class-name">
+    {someVeryLongContentExpressionnnnnnnnnnnnnnnnnnnnnnn}
+  </div>
+)?.b;
+(
+  <div className="some-long-class-name">
+    {someVeryLongContentExpressionnnnnnnnnnnnnnnnnnnnnnn}
+  </div>
+)?.[0];
+(
+  <div className="some-long-class-name">
+    {someVeryLongContentExpressionnnnnnnnnnnnnnnnnnnnnnn}
+  </div>
+)?.b();
+x = (
+  <div className="some-long-class-name">
+    {someVeryLongContentExpressionnnnnnnnnnnnnnnnnnnnnn}
+  </div>
+)?.b;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+(<div className="some-long-class-name">{someVeryLongContentExpressionnnnnnnnnnnnnnnnnnnnnnn}</div>)
+  ?.b;
+(
+  <div className="some-long-class-name">{someVeryLongContentExpressionnnnnnnnnnnnnnnnnnnnnnn}</div>
+)?.[0];
+(
+  <div className="some-long-class-name">{someVeryLongContentExpressionnnnnnnnnnnnnnnnnnnnnnn}</div>
+)?.b();
+x = (
+  <div className="some-long-class-name">{someVeryLongContentExpressionnnnnnnnnnnnnnnnnnnnnn}</div>
+)?.b;
+
+===================== End =====================

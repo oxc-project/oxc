@@ -4,11 +4,13 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{AstNode, config::GlobalValue, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, ast_util::get_declaration_of_variable, context::LintContext, rule::Rule,
+    utils::is_enabled_global_reference,
+};
 
 fn implied_eval_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Implied eval. Consider passing a function instead of a string.")
@@ -160,13 +162,6 @@ fn is_global_candidate_name(name: &str) -> bool {
     matches!(name, "global" | "window" | "globalThis" | "self")
 }
 
-fn is_enabled_global_reference(ident: &IdentifierReference<'_>, ctx: &LintContext<'_>) -> bool {
-    ident.is_global_reference(ctx.scoping())
-        && ctx
-            .get_global_variable_value(ident.name.as_str())
-            .is_some_and(|value| value != GlobalValue::Off)
-}
-
 fn is_string_like_argument<'a>(expr: &'a Expression<'a>, ctx: &LintContext<'a>) -> bool {
     is_evaluated_string(expr) || static_value_is_string(expr, ctx, 0)
 }
@@ -204,8 +199,7 @@ fn initialized_symbol_init<'a>(
     ident: &IdentifierReference<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<&'a Expression<'a>> {
-    let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id()?;
-    let declaration = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
+    let declaration = get_declaration_of_variable(ident, ctx.semantic())?;
     let AstKind::VariableDeclarator(declarator) = declaration.kind() else {
         return None;
     };

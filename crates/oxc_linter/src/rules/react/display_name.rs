@@ -23,7 +23,8 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
     utils::{
         InnermostFunction, arrow_function_returns, expression_returns,
-        find_innermost_function_with_jsx, function_returns, is_hoc_call, is_react_component_name,
+        find_innermost_function_with_jsx, function_returns, is_es6_component_class, is_hoc_call,
+        is_react_component_name,
     },
 };
 
@@ -324,24 +325,6 @@ fn extract_member_expression_path(expr: &Expression) -> String {
 /// Check if a call expression is a createContext call
 fn is_create_context_call(call: &CallExpression) -> bool {
     call.callee_name().is_some_and(|name| name == "createContext")
-}
-
-/// Check if a class extends React.Component or React.PureComponent
-fn extends_react_component(class: &Class) -> bool {
-    class.heritage_expression().is_some_and(|super_class| {
-        if let Some(member_expr) = super_class.as_member_expression()
-            && let Expression::Identifier(ident) = member_expr.object()
-        {
-            return ident.name == "React"
-                && member_expr
-                    .static_property_name()
-                    .is_some_and(|name| name == "Component" || name == "PureComponent");
-        }
-        if let Some(ident_reference) = super_class.get_identifier_reference() {
-            return ident_reference.name == "Component" || ident_reference.name == "PureComponent";
-        }
-        false
-    })
 }
 
 /// Check if a symbol has a displayName assignment via semantic references
@@ -695,7 +678,7 @@ fn check_class_component(
         return Some(ReactComponentInfo { span, is_context: false, name: None });
     }
 
-    if extends_react_component(class) {
+    if is_es6_component_class(class) {
         return Some(ReactComponentInfo { span, is_context: false, name: None });
     }
 

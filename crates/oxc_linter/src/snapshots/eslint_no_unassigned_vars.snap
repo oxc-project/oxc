@@ -72,6 +72,27 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Variable declared without assignment. Either assign a value or remove the declaration.
 
+  ⚠ eslint(no-unassigned-vars): 'unassigned' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:1:15]
+ 1 │ let assigned, unassigned; assigned = 1; log(assigned, unassigned);
+   ·               ──────────
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
+  ⚠ eslint(no-unassigned-vars): 'b' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:1:8]
+ 1 │ let a, b; log(a, b); a = 1;
+   ·        ─
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
+  ⚠ eslint(no-unassigned-vars): 'unassigned' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:1:22]
+ 1 │ let initialized = 1, unassigned; log(initialized, unassigned);
+   ·                      ──────────
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
   ⚠ eslint(no-unassigned-vars): 'one' is always 'undefined' because it's never assigned.
    ╭─[no_unassigned_vars.tsx:1:42]
  1 │ const foo = (two: string): void => { let one: string | undefined; if (one === two) {} }

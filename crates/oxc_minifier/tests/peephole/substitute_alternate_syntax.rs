@@ -2,7 +2,8 @@ use oxc_span::SourceType;
 
 use crate::{
     CompressOptions, CompressOptionsKeepNames, CompressOptionsUnused, default_options, test,
-    test_options, test_same, test_same_options, test_same_options_source_type, test_target_same,
+    test_options, test_same, test_same_options, test_same_options_source_type, test_smallest,
+    test_target_same,
 };
 
 #[test]
@@ -331,9 +332,11 @@ fn test_string_array_splitting() {
 #[test]
 fn test_template_string_to_string() {
     test("x = `abcde`", "x = 'abcde'");
-    // Lone surrogates are stored escaped in the cooked value; converting to a
-    // string literal would materialize the escape encoding as literal text.
-    test_same("x = `\\ud800y`");
+    // A lone surrogate in the cooked value is kept as the same code unit.
+    test("x = `\\ud800y`", "x = '\\ud800y'");
+    test("x = `${'\\ud800'}`", "x = '\\ud800'");
+    test("x = `${'\\ud800'}`.length", "x = 1");
+    test("x = `\\ud83d${'\\ude00'}`", "x = '\u{1F600}'");
     test("x = `ab cd ef`", "x = 'ab cd ef'");
     test_same("x = `hello ${name}`");
     test_same("tag `hello ${name}`");
@@ -709,6 +712,19 @@ fn test_property_key() {
 
     test("class C { ['-1']() {} }", "class C { '-1'() {} }");
 
+    // Negative and non-finite numeric keys keep their brackets.
+    // <https://github.com/oxc-project/oxc/issues/27834>
+    test_same("v = { [-2]: _ }");
+    test_same("v = { [-1]() {} }");
+    test_same("({ [-2]: _ } = {})");
+    test_same("var { [-2]: _ } = {}");
+    test_same("class C { [-2] = _; static [-3]() {} }");
+    test_same("class C { accessor [-2] = _ }");
+    test_same("var { [Infinity]: _ } = {}");
+    test_same("var { [-Infinity]: _ } = {}");
+    test_same("class C { [NaN]() {} }");
+    test_same("v = { [-0]: _ }");
+
     // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
     test_same("v = ({ ['__proto__']: 0 })"); // { __proto__: 0 } will have `isProtoSetter = true`
     test("v = ({ ['__proto__']() {} })", "v = ({ __proto__() {} })");
@@ -936,6 +952,33 @@ fn test_compress_destructuring_assignment_target() {
     test("var {y: y} = x", "var {y} = x");
     test("var {y: z, 'z': y} = x", "var {y: z, z: y} = x");
     test("var {y: y, 'z': z} = x", "var {y, z} = x");
+    test("var {y: y = f()} = x", "var {y = f()} = x");
+
+    test("({ y: y } = x)", "({ y } = x)");
+    test("({ 'y': y } = x)", "({ y } = x)");
+    test("({ y: y = 1 } = x)", "({ y = 1 } = x)");
+    test("({ y: y = f() } = x)", "({ y = f() } = x)");
+    test("({ y: y = y } = x)", "({ y = y } = x)");
+    test("({ y: y = function() {} } = x)", "({ y = function() {} } = x)");
+    test("({ y: y = f(), z: z } = x)", "({ y = f(), z } = x)");
+    test("({ a: { y: y = f() } } = x)", "({ a: { y = f() } } = x)");
+    test("[{ y: y = f() }] = x", "[{ y = f() }] = x");
+    test("for ({ y: y = f() } of x);", "for ({ y = f() } of x);");
+    test("for ({ y: y = f() } in x);", "for ({ y = f() } in x);");
+    test(
+        "async function g() { for await ({ y: y = f() } of x); }",
+        "async function g() { for await ({ y = f() } of x); }",
+    );
+    test("function* g() { ({ y: y = yield } = x) }", "function* g() { ({ y = yield } = x) }");
+    test(
+        "async function g() { ({ y: y = await f() } = x) }",
+        "async function g() { ({ y = await f() } = x) }",
+    );
+    test("({ y: y = 1, ...z } = x)", "({ y = 1, ...z } = x)");
+    test("({ ['y']: y = 1 } = x)", "({ y = 1 } = x)");
+    test_same("({ [y]: y = 1 } = x)");
+    test_same("({ y: z = f() } = x)");
+    test_same("({ y: a.y = f() } = x)");
 }
 
 #[test]
@@ -1076,6 +1119,14 @@ fn test_rewrite_arguments_copy_loop() {
         "function _() { var r = [...arguments], keep; use(r, keep) }",
     );
     test(
+        "function _() { for (var keep, r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+        "function _() { var keep, r = [...arguments]; use(r, keep) }",
+    );
+    test(
+        "function _() { for (var first, second, r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; use(r, first, second) }",
+        "function _() { var first, second, r = [...arguments]; use(r, first, second) }",
+    );
+    test(
         "function _() { var items = [], t = 0, i, u, r; for (; t < arguments.length; t++) items[t] = arguments[t]; if (this.list = [], items != null) for (i = 0, u = items; i < u.length; i++) r = u[i], this.list.push(r) }",
         "function _() { var items = [...arguments], i, u, r; if (this.list = [], items != null) for (i = 0, u = items; i < u.length; i++) r = u[i], this.list.push(r) }",
     );
@@ -1085,6 +1136,12 @@ fn test_rewrite_arguments_copy_loop() {
     );
     test_same(
         "function _() { for (var r = [], a = 0, keep = side(); a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+    );
+    test_same(
+        "function _() { for (var keep = side(), r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+    );
+    test_same(
+        "function _() { for (var keep; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
     );
 }
 
@@ -1163,4 +1220,30 @@ fn test_substitute_yield_expression() {
     test("function* a() { yield* undefined; }", "function* a() { yield* void 0; }");
     test("function* a() { yield* fn(); }", "function* a() { yield* fn(); }");
     test_same("function* a(undefined) { yield undefined; }");
+}
+
+#[test]
+fn empty_iife_preserves_rest_destructuring() {
+    test_smallest(
+        "var n = 0; (function (...[v = n++]) {})(); console.log(n);",
+        "var n = 0; (function (...[v = n++]) {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; ((...[v = n++]) => {})(); console.log(n);",
+        "var n = 0; ((...[v = n++]) => {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; (function (...{0: v = n++}) {})(); console.log(n);",
+        "var n = 0; (function (...{0: v = n++}) {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; ((...{0: v = n++}) => {})(); console.log(n);",
+        "var n = 0; ((...{0: v = n++}) => {})(), console.log(n);",
+    );
+    test_same("(function (...[[v]]) {})();");
+    test_same("((...[[v]]) => {})();");
+    test("(function (...args) {})();", "");
+    test("((...args) => {})();", "");
+    test("x = (function (...args) {})();", "x = void 0;");
+    test("x = ((...args) => {})();", "x = void 0;");
 }

@@ -245,7 +245,9 @@ impl Rule for NumericSeparatorsStyle {
         match node.kind() {
             AstKind::NumericLiteral(number) => {
                 let raw = number.raw.as_ref().unwrap().as_str();
-                if !raw.contains('_') && self.skip_number_separator(number.base) {
+                if self.is_short_decimal_integer(raw)
+                    || (!raw.contains('_') && self.skip_number_separator(number.base))
+                {
                     return;
                 }
 
@@ -260,7 +262,9 @@ impl Rule for NumericSeparatorsStyle {
             }
             AstKind::BigIntLiteral(number) => {
                 let raw = number.raw.unwrap().as_str();
-                if !raw.contains('_') && self.skip_bigint_separator(number.base) {
+                if self.is_short_decimal_integer(&raw[..raw.len() - 1])
+                    || (!raw.contains('_') && self.skip_bigint_separator(number.base))
+                {
                     return;
                 }
 
@@ -279,6 +283,15 @@ impl Rule for NumericSeparatorsStyle {
 }
 
 impl NumericSeparatorsStyle {
+    fn is_short_decimal_integer(&self, raw: &str) -> bool {
+        let minimum_digits =
+            usize::try_from(self.number.base.minimum_digits).expect("u32 size must fit into usize");
+        let group_length =
+            usize::try_from(self.number.base.group_length).expect("u32 size must fit into usize");
+        (raw.len() < minimum_digits || raw.len() <= group_length)
+            && raw.bytes().all(|byte| byte.is_ascii_digit())
+    }
+
     fn skip_number_separator(&self, base: NumberBase) -> bool {
         let base_config = match base {
             NumberBase::Binary => self.binary.only_if_contains_separator,

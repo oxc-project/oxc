@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, collections::hash_map::Entry};
 
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, Span};
-use oxc_str::Str;
+use oxc_str::{JSStr, Str};
 
 use crate::{builder::SemanticBuilder, diagnostics};
 
@@ -183,8 +183,32 @@ fn check_ambient_module_declaration(span: Span, ctx: &SemanticBuilder<'_>) {
 
 pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     let mut need_initializer = false;
+    // Enum member symbols store UTF-8 names, so the binder declares no symbol for a name with a
+    // lone surrogate and cannot report its redeclaration.
+    let mut lone_surrogate_names = FxHashMap::<JSStr<'a>, Span>::default();
 
     decl.body.members.iter().for_each(|member| {
+        let name = match &member.id {
+            TSEnumMemberName::Identifier(_) => None,
+            TSEnumMemberName::String(lit) | TSEnumMemberName::ComputedString(lit) => {
+                Some(lit.value)
+            }
+            TSEnumMemberName::ComputedTemplateString(template) => template.single_quasi(),
+        };
+        if let Some(name) = name.filter(|name| name.as_str().is_none()) {
+            let span = member.id.span();
+            match lone_surrogate_names.entry(name) {
+                Entry::Occupied(first) => ctx.error(diagnostics::redeclaration(
+                    &name.display().to_string(),
+                    *first.get(),
+                    span,
+                )),
+                Entry::Vacant(entry) => {
+                    entry.insert(span);
+                }
+            }
+        }
+
         #[expect(clippy::unnested_or_patterns)]
         if let Some(initializer) = &member.initializer {
             need_initializer = !matches!(

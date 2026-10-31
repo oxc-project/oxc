@@ -1,3 +1,4 @@
+use oxc_ast::{AstKind, MemberExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -63,8 +64,10 @@ declare_oxc_lint!(
 
 impl Rule for NoIterator {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let Some(member_expression) = node.kind().as_member_expression_kind() else {
-            return;
+        let member_expression = match node.kind() {
+            AstKind::StaticMemberExpression(expr) => MemberExpressionKind::Static(expr),
+            AstKind::ComputedMemberExpression(expr) => MemberExpressionKind::Computed(expr),
+            _ => return,
         };
         if let Some(static_property_name) = member_expression.static_property_name()
             && static_property_name == "__iterator__"
@@ -87,6 +90,7 @@ fn test() {
         "var __iterator__ = null;",
         "foo[`__iterator`] = null;",
         "foo[`__iterator__\n`] = null;",
+        "class C { #__iterator__; read() { return this.#__iterator__; } }",
     ];
 
     let fail = vec![

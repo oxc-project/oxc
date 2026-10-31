@@ -49,7 +49,19 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 let new_stmt = s.body.remove(0);
-                ctx.replace_statement(stmt, new_stmt);
+                // The unwrap drops no references and preserves side effects,
+                // and the enclosing nodes exit later in this pass, so it needs
+                // no extra pass on its own. A direct body-list item is the
+                // exception: `var` symbol values and the constructor `super()`
+                // scan depend on that position, and a later pass sees it.
+                if matches!(
+                    ctx.parent(),
+                    Ancestor::ProgramBody(_) | Ancestor::FunctionBodyStatements(_)
+                ) {
+                    ctx.replace_statement(stmt, new_stmt);
+                } else {
+                    ctx.replace_statement_settled(stmt, new_stmt);
+                }
             }
             _ => {}
         }
@@ -467,11 +479,7 @@ impl<'a> PeepholeOptimizations {
             if Self::remove_unused_expression(&mut e.test, ctx) {
                 ctx.drop_expression(&e.test);
                 // `(1 ? a.b : 0)()` => `(0, a.b)()`
-                if Self::should_keep_indirect_access(&result_expr, ctx) {
-                    Self::preserve_indirect_access(e.span, result_expr, ctx)
-                } else {
-                    result_expr
-                }
+                Self::preserve_indirect_access_if_needed(e.span, result_expr, ctx)
             } else {
                 // `(a, true) ? b : c` => `a, b`
                 Self::join_sequence(e.span, e.test, result_expr, ctx)
@@ -606,7 +614,11 @@ impl<'a> PeepholeOptimizations {
         if !params.items.iter().all(|param| {
             param.pattern.is_binding_identifier()
                 && param.initializer.as_ref().is_none_or(|init| !init.may_have_side_effects(ctx))
-        }) {
+        }) || params
+            .rest
+            .as_ref()
+            .is_some_and(|rest| !rest.rest.argument.is_binding_identifier())
+        {
             return;
         }
         if body_has_side_effects {

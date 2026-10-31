@@ -1,6 +1,6 @@
 [package]
 name = "oxc_ecmascript"
-version = "0.155.0"
+version = "0.156.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -35,8 +35,12 @@ oxc_str = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
 cow-utils = { workspace = true, optional = true }
-dragonbox_ecma = { workspace = true }
 itoa = { workspace = true }
+memchr = { workspace = true }
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
 smallvec = { workspace = true, optional = true }
+zmij_ecma = { workspace = true }
+
+[dev-dependencies]
+oxc_allocator = { workspace = true }

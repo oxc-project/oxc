@@ -635,7 +635,7 @@ impl LanguageServer for Backend {
                 }
             })
         {
-            self.file_system.set(uri.clone(), content);
+            self.file_system.set_with_version(uri.clone(), params.text_document.version, content);
         }
 
         let document = self.file_system.get_document(&uri);
@@ -703,6 +703,7 @@ impl LanguageServer for Backend {
         self.file_system.set_with_language(
             uri.clone(),
             LanguageId::new(params.text_document.language_id.to_string()),
+            params.text_document.version,
             content,
         );
 
@@ -796,13 +797,13 @@ impl LanguageServer for Backend {
             return Ok(None);
         };
 
-        let is_open_document = self.file_system.is_open(&uri);
+        let document_version = self.file_system.get_version(&uri);
 
         let params = crate::CodeActionParams {
             uri,
             range: params.range,
             context: params.context,
-            is_open_document,
+            document_version,
         };
 
         let code_actions = worker.get_code_actions_or_commands(params).await;
@@ -882,6 +883,14 @@ impl LanguageServer for Backend {
         &self,
         params: DocumentDiagnosticParams,
     ) -> Result<DocumentDiagnosticReport> {
+        // The client can request diagnostics even if the server wants to use push mode.
+        // Some client will ignore the (not set) server diagnostic capability and still request diagnostics.
+        if self.capabilities.get().unwrap().diagnostic_mode != DiagnosticMode::Pull {
+            return Ok(DocumentDiagnosticReport::RelatedFullDocumentDiagnosticReport(
+                RelatedFullDocumentDiagnosticReport::default(),
+            ));
+        }
+
         let uri = &params.text_document.uri;
         let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
             return Ok(DocumentDiagnosticReport::RelatedFullDocumentDiagnosticReport(

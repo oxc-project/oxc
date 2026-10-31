@@ -26,7 +26,7 @@ use oxc_span::SourceType;
 // or the special-purpose AST-in `format_program`.
 pub(crate) use crate::ast_nodes::{AstNode, AstNodes};
 pub use crate::embed_context::{
-    CssInJsTemplate, HtmlEmbedMeta, JsEmbeddedIn, MarkdownInJsTemplate,
+    CssInJsTemplate, HtmlInJsTemplate, JsEmbeddedIn, MarkdownInJsTemplate,
 };
 // `JsFormatContext` is public solely as the type parameter of the returned `Formatted`;
 // its methods are not part of the public contract.
@@ -130,19 +130,24 @@ pub fn format_to_ir<'a>(
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
     let program = parse(allocator, allocator.alloc_str(source_text), source_type)?;
-    let node = AstNode::new(program, AstNodes::Dummy(), allocator);
+    let node = AstNode::new(program, AstNodes::Dummy());
     let mut context =
         JsFormatContext::new(program.source_text, program.source_type, &program.comments, options);
 
     // Special cases for js-in-xxx:
     // - Single JSX in Markdown code block: omit the semicolon
-    let embedding_omits_semicolon = embedded_in == Some(JsEmbeddedIn::MarkdownCodeBlock)
-        && program.directives.is_empty()
-        && matches!(
-            program.body.as_slice(),
-            [Statement::ExpressionStatement(statement)] if statement.expression.is_jsx()
-        );
+    // - Single expression in an HTML event handler attribute: omit the semicolon
+    let embedding_omits_semicolon = program.directives.is_empty()
+        && match program.body.as_slice() {
+            [Statement::ExpressionStatement(statement)] => match embedded_in {
+                Some(JsEmbeddedIn::MarkdownCodeBlock) => statement.expression.is_jsx(),
+                Some(JsEmbeddedIn::HtmlEventHandler) => true,
+                _ => false,
+            },
+            _ => false,
+        };
     context.set_embedding_omits_semicolon(embedding_omits_semicolon);
+    context.set_embedded_in(embedded_in);
 
     let (ir, _) = formatter::build_ir(
         context,
@@ -178,6 +183,9 @@ pub fn format_fragment<'a>(
     // NOTE: Since this options is just the preferred quote (not a forced),
     // this may not be enough for all cases.
     // But it seems fine for almost all cases, so leave it for now.
+    // TODO: When Vue formats natively, share the HTML event handler's rule instead
+    // (`JsFormatContext::string_quote_style`, `'` whatever the string holds):
+    // a string holding more `'` than `"` prints `"` here, which the attribute escapes as `&quot;`.
     let options = JsFormatOptions { quote_style: QuoteStyle::Single, ..options };
 
     // A js-in-xxx fragment never owns file envelopes (BOM / front matter)
@@ -195,7 +203,7 @@ pub fn format_fragment<'a>(
             // Parens are forced only in the binding-LHS context with multiple params or a rest element.
             let with_parens = matches!(context, FragmentContext::FunctionParamsAsBindingLhs)
                 && (1 < params.items.len() || params.rest.is_some());
-            let node = AstNode::new(params, AstNodes::Dummy(), allocator);
+            let node = AstNode::new(params, AstNodes::Dummy());
             let content = FormatFunctionParams::new(&node, with_parens);
             format_node(
                 &session,
@@ -215,7 +223,7 @@ pub fn format_fragment<'a>(
             let Some(type_params) = decl.type_parameters.as_deref() else {
                 return Err(OxcDiagnostic::error("Expected type parameters in wrapped fragment"));
             };
-            let node = AstNode::new(type_params, AstNodes::Dummy(), allocator);
+            let node = AstNode::new(type_params, AstNodes::Dummy());
             let content = FormatTypeParameters::new(&node);
             format_node(
                 &session,
@@ -266,7 +274,7 @@ fn format_program_with_session<'a>(
     program: &'a Program<'a>,
     options: JsFormatOptions,
 ) -> Formatted<'a, JsFormatContext<'a>> {
-    let node = AstNode::new(program, AstNodes::Dummy(), session.allocator());
+    let node = AstNode::new(program, AstNodes::Dummy());
     format_node(
         session,
         options,
@@ -360,8 +368,8 @@ pub(crate) enum JsLabels {
 }
 
 impl Label for JsLabels {
-    fn id(&self) -> u64 {
-        *self as u64
+    fn id(&self) -> u32 {
+        *self as u32
     }
 
     fn debug_name(&self) -> &'static str {

@@ -1,0 +1,71 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/jsx-outlining-safe-binding-names.js
+---
+import { c as _c } from "react/compiler-runtime";
+// @enableJsxOutlining
+function Component(t0) {
+	const $ = _c(4);
+	const { arr } = t0;
+	let t1;
+	if ($[0] !== arr) {
+		t1 = arr.map(_temp2);
+		$[0] = arr;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	let t2;
+	if ($[2] !== t1) {
+		t2 = <ul>{t1}</ul>;
+		$[2] = t1;
+		$[3] = t2;
+	} else {
+		t2 = $[3];
+	}
+	return t2;
+}
+function _temp2(item) {
+	const t0 = item.label;
+	const T0 = _temp;
+	return <T0 p1="existing1" p={item.id} t={t0} p2="existing" p3={item.keyValue} p4={item.evalValue} p5={item.argumentsValue} p6={item.classValue} key={item.id} />;
+}
+function _temp(t0) {
+	const $ = _c(11);
+	const { "p1": p1, "p": p, "t": t, "p2": p2, "p3": p3, "p4": p4, "p5": p5, "p6": p6 } = t0;
+	let t1;
+	if ($[0] !== p || $[1] !== p1 || $[2] !== t) {
+		t1 = <span p1={p1} data-id={p}>{t}</span>;
+		$[0] = p;
+		$[1] = p1;
+		$[2] = t;
+		$[3] = t1;
+	} else {
+		t1 = $[3];
+	}
+	let t2;
+	if ($[4] !== p2 || $[5] !== p3 || $[6] !== p4 || $[7] !== p5 || $[8] !== p6 || $[9] !== t1) {
+		t2 = <li p={p2} key-={p3} eval-={p4} arguments-={p5} class={p6}>{t1}</li>;
+		$[4] = p2;
+		$[5] = p3;
+		$[6] = p4;
+		$[7] = p5;
+		$[8] = p6;
+		$[9] = t1;
+		$[10] = t2;
+	} else {
+		t2 = $[10];
+	}
+	return t2;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{ arr: [{
+		id: 1,
+		label: "a",
+		keyValue: "key",
+		evalValue: "eval",
+		argumentsValue: "arguments",
+		classValue: "row"
+	}] }]
+};

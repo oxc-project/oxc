@@ -456,7 +456,7 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
 
 fn is_simple_template_literal(expr: &Expression) -> bool {
     match expr {
-        Expression::TemplateLiteral(template) => template.quasis.len() == 1,
+        Expression::TemplateLiteral(template) => template.is_no_substitution_template(),
         _ => false,
     }
 }

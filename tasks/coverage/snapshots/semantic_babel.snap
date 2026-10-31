@@ -1,8 +1,15 @@
-commit: 4f4ef5d4
+commit: b835f0c6
 
 semantic_babel Summary:
-AST Parsed     : 2239/2239 (100.00%)
-Positive Passed: 2148/2239 (95.94%)
+AST Parsed     : 2304/2304 (100.00%)
+Positive Passed: 2210/2304 (95.92%)
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-open-export-default-from/input.js
+Cannot use export statement outside a module
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body-lexical-redeclaration/input.js
+Identifier `f` has already been declared
+Identifier `g` has already been declared
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
@@ -12,6 +19,9 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comment
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/export-default-let-with-linebreak-and-keyword/input.js
+Cannot use export statement outside a module
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
 Bindings mismatch:
@@ -75,11 +85,6 @@ Bindings mismatch:
 after transform: ScopeId(0): ["assertIsString"]
 rebuilt        : ScopeId(0): []
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/for-of-lhs/input.ts
-Reference flags mismatch for "a":
-after transform: ReferenceId(3): ReferenceFlags(Read)
-rebuilt        : ReferenceId(1): ReferenceFlags(Write)
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/abstract/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["C1", "C2", "C3", "C4", "C5"]
@@ -95,6 +100,10 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Unresolved references mismatch:
 after transform: ["a"]
 rebuilt        : []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/escaped-in-after-initializer/input.ts
+Identifier `\u{69}n` has already been declared
+Identifier `\u{69}n` has already been declared
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/get-generic/input.ts
 Bindings mismatch:

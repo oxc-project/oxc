@@ -108,10 +108,6 @@ pub struct MinifierState<'a> {
     /// Per-pass change accumulator populated by typed mutation helpers and
     /// consumed by `compression_pass` after Normalize and every peephole pass.
     pub(crate) pass_changes: PassChanges<'a>,
-
-    /// Scratch buffer reused by `try_fold_concat` to build template literal
-    /// quasis without allocating a fresh `String` per call.
-    pub concat_scratch: String,
 }
 
 impl<'a> MinifierState<'a> {
@@ -133,7 +129,6 @@ impl<'a> MinifierState<'a> {
                 this_initialized_at: None,
             }),
             pass_changes: PassChanges::new(scoping.references_len(), allocator),
-            concat_scratch: String::new(),
         }
     }
 

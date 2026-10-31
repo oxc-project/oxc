@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        AssignmentTarget, Class, ClassElement, Expression, MethodDefinitionKind,
-        PropertyDefinition, Statement,
-    },
+    ast::{AssignmentTarget, Class, ClassElement, Expression, PropertyDefinition, Statement},
     match_member_expression,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -182,15 +179,15 @@ fn check_class<'a>(class: &Class<'a>, node: &AstNode<'a>, ctx: &LintContext<'a>)
 
     let constructor = class.body.body.iter().find_map(|el| match el {
         ClassElement::MethodDefinition(method)
-            if method.kind == MethodDefinitionKind::Constructor && method.value.body.is_some() =>
+            if method.kind.is_constructor() && method.value.body.is_some() =>
         {
             Some(method)
         }
         _ => None,
     });
-    let has_constructor_signature = class.body.body.iter().any(|el| {
-        matches!(el, ClassElement::MethodDefinition(method) if method.kind == MethodDefinitionKind::Constructor)
-    });
+    let has_constructor_signature = class.body.body.iter().any(
+        |el| matches!(el, ClassElement::MethodDefinition(method) if method.kind.is_constructor()),
+    );
 
     let name_property = class.body.body.iter().find_map(|el| {
         if let ClassElement::PropertyDefinition(prop) = el

@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        ClassElement, IdentifierReference, PropertyKey, TSSignature, TSType, TSTypeAnnotation,
-        TSTypeName,
-    },
+    ast::{ClassElement, IdentifierReference, TSSignature, TSType, TSTypeAnnotation, TSTypeName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -122,9 +119,7 @@ impl Rule for NoMisusedNew {
                 }
             }
             AstKind::TSMethodSignature(method_sig) => {
-                if let PropertyKey::StaticIdentifier(id) = &method_sig.key
-                    && id.name == "constructor"
-                {
+                if method_sig.key.is_specific_id("constructor") {
                     ctx.diagnostic(no_misused_new_interface_diagnostic(method_sig.key.span()));
                 }
             }

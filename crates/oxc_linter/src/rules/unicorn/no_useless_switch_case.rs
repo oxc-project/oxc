@@ -63,7 +63,7 @@ impl Rule for NoUselessSwitchCase {
 
         let cases = &switch_statement.cases;
 
-        let mut default_cases = cases.iter().filter(|case| case.test.is_none());
+        let mut default_cases = cases.iter().filter(|case| case.is_default_case());
         let Some(default_case) = default_cases.next() else {
             return;
         };

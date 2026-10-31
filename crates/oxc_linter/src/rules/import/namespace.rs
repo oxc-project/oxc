@@ -1,7 +1,7 @@
 use std::{fmt::Debug, sync::Arc};
 
 use oxc_ast::{
-    AstKind, StaticPropertyName,
+    AstKind,
     ast::{BindingPattern, ObjectPattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -322,13 +322,28 @@ fn check_deep_namespace_for_object_pattern(
     ctx: &LintContext<'_>,
 ) {
     for property in &pattern.properties {
-        let name = property.key.name().and_then(StaticPropertyName::into_cow_str);
-        let Some(name) = name else {
+        let Some(key_name) = property.key.name() else {
+            continue;
+        };
+        let missing_export = |name: &dyn Debug| {
+            if namespaces.len() > 1 {
+                no_export_in_deeply_imported_namespace(
+                    property.key.span(),
+                    name,
+                    &namespaces.join("."),
+                )
+            } else {
+                no_export(property.key.span(), name, source)
+            }
+        };
+        let Some(name) = key_name.as_str() else {
+            // An export name can't contain a lone surrogate, so the namespace has no such member.
+            ctx.diagnostic(missing_export(&key_name));
             continue;
         };
 
         if let BindingPattern::ObjectPattern(pattern) = &property.value
-            && let Some(module_source) = get_module_request_name(&name, module)
+            && let Some(module_source) = get_module_request_name(name, module)
         {
             let Some(next_module) = module.get_loaded_module(module_source.as_str()) else {
                 continue;
@@ -347,22 +362,7 @@ fn check_deep_namespace_for_object_pattern(
             continue;
         }
 
-        check_binding_exported(
-            &name,
-            || {
-                if namespaces.len() > 1 {
-                    no_export_in_deeply_imported_namespace(
-                        property.key.span(),
-                        &name,
-                        &namespaces.join("."),
-                    )
-                } else {
-                    no_export(property.key.span(), &name, source)
-                }
-            },
-            module,
-            ctx,
-        );
+        check_binding_exported(name, || missing_export(&name), module, ctx);
     }
 }
 
@@ -523,6 +523,7 @@ fn test() {
         (r#"import * as names from "./named-exports"; function b() { const { c } = names }"#, None),
         (r#"import * as names from "./named-exports"; const { c: d } = names"#, None),
         (r#"import * as names from "./named-exports"; const { c: { d } } = names"#, None),
+        (r#"import * as names from "./named-exports"; const { "\uD800": d } = names"#, None),
         // r#"import * as Endpoints from "./issue-195/Endpoints"; console.log(Endpoints.Foo)"#,
         // r#"import * as namespace from './malformed.js';"#,
         // TODO: Hard to confirm if it's a namespace object

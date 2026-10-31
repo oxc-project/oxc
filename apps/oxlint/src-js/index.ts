@@ -9,6 +9,7 @@ export type {
   OxlintGlobals,
   RuleCategories,
   ExternalPluginsConfig,
+  Oxlintrc,
   OxlintConfig,
   OxlintOverride,
 } from "./package/config.ts";

@@ -94,13 +94,9 @@ fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
                 Expression::StringLiteral(literal) => {
                     literal.value.as_str().is_some_and(is_valid_language_tag)
                 }
-                Expression::TemplateLiteral(template) if template.expressions.is_empty() => {
-                    template
-                        .quasis
-                        .first()
-                        .and_then(|quasi| quasi.value.cooked.as_ref())
-                        .is_none_or(|value| value.as_str().is_some_and(is_valid_language_tag))
-                }
+                Expression::TemplateLiteral(template) => template
+                    .single_quasi()
+                    .is_none_or(|value| value.as_str().is_some_and(is_valid_language_tag)),
                 _ => !expression.is_undefined(),
             }
         }

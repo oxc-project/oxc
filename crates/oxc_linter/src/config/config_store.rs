@@ -176,7 +176,6 @@ impl Config {
         // Build this only if an override adds a plugin whose category rules need applying.
         let mut all_rules: Option<Vec<RuleEnum>> = None;
 
-        // Build a hashmap of existing external rules keyed by rule id with value (options_id, severity)
         let mut external_rules = self
             .base
             .external_rules
@@ -222,7 +221,6 @@ impl Config {
                     }) {
                         rules.entry(rule).or_insert(*severity);
                     }
-                    // Mark these plugins as configured
                     configured_plugins |= unconfigured_plugins;
                 }
             }

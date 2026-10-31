@@ -30,7 +30,6 @@ use serde::{Deserialize, Serialize, de::Deserializer, ser::Serializer};
 pub fn normalize_plugin_name(plugin_name: &str) -> Cow<'_, str> {
     const PLUGIN_PREFIXES: [&str; 2] = ["eslint-plugin", "oxlint-plugin"];
 
-    // Handle scoped packages (@scope/...)
     if let Some((scope, rest)) = plugin_name.split_once('/') {
         for prefix in PLUGIN_PREFIXES {
             // @foo/eslint-plugin -> @foo
@@ -47,7 +46,6 @@ pub fn normalize_plugin_name(plugin_name: &str) -> Cow<'_, str> {
         }
     }
 
-    // Handle non-scoped packages
     for prefix in PLUGIN_PREFIXES {
         if let Some(suffix) =
             plugin_name.strip_prefix(prefix).and_then(|rest| rest.strip_prefix('-'))
@@ -58,7 +56,6 @@ pub fn normalize_plugin_name(plugin_name: &str) -> Cow<'_, str> {
         }
     }
 
-    // No normalization needed
     Cow::Borrowed(plugin_name)
 }
 

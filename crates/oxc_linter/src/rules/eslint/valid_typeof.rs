@@ -151,7 +151,7 @@ impl Rule for ValidTypeof {
         }
 
         if let Expression::Identifier(ident) = sibling
-            && ident.name == "undefined"
+            && ident.is_undefined()
             && ctx.is_reference_to_global_variable(ident)
         {
             ctx.diagnostic_with_fix(

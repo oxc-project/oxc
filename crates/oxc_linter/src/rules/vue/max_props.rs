@@ -20,7 +20,7 @@ use crate::{
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::{DefaultRuleConfig, Rule},
-    utils::{find_property, for_each_define_props_type_signature},
+    utils::for_each_define_props_type_signature,
 };
 
 fn max_props_diagnostic(span: Span, cur: u32, limit: u32) -> OxcDiagnostic {
@@ -172,7 +172,7 @@ impl MaxProps {
             return;
         };
 
-        let Some(props_prop) = find_property(obj_expr, "props") else {
+        let Some(props_prop) = obj_expr.find_property("props") else {
             return;
         };
         let Expression::ObjectExpression(props_obj_expr) = props_prop.value.get_inner_expression()

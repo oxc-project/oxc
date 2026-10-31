@@ -1,0 +1,49 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div>
+  <div>
+    <!--
+    comment
+		-->
+  </div>
+  <div>
+    <!--
+    comment
+  -->
+  </div>
+</div>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div>
+  <div>
+    <!--
+    comment
+		-->
+  </div>
+  <div>
+    <!--
+    comment
+  --></div>
+</div>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div>
+  <div>
+    <!--
+    comment
+		-->
+  </div>
+  <div>
+    <!--
+    comment
+  --></div>
+</div>
+
+===================== End =====================

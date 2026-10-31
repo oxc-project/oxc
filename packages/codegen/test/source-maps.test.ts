@@ -95,6 +95,26 @@ describe("Rust conformance", () => {
     },
     { name: "astral-new.js", code: "new 𐐀;", lang: "js" as const },
     {
+      name: "escaped-default-import.js",
+      code: 'import s\\u006furce from "./a.js";',
+      lang: "js" as const,
+    },
+    {
+      name: "escaped-default-import.ts",
+      code: 'import type s\\u006furce from "./a.js";',
+      lang: "ts" as const,
+    },
+    {
+      name: "escaped-default-and-named-import.js",
+      code: 'import s\\u006furce, { value } from "./a.js";',
+      lang: "js" as const,
+    },
+    {
+      name: "escaped-default-and-namespace-import.js",
+      code: 'import s\\u006furce, * as ns from "./a.js";',
+      lang: "js" as const,
+    },
+    {
       name: "large-line-gap.js",
       code: `\`${"\n".repeat(200)}\`;\nvalue;`,
       lang: "js" as const,

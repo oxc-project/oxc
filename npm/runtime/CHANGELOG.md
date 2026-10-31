@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.156.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- e3eca41 runtime: Align async iterator throw with Babel (#28059) (camc314)
+
 ## [0.154.0] - 2026-10-13
 
 ### 🐛 Bug Fixes

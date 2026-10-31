@@ -95,7 +95,7 @@ impl Rule for NoThrowLiteral {
                 });
             }
             Expression::Identifier(id)
-                if id.name == "undefined" && ctx.is_reference_to_global_variable(id) =>
+                if id.is_undefined() && ctx.is_reference_to_global_variable(id) =>
             {
                 ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), true));
             }

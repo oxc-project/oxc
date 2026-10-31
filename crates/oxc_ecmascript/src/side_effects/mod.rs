@@ -5,7 +5,9 @@ mod pure_function;
 mod statements;
 
 pub use context::{MayHaveSideEffectsContext, PropertyReadSideEffects};
-pub use known_globals::{is_regexp_syntax_supported, is_typed_array_constructor, is_valid_regexp};
+pub use known_globals::{
+    is_error_constructor, is_regexp_syntax_supported, is_typed_array_constructor, is_valid_regexp,
+};
 pub use pure_function::is_pure_function;
 
 /// Returns true if subtree changes application state.

@@ -357,7 +357,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         node: &TSType<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        match &node {
+        match node.without_parenthesized() {
             TSType::TSVoidKeyword(_)
             | TSType::TSUndefinedKeyword(_)
             | TSType::TSNullKeyword(_)
@@ -408,9 +408,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             TSType::JSDocNonNullableType(t) => {
                 self.serialize_type_node(&t.type_annotation, ctx)
             }
-            TSType::TSParenthesizedType(t) => {
-                self.serialize_type_node(&t.type_annotation, ctx)
-            }
+            TSType::TSParenthesizedType(_) => unreachable!("Type is already unwrapped"),
             TSType::TSObjectKeyword(_)
             // Fallback to `Object`
             | TSType::TSTypeQuery(_) | TSType::TSIndexedAccessType(_) | TSType::TSMappedType(_)
@@ -428,10 +426,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         params: &FormalParameters<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut elements = ArenaVec::with_capacity_in(
-            params.items.len() + usize::from(params.rest.is_some()),
-            ctx,
-        );
+        let mut elements = ArenaVec::with_capacity_in(params.parameters_count(), ctx);
         elements.extend(params.items.iter().map(|param| {
             ArrayExpressionElement::from(self.serialize_parameter_types_of_node(param, ctx))
         }));

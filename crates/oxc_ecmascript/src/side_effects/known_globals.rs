@@ -154,8 +154,10 @@ pub(super) fn is_unconditionally_pure_constructor(name: &str) -> bool {
 }
 
 /// Whether the name is an Error constructor.
+///
+/// See <https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-native-error-types-used-in-this-standard> for the list of native errors.
 #[rustfmt::skip]
-pub(super) fn is_error_constructor(name: &str) -> bool {
+pub fn is_error_constructor(name: &str) -> bool {
     matches!(name, "Error" | "EvalError" | "RangeError" | "ReferenceError"
             | "SyntaxError" | "TypeError" | "URIError")
 }

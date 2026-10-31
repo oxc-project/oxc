@@ -117,24 +117,8 @@ impl IdentifierLocVisitor {
     /// names, `this`, and member-property parts carry no reference and are
     /// never looked up, so only `IdentifierReference` names are recorded.
     fn record_jsx_element_name<'a>(&mut self, name: &JSXElementName<'a>) {
-        match name {
-            JSXElementName::IdentifierReference(id) => self.record_reference(id),
-            JSXElementName::MemberExpression(m) => self.record_jsx_member_expression(m),
-            JSXElementName::Identifier(_)
-            | JSXElementName::ThisExpression(_)
-            | JSXElementName::NamespacedName(_) => {}
-        }
-    }
-
-    fn record_jsx_member_expression<'a>(&mut self, expr: &JSXMemberExpression<'a>) {
-        match &expr.object {
-            JSXMemberExpressionObject::IdentifierReference(id) => {
-                self.record_reference(id);
-            }
-            JSXMemberExpressionObject::ThisExpression(_) => {}
-            JSXMemberExpressionObject::MemberExpression(inner) => {
-                self.record_jsx_member_expression(inner);
-            }
+        if let Some(id) = name.get_identifier() {
+            self.record_reference(id);
         }
     }
 }

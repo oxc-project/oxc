@@ -2,7 +2,7 @@ use lazy_regex::{Regex, RegexBuilder};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::SwitchCase};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -138,7 +138,7 @@ impl Rule for DefaultCase {
 
         let cases = &switch.cases;
 
-        if cases.is_empty() || cases.iter().any(|case| case.test.is_none()) {
+        if cases.is_empty() || cases.iter().any(SwitchCase::is_default_case) {
             return;
         }
 

@@ -4,8 +4,8 @@ use fast_glob::glob_match;
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        Argument, ArrowFunctionExpression, CallExpression, Class, Function, JSXAttributeName,
-        JSXExpression, JSXExpressionContainer, MemberExpression,
+        Argument, ArrowFunctionExpression, CallExpression, Class, Function, JSXExpression,
+        JSXExpressionContainer, MemberExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -497,10 +497,7 @@ fn nearest_jsx_attribute_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Opti
             let AstKind::JSXAttribute(attr) = parent.kind() else {
                 return None;
             };
-            return match &attr.name {
-                JSXAttributeName::Identifier(id) => Some(id.name.to_string()),
-                JSXAttributeName::NamespacedName(_) => None,
-            };
+            return attr.name.as_identifier().map(|id| id.name.to_string());
         }
         if matches!(ancestor.kind(), AstKind::JSXElement(_) | AstKind::JSXFragment(_)) {
             return None;

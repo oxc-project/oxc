@@ -23,7 +23,9 @@ use super::FormatWrite;
 /// Span windows assuming source-ordered, non-overlapping fields are inverted here:
 /// the generated `following_span_start` for `this_param` (= params span start) points before it,
 /// so the generated trailing-comment pass never captures anything (see [`Parameter::This`]).
-pub fn get_this_param<'a>(parent: &AstNodes<'a>) -> Option<&'a AstNode<'a, TSThisParameter<'a>>> {
+pub fn get_this_param<'b, 'a>(
+    parent: &'b AstNodes<'b, 'a>,
+) -> Option<AstNode<'b, 'a, TSThisParameter<'a>>> {
     match parent {
         AstNodes::Function(func) => func.this_param(),
         AstNodes::TSFunctionType(func) => func.this_param(),
@@ -33,7 +35,7 @@ pub fn get_this_param<'a>(parent: &AstNodes<'a>) -> Option<&'a AstNode<'a, TSThi
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameters<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         // `function foo /**/ () {}`
         //               ^^^ keep comments printed before parameters
@@ -104,7 +106,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameter<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let content = format_with(|f| {
             let left = format_with(|f| {
@@ -166,7 +168,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSThisParameter<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSThisParameter<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["this", self.type_annotation()]);
     }
@@ -174,11 +176,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSThisParameter<'a>> {
 
 enum Parameter<'a, 'b> {
     This {
-        param: &'b AstNode<'a, TSThisParameter<'a>>,
-        list: &'b AstNode<'a, FormalParameters<'a>>,
+        param: AstNode<'b, 'a, TSThisParameter<'a>>,
+        list: &'b AstNode<'b, 'a, FormalParameters<'a>>,
     },
-    Formal(&'b AstNode<'a, FormalParameter<'a>>),
-    Rest(&'b AstNode<'a, FormalParameterRest<'a>>),
+    Formal(AstNode<'b, 'a, FormalParameter<'a>>),
+    Rest(AstNode<'b, 'a, FormalParameterRest<'a>>),
 }
 
 impl GetSpan for Parameter<'_, '_> {
@@ -215,8 +217,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for Parameter<'a, '_> {
 
 struct FormalParametersIter<'a, 'b> {
     this: Option<Parameter<'a, 'b>>,
-    params: AstNodeIterator<'a, FormalParameter<'a>>,
-    rest: Option<&'b AstNode<'a, FormalParameterRest<'a>>>,
+    params: AstNodeIterator<'b, 'a, FormalParameter<'a>>,
+    rest: Option<AstNode<'b, 'a, FormalParameterRest<'a>>>,
 }
 
 impl<'a, 'b> From<&'b ParameterList<'a, 'b>> for FormalParametersIter<'a, 'b> {
@@ -243,8 +245,8 @@ impl<'a, 'b> Iterator for FormalParametersIter<'a, 'b> {
 }
 
 pub struct ParameterList<'a, 'b> {
-    list: &'b AstNode<'a, FormalParameters<'a>>,
-    this: Option<&'b AstNode<'a, TSThisParameter<'a>>>,
+    list: &'b AstNode<'b, 'a, FormalParameters<'a>>,
+    this: Option<AstNode<'b, 'a, TSThisParameter<'a>>>,
     layout: Option<ParameterLayout>,
     trailing_separator_override: Option<TrailingSeparator>,
 }
@@ -284,8 +286,8 @@ pub enum ParameterLayout {
 
 impl<'a, 'b> ParameterList<'a, 'b> {
     pub fn with_layout(
-        list: &'b AstNode<'a, FormalParameters<'a>>,
-        this: Option<&'b AstNode<'a, TSThisParameter<'a>>>,
+        list: &'b AstNode<'b, 'a, FormalParameters<'a>>,
+        this: Option<AstNode<'b, 'a, TSThisParameter<'a>>>,
         layout: ParameterLayout,
     ) -> Self {
         Self { list, this, layout: Some(layout), trailing_separator_override: None }
@@ -364,8 +366,8 @@ pub fn can_avoid_parentheses(arrow: &ArrowFunctionExpression<'_>, f: &JsFormatte
 /// (`FormalParameters` before printing, `FormalParameter` after its leading comments, the type literal while printing),
 /// so every comment check here must be position-based to give all of them the same answer.
 pub fn should_hug_function_parameters<'a>(
-    parameters: &AstNode<'a, FormalParameters<'a>>,
-    this_param: Option<&AstNode<'a, TSThisParameter<'a>>>,
+    parameters: &AstNode<'_, 'a, FormalParameters<'a>>,
+    this_param: Option<AstNode<'_, 'a, TSThisParameter<'a>>>,
     parentheses_not_needed: bool,
     f: &JsFormatter<'_, 'a>,
 ) -> bool {

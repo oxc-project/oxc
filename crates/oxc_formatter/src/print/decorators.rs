@@ -12,7 +12,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, Decorator<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.is_empty() {
             return;
@@ -52,13 +52,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Decorator<
     }
 }
 
-fn is_identifier_or_static_member_only(callee: &Expression) -> bool {
+fn is_identifier_or_non_computed_member_only(callee: &Expression) -> bool {
     let mut expr = callee;
     loop {
         match expr {
             Expression::Identifier(_) => return true,
             Expression::StaticMemberExpression(static_member) => {
                 expr = &static_member.object;
+            }
+            Expression::PrivateFieldExpression(private_field) => {
+                expr = &private_field.object;
             }
             _ => break,
         }
@@ -67,22 +70,19 @@ fn is_identifier_or_static_member_only(callee: &Expression) -> bool {
     false
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, Decorator<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["@"]);
 
         // Determine if parentheses are required around decorator expressions
         let needs_parentheses = match &self.expression {
-            // Identifiers: `@decorator` needs no parens
-            Expression::Identifier(_) => false,
             // Call expressions: `@obj.method()` needs no parens, `@(complex().method)()` needs parens
-            Expression::CallExpression(call) => !is_identifier_or_static_member_only(&call.callee),
-            // Static member expressions: `@obj.prop` needs no parens, `@(complex[key])` needs parens
-            Expression::StaticMemberExpression(static_member) => {
-                !is_identifier_or_static_member_only(&static_member.object)
+            Expression::CallExpression(call) => {
+                !is_identifier_or_non_computed_member_only(&call.callee)
             }
-            // All other expressions need parentheses: `@(a + b)`, `@(condition ? a : b)`
-            _ => true,
+            // `@decorator`, `@obj.prop` and `@obj.#prop` need no parens,
+            // all other expressions need parens: `@(complex[key])`, `@(a + b)`
+            expression => !is_identifier_or_non_computed_member_only(expression),
         };
 
         if needs_parentheses {
@@ -98,7 +98,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
 /// Check if decorators should expand (have newlines between them)
 #[inline]
 fn should_expand_decorators<'a>(
-    decorators: &AstNode<'a, ArenaVec<'a, Decorator<'a>>>,
+    decorators: &AstNode<'_, 'a, ArenaVec<'a, Decorator<'a>>>,
     f: &JsFormatter<'_, 'a>,
 ) -> bool {
     decorators

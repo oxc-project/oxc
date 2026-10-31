@@ -79,17 +79,16 @@ NOTE: Rust written formatters never fall back to Prettier, since they exist to r
 Known divergences live in DIVERGENCES.md (embedding / dispatch layer only); single-language ones live in the owning crate's.
 
 - The pin is a minimal repro in `conformance/fixtures/edge-cases/`
-- `conformance/run.ts` derives the file-to-entry map from every `DIVERGENCES.md` (this one's `Pin:` / `Conformance:`, the crates' `Oxfmt:`), prints the ref next to each failure,
-  and warns on a failure no entry lists (unclassified) and on a listed file that passes (stale)
+- `conformance/run_prettier.ts` compares Prettier's own test suite with its committed jest snapshots, so Prettier never runs
+  - Its `PARSERS` table maps a Prettier parser to the filename oxfmt routes to that language, parsers not listed are not run
+  - Each input runs under its spec's own options only, and is also checked for idempotency and its CRLF / CR / BOM variants
+- `conformance/run_live.ts` compares with Prettier run on the spot
+  - A category's `projects` (real-world repositories) are compared on Prettier's output of each file, the code a Prettier user hands over,
+    so the divergences that keep what was written do not fire in bulk; its `fixtures` stay as written, raw shapes are their job
+- Both runners name a file as its report prints it (its path under `conformance/fixtures/`, `<dir>/snippet: <title>` for a snippet), as `DIVERGENCES.md` lists it in `Pin:` / `Conformance:` lines (`conformance/shared.ts`), and fail on a listed path that passes (stale)
+  - Both reports list the entries under each failing file, `❓unclassified` when none does (those files first); `run_live.ts` also warns on an unclassified one
 - All current entries are embedding-layer decisions that outlive the Prettier delegation;
   if an entry about the Prettier-fallback boundary itself is ever added, group it under a separate heading in DIVERGENCES.md so the removal scope stays obvious when the fallback goes away
-
-Conformance failures (`conformance/snapshots/`) no entry accounts for, to fix rather than admit:
-
-- `jsdoc`: `externals/svelte/compiler/print/index.js`
-  - `if (!(a && b))` hugs `!(` to the head paren since prettier/prettier#18401, not ported yet (Prettier conformance `js/if/condition-break/unary-expression.js`; unrelated to JSDoc)
-- `astro`: `externals/plugin-astro/other/prettier-ignore-js/input.astro`
-  - A `// prettier-ignore`d expression statement without `;` gets `;` appended (`oxc_formatter` itself, reproducible in plain `.ts`; unrelated to Astro)
 
 ### Embedded language formatting
 
@@ -97,19 +96,19 @@ Embedded languages (e.g. css-in-js, CSS front matter YAML) go through the `Forma
 
 Routing is ONE table (`route_embedded` in `src/core/language.rs`, which also maps the LSP `languageId`):
 
-- `Native` languages (js/ts/css/graphql/yaml/json/markdown/toml/...) get a Rust branch
-- `Prettier` set (html/angular/vue/svelte/astro/handlebars/mdx) goes to the Prettier Doc→IR channel (`embed/prettier_doc.rs`)
+- `Native` languages (js/ts/css/graphql/yaml/json/markdown/toml/html/...) get a Rust branch
+- `Prettier` set (angular/vue/svelte/astro/handlebars/mdx) goes to the Prettier Doc→IR channel (`embed/prettier_doc.rs`)
 - everything else is deliberately preserved
 
 Language-pair data crosses as `DispatchRequest::parent_context` markers the dispatcher translates for the child, so no language crate depends on another.
 
 Vocabulary: "fallback" = the dispatcher's optional `PrettierDocFallback` slot (a build/root may not install one).
-The pure Rust build runs fallback-less, so non-native embeds (html-in-js, custom front matter) deliberately stay verbatim.
+The pure Rust build runs fallback-less, so non-native embeds (angular-in-js, custom front matter) deliberately stay verbatim.
 
-The roots install `SessionServices`, all via `embed/services.rs::for_root` (one definition per build; the napi one takes the `ExternalServices` transport, and adds the Prettier fallback / string embedder / Tailwind sorter to the registry dispatcher): the JS/TS, CSS and Markdown file roots (`core/format.rs`, `PhysicalFile` sessions, both builds) and the Vue/Svelte/Astro `<script>` and Astro frontmatter root (`api/text_to_doc_api.rs`, `VirtualDocument` session, napi only).
+The roots install `SessionServices`, all via `embed/services.rs::for_root` (one definition per build; the napi one takes the `ExternalServices` transport, and adds the Prettier fallback / string embedder / Tailwind sorter to the registry dispatcher): the JS/TS, CSS, Markdown and HTML file roots (`core/format.rs`, `PhysicalFile` sessions, both builds) and the Vue/Svelte/Astro `<script>` and Astro frontmatter root (`api/text_to_doc_api.rs`, `VirtualDocument` session, napi only).
 
 Which languages may dispatch AT ALL from a given host is the host crate's own gate (e.g. `oxc_formatter_css` dispatches only `yaml`/`toml` front matter, `oxc_formatter_markdown` every fenced code block's language); the shared `route_embedded()` table then decides who serves the language.
-Adding a dispatch call to a host crate is therefore a routing decision (check `route_embedded()` and the embedded conformance when doing so. A root needing a bespoke service set would assemble the `SessionServices` struct literally), none does today.
+Adding a dispatch call to a host crate is therefore a routing decision (check `route_embedded()` and the xxx-in-yyy categories of `conformance:live` when doing so. A root needing a bespoke service set would assemble the `SessionServices` struct literally), none does today.
 `embeddedLanguageFormatting: off` installs no dispatcher, every builder consults the same off-gate, `ResolvedDispatchConfig::is_embedded_formatting_enabled`.
 Tracing span namespaces: `oxfmt::embed::` = pure Rust work, `oxfmt::external::` = napi-crossing calls.
 
@@ -118,12 +117,11 @@ Per-language options are NOT built up front: `ResolvedDispatchConfig` maps them 
 A separate string-out channel (the session's `string_embedder` service, NOT the dispatcher) carries JSDoc's string-in/string-out consumer:
 
 - JSDoc fenced code blocks: the host (`oxc_formatter`) embeds only the `prettier-plugin-jsdoc` set (css/less/scss/json/yaml/html), then routing follows ONE rule, the same `route_embedded` table
-  - a `Native` fence language formats through `FormatSession::dispatch_to_string` via a thin string adapter (`embed/jsdoc_fence.rs::format_native_fence`, EVERY build, the pure Rust build wires it via `services::for_root`)
-  - html fences stay on the Prettier string path (`embed/prettier_string.rs`, napi only; its Doc→IR conversion has unrepresentable cases);
+  - a `Native` fence language (the whole set) formats through `FormatSession::dispatch_to_string` via a thin string adapter (`embed/jsdoc_fence.rs`, EVERY build, wired by `services::for_root`)
   - everything else stays verbatim
-  - the embedder carries the caller's effective print width; both branches honor it (native via `PrintWidth` override, Prettier via `printWidth` in the options JSON), so a fence prints at the same width a JS/TS snippet in the same position would (see `upstream-jsdoc-bugs.md` #11 for the deliberate divergence from upstream's flat `printWidth - 4`)
+  - the embedder carries the caller's effective print width (a `PrintWidth` override), so a fence prints at the same width a JS/TS snippet in the same position would (see `upstream-jsdoc-bugs.md` #11 for the deliberate divergence from upstream's flat `printWidth - 4`)
 
-NOTE: The string-out channel outlives the html rewrite; its full exit criterion is owned by `oxc_formatter_core`'s AGENTS.md (domain (4)).
+NOTE: The string-out channel outlives the html rewrite; its exit criterion is owned by `oxc_formatter_core`'s AGENTS.md (domain (4)).
 The half owned here: JSDoc's string-out is NOT structural, fences can move to IR-out (session dispatch inside the comment IR).
 The printer already has the per-line prefix mechanism the `*` continuation needs (`prefix_align`); what remains is JSDoc emitting its output as lines plus embedded IR instead of one string, deferred for verification time, not by design.
 
@@ -161,8 +159,10 @@ pnpm build-dev && pnpm t
 # Update snapshots
 pnpm t -u
 
-# Run conformance test for xxx-in-js and js-in-xxx
+# Run conformance tests (`conformance:prettier` and `conformance:live`)
 pnpm build-dev && pnpm download-fixtures && pnpm conformance
+# Print the diffs of Prettier's test suite matching a path substring, without writing the report
+pnpm conformance:prettier --filter <substring>
 ```
 
 To manually verify the CLI behavior after building:

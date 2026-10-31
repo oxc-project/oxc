@@ -333,8 +333,7 @@ fn is_string_arg_matching(arg: &Argument, value: &str) -> bool {
     arg.as_expression().is_some_and(|expr| match expr {
         Expression::StringLiteral(lit) => lit.value == value,
         Expression::TemplateLiteral(tpl) => {
-            tpl.quasis.len() == 1
-                && tpl.expressions.is_empty()
+            tpl.is_no_substitution_template()
                 && tpl.quasis.first().is_some_and(|q| q.value.raw == value)
         }
         _ => false,

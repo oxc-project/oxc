@@ -30,7 +30,7 @@ use crate::{
     write,
 };
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSUnionType<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         // A suppression comment before the union covers the whole union,
         // decided by the generated `fmt` like any other node (AGENTS.md "Suppression", DIVERGENCES.md#union-suppression-whole);
@@ -74,7 +74,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             let has_alias_level_own_line_comments =
                 is_alias_level && (has_comment_before_pipe || has_comment_after_pipe);
             if !has_alias_level_own_line_comments {
-                return format_union_types(self.types(), Span::default(), true, f);
+                return format_union_types(&self.types(), Span::default(), true, f);
             }
         }
 
@@ -216,7 +216,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
 
             write!(f, [if_group_breaks(&separator)]);
 
-            format_union_types(types, suppressed_node_span, false, f);
+            format_union_types(&types, suppressed_node_span, false, f);
         });
 
         let content = format_with(|f| {
@@ -361,7 +361,7 @@ pub fn alias_union_breaks_after_operator(
 }
 
 fn should_indent_alias_union<'a>(
-    alias: &AstNode<'a, TSTypeAliasDeclaration<'a>>,
+    alias: &AstNode<'_, 'a, TSTypeAliasDeclaration<'a>>,
     comment_info: LeadingCommentsInfo,
     f: &JsFormatter<'_, 'a>,
 ) -> bool {
@@ -374,7 +374,7 @@ fn should_indent_alias_union<'a>(
 }
 
 fn format_union_types<'a>(
-    node: &AstNode<'a, ArenaVec<'a, TSType<'a>>>,
+    node: &AstNode<'_, 'a, ArenaVec<'a, TSType<'a>>>,
     mut suppressed_node_span: Span,
     should_hug: bool,
     f: &mut JsFormatter<'_, 'a>,
@@ -461,7 +461,7 @@ fn format_union_types<'a>(
             //            ^^^^^^^^^^^ the following logic is to print comment2,
             // )[]; // comment 3
             //```
-            // TODO: We may need to tweak `AstNode<'a, ArenaVec<'a, T>>` iterator as some of Vec's last elements should have the following span.
+            // TODO: We may need to tweak `AstNode<'_, 'a, ArenaVec<'a, T>>` iterator as some of Vec's last elements should have the following span.
             let comments = f.context().comments().end_of_line_comments_after(element_span.end);
             write!(f, FormatTrailingComments::Comments(comments));
         }

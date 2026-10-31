@@ -354,7 +354,7 @@ impl<'a> Codegen<'a> {
     /// Push str into the buffer
     #[inline]
     pub fn print_str(&mut self, s: &str) {
-        self.code.print_str(s);
+        self.code.print_str_short(s);
     }
 
     /// Print an identifier name (binding, reference, label, private name, property key),
@@ -362,7 +362,7 @@ impl<'a> Codegen<'a> {
     #[inline]
     pub fn print_name(&mut self, s: &str) {
         if !self.options.ascii_only || s.is_ascii() {
-            self.code.print_str(s);
+            self.code.print_str_short(s);
         } else {
             self.print_non_ascii_escaped(s, NonAsciiEscape::Identifier);
             self.need_space_before_identifier = self.code.len();

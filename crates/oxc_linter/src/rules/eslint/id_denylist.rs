@@ -22,9 +22,9 @@ use crate::{
     context::{ContextHost, LintContext},
     rule::{Rule, TupleRuleConfig},
     rules::eslint::id_match::{
-        is_dynamic_import_attribute_object_property, is_known_external_global,
-        transparent_reference_parent,
+        is_dynamic_import_attribute_object_property, transparent_reference_parent,
     },
+    utils::is_enabled_global_reference,
 };
 
 fn id_denylist_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
@@ -193,7 +193,7 @@ impl IdDenylist {
             _ => {}
         }
 
-        if is_known_external_global(ident, ctx) {
+        if is_enabled_global_reference(ident, ctx) {
             return;
         }
 

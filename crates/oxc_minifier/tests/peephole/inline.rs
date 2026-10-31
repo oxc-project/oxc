@@ -602,6 +602,18 @@ fn r#const() {
 
     test_options("let foo = 1; log(foo)", "log(1)", &options);
     test_options("export let foo = 1; log(foo)", "export let foo = 1; log(1)", &options);
+
+    // A constant with a statically unknown type can still be a string.
+    test_options(
+        "function f() { const y = (true ? '5' : true) + 1; return [y, y]; } log(f());",
+        "function f() { return ['51', '51']; } log(f());",
+        &options,
+    );
+    test_options(
+        "function f() { const y = (true ? '5' : true) + null; return [y, y]; } log(f());",
+        "function f() { let y = '5null'; return [y, y]; } log(f());",
+        &options,
+    );
 }
 
 // https://github.com/oxc-project/oxc/issues/20282
@@ -697,6 +709,8 @@ fn small_value() {
 
     test_options("const foo = 'aaa'; log(foo), log(foo)", "log('aaa'), log('aaa')", &options);
     test_same_options("const foo = 'aaaa'; log(foo), log(foo)", &options);
+    // A lone surrogate takes 3 bytes but prints as a 6-character escape.
+    test_same_options(r"const foo = '\uD800'; log(foo), log(foo)", &options);
 
     test_options("const foo = true; log(foo), log(foo)", "log(!0), log(!0)", &options);
     test_options("const foo = false; log(foo), log(foo)", "log(!1), log(!1)", &options);

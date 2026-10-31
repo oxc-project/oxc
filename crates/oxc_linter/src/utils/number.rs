@@ -32,14 +32,11 @@ impl PartialEq for ScientificNotation<'_> {
 
 impl<'a> RawNum<'a> {
     fn new(num: &str) -> Option<RawNum<'_>> {
-        // remove sign
         let num = num.trim_start_matches(['+', '-']);
 
         let (int, num_without_int) = {
-            // skip leading zeros
             let num_without_zeros = num.trim_start_matches('0');
 
-            // read the integer part and store the end index
             let int_end = num_without_zeros
                 .chars()
                 .position(|ch| !ch.is_ascii_digit())
@@ -48,7 +45,6 @@ impl<'a> RawNum<'a> {
             // if no integer part was found, default to 0
             let int = if int_end == 0 { "0" } else { &num_without_zeros[..int_end] };
 
-            // make a slice of the rest of the string
             let num_without_int = &num_without_zeros[int_end..];
 
             (int, num_without_int)

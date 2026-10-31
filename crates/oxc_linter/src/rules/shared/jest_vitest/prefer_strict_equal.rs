@@ -1,4 +1,5 @@
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{
@@ -36,13 +37,10 @@ expect({ a: 'a', b: undefined }).toStrictEqual({ a: 'a' });
 ```
 ";
 
-pub fn run_on_jest_node<'a, 'c>(jest_node: &PossibleJestNode<'a, 'c>, ctx: &'c LintContext<'a>) {
-    run(jest_node, ctx);
-}
-
-fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) -> Option<()> {
-    let call_expr = possible_jest_node.node.kind().as_call_expression()?;
-    let parse_jest_expect_fn_call = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)?;
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Option<()> {
+    let call_expr = node.kind().as_call_expression()?;
+    let possible_jest_node = PossibleJestNode::from_call_expression(node, call_expr, ctx)?;
+    let parse_jest_expect_fn_call = parse_expect_jest_fn_call(call_expr, &possible_jest_node, ctx)?;
     let matcher = parse_jest_expect_fn_call.matcher()?;
     let matcher_name = matcher.name()?;
 

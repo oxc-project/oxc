@@ -1,6 +1,6 @@
 [package]
 name = "oxc_formatter_css"
-version = "0.74.0"
+version = "0.75.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -27,7 +27,7 @@ oxc-css-parser = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
-oxc_formatter_tests = { workspace = true, features = ["conformance"] }
+oxc_formatter_tests = { workspace = true }
 pico-args = { workspace = true }
 
 [build-dependencies]

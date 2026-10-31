@@ -1,9 +1,10 @@
-use crate::{error::DiagCode, lanes::Lanes};
+use crate::error::DiagCode;
 
 use crate::pipeline::{
     bitmap::bm_get,
     bytes::{is_id_start, is_word, line_break_in},
     disambiguate::jsx_over_generic,
+    lanes::Lanes,
     token_view,
 };
 

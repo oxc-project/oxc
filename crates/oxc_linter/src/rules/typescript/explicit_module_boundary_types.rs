@@ -1,4 +1,4 @@
-use std::{borrow::Cow, ops::Deref};
+use std::ops::Deref;
 
 use oxc_allocator::{Address, ArenaVec, UnstableAddress};
 use oxc_ast::{AstKind, StaticPropertyName, ast::*};
@@ -315,7 +315,8 @@ impl Fn<'_> {
 #[derive(Clone, Copy)]
 struct TargetSymbol<'a> {
     span: Span,
-    name: &'a str,
+    /// `None` for a property name with a lone surrogate, which matches no allowed name.
+    name: Option<&'a str>,
     kind: TargetSymbolKind,
 }
 
@@ -360,7 +361,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         if let Some(id) = binding {
             self.target_symbol = Some(TargetSymbol {
                 span: id.span,
-                name: id.name.as_str(),
+                name: Some(id.name.as_str()),
                 kind: TargetSymbolKind::Binding,
             });
             true
@@ -373,11 +374,12 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         let Some(id) = prop else {
             return false;
         };
-        if let Some(Cow::Borrowed(name)) =
-            id.static_name().and_then(StaticPropertyName::into_cow_str)
-        {
-            self.target_symbol =
-                Some(TargetSymbol { span: id.span(), name, kind: TargetSymbolKind::Property });
+        if let Some(StaticPropertyName::Borrowed(name)) = id.static_name() {
+            self.target_symbol = Some(TargetSymbol {
+                span: id.span(),
+                name: name.as_str(),
+                kind: TargetSymbolKind::Property,
+            });
             true
         } else {
             false
@@ -395,7 +397,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         debug_assert!(func.return_type.is_none());
 
         let target = self.target_symbol.as_ref();
-        let target_name = target.map(|t| t.name);
+        let target_name = target.and_then(|t| t.name);
         #[expect(clippy::cast_possible_truncation)]
         let span = target.map_or(Span::sized(func.span.start, "function".len() as u32), |t| t.span);
         let is_allowed = || {
@@ -503,7 +505,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
     fn check_arrow_without_return(&mut self, arrow: &ArrowFunctionExpression<'a>) {
         debug_assert!(arrow.return_type.is_none());
         let target = self.target_symbol.as_ref();
-        let target_name = target.map(|t| t.name);
+        let target_name = target.and_then(|t| t.name);
         let span = match target {
             Some(TargetSymbol { span, kind: TargetSymbolKind::Property, .. }) => *span,
             // Match typescript-eslint's function-head location for the exported arrow itself.
@@ -1805,6 +1807,15 @@ mod test {
               foo: () => {},
             };
             ",
+                Some(json!([{ "allowTypedFunctionExpressions": false }])),
+            ),
+            (
+                r#"
+            interface Foo {}
+            export const x: Foo = {
+              "foo\uDC00": () => {},
+            };
+            "#,
                 Some(json!([{ "allowTypedFunctionExpressions": false }])),
             ),
             (

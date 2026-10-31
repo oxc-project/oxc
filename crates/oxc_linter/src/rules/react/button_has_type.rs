@@ -6,10 +6,7 @@ use crate::{
 };
 use oxc_ast::{
     AstKind,
-    ast::{
-        Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName,
-        ObjectPropertyKind,
-    },
+    ast::{Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -122,32 +119,17 @@ impl Rule for ButtonHasType {
                 }
 
                 if let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) {
-                    obj_expr
-                        .properties
-                        .iter()
-                        .find_map(|prop| {
-                            if let ObjectPropertyKind::ObjectProperty(prop) = prop
-                                && prop.key.is_specific_static_name("type")
-                            {
-                                return Some(prop);
+                    obj_expr.find_property("type").map_or_else(
+                        || {
+                            ctx.diagnostic(missing_type_prop(obj_expr.span));
+                        },
+                        |type_prop| {
+                            if !self.is_valid_button_type_prop_expression(&type_prop.value) {
+                                let allowed_types = self.allowed_types_message();
+                                ctx.diagnostic(invalid_type_prop(type_prop.span, &allowed_types));
                             }
-
-                            None
-                        })
-                        .map_or_else(
-                            || {
-                                ctx.diagnostic(missing_type_prop(obj_expr.span));
-                            },
-                            |type_prop| {
-                                if !self.is_valid_button_type_prop_expression(&type_prop.value) {
-                                    let allowed_types = self.allowed_types_message();
-                                    ctx.diagnostic(invalid_type_prop(
-                                        type_prop.span,
-                                        &allowed_types,
-                                    ));
-                                }
-                            },
-                        );
+                        },
+                    );
                 } else {
                     ctx.diagnostic(missing_type_prop(call_expr.span));
                 }

@@ -128,7 +128,15 @@ impl<'a> JSStrBuilder<'a> {
     /// A pair may span consecutive calls, including empty buffers.
     #[inline]
     pub fn push_utf16(&mut self, units: &[u16]) {
-        for &unit in units {
+        self.push_code_units(units.iter().copied());
+    }
+
+    /// Append potentially ill-formed UTF-16 code units from an iterator, like [`push_utf16`].
+    ///
+    /// [`push_utf16`]: Self::push_utf16
+    #[inline]
+    pub fn push_code_units(&mut self, units: impl IntoIterator<Item = u16>) {
+        for unit in units {
             self.push_code_unit(unit);
         }
     }

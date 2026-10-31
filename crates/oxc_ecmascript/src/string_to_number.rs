@@ -1,7 +1,16 @@
+use oxc_str::JSStr;
 use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
 
 pub trait StringToNumber {
     fn string_to_number(&self) -> f64;
+}
+
+impl StringToNumber for JSStr<'_> {
+    fn string_to_number(&self) -> f64 {
+        // A string containing a lone surrogate can never be a StringNumericLiteral,
+        // so it converts to NaN.
+        self.as_str().map_or(f64::NAN, |value| value.string_to_number())
+    }
 }
 
 /// `StringToNumber`
@@ -95,5 +104,15 @@ mod tests {
     #[test]
     fn does_not_trim_non_ecmascript_whitespace() {
         assert!("1\u{0085}".string_to_number().is_nan());
+    }
+
+    #[test]
+    fn js_str_converts_like_str_unless_it_has_a_lone_surrogate() {
+        let allocator = oxc_allocator::Allocator::new();
+        assert_eq!(oxc_str::JSStr::from(" 12 ").string_to_number(), 12.0);
+        let mut builder = oxc_str::JSStrBuilder::new_in(&&allocator);
+        builder.push_str("1");
+        builder.push_code_unit(0xD800);
+        assert!(builder.into_js_str().string_to_number().is_nan());
     }
 }

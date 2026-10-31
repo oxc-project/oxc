@@ -149,6 +149,15 @@ impl SourceFormatter {
                 oxc_formatter_markdown::format_with_session(&session, source_text, options)
                     .and_then(|formatted| print(formatted, &path))
             }
+            FormatStrategy::Native(NativeLanguage::Html(variant)) => {
+                let allocator = self.allocator_pool.get();
+                let dispatch_config =
+                    ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
+                let session = self.root_session(&allocator, &dispatch_config);
+                let options = dispatch_config.htmlish_options(variant);
+                oxc_formatter_htmlish::format_with_session(&session, source_text, options)
+                    .and_then(|formatted| print(formatted, &path))
+            }
             FormatStrategy::Native(NativeLanguage::Toml) => {
                 oxc_formatter_toml::format(source_text, to_oxc_formatter_toml(&config, core))
             }
@@ -249,14 +258,14 @@ impl SourceFormatter {
         language: PrettierLanguage,
         config: &FormatConfig,
     ) -> Result<String, OxcDiagnostic> {
-        use PrettierLanguage::{Angular, Astro, Glimmer, Html, Svelte, Vue};
+        use PrettierLanguage::{Angular, Astro, Glimmer, Svelte, Vue};
 
         let mut prettier_options = to_prettier(config);
         inject_parser(&mut prettier_options, language.parser());
         inject_filepath(&mut prettier_options, path);
 
         // CSS/SCSS/Less also benefit, but they are formatted by `oxc_formatter_css`
-        if matches!(language, Html | Vue | Angular | Glimmer | Svelte | Astro) {
+        if matches!(language, Vue | Angular | Glimmer | Svelte | Astro) {
             inject_tailwind_plugin_payload(&mut prettier_options, config);
         }
         // Languages that embed JS/TS code.

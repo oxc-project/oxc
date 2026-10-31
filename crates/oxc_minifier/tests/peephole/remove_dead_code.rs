@@ -335,6 +335,21 @@ fn remove_empty_function() {
 }
 
 #[test]
+fn pure_function_preserves_rest_destructuring() {
+    test_same("function foo(...[v = side_effect()]) {} foo(), foo();");
+    test_same("function foo(...[v = side_effect()]) {} use(foo(), foo());");
+    test_same("var foo = function (...[v = side_effect()]) {}; foo(), foo();");
+    test_same("var foo = function (...[v = side_effect()]) {}; use(foo(), foo());");
+    test_same("var foo = (...[v = side_effect()]) => {}; foo(), foo();");
+    test_same("var foo = (...[v = side_effect()]) => {}; use(foo(), foo());");
+    test_same("function foo(...{0: v = side_effect()}) {} foo(), foo();");
+    test_same("function foo(...{0: v = side_effect()}) {} use(foo(), foo());");
+    test_same("function foo(...[[v]]) {} foo(), foo();");
+    test_same("function foo(...[[v]]) {} use(foo(), foo());");
+    test("function foo(...args) {} foo();", "function foo(...args) {}");
+}
+
+#[test]
 fn redeclared_pure_function_is_not_folded_var() {
     test_same("var foo = (u) => {}; if (g) var foo = (a) => { console.log(a); }; foo('x');");
 }

@@ -1942,6 +1942,17 @@ mod test {
 
     #[test]
     #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_tsgolint_same_name_rule_severity_with_overrides() {
+        // `unicorn/prefer-string-starts-ends-with` must not change the severity of the typescript rule
+        // See: https://github.com/oxc-project/oxc/issues/28136
+        let args = &["a.ts", "b.tsx"];
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_same_name_overrides".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
     fn test_tsgolint_fix() {
         Tester::new().test_fix_with_args(
             "fixtures/cli/tsgolint_fix/fix.ts",

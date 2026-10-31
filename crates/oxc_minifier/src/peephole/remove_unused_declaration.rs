@@ -277,7 +277,7 @@ impl<'a> PeepholeOptimizations {
         if let Some(phase) = import_decl.phase {
             let (ImportPhase::Defer | ImportPhase::Source) = phase;
             if ctx.scoping().symbol_is_unused(
-                import_decl.specifiers.as_ref().unwrap().first().unwrap().local().symbol_id(),
+                import_decl.specifiers.as_ref().unwrap().first().unwrap().symbol_id(),
             ) {
                 let new_stmt = Statement::new_empty_statement(import_decl.span, ctx);
                 ctx.replace_statement(stmt, new_stmt);
@@ -292,16 +292,7 @@ impl<'a> PeepholeOptimizations {
 
         let original_len = specifiers.len();
 
-        specifiers.retain(|specifier| {
-            let local = match specifier {
-                ImportDeclarationSpecifier::ImportSpecifier(s) => &s.local,
-                ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => &s.local,
-                ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => &s.local,
-            };
-
-            let symbol_id = local.symbol_id();
-            !ctx.scoping().symbol_is_unused(symbol_id)
-        });
+        specifiers.retain(|specifier| !ctx.scoping().symbol_is_unused(specifier.symbol_id()));
 
         if specifiers.len() != original_len {
             ctx.notice_change();

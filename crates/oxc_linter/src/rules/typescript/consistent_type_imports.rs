@@ -247,7 +247,7 @@ impl Rule for ConsistentTypeImports {
 
                 if let Some(specifiers) = &import_decl.specifiers {
                     for specifier in specifiers {
-                        let symbol_id = specifier.local().symbol_id();
+                        let symbol_id = specifier.symbol_id();
                         let no_type_qualifier = match specifier {
                             ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                                 specifier.import_kind.is_value()
@@ -281,7 +281,7 @@ impl Rule for ConsistentTypeImports {
                 {
                     let type_names = type_references_without_type_qualifier
                         .iter()
-                        .map(|specifier| specifier.local().name.as_str())
+                        .map(|specifier| specifier.name().as_str())
                         .collect::<Vec<_>>();
 
                     // ['foo', 'bar', 'baz' ] => "foo, bar, and baz".

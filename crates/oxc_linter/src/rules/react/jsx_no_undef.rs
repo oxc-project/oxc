@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{IdentifierReference, JSXElementName, JSXMemberExpression, JSXMemberExpressionObject},
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -46,35 +43,11 @@ declare_oxc_lint!(
     short_description = "Disallow undeclared variables in JSX.",
 );
 
-fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a IdentifierReference<'a>> {
-    match node {
-        JSXElementName::Identifier(_)
-        | JSXElementName::NamespacedName(_)
-        | JSXElementName::ThisExpression(_) => None,
-        JSXElementName::IdentifierReference(ident) => Some(ident),
-        JSXElementName::MemberExpression(expr) => get_member_ident(expr),
-    }
-}
-
-fn get_member_ident<'a>(
-    mut expr: &'a JSXMemberExpression<'a>,
-) -> Option<&'a IdentifierReference<'a>> {
-    loop {
-        match &expr.object {
-            JSXMemberExpressionObject::IdentifierReference(ident) => return Some(ident),
-            JSXMemberExpressionObject::ThisExpression(_) => return None,
-            JSXMemberExpressionObject::MemberExpression(next_expr) => {
-                expr = next_expr;
-            }
-        }
-    }
-}
-
 impl Rule for JsxNoUndef {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(elem) = node.kind() else { return };
 
-        if let Some(ident) = get_resolvable_ident(&elem.name) {
+        if let Some(ident) = elem.name.get_identifier() {
             let reference = ctx.scoping().get_reference(ident.reference_id());
             if reference.symbol_id().is_some() {
                 return;

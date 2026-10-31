@@ -1,11 +1,11 @@
 use oxc_span::Span;
 
-use crate::{
-    lanes::Lanes,
-    token::{SPAN_SENTINELS, tk},
-};
+use crate::token::{SPAN_SENTINELS, tk};
 
-use crate::pipeline::cpu::{Cpu, DynCpu, apply, cpu_select, cpu_versions};
+use crate::pipeline::{
+    cpu::{Cpu, DynCpu, apply, cpu_select, cpu_versions},
+    lanes::Lanes,
+};
 
 #[cfg(target_arch = "x86_64")]
 mod avx2;

@@ -6,8 +6,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentTarget, Class, ClassElement, Expression, FormalParameter,
-        MethodDefinition, MethodDefinitionKind, PropertyDefinition, PropertyKey, Statement,
-        TSAccessibility,
+        MethodDefinition, PropertyDefinition, PropertyKey, Statement, TSAccessibility,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -136,8 +135,7 @@ impl Rule for ParameterProperties {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::MethodDefinition(method)
-                if method.kind == MethodDefinitionKind::Constructor
-                    && self.0.prefer == Prefer::ClassProperty =>
+                if method.kind.is_constructor() && self.0.prefer == Prefer::ClassProperty =>
             {
                 self.check_prefer_class_property(method, ctx);
             }
@@ -202,7 +200,7 @@ impl ParameterProperties {
 
         for element in &class.body.body {
             let ClassElement::MethodDefinition(method) = element else { continue };
-            if method.kind != MethodDefinitionKind::Constructor {
+            if !method.kind.is_constructor() {
                 continue;
             }
 

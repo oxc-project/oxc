@@ -3,19 +3,15 @@ use std::ops::Deref;
 use oxc_ast::ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement, StringLiteral};
 use oxc_span::GetSpan;
 
-use crate::{
-    ast_nodes::AstNode,
-    formatter::{prelude::*, trivia::FormatTrailingComments},
-    write,
-};
+use crate::{ast_nodes::AstNode, formatter::prelude::*, write};
 
 pub struct FormatOpeningElement<'a, 'b> {
-    element: &'b AstNode<'a, JSXOpeningElement<'a>>,
+    element: &'b AstNode<'b, 'a, JSXOpeningElement<'a>>,
     is_self_closing: bool,
 }
 
-impl<'a> Deref for FormatOpeningElement<'a, '_> {
-    type Target = AstNode<'a, JSXOpeningElement<'a>>;
+impl<'a, 'b> Deref for FormatOpeningElement<'a, 'b> {
+    type Target = AstNode<'b, 'a, JSXOpeningElement<'a>>;
 
     fn deref(&self) -> &Self::Target {
         self.element
@@ -23,7 +19,7 @@ impl<'a> Deref for FormatOpeningElement<'a, '_> {
 }
 
 impl<'a, 'b> FormatOpeningElement<'a, 'b> {
-    pub fn new(element: &'b AstNode<'a, JSXOpeningElement<'a>>, is_self_closing: bool) -> Self {
+    pub fn new(element: &'b AstNode<'b, 'a, JSXOpeningElement<'a>>, is_self_closing: bool) -> Self {
         Self { element, is_self_closing }
     }
 
@@ -103,9 +99,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatOpeningElement<'a, '_> {
                         write!(f, [soft_line_indent_or_space(&attributes)]);
                     }
 
-                    let comments = f.context().comments().comments_before(self.span.end);
-                    FormatTrailingComments::Comments(comments).fmt(f);
-
                     let force_bracket_same_line = f.options().bracket_same_line.value();
                     let wants_bracket_same_line = attributes.is_empty() && !name_has_comment;
 
@@ -124,7 +117,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatOpeningElement<'a, '_> {
 
                 let has_multiline_string_attribute = attributes
                     .iter()
-                    .any(|attribute| is_multiline_string_literal_attribute(attribute));
+                    .any(|attribute| is_multiline_string_literal_attribute(&attribute));
                 write!(f, [group(&format_inner).should_expand(has_multiline_string_attribute)]);
             }
         }

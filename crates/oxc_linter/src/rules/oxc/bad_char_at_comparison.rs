@@ -103,9 +103,7 @@ fn invalid_comparison_string(expr: &Expression) -> Option<(Span, usize)> {
     let expr = expr.without_parentheses();
     let value = match expr {
         Expression::StringLiteral(literal) => literal.value,
-        Expression::TemplateLiteral(literal) if literal.expressions.is_empty() => {
-            literal.quasis.first()?.value.cooked?
-        }
+        Expression::TemplateLiteral(literal) => literal.single_quasi()?,
         _ => return None,
     };
     let len = value.len_utf16();

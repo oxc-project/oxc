@@ -1,5 +1,15 @@
-commit: 7ab7fafa
+commit: d53ebc8b
 
 lexer_test262 Summary:
-AST Parsed     : 52108/52108 (100.00%)
-Positive Passed: 52108/52108 (100.00%)
+AST Parsed     : 52127/52127 (100.00%)
+Positive Passed: 52122/52127 (99.99%)
+Comments: tasks/coverage/test262/test/annexB/language/comments/single-line-html-close-unicode-separators.js
+
+Comments: tasks/coverage/test262/test/language/comments/multi-line-asi-line-separator.js
+
+Comments: tasks/coverage/test262/test/language/comments/multi-line-asi-paragraph-separator.js
+
+Comments: tasks/coverage/test262/test/language/line-terminators/comment-multi-ls.js
+
+Comments: tasks/coverage/test262/test/language/line-terminators/comment-multi-ps.js
+

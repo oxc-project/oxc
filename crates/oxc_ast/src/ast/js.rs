@@ -2232,12 +2232,7 @@ pub struct MethodDefinition<'a> {
     pub r#type: MethodDefinitionType,
     pub decorators: Vec<'a, Decorator<'a>>,
     pub key: PropertyKey<'a>,
-    #[visit(args(flags = match self.kind {
-        MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
-        MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
-        MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
-        MethodDefinitionKind::Method => ScopeFlags::Function,
-    }))]
+    #[visit(args(flags = self.kind.scope_flags()))]
     pub value: Box<'a, Function<'a>>, // FunctionExpression
     pub kind: MethodDefinitionKind,
     pub computed: bool,

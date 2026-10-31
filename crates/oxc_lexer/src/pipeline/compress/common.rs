@@ -1,6 +1,8 @@
 use oxc_span::Span;
 
-use crate::{error::DiagCode, lanes::Lanes, token::tk};
+use crate::{error::DiagCode, token::tk};
+
+use crate::pipeline::lanes::Lanes;
 
 #[inline(always)]
 pub(super) unsafe fn emit_value(
@@ -15,7 +17,7 @@ pub(super) unsafe fn emit_value(
     let e = sp.end as usize;
     let k = *out_kinds.add(j);
     if k < tk!(IdentEscaped) {
-        lanes.push_number_swar(src, s, e);
+        lanes.push_number(src, s, e);
     } else if k == tk!(IdentEscaped) {
         lanes.push_atom(src, s, e);
     } else {

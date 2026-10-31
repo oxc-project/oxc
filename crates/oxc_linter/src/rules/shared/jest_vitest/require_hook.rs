@@ -1,7 +1,7 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, Statement, VariableDeclarationKind},
+    ast::{Argument, Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
@@ -200,7 +200,7 @@ impl RequireHookConfig {
         if let Statement::ExpressionStatement(expr_stmt) = stmt {
             self.check_should_report_in_hook(&expr_stmt.expression, ctx);
         } else if let Statement::VariableDeclaration(var_decl) = stmt
-            && var_decl.kind != VariableDeclarationKind::Const
+            && !var_decl.kind.is_const()
             && var_decl.declarations.iter().any(|decl| {
                 let Some(init_call) = &decl.init else {
                     return false;

@@ -139,7 +139,8 @@ impl SymbolValue<'_> {
             || match constant {
                 ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,
                 ConstantValue::BigInt(_) => false,
-                ConstantValue::String(s) => s.len() <= 3,
+                // A lone surrogate is 3 bytes but prints as a 6-character escape.
+                ConstantValue::String(s) => s.as_str().is_some_and(|s| s.len() <= 3),
                 ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
             }
     }

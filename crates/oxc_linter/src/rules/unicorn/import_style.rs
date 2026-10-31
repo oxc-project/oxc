@@ -529,7 +529,7 @@ fn get_actual_assignment_target_styles(pattern: &BindingPattern<'_>) -> StyleSet
         }
         BindingPattern::ObjectPattern(pattern) => {
             let mut styles = StyleSet::default();
-            if pattern.properties.is_empty() && pattern.rest.is_none() {
+            if pattern.is_empty() {
                 styles.unassigned = true;
                 return styles;
             }

@@ -15,8 +15,7 @@ use crate::{
     frameworks::FrameworkOptions,
     rule::Rule,
     utils::{
-        find_property, for_each_define_props_type_signature,
-        is_vue_component_options_object_excluding_instance,
+        for_each_define_props_type_signature, is_vue_component_options_object_excluding_instance,
     },
 };
 
@@ -95,7 +94,7 @@ impl Rule for RequireDefaultProp {
                 if !is_vue_component_options_object_excluding_instance(node, ctx) {
                     return;
                 }
-                let Some(props_prop) = find_property(obj, "props") else { return };
+                let Some(props_prop) = obj.find_property("props") else { return };
                 if let Expression::ObjectExpression(props_obj) =
                     props_prop.value.get_inner_expression()
                 {
@@ -274,7 +273,9 @@ fn check_type_signature<'a>(
 /// `as`/parenthesized expressions by the caller.
 fn is_without_default_value(value: &Expression) -> bool {
     match value {
-        Expression::ObjectExpression(obj) => !prop_is_required(obj) && !prop_has_default(obj),
+        Expression::ObjectExpression(obj) => {
+            !prop_is_required(obj) && obj.find_property("default").is_none()
+        }
         Expression::Identifier(ident) => NATIVE_TYPES.contains(&ident.name.as_str()),
         // A call/member expression is assumed to produce the default value.
         Expression::CallExpression(_)
@@ -290,13 +291,6 @@ fn prop_is_required(obj: &ObjectExpression) -> bool {
         matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
             if prop.key.is_specific_static_name("required")
                 && matches!(prop.value.get_inner_expression(), Expression::BooleanLiteral(lit) if lit.value))
-    })
-}
-
-fn prop_has_default(obj: &ObjectExpression) -> bool {
-    obj.properties.iter().any(|prop| {
-        matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
-            if prop.key.is_specific_static_name("default"))
     })
 }
 

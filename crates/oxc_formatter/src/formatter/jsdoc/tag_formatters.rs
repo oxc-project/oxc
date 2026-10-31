@@ -307,8 +307,8 @@ impl JsdocFormatter<'_, '_> {
                             && !formatted.contains('\n')
                             && formatter_input.contains('\n')
                         {
-                            // Estimate: @kind + space + { + type + } = tag_prefix_len + 3 + type.len()
-                            let estimated_width = tag_prefix_len + 3 + formatted.len();
+                            // Estimate: @kind + space + { + type + } = tag_prefix_len + 3 + type width
+                            let estimated_width = tag_prefix_len + 3 + str_width(&formatted);
                             if estimated_width > self.wrap_width {
                                 // Use the star-stripped multiline version
                                 normalized_type_str = Cow::Owned(formatter_input.into_owned());

@@ -163,6 +163,7 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
 
         let mut current: Option<MergedScope> = None;
         let mut merged: Vec<MergedScope> = Vec::new();
+        let mut in_manual_memo = false;
 
         for (i, statement) in block.iter().enumerate() {
             match statement {
@@ -238,6 +239,16 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                                         }
                                     }
                                 }
+                                InstructionValue::StartMemoize { .. }
+                                | InstructionValue::FinishMemoize { .. } => {
+                                    in_manual_memo =
+                                        matches!(iv, InstructionValue::StartMemoize { .. });
+                                    if let Some(c) = current.take()
+                                        && c.to > c.from + 1
+                                    {
+                                        merged.push(c);
+                                    }
+                                }
                                 _ => {
                                     // Other instructions prevent merging
                                     if let Some(c) = current.take()
@@ -262,17 +273,34 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
                     let next_scope_id = scope_block.scope;
                     if let Some(ref mut c) = current {
                         let current_scope_id = c.scope_id;
-                        if can_merge_scopes(
-                            current_scope_id,
-                            next_scope_id,
-                            self.env,
-                            &self.temporaries,
-                        ) && are_lvalues_last_used_by_scope(
-                            next_scope_id,
-                            &c.lvalues,
-                            &self.last_usage,
-                            self.env,
-                        ) {
+                        let merges_constant_scope = in_manual_memo
+                            && can_merge_constant_scope_in_manual_memo(
+                                current_scope_id,
+                                next_scope_id,
+                                self.env,
+                            );
+                        if (merges_constant_scope
+                            || can_merge_scopes(
+                                current_scope_id,
+                                next_scope_id,
+                                self.env,
+                                &self.temporaries,
+                            ))
+                            && are_lvalues_last_used_by_scope(
+                                next_scope_id,
+                                &c.lvalues,
+                                &self.last_usage,
+                                self.env,
+                            )
+                        {
+                            if merges_constant_scope {
+                                inherit_dependencies(
+                                    current_scope_id,
+                                    next_scope_id,
+                                    self.env,
+                                    &self.temporaries,
+                                );
+                            }
                             // Merge: extend the current scope's range
                             let next_range_end = self.env.scopes[next_scope_id].range.end;
                             let current_range_end = self.env.scopes[current_scope_id].range.end;
@@ -496,6 +524,49 @@ fn can_merge_scopes<'a>(
     }
 
     false
+}
+
+/// Whether a scope without dependencies can merge into the next scope of the same
+/// `useMemo` callback. On its own such a scope is computed once per mount, so a
+/// value such as `new Map()` would outlive the memo's dependencies, while the
+/// author asked for a new one whenever they change.
+fn can_merge_constant_scope_in_manual_memo<'a>(
+    current_id: ScopeId,
+    next_id: ScopeId,
+    env: &Environment<'a>,
+) -> bool {
+    let current = &env.scopes[current_id];
+    let next = &env.scopes[next_id];
+    current.dependencies.is_empty()
+        && current.reassignments.is_empty()
+        && !next.dependencies.is_empty()
+        && next.reassignments.is_empty()
+}
+
+/// Give a scope without dependencies the dependencies of the next scope it is
+/// merged with, except those on its own declarations.
+fn inherit_dependencies<'a>(
+    current_id: ScopeId,
+    next_id: ScopeId,
+    env: &mut Environment<'a>,
+    temporaries: &TemporariesMap,
+) {
+    let current_declarations: Vec<DeclarationId> = env.scopes[current_id]
+        .declarations
+        .iter()
+        .map(|(_key, decl)| env.identifiers[decl.identifier].declaration_id)
+        .collect();
+    let mut dependencies = ArenaVec::new_in(&env.allocator);
+    for dep in &env.scopes[next_id].dependencies {
+        let dep_decl = env.identifiers[dep.identifier].declaration_id;
+        let is_own_declaration = current_declarations
+            .iter()
+            .any(|&decl| decl == dep_decl || temporaries[dep_decl] == Some(decl));
+        if !is_own_declaration {
+            dependencies.push(dep.clone_in(env.allocator));
+        }
+    }
+    env.scopes[current_id].dependencies = dependencies;
 }
 
 /// Check if a type is always invalidating (guaranteed to change when inputs change).

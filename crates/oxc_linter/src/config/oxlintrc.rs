@@ -324,7 +324,6 @@ impl Oxlintrc {
             ))
         })?;
 
-        // jsonc support
         json_strip_comments::strip(&mut string).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse jsonc file {}: {err:?}", path.display()))
         })?;
@@ -332,7 +331,6 @@ impl Oxlintrc {
         let json = serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
             let ext = path.extension().and_then(OsStr::to_str);
             let err = match ext {
-                // syntax error
                 Some(ext) if is_json_ext(ext) => err.to_string(),
                 Some(_) => "Only JSON configuration files are supported".to_string(),
                 None => {

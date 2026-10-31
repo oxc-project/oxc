@@ -38,7 +38,7 @@ end-of-line whitespace never appearing in the output is guaranteed by constructi
 Text/Token content is the emitter's responsibility, language crates write their values pre-trimmed.
 
 NOTE: The printer's runtime optimizations (pending-space dedup, consecutive-hardline merging, this no-trim rule, ...) are mirrored downstream by `apps/oxfmt`'s `prettier_compat` (IR ↔ Prettier Doc interop; kept there because core never learns Prettier-as-a-system).
-When changing printer runtime behavior, update that mirror in the same PR; oxfmt's embedded/E2E conformance is the backstop that catches drift.
+When changing printer runtime behavior, update that mirror in the same PR; oxfmt's conformance is the backstop that catches drift.
 
 ### Choosing a staging buffer
 
@@ -78,7 +78,7 @@ The core is parameterized over a consumer-supplied context so it stays language-
 
 ### Embedded-language infrastructure (`session/`)
 
-`FormatSession` / `FormatDispatcher` / `DispatchRequest` / `DispatchPayload` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
+`FormatSession` / `FormatDispatcher` / `DispatchRequest` / `EmbeddedIr` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
 
 - The orchestrator (oxfmt) assembles the dispatcher, mapping language names to formatter implementations (or a Prettier fallback)
   - Formatter crates only invoke it via `FormatSession::dispatch`
@@ -86,8 +86,9 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - A child adds classes straight into the parent's index space, so its doc is written as-is (no remap)
   - A root formatter opens a fresh scope (`with_new_tailwind_scope`) and sorts it when finalizing its `Document` (`take_sorted_tailwind_classes`)
 - A language crate's `format_to_ir` entry returns `EmbeddedIr`, one shape for every child language, no per-crate tuples
+  - The dispatcher answers with it as-is (`DispatchResponse::Formatted`): data flows parent→child only, a child reports nothing back
 - Only language-pair specific data crosses as `dyn Any`, core never learns concrete languages:
-  - When the parent picks the child language, it passes the pair's own data (css-in-js's `CssInJsTemplate`, html-in-js's `has_multiple_root_elements`)
+  - When the parent picks the child language, it passes the pair's own data (css-in-js's `CssInJsTemplate`, html-in-js's `HtmlInJsTemplate`)
   - When it cannot (a Markdown code block's name resolves in the host), it passes a fact about itself to every child,
     and the host translates it into the pair's data once the child language is known (`XxxInMarkdownCodeBlock` → `JsEmbeddedIn`)
 - `FormatSession` (`session/mod.rs`) is the execution unit:
@@ -124,7 +125,7 @@ Output targets Prettier compatibility, but the domain is defined by what it is, 
 
 Admission: core stores the service and hands it back (or applies it mechanically at finalize);
 every value crossing the closure boundary is an opaque string/vec, never a language enum or an option type, and core makes no decision from the result.
-`string_embedder` additionally carries an exit criterion: it is removed when (a) html gains an IR-capable formatter AND (b) the host's string-out consumers (JSDoc fences) can express their re-embedding in IR (see `apps/oxfmt`'s AGENTS.md for that half); until then it is the string-out channel's transport.
+`string_embedder` additionally carries an exit criterion: it is removed when the host's string-out consumers (JSDoc fences) can express their re-embedding in IR (see `apps/oxfmt`'s AGENTS.md for that half; html, the other half, has an IR-capable formatter now); until then it is the string-out channel's transport.
 
 - (5) `envelope/`: IR-composing behavior shared by document-envelope hosts (`write_front_matter`)
 
@@ -174,5 +175,5 @@ Quote-style options, comment rules, and the like are likewise consumer-owned.
 cargo c -p oxc_formatter_core
 ```
 
-This crate has basic tests only of its own, it is exercised through the conformance/snapshot tests of its consumers.
+This crate has basic tests only of its own, it is exercised through its consumers' fixture tests and oxfmt's conformance.
 The fixture-test infrastructure those consumers use lives in `crates/oxc_formatter_tests`.
