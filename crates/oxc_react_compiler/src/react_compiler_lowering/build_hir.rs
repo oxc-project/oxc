@@ -2060,18 +2060,7 @@ fn simple_assignment_target_ref_from_simple<'b, 'a>(
         | oxc::SimpleAssignmentTarget::PrivateFieldExpression(_) => {
             Some(SimpleAssignmentTargetRef::Member(target.to_member_expression()))
         }
-        oxc::SimpleAssignmentTarget::TSAsExpression(node) => {
-            simple_assignment_target_expression_ref(&node.expression)
-        }
-        oxc::SimpleAssignmentTarget::TSSatisfiesExpression(node) => {
-            simple_assignment_target_expression_ref(&node.expression)
-        }
-        oxc::SimpleAssignmentTarget::TSNonNullExpression(node) => {
-            simple_assignment_target_expression_ref(&node.expression)
-        }
-        oxc::SimpleAssignmentTarget::TSTypeAssertion(node) => {
-            simple_assignment_target_expression_ref(&node.expression)
-        }
+        _ => target.get_expression().and_then(simple_assignment_target_expression_ref),
     }
 }
 
