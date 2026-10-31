@@ -171,7 +171,15 @@ ascii_byte_handler!(ERR(lexer) {
 
 // <SPACE> <TAB> Normal Whitespace
 ascii_byte_handler!(SPS(lexer) {
-    lexer.consume_char();
+    // SAFETY: This handler is called on an ASCII space or tab.
+    let mut pos = unsafe { lexer.source.position().add(1) };
+    let end = lexer.source.end();
+    // SAFETY: The short-circuit check ensures `pos` is before the end.
+    while pos != end && matches!(unsafe { pos.read() }, b' ' | b'\t') {
+        // SAFETY: The byte is present and ASCII.
+        pos = unsafe { pos.add(1) };
+    }
+    lexer.source.set_position(pos);
     Kind::Skip
 });
 
