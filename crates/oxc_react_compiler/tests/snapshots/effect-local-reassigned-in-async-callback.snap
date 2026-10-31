@@ -1,0 +1,33 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/effect-local-reassigned-in-async-callback.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { useEffect } from "react";
+// `timeoutId` is declared inside the effect, so reassigning it after `await`
+// in the async callback never crosses a render.
+function useAfterRun(run) {
+	const $ = _c(3);
+	let t0;
+	let t1;
+	if ($[0] !== run) {
+		t0 = () => {
+			let timeoutId;
+			const go = async () => {
+				await run();
+				timeoutId = setTimeout(_temp, 10);
+			};
+			go();
+			return () => clearTimeout(timeoutId);
+		};
+		t1 = [run];
+		$[0] = run;
+		$[1] = t0;
+		$[2] = t1;
+	} else {
+		t0 = $[1];
+		t1 = $[2];
+	}
+	useEffect(t0, t1);
+}
+function _temp() {}

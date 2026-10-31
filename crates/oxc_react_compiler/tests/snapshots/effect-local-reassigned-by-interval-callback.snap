@@ -1,0 +1,39 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/effect-local-reassigned-by-interval-callback.js
+---
+import { c as _c } from "react/compiler-runtime";
+// @validateNoImpureFunctionsInRender
+import { useEffect, useState } from "react";
+// `last` is declared inside the effect, so reassigning it from the interval
+// callback never crosses a render. The pragma matches Oxlint, which enables this
+// validation.
+function useTicker(isPlaying) {
+	const $ = _c(3);
+	const [total, setTotal] = useState(0);
+	let t0;
+	let t1;
+	if ($[0] !== isPlaying) {
+		t0 = () => {
+			if (!isPlaying) {
+				return;
+			}
+			let last = Date.now();
+			const id = setInterval(() => {
+				const now = Date.now();
+				setTotal((t) => t + (now - last));
+				last = now;
+			}, 1e3);
+			return () => clearInterval(id);
+		};
+		t1 = [isPlaying];
+		$[0] = isPlaying;
+		$[1] = t0;
+		$[2] = t1;
+	} else {
+		t0 = $[1];
+		t1 = $[2];
+	}
+	useEffect(t0, t1);
+	return total;
+}
