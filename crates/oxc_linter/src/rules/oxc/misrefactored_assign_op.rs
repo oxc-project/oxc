@@ -53,6 +53,7 @@ declare_oxc_lint!(
     MisrefactoredAssignOp,
     oxc,
     suspicious,
+    recommended,
     suggestion,
     version = "0.1.1",
     short_description = "Checks for `a op= a op b` or `a op= b op a` patterns.",

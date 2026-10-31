@@ -133,6 +133,7 @@ declare_oxc_lint!(
     ConstComparisons,
     oxc,
     correctness,
+    recommended,
     version = "0.0.22",
     short_description = "Checks for redundant or logically impossible comparisons.",
 );
