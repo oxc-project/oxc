@@ -106,6 +106,14 @@ impl CliRunner {
         let provided_path_count = paths.len();
         let now = Instant::now();
 
+        if fix_options.hide_fixable && fix_options.is_enabled() {
+            print_and_flush_stdout(
+                stdout,
+                "--hide-fixable cannot be combined with --fix, --fix-suggestions, or --fix-dangerously.\n",
+            );
+            return CliRunResult::InvalidOptionConfig;
+        }
+
         let filters = match Self::get_filters(filter) {
             Ok(filters) => filters,
             Err((result, message)) => {
@@ -478,9 +486,13 @@ impl CliRunner {
             }
         }
 
-        let linter = Linter::new(LintOptions::default(), config_store, external_linter)
-            .with_fix(fix_options.fix_kind())
-            .with_report_unused_directives(report_unused_directives);
+        let linter = Linter::new(
+            LintOptions { hide_fixable: fix_options.hide_fixable, ..LintOptions::default() },
+            config_store,
+            external_linter,
+        )
+        .with_fix(fix_options.fix_kind())
+        .with_report_unused_directives(report_unused_directives);
 
         let number_of_files = files_to_lint.len();
         let tsconfig = basic_options.tsconfig;
@@ -523,6 +535,7 @@ impl CliRunner {
             .with_type_check(type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
+            .with_hide_fixable(fix_options.hide_fixable)
             .with_type_check_only(type_check_only)
             .with_timings(debug_timings)
             .build()
@@ -806,6 +819,150 @@ mod test {
     fn multi_files() {
         let args = &["fixtures/cli/linter/debugger.js", "fixtures/cli/linter/nan.js"];
         Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn hide_fixable_preserves_nonfixable_diagnostics() {
+        let tester = Tester::new().with_cwd("fixtures/cli/hide_fixable".into());
+        let path = "fixtures/cli/hide_fixable/index.ts";
+        let before = fs::read(path).unwrap();
+        let args = [
+            "index.ts",
+            "-A",
+            "all",
+            "-D",
+            "eqeqeq",
+            "-D",
+            "no-debugger",
+            "-D",
+            "no-unused-vars",
+            "--format",
+            "json",
+        ];
+        let output = tester.test_output_verbose(&args);
+        let report: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(report["diagnostics"].as_array().unwrap().len(), 4, "{output}");
+
+        let mut args = args.to_vec();
+        args.push("--hide-fixable");
+        let output = tester.test_output_verbose(&args);
+        let report: serde_json::Value = serde_json::from_str(&output).unwrap();
+        let diagnostics = report["diagnostics"].as_array().unwrap();
+        // The unsafe equality, debugger suggestion, and dangerous unused-variable fix remain.
+        assert_eq!(diagnostics.len(), 3, "{output}");
+        for rule in ["eqeqeq", "no-debugger", "no-unused-vars"] {
+            assert!(
+                diagnostics
+                    .iter()
+                    .any(|diagnostic| { diagnostic["code"].as_str().unwrap().contains(rule) }),
+                "{output}"
+            );
+        }
+        assert_eq!(fs::read(path).unwrap(), before);
+    }
+
+    #[test]
+    fn hide_fixable_excludes_hidden_diagnostics_from_exit_status() {
+        use crate::cli::CliRunResult;
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let source = "export const value = typeof unknownValue == 'undefined';\n";
+        fs::write(temp_dir.path().join("index.js"), source).unwrap();
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+
+        for severity in ["-W", "-D"] {
+            let args = [
+                "index.js",
+                "-A",
+                "all",
+                severity,
+                "eqeqeq",
+                "--deny-warnings",
+                "--max-warnings",
+                "0",
+            ];
+            let (_, result) = tester.test_output(&args);
+            assert!(!matches!(result, CliRunResult::LintSucceeded), "{result:?}");
+
+            let mut args = args.to_vec();
+            args.push("--hide-fixable");
+            let (output, result) = tester.test_output(&args);
+            assert!(matches!(result, CliRunResult::LintSucceeded), "{result:?}\n{output}");
+        }
+        assert_eq!(fs::read_to_string(temp_dir.path().join("index.js")).unwrap(), source);
+
+        fs::write(temp_dir.path().join("index.js"), "const = ;").unwrap();
+        let (_, result) = tester.test_output(&["index.js", "--hide-fixable"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}");
+    }
+
+    #[test]
+    fn hide_fixable_preserves_bulk_suppressions() {
+        use crate::cli::CliRunResult;
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(
+            temp_dir.path().join("index.js"),
+            "export const value = typeof unknownValue == 'undefined';\n",
+        )
+        .unwrap();
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        let args = ["index.js", "-A", "all", "-D", "eqeqeq"];
+        let mut suppress_args = args.to_vec();
+        suppress_args.push("--suppress-all");
+        let (_, result) = tester.test_output(&suppress_args);
+        assert!(matches!(result, CliRunResult::LintSucceeded), "{result:?}");
+        let path = temp_dir.path().join("oxlint-suppressions.json");
+        let before = fs::read(&path).unwrap();
+
+        let mut hide_args = args.to_vec();
+        hide_args.extend(["--hide-fixable", "--prune-suppressions"]);
+        let (output, result) = tester.test_output(&hide_args);
+        assert!(matches!(result, CliRunResult::LintSucceeded), "{result:?}\n{output}");
+        assert_eq!(fs::read(path).unwrap(), before);
+    }
+
+    #[test]
+    fn hide_fixable_rejects_fix_flags() {
+        use crate::cli::CliRunResult;
+
+        for flag in ["--fix", "--fix-suggestions", "--fix-dangerously"] {
+            let (output, result) = Tester::new().test_output(&["--hide-fixable", flag]);
+            assert!(matches!(result, CliRunResult::InvalidOptionConfig), "{result:?}");
+            assert!(output.contains("--hide-fixable cannot be combined"), "{output}");
+        }
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn hide_fixable_type_aware() {
+        let tester = Tester::new().with_cwd("fixtures/cli/hide_fixable".into());
+        let path = "fixtures/cli/hide_fixable/index.ts";
+        let before = fs::read(path).unwrap();
+        let args = [
+            "index.ts",
+            "--type-aware",
+            "-A",
+            "all",
+            "-D",
+            "no-unnecessary-type-assertion",
+            "-D",
+            "no-floating-promises",
+            "--format",
+            "json",
+        ];
+        let output = tester.test_output_verbose(&args);
+        let report: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(report["diagnostics"].as_array().unwrap().len(), 2, "{output}");
+
+        let mut args = args.to_vec();
+        args.push("--hide-fixable");
+        let output = tester.test_output_verbose(&args);
+        let report: serde_json::Value = serde_json::from_str(&output).unwrap();
+        let diagnostics = report["diagnostics"].as_array().unwrap();
+        assert_eq!(diagnostics.len(), 1, "{output}");
+        assert!(diagnostics[0]["code"].as_str().unwrap().contains("no-floating-promises"));
+        assert_eq!(fs::read(path).unwrap(), before);
     }
 
     #[test]

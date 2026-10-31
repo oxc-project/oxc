@@ -151,6 +151,7 @@ pub struct LintRunnerBuilder {
     lint_service_options: LintServiceOptions,
     silent: bool,
     fix_kind: FixKind,
+    hide_fixable: bool,
     type_check_only: bool,
     timings: bool,
     with_ignore_fixes: bool,
@@ -165,6 +166,7 @@ impl LintRunnerBuilder {
             lint_service_options,
             silent: false,
             fix_kind: FixKind::None,
+            hide_fixable: false,
             type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
@@ -192,6 +194,12 @@ impl LintRunnerBuilder {
     #[must_use]
     pub fn with_fix_kind(mut self, fix_kind: FixKind) -> Self {
         self.fix_kind = fix_kind;
+        self
+    }
+
+    #[must_use]
+    pub fn with_hide_fixable(mut self, hide_fixable: bool) -> Self {
+        self.hide_fixable = hide_fixable;
         self
     }
 
@@ -227,6 +235,7 @@ impl LintRunnerBuilder {
                 Ok(state) => Some(
                     state
                         .with_silent(self.silent)
+                        .with_hide_fixable(self.hide_fixable)
                         .with_type_check(self.type_check)
                         .with_type_check_only(self.type_check_only)
                         .with_timings(self.timings)
