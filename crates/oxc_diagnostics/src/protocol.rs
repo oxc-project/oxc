@@ -76,4 +76,12 @@ pub trait SourceCode: Send + Sync {
     fn name(&self) -> Option<&str> {
         None
     }
+
+    /// Returns the byte offset at which each line starts, if this source caches them.
+    ///
+    /// Reporters that resolve many offsets in one source use this to avoid rescanning
+    /// the source from its start for every offset.
+    fn line_starts(&self) -> Option<&[u32]> {
+        None
+    }
 }
