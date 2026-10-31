@@ -13,7 +13,7 @@ use oxc_span::Span;
 
 use crate::{
     comments::{FormatCommentBeforeContent, FormatLineCommentSuffix, count_newlines},
-    print::JsonFormatter,
+    print::{JsonFormatter, write_comma_after},
 };
 
 /// Whether a trailing `,` should follow the last entry.
@@ -126,7 +126,7 @@ fn write_inter_entry_separator(prev: Span, curr: Span, f: &mut JsonFormatter<'_,
     let keep_blank = !prev_is_hole && !is_hole(curr, f);
 
     let Some(trailing_end) = trailing_comments_end(curr.start, f) else {
-        write!(f, ",");
+        write_comma_after(prev.end, f);
         write_break_after(prev.end, curr.start, keep_blank, f);
         return;
     };
