@@ -1283,6 +1283,7 @@ export interface DummyRuleMap {
   "oxc/no-this-in-exported-function"?: RuleNoConfig;
   "oxc/number-arg-out-of-range"?: RuleNoConfig;
   "oxc/only-used-in-recursion"?: RuleNoConfig;
+  "oxc/require-latin1"?: RuleNoConfig;
   "oxc/uninvoked-array-callback"?: RuleNoConfig;
   "prefer-arrow-callback"?: RuleNoConfig | [AllowWarnDeny, PreferArrowCallbackConfig];
   "prefer-const"?: RuleNoConfig | [AllowWarnDeny, PreferConstConfig];

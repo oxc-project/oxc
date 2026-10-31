@@ -6145,6 +6145,9 @@
         "oxc/only-used-in-recursion": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "oxc/require-latin1": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "oxc/uninvoked-array-callback": {
           "$ref": "#/definitions/RuleNoConfig"
         },
