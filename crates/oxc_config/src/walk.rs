@@ -12,10 +12,15 @@ use rustc_hash::FxHashMap;
 /// `has_vcs_boundary` should be the result of [`all_paths_have_vcs_boundary`] for the walk targets.
 /// Callers that build multiple walkers from the same targets can compute it once and reuse it.
 ///
+/// `respect_gitignore` controls the git layer (nested `.gitignore` files and `$GIT_COMMON_DIR/info/exclude`);
+/// pass `false` when the tool's `--no-ignore` disables the `vcs` ignore sources.
+/// `require_git` is inert in that case, so callers can also skip computing `has_vcs_boundary` and pass `false`.
+///
 /// [`GitignoreChecker`] uses these same settings for walk-root checks.
 pub fn configure_walk_builder(
     builder: &mut WalkBuilder,
     has_vcs_boundary: bool,
+    respect_gitignore: bool,
 ) -> &mut WalkBuilder {
     builder
         // Include hidden files to lint|format; VCS directories are skipped by each tool
@@ -25,11 +30,11 @@ pub fn configure_walk_builder(
         // Ignore the user's global gitignore
         .git_global(false)
         // Respect repository-local (nested) `.gitignore` files
-        .git_ignore(true)
-        // Also look up parent directories
-        .parents(true)
+        .git_ignore(respect_gitignore)
         // Respect `$GIT_COMMON_DIR/info/exclude` as well
-        .git_exclude(true)
+        .git_exclude(respect_gitignore)
+        // Also look up parent directories; does not affect what to respect
+        .parents(true)
         // Parent `.gitignore` lookup stops at the repository boundary when targets are inside a repo
         .require_git(has_vcs_boundary)
 }
@@ -88,7 +93,7 @@ impl GitignoreChecker {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
                 let mut builder = WalkBuilder::new(entry.key());
-                configure_walk_builder(&mut builder, has_vcs_boundary);
+                configure_walk_builder(&mut builder, has_vcs_boundary, true);
                 let Some(matcher) = builder.build_matchers().pop() else { return false };
                 entry.insert(matcher)
             }
@@ -156,7 +161,7 @@ mod test {
     fn collect_walked_js_files(root: &Path) -> Vec<String> {
         let mut builder = WalkBuilder::new(root);
         let has_boundary = all_paths_have_vcs_boundary(&[root.to_path_buf()], root);
-        let mut paths: Vec<String> = configure_walk_builder(&mut builder, has_boundary)
+        let mut paths: Vec<String> = configure_walk_builder(&mut builder, has_boundary, true)
             .build()
             .filter_map(Result::ok)
             .filter_map(|entry| {

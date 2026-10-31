@@ -20,7 +20,13 @@ workspace = true
 test = true
 doctest = false
 
+[features]
+# CLI parser helpers shared between Oxlint and Oxfmt.
+# Gated so that library consumers (e.g. `napi-playground` -> `oxc_linter` -> `oxc_config`) do not pull in `bpaf`.
+bpaf = ["dep:bpaf"]
+
 [dependencies]
+bpaf = { workspace = true, optional = true }
 fast-glob = { workspace = true }
 ignore = { workspace = true }
 oxc_diagnostics = { workspace = true }
