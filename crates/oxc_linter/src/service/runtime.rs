@@ -653,6 +653,9 @@ impl Runtime {
                                     },
                                 )),
                                 Err(messages) => {
+                                    // Lint rules can't run on a section that failed to parse,
+                                    // so this run can't tell which suppressions still apply.
+                                    diff_manager.collect_unparsed_file(path, &me.cwd);
                                     if !messages.is_empty() {
                                         let diagnostics = DiagnosticService::wrap_diagnostics(
                                             &me.cwd,

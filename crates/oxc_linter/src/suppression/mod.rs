@@ -4,7 +4,7 @@ use std::{
 };
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 mod diff;
 mod tracking;
@@ -23,6 +23,9 @@ type FileSuppressionsMap = FxHashMap<String, DiagnosticCounts>;
 #[derive(Debug, Default)]
 pub struct RuntimeSuppressionMap {
     inner: std::sync::Mutex<FxHashMap<Filename, FileSuppressionsMap>>,
+    /// Files that could not be fully parsed. Their counts from this run are incomplete,
+    /// so they are treated as unseen and keep their recorded suppressions.
+    unparsed: std::sync::Mutex<FxHashSet<Filename>>,
 }
 
 impl RuntimeSuppressionMap {
@@ -41,9 +44,19 @@ impl RuntimeSuppressionMap {
         map.entry(filename).or_default();
     }
 
-    /// Consume into the inner map.
+    /// Mark a file that failed to parse. Its entry is dropped from the final map, even if
+    /// another pass (e.g. type-aware linting) saw it, because the lint rules never ran on it.
+    pub fn mark_unparsed(&self, filename: Filename) {
+        self.unparsed.lock().unwrap().insert(filename);
+    }
+
+    /// Consume into the inner map, leaving out files that failed to parse.
     pub fn into_inner(self) -> FxHashMap<Filename, FileSuppressionsMap> {
-        self.inner.into_inner().unwrap()
+        let mut map = self.inner.into_inner().unwrap();
+        for filename in self.unparsed.into_inner().unwrap() {
+            map.remove(&filename);
+        }
+        map
     }
 }
 
