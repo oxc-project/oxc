@@ -1284,6 +1284,7 @@ export interface DummyRuleMap {
   "oxc/number-arg-out-of-range"?: RuleNoConfig;
   "oxc/only-used-in-recursion"?: RuleNoConfig;
   "oxc/uninvoked-array-callback"?: RuleNoConfig;
+  "oxc/unsupported-eslint-directive"?: RuleNoConfig;
   "prefer-arrow-callback"?: RuleNoConfig | [AllowWarnDeny, PreferArrowCallbackConfig];
   "prefer-const"?: RuleNoConfig | [AllowWarnDeny, PreferConstConfig];
   "prefer-destructuring"?:

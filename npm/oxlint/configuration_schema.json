@@ -6148,6 +6148,9 @@
         "oxc/uninvoked-array-callback": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "oxc/unsupported-eslint-directive": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "prefer-arrow-callback": {
           "anyOf": [
             {

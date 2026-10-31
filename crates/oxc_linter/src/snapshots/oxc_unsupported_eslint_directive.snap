@@ -1,0 +1,244 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ oxc(unsupported-eslint-directive): The `oxlint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* oxlint "example/rule1": "error" */
+   · ─────────────────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `oxlint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* oxlint "no-console":"error" */
+   · ─────────────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `oxlint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* oxlint no-alert: warn */
+   · ───────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `oxlint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* oxlint no-alert: "off" */
+   · ────────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `oxlint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* oxlint no-alert:off */
+   · ─────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `oxlint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* oxlint no-alert:"off" */
+   · ───────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `oxlint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* oxlint "no-console":0 */
+   · ───────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `oxlint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* oxlint "no-console":1 */
+   · ───────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `oxlint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* oxlint "no-console":2 */
+   · ───────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `oxlint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* oxlint no-console:0,no-alert:0 */
+   · ────────────────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `oxlint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* oxlint @typescript-eslint/no-explicit-any:0, no-alert:0 */
+   · ─────────────────────────────────────────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* eslint "example/rule1": "error" */
+   · ─────────────────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* eslint "no-console":"error" */
+   · ─────────────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* eslint no-alert: warn */
+   · ───────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* eslint no-alert: "off" */
+   · ────────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* eslint no-alert:off */
+   · ─────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* eslint no-alert:"off" */
+   · ───────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* eslint "no-console":0 */
+   · ───────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* eslint "no-console":1 */
+   · ───────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* eslint "no-console":2 */
+   · ───────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* eslint no-console:0,no-alert:0 */
+   · ────────────────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* eslint @typescript-eslint/no-explicit-any:0, no-alert:0 */
+   · ─────────────────────────────────────────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /*eslint no-alert:off*/
+   · ───────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `oxlint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /*   oxlint no-alert: off */
+   · ────────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ ╭─▶ /*
+ 2 │ │   eslint
+ 3 │ │   no-alert: off
+ 4 │ ╰─▶ */
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /*﻿eslint no-alert: off */
+   · ─────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* eslint quotes: ["error", "single"] -- explanation */
+   · ───────────────────────────────────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint-env` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* eslint-env browser, node */
+   · ──────────────────────────────
+   ╰────
+  help: Configure environments in the `env` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `oxlint-env` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* oxlint-env node */
+   · ─────────────────────
+   ╰────
+  help: Configure environments in the `env` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `global` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* global foo, bar:false */
+   · ───────────────────────────
+   ╰────
+  help: Configure global variables in the `globals` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `globals` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* globals foo:writable, bar:readonly */
+   · ────────────────────────────────────────
+   ╰────
+  help: Configure global variables in the `globals` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `exported` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* exported foo */ var foo = 1;
+   · ──────────────────
+   ╰────
+  help: Use ES module exports instead of an `exported` comment.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:1:1]
+ 1 │ /* eslint */
+   · ────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.
+
+  ⚠ oxc(unsupported-eslint-directive): The `eslint` directive is not supported by Oxlint.
+   ╭─[unsupported_eslint_directive.tsx:2:1]
+ 1 │ /* oxlint-disable no-console */
+ 2 │ /* eslint no-alert: off */
+   · ──────────────────────────
+   ╰────
+  help: Configure rules in the `rules` field of your Oxlint configuration file.

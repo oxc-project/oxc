@@ -769,6 +769,7 @@ pub(crate) mod oxc {
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
     pub mod uninvoked_array_callback;
+    pub mod unsupported_eslint_directive;
 }
 
 /// <https://github.com/vercel/next.js/tree/canary/packages/eslint-plugin-next>
