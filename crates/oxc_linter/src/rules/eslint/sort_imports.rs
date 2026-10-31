@@ -105,19 +105,13 @@ impl Rule for SortImports {
     fn run_once(&self, ctx: &LintContext) {
         let program = ctx.nodes().program();
 
-        let mut import_declarations = vec![];
-
-        for statement in &program.body {
-            if let Statement::ImportDeclaration(decl) = statement {
-                import_declarations.push(decl);
-            } else {
-                break;
-            }
-        }
-
         let mut previous: Option<&ImportDeclaration> = None;
 
-        for current in import_declarations {
+        for statement in &program.body {
+            let Statement::ImportDeclaration(current) = statement else {
+                continue;
+            };
+
             if !self.ignore_declaration_sort {
                 // ```js
                 // import b from 'foo.js'
@@ -614,6 +608,12 @@ import a from 'a';",
             import a from 'a';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
+        ("var x; import a from 'a'; foo(); import b from 'b';", None),
+        ("var x; import {b, a} from 'a';", Some(serde_json::json!([{ "ignoreMemberSort": true }]))),
+        (
+            "var x; import b from 'b'; import a from 'a';",
+            Some(serde_json::json!([{ "ignoreDeclarationSort": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -753,6 +753,27 @@ import a from 'a';",
             import { c, a } from 'c';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
+        (
+            "var _a;
+            import { format } from 'util';
+            import { normalize, resolve } from 'path';
+            export { _a, format, normalize, resolve };",
+            None,
+        ),
+        (
+            "import b from 'b';
+            foo();
+            import a from 'a';",
+            None,
+        ),
+        (
+            "import b from 'b'; foo(); import a from 'a';",
+            Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
+        ),
+        (
+            "var x; import {b, a} from 'a';",
+            Some(serde_json::json!([{ "ignoreDeclarationSort": true }])),
+        ),
     ];
 
     let fix = vec![
@@ -809,6 +830,7 @@ import a from 'a';",
             "import {zzzzz, aaaaa /* comment */} from 'foo.js';",
             None,
         ),
+        ("var x; import {b, a} from 'a';", "var x; import {a, b} from 'a';", None),
     ];
     Tester::new(SortImports::NAME, SortImports::PLUGIN, pass, fail)
         .expect_fix(fix)

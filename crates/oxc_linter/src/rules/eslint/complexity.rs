@@ -1,4 +1,12 @@
-use oxc_ast::AstKind;
+use oxc_ast::{
+    AstKind,
+    ast::{
+        ArrowFunctionExpression, AssignmentExpression, AssignmentPattern, CallExpression,
+        CatchClause, ConditionalExpression, DoWhileStatement, ForInStatement, ForOfStatement,
+        ForStatement, FormalParameter, Function, IfStatement, LogicalExpression, MemberExpression,
+        PropertyDefinition, StaticBlock, SwitchCase, SwitchStatement, WhileStatement,
+    },
+};
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -242,78 +250,78 @@ impl ComplexityVisitor {
 }
 
 impl VisitJs<'_> for ComplexityVisitor {
-    fn visit_catch_clause(&mut self, it: &oxc_ast::ast::CatchClause<'_>) {
+    fn visit_catch_clause(&mut self, it: &CatchClause<'_>) {
         self.complexity += 1;
         walk_js::walk_catch_clause(self, it);
     }
 
-    fn visit_conditional_expression(&mut self, it: &oxc_ast::ast::ConditionalExpression<'_>) {
+    fn visit_conditional_expression(&mut self, it: &ConditionalExpression<'_>) {
         self.complexity += 1;
         walk_js::walk_conditional_expression(self, it);
     }
 
-    fn visit_logical_expression(&mut self, it: &oxc_ast::ast::LogicalExpression<'_>) {
+    fn visit_logical_expression(&mut self, it: &LogicalExpression<'_>) {
         self.complexity += 1;
         walk_js::walk_logical_expression(self, it);
     }
 
-    fn visit_for_statement(&mut self, it: &oxc_ast::ast::ForStatement<'_>) {
+    fn visit_for_statement(&mut self, it: &ForStatement<'_>) {
         self.complexity += 1;
         walk_js::walk_for_statement(self, it);
     }
 
-    fn visit_for_in_statement(&mut self, it: &oxc_ast::ast::ForInStatement<'_>) {
+    fn visit_for_in_statement(&mut self, it: &ForInStatement<'_>) {
         self.complexity += 1;
         walk_js::walk_for_in_statement(self, it);
     }
 
-    fn visit_for_of_statement(&mut self, it: &oxc_ast::ast::ForOfStatement<'_>) {
+    fn visit_for_of_statement(&mut self, it: &ForOfStatement<'_>) {
         self.complexity += 1;
         walk_js::walk_for_of_statement(self, it);
     }
 
-    fn visit_if_statement(&mut self, it: &oxc_ast::ast::IfStatement<'_>) {
+    fn visit_if_statement(&mut self, it: &IfStatement<'_>) {
         self.complexity += 1;
         walk_js::walk_if_statement(self, it);
     }
 
-    fn visit_while_statement(&mut self, it: &oxc_ast::ast::WhileStatement<'_>) {
+    fn visit_while_statement(&mut self, it: &WhileStatement<'_>) {
         self.complexity += 1;
         walk_js::walk_while_statement(self, it);
     }
 
-    fn visit_do_while_statement(&mut self, it: &oxc_ast::ast::DoWhileStatement<'_>) {
+    fn visit_do_while_statement(&mut self, it: &DoWhileStatement<'_>) {
         self.complexity += 1;
         walk_js::walk_do_while_statement(self, it);
     }
 
-    fn visit_assignment_pattern(&mut self, it: &oxc_ast::ast::AssignmentPattern<'_>) {
+    fn visit_assignment_pattern(&mut self, it: &AssignmentPattern<'_>) {
         self.complexity += 1;
         walk_js::walk_assignment_pattern(self, it);
     }
 
-    fn visit_formal_parameter(&mut self, it: &oxc_ast::ast::FormalParameter<'_>) {
+    fn visit_formal_parameter(&mut self, it: &FormalParameter<'_>) {
         if it.initializer.is_some() {
             self.complexity += 1;
         }
         walk_js::walk_formal_parameter(self, it);
     }
 
-    fn visit_switch_case(&mut self, it: &oxc_ast::ast::SwitchCase<'_>) {
-        if self.variant == Variant::Classic && it.test.is_some() {
+    fn visit_switch_case(&mut self, it: &SwitchCase<'_>) {
+        if self.variant == Variant::Classic && !it.is_default_case() {
             self.complexity += 1;
         }
         walk_js::walk_switch_case(self, it);
     }
 
-    fn visit_switch_statement(&mut self, it: &oxc_ast::ast::SwitchStatement<'_>) {
+    fn visit_switch_statement(&mut self, it: &SwitchStatement<'_>) {
         if self.variant == Variant::Modified {
             self.complexity += 1;
         }
         walk_js::walk_switch_statement(self, it);
     }
 
-    fn visit_assignment_expression(&mut self, it: &oxc_ast::ast::AssignmentExpression<'_>) {
+    fn visit_assignment_expression(&mut self, it: &AssignmentExpression<'_>) {
         if matches!(
             it.operator,
             AssignmentOperator::LogicalAnd
@@ -325,21 +333,21 @@ impl VisitJs<'_> for ComplexityVisitor {
         walk_js::walk_assignment_expression(self, it);
     }
 
-    fn visit_member_expression(&mut self, it: &oxc_ast::ast::MemberExpression<'_>) {
+    fn visit_member_expression(&mut self, it: &MemberExpression<'_>) {
         if it.optional() {
             self.complexity += 1;
         }
         walk_js::walk_member_expression(self, it);
     }
 
-    fn visit_call_expression(&mut self, it: &oxc_ast::ast::CallExpression<'_>) {
+    fn visit_call_expression(&mut self, it: &CallExpression<'_>) {
         if it.optional {
             self.complexity += 1;
         }
         walk_js::walk_call_expression(self, it);
     }
 
-    fn visit_function(&mut self, it: &oxc_ast::ast::Function<'_>, flags: oxc_semantic::ScopeFlags) {
+    fn visit_function(&mut self, it: &Function<'_>, flags: oxc_semantic::ScopeFlags) {
         if !self.has_entered_complexity_evaluation {
             self.has_entered_complexity_evaluation = true;
             walk_js::walk_function(self, it, flags);
@@ -347,7 +355,7 @@ impl VisitJs<'_> for ComplexityVisitor {
         // Do not enter function if we already started evaluating complexity
     }
 
-    fn visit_arrow_function_expression(&mut self, it: &oxc_ast::ast::ArrowFunctionExpression<'_>) {
+    fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'_>) {
         if !self.has_entered_complexity_evaluation {
             self.has_entered_complexity_evaluation = true;
             walk_js::walk_arrow_function_expression(self, it);
@@ -355,7 +363,7 @@ impl VisitJs<'_> for ComplexityVisitor {
         // Do not enter function if we already started evaluating complexity
     }
 
-    fn visit_static_block(&mut self, it: &oxc_ast::ast::StaticBlock<'_>) {
+    fn visit_static_block(&mut self, it: &StaticBlock<'_>) {
         if !self.has_entered_complexity_evaluation {
             self.has_entered_complexity_evaluation = true;
             walk_js::walk_static_block(self, it);
@@ -363,11 +371,11 @@ impl VisitJs<'_> for ComplexityVisitor {
         // Do not enter static block if we already started evaluating complexity
     }
 
-    fn visit_property_definition(&mut self, it: &oxc_ast::ast::PropertyDefinition<'_>) {
+    fn visit_property_definition(&mut self, it: &PropertyDefinition<'_>) {
         if self.has_entered_complexity_evaluation {
             // Visit all other nodes except for value expression if part of another
             // function / static block's complexity evaluation
-            let kind = oxc_ast::AstKind::PropertyDefinition(self.alloc(it));
+            let kind = AstKind::PropertyDefinition(self.alloc(it));
             self.enter_node(kind);
             self.visit_span(&it.span);
             self.visit_decorators(&it.decorators);

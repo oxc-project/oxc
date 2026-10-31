@@ -1,7 +1,8 @@
 // Block and own-line comments in a classic for-head keep their slot, never
 // crossing the head's `;`s or its `)`, with or without a node in the slot
 // (a same-line line comment moves just behind its `;` instead: `a; // c`).
-// Known divergence (js/explicit-resource-management/valid-await-using-comments.js):
+// Known divergence (DIVERGENCES.md#head-body-comment-relocation;
+// js/explicit-resource-management/valid-await-using-comments.js):
 // Prettier moves empty-slot comments backward across the `;`s onto the init
 // (`for (a /*8*/ /*9*/;;)`), or forward out of the parens entirely when every
 // slot is empty (`for (;;) /*s0*/ ;`) -- attachment artifacts of the kind
@@ -24,3 +25,13 @@ for (a // c1
 ; b; c) {}
 for (a; // t
 b; c) {}
+
+// Right after the `(`, a same-line run ending in a line comment moves to its own line as a whole (the opener exception),
+// and own-line comments sharing a line stay together
+for (// c
+;;) {}
+for (/* a */ // b
+;;) {}
+for (;
+/* a */ // b
+;) {}

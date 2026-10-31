@@ -68,6 +68,7 @@ declare_oxc_lint!(
     NoCondAssign,
     eslint,
     correctness,
+    recommended,
     config = NoCondAssignConfig,
     version = "0.0.5",
     short_description = "Disallow assignment operators in conditional expressions.",

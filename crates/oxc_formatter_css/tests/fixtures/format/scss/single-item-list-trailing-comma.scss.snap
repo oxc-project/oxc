@@ -3,7 +3,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
 // `(x,)` is a single-element list in Sass: the trailing comma IS the list,
-// so it is preserved regardless of the `trailingComma` option (prettier#19928).
+// so it is preserved regardless of the `trailingComma` option (DIVERGES, Prettier drops it; see DIVERGENCES.md#single-item-list-trailing-comma).
 $single-string: ("a",);
 $single-space-list: (1 2 3,);
 $single-nested-list: ((1, 2),);
@@ -59,7 +59,7 @@ $comment-without-comma: ("a" // ,
 { printWidth: 80 }
 ------------------
 // `(x,)` is a single-element list in Sass: the trailing comma IS the list,
-// so it is preserved regardless of the `trailingComma` option (prettier#19928).
+// so it is preserved regardless of the `trailingComma` option (DIVERGES, Prettier drops it; see DIVERGENCES.md#single-item-list-trailing-comma).
 $single-string: ("a",);
 $single-space-list: (1 2 3,);
 $single-nested-list: ((1, 2),);
@@ -132,7 +132,7 @@ $comment-without-comma: (
 { printWidth: 100 }
 -------------------
 // `(x,)` is a single-element list in Sass: the trailing comma IS the list,
-// so it is preserved regardless of the `trailingComma` option (prettier#19928).
+// so it is preserved regardless of the `trailingComma` option (DIVERGES, Prettier drops it; see DIVERGENCES.md#single-item-list-trailing-comma).
 $single-string: ("a",);
 $single-space-list: (1 2 3,);
 $single-nested-list: ((1, 2),);

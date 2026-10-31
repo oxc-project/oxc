@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use bitflags::bitflags;
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         Expression, FormalParameter, Function, IdentifierName, IdentifierReference,
         MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKind, TSAccessibility,
@@ -20,13 +20,13 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_empty_function_diagnostic<S: AsRef<str>>(
+fn no_empty_function_diagnostic<S: std::fmt::Display>(
     span: Span,
     fn_kind: &str,
     fn_name: Option<S>,
 ) -> OxcDiagnostic {
     let message = match fn_name {
-        Some(name) => Cow::Owned(format!("Unexpected empty {fn_kind} `{}`", name.as_ref())),
+        Some(name) => Cow::Owned(format!("Unexpected empty {fn_kind} `{name}`")),
         None => Cow::Borrowed("Unexpected empty function"),
     };
     OxcDiagnostic::warn(message)
@@ -325,7 +325,11 @@ impl Rule for NoEmptyFunction {
             return;
         };
         ctx.diagnostic_with_suggestion(
-            no_empty_function_diagnostic(fb.span, kind, fn_name),
+            no_empty_function_diagnostic(
+                fb.span,
+                kind,
+                fn_name.as_ref().map(StaticPropertyName::display),
+            ),
             |fixer| {
                 fixer
                     .replace(Span::new(fb.span.start + 1, fb.span.end - 1), " /* empty */ ")
@@ -336,10 +340,10 @@ impl Rule for NoEmptyFunction {
 }
 
 #[derive(Default, Debug, Clone)]
-struct ViolationInfo<'a>(pub Option<(&'static str, Option<Cow<'a, str>>)>);
-impl<'a> From<(&'static str, Option<Cow<'a, str>>)> for ViolationInfo<'a> {
-    fn from(value: (&'static str, Option<Cow<'a, str>>)) -> Self {
-        debug_assert!(!value.0.is_empty());
+struct ViolationInfo<'a>(pub Option<(&'static str, Option<StaticPropertyName<'a>>)>);
+impl<'a> From<(&'static str, Option<StaticPropertyName<'a>>)> for ViolationInfo<'a> {
+    fn from(value: (&'static str, Option<StaticPropertyName<'a>>)) -> Self {
+        debug_assert_ne!(value.0, "");
         Self(Some(value))
     }
 }
@@ -350,9 +354,10 @@ impl NoEmptyFunction {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) -> ViolationInfo<'a> {
-        let mut ancestors = ctx.nodes().ancestor_kinds(node.id());
-        while let Some(parent) = ancestors.next() {
-            match parent {
+        let nodes = ctx.nodes();
+        let mut parent = nodes.parent_node(node.id());
+        loop {
+            match parent.kind() {
                 AstKind::Function(f) => {
                     if let Some(name) = f.name() {
                         if self.is_allowed_function_expression(f) {
@@ -366,14 +371,13 @@ impl NoEmptyFunction {
                         } else {
                             "function"
                         };
-                        return (kind, Some(name.into())).into();
+                        return (kind, Some(StaticPropertyName::from(name))).into();
                     }
                     if f.is_expression()
                         && self.is_allowed_function_expression(f)
-                        && ancestors
-                            .clone()
-                            .next()
-                            .is_none_or(Self::is_plain_function_expression_container)
+                        && Self::is_plain_function_expression_container(
+                            nodes.parent_kind(parent.id()),
+                        )
                     {
                         return ViolationInfo::default();
                     }
@@ -388,7 +392,7 @@ impl NoEmptyFunction {
                 }
                 AstKind::IdentifierName(IdentifierName { name, .. })
                 | AstKind::IdentifierReference(IdentifierReference { name, .. }) => {
-                    return ("function", Some(Cow::Borrowed(name.as_str()))).into();
+                    return ("function", Some(StaticPropertyName::from(*name))).into();
                 }
                 AstKind::PropertyDefinition(prop) => {
                     if self.allow_decorated_function() && !prop.decorators.is_empty() {
@@ -438,15 +442,16 @@ impl NoEmptyFunction {
                             _ => {}
                         }
                     }
-                    return ("function", decl.id.get_identifier_name().map(Into::into)).into();
+                    return (
+                        "function",
+                        decl.id.get_identifier_name().map(StaticPropertyName::from),
+                    )
+                        .into();
                 }
                 _ => return ("function", None).into(),
             }
+            parent = nodes.parent_node(parent.id());
         }
-        #[cfg(debug_assertions)]
-        unreachable!();
-        #[cfg(not(debug_assertions))]
-        ("function", None).into()
     }
 
     fn is_allowed_method(&self, method: &MethodDefinition) -> bool {

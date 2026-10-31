@@ -273,19 +273,8 @@ impl NoLoopFunc {
             return true;
         }
 
-        // If declared outside but modified inside the loop, it's unsafe
-        // because the captured value changes across iterations
-        let scoping = ctx.scoping();
-        for reference in scoping.get_resolved_references(symbol_id) {
-            if reference.is_write() {
-                let ref_span = ctx.semantic().reference_span(reference);
-                if loop_span.contains_inclusive(ref_span) {
-                    return true;
-                }
-            }
-        }
-
-        false
+        let border = Self::get_top_loop_node(loop_node, None, ctx).span().start;
+        Self::has_unsafe_writes(symbol_id, border, ctx)
     }
 
     /// Check if a var variable is declared in an outer for-in/for-of loop header.
@@ -355,13 +344,15 @@ impl NoLoopFunc {
             return false;
         }
 
-        let scoping = ctx.scoping();
         let border = Self::get_top_loop_node(loop_node, Some(symbol_decl_node), ctx).span().start;
+        Self::has_unsafe_writes(symbol_id, border, ctx)
+    }
+
+    fn has_unsafe_writes(symbol_id: SymbolId, border: u32, ctx: &LintContext) -> bool {
+        let scoping = ctx.scoping();
         let symbol_variable_scope_id =
             Self::get_enclosing_variable_scope_id(scoping.symbol_scope_id(symbol_id), ctx);
 
-        // If declared outside the loop body, writes are safe only when they happen before the
-        // relevant loop and in the same variable scope as the declaration.
         for reference in scoping.get_resolved_references(symbol_id) {
             if reference.is_write() {
                 let ref_span = ctx.semantic().reference_span(reference);
@@ -855,6 +846,8 @@ fn test() {
                 image.onload = () => (isOn ? 'enabled' : 'disabled');
             }
         ",
+        "var a = 0; a = 1; for (let x of xs) { callbacks.push(() => a); }",
+        "var a = 0; for (let x of xs) { callbacks.push(() => a); }",
     ];
 
     let fail = vec![
@@ -1125,6 +1118,20 @@ fn test() {
                 e = next();
             }
         }",
+        "var done = false;
+var out = [];
+for (var i = 0; i < 3; i++) {
+  out.push(function () { if (done) throw 0; });
+}
+done = true;
+module.exports = out;",
+        "let done = false; for (var i = 0; i < 3; i++) { out.push(function () { if (done) throw 0; }); } done = true;",
+        "var a = 0; for (let x in xs) { callbacks.push(() => a); } a = 1;",
+        "var a = 0; for (let x of xs) { callbacks.push(() => a); } a = 1;",
+        "var a = 0; while (condition) { callbacks.push(() => a); } a = 1;",
+        "var a = 0; do { callbacks.push(() => a); } while (condition); a = 1;",
+        "var a = 0; for (let x of xs) { a = 1; for (let y of ys) { callbacks.push(() => a); } }",
+        "var a = 0; function update() { a = 1; } for (let x of xs) { callbacks.push(() => a); } update();",
     ];
 
     Tester::new(NoLoopFunc::NAME, NoLoopFunc::PLUGIN, pass, fail).test_and_snapshot();

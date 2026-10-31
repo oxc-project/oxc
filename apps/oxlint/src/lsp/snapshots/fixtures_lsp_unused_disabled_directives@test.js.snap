@@ -9,7 +9,7 @@ File URI: file://<variable>/fixtures/lsp/unused_disabled_directives/test.js
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
-message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
+message: String("`debugger` statement is not allowed\nhelp: Remove the debugger statement")
 range: Range { start: Position { line: 2, character: 2 }, end: Position { line: 2, character: 11 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/lsp/unused_disabled_directives/test.js"
@@ -20,7 +20,7 @@ tags: None
 
 code: "eslint(no-console)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html"
-message: "Unexpected console statement.\nhelp: Delete this console statement."
+message: String("Unexpected console statement.\nhelp: Delete this console statement.")
 range: Range { start: Position { line: 9, character: 0 }, end: Position { line: 9, character: 11 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/lsp/unused_disabled_directives/test.js"
@@ -31,7 +31,7 @@ tags: None
 
 code: ""
 code_description.href: "None"
-message: "Unused oxlint-disable directive (no problems were reported)."
+message: String("Unused oxlint-disable directive (no problems were reported).")
 range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 56 } }
 related_information: None
 severity: Some(Error)
@@ -40,7 +40,7 @@ tags: None
 
 code: ""
 code_description.href: "None"
-message: "Unused oxlint-disable directive (no problems were reported from no-for-loop)."
+message: String("Unused oxlint-disable directive (no problems were reported from no-for-loop).")
 range: Range { start: Position { line: 5, character: 41 }, end: Position { line: 5, character: 52 } }
 related_information: None
 severity: Some(Error)
@@ -49,7 +49,7 @@ tags: None
 
 code: ""
 code_description.href: "None"
-message: "Unused oxlint-disable directive (no problems were reported)."
+message: String("Unused oxlint-disable directive (no problems were reported).")
 range: Range { start: Position { line: 8, character: 0 }, end: Position { line: 8, character: 52 } }
 related_information: None
 severity: Some(Error)

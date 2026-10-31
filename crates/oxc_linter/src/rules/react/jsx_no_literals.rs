@@ -207,9 +207,7 @@ impl JsxNoLiterals {
     fn resolve_element_name(id_ref: &IdentifierReference, ctx: &LintContext) -> CompactStr {
         let local_name = id_ref.name.to_compact_str();
 
-        let Some(reference_id) = id_ref.reference_id.get() else {
-            return local_name;
-        };
+        let reference_id = id_ref.reference_id();
         let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
             return local_name;
         };
@@ -273,7 +271,11 @@ impl JsxNoLiterals {
                 JSXChild::ExpressionContainer(container) if options.no_strings => {
                     match &container.expression {
                         JSXExpression::StringLiteral(literal) => {
-                            if !Self::is_allowed_string(literal.value.as_str(), options) {
+                            if !literal
+                                .value
+                                .as_str()
+                                .is_some_and(|value| Self::is_allowed_string(value, options))
+                            {
                                 ctx.diagnostic(literal_text_diagnostic(literal.span));
                             }
                         }
@@ -296,7 +298,11 @@ impl JsxNoLiterals {
     ) {
         match &expr {
             Expression::StringLiteral(literal) => {
-                if !Self::is_allowed_string(literal.value.as_str(), options) {
+                if !literal
+                    .value
+                    .as_str()
+                    .is_some_and(|value| Self::is_allowed_string(value, options))
+                {
                     ctx.diagnostic(literal_attribute_diagnostic(attr.span));
                 }
             }
@@ -327,7 +333,11 @@ impl JsxNoLiterals {
 
             match value {
                 JSXAttributeValue::StringLiteral(str_literal) => {
-                    if Self::is_allowed_string(str_literal.value.as_str(), options) {
+                    if str_literal
+                        .value
+                        .as_str()
+                        .is_some_and(|value| Self::is_allowed_string(value, options))
+                    {
                         continue;
                     }
 

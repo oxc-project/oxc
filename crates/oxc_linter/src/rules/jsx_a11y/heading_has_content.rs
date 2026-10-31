@@ -68,6 +68,7 @@ declare_oxc_lint!(
     HeadingHasContent,
     jsx_a11y,
     correctness,
+    recommended,
     config = HeadingHasContentConfig,
     version = "0.0.19",
     short_description = "Enforce that heading elements have content that is accessible to screen readers.",

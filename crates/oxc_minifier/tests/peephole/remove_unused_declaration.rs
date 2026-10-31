@@ -1005,6 +1005,13 @@ fn keep_recursive_function_with_unused_keep_option() {
 fn remove_unused_import_specifiers() {
     let options = CompressOptions::smallest();
 
+    test_options("import {} from 'a';", "import 'a';", &options);
+    test_options(
+        "import {} from 'a' with { type: 'json' };",
+        "import 'a' with { type: 'json' };",
+        &options,
+    );
+
     test_options("import a from 'a'", "import 'a';", &options);
     test_options("import a from 'a'; foo()", "import 'a'; foo();", &options);
     test_same_options(
@@ -1064,7 +1071,7 @@ fn remove_unused_import_specifiers() {
     test_options("import { a as b } from 'a'", "import 'a';", &options);
     test_same_options("import { a as b } from 'a'; foo(b);", &options);
 
-    test_same_options("import { a } from 'a'; export { a };", &options);
+    test_options("import { a } from 'a'; export { a };", "export { a } from 'a';", &options);
     // Keep imports when direct eval is present
     test_same_options("import { a } from 'a'; eval('a');", &options);
     test_same_options("import a from 'a'; eval('a');", &options);

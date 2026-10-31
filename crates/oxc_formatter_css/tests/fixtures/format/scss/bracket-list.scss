@@ -1,7 +1,7 @@
 // `[a, b]` prints like `(a, b)`: same construct, same output.
 // Prettier treats the brackets as words of the OUTER comma list, so every
 // bracket list below that has a comment, a sibling token, or a comma list
-// longer than the line diverges (DIVERGENCES.md "bracket-list-layout").
+// longer than the line diverges (DIVERGENCES.md#bracket-list-layout).
 $basic: [1, 2];
 $space: [1 2];
 $empty: [];

@@ -62,6 +62,7 @@ declare_oxc_lint!(
     NoDeprecatedDeleteSet,
     vue,
     correctness,
+    recommended,
     version = "1.62.0",
     short_description = "Disallow using deprecated `$set` / `$delete` (in Vue.js 3.0.0+).",
 );
@@ -117,11 +118,7 @@ fn is_imported_set_or_del_from_vue<'a>(
 fn static_member_callee<'a, 'b>(
     callee: &'b Expression<'a>,
 ) -> Option<&'b StaticMemberExpression<'a>> {
-    let inner = callee.get_inner_expression();
-    let member = match inner {
-        Expression::ChainExpression(chain) => chain.expression.as_member_expression()?,
-        _ => inner.as_member_expression()?,
-    };
+    let member = callee.get_member_expr()?;
     match member {
         MemberExpression::StaticMemberExpression(m) => Some(m),
         _ => None,

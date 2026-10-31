@@ -2,7 +2,8 @@
 // position (the `;` is content, head-body comment policy): an inline block
 // comment stays, a line comment keeps its line with the `;` forced onto the
 // next line, an own-line comment keeps its own line.
-// Known divergences (js/comments/between-head-and-body/empty-statement.js,
+// Known divergences (DIVERGENCES.md#head-body-comment-relocation;
+// js/comments/between-head-and-body/empty-statement.js,
 // js/for/9812-2.js, js/for-of/comments.js): Prettier pulls the comment
 // backward into the parentheses (`while (x /* c */);`) or hoists an own-line
 // comment onto the head line (`for (x of y) // c`) -- attachment artifacts of

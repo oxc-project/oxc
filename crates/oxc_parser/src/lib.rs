@@ -66,6 +66,7 @@
 
 use std::any::Any;
 
+mod ast_builder;
 pub mod config;
 mod context;
 mod cursor;
@@ -98,6 +99,7 @@ use oxc_syntax::module_record::ModuleRecord;
 
 pub use crate::lexer::{Kind, Token};
 use crate::{
+    ast_builder::ParserAstBuilder,
     config::{
         LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
     },
@@ -164,6 +166,10 @@ pub struct ParserReturn<'a> {
     /// The parsed AST.
     ///
     /// Will be empty (e.g. no statements, directives, etc) if the parser encountered a fatal error.
+    ///
+    /// Every node has a unique node ID within this AST. Program has ID zero;
+    /// other IDs follow construction order and may have gaps from discarded nodes.
+    /// Semantic analysis replaces these with its own dense node IDs.
     ///
     /// ## Validity
     /// It is possible for the AST to be present and semantically invalid. This will happen if
@@ -415,6 +421,9 @@ mod parser_parse {
 
         /// Parse a single [`Expression`].
         ///
+        /// Every node receives a unique, nonzero node ID. IDs follow construction
+        /// order and may have gaps from discarded nodes.
+        ///
         /// # Example
         ///
         /// ```rust
@@ -654,7 +663,7 @@ struct ParserImpl<'a, C: ParserConfig> {
     ctx: Context,
 
     /// Ast builder for creating AST nodes
-    ast: AstBuilder<'a>,
+    ast: ParserAstBuilder<'a>,
 
     /// Module Record Builder
     module_record_builder: ModuleRecordBuilder<'a>,
@@ -690,7 +699,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             prev_token_end: 0,
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
-            ast: AstBuilder::new(allocator),
+            ast: ParserAstBuilder::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
             is_ts: source_type.is_typescript(),
         }
@@ -847,7 +856,9 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             hashbang,
             directives,
             statements,
-            self,
+            // The default builder assigns ID zero (NodeId::ROOT) to Program.
+            // ParserAstBuilder starts at one, keeping every child ID distinct.
+            &AstBuilder::new(self.allocator()),
         )
     }
 
@@ -857,29 +868,98 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
     /// we need to reparse them with the await context enabled.
     fn reparse_potential_top_level_awaits(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
-        // Token stream is already complete from the first parse.
-        // Reparsing here is only to patch AST nodes, so keep the original token stream.
         let original_tokens =
             if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
+        let original = original_tokens.as_ref().map_or(&[][..], |tokens| tokens.as_slice());
+        let mut original_index = 0;
+        let mut replacements = ArenaVec::new_in(self);
 
         let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
+        // Ranges refer to the original tokens and to the flat replacement buffer
+        let mut edits = ArenaVec::with_capacity_in(
+            if self.lexer.config.tokens() { checkpoints.len() } else { 0 },
+            self,
+        );
         for (stmt_index, checkpoint) in checkpoints {
-            // Rewind to the checkpoint
             self.rewind(checkpoint);
+            let replacement_start = replacements.len();
+
+            if self.lexer.config.tokens() {
+                original_index += original[original_index..]
+                    .iter()
+                    .position(|token| token.start() >= self.token.start())
+                    .unwrap_or(original.len() - original_index);
+                // The checkpoint's current token has already been lexed
+                replacements.push(self.token);
+                self.lexer.set_tokens(std::mem::replace(&mut replacements, ArenaVec::new_in(self)));
+            }
+            let edit_start = original_index;
 
             // Parse the statement with await context enabled (TopLevel context is already set)
             let stmt = self.context_add(Context::Await, |p| {
-                p.parse_statement_list_item(StatementContext::StatementList)
+                p.parse_statement_list_item(StatementContext::Program)
             });
 
             // Replace the statement if the index is valid
             if stmt_index < statements.len() {
                 statements[stmt_index] = stmt;
             }
+
+            if self.lexer.config.tokens() {
+                replacements = self.lexer.take_tokens();
+                // Exclude the next statement's token (or EOF)
+                replacements.pop();
+                // An earlier reparse can consume a later candidate, as in `await\nawait /x/u`.
+                // Record overlapping source ranges only once.
+                let end = replacements[..replacement_start].last().map_or(0, Token::end);
+                let overlap_len =
+                    replacements[replacement_start..].partition_point(|token| token.start() < end);
+                if overlap_len != 0 {
+                    replacements.copy_within(replacement_start + overlap_len.., replacement_start);
+                    let len = replacements.len() - overlap_len;
+                    replacements.truncate(len);
+                }
+                original_index += original[original_index..]
+                    .iter()
+                    .position(|token| token.start() >= self.token.start())
+                    .unwrap_or(original.len() - original_index);
+                edits.push((edit_start..original_index, replacement_start..replacements.len()));
+            }
         }
 
-        if let Some(original_tokens) = original_tokens {
-            self.lexer.set_tokens(original_tokens);
+        if let Some(mut tokens) = original_tokens {
+            let mut read = 0;
+            if edits.iter().all(|(range, replacement)| replacement.len() <= range.len()) {
+                // Compact in place. Original indices remain valid because the write cursor
+                // never overtakes the read cursor.
+                let mut write = 0;
+                for (range, replacement) in edits {
+                    tokens.copy_within(read..range.start, write);
+                    write += range.start - read;
+                    let replacement = &replacements[replacement];
+                    tokens[write..write + replacement.len()].copy_from_slice(replacement);
+                    write += replacement.len();
+                    read = range.end;
+                }
+                let tail_len = tokens.len() - read;
+                tokens.copy_within(read.., write);
+                tokens.truncate(write + tail_len);
+                self.lexer.set_tokens(tokens);
+            } else {
+                // A growing replacement could overwrite unread tokens.
+                // Use a separate output buffer, still applying all edits in one forward pass.
+                let len = edits.iter().fold(tokens.len(), |len, (range, replacement)| {
+                    len - range.len() + replacement.len()
+                });
+                let mut output = ArenaVec::with_capacity_in(len, self);
+                for (range, replacement) in edits {
+                    output.extend_from_slice(&tokens[read..range.start]);
+                    output.extend_from_slice(&replacements[replacement]);
+                    read = range.end;
+                }
+                output.extend_from_slice(&tokens[read..]);
+                self.lexer.set_tokens(output);
+            }
         }
     }
 
@@ -916,11 +996,10 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     }
 
     fn check_unfinished_errors(&mut self) {
-        use oxc_span::GetSpan;
         // PropertyDefinition : cover_initialized_name
         // It is a Syntax Error if any source text is matched by this production.
-        for expr in self.state.cover_initialized_name.values() {
-            self.errors.push(diagnostics::cover_initialized_name(expr.span()));
+        for cover in self.state.cover_initialized_name.values() {
+            self.errors.push(diagnostics::cover_initialized_name(cover.span));
         }
     }
 
@@ -948,10 +1027,10 @@ impl<'a, C: ParserConfig> GetAllocator<'a> for ParserImpl<'a, C> {
 }
 
 impl<'a, C: ParserConfig> GetAstBuilder<'a> for ParserImpl<'a, C> {
-    type Builder = AstBuilder<'a>;
+    type Builder = ParserAstBuilder<'a>;
 
     #[inline]
-    fn builder(&self) -> &AstBuilder<'a> {
+    fn builder(&self) -> &ParserAstBuilder<'a> {
         &self.ast
     }
 }
@@ -993,6 +1072,51 @@ mod test {
         let source_type = SourceType::default();
         for source in ["a b", "a;", "let x = 1"] {
             assert!(Parser::new(&allocator, source, source_type).parse_expression().is_err());
+        }
+    }
+
+    #[test]
+    fn simple_arrow_no_side_effects_annotations() {
+        for source in [
+            "/*#__NO_SIDE_EFFECTS__*/ value => value",
+            "/*#__NO_SIDE_EFFECTS__*/ async value => value",
+            "/*#__NO_SIDE_EFFECTS__*/ async of => of",
+        ] {
+            let allocator = Allocator::default();
+            let expr =
+                Parser::new(&allocator, source, SourceType::default()).parse_expression().unwrap();
+            let Expression::ArrowFunctionExpression(arrow) = expr else { panic!("{source}") };
+            assert!(arrow.pure, "{source}");
+        }
+    }
+
+    #[test]
+    fn identifier_continuation_pure_annotations() {
+        for source in [
+            "/*#__PURE__*/ callee()",
+            "/*#__PURE__*/ callee<T>()",
+            "/*#__PURE__*/ callee!.method()",
+        ] {
+            let allocator = Allocator::default();
+            let expr =
+                Parser::new(&allocator, source, SourceType::ts()).parse_expression().unwrap();
+            let Expression::CallExpression(call) = expr else { panic!("{source}") };
+            assert!(call.pure, "{source}");
+        }
+
+        // Check both the assignment-expression entry and a binary RHS continuation.
+        for (source, annotated_left) in [
+            ("/*#__PURE__*/ callee() + other()", true),
+            ("other() + /*#__PURE__*/ callee()", false),
+        ] {
+            let allocator = Allocator::default();
+            let expr =
+                Parser::new(&allocator, source, SourceType::default()).parse_expression().unwrap();
+            let Expression::BinaryExpression(binary) = expr else { panic!("{source}") };
+            let Expression::CallExpression(left) = &binary.left else { panic!("{source}") };
+            let Expression::CallExpression(right) = &binary.right else { panic!("{source}") };
+            assert_eq!(left.pure, annotated_left, "{source}");
+            assert_eq!(right.pure, !annotated_left, "{source}");
         }
     }
 
@@ -1056,6 +1180,33 @@ mod test {
         assert_eq!(external.id.value, "raw");
         assert!(external.body.is_some());
         assert!(external.declare);
+    }
+
+    #[test]
+    fn surrogate_halves_join_across_escape_forms() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        // Each spelling escapes U+1F600 as its two surrogate halves.
+        let escapes = [
+            r"\uD83D\uDE00",
+            r"\u{D83D}\u{DE00}",
+            r"\uD83D\u{DE00}",
+            r"\u{D83D}\uDE00",
+            // A LineContinuation contributes no code units, so the halves are adjacent.
+            "\\uD83D\\\n\\uDE00",
+        ];
+        for escape in escapes {
+            let source = format!("'{escape}'");
+            let expr = Parser::new(&allocator, &source, source_type).parse_expression().unwrap();
+            let Expression::StringLiteral(literal) = expr else { panic!("{source}") };
+            assert_eq!(literal.value.as_str(), Some("😀"), "{source}");
+
+            let source = format!("`{escape}`");
+            let expr = Parser::new(&allocator, &source, source_type).parse_expression().unwrap();
+            let Expression::TemplateLiteral(template) = expr else { panic!("{source}") };
+            let cooked = template.quasis[0].value.cooked.and_then(oxc_str::JSStr::as_str);
+            assert_eq!(cooked, Some("😀"), "{source}");
+        }
     }
 
     #[test]
@@ -1322,6 +1473,36 @@ mod test {
                 (Kind::Semicolon, 5, 6),
             ]
         );
+    }
+
+    #[test]
+    fn tokens_after_unambiguous_await_reparse() {
+        for source in [
+            "await /x/u; export {};",
+            // Reparsing merges `/a/`, but splits `/b/g`, increasing the token count.
+            "await /a/ /b/g; export {};",
+            "before(); await /a/ /b/g; between(); await /x/u; export {}; tail();",
+            "before(); await /x/u; after(); export {}; tail();",
+            "before(); await /x/u; between(); await /y/g; export {}; tail();",
+            "await /x/u\nawait /y/g\nexport {};",
+            "await\nawait /x/u; export {};",
+            "before(); await\nawait /x/u; between(); await\nawait /y/g; export {}; tail();",
+            "const x = await /x/u; between(); const y = await /y/g; export {};",
+            "/before/.test(await /x/u); /after/.test('after'); export {};",
+            "await /x/u, import.meta;",
+            "#!/usr/bin/env node\n'use strict';\nawait /* regexp */ /x/u; export {};",
+            "export {}; await /x/u;",
+        ] {
+            let allocator = Allocator::default();
+            let parse = |source_type| {
+                Parser::new(&allocator, source, source_type)
+                    .with_config(config::TokensParserConfig)
+                    .parse()
+            };
+            let unambiguous = parse(SourceType::unambiguous());
+            let module = parse(SourceType::mjs());
+            assert_eq!(unambiguous.tokens.as_slice(), module.tokens.as_slice(), "{source}");
+        }
     }
 
     // A fatal error fast-forwards the lexer to end of file. Re-lexing the `}` of a template

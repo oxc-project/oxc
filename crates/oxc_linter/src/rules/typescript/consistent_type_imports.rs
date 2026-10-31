@@ -247,7 +247,7 @@ impl Rule for ConsistentTypeImports {
 
                 if let Some(specifiers) = &import_decl.specifiers {
                     for specifier in specifiers {
-                        let symbol_id = specifier.local().symbol_id();
+                        let symbol_id = specifier.symbol_id();
                         let no_type_qualifier = match specifier {
                             ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                                 specifier.import_kind.is_value()
@@ -281,7 +281,7 @@ impl Rule for ConsistentTypeImports {
                 {
                     let type_names = type_references_without_type_qualifier
                         .iter()
-                        .map(|specifier| specifier.local().name.as_str())
+                        .map(|specifier| specifier.name().as_str())
                         .collect::<Vec<_>>();
 
                     // ['foo', 'bar', 'baz' ] => "foo, bar, and baz".
@@ -452,8 +452,11 @@ fn fix_to_type_import_declaration(options: &FixOptions<'_, '_>) -> FixerResult<R
 
     if !type_names_specifiers.is_empty() {
         // definitely all type references: `import type { A, B } from 'foo'`
-        if let Some(type_only_named_import) =
-            get_type_only_named_import(ctx, import_decl.source.value.as_str())
+        if let Some(type_only_named_import) = import_decl
+            .source
+            .value
+            .as_str()
+            .and_then(|source| get_type_only_named_import(ctx, source))
         {
             let new_options = FixOptions {
                 import_decl: type_only_named_import,

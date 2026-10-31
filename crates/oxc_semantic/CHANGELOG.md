@@ -4,6 +4,46 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.156.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- f4dac9e semantic: Separate hoisted vars from block type bindings (#27936) (limadog9)
+- 5c84098 semantic,linter: Report names with lone surrogates in enum and lint checks (#27991) (Dunqing)
+
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- e3c1b11 ast: [**BREAKING**] Preserve lone surrogates in static property names (#27095) (Dunqing)
+
+## [0.154.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- f8e9a50 semantic: Stop arguments resolution at ordinary functions (#26929) (camc314)
+- 72bf06f crates/oxc_semantic: Decline to evaluate unary ops on strings in enum initializers (#27447) (Brooooooklyn)
+- 558a890 semantic: Mark delete of optional members as MemberWriteTarget (#27430) (Bartok)
+- 7e6a050 semantic: Visit `TSMethodSignature` computed method keys in enclosing scope (#27357) (camc314)
+
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- b2793fa parser: Reject module syntax in script (#27220) (leaysgur)
+
+## [0.151.0] - 2026-09-21
+
+### ⚡ Performance
+
+- bd3f69e semantic: Reuse identifier hashes in enum member lookups (#26773) (camc314)
+
+## [0.150.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- a091fc4 parser: Validate await context for await using declarations (#26495) (camc314)
+
 ## [0.149.0] - 2026-09-07
 
 ### 🐛 Bug Fixes

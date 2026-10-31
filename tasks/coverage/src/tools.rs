@@ -899,26 +899,17 @@ fn run_estree_acorn_jsx_impl(
 // Skip paths for TypeScript ESTree tests
 static TS_SKIP_PATHS: &[&str] = &[
     // Skip cases which are failing in parser conformance tests
-    "typescript/tests/cases/compiler/arrayFromAsync.ts",
-    "typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
-    "typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts",
-    "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
+    "typescript/tsc/testdata/tests/cases/compiler/arrayFromAsync.ts",
+    "typescript/tsc/testdata/tests/cases/compiler/regexInvalidUtf8WithUnicodeFlag.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/es2019/importMeta/importMeta.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
     // Skip tests where TS-ESLint is incorrect
-    "typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
-];
-
-// Additional skip paths for the TypeScript ESTree *token* tests.
-// These fixtures' ASTs match TS-ESLint, so only the token comparison is skipped.
-static TS_TOKENS_SKIP_PATHS: &[&str] = &[
-    // TS-ESLint drops the first `<` of a `<<` which opens a type argument list,
-    // e.g. `ReturnType<<T>(x: T) => number>`. Oxc correctly emits both `<` tokens.
-    // <https://github.com/typescript-eslint/typescript-eslint/issues/12820>
-    "typescript/tests/cases/compiler/importTypeWithUnparenthesizedGenericFunctionParsed.ts",
-    "typescript/tests/cases/compiler/parseGenericArrowRatherThanLeftShift.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
 ];
 
 pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
-    run_estree_typescript_impl(files, "AST", &[], RuntimeParserConfig::default(), |ret| {
+    run_estree_typescript_impl(files, "AST", RuntimeParserConfig::default(), |ret| {
         let mut program = ret.program;
         let source_text = program.source_text;
         Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
@@ -927,30 +918,23 @@ pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
 }
 
 pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
-    run_estree_typescript_impl(
-        files,
-        "TOKENS",
-        TS_TOKENS_SKIP_PATHS,
-        RuntimeParserConfig::new(true),
-        |ret| {
-            let ParserReturn { program, tokens, .. } = ret;
-            let source_text = program.source_text;
-            let span_converter = Utf8ToUtf16::new(source_text);
-            to_estree_tokens_pretty_json(
-                &tokens,
-                &program,
-                source_text,
-                &span_converter,
-                ESTreeTokenOptions::new(true),
-            )
-        },
-    )
+    run_estree_typescript_impl(files, "TOKENS", RuntimeParserConfig::new(true), |ret| {
+        let ParserReturn { program, tokens, .. } = ret;
+        let source_text = program.source_text;
+        let span_converter = Utf8ToUtf16::new(source_text);
+        to_estree_tokens_pretty_json(
+            &tokens,
+            &program,
+            source_text,
+            &span_converter,
+            ESTreeTokenOptions::new(true),
+        )
+    })
 }
 
 fn run_estree_typescript_impl(
     files: &[TypeScriptFile],
     section_key: &str,
-    extra_skip_paths: &[&str],
     parser_config: RuntimeParserConfig,
     get_json: impl for<'a> Fn(ParserReturn<'a>) -> String + Sync,
 ) -> Vec<CoverageResult> {
@@ -960,11 +944,7 @@ fn run_estree_typescript_impl(
             if test_file.should_fail {
                 return None;
             }
-            if test_file
-                .path
-                .to_str()
-                .is_some_and(|p| TS_SKIP_PATHS.contains(&p) || extra_skip_paths.contains(&p))
-            {
+            if test_file.path.to_str().is_some_and(|p| TS_SKIP_PATHS.contains(&p)) {
                 return None;
             }
 

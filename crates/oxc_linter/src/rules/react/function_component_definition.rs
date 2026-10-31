@@ -2,8 +2,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
-    AstKind,
-    ast::{AssignmentTarget, FunctionType, VariableDeclarator},
+    AstKind, FunctionKind,
+    ast::{AssignmentTarget, FunctionType, VariableDeclaration, VariableDeclarator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -112,13 +112,18 @@ impl Rule for FunctionComponentDefinition {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let actual = match node.kind() {
-            AstKind::Function(function) => match function.r#type {
-                FunctionType::FunctionDeclaration => FunctionStyle::Declaration,
-                FunctionType::FunctionExpression => FunctionStyle::Expression,
-                _ => return,
-            },
-            AstKind::ArrowFunctionExpression(_) => FunctionStyle::Arrow,
+        let (actual, function) = match node.kind() {
+            AstKind::Function(function) => {
+                let style = match function.r#type {
+                    FunctionType::FunctionDeclaration => FunctionStyle::Declaration,
+                    FunctionType::FunctionExpression => FunctionStyle::Expression,
+                    _ => return,
+                };
+                (style, FunctionKind::Function(function))
+            }
+            AstKind::ArrowFunctionExpression(arrow) => {
+                (FunctionStyle::Arrow, FunctionKind::Arrow(arrow))
+            }
             _ => return,
         };
 
@@ -126,20 +131,25 @@ impl Rule for FunctionComponentDefinition {
             return;
         }
 
-        let named = is_named(node, ctx);
-        let (allowed, expected) = if named {
-            (self.0.named_components.allows(actual), self.0.named_components.preferred())
+        let (allowed, expected) = if is_named(node, ctx) {
+            (
+                self.0.named_components.allows(actual),
+                ComponentStyle::Named(self.0.named_components.preferred()),
+            )
         } else {
-            (self.0.unnamed_components.allows(actual), self.0.unnamed_components.preferred())
+            (
+                self.0.unnamed_components.allows(actual),
+                ComponentStyle::Unnamed(self.0.unnamed_components.preferred()),
+            )
         };
         if allowed {
             return;
         }
 
-        let diagnostic = function_component_definition_diagnostic(node.span(), expected);
-        if fix::can_fix(node, ctx, expected) {
+        let diagnostic = function_component_definition_diagnostic(node.span(), expected.style());
+        if fix::can_fix(node, function, ctx, expected.style()) {
             ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
-                let (span, replacement) = fix::replacement(node, ctx, expected, named);
+                let (span, replacement) = fix::replacement(node, function, ctx, expected);
                 fixer.replace(span, replacement)
             });
         } else {
@@ -229,14 +239,15 @@ fn component_parent_kind<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Optio
     }
 }
 
-fn variable_declarator<'a, 'c>(
+fn component_variable<'a>(
     node: &AstNode<'a>,
-    ctx: &'c LintContext<'a>,
-) -> Option<&'c VariableDeclarator<'a>> {
-    match component_parent_kind(node, ctx) {
-        Some(AstKind::VariableDeclarator(declaration)) => Some(declaration),
-        _ => None,
-    }
+    ctx: &LintContext<'a>,
+) -> Option<(&'a VariableDeclarator<'a>, &'a VariableDeclaration<'a>)> {
+    let AstKind::VariableDeclarator(declarator) = component_parent_kind(node, ctx)? else {
+        return None;
+    };
+    let declaration = ctx.nodes().parent_kind(declarator.node_id()).as_variable_declaration()?;
+    Some((declarator, declaration))
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -244,6 +255,21 @@ enum FunctionStyle {
     Declaration,
     Expression,
     Arrow,
+}
+
+#[derive(Clone, Copy)]
+enum ComponentStyle {
+    Named(NamedComponentStyle),
+    Unnamed(UnnamedComponentStyle),
+}
+
+impl ComponentStyle {
+    fn style(self) -> FunctionStyle {
+        match self {
+            Self::Named(style) => style.style(),
+            Self::Unnamed(style) => style.style(),
+        }
+    }
 }
 
 impl FunctionStyle {
@@ -257,12 +283,10 @@ impl FunctionStyle {
 }
 
 impl NamedComponents {
-    fn preferred(&self) -> FunctionStyle {
+    fn preferred(&self) -> NamedComponentStyle {
         match self {
-            Self::Single(style) => style.style(),
-            Self::Multiple(styles) => {
-                styles.first().map_or(FunctionStyle::Declaration, |style| style.style())
-            }
+            Self::Single(style) => *style,
+            Self::Multiple(styles) => styles.first().copied().unwrap_or_default(),
         }
     }
 
@@ -285,12 +309,10 @@ impl NamedComponentStyle {
 }
 
 impl UnnamedComponents {
-    fn preferred(&self) -> FunctionStyle {
+    fn preferred(&self) -> UnnamedComponentStyle {
         match self {
-            Self::Single(style) => style.style(),
-            Self::Multiple(styles) => {
-                styles.first().map_or(FunctionStyle::Expression, |style| style.style())
-            }
+            Self::Single(style) => *style,
+            Self::Multiple(styles) => styles.first().copied().unwrap_or_default(),
         }
     }
 
@@ -313,24 +335,28 @@ impl UnnamedComponentStyle {
 
 fn is_named<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     matches!(node.kind(), AstKind::Function(function) if function.r#type == FunctionType::FunctionDeclaration)
-        || variable_declarator(node, ctx).is_some()
+        || component_variable(node, ctx).is_some()
 }
 
 mod fix {
     use oxc_ast::{
-        AstKind,
+        AstKind, FunctionKind,
         ast::{
             ArrowFunctionExpression, FormalParameters, Function, FunctionType,
-            TSTypeParameterDeclaration, VariableDeclarator,
+            TSTypeParameterDeclaration, VariableDeclaration, VariableDeclarator,
         },
     };
     use oxc_span::{GetSpan, Span};
 
-    use super::{FunctionStyle, variable_declarator};
+    use super::{
+        ComponentStyle, FunctionStyle, NamedComponentStyle, UnnamedComponentStyle,
+        component_variable,
+    };
     use crate::{AstNode, context::LintContext};
 
     pub(super) fn can_fix<'a>(
         node: &AstNode<'a>,
+        function: FunctionKind<'a, '_>,
         ctx: &LintContext<'a>,
         expected: FunctionStyle,
     ) -> bool {
@@ -338,18 +364,14 @@ mod fix {
             return false;
         }
 
-        let declaration = variable_declarator(node, ctx);
-        if declaration.is_some_and(|declaration| {
-            matches!(
-                ctx.nodes().parent_kind(declaration.node_id()),
-                AstKind::VariableDeclaration(variable) if variable.declarations.len() > 1
-            )
-        }) {
+        let variable = component_variable(node, ctx);
+        if variable.is_some_and(|(_, declaration)| declaration.declarations.len() > 1) {
             return false;
         }
+        let declaration = variable.map(|(declarator, _)| declarator);
 
-        match node.kind() {
-            AstKind::Function(function) => {
+        match function {
+            FunctionKind::Function(function) => {
                 if function.r#type == FunctionType::FunctionDeclaration
                     && matches!(
                         ctx.nodes().parent_kind(node.id()),
@@ -376,7 +398,7 @@ mod fix {
                     return false;
                 }
             }
-            AstKind::ArrowFunctionExpression(arrow) => {
+            FunctionKind::Arrow(arrow) => {
                 if expected == FunctionStyle::Declaration
                     && declaration.is_some_and(|declaration| declaration.type_annotation.is_some())
                 {
@@ -388,7 +410,6 @@ mod fix {
                     return false;
                 }
             }
-            _ => unreachable!(),
         }
         true
     }
@@ -419,18 +440,18 @@ mod fix {
 
     pub(super) fn replacement<'a>(
         node: &AstNode<'a>,
+        function: FunctionKind<'a, '_>,
         ctx: &LintContext<'a>,
-        expected: FunctionStyle,
-        named: bool,
+        expected: ComponentStyle,
     ) -> (Span, String) {
-        let parts = FunctionParts::new(node, ctx);
+        let parts = FunctionParts::new(node, function, ctx);
         let body = if parts.expression_body {
             format!("{{\n return {}\n}}", parts.body)
         } else {
             parts.body.clone()
         };
-        let function = match (expected, named) {
-            (FunctionStyle::Declaration, true) => format!(
+        let function = match expected {
+            ComponentStyle::Named(NamedComponentStyle::FunctionDeclaration) => format!(
                 "{}function{} {}{}{}{} {}",
                 parts.async_prefix,
                 parts.generator_marker,
@@ -440,7 +461,7 @@ mod fix {
                 parts.return_type,
                 body
             ),
-            (FunctionStyle::Expression, true) => format!(
+            ComponentStyle::Named(NamedComponentStyle::FunctionExpression) => format!(
                 "{} {}{} = {}function{}{}{}{} {}",
                 parts.variable_kind,
                 parts.name,
@@ -452,7 +473,7 @@ mod fix {
                 parts.return_type,
                 body
             ),
-            (FunctionStyle::Arrow, true) => format!(
+            ComponentStyle::Named(NamedComponentStyle::ArrowFunction) => format!(
                 "{} {}{} = {}{}{}{} => {}",
                 parts.variable_kind,
                 parts.name,
@@ -463,7 +484,7 @@ mod fix {
                 parts.return_type,
                 body
             ),
-            (FunctionStyle::Expression, false) => format!(
+            ComponentStyle::Unnamed(UnnamedComponentStyle::FunctionExpression) => format!(
                 "{}function{}{}{}{} {}",
                 parts.async_prefix,
                 parts.generator_marker,
@@ -472,11 +493,10 @@ mod fix {
                 parts.return_type,
                 body
             ),
-            (FunctionStyle::Arrow, false) => format!(
+            ComponentStyle::Unnamed(UnnamedComponentStyle::ArrowFunction) => format!(
                 "{}{}{}{} => {}",
                 parts.async_prefix, parts.type_parameters, parts.params, parts.return_type, body
             ),
-            (FunctionStyle::Declaration, false) => unreachable!(),
         };
         (parts.replace_span, function)
     }
@@ -496,11 +516,10 @@ mod fix {
     }
 
     impl<'a> FunctionParts<'a> {
-        fn new(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Self {
-            match node.kind() {
-                AstKind::Function(function) => Self::from_function(function, node, ctx),
-                AstKind::ArrowFunctionExpression(arrow) => Self::from_arrow(arrow, node, ctx),
-                _ => unreachable!(),
+        fn new(node: &AstNode<'a>, function: FunctionKind<'a, '_>, ctx: &LintContext<'a>) -> Self {
+            match function {
+                FunctionKind::Function(function) => Self::from_function(function, node, ctx),
+                FunctionKind::Arrow(arrow) => Self::from_arrow(arrow, node, ctx),
             }
         }
 
@@ -509,8 +528,10 @@ mod fix {
             node: &AstNode<'a>,
             ctx: &LintContext<'a>,
         ) -> Self {
-            let declaration = variable_declarator(node, ctx);
-            let (replace_span, variable_kind) = variable_context(node, declaration, ctx);
+            let variable = component_variable(node, ctx);
+            let declaration = variable.map(|(declarator, _)| declarator);
+            let (replace_span, variable_kind) =
+                variable_context(node, variable.map(|(_, declaration)| declaration));
             Self {
                 replace_span,
                 name: function.id.as_ref().map_or_else(
@@ -544,8 +565,10 @@ mod fix {
             node: &AstNode<'a>,
             ctx: &LintContext<'a>,
         ) -> Self {
-            let declaration = variable_declarator(node, ctx);
-            let (replace_span, variable_kind) = variable_context(node, declaration, ctx);
+            let variable = component_variable(node, ctx);
+            let declaration = variable.map(|(declarator, _)| declarator);
+            let (replace_span, variable_kind) =
+                variable_context(node, variable.map(|(_, declaration)| declaration));
             Self {
                 replace_span,
                 name: variable_name(declaration),
@@ -570,17 +593,12 @@ mod fix {
 
     fn variable_context<'a>(
         node: &AstNode<'a>,
-        declaration: Option<&VariableDeclarator<'a>>,
-        ctx: &LintContext<'a>,
+        declaration: Option<&VariableDeclaration<'a>>,
     ) -> (Span, &'static str) {
         let Some(declaration) = declaration else {
             return (node.span(), "const");
         };
-        let AstKind::VariableDeclaration(variable) = ctx.nodes().parent_kind(declaration.node_id())
-        else {
-            unreachable!()
-        };
-        (variable.span, variable.kind.as_str())
+        (declaration.span, declaration.kind.as_str())
     }
 
     fn variable_name(declaration: Option<&VariableDeclarator<'_>>) -> String {

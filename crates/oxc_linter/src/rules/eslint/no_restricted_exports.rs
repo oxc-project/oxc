@@ -13,12 +13,13 @@ use oxc_ast::{
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
     AstNode,
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::deserialize_regex_option,
 };
@@ -209,6 +210,17 @@ impl Rule for NoRestrictedExports {
         )
     }
 
+    fn should_run(&self, _ctx: &ContextHost) -> bool {
+        let defaults = &self.restrict_default_exports;
+        !self.restricted_named_exports.is_empty()
+            || self.restricted_named_exports_pattern.is_some()
+            || defaults.default_from
+            || defaults.direct
+            || defaults.named
+            || defaults.named_from
+            || defaults.namespace_from
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ExportAllDeclaration(export) => self.check_export_all(export, ctx),
@@ -288,6 +300,12 @@ impl NoRestrictedExports {
     }
 
     fn check_export_declaration(&self, export: &ExportDeclaration, ctx: &LintContext) {
+        if self.restricted_named_exports.is_empty()
+            && self.restricted_named_exports_pattern.is_none()
+        {
+            return;
+        }
+
         match &export.declaration {
             Declaration::FunctionDeclaration(_) | Declaration::ClassDeclaration(_) => {
                 if let Some(id) = export.declaration.id() {
@@ -299,13 +317,9 @@ impl NoRestrictedExports {
                 }
             }
             Declaration::VariableDeclaration(variable) => {
-                self.check_no_restricted_named_exports(
-                    ctx,
-                    export.span,
-                    variable.declarations.iter().flat_map(|d| {
-                        d.id.get_binding_identifiers().into_iter().map(|id| id.name.into_string())
-                    }),
-                );
+                variable.bound_names(&mut |id| {
+                    self.check_no_restricted_named_export(ctx, export.span, id.name.as_str());
+                });
             }
             _ => {}
         }
@@ -372,16 +386,19 @@ impl NoRestrictedExports {
         }
 
         for export in exports {
-            let export = export.borrow();
-            if self.restricted_named_exports.contains(export)
-                || (export != "default"
-                    && self
-                        .restricted_named_exports_pattern
-                        .as_ref()
-                        .is_some_and(|r| r.is_match(export)))
-            {
-                ctx.diagnostic(no_restricted_named_exports_diagnostic(span, export));
-            }
+            self.check_no_restricted_named_export(ctx, span, export.borrow().as_str());
+        }
+    }
+
+    fn check_no_restricted_named_export(&self, ctx: &LintContext<'_>, span: Span, export: &str) {
+        if self.restricted_named_exports.contains(export)
+            || (export != "default"
+                && self
+                    .restricted_named_exports_pattern
+                    .as_ref()
+                    .is_some_and(|r| r.is_match(export)))
+        {
+            ctx.diagnostic(no_restricted_named_exports_diagnostic(span, export));
         }
     }
 }

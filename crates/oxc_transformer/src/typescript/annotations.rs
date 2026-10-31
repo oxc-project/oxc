@@ -108,21 +108,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                             true
                         } else {
                             specifiers.retain(|specifier| {
-                                let id = match specifier {
-                                    ImportDeclarationSpecifier::ImportSpecifier(s) => {
-                                        if s.import_kind.is_type() {
-                                            Self::remove_binding(&s.local, ctx);
-                                            return false;
-                                        }
-                                        &s.local
-                                    }
-                                    ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
-                                        &s.local
-                                    }
-                                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
-                                        &s.local
-                                    }
-                                };
+                                if let ImportDeclarationSpecifier::ImportSpecifier(s) = specifier
+                                    && s.import_kind.is_type()
+                                {
+                                    Self::remove_binding(&s.local, ctx);
+                                    return false;
+                                }
+                                let id = specifier.local();
                                 // If `only_remove_type_imports` is true, then we can return `true` to keep it because
                                 // it is not a type import, otherwise we need to check if the identifier is referenced
                                 if self.only_remove_type_imports || self.has_value_reference(id, ctx) {
@@ -569,17 +561,7 @@ impl<'a> TypeScriptAnnotations<'a> {
     fn remove_import_declaration_bindings(decl: &ImportDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(specifiers) = &decl.specifiers {
             for specifier in specifiers {
-                match specifier {
-                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                        Self::remove_binding(&specifier.local, ctx);
-                    }
-                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                        Self::remove_binding(&specifier.local, ctx);
-                    }
-                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
-                        Self::remove_binding(&specifier.local, ctx);
-                    }
-                }
+                Self::remove_binding(specifier.local(), ctx);
             }
         }
     }

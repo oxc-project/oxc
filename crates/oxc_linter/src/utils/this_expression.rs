@@ -10,7 +10,7 @@ use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
 
 use crate::{
-    ast_util::get_declaration_from_reference_id, ast_util::variable_declaration_kind,
+    ast_util::{get_declaration_from_reference_id, variable_declaration_kind},
     context::LintContext,
 };
 
@@ -84,7 +84,8 @@ pub fn is_this_alias(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool
             _ => None,
         })
         .filter(|var| {
-            variable_declaration_kind(var, ctx) == VariableDeclarationKind::Const
+            variable_declaration_kind(var, ctx.nodes())
+                .is_some_and(VariableDeclarationKind::is_const)
                 && matches!(&var.id, BindingPattern::BindingIdentifier(_))
         })
         .and_then(|var| var.init.as_ref())

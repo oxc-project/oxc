@@ -1,0 +1,15 @@
+enum F {
+  A = foo + "a",
+  B = typeof foo,
+  C = `${foo}`,
+  D = f(),
+  E = (foo + "a"),
+  G = "a" + foo + 1,
+  H = 1 + foo,
+  I = (foo as string) + "a",
+  J = foo satisfies string,
+  K = ("x" as string),
+  L = "x"!,
+  M = <string>"x",
+  N = ("x"),
+}

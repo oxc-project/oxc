@@ -83,21 +83,7 @@ impl StringLiteral<'_> {
     /// See: <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-isstringwellformedunicode>
     #[inline]
     pub fn is_string_well_formed_unicode(&self) -> bool {
-        !self.lone_surrogates
-    }
-}
-
-impl AsRef<str> for StringLiteral<'_> {
-    #[inline]
-    fn as_ref(&self) -> &str {
-        self.value.as_ref()
-    }
-}
-
-impl Display for StringLiteral<'_> {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.value.fmt(f)
+        !self.value.has_lone_surrogate()
     }
 }
 

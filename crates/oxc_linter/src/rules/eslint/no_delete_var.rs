@@ -44,6 +44,7 @@ declare_oxc_lint!(
     NoDeleteVar,
     eslint,
     correctness,
+    recommended,
     version = "0.0.4",
     short_description = "The purpose of the `delete` operator is to remove a property from an object.",
 );

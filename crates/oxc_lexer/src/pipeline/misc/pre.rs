@@ -1,13 +1,15 @@
-use crate::{error::diag_code, lanes::Lanes, tables::is_id_start};
+use crate::{error::DiagCode, token::tk};
 
-use super::super::{
-    IDENT_ESC, PRIV_IDENT, PRIV_IDENT_ESC, WS,
+use crate::pipeline::{
     bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},
-    find::unicode_ws_len,
+    bytes::{is_id_start, unicode_ws_len_at_unchecked},
+    cpu::{Cpu, apply, cpu_versions},
+    lanes::Lanes,
     scan::scan_ident_esc,
 };
 
-#[inline]
+#[apply(cpu_versions)]
+#[inline(never)]
 pub unsafe fn misc_pre(
     src: *const u8,
     n: usize,
@@ -18,8 +20,9 @@ pub unsafe fn misc_pre(
     kind: *mut u8,
     vutf8: bool,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) -> usize {
-    if !bm_any(misc, nb) {
+    if !bm_any(misc, nb, cpu) {
         return 0;
     }
 
@@ -33,6 +36,9 @@ pub unsafe fn misc_pre(
 /// `VUTF8` (`LexOptions::validate_utf8`) adds UTF-8 well-formedness
 /// validation to the non-ASCII walk. Monomorphized so the default `false`
 /// copy pays nothing for it.
+///
+/// `#[inline(always)]` so it gets compiled as part of each of [`misc_pre`]'s entry points.
+#[inline(always)]
 unsafe fn misc_pre_impl<const VUTF8: bool>(
     src: *const u8,
     n: usize,
@@ -68,7 +74,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                     if ok {
                         // Consume the verified continuation bits so they are
                         // not re-visited; a continuation still visible to the
-                        // walk had no valid lead — that is the stray-
+                        // walk had no valid lead - that is the stray-
                         // continuation check.
                         let cm: u128 = (((1u128 << cont) - 1) << 1) << (p & 63);
                         m &= !(cm as u64);
@@ -77,15 +83,15 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                         utf8_bad = true;
                         // Span = the maximal invalid subpart; one diag per
                         // file, context-free (fires inside strings too).
-                        lanes.push_diag(p as u32, (1 + cont) as u32, diag_code::INVALID_UTF8);
+                        lanes.push_diag(p as u32, (1 + cont) as u32, DiagCode::InvalidUtf8);
                         continue;
                     } else {
                         continue;
                     }
                 }
-                let len = unicode_ws_len(src, p);
+                let len = unicode_ws_len_at_unchecked(src, p);
                 if len != 0 {
-                    *kind.add(p) = WS;
+                    *kind.add(p) = tk!(Whitespace);
                     bm_clear_range(word, p, p + len - 1);
                     bm_set(st, p);
                     bm_clear_range(st, p + 1, p + len - 1);
@@ -116,10 +122,10 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 }
                 let e0 = bm_next0(word, p + 1, n);
                 let e = if *src.add(e0) == b'\\' && *src.add(e0 + 1) == b'u' {
-                    *kind.add(p) = PRIV_IDENT_ESC;
+                    *kind.add(p) = tk!(PrivateIdentEscaped);
                     scan_ident_esc(src, n, e0)
                 } else {
-                    *kind.add(p) = PRIV_IDENT;
+                    *kind.add(p) = tk!(PrivateIdent);
                     e0
                 };
                 bm_clear_range(st, p + 1, e - 1);
@@ -127,7 +133,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 if *src.add(p + 1) != b'u' {
                     continue;
                 }
-                *kind.add(p) = IDENT_ESC;
+                *kind.add(p) = tk!(IdentEscaped);
                 nesc += 1;
                 let e = scan_ident_esc(src, n, p);
                 bm_clear_range(st, p + 1, e - 1);

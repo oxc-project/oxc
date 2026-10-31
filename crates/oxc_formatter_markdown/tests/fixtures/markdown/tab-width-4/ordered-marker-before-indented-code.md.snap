@@ -1,0 +1,21 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+>2.     ordered item starting with indented code
+>        second line
+
+==================== Output ====================
+-------------------------------
+{ printWidth: 80, tabWidth: 4 }
+-------------------------------
+> 2.     ordered item starting with indented code
+>        second line
+
+--------------------------------
+{ printWidth: 100, tabWidth: 4 }
+--------------------------------
+> 2.     ordered item starting with indented code
+>        second line
+
+===================== End =====================

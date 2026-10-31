@@ -115,8 +115,10 @@ pub fn infer_mutation_aliasing_effects<'a>(
         initial_state.define(self_binding.identifier, value_id);
     }
 
+    let mutable_param_kind =
+        AbstractValue { kind: ValueKind::Mutable, reason: ReasonSet::single(ValueReason::Other) };
     let param_kind: AbstractValue = if is_function_expression {
-        AbstractValue { kind: ValueKind::Mutable, reason: ReasonSet::single(ValueReason::Other) }
+        mutable_param_kind
     } else {
         AbstractValue {
             kind: ValueKind::Frozen,
@@ -131,26 +133,20 @@ pub fn infer_mutation_aliasing_effects<'a>(
             infer_param(&func.params[0], &mut initial_state, &param_kind);
         }
         if params_len > 1 {
-            let ref_place = match &func.params[1] {
-                ParamPattern::Place(p) => p,
-                ParamPattern::Spread(s) => &s.place,
-            };
-            let value_id = ValueId::new();
-            initial_state.initialize(
-                value_id,
-                AbstractValue {
-                    kind: ValueKind::Mutable,
-                    reason: ReasonSet::single(ValueReason::Other),
-                },
-            );
-            initial_state.define(ref_place.identifier, value_id);
+            infer_param(&func.params[1], &mut initial_state, &mutable_param_kind);
         }
     } else {
         for param in &func.params {
             infer_param(param, &mut initial_state, &param_kind);
         }
     }
-
+    infer_context_parameter_bindings(
+        func,
+        env,
+        &mut initial_state,
+        &param_kind,
+        &mutable_param_kind,
+    );
     let mut queued_states: FxIndexMap<BlockId, InferenceState> = FxIndexMap::default();
 
     // Queue helper
@@ -358,23 +354,107 @@ impl ReasonSet {
 // InferenceState
 // =============================================================================
 
+/// Number of `ValueId`s a [`ValueIdSet`] holds before spilling to the heap.
+const VALUE_ID_INLINE_CAPACITY: usize = 5;
+
+/// An insertion-ordered set of `ValueId`s. The overwhelming majority of these
+/// sets contain at most five values, so keep those values inline.
+#[derive(Debug, Clone)]
+enum ValueIdSet {
+    Inline { items: [ValueId; VALUE_ID_INLINE_CAPACITY], len: u8 },
+    Spilled(Rc<SpilledValueIdSet>),
+}
+
+#[derive(Debug)]
+struct SpilledValueIdSet {
+    values: Vec<ValueId>,
+    members: FxHashSet<ValueId>,
+}
+
+impl Clone for SpilledValueIdSet {
+    fn clone(&self) -> Self {
+        let mut values = Vec::with_capacity(self.values.capacity());
+        values.extend_from_slice(&self.values);
+        Self { values, members: self.members.clone() }
+    }
+}
+
+impl Default for ValueIdSet {
+    fn default() -> Self {
+        Self::Inline { items: [ValueId(0); VALUE_ID_INLINE_CAPACITY], len: 0 }
+    }
+}
+
+impl ValueIdSet {
+    fn single(value: ValueId) -> Self {
+        let mut set = Self::default();
+        set.insert(value);
+        set
+    }
+
+    fn as_slice(&self) -> &[ValueId] {
+        match self {
+            Self::Inline { items, len } => &items[..usize::from(*len)],
+            Self::Spilled(set) => &set.values,
+        }
+    }
+
+    fn iter(&self) -> impl Iterator<Item = ValueId> + '_ {
+        self.as_slice().iter().copied()
+    }
+
+    fn contains(&self, value: ValueId) -> bool {
+        match self {
+            Self::Inline { .. } => self.as_slice().contains(&value),
+            Self::Spilled(set) => set.members.contains(&value),
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.as_slice().is_empty()
+    }
+
+    fn insert(&mut self, value: ValueId) {
+        if self.contains(value) {
+            return;
+        }
+        match self {
+            Self::Inline { items, len } if usize::from(*len) < VALUE_ID_INLINE_CAPACITY => {
+                items[usize::from(*len)] = value;
+                *len += 1;
+            }
+            Self::Inline { items, len } => {
+                let mut values = Vec::with_capacity(VALUE_ID_INLINE_CAPACITY * 2);
+                values.extend_from_slice(&items[..usize::from(*len)]);
+                values.push(value);
+                let members = values.iter().copied().collect();
+                *self = Self::Spilled(Rc::new(SpilledValueIdSet { values, members }));
+            }
+            Self::Spilled(set) => {
+                let set = Rc::make_mut(set);
+                set.members.insert(value);
+                set.values.push(value);
+            }
+        }
+    }
+
+    fn union_with(&mut self, other: &Self) {
+        for value in other.iter() {
+            self.insert(value);
+        }
+    }
+}
+
 /// The abstract state tracked during inference.
 /// The pass has exclusive access to each state (interior mutability only via
-/// the `uninitialized_access` Cell); the one shared piece is the immutable
-/// per-variable value sets (see `variables`).
+/// the `uninitialized_access` Cell).
 #[derive(Debug, Clone)]
 struct InferenceState {
     is_function_expression: bool,
     /// The kind of each value, based on its allocation site
     values: FxHashMap<ValueId, AbstractValue>,
-    /// The set of values pointed to by each identifier. The sets are shared via
-    /// `Rc`: every write to the map replaces the whole entry (sets are never
-    /// mutated in place), so state clones and assignments bump a refcount
-    /// instead of deep-copying each set. Shared sets iterate the very table a
-    /// deep clone would have copied; freshly built union/phi/singleton sets are
-    /// constructed by the same insert sequence as before. Either way iteration
-    /// order is unchanged.
-    variables: FxHashMap<IdentifierId, Rc<FxHashSet<ValueId>>>,
+    /// The set of values pointed to by each identifier.
+    variables: FxHashMap<IdentifierId, ValueIdSet>,
     /// Tracks uninitialized identifier access errors (matches TS invariant).
     /// Uses Cell so it can be set from `&self` methods like `kind()`.
     /// Stores (IdentifierId, usage_span) where usage_span is the source location
@@ -408,7 +488,7 @@ impl InferenceState {
         };
         let mut merged_kind: Option<AbstractValue> = None;
         for value_id in values.iter() {
-            let kind = match self.values.get(value_id) {
+            let kind = match self.values.get(&value_id) {
                 Some(k) => k,
                 None => continue,
             };
@@ -428,25 +508,22 @@ impl InferenceState {
     }
 
     fn define(&mut self, place_id: IdentifierId, value_id: ValueId) {
-        let mut set = FxHashSet::default();
-        set.insert(value_id);
-        self.variables.insert(place_id, Rc::new(set));
+        self.variables.insert(place_id, ValueIdSet::single(value_id));
     }
 
     fn assign(&mut self, into: IdentifierId, from: IdentifierId) {
         let values = match self.variables.get(&from) {
-            Some(v) => Rc::clone(v),
+            Some(v) => v.clone(),
             None => {
                 // Create a stable value for uninitialized identifiers
                 // Use a deterministic ID based on the from identifier
                 let vid = ValueId::from_identifier(from);
-                let mut set = FxHashSet::default();
-                set.insert(vid);
+                let set = ValueIdSet::single(vid);
                 self.values.entry(vid).or_insert_with(|| AbstractValue {
                     kind: ValueKind::Mutable,
                     reason: ReasonSet::single(ValueReason::Other),
                 });
-                Rc::new(set)
+                set
             }
         };
         self.variables.insert(into, values);
@@ -454,15 +531,14 @@ impl InferenceState {
 
     fn append_alias(&mut self, place: IdentifierId, value: IdentifierId) {
         let new_values = match self.variables.get(&value) {
-            Some(v) => Rc::clone(v),
+            Some(v) => v.clone(),
             None => return,
         };
-        let prev_values = match self.variables.get(&place) {
-            Some(v) => Rc::clone(v),
+        let prev_values = match self.variables.get_mut(&place) {
+            Some(v) => v,
             None => return,
         };
-        let merged: FxHashSet<ValueId> = prev_values.union(&new_values).copied().collect();
-        self.variables.insert(place, Rc::new(merged));
+        prev_values.union_with(&new_values);
     }
 
     fn is_defined(&self, place_id: IdentifierId) -> bool {
@@ -471,7 +547,7 @@ impl InferenceState {
 
     fn values_for(&self, place_id: IdentifierId) -> Vec<ValueId> {
         match self.variables.get(&place_id) {
-            Some(values) => values.iter().copied().collect(),
+            Some(values) => values.iter().collect(),
             None => Vec::new(),
         }
     }
@@ -541,7 +617,7 @@ impl InferenceState {
 
     fn merge(&self, other: &InferenceState) -> Option<InferenceState> {
         let mut next_values: Option<FxHashMap<ValueId, AbstractValue>> = None;
-        let mut next_variables: Option<FxHashMap<IdentifierId, Rc<FxHashSet<ValueId>>>> = None;
+        let mut next_variables: Option<FxHashMap<IdentifierId, ValueIdSet>> = None;
 
         // Merge values present in both
         for (id, this_value) in &self.values {
@@ -569,15 +645,16 @@ impl InferenceState {
                 && contributes_new_value(this_values, other_values)
             {
                 let nvars = next_variables.get_or_insert_with(|| self.variables.clone());
-                let merged: FxHashSet<ValueId> = this_values.union(other_values).copied().collect();
-                nvars.insert(*id, Rc::new(merged));
+                let mut merged = this_values.clone();
+                merged.union_with(other_values);
+                nvars.insert(*id, merged);
             }
         }
         // Add variables only in other
         for (id, other_values) in &other.variables {
             if !self.variables.contains_key(id) {
                 let nvars = next_variables.get_or_insert_with(|| self.variables.clone());
-                nvars.insert(*id, Rc::clone(other_values));
+                nvars.insert(*id, other_values.clone());
             }
         }
 
@@ -618,18 +695,14 @@ impl InferenceState {
         }
 
         for (id, other_values) in &other.variables {
-            match self.variables.get(id) {
-                Some(this_values) => {
-                    if contributes_new_value(this_values, other_values) {
-                        // Build the union as a fresh set exactly like `merge`, so
-                        // the resulting iteration order matches.
-                        let merged: FxHashSet<ValueId> =
-                            this_values.union(other_values).copied().collect();
-                        self.variables.insert(*id, Rc::new(merged));
+            match self.variables.entry(*id) {
+                std::collections::hash_map::Entry::Occupied(mut entry) => {
+                    if contributes_new_value(entry.get(), other_values) {
+                        entry.get_mut().union_with(other_values);
                     }
                 }
-                None => {
-                    self.variables.insert(*id, Rc::clone(other_values));
+                std::collections::hash_map::Entry::Vacant(entry) => {
+                    entry.insert(other_values.clone());
                 }
             }
         }
@@ -640,17 +713,17 @@ impl InferenceState {
     }
 
     fn infer_phi(&mut self, phi_place_id: IdentifierId, phi_operands: &OrderedMap<BlockId, Place>) {
-        let mut values: FxHashSet<ValueId> = FxHashSet::default();
+        let mut values = ValueIdSet::default();
         for (_, operand) in phi_operands {
             if let Some(operand_values) = self.variables.get(&operand.identifier) {
                 for v in operand_values.iter() {
-                    values.insert(*v);
+                    values.insert(v);
                 }
             }
             // If not found, it's a backedge that will be handled later by merge
         }
         if !values.is_empty() {
-            self.variables.insert(phi_place_id, Rc::new(values));
+            self.variables.insert(phi_place_id, values);
         }
     }
 }
@@ -659,10 +732,14 @@ fn is_superset(a: &ReasonSet, b: &ReasonSet) -> bool {
     a.0 & b.0 == b.0
 }
 
-/// Whether `other` holds a value that `this` lacks. The sets are immutable and
-/// shared, so an identical allocation can contribute nothing new.
-fn contributes_new_value(this: &Rc<FxHashSet<ValueId>>, other: &Rc<FxHashSet<ValueId>>) -> bool {
-    !Rc::ptr_eq(this, other) && other.iter().any(|value| !this.contains(value))
+/// Whether `other` holds a value that `this` lacks.
+fn contributes_new_value(this: &ValueIdSet, other: &ValueIdSet) -> bool {
+    if let (ValueIdSet::Spilled(this), ValueIdSet::Spilled(other)) = (this, other)
+        && Rc::ptr_eq(this, other)
+    {
+        return false;
+    }
+    other.iter().any(|value| !this.contains(value))
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -1124,6 +1201,59 @@ fn infer_param(param: &ParamPattern, state: &mut InferenceState, param_kind: &Ab
     let value_id = ValueId::new();
     state.initialize(value_id, *param_kind);
     state.define(place.identifier, value_id);
+}
+
+/// Non-plain parameters use temporary entries in `func.params`; their named bindings
+/// are initialized by stores in the parameter prologue. Seed the declaration identifiers
+/// behind those SSA stores before interpreting the prologue so earlier default-value
+/// closures can read or update a later parameter binding.
+fn infer_context_parameter_bindings(
+    func: &HirFunction,
+    env: &Environment,
+    state: &mut InferenceState,
+    param_kind: &AbstractValue,
+    mutable_param_kind: &AbstractValue,
+) {
+    for (_, block) in &func.body.blocks {
+        for &instruction_id in &block.instructions {
+            let lvalue = match &func.instructions[instruction_id.index()].value {
+                InstructionValue::StoreContext { lvalue, .. }
+                | InstructionValue::StoreLocal { lvalue, .. } => lvalue,
+                _ => continue,
+            };
+            let declaration_id = env.identifiers[lvalue.place.identifier].declaration_id;
+            let identifier = IdentifierId::from_usize(declaration_id.index());
+            if !matches!(env.identifiers[identifier].name, Some(IdentifierName::Named(_))) {
+                continue;
+            }
+            let parameter_kind = env.identifiers[identifier].span.and_then(|binding_span| {
+                func.params.iter().enumerate().find_map(|(index, param)| {
+                    let parameter = match param {
+                        ParamPattern::Place(place) => place,
+                        ParamPattern::Spread(spread) => &spread.place,
+                    };
+                    env.identifiers[parameter.identifier].span.and_then(|parameter_span| {
+                        (binding_span.start >= parameter_span.start
+                            && binding_span.end <= parameter_span.end)
+                            .then_some(
+                                if func.fn_type == ReactFunctionType::Component && index == 1 {
+                                    mutable_param_kind
+                                } else {
+                                    param_kind
+                                },
+                            )
+                    })
+                })
+            });
+            if state.is_defined(identifier) {
+                continue;
+            }
+            let Some(parameter_kind) = parameter_kind else { continue };
+            let value_id = ValueId::new();
+            state.initialize(value_id, *parameter_kind);
+            state.define(identifier, value_id);
+        }
+    }
 }
 
 // =============================================================================
@@ -2313,8 +2443,8 @@ fn compute_signature_for_instruction<'a>(
             effects.push(AliasingEffect::Assign { from: *sl_value, into: sl.place });
             effects.push(AliasingEffect::Assign { from: *sl_value, into: *lvalue });
         }
-        InstructionValue::PostfixUpdate { lvalue: pf_lvalue, .. }
-        | InstructionValue::PrefixUpdate { lvalue: pf_lvalue, .. } => {
+        InstructionValue::PostfixUpdateLocal { lvalue: pf_lvalue, .. }
+        | InstructionValue::PrefixUpdateLocal { lvalue: pf_lvalue, .. } => {
             effects.push(AliasingEffect::Create {
                 into: *lvalue,
                 value: ValueKind::Primitive,
@@ -2325,6 +2455,15 @@ fn compute_signature_for_instruction<'a>(
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
+        }
+        InstructionValue::PostfixUpdateContext { value: pf_value, .. }
+        | InstructionValue::PrefixUpdateContext { value: pf_value, .. } => {
+            effects.push(AliasingEffect::Create {
+                into: *lvalue,
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
+            effects.push(AliasingEffect::Mutate { value: *pf_value, reason: None });
         }
         InstructionValue::StoreGlobal { name, value: sg_value, .. } => {
             let variable = format!("`{}`", name);
@@ -2404,7 +2543,10 @@ fn compute_effects_for_legacy_signature<'a>(
         reason: return_value_reason,
     });
 
-    if signature.impure && env.config.validate_no_impure_functions_in_render {
+    if signature.impure
+        && env.config.validate_no_impure_functions_in_render
+        && (!signature.impure_if_no_args || args.is_empty())
+    {
         let diagnostic =
             diagnostics::impure_function(signature.canonical_name.as_deref(), span.copied());
         let error = env.intern_aliasing_diagnostic(receiver.identifier, diagnostic);

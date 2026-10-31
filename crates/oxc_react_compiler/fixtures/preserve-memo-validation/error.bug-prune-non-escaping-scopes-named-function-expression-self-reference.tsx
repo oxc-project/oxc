@@ -1,7 +1,6 @@
 // A named function expression can capture its own binding in a nested function.
-// PruneNonEscapingScopes does not create an identifier node for that binding, so
-// it must bail out with the same invariant as the TypeScript compiler instead of
-// continuing to PreserveManualMemo validation with inconsistent state.
+// Pruning must register that binding before following captured dependencies.
+// The component must still bail out when manual memoization cannot be preserved.
 import { memo, useCallback } from 'react';
 
 type ObjectiveID = number;

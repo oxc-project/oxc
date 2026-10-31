@@ -1,11 +1,11 @@
-use std::fmt::Write;
+use std::{fmt::Write, time::Duration};
 
-use crate::output_formatter::InternalFormatter;
+use crate::output_formatter::{InternalFormatter, RuleTimings};
 use oxc_diagnostics::{
     Error, GraphicalReportHandler,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
-use oxc_linter::{RuleTimingRecord, table::RuleTable};
+use oxc_linter::{RuleTimingRecord, RuleTimingSource, table::RuleTable};
 use rustc_hash::FxHashSet;
 
 #[derive(Debug)]
@@ -27,11 +27,15 @@ impl InternalFormatter for DefaultOutputFormatter {
     fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {
         let mut output = lint_command_info.format_execution_summary();
 
-        if let Some(rule_timings) = &lint_command_info.rule_timings
-            && !rule_timings.is_empty()
-        {
-            output.push('\n');
-            output.push_str(&format_rule_timing_table(rule_timings));
+        if let Some(rule_timings) = &lint_command_info.rule_timings {
+            if !rule_timings.records.is_empty() {
+                output.push('\n');
+                output.push_str(&format_rule_timing_table(&rule_timings.records));
+            }
+            if !rule_timings.js_plugin_runtime.is_zero() {
+                output.push('\n');
+                output.push_str(&format_js_plugin_timing_summary(rule_timings));
+            }
         }
 
         Some(output)
@@ -48,6 +52,24 @@ impl InternalFormatter for DefaultOutputFormatter {
 
         Box::new(GraphicalReporterTester::default())
     }
+}
+
+fn format_js_plugin_timing_summary(rule_timings: &RuleTimings) -> String {
+    let runtime = rule_timings.js_plugin_runtime;
+    let rule_callbacks = rule_timings
+        .records
+        .iter()
+        .filter(|record| record.source == RuleTimingSource::JsPlugin)
+        .map(|record| record.duration)
+        .sum::<Duration>();
+    let shared_overhead = runtime.saturating_sub(rule_callbacks);
+
+    format!(
+        "JS plugin runtime:\n  Total:           {:>10.3}ms\n  Rule callbacks:  {:>10.3}ms\n  Shared overhead: {:>10.3}ms\n",
+        runtime.as_secs_f64() * 1000.0,
+        rule_callbacks.as_secs_f64() * 1000.0,
+        shared_overhead.as_secs_f64() * 1000.0,
+    )
 }
 
 fn format_rule_timing_table(rule_timings: &[RuleTimingRecord]) -> String {
@@ -235,8 +257,8 @@ mod test {
     use std::time::Duration;
 
     use crate::output_formatter::{
-        InternalFormatter, LintCommandInfo, OxlintSuppressionFileAction,
-        default::{DefaultOutputFormatter, GraphicalReporter},
+        InternalFormatter, LintCommandInfo, OxlintSuppressionFileAction, RuleTimings,
+        default::{DefaultOutputFormatter, GraphicalReporter, format_js_plugin_timing_summary},
     };
     use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
     use oxc_linter::{RuleTimingRecord, RuleTimingSource};
@@ -332,28 +354,50 @@ mod test {
             threads_count: 1,
             start_time: Duration::from_millis(5),
             oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
-            rule_timings: Some(vec![
-                RuleTimingRecord {
-                    source: RuleTimingSource::Native,
-                    plugin_name: "eslint".to_string(),
-                    rule_name: "no-debugger".to_string(),
-                    duration: Duration::from_micros(1500),
-                    calls: 3,
-                },
-                RuleTimingRecord {
-                    source: RuleTimingSource::TypeAware,
-                    plugin_name: "typescript".to_string(),
-                    rule_name: "no-floating-promises".to_string(),
-                    duration: Duration::from_micros(500),
-                    calls: 0,
-                },
-            ]),
+            rule_timings: Some(RuleTimings {
+                records: vec![
+                    RuleTimingRecord {
+                        source: RuleTimingSource::Native,
+                        plugin_name: "eslint".to_string(),
+                        rule_name: "no-debugger".to_string(),
+                        duration: Duration::from_micros(1500),
+                        calls: 3,
+                    },
+                    RuleTimingRecord {
+                        source: RuleTimingSource::TypeAware,
+                        plugin_name: "typescript".to_string(),
+                        rule_name: "no-floating-promises".to_string(),
+                        duration: Duration::from_micros(500),
+                        calls: 0,
+                    },
+                ],
+                js_plugin_runtime: Duration::ZERO,
+            }),
         });
 
         assert!(result.is_some());
         assert_eq!(
             result.unwrap(),
             "Finished in 5ms on 1 file with 2 rules using 1 threads.\n\nRule timings:\nRule                              Time (ms)  Relative  Calls  Source\n-------------------------------  ----------  --------  -----  ----------\neslint/no-debugger                    1.500     75.0%      3  native\ntypescript/no-floating-promises       0.500     25.0%      0  type-aware\n"
+        );
+    }
+
+    #[test]
+    fn js_plugin_timing_summary() {
+        let result = format_js_plugin_timing_summary(&RuleTimings {
+            records: vec![RuleTimingRecord {
+                source: RuleTimingSource::JsPlugin,
+                plugin_name: "example".to_string(),
+                rule_name: "rule".to_string(),
+                duration: Duration::from_micros(700),
+                calls: 2,
+            }],
+            js_plugin_runtime: Duration::from_millis(1),
+        });
+
+        assert_eq!(
+            result,
+            "JS plugin runtime:\n  Total:                1.000ms\n  Rule callbacks:       0.700ms\n  Shared overhead:      0.300ms\n"
         );
     }
 

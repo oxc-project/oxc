@@ -10,7 +10,7 @@ import {
   CAT_IDENT,
   CAT_INT_DIGIT,
   CAT_OP_UN_NEG,
-  CAT_OP_UN_NOT_AFTER_LT,
+  CAT_OP_LT_THEN_UN_NOT,
   CAT_OP_UN_PLUS,
   CAT_OP_UPD_DEC,
   CAT_OP_UPD_INC,
@@ -41,9 +41,36 @@ if (DEBUG) {
  * Call it before writing anything starting with an identifier character - a name, a keyword, or a
  * number. The categories needing the space are the lowest codes in the numbering, so the test is
  * one compare.
+ *
+ * @param state - Printer state
  */
 export function printSpaceBeforeIdentifier(state: State): void {
   debugAssertLastFresh(state);
+
+  // Pretty output never needs this space, so this function is always a no-op.
+  // Only a minifying printer needs the check.
+  //
+  // `last` is never one of the categories the check looks for:
+  //
+  // - The next thing written after a keyword is always either a space (`return x`, `function f`),
+  //   or punctuation (`return;`, `default:`, `function(`, `function<`).
+  //   A space replaces the keyword's `CAT_IDENT` with `CAT_OTHER` before anything which calls this.
+  //   Punctuation does not start with an identifier character, so is never preceded by a call to this.
+  //
+  // - Everything else which writes one of the relevant categories ends a name, an expression or a type:
+  //   - an identifier, `this` or `true` (`CAT_IDENT`)
+  //   - a number (`CAT_INT_DIGIT`)
+  //   - a regex (`CAT_REGEX_SLASH`)
+  //   Nothing starting with an identifier character is ever written straight after one of those.
+  //   The keywords which can follow them (`in`, `of`, `as`, `from`, `extends` etc)
+  //   are always written with a space before them, so do not call this function.
+  //
+  // Release builds remove the calls entirely. Debug builds keep the assertion above,
+  // to ensure `last` stays fresh at every call site, ready for a minify mode.
+  if (!MINIFY) {
+    debugAssert(state.last > CAT_REGEX_SLASH);
+    return;
+  }
 
   // `last` starts as `CAT_OTHER` (start of output behaves like after whitespace),
   // so no empty-output check is needed.
@@ -53,22 +80,22 @@ export function printSpaceBeforeIdentifier(state: State): void {
 }
 
 // `printSpaceBeforeOperator` selects the categories needing a space by their position in `Category` numbering.
-// Check `category >= CAT_OP_UN_NOT_AFTER_LT` matches the intended categories, and no others.
+// Check `category >= CAT_OP_LT_THEN_UN_NOT` matches the intended categories, and no others.
 // `CAT_OP_UN_NOT` is deliberately absent - `printSpaceBeforeOperatorSlow` has no clause for a
 // plain `!`, so it sits below the range and storing it costs the slow path nothing.
 if (DEBUG) {
   for (const category of ALL_CATEGORIES) {
     const expected = [
-      CAT_OP_UN_NOT_AFTER_LT,
+      CAT_OP_LT_THEN_UN_NOT,
       CAT_OP_UN_PLUS,
       CAT_OP_UPD_INC,
       CAT_OP_UN_NEG,
       CAT_OP_UPD_DEC,
     ].includes(category);
-    const actual = category >= CAT_OP_UN_NOT_AFTER_LT;
+    const actual = category >= CAT_OP_LT_THEN_UN_NOT;
     debugAssert(
       actual === expected,
-      `Category ${category} disagrees with \`last >= CAT_OP_UN_NOT_AFTER_LT\``,
+      `Category ${category} disagrees with \`last >= CAT_OP_LT_THEN_UN_NOT\``,
     );
   }
 }
@@ -80,6 +107,7 @@ if (DEBUG) {
  * An operator category in `last` proves that operator was the immediately preceding token,
  * because every write replaces `last`, so no position has to be recorded alongside it.
  *
+ * @param state - Printer state
  * @param next - Category of the operator about to be written
  */
 export function printSpaceBeforeOperator(state: State, next: Category): void {
@@ -88,7 +116,7 @@ export function printSpaceBeforeOperator(state: State, next: Category): void {
   // The slow path only runs when an operator it distinguishes was the immediately preceding token,
   // which is rare in pretty output. Keep the hot check inlinable.
   const prev = state.last;
-  if (prev >= CAT_OP_UN_NOT_AFTER_LT) printSpaceBeforeOperatorSlow(state, prev, next);
+  if (prev >= CAT_OP_LT_THEN_UN_NOT) printSpaceBeforeOperatorSlow(state, prev, next);
 }
 
 /**
@@ -106,6 +134,7 @@ export function printSpaceBeforeOperator(state: State, next: Category): void {
  * asymmetry is the Rust original's, where it is live in minified mode - unpadded `(x++)+y` must
  * print `x+++y` with no space, while unary `+ +y` must keep one.)
  *
+ * @param state - Printer state
  * @param prev - Category of the operator written last
  * @param next - Category of the operator about to be written
  */
@@ -113,7 +142,7 @@ function printSpaceBeforeOperatorSlow(state: State, prev: Category, next: Catego
   if (
     (prev === CAT_OP_UN_PLUS && (next === CAT_OP_UN_PLUS || next === CAT_OP_UPD_INC))
     || (prev === CAT_OP_UN_NEG && (next === CAT_OP_UN_NEG || next === CAT_OP_UPD_DEC))
-    || (prev === CAT_OP_UN_NOT_AFTER_LT && next === CAT_OP_UPD_DEC)
+    || (prev === CAT_OP_LT_THEN_UN_NOT && next === CAT_OP_UPD_DEC)
   ) {
     write(state, " ", CAT_OTHER);
   }

@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-# DIVERGES from Prettier: `tabWidth: 0` is clamped to 1 (Prettier flattens every nesting).
+# DIVERGES from Prettier: `tabWidth: 0` is clamped to 1 (Prettier flattens every nesting); see DIVERGENCES.md#tab-width-zero
 map:
   key: value
   block: |
@@ -16,7 +16,7 @@ map:
 -------------------------------
 { printWidth: 80, tabWidth: 0 }
 -------------------------------
-# DIVERGES from Prettier: `tabWidth: 0` is clamped to 1 (Prettier flattens every nesting).
+# DIVERGES from Prettier: `tabWidth: 0` is clamped to 1 (Prettier flattens every nesting); see DIVERGENCES.md#tab-width-zero
 map:
  key: value
  block: |
@@ -42,7 +42,7 @@ map:
 --------------------------------
 { printWidth: 100, tabWidth: 0 }
 --------------------------------
-# DIVERGES from Prettier: `tabWidth: 0` is clamped to 1 (Prettier flattens every nesting).
+# DIVERGES from Prettier: `tabWidth: 0` is clamped to 1 (Prettier flattens every nesting); see DIVERGENCES.md#tab-width-zero
 map:
  key: value
  block: |

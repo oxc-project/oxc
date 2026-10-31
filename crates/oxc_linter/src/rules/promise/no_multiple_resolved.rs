@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, CallExpression, Expression},
+    ast::{ArrowFunctionExpression, BindingIdentifier, CallExpression, Expression, Function},
 };
 use oxc_ast_visit::VisitJs;
 use oxc_cfg::{
@@ -628,16 +628,13 @@ fn get_resolve_symbol_id(expr: &Expression) -> (Option<SymbolId>, Option<SymbolI
         }
         _ => None,
     };
-    let symbol_ids = params.map_or(vec![], |params| {
-        params
-            .items
-            .iter()
-            .map(|param| param.pattern.get_binding_identifier().map(BindingIdentifier::symbol_id))
-            .collect::<Vec<_>>()
-    });
-    let resolve_symbol_id = symbol_ids.first().copied().unwrap_or(None);
-    let reject_symbol_id = symbol_ids.get(1).copied().unwrap_or(None);
-    (resolve_symbol_id, reject_symbol_id)
+    let Some(params) = params else { return (None, None) };
+    let mut symbol_ids = params
+        .items
+        .iter()
+        .take(2)
+        .map(|param| param.pattern.get_binding_identifier().map(BindingIdentifier::symbol_id));
+    (symbol_ids.next().flatten(), symbol_ids.next().flatten())
 }
 
 #[inline]
@@ -746,15 +743,9 @@ impl<'a> VisitJs<'a> for ResolveFinder<'a> {
         }
     }
 
-    fn visit_function(
-        &mut self,
-        _it: &oxc_ast::ast::Function<'a>,
-        _flags: oxc_semantic::ScopeFlags,
-    ) {
-    }
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
 
-    fn visit_arrow_function_expression(&mut self, _it: &oxc_ast::ast::ArrowFunctionExpression<'a>) {
-    }
+    fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {}
 }
 
 #[test]

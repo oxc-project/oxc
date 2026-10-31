@@ -1,0 +1,143 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A suppressed declaration prints its content verbatim up to the formatter's `;`:
+// the verbatim range covers the source parens the reprint would drop
+// (`TSParenthesizedType` / `ParenthesizedExpression` are not in the AST),
+// so the content end must extend over them, as for `p = (q = 1)` in suppressed-class-member.ts.
+// A comment inside the parens stays inside; a comment after them moves behind the `;`.
+
+// oxfmt-ignore
+type ParenAlias = (X);
+// oxfmt-ignore
+type ParenAliasComment = (X /* stays */);
+// oxfmt-ignore
+type ParenAliasAfter = (X) /* moves */;
+// oxfmt-ignore
+type ParenAliasAsi = ( X )
+// oxfmt-ignore
+export type ExportedParenAlias = (X /* stays */);
+// oxfmt-ignore
+declare function parenReturnType(): (X /* stays */);
+// oxfmt-ignore
+let parenDeclarator = (1 /* stays */), parenDeclarator2 = (2);
+
+// Nested parens around a union: https://github.com/oxc-project/oxc/pull/26646#issuecomment-5673128856
+// prettier-ignore
+type NestedParenUnion = (((((string)) | ((number)))));
+
+==================== Output ====================
+------------------------------
+{ printWidth: 80, semi: true }
+------------------------------
+// A suppressed declaration prints its content verbatim up to the formatter's `;`:
+// the verbatim range covers the source parens the reprint would drop
+// (`TSParenthesizedType` / `ParenthesizedExpression` are not in the AST),
+// so the content end must extend over them, as for `p = (q = 1)` in suppressed-class-member.ts.
+// A comment inside the parens stays inside; a comment after them moves behind the `;`.
+
+// oxfmt-ignore
+type ParenAlias = (X);
+// oxfmt-ignore
+type ParenAliasComment = (X /* stays */);
+// oxfmt-ignore
+type ParenAliasAfter = (X); /* moves */
+// oxfmt-ignore
+type ParenAliasAsi = ( X );
+// oxfmt-ignore
+export type ExportedParenAlias = (X /* stays */);
+// oxfmt-ignore
+declare function parenReturnType(): (X /* stays */);
+// oxfmt-ignore
+let parenDeclarator = (1 /* stays */), parenDeclarator2 = (2);
+
+// Nested parens around a union: https://github.com/oxc-project/oxc/pull/26646#issuecomment-5673128856
+// prettier-ignore
+type NestedParenUnion = (((((string)) | ((number)))));
+
+-------------------------------
+{ printWidth: 100, semi: true }
+-------------------------------
+// A suppressed declaration prints its content verbatim up to the formatter's `;`:
+// the verbatim range covers the source parens the reprint would drop
+// (`TSParenthesizedType` / `ParenthesizedExpression` are not in the AST),
+// so the content end must extend over them, as for `p = (q = 1)` in suppressed-class-member.ts.
+// A comment inside the parens stays inside; a comment after them moves behind the `;`.
+
+// oxfmt-ignore
+type ParenAlias = (X);
+// oxfmt-ignore
+type ParenAliasComment = (X /* stays */);
+// oxfmt-ignore
+type ParenAliasAfter = (X); /* moves */
+// oxfmt-ignore
+type ParenAliasAsi = ( X );
+// oxfmt-ignore
+export type ExportedParenAlias = (X /* stays */);
+// oxfmt-ignore
+declare function parenReturnType(): (X /* stays */);
+// oxfmt-ignore
+let parenDeclarator = (1 /* stays */), parenDeclarator2 = (2);
+
+// Nested parens around a union: https://github.com/oxc-project/oxc/pull/26646#issuecomment-5673128856
+// prettier-ignore
+type NestedParenUnion = (((((string)) | ((number)))));
+
+-------------------------------
+{ printWidth: 80, semi: false }
+-------------------------------
+// A suppressed declaration prints its content verbatim up to the formatter's `;`:
+// the verbatim range covers the source parens the reprint would drop
+// (`TSParenthesizedType` / `ParenthesizedExpression` are not in the AST),
+// so the content end must extend over them, as for `p = (q = 1)` in suppressed-class-member.ts.
+// A comment inside the parens stays inside; a comment after them moves behind the `;`.
+
+// oxfmt-ignore
+type ParenAlias = (X)
+// oxfmt-ignore
+type ParenAliasComment = (X /* stays */)
+// oxfmt-ignore
+type ParenAliasAfter = (X) /* moves */
+// oxfmt-ignore
+type ParenAliasAsi = ( X )
+// oxfmt-ignore
+export type ExportedParenAlias = (X /* stays */)
+// oxfmt-ignore
+declare function parenReturnType(): (X /* stays */)
+// oxfmt-ignore
+let parenDeclarator = (1 /* stays */), parenDeclarator2 = (2)
+
+// Nested parens around a union: https://github.com/oxc-project/oxc/pull/26646#issuecomment-5673128856
+// prettier-ignore
+type NestedParenUnion = (((((string)) | ((number)))))
+
+--------------------------------
+{ printWidth: 100, semi: false }
+--------------------------------
+// A suppressed declaration prints its content verbatim up to the formatter's `;`:
+// the verbatim range covers the source parens the reprint would drop
+// (`TSParenthesizedType` / `ParenthesizedExpression` are not in the AST),
+// so the content end must extend over them, as for `p = (q = 1)` in suppressed-class-member.ts.
+// A comment inside the parens stays inside; a comment after them moves behind the `;`.
+
+// oxfmt-ignore
+type ParenAlias = (X)
+// oxfmt-ignore
+type ParenAliasComment = (X /* stays */)
+// oxfmt-ignore
+type ParenAliasAfter = (X) /* moves */
+// oxfmt-ignore
+type ParenAliasAsi = ( X )
+// oxfmt-ignore
+export type ExportedParenAlias = (X /* stays */)
+// oxfmt-ignore
+declare function parenReturnType(): (X /* stays */)
+// oxfmt-ignore
+let parenDeclarator = (1 /* stays */), parenDeclarator2 = (2)
+
+// Nested parens around a union: https://github.com/oxc-project/oxc/pull/26646#issuecomment-5673128856
+// prettier-ignore
+type NestedParenUnion = (((((string)) | ((number)))))
+
+===================== End =====================

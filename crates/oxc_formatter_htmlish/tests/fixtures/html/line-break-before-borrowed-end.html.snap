@@ -1,0 +1,25 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div><progress><progress>x</progress><wbr />
+amet,
+
+</progress><abbr></abbr></div>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div>
+  <progress><progress>x</progress><wbr /> amet,</progress><abbr></abbr>
+</div>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div>
+  <progress><progress>x</progress><wbr /> amet,</progress><abbr></abbr>
+</div>
+
+===================== End =====================

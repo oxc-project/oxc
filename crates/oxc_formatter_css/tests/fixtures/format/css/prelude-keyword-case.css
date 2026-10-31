@@ -1,4 +1,4 @@
-/* prelude keywords lowercase (see DIVERGENCES.md "prelude-keyword-case"); values and case-sensitive names keep theirs */
+/* prelude keywords lowercase (see DIVERGENCES.md#prelude-keyword-case); values and case-sensitive names keep theirs */
 @MEDIA ONLY SCREEN AND (MAX-WIDTH: 1PX), PRINT {
   a {
     b: c;

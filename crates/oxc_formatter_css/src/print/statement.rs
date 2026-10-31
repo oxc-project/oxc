@@ -7,8 +7,11 @@ use oxc_css_parser::ast::{
 use oxc_span::Span;
 
 use oxc_formatter_core::{
-    Buffer, arena_cow_str,
-    builders::{block_indent, dedent, empty_line, hard_line_break, indent, space, text},
+    arena_cow_str,
+    builders::{
+        block_indent, dedent, empty_line, hard_line_break, if_group_breaks, indent,
+        soft_line_break_or_space, space, text, token,
+    },
     write,
 };
 
@@ -98,6 +101,8 @@ pub(super) fn write_statement_sequence_bounded<'a>(
     // (`${m}\ncolor: red` -> no `;`, but `${m}\ncolor: red;\nx: 1` -> `x: 1;`).
     // Track that run so swallowed declarations keep a source-driven `;`.
     let mut swallowed = false;
+    // Only the attribute's own declarations, not a block's
+    let style_attribute = upper == u32::MAX && f.context().is_style_attribute();
     for (i, stmt) in statements.iter().enumerate() {
         let start = stmt_start(stmt);
         if i > 0 {
@@ -110,14 +115,20 @@ pub(super) fn write_statement_sequence_bounded<'a>(
             let next_start =
                 f.context().comments().peek().map_or(start, |c| c.span.start.min(start));
             let gap = classify_gap(source.bytes_range(prev_end, next_start));
-            // A `;`-less css-in-js placeholder preserves the source whitespace that
-            // follows it: Prettier keeps `${a} ${b}` on one line and `${a}\n${b}` on two
-            // (postcss swallows the run as a verbatim prelude).
+            // A `;`-less css-in-js placeholder keeps whether whitespace follows it (none / space / newline):
+            // its content is unknown, so `${a}${b}` may be one token (as Prettier does).
             // Other statements always start on a new line.
             if matches!(statements[i - 1], Statement::Placeholder(_)) && gap == Gap::None {
-                write!(f, space());
+                if prev_end < next_start {
+                    write!(f, space());
+                }
             } else {
-                write!(f, hard_line_break());
+                // A `style` attribute's declarations share a line when they fit
+                if style_attribute {
+                    write!(f, soft_line_break_or_space());
+                } else {
+                    write!(f, hard_line_break());
+                }
                 if gap == Gap::Blank {
                     write!(f, empty_line());
                 }
@@ -129,6 +140,7 @@ pub(super) fn write_statement_sequence_bounded<'a>(
             .comments()
             .iter_before(start)
             .last()
+            .copied()
             .is_some_and(|c| is_suppression_comment(source, c));
         flush_leading_comments(start, f);
         let end = stmt_end(stmt, f);
@@ -143,6 +155,13 @@ pub(super) fn write_statement_sequence_bounded<'a>(
             if has_source_semicolon {
                 write!(f, ";");
             }
+        } else if style_attribute
+            && i + 1 == statements.len()
+            && let Statement::Declaration(decl) = stmt
+        {
+            // The last declaration's `;` only when the attribute breaks
+            write_declaration(decl, f);
+            write!(f, if_group_breaks(&token(";")));
         } else {
             write_statement(stmt, f);
         }
@@ -169,7 +188,7 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
         Statement::UnknownQualifiedRule(rule) => write_unknown_qualified_rule(rule, f),
         Statement::Declaration(decl) => {
             write_declaration(decl, f);
-            if matches!(decl.name, InterpolableIdent::Placeholder(_)) {
+            if decl.name.has_placeholder() {
                 // A css-in-js `${foo}: ${bar}` declaration keeps the source `;`
                 // (Prettier preserves it: `${foo}: ${bar};` vs `${foo}: ${bar}`).
                 let end = to_span(decl.span()).end;
@@ -344,10 +363,10 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
     if let Some(prefix) = decl.name_prefix {
         write!(f, text(f.allocator().alloc_str(prefix.encode_utf8(&mut [0; 4]))));
     }
-    if let InterpolableIdent::Placeholder(placeholder) = &decl.name {
-        // A css-in-js placeholder property name (`${foo}: ...`) is a typed marker
+    if decl.name.has_placeholder() {
+        // A css-in-js placeholder property name (`${foo}: ...`, `${a}-${b}: ...`) holds typed markers
         // the host replaces with `${expr}`; never lowercase it like a real property.
-        super::write_placeholder(placeholder, f);
+        selector::write_interpolable_ident(&decl.name, f);
     } else if is_custom_property
         || f.context().in_less_detached().get()
         || f.context().in_icss_rule().get()
@@ -483,7 +502,7 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             let _ = f.context().comments().take_before(value_end);
         } else if decl.value_is_raw && is_custom_property {
             // Text the typed grammar could not read (`--z: */;`, `--x: 1px !foo;`, // Scss `--x: // (\n);`):
-            // verbatim in every variant (DIVERGENCES.md "custom-property-raw-verbatim").
+            // verbatim in every variant (DIVERGENCES.md#custom-property-raw-verbatim).
             value::write_verbatim_value(Span::new(value_start, value_end), f);
         } else {
             // Typed values, plus a normal property's raw `<any-value>` fallback:

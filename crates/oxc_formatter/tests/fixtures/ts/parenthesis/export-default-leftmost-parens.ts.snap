@@ -1,0 +1,48 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+export default (class {}).foo;
+export default (class {})["x"];
+export default (class {}).getInstance();
+export default (function () {}).toString();
+export default (function () {}) + 1;
+export default (function () {}) || 1;
+export default (function () {})`t`;
+export default (class {})();
+// An ancestor with its own parens covers it
+export default (class {}[1] = 1);
+export default (function () {}, 1);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+export default (class {}).foo;
+export default (class {})["x"];
+export default (class {}).getInstance();
+export default (function () {}).toString();
+export default (function () {}) + 1;
+export default (function () {}) || 1;
+export default (function () {})`t`;
+export default (class {})();
+// An ancestor with its own parens covers it
+export default (class {}[1] = 1);
+export default (function () {}, 1);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+export default (class {}).foo;
+export default (class {})["x"];
+export default (class {}).getInstance();
+export default (function () {}).toString();
+export default (function () {}) + 1;
+export default (function () {}) || 1;
+export default (function () {})`t`;
+export default (class {})();
+// An ancestor with its own parens covers it
+export default (class {}[1] = 1);
+export default (function () {}, 1);
+
+===================== End =====================

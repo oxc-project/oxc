@@ -92,6 +92,7 @@ declare_oxc_lint!(
     InteractiveSupportsFocus,
     jsx_a11y,
     correctness,
+    recommended,
     suggestion,
     config = InteractiveSupportsFocusConfig,
     version = "1.63.0",

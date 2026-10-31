@@ -1,9 +1,9 @@
 // A same-line `//` before a list comma rides past the comma (`a // c\n,` -> `a, // c`):
 // the comma cannot follow a `//`, and the comment keeps its line (JS prints the same).
 // A block comment stays before the comma; an own-line comment leads the next element
-// (Prettier pulls it up to the comma line, DIVERGENCES.md "own-line-trailing-comment-keeps-line").
+// (Prettier pulls it up to the comma line, DIVERGENCES.md#own-line-trailing-comment-keeps-line).
 // In a fill (`@each`, `@forward`) the entries before the comment keep their line
-// (Prettier breaks `$k` / `in a,` apart, DIVERGENCES.md "line-comment-before-comma-fill-head").
+// (Prettier breaks `$k` / `in a,` apart, DIVERGENCES.md#line-comment-before-comma-fill-head).
 a {
   transition: a 1s // c
     , b 2s;

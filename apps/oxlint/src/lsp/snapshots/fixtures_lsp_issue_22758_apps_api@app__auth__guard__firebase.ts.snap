@@ -9,7 +9,7 @@ File URI: file://<variable>/fixtures/lsp/issue_22758/apps/api/app/auth/guard/fir
 
 code: "typescript(no-wrapper-object-types)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-wrapper-object-types.html"
-message: "Do not use wrapper object types.\nhelp: Replace `String` with `string`.\nnote: `String` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `string` for values, and in `extends`/`implements` use an interface/object shape instead."
+message: String("Do not use wrapper object types.\nhelp: Replace `String` with `string`.\nnote: `String` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `string` for values, and in `extends`/`implements` use an interface/object shape instead.")
 range: Range { start: Position { line: 0, character: 12 }, end: Position { line: 0, character: 18 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/lsp/issue_22758/apps/api/app/auth/guard/firebase.ts"

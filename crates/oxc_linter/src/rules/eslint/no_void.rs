@@ -2,7 +2,6 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_syntax::operator::UnaryOperator;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -76,7 +75,7 @@ impl Rule for NoVoid {
             return;
         }
 
-        if unary_expr.operator == UnaryOperator::Void {
+        if unary_expr.operator.is_void() {
             ctx.diagnostic_with_suggestion(no_void_diagnostic(unary_expr.span), |fixer| {
                 fixer.replace(unary_expr.span, "undefined")
             });

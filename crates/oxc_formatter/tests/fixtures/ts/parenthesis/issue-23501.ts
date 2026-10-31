@@ -1,7 +1,8 @@
 // https://github.com/oxc-project/oxc/issues/23501
-// `export default (<Function|Class> as ...)` needs outer parens to keep the cast
-// attached. Without them the leading `function`/`class` token makes `export
-// default` parse the right-hand side as a declaration, leaving the cast detached.
+// `export default <Function|Class> as ...` needs parens to keep the cast attached.
+// Without them the leading `function`/`class` token makes `export default` parse
+// the right-hand side as a declaration, leaving the cast detached.
+// We wrap the function/class itself (DIVERGENCES.md#export-default-leftmost-parens).
 
 // Original report — chained `as`.
 export default (function foo() {} as unknown as Foo);

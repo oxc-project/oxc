@@ -34,3 +34,36 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
   note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/purity
+
+  ⚠ react(purity): Cannot call impure function during render
+   ╭─[purity.tsx:3:16]
+ 2 │ function Component() {
+ 3 │   const date = new Date();
+   ·                ─────┬────
+   ·                     ╰── Cannot call impure function
+ 4 │   const time = new Date().getTime();
+   ╰────
+  help: `Date` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/purity
+
+  ⚠ react(purity): Cannot call impure function during render
+   ╭─[purity.tsx:4:16]
+ 3 │   const date = new Date();
+ 4 │   const time = new Date().getTime();
+   ·                ─────┬────
+   ·                     ╰── Cannot call impure function
+ 5 │   const year = new Date().getFullYear();
+   ╰────
+  help: `Date` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/purity
+
+  ⚠ react(purity): Cannot call impure function during render
+   ╭─[purity.tsx:5:16]
+ 4 │   const time = new Date().getTime();
+ 5 │   const year = new Date().getFullYear();
+   ·                ─────┬────
+   ·                     ╰── Cannot call impure function
+ 6 │   return <Foo date={date} time={time} year={year} />;
+   ╰────
+  help: `Date` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/purity

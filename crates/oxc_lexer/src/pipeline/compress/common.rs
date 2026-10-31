@@ -1,8 +1,8 @@
 use oxc_span::Span;
 
-use crate::{error::diag_code, lanes::Lanes};
+use crate::{error::DiagCode, token::tk};
 
-use super::super::IDENT_ESC;
+use crate::pipeline::lanes::Lanes;
 
 #[inline(always)]
 pub(super) unsafe fn emit_value(
@@ -16,9 +16,9 @@ pub(super) unsafe fn emit_value(
     let s = sp.start as usize;
     let e = sp.end as usize;
     let k = *out_kinds.add(j);
-    if k < IDENT_ESC {
-        lanes.push_number_swar(src, s, e);
-    } else if k == IDENT_ESC {
+    if k < tk!(IdentEscaped) {
+        lanes.push_number(src, s, e);
+    } else if k == tk!(IdentEscaped) {
         lanes.push_atom(src, s, e);
     } else {
         lanes.push_atom(src, s + 1, e);
@@ -53,16 +53,16 @@ pub(super) unsafe fn invalid_diags(
         l.min(nn - cs)
     };
     for j in 0..m {
-        if *out_kinds.add(j) == 255 {
+        if *out_kinds.add(j) == tk!(Invalid) {
             let sp = *out_spans.add(j);
             let (s, e) = (sp.start, sp.end);
             let b0 = src[s as usize];
             if b0 == b'\\' {
-                lanes.push_diag(s + 1, char_after(s + 1), diag_code::INVALID_IDENTIFIER_ESCAPE);
+                lanes.push_diag(s + 1, char_after(s + 1), DiagCode::InvalidIdentifierEscape);
             } else if b0 == b'#' {
-                lanes.push_diag(s + 1, char_after(s + 1), diag_code::UNEXPECTED_CHARACTER);
+                lanes.push_diag(s + 1, char_after(s + 1), DiagCode::UnexpectedCharacter);
             } else {
-                lanes.push_diag(s, e - s, diag_code::UNEXPECTED_CHARACTER);
+                lanes.push_diag(s, e - s, DiagCode::UnexpectedCharacter);
             }
         }
     }

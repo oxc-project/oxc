@@ -11,6 +11,12 @@ do {} while (false);
 do; while (false);
 do debugger; while (false);
 
+function f1() {
+  do {} while (false);
+  do; while (false);
+  do debugger; while (false);
+}
+
 switch (value) {}
 switch (value) {
   case true:

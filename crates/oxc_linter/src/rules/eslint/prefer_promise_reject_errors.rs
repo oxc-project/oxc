@@ -208,7 +208,7 @@ fn check_reject_in_function(
 fn is_undefined(arg: &Argument, ctx: &LintContext) -> bool {
     match arg.as_expression().map(Expression::get_inner_expression) {
         Some(Expression::Identifier(ident)) => {
-            ident.name == "undefined" && ctx.is_reference_to_global_variable(ident)
+            ident.is_undefined() && ctx.is_reference_to_global_variable(ident)
         }
         _ => false,
     }

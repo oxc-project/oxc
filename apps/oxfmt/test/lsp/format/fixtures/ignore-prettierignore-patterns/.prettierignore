@@ -1,0 +1,4 @@
+vendor/
+*.gen.ts
+!keep.gen.ts
+!vendor/a.ts

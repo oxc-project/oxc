@@ -596,7 +596,7 @@ export interface Oxlintrc {
    *
    * TypeScript plugin files are supported in the following environments:
    * - Deno and Bun: TypeScript files are supported natively.
-   * - Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in
+   * - Node.js >=22.18.0: TypeScript files are supported natively with built-in
    * type-stripping enabled by default.
    *
    * For older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.
@@ -1323,7 +1323,7 @@ export interface DummyRuleMap {
   "react-perf/jsx-no-new-function-as-prop"?: RuleNoConfig | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-object-as-prop"?: RuleNoConfig | [AllowWarnDeny, ReactPerfConfig];
   "react/button-has-type"?: RuleNoConfig | [AllowWarnDeny, ButtonHasType];
-  "react/capitalized-calls"?: RuleNoConfig;
+  "react/capitalized-calls"?: RuleNoConfig | [AllowWarnDeny, CapitalizedCallsConfig];
   "react/checked-requires-onchange-or-readonly"?: RuleNoConfig | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly];
   "react/display-name"?: RuleNoConfig | [AllowWarnDeny, DisplayNameConfig];
   "react/error-boundaries"?: RuleNoConfig;
@@ -1425,7 +1425,7 @@ export interface DummyRuleMap {
   "symbol-description"?: RuleNoConfig;
   "typescript/adjacent-overload-signatures"?: RuleNoConfig;
   "typescript/array-type"?: RuleNoConfig | [AllowWarnDeny, ArrayTypeConfig];
-  "typescript/await-thenable"?: RuleNoConfig;
+  "typescript/await-thenable"?: RuleNoConfig | [AllowWarnDeny, AwaitThenableConfig];
   "typescript/ban-ts-comment"?: RuleNoConfig | [AllowWarnDeny, BanTsCommentConfig];
   "typescript/ban-tslint-comment"?: RuleNoConfig;
   "typescript/ban-types"?: RuleNoConfig;
@@ -1457,6 +1457,7 @@ export interface DummyRuleMap {
   "typescript/no-extraneous-class"?: RuleNoConfig | [AllowWarnDeny, NoExtraneousClass];
   "typescript/no-floating-promises"?: RuleNoConfig | [AllowWarnDeny, NoFloatingPromisesConfig];
   "typescript/no-for-in-array"?: RuleNoConfig;
+  "typescript/no-generated-empty-object-type"?: RuleNoConfig;
   "typescript/no-implied-eval"?: RuleNoConfig;
   "typescript/no-import-type-side-effects"?: RuleNoConfig;
   "typescript/no-inferrable-types"?: RuleNoConfig | [AllowWarnDeny, NoInferrableTypes];
@@ -1489,6 +1490,7 @@ export interface DummyRuleMap {
   "typescript/no-unsafe-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-call"?: RuleNoConfig;
   "typescript/no-unsafe-declaration-merging"?: RuleNoConfig;
+  "typescript/no-unsafe-enum-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-enum-comparison"?: RuleNoConfig;
   "typescript/no-unsafe-function-type"?: RuleNoConfig;
   "typescript/no-unsafe-member-access"?: RuleNoConfig | [AllowWarnDeny, NoUnsafeMemberAccessConfig];
@@ -1646,7 +1648,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-object-from-entries"?: RuleNoConfig | [AllowWarnDeny, PreferObjectFromEntriesConfig];
   "unicorn/prefer-optional-catch-binding"?: RuleNoConfig;
   "unicorn/prefer-prototype-methods"?: RuleNoConfig;
-  "unicorn/prefer-query-selector"?: RuleNoConfig;
+  "unicorn/prefer-query-selector"?: RuleNoConfig | [AllowWarnDeny, PreferQuerySelector];
   "unicorn/prefer-reflect-apply"?: RuleNoConfig;
   "unicorn/prefer-regexp-test"?: RuleNoConfig;
   "unicorn/prefer-response-static-json"?: RuleNoConfig;
@@ -1995,6 +1997,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, RadixType]
     | [AllowWarnDeny, ReactPerfConfig]
     | [AllowWarnDeny, ButtonHasType]
+    | [AllowWarnDeny, CapitalizedCallsConfig]
     | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly]
     | [AllowWarnDeny, DisplayNameConfig]
     | [AllowWarnDeny, ExhaustiveDepsConfig]
@@ -2035,6 +2038,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, SortOrder, SortKeysOptions]
     | [AllowWarnDeny, SortVars]
     | [AllowWarnDeny, ArrayTypeConfig]
+    | [AllowWarnDeny, AwaitThenableConfig]
     | [AllowWarnDeny, BanTsCommentConfig]
     | [AllowWarnDeny, ClassLiteralPropertyStyleOption]
     | [AllowWarnDeny, PreferGenericType]
@@ -2111,6 +2115,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, PreferExportFrom]
     | [AllowWarnDeny, PreferNumberPropertiesConfig]
     | [AllowWarnDeny, PreferObjectFromEntriesConfig]
+    | [AllowWarnDeny, PreferQuerySelector]
     | [AllowWarnDeny, PreferSingleCallConfig]
     | [AllowWarnDeny, PreferStructuredCloneConfig]
     | [AllowWarnDeny, PreferTernaryOption]
@@ -4967,6 +4972,21 @@ export interface ButtonHasType {
    */
   submit?: boolean;
 }
+export interface CapitalizedCallsConfig {
+  /**
+   * Exact names of capitalized functions that may be called directly.
+   * Forwarded to the React Compiler's `validateNoCapitalizedCalls`
+   * environment option.
+   */
+  allow?: string[];
+  /**
+   * A regex pattern; capitalized functions whose name matches may be called
+   * directly, checked alongside `allow`. Useful when a codebase has a
+   * naming convention for capitalized non-component factories, such as
+   * generated event or schema builders (e.g. `"Event$"`).
+   */
+  allowPattern?: string;
+}
 export interface CheckedRequiresOnchangeOrReadonly {
   /**
    * Ignore the restriction that `checked` and `defaultChecked` should not be used together.
@@ -5435,6 +5455,20 @@ export interface NoUnstableNestedComponentsConfig {
 }
 export interface OnlyExportComponentsConfig {
   /**
+   * Allow an exported object when every property is a React component.
+   * This matches Vite's compound component support. The object must be non-empty,
+   * contain no nested objects, spreads, or accessors, and anonymous functions
+   * must use a component name as a static property key.
+   *
+   * ```jsx
+   * // Allowed when allowCompoundComponents: true
+   * const Root = () => <div />;
+   * const Label = () => <span />;
+   * export const Tag = { Root, Label };
+   * ```
+   */
+  allowCompoundComponents?: boolean;
+  /**
    * Allow exporting primitive constants (string/number/boolean/template literal)
    * alongside component exports without triggering a violation. Recommended when your
    * bundler’s Fast Refresh integration supports this (enabled by the plugin’s `vite`
@@ -5588,6 +5622,14 @@ export interface ArrayTypeConfig {
    * The array type expected for readonly cases. If omitted, the value for `default` will be used.
    */
   readonly?: ReadonlyArrayOption;
+}
+export interface AwaitThenableConfig {
+  /**
+   * Allow Promise aggregators such as `Promise.all` to receive mixed arrays or
+   * iterables containing at least one potentially Promise-like value.
+   * Inputs containing only synchronous values are still reported.
+   */
+  allowMixedPromiseArrays?: boolean;
 }
 /**
  * This rule allows you to specify how different TypeScript directive comments
@@ -6978,6 +7020,13 @@ export interface PreferObjectFromEntriesConfig {
    * Additional functions to treat as equivalents to `Object.fromEntries`.
    */
   functions?: string[];
+}
+export interface PreferQuerySelector {
+  /**
+   * When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.
+   * This avoids the need to manually compose a CSS selector string, which can be less readable.
+   */
+  allowWithVariables?: boolean;
 }
 export interface PreferSingleCallConfig {
   /**

@@ -4,7 +4,8 @@ use serde::Deserialize;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, ClassElement, ExportDefaultDeclarationKind, Expression, ObjectExpression,
+        AssignmentExpression, AssignmentTarget, CallExpression, Class, ClassElement,
+        ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression, ObjectExpression,
         ObjectPropertyKind, PropertyKey, Statement,
     },
 };
@@ -22,7 +23,8 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
     utils::{
         InnermostFunction, arrow_function_returns, expression_returns,
-        find_innermost_function_with_jsx, function_returns, is_hoc_call, is_react_component_name,
+        find_innermost_function_with_jsx, function_returns, is_es6_component_class, is_hoc_call,
+        is_react_component_name,
     },
 };
 
@@ -63,6 +65,7 @@ declare_oxc_lint!(
     DisplayName,
     react,
     pedantic,
+    recommended,
     config = DisplayNameConfig,
     version = "1.42.0",
     short_description = "Enforces that React components have a `displayName` property.",
@@ -177,7 +180,6 @@ impl Rule for DisplayName {
                     continue; // Name is valid displayName
                 }
 
-                // Check if this symbol has a displayName assignment via semantic references
                 if !has_display_name_via_semantic(symbol_id, component_info.name.as_ref(), ctx) {
                     components_to_report.push((component_info.span, component_info.is_context));
                 }
@@ -190,12 +192,10 @@ impl Rule for DisplayName {
                         check_context_assignment_references(symbol_id, decl_node, ctx)
                     });
 
-                if let Some(component_info) = context_assignment_info {
-                    // Check if this symbol has a displayName assignment
-                    if !has_display_name_via_semantic(symbol_id, component_info.name.as_ref(), ctx)
-                    {
-                        components_to_report.push((component_info.span, component_info.is_context));
-                    }
+                if let Some(component_info) = context_assignment_info
+                    && !has_display_name_via_semantic(symbol_id, component_info.name.as_ref(), ctx)
+                {
+                    components_to_report.push((component_info.span, component_info.is_context));
                 }
             }
         }
@@ -207,7 +207,7 @@ impl Rule for DisplayName {
             // Efficiently find export default by checking only top-level statements
             let program = ctx.nodes().program();
             for stmt in &program.body {
-                if let oxc_ast::ast::Statement::ExportDefaultDeclaration(export) = stmt {
+                if let Statement::ExportDefaultDeclaration(export) = stmt {
                     if let Some(component_info) =
                         is_anonymous_export_component(export, ctx, ignore_transpiler_name)
                     {
@@ -323,26 +323,8 @@ fn extract_member_expression_path(expr: &Expression) -> String {
 }
 
 /// Check if a call expression is a createContext call
-fn is_create_context_call(call: &oxc_ast::ast::CallExpression) -> bool {
+fn is_create_context_call(call: &CallExpression) -> bool {
     call.callee_name().is_some_and(|name| name == "createContext")
-}
-
-/// Check if a class extends React.Component or React.PureComponent
-fn extends_react_component(class: &oxc_ast::ast::Class) -> bool {
-    class.heritage_expression().is_some_and(|super_class| {
-        if let Some(member_expr) = super_class.as_member_expression()
-            && let Expression::Identifier(ident) = member_expr.object()
-        {
-            return ident.name == "React"
-                && member_expr
-                    .static_property_name()
-                    .is_some_and(|name| name == "Component" || name == "PureComponent");
-        }
-        if let Some(ident_reference) = super_class.get_identifier_reference() {
-            return ident_reference.name == "Component" || ident_reference.name == "PureComponent";
-        }
-        false
-    })
 }
 
 /// Check if a symbol has a displayName assignment via semantic references
@@ -353,7 +335,6 @@ fn has_display_name_via_semantic(
 ) -> bool {
     let component_name_str = component_name.map(CompactStr::as_str);
 
-    // Check all references to this symbol
     for reference in ctx.scoping().get_resolved_references(symbol_id) {
         if is_display_name_assignment_for_reference(reference, component_name_str, ctx) {
             return true;
@@ -381,7 +362,6 @@ fn check_context_assignment_references(
         None
     };
 
-    // Check all write references to this symbol
     for reference in ctx.scoping().get_resolved_references(symbol_id) {
         if !reference.is_write() {
             continue;
@@ -424,7 +404,6 @@ fn is_react_component_node<'a>(
             // That will be handled by checking write references in Phase 1
             decl.init.as_ref()?;
 
-            // Check for createContext
             if let Some(Expression::CallExpression(call)) = &decl.init
                 && is_create_context_call(call)
             {
@@ -475,7 +454,6 @@ fn is_react_component_node<'a>(
                     });
                 }
 
-                // Check for createReactClass
                 if callee_name == "createClass" || callee_name == "createReactClass" {
                     if !has_create_react_class_display_name(call, ignore_transpiler_name) {
                         return Some(ReactComponentInfo {
@@ -639,7 +617,7 @@ fn has_component_methods_in_object(
 
 /// Handle anonymous export default components
 fn is_anonymous_export_component(
-    export: &oxc_ast::ast::ExportDefaultDeclaration,
+    export: &ExportDefaultDeclaration,
     ctx: &LintContext,
     ignore_transpiler_name: bool,
 ) -> Option<ReactComponentInfo> {
@@ -676,7 +654,7 @@ fn is_anonymous_export_component(
 
 /// Check if a class is a React component that needs displayName
 fn check_class_component(
-    class: &oxc_ast::ast::Class,
+    class: &Class,
     span: Span,
     ctx: &LintContext,
     ignore_transpiler_name: bool,
@@ -700,7 +678,7 @@ fn check_class_component(
         return Some(ReactComponentInfo { span, is_context: false, name: None });
     }
 
-    if extends_react_component(class) {
+    if is_es6_component_class(class) {
         return Some(ReactComponentInfo { span, is_context: false, name: None });
     }
 
@@ -709,7 +687,7 @@ fn check_class_component(
 
 /// Handle module.exports assignments
 fn is_module_exports_component(
-    assign: &oxc_ast::ast::AssignmentExpression,
+    assign: &AssignmentExpression,
     ignore_transpiler_name: bool,
     check_context_objects: bool,
     ctx: &LintContext,
@@ -813,7 +791,7 @@ fn test_react_version_for_memo_forwardref_internal(version: Option<&ReactVersion
 
 /// Check if a createReactClass call has a displayName property
 fn has_create_react_class_display_name(
-    call: &oxc_ast::ast::CallExpression,
+    call: &CallExpression,
     ignore_transpiler_name: bool,
 ) -> bool {
     call.arguments.iter().any(|arg| {
@@ -832,22 +810,20 @@ fn has_create_react_class_display_name(
 }
 
 /// Check if a class has a static displayName property
-fn class_has_static_display_name(class: &oxc_ast::ast::Class) -> bool {
+fn class_has_static_display_name(class: &Class) -> bool {
     class.body.body.iter().any(|element| match element {
         ClassElement::MethodDefinition(method_def) => {
-            method_def.r#static
-                && method_def.key.static_name() == Some(std::borrow::Cow::Borrowed("displayName"))
+            method_def.r#static && method_def.key.is_specific_static_name("displayName")
         }
         ClassElement::PropertyDefinition(prop_def) => {
-            prop_def.r#static
-                && prop_def.key.static_name() == Some(std::borrow::Cow::Borrowed("displayName"))
+            prop_def.r#static && prop_def.key.is_specific_static_name("displayName")
         }
         _ => false,
     })
 }
 
 /// Check if a class returns JSX from any of its methods.
-fn class_returns_jsx(class: &oxc_ast::ast::Class, ctx: &LintContext) -> bool {
+fn class_returns_jsx(class: &Class, ctx: &LintContext) -> bool {
     class.body.body.iter().any(|element| {
         if let ClassElement::MethodDefinition(method_def) = element {
             return function_returns(&method_def.value, ctx).has_jsx();

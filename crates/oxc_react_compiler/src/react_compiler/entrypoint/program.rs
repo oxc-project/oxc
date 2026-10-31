@@ -810,7 +810,7 @@ fn is_valid_props_annotation(type_annotation: Option<&TSTypeAnnotation>) -> bool
 /// the flat params list; in oxc the rest lives in `params.rest`. So the logical
 /// param count is `items.len() + rest.is_some()`.
 fn is_valid_component_params(params: &FormalParameters) -> bool {
-    let logical_len = params.items.len() + usize::from(params.rest.is_some());
+    let logical_len = params.parameters_count();
     if logical_len == 0 {
         return true;
     }
@@ -1319,9 +1319,11 @@ fn process_fn<'a, const EMIT: bool>(
 fn body_directive_values<'a>(body: &FunctionBody<'a>) -> Vec<BodyDirective<'a>> {
     body.directives
         .iter()
-        .map(|directive| BodyDirective {
-            value: directive.expression.value,
-            span: directive.expression.span,
+        .filter_map(|directive| {
+            directive.expression.value.as_str().map(|value| BodyDirective {
+                value: Str::from(value),
+                span: directive.expression.span,
+            })
         })
         .collect()
 }
@@ -2063,24 +2065,22 @@ fn find_functions_to_compile<'b, 'ast>(
 // -----------------------------------------------------------------------
 
 /// Cheap, sound pre-check for [`find_functions_to_compile`]: `false` means the
-/// discovery walk cannot queue anything, so the compile is a no-op. Built from
-/// data `Semantic` already computed instead of walking the AST, and delegating
-/// all judgment to discovery's own helpers:
+/// discovery walk cannot queue anything, so the compile is a no-op.
 ///
-/// - every discoverable function creates a function scope, so the node behind
-///   each function scope is run through [`try_make_compile_source`] with the
-///   name discovery would infer — own id for declarations, the directly
-///   enclosing `const Foo = ...` declarator for expressions/arrows, the only
-///   name sources discovery uses outside forwardRef/memo. This covers the
-///   named and directive-opt-in selection paths, nested functions included;
-/// - the forwardRef/memo path needs an identifier named `memo`, `forwardRef`,
-///   or `React` in callee position of a call [`get_callee_name_if_react_api`]
-///   recognizes, so checking the reference shapes of those three names —
-///   bindings and unresolved globals — covers wrapped anonymous functions.
+/// `precise` (compile/emit) runs each function through [`try_make_compile_source`]
+/// so files like `react.development.js` — hook *implementations*, not callers —
+/// do not pay a discovery walk that queues nothing. Lint uses a name-only
+/// over-approximation: a PascalCase / `useX` name or a non-empty directive list
+/// is enough; the JSX/hook body scan is left to discovery.
+///
+/// The forwardRef/memo path needs an identifier named `memo`, `forwardRef`,
+/// or `React` in callee position of a call [`get_callee_name_if_react_api`]
+/// recognizes, so checking the reference shapes of those three names —
+/// bindings and unresolved globals — covers wrapped anonymous functions.
 ///
 /// Over-approximation is fine (the walk then finds an empty queue); a missed
 /// witness is not, since a skipped file is never compiled.
-fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> bool {
+fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions, precise: bool) -> bool {
     // 'all' mode compiles every top-level function; always walk.
     if opts.compilation_mode == CompilationMode::All {
         return true;
@@ -2102,9 +2102,7 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
         }
     }
 
-    // Named components/hooks and directive opt-ins: run the node behind every
-    // function scope through discovery's candidate constructor. parent_callee
-    // is None — wrapper-selected functions are witnessed by reference shapes.
+    // Named components/hooks and directive opt-ins.
     let mut discarded = FxHashSet::default();
     for scope_id in scoping.scope_descendants_from_root() {
         if !scoping.scope_flags(scope_id).is_function() {
@@ -2122,7 +2120,6 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
                         (declarator_name_for(nodes, node.id()), OriginalFnKind::FunctionExpression)
                     }
                 };
-                // A nameless function without directives can never classify.
                 if name.is_none()
                     && func.body.as_ref().is_none_or(|body| body.directives.is_empty())
                 {
@@ -2141,8 +2138,21 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
             }
             _ => continue,
         };
-        if try_make_compile_source(fn_node, name, original_kind, None, opts, &mut discarded)
-            .is_some()
+        if precise {
+            if try_make_compile_source(fn_node, name, original_kind, None, opts, &mut discarded)
+                .is_some()
+            {
+                return true;
+            }
+        } else if name.is_some_and(|n| is_hook_name(n) || is_component_name(n))
+            || match fn_node {
+                FunctionNode::Function(func) => {
+                    func.body.as_ref().is_some_and(|body| !body.directives.is_empty())
+                }
+                FunctionNode::Arrow(arrow) => {
+                    arrow.get_function_body().is_some_and(|body| !body.directives.is_empty())
+                }
+            }
         {
             return true;
         }
@@ -2254,7 +2264,7 @@ impl<'a> CompileOutput<'a> {
     pub fn transform(self, program: &mut Program<'a>) {
         let CompileOutput { replacements, mut context } = self;
         let ast = AstBuilder::new(context.allocator());
-        ox_transform_program(&ast, program, &replacements, &mut context);
+        ox_transform_program(&ast, program, replacements, &mut context);
         // Diagnostics were extracted at the end of compilation; nothing in the
         // transform phase may add more.
         debug_assert!(context.diagnostics.is_empty());
@@ -2308,21 +2318,21 @@ fn copy_param_ts_metadata<'a>(
 /// declaration vs expression. Mirrors the Babel `ReplaceFnVisitor` field copy.
 fn ox_build_function<'a>(
     ast: &AstBuilder<'a>,
-    codegen: &CodegenFunction<'a>,
+    codegen: CodegenFunction<'a>,
     fn_type: FunctionType,
 ) -> ArenaBox<'a, Function<'a>> {
     Function::boxed(
         codegen.span.unwrap_or_default(),
         fn_type,
-        codegen.id.clone_in_with_semantic_ids(ast.allocator()),
+        codegen.id,
         codegen.generator,
         codegen.is_async,
         false,
         None,
         None,
-        codegen.params.clone_in_with_semantic_ids(ast.allocator()),
+        codegen.params,
         None,
-        Some(codegen.body.clone_in_with_semantic_ids(ast.allocator())),
+        Some(codegen.body),
         ast,
     )
 }
@@ -2331,7 +2341,7 @@ fn ox_build_function<'a>(
 /// kind (arrow vs function expression). Mirrors `build_compiled_expression_matching_kind`.
 fn ox_build_compiled_expression<'a>(
     ast: &AstBuilder<'a>,
-    codegen: &CodegenFunction<'a>,
+    codegen: CodegenFunction<'a>,
     original_kind: OriginalFnKind,
 ) -> Expression<'a> {
     match original_kind {
@@ -2339,11 +2349,9 @@ fn ox_build_compiled_expression<'a>(
             codegen.span.unwrap_or_default(),
             codegen.is_async,
             None,
-            codegen.params.clone_in_with_semantic_ids(ast.allocator()),
+            codegen.params,
             None,
-            ArrowFunctionBody::FunctionBody(
-                codegen.body.clone_in_with_semantic_ids(ast.allocator()),
-            ),
+            ArrowFunctionBody::FunctionBody(codegen.body),
             ast,
         ),
         _ => Expression::FunctionExpression(ox_build_function(
@@ -2360,14 +2368,14 @@ fn ox_build_compiled_expression<'a>(
 fn ox_replace_function<'a>(
     ast: &AstBuilder<'a>,
     func: &mut Function<'a>,
-    codegen: &CodegenFunction<'a>,
+    codegen: CodegenFunction<'a>,
 ) {
     // When the compiled function does not initialize a memo cache, the body is
     // left essentially intact, so the original TS signature (type parameters,
     // `this` parameter, return type, and per-parameter type annotations) is
     // preserved. Functions that memoize drop these types, mirroring Babel.
     let keep_types = codegen.memo_slots_used == 0;
-    let mut params = codegen.params.clone_in_with_semantic_ids(ast.allocator());
+    let mut params = codegen.params;
     if keep_types {
         copy_param_ts_metadata(ast.allocator(), &mut params, &func.params);
     } else {
@@ -2376,12 +2384,12 @@ fn ox_replace_function<'a>(
         func.this_param = None;
     }
     let source_id_span = func.id.as_ref().map(|id| id.span);
-    func.id = codegen.id.clone_in_with_semantic_ids(ast.allocator());
+    func.id = codegen.id;
     if let (Some(id), Some(span)) = (&mut func.id, source_id_span) {
         id.span = span;
     }
     func.params = params;
-    func.body = Some(codegen.body.clone_in_with_semantic_ids(ast.allocator()));
+    func.body = Some(codegen.body);
     func.generator = codegen.generator;
     func.r#async = codegen.is_async;
     func.declare = false;
@@ -2393,10 +2401,10 @@ fn ox_replace_function<'a>(
 fn ox_replace_arrow<'a>(
     ast: &AstBuilder<'a>,
     arrow: &mut ArrowFunctionExpression<'a>,
-    codegen: &CodegenFunction<'a>,
+    codegen: CodegenFunction<'a>,
 ) {
     let keep_types = codegen.memo_slots_used == 0;
-    let mut params = codegen.params.clone_in_with_semantic_ids(ast.allocator());
+    let mut params = codegen.params;
     if keep_types {
         copy_param_ts_metadata(ast.allocator(), &mut params, &arrow.params);
     } else {
@@ -2404,8 +2412,7 @@ fn ox_replace_arrow<'a>(
         arrow.return_type = None;
     }
     arrow.params = params;
-    arrow.body =
-        ArrowFunctionBody::FunctionBody(codegen.body.clone_in_with_semantic_ids(ast.allocator()));
+    arrow.body = ArrowFunctionBody::FunctionBody(codegen.body);
     arrow.r#async = codegen.is_async;
 }
 
@@ -2458,7 +2465,7 @@ enum OxcVisitMode<'a, 'b> {
         /// Compiled replacement for each original function, keyed by the function's
         /// `scope_id` cell. Codegen-built nodes carry no cells, so they are never
         /// matched.
-        replacements: FxHashMap<ScopeId, &'b CodegenFunction<'a>>,
+        replacements: FxHashMap<ScopeId, CodegenFunction<'a>>,
         /// Replacements not yet applied; the walk stops once it reaches zero.
         remaining: usize,
     },
@@ -2579,7 +2586,7 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
                     return;
                 }
                 if let Some(scope_id) = func.scope_id.get()
-                    && let Some(&codegen) = replacements.get(&scope_id)
+                    && let Some(codegen) = replacements.remove(&scope_id)
                 {
                     ox_replace_function(ast, func, codegen);
                     *remaining -= 1;
@@ -2628,7 +2635,7 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
                     return;
                 }
                 if let Some(scope_id) = arrow.scope_id.get()
-                    && let Some(&codegen) = replacements.get(&scope_id)
+                    && let Some(codegen) = replacements.remove(&scope_id)
                 {
                     ox_replace_arrow(ast, arrow, codegen);
                     *remaining -= 1;
@@ -2761,12 +2768,12 @@ fn ox_gating_call<'a>(ast: &AstBuilder<'a>, callee_name: &str) -> Expression<'a>
 fn ox_apply_gated_conditional<'a>(
     ast: &AstBuilder<'a>,
     program: &mut Program<'a>,
-    replacement: &OxcReplacement<'a>,
+    scope_id: ScopeId,
+    original_kind: OriginalFnKind,
+    codegen_fn: CodegenFunction<'a>,
     gating_config: &GatingConfig,
     context: &mut ProgramContext,
 ) {
-    let scope_id = replacement.fn_scope_id;
-
     let gating_import = context.add_import_specifier(
         &gating_config.source,
         &gating_config.import_specifier_name,
@@ -2781,8 +2788,7 @@ fn ox_apply_gated_conditional<'a>(
         None => return,
     };
 
-    let compiled_expr =
-        ox_build_compiled_expression(ast, &replacement.codegen_fn, replacement.original_kind);
+    let compiled_expr = ox_build_compiled_expression(ast, codegen_fn, original_kind);
 
     // gating() ? compiled : original
     let gating_expression = Expression::new_conditional_expression(
@@ -2832,7 +2838,7 @@ fn ox_clone_original_fn_as_expression<'a>(
 fn ox_transform_program<'a>(
     ast: &AstBuilder<'a>,
     program: &mut Program<'a>,
-    replacements: &[OxcReplacement<'a>],
+    replacements: Vec<OxcReplacement<'a>>,
     context: &mut ProgramContext,
 ) {
     // Anchor generated top-level imports immediately before the first source
@@ -2852,33 +2858,22 @@ fn ox_transform_program<'a>(
     //     original function (Babel `insertAfter`), however deeply nested it is.
     //   - (Arrow)FunctionExpression originals: appended at the end of the program
     //     body (Babel `pushContainer('body', ...)`), since inserting as a sibling
-    //     would corrupt the parent expression. For a nested original this can hoist
-    //     the outlined function past bindings it references — upstream has the same
-    //     behavior, so we reproduce it rather than diverge.
+    //     would corrupt the parent expression. Candidates whose HIR references
+    //     an outer lexical binding are kept inline for these roots, so this
+    //     placement cannot hoist them past the binding they reference.
     let mut appended_outlined_decls: Vec<Statement<'a>> = Vec::new();
+    let needs_memo_import = replacements.iter().any(|r| codegen_uses_memo_cache(&r.codegen_fn));
 
-    // Substitute every non-gated compiled function into its original in a single
-    // program walk, each matched by its `scope_id` cell. In-place edits do not
-    // change `program.body`, so the outlined-decl insertion and gating below
-    // (which do restructure it) are unaffected by running first. Gated functions
-    // are replaced by a conditional in the loop below, not edited in place.
-    let replace_map: FxHashMap<ScopeId, &CodegenFunction<'a>> = replacements
-        .iter()
-        .filter(|r| r.gating.is_none())
-        .map(|r| (r.fn_scope_id, &r.codegen_fn))
-        .collect();
-    if !replace_map.is_empty() {
-        let mode =
-            OxcVisitMode::ReplaceFns { remaining: replace_map.len(), replacements: replace_map };
-        let mut visitor = OxcVisitor { ast, mode };
-        oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
-    }
+    let mut replace_map: FxHashMap<ScopeId, CodegenFunction<'a>> = FxHashMap::default();
+    let mut gated_replacements = Vec::new();
 
-    for replacement in replacements {
+    for mut replacement in replacements {
+        let scope_id = replacement.fn_scope_id;
+        let original_kind = replacement.original_kind;
         let mut sibling_outlined_decls: Vec<Statement<'a>> = Vec::new();
-        let insert_as_sibling = replacement.original_kind == OriginalFnKind::FunctionDeclaration;
-        for outlined in &replacement.codegen_fn.outlined {
-            let func = ox_build_function(ast, &outlined.func, FunctionType::FunctionDeclaration);
+        let insert_as_sibling = original_kind == OriginalFnKind::FunctionDeclaration;
+        for outlined in std::mem::take(&mut replacement.codegen_fn.outlined) {
+            let func = ox_build_function(ast, outlined.func, FunctionType::FunctionDeclaration);
             let stmt = Statement::FunctionDeclaration(func);
             if insert_as_sibling {
                 sibling_outlined_decls.push(stmt);
@@ -2887,17 +2882,46 @@ fn ox_transform_program<'a>(
             }
         }
 
-        // Insert outlined declarations before applying gating: upstream inserts
-        // them during the compile-queue loop, before any original is replaced,
-        // so they anchor to the original statement — gating rewrites it into a
-        // `const`, which no longer matches the function's scope.
+        // Insert outlined declarations while the original function and its scope id
+        // are still present in the program.
         if !sibling_outlined_decls.is_empty() {
-            ox_insert_outlined_after(ast, program, replacement.fn_scope_id, sibling_outlined_decls);
+            ox_insert_outlined_after(ast, program, scope_id, sibling_outlined_decls);
         }
 
-        if let Some(ref gating_config) = replacement.gating {
-            ox_apply_gated_conditional(ast, program, replacement, gating_config, context);
+        if let Some(gating_config) = replacement.gating {
+            gated_replacements.push((
+                scope_id,
+                original_kind,
+                replacement.codegen_fn,
+                gating_config,
+            ));
+        } else {
+            replace_map.insert(scope_id, replacement.codegen_fn);
         }
+    }
+
+    // Substitute every non-gated compiled function into its original in a single
+    // program walk, each matched by its `scope_id` cell. In-place edits do not
+    // change `program.body`, so the outlined-decl insertion and gating below
+    // (which do restructure it) are unaffected by running first. Gated functions
+    // are replaced by a conditional in the loop below, not edited in place.
+    if !replace_map.is_empty() {
+        let mode =
+            OxcVisitMode::ReplaceFns { remaining: replace_map.len(), replacements: replace_map };
+        let mut visitor = OxcVisitor { ast, mode };
+        oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
+    }
+
+    for (scope_id, original_kind, codegen_fn, gating_config) in gated_replacements {
+        ox_apply_gated_conditional(
+            ast,
+            program,
+            scope_id,
+            original_kind,
+            codegen_fn,
+            &gating_config,
+            context,
+        );
     }
 
     // Append outlined function declarations (from expression-parented originals) at
@@ -2905,7 +2929,7 @@ fn ox_transform_program<'a>(
     program.body.extend(appended_outlined_decls);
 
     // Register the memo cache import; codegen emitted its pre-reserved local name.
-    if replacements.iter().any(|r| codegen_uses_memo_cache(&r.codegen_fn)) {
+    if needs_memo_import {
         context.add_memo_cache_import();
     }
 
@@ -2982,8 +3006,9 @@ fn ox_add_imports_to_program<'a>(
     for (idx, stmt) in program.body.iter().enumerate() {
         if let Statement::ImportDeclaration(import) = stmt
             && ox_is_non_namespaced_import(import)
+            && let Some(source) = import.source.value.as_str()
         {
-            existing_import_indices.entry(import.source.value.as_str()).or_insert(idx);
+            existing_import_indices.entry(source).or_insert(idx);
         }
     }
 
@@ -3126,7 +3151,7 @@ pub fn compile_program<'a, const EMIT: bool>(
     // Find all functions to compile. An empty queue means no work, so return
     // before all the setup below, which only compilation needs. The pre-check
     // decides emptiness from semantic data without walking the AST.
-    if !may_have_functions_to_compile(semantic, &options) {
+    if !may_have_functions_to_compile(semantic, &options, EMIT) {
         return CompileResult::Success { output: None, diagnostics: Diagnostics::new() };
     }
     let queue = find_functions_to_compile(program, &options);
@@ -3157,7 +3182,7 @@ pub fn compile_program<'a, const EMIT: bool>(
 
     // Check for module-scope opt-out directive
     let has_module_scope_opt_out = find_directive_disabling_memoization(
-        program.directives.iter().map(|d| d.expression.value.as_str()),
+        program.directives.iter().filter_map(|d| d.expression.value.as_str()),
         options.custom_opt_out_directives.as_deref(),
     )
     .is_some();
@@ -3176,10 +3201,10 @@ pub fn compile_program<'a, const EMIT: bool>(
     let ast = AstBuilder::new(allocator);
     let scope = ScopeResolver::new(semantic, allocator);
 
-    // Initialize known referenced names from scope bindings for UID collision detection
-    context.init_from_scope(&scope);
-
     if EMIT {
+        // Seed UID collision detection with every binding in the file. Lint
+        // does not generate identifiers, so skip the walk.
+        context.init_from_scope(&scope);
         // Pre-register instrumentation imports to get stable local names.
         // These are needed before compilation so codegen can use the correct names.
         let (instrument_fn_name, instrument_gating_name) = if let Some(ref instrument_config) =

@@ -7,7 +7,6 @@ use oxc_css_parser::ast::{
     LessNamespaceValueCallee, LessVariableDeclaration,
 };
 use oxc_formatter_core::{
-    Buffer,
     builders::{
         group, hard_line_break, indent, soft_line_break_or_space, soft_line_indent_or_space, space,
         text,
@@ -155,7 +154,7 @@ pub(super) fn write_less_conditional_qualified_rule<'a>(
 
 /// ` when <cond>, <cond>`: each condition raw apart from number/string adjustments (Prettier's paren token),
 /// the alternatives inline. Over the width the enclosing group breaks before `when` and after each `,`,
-/// never inside `when <cond>` (see DIVERGENCES.md "less-guard-list-inline").
+/// never inside `when <cond>` (see DIVERGENCES.md#less-guard-list-inline).
 /// A `when(` glued to its condition stays glued (one selector word to Prettier).
 fn write_less_guard<'a>(guard: &LessConditions<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();

@@ -5,7 +5,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{AstNode, ast_util, context::LintContext, rule::Rule};
 
@@ -67,7 +68,12 @@ fn check_unicorn_prefer_spread<'a>(
         return;
     };
 
-    let Some(static_property_name) = member_expr.static_property_name() else {
+    if member_expr.object().without_parentheses().is_super() {
+        return;
+    }
+
+    let Some(static_property_name) = member_expr.static_property_name().and_then(JSStr::as_str)
+    else {
         return;
     };
 
@@ -169,39 +175,6 @@ fn check_unicorn_prefer_spread<'a>(
                 member_expr.object(),
             );
         }
-        // `string.split()`
-        "split" => {
-            if call_expr.arguments.len() != 1 {
-                return;
-            }
-
-            let Some(expr) = call_expr.arguments[0].as_expression() else {
-                return;
-            };
-            let Expression::StringLiteral(string_lit) = expr.without_parentheses() else {
-                return;
-            };
-
-            if !string_lit.value.is_empty() {
-                return;
-            }
-
-            ctx.diagnostic_with_fix(
-                unicorn_prefer_spread_diagnostic(call_expr.span, "string.split()"),
-                |fixer| {
-                    let needs_semi = ast_util::could_be_asi_hazard(node, ctx);
-                    let callee_obj = member_expr.object().without_parentheses();
-                    let prefix = if needs_semi { ";" } else { "" };
-                    fixer.replace(
-                        call_expr.span,
-                        format!(
-                            "{prefix}[...{}]",
-                            callee_obj.span().source_text(ctx.source_text())
-                        ),
-                    )
-                },
-            );
-        }
         _ => {}
     }
 }
@@ -246,7 +219,9 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
 
     if let Expression::CallExpression(call_expr) = expr {
         if let Some(member_expr) = call_expr.callee.without_parentheses().as_member_expression() {
-            if Some("join") == member_expr.static_property_name() && call_expr.arguments.len() < 2 {
+            if member_expr.static_property_name().is_some_and(|name| name == "join")
+                && call_expr.arguments.len() < 2
+            {
                 return true;
             }
             return false;
@@ -270,7 +245,9 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
             ident.name.as_str()
         }
         expr @ match_member_expression!(Expression) => {
-            if let Some(v) = expr.to_member_expression().static_property_name() {
+            if let Some(v) =
+                expr.to_member_expression().static_property_name().and_then(JSStr::as_str)
+            {
                 v
             } else {
                 return false;
@@ -436,7 +413,30 @@ fn test() {
         r#""".split(string)"#,
         "string.split()",
         r#"string.notSplit("")"#,
-        // r#"const notString = 0; notString.split("")"#,
+        r#"const notString = 0; notString.split("")"#,
+        r#""string".split("")"#,
+        r#""string".split('')"#,
+        r#"unknown.split("")"#,
+        r#"const characters = "string".split("")"#,
+        r#"(( (( (( "string" )).split ))( (("")) ) ))"#,
+        r#"bar()
+            foo.split("")"#,
+        r#"unknown.split("")"#,
+        r#""🦄".split("")"#,
+        r#"const {length} = "🦄".split("")"#,
+        r#""foo bar baz".split("")"#,
+        "foo()\nstr.split(\"\")",
+        r#"'string'
+str.split("")"#,
+        r#""string"
+str.split("")"#,
+        "class A extends B { method() { return super.slice(); } }",
+        "class A extends B { method() { return super.slice(0); } }",
+        r#"class A extends B { method() { return super["slice"](); } }"#,
+        "class A extends B { method() { return super.toSpliced(); } }",
+        "class A extends B { method() { return (super.toSpliced)(); } }",
+        r#"class A extends B { method() { return super["toSpliced"](); } }"#,
+        "class A extends B { method() { return super.concat(); } }",
     ];
 
     let fail = vec![
@@ -598,16 +598,6 @@ fn test() {
             foo.toSpliced()",
         r#""".toSpliced()"#,
         "new Uint8Array([10, 20, 30, 40, 50]).toSpliced()",
-        r#""string".split("")"#,
-        r#""string".split('')"#,
-        r#"unknown.split("")"#,
-        r#"const characters = "string".split("")"#,
-        r#"(( (( (( "string" )).split ))( (("")) ) ))"#,
-        r#"bar()
-            foo.split("")"#,
-        r#"unknown.split("")"#,
-        r#""🦄".split("")"#,
-        r#"const {length} = "🦄".split("")"#,
     ];
 
     let fix = vec![
@@ -644,11 +634,6 @@ fn test() {
         ("const copy = array.toSpliced()", "const copy = [...array]"),
         // `array.toSpliced()` - ASI hazard cases
         ("foo()\narray.toSpliced()", "foo()\n;[...array]"),
-        // `string.split()`
-        (r#""🦄".split("")"#, r#"[..."🦄"]"#),
-        (r#""foo bar baz".split("")"#, r#"[..."foo bar baz"]"#),
-        // `string.split()` - ASI hazard cases
-        ("foo()\nstr.split(\"\")", "foo()\n;[...str]"),
         (
             r"Array.from(path.matchAll(/\{([^{}?]+\??)\}/g))",
             "[...path.matchAll(/\\{([^{}?]+\\??)\\}/g)]",
@@ -681,17 +666,6 @@ fn test() {
         ("switch (array.slice()[0]) {}", "switch ([...array][0]) {}"),
         ("`template`\narray.toSpliced()", "`template`\n;[...array]"),
         (
-            r#"'string'
-str.split("")"#,
-            "'string'\n;[...str]",
-        ),
-        (
-            r#""string"
-str.split("")"#,
-            r#""string"
-;[...str]"#,
-        ),
-        (
             "foo()\nArray.from(set).map(x => x).filter(Boolean).length",
             "foo()\n;[...set].map(x => x).filter(Boolean).length",
         ),
@@ -705,6 +679,10 @@ str.split("")"#,
         ("(foo, Array.from(set))", "(foo, [...set])"),
         ("[Array.from(set)]", "[[...set]]"),
         ("async () => await Array.from(set)", "async () => await [...set]"),
+        (
+            "class A extends B { method() { return super.items.slice(); } }",
+            "class A extends B { method() { return [...super.items]; } }",
+        ),
     ];
 
     Tester::new(PreferSpread::NAME, PreferSpread::PLUGIN, pass, fail)

@@ -2,16 +2,19 @@
 
 ## Our Commitment
 
-The Oxc minifier maintains correctness through comprehensive testing and validation.
+The Oxc minifier aims to preserve JavaScript behavior under the
+[documented assumptions](./ASSUMPTIONS.md). Tests provide regression coverage;
+they do not prove correctness for every program.
 
 ## Validation Infrastructure
 
 ### Conformance Testing
 
-- **test262**: Full ECMAScript specification compliance
-- **Babel**: Modern JavaScript patterns and transforms
-- **TypeScript**: Type-aware transformations
-- **Real-world**: Top npm packages and frameworks
+`cargo coverage minifier` runs compression/code-generation idempotency checks on
+selected test262 and Babel cases. The test262 runner skips parse-negative and
+`noStrict` cases; the Babel runner skips expected failures and TypeScript sources.
+The minifier has no TypeScript conformance suite or type-aware transformations.
+Transform TypeScript, TSX, and JSX to JavaScript before minification.
 
 Run conformance tests:
 
@@ -41,15 +44,16 @@ just minsize
 # See tasks/minsize/minsize.snap for results
 ```
 
-### Differential Testing
+### Runtime Testing
 
-- Input vs output behavioral equivalence
-- Cross-validation with other minifiers
-- Fuzzing with randomly generated valid JavaScript
+`cargo coverage runtime` runs eligible test262 cases through codegen, transformer,
+and minifier pipelines and executes the outputs with Node.js (>= 22).
+`tasks/e2e` also contains Node.js runtime tests for the transformer and minifier.
+Idempotency alone does not establish behavioral equivalence.
 
 ### Semantic Preservation
 
-Every optimization preserves:
+Within the documented assumptions, optimizations are intended to preserve:
 
 - Variable scoping and bindings
 - Execution order and side effects
@@ -61,8 +65,11 @@ Every optimization preserves:
 
 ### Temporal Dead Zones (TDZ)
 
+Code must not violate a TDZ. Preserving the resulting `ReferenceError` is not
+guaranteed; see [No TDZ Violation](./ASSUMPTIONS.md#no-tdz-violation).
+
 ```javascript
-// Correctly preserves TDZ semantics
+// Outside the minifier's assumptions: this code violates the TDZ.
 {
   console.log(x); // ReferenceError
   let x = 1;
@@ -108,7 +115,8 @@ function* gen() {
 
 ### Type Coercion
 
-All JavaScript coercion rules are preserved using `oxc_ecmascript` conversions:
+Constant evaluation and side-effect analysis use `oxc_ecmascript` conversions,
+subject to the documented assumptions about coercion purity and exceptions:
 
 - String coercion (`ToJsString`)
 - Number coercion (`ToNumber`)
@@ -131,35 +139,25 @@ cargo test -p oxc_minifier
 Real-world code testing:
 
 ```bash
-cd tasks/e2e
-pnpm test
+# From the repository root, build the bindings first
+pnpm --filter "./napi/minify" --filter "./napi/transform" run build-test
+pnpm --dir tasks/e2e test
 ```
 
 ### Idempotency Testing
 
-Minifying twice produces same result:
+The conformance runner checks whether a second compression produces the same
+output. The example can also report whether a particular input is idempotent:
 
 ```bash
-cargo run -p oxc_minifier --example minifier test.js --twice
+cargo run -p oxc_minifier --example minifier -- test.js --twice
 ```
 
-## Correctness Tools
+## Semantic Bookkeeping Checks
 
-### Semantic Validator
-
-Validates that transformations preserve semantics.
-
-### AST Differ
-
-Shows exact changes made to the AST.
-
-### Behavior Comparison
-
-Compares runtime behavior of original vs minified code.
-
-### Side Effect Tracker
-
-Ensures side effects occur in correct order.
+Debug builds run over-prune and under-prune guards in `src/compression_pass.rs`
+to catch inconsistencies between live AST references and semantic scoping.
+These guards check bookkeeping, not arbitrary runtime equivalence.
 
 ## Known Limitations
 
@@ -180,11 +178,6 @@ If you find correctness issues:
 
 ## Continuous Validation
 
-Our CI runs:
-
-- Full conformance test suite
-- Size benchmarks
-- Real-world package tests
-- Fuzzing tests
-
-Every PR must pass all correctness tests.
+Check the current [CI workflow](../../../.github/workflows/ci.yml) for
+configured checks. Choose local verification using the repository's
+[verification guidance](../../../.agents/verification.md).

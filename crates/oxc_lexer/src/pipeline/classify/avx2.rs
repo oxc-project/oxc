@@ -1,17 +1,20 @@
-use core::arch::x86_64::*;
+use std::arch::x86_64::*;
 
-use crate::{
-    opmap::PUNCT1_KIND_UNKNOWN,
-    tables::{PH_A, PH_B, PH_T0, PH_T1, Tables},
-};
+use crate::token::tk;
 
-use super::super::{
-    IDENT, NUM, WS,
+use crate::pipeline::{
     chunk::{load256, mm, veq},
+    cpu::Avx2,
 };
 
-pub unsafe fn classify(
-    t: &Tables,
+use super::{
+    luts::{MERGED_LUTS, WORD_LUTS},
+    punct1_luts::{PH_A, PH_B, PH_T0, PH_T1},
+};
+
+#[inline(never)]
+#[target_feature(enable = "avx2,bmi2,popcnt")]
+pub(super) unsafe fn classify_avx2(
     ts: bool,
     src: *const u8,
     n: usize,
@@ -23,17 +26,18 @@ pub unsafe fn classify(
     dot: *mut u64,
     misc: *mut u64,
     kind: *mut u8,
+    cpu: Avx2,
 ) {
     // The merged LUT variants differ only in the keyword-initial bits; the
     // selection happens once, outside the loop.
-    let mrg_lo = if ts { &t.mrg_lo_ts } else { &t.mrg_lo };
+    let mrg_lo = if ts { MERGED_LUTS.lo_ts } else { MERGED_LUTS.lo };
     let mut cw: u64 = 0;
     let mut cs: u64 = 0;
     let mut i = 0usize;
     let mut b = 0usize;
     // Process ceil(n/64) blocks. When n is not a multiple of 64 the final
     // block overreads up to 63 bytes into the caller-guaranteed zeroed PAD
-    // and is masked below — this replaces the byte-at-a-time scalar tail,
+    // and is masked below - this replaces the byte-at-a-time scalar tail,
     // which cost ~18 cyc per tail byte (up to ~1.1k cyc when n mod 64 is
     // near 63) and dominated small-file lexing.
     let nb_ceil = n.div_ceil(64);
@@ -41,14 +45,17 @@ pub unsafe fn classify(
     let v_phb = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_B.as_ptr() as *const __m128i));
     let v_pht0 = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_T0.as_ptr() as *const __m128i));
     let v_pht1 = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_T1.as_ptr() as *const __m128i));
-    let v_96 = _mm256_set1_epi8(PUNCT1_KIND_UNKNOWN as i8);
-    let v_ws = _mm256_set1_epi8(WS as i8);
-    let v_ident = _mm256_set1_epi8(IDENT as i8);
-    let v_num = _mm256_set1_epi8(NUM as i8);
+    let v_96 = _mm256_set1_epi8(tk!(Invalid) as i8);
+    let v_ws = _mm256_set1_epi8(tk!(Whitespace) as i8);
+    let v_ident = _mm256_set1_epi8(tk!(Ident) as i8);
+    let v_num = _mm256_set1_epi8(tk!(Number) as i8);
     let v_mlo = _mm256_broadcastsi128_si256(_mm_loadu_si128(mrg_lo.as_ptr() as *const __m128i));
-    let v_mhi = _mm256_broadcastsi128_si256(_mm_loadu_si128(t.mrg_hi.as_ptr() as *const __m128i));
-    let v_wblo = _mm256_broadcastsi128_si256(_mm_loadu_si128(t.wb_lo.as_ptr() as *const __m128i));
-    let v_wbhi = _mm256_broadcastsi128_si256(_mm_loadu_si128(t.wb_hi.as_ptr() as *const __m128i));
+    let v_mhi =
+        _mm256_broadcastsi128_si256(_mm_loadu_si128(MERGED_LUTS.hi.as_ptr() as *const __m128i));
+    let v_wblo =
+        _mm256_broadcastsi128_si256(_mm_loadu_si128(WORD_LUTS.lo.as_ptr() as *const __m128i));
+    let v_wbhi =
+        _mm256_broadcastsi128_si256(_mm_loadu_si128(WORD_LUTS.hi.as_ptr() as *const __m128i));
     let v_kwpl = _mm256_set1_epi8(0x03);
     let v_oppl = _mm256_set1_epi8(0x3c);
     let v_wdpl = _mm256_set1_epi8(0x3f);
@@ -98,11 +105,11 @@ pub unsafe fn classify(
         cw = wordm >> 63;
         cs = wsm >> 63;
         *st.add(b) = (wsm & !sprev) | (wordm & !wprev) | (!wsm & !wordm);
-        let mut k0 = vpunct1(v0, hn0, v_pha, v_phb, v_pht0, v_pht1, v_96);
+        let mut k0 = vpunct1(v0, hn0, v_pha, v_phb, v_pht0, v_pht1, v_96, cpu);
         k0 = _mm256_blendv_epi8(v_ws, k0, nws0);
         k0 = _mm256_blendv_epi8(k0, v_ident, w0);
         k0 = _mm256_blendv_epi8(k0, v_num, d0);
-        let mut k1 = vpunct1(v1, hn1, v_pha, v_phb, v_pht0, v_pht1, v_96);
+        let mut k1 = vpunct1(v1, hn1, v_pha, v_phb, v_pht0, v_pht1, v_96, cpu);
         k1 = _mm256_blendv_epi8(v_ws, k1, nws1);
         k1 = _mm256_blendv_epi8(k1, v_ident, w1);
         k1 = _mm256_blendv_epi8(k1, v_num, d1);
@@ -117,7 +124,7 @@ pub unsafe fn classify(
     // other six bitmaps are already 0 for a zero byte, but masking all seven
     // makes the last word bit-identical to the old scalar tail's output (real
     // bits [0, rem), zeros above) regardless of LUT contents. `kind` past `n`
-    // is never read — `compress` only visits masked `st` starts — so it needs
+    // is never read - `compress` only visits masked `st` starts - so it needs
     // no fixup.
     let rem = n & 63;
     if rem != 0 {
@@ -134,7 +141,7 @@ pub unsafe fn classify(
 }
 
 #[inline(always)]
-unsafe fn vpunct1(
+fn vpunct1(
     v: __m256i,
     hn: __m256i,
     pa: __m256i,
@@ -142,11 +149,15 @@ unsafe fn vpunct1(
     pt0: __m256i,
     pt1: __m256i,
     v96: __m256i,
+    _cpu: Avx2,
 ) -> __m256i {
-    let h = _mm256_xor_si256(_mm256_shuffle_epi8(pa, v), _mm256_shuffle_epi8(pb, hn));
-    let o0 = _mm256_shuffle_epi8(pt0, h);
-    let o1 = _mm256_shuffle_epi8(pt1, h);
-    let ord = _mm256_blendv_epi8(o0, o1, _mm256_slli_epi16::<3>(h));
-    let ctl = _mm256_cmpgt_epi8(_mm256_set1_epi8(0x20), v);
-    _mm256_blendv_epi8(ord, v96, ctl)
+    // SAFETY: `Avx2` type guarantees required target features are present
+    unsafe {
+        let h = _mm256_xor_si256(_mm256_shuffle_epi8(pa, v), _mm256_shuffle_epi8(pb, hn));
+        let o0 = _mm256_shuffle_epi8(pt0, h);
+        let o1 = _mm256_shuffle_epi8(pt1, h);
+        let ord = _mm256_blendv_epi8(o0, o1, _mm256_slli_epi16::<3>(h));
+        let ctl = _mm256_cmpgt_epi8(_mm256_set1_epi8(0x20), v);
+        _mm256_blendv_epi8(ord, v96, ctl)
+    }
 }

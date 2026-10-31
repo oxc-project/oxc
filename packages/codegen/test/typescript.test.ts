@@ -32,16 +32,15 @@ const fixturePaths = (
   .flat()
   .sort();
 
-// `oxc-parser` deserializes the AST with recursive JS functions, and these fixtures nest binary
-// expressions deeply enough to overflow the stack.
-// They sit right on the limit, so they fail intermittently rather than every time.
-// That is a limit of the parser rather than of the printer.
-//
-// `napi/parser`'s tests never meet them. Their TypeScript fixture list comes from the `estree-conformance` submodule,
-// which holds no recording for either file.
 const SKIPPED_PATHS = new Set([
+  // `oxc-parser` deserializes the AST with recursive JS functions, and these fixtures nest binary
+  // expressions deeply enough to overflow the stack. They sit right on the limit, so they fail
+  // intermittently rather than every time. That is a limit of the parser rather than the printer.
   "compiler/binderBinaryExpressionStress.ts",
   "compiler/binderBinaryExpressionStressJs.ts",
+  // Rust preserves the raw brace-escaped surrogate spelling, while the JS printer receives the
+  // decoded string value and prints the equivalent code point.
+  "compiler/braceEscapedSurrogatePairLiteralType.ts",
 ]);
 
 describe.concurrent("TypeScript", () => {

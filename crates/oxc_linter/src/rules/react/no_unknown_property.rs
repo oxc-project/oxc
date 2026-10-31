@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 use itertools::Itertools;
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
+    ast::{JSXAttributeItem, JSXElementName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -93,6 +93,7 @@ declare_oxc_lint!(
     NoUnknownProperty,
     react,
     restriction,
+    recommended,
     suggestion,
     config = NoUnknownPropertyConfig,
     version = "0.2.0",
@@ -105,6 +106,8 @@ const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
     "checked" => phf_set! {"input"},
     // Intentionally lowercased, per the react types.
     "closedby" => phf_set! {"dialog"},
+    // Intentionally lowercased, React 19.3 recognizes it as a boolean attribute and warns on `credentialLess`.
+    "credentialless" => phf_set! {"iframe"},
     // image is required for SVG support, all other tags are HTML.
     "crossOrigin" => phf_set! {"script", "img", "video", "audio", "link", "image"},
     "displaystyle" => phf_set! {"math"},
@@ -260,7 +263,9 @@ const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
     "onCompositionUpdate", "onCut", "onDoubleClick", "onDrag", "onDragEnd", "onDragEnter", "onDragExit", "onDragLeave",
     "onError", "onFocus", "onInput", "onKeyDown", "onKeyPress", "onKeyUp", "onLoad", "onWheel", "onDragOver",
     "onDragStart", "onDrop", "onMouseDown", "onMouseEnter", "onMouseLeave", "onMouseMove", "onMouseOut", "onMouseOver",
-    "onMouseUp", "onPaste", "onScroll", "onScrollEnd", "onSelect", "onSubmit", "onBeforeToggle", "onToggle", "onTransitionEnd", "radioGroup",
+    "onMouseUp", "onPaste", "onScroll", "onScrollEnd", "onSelect", "onSubmit", "onBeforeToggle", "onToggle",
+    "onTransitionCancel", "onTransitionEnd", "onTransitionRun", "onTransitionStart",
+    "onFullscreenChange", "onFullscreenError", "radioGroup",
     "readOnly", "referrerPolicy", "rowSpan", "srcDoc", "srcLang", "srcSet", "useMap",
     // SVG attributes
     // See https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute
@@ -275,7 +280,7 @@ const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
     "gradientUnits", "horizAdvX", "horizOriginX", "imageRendering", "kernelMatrix",
     "kernelUnitLength", "keyPoints", "keySplines", "keyTimes", "lengthAdjust", "letterSpacing",
     "lightingColor", "limitingConeAngle", "markerEnd", "markerMid", "markerStart", "markerHeight",
-    "markerUnits", "markerWidth", "maskContentUnits", "maskUnits", "mathematical", "numOctaves",
+    "markerUnits", "markerWidth", "maskContentUnits", "maskType", "maskUnits", "mathematical", "numOctaves",
     "overlinePosition", "overlineThickness", "panose1", "paintOrder", "pathLength",
     "patternContentUnits", "patternTransform", "patternUnits", "pointerEvents", "pointsAtX",
     "pointsAtY", "pointsAtZ", "preserveAlpha", "preserveAspectRatio", "primitiveUnits",
@@ -311,7 +316,8 @@ const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
     "onPlayingCapture", "onProgressCapture", "onRateChangeCapture", "onSeekedCapture", "onSeekingCapture", "onStalledCapture", "onSuspendCapture",
     "onTimeUpdateCapture", "onVolumeChangeCapture", "onWaitingCapture", "onSelectCapture", "onTouchCancelCapture", "onTouchEndCapture",
     "onTouchMoveCapture", "onTouchStartCapture", "onScrollCapture", "onScrollEndCapture", "onWheelCapture", "onAnimationEndCapture",
-    "onAnimationStartCapture", "onTransitionEndCapture",
+    "onAnimationStartCapture", "onTransitionCancelCapture", "onTransitionEndCapture", "onTransitionRunCapture",
+    "onTransitionStartCapture", "onFullscreenChangeCapture", "onFullscreenErrorCapture",
     "onAuxClick", "onAuxClickCapture", "onClickCapture", "onContextMenuCapture", "onDoubleClickCapture",
     "onDragCapture", "onDragEndCapture", "onDragEnterCapture", "onDragExitCapture", "onDragLeaveCapture",
     "onDragOverCapture", "onDragStartCapture", "onDropCapture", "onMouseDownCapture",
@@ -387,6 +393,7 @@ const DOM_ATTRIBUTES_TO_CAMEL: Map<&'static str, &'static str> = phf_map! {
     "marker-end" => "markerEnd",
     "marker-mid" => "markerMid",
     "marker-start" => "markerStart",
+    "mask-type" => "maskType",
     "overline-position" => "overlinePosition",
     "overline-thickness" => "overlineThickness",
     "paint-order" => "paintOrder",
@@ -512,70 +519,64 @@ impl Rule for NoUnknownProperty {
 
         let is_valid_html_tag = matches_html_tag_conventions(el_type)
             && el.attributes.iter().all(|attr| {
-                let JSXAttributeItem::Attribute(jsx_attr) = attr else {
+                let Some(jsx_attr) = attr.as_attribute() else {
                     return true;
                 };
-                let JSXAttributeName::Identifier(ident) = &jsx_attr.name else {
+                let Some(ident) = jsx_attr.name.as_identifier() else {
                     return true;
                 };
                 ident.name.as_str() != "is"
             });
 
-        el.attributes
-            .iter()
-            .filter_map(|attr| match &attr {
-                JSXAttributeItem::Attribute(regular) => Some(&**regular),
-                JSXAttributeItem::SpreadAttribute(_) => None,
-            })
-            .for_each(|attr| {
-                let span = attr.name.span();
-                let actual_name = get_jsx_attribute_name(&attr.name);
-                if self.0.ignore.contains(&(actual_name)) {
-                    return;
+        el.attributes.iter().filter_map(JSXAttributeItem::as_attribute).for_each(|attr| {
+            let span = attr.name.span();
+            let actual_name = get_jsx_attribute_name(&attr.name);
+            if self.0.ignore.contains(&(actual_name)) {
+                return;
+            }
+            if is_valid_data_attr(&actual_name) {
+                if self.0.require_data_lowercase && has_uppercase(&actual_name) {
+                    ctx.diagnostic(data_lowercase_required(
+                        span,
+                        &actual_name.cow_to_ascii_lowercase(),
+                    ));
                 }
-                if is_valid_data_attr(&actual_name) {
-                    if self.0.require_data_lowercase && has_uppercase(&actual_name) {
-                        ctx.diagnostic(data_lowercase_required(
-                            span,
-                            &actual_name.cow_to_ascii_lowercase(),
-                        ));
-                    }
-                    return;
+                return;
+            }
+            if is_valid_aria_property(&actual_name) || !is_valid_html_tag {
+                return;
+            }
+            let name = normalize_attribute_case(&actual_name);
+            if let Some(tags) = ATTRIBUTE_TAGS_MAP.get(name) {
+                if !tags.contains(el_type) {
+                    ctx.diagnostic(invalid_prop_on_tag(
+                        span,
+                        &actual_name,
+                        &tags.iter().join(", "),
+                    ));
                 }
-                if is_valid_aria_property(&actual_name) || !is_valid_html_tag {
-                    return;
-                }
-                let name = normalize_attribute_case(&actual_name);
-                if let Some(tags) = ATTRIBUTE_TAGS_MAP.get(name) {
-                    if !tags.contains(el_type) {
-                        ctx.diagnostic(invalid_prop_on_tag(
-                            span,
-                            &actual_name,
-                            &tags.iter().join(", "),
-                        ));
-                    }
-                    return;
-                }
+                return;
+            }
 
-                if DOM_PROPERTIES_NAMES.contains(name) {
-                    return;
-                }
+            if DOM_PROPERTIES_NAMES.contains(name) {
+                return;
+            }
 
-                dom_properties_lower_map()
-                    .get(&name.cow_to_ascii_lowercase())
-                    .or_else(|| DOM_ATTRIBUTES_TO_CAMEL.get(name))
-                    .map_or_else(
-                        || {
-                            ctx.diagnostic(unknown_prop(span));
-                        },
-                        |prop| {
-                            ctx.diagnostic_with_suggestion(
-                                unknown_prop_with_standard_name(span, prop),
-                                |fixer| fixer.replace(span, *prop),
-                            );
-                        },
-                    );
-            });
+            dom_properties_lower_map()
+                .get(&name.cow_to_ascii_lowercase())
+                .or_else(|| DOM_ATTRIBUTES_TO_CAMEL.get(name))
+                .map_or_else(
+                    || {
+                        ctx.diagnostic(unknown_prop(span));
+                    },
+                    |prop| {
+                        ctx.diagnostic_with_suggestion(
+                            unknown_prop_with_standard_name(span, prop),
+                            |fixer| fixer.replace(span, *prop),
+                        );
+                    },
+                );
+        });
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -599,6 +600,18 @@ fn test() {
         (r#"<div className="bar"></div>;"#, None),
         (r"<div onMouseDown={this._onMouseDown}></div>;", None),
         (r"<div onScrollEnd={this._onScrollEnd}></div>;", None),
+        (r"<div onFullscreenChange={this._onFullscreenChange}></div>;", None),
+        (r"<div onFullscreenError={this._onFullscreenError}></div>;", None),
+        (r"<div onFullscreenChangeCapture={this._onFullscreenChange}></div>;", None),
+        (r"<div onFullscreenErrorCapture={this._onFullscreenError}></div>;", None),
+        (r"<div onTransitionCancel={this._onTransitionCancel}></div>;", None),
+        (r"<div onTransitionCancelCapture={this._onTransitionCancelCapture}></div>;", None),
+        (r"<div onTransitionRun={this._onTransitionRun}></div>;", None),
+        (r"<div onTransitionRunCapture={this._onTransitionRunCapture}></div>;", None),
+        (r"<div onTransitionStart={this._onTransitionStart}></div>;", None),
+        (r"<div onTransitionStartCapture={this._onTransitionStartCapture}></div>;", None),
+        (r#"<iframe credentialless src="https://example.com" />"#, None),
+        (r#"<mask maskType="alpha" />"#, None),
         (r"<div onScrollEndCapture={this._onScrollEndCapture}></div>;", None),
         (r#"<a href="someLink" download="foo">Read more</a>"#, None),
         (r#"<area download="foo" />"#, None),
@@ -838,6 +851,9 @@ fn test() {
         ),
         ("<t onChñnge/>", None),
         (r#"<div precedence="default" />"#, None),
+        (r"<div credentialless />", None),
+        (r#"<iframe credentialLess src="https://example.com" />"#, None),
+        (r#"<mask mask-type="alpha" />"#, None),
         (r#"<script precedence="high" src="foo.js" />"#, None),
     ];
 

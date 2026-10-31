@@ -42,6 +42,8 @@ const SINK = { dummy: 0 };
  * Flatten a rope in place.
  *
  * A no-op on a string which is already flat, apart from a short scan.
+ *
+ * @param s - String to flatten
  */
 export function flattenString(s: string): void {
   SINK.dummy ^= s.indexOf(" ");
@@ -81,6 +83,8 @@ export const OUTPUT_CHUNK_LENGTH = 16 * 1024;
  * Flatten `output` into `state.outputChunks` and start a new chunk.
  *
  * The chunks array is created on the first spill, so a small print never allocates it.
+ *
+ * @param state - Printer state
  */
 export function spillOutputChunk(state: State): void {
   const { output } = state;

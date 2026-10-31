@@ -53,11 +53,12 @@ impl<'a, 'b> LiteralParser<'a, 'b> {
     }
 }
 
-/// Regular expression parser for `new RegExp("constrocutor")` usage.
-/// - `pattern_text`: the string literal text as 1st argument of `RegExp` constructor
-/// - `flags_text`: the string literal text as 2nd argument of `RegExp` constructor
+/// Regular expression parser for `RegExp` constructor arguments.
+/// - `pattern_text`: the source text of the first argument
+/// - `flags_text`: the source text of the second argument
 ///
-/// String literal text should be in the form of `'...'` or `"..."` and may contain escape sequences.
+/// Arguments must be quoted strings (`'...'` or `"..."`) or no-substitution
+/// templates with a defined cooked value. Escape sequences are decoded.
 pub struct ConstructorParser<'a> {
     allocator: &'a Allocator,
     pattern_text: &'a str,
@@ -93,11 +94,7 @@ impl<'a> ConstructorParser<'a> {
             (false, false)
         };
 
-        let pattern_text = if matches!(self.pattern_text, r#""""# | "''" | "``") {
-            r#""(?:)""#
-        } else {
-            self.pattern_text
-        };
+        let pattern_text = self.pattern_text;
         let reader =
             Reader::initialize(pattern_text, unicode_mode, parse_string_literal).map_err(|_| {
                 let span_start = pattern_span_offset;
@@ -105,6 +102,14 @@ impl<'a> ConstructorParser<'a> {
                 let span_end = pattern_span_offset + pattern_text.len() as u32;
                 diagnostics::invalid_input(Span::new(span_start, span_end))
             })?;
+
+        // A literal containing only line continuations also has an empty cooked value.
+        // Use the same replacement and synthetic spans as an empty quoted literal.
+        let reader = if reader.peek().is_none() {
+            Reader::initialize(r#""(?:)""#, unicode_mode, parse_string_literal)?
+        } else {
+            reader
+        };
 
         PatternParser::new(
             self.allocator,

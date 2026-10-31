@@ -1,7 +1,8 @@
 // A multiline block comment between a head and its `{` stays inline like any
 // other same-line block comment (head-body comment policy, no exception for
 // multiline content).
-// Known divergence (js/comments/between-head-and-body/between-head-and-body.js):
+// Known divergence (DIVERGENCES.md#head-body-comment-relocation;
+// js/comments/between-head-and-body/between-head-and-body.js):
 // Prettier moves it onto its own line for while/do/else heads only, keeping it
 // inline everywhere else -- an internal inconsistency, one uniform rule instead.
 while (x) /* one

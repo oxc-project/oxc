@@ -4,47 +4,18 @@ use std::{
     sync::Arc,
 };
 
-use oxc_language_server::{LanguageId, run_server};
-use tower_lsp_server::ls_types::Uri;
+use oxc_language_server::run_server;
+use tower_lsp_server::gen_lsp_types::Uri;
 
-use crate::core::{ExternalServices, JsConfigLoaderCb, utils};
+use crate::core::{ExternalServices, JsConfigLoaderCb, Language};
 
 mod options;
 mod server_formatter;
 
-fn get_file_extension_from_language_id(language_id: &LanguageId) -> Option<&'static str> {
-    match language_id.as_str() {
-        "javascript" => Some("js"),
-        "typescript" => Some("ts"),
-        "javascriptreact" => Some("jsx"),
-        "typescriptreact" => Some("tsx"),
-        "toml" => Some("toml"),
-        "css" => Some("css"),
-        "graphql" => Some("graphql"),
-        "handlebars" => Some("handlebars"),
-        "json" => Some("json"),
-        "jsonc" => Some("jsonc"),
-        "json5" => Some("json5"),
-        "markdown" => Some("md"),
-        "mdx" => Some("mdx"),
-        "mjml" => Some("mjml"),
-        "html" => Some("html"),
-        "scss" => Some("scss"),
-        "less" => Some("less"),
-        "vue" => Some("vue"),
-        "svelte" => Some("svelte"),
-        "yaml" => Some("yaml"),
-        "angular" => Some("component.html"),
-        _ => None,
-    }
-}
-
-pub fn create_fake_file_path_from_language_id(
-    language_id: &LanguageId,
-    root: &Path,
-    uri: &Uri,
-) -> Option<PathBuf> {
-    let file_extension = get_file_extension_from_language_id(language_id)?;
+/// The path of an in-memory document,
+/// so that config scopes, `ignorePatterns` and `overrides` see it as a file of `language`.
+pub fn create_fake_file_path(language: Language, root: &Path, uri: &Uri) -> PathBuf {
+    let file_extension = language.to_lsp_extension();
     // Use the authority (if available) or the last segment of the path as the file name, defaulting to "Untitled" if neither is available
     let mut name = uri.authority().map_or_else(
         || uri.path().rsplit_once('/').map_or_else(|| "Untitled", |(_, s)| s.as_str()),
@@ -56,14 +27,14 @@ pub fn create_fake_file_path_from_language_id(
     }
 
     let file_name = format!("{name}.{file_extension}");
-    Some(root.join(file_name))
+    root.join(file_name)
 }
 
 /// Run the language server
 pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_services: ExternalServices) {
     let version = {
         let mut version = env!("CARGO_PKG_VERSION").to_string();
-        if let Some(vp_version) = utils::vp_version() {
+        if let Some(vp_version) = oxc_config::vp_version() {
             let _ = write!(version, " (VP: {})", vp_version.to_string_lossy());
         }
         version
@@ -83,23 +54,21 @@ pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_services: Exte
 mod test {
     use std::str::FromStr;
 
-    use oxc_language_server::LanguageId;
-    use tower_lsp_server::ls_types::Uri;
+    use tower_lsp_server::gen_lsp_types::Uri;
 
-    use crate::lsp::create_fake_file_path_from_language_id;
+    use crate::{core::Language, lsp::create_fake_file_path};
 
     #[test]
-    fn test_create_fake_file_path_from_language_id() {
-        let language_id = LanguageId::new("jsonc".to_string());
+    fn test_create_fake_file_path() {
         let root = std::env::temp_dir();
 
         let uri = Uri::from_str("vscode-userdata:/c%3A/Users/User/settings.json").unwrap();
-        let result = create_fake_file_path_from_language_id(&language_id, &root, &uri).unwrap();
+        let result = create_fake_file_path(Language::Jsonc, &root, &uri);
         assert_eq!(result.extension().unwrap(), "jsonc");
         assert!(result.starts_with(&root));
 
         let uri = Uri::from_str("Untitled://Untitled-1").unwrap();
-        let result = create_fake_file_path_from_language_id(&language_id, &root, &uri).unwrap();
+        let result = create_fake_file_path(Language::Jsonc, &root, &uri);
         assert_eq!(result.extension().unwrap(), "jsonc");
         assert!(result.starts_with(&root));
     }

@@ -190,3 +190,51 @@ source: crates/oxc_linter/src/tester.rs
  1 │ array.filter((value): boolean => value)
    ·              ─────────────────────────
    ╰────
+
+  ⚠ unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
+   ╭─[prefer_native_coercion_functions.tsx:2:16]
+ 1 │ export const o = {
+ 2 │             p: function (v) { return String(v); },
+   ·                ──────────────────────────────────
+ 3 │             m(v) { return String(v); },
+   ╰────
+
+  ⚠ unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
+   ╭─[prefer_native_coercion_functions.tsx:3:14]
+ 2 │             p: function (v) { return String(v); },
+ 3 │             m(v) { return String(v); },
+   ·              ─────────────────────────
+ 4 │             a: (v) => String(v),
+   ╰────
+
+  ⚠ unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
+   ╭─[prefer_native_coercion_functions.tsx:4:16]
+ 3 │             m(v) { return String(v); },
+ 4 │             a: (v) => String(v),
+   ·                ────────────────
+ 5 │         };
+   ╰────
+
+  ⚠ unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
+   ╭─[prefer_native_coercion_functions.tsx:1:14]
+ 1 │ object = {foo(v) {return String(v);}, bar}
+   ·              ───────────────────────
+   ╰────
+
+  ⚠ unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
+   ╭─[prefer_native_coercion_functions.tsx:1:16]
+ 1 │ object = {foo: function(v) {return String(v);}, bar}
+   ·                ───────────────────────────────
+   ╰────
+
+  ⚠ unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
+   ╭─[prefer_native_coercion_functions.tsx:1:12]
+ 1 │ object = {[function(v) {return String(v);}]: 1}
+   ·            ───────────────────────────────
+   ╰────
+
+  ⚠ unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
+   ╭─[prefer_native_coercion_functions.tsx:1:16]
+ 1 │ object = {set [function(v) {return String(v);}](value) {}}
+   ·                ───────────────────────────────
+   ╰────

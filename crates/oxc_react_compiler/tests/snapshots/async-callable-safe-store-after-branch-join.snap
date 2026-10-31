@@ -1,0 +1,33 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-callable-safe-store-after-branch-join.js
+---
+function Component(t0) {
+	const { cond } = t0;
+	let count = 0;
+	let cb = _temp;
+	const safeAsync = _temp2;
+	const asyncUsingCb = async () => {
+		await 0;
+		cb();
+	};
+	let run;
+	if (cond) {
+		cb = () => count++;
+		run = asyncUsingCb;
+	} else {
+		run = safeAsync;
+	}
+	cb = _temp3;
+	run();
+	return null;
+}
+function _temp3() {
+	return null;
+}
+async function _temp2() {
+	return null;
+}
+function _temp() {
+	return null;
+}

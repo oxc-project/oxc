@@ -290,22 +290,70 @@ export function Component({ value }: { value: string }) {
     expect(result.code).not.toContain("<span");
   });
 
-  it("does not enable manual memo dependency validation by default", () => {
-    const result = transformSync(
-      "Component.tsx",
-      `import { useMemo } from "react";
-      import { typedCapture, typedCreateFrom, typedMutate, ValidateMemoization } from "shared-runtime";
-      function Component({ a, b }: { a: number; b: number }) {
-        const x = useMemo(() => ({ a }), [a, b]);
-        const y = typedCapture(x);
-        const z = typedCreateFrom(y);
-        typedMutate(z, b);
-        return <ValidateMemoization inputs={[a, b]} output={x} />;
+  it.each([
+    [
+      "missing dependencies with rest props",
+      `export function List({ s, ...props }) {
+        const { items, children } = props;
+        const values = useMemo(() => sortBy(items, s ?? props.value), [items]);
+        return children(values);
       }`,
+    ],
+    [
+      "extra dependencies",
+      `export function Clock({ tick }) {
+        const now = useMemo(() => readGlobal(), [tick]);
+        return <span>{now}</span>;
+      }`,
+    ],
+    [
+      "partial callback dependencies",
+      `export function Label({ prefix, suffix }) {
+        const format = useCallback(() => prefix + suffix, [prefix]);
+        return <Text format={format} suffix={suffix} />;
+      }`,
+    ],
+    [
+      "callback property reads",
+      `export function Profile({ user, s }) {
+        const items = useMemo(() => sortBy(user.profile.items, s), [user.id]);
+        return <span>{items}</span>;
+      }`,
+    ],
+  ])("skips manual memoization with %s by default", (_name, component) => {
+    const result = transformSync(
+      "Component.jsx",
+      `import { useMemo, useCallback } from "react";
+      ${component}`,
     );
 
+    expect(result.fatal).toBe(false);
     expect(result.errors).toEqual([]);
+    expect(result.code).not.toContain("react/compiler-runtime");
+    expect(result.code).toMatch(/use(?:Memo|Callback)\(\(\) =>/);
+  });
+
+  it("compiles a sibling after a manual memoization bailout", () => {
+    const result = transformSync(
+      "Components.jsx",
+      `import { useMemo } from "react";
+      export function List({ s, ...props }) {
+        const { items, children } = props;
+        const values = useMemo(() => sortBy(items, s ?? props.value), [items]);
+        return children(values);
+      }
+      export function Component(props) {
+        return <span>{props.text}</span>;
+      }`,
+      { reactCompiler: { reportDiagnostics: true } },
+    );
+
+    expect(result.fatal).toBe(false);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].message).toBe("Found missing memoization dependencies");
+    expect(result.code).toContain("useMemo(() => sortBy(items, s ?? props.value), [items])");
     expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain("_c(");
   });
 
   it("compiles an unsuppressed sibling after a suppression bailout", () => {
@@ -326,6 +374,81 @@ export function Component({ value }: { value: string }) {
     expect(result.code).toContain("react/compiler-runtime");
     expect(result.code).not.toContain("props: { text: string }");
     expect(result.code).not.toContain("<span");
+  });
+
+  it("reports recoverable diagnostics only when reportDiagnostics is enabled", () => {
+    const source = `function Suppressed({ value }: { value: number }) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const doubled = value * 2;
+      return <div>{doubled}</div>;
+    }
+    export function Component(props: { text: string }) {
+      return <span>{props.text}</span>;
+    }`;
+
+    const silent = transformSync("Components.tsx", source);
+    expect(silent.fatal).toBe(false);
+    expect(silent.errors).toEqual([]);
+
+    const reported = transformSync("Components.tsx", source, {
+      reactCompiler: { reportDiagnostics: true },
+    });
+    expect(reported.fatal).toBe(false);
+    expect(reported.code).toBe(silent.code);
+    expect(reported.errors).toHaveLength(1);
+    expect(reported.errors[0]).toMatchObject({
+      severity: "Error",
+      message: "React rule suppression prevents optimization",
+    });
+    expect(reported.errors[0].codeframe).toContain("react-compiler(Suppression)");
+    const [label] = reported.errors[0].labels;
+    expect(source.slice(label.start, label.end)).toBe(
+      "// eslint-disable-next-line react-hooks/exhaustive-deps",
+    );
+  });
+
+  it("reports every recoverable diagnostic with its own severity", () => {
+    const result = transformSync(
+      "Components.tsx",
+      `import { useReactTable } from "@tanstack/react-table";
+      function Table() {
+        const table = useReactTable({});
+        return <div>{table}</div>;
+      }
+      function Suppressed({ value }: { value: number }) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        return <div>{value}</div>;
+      }
+      export function Component(props: { text: string }) {
+        return <span>{props.text}</span>;
+      }`,
+      { reactCompiler: { reportDiagnostics: true } },
+    );
+
+    expect(result.fatal).toBe(false);
+    expect(result.code).toContain("_c(");
+    expect(result.errors.map((error) => [error.severity, error.message])).toEqual([
+      ["Warning", "Use of incompatible library"],
+      ["Error", "React rule suppression prevents optimization"],
+    ]);
+  });
+
+  it("reports lint findings with reportDiagnostics", () => {
+    const result = transformSync(
+      "Component.tsx",
+      `function Component({ value }: { value: number }) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        const doubled = value * 2;
+        return <div>{doubled}</div>;
+      }`,
+      { reactCompiler: { outputMode: "lint", reportDiagnostics: true } },
+    );
+
+    expect(result.fatal).toBe(false);
+    expect(result.code).not.toContain("_c(");
+    expect(result.code).not.toContain(": number");
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].message).toBe("React rule suppression prevents optimization");
   });
 
   it.each(["critical_errors", "all_errors"] as const)(

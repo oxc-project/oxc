@@ -1,10 +1,11 @@
-use crate::opmap::{KW_KIND_BASE, PUNCT1_KIND_UNKNOWN};
+use crate::token::{KW_KIND_BASE, tk};
 
-use super::super::{
-    IDENT, IDENT_ESC,
+use crate::pipeline::{
     bitmap::{bm_clear, bm_get, bm_prev1},
+    cpu::{Cpu, apply, cpu_versions},
 };
 
+#[apply(cpu_versions)]
 #[inline]
 pub unsafe fn misc_post(
     src: *const u8,
@@ -14,12 +15,15 @@ pub unsafe fn misc_post(
     misc: *const u64,
     kind: *mut u8,
     nesc: usize,
+    cpu: impl Cpu,
 ) {
     if nesc != 0 {
-        misc_post_impl(src, n, st, word, misc, kind)
+        misc_post_impl(src, n, st, word, misc, kind, cpu)
     }
 }
 
+#[apply(cpu_versions)]
+#[inline(never)]
 unsafe fn misc_post_impl(
     src: *const u8,
     n: usize,
@@ -27,6 +31,7 @@ unsafe fn misc_post_impl(
     word: *const u64,
     misc: *const u64,
     kind: *mut u8,
+    _cpu: impl Cpu,
 ) {
     let nw = (n + 63) >> 6;
     for w in 0..nw {
@@ -46,8 +51,8 @@ unsafe fn misc_post_impl(
             }
             let tt = bm_prev1(st, p);
             let k = *kind.add(tt as usize);
-            if k == IDENT || (k >= KW_KIND_BASE && k != PUNCT1_KIND_UNKNOWN) {
-                *kind.add(tt as usize) = IDENT_ESC;
+            if k == tk!(Ident) || (k >= KW_KIND_BASE && k != tk!(Invalid)) {
+                *kind.add(tt as usize) = tk!(IdentEscaped);
                 bm_clear(st, p);
             }
         }

@@ -1,7 +1,9 @@
-use oxc_ast::AstKind;
-use oxc_ast::ast::{
-    Argument, BindingPattern, CatchClause, Expression, Function, IdentifierReference,
-    ObjectExpression, ObjectPropertyKind, PropertyKey, ThrowStatement, TryStatement,
+use oxc_ast::{
+    AstKind,
+    ast::{
+        Argument, BindingPattern, CatchClause, Expression, Function, IdentifierReference,
+        ObjectExpression, ObjectPropertyKind, PropertyKey, ThrowStatement, TryStatement,
+    },
 };
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
@@ -84,6 +86,9 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
             let Some(ident) = self.catch_param.get_identifier_name() else {
                 return fixer.noop();
             };
+            // Keep the catch binding unchanged as part of each fix, so removing or renaming it
+            // conflicts with inserting a reference to it (e.g. `prefer-optional-catch-binding`).
+            let preserve_catch_param = || fixer.replace_with(self.catch_param, self.catch_param);
             let cause_prop_text = format!("cause: {}", ident.as_str());
 
             match args.len() {
@@ -98,7 +103,7 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                         throw_stmt.argument.span().end,
                         "(",
                     ) {
-                        let mut fix = fixer.new_fix_with_capacity(3);
+                        let mut fix = fixer.new_fix_with_capacity(4);
                         let span = Span::sized(args_start + offset, 1);
                         if let Expression::Identifier(ident) = callee
                             && is_aggregate_error(ident, self.ctx)
@@ -110,13 +115,13 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                         fix.push(
                             fixer.insert_text_after_range(span, format!("{{ {cause_prop_text} }}")),
                         );
-                        return fix.with_message(ADD_CAUSE_PROPERTY);
+                        return fix.extend(preserve_catch_param()).with_message(ADD_CAUSE_PROPERTY);
                     }
                 }
                 1 => {
                     let span = args[0].span();
                     // insert comma
-                    let mut fix = fixer.new_fix_with_capacity(3);
+                    let mut fix = fixer.new_fix_with_capacity(4);
                     if let Expression::Identifier(ident) = callee
                         && is_aggregate_error(ident, self.ctx)
                     {
@@ -127,7 +132,7 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                     fix.push(
                         fixer.insert_text_after_range(span, format!("{{ {cause_prop_text} }}")),
                     );
-                    return fix.with_message(ADD_CAUSE_PROPERTY);
+                    return fix.extend(preserve_catch_param()).with_message(ADD_CAUSE_PROPERTY);
                 }
                 2 => {
                     if let Expression::Identifier(ident) = callee
@@ -135,12 +140,12 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                     {
                         // AggregateError takes options as its third argument
                         let span = args[1].span();
-                        let mut fix = fixer.new_fix_with_capacity(2);
+                        let mut fix = fixer.new_fix_with_capacity(3);
                         fix.push(fixer.insert_text_after_range(span, ", "));
                         fix.push(
                             fixer.insert_text_after_range(span, format!("{{ {cause_prop_text} }}")),
                         );
-                        return fix.with_message(ADD_CAUSE_PROPERTY);
+                        return fix.extend(preserve_catch_param()).with_message(ADD_CAUSE_PROPERTY);
                     }
 
                     // if the second argument is an existing object, merge into it
@@ -163,10 +168,12 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                                 if prop.shorthand || prop.method || prop.kind.is_accessor() {
                                     return fixer
                                         .replace(prop.span(), cause_prop_text)
+                                        .extend(preserve_catch_param())
                                         .with_message(REPLACE_CAUSE_PROPERTY);
                                 }
                                 return fixer
                                     .replace(prop.value.span(), ident.as_str().to_string())
+                                    .extend(preserve_catch_param())
                                     .with_message(REPLACE_CAUSE_PROPERTY);
                             }
                         } else if obj_expr.properties.is_empty() {
@@ -175,14 +182,17 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                                     obj_expr.span().shrink_right(1),
                                     format!(" {cause_prop_text} "),
                                 )
+                                .extend(preserve_catch_param())
                                 .with_message(ADD_CAUSE_PROPERTY);
                         } else if let Some(last_prop) = obj_expr.properties.last() {
-                            let mut fix = fixer.new_fix_with_capacity(2);
+                            let mut fix = fixer.new_fix_with_capacity(3);
                             fix.push(fixer.insert_text_after_range(last_prop.span(), ", "));
                             fix.push(
                                 fixer.insert_text_after_range(last_prop.span(), cause_prop_text),
                             );
-                            return fix.with_message(ADD_CAUSE_PROPERTY);
+                            return fix
+                                .extend(preserve_catch_param())
+                                .with_message(ADD_CAUSE_PROPERTY);
                         }
                     }
                 }
@@ -243,7 +253,7 @@ fn has_cause_property(
 }
 
 fn is_catch_parameter(expr: &Expression, catch_param: &BindingPattern, ctx: &LintContext) -> bool {
-    let oxc_ast::ast::BindingPattern::BindingIdentifier(binding) = &catch_param else {
+    let BindingPattern::BindingIdentifier(binding) = &catch_param else {
         return false;
     };
 
@@ -294,6 +304,7 @@ declare_oxc_lint!(
     PreserveCaughtError,
     eslint,
     suspicious,
+    recommended,
     conditional_fix,
     config = PreserveCaughtErrorOptions,
     version = "1.16.0",
@@ -897,7 +908,7 @@ fn test() {
             }"#,
             None,
         ),
-        // Multiple throw statements within a catch block
+        // Fixes sharing a catch binding overlap, so only the first throw is fixed per pass
         (
             r#"try {
                 doSomething();
@@ -913,7 +924,7 @@ fn test() {
                 if (err.code === "A") {
                     throw new Error("Type A", { cause: err });
                 }
-                throw new TypeError("Fallback error", { cause: err });
+                throw new TypeError("Fallback error");
             }"#,
             None,
         ),
@@ -1105,6 +1116,12 @@ fn test() {
             } catch (error) {
                 throw new Error("Something failed", { cause: error });
             }"#,
+            None,
+        ),
+        // A later pass fixes the remaining throw while preserving the same catch binding.
+        (
+            r#"try {} catch (err) { if (err.code === "A") { throw new Error("Type A", { cause: err }); } throw new TypeError("Fallback error"); }"#,
+            r#"try {} catch (err) { if (err.code === "A") { throw new Error("Type A", { cause: err }); } throw new TypeError("Fallback error", { cause: err }); }"#,
             None,
         ),
     ];

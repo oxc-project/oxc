@@ -54,7 +54,7 @@ impl<'a> Normalize {
 impl<'a> Traverse<'a> for Normalize {
     fn exit_program(&mut self, node: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         if self.options.remove_unnecessary_use_strict && node.source_type.is_module() {
-            node.directives.drain_filter(|d| d.directive.as_str() == "use strict");
+            node.directives.drain_filter(|d| d.is_use_strict());
         }
     }
 
@@ -101,15 +101,11 @@ impl<'a> Traverse<'a> for Normalize {
     fn exit_statements(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        _ctx: &mut TraverseCtx<'a>,
     ) {
         // No console handling here: `exit_expression` has already rewritten
         // every console call (statement position included) to `void 0`.
-        stmts.retain(|stmt| match stmt {
-            Statement::EmptyStatement(_) => false,
-            Statement::DebuggerStatement(_) if ctx.options().drop_debugger => false,
-            _ => true,
-        });
+        stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
     }
 
     fn exit_variable_declaration(
@@ -124,6 +120,10 @@ impl<'a> Traverse<'a> for Normalize {
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
+            Statement::DebuggerStatement(debugger) if ctx.options().drop_debugger => {
+                let new_stmt = Statement::new_empty_statement(debugger.span, ctx);
+                ctx.replace_statement(stmt, new_stmt);
+            }
             Statement::WhileStatement(_) if self.options.convert_while_to_fors => {
                 Self::convert_while_to_for(stmt, ctx);
             }
@@ -261,7 +261,7 @@ impl<'a> Normalize {
         stmt.replace_with(|stmt| {
             let Statement::WhileStatement(while_stmt) = stmt else { unreachable!() };
             let while_stmt = while_stmt.unbox();
-            let for_stmt = ForStatement::boxed_with_scope_id(
+            Statement::new_for_statement_with_scope_id(
                 while_stmt.span,
                 None,
                 Some(while_stmt.test),
@@ -269,8 +269,7 @@ impl<'a> Normalize {
                 while_stmt.body,
                 ctx.create_child_scope_of_current(ScopeFlags::empty()),
                 ctx,
-            );
-            Statement::ForStatement(for_stmt)
+            )
         });
     }
 
@@ -360,8 +359,7 @@ impl<'a> Normalize {
         // `replace_expression` walks the dropped ident into `PassChanges`, so
         // its resolved reference is pruned by `finish_normalize_pass`,
         // before pass 1 — otherwise the symbol would look referenced forever.
-        let new_arg =
-            Expression::new_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal, ctx);
+        let new_arg = Expression::new_number_0(ident.span, ctx);
         ctx.replace_expression(&mut e.argument, new_arg);
     }
 
@@ -377,6 +375,10 @@ impl<'a> Normalize {
             return None;
         }
         if !ctx.is_global_reference(ident) {
+            return None;
+        }
+        // `delete Number.NaN` is false (or throws in strict mode), but `delete NaN` is true.
+        if Self::is_unary_delete_ancestor(ctx.ancestors()) {
             return None;
         }
         Some(Expression::new_nan(ident.span, ctx))
@@ -678,7 +680,7 @@ impl<'a> Normalize {
                 .map(|scope_id| ctx.scoping().scope_flags(scope_id))
                 .is_some_and(ScopeFlags::is_strict_mode)
         {
-            body.directives.drain_filter(|d| d.directive.as_str() == "use strict");
+            body.directives.drain_filter(|d| d.is_use_strict());
         }
     }
 }

@@ -13,7 +13,7 @@ $typed-tail-comment: red /* keep typed tail */;
 /* A $var declaration keeps Css's <any-value> raw fallback.
    `$raw-close` and `$raw-paren` DIVERGE from Prettier:
    textual substitution makes raw bytes semantic
-   (DIVERGENCES.md "postcss-simple-var-raw-verbatim"). */
+   (DIVERGENCES.md#postcss-simple-var-raw-verbatim). */
 $raw-close: */;
 $raw-tail-comment: */ /* keep raw tail */;
 $raw-selector: .foo > bar;
@@ -61,7 +61,7 @@ $typed-tail-comment: red /* keep typed tail */;
 /* A $var declaration keeps Css's <any-value> raw fallback.
    `$raw-close` and `$raw-paren` DIVERGE from Prettier:
    textual substitution makes raw bytes semantic
-   (DIVERGENCES.md "postcss-simple-var-raw-verbatim"). */
+   (DIVERGENCES.md#postcss-simple-var-raw-verbatim). */
 $raw-close: */;
 $raw-tail-comment: */ /* keep raw tail */;
 $raw-selector: .foo > bar;
@@ -93,12 +93,7 @@ $raw-paren: (
 
 /* multi-value lists in $var declarations break one per line */
 $fontFamily:
-  "Lato",
-  -apple-system,
-  "Helvetica Neue",
-  Helvetica,
-  Arial,
-  sans-serif;
+  "Lato", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
 
 -------------------
 { printWidth: 100 }
@@ -114,7 +109,7 @@ $typed-tail-comment: red /* keep typed tail */;
 /* A $var declaration keeps Css's <any-value> raw fallback.
    `$raw-close` and `$raw-paren` DIVERGE from Prettier:
    textual substitution makes raw bytes semantic
-   (DIVERGENCES.md "postcss-simple-var-raw-verbatim"). */
+   (DIVERGENCES.md#postcss-simple-var-raw-verbatim). */
 $raw-close: */;
 $raw-tail-comment: */ /* keep raw tail */;
 $raw-selector: .foo > bar;
@@ -145,12 +140,6 @@ $raw-paren: (
 }
 
 /* multi-value lists in $var declarations break one per line */
-$fontFamily:
-  "Lato",
-  -apple-system,
-  "Helvetica Neue",
-  Helvetica,
-  Arial,
-  sans-serif;
+$fontFamily: "Lato", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
 
 ===================== End =====================

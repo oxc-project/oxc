@@ -76,6 +76,7 @@ declare_oxc_lint!(
     NoHtmlLinkForPages,
     nextjs,
     correctness,
+    recommended,
     version = "1.7.0",
     short_description = "Prevents the usage of `<a>` elements to navigate between Next.js pages.",
 );
@@ -148,7 +149,7 @@ impl Rule for NoHtmlLinkForPages {
                 // String literal href - check if it's an internal link
                 JSXAttributeValue::StringLiteral(str_lit) => {
                     let href_value = str_lit.value.as_str();
-                    is_internal_page_link(href_value)
+                    href_value.is_some_and(is_internal_page_link)
                 }
                 // Expression href (dynamic) - ignore, can't statically determine if internal
                 _ => false,

@@ -1,23 +1,22 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
-        ArrowFunctionExpression, BindingPattern, Expression, FunctionType, PropertyKind,
-        ReturnStatement, TSType, TSTypeName,
+        ArrowFunctionExpression, BindingPattern, Expression, Function, FunctionType, PropertyKind,
+        ReturnStatement,
     },
 };
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 use oxc_str::CompactStr;
-use oxc_syntax::operator::UnaryOperator;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
-    ast_util::{iter_outer_expressions, outermost_paren_parent},
+    ast_util::{is_iife, outermost_paren_parent},
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
 };
@@ -304,8 +303,7 @@ impl ExplicitFunctionReturnType {
             return false;
         }
         let Some(expr) = func.get_expression() else { return false };
-        let Expression::UnaryExpression(unary_expr) = expr else { return false };
-        matches!(unary_expr.operator, UnaryOperator::Void)
+        expr.is_void()
     }
 
     fn is_allowed_function<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
@@ -314,7 +312,7 @@ impl ExplicitFunctionReturnType {
                 if self.allow_functions_without_type_parameters && func.type_parameters.is_none() {
                     return true;
                 }
-                if self.allow_iifes && is_iife(node, ctx) {
+                if self.allow_iifes && is_iife(node, ctx.semantic()) {
                     return true;
                 }
                 if self.allowed_names.is_empty() {
@@ -329,7 +327,7 @@ impl ExplicitFunctionReturnType {
                 if self.allow_functions_without_type_parameters && func.type_parameters.is_none() {
                     return true;
                 }
-                if self.allow_iifes && is_iife(node, ctx) {
+                if self.allow_iifes && is_iife(node, ctx.semantic()) {
                     return true;
                 }
                 if self.allowed_names.is_empty() {
@@ -357,19 +355,25 @@ impl ExplicitFunctionReturnType {
                 self.allowed_names.contains(id.name.as_str())
             }
             AstKind::MethodDefinition(def) => {
-                let Some(name) = def.key.name() else { return false };
+                let Some(name) = def.key.name().and_then(StaticPropertyName::into_cow_str) else {
+                    return false;
+                };
                 def.key.is_identifier()
                     && !def.computed
                     && self.allowed_names.contains(name.as_ref())
             }
             AstKind::PropertyDefinition(def) => {
-                let Some(name) = def.key.name() else { return false };
+                let Some(name) = def.key.name().and_then(StaticPropertyName::into_cow_str) else {
+                    return false;
+                };
                 def.key.is_identifier()
                     && !def.computed
                     && self.allowed_names.contains(name.as_ref())
             }
             AstKind::ObjectProperty(prop) => {
-                let Some(name) = prop.key.name() else { return false };
+                let Some(name) = prop.key.name().and_then(StaticPropertyName::into_cow_str) else {
+                    return false;
+                };
                 prop.key.is_identifier()
                     && !prop.computed
                     && self.allowed_names.contains(name.as_ref())
@@ -418,24 +422,10 @@ impl ExplicitFunctionReturnType {
 
         match expr {
             Expression::TSAsExpression(ts_expr) => {
-                let TSType::TSTypeReference(ts_type) = &ts_expr.type_annotation else {
-                    return false;
-                };
-                let TSTypeName::IdentifierReference(id_ref) = &ts_type.type_name else {
-                    return false;
-                };
-
-                id_ref.name == "const"
+                ts_expr.type_annotation.is_const_type_reference()
             }
             Expression::TSTypeAssertion(ts_expr) => {
-                let TSType::TSTypeReference(ts_type) = &ts_expr.type_annotation else {
-                    return false;
-                };
-                let TSTypeName::IdentifierReference(id_ref) = &ts_type.type_name else {
-                    return false;
-                };
-
-                id_ref.name == "const"
+                ts_expr.type_annotation.is_const_type_reference()
             }
             _ => false,
         }
@@ -459,19 +449,10 @@ impl ExplicitFunctionReturnType {
         if let AstKind::ArrowFunctionExpression(arrow_func_expr) = node.kind()
             && let Some(func_body_expr) = arrow_func_expr.get_expression()
         {
-            return is_function(func_body_expr);
+            return func_body_expr.get_inner_expression().is_function();
         }
         all_return_statements_are_functions(node)
     }
-}
-
-// check function is IIFE (Immediately Invoked Function Expression)
-fn is_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(AstKind::CallExpression(call)) = iter_outer_expressions(ctx.nodes(), node.id()).next()
-    else {
-        return false;
-    };
-    call.callee.span().contains_inclusive(node.span())
 }
 
 /**
@@ -585,13 +566,6 @@ fn is_typed_jsx(node: &AstNode) -> bool {
     matches!(node.kind(), AstKind::JSXExpressionContainer(_) | AstKind::JSXSpreadAttribute(_))
 }
 
-fn is_function(expr: &Expression) -> bool {
-    matches!(
-        expr.get_inner_expression(),
-        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
-    )
-}
-
 fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
 
@@ -660,16 +634,13 @@ struct ReturnStatementChecker {
 impl<'a> VisitJs<'a> for ReturnStatementChecker {
     fn visit_return_statement(&mut self, return_statement: &ReturnStatement<'a>) {
         self.has_return = true;
-        self.all_returns_are_functions &=
-            return_statement.argument.as_ref().is_some_and(|argument| is_function(argument));
+        self.all_returns_are_functions &= return_statement
+            .argument
+            .as_ref()
+            .is_some_and(|argument| argument.get_inner_expression().is_function());
     }
 
-    fn visit_function(
-        &mut self,
-        _func: &oxc_ast::ast::Function<'a>,
-        _flags: oxc_semantic::ScopeFlags,
-    ) {
-    }
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
 
     fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {}
 }

@@ -8,7 +8,6 @@ use oxc_css_parser::ast::{
     SassUseNamespaceKind, SassVariableDeclaration, SimpleBlock,
 };
 use oxc_formatter_core::{
-    Buffer,
     builders::{
         dedent, empty_line, group, hard_line_break, if_group_breaks, indent, soft_line_break,
         soft_line_break_or_space, space, text,
@@ -54,6 +53,7 @@ pub(super) fn write_sass_variable_declaration<'a>(
         .comments()
         .iter_before(value_start)
         .next()
+        .copied()
         .is_some_and(|c| value::comment_is_own_line(c, source));
     let hard_list = top_level_value_breaks_hard(&decl.value, ctx, f);
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
@@ -118,7 +118,7 @@ pub(super) fn top_level_value_breaks_hard<'a>(
         .iter_before(value_span.end)
         .any(|c| c.span.start >= value_span.start);
     has_comments
-        || elements.iter().enumerate().any(|(i, el)| {
+        || elements.iter().any(|el| {
             let group = match el {
                 ComponentValue::SassList(inner) if inner.comma_spans.is_none() => {
                     &inner.elements[..]
@@ -128,7 +128,7 @@ pub(super) fn top_level_value_breaks_hard<'a>(
                 }
                 other => std::slice::from_ref(other),
             };
-            value::comma_group_is_multi(group, i == 0)
+            value::comma_group_is_multi(group)
         })
 }
 
@@ -386,7 +386,7 @@ pub(super) fn write_sass_map<'a>(
             }
         }
         // NOTE: Comment presence never changes the comma (Prettier drops it after a leading comment on the FIRST item);
-        // see DIVERGENCES.md "map-leading-comment-layout".
+        // see DIVERGENCES.md#map-leading-comment-layout.
         if trailing {
             write!(f, ",");
         }

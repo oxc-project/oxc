@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-// A `//` on a comma's line stays on that line (DIVERGENCES.md "line-comment-after-comma").
+// A `//` on a comma's line stays on that line (DIVERGENCES.md#line-comment-after-comma).
 @list: #aaaaaa, // Start with A
   #bbbbbb, // then some B
   #cccccc; // and round it out with C
@@ -17,7 +17,7 @@ a {
 ------------------
 { printWidth: 80 }
 ------------------
-// A `//` on a comma's line stays on that line (DIVERGENCES.md "line-comment-after-comma").
+// A `//` on a comma's line stays on that line (DIVERGENCES.md#line-comment-after-comma).
 @list:
   #aaaaaa, // Start with A
   #bbbbbb, // then some B
@@ -35,7 +35,7 @@ a {
 -------------------
 { printWidth: 100 }
 -------------------
-// A `//` on a comma's line stays on that line (DIVERGENCES.md "line-comment-after-comma").
+// A `//` on a comma's line stays on that line (DIVERGENCES.md#line-comment-after-comma).
 @list:
   #aaaaaa, // Start with A
   #bbbbbb, // then some B

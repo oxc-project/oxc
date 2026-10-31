@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentTargetMaybeDefault, AssignmentTargetProperty, AssignmentTargetPropertyProperty,
-        BindingPattern, BindingProperty, ImportOrExportKind,
+        BindingPattern, BindingProperty,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -159,12 +159,11 @@ impl Rule for NoUselessRename {
                     |fixer| {
                         let local_text =
                             import_specifier.local.span.source_text(ctx.source_text()).to_string();
-                        let replacement =
-                            if import_specifier.import_kind == ImportOrExportKind::Type {
-                                format!("type {local_text}")
-                            } else {
-                                local_text
-                            };
+                        let replacement = if import_specifier.import_kind.is_type() {
+                            format!("type {local_text}")
+                        } else {
+                            local_text
+                        };
                         fixer.replace(import_specifier.span, replacement)
                     },
                 );
@@ -187,12 +186,11 @@ impl Rule for NoUselessRename {
                                     .span()
                                     .source_text(ctx.source_text())
                                     .to_string();
-                                let replacement =
-                                    if specifier.export_kind == ImportOrExportKind::Type {
-                                        format!("type {local_text}")
-                                    } else {
-                                        local_text
-                                    };
+                                let replacement = if specifier.export_kind.is_type() {
+                                    format!("type {local_text}")
+                                } else {
+                                    local_text
+                                };
                                 fixer.replace(specifier.span, replacement)
                             },
                         );
@@ -215,12 +213,11 @@ impl Rule for NoUselessRename {
                                     .span()
                                     .source_text(ctx.source_text())
                                     .to_string();
-                                let replacement =
-                                    if specifier.export_kind == ImportOrExportKind::Type {
-                                        format!("type {local_text}")
-                                    } else {
-                                        local_text
-                                    };
+                                let replacement = if specifier.export_kind.is_type() {
+                                    format!("type {local_text}")
+                                } else {
+                                    local_text
+                                };
                                 fixer.replace(specifier.span, replacement)
                             },
                         );

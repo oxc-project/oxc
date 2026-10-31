@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
 use oxc_span::Span;
-use tower_lsp_server::ls_types::{
-    self, CodeDescription, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity,
-    NumberOrString, Range, Uri,
+use tower_lsp_server::gen_lsp_types::{
+    Code, CodeDescription, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, Location,
+    Message as LspMessage, Range, Uri,
 };
 
 use oxc_diagnostics::{OxcCode, Severity};
@@ -14,7 +14,7 @@ use oxc_linter::{
 
 use crate::lsp::{
     options::{RuleCustomizationSeverity, RulesCustomization},
-    utils::get_full_rule_name,
+    utils::{get_full_rule_name, get_oxc_diagnostic_full_message},
 };
 
 #[derive(Debug, Clone, Default)]
@@ -54,12 +54,12 @@ impl RulesCustomization {
 impl TryFrom<RuleCustomizationSeverity> for DiagnosticSeverity {
     type Error = &'static str;
 
-    fn try_from(value: RuleCustomizationSeverity) -> Result<Self, Self::Error> {
+    fn try_from(value: RuleCustomizationSeverity) -> Result<Self, &'static str> {
         match value {
-            RuleCustomizationSeverity::Error => Ok(DiagnosticSeverity::ERROR),
-            RuleCustomizationSeverity::Warn => Ok(DiagnosticSeverity::WARNING),
-            RuleCustomizationSeverity::Hint => Ok(DiagnosticSeverity::HINT),
-            RuleCustomizationSeverity::Info => Ok(DiagnosticSeverity::INFORMATION),
+            RuleCustomizationSeverity::Error => Ok(DiagnosticSeverity::Error),
+            RuleCustomizationSeverity::Warn => Ok(DiagnosticSeverity::Warning),
+            RuleCustomizationSeverity::Hint => Ok(DiagnosticSeverity::Hint),
+            RuleCustomizationSeverity::Info => Ok(DiagnosticSeverity::Information),
             RuleCustomizationSeverity::Off => Err(
                 "Off severity should not be converted to DiagnosticSeverity as it means the rule is disabled and should not produce diagnostics.",
             ),
@@ -69,9 +69,9 @@ impl TryFrom<RuleCustomizationSeverity> for DiagnosticSeverity {
 
 fn severity_to_lsp_severity(value: Severity) -> DiagnosticSeverity {
     match value {
-        Severity::Error => DiagnosticSeverity::ERROR,
-        Severity::Warning => DiagnosticSeverity::WARNING,
-        Severity::Advice => DiagnosticSeverity::HINT,
+        Severity::Error => DiagnosticSeverity::Error,
+        Severity::Warning => DiagnosticSeverity::Warning,
+        Severity::Advice => DiagnosticSeverity::Hint,
     }
 }
 pub fn message_to_lsp_diagnostic(
@@ -104,10 +104,10 @@ pub fn message_to_lsp_diagnostic(
                     let start_position = lsp_offset_to_position(source_text, offset);
                     let end_position = lsp_offset_to_position(source_text, offset + span.len());
 
-                    ls_types::DiagnosticRelatedInformation {
-                        location: ls_types::Location {
+                    DiagnosticRelatedInformation {
+                        location: Location {
                             uri: uri.clone(),
-                            range: ls_types::Range::new(start_position, end_position),
+                            range: Range::new(start_position, end_position),
                         },
                         message: span
                             .label()
@@ -130,28 +130,13 @@ pub fn message_to_lsp_diagnostic(
         .and_then(|url| url.parse().ok())
         .map(|href| CodeDescription { href });
 
-    let mut diagnostic_message = String::with_capacity(
-        message.error.message.len()
-            + message.error.help.as_ref().map_or(0, |h| h.len() + 7) // "help: " prefix
-            + message.error.note.as_ref().map_or(0, |n| n.len() + 7), // "note: " prefix
-    );
-
-    diagnostic_message.push_str(&message.error.message);
-    if let Some(help) = &message.error.help {
-        diagnostic_message.push_str("\nhelp: ");
-        diagnostic_message.push_str(help);
-    }
-
-    if let Some(note) = &message.error.note {
-        diagnostic_message.push_str("\nnote: ");
-        diagnostic_message.push_str(note);
-    }
+    let diagnostic_message = get_oxc_diagnostic_full_message(&message.error);
 
     let diagnostic = Diagnostic {
         range,
         severity: Some(severity),
-        code: Some(NumberOrString::String(code)),
-        message: diagnostic_message,
+        code: Some(Code::String(code)),
+        message: LspMessage::String(diagnostic_message),
         source: Some("oxc".into()),
         code_description,
         related_information,
@@ -224,7 +209,7 @@ pub fn generate_inverted_diagnostics(
             continue;
         };
         let related_information = Some(vec![DiagnosticRelatedInformation {
-            location: ls_types::Location { uri: uri.clone(), range: d.diagnostic.range },
+            location: Location { uri: uri.clone(), range: d.diagnostic.range },
             message: "original diagnostic".to_string(),
         }]);
         for r in related_info {
@@ -239,9 +224,9 @@ pub fn generate_inverted_diagnostics(
             inverted_diagnostics.push(DiagnosticReport {
                 diagnostic: Diagnostic {
                     range: r.location.range,
-                    severity: Some(DiagnosticSeverity::HINT),
+                    severity: Some(DiagnosticSeverity::Hint),
                     code: None,
-                    message: r.message.clone(),
+                    message: LspMessage::String(r.message.clone()),
                     source: d.diagnostic.source.clone(),
                     code_description: None,
                     related_information: related_information.clone(),
@@ -265,9 +250,9 @@ pub fn create_unused_directives_report(
     let fix_message = "remove unused disable directive";
 
     let severity = if severity == AllowWarnDeny::Deny {
-        DiagnosticSeverity::ERROR
+        DiagnosticSeverity::Error
     } else {
-        DiagnosticSeverity::WARNING
+        DiagnosticSeverity::Warning
     };
 
     // Report unused disable comments
@@ -337,7 +322,7 @@ fn build_unused_disable_diagnostic_report(
             range,
             severity: Some(severity),
             code: Some("".into()),
-            message,
+            message: LspMessage::String(message),
             source: Some("oxc".into()),
             code_description: None,
             related_information: None,

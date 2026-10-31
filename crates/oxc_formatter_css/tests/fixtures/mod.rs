@@ -3,16 +3,16 @@
 //! (a divergence needs its own pin; the big conformance file is only a regression net).
 //!
 //! Expected outputs were verified against `prettier` by hand;
-//! when adding a fixture, do the same (`npx prettier@<oxfmt-bundle-version> --parser <variant>`).
+//! when adding a fixture, do the same with the oxfmt-bundled one
+//! (`node apps/oxfmt/node_modules/prettier/bin/prettier.cjs --parser <variant>`, see `FORMATTER_POLICY.md` "Verification").
 
 use std::path::Path;
 
 use oxc_allocator::{Allocator, ArenaVec};
-use oxc_formatter_css::{CssFormatOptions, CssVariant, format, parse_for_format};
-use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
-
-mod options;
-use options::apply_css_options;
+use oxc_formatter_css::{
+    CssFormatOptions, CssRoot, CssVariant, TrailingCommas, format, parse_for_format,
+};
+use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
 
 struct CssHarness;
 
@@ -26,10 +26,17 @@ impl FixtureFormatter for CssHarness {
     type Options = CssFormatOptions;
     type Fingerprint = Fingerprint;
 
-    fn parse_options(json: &OptionSet) -> Self::Options {
-        let mut options = CssFormatOptions::default();
-        apply_css_options(&mut options, json);
-        options
+    fn apply_option(options: &mut Self::Options, key: &str, value: &OptionValue) -> bool {
+        match key {
+            "trailingComma" => {
+                if let Some(s) = value.as_str() {
+                    options.trailing_commas =
+                        if s == "none" { TrailingCommas::Never } else { TrailingCommas::Always };
+                }
+            }
+            _ => return false,
+        }
+        true
     }
 
     fn format(source: &str, path: &Path, options: &Self::Options) -> String {
@@ -54,7 +61,7 @@ impl FixtureFormatter for CssHarness {
             &allocator,
             source,
             options,
-            /* template_placeholders */ is_embedded(path),
+            if is_embedded(path) { CssRoot::CssInJsTemplate } else { CssRoot::Stylesheet },
         )
         .expect("source should parse");
         Fingerprint { comments: parsed.comments.len() }
@@ -80,13 +87,16 @@ fn is_embedded(path: &Path) -> bool {
 /// Format through `format_to_ir` and print the raw IR, mirroring what the
 /// oxfmt dispatcher + parent template printing do (minus `${}` substitution).
 fn format_embedded(source: &str, options: CssFormatOptions) -> String {
-    use oxc_formatter_core::{Document, FormatElement, FormatOptions, TextWidth};
+    use oxc_formatter_core::{Document, FormatElement, FormatOptions};
 
     let allocator = Allocator::default();
     let session =
         oxc_formatter_core::FormatSession::new(&allocator, oxc_formatter_core::InputKind::Fragment);
     let embedded = oxc_formatter_css::format_to_ir(
-        &session, source, options, /* template_placeholders */ true,
+        &session,
+        source,
+        options,
+        Some(oxc_formatter_css::CssEmbeddedIn::CssInJsTemplate),
     )
     .expect("format should succeed");
     // Simulate the host: replace each typed placeholder with the canonical
@@ -96,10 +106,7 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
         embedded.ir.iter().map(|element| match element {
             FormatElement::EmbedPlaceholder(index) => {
                 let text = allocator.alloc_str(&std::format!("`PLACEHOLDER-{index}`"));
-                FormatElement::Text {
-                    text,
-                    width: TextWidth::from_text(text, options.indent_width),
-                }
+                FormatElement::text(text, options.indent_width)
             }
             other => other.clone(),
         }),
@@ -153,7 +160,7 @@ fn parse_error_is_err() {
     let scss = CssFormatOptions { variant: CssVariant::Scss, ..css };
     let less = CssFormatOptions { variant: CssVariant::Less, ..css };
     for (source, options) in [
-        // Root declaration: `TopLevelDeclaration` outside the css-in-js parse mode
+        // Root declaration: `TopLevelDeclaration` in a stylesheet, as opposed to a fragment (`CssRoot`)
         // (dart-sass rejects it; Less parses it like less.js).
         ("display: flex;", scss),
         // EOF/newline-unclosed constructs: oxc-css-parser (0.0.6+) recovers to a

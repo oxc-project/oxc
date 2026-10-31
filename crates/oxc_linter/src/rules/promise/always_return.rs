@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, Statement, UnaryOperator},
+    ast::{AssignmentTarget, Expression, Statement},
 };
 use oxc_cfg::{
     EdgeType, ErrorEdgeKind, InstructionKind,
@@ -183,6 +183,7 @@ declare_oxc_lint!(
     AlwaysReturn,
     promise,
     suspicious,
+    recommended,
     config = AlwaysReturnConfig,
     version = "1.13.0",
     short_description = "Require returning inside each `then()` to create readable and reusable Promise chains.",
@@ -263,7 +264,7 @@ fn is_last_callback(node: &AstNode, ctx: &LintContext) -> bool {
             }
             AstKind::UnaryExpression(unary_expr) => {
                 // e.g. void promise.then(() => value)
-                return unary_expr.operator == UnaryOperator::Void;
+                return unary_expr.operator.is_void();
             }
             AstKind::SequenceExpression(sequence_expr) => {
                 // e.g. (promise.then(() => value), expr)

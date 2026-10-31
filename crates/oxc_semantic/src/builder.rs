@@ -17,6 +17,7 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_ecmascript::IsSimpleParameterList;
 use oxc_span::{SourceType, Span};
 use oxc_str::Ident;
 use oxc_syntax::{
@@ -81,6 +82,8 @@ pub struct SemanticBuilder<'a> {
     pub(crate) current_scope_id: ScopeId,
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
+    /// Duplicate-binding exclusions for the parameter list currently being visited.
+    pub(crate) formal_parameter_excludes: SymbolFlags,
     /// Nesting depth of TypeScript ambient contexts.
     ambient_depth: u32,
     /// Symbols that have been hoisted out of a scope (e.g. `var` declarations hoisted to
@@ -149,6 +152,7 @@ impl<'a> SemanticBuilder<'a> {
             source_type: SourceType::default(),
             errors: RefCell::new(Diagnostics::new()),
             current_reference_flags: ReferenceFlags::empty(),
+            formal_parameter_excludes: SymbolFlags::FunctionScopedVariableExcludes,
             ambient_depth: 0,
             current_scope_id,
             module_instance_state_cache: FxHashMap::default(),
@@ -644,11 +648,28 @@ impl<'a> SemanticBuilder<'a> {
         let root_scope_id = self.scoping.root_scope_id();
         let refs = self.unresolved_references.take();
         for unresolved in refs {
-            if !self.walk_up_resolve_reference(unresolved, root_scope_id) {
+            if !self.resolve_reference(unresolved, root_scope_id) {
                 self.scoping
                     .add_root_unresolved_reference(unresolved.name, unresolved.reference_id);
             }
         }
+    }
+
+    /// Resolve a reference by walking up the scope chain through `last_scope_id`.
+    ///
+    /// Returns `true` when lookup is finished: the reference is resolved, or it belongs to an
+    /// implicit arguments object.
+    #[expect(clippy::inline_always, reason = "Hot path — called for every reference resolution")]
+    #[inline(always)]
+    fn resolve_reference(
+        &mut self,
+        unresolved: UnresolvedReference<'a>,
+        last_scope_id: ScopeId,
+    ) -> bool {
+        if unresolved.name == "arguments" {
+            return self.resolve_arguments_reference(unresolved, last_scope_id);
+        }
+        self.walk_up_resolve_reference(unresolved, last_scope_id)
     }
 
     /// Walk up the scope chain through `last_scope_id`.
@@ -664,6 +685,50 @@ impl<'a> SemanticBuilder<'a> {
             if let Some(symbol_id) = self.scoping.get_binding(scope_id, unresolved.name)
                 && self.try_resolve_reference(unresolved.reference_id, symbol_id)
             {
+                return true;
+            }
+            if scope_id == last_scope_id {
+                return false;
+            }
+            current_scope_id = self.scoping.scope_parent_id(scope_id);
+        }
+        false
+    }
+
+    /// Resolve a reference named `arguments`.
+    ///
+    /// An ordinary function has an implicit arguments object, which has no symbol. A value
+    /// reference therefore ends its lookup at the nearest ordinary function. Unless a parameter
+    /// or declaration of that function binds the name, the reference is recorded as a root
+    /// unresolved reference, so it never resolves to a binding outside the function.
+    ///
+    /// Returns `true` when lookup is finished.
+    #[cold]
+    #[inline(never)]
+    fn resolve_arguments_reference(
+        &mut self,
+        unresolved: UnresolvedReference<'a>,
+        last_scope_id: ScopeId,
+    ) -> bool {
+        // A type named `arguments` is an ordinary type binding.
+        let flags = self.scoping.get_reference(unresolved.reference_id).flags();
+        if !flags.intersects(ReferenceFlags::Value | ReferenceFlags::ValueAsType) {
+            return self.walk_up_resolve_reference(unresolved, last_scope_id);
+        }
+
+        let mut current_scope_id = Some(unresolved.lookup_scope_id);
+        while let Some(scope_id) = current_scope_id {
+            if let Some(symbol_id) = self.scoping.get_binding(scope_id, unresolved.name)
+                // A function expression's own name lies outside its arguments environment.
+                && !self.scoping.symbol_flags(symbol_id).contains(SymbolFlags::FunctionExpression)
+                && self.try_resolve_reference(unresolved.reference_id, symbol_id)
+            {
+                return true;
+            }
+            let scope_flags = self.scoping.scope_flags(scope_id);
+            if scope_flags.is_function() && !scope_flags.is_arrow() {
+                self.scoping
+                    .add_root_unresolved_reference(unresolved.name, unresolved.reference_id);
                 return true;
             }
             if scope_id == last_scope_id {
@@ -762,7 +827,7 @@ impl<'a> SemanticBuilder<'a> {
             {
                 return true;
             }
-            if self.walk_up_resolve_reference(*unresolved, current_scope_id) {
+            if self.resolve_reference(*unresolved, current_scope_id) {
                 return false;
             }
             // Skip this function body during final resolution. An enclosing parameter resolution
@@ -2222,6 +2287,25 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_formal_parameters(&mut self, it: &FormalParameters<'a>) {
+        // Checking whether a list is simple scans its parameters. Do this once per
+        // list, rather than once per parameter when binding each name.
+        let mut excludes = SymbolFlags::FunctionScopedVariableExcludes;
+        if matches!(
+            it.kind,
+            FormalParameterKind::ArrowFormalParameters
+                | FormalParameterKind::UniqueFormalParameters
+        ) || self.strict_mode()
+            || !it.is_simple_parameter_list()
+        {
+            excludes |= SymbolFlags::FunctionScopedVariable;
+        }
+        let previous = mem::replace(&mut self.formal_parameter_excludes, excludes);
+        oxc_ast_visit::walk::walk_formal_parameters(self, it);
+        // Default values and type annotations can contain nested parameter lists.
+        self.formal_parameter_excludes = previous;
+    }
+
     fn visit_update_expression(&mut self, it: &UpdateExpression<'a>) {
         let kind = AstKind::UpdateExpression(self.alloc(it));
         self.enter_node(kind);
@@ -2239,7 +2323,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Set Write so `visit_member_expression` can detect it and mark MemberWriteTarget.
         // Only for member expressions — `delete x` (bare identifier in sloppy mode)
         // is not a property modification.
-        if it.operator == UnaryOperator::Delete && it.argument.is_member_expression() {
+        // `is_member_expression` misses `delete a?.b` (a `ChainExpression`) and
+        // `delete (a.b)` (a `ParenthesizedExpression`). Unwrap those so the
+        // member still sees the write context.
+        if it.operator == UnaryOperator::Delete && is_delete_member_target(&it.argument) {
             self.current_reference_flags = ReferenceFlags::Write;
         }
         self.visit_expression(&it.argument);
@@ -2444,7 +2531,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_ts_method_signature(&mut self, sig: &TSMethodSignature<'a>) {
         let kind = AstKind::TSMethodSignature(self.alloc(sig));
         self.enter_node(kind);
-        self.enter_scope(ScopeFlags::empty(), &sig.scope_id);
         self.visit_span(&sig.span);
         if sig.computed {
             // interface A { [prop](): string }
@@ -2453,6 +2539,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.visit_property_key(&sig.key);
         self.current_reference_flags = ReferenceFlags::empty();
+        self.enter_scope(ScopeFlags::empty(), &sig.scope_id);
         if let Some(type_parameters) = &sig.type_parameters {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
@@ -2479,13 +2566,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.visit_property_key(&method.key);
         self.current_reference_flags = ReferenceFlags::empty();
-        let flags = match method.kind {
-            MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
-            MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
-            MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
-            MethodDefinitionKind::Method => ScopeFlags::Function,
-        };
-        self.visit_function(&method.value, flags);
+        self.visit_function(&method.value, method.kind.scope_flags());
         self.leave_node(kind);
     }
 
@@ -2855,6 +2936,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_ts_type_assertion(&mut self, it: &TSTypeAssertion<'a>) {
+        let kind = AstKind::TSTypeAssertion(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_span(&it.span);
+        // The type annotation must not consume the asserted expression's reference flags.
+        let reference_flags = mem::take(&mut self.current_reference_flags);
+        self.visit_ts_type(&it.type_annotation);
+        self.current_reference_flags = reference_flags;
+        self.visit_expression(&it.expression);
+        self.leave_node(kind);
+    }
+
     fn visit_ts_type_reference(&mut self, ty: &TSTypeReference<'a>) {
         let kind = AstKind::TSTypeReference(self.alloc(ty));
         self.enter_node(kind);
@@ -2930,6 +3023,23 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_span(&it.span);
         self.visit_export_default_declaration_kind(&it.declaration);
         self.leave_node(kind);
+    }
+}
+
+/// `delete` only modifies a property when its argument is a member expression.
+///
+/// Optional chains (`delete a?.b`) are `ChainExpression`, and parentheses or
+/// type assertions wrap the member (`delete (a.b)`, `delete (a as T).b`).
+/// Bare `delete x` is not a property modification.
+fn is_delete_member_target(expr: &Expression<'_>) -> bool {
+    match expr.get_inner_expression() {
+        Expression::ChainExpression(chain) => match &chain.expression {
+            ChainElement::StaticMemberExpression(_)
+            | ChainElement::ComputedMemberExpression(_)
+            | ChainElement::PrivateFieldExpression(_) => true,
+            ChainElement::CallExpression(_) | ChainElement::TSNonNullExpression(_) => false,
+        },
+        inner => inner.is_member_expression(),
     }
 }
 

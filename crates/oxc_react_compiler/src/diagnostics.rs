@@ -944,24 +944,6 @@ where
 }
 
 #[cold]
-pub fn todo_build_hir_lower_expression_handle_update_expression_variables_captured_within_lambdas<
-    L,
-    T,
->(
-    labels: T,
-) -> OxcDiagnostic
-where
-    L: Into<oxc_diagnostics::LabeledSpan>,
-    T: IntoIterator<Item = L>,
-{
-    diagnostic(
-        ErrorCategory::Todo,
-        "(BuildHIR::lowerExpression) Handle UpdateExpression to variables captured within lambdas.",
-    )
-    .with_labels(labels)
-}
-
-#[cold]
 pub fn todo_update_expression_where_argument_global_not_yet_supported<L, T>(
     labels: T,
 ) -> OxcDiagnostic
@@ -1450,6 +1432,15 @@ pub fn local_fbt_variable(span: Option<Span>) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn todo_member_expression_chain_too_long(span: Span, max_length: usize) -> OxcDiagnostic {
+    diagnostic(
+        ErrorCategory::Todo,
+        format!("Support member expression chains longer than {max_length} members"),
+    )
+    .with_label(span.primary_label("This member expression chain is too long"))
+}
+
+#[cold]
 pub fn blocklisted_import(module: &str, span: Span) -> OxcDiagnostic {
     diagnostic(ErrorCategory::Todo, "Import from a blocklisted module")
         .with_help(format!("Remove the import from blocklisted module `{module}`"))
@@ -1480,6 +1471,18 @@ where
                 span.label("Additional gating directive")
             }
         }))
+}
+
+#[cold]
+pub fn invariant_single_predecessor_phi_has_multiple_operands(
+    operands: impl Display,
+) -> OxcDiagnostic {
+    diagnostic(
+        ErrorCategory::Invariant,
+        format!(
+            "Found a block with a single predecessor but where a phi has multiple ({operands}) operands"
+        ),
+    )
 }
 
 #[cold]
@@ -1531,6 +1534,15 @@ pub fn unsupported_eval(span: Span) -> OxcDiagnostic {
             "Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler",
         )
         .with_label(span.primary_label("`eval` cannot be analyzed by React Compiler"))
+}
+
+#[cold]
+pub fn unsupported_implicit_arguments(span: Span) -> OxcDiagnostic {
+    diagnostic(ErrorCategory::UnsupportedSyntax, "Implicit 'arguments' is not supported")
+        .with_help(
+            "React Compiler does not support compiling functions that reference the implicit arguments object",
+        )
+        .with_label(span.primary_label("Implicit 'arguments' is not supported"))
 }
 
 #[cold]

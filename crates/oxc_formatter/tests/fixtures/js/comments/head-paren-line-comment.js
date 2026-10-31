@@ -1,6 +1,7 @@
 // A line comment inside a statement head's parentheses stays inside them,
 // flushed before the `)`.
-// - for-in / for-of: diverges — Prettier is not idempotent (prettier#12880),
+// - for-in / for-of: diverges (DIVERGENCES.md#head-body-comment-relocation):
+//   Prettier is not idempotent (prettier#12880),
 //   its first pass moves the comment past the body's `{`
 // - with / while: no divergence (their grouped heads break), the control cases
 for (a in b // c

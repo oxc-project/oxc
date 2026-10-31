@@ -113,9 +113,11 @@
 //! ## References
 //! - [Prettier handles special comments](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js)
 //! - [Prettier pre-processes comments](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/main/comments/attach.js)
-use oxc_ast::{Comment, CommentContent};
+use oxc_ast::Comment;
 use oxc_formatter_core::SourceText;
 use oxc_span::{GetSpan, Span};
+
+use super::trivia::is_jsdoc_comment;
 
 /// Saved comment cursor state for [`Comments::snapshot`] / [`Comments::restore`].
 #[derive(Clone, Copy)]
@@ -123,6 +125,7 @@ pub struct CommentSnapshot {
     printed_count: usize,
     last_handled_type_cast_comment: usize,
     type_cast_node_span: Span,
+    operator_suppressed_start: Option<u32>,
     view_limit: Option<usize>,
 }
 
@@ -143,6 +146,8 @@ pub struct Comments<'a> {
     /// Used to prevent duplicate processing of special TypeScript type cast comments.
     last_handled_type_cast_comment: usize,
     type_cast_node_span: Span,
+    /// See [`Self::mark_suppressed_after_operator`].
+    operator_suppressed_start: Option<u32>,
     /// Optional limit for the unprinted_comments view.
     ///
     /// When set, [`Self::unprinted_comments()`] will only return comments up to this index,
@@ -159,6 +164,7 @@ impl<'a> Comments<'a> {
             printed_count: 0,
             last_handled_type_cast_comment: 0,
             type_cast_node_span: Span::default(),
+            operator_suppressed_start: None,
             view_limit: None,
         }
     }
@@ -196,7 +202,12 @@ impl<'a> Comments<'a> {
     /// This is automatically called by the trivia formatting functions, but must be
     /// called manually if comments are formatted through other means.
     #[inline]
-    pub fn increment_printed_count(&mut self) {
+    pub fn increment_printed_count(&mut self, comment: &Comment) {
+        debug_assert_eq!(
+            self.first_unprinted_span(),
+            Some(comment.span),
+            "the claimed comment must be the first unprinted one"
+        );
         self.printed_count += 1;
     }
 
@@ -242,6 +253,7 @@ impl<'a> Comments<'a> {
             printed_count: self.printed_count,
             last_handled_type_cast_comment: self.last_handled_type_cast_comment,
             type_cast_node_span: self.type_cast_node_span,
+            operator_suppressed_start: self.operator_suppressed_start,
             view_limit: self.view_limit,
         }
     }
@@ -254,6 +266,7 @@ impl<'a> Comments<'a> {
         self.printed_count = snapshot.printed_count;
         self.last_handled_type_cast_comment = snapshot.last_handled_type_cast_comment;
         self.type_cast_node_span = snapshot.type_cast_node_span;
+        self.operator_suppressed_start = snapshot.operator_suppressed_start;
         self.view_limit = snapshot.view_limit;
     }
 }
@@ -273,12 +286,12 @@ impl<'a> Comments<'a> {
 
     /// Returns the line comments that end before or at the given position.
     pub fn line_comments_before(&self, pos: u32) -> &'a [Comment] {
-        self.comments_before_while(pos, |c| c.is_line())
+        self.comments_before_while(pos, Comment::is_line)
     }
 
     /// Returns comments that are on their own line and end before or at the given position.
     pub fn own_line_comments_before(&self, pos: u32) -> &'a [Comment] {
-        self.comments_before_while(pos, |c| c.preceded_by_newline())
+        self.comments_before_while(pos, Comment::preceded_by_newline)
     }
 
     /// The leading run of [`Self::comments_before_iter`] satisfying `predicate`, as a slice.
@@ -434,6 +447,9 @@ impl<'a> Comments<'a> {
 
         let mut comment_index = 0;
         let mut type_cast_comment = None;
+        // The following node starts at or after the enclosing end (spans are half-open),
+        // so every comment inside the enclosing node is trailing.
+        let following_is_outside = following_span_start >= enclosing_span.end;
 
         while let Some(comment) = comments.get(comment_index) {
             // Stop if the comment:
@@ -443,9 +459,8 @@ impl<'a> Comments<'a> {
                 break;
             }
 
-            if following_span_start > enclosing_span.end && comment.span.end <= enclosing_span.end {
-                // Do nothing; this comment is inside the enclosing node, and the following node is outside the enclosing node.
-                // So it must be a trailing comment, continue checking the next comment.
+            if following_is_outside {
+                // Inside the enclosing node by the check above, so continue checking the next comment.
             } else if self.is_type_cast_comment(comment) {
                 // `A || /* @type {Number} */ (B)`:
                 //      ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -518,7 +533,23 @@ impl<'a> Comments<'a> {
 
     /// Checks if there are any leading own-line comments before the given position.
     pub fn has_leading_own_line_comment(&self, start: u32) -> bool {
-        self.comments_before_iter(start).any(|comment| comment.followed_by_newline())
+        self.comments_before_iter(start).any(Comment::followed_by_newline)
+    }
+
+    /// The last printed comment when it is a line comment starting after `pos`:
+    /// a pending `line_suffix` the printer flushes past an operator.
+    /// ```ts
+    /// const a // c
+    /// = 1
+    ///
+    /// (foo // c
+    /// ) as T
+    /// ```
+    /// For layout decisions that run after the left side printed, where cursor-based queries no longer see it.
+    pub fn printed_line_comment_after(&self, pos: u32) -> Option<&'a Comment> {
+        self.printed_comments()
+            .last()
+            .filter(|comment| comment.is_line() && comment.span.start > pos)
     }
 
     /// Index into [`Self::unprinted_comments`] of the first cast comment
@@ -533,9 +564,27 @@ impl<'a> Comments<'a> {
         !self.end_of_line_comments_after(pos).is_empty()
     }
 
-    /// Checks if the node has a suppression comment.
+    /// Checks if the node has a suppression comment:
+    /// an unprinted one before it, or the one its operator's line printed ([`Self::mark_suppressed_after_operator`]).
     pub fn is_suppressed(&self, start: u32) -> bool {
-        self.comments_before_iter(start).any(|comment| self.is_suppression_comment(comment))
+        self.operator_suppressed_start == Some(start)
+            || self.comments_before_iter(start).any(|comment| self.is_suppression_comment(comment))
+    }
+
+    /// ```ts
+    /// const a = // oxfmt-ignore
+    ///   1+2;
+    /// ```
+    /// In this case, suppression line comment ending the operator's line is:
+    /// - printed right after the operator for placement (it keeps its line)
+    /// - and still targets the right-hand side
+    ///
+    /// `AssignmentLike` marks the node it targets after printing the operator's comment run,
+    /// and the node's own `fmt` then takes the suppressed path.
+    /// The mark is never cleared: no ancestor shares the right-hand side's start (it follows the operator),
+    /// its descendants are not visited after the verbatim print, and a re-format of the same node must answer the same.
+    pub fn mark_suppressed_after_operator(&mut self, start: u32) {
+        self.operator_suppressed_start = Some(start);
     }
 
     /// Checks if there is a trailing suppression comment on the same line.
@@ -553,6 +602,54 @@ impl<'a> Comments<'a> {
                 .end_of_line_comments_after(pos)
                 .iter()
                 .any(|comment| self.is_suppression_comment(comment))
+    }
+
+    /// Whether no comment is for the generated `fmt` of the node at `span` to print or to act on,
+    /// so that it can skip all of its comment queries:
+    /// - every unprinted comment ends after the node and after its parent (`enclosing_span`)
+    ///   - none leads it, none is in it
+    ///   - its trailing pass only claims comments that end in the parent ([`Self::get_trailing_comments`])
+    /// - nothing suppresses it ([`Self::is_span_suppressed`])
+    ///   - no unprinted comment ends before it, so only the operator's mark is left of [`Self::is_suppressed`]
+    /// - if it `can_be_cast_target`, no printed type cast comment makes it one ([`Self::printed_type_cast_comment_before`])
+    ///
+    /// Every comment the node's `write` prints is after these, so its trailing pass would still find none.
+    /// Debug builds assert that the skipped queries agree (the type cast one in the generated `fmt`).
+    #[inline]
+    pub fn is_quiet(
+        &self,
+        span: Span,
+        enclosing_span: impl Fn() -> Span,
+        following_span_start: u32,
+        can_be_cast_target: bool,
+    ) -> bool {
+        let quiet = self.unprinted_comments().first().is_none_or(|next| {
+            next.span.end > span.end
+                && next.span.end > enclosing_span().end
+                && !self.has_trailing_suppression_comment(span.end)
+        }) && self.operator_suppressed_start != Some(span.start)
+            && !(can_be_cast_target && self.printed_type_cast_comment_before(span.start).is_some());
+        debug_assert!(
+            !quiet
+                || (self.comments_before(span.start).is_empty()
+                    && self
+                        .get_trailing_comments(enclosing_span(), span, following_span_start)
+                        .is_empty()
+                    && !self.is_span_suppressed(span)),
+            "a quiet node at {span:?} has comments to format"
+        );
+        quiet
+    }
+
+    /// The last printed comment, if it is a type cast comment followed by `(` before `start`
+    /// that no cast target has handled yet (see `classify_type_cast`).
+    pub fn printed_type_cast_comment_before(&self, start: u32) -> Option<&'a Comment> {
+        if self.is_handled_type_cast_comment() {
+            return None;
+        }
+        self.printed_comments().last().filter(|comment| {
+            comment.span.end <= start && self.is_type_cast_comment_followed_by_paren(comment)
+        })
     }
 
     /// Whether a leading comment or one trailing the node's end suppresses it
@@ -618,7 +715,7 @@ impl<'a> Comments<'a> {
 
     /// Position-based analog of [`Self::has_leading_own_line_comment`], over a range.
     pub fn has_own_line_comment_in_range(&self, start: u32, end: u32) -> bool {
-        self.all_comments_in_range(start, end).any(|comment| comment.followed_by_newline())
+        self.all_comments_in_range(start, end).any(Comment::followed_by_newline)
     }
 
     /// Whether the first non-whitespace byte after `pos` outside comments is `)`.
@@ -673,7 +770,7 @@ impl Comments<'_> {
                     .is_some_and(|&byte| byte.is_ascii_whitespace() || byte == b'{')
         }
 
-        if !matches!(comment.content, CommentContent::Jsdoc) {
+        if !is_jsdoc_comment(comment) {
             return false;
         }
 

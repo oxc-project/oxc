@@ -1,0 +1,5 @@
+{
+  "rules": {
+    "eslint/no-return-assign": ["error", "foobar"]
+  }
+}

@@ -1,8 +1,11 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::Comment;
 use oxc_formatter_core::{
-    Buffer, Format, LINE_TERMINATORS, SourceText, SpanCursor, arena_cow_str,
-    builders::{empty_line, expand_parent, hard_line_break, line_suffix, maybe_space, space, text},
+    Format, LINE_TERMINATORS, SourceText, SpanCursor, arena_cow_str,
+    builders::{
+        block_indent, empty_line, expand_parent, group, hard_line_break, line_suffix, maybe_space,
+        soft_block_indent, space, text,
+    },
     normalize_newlines,
     spec::is_suppression_marker,
     write,
@@ -66,17 +69,17 @@ fn write_comment_text(comment: &Comment, f: &mut JsonFormatter<'_, '_>) {
 /// Callers today pass block comments only; the line branch keeps the contract uniform.
 #[must_use = "formatted comments must be written to the formatter"]
 #[derive(Clone, Copy, Debug)]
-pub struct FormatCommentBeforeContent(Comment);
+pub struct FormatCommentBeforeContent<'c>(&'c Comment);
 
-impl FormatCommentBeforeContent {
-    pub const fn new(comment: Comment) -> Self {
+impl<'c> FormatCommentBeforeContent<'c> {
+    pub const fn new(comment: &'c Comment) -> Self {
         Self(comment)
     }
 }
 
-impl<'a> Format<'a, JsonFormatContext<'a>> for FormatCommentBeforeContent {
+impl<'a> Format<'a, JsonFormatContext<'a>> for FormatCommentBeforeContent<'_> {
     fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
-        write_comment_text(&self.0, f);
+        write_comment_text(self.0, f);
         if self.0.is_line() {
             write!(f, [expand_parent(), hard_line_break()]);
         }
@@ -87,13 +90,13 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FormatCommentBeforeContent {
 /// cannot swallow later tokens, not measured.
 #[must_use = "formatted comments must be written to the formatter"]
 #[derive(Clone, Copy, Debug)]
-pub struct FormatLineCommentSuffix {
-    comment: Comment,
+pub struct FormatLineCommentSuffix<'c> {
+    comment: &'c Comment,
     leading_space: bool,
 }
 
-impl FormatLineCommentSuffix {
-    pub const fn new(comment: Comment) -> Self {
+impl<'c> FormatLineCommentSuffix<'c> {
+    pub const fn new(comment: &'c Comment) -> Self {
         Self { comment, leading_space: false }
     }
 
@@ -103,14 +106,14 @@ impl FormatLineCommentSuffix {
     }
 }
 
-impl<'a> Format<'a, JsonFormatContext<'a>> for FormatLineCommentSuffix {
+impl<'a> Format<'a, JsonFormatContext<'a>> for FormatLineCommentSuffix<'_> {
     fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
         debug_assert!(self.comment.is_line(), "expected a line comment");
         let comment = self.comment;
         let leading_space = self.leading_space;
         let suffix = format_with(move |f: &mut JsonFormatter<'_, 'a>| {
             write!(f, maybe_space(leading_space));
-            write_comment_text(&comment, f);
+            write_comment_text(comment, f);
         });
         write!(f, line_suffix(&suffix));
     }
@@ -140,6 +143,24 @@ pub fn write_leading_comments(
     }
 }
 
+/// Emit the comments in an array hole's slot, before its `,` at `comma`.
+/// Like [`write_leading_comments`], except that a hole has no value:
+/// the `,` follows a block comment directly (`[a, /* c */, b]`), as a separator follows any value (`[a /* c */, b]`),
+/// even an own-line one, and only a line comment ends its line.
+pub fn write_hole_comments(comma: u32, f: &mut JsonFormatter<'_, '_>) {
+    let comments = f.context().comments().take_before(comma);
+    let Some((last, rest)) = comments.split_last() else { return };
+    // An own-line comment keeps its line, the glued `,` brings no break to expand the array
+    if comments[0].preceded_by_newline() {
+        write!(f, expand_parent());
+    }
+    write_leading_comments(rest, last.span.start, f);
+    write_comment_text(last, f);
+    if last.is_line() {
+        write!(f, hard_line_break());
+    }
+}
+
 /// Recognizes `\n`, lone `\r`, `\r\n`, and LS(U+2028) / PS(U+2029), the full ECMAScript line-terminator set.
 ///
 /// LS/PS recognition is unconditional (no `JsonVariant` threading), keeping this a pure `&[u8]` helper.
@@ -147,6 +168,8 @@ pub fn write_leading_comments(
 /// this crate parses every variant leniently as JS, so the lexer accepts a bare LS/PS in an inter-entry gap regardless of variant.
 /// A spec-strict JSON document keeps them inside string literals, so the branch rarely fires for `json` / `jsonc`.
 /// But when it does, treating it as a break matches Prettier (every variant goes through its JS printer).
+///
+/// `oxc_formatter`'s `line_breaks` (`source_text.rs`) counts the same set over a `&str`; keep them in sync.
 pub fn count_newlines(slice: &[u8]) -> usize {
     let mut count = 0;
     let mut i = 0;
@@ -224,14 +247,27 @@ fn write_gap(gap: &[u8], f: &mut JsonFormatter<'_, '_>) {
     }
 }
 
-/// Emit dangling comments inside an empty container (the caller wraps the result in
-/// [`oxc_formatter_core::builders::block_indent`] or similar).
-pub fn write_dangling_comments(comments: &[Comment], f: &mut JsonFormatter<'_, '_>) {
-    for (i, comment) in comments.iter().enumerate() {
-        if i > 0 {
-            write!(f, hard_line_break());
+/// Emit dangling comments inside an empty container, between its brackets.
+/// - Block comments only: stays inline when it fits (`[/* x */]`)
+/// - Any line comment: always expanded, the closing bracket needs its own line
+///
+/// Multiple comments are joined by hard line breaks, so they expand the group anyway.
+pub fn write_empty_container_comments(comments: &[Comment], f: &mut JsonFormatter<'_, '_>) {
+    if comments.is_empty() {
+        return;
+    }
+    let inner = format_with(move |f| {
+        for (i, comment) in comments.iter().enumerate() {
+            if i > 0 {
+                write!(f, hard_line_break());
+            }
+            write_comment_text(comment, f);
         }
-        write_comment_text(comment, f);
+    });
+    if comments.iter().any(Comment::is_line) {
+        write!(f, block_indent(&inner));
+    } else {
+        write!(f, group(&soft_block_indent(&inner)));
     }
 }
 
@@ -309,7 +345,7 @@ pub fn is_suppression_comment(source: SourceText<'_>, comment: &Comment) -> bool
 /// `before` is typically the next AST node's `span.start`.
 pub fn is_suppressed_before(f: &JsonFormatter<'_, '_>, before: u32) -> bool {
     let source = f.context().source_text();
-    f.context().comments().iter_before(before).any(|c| is_suppression_comment(source, &c))
+    f.context().comments().iter_before(before).any(|c| is_suppression_comment(source, c))
 }
 
 /// `Format` adapter that emits a node's leading comments, then the node's source

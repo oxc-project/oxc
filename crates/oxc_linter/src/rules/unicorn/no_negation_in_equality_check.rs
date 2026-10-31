@@ -51,6 +51,7 @@ declare_oxc_lint!(
     NoNegationInEqualityCheck,
     unicorn,
     pedantic,
+    recommended,
     suggestion,
     version = "0.5.3",
     short_description = "Disallow negated expressions on the left of (in)equality checks.",

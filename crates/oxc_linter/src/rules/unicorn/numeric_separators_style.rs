@@ -206,6 +206,7 @@ declare_oxc_lint!(
     NumericSeparatorsStyle,
     unicorn,
     style,
+    recommended,
     fix,
     config = NumericSeparatorsStyleConfig,
     version = "0.0.19",
@@ -244,7 +245,9 @@ impl Rule for NumericSeparatorsStyle {
         match node.kind() {
             AstKind::NumericLiteral(number) => {
                 let raw = number.raw.as_ref().unwrap().as_str();
-                if !raw.contains('_') && self.skip_number_separator(number.base) {
+                if self.is_short_decimal_integer(raw)
+                    || (!raw.contains('_') && self.skip_number_separator(number.base))
+                {
                     return;
                 }
 
@@ -259,13 +262,15 @@ impl Rule for NumericSeparatorsStyle {
             }
             AstKind::BigIntLiteral(number) => {
                 let raw = number.raw.unwrap().as_str();
-                if !raw.contains('_') && self.skip_bigint_separator(number.base) {
+                if self.is_short_decimal_integer(&raw[..raw.len() - 1])
+                    || (!raw.contains('_') && self.skip_bigint_separator(number.base))
+                {
                     return;
                 }
 
                 let formatted = self.format_bigint(number, raw);
 
-                if formatted.len() != number.span.size() as usize {
+                if formatted != raw {
                     ctx.diagnostic_with_fix(
                         numeric_separators_style_diagnostic(number.span),
                         |fixer| fixer.replace(number.span, formatted),
@@ -278,6 +283,15 @@ impl Rule for NumericSeparatorsStyle {
 }
 
 impl NumericSeparatorsStyle {
+    fn is_short_decimal_integer(&self, raw: &str) -> bool {
+        let minimum_digits =
+            usize::try_from(self.number.base.minimum_digits).expect("u32 size must fit into usize");
+        let group_length =
+            usize::try_from(self.number.base.group_length).expect("u32 size must fit into usize");
+        (raw.len() < minimum_digits || raw.len() <= group_length)
+            && raw.bytes().all(|byte| byte.is_ascii_digit())
+    }
+
     fn skip_number_separator(&self, base: NumberBase) -> bool {
         let base_config = match base {
             NumberBase::Binary => self.binary.only_if_contains_separator,
@@ -737,6 +751,8 @@ fn test() {
         ("const foo = 1_9_223n", None),
         ("const foo = 80_7n", None),
         ("const foo = 123456789_100n", None),
+        ("const foo = 12_34_567n", None),
+        ("const foo = 0xA_BCDn", None),
         ("const foo = 1_2_345_678", None),
         ("const foo = 12_3", None),
         ("const foo = 1234567890", None),
@@ -828,6 +844,8 @@ fn test() {
         ("const foo = 1_9_223n", "const foo = 19_223n", None),
         ("const foo = 80_7n", "const foo = 807n", None),
         ("const foo = 123456789_100n", "const foo = 123_456_789_100n", None),
+        ("const foo = 12_34_567n", "const foo = 1_234_567n", None),
+        ("const foo = 0xA_BCDn", "const foo = 0xAB_CDn", None),
         ("const foo = 1_2_345_678", "const foo = 12_345_678", None),
         ("const foo = 12_3", "const foo = 123", None),
         ("const foo = 1234567890", "const foo = 1_234_567_890", None),

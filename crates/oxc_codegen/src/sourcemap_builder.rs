@@ -66,12 +66,14 @@ pub struct SourcemapBuilder<'a> {
 impl<'a> SourcemapBuilder<'a> {
     pub fn new(path: &Path, source_text: &'a str) -> Self {
         let line_offset_tables = Self::generate_line_offset_tables(source_text);
+        // Estimate mapping and name counts from source length to reduce reallocations.
+        let source_len = source_text.len();
         Self {
             source_name: path.to_string_lossy().into_owned(),
             original_source: source_text,
-            names: Vec::new(),
+            names: Vec::with_capacity(source_len / 64),
             names_map: FxHashMap::default(),
-            tokens: Vec::new(),
+            tokens: Vec::with_capacity(source_len / 4),
             last_generated_update: 0,
             last_position: None,
             line_offset_tables,
@@ -93,7 +95,7 @@ impl<'a> SourcemapBuilder<'a> {
             source_contents: vec![Some(Cow::Borrowed(self.original_source))],
             tokens: self.tokens.into_boxed_slice(),
             token_chunks: None,
-            x_google_ignore_list: None,
+            ignore_list: None,
             debug_id: None,
         })
     }
@@ -381,7 +383,7 @@ impl<'a> SourcemapBuilder<'a> {
     }
 
     fn generate_line_offset_tables(content: &str) -> LineOffsetTables {
-        let mut lines = vec![];
+        let mut lines = Vec::with_capacity(content.len() / 24 + 1);
         let mut column_offsets = IndexVec::new();
 
         // Used as a buffer to reduce memory reallocations.

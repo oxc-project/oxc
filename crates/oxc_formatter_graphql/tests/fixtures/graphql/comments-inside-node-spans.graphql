@@ -6,7 +6,7 @@
 """
 description then comment (the issue #24927 shape)
 """
-# own-line comment after a description stays before the keyword
+# DIVERGES: own-line comment after a description stays before the keyword; see DIVERGENCES.md#own-line-comment-after-description
 type A {
   """
   field description
@@ -23,6 +23,7 @@ type DescInline {
   f: String
 }
 
+# DIVERGES: the comment after `type` stays between keyword and name; see DIVERGENCES.md#comment-after-keyword
 """
 comment after the keyword stays between keyword and name:
 pulling it backwards across `type` (as Prettier does) would cross a token
@@ -32,7 +33,7 @@ DescThenKeywordComment {
 }
 
 # same-line trailing comments in front of formatter literals stay on their line
-# (line_suffix + boundary; Prettier scatters these — attachment artifacts we diverge from)
+# (DIVERGES, Prettier scatters these; see DIVERGENCES.md#trailing-comment-before-continuation)
 type ForwardCrossing # after name
 implements I {
   f(

@@ -13,7 +13,7 @@ use oxc_css_parser::ast::{
     PseudoElementSelectorArgKind, SelectorList, SimpleSelector, TypeSelector, WqName,
 };
 use oxc_formatter_core::{
-    Buffer, FormatElement, arena_cow_str,
+    FormatElement, arena_cow_str,
     builders::{group, hard_line_break, indent, soft_line_break, soft_line_break_or_space, text},
     write,
 };

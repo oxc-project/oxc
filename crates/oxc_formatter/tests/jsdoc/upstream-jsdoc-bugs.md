@@ -344,3 +344,31 @@ printer (`shouldPreventBreak`, regex `/^>|^(?:[*+-]|#{1,6}|\d+[).])$/`): any dig
 guarded (not just `1.`) and `>` matches as a prefix (`>=` at a line start opens a blockquote).
 Pinned by `line-wrapping-balance/007-block-marker-not-moved-to-line-start`.
 
+## 13. Description text is written back without escapes, so it can close the comment or change
+
+**Severity**: High — the output can fail to parse (`*/` inside the comment)
+
+The plugin parses descriptions as markdown and writes each text node's parsed value.
+That value has the escapes removed (`\*`, `\/`, `\\`) and character references decoded (`&amp;`),
+and emphasis is always written `_x_` / `**x**` regardless of its neighbours.
+
+| Description          | Upstream output  | Problem                                                                |
+| -------------------- | ---------------- | ---------------------------------------------------------------------- |
+| `See __a__/b`        | `See **a**/b`    | `*/` closes the comment                                                |
+| `Glob: src/**\/*.js` | `src/**/*.js`    | Same, the author's `\/` is dropped                                     |
+| `\*not emphasis\*`   | `*not emphasis*` | Becomes emphasis on the next pass (not idempotent)                     |
+| `Multiply a*b*c`     | `a_b_c`          | Intraword `_` is no emphasis, the text changes                         |
+| `\\\\`               | `\\`             | One backslash less on every pass (hosseinmd/prettier-plugin-jsdoc#152) |
+
+**Root cause**: `descriptionFormatter.ts` stringifies `text` nodes from `mdAst.value`
+(`mdast-util-from-markdown` output) with no escaping, and picks the emphasis marker without looking at the context.
+
+**oxfmt behavior**: the written text parses back to the same markdown and never contains `*/`.
+
+- A text node is written as it appears in the source (escapes and character references kept)
+- Emphasis is written `_x_` unless inside a word (`a*b*c` keeps `*`), strong `**x**` unless followed by `/` (keeps `__`)
+- Descriptions written out without the markdown pass (one-line tag descriptions) get the same marker normalization in place
+
+A bare URL with `__` (`http://x.io/__init__.py`) is strong per CommonMark, so it is still written `**init**` as upstream;
+code spans, `<...>` autolinks, links and `{@link}` keep the URL.
+Pinned by `descriptions/045-markdown-round-trip`.

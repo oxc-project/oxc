@@ -850,7 +850,7 @@ mod tests {
     fn exact(count: u32) -> FormatElement<'static> {
         FormatElement::Line(LineMode::ExactLineBreaks(NonZeroU32::new(count).unwrap()))
     }
-    const A: FormatElement<'static> = FormatElement::Token { text: "a" };
+    const A: FormatElement<'static> = FormatElement::token("a");
     const HARD: FormatElement<'static> = FormatElement::Line(LineMode::Hard);
     const EMPTY: FormatElement<'static> = FormatElement::Line(LineMode::Empty);
     const SPACE: FormatElement<'static> = FormatElement::Space;
@@ -905,14 +905,14 @@ mod tests {
         // Dangling comment in an otherwise-empty object:
         // `{` indent[softline, "// x", hardline] softline `}`
         let doc = to_doc(&[
-            FormatElement::Token { text: "{" },
+            FormatElement::token("{"),
             FormatElement::Tag(Tag::StartIndent),
             SOFT,
-            FormatElement::Token { text: "// x" },
+            FormatElement::token("// x"),
             HARD,
             FormatElement::Tag(Tag::EndIndent),
             SOFT,
-            FormatElement::Token { text: "}" },
+            FormatElement::token("}"),
         ]);
         assert_eq!(
             doc["doc"],

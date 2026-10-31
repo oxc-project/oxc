@@ -1,17 +1,22 @@
-use crate::{
-    comment_meta,
-    error::diag_code,
+use crate::{error::DiagCode, token::tk};
+
+use crate::pipeline::{
+    bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0},
+    bytes::hex_val,
+    disambiguate::not_operator_position,
+    find::find,
     lanes::Lanes,
-    opmap::OP_SLASH_EQ,
-    tables::{Tables, hex_val},
+    scan::{scan_quoted, scan_regex, scan_tmpl_text},
+    token_view,
 };
 
-use super::super::{
-    BCOM, LCOM, REGEX, STR,
-    bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
-    disambiguate::not_operator_position,
-    scan::{scan_block_comment, scan_line_comment, scan_quoted, scan_regex, scan_tmpl_text},
-};
+use super::comments::{lex_block_comment, lex_line_comment};
+
+/// Ordered for speed, pairing `'` with `/` and `<` with `>` (see `any_of` in `find/avx2.rs`).
+pub(super) const OPENER_BYTES: [u8; 6] = [b'"', b'`', b'\'', b'/', b'<', b'>'];
+
+/// Ordered for speed, pairing `'` with `/` and `<` with `>` (see `any_of` in `find/avx2.rs`).
+pub(super) const OPENER8_BYTES: [u8; 8] = [b'"', b'`', b'\'', b'/', b'{', b'}', b'<', b'>'];
 
 /// Lex the string literal opening at `s`. Returns the resume index. Shared
 /// by `carve` and `carve_jsx` JS mode.
@@ -33,9 +38,9 @@ pub(super) unsafe fn lex_string(
         // The terminator wins over unterminated-at-EOF, same as oxc_parser.
         lanes.push_line_terminator_in_string(srcs, s, end);
     } else if e >= n {
-        lanes.push_diag(s as u32, (n - s) as u32, diag_code::UNTERMINATED_STRING);
+        lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedString);
     }
-    *kind.add(s) = STR;
+    *kind.add(s) = tk!(String);
     if end > s + 1 {
         bm_clear_range(st, s + 1, end - 1);
     }
@@ -69,7 +74,7 @@ pub(super) unsafe fn lex_template_segment(
     let mut term = 0i32;
     let end = scan_tmpl_text(src, n, s + 1, &mut term);
     if term == 0 {
-        lanes.push_diag(s as u32, (end - s) as u32, diag_code::UNTERMINATED_TEMPLATE);
+        lanes.push_diag(s as u32, (end - s) as u32, DiagCode::UnterminatedTemplate);
     }
     *kind.add(s) = if term == 2 { head_kind } else { flat_kind };
     if end > s + 1 {
@@ -83,7 +88,6 @@ pub(super) unsafe fn lex_template_segment(
 /// block comment, regex, `/=`, or a bare slash left for `coalesce`.
 #[inline(always)]
 pub(super) unsafe fn lex_slash(
-    t: &Tables,
     src: *const u8,
     srcs: &[u8],
     n: usize,
@@ -91,7 +95,6 @@ pub(super) unsafe fn lex_slash(
     kind: *mut u8,
     opch: *mut u64,
     word: *const u64,
-    digit: *const u64,
     ts: bool,
     s: usize,
     lanes: &mut Lanes,
@@ -101,85 +104,32 @@ pub(super) unsafe fn lex_slash(
         lex_line_comment(src, srcs, n, st, kind, s, lanes)
     } else if d == b'*' {
         lex_block_comment(src, srcs, n, st, kind, s, lanes)
-    } else if not_operator_position(t, src, st, kind, word, digit, n, s, ts, lanes.module) {
+    } else if not_operator_position(
+        &token_view(
+            src,
+            st,
+            opch,
+            kind,
+            n,
+            ts,
+            0,
+            lanes.module,
+            &lanes.disambiguate.brackets,
+            &lanes.disambiguate.closers,
+        ),
+        &mut lanes.disambiguate.walks,
+        s,
+    ) {
         lex_regex(src, srcs, n, st, kind, word, s, lanes)
     } else if s + 1 < n && *src.add(s + 1) == b'=' {
         // `/=`: absorb the `=`.
-        *kind.add(s) = OP_SLASH_EQ;
+        *kind.add(s) = tk!(SlashEq);
         bm_clear(st, s + 1);
         bm_clear(opch, s + 1);
         s + 2
     } else {
         s + 1
     }
-}
-
-/// Lex the `//` line comment at `s`. Returns the resume index.
-#[inline(always)]
-pub(super) unsafe fn lex_line_comment(
-    src: *const u8,
-    srcs: &[u8],
-    n: usize,
-    st: *mut u64,
-    kind: *mut u8,
-    s: usize,
-    lanes: &mut Lanes,
-) -> usize {
-    let (end, lic_q) = scan_line_comment(src, n, s + 2);
-    *kind.add(s) = LCOM;
-    if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1);
-    }
-    if end < n {
-        bm_set(st, end);
-    }
-    let lic = lic_q >= 0 && (lic_q as usize) + 8 < end;
-    let m = comment_meta::meta_byte_flags(&srcs[..n], s as u32, end as u32, false, false, lic);
-    debug_assert_eq!(
-        m,
-        comment_meta::meta_byte_exact(&srcs[..n], s as u32, end as u32, false),
-        "LCOM meta fused != exact at {s}"
-    );
-    lanes.comment_meta.push(m);
-    lanes.push_comment_record(srcs, n, s as u32, end as u32, false, m);
-    end
-}
-
-/// Lex the `/*` block comment at `s` (unterminated at EOF is diagnosed).
-/// Returns the resume index.
-#[inline(always)]
-pub(super) unsafe fn lex_block_comment(
-    src: *const u8,
-    srcs: &[u8],
-    n: usize,
-    st: *mut u64,
-    kind: *mut u8,
-    s: usize,
-    lanes: &mut Lanes,
-) -> usize {
-    let (e, saw_nl, lic_q) = scan_block_comment(src, n, s + 2);
-    let end = if e < n { e + 1 } else { n };
-    if e >= n {
-        lanes.push_diag(s as u32, (n - s) as u32, diag_code::UNTERMINATED_BLOCK_COMMENT);
-    }
-    *kind.add(s) = BCOM;
-    if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1);
-    }
-    let m = if e < n {
-        let lic = lic_q >= 0 && (lic_q as usize) + 8 < e - 1;
-        comment_meta::meta_byte_flags(&srcs[..n], s as u32, end as u32, true, saw_nl, lic)
-    } else {
-        comment_meta::meta_byte_exact(&srcs[..n], s as u32, end as u32, true)
-    };
-    debug_assert_eq!(
-        m,
-        comment_meta::meta_byte_exact(&srcs[..n], s as u32, end as u32, true),
-        "BCOM meta fused != exact at {s}"
-    );
-    lanes.comment_meta.push(m);
-    lanes.push_comment_record(srcs, n, s as u32, end as u32, true, m);
-    end
 }
 
 /// Lex the regex literal at `s` (the regex-vs-division decision is already
@@ -202,15 +152,15 @@ unsafe fn lex_regex(
         // oxc_parser reports a line terminator in the body as "unterminated"
         // with a span ending just past the first one, even when a later `/`
         // closes our token.
-        lanes.push_diag(s as u32, (nl_at + 1 - s) as u32, diag_code::LINE_TERMINATOR_IN_REGEXP);
+        lanes.push_diag(s as u32, (nl_at + 1 - s) as u32, DiagCode::LineTerminatorInRegexp);
     } else if e >= n {
-        lanes.push_diag(s as u32, (n - s) as u32, diag_code::UNTERMINATED_REGEXP);
+        lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedRegexp);
     }
     let mut end = fs;
     if end < n && bm_get(word, end) {
         end = bm_next0(word, end, n);
     }
-    *kind.add(s) = REGEX;
+    *kind.add(s) = tk!(RegExp);
     if end > s + 1 {
         bm_clear_range(st, s + 1, end - 1);
     }
@@ -231,4 +181,25 @@ pub(super) unsafe fn skip_unicode_brace_escape(src: *const u8, n: usize, s: usiz
         j += 1;
     }
     j
+}
+
+/// First ECMAScript LineTerminator at/after `i`: LF, CR, or the 3-byte LS/PS
+/// (U+2028/U+2029). Stops at LS/PS too, so the hashbang scan cannot run
+/// through one. A 0xE2 that isn't LS/PS keeps scanning; the 2-byte confirm
+/// past a trailing 0xE2 reads the pad, which can never match 0x80.
+#[inline]
+pub(super) unsafe fn find_line_terminator(src: *const u8, n: usize, mut i: usize) -> usize {
+    loop {
+        let p = find(src, n, i, [b'\n', b'\r', 0xE2]);
+        if p >= n {
+            return n;
+        }
+        if *src.add(p) != 0xE2 {
+            return p;
+        }
+        if *src.add(p + 1) == 0x80 && (*src.add(p + 2) == 0xA8 || *src.add(p + 2) == 0xA9) {
+            return p;
+        }
+        i = p + 1;
+    }
 }

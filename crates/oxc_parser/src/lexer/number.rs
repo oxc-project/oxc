@@ -44,8 +44,32 @@ pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str
 }
 
 pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
-    let s = if has_sep { s.cow_replace('_', "") } else { Cow::Borrowed(s) };
+    if has_sep {
+        return parse_float_with_underscores(s);
+    }
     debug_assert!(!s.contains('_'));
+    s.parse::<f64>().map_err(|_| "invalid float")
+}
+
+#[cold]
+fn parse_float_with_underscores(s: &str) -> Result<f64, &'static str> {
+    // Common numeric literals fit in a small scratch buffer. Keep the heap fallback
+    // for arbitrarily long literals without allocating for every separated literal.
+    const CAPACITY: usize = 64;
+    if s.len() > CAPACITY {
+        return s.cow_replace('_', "").parse::<f64>().map_err(|_| "invalid float");
+    }
+
+    let mut buffer = [0; CAPACITY];
+    let mut len = 0;
+    for byte in s.bytes() {
+        if byte != b'_' {
+            buffer[len] = byte;
+            len += 1;
+        }
+    }
+    // Removing an ASCII character preserves UTF-8.
+    let s = std::str::from_utf8(&buffer[..len]).unwrap();
     s.parse::<f64>().map_err(|_| "invalid float")
 }
 
@@ -69,7 +93,7 @@ fn parse_decimal(s: &str) -> f64 {
     /// `u64::MAX + 1` in decimal is 18446744073709551616 (20 chars).
     const MAX_FAST_DECIMAL_LEN: usize = 19;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     if s.len() > MAX_FAST_DECIMAL_LEN {
         return parse_decimal_slow(s);
     }
@@ -95,7 +119,7 @@ fn parse_decimal_with_underscores(s: &str) -> f64 {
     /// `u64::MAX + 1` in decimal is 18446744073709551616 (20 chars).
     const MAX_FAST_DECIMAL_LEN: usize = 19;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     if s.len() > MAX_FAST_DECIMAL_LEN {
         return parse_decimal_slow(&s.cow_replace('_', ""));
     }
@@ -150,7 +174,7 @@ fn parse_binary(s: &str) -> f64 {
     /// overflow a u64, forcing us to take the slow path.
     const MAX_FAST_BINARY_LEN: usize = 64;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0b") && !s.starts_with("0B"));
 
     if s.len() > MAX_FAST_BINARY_LEN {
@@ -177,7 +201,7 @@ fn parse_binary_with_underscores(s: &str) -> f64 {
     /// overflow a u64, forcing us to take the slow path.
     const MAX_FAST_BINARY_LEN: usize = 64;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0b") && !s.starts_with("0B"));
 
     if s.len() > MAX_FAST_BINARY_LEN {
@@ -219,7 +243,7 @@ fn parse_octal(s: &str) -> f64 {
     /// Numeric strings longer than this have the chance to overflow u64.
     const MAX_FAST_OCTAL_LEN: usize = 21;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0o") && !s.starts_with("0O"));
     if s.len() > MAX_FAST_OCTAL_LEN {
         return parse_octal_slow(s);
@@ -245,7 +269,7 @@ fn parse_octal_with_underscores(s: &str) -> f64 {
     /// Numeric strings longer than this have the chance to overflow u64.
     const MAX_FAST_OCTAL_LEN: usize = 21;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0o") && !s.starts_with("0O"));
     if s.len() > MAX_FAST_OCTAL_LEN {
         return parse_octal_with_underscores_slow(s);
@@ -298,7 +322,7 @@ fn parse_hex(s: &str) -> f64 {
     /// Hex strings longer than this have the chance to overflow u64.
     const MAX_FAST_HEX_LEN: usize = 16;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0x"));
 
     if s.len() > MAX_FAST_HEX_LEN {
@@ -325,7 +349,7 @@ fn parse_hex_with_underscores(s: &str) -> f64 {
     /// Hex strings longer than this have the chance to overflow u64.
     const MAX_FAST_HEX_LEN: usize = 16;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0x"));
 
     if s.len() > MAX_FAST_HEX_LEN {
@@ -609,6 +633,26 @@ mod test {
             ("0.000000001", 0.000_000_001),
         ];
         assert_all_floats_eq(cases, false);
+    }
+
+    #[test]
+    fn test_decimal_separators_rounding_and_buffer_boundary() {
+        for (literal, bits) in [
+            ("1.0000000000000001110223024625156540423631668090820312_5", 0x3ff0_0000_0000_0000),
+            ("1.0000000000000001110223024625156540423631668090820312_6", 0x3ff0_0000_0000_0001),
+            ("1.797_693_134_862_315_7e308", 0x7fef_ffff_ffff_ffff),
+            ("1.797_693_134_862_315_9e308", 0x7ff0_0000_0000_0000),
+            ("4.940_656_458_412_465_4e-324", 1),
+            ("2.470_328_229_206_232_7e-324", 0),
+            ("2.470_328_229_206_232_8e-324", 1),
+        ] {
+            assert_eq!(parse_float(literal, true).unwrap().to_bits(), bits, "{literal}");
+        }
+        for len in [63, 64, 65, 128] {
+            let literal = format!("1.5_{}", "0".repeat(len - 4));
+            assert_eq!(parse_float(&literal, true), Ok(1.5), "{literal}");
+        }
+        assert_eq!(parse_float("1_µ.5", true), Err("invalid float"));
     }
 
     #[test]

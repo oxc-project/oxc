@@ -7,7 +7,6 @@
 
 use oxc_css_parser::ast::{PostcssSimpleVar, PostcssSimpleVarDeclaration};
 use oxc_formatter_core::{
-    Buffer,
     builders::{space, text},
     write,
 };
@@ -36,7 +35,7 @@ pub(super) fn write_postcss_simple_var_declaration<'a>(
         if decl.value_is_raw {
             // postcss-simple-vars substitutes the value textually,
             // so re-spacing a raw fallback would change the substituted token stream
-            // (DIVERGENCES.md "postcss-simple-var-raw-verbatim").
+            // (DIVERGENCES.md#postcss-simple-var-raw-verbatim).
             let value_start = to_span(decl.value[0].span()).start;
             value::write_verbatim_value(Span::new(value_start, end), f);
         } else {

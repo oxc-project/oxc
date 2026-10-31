@@ -95,6 +95,7 @@ declare_oxc_lint!(
     ExplicitTimerDelay,
     unicorn,
     style,
+    recommended,
     fix,
     config = ExplicitTimerDelayMode,
     version = "1.73.0",
@@ -166,7 +167,7 @@ fn timer_name<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) -> Opti
                 return None;
             }
 
-            let name = member_expr.static_property_name()?;
+            let name = member_expr.static_property_name()?.as_str()?;
 
             if !is_timer_function_name(name) {
                 return None;

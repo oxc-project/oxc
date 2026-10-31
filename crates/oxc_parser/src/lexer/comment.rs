@@ -25,7 +25,7 @@ static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
 
 impl<'a, C: Config> Lexer<'a, C> {
     /// Section 12.4 Single Line Comment
-    pub(super) fn skip_single_line_comment(&mut self) -> Kind {
+    pub(super) fn skip_single_line_comment(&mut self, kind: CommentKind) -> Kind {
         byte_search! {
             lexer: self,
             table: LINE_BREAK_TABLE,
@@ -38,7 +38,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                 if next_byte != LS_OR_PS_FIRST {
                     // `\r` or `\n`
                     self.trivia_builder
-                        .add_line_comment(self.token.start(), self.source.offset_of(pos), self.source.whole());
+                        .add_line_comment(self.token.start(), self.source.offset_of(pos), kind, self.source.whole());
                     // SAFETY: Safe to consume `\r` or `\n` as both are ASCII
                     pos = unsafe { pos.add(1) };
                     // We've found the end. Do not continue searching.
@@ -53,7 +53,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                     if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
                         // Irregular line break
                         self.trivia_builder
-                            .add_line_comment(self.token.start(), self.source.offset_of(pos), self.source.whole());
+                            .add_line_comment(self.token.start(), self.source.offset_of(pos), kind, self.source.whole());
                         // Advance `pos` to after this char.
                         // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
                         // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
@@ -71,7 +71,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                 }
             },
             handle_eof: {
-                self.trivia_builder.add_line_comment(self.token.start(), self.offset(), self.source.whole());
+                self.trivia_builder.add_line_comment(self.token.start(), self.offset(), kind, self.source.whole());
                 return Kind::Skip;
             },
         };

@@ -1,0 +1,34 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+---<textarea>
+]-|-
+[ff]: /u<textarea>
+---<div>
+{% t %}W
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+---<textarea>
+]-|-
+[ff]: /u<textarea>
+---
+
+   <div>
+{% t %}W
+
+-------------------
+{ printWidth: 100 }
+-------------------
+---<textarea>
+]-|-
+[ff]: /u<textarea>
+---
+
+   <div>
+{% t %}W
+
+===================== End =====================

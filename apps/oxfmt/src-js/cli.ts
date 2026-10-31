@@ -3,7 +3,6 @@ import {
   initExternalServices,
   disposeExternalServices,
   formatFile,
-  formatEmbeddedCode,
   formatEmbeddedDoc,
   sortTailwindClasses,
 } from "./cli/worker-proxy";
@@ -29,6 +28,10 @@ void (async () => {
   // https://github.com/oxc-project/oxc/issues/20285
   // @ts-expect-error: `_handle` is an internal API
   if (!process.stdin.isTTY) process.stdin._handle?.setBlocking?.(true);
+  // stderr: Diagnostics for many files can overflow the pipe buffer, and the rest is silently dropped.
+  // https://github.com/oxc-project/oxc/issues/27361
+  // @ts-expect-error: `_handle` is an internal API
+  if (!process.stderr.isTTY) process.stderr._handle?.setBlocking?.(true);
 
   // LSP uses stdout for communication, so write logs to stderr to avoid breaking the protocol.
   // Since LSP is handled on the Rust side, we have to check the flag here. (`runCli()` starts the server and waits)
@@ -43,7 +46,6 @@ void (async () => {
     process.env.VP_VERSION ? loadVitePlusConfig : loadJsConfig,
     initExternalServices,
     formatFile,
-    formatEmbeddedCode,
     formatEmbeddedDoc,
     sortTailwindClasses,
   );

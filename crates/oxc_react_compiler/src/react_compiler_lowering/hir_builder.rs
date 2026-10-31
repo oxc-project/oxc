@@ -154,6 +154,10 @@ pub struct HirBuilder<'a, 'b> {
     context_identifiers: rustc_hash::FxHashSet<SymbolId>,
     /// Index mapping identifier byte offsets to source locations and JSX status.
     identifier_spans: &'b IdentifierLocIndex,
+    /// Whether this function references a binding in an enclosing function
+    /// outside the compiled-function boundary. Such a function cannot be
+    /// safely outlined to module scope.
+    has_outer_lexical_reference: bool,
 }
 
 impl<'a, 'b> HirBuilder<'a, 'b> {
@@ -201,6 +205,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             component_scope,
             context_identifiers,
             identifier_spans,
+            has_outer_lexical_reference: false,
         }
     }
 
@@ -274,6 +279,18 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Returns the 'a reference to avoid conflicts with mutable borrows on self.
     pub fn identifier_spans(&self) -> &'b IdentifierLocIndex {
         self.identifier_spans
+    }
+
+    /// Mark this function as depending on an enclosing lexical binding that is
+    /// outside the compiled-function boundary.
+    pub fn note_outer_lexical_reference(&mut self) {
+        self.has_outer_lexical_reference = true;
+    }
+
+    /// Whether this function depends on an enclosing lexical binding outside
+    /// the compiled-function boundary.
+    pub fn has_outer_lexical_reference(&self) -> bool {
+        self.has_outer_lexical_reference
     }
 
     /// Access the bindings map.
@@ -562,15 +579,34 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         self.env.record_diagnostic(diagnostic);
     }
 
-    /// Check if a name has a local binding (non-module-level).
-    /// This is used for checking if fbt/fbs JSX tags are local bindings
-    /// (which is not supported).
-    pub fn has_local_binding(&self, name: &str) -> bool {
-        if let Some(symbol_id) = self.scope.find_binding_in_descendants(name, self.component_scope)
-        {
-            return self.scope.symbol_scope(symbol_id) != self.scope.program_scope();
+    /// Resolve a local binding when the AST reference has no scope mapping.
+    pub fn resolve_local_binding_by_name(
+        &mut self,
+        name: &str,
+        span: Option<Span>,
+    ) -> Result<Option<IdentifierId>, OxcDiagnostic> {
+        let symbol_id = span.map_or_else(
+            || self.scope.find_binding(self.function_scope, name),
+            |span| self.scope.find_binding_at_position(name, self.component_scope, span.start),
+        );
+        let Some(symbol_id) = symbol_id else {
+            return Ok(None);
+        };
+        if self.scope.symbol_scope(symbol_id) == self.scope.program_scope() {
+            return Ok(None);
         }
-        false
+        let name = self.scope.symbol_ident(symbol_id);
+
+        // JSX identifiers do not have semantic references. Resolve the binding
+        // explicitly so a local `fbt` reports the earlier Todo diagnostic instead
+        // of the later invariant from JSX tag validation.
+        if name == "fbt" {
+            // Cache the lookup as a real HIR binding so later forward tags and
+            // the eventual declaration reuse the first diagnostic.
+            self.resolve_binding_with_span(name, symbol_id, span)?;
+            return Ok(None);
+        }
+        self.resolve_binding_with_span(name, symbol_id, span).map(Some)
     }
 
     /// Return the kind of the current block.
@@ -670,33 +706,13 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         symbol_id: SymbolId,
         span: Option<Span>,
     ) -> Result<IdentifierId, OxcDiagnostic> {
-        // Check for unsupported names BEFORE the cache check.
-        // In TS, resolveBinding records fbt errors when node.name === 'fbt'. After a name collision
-        // causes a rename (e.g., "fbt" -> "fbt_0"), TS's scope.rename changes the AST node's name,
-        // preventing subsequent fbt error recording. We simulate this by checking whether the
-        // resolved name for this binding is still "fbt" (not renamed to "fbt_0" etc.).
-        if name == "fbt" {
-            // Check if this binding was previously resolved to a renamed version
-            let should_record_fbt_error =
-                if let Some(&identifier_id) = self.bindings.get(&symbol_id) {
-                    // Already resolved - check if the resolved name is still "fbt"
-                    match &self.env.identifiers[identifier_id].name {
-                        Some(IdentifierName::Named(resolved_name)) => resolved_name == "fbt",
-                        _ => false,
-                    }
-                } else {
-                    // First resolution - always record
-                    true
-                };
-            if should_record_fbt_error {
-                let error_span = self.declaration_span(symbol_id).or(span);
-                self.env.record_error(diagnostics::local_fbt_variable(error_span))?;
-            }
-        }
-
         // If we've already resolved this binding, return the cached IdentifierId
         if let Some(&identifier_id) = self.bindings.get(&symbol_id) {
             return Ok(identifier_id);
+        }
+
+        if let Some(error) = self.local_fbt_error(name, symbol_id, span) {
+            self.env.record_error(error)?;
         }
 
         if is_always_reserved_word(name.as_str()) {
@@ -744,6 +760,29 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         Ok(id)
     }
 
+    /// Build the diagnostic for a local `fbt` binding that has not been renamed.
+    ///
+    /// Babel renames the AST binding after a collision. Once Oxc has recorded
+    /// the equivalent rename, do not report the diagnostic again.
+    fn local_fbt_error(
+        &self,
+        name: Ident<'a>,
+        symbol_id: SymbolId,
+        span: Option<Span>,
+    ) -> Option<OxcDiagnostic> {
+        if name != "fbt" {
+            return None;
+        }
+        let should_report = self.bindings.get(&symbol_id).is_none_or(|&identifier_id| {
+            matches!(
+                &self.env.identifiers[identifier_id].name,
+                Some(IdentifierName::Named(resolved_name)) if resolved_name == "fbt"
+            )
+        });
+        should_report
+            .then(|| diagnostics::local_fbt_variable(self.declaration_span(symbol_id).or(span)))
+    }
+
     /// Set the span on an identifier to the declaration-site span.
     /// This overrides any previously-set span (which may have come from a reference site).
     pub fn set_identifier_declaration_span(&mut self, id: IdentifierId, span: Span) {
@@ -767,6 +806,9 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             // No binding found: this is a global
             return Ok(VariableBinding::Global { name });
         };
+        if self.scope.is_ambient_binding(symbol_id) {
+            return Ok(VariableBinding::Global { name });
+        }
         // Treat type-only declarations as globals so the compiler doesn't try to
         // create or initialize HIR bindings for them. Inline enums are opaque
         // pass-through instructions, matching upstream's `UnsupportedNode`, so
@@ -799,6 +841,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 None => VariableBinding::ModuleLocal { name },
             })
         } else if !self.is_scope_within_compiled_function(symbol_scope) {
+            self.has_outer_lexical_reference = true;
             Ok(VariableBinding::ModuleLocal { name })
         } else {
             let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
@@ -910,15 +953,22 @@ pub fn get_reverse_postordered_blocks<'a>(
     let mut used_fallthroughs: FxHashSet<BlockId> = FxHashSet::default();
     let mut postorder: Vec<BlockId> = Vec::new();
 
-    fn visit(
-        hir: &HIR<'_>,
-        block_id: BlockId,
-        is_used: bool,
-        visited: &mut FxHashSet<BlockId>,
-        used: &mut FxHashSet<BlockId>,
-        used_fallthroughs: &mut FxHashSet<BlockId>,
-        postorder: &mut Vec<BlockId>,
-    ) {
+    enum Visit {
+        Enter { block_id: BlockId, is_used: bool },
+        Exit(BlockId),
+    }
+
+    // Keep DFS state on the heap: even shallow generated source can lower to
+    // a long chain of blocks that exceeds the native or WebAssembly call stack.
+    let mut stack = vec![Visit::Enter { block_id: hir.entry, is_used: true }];
+    while let Some(visit) = stack.pop() {
+        let (block_id, is_used) = match visit {
+            Visit::Enter { block_id, is_used } => (block_id, is_used),
+            Visit::Exit(block_id) => {
+                postorder.push(block_id);
+                continue;
+            }
+        };
         let was_used = used.contains(&block_id);
         let was_visited = visited.contains(&block_id);
         visited.insert(block_id);
@@ -926,7 +976,7 @@ pub fn get_reverse_postordered_blocks<'a>(
             used.insert(block_id);
         }
         if was_visited && (was_used || !is_used) {
-            return;
+            continue;
         }
 
         let block = hir
@@ -934,10 +984,17 @@ pub fn get_reverse_postordered_blocks<'a>(
             .get(&block_id)
             .unwrap_or_else(|| panic!("[HIRBuilder] expected block {:?} to exist", block_id));
 
-        // Visit successors in reverse order so that when we reverse the
-        // postorder list, sibling edges come out in program order.
-        let mut successors = each_terminal_successor(&block.terminal);
-        successors.reverse();
+        // A fallthrough first visited as unused must be traversed again when
+        // reached by a used successor, but must only be emitted once.
+        if !was_visited {
+            stack.push(Visit::Exit(block_id));
+        }
+
+        // LIFO visits successors in reverse order, so reversing postorder
+        // restores source order. Push fallthrough last to visit it first.
+        for successor in each_terminal_successor(&block.terminal) {
+            stack.push(Visit::Enter { block_id: successor, is_used });
+        }
 
         let fallthrough = terminal_fallthrough(&block.terminal);
 
@@ -947,18 +1004,9 @@ pub fn get_reverse_postordered_blocks<'a>(
             if is_used {
                 used_fallthroughs.insert(ft);
             }
-            visit(hir, ft, false, visited, used, used_fallthroughs, postorder);
-        }
-        for successor in successors {
-            visit(hir, successor, is_used, visited, used, used_fallthroughs, postorder);
-        }
-
-        if !was_visited {
-            postorder.push(block_id);
+            stack.push(Visit::Enter { block_id: ft, is_used: false });
         }
     }
-
-    visit(hir, hir.entry, true, &mut visited, &mut used, &mut used_fallthroughs, &mut postorder);
 
     let mut blocks = OrderedMap::default();
     for block_id in postorder.into_iter().rev() {
@@ -1097,23 +1145,19 @@ pub fn mark_predecessors(hir: &mut HIR) {
 
     let mut visited: FxHashSet<BlockId> = FxHashSet::default();
 
-    fn visit(
-        hir: &mut HIR,
-        block_id: BlockId,
-        prev_block_id: Option<BlockId>,
-        visited: &mut FxHashSet<BlockId>,
-    ) {
+    let mut stack = vec![(hir.entry, None)];
+    while let Some((block_id, prev_block_id)) = stack.pop() {
         // Add predecessor
         if let Some(prev_id) = prev_block_id {
             if let Some(block) = hir.blocks.get_mut(&block_id) {
                 block.preds.insert(prev_id);
             } else {
-                return;
+                continue;
             }
         }
 
         if visited.contains(&block_id) {
-            return;
+            continue;
         }
         visited.insert(block_id);
 
@@ -1121,15 +1165,15 @@ pub fn mark_predecessors(hir: &mut HIR) {
         let successors = if let Some(block) = hir.blocks.get(&block_id) {
             each_terminal_successor(&block.terminal)
         } else {
-            return;
+            continue;
         };
 
-        for successor in successors {
-            visit(hir, successor, Some(block_id), visited);
+        // Preserve the recursive DFS's predecessor insertion order, including
+        // edges to already-visited blocks. Phi operand order depends on it.
+        for successor in successors.into_iter().rev() {
+            stack.push((successor, Some(block_id)));
         }
     }
-
-    visit(hir, hir.entry, None, &mut visited);
 }
 
 // ---------------------------------------------------------------------------

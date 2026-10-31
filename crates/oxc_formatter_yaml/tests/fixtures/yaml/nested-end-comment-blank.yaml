@@ -1,6 +1,6 @@
 # A blank in front of an inner container's end comment is reproduced by the
 # inner flush; the outer separator and the stream's end comments must not
-# observe it again (a blank line is never invented).
+# observe it again (a blank line is never invented; DIVERGENCES.md#blank-lines).
 outer:
   inner:
     a: 1

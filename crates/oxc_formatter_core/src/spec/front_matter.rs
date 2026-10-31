@@ -90,6 +90,10 @@ pub fn parse_front_matter(text: &str) -> Option<FrontMatter<'_>> {
 /// line offset, and gap after it stays byte-identical:
 /// `\n` / `\r` survive, every other byte becomes one ASCII space
 /// (multi-byte characters become runs of spaces, preserving byte length).
+///
+/// The body may start on the closing line (`---<div>`, the trailing text stays outside `raw`):
+/// a host that prints verbatim slices must slice the blanked text too,
+/// or those bytes print as the delimiter again and the next parse reads a different document.
 pub fn blank_front_matter(text: &str, raw_len: usize) -> String {
     let mut out = String::with_capacity(text.len());
     for &byte in &text.as_bytes()[..raw_len] {

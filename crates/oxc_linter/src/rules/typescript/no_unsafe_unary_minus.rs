@@ -56,6 +56,7 @@ declare_oxc_lint!(
     NoUnsafeUnaryMinus(tsgolint),
     typescript,
     correctness,
+    recommended,
     version = "1.12.0",
     short_description = "This rule disallows using the unary minus operator on a value which is not of type 'number' | 'bigint'.",
 );

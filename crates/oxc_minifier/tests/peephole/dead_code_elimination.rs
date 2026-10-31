@@ -117,7 +117,6 @@ fn test_with_options_source_type(
     );
     iterations
 }
-
 #[test]
 fn dce_if_statement() {
     test("if (true) { foo }", "foo");
@@ -225,6 +224,20 @@ fn dce_conditional_expression() {
 
     test("const foo = true ? A : B", "A");
     test("const foo = false ? A : B", "B");
+}
+
+#[test]
+fn dce_fold_computed_member_expr() {
+    test("use([]['length']);", "use(0);");
+    test("use([1, 2, 3]['length']);", "use(3);");
+    test("use([,,1]['length']);", "use(3);");
+    test("use('abc'['length']);", "use(3);");
+    test("use('\\u{1F600}'['length']);", "use(2);");
+
+    test_same("use(object[key]);");
+    test_same("use(object['length']);");
+    test_same("use([...items]['length']);");
+    test_same("use([foo()]['length']);");
 }
 
 #[test]
@@ -540,6 +553,24 @@ console.log([
 #[test]
 fn dropped_direct_eval_converges_after_liveness_refresh() {
     test_with_iterations("if (false) eval('x'); function f() { f() }", "", 2);
+}
+
+#[test]
+fn block_unwrap_needs_no_extra_pass() {
+    test_with_iterations("if (a) { foo() }", "if (a) foo();", 0);
+    test_with_iterations("for (;;) { if (a) { { foo() } } }", "for (;;) if (a) foo();", 0);
+    test_with_iterations(
+        "export function f() { if (a) { return b } }",
+        "export function f() { if (a) return b; }",
+        0,
+    );
+    // A direct body-list item keeps the conservative revisit: `var` symbol
+    // values depend on that position.
+    test_with_iterations(
+        "export function f() { { var x = 0; } return [x, x]; }",
+        "export function f() { var x = 0; return [x, x]; }",
+        1,
+    );
 }
 
 #[test]

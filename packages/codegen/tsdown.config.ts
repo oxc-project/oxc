@@ -25,9 +25,11 @@ const assertPlugins = DEBUG ? [] : [removeAssertsPlugin];
 
 // Global constants defined at build time. See `src-js/globals.d.ts`.
 // `DEBUG: false` lets the minifier remove the body of `debugAssert` and any other debug-only code.
+// `MINIFY` is always `false` - the printer only produces pretty output at present.
 const definedGlobals = {
   DEBUG: DEBUG ? "true" : "false",
   BENCHMARKS: BENCHMARKS ? "true" : "false",
+  MINIFY: "false",
 };
 
 // Base config.

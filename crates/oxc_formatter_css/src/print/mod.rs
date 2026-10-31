@@ -2,7 +2,7 @@ use cow_utils::CowUtils;
 use oxc_css_parser::ast::{Placeholder, Stylesheet};
 
 use oxc_formatter_core::{
-    Buffer, Format, FormatElement, Formatter, arena_cow_str,
+    Format, FormatElement, Formatter, arena_cow_str,
     builders::{FormatWith, text, token},
     write,
 };

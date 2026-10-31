@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, TakeIn};
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -9,7 +9,6 @@ use super::PeepholeOptimizations;
 impl<'a> PeepholeOptimizations {
     /// `mangleFor`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9801>
     pub fn minimize_for_statement(for_stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Get the first statement in the loop
         let mut first = &for_stmt.body;
         if let Statement::BlockStatement(block_stmt) = first {
             if let Some(b) = block_stmt.body.first() {
@@ -68,14 +67,14 @@ impl<'a> PeepholeOptimizations {
             let IfStatement { test, alternate, .. } = if_stmt.unbox();
             let expr = Self::minimize_not(test.span(), test, ctx, true);
 
-            if let Some(test) = &mut for_stmt.test {
-                let left = test.take_in(ctx);
-                let mut logical_expr =
-                    LogicalExpression::new(test.span(), left, LogicalOperator::And, expr, ctx);
-                let new_test = Self::try_fold_and_or(&mut logical_expr, ctx).unwrap_or_else(|| {
-                    Expression::LogicalExpression(ArenaBox::new_in(logical_expr, ctx))
-                });
-                ctx.replace_expression(test, new_test);
+            if let Some(left) = for_stmt.test.take() {
+                for_stmt.test = Some(Self::join_with_left_associative_op(
+                    left.span(),
+                    LogicalOperator::And,
+                    left,
+                    expr,
+                    ctx,
+                ));
             } else {
                 for_stmt.test = Some(expr);
             }
@@ -111,14 +110,14 @@ impl<'a> PeepholeOptimizations {
 
             let expr = test;
 
-            if let Some(test) = &mut for_stmt.test {
-                let left = test.take_in(ctx);
-                let mut logical_expr =
-                    LogicalExpression::new(test.span(), left, LogicalOperator::And, expr, ctx);
-                let new_test = Self::try_fold_and_or(&mut logical_expr, ctx).unwrap_or_else(|| {
-                    Expression::LogicalExpression(ArenaBox::new_in(logical_expr, ctx))
-                });
-                ctx.replace_expression(test, new_test);
+            if let Some(left) = for_stmt.test.take() {
+                for_stmt.test = Some(Self::join_with_left_associative_op(
+                    left.span(),
+                    LogicalOperator::And,
+                    left,
+                    expr,
+                    ctx,
+                ));
             } else {
                 for_stmt.test = Some(expr);
             }

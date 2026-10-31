@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.unsupported-implicit-arguments.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Implicit 'arguments' is not supported", labels: [LabeledSpan { label: Some("Implicit 'arguments' is not supported"), span: Span { start: 43, end: 52 }, primary: true }], help: Some("React Compiler does not support compiling functions that reference the implicit arguments object"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Warning, code: OxcCode { scope: Some("react-compiler"), number: Some("UnsupportedSyntax") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+
+No changes.

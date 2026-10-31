@@ -13,8 +13,8 @@ export const textToDoc: Parser<Doc>["parse"] = async (embeddedSourceText, textTo
   // For (j|t)s-in-xxx, default `parser` is either `babel`(JS), `babel-ts` or `typescript`.
   // We need to infer the parse grammar (`source_ext`) for `oxc_formatter`.
   // - JS: always enable JSX for js-in-xxx, it's syntactically valid
-  // - TS: `typescript` (ts-in-vue|markdown|mdx) or `babel-ts` (ts-in-vue(script generic="..."))
-  //   - In case of ts-in-md, `filepath` is overridden as `dummy.ts(x)` to distinguish TSX or TS
+  // - TS: `typescript` (ts-in-vue|mdx) or `babel-ts` (ts-in-vue(script generic="..."))
+  //   - In case of ts-in-mdx, `filepath` is overridden as `dummy.ts(x)` to distinguish TSX or TS
   //   - For tsx-in-vue (`<script lang="tsx">`), there is no signal from Prettier itself:
   //     - both `lang="ts"` and `lang="tsx"` resolve to the `typescript` parser and `filepath` is the parent `.vue` file
   //     - Nor from parsing: a JSX-free tsx block parses fine as plain ts

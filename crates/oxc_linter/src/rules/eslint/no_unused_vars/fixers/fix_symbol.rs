@@ -133,7 +133,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                             .filter_map(|(idx, el)| el.as_ref().map(|el| (idx, el)))
                             .find_map(|(idx, el)| {
                                 if self == el {
-                                    Some((el.span(), idx == last_position))
+                                    Some((el.span(), arr.rest.is_none() && idx == last_position))
                                 } else {
                                     None
                                 }
