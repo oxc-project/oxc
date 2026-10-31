@@ -28,7 +28,7 @@ fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
             // Out of budget: assume a tag, which only costs an anchor.
             return true;
         }
-        let k = tokens.base_kind(w, cpu);
+        let k = tokens.base_kind(w);
         if k == tk!(JsxLt) {
             return true;
         }
@@ -242,7 +242,7 @@ pub(super) fn paren_anchor(tokens: &Tokens, p: usize) -> Option<Anchor> {
             b'>' if !(q > 0 && tokens.src[q - 1] == b'=') => Some(Anchor::Expr(p)),
             _ => None,
         },
-        Prev::Other(q) => match tokens.base_kind(q, cpu) {
+        Prev::Other(q) => match tokens.base_kind(q) {
             tk!(
                 String | Number | BigInt | TemplateNoSub | TemplateTail | RegExp | PrivateIdent
             ) => Some(Anchor::Expr(p)),

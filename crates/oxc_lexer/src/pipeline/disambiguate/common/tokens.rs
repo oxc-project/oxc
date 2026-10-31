@@ -68,9 +68,8 @@ impl Prev {
 
 impl Tokens<'_> {
     /// Base kind: keywords back to `tk!(Ident)`, escaped names to their plain kind.
-    #[apply(cpu_versions)]
-    #[inline]
-    pub fn base_kind(&self, pos: usize, _cpu: impl Cpu) -> u8 {
+    #[inline(always)]
+    pub fn base_kind(&self, pos: usize) -> u8 {
         let k = self.kind[pos];
         if k >= KW_KIND_BASE {
             return tk!(Ident);
@@ -137,7 +136,7 @@ impl Tokens<'_> {
     #[inline]
     pub fn peek(&self, i: usize, cpu: impl Cpu) -> Peek {
         let pos = self.next_sig(i, cpu);
-        let kind = if pos < self.n { self.base_kind(pos, cpu) } else { tk!(Eof) };
+        let kind = if pos < self.n { self.base_kind(pos) } else { tk!(Eof) };
         Peek { pos, kind, byte: self.src[pos] }
     }
 
@@ -154,7 +153,7 @@ impl Tokens<'_> {
         let Some(q) = self.prev_sig(p, cpu) else {
             return Prev::None;
         };
-        let k = self.base_kind(q, cpu);
+        let k = self.base_kind(q);
         if k >= OP_KIND_BASE {
             Prev::Op(q, self.src[q])
         } else if k == tk!(Ident) {
@@ -237,7 +236,7 @@ impl Tokens<'_> {
             if *steps > cap {
                 return None;
             }
-            match self.base_kind(tp, cpu) {
+            match self.base_kind(tp) {
                 tk!(TemplateTail) => depth += 1,
                 tk!(TemplateHead) => {
                     depth -= 1;

@@ -63,7 +63,7 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize, cpu: impl Cpu) -> Optio
         if steps > RULE_SCAN_CAP {
             return None;
         }
-        let k = tokens.base_kind(p, cpu);
+        let k = tokens.base_kind(p);
         if k >= OP_KIND_BASE {
             let c = tokens.src[p];
             match c {
