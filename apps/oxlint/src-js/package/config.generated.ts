@@ -5599,6 +5599,13 @@ export interface SortKeysOptions {
    */
   caseSensitive?: boolean;
   /**
+   * Ignore object literals passed directly to these functions or methods.
+   * Names match the local function identifier or the static method name exactly, so
+   * `configureStore` also matches `toolkit.configureStore`.
+   * Nested objects and objects inside callbacks are still checked.
+   */
+  ignoreFunctions?: string[];
+  /**
    * Minimum number of properties required in an object before sorting is enforced.
    */
   minKeys?: number;

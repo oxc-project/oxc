@@ -19238,6 +19238,15 @@
           "type": "boolean",
           "markdownDescription": "Whether the sort comparison is case-sensitive (A < a when true)."
         },
+        "ignoreFunctions": {
+          "description": "Ignore object literals passed directly to these functions or methods.\nNames match the local function identifier or the static method name exactly, so\n`configureStore` also matches `toolkit.configureStore`.\nNested objects and objects inside callbacks are still checked.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Ignore object literals passed directly to these functions or methods.\nNames match the local function identifier or the static method name exactly, so\n`configureStore` also matches `toolkit.configureStore`.\nNested objects and objects inside callbacks are still checked."
+        },
         "minKeys": {
           "description": "Minimum number of properties required in an object before sorting is enforced.",
           "default": 2,

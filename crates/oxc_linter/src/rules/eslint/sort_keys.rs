@@ -2,7 +2,7 @@ use std::{borrow::Cow, cmp::Ordering, iter::Peekable};
 
 use oxc_ast::{
     AstKind, StaticPropertyName,
-    ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind},
+    ast::{Expression, MemberExpression, ObjectExpression, ObjectProperty, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -14,6 +14,7 @@ use serde::Deserialize;
 
 use crate::{
     AstNode,
+    ast_util::iter_outer_expressions,
     context::LintContext,
     rule::{Rule, TupleRuleConfig},
 };
@@ -41,6 +42,11 @@ pub struct SortKeysOptions {
     min_keys: u32,
     /// When true, groups of properties separated by a blank line are sorted independently.
     allow_line_separated_groups: bool,
+    /// Ignore object literals passed directly to these functions or methods.
+    /// Names match the local function identifier or the static method name exactly, so
+    /// `configureStore` also matches `toolkit.configureStore`.
+    /// Nested objects and objects inside callbacks are still checked.
+    ignore_functions: Vec<String>,
 }
 
 impl Default for SortKeysOptions {
@@ -51,6 +57,7 @@ impl Default for SortKeysOptions {
             natural: false,
             min_keys: 2,
             allow_line_separated_groups: false,
+            ignore_functions: Vec::new(),
         }
     }
 }
@@ -72,6 +79,15 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// Unsorted property keys can make the code harder to read and maintain.
+    ///
+    /// ### Options
+    ///
+    /// Use `ignoreFunctions` to preserve argument key order for functions whose TypeScript
+    /// inference depends on property order, such as `configureStore` or `createRoute`:
+    ///
+    /// ```json
+    /// ["asc", { "ignoreFunctions": ["configureStore", "createRoute"] }]
+    /// ```
     ///
     /// ### Examples
     ///
@@ -113,6 +129,12 @@ impl Rule for SortKeys {
                 return;
             }
 
+            if !options.ignore_functions.is_empty()
+                && is_ignored_function_argument(node, ctx, &options.ignore_functions)
+            {
+                return;
+            }
+
             if is_object_sorted(dec, ctx.source_text(), sort_order, options) {
                 return;
             }
@@ -131,6 +153,26 @@ impl Rule for SortKeys {
             ctx.diagnostic(sort_properties_diagnostic(node.span()));
         }
     }
+}
+
+fn is_ignored_function_argument<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    ignore_functions: &[String],
+) -> bool {
+    let Some(AstKind::CallExpression(call)) = iter_outer_expressions(ctx.nodes(), node.id()).next()
+    else {
+        return false;
+    };
+
+    let name = match call.callee.get_inner_expression() {
+        Expression::Identifier(ident) => Some(ident.name.as_str()),
+        expr => expr
+            .get_member_expr()
+            .and_then(MemberExpression::static_property_name)
+            .and_then(JSStr::as_str),
+    };
+    name.is_some_and(|name| ignore_functions.iter().any(|ignored| ignored == name))
 }
 
 struct FixableProperty<'a> {
@@ -1734,6 +1776,109 @@ fn test() {
     ];
 
     Tester::new(SortKeys::NAME, SortKeys::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
+}
+
+#[test]
+fn test_ignore_functions() {
+    use crate::tester::Tester;
+
+    let options = Some(serde_json::json!([
+        "asc",
+        { "ignoreFunctions": ["configureStore", "createRoute"] }
+    ]));
+
+    let mut pass = vec![
+        "configureStore({ reducer, middleware, preloadedState, enhancers });",
+        "createRoute({ params: {}, loader() {}, beforeLoad() {} });",
+        "configureStore(null, { reducer, middleware }, { reducer, middleware });",
+        "otherFunction(configureStore({ reducer, middleware }));",
+        "toolkit.configureStore({ reducer, middleware });",
+        "toolkit['configureStore']({ reducer, middleware });",
+        "toolkit[`configureStore`]({ reducer, middleware });",
+        "(toolkit.configureStore)({ reducer, middleware });",
+        "configureStore?.({ reducer, middleware });",
+        "toolkit?.configureStore({ reducer, middleware });",
+        "toolkit.configureStore?.({ reducer, middleware });",
+        "(toolkit?.configureStore)({ reducer, middleware });",
+        "(configureStore)({ reducer, middleware });",
+        "(configureStore as Factory)({ reducer, middleware });",
+        "configureStore!({ reducer, middleware });",
+        "(configureStore<Options>)({ reducer, middleware });",
+        "configureStore(({ reducer, middleware }));",
+        "configureStore({ reducer, middleware } as Options);",
+        "configureStore({ reducer, middleware } satisfies Options);",
+        "configureStore(({ reducer, middleware } as Options)!);",
+        "configureStore<Options>({ reducer, middleware });",
+    ]
+    .into_iter()
+    .map(|code| (code, options.clone()))
+    .collect::<Vec<_>>();
+
+    pass.push((
+        "import { configureStore as makeStore } from '@reduxjs/toolkit'; makeStore({ middleware, reducer });",
+        Some(serde_json::json!(["desc", { "ignoreFunctions": ["makeStore"] }])),
+    ));
+
+    let mut fail = vec![
+        "otherFunction({ reducer, middleware });",
+        "ConfigureStore({ reducer, middleware });",
+        "import { configureStore as makeStore } from '@reduxjs/toolkit'; makeStore({ reducer, middleware });",
+        "const options = { reducer, middleware }; configureStore(options);",
+        "toolkit[method]({ reducer, middleware });",
+        "configureStore({ reducer: { z: 1, a: 2 }, middleware });",
+        "configureStore(() => ({ reducer, middleware }));",
+        "configureStore([{ reducer, middleware }]);",
+        "configureStore(condition ? { reducer, middleware } : options);",
+        "configureStore(otherFunction({ reducer, middleware }));",
+        "new configureStore({ reducer, middleware });",
+        "({ reducer, middleware }).configureStore();",
+    ]
+    .into_iter()
+    .map(|code| (code, options.clone()))
+    .collect::<Vec<_>>();
+    fail.push(("configureStore({ reducer, middleware });", None));
+    fail.push((
+        "configureStore({ reducer, middleware });",
+        Some(serde_json::json!(["asc", { "ignoreFunctions": [] }])),
+    ));
+
+    let fix = vec![
+        (
+            "configureStore({ reducer, middleware }); const options = { z: 1, a: 2 };",
+            "configureStore({ reducer, middleware }); const options = { a: 2, z: 1 };",
+            options.clone(),
+        ),
+        (
+            "configureStore({ reducer: { z: 1, a: 2 }, middleware });",
+            "configureStore({ reducer: { a: 2, z: 1 }, middleware });",
+            options.clone(),
+        ),
+        (
+            "const obj = { z: configureStore({ reducer, middleware }), a: 1 };",
+            "const obj = { a: 1, z: configureStore({ reducer, middleware }) };",
+            options.clone(),
+        ),
+        (
+            "configureStore(() => ({ reducer, middleware }));",
+            "configureStore(() => ({ middleware, reducer }));",
+            options.clone(),
+        ),
+        (
+            "otherFunction({ reducer, middleware });",
+            "otherFunction({ middleware, reducer });",
+            options,
+        ),
+        (
+            "configureStore({ reducer, middleware });",
+            "configureStore({ middleware, reducer });",
+            None,
+        ),
+    ];
+
+    Tester::new(SortKeys::NAME, SortKeys::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .with_snapshot_suffix("ignore_functions")
+        .test_and_snapshot();
 }
 
 #[test]
