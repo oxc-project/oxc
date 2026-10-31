@@ -1,0 +1,21 @@
+{
+  "name": "oxc-pgo-workloads",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.918.0",
+    "@vue/compiler-sfc": "3.5.22",
+    "d3-scale": "1.0.7",
+    "d3-selection": "1.2.0",
+    "esbuild": "0.25.12",
+    "google-protobuf": "3.21.4",
+    "preact": "10.27.2",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "rxjs": "7.8.2",
+    "svelte": "5.43.8",
+    "three": "0.180.0",
+    "vue": "3.5.22",
+    "zod": "4.1.12"
+  }
+}

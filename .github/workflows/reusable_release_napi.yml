@@ -3,34 +3,76 @@ name: Release NAPI
 permissions: {}
 
 on:
+  workflow_dispatch:
+    inputs:
+      name:
+        required: true
+        type: choice
+        description: "Build and package without publishing"
+        options: [parser, transform, minify]
+      dry-run:
+        type: boolean
+        default: true
+        description: "Manual runs never publish"
   workflow_call:
     inputs:
       name:
         required: true
         type: string
         description: "The component name"
+      dry-run:
+        type: boolean
+        default: false
+        description: "Build and package without publishing"
 
 jobs:
   check:
     name: Check version
     runs-on: ubuntu-slim
     outputs:
-      version_changed: ${{ steps.check.outputs.version_changed }}
+      version_changed: ${{ (github.event_name == 'workflow_dispatch' || inputs.dry-run) && 'true' || steps.check.outputs.version_changed }}
     env:
       name: ${{ inputs.name }}
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: $/.github/actions/check-version
         id: check
+        if: github.event_name != 'workflow_dispatch' && !inputs.dry-run
         with:
           file-name: napi/${{ inputs.name }}/package.json
           file-url: https://unpkg.com/oxc-${{ inputs.name }}@latest/package.json
 
-  build:
+  prepare-pgo:
     needs: check
-    if: needs.check.outputs.version_changed == 'true'
+    if: needs.check.outputs.version_changed == 'true' && contains(fromJSON('["parser", "transform", "minify"]'), inputs.name)
+    name: Prepare PGO corpus
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - parallel:
+          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+          - uses: $/.github/actions/clone-submodules
+            with:
+              node-compat-table: false
+      - name: Prepare full ecosystem and conformance corpus
+        run: |
+          node tasks/transform_conformance/update_fixtures.ts
+          pnpm node tasks/pgo/pgo.mjs prepare --fetch
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pgo-corpus
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0 # Shards are already compressed.
+          path: target/pgo/corpus
+
+  build:
+    needs: [check, prepare-pgo]
+    if: >-
+      !cancelled() && needs.check.outputs.version_changed == 'true' &&
+      (needs.prepare-pgo.result == 'success' || needs.prepare-pgo.result == 'skipped')
     name: Build ${{ matrix.target }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ contains(fromJSON('["parser", "transform", "minify"]'), inputs.name) && matrix.pgo-os || matrix.os }}
     env:
       name: ${{ inputs.name }}
     defaults:
@@ -42,6 +84,7 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            pgo: true
             build: pnpm build --target x86_64-pc-windows-msvc
 
           - os: windows-latest
@@ -50,6 +93,7 @@ jobs:
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            pgo: true
             build: pnpm build --target x86_64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
@@ -58,6 +102,8 @@ jobs:
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
+            pgo: true
+            pgo-os: ubuntu-24.04-arm
             build: pnpm build --target aarch64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
@@ -70,10 +116,13 @@ jobs:
 
           - os: macos-latest
             target: x86_64-apple-darwin
+            pgo: true
+            pgo-os: macos-15-intel
             build: pnpm build --target x86_64-apple-darwin
 
           - os: macos-latest
             target: aarch64-apple-darwin
+            pgo: true
             build: pnpm build --target aarch64-apple-darwin
 
           - os: ubuntu-latest
@@ -149,7 +198,44 @@ jobs:
             with:
               version: 0.13.0
 
+      - name: Download PGO corpus
+        if: matrix.pgo && contains(fromJSON('["parser", "transform", "minify"]'), inputs.name)
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: pgo-corpus
+          path: target/pgo/corpus
+
+      - name: Build and validate PGO binding
+        if: matrix.pgo && contains(fromJSON('["parser", "transform", "minify"]'), inputs.name)
+        run: |
+          rustup component add llvm-tools-preview
+          pnpm node tasks/pgo/pgo.mjs "$name" --target ${{ matrix.target }} --corpus target/pgo/corpus
+        env:
+          TARGET_CC: ${{ !contains(matrix.target, 'pc-windows-msvc') && 'clang' || '' }}
+
+      - name: Upload PGO provenance
+        if: matrix.pgo && contains(fromJSON('["parser", "transform", "minify"]'), inputs.name)
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pgo-${{ inputs.name }}-${{ matrix.target }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            target/pgo/${{ inputs.name }}/${{ matrix.target }}/merged.profdata
+            target/pgo/${{ inputs.name }}/${{ matrix.target }}/profile.json
+
+      - name: Upload installable PGO package
+        if: matrix.pgo && contains(fromJSON('["parser", "transform", "minify"]'), inputs.name)
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: napi-pgo-${{ inputs.name }}-${{ matrix.target }}
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+          path: target/pgo/${{ inputs.name }}/${{ matrix.target }}/npm
+
       - name: Build
+        if: ${{ !matrix.pgo || !contains(fromJSON('["parser", "transform", "minify"]'), inputs.name) }}
         working-directory: napi/${{ inputs.name }}
         run: ${{ matrix.build }}
         shell: bash
@@ -220,6 +306,7 @@ jobs:
           - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
           - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
             with:
+              pattern: bindings-*
               path: artifacts
 
       - run: mkdir -p ${npm_dir}
@@ -238,7 +325,26 @@ jobs:
       - name: Check Publish
         run: node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
 
+      - name: Prepare release packages without publishing
+        if: github.event_name == 'workflow_dispatch' || inputs.dry-run
+        run: |
+          pnpm napi pre-publish --no-gh-release --skip-optional-publish -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          mkdir -p package-artifacts
+          for package in ${npm_dir}/* ${package_path}; do
+            pnpm --dir "$package" pack --pack-destination "$GITHUB_WORKSPACE/package-artifacts"
+          done
+
+      - name: Upload release packages
+        if: github.event_name == 'workflow_dispatch' || inputs.dry-run
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-${{ inputs.name }}
+          if-no-files-found: error
+          compression-level: 0
+          path: package-artifacts/*.tgz
+
       - name: Trusted Publish
+        if: github.event_name != 'workflow_dispatch' && !inputs.dry-run
         run: |
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to `package_path`.
