@@ -754,3 +754,64 @@ fn test_implicit_arguments_unresolved_references() {
         assert!(scoping.get_reference(reference_id).symbol_id().is_none());
     }
 }
+
+#[test]
+fn annex_b_existing_var_and_sibling_functions() {
+    for source in [
+        "{ function f() {} } { function f() {} } f();",
+        "var f = 0; { function f() {} } { function f() {} } f();",
+        "function f() {} { function f() {} } { function f() {} } f();",
+    ] {
+        let tester = SemanticTester::new(source, oxc_span::SourceType::script());
+        let semantic = tester.build();
+        let scoping = semantic.scoping();
+        let root = scoping.get_root_binding("f".into()).unwrap();
+        assert_eq!(scoping.symbol_ids().filter(|&id| scoping.symbol_name(id) == "f").count(), 1);
+        assert!(scoping.symbol_redeclarations(root).len() >= 2);
+        assert_eq!(scoping.get_resolved_references(root).count(), 1);
+    }
+}
+
+#[test]
+fn annex_b_aliases_preserve_lexical_redeclaration_checks() {
+    for source in [
+        "var f; { var f; function f() {} }",
+        "var f; { let f; function f() {} }",
+        "var f; { function f() {} let f; }",
+        "var f; { function* f() {} function f() {} }",
+        "var f; { function f() {} async function f() {} }",
+    ] {
+        let tester = SemanticTester::new(source, oxc_span::SourceType::script());
+        assert!(!tester.build_with_errors().diagnostics.is_empty(), "{source}");
+    }
+
+    // Annex B aliases do not apply to strict block functions or generators.
+    for source in [
+        "'use strict'; var f; { function f() {} } { function f() {} }",
+        "var f; { function* f() {} } { function* f() {} }",
+        "var f; { async function f() {} } { async function f() {} }",
+    ] {
+        let tester = SemanticTester::new(source, oxc_span::SourceType::script());
+        let semantic = tester.build();
+        let scoping = semantic.scoping();
+        assert_eq!(
+            scoping.symbol_ids().filter(|&id| scoping.symbol_name(id) == "f").count(),
+            3,
+            "{source}"
+        );
+    }
+}
+
+#[test]
+fn annex_b_alias_purity_does_not_apply_to_other_declarations() {
+    for source in [
+        "{ /* @__NO_SIDE_EFFECTS__ */ function f() {} } { function f() { effect(); } } f();",
+        "{ function f() { effect(); } } f(); { /* @__NO_SIDE_EFFECTS__ */ function f() {} }",
+    ] {
+        let tester = SemanticTester::new(source, oxc_span::SourceType::script());
+        let semantic = tester.build();
+        let scoping = semantic.scoping();
+        let symbol = scoping.get_root_binding("f".into()).unwrap();
+        assert!(!scoping.no_side_effects().contains(&symbol), "{source}");
+    }
+}

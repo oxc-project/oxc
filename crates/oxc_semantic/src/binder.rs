@@ -170,42 +170,71 @@ impl<'a> Binder<'a> for Function<'a> {
                 SymbolFlags::FunctionExcludes - SymbolFlags::FunctionScopedVariable
             };
 
-            let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
-            ident.symbol_id.set(Some(symbol_id));
-
             let scope_flags = builder.current_scope_flags();
-
-            // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
-            // scopes also create an implicit var-like binding in the enclosing function
-            // scope. Hoist to the var scope — same pattern as var hoisting (line 46).
-            if is_declaration // function expressions are bound in their own (var) scope
-                && !self.r#async // Annex B only applies to plain functions
-                && !self.generator // not generators or async generators
-                && !builder.source_type.is_typescript() // Annex B is JavaScript-only
-                && !scope_flags.is_var() // already in a var scope, no hoisting needed
-                && !scope_flags.is_strict_mode()
-            // no Annex B in strict mode / modules
-            {
-                let block_scope_id = builder.current_scope_id;
-                let var_scope_id = builder
+            let block_scope_id = builder.current_scope_id;
+            let annex_b_var_scope = (is_declaration
+                && !self.r#async
+                && !self.generator
+                && !builder.source_type.is_typescript()
+                && !scope_flags.is_var()
+                && !scope_flags.is_strict_mode())
+            .then(|| {
+                builder
                     .scoping
                     .scope_ancestors(block_scope_id)
                     .skip(1)
-                    .find(|&id| builder.scoping.scope_flags(id).is_var());
-                if let Some(var_scope_id) = var_scope_id
-                    && !builder.scoping.scope_has_binding(var_scope_id, ident.name)
+                    .find(|&id| builder.scoping.scope_flags(id).is_var())
+            })
+            .flatten();
+
+            let existing_alias = annex_b_var_scope.and_then(|var_scope| {
+                if builder.scoping.scope_has_binding(block_scope_id, ident.name)
+                    || builder.hoisting_variables.contains_key(&(block_scope_id, ident.name))
                 {
-                    builder.scoping.move_binding_by_symbol_id(
-                        block_scope_id,
-                        var_scope_id,
-                        symbol_id,
-                    );
-                    builder.hoisting_variables.insert((block_scope_id, ident.name), symbol_id);
+                    return None;
                 }
+                let symbol = builder.scoping.get_binding(var_scope, ident.name)?;
+                let flags = builder.scoping.symbol_flags(symbol);
+                if !(flags.is_function_scoped_declaration() || flags.is_function())
+                    || flags.contains(SymbolFlags::FunctionExpression)
+                {
+                    return None;
+                }
+                let blocked = builder
+                    .scoping
+                    .scope_ancestors(block_scope_id)
+                    .skip(1)
+                    .take_while(|&scope| scope != var_scope)
+                    .any(|scope| builder.scoping.scope_has_binding(scope, ident.name));
+                (!blocked).then_some(symbol)
+            });
+
+            let symbol_id = if let Some(symbol_id) = existing_alias {
+                // Like a repeated var declaration, evaluating another sloppy block
+                // function writes the existing enclosing var binding. Keep the
+                // declaration identity and redeclaration metadata together.
+                builder.annex_b_function_aliases.insert(ident.span);
+                builder.add_redeclare_variable(symbol_id, includes, ident.span);
+                builder.scoping.union_symbol_flag(symbol_id, includes);
+                builder.hoisting_variables.insert((block_scope_id, ident.name), symbol_id);
+                symbol_id
+            } else {
+                builder.declare_symbol(ident.span, ident.name, includes, excludes)
+            };
+            ident.symbol_id.set(Some(symbol_id));
+
+            if let Some(var_scope_id) = annex_b_var_scope
+                && !builder.scoping.scope_has_binding(var_scope_id, ident.name)
+            {
+                builder.scoping.move_binding_by_symbol_id(block_scope_id, var_scope_id, symbol_id);
+                builder.hoisting_variables.insert((block_scope_id, ident.name), symbol_id);
             }
 
-            // Save `@__NO_SIDE_EFFECTS__`
-            if self.pure {
+            // A pure declaration does not make other values assigned to the
+            // same binding pure, including Annex B writes from sibling blocks.
+            if !builder.scoping.symbol_redeclarations(symbol_id).is_empty() {
+                builder.scoping.no_side_effects.remove(&symbol_id);
+            } else if self.pure {
                 builder.scoping.no_side_effects.insert(symbol_id);
             }
         }
