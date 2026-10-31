@@ -2,6 +2,7 @@ import { runCli } from "./bindings";
 import {
   initExternalServices,
   disposeExternalServices,
+  exitWithoutWaitingForWorkers,
   formatFile,
   formatEmbeddedDoc,
   sortTailwindClasses,
@@ -64,7 +65,25 @@ void (async () => {
     return;
   }
 
-  // Other modes are handled by Rust, just need to set `exitCode`
+  // Other modes are handled by Rust, just need to exit with `exitCode`
+
+  // Node.js before 24.13.1, and 25.0 to 25.3, has a race condition in ThreadsafeFunction cleanup
+  // that can crash the process at exit on large codebases.
+  // See: https://github.com/nodejs/node/issues/55706
+  // Backport: https://nodejs.org/en/blog/release/v24.13.1
+  const [major, minor, patch] = process.versions.node.split(".").map(Number);
+  const hasNode24Fix = major === 24 && (minor > 13 || (minor === 13 && patch >= 1));
+  const hasTsfnCleanupFix = hasNode24Fix || major > 25 || (major === 25 && minor >= 4);
+
+  if (hasTsfnCleanupFix) {
+    // Exit now, without waiting for the Prettier workers to exit.
+    // `process.exit()` loses no output here: Rust has written and flushed all of it before `runCli()` resolved,
+    // and JS writes to `stdout`/`stderr` finish at once because they are set to blocking mode above.
+    // If the workers cannot be killed this way, this returns, and the cleanup below runs instead.
+    // (`exitCode` is not `null`: `runCli()` returns `null` only for the `init` and `migrate:*` modes,
+    // and those modes return earlier in this function.)
+    exitWithoutWaitingForWorkers(exitCode!);
+  }
 
   // Clean up worker pool to not V8 crashes on process exit
   await disposeExternalServices();
@@ -74,14 +93,9 @@ void (async () => {
   // https://nodejs.org/api/process.html#processexitcode
   process.exitCode = exitCode!;
 
-  // Older Node.js versions have a race condition with ThreadsafeFunction cleanup that causes
-  // crashes on large codebases. Add a small delay to allow pending NAPI operations
-  // to complete before exit. Fixed in Node.js 25.4.0+ and backported to 24.13.1.
-  // See: https://github.com/nodejs/node/issues/55706
-  // Backport: https://nodejs.org/en/blog/release/v24.13.1
-  const [major, minor, patch] = process.versions.node.split(".").map(Number);
-  const hasNode24Fix = major === 24 && (minor > 13 || (minor === 13 && patch >= 1));
-  if (!hasNode24Fix && (major < 25 || (major === 25 && minor < 4))) {
+  if (!hasTsfnCleanupFix) {
+    // This Node.js has the ThreadsafeFunction cleanup race (nodejs/node#55706, see above).
+    // Wait a little before exit, so that pending NAPI operations can complete.
     setTimeout(() => process.exit(), 50);
   }
 })();

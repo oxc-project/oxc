@@ -1,3 +1,4 @@
+import { ChildProcess } from "node:child_process";
 import Tinypool from "tinypool";
 import { toFormatFileResult, toNullable } from "../libs/napi-callbacks";
 import type { FormatFileResult } from "../libs/napi-callbacks";
@@ -30,8 +31,15 @@ async function getPool(): Promise<Tinypool> {
 
   pool ??= new Tinypool({
     filename: new URL("./cli-worker.js", import.meta.url).href,
-    minThreads: poolSize,
+    // Spawn workers on demand: each one is a full Node.js process,
+    // and most runs delegate only a few files to Prettier.
+    minThreads: 1,
     maxThreads: poolSize,
+    // Keep spawned workers until the pool is destroyed.
+    // Tinypool's default (0) removes workers above `minThreads` as soon as they go idle,
+    // so a run whose tasks arrive in waves would keep respawning them.
+    // `setTimeout` caps the delay at 2^31 - 1 ms; `Infinity` would fire after 1 ms.
+    idleTimeout: 2 ** 31 - 1,
     // XXX: Use `child_process` instead of `worker_threads`.
     // Not sure why, but when using `worker_threads`,
     // calls from NAPI (CLI) -> worker threads -> NAPI (prettier-plugin-oxfmt) causes a hang...
@@ -47,6 +55,30 @@ export async function disposeExternalServices(): Promise<void> {
   await pool?.destroy();
   pool = null;
   poolSize = null;
+}
+
+// Exit the process without waiting for the workers to exit.
+//
+// `pool.destroy()` sends `SIGTERM` to each worker and waits for all of them to exit (~10 ms with 16 workers).
+// There is nothing to wait for: workers write no files, their stdio is piped to this process,
+// and Rust has written and flushed the output before `runCli()` resolves.
+//
+// `process.exit()` must follow the kills synchronously.
+// If the event loop runs again, Tinypool sees a worker exit, emits "Worker exited unexpectedly" as an uncaught error,
+// and may spawn a replacement worker.
+//
+// NOTE: This relies on a Tinypool internal that is not in its types:
+// with `runtime: "child_process"`, each of `pool.threads` has the `ChildProcess` as `process`.
+// If any worker does not, this returns without doing anything,
+// and the caller must fall back to `disposeExternalServices()`.
+export function exitWithoutWaitingForWorkers(exitCode: number): void {
+  const children = (pool?.threads ?? []).map((worker) =>
+    "process" in worker ? worker.process : undefined,
+  );
+  if (!children.every((child): child is ChildProcess => child instanceof ChildProcess)) return;
+
+  for (const child of children) child.kill("SIGKILL");
+  process.exit(exitCode);
 }
 
 // ---
