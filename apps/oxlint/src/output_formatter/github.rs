@@ -8,26 +8,31 @@ use oxc_diagnostics::{
 use super::default::get_diagnostic_result_output;
 use crate::output_formatter::InternalFormatter;
 
-#[derive(Debug)]
-pub struct GithubOutputFormatter;
+#[derive(Debug, Default)]
+pub struct GithubOutputFormatter {
+    pub no_summary: bool,
+}
 
 impl InternalFormatter for GithubOutputFormatter {
     fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {
-        Some(lint_command_info.format_execution_summary())
+        Some(lint_command_info.format_execution_summary(self.no_summary))
     }
 
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
-        Box::new(GithubReporter)
+        Box::new(GithubReporter { no_summary: self.no_summary })
     }
 }
 
 /// Formats reports using [GitHub Actions
 /// annotations](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message). Useful for reporting in CI.
-struct GithubReporter;
+#[derive(Default)]
+struct GithubReporter {
+    no_summary: bool,
+}
 
 impl DiagnosticReporter for GithubReporter {
     fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
-        Some(get_diagnostic_result_output(result))
+        Some(get_diagnostic_result_output(result, self.no_summary))
     }
 
     fn supports_minified_file_fallback(&self) -> bool {
@@ -119,7 +124,7 @@ mod test {
 
     #[test]
     fn lint_command_info() {
-        let formatter = GithubOutputFormatter;
+        let formatter = GithubOutputFormatter::default();
         let result = formatter.lint_command_info(&LintCommandInfo {
             number_of_files: 5,
             number_of_rules: Some(10),
@@ -137,7 +142,7 @@ mod test {
 
     #[test]
     fn lint_command_info_unknown_rules() {
-        let formatter = GithubOutputFormatter;
+        let formatter = GithubOutputFormatter::default();
         let result = formatter.lint_command_info(&LintCommandInfo {
             number_of_files: 5,
             number_of_rules: None,
@@ -152,7 +157,7 @@ mod test {
 
     #[test]
     fn reporter_finish() {
-        let mut reporter = GithubReporter;
+        let mut reporter = GithubReporter::default();
 
         let result = reporter.finish(&DiagnosticResult::default());
 
@@ -161,7 +166,7 @@ mod test {
 
     #[test]
     fn reporter_finish_with_errors() {
-        let mut reporter = GithubReporter;
+        let mut reporter = GithubReporter::default();
 
         let result = reporter.finish(&DiagnosticResult::new(2, 1, false));
 
@@ -170,7 +175,7 @@ mod test {
 
     #[test]
     fn reporter_error() {
-        let mut reporter = GithubReporter;
+        let mut reporter = GithubReporter::default();
         let error = OxcDiagnostic::warn("error message")
             .with_label(Span::new(0, 8))
             .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
@@ -186,7 +191,7 @@ mod test {
 
     #[test]
     fn reporter_error_escapes_filename_differently_in_property_and_message() {
-        let mut reporter = GithubReporter;
+        let mut reporter = GithubReporter::default();
         let error = OxcDiagnostic::warn("error message")
             .with_label(Span::new(0, 8))
             .with_source_code(NamedSource::new("we,ird%name.ts", "debugger;"));
@@ -203,7 +208,7 @@ mod test {
 
     #[test]
     fn reporter_error_without_labels_omits_file_and_location() {
-        let mut reporter = GithubReporter;
+        let mut reporter = GithubReporter::default();
         let error = OxcDiagnostic::warn("warning message")
             .with_error_code("scope", "rule")
             .with_help("help message")
@@ -217,7 +222,7 @@ mod test {
 
     #[test]
     fn reporter_fileless_error_uses_error_annotation() {
-        let mut reporter = GithubReporter;
+        let mut reporter = GithubReporter::default();
         let error = OxcDiagnostic::error("error message")
             .with_error_code("scope", "rule")
             .with_help("help message")
@@ -236,7 +241,7 @@ mod test {
             .with_label(Span::new(0, 1300))
             .with_source_code(NamedSource::new("file://test.ts", source_text));
 
-        let (mut service, sender) = DiagnosticService::new(Box::new(GithubReporter));
+        let (mut service, sender) = DiagnosticService::new(Box::new(GithubReporter::default()));
         sender.send(vec![diagnostic]).unwrap();
         drop(sender);
 
