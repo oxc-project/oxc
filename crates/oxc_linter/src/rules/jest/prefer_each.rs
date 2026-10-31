@@ -48,6 +48,24 @@ fn test() {
                 expect(numbers[i]).toBeGreaterThan(7);
               }
             });"#,
+        // `describe` / `test` imported from a module other than `@jest/globals` are not test functions.
+        r#"import { describe, test } from "./helpers";
+            describe("probe", () => {
+              for (const item of ["a", "b"]) {
+                test(`handles ${item}`, () => {});
+              }
+            });"#,
+        // Test functions imported from other runners (Playwright, `node:test`) are not reported.
+        r#"import { test } from "@playwright/test";
+            for (const kind of ["a", "b"]) {
+              test(`x ${kind}`, () => {});
+            }"#,
+        r#"import { describe, it } from "node:test";
+            describe("d", () => {
+              for (const kind of ["a", "b"]) {
+                it(`x ${kind}`, () => {});
+              }
+            });"#,
     ];
 
     let fail = vec![
@@ -158,6 +176,13 @@ fn test() {
                 }
               });
             }"#,
+        // An aliased import of `it` from `@jest/globals` is still a test function.
+        r#"import { describe, it as check } from "@jest/globals";
+            describe("probe", () => {
+              for (const item of ["a", "b"]) {
+                check(`handles ${item}`, () => {});
+              }
+            });"#,
     ];
 
     Tester::new(PreferEach::NAME, PreferEach::PLUGIN, pass, fail).test_and_snapshot();

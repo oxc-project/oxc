@@ -1,12 +1,15 @@
 use oxc_ast::{AstKind, AstType};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::{AstNode, AstTypesBitset, NodeId};
+use oxc_semantic::{AstTypesBitset, NodeId};
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
 use crate::{
     context::{ContextHost, LintContext},
-    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_jest_fn_call},
+    utils::{
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, iter_possible_jest_call_node,
+        parse_jest_fn_call,
+    },
 };
 
 fn use_prefer_each(span: Span, fn_name: &str) -> OxcDiagnostic {
@@ -77,13 +80,26 @@ impl PreferEachConfig {
     }
 
     pub fn run_once(ctx: &LintContext<'_>) {
+        // Only consider calls that resolve to a test framework global or to an import
+        // from `vitest` / `@jest/globals`, so that local helpers named `test` are
+        // ignored and aliased imports (`import { it as check } from 'vitest'`) are not.
+        let mut possible_jest_nodes =
+            iter_possible_jest_call_node(ctx.semantic()).collect::<Vec<_>>();
+        // Visit calls in source order, so the first test call in a loop names the diagnostic.
+        possible_jest_nodes.sort_unstable_by_key(|possible_jest_node| possible_jest_node.node.id());
+
         let mut skip = FxHashSet::<NodeId>::default();
-        ctx.nodes().iter().for_each(|node| {
-            Self::run(node, ctx, &mut skip);
-        });
+        for possible_jest_node in &possible_jest_nodes {
+            Self::run(possible_jest_node, ctx, &mut skip);
+        }
     }
 
-    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, skip: &mut FxHashSet<NodeId>) {
+    fn run<'a>(
+        possible_jest_node: &PossibleJestNode<'a, '_>,
+        ctx: &LintContext<'a>,
+        skip: &mut FxHashSet<NodeId>,
+    ) {
+        let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
         // Walking up to the nearest enclosing loop is much cheaper than
@@ -107,9 +123,7 @@ impl PreferEachConfig {
             return;
         }
 
-        let Some(jest_fn_call) =
-            parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
-        else {
+        let Some(jest_fn_call) = parse_jest_fn_call(call_expr, possible_jest_node, ctx) else {
             return;
         };
 

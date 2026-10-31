@@ -252,3 +252,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   beforeEach(() => setupSomething(input));
    ╰────
   help: Prefer using `describe.each` rather than a manual loop.
+
+  ⚠ vitest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:3:15]
+ 2 │             describe("probe", () => {
+ 3 │               for (const item of ["a", "b"]) {
+   ·               ───────────────────────────────
+ 4 │                 check(`handles ${item}`, () => {});
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
