@@ -7,8 +7,9 @@ use crate::pipeline::{
 /// Nibble lookup tables which classify bytes as keyword-initial letters, operator chars, or `.`.
 ///
 /// "Merged" because one lookup answers all three questions.
-/// `classify_impl` looks up each byte's low nibble in `lo` and its high nibble in `hi` with `vpshufb`,
-/// and ANDs the results. For an ASCII byte `c`, `lo[c & 15] & hi[c >> 4]` has these bits set:
+/// The SIMD implementations of `classify` look up each byte's low nibble in `lo`
+/// and its high nibble in `hi`, and AND the results.
+/// For an ASCII byte `c`, `lo[c & 15] & hi[c >> 4]` has these bits set:
 ///
 /// * Bits 0-1: `c` can start a keyword.
 /// * Bits 2-5: `c` is an operator char.
@@ -86,7 +87,8 @@ pub(super) const MERGED_LUTS: MergedLuts = {
 /// * Bit 6: `c` is whitespace other than space (tab, line feed etc).
 /// * Bit 7: `c` is space.
 ///
-/// Bytes >= 0x80 get no bits. `classify_impl` counts them as identifier chars separately.
+/// Bytes >= 0x80 get no bits.
+/// The SIMD implementations of `classify` count them as identifier chars separately.
 pub(super) struct WordLuts {
     pub lo: [u8; 16],
     pub hi: [u8; 16],
