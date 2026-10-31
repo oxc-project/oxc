@@ -270,11 +270,11 @@ impl NoCycle {
     ) -> bool {
         let path = &module.resolved_absolute_path;
 
-        let is_node_module = path
-            .components()
-            .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")));
-
-        if is_node_module {
+        if self.ignore_external
+            && path
+                .components()
+                .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")))
+        {
             return false;
         }
 
@@ -523,6 +523,61 @@ fn test() {
     Tester::new(NoCycle::NAME, NoCycle::PLUGIN, pass, fail)
         .change_rule_path("cycles/depth-zero.js")
         .with_import_plugin(true)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_ignore_external() {
+    use crate::tester::Tester;
+    use serde_json::json;
+
+    let pass = vec![
+        (
+            "import { value } from 'cycle-package'; export const entry = value;",
+            Some(json!([{ "ignoreExternal": true }])),
+        ),
+        (
+            "import { value } from './internal.js'; export const entry = value;",
+            Some(json!([{ "ignoreExternal": true }])),
+        ),
+        (
+            "import { value } from 'cycle-package'; export const entry = value;",
+            Some(json!([{ "ignoreExternal": true, "maxDepth": 1 }])),
+        ),
+        (
+            "import { value } from './internal.js'; export const entry = value;",
+            Some(json!([{ "ignoreExternal": true, "maxDepth": 2 }])),
+        ),
+    ];
+    let fail = vec![
+        ("import { value } from 'cycle-package'; export const entry = value;", None),
+        (
+            "import { value } from 'cycle-package'; export const entry = value;",
+            Some(json!([{ "ignoreExternal": false }])),
+        ),
+        ("import { value } from './internal.js'; export const entry = value;", None),
+        (
+            "import { value } from './internal.js'; export const entry = value;",
+            Some(json!([{ "ignoreExternal": false }])),
+        ),
+        (
+            "import { value } from 'cycle-package'; export const entry = value;",
+            Some(json!([{ "maxDepth": 1 }])),
+        ),
+        (
+            "import { value } from './internal.js'; export const entry = value;",
+            Some(json!([{ "maxDepth": 2 }])),
+        ),
+        (
+            "import { value } from './local.js'; export const entry = value;",
+            Some(json!([{ "ignoreExternal": true }])),
+        ),
+    ];
+
+    Tester::new(NoCycle::NAME, NoCycle::PLUGIN, pass, fail)
+        .change_rule_path("cycles/ignore-external/entry.js")
+        .with_import_plugin(true)
+        .with_snapshot_suffix("ignore_external")
         .test_and_snapshot();
 }
 
