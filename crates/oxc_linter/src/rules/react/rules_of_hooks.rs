@@ -414,7 +414,12 @@ impl Rule for RulesOfHooks {
             return;
         }
 
-        if is_inside_try_catch(nodes, node.id(), parent_func.id()) {
+        // A Hook inside `try`/`catch`/`finally` is judged as eslint-plugin-react-hooks
+        // judges it, before the CFG checks: its code-path analysis forks to the `catch`
+        // when the first node that can throw is exited, and a Hook recorded after that
+        // fork is skipped on the thrown path. An unreachable Hook after a `throw` in a
+        // `try` block is reported there too.
+        if is_conditional_in_try_catch(nodes, node, span, parent_func.id()) {
             if cfg.is_cyclic(node_cfg_id) {
                 return ctx.diagnostic(diagnostics::loop_hook(
                     span,
@@ -649,34 +654,36 @@ fn has_conditional_path_accept_throw(
             continue;
         }
 
-        // Oxc's CFG is statement-granular, so a possible throw before the Hook can share the
-        // same basic block as the Hook. Keep that explicit error edge on the pre-Hook path.
-        let has_pre_hook_throw = block_id == to_graph_id
+        // Every block inside a `try` has an explicit error edge to its `catch`, but the
+        // thrown path only exists where something can throw: eslint-plugin-react-hooks
+        // forks to the `catch` at the first node that can throw. Before the Hook, follow
+        // the error edge only out of a block that can throw before the Hook (Oxc's CFG
+        // is statement-granular, so that node can share the Hook's own block); after the
+        // Hook, the thrown path has passed it.
+        let can_throw_before_hook = !entered_after_hook
             && block.instructions().iter().any(|instruction| {
                 statement_has_throw_before_hook(nodes, instruction.node_id, to.span())
             });
 
         for edge in graph.edges(block_id) {
-            let edge_passed_hook = if block_id == to_graph_id
-                && !entered_after_hook
-                && has_pre_hook_throw
-                && matches!(edge.weight(), EdgeType::Error(ErrorEdgeKind::Explicit))
-            {
-                false
-            } else {
-                passed_hook
-            };
-
             match edge.weight() {
                 EdgeType::NewFunction
                 | EdgeType::Error(ErrorEdgeKind::Implicit)
                 | EdgeType::Unreachable => {}
-                EdgeType::Error(ErrorEdgeKind::Explicit)
-                | EdgeType::Join
+                EdgeType::Error(ErrorEdgeKind::Explicit) => {
+                    if entered_after_hook {
+                        stack.push((edge.target(), true));
+                    } else if can_throw_before_hook {
+                        stack.push((edge.target(), false));
+                    } else if block_id == to_graph_id {
+                        stack.push((edge.target(), true));
+                    }
+                }
+                EdgeType::Join
                 | EdgeType::Finalize
                 | EdgeType::Jump
                 | EdgeType::Backedge
-                | EdgeType::Normal => stack.push((edge.target(), edge_passed_hook)),
+                | EdgeType::Normal => stack.push((edge.target(), passed_hook)),
             }
         }
     }
@@ -718,6 +725,15 @@ impl<'a> MayThrowBeforeHook {
             AstKind::LabeledStatement(node) => self.visit_labeled_statement(node),
             AstKind::ThrowStatement(node) => self.visit_throw_statement(node),
             AstKind::TryStatement(node) => self.visit_try_statement(node),
+            AstKind::BlockStatement(node) => self.visit_block_statement(node),
+            AstKind::AssignmentExpression(node) => self.visit_assignment_expression(node),
+            AstKind::BinaryExpression(node) => self.visit_binary_expression(node),
+            AstKind::ConditionalExpression(node) => self.visit_conditional_expression(node),
+            AstKind::LogicalExpression(node) => self.visit_logical_expression(node),
+            AstKind::ParenthesizedExpression(node) => self.visit_parenthesized_expression(node),
+            AstKind::SequenceExpression(node) => self.visit_sequence_expression(node),
+            AstKind::UnaryExpression(node) => self.visit_unary_expression(node),
+            AstKind::UpdateExpression(node) => self.visit_update_expression(node),
             _ => self.enter_node(kind),
         }
     }
@@ -734,17 +750,22 @@ impl<'a> VisitJs<'a> for MayThrowBeforeHook {
             return;
         }
 
+        // The nodes ESLint's code-path analysis forks on inside a `try` block
+        // (`processCodePathToExit`: call, `import()`, member, `new`, `yield`, and an
+        // identifier reference, which can throw a ReferenceError), plus `throw` itself.
         self.found = matches!(
             kind,
             AstKind::AwaitExpression(_)
                 | AstKind::CallExpression(_)
                 | AstKind::ComputedMemberExpression(_)
+                | AstKind::IdentifierReference(_)
                 | AstKind::ImportExpression(_)
                 | AstKind::NewExpression(_)
                 | AstKind::PrivateFieldExpression(_)
                 | AstKind::StaticMemberExpression(_)
                 | AstKind::TaggedTemplateExpression(_)
                 | AstKind::ThrowStatement(_)
+                | AstKind::YieldExpression(_)
         );
     }
 
@@ -787,6 +808,58 @@ fn is_inside_try_catch(
         .ancestors(hook_node_id)
         .take_while(|node| node.id() != function_node_id)
         .any(|node| matches!(node.kind(), AstKind::TryStatement(_) | AstKind::CatchClause(_)))
+}
+
+/// Whether a Hook inside a `try` statement is called conditionally, as
+/// eslint-plugin-react-hooks decides it (`rules-of-hooks` over ESLint's code-path
+/// analysis):
+///
+/// - in a `catch` clause: always, the clause runs only after a throw;
+/// - in a `finally` block: when the `try` block or the `catch` clause holds a node
+///   that can throw, since the thrown path then reaches the block on its own;
+/// - in a `try` block: when a node that can throw (an identifier reference, an
+///   assignment target included, a member expression, a call, `new`, `import()`,
+///   `yield`, `await`, a tagged template, `throw`) is exited before the Hook call is
+///   entered, in that block or in any enclosing `try` block of the same function.
+///   `try { return useA(); } catch { return null; }` is fine; `c = useA()` and
+///   `f(); useA()` are not.
+fn is_conditional_in_try_catch(
+    nodes: &AstNodes<'_>,
+    hook: &AstNode<'_>,
+    hook_span: Span,
+    function_node_id: NodeId,
+) -> bool {
+    let mut child_span = hook.span();
+    for ancestor in nodes.ancestors(hook.id()).take_while(|node| node.id() != function_node_id) {
+        match ancestor.kind() {
+            AstKind::CatchClause(_) => return true,
+            AstKind::TryStatement(try_stmt) => {
+                if try_stmt.block.span == child_span {
+                    let mut visitor = MayThrowBeforeHook { hook_span, found: false };
+                    visitor.visit_block_statement(&try_stmt.block);
+                    if visitor.found {
+                        return true;
+                    }
+                } else if try_stmt.finalizer.as_ref().is_some_and(|block| block.span == child_span)
+                {
+                    let mut visitor = MayThrowBeforeHook {
+                        hook_span: Span::new(u32::MAX, u32::MAX),
+                        found: false,
+                    };
+                    visitor.visit_block_statement(&try_stmt.block);
+                    if let Some(handler) = &try_stmt.handler {
+                        visitor.visit_block_statement(&handler.body);
+                    }
+                    if visitor.found {
+                        return true;
+                    }
+                }
+            }
+            _ => {}
+        }
+        child_span = ancestor.span();
+    }
+    false
 }
 
 fn check_use_effect_event_usage(
@@ -1595,6 +1668,28 @@ fn test() {
           useState();
         }
     ",
+    // A Hook inside `try` with nothing that can throw before it is called on every
+    // path, as eslint-plugin-react-hooks judges it (oxc-project/oxc#27603).
+    "
+        function Foo() {
+            try {
+                const value = 1;
+                useState(value);
+            } catch {}
+        }
+    ",
+    "function useS1() { try { return useA(); } catch { return null; } }",
+    "function useS2() { try { const r = useA(); return r; } catch { return null; } }",
+    "function useS5() { try { useA(); } catch {} }",
+    "function useS7() { try { useA(); } finally { g(); } }",
+    "function useS8() { try { return useA(); } finally { g(); } }",
+    "function useS10() { try { useA(); return null; } catch { return null; } }",
+    "function useS11() { try { const r = useA(); void r; } catch {} }",
+    "function useS12() { try { return useA(); } catch (e) { g(); return null; } }",
+    "function useS14() { try { return useA(); } catch { throw new Error('x'); } }",
+    r#"function useJ() { try { "use strict"; useState(); } catch {} }"#,
+    "function useL() { try { try { useState(); } catch {} } catch {} }",
+    "function useM() { try { const value = 1; useState(value); } finally { f(); } }",
         r"
             function MyComponent({ theme }) {
               const onClick = useEffectEvent(() => {
@@ -2219,14 +2314,6 @@ fn test() {
                 }
         ",
         "
-                function Foo() {
-                    try {
-                        const value = 1;
-                        useState(value);
-                    } catch {}
-                }
-        ",
-        "
                 function useHook() {
                     try {
                         const value = f();
@@ -2249,6 +2336,20 @@ fn test() {
                     } catch {}
                 }
         ",
+        // A node that can throw is exited before the Hook call is entered: an
+        // assignment target, a bare identifier, a member expression, a destructuring
+        // source, a call in an enclosing `try` (oxc-project/oxc#27603).
+        "function useS3() { let c = null; try { c = useA(); } catch { c = null; } return c; }",
+        "function useS9() { try { f(); return useA(); } catch { return null; } }",
+        "function useG() { try { x; useState(); } catch {} }",
+        "function useH() { try { obj.prop; useState(); } catch {} }",
+        "function useI() { try { const { a } = props; useState(a); } catch {} }",
+        "function useK() { try { f(); try { useState(); } catch {} } catch {} }",
+        // A Hook in a `catch` clause runs only after a throw; one in `finally` is
+        // reached by the thrown path on its own once the `try` block can throw.
+        "function useC() { try { f(); } catch { useState(); } }",
+        "function useN() { try { } catch { useState(); } }",
+        "function useD() { try { f(); } finally { useState(); } }",
         "
                 function App({p1, p2}) {
                     try {
