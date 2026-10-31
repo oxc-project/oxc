@@ -194,7 +194,7 @@ pub(super) unsafe fn lanes_post_avx2(
         }
         i += 64;
     }
-    let mut inv_dirty = inv.movemask() != 0;
+    let mut inv_dirty = !inv.is_zero();
     while i < m {
         let v = Vec256::load_unaligned(out_kinds.add(i), cpu);
         let hit = hits(v);

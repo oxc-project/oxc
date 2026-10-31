@@ -544,8 +544,7 @@ fn span_has_bs_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
     let mut i = bs;
     while i + 32 <= be {
         let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(i), cpu) };
-        let m = v.eq_u8(b'\\').movemask();
-        if m != 0 {
+        if !v.eq_u8(b'\\').is_zero() {
             return true;
         }
         i += 32;
@@ -586,8 +585,7 @@ fn span_has_bs_or_cr_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
     let mut i = bs;
     while i + 32 <= be {
         let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(i), cpu) };
-        let m = (v.eq_u8(b'\\') | v.eq_u8(b'\r')).movemask();
-        if m != 0 {
+        if !(v.eq_u8(b'\\') | v.eq_u8(b'\r')).is_zero() {
             return true;
         }
         i += 32;
