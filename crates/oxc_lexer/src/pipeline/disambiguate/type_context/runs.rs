@@ -135,7 +135,7 @@ fn list_in_any_context(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
         Prev::Word(k, tk!(KwFunction | KwClass)) => !tokens.property_name(k, cpu),
         Prev::Word(head, 0) => {
             type_args_at(tokens, lt, cpu)
-                || (!tokens.line_break_between(tokens.next_start(head + 1, cpu), lt, cpu)
+                || (!tokens.line_break_between(tokens.next_start(head + 1), lt, cpu)
                     && type_reference_head(tokens, head, cpu))
         }
         _ => false,
@@ -164,7 +164,7 @@ fn type_reference_head(tokens: &Tokens, head: usize, cpu: impl Cpu) -> bool {
         Prev::Word(k, tk!(KwExtends | KwClass | KwFunction)) => !tokens.property_name(k, cpu),
         Prev::Word(k, tk!(KwImplements | KwAs | KwSatisfies | KwKeyof | KwInterface | KwType)) => {
             !tokens.property_name(k, cpu)
-                && !tokens.line_break_between(tokens.next_start(k + 1, cpu), h, cpu)
+                && !tokens.line_break_between(tokens.next_start(k + 1), h, cpu)
         }
         Prev::Op(c, b':') => return_type_colon(tokens, c, cpu),
         _ => false,

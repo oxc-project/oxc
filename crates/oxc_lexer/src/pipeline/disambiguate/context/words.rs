@@ -11,7 +11,7 @@ impl Walk {
     pub(super) fn step_word(&mut self, tokens: &Tokens, pos: usize) -> usize {
         let cpu = BASELINE;
 
-        let end = tokens.next_start(pos + 1, cpu);
+        let end = tokens.next_start(pos + 1);
         let kw = if self.after_dot { 0 } else { tokens.word_kw(pos, end - pos, cpu) };
 
         if self.in_type() {

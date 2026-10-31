@@ -92,12 +92,12 @@ impl Walk {
         let end = match k {
             tk!(Ident) => self.step_word(tokens, pos),
             tk!(Number | BigInt | String | RegExp | TemplateNoSub | PrivateIdent) => {
-                let e = tokens.next_start(pos + 1, cpu);
+                let e = tokens.next_start(pos + 1);
                 self.literal(tokens, k, e);
                 e
             }
             tk!(TemplateHead | TemplateMiddle) => {
-                let e = tokens.next_start(pos + 1, cpu);
+                let e = tokens.next_start(pos + 1);
                 if k == tk!(TemplateMiddle) && self.pop_to(|k| k == FrameKind::Sub).is_none() {
                     self.unbalanced();
                 }
@@ -108,7 +108,7 @@ impl Walk {
                 e
             }
             tk!(TemplateTail) => {
-                let e = tokens.next_start(pos + 1, cpu);
+                let e = tokens.next_start(pos + 1);
                 if self.pop_to(|k| k == FrameKind::Sub).is_none() {
                     self.unbalanced();
                 }

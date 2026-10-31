@@ -267,11 +267,9 @@ impl Walk {
     }
 
     pub(super) fn advance(&mut self, tokens: &Tokens, limit: usize) {
-        let cpu = BASELINE;
-
         let mut pos = self.walked_to;
         loop {
-            pos = tokens.next_start(pos, cpu);
+            pos = tokens.next_start(pos);
             if pos >= limit || pos >= tokens.n {
                 break;
             }
