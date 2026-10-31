@@ -136,3 +136,12 @@ export interface ParserOptions {
 
 /** Returns `true` if raw transfer is supported on this platform. */
 export declare function rawTransferSupported(): boolean
+
+/**
+ * Register a JS plugin worker (a Node.js worker thread which runs JS plugins).
+ *
+ * Called from JS plugin workers spawned by JS side when `--js-threads` option is used,
+ * before main thread calls `lint`. Each worker passes in its own callbacks.
+ * `lint` broadcasts plugin loading and config setup to all JS threads, and distributes files between them.
+ */
+export declare function registerJsPluginWorker(loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb): void

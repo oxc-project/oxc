@@ -27,9 +27,10 @@ generatePluginEslint();
 console.log("Building with tsdown...");
 execSync("pnpm tsdown", { stdio: "inherit", cwd: oxlintDirPath });
 
-// Delete `cli.d.ts`
-console.log("Deleting cli.d.ts...");
+// Delete `cli.d.ts` and `js_plugin_worker.d.ts` (entry points, not public API)
+console.log("Deleting cli.d.ts and js_plugin_worker.d.ts...");
 rmSync(join(distDirPath, "cli.d.ts"));
+rmSync(join(distDirPath, "js_plugin_worker.d.ts"));
 
 // Copy native `.node` files from `src-js`
 console.log("Copying `.node` files...");

@@ -1,5 +1,6 @@
 use std::{
     io::BufWriter,
+    num::NonZeroUsize,
     process::{ExitCode, Termination},
 };
 
@@ -184,6 +185,11 @@ async fn lint_impl(
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
 
+    // Take JS plugin workers registered by the JS side (`--js-threads` option) before anything else,
+    // so the registry is drained on every path, including early returns below
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    let js_plugin_workers = crate::js_plugins::take_registered_js_plugin_workers();
+
     let command = {
         let cmd = crate::cli::lint_command();
         match cmd.run_inner(&*args) {
@@ -202,17 +208,62 @@ async fn lint_impl(
     // Both LSP and CLI use `tracing` for logging
     init_tracing();
 
+    // Initialize thread pool before setting up JS threads, as JS thread count is capped at thread count.
+    // LSP mode doesn't use this thread pool.
+    if !command.lsp {
+        command.handle_threads();
+    }
+
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     let (external_linter, js_config_loader) = {
+        use crate::js_plugins::{JsThreadCallbacks, create_external_linter};
+
         let js_config_loader = Some(crate::js_config::create_js_config_loader(load_js_configs));
-        let external_linter = Some(crate::js_plugins::create_external_linter(
+
+        // JS thread 0 is the main JS thread.
+        // Additional JS threads are JS plugin workers spawned by JS side when `--js-threads` option is used.
+        // LSP mode only uses the main JS thread.
+        let mut js_threads = vec![JsThreadCallbacks {
             load_plugin,
             setup_rule_configs,
             lint_file,
             create_workspace,
             destroy_workspace,
-        ));
+        }];
+        if !command.lsp {
+            js_threads.extend(js_plugin_workers);
+
+            // Each JS thread owns the fixed-size allocator buffers with `buffer_id % js_thread_count == index`,
+            // and there is 1 buffer per thread. So any JS threads beyond the thread count would never receive
+            // any files to lint. Cap JS thread count at thread count, and drop callbacks for excess JS threads.
+            let requested_js_threads = command.misc_options.js_threads.map_or(1, NonZeroUsize::get);
+            let thread_count = rayon::current_num_threads();
+            let max_js_threads = requested_js_threads.min(thread_count);
+            if requested_js_threads > thread_count {
+                #[expect(clippy::print_stderr)]
+                {
+                    eprintln!(
+                        "Warning: `--js-threads {requested_js_threads}` exceeds thread count ({thread_count}). Using {thread_count} JS threads."
+                    );
+                }
+            }
+            js_threads.truncate(max_js_threads);
+
+            // JS side spawns workers based on its own parsing of `--js-threads`.
+            // This should always agree with Rust-side parsing, but warn if it doesn't.
+            if js_threads.len() != max_js_threads {
+                #[expect(clippy::print_stderr)]
+                {
+                    eprintln!(
+                        "Warning: Expected {max_js_threads} JS threads, but only {} were started.",
+                        js_threads.len()
+                    );
+                }
+            }
+        }
+
+        let external_linter = Some(create_external_linter(js_threads));
         (external_linter, js_config_loader)
     };
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
@@ -234,8 +285,6 @@ async fn lint_impl(
         return CliRunResult::LintSucceeded;
     }
 
-    command.handle_threads();
-
     // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
     // See `https://github.com/rust-lang/rust/issues/60673`.
     let mut stdout = BufWriter::new(std::io::stdout());
@@ -247,6 +296,32 @@ async fn lint_impl(
     }
 
     cli_runner.run(&mut stdout)
+}
+
+/// Register a JS plugin worker (a Node.js worker thread which runs JS plugins).
+///
+/// Called from JS plugin workers spawned by JS side when `--js-threads` option is used,
+/// before main thread calls `lint`. Each worker passes in its own callbacks.
+/// `lint` broadcasts plugin loading and config setup to all JS threads, and distributes files between them.
+#[napi]
+pub fn register_js_plugin_worker(
+    load_plugin: JsLoadPluginCb,
+    setup_rule_configs: JsSetupRuleConfigsCb,
+    lint_file: JsLintFileCb,
+    create_workspace: JsCreateWorkspaceCb,
+    destroy_workspace: JsDestroyWorkspaceCb,
+) {
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    crate::js_plugins::register_js_plugin_worker(crate::js_plugins::JsThreadCallbacks {
+        load_plugin,
+        setup_rule_configs,
+        lint_file,
+        create_workspace,
+        destroy_workspace,
+    });
+    #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+    let (_, _, _, _, _) =
+        (load_plugin, setup_rule_configs, lint_file, create_workspace, destroy_workspace);
 }
 
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]

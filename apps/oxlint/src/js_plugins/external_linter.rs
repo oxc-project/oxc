@@ -3,6 +3,7 @@ use std::{
     time::Duration,
 };
 
+use futures_util::future::join_all;
 use napi::{
     Status,
     bindgen_prelude::{FnArgs, Uint8Array},
@@ -17,6 +18,7 @@ use oxc_linter::{
     LintFileFailure, LintFileOutput, LoadPluginResult,
 };
 
+use super::js_plugin_workers::JsThreadCallbacks;
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
     run::{
@@ -26,13 +28,34 @@ use crate::{
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
-pub fn create_external_linter(
-    load_plugin: JsLoadPluginCb,
-    setup_rule_configs: JsSetupRuleConfigsCb,
-    lint_file: JsLintFileCb,
-    create_workspace: JsCreateWorkspaceCb,
-    destroy_workspace: JsDestroyWorkspaceCb,
-) -> ExternalLinter {
+///
+/// `js_threads` contains callbacks for each JS thread. JS thread 0 is the main JS thread.
+/// Any further JS threads are JS plugin workers (`--js-threads` option).
+///
+/// * `lintFile` calls are routed to a single JS thread, chosen by the ID of the allocator buffer.
+///   Each buffer is therefore only ever sent to one JS thread, which preserves the invariant that
+///   a buffer has at most 1 owner on JS side.
+/// * All other calls (`loadPlugin`, `setupRuleConfigs`, `createWorkspace`, `destroyWorkspace`)
+///   are broadcast to all JS threads, so every JS thread has identical plugins, rules and options.
+///
+/// # Panics
+/// Panics if `js_threads` is empty.
+pub fn create_external_linter(js_threads: Vec<JsThreadCallbacks>) -> ExternalLinter {
+    assert!(!js_threads.is_empty(), "At least 1 JS thread is required");
+
+    let mut load_plugin = Vec::with_capacity(js_threads.len());
+    let mut setup_rule_configs = Vec::with_capacity(js_threads.len());
+    let mut lint_file = Vec::with_capacity(js_threads.len());
+    let mut create_workspace = Vec::with_capacity(js_threads.len());
+    let mut destroy_workspace = Vec::with_capacity(js_threads.len());
+    for js_thread in js_threads {
+        load_plugin.push(js_thread.load_plugin);
+        setup_rule_configs.push(js_thread.setup_rule_configs);
+        lint_file.push(js_thread.lint_file);
+        create_workspace.push(js_thread.create_workspace);
+        destroy_workspace.push(js_thread.destroy_workspace);
+    }
+
     let rust_load_plugin = wrap_load_plugin(load_plugin);
     let rust_setup_rule_configs = wrap_setup_rule_configs(setup_rule_configs);
     let rust_lint_file = wrap_lint_file(lint_file);
@@ -55,86 +78,121 @@ pub enum LoadPluginReturnValue {
     Failure(String),
 }
 
-/// Wrap `loadPlugin` JS callback as a normal Rust function.
+/// Wrap `loadPlugin` JS callbacks as a normal Rust function.
 ///
 /// The JS-side function is async. The returned Rust function blocks the current thread
-/// until the `Promise` returned by the JS function resolves.
+/// until the `Promise`s returned by the JS functions resolve.
+///
+/// The plugin is loaded in all JS threads concurrently. All JS threads must return identical results,
+/// because rule IDs are offsets into the list of registered rules, which must match across JS threads.
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
-fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
+fn wrap_load_plugin(cbs: Vec<JsLoadPluginCb>) -> ExternalLinterLoadPluginCb {
     Arc::new(Box::new(move |plugin_url, plugin_name, plugin_name_is_alias, workspace_uri| {
-        let cb = &cb;
-        let res = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(async move {
-                cb.call_async(FnArgs::from((
-                    plugin_url,
-                    plugin_name,
+        let results = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(join_all(cbs.iter().map(|cb| {
+                let args = FnArgs::from((
+                    plugin_url.clone(),
+                    plugin_name.clone(),
                     plugin_name_is_alias,
-                    workspace_uri,
-                )))
-                .await?
-                .into_future()
-                .await
-            })
+                    workspace_uri.clone(),
+                ));
+                async move { cb.call_async(args).await?.into_future().await }
+            })))
         });
 
-        match res {
-            // `loadPlugin` returns JSON string if plugin loaded successfully, or an error occurred
-            Ok(json) => match serde_json::from_str(&json) {
-                // Plugin loaded successfully
-                Ok(LoadPluginReturnValue::Success(result)) => Ok(result),
-                // Error occurred on JS side
-                Ok(LoadPluginReturnValue::Failure(err)) => Err(err),
-                // Invalid JSON - should be impossible, because we control serialization on JS side
-                Err(err) => {
-                    Err(format!("Failed to deserialize JSON returned by `loadPlugin`: {err}"))
-                }
-            },
-            // `loadPlugin` threw an error - should be impossible because `loadPlugin` is wrapped in try-catch
-            Err(err) => Err(format!("`loadPlugin` threw an error: {err}")),
+        let mut results = results.into_iter().map(parse_load_plugin_result);
+        // `cbs` is never empty, so there is always a first result
+        let first = results.next().unwrap()?;
+        for (index, result) in results.enumerate() {
+            let result = result?;
+            if result.name != first.name
+                || result.offset != first.offset
+                || result.rule_names != first.rule_names
+            {
+                return Err(format!(
+                    "Plugin `{}` loaded differently in JS thread {} than in JS thread 0",
+                    first.name,
+                    index + 1
+                ));
+            }
         }
+        Ok(first)
     }))
 }
 
-/// Wrap `setupRuleConfigs` JS callback as a normal Rust function.
+/// Convert the result of a single `loadPlugin` call into a `LoadPluginResult`.
+fn parse_load_plugin_result(res: napi::Result<String>) -> Result<LoadPluginResult, String> {
+    match res {
+        // `loadPlugin` returns JSON string if plugin loaded successfully, or an error occurred
+        Ok(json) => match serde_json::from_str(&json) {
+            // Plugin loaded successfully
+            Ok(LoadPluginReturnValue::Success(result)) => Ok(result),
+            // Error occurred on JS side
+            Ok(LoadPluginReturnValue::Failure(err)) => Err(err),
+            // Invalid JSON - should be impossible, because we control serialization on JS side
+            Err(err) => Err(format!("Failed to deserialize JSON returned by `loadPlugin`: {err}")),
+        },
+        // `loadPlugin` threw an error - should be impossible because `loadPlugin` is wrapped in try-catch
+        Err(err) => Err(format!("`loadPlugin` threw an error: {err}")),
+    }
+}
+
+/// Wrap `setupRuleConfigs` JS callbacks as a normal Rust function.
 ///
 /// The JS-side `setupRuleConfigs` function is synchronous, but it's wrapped in a `ThreadsafeFunction`,
 /// so cannot be called synchronously. Use an `mpsc::channel` to wait for the result from JS side,
 /// and block current thread until `setupRuleConfigs` completes execution.
-fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleConfigsCb {
+///
+/// The call is sent to all JS threads first, and then the results are awaited, so JS threads run it concurrently.
+fn wrap_setup_rule_configs(cbs: Vec<JsSetupRuleConfigsCb>) -> ExternalLinterSetupRuleConfigsCb {
     Arc::new(Box::new(move |options_json: String| {
-        let (tx, rx) = channel();
+        // Send data to all JS threads
+        let receivers = cbs
+            .iter()
+            .map(|cb| {
+                let (tx, rx) = channel();
+                let status = cb.call_with_return_value(
+                    options_json.clone(),
+                    ThreadsafeFunctionCallMode::NonBlocking,
+                    move |result, _env| {
+                        // This call cannot fail, because `rx.recv()` below blocks until it receives a message.
+                        // This closure is a `FnOnce`, so it can't be called more than once, so only 1 message can be sent.
+                        // Therefore, `rx` cannot be dropped before this call.
+                        let res = tx.send(result);
+                        debug_assert!(res.is_ok(), "Failed to send result of `setupRuleConfigs`");
+                        Ok(())
+                    },
+                );
+                (status, rx)
+            })
+            .collect::<Vec<_>>();
 
-        // Send data to JS
-        let status = cb.call_with_return_value(
-            options_json,
-            ThreadsafeFunctionCallMode::NonBlocking,
-            move |result, _env| {
-                // This call cannot fail, because `rx.recv()` below blocks until it receives a message.
-                // This closure is a `FnOnce`, so it can't be called more than once, so only 1 message can be sent.
-                // Therefore, `rx` cannot be dropped before this call.
-                let res = tx.send(result);
-                debug_assert!(res.is_ok(), "Failed to send result of `setupRuleConfigs`");
-                Ok(())
-            },
-        );
-
-        if status == Status::Ok {
-            match rx.recv() {
-                // Setup succeeded
-                Ok(Ok(None)) => Ok(()),
-                // Setup failed
-                Ok(Ok(Some(err))) => Err(err),
-                // `setupRuleConfigs` threw an error - should be impossible because it should be infallible
-                Ok(Err(err)) => Err(format!("`setupRuleConfigs` threw an error: {err}")),
-                // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
-                // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
-                // `tx.send()` always happens before `tx` is dropped.
-                Err(err) => Err(format!("`setupRuleConfigs` did not respond: {err}")),
+        // Wait for all JS threads to respond. Return first error, if any.
+        let mut first_err = None;
+        for (status, rx) in receivers {
+            let res = if status == Status::Ok {
+                match rx.recv() {
+                    // Setup succeeded
+                    Ok(Ok(None)) => Ok(()),
+                    // Setup failed
+                    Ok(Ok(Some(err))) => Err(err),
+                    // `setupRuleConfigs` threw an error - should be impossible because it should be infallible
+                    Ok(Err(err)) => Err(format!("`setupRuleConfigs` threw an error: {err}")),
+                    // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
+                    // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
+                    // `tx.send()` always happens before `tx` is dropped.
+                    Err(err) => Err(format!("`setupRuleConfigs` did not respond: {err}")),
+                }
+            } else {
+                Err(format!("Failed to schedule `setupRuleConfigs` callback: {status:?}"))
+            };
+            if let Err(err) = res {
+                first_err.get_or_insert(err);
             }
-        } else {
-            Err(format!("Failed to schedule `setupRuleConfigs` callback: {status:?}"))
         }
+
+        first_err.map_or(Ok(()), Err)
     }))
 }
 
@@ -151,10 +209,14 @@ pub enum LintFileReturnValue {
 /// and passes it to JS side, unless the `Allocator`'s buffer has already been sent to JS.
 ///
 /// Unlike `loadPlugin`, `lintFile` JS callback is not async. But `ThreadsafeFunction` executes the callback
-/// on main JS thread, and therefore it may have to wait for a previous `lintFile` call to complete.
+/// on its own JS thread, and therefore it may have to wait for a previous `lintFile` call to complete.
 /// Use an `mpsc::channel` to wait for the result from JS side, and block current thread until `lintFile`
 /// completes execution.
-fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
+///
+/// If there are multiple JS threads, the JS thread is chosen by the buffer ID (`buffer_id % js_thread_count`).
+/// Each buffer is therefore only ever sent to a single JS thread, so it has at most 1 owner on JS side.
+/// Buffer IDs are assigned sequentially, so work is spread evenly across JS threads.
+fn wrap_lint_file(cbs: Vec<JsLintFileCb>) -> ExternalLinterLintFileCb {
     Arc::new(Box::new(
         move |file_path: String,
               rule_ids: Vec<u32>,
@@ -173,6 +235,9 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             // but it does hold at present.
             // TODO: Close this soundness hole with type-level guarantees.
             let (buffer_id, buffer) = unsafe { get_buffer(allocator) };
+
+            // Select JS thread which owns this buffer
+            let cb = &cbs[buffer_id as usize % cbs.len()];
 
             // Send data to JS
             let status = cb.call_with_return_value(
@@ -308,64 +373,79 @@ unsafe fn get_buffer(
     (buffer_id, Some(buffer))
 }
 
-/// Wrap `createWorkspace` JS callback as a normal Rust function.
+/// Wrap `createWorkspace` JS callbacks as a normal Rust function.
 ///
 /// The JS-side function is async. The returned Rust function blocks the current thread
-/// until the `Promise` returned by the JS function resolves.
+/// until the `Promise`s returned by the JS functions in all JS threads resolve.
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
-fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> ExternalLinterCreateWorkspaceCb {
+fn wrap_create_workspace(cbs: Vec<JsCreateWorkspaceCb>) -> ExternalLinterCreateWorkspaceCb {
     Arc::new(Box::new(move |workspace_uri| {
-        let cb = &cb;
-        let res = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current()
-                .block_on(async move { cb.call_async(workspace_uri).await?.into_future().await })
+        let results = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(join_all(cbs.iter().map(|cb| {
+                let workspace_uri = workspace_uri.clone();
+                async move { cb.call_async(workspace_uri).await?.into_future().await }
+            })))
         });
 
-        match res {
-            // `createWorkspace` completed successfully
-            Ok(()) => Ok(()),
+        for res in results {
             // `createWorkspace` threw an error
-            Err(err) => Err(format!("`createWorkspace` threw an error: {err}")),
+            if let Err(err) = res {
+                return Err(format!("`createWorkspace` threw an error: {err}"));
+            }
         }
+        Ok(())
     }))
 }
 
-/// Wrap `destroyWorkspace` JS callback as a normal Rust function.
+/// Wrap `destroyWorkspace` JS callbacks as a normal Rust function.
 ///
 /// The JS-side `destroyWorkspace` function is synchronous, but it's wrapped in a `ThreadsafeFunction`,
 /// so cannot be called synchronously. Use an `mpsc::channel` to wait for the result from JS side.
 ///
 /// Uses a timeout to prevent indefinite blocking during shutdown, which can cause issues
 /// in multi-root workspace scenarios where multiple workspaces are being destroyed concurrently.
-fn wrap_destroy_workspace(cb: JsDestroyWorkspaceCb) -> ExternalLinterDestroyWorkspaceCb {
+fn wrap_destroy_workspace(cbs: Vec<JsDestroyWorkspaceCb>) -> ExternalLinterDestroyWorkspaceCb {
     Arc::new(Box::new(move |workspace_uri| {
-        let (tx, rx) = channel();
+        // Send data to all JS threads
+        let receivers = cbs
+            .iter()
+            .map(|cb| {
+                let (tx, rx) = channel();
+                let status = cb.call_with_return_value(
+                    workspace_uri.clone(),
+                    ThreadsafeFunctionCallMode::NonBlocking,
+                    move |result, _env| {
+                        // Ignore send errors - the receiver may have timed out
+                        let _ = tx.send(result);
+                        Ok(())
+                    },
+                );
+                (status, rx)
+            })
+            .collect::<Vec<_>>();
 
-        // Send data to JS
-        let status = cb.call_with_return_value(
-            workspace_uri,
-            ThreadsafeFunctionCallMode::NonBlocking,
-            move |result, _env| {
-                // Ignore send errors - the receiver may have timed out
-                let _ = tx.send(result);
-                Ok(())
-            },
-        );
-
-        if status == Status::Ok {
-            // Use a timeout to prevent blocking indefinitely during shutdown.
-            // If JS side doesn't respond within the timeout, we proceed with shutdown anyway.
-            match rx.recv_timeout(Duration::from_secs(5)) {
-                // Destroying workspace succeeded
-                Ok(Ok(()))
-                // Timeout or sender dropped - proceed with shutdown
-                | Err(_) => Ok(()),
-                // `destroyWorkspace` threw an error
-                Ok(Err(err)) => Err(format!("`destroyWorkspace` threw an error: {err}")),
+        let mut first_err = None;
+        for (status, rx) in receivers {
+            let res = if status == Status::Ok {
+                // Use a timeout to prevent blocking indefinitely during shutdown.
+                // If JS side doesn't respond within the timeout, we proceed with shutdown anyway.
+                match rx.recv_timeout(Duration::from_secs(5)) {
+                    // Destroying workspace succeeded
+                    Ok(Ok(()))
+                    // Timeout or sender dropped - proceed with shutdown
+                    | Err(_) => Ok(()),
+                    // `destroyWorkspace` threw an error
+                    Ok(Err(err)) => Err(format!("`destroyWorkspace` threw an error: {err}")),
+                }
+            } else {
+                Err(format!("Failed to schedule `destroyWorkspace` callback: {status:?}"))
+            };
+            if let Err(err) = res {
+                first_err.get_or_insert(err);
             }
-        } else {
-            Err(format!("Failed to schedule `destroyWorkspace` callback: {status:?}"))
         }
+
+        first_err.map_or(Ok(()), Err)
     }))
 }

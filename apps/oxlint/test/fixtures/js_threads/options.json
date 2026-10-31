@@ -1,0 +1,4 @@
+{
+  "fix": true,
+  "args": ["--threads", "4", "--js-threads", "3"]
+}

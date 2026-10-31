@@ -1,0 +1,3 @@
+{
+  "args": ["--threads", "2", "--js-threads", "4"]
+}

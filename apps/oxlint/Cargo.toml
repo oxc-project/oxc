@@ -43,6 +43,7 @@ oxc_str = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 cow-utils = { workspace = true }
+futures-util = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 napi = { workspace = true, features = ["async"], optional = true }
 tracing = { workspace = true }
