@@ -101,7 +101,7 @@ impl Walk {
                 let nx = tokens.peek(end);
                 let at_stmt = self.at_stmt_start()
                     || self.prev_kw == tk!(KwDefault)
-                    || (kw == tk!(KwNamespace) && self.stmt_reg() == S_EXPORT_AS);
+                    || (kw == tk!(KwNamespace) && self.stmt_reg() == StmtReg::ExportAs);
                 tokens.ts
                     && matches_tk!(nx.kind, Ident | String)
                     && !tokens.line_break_between(end, nx.pos)
@@ -112,14 +112,14 @@ impl Walk {
                 // namespace X`.
                 let export_as = kw == tk!(KwAs) && self.prev_kw == tk!(KwExport);
                 let in_module_clause = self.top_kind() == FrameKind::ModuleSpec
-                    || matches!(self.stmt_reg(), S_IMPORT | S_EXPORT);
+                    || matches!(self.stmt_reg(), StmtReg::Import | StmtReg::Export);
                 export_as || (tokens.ts && !self.operand_allowed() && !in_module_clause)
             }
             tk!(KwStatic) => {
                 self.top_kind() == FrameKind::ClassBody && self.top().state == M_KEY_POS
             }
             tk!(KwImplements) => self.top_kind() == FrameKind::ClassHead,
-            tk!(KwFrom) => matches!(self.stmt_reg(), S_IMPORT | S_EXPORT),
+            tk!(KwFrom) => matches!(self.stmt_reg(), StmtReg::Import | StmtReg::Export),
             _ => true,
         };
         if keyword { kw } else { 0 }
@@ -128,15 +128,15 @@ impl Walk {
     /// True when a statement register takes the word as its name (break label, type X, import x).
     fn declared_name(&mut self, kw: u8) -> bool {
         match self.stmt_reg() {
-            S_BREAK => {
+            StmtReg::Break => {
                 // break label, export as namespace N: the statement is complete.
-                self.set_stmt_reg(S_NONE);
+                self.set_stmt_reg(StmtReg::None);
                 self.value_done();
                 self.stmt_done = true;
                 self.after_statement();
             }
-            S_EXPORT_AS if kw == tk!(KwNamespace) => {
-                self.set_stmt_reg(S_BREAK);
+            StmtReg::ExportAs if kw == tk!(KwNamespace) => {
+                self.set_stmt_reg(StmtReg::Break);
                 self.set_operand();
                 self.prev_kw = tk!(KwNamespace);
             }
@@ -196,17 +196,17 @@ impl Walk {
                 self.keyword(kw);
             }
             tk!(KwCase) => {
-                self.set_stmt_reg(S_CASE);
+                self.set_stmt_reg(StmtReg::Case);
                 self.keyword(tk!(KwCase));
             }
             tk!(KwDefault) => {
                 let export = self.prev_kw == tk!(KwExport);
                 self.export_default |= export;
-                self.set_stmt_reg(if export { S_NONE } else { S_CASE });
+                self.set_stmt_reg(if export { StmtReg::None } else { StmtReg::Case });
                 self.keyword(kw);
             }
             tk!(KwBreak | KwContinue) => {
-                self.set_stmt_reg(S_BREAK);
+                self.set_stmt_reg(StmtReg::Break);
                 self.keyword(kw);
             }
             tk!(KwVar | KwConst | KwLet | KwUsing) => {
@@ -222,7 +222,7 @@ impl Walk {
                     self.value_done();
                     self.prev_kw = tk!(KwImport);
                 } else {
-                    self.set_stmt_reg(S_IMPORT);
+                    self.set_stmt_reg(StmtReg::Import);
                     self.keyword(tk!(KwImport));
                 }
             }
@@ -233,14 +233,14 @@ impl Walk {
                     nx = tokens.peek(nx.pos + 4);
                 }
                 let clause = nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'{' | b'*');
-                self.set_stmt_reg(if clause { S_EXPORT } else { S_NONE });
+                self.set_stmt_reg(if clause { StmtReg::Export } else { StmtReg::None });
                 self.keyword(tk!(KwExport));
                 // What follows is read at statement position, as a declaration.
                 self.expect = Expect::Statement;
             }
             tk!(KwAs) => {
                 if self.prev_kw == tk!(KwExport) {
-                    self.set_stmt_reg(S_EXPORT_AS);
+                    self.set_stmt_reg(StmtReg::ExportAs);
                     self.keyword(tk!(KwAs));
                 } else {
                     self.open_region(R_EXPR);
@@ -258,20 +258,20 @@ impl Walk {
                 self.prev_kw = tk!(KwAsync);
             }
             tk!(KwType) => {
-                self.set_stmt_reg(S_TYPE_NAME);
+                self.set_stmt_reg(StmtReg::TypeName);
                 self.keyword(tk!(KwType));
             }
             tk!(KwInterface) => {
                 // Same head frame as a class: `extends`, `<` and the body may follow on later
                 // lines.
-                self.push(FrameKind::ClassHead).reg = C_INTERFACE;
+                self.push(FrameKind::ClassHead).is_interface = true;
                 self.value_done();
                 self.prev_kw = tk!(KwInterface);
             }
             tk!(KwModule) if self.prev_kw == tk!(KwDeclare) => {
                 // A declared module may have no body.
                 self.keyword(kw);
-                self.set_stmt_reg(S_DECLARE_MODULE);
+                self.set_stmt_reg(StmtReg::DeclareModule);
             }
             _ => {
                 // A plain name, or any other keyword spelling used as one.

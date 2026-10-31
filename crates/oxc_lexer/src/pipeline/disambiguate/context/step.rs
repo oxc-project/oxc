@@ -216,8 +216,8 @@ impl Walk {
         if k == tk!(String) {
             // Module specifier: `import "x"`, `... from "x"`.
             let reg = self.stmt_reg();
-            if (reg == S_IMPORT && matches_tk!(self.prev_kw, KwImport | KwFrom))
-                || (reg == S_EXPORT && self.prev_kw == tk!(KwFrom))
+            if (reg == StmtReg::Import && matches_tk!(self.prev_kw, KwImport | KwFrom))
+                || (reg == StmtReg::Export && self.prev_kw == tk!(KwFrom))
             {
                 self.value_done();
                 let nx = tokens.peek(end);
@@ -225,14 +225,14 @@ impl Walk {
                     && !tokens.line_break_between(end, nx.pos)
                     && (tokens.ident_is(nx.pos, b"with") || tokens.ident_is(nx.pos, b"assert"));
                 if attrs {
-                    self.set_stmt_reg(S_ATTRS);
+                    self.set_stmt_reg(StmtReg::Attrs);
                     return;
                 }
                 self.stmt_done = true;
                 self.after_statement();
                 return;
             }
-            if reg == S_DECLARE_MODULE {
+            if reg == StmtReg::DeclareModule {
                 // `declare module "x"`: bodiless unless `{` follows.
                 self.value_done();
                 self.stmt_done = true;

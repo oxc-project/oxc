@@ -140,10 +140,9 @@ impl Walk {
         i
     }
 
-    /// Statement register of the innermost statement holder (S_NONE inside expression frames).
-    pub(super) fn stmt_reg(&self) -> u8 {
-        let i = self.stmt_frame();
-        if self.frames[i].kind.is_stmt_holder() { self.frames[i].reg } else { S_NONE }
+    /// Statement register of the innermost statement holder (None inside expression frames).
+    pub(super) fn stmt_reg(&self) -> StmtReg {
+        self.frames[self.stmt_frame()].reg
     }
 
     pub(super) fn top_declarator(&self) -> u8 {
@@ -151,7 +150,7 @@ impl Walk {
         if f.kind.is_stmt_holder() { f.state } else { D_NONE }
     }
 
-    pub(super) fn set_stmt_reg(&mut self, v: u8) {
+    pub(super) fn set_stmt_reg(&mut self, v: StmtReg) {
         let i = self.stmt_frame();
         if self.frames[i].kind.is_stmt_holder() {
             self.frames[i].reg = v;
@@ -233,7 +232,7 @@ impl Walk {
         let i = self.stmt_frame();
         let f = &mut self.frames[i];
         f.state = D_NONE;
-        f.reg = S_NONE;
+        f.reg = StmtReg::None;
         f.open_questions = 0;
         self.export_default = false;
         self.decorator = 0;
@@ -368,7 +367,7 @@ impl Walk {
         match self.top_kind() {
             FrameKind::FnHead | FrameKind::ClassHead => true,
             FrameKind::Object | FrameKind::ClassBody => self.top().state == M_KEY_SEEN,
-            _ => self.stmt_reg() == S_TYPE_NAME,
+            _ => self.stmt_reg() == StmtReg::TypeName,
         }
     }
 

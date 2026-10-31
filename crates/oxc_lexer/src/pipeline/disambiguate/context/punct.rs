@@ -118,9 +118,9 @@ impl Walk {
     }
 
     pub(super) fn assign(&mut self) {
-        if matches!(self.stmt_reg(), S_TYPE_NAME | S_IMPORT) {
+        if matches!(self.stmt_reg(), StmtReg::TypeName | StmtReg::Import) {
             // `type X =`: the alias type.
-            self.set_stmt_reg(S_NONE);
+            self.set_stmt_reg(StmtReg::None);
             self.open_region(R_STMT);
             return;
         }
@@ -193,7 +193,7 @@ impl Walk {
             }
             _ => {}
         }
-        if self.stmt_reg() == S_CASE {
+        if self.stmt_reg() == StmtReg::Case {
             self.after_statement();
             self.clear_prev();
             return;
@@ -264,10 +264,10 @@ impl Walk {
         let top = *self.top();
         let mut body = Frame::default();
         let kind = match top.kind {
-            FrameKind::ClassHead if top.reg == C_INTERFACE => {
+            FrameKind::ClassHead if top.is_interface => {
                 // Interface body: a type literal that ends the statement.
                 self.pop();
-                self.push(FrameKind::TypeLit).state = L_INTERFACE_BODY;
+                self.push(FrameKind::TypeLit).is_interface = true;
                 self.operand_done();
                 self.decorator = 0;
                 return;
@@ -291,14 +291,16 @@ impl Walk {
                 body.is_async = true;
                 FrameKind::FnBody
             }
-            _ if matches!(self.stmt_reg(), S_IMPORT | S_EXPORT | S_ATTRS) => FrameKind::ModuleSpec,
+            _ if matches!(self.stmt_reg(), StmtReg::Import | StmtReg::Export | StmtReg::Attrs) => {
+                FrameKind::ModuleSpec
+            }
             _ if !self.at_stmt_start() && self.operand_allowed() => {
                 body.is_value = true;
                 FrameKind::Object
             }
             _ => {
                 // Statement frames reset their registers when a block opens.
-                self.set_stmt_reg(S_NONE);
+                self.set_stmt_reg(StmtReg::None);
                 FrameKind::Block
             }
         };
@@ -327,7 +329,7 @@ impl Walk {
                 self.clear_prev();
             }
             // An attributes clause ends its declaration, like a body.
-            FrameKind::ModuleSpec if self.stmt_reg() != S_ATTRS => {
+            FrameKind::ModuleSpec if self.stmt_reg() != StmtReg::Attrs => {
                 self.operand_done();
             }
             FrameKind::ArrowBody => {
