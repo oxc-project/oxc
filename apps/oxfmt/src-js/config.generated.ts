@@ -66,6 +66,7 @@ export type ImportSelectorConfig =
   | "import";
 export type SortGroupItemConfig = NewlinesBetweenMarker | string | string[];
 export type SortOrderConfig = "asc" | "desc";
+export type SortTypeConfig = "natural" | "biome";
 export type SortPackageJsonUserConfig = boolean | SortPackageJsonConfig;
 export type SortTailwindcssUserConfig = boolean | SortTailwindcssConfig;
 export type SvelteUserConfig = boolean | SvelteConfig;
@@ -860,6 +861,21 @@ export interface SortImportsConfig {
    * - Default: `false`
    */
   sortSideEffects?: boolean;
+  /**
+   * How import sources are compared within a group.
+   *
+   * - `"natural"`: Natural order, compatible with `eslint-plugin-perfectionist`.
+   * - `"biome"`: The order of Biome's `organizeImports`.
+   *
+   * With `"biome"`, sources are ordered by kind (URL, protocol, package, alias, path),
+   * paths by proximity (`../..` before `..` before `.`),
+   * then naturally with `/` first and uppercase directly before lowercase.
+   * Imports of the same source are ordered by kind, type imports first.
+   * `ignoreCase` has no effect.
+   *
+   * - Default: `"natural"`
+   */
+  type?: SortTypeConfig;
   [k: string]: unknown;
 }
 export interface CustomGroupItemConfig {

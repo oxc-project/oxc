@@ -555,6 +555,20 @@ pub struct SortImportsConfig {
     /// - Default: `"asc"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub order: Option<SortOrderConfig>,
+    /// How import sources are compared within a group.
+    ///
+    /// - `"natural"`: Natural order, compatible with `eslint-plugin-perfectionist`.
+    /// - `"biome"`: The order of Biome's `organizeImports`.
+    ///
+    /// With `"biome"`, sources are ordered by kind (URL, protocol, package, alias, path),
+    /// paths by proximity (`../..` before `..` before `.`),
+    /// then naturally with `/` first and uppercase directly before lowercase.
+    /// Imports of the same source are ordered by kind, type imports first.
+    /// `ignoreCase` has no effect.
+    ///
+    /// - Default: `"natural"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#type: Option<SortTypeConfig>,
     /// Ignore case when sorting.
     ///
     /// - Default: `true`
@@ -638,6 +652,13 @@ pub struct SortImportsConfig {
 pub enum SortOrderConfig {
     Asc,
     Desc,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum SortTypeConfig {
+    Natural,
+    Biome,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]

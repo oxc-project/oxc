@@ -914,6 +914,15 @@
           "description": "Sort side effect imports.\n\nDisabled by default for safety reasons.\n\n- Default: `false`",
           "type": "boolean",
           "markdownDescription": "Sort side effect imports.\n\nDisabled by default for safety reasons.\n\n- Default: `false`"
+        },
+        "type": {
+          "description": "How import sources are compared within a group.\n\n- `\"natural\"`: Natural order, compatible with `eslint-plugin-perfectionist`.\n- `\"biome\"`: The order of Biome's `organizeImports`.\n\nWith `\"biome\"`, sources are ordered by kind (URL, protocol, package, alias, path),\npaths by proximity (`../..` before `..` before `.`),\nthen naturally with `/` first and uppercase directly before lowercase.\nImports of the same source are ordered by kind, type imports first.\n`ignoreCase` has no effect.\n\n- Default: `\"natural\"`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SortTypeConfig"
+            }
+          ],
+          "markdownDescription": "How import sources are compared within a group.\n\n- `\"natural\"`: Natural order, compatible with `eslint-plugin-perfectionist`.\n- `\"biome\"`: The order of Biome's `organizeImports`.\n\nWith `\"biome\"`, sources are ordered by kind (URL, protocol, package, alias, path),\npaths by proximity (`../..` before `..` before `.`),\nthen naturally with `/` first and uppercase directly before lowercase.\nImports of the same source are ordered by kind, type imports first.\n`ignoreCase` has no effect.\n\n- Default: `\"natural\"`"
         }
       }
     },
@@ -1003,6 +1012,13 @@
         {
           "$ref": "#/definitions/SortTailwindcssConfig"
         }
+      ]
+    },
+    "SortTypeConfig": {
+      "type": "string",
+      "enum": [
+        "natural",
+        "biome"
       ]
     },
     "SvelteConfig": {

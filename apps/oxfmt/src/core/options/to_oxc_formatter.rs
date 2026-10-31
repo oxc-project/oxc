@@ -4,7 +4,7 @@ use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CommentLineStrategy,
     CustomGroupDefinition, Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions,
     JsdocOptions, LineWrappingStyle, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons,
-    SortImportsOptions, SortOrder, TrailingCommas,
+    SortImportsOptions, SortOrder, SortType, TrailingCommas,
 };
 use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 
@@ -12,7 +12,7 @@ use super::super::oxfmtrc::{
     ArrowParensConfig, CommentLineStrategyConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
     ImportModifierConfig, ImportSelectorConfig, JsdocUserConfig, LineWrappingStyleConfig,
     ObjectWrapConfig, OperatorPositionConfig, QuotePropsConfig, SortGroupItemConfig,
-    SortImportsUserConfig, SortOrderConfig, TrailingCommaConfig,
+    SortImportsUserConfig, SortOrderConfig, SortTypeConfig, TrailingCommaConfig,
 };
 
 /// Convert `FormatConfig` into `JsFormatOptions` for `oxc_formatter`.
@@ -171,6 +171,12 @@ pub(super) fn to_sort_imports(config: &FormatConfig) -> Result<Option<SortImport
         sort_imports.order = match v {
             SortOrderConfig::Asc => SortOrder::Asc,
             SortOrderConfig::Desc => SortOrder::Desc,
+        };
+    }
+    if let Some(v) = sort_imports_config.r#type {
+        sort_imports.sort_type = match v {
+            SortTypeConfig::Natural => SortType::Natural,
+            SortTypeConfig::Biome => SortType::Biome,
         };
     }
     if let Some(v) = sort_imports_config.ignore_case {

@@ -75,6 +75,7 @@ struct TestSortImportsConfig {
     partition_by_comment: Option<bool>,
     sort_side_effects: Option<bool>,
     order: Option<String>,
+    r#type: Option<String>,
     ignore_case: Option<bool>,
     newlines_between: Option<bool>,
     internal_pattern: Option<Vec<String>>,
@@ -153,6 +154,9 @@ fn parse_test_config(json: &str) -> JsFormatOptions {
                 "desc" => SortOrder::Desc,
                 _ => SortOrder::Asc,
             };
+        }
+        if let Some(v) = sort_config.r#type {
+            sort_imports.sort_type = v.parse().expect("Invalid sort type");
         }
         if let Some(v) = sort_config.ignore_case {
             sort_imports.ignore_case = v;

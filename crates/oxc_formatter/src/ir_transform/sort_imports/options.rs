@@ -17,6 +17,9 @@ pub struct SortImportsOptions {
     /// Sort order (asc or desc).
     /// Default is ascending (asc).
     pub order: SortOrder,
+    /// How import sources are compared within a group.
+    /// Default is natural order ([`SortType::Natural`]).
+    pub sort_type: SortType,
     /// Ignore case when sorting.
     /// Default is `true`.
     pub ignore_case: bool,
@@ -102,6 +105,7 @@ impl Default for SortImportsOptions {
             partition_by_comment: false,
             sort_side_effects: false,
             order: SortOrder::default(),
+            sort_type: SortType::default(),
             ignore_case: true,
             newlines_between: true,
             internal_pattern: default_internal_patterns(),
@@ -152,6 +156,34 @@ impl fmt::Display for SortOrder {
             SortOrder::Desc => "DESC",
         };
         f.write_str(s)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum SortType {
+    /// Natural order, compatible with `eslint-plugin-perfectionist`.
+    #[default]
+    Natural,
+    /// The order of Biome's `organizeImports`.
+    /// Sources are ordered by kind (URL, protocol, package, alias, path),
+    /// paths by proximity (`../..` before `..` before `.`),
+    /// then naturally with `/` first and uppercase directly before lowercase.
+    /// Imports of the same source are ordered by kind, type imports first.
+    /// `ignore_case` has no effect.
+    Biome,
+}
+
+impl FromStr for SortType {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "natural" => Ok(Self::Natural),
+            "biome" => Ok(Self::Biome),
+            _ => {
+                Err("Value not supported for SortType. Supported values are 'natural' and 'biome'.")
+            }
+        }
     }
 }
 

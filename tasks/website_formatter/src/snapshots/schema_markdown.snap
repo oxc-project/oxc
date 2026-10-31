@@ -768,6 +768,25 @@ Disabled by default for safety reasons.
 - Default: `false`
 
 
+### sortImports.type
+
+type: `"natural" | "biome"`
+
+
+How import sources are compared within a group.
+
+- `"natural"`: Natural order, compatible with `eslint-plugin-perfectionist`.
+- `"biome"`: The order of Biome's `organizeImports`.
+
+With `"biome"`, sources are ordered by kind (URL, protocol, package, alias, path),
+paths by proximity (`../..` before `..` before `.`),
+then naturally with `/` first and uppercase directly before lowercase.
+Imports of the same source are ordered by kind, type imports first.
+`ignoreCase` has no effect.
+
+- Default: `"natural"`
+
+
 ## sortPackageJson
 
 type: `object | boolean`

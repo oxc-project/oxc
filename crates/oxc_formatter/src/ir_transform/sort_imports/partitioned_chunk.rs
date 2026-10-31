@@ -1,6 +1,7 @@
 use oxc_formatter_core::format_element::LineMode;
 
 use crate::ir_transform::sort_imports::{
+    biome_order::statement_kind_rank,
     compute_metadata::compute_import_metadata,
     group_matcher::GroupMatcher,
     options::SortImportsOptions,
@@ -123,6 +124,7 @@ impl<'a> PartitionedChunk<'a> {
                     }
 
                     let is_side_effect = metadata.is_side_effect;
+                    let statement_kind = statement_kind_rank(metadata);
                     let (group_idx, normalized_source, is_ignored) =
                         compute_import_metadata(metadata, group_matcher, options);
 
@@ -130,6 +132,7 @@ impl<'a> PartitionedChunk<'a> {
                         leading_lines: std::mem::take(&mut current_pending),
                         import_line: line,
                         is_side_effect,
+                        statement_kind,
                         group_idx,
                         normalized_source,
                         is_ignored,
