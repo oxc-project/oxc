@@ -20,14 +20,30 @@ use super::GraphqlFormatter;
 
 pub(super) fn write_string_value<'a>(sv: &StringValue<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     let raw = sv.raw;
-    if let Some(body) = raw.strip_prefix("\"\"\"").and_then(|r| r.strip_suffix("\"\"\"")) {
+    if let Some(body) = block_string_body(raw) {
         write_block_string(body, f);
-    } else if let Some(body) = raw.strip_prefix('"').and_then(|r| r.strip_suffix('"')) {
-        write_regular_string(body, f);
+    } else if let Some(body) = escaped_string_body(raw) {
+        write_escaped_string(body, f);
     } else {
-        // Defensive: malformed string (parse errors bail out before reaching here).
+        // No escapes: the body cannot contain `"` or raw line terminators either,
+        // so the string round-trips verbatim, quotes included (one slice).
+        // Also the defensive fallback for a malformed string (parse errors bail out before reaching here).
         write!(f, text(raw));
     }
+}
+
+/// Whether [write_string_value] prints `sv` as its raw source text.
+pub(super) fn is_verbatim(sv: &StringValue<'_>) -> bool {
+    block_string_body(sv.raw).is_none() && escaped_string_body(sv.raw).is_none()
+}
+
+fn block_string_body(raw: &str) -> Option<&str> {
+    raw.strip_prefix("\"\"\"").and_then(|r| r.strip_suffix("\"\"\""))
+}
+
+/// The body of a regular string with escapes.
+fn escaped_string_body(raw: &str) -> Option<&str> {
+    raw.strip_prefix('"').and_then(|r| r.strip_suffix('"')).filter(|body| body.contains('\\'))
 }
 
 /// Block string: cook per the GraphQL `BlockStringValue` algorithm, re-escape `"""`,
@@ -136,20 +152,10 @@ fn leading_whitespace_len(line: &str) -> usize {
     line.bytes().take_while(|&b| b == b' ' || b == b'\t').count()
 }
 
-/// Regular string: decode escapes (GraphQL `StringValue` semantics), then re-encode
+/// Regular string with escapes: decode them (GraphQL `StringValue` semantics), then re-encode
 /// the Prettier way (`"` and `\` escaped, newline as `\n`, everything else verbatim).
-fn write_regular_string<'a>(body: &'a str, f: &mut GraphqlFormatter<'_, 'a>) {
+fn write_escaped_string(body: &str, f: &mut GraphqlFormatter<'_, '_>) {
     write!(f, "\"");
-    if !body.contains('\\') {
-        // No escapes: the body cannot contain `"` or raw line terminators either,
-        // so it round-trips verbatim.
-        if !body.is_empty() {
-            write!(f, text(body));
-        }
-        write!(f, "\"");
-        return;
-    }
-
     let cooked = cook_string(body);
     let mut out = String::with_capacity(cooked.len() + 2);
     for c in cooked.chars() {

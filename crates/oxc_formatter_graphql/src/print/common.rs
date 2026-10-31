@@ -13,10 +13,11 @@ use oxc_graphql_parser::ast::{
     self, Directive, InputValueDefinition, Name, NamedType, StringValue, Type, Variable,
     VariableDefinition,
 };
+use oxc_span::Span;
 
 use crate::comments::{
     flush_leading_comments, flush_trailing_comment_before, flush_trailing_inside_comments,
-    write_adjacent_trailing_comment, write_dangling_comments,
+    has_comment_before, write_adjacent_trailing_comment, write_dangling_comments,
 };
 
 use super::{
@@ -28,6 +29,72 @@ use super::{
 pub(super) fn write_name<'a>(name: &Name<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     flush_leading_comments(to_span(name.span).start, f);
     write!(f, text(name.value));
+}
+
+// Verbatim slices:
+// a construct whose source already reads exactly as printed (no whitespace, comma or comment between its tokens
+// beyond what the printer writes itself) prints as ONE source slice instead of a text/token per piece.
+// No comment can sit inside such a slice, so the claims the piecewise path makes inside it are no-ops;
+// only the leading claim at its start remains.
+
+/// A `sigil` (`$`, `@`, `...`) directly followed by `name` in the source:
+/// the source span of both.
+pub(super) fn verbatim_sigil_span(span: ast::Span, sigil: &str, name: &Name<'_>) -> Option<Span> {
+    let span = to_span(span);
+    let name = to_span(name.span);
+    ((name.start - span.start) as usize == sigil.len()).then(|| Span::new(span.start, name.end))
+}
+
+/// `<sigil><name>` (`$var`, `@directive`, `...Fragment`) of the construct at `span`.
+/// Claims at the construct's span start so a leading comment lands before the sigil,
+/// not between the sigil and the name.
+pub(super) fn write_sigil_name<'a>(
+    span: ast::Span,
+    sigil: &'static str,
+    name: &Name<'a>,
+    f: &mut GraphqlFormatter<'_, 'a>,
+) {
+    flush_leading_comments(to_span(span).start, f);
+    if let Some(span) = verbatim_sigil_span(span, sigil, name) {
+        write!(f, text(f.context().source_text().text_for(&span)));
+    } else {
+        write!(f, sigil);
+        write_name(name, f);
+    }
+}
+
+/// Source span of `ty` when it is spelled exactly as printed (`[Foo!]!`).
+pub(super) fn verbatim_type_span(ty: &Type<'_>, f: &GraphqlFormatter<'_, '_>) -> Option<Span> {
+    if matches!(ty, Type::Missing(_)) {
+        return None;
+    }
+    let span = to_span(ty.span());
+    f.context()
+        .source_text()
+        .all_bytes_match(span.start, span.end, |b| {
+            b.is_ascii_alphanumeric() || matches!(b, b'_' | b'[' | b']' | b'!')
+        })
+        .then_some(span)
+}
+
+/// Writes `<head>: <tail>` as one source slice, after the head's leading claim,
+/// when `": "` sits right between them (both already verified to print as their own source text;
+/// an empty `head` stands for one written before, like the `)` of a field's arguments).
+/// Returns `false`, writing nothing, when the source does not read exactly as printed.
+pub(super) fn write_verbatim_colon_pair(
+    head: Span,
+    tail: Option<Span>,
+    f: &mut GraphqlFormatter<'_, '_>,
+) -> bool {
+    let source = f.context().source_text();
+    let Some(tail) = tail.filter(|tail| {
+        tail.start == head.end + 2 && source.bytes_range(head.end, tail.start) == b": "
+    }) else {
+        return false;
+    };
+    flush_leading_comments(head.start, f);
+    write!(f, text(source.slice_range(head.start, tail.end)));
+    true
 }
 
 /// Description followed by a hard line break (the default placement).
@@ -116,11 +183,7 @@ pub(super) fn write_directives<'a>(
 }
 
 fn write_directive<'a>(directive: &'a Directive<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
-    // Claim at the construct's span start so a leading comment lands before the `@`,
-    // not between the sigil and the name.
-    flush_leading_comments(to_span(directive.span).start, f);
-    write!(f, "@");
-    write_name(&directive.name, f);
+    write_sigil_name(directive.span, "@", &directive.name, f);
     write_arguments(directive.arguments.as_ref(), f);
 }
 
@@ -190,13 +253,7 @@ pub(super) fn write_arguments<'a>(
     let Some(arguments) = arguments else { return };
     let items = arguments.items.as_slice();
     write_paren_list(f, items, arguments.span, true, |i, f| {
-        let argument = &items[i];
-        write_name(&argument.name, f);
-        flush_trailing_before_literal(to_span(argument.name.span).end, f);
-        write!(f, ": ");
-        if let Some(v) = argument.value.as_ref() {
-            value::write_value(v, f);
-        }
+        value::write_name_value(&items[i].name, items[i].value.as_ref(), f);
     });
 }
 
@@ -218,22 +275,24 @@ fn write_variable_definition<'a>(
     f: &mut GraphqlFormatter<'_, 'a>,
 ) {
     write_description(variable_definition.description.as_deref(), f);
-    write_variable(&variable_definition.variable, f);
-    flush_trailing_before_literal(to_span(variable_definition.variable.span).end, f);
-    write!(f, ": ");
-    if let Some(ty) = variable_definition.ty.as_ref() {
-        write_type(ty, f);
+    let variable = &variable_definition.variable;
+    let ty = variable_definition.ty.as_ref();
+    let head = verbatim_sigil_span(variable.span, "$", &variable.name);
+    let tail = ty.and_then(|ty| verbatim_type_span(ty, f));
+    if !head.is_some_and(|head| write_verbatim_colon_pair(head, tail, f)) {
+        write_variable(variable, f);
+        flush_trailing_before_literal(to_span(variable.span).end, f);
+        write!(f, ": ");
+        if let Some(ty) = ty {
+            write_type(ty, f);
+        }
     }
     write_default_value(variable_definition.default_value.as_ref(), f);
     write_directives(&variable_definition.directives, DirectivesStyle::Attached, f);
 }
 
 pub(super) fn write_variable<'a>(variable: &Variable<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
-    // Claim at the construct's span start so a leading comment lands before the `$`,
-    // not between the sigil and the name.
-    flush_leading_comments(to_span(variable.span).start, f);
-    write!(f, "$");
-    write_name(&variable.name, f);
+    write_sigil_name(variable.span, "$", &variable.name, f);
 }
 
 fn write_default_value<'a>(
@@ -260,6 +319,13 @@ pub(super) fn write_spaced_keyword(
 }
 
 pub(super) fn write_type<'a>(ty: &Type<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
+    // One slice unless a comment is pending in front (the piecewise path claims it at the first name, inside a `[`)
+    if let Some(span) = verbatim_type_span(ty, f)
+        && !has_comment_before(f, span.start)
+    {
+        write!(f, text(f.context().source_text().text_for(&span)));
+        return;
+    }
     match ty {
         Type::Named(named) => write_named_type(named, f),
         Type::List(list) => {
@@ -286,11 +352,15 @@ pub(super) fn write_input_value_definition<'a>(
     f: &mut GraphqlFormatter<'_, 'a>,
 ) {
     write_description_input_value(input_value.description.as_deref(), f);
-    write_name(&input_value.name, f);
-    flush_trailing_before_literal(to_span(input_value.name.span).end, f);
-    write!(f, ": ");
-    if let Some(ty) = input_value.ty.as_ref() {
-        write_type(ty, f);
+    let ty = input_value.ty.as_ref();
+    let tail = ty.and_then(|ty| verbatim_type_span(ty, f));
+    if !write_verbatim_colon_pair(to_span(input_value.name.span), tail, f) {
+        write_name(&input_value.name, f);
+        flush_trailing_before_literal(to_span(input_value.name.span).end, f);
+        write!(f, ": ");
+        if let Some(ty) = ty {
+            write_type(ty, f);
+        }
     }
     write_default_value(input_value.default_value.as_ref(), f);
     write_directives(&input_value.directives, DirectivesStyle::Attached, f);
@@ -308,6 +378,13 @@ pub(super) fn write_implements_interfaces<'a>(
     let Some(implements) = implements else { return };
     let interfaces = implements.interfaces.as_slice();
     write_spaced_keyword(to_span(implements.span).start, "implements ", f);
+    // A single name with no comment to claim in front leaves the group nothing to break
+    if let [named] = interfaces
+        && !has_comment_before(f, to_span(named.name.span).start)
+    {
+        write_named_type(named, f);
+        return;
+    }
     let joined = format_with(move |f: &mut GraphqlFormatter<'_, 'a>| {
         for (i, named) in interfaces.iter().enumerate() {
             if i > 0 {
