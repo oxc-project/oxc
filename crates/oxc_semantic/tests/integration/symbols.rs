@@ -255,8 +255,23 @@ fn test_lexical_redeclaration_of_hoisted_var_next_to_block_type_binding() {
         "function f() { { var X; type X = string; const X = 1; } }",
         "function f() { { var X; interface X {} class X {} } }",
         "function f() { { interface X {} var X; let X; } }",
+        "function f() { type X = number; { var X; interface X {} let X; } }",
     ] {
         SemanticTester::ts(source).has_error("Identifier `X` has already been declared");
+    }
+}
+
+#[test]
+fn test_block_type_binding_ignores_outer_type_merged_with_hoisted_var() {
+    for source in [
+        "function f() { type X = number; { interface X { a: number } var X = 0; interface X { b: number } const value: X = { a: 1, b: 2 }; } }",
+        "function f() { type X = number; { var X = 0; interface X {} } }",
+        "function f() { type X = number; { var X = 0; type X = string; } }",
+        "function f() { interface X {} { var X = 0; type X = string; } }",
+    ] {
+        let tester = SemanticTester::ts(source);
+        let diagnostics = tester.build_with_errors().diagnostics;
+        assert!(diagnostics.is_empty(), "{source}: {diagnostics:?}");
     }
 }
 
