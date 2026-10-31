@@ -757,31 +757,7 @@ fn declaration_or_parent_id(ctx: &LintContext, declaration_id: NodeId) -> NodeId
 }
 
 fn binding_pattern_contains_symbol(pattern: &BindingPattern, symbol_span: Span) -> bool {
-    match pattern {
-        BindingPattern::BindingIdentifier(identifier) => identifier.span == symbol_span,
-        BindingPattern::AssignmentPattern(pattern) => {
-            binding_pattern_contains_symbol(&pattern.left, symbol_span)
-        }
-        BindingPattern::ObjectPattern(pattern) => {
-            pattern
-                .properties
-                .iter()
-                .any(|property| binding_pattern_contains_symbol(&property.value, symbol_span))
-                || pattern.rest.as_ref().is_some_and(|rest| {
-                    binding_pattern_contains_symbol(&rest.argument, symbol_span)
-                })
-        }
-        BindingPattern::ArrayPattern(pattern) => {
-            pattern
-                .elements
-                .iter()
-                .flatten()
-                .any(|element| binding_pattern_contains_symbol(element, symbol_span))
-                || pattern.rest.as_ref().is_some_and(|rest| {
-                    binding_pattern_contains_symbol(&rest.argument, symbol_span)
-                })
-        }
-    }
+    !pattern.all_binding_identifiers(&mut |ident| ident.span != symbol_span)
 }
 
 fn pattern_initializer_contains_location(
