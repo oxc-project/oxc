@@ -91,6 +91,10 @@ struct ClassDecorations<'a> {
     /// Decoration statements accumulated for the current class.
     /// These will be applied when the class processing is complete.
     decoration_stmts: Vec<Statement<'a>>,
+    /// Decoration statements of static members, kept apart from `decoration_stmts`
+    /// because TypeScript applies every instance member decorator first, then
+    /// every static member decorator. See [`ClassDecorations::append_static_decorations`].
+    static_decoration_stmts: Vec<Statement<'a>>,
     /// Binding for the current class being processed.
     /// Generated on-demand when the first decorator needs it.
     class_binding: Option<BoundIdentifier<'a>>,
@@ -103,6 +107,12 @@ impl ClassDecorations<'_> {
     fn with_should_transform(mut self, should_transform: bool) -> Self {
         self.should_transform = should_transform;
         self
+    }
+
+    /// Move the static member decorations after the instance member ones,
+    /// the order TypeScript applies them in.
+    fn append_static_decorations(&mut self) {
+        self.decoration_stmts.append(&mut self.static_decoration_stmts);
     }
 }
 
@@ -591,7 +601,12 @@ impl<'a> LegacyDecorator<'a> {
         let decorator_stmt = self.create_decorator(decorations, prefix, name, descriptor, ctx);
 
         // Push to current decoration stack
-        self.class_decorations_stack.last_mut().decoration_stmts.push(decorator_stmt);
+        let current_class = self.class_decorations_stack.last_mut();
+        if is_static {
+            current_class.static_decoration_stmts.push(decorator_stmt);
+        } else {
+            current_class.decoration_stmts.push(decorator_stmt);
+        }
     }
     /// Transforms a statement that is a class declaration
     ///
@@ -740,7 +755,8 @@ impl<'a> LegacyDecorator<'a> {
     }
 
     fn transform_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        let current_class_decorations = self.class_decorations_stack.pop();
+        let mut current_class_decorations = self.class_decorations_stack.pop();
+        current_class_decorations.append_static_decorations();
 
         // Legacy decorator does not allow in class expression.
         if current_class_decorations.should_transform {
@@ -897,6 +913,7 @@ impl<'a> LegacyDecorator<'a> {
         let ClassDecorations {
             class_binding: class_binding_tmp,
             mut decoration_stmts,
+            static_decoration_stmts: _,
             class_has_private_in_expression_in_decorator,
             should_transform: _,
         } = current_class_decorations;
@@ -1032,6 +1049,7 @@ impl<'a> LegacyDecorator<'a> {
         let ClassDecorations {
             class_binding,
             mut decoration_stmts,
+            static_decoration_stmts: _,
             class_has_private_in_expression_in_decorator,
             should_transform: _,
         } = current_class_decorations;
