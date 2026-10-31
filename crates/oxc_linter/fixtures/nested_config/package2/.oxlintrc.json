@@ -1,0 +1,8 @@
+{
+  "extends": ["../.oxlintrc.json"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "no-console": "off",
+    "custom/other-rule": "error"
+  }
+}
