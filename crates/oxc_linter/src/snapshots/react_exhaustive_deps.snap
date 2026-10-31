@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 505
 ---
 
   ⚠ react-hooks(exhaustive-deps): React hook useCallback depends on `value`, which changes every render
@@ -77,6 +78,18 @@ source: crates/oxc_linter/src/tester.rs
  4 │           }, []);
    ·              ──
  5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'ref'. Mutable values like 'ref.current' aren't valid dependencies because mutating them doesn't re-render the component.
+   ╭─[exhaustive_deps.tsx:8:14]
+ 6 │           useEffect(() => {
+ 7 │             ref.current?.setValue(x);
+   ·             ─────┬─────
+   ·                  ╰── useEffect uses `ref` here
+ 8 │           }, [ref.current, x]);
+   ·              ────────────────
+ 9 │         }
    ╰────
   help: Either include it or remove the dependency array.
 
@@ -1182,7 +1195,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.color', and 'props.someOtherRefs.current.innerHTML'
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.someOtherRefs.current.innerHTML', and 'props.color'
     ╭─[exhaustive_deps.tsx:9:14]
   6 │             console.log(ref2.current.textContent);
   7 │             alert(props.someOtherRefs.current.innerHTML);
