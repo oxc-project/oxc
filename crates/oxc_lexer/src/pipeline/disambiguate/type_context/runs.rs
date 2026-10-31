@@ -11,6 +11,7 @@
 //! follows, at a return type, or at `<T extends`. Otherwise the forward context walk counts the
 //! lists open at the run ([`context`]).
 //!
+//! [`lt_run_split`]: super::bytes::lt_run_split
 //! [`type_list`]: super::type_list
 //! [`context`]: crate::pipeline::disambiguate::context
 
@@ -19,14 +20,13 @@ use crate::{
     token::{OP_KIND_BASE, matches_tk, tk},
 };
 
-use super::type_list::type_args_at;
-
-pub use super::bytes::lt_run_split;
 use crate::pipeline::disambiguate::{
     RULE_SCAN_CAP,
     common::{Prev, Tokens},
     context::{self, Walks},
 };
+
+use super::type_list::type_args_at;
 
 /// `coalesce` entry for a `>` run (`>>`, `>>>`, and a `>` glued to `=`): how many leading `>` bytes
 /// to leave unfused (each closes an open `<` list), or 0 to fuse.
