@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 522
 ---
 
   ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
@@ -118,5 +119,33 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_array_for_each.tsx:1:12]
  1 │ return foo.forEach(element => {bar(element)});
    ·            ───────
+   ╰────
+  help: Replace it with a `for…of` loop. It is faster, more readable, and allows early exits with `break` or `return`.
+
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
+   ╭─[no_array_for_each.tsx:1:20]
+ 1 │ new Array(1, 2, 3).forEach((element) => bar(element))
+   ·                    ───────
+   ╰────
+  help: Replace it with a `for…of` loop. It is faster, more readable, and allows early exits with `break` or `return`.
+
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
+   ╭─[no_array_for_each.tsx:1:19]
+ 1 │ new Uint8Array(8).forEach((element) => bar(element))
+   ·                   ───────
+   ╰────
+  help: Replace it with a `for…of` loop. It is faster, more readable, and allows early exits with `break` or `return`.
+
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
+   ╭─[no_array_for_each.tsx:1:32]
+ 1 │ const array = [1, 2, 3]; array.forEach((element) => bar(element));
+   ·                                ───────
+   ╰────
+  help: Replace it with a `for…of` loop. It is faster, more readable, and allows early exits with `break` or `return`.
+
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
+   ╭─[no_array_for_each.tsx:1:37]
+ 1 │ declare const items: unknown; items.forEach((element) => bar(element));
+   ·                                     ───────
    ╰────
   help: Replace it with a `for…of` loop. It is faster, more readable, and allows early exits with `break` or `return`.
