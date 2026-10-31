@@ -150,22 +150,24 @@ impl CliRunner {
             // To accommodate this, unless `--no-ignore` is passed,
             // pre-filter the paths.
             if !paths.is_empty() {
-                let (ignore, _err) = Gitignore::new(&ignore_options.ignore_path);
+                let (ignore, _err) = Gitignore::new(self.cwd.join(&ignore_options.ignore_path));
 
                 paths.retain_mut(|p| {
                     // Try to prepend cwd to all paths
-                    let Ok(mut path) = absolutize(p) else {
+                    let Ok(path) = absolutize(p) else {
                         return false;
                     };
 
-                    std::mem::swap(p, &mut path);
+                    *p = path;
+                    let is_dir = p.is_dir();
 
-                    if path.is_dir() {
-                        true
+                    // An explicit target can be inside a directory excluded by the ignore file.
+                    let ignored = if p.starts_with(ignore.path()) {
+                        ignore.matched_path_or_any_parents(&*p, is_dir).is_ignore()
                     } else {
-                        !(builder.matched(p, false).is_ignore()
-                            || ignore.matched(path, false).is_ignore())
-                    }
+                        ignore.matched(&*p, is_dir).is_ignore()
+                    };
+                    !(builder.matched(p, is_dir).is_ignore() || ignored)
                 });
             }
 
@@ -857,6 +859,71 @@ mod test {
             "fixtures/cli/linter/nan.js",
         ];
         Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn ignore_file_filters_explicit_descendants() {
+        use crate::cli::CliRunResult;
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let root = temp_dir.path();
+        let external_dir = tempfile::tempdir().unwrap();
+        let external_file = external_dir.path().join("external.ts");
+        fs::write(&external_file, "debugger;\n").unwrap();
+        fs::create_dir_all(root.join("backend/scripts")).unwrap();
+        fs::write(root.join("backend/scripts/openapi.ts"), "debugger;\n").unwrap();
+        fs::write(root.join("backend/keep.ts"), "debugger;\n").unwrap();
+
+        for ignore_name in [".eslintignore", ".customignore"] {
+            fs::write(root.join(ignore_name), "backend/scripts\n").unwrap();
+            let tester = Tester::new().with_cwd(root.to_path_buf());
+            let ignore_args = if ignore_name == ".eslintignore" {
+                vec![]
+            } else {
+                vec!["--ignore-path", ignore_name]
+            };
+            let run = |paths: &[&str], no_ignore: bool| {
+                let mut args = vec!["--debug", "files"];
+                args.extend_from_slice(&ignore_args);
+                if no_ignore {
+                    args.push("--no-ignore");
+                }
+                args.extend_from_slice(paths);
+                let (stdout, result) = tester.test_output(&args);
+                assert!(matches!(result, CliRunResult::LintSucceeded), "{result:?}\n{stdout}");
+                stdout
+            };
+
+            for paths in [vec![], vec!["."], vec!["backend"]] {
+                assert_eq!(run(&paths, false), "backend/keep.ts\n", "{ignore_name}, {paths:?}");
+            }
+            for target in ["backend/scripts", "backend/scripts/openapi.ts"] {
+                let absolute = root.join(target);
+                for path in [target, absolute.to_str().unwrap()] {
+                    assert_eq!(run(&[path], false), "", "{ignore_name}, {path}");
+                    assert_eq!(
+                        run(&[path], true),
+                        "backend/scripts/openapi.ts\n",
+                        "--no-ignore, {ignore_name}, {path}"
+                    );
+                }
+            }
+            assert_eq!(run(&["backend/scripts", "backend/keep.ts"], false), "backend/keep.ts\n");
+
+            assert!(run(&[external_file.to_str().unwrap()], false).ends_with("/external.ts\n"));
+
+            fs::write(root.join(ignore_name), "backend/scripts/\n").unwrap();
+            for path in ["backend/scripts", "backend/scripts/openapi.ts"] {
+                assert_eq!(run(&[path], false), "", "directory-only pattern, {path}");
+            }
+
+            // A whitelist can re-include a file when its parent directory is not excluded.
+            fs::write(root.join(ignore_name), "backend/scripts/*\n!backend/scripts/openapi.ts\n")
+                .unwrap();
+            assert_eq!(run(&["backend/scripts/openapi.ts"], false), "backend/scripts/openapi.ts\n");
+            assert_eq!(run(&["."], false), "backend/keep.ts\nbackend/scripts/openapi.ts\n");
+            fs::remove_file(root.join(ignore_name)).unwrap();
+        }
     }
 
     #[test]
