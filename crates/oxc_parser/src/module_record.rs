@@ -209,25 +209,22 @@ impl<'a> ModuleRecordBuilder<'a> {
 
         if let Some(specifiers) = &decl.specifiers {
             for specifier in specifiers {
-                let (import_name, local_name, is_type) = match specifier {
+                let local = specifier.local();
+                let local_name = NameSpan::new(local.name.into(), local.span);
+                let (import_name, is_type) = match specifier {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => (
                         ImportImportName::Name(NameSpan::new(
                             specifier.imported.name(),
                             specifier.imported.span(),
                         )),
-                        NameSpan::new(specifier.local.name.into(), specifier.local.span),
                         decl.import_kind.is_type() || specifier.import_kind.is_type(),
                     ),
-                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => (
-                        ImportImportName::NamespaceObject,
-                        NameSpan::new(specifier.local.name.into(), specifier.local.span),
-                        decl.import_kind.is_type(),
-                    ),
-                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => (
-                        ImportImportName::Default(specifier.span),
-                        NameSpan::new(specifier.local.name.into(), specifier.local.span),
-                        decl.import_kind.is_type(),
-                    ),
+                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
+                        (ImportImportName::NamespaceObject, decl.import_kind.is_type())
+                    }
+                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                        (ImportImportName::Default(specifier.span), decl.import_kind.is_type())
+                    }
                 };
                 self.add_import_entry(ImportEntry {
                     statement_span: decl.span,
