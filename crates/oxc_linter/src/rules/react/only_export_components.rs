@@ -656,7 +656,13 @@ impl OnlyExportComponents {
                 return None;
             }
             let init = declarator.init.as_ref()?.get_inner_expression();
-            matches!(init, Expression::ObjectExpression(_)).then_some(init)
+            matches!(
+                init,
+                Expression::ObjectExpression(_)
+                    | Expression::JSXElement(_)
+                    | Expression::JSXFragment(_)
+            )
+            .then_some(init)
         });
         self.classify_export(name, span, self.can_be_react_function_component(init), init)
     }
@@ -710,7 +716,12 @@ impl OnlyExportComponents {
         }
 
         if let Some(init_expr) = init {
-            if matches!(init_expr.get_inner_expression(), Expression::ObjectExpression(_)) {
+            if matches!(
+                init_expr.get_inner_expression(),
+                Expression::ObjectExpression(_)
+                    | Expression::JSXElement(_)
+                    | Expression::JSXFragment(_)
+            ) {
                 return ExportType::NonComponent(span);
             }
 
@@ -907,6 +918,23 @@ fn test() {
         ("export const foo = 3;", None),
         ("const foo = 3; const bar = 'Hello'; export { foo, bar };", None),
         ("export const foo = () => {};", None),
+        (
+            "export const CLOSED_ICON = <span>closed</span>;
+export const STATUS_LABELS = { open: 'Open', closed: 'Closed' };
+export function formatDate(date: Date): string { return date.toLocaleDateString(); }",
+            Some(serde_json::json!([{ "allowConstantExport": true }])),
+        ),
+        ("export const Icon = <>closed</>; export const labels = {};", None),
+        (
+            "export const Icon = (<span /> as React.ReactElement) satisfies React.ReactNode; export const labels = {};",
+            None,
+        ),
+        ("const CLOSED_ICON = <span />; export { CLOSED_ICON }; export const labels = {};", None),
+        ("const Icon = <></>; export default Icon; export function formatDate() {}", None),
+        (
+            "export const CLOSED_ICON = <span />; export const App = () => <div />;",
+            Some(serde_json::json!([{ "allowExportNames": ["CLOSED_ICON"] }])),
+        ),
         ("export default function foo () {};", None),
         ("export default memo(function Foo () {});", None),
         ("export default React.memo(function Foo () {});", None),
@@ -1299,6 +1327,12 @@ export function Button(props: PropsWithChildren): ReactNode {
             "export const Foo = () => {}; export const Tag = { Root: enabled ? () => <div /> : null };",
             Some(serde_json::json!([{ "allowCompoundComponents": true }])),
         ),
+        (
+            "export const CLOSED_ICON = <span />; export const App = () => <div />;",
+            Some(serde_json::json!([{ "allowConstantExport": true }])),
+        ),
+        ("export const Icon = <></> as React.ReactNode; export default function App() {}", None),
+        ("const Icon = <span />; export { Icon }; export const App = () => <div />;", None),
     ];
 
     Tester::new(OnlyExportComponents::NAME, OnlyExportComponents::PLUGIN, pass, fail)
