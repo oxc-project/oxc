@@ -1562,6 +1562,20 @@ mod test {
     }
 
     #[test]
+    fn test_rules_customization_wildcard_severity() {
+        let tester = Tester::new(
+            "fixtures/lsp/rules_customization/severity",
+            json!({
+                "rulesCustomization": {
+                    "no-*": { "severity": "off" },
+                    "no-debugger": { "severity": "warn" }
+                }
+            }),
+        );
+        tester.test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
     fn test_rules_customization_severity() {
         let tester = Tester::new(
             "fixtures/lsp/rules_customization/severity",
