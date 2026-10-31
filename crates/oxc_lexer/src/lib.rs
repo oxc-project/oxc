@@ -12,13 +12,13 @@ pub mod diagnostics;
 pub mod error;
 pub mod options;
 mod pipeline;
-pub mod token;
+mod token;
 
 pub use arena::{Arena, LexResult, LineEntry};
 pub use error::{DiagCode, DiagSeverity, Diagnostic};
 pub use options::LexOptions;
 pub use pipeline::Lexer;
-pub use token::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
+pub use token::{KW_KIND_BASE, SPAN_SENTINELS, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
 
 use pipeline::{Lanes, decode_char_at};
 

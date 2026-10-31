@@ -47,7 +47,7 @@ macro_rules! define_token_kind {
         #[doc(hidden)]
         #[allow(unused, clippy::allow_attributes)]
         #[expect(non_upper_case_globals)]
-        pub(crate) mod __kind_u8 {
+        pub mod __kind_u8 {
             use super::TokenKind;
 
             $(
@@ -281,13 +281,13 @@ macro_rules! matches_tk {
 pub(crate) use matches_tk;
 
 /// First punctuator kind - the token-kind space reserves [32, 128) for them.
-pub(crate) const OP_KIND_BASE: u8 = tk!(LBrace);
+pub const OP_KIND_BASE: u8 = tk!(LBrace);
 #[cfg_attr(not(test), expect(dead_code, reason = "only used in tests"))]
-pub(crate) const OP_KIND_MAX: u8 = tk!(At);
+pub const OP_KIND_MAX: u8 = tk!(At);
 
 /// First keyword kind: every kind `>= KW_KIND_BASE` other than [`TokenKind::Invalid`] is a keyword.
 pub const KW_KIND_BASE: u8 = tk!(KwBreak);
-pub(crate) const KW_KIND_MAX: u8 = tk!(KwUsing);
+pub const KW_KIND_MAX: u8 = tk!(KwUsing);
 
 impl TokenKind {
     #[inline]
@@ -393,7 +393,7 @@ impl Display for TokenKind {
 /// from the named constants in `pipeline`, so this holds for any range the
 /// lexer has written; it does *not* hold for uninitialised arena memory.
 #[inline]
-pub(crate) const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
+pub const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
     // SAFETY: `TokenKind` is `#[repr(u8)]` so it has the same size and
     // alignment as `u8`, and the caller guarantees every byte is a declared
     // discriminant.
@@ -401,7 +401,7 @@ pub(crate) const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
 }
 
 #[inline]
-pub(crate) fn debug_assert_kind_bytes(bytes: &[u8]) {
+pub fn debug_assert_kind_bytes(bytes: &[u8]) {
     debug_assert!(
         bytes.iter().all(|&b| TokenKind::from_u8(b).is_some()),
         "lexer wrote a byte that is not a declared TokenKind discriminant"
@@ -416,7 +416,7 @@ pub const TRIVIA_MAX: u8 = tk!(LineTerminator);
 /// [`TokenKind::is_trivia`] on a raw kind byte, for the pipeline's `u8` lanes.
 #[inline]
 #[must_use]
-pub(crate) const fn is_trivia_byte(kind: u8) -> bool {
+pub const fn is_trivia_byte(kind: u8) -> bool {
     kind.wrapping_sub(TRIVIA_MIN) <= TRIVIA_MAX - TRIVIA_MIN
 }
 
