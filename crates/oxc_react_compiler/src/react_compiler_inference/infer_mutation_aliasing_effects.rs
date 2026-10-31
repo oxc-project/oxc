@@ -1430,6 +1430,13 @@ fn apply_signature<'a>(
                             &variable,
                             mutate_value.span,
                             ident.span,
+                            matches!(
+                                effect,
+                                AliasingEffect::Mutate {
+                                    reason: Some(MutationReason::AssignCurrentProperty),
+                                    ..
+                                }
+                            ),
                         );
                         let error =
                             env.intern_aliasing_diagnostic(mutate_value.identifier, diagnostic);
@@ -2067,8 +2074,19 @@ fn apply_effect_ref<'a>(
                         }
                         _ => "value".to_string(),
                     };
-                    let diagnostic =
-                        diagnostics::immutable_value(reason_str, &variable, value.span, ident.span);
+                    let diagnostic = diagnostics::immutable_value(
+                        reason_str,
+                        &variable,
+                        value.span,
+                        ident.span,
+                        matches!(
+                            effect,
+                            AliasingEffect::Mutate {
+                                reason: Some(MutationReason::AssignCurrentProperty),
+                                ..
+                            }
+                        ),
+                    );
 
                     let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     let error_kind = if abstract_value.kind == ValueKind::Frozen {
