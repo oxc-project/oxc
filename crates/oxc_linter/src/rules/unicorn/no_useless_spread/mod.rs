@@ -107,6 +107,7 @@ declare_oxc_lint!(
     ///
     /// The `for…of` loop can iterate over any iterable object not just array,
     /// so it's unnecessary to convert the iterable to an array.
+    /// This is reported without a fix because the loop can mutate the original collection.
     ///
     /// The `yield*` can delegate to another iterable, so it's unnecessary to
     /// convert the iterable to an array.
@@ -654,7 +655,7 @@ fn test() {
     ];
 
     #[expect(clippy::literal_string_with_formatting_args)]
-    let fail = vec![
+    let mut fail = vec![
         r"const array = [...[a]]",
         r"const object = {...{a}}",
         r"foo(...[a])",
@@ -779,7 +780,36 @@ fn test() {
         r"const obj = { ...(foo ? Object.entries(obj).reduce(fn, {}) : { a: 2 }) }",
     ];
 
-    let fix = vec![
+    let snapshot_loops = [
+        r"const items = [1, 2, 2.5, 3];
+        for (const item of [...items]) {
+            if (item === Math.floor(item)) {
+                items.splice(items.indexOf(item), 1);
+            }
+        }",
+        r"const set = new Set([1, 2, 3]);
+        for (const item of [...set]) { set.add(item * 2); }",
+        r"const items = [1, 2, 3]; const alias = items;
+        for (const item of [...items]) { alias.pop(); consume(item); }",
+        r"const items = [1, 2, 3]; const remove = () => items.pop();
+        for (const item of [...items]) { remove(); consume(item); }",
+        r"for (const challenge of [...Ladders.challenges.get(id) || []]) {
+            Ladders.challenges.remove(challenge);
+        }",
+        r"const items = [1, 2, 3];
+        for (items[0] of [...items]) { consume(items); }",
+        r"const items = [1, 2, 3];
+        for (const item of (([...((items))]))) { items.shift(); consume(item); }",
+        r"async function remove(items) {
+            for await (const item of [...items]) { items.splice(0, 1); consume(item); }
+        }",
+        r"const items = [1, 2, 3];
+        for (const item of [...items.copyWithin(0)]) { items.pop(); consume(item); }",
+        r"for (const item of [...items.map(f)]) { consume(item); }",
+    ];
+    fail.extend(snapshot_loops);
+
+    let mut fix = vec![
         // array literals
         ("[...[1,2,3]]", "[1,2,3]"),
         ("[...[1,2,3], ...[4,5,6]]", "[1, 2, 3, 4, 5, 6]"),
@@ -821,6 +851,8 @@ fn test() {
             "jsxEl(({\n\tclassName,\n\tonClick: () => console.log('click')\n}));",
         ),
     ];
+    fix.extend(snapshot_loops.map(|source| (source, source)));
+
     Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
         .change_rule_path_extension("mjs")
         .expect_fix(fix)
