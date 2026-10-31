@@ -2954,6 +2954,7 @@ version = "1.90.0"
 dependencies = [
  "bpaf",
  "cow-utils",
+ "futures-util",
  "ignore",
  "insta",
  "lazy-regex",
