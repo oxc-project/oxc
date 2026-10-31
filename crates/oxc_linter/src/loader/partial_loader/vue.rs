@@ -138,7 +138,7 @@ mod test {
 
     fn parse_vue(source_text: &str) -> JavaScriptSource<'_> {
         let sources = VuePartialLoader::new(source_text).parse();
-        *sources.first().unwrap()
+        sources.into_iter().next().unwrap()
     }
 
     #[test]

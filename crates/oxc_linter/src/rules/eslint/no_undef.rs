@@ -310,3 +310,42 @@ fn test_repeated_unresolved_names() {
 
     Tester::new(NoUndef::NAME, NoUndef::PLUGIN, pass, fail).test();
 }
+
+#[test]
+fn test_astro_define_vars() {
+    use crate::tester::Tester;
+
+    let pass = vec![(
+        r#"<script define:vars={{ foo, bar: 1, "baz": 2 }}>
+            foo; bar; baz;
+        </script>"#,
+        None,
+    )];
+    let fail = vec![
+        (
+            r"<script define:vars={{ foo }}>
+                bar;
+            </script>",
+            None,
+        ),
+        // `define:vars` only declares variables in its own script.
+        (
+            r"<script define:vars={{ foo }}></script>
+            <script>
+                foo;
+            </script>",
+            None,
+        ),
+        (
+            r"<script define:vars={{ [foo]: 1, ...rest }}>
+                foo; rest;
+            </script>",
+            None,
+        ),
+    ];
+
+    Tester::new(NoUndef::NAME, NoUndef::PLUGIN, pass, fail)
+        .change_rule_path("test.astro")
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
