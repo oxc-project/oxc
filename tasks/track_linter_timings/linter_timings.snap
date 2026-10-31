@@ -358,6 +358,7 @@ oxc/no-this-in-exported-function                        |    112
 oxc/number-arg-out-of-range                             |  14295
 oxc/only-used-in-recursion                              |  16812
 oxc/uninvoked-array-callback                            |   1421
+oxc/unsupported-eslint-directive                        |      7
 promise/always-return                                   |  16812
 promise/avoid-new                                       |   1421
 promise/catch-or-return                                 |  24802
