@@ -11,6 +11,9 @@ pub struct SortImportsOptions {
     /// Partition imports by comments.
     /// Default is `false`.
     pub partition_by_comment: bool,
+    /// Partition imports by side-effect imports.
+    /// Default is `false`.
+    pub partition_by_side_effect: bool,
     /// Sort side effects imports.
     /// Default is `false`.
     pub sort_side_effects: bool,
@@ -54,6 +57,12 @@ impl SortImportsOptions {
         if self.partition_by_newline && self.newline_boundary_overrides.iter().any(Option::is_some)
         {
             return Err("`partitionByNewline` and per-group `{ \"newlinesBetween\" }` markers cannot be used together".to_string());
+        }
+        if self.partition_by_side_effect && self.sort_side_effects {
+            return Err(
+                "`partitionBySideEffect: true` and `sortSideEffects: true` cannot be used together"
+                    .to_string(),
+            );
         }
         if self.partition_by_newline && self.newlines_between {
             return Err(
@@ -100,6 +109,7 @@ impl Default for SortImportsOptions {
         Self {
             partition_by_newline: false,
             partition_by_comment: false,
+            partition_by_side_effect: false,
             sort_side_effects: false,
             order: SortOrder::default(),
             ignore_case: true,
@@ -228,6 +238,17 @@ mod tests {
                 .expect_err("conflicting name must be rejected");
             assert!(err.contains(name), "error must name the conflicting group: {err}");
         }
+    }
+
+    #[test]
+    fn rejects_partition_by_side_effect_with_sort_side_effects() {
+        let options = SortImportsOptions {
+            partition_by_side_effect: true,
+            sort_side_effects: true,
+            ..SortImportsOptions::default()
+        };
+        let err = options.validate().expect_err("conflicting options must be rejected");
+        assert!(err.contains("partitionBySideEffect"), "{err}");
     }
 
     #[test]

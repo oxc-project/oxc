@@ -543,6 +543,22 @@ pub struct SortImportsConfig {
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub partition_by_comment: Option<bool>,
+    /// Use side effect imports to separate imports into logical groups.
+    ///
+    /// When `true`, imports are not sorted across a side effect import,
+    /// so modules keep being evaluated in the same order relative to it.
+    ///
+    /// ```js
+    /// import { b } from 'b'
+    /// import './polyfill'
+    /// import { a } from 'a'
+    /// ```
+    ///
+    /// Cannot be used together with `sortSideEffects: true`.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub partition_by_side_effect: Option<bool>,
     /// Sort side effect imports.
     ///
     /// Disabled by default for safety reasons.

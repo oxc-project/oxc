@@ -203,6 +203,8 @@ pub struct OxcSortImportsOptions {
     pub partition_by_newline: Option<bool>,
     /// Partition imports by comments (default: false)
     pub partition_by_comment: Option<bool>,
+    /// Partition imports by side effect imports (default: false)
+    pub partition_by_side_effect: Option<bool>,
     /// Sort side effects imports (default: false)
     pub sort_side_effects: Option<bool>,
     /// Sort order: "asc" | "desc" (default: "asc")

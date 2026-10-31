@@ -910,6 +910,11 @@
           "type": "boolean",
           "markdownDescription": "Use empty lines to separate imports into logical groups.\n\nWhen `true`, imports are not sorted across an empty line.\n\n```js\nimport { b1, b2 } from 'b'\n\nimport { a } from 'a'\nimport { c } from 'c'\n```\n\n- Default: `false`"
         },
+        "partitionBySideEffect": {
+          "description": "Use side effect imports to separate imports into logical groups.\n\nWhen `true`, imports are not sorted across a side effect import,\nso modules keep being evaluated in the same order relative to it.\n\n```js\nimport { b } from 'b'\nimport './polyfill'\nimport { a } from 'a'\n```\n\nCannot be used together with `sortSideEffects: true`.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Use side effect imports to separate imports into logical groups.\n\nWhen `true`, imports are not sorted across a side effect import,\nso modules keep being evaluated in the same order relative to it.\n\n```js\nimport { b } from 'b'\nimport './polyfill'\nimport { a } from 'a'\n```\n\nCannot be used together with `sortSideEffects: true`.\n\n- Default: `false`"
+        },
         "sortSideEffects": {
           "description": "Sort side effect imports.\n\nDisabled by default for safety reasons.\n\n- Default: `false`",
           "type": "boolean",

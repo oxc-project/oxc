@@ -13,7 +13,7 @@ pub enum SourceLine<'a> {
     /// Line that contains an import statement.
     /// May have leading comments like `/* ... */ import ...`.
     /// And also may have trailing comments like `import ...; // ...`.
-    /// Never be a boundary.
+    /// May be used as a boundary if it is a side-effect import and `options.partition_by_side_effect` is true.
     Import(Range<usize>, ImportLineMetadata<'a>),
     /// Empty line.
     /// May be used as a boundary if `options.partition_by_newline` is true.
