@@ -1846,24 +1846,7 @@ fn ox_codegen_instruction_value<'a>(
 /// spurious parens (e.g. `(a?.b)(d)` instead of `a?.b(d)`).
 fn ox_unwrap_chain(expr: oxc::Expression<'_>) -> oxc::Expression<'_> {
     match expr {
-        oxc::Expression::ChainExpression(chain) => {
-            let chain = chain.unbox();
-            match chain.expression {
-                oxc::ChainElement::CallExpression(call) => oxc::Expression::CallExpression(call),
-                oxc::ChainElement::ComputedMemberExpression(m) => {
-                    oxc::Expression::ComputedMemberExpression(m)
-                }
-                oxc::ChainElement::StaticMemberExpression(m) => {
-                    oxc::Expression::StaticMemberExpression(m)
-                }
-                oxc::ChainElement::PrivateFieldExpression(m) => {
-                    oxc::Expression::PrivateFieldExpression(m)
-                }
-                oxc::ChainElement::TSNonNullExpression(e) => {
-                    oxc::Expression::TSNonNullExpression(e)
-                }
-            }
-        }
+        oxc::Expression::ChainExpression(chain) => oxc::Expression::from(chain.unbox().expression),
         other => other,
     }
 }
