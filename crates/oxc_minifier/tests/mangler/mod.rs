@@ -135,6 +135,9 @@ fn mangler() {
         "function _() { var x; try { throw 0 } catch (e) { e } }", // e can shadow x
         "function _() { var x; try { throw 0 } catch (e) { var e } }", // e can shadow x (not implemented)
         "function _() { var x; try { throw 0 } catch { var e } }",     // e should not shadow x
+        "function _(x) { function g(y) { try { throw 0 } catch (y) { var y = 2; y } return x } }", // catch y should use the name of parameter y
+        "function _() { var y; { let z; try { throw 0 } catch (y) { var y = 2; z } } }", // z should not use the name of var y
+        "function _() { var y; try { throw 0 } catch (y) { var y = 2; () => { let w; y } } }", // w should not use the name of var y
         "function _() { var x; var y; }", // x and y should have different names
         "function _() { var x; let y; }", // x and y should have different names
         "function _() { { var x; var y; } }", // x and y should have different names
@@ -394,6 +397,17 @@ fn non_mangleable_symbols_do_not_consume_slots() {
         "var A, B; { use(A); let slot_0; } { use(B); let slot_0; }",
         &options,
     );
+}
+
+#[test]
+fn catch_parameter_redeclared_by_var_at_top_level() {
+    // The top-level `y` keeps its name, so the catch parameter must keep it too.
+    // Otherwise the printed `var` declares a new global variable.
+    let mangled = mangle_script(
+        "var y = 0; try { throw 0 } catch (y) { var y = 2; y }",
+        &MangleOptions::default(),
+    );
+    assert_eq!(mangled, "var y = 0;\ntry {\n\tthrow 0;\n} catch (y) {\n\tvar y = 2;\n\ty;\n}\n");
 }
 
 /// Annex B.3.2.1: In sloppy mode, function declarations inside blocks have var-like hoisting.
