@@ -381,13 +381,7 @@ fn is_function_reassigned(function_id: &BindingIdentifier, ctx: &LintContext) ->
 }
 
 fn get_jsx_element_symbol_id(node: &JSXElementName<'_>, ctx: &LintContext<'_>) -> Option<SymbolId> {
-    let identifier = match node {
-        JSXElementName::IdentifierReference(ident) => Some(ident.as_ref()),
-        JSXElementName::MemberExpression(expr) => expr.get_identifier(),
-        JSXElementName::Identifier(_)
-        | JSXElementName::NamespacedName(_)
-        | JSXElementName::ThisExpression(_) => None,
-    }?;
+    let identifier = node.get_identifier()?;
 
     ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
 }
