@@ -14,11 +14,12 @@ use oxc_span::Span;
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
 use crate::{
-    FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings, WEBSITE_BASE_RULES_URL,
+    FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
     config::GlobalValue,
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
+    rule_documentation_url,
     utils::{ReactCompilerResults, build_react_compiler_results},
 };
 
@@ -270,10 +271,7 @@ impl<'a> LintContext<'a> {
         message.error = message
             .error
             .with_error_code(self.current_plugin_display_name, self.current_rule_name)
-            .with_url(format!(
-                "{}/{}/{}.html",
-                WEBSITE_BASE_RULES_URL, self.current_plugin_name, self.current_rule_name
-            ));
+            .with_url(rule_documentation_url(self.current_plugin_name, self.current_rule_name));
         if message.error.severity != self.severity {
             message.error = message.error.with_severity(self.severity);
         }

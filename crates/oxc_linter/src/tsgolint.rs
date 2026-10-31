@@ -20,7 +20,7 @@ use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, 
 
 use crate::{
     CompositeFix, FixKind, Fixer, Message, PossibleFixes, RuleTimingRecord, RuleTimingSource,
-    RuleTimingStore, WEBSITE_BASE_RULES_URL, suppression::DiffManager,
+    RuleTimingStore, rule_documentation_url, suppression::DiffManager,
 };
 
 /// State required to initialize the `tsgolint` linter.
@@ -820,7 +820,7 @@ impl From<TsGoLintDiagnostic> for OxcDiagnostic {
 impl From<TsGoLintRuleDiagnostic> for OxcDiagnostic {
     fn from(val: TsGoLintRuleDiagnostic) -> Self {
         let mut d = OxcDiagnostic::warn(val.message.description)
-            .with_url(format!("{}/{}/{}.html", WEBSITE_BASE_RULES_URL, "typescript", val.rule))
+            .with_url(rule_documentation_url("typescript", &val.rule))
             .with_error_code("typescript", val.rule);
         if let Some(help) = val.message.help {
             d = d.with_help(help);
