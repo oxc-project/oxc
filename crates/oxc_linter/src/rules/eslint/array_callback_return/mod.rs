@@ -235,10 +235,18 @@ impl Rule for ArrayCallbackReturn {
                 check_function_body(node.id(), ctx.semantic())
             };
 
+            // `return_status` counts `throw` as an explicit exit, but forEach only cares about returned values.
+            let returns_value = || {
+                always_explicit_return
+                    || function_body.is_some_and(|body| {
+                        !return_checker::get_explicit_return_spans(body).is_empty()
+                    })
+            };
+
             match (array_method, self.check_for_each, self.allow_void, self.allow_implicit) {
                 ("forEach", false, _, _) => (),
                 ("forEach", true, false, _) => {
-                    if return_status.may_return_explicit() {
+                    if returns_value() {
                         let return_spans = concise_expression.map_or_else(
                             || {
                                 let function_body = function_body.unwrap();
@@ -258,7 +266,7 @@ impl Rule for ArrayCallbackReturn {
                     }
                 }
                 ("forEach", true, true, _) => {
-                    if !return_status.may_return_explicit() {
+                    if !returns_value() {
                         return;
                     }
 
@@ -581,6 +589,19 @@ fn test() {
             Some(serde_json::json!([{"checkForEach": true}])),
         ),
         ("foo.forEach(x => { var a=0; })", Some(serde_json::json!([{"checkForEach": true}]))),
+        (
+            "foo.forEach(x => { if (x > 1) { throw new Error('too big'); } })",
+            Some(serde_json::json!([{"checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { try { f(x); } catch { throw new Error(); } })",
+            Some(serde_json::json!([{"checkForEach": true}])),
+        ),
+        ("foo.forEach(x => { f(x); throw x; })", Some(serde_json::json!([{"checkForEach": true}]))),
+        (
+            "foo.forEach(x => { if (x) throw x; })",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
         (
             "foo.forEach(x => { if (a === b) { return;} var a=0; })",
             Some(serde_json::json!([{"checkForEach": true}])),
