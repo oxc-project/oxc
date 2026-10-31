@@ -1,0 +1,12 @@
+{
+  "plugins": ["eslint", "typescript"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "no-console": "error",
+    "no-debugger": "error",
+    "no-unused-vars": "warn",
+    "typescript/no-explicit-any": "error"
+  }
+}

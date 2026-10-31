@@ -145,18 +145,17 @@ impl Default for SuppressionFile<'_> {
 impl<'a> SuppressionFile<'a> {
     pub fn new<'b>(
         file_exists: bool,
-        suppress_all: bool,
+        is_suppressing: bool,
         suppression_data: Option<&'b FileSuppressionsMap>,
     ) -> Self
     where
         'b: 'a,
     {
-        if !file_exists && !suppress_all {
+        if !file_exists && !is_suppressing {
             return Self { state: SuppressionFileState::Ignored, suppression_data: None };
         }
 
-        if suppress_all {
-            // All errors will be suppressed and written to the file.
+        if !file_exists {
             return Self { state: SuppressionFileState::New, suppression_data: None };
         }
 

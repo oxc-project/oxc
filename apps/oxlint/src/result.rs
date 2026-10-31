@@ -9,6 +9,7 @@ pub enum CliRunResult {
     InvalidOptionTypeCheckWithoutTypeAware,
     InvalidOptionTypeCheckOnlyWithFix,
     InvalidOptionTypeCheckOnlyWithSuppressionUpdate,
+    InvalidOptionSuppressionCombination,
     InvalidOptionSeverityWithoutFilter,
     InvalidOptionSeverityWithoutPluginName,
     InvalidOptionSeverityWithoutRuleName,
@@ -42,6 +43,7 @@ impl Termination for CliRunResult {
             | Self::InvalidOptionTypeCheckWithoutTypeAware
             | Self::InvalidOptionTypeCheckOnlyWithFix
             | Self::InvalidOptionTypeCheckOnlyWithSuppressionUpdate
+            | Self::InvalidOptionSuppressionCombination
             | Self::InvalidOptionSeverityWithoutFilter
             | Self::InvalidOptionSeverityWithoutPluginName
             | Self::InvalidOptionSeverityWithoutRuleName
