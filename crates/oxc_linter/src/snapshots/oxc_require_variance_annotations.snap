@@ -1,0 +1,171 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:11]
+ 1 │ class Box<T> { value!: T; }
+   ·           ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:19]
+ 1 │ const Box = class<T> { value!: T; };
+   ·                   ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:20]
+ 1 │ abstract class Box<T> { abstract value: T; }
+   ·                    ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:15]
+ 1 │ interface Box<T> { value: T; }
+   ·               ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:10]
+ 1 │ type Box<T> = { value: T };
+   ·          ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:15]
+ 1 │ type Callback<T> = (value: T) => void;
+   ·               ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:14]
+ 1 │ type Factory<T> = new () => { value: T };
+   ·              ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:14]
+ 1 │ type Factory<T> = abstract new () => { value: T };
+   ·              ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:13]
+ 1 │ type Mapped<T> = { [K in keyof T]: T[K] };
+   ·             ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:20]
+ 1 │ type Parenthesized<T> = (({ value: T }));
+   ·                    ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:15]
+ 1 │ type Callback<T> = ((value: T) => void);
+   ·               ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:44]
+ 1 │ type Box<out T> = { value: T }; type Alias<T> = Box<T>;
+   ·                                            ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:64]
+ 1 │ type Box<out T> = { value: T }; type A<out T> = Box<T>; type B<T> = A<T>;
+   ·                                                                ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:12]
+ 1 │ type Alias<T> = Box<T>; type Box<out T> = { value: T };
+   ·            ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:44]
+ 1 │ type Box<out T> = { value: T }; type Alias<Box> = { value: Box };
+   ·                                            ───
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:23]
+ 1 │ interface Pair<out T, U> { first: T; second: U; }
+   ·                       ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:16]
+ 1 │ interface Pair<T, U> { first: T; second: U; }
+   ·                ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:19]
+ 1 │ interface Pair<T, U> { first: T; second: U; }
+   ·                   ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:17]
+ 1 │ class Box<const T extends string = string> { value!: T; }
+   ·                 ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:19]
+ 1 │ declare class Box<T> { value: T; }
+   ·                   ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:23]
+ 1 │ declare interface Box<T> { value: T; }
+   ·                       ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:18]
+ 1 │ declare type Box<T> = { value: T };
+   ·                  ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:22]
+ 1 │ export interface Box<T> { value: T; }
+   ·                      ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
+
+  ⚠ oxc(require-variance-annotations): Type parameter is missing a variance annotation.
+   ╭─[require_variance_annotations.tsx:1:26]
+ 1 │ export default class Box<T> { value!: T; }
+   ·                          ─
+   ╰────
+  help: Add `in`, `out`, or `in out` to describe how the type parameter is used.
