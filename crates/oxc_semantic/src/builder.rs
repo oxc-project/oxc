@@ -2120,6 +2120,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             func.bind(self);
         }
 
+        // A named function expression's name lives outside its parameter and var scope.
+        // Keeping it in a separate scope lets same-named parameters and var declarations
+        // shadow it without replacing the recursive name binding.
+        if func.is_expression() && func.id.is_some() {
+            let name_scope_id = Cell::new(None);
+            self.enter_scope(ScopeFlags::empty(), &name_scope_id);
+            func.bind(self);
+            if let Some(id) = &func.id {
+                self.visit_binding_identifier(id);
+            }
+        }
+
         self.enter_scope(
             {
                 let mut flags = flags;
@@ -2131,12 +2143,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             &func.scope_id,
         );
 
-        if func.is_expression() {
-            // We need to bind function expression in the function scope
+        if func.is_expression() && func.id.is_none() {
             func.bind(self);
         }
 
-        if let Some(id) = &func.id {
+        if !func.is_expression()
+            && let Some(id) = &func.id
+        {
             self.visit_binding_identifier(id);
         }
 
@@ -2198,6 +2211,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.leave_scope();
+        if func.is_expression() && func.id.is_some() {
+            self.leave_scope();
+        }
         self.leave_node(kind);
         self.leave_ambient_context(func.declare);
     }

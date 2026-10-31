@@ -178,7 +178,7 @@ impl<'a> Binder<'a> for Function<'a> {
             // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
             // scopes also create an implicit var-like binding in the enclosing function
             // scope. Hoist to the var scope — same pattern as var hoisting (line 46).
-            if is_declaration // function expressions are bound in their own (var) scope
+            if is_declaration // function expressions use a separate name scope
                 && !self.r#async // Annex B only applies to plain functions
                 && !self.generator // not generators or async generators
                 && !builder.source_type.is_typescript() // Annex B is JavaScript-only
