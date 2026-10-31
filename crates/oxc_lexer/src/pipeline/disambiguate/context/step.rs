@@ -127,7 +127,7 @@ impl Walk {
         // Concise arrow bodies end with the statement.
         self.pop_concise();
         // An expression-embedded type region ends too.
-        while self.top_kind() == FrameKind::TypeRegion && self.top().state == R_EXPR {
+        while self.top_kind() == FrameKind::TypeRegion && self.top().region == RegionRule::Expr {
             self.pop();
         }
         if self.top_kind() == FrameKind::TypeRegion {
@@ -182,9 +182,9 @@ impl Walk {
 
     fn end_region_by_break(&mut self) {
         let r = self.pop();
-        match r.state {
-            R_STMT => self.end_statement(),
-            R_INLINE => {
+        match r.region {
+            RegionRule::Stmt => self.end_statement(),
+            RegionRule::Inline => {
                 // A declarator / member annotation ended by a line break.
                 match self.top_kind() {
                     FrameKind::ClassBody => {
@@ -199,12 +199,12 @@ impl Walk {
                     _ => self.end_statement(),
                 }
             }
-            R_EXPR => {
+            RegionRule::Expr => {
                 // `x as T` then a new line: the value is complete.
                 self.set_value();
                 self.no_type_args = true;
             }
-            _ => self.set_value(),
+            RegionRule::ArrowRet => self.set_value(),
         }
     }
 

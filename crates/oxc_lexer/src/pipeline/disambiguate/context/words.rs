@@ -243,12 +243,12 @@ impl Walk {
                     self.set_stmt_reg(StmtReg::ExportAs);
                     self.keyword(tk!(KwAs));
                 } else {
-                    self.open_region(R_EXPR);
+                    self.open_region(RegionRule::Expr);
                     self.prev_kw = tk!(KwAs);
                 }
             }
             tk!(KwSatisfies) => {
-                self.open_region(R_EXPR);
+                self.open_region(RegionRule::Expr);
                 self.prev_kw = tk!(KwSatisfies);
             }
             tk!(KwAsync) => {

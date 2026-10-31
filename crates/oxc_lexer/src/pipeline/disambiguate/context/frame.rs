@@ -81,16 +81,31 @@ pub(super) const MOD_GEN: u8 = 2;
 
 pub(super) const MOD_STATIC: u8 = 4;
 
-// TypeRegion end rule (`state`).
-pub(super) const R_ARROW_RET: u8 = 2; // `(a): T =>`: ends at `=>`
-pub(super) const R_INLINE: u8 = 3; // declarator/param/member annotation: ends at `=`/`,`/closer/`{`
-pub(super) const R_STMT: u8 = 4; // alias / import-equals / bodiless module: ends at `;`/ASI
-pub(super) const R_EXPR: u8 = 5; // `as T` / `satisfies T`: ends at any expression token
+/// TypeRegion end rule.
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+pub(super) enum RegionRule {
+    /// A declarator, param or member annotation: ends at an equals, comma, closer or brace.
+    #[default]
+    Inline,
+    /// The return type of an arrow: ends at the arrow.
+    ArrowRet,
+    /// An alias, import equals or bodiless module: ends at a semicolon or ASI.
+    Stmt,
+    /// An as or satisfies type: ends at any expression token.
+    Expr,
+}
 
-// What an Angle list is (`state`).
-pub(super) const A_VALUE: u8 = 1; // declaration type parameters or `f<T>(x)` type arguments
-pub(super) const A_IN_TYPE: u8 = 3; // a list inside a type
-pub(super) const A_ASSERT: u8 = 4; // an operand follows: an assertion or leading type parameters
+/// What an Angle list is.
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+pub(super) enum AngleList {
+    /// Declaration type parameters, or the type arguments of a call.
+    #[default]
+    Value,
+    /// A list inside a type.
+    InType,
+    /// An operand follows: an assertion or leading type parameters.
+    Assert,
+}
 
 #[derive(Clone, Copy, Default)]
 pub(super) struct Frame {
@@ -107,6 +122,8 @@ pub(super) struct Frame {
     pub(super) inner: bool,
     /// ClassHead: an interface head. TypeLit: an interface body, closing it ends the statement.
     pub(super) is_interface: bool,
+    pub(super) region: RegionRule,
+    pub(super) angle: AngleList,
     pub(super) state: u8,
     pub(super) reg: StmtReg,
     /// Modifier bits: an Object or ClassBody member's, or the async before a Group.
