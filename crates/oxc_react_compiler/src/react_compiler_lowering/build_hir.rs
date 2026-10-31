@@ -18,6 +18,7 @@ use oxc_ast::ast as oxc;
 use oxc_ast::ast::BinaryOperator;
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, JSChar, JSStr, JSStrBuilder, Str, format_ident, static_ident};
 use oxc_syntax::xml_entities::{decode_entities, decode_entity};
@@ -168,32 +169,11 @@ fn collect_binding_names_from_pattern(
     scope: &ScopeResolver<'_, '_>,
     out: &mut FxHashSet<SymbolId>,
 ) {
-    match pattern {
-        oxc::BindingPattern::BindingIdentifier(id) => {
-            if let Some(symbol_id) = resolve_declared_binding(id, scope_id, scope) {
-                out.insert(symbol_id);
-            }
+    pattern.bound_names(&mut |id| {
+        if let Some(symbol_id) = resolve_declared_binding(id, scope_id, scope) {
+            out.insert(symbol_id);
         }
-        oxc::BindingPattern::ObjectPattern(obj) => {
-            for prop in &obj.properties {
-                collect_binding_names_from_pattern(&prop.value, scope_id, scope, out);
-            }
-            if let Some(rest) = &obj.rest {
-                collect_binding_names_from_pattern(&rest.argument, scope_id, scope, out);
-            }
-        }
-        oxc::BindingPattern::ArrayPattern(arr) => {
-            for elem in arr.elements.iter().flatten() {
-                collect_binding_names_from_pattern(elem, scope_id, scope, out);
-            }
-            if let Some(rest) = &arr.rest {
-                collect_binding_names_from_pattern(&rest.argument, scope_id, scope, out);
-            }
-        }
-        oxc::BindingPattern::AssignmentPattern(assign) => {
-            collect_binding_names_from_pattern(&assign.left, scope_id, scope, out);
-        }
-    }
+    });
 }
 
 // =============================================================================
