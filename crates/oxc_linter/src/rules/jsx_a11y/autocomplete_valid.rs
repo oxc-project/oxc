@@ -108,8 +108,6 @@ static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf::phf_set![
     "language",
     "name",
     "new-password",
-    "off",
-    "on",
     "one-time-code",
     "organization",
     "organization-title",
@@ -122,35 +120,51 @@ static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf::phf_set![
     "tel-country-code",
     "tel-extension",
     "tel-local",
+    "tel-local-prefix",
+    "tel-local-suffix",
     "tel-national",
     "transaction-amount",
     "transaction-currency",
     "url",
     "username",
-    "webauthn",
 ];
 
-static BILLING_AND_SHIPPING: [&str; 11] = [
-    "address-level1",
-    "address-level2",
-    "address-level3",
-    "address-level4",
-    "address-line1",
-    "address-line2",
-    "address-line3",
-    "country",
-    "country-name",
-    "postal-code",
-    "street-address",
+/// Field names that can follow `home`, `work`, `mobile`, `fax` or `pager`.
+static CONTACT_FIELD_NAMES: [&str; 10] = [
+    "email",
+    "impp",
+    "tel",
+    "tel-area-code",
+    "tel-country-code",
+    "tel-extension",
+    "tel-local",
+    "tel-local-prefix",
+    "tel-local-suffix",
+    "tel-national",
 ];
 
+// https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill-detail-tokens
 fn is_valid_autocomplete_value(value: &str) -> bool {
     let parts: Vec<&str> = value.split_whitespace().collect();
+    let mut parts = parts.as_slice();
 
-    match parts.len() {
-        1 => VALID_AUTOCOMPLETE_VALUES.contains(parts[0]),
-        2 if ["billing", "shipping"].contains(&parts[0]) => {
-            BILLING_AND_SHIPPING.contains(&parts[1])
+    // These are only accepted as the whole value.
+    if let ["on" | "off" | "webauthn"] = parts {
+        return true;
+    }
+    if let [section, rest @ ..] = parts
+        && section.starts_with("section-")
+    {
+        parts = rest;
+    }
+    if let ["shipping" | "billing", rest @ ..] = parts {
+        parts = rest;
+    }
+
+    match parts {
+        [field] => VALID_AUTOCOMPLETE_VALUES.contains(field),
+        ["home" | "work" | "mobile" | "fax" | "pager", field] => {
+            CONTACT_FIELD_NAMES.contains(field)
         }
         _ => false,
     }
@@ -214,8 +228,21 @@ fn test() {
         ("<input type='text' autocomplete='off' />;", None, None),
         ("<input type='text' autocomplete='on' />;", None, None),
         // ("<input type='text' autocomplete='billing family-name' />;", None, None),
-        // ("<input type='text' autocomplete='section-blue shipping street-address' />;", None, None),
-        // ("<input type='text' autocomplete='section-somewhere shipping work email' />;", None, None),
+        ("<input type='text' autocomplete='section-blue shipping street-address' />;", None, None),
+        ("<input type='text' autocomplete='section-somewhere shipping work email' />;", None, None),
+        ("<input type='text' autocomplete='tel-local-prefix' />;", None, None),
+        ("<input type='text' autocomplete='tel-local-suffix' />;", None, None),
+        ("<input type='text' autocomplete='section-billing email' />;", None, None),
+        ("<input type='text' autocomplete='section- email' />;", None, None),
+        ("<input type='text' autocomplete='work email' />;", None, None),
+        ("<input type='text' autocomplete='home tel' />;", None, None),
+        ("<input type='text' autocomplete='billing name' />;", None, None),
+        ("<input type='text' autocomplete='shipping tel' />;", None, None),
+        (
+            "<input type='text' autocomplete='section-a billing mobile tel-local-suffix' />;",
+            None,
+            None,
+        ),
         ("<input type='text' autocomplete />;", None, None),
         ("<input type='text' autocomplete={autocompl} />;", None, None),
         ("<input type='text' autocomplete={autocompl || 'name'} />;", None, None),
@@ -239,6 +266,13 @@ fn test() {
         ("<input type='text' autocomplete='name invalid' />;", None, None),
         ("<input type='text' autocomplete='invalid name' />;", None, None),
         ("<input type='text' autocomplete='home url' />;", None, None),
+        ("<input type='text' autocomplete='work name' />;", None, None),
+        ("<input type='text' autocomplete='billing off' />;", None, None),
+        ("<input type='text' autocomplete='section-a on' />;", None, None),
+        ("<input type='text' autocomplete='shipping section-a email' />;", None, None),
+        ("<input type='text' autocomplete='work billing email' />;", None, None),
+        ("<input type='text' autocomplete='billing shipping email' />;", None, None),
+        ("<input type='text' autocomplete='home work tel' />;", None, None),
         (
             "<Bar autocomplete='baz'></Bar>;",
             Some(serde_json::json!([{ "inputComponents": ["Bar"] }])),
