@@ -1,7 +1,31 @@
 //! Core diagnostic protocol used by Oxc's renderers.
 use std::{borrow::Cow, error::Error};
 
-use oxc_span::LabeledSpan;
+use oxc_span::{LabeledSpan, Span};
+
+/// A complete replacement that can resolve a diagnostic.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct DiagnosticFix {
+    /// Native fix kind, such as `fix` or `dangerous_suggestion`.
+    pub kind: &'static str,
+    /// Optional human-readable description of the replacement.
+    pub message: Option<Cow<'static, str>>,
+    /// UTF-8 byte span replaced by [`DiagnosticFix::content`].
+    pub span: Span,
+    /// Replacement text.
+    pub content: Cow<'static, str>,
+}
+
+impl DiagnosticFix {
+    pub fn new(
+        kind: &'static str,
+        message: Option<Cow<'static, str>>,
+        span: Span,
+        content: Cow<'static, str>,
+    ) -> Self {
+        Self { kind, message, span, content }
+    }
+}
 
 /// Rich metadata that renderers use to produce human-friendly error messages.
 pub trait Diagnostic: Error {
@@ -51,6 +75,11 @@ pub trait Diagnostic: Error {
     /// them for the duration of a report.
     fn labels(&self) -> &[LabeledSpan] {
         &[]
+    }
+
+    /// Alternative complete replacements that can resolve this diagnostic.
+    fn fixes(&self) -> Option<&[DiagnosticFix]> {
+        None
     }
 }
 
