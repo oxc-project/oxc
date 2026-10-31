@@ -1,4 +1,3 @@
-import { ChildProcess } from "node:child_process";
 import Tinypool from "tinypool";
 import { toFormatFileResult, toNullable } from "../libs/napi-callbacks";
 import type { FormatFileResult } from "../libs/napi-callbacks";
@@ -56,30 +55,6 @@ export async function disposeExternalServices(): Promise<void> {
   await pool?.destroy();
   pool = null;
   poolSize = null;
-}
-
-// Exit the process without waiting for the workers to exit.
-//
-// `pool.destroy()` sends `SIGTERM` to each worker and waits for all of them to exit (~10 ms with 16 workers).
-// There is nothing to wait for: workers write no files, their stdio is piped to this process,
-// and Rust has written and flushed the output before `runCli()` resolves.
-//
-// `process.exit()` must follow the kills synchronously.
-// If the event loop runs again, Tinypool sees a worker exit, emits "Worker exited unexpectedly" as an uncaught error,
-// and may spawn a replacement worker.
-//
-// NOTE: This relies on a Tinypool internal that is not in its types:
-// with `runtime: "child_process"`, each of `pool.threads` has the `ChildProcess` as `process`.
-// If any worker does not, this returns without doing anything,
-// and the caller must fall back to `disposeExternalServices()`.
-export function exitWithoutWaitingForWorkers(exitCode: number): void {
-  const children = (pool?.threads ?? []).map((worker) =>
-    "process" in worker ? worker.process : undefined,
-  );
-  if (!children.every((child): child is ChildProcess => child instanceof ChildProcess)) return;
-
-  for (const child of children) child.kill("SIGKILL");
-  process.exit(exitCode);
 }
 
 // ---

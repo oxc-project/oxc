@@ -2,7 +2,6 @@ import { runCli } from "./bindings";
 import {
   initExternalServices,
   disposeExternalServices,
-  exitWithoutWaitingForWorkers,
   formatFile,
   formatEmbeddedCode,
   formatEmbeddedDoc,
@@ -78,13 +77,13 @@ void (async () => {
   const hasTsfnCleanupFix = hasNode24Fix || major > 25 || (major === 25 && minor >= 4);
 
   if (hasTsfnCleanupFix) {
-    // Exit now, without waiting for the Prettier workers to exit.
+    // Exit now, without waiting for the Prettier workers to exit (`pool.destroy()` waits ~10 ms with 16 workers).
     // `process.exit()` loses no output here: Rust has written and flushed all of it before `runCli()` resolved,
     // and JS writes to `stdout`/`stderr` finish at once because they are set to blocking mode above.
-    // If the workers cannot be killed this way, this returns, and the cleanup below runs instead.
+    // Each worker exits by itself when its IPC channel to this process closes (see `cli-worker.ts`).
     // (`exitCode` is not `null`: `runCli()` returns `null` only for the `init` and `migrate:*` modes,
     // and those modes return earlier in this function.)
-    exitWithoutWaitingForWorkers(exitCode!);
+    process.exit(exitCode!);
   }
 
   // Clean up worker pool to not V8 crashes on process exit
