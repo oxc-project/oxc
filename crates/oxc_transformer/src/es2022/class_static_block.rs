@@ -293,8 +293,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 ClassElement::TSIndexSignature(_) => continue,
             };
 
-            if let PropertyKey::PrivateIdentifier(id) = key {
-                keys.reserve(id.name.as_str());
+            if let Some(name) = key.private_name() {
+                keys.reserve(name.as_str());
             }
         }
 
