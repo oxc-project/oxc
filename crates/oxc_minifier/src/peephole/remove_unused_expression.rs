@@ -1130,6 +1130,14 @@ impl<'a> PeepholeOptimizations {
                 }
                 _ => {}
             }
+            // `static ["prototype"]` throws a `TypeError` when the class is evaluated:
+            // the constructor's own `prototype` is non-writable and non-configurable.
+            if e.r#static()
+                && e.computed()
+                && e.property_key().is_some_and(|key| key.is_specific_static_name("prototype"))
+            {
+                return ClassRemovability::Keep;
+            }
             if e.r#static() {
                 let value = match e {
                     ClassElement::PropertyDefinition(prop) => prop.value.as_ref(),
