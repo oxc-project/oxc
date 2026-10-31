@@ -357,7 +357,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         node: &TSType<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        match &node {
+        match node.without_parenthesized() {
             TSType::TSVoidKeyword(_)
             | TSType::TSUndefinedKeyword(_)
             | TSType::TSNullKeyword(_)
@@ -408,9 +408,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             TSType::JSDocNonNullableType(t) => {
                 self.serialize_type_node(&t.type_annotation, ctx)
             }
-            TSType::TSParenthesizedType(t) => {
-                self.serialize_type_node(&t.type_annotation, ctx)
-            }
+            TSType::TSParenthesizedType(_) => unreachable!("Type is already unwrapped"),
             TSType::TSObjectKeyword(_)
             // Fallback to `Object`
             | TSType::TSTypeQuery(_) | TSType::TSIndexedAccessType(_) | TSType::TSMappedType(_)

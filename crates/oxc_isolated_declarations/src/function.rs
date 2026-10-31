@@ -250,7 +250,7 @@ impl UndefinedPresence {
 
 /// Classify whether annotation syntax proves that the parameter type includes `undefined`.
 fn undefined_presence(ts_type: &TSType<'_>) -> UndefinedPresence {
-    match ts_type {
+    match ts_type.without_parenthesized() {
         TSType::TSUndefinedKeyword(_) => UndefinedPresence::Present,
         TSType::TSAnyKeyword(_) => UndefinedPresence::Any,
         TSType::TSUnknownKeyword(_) => UndefinedPresence::UnknownKeyword,
@@ -274,9 +274,7 @@ fn undefined_presence(ts_type: &TSType<'_>) -> UndefinedPresence {
         | TSType::TSThisType(_) => UndefinedPresence::Absent,
         TSType::TSNeverKeyword(_) => UndefinedPresence::Never,
         TSType::TSVoidKeyword(_) => UndefinedPresence::Void,
-        TSType::TSParenthesizedType(parenthesized) => {
-            undefined_presence(&parenthesized.type_annotation)
-        }
+        TSType::TSParenthesizedType(_) => unreachable!("Type is already unwrapped"),
         TSType::TSUnionType(union) => union
             .types
             .iter()
@@ -310,11 +308,8 @@ fn undefined_presence(ts_type: &TSType<'_>) -> UndefinedPresence {
 /// Do not descend through intersections: `undefined & string` excludes `undefined`, whereas a
 /// parenthesized or nested union member still spells it explicitly.
 fn has_explicit_undefined_union_member(ts_type: &TSType<'_>) -> bool {
-    match ts_type {
+    match ts_type.without_parenthesized() {
         TSType::TSUndefinedKeyword(_) => true,
-        TSType::TSParenthesizedType(parenthesized) => {
-            has_explicit_undefined_union_member(&parenthesized.type_annotation)
-        }
         TSType::TSUnionType(union) => union.types.iter().any(has_explicit_undefined_union_member),
         _ => false,
     }
@@ -322,6 +317,7 @@ fn has_explicit_undefined_union_member(ts_type: &TSType<'_>) -> bool {
 
 /// Whether TypeScript can syntactically add `undefined` without using type information.
 fn can_add_undefined(ts_type: &TSType<'_>) -> bool {
+    let ts_type = ts_type.without_parenthesized();
     if ts_type.is_keyword() {
         return true;
     }
@@ -336,9 +332,6 @@ fn can_add_undefined(ts_type: &TSType<'_>) -> bool {
         | TSType::TSTemplateLiteralType(_)
         | TSType::TSThisType(_)
         | TSType::TSTypeOperatorType(_) => true,
-        TSType::TSParenthesizedType(parenthesized) => {
-            can_add_undefined(&parenthesized.type_annotation)
-        }
         TSType::TSUnionType(union) => union.types.iter().all(can_add_undefined),
         TSType::TSIntersectionType(intersection) => {
             intersection.types.iter().all(can_add_undefined)
