@@ -596,6 +596,7 @@ pub(crate) mod unicorn {
     pub mod no_empty_file;
     pub mod no_hex_escape;
     pub mod no_immediate_mutation;
+    pub mod no_incorrect_query_selector;
     pub mod no_instanceof_array;
     pub mod no_instanceof_builtins;
     pub mod no_invalid_fetch_options;
