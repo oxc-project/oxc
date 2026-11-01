@@ -167,7 +167,7 @@ impl Lexer {
         self.ensure(n);
         self.lanes.clear();
         self.lanes.module = module;
-        self.lanes.disambiguate.begin(n, module);
+        self.lanes.disambiguate.begin(n, module, cpu);
         if n == 0 {
             write_sentinels(0, out_spans, out_kinds);
             self.sig_len = 0;
