@@ -1,11 +1,7 @@
-// Leaves async work behind after the config is loaded, like a Vite plugin or a telemetry hook.
-// The CLI must still run all of it before it exits, as a natural Node.js exit does.
 import { createWriteStream } from "node:fs";
 
 const out = process.env.OXFMT_TEST_OUT_FILE;
 if (out) {
-  // `beforeExit` fires after the formatting is done. The work it adds must finish too,
-  // and the exit code that it sets must win.
   let started = false;
   process.on("beforeExit", () => {
     if (started) return;

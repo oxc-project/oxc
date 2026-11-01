@@ -1,7 +1,4 @@
-// Preloaded into the CLI process and every Prettier worker through `NODE_OPTIONS`.
-// Only a worker has an IPC channel (`process.send`).
-// Each worker records its PID, then leaves a referenced timer,
-// like a Prettier plugin that never clears one.
+// Simulate a plugin that keeps a worker alive. Only workers have `process.send`.
 import { appendFileSync } from "node:fs";
 
 if (process.send !== undefined) {

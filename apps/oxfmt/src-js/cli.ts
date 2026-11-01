@@ -76,20 +76,13 @@ void (async () => {
   const hasTsfnCleanupFix = hasNode24Fix || major > 25 || (major === 25 && minor >= 4);
 
   if (hasTsfnCleanupFix) {
-    // Exit naturally, so that async work that user code leaves (JS config, Vite plugins, `--import` preloads) still runs:
-    // `beforeExit` listeners, timers, unawaited writes, and errors thrown later all behave as with a plain natural exit.
-    // Do not await `pool.destroy()` (~10 ms with 16 workers); let idle workers stop holding the event loop instead.
+    // Exit naturally, so that async work left by user code (JS config, plugins, preloads) still runs.
+    // Unref idle workers instead of awaiting `pool.destroy()`.
     releaseExternalServicesForExit();
-    // (`exitCode` is not `null`: `runCli()` returns `null` only for the `init` and `migrate:*` modes,
-    // and those modes return earlier in this function.)
+    // `runCli()` returns `null` only for the `init` and `migrate:*` modes, which returned above.
     process.exitCode = exitCode!;
-    // Node.js emits `exit` only after the event loop is empty and `beforeExit` added no more work.
-    // From there, `process.exit()` skips only the native teardown that follows a natural exit
-    // (environment cleanup and V8 isolate disposal), which costs up to tens of ms on large runs.
-    // It does not emit `exit` again, and it uses `process.exitCode`, including any value set by `exit` listeners.
-    // `queueMicrotask` runs it after every `exit` listener; `process.nextTick` does not run during a natural exit.
-    // No output is lost: Rust has written and flushed all of it before `runCli()` resolved,
-    // and JS writes to `stdout`/`stderr` finish at once because they are set to blocking mode above.
+    // After `exit`, skip the native teardown (environment cleanup and V8 isolate disposal).
+    // A microtask runs after all `exit` listeners. `process.nextTick` does not run here.
     process.once("exit", () => queueMicrotask(() => process.exit()));
     return;
   }
@@ -102,9 +95,6 @@ void (async () => {
   // https://nodejs.org/api/process.html#processexitcode
   process.exitCode = exitCode!;
 
-  if (!hasTsfnCleanupFix) {
-    // This Node.js has the ThreadsafeFunction cleanup race (nodejs/node#55706, see above).
-    // Wait a little before exit, so that pending NAPI operations can complete.
-    setTimeout(() => process.exit(), 50);
-  }
+  // Wait a little before exit, so that pending NAPI operations can complete (see above).
+  setTimeout(() => process.exit(), 50);
 })();

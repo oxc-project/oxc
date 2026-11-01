@@ -7,8 +7,13 @@ import { describe, expect, it } from "vitest";
 const CLI_PATH = join(import.meta.dirname, "..", "..", "dist", "cli.js");
 const FIXTURE_DIR = join(import.meta.dirname, "exit_async_work");
 
+// On other Node.js versions, the CLI forces its exit after a delay (see `cli.ts`), so `beforeExit` does not fire.
+const [major, minor, patch] = process.versions.node.split(".").map(Number);
+const hasNode24Fix = major === 24 && (minor > 13 || (minor === 13 && patch >= 1));
+const exitsNaturally = hasNode24Fix || major > 25 || (major === 25 && minor >= 4);
+
 describe("oxfmt CLI", () => {
-  it("runs async work that the config leaves before it exits", async () => {
+  it.runIf(exitsNaturally)("runs async work that the config leaves before it exits", async () => {
     const tmp = await fs.mkdtemp(join(tmpdir(), "oxfmt-exit-async-work-"));
     const outFile = join(tmp, "out.bin");
 

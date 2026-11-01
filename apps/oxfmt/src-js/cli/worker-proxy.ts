@@ -32,14 +32,11 @@ async function getPool(): Promise<Tinypool> {
 
   pool ??= new Tinypool({
     filename: new URL("./cli-worker.js", import.meta.url).href,
-    // Spawn workers on demand: each one is a full Node.js process,
-    // and most runs delegate only a few files to Prettier.
+    // Spawn workers on demand: each one is a full Node.js process.
     minThreads: 1,
     maxThreads: poolSize,
-    // Keep spawned workers until the pool is destroyed.
-    // Tinypool's default (0) removes workers above `minThreads` as soon as they go idle,
-    // so a run whose tasks arrive in waves would keep respawning them.
-    // `setTimeout` caps the delay at 2^31 - 1 ms; `Infinity` would fire after 1 ms.
+    // Keep spawned workers. The default (0) removes idle workers above `minThreads`.
+    // `setTimeout` accepts at most 2^31 - 1 ms; `Infinity` would fire after 1 ms.
     idleTimeout: 2 ** 31 - 1,
     // XXX: Use `child_process` instead of `worker_threads`.
     // Not sure why, but when using `worker_threads`,
@@ -58,14 +55,11 @@ export async function disposeExternalServices(): Promise<void> {
   poolSize = null;
 }
 
-// Let the event loop end without destroying the pool, so the CLI can exit naturally.
-// Tinypool unrefs the IPC channel, `stdout`, and `stderr` of an idle `child_process` worker, but not its `stdin` pipe,
-// which would keep this process alive. (Tinypool 2.2.0 `ProcessWorker.unref()`)
-// Each worker exits by itself when its IPC channel to this process closes (see `cli-worker.ts`).
+// Let the event loop end without destroying the pool.
+// Tinypool 2.2.0 leaves the `stdin` pipe referenced. Workers exit on `disconnect` (see `cli-worker.ts`).
 export function releaseExternalServicesForExit(): void {
   for (const worker of pool?.threads ?? []) {
-    // `process` is not part of `TinypoolWorker`; `runtime: "child_process"` workers have it.
-    // The `stdin` pipe is a `net.Socket` at runtime, which has `unref()`.
+    // `TinypoolWorker` types lack `process`, and `stdin` is a `net.Socket` at runtime.
     if ("process" in worker) ((worker.process as ChildProcess).stdin as Socket | null)?.unref();
   }
 }
