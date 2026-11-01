@@ -987,13 +987,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // parameter initializers are expressions again), so retrying the same `<` after a rewind
         // would make input such as `a=b<c<(a=b<c<(...` take time exponential in its nesting.
         let start = self.cur_start();
-        if self.state.not_type_arguments.contains(&start) {
+        let attempt = (start, self.ctx.bits());
+        if self.state.not_type_arguments.contains(&attempt) {
             return None;
         }
         let checkpoint = self.checkpoint();
         let type_arguments = self.parse_type_arguments_in_expression_impl(start);
         if type_arguments.is_none() {
-            self.state.not_type_arguments.insert(start);
+            self.state.not_type_arguments.insert(attempt);
             self.rewind(checkpoint);
         }
         type_arguments

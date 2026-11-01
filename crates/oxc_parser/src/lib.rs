@@ -1523,6 +1523,18 @@ mod test {
         assert!(ret.tokens.is_empty());
     }
 
+    // The first parse of the infer constraint disallows conditional types, so `<` fails there. The
+    // parse after the rewind allows them, so the same `<` must parse as type arguments.
+    #[test]
+    fn failed_type_arguments_are_retried_in_another_context() {
+        let source = "type X = (infer U extends ({[f<B extends C ? D : E>(g)]: 1}) ? 1 : 2)";
+        for source_type in [SourceType::ts(), SourceType::tsx()] {
+            let allocator = Allocator::default();
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);
+        }
+    }
+
     // This input used a 377 MB arena before failed attempts were remembered.
     #[test]
     fn failed_type_arguments_in_computed_keys_are_not_retried() {
