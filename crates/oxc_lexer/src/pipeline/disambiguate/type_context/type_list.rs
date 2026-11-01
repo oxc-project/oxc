@@ -15,6 +15,7 @@ use crate::{
 };
 
 use crate::pipeline::{
+    cpu::{Cpu, apply, cpu_versions},
     disambiguate::common::{Tokens, bits, word_len},
     keywords::kw_match_at,
 };
@@ -23,7 +24,8 @@ use super::bytes::{
     list_closer, raw_template_end, skip_raw_literal, skip_trivia_fwd, skip_trivia_nl,
 };
 
-fn gt_follower(tokens: &Tokens, i: usize) -> bool {
+#[apply(cpu_versions)]
+fn gt_follower(tokens: &Tokens, i: usize, _cpu: impl Cpu) -> bool {
     let (src, n) = (tokens.src, tokens.n);
     let (i, broke) = skip_trivia_nl(src, n, i);
     if i >= n {
@@ -55,8 +57,9 @@ fn gt_follower(tokens: &Tokens, i: usize) -> bool {
     }
 }
 
+#[apply(cpu_versions)]
 #[rustfmt::skip::macros(matches_tk)]
-fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
+fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool {
     let Tokens { src, st, kind, .. } = *tokens;
     let mut start = true;
     let mut braces: i32 = 0;
@@ -135,7 +138,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
             let kk = if dotted { 0 } else { kw_match_at(true, src, w, word_len(src, w)) as u8 };
             // A keyword type (`this`, `any`, `null`, ...) takes no type arguments; in a type
             // query it names a value, which may (`typeof this<A>`).
-            this_head = keyword_type(kk) && last_kw != tk!(KwTypeof);
+            this_head = keyword_type(kk, cpu) && last_kw != tk!(KwTypeof);
             if !start && braces == 0 && !matches_tk!(kk, KwExtends | KwIs | KwIn) {
                 return false;
             }
@@ -349,8 +352,9 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
 }
 
 /// A keyword that is a whole type by itself, as any, null or this, and takes no type arguments.
+#[apply(cpu_versions)]
 #[rustfmt::skip::macros(matches_tk)]
-pub fn keyword_type(kw: u8) -> bool {
+pub fn keyword_type(kw: u8, _cpu: impl Cpu) -> bool {
     matches_tk!(
         kw,
         KwAny | KwBigInt | KwBoolean | KwNever | KwNumber | KwObject | KwString | KwSymbol
@@ -374,20 +378,22 @@ fn type_illegal_kind(k: u8) -> bool {
 /// position: a balanced list whose contents are types and whose closer is followed by a token that
 /// cannot start an expression. In a type, every `<` after a name opens a list, so a `<` this
 /// accepts opens one in any context.
-pub fn type_args_at(tokens: &Tokens, lt: usize) -> bool {
+#[apply(cpu_versions)]
+pub fn type_args_at(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
     let closers = tokens.closers;
     if let Some(yes) = closers.get(lt).and_then(|r| r.args) {
         return yes;
     }
-    let yes = list_closer(tokens, lt).is_some_and(|gt| list_is_type_args(tokens, lt, gt));
+    let yes = list_closer(tokens, lt).is_some_and(|gt| list_is_type_args(tokens, lt, gt, cpu));
     closers.set_args(lt, yes);
     yes
 }
 
-fn list_is_type_args(tokens: &Tokens, lt: usize, gt: usize) -> bool {
+#[apply(cpu_versions)]
+fn list_is_type_args(tokens: &Tokens, lt: usize, gt: usize, cpu: impl Cpu) -> bool {
     !matches!(tokens.src[gt + 1], b'=' | b'>')
-        && gt_follower(tokens, gt + 1)
-        && type_list_legal(tokens, lt + 1, gt)
+        && gt_follower(tokens, gt + 1, cpu)
+        && type_list_legal(tokens, lt + 1, gt, cpu)
 }
 
 #[inline(always)]

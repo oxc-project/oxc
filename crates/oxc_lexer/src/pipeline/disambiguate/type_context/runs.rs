@@ -134,7 +134,7 @@ fn list_in_any_context(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
     match tokens.prev_token(lt) {
         Prev::Word(k, tk!(KwFunction | KwClass)) => !tokens.property_name(k),
         Prev::Word(head, 0) => {
-            type_args_at(tokens, lt)
+            type_args_at(tokens, lt, cpu)
                 || (!tokens.line_break_between(tokens.next_start(head + 1), lt)
                     && type_reference_head(tokens, head, cpu))
         }
