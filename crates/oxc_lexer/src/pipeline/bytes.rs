@@ -53,7 +53,7 @@ pub(super) fn unicode_ws_len_at(src: &[u8], p: usize) -> usize {
 /// U+0085, U+00A0, U+1680, U+2000..=U+200B, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
 ///
 /// Unsafe version of [`unicode_ws_len_at`].
-#[inline]
+#[inline(always)]
 pub(super) unsafe fn unicode_ws_len_at_unchecked(src: *const u8, p: usize) -> usize {
     unicode_ws_len(*src.add(p), *src.add(p + 1), *src.add(p + 2))
 }
