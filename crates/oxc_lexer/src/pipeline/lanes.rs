@@ -408,7 +408,7 @@ impl Lanes {
 
     #[apply(cpu_versions)]
     #[inline]
-    pub(super) fn push_number(&mut self, src: &[u8], s: usize, e: usize, _cpu: impl Cpu) {
+    pub(super) fn push_number(&mut self, src: &[u8], s: usize, e: usize, cpu: impl Cpu) {
         let len = e - s;
         if len.wrapping_sub(1) <= 7 && !(len > 1 && src[s] == b'0') {
             let keep = KEEP[len];
@@ -428,11 +428,11 @@ impl Lanes {
             }
         }
         // Only non-SWAR numbers (floats, radix-prefixed, bigint, separators, leading zeros, long) reach the validation walk.
-        let code = validate_number(src, s, e);
+        let code = validate_number(src, s, e, cpu);
         if code != DiagCode::Ok {
             self.push_diag(s as u32, (e - s) as u32, code);
         }
-        self.numbers.push(parse_number(src, s, e));
+        self.numbers.push(parse_number(src, s, e, cpu));
     }
 }
 
@@ -658,7 +658,8 @@ fn hexd(b: u8) -> Option<u8> {
     }
 }
 
-fn parse_number(src: &[u8], s: usize, e: usize) -> f64 {
+#[apply(cpu_versions)]
+fn parse_number(src: &[u8], s: usize, e: usize, _cpu: impl Cpu) -> f64 {
     let mut i = s;
     let mut radix: u64 = 0;
     if e - s >= 2 && src[s] == b'0' {
@@ -723,8 +724,9 @@ fn parse_number(src: &[u8], s: usize, e: usize) -> f64 {
     str::from_utf8(&buf[..bl]).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
 }
 
+#[apply(cpu_versions)]
 #[inline]
-fn radix_digit(c: u8) -> Option<u8> {
+fn radix_digit(c: u8, _cpu: impl Cpu) -> Option<u8> {
     match c {
         b'0'..=b'9' => Some(c - b'0'),
         b'a'..=b'f' => Some(c - b'a' + 10),
@@ -740,8 +742,9 @@ fn radix_digit(c: u8) -> Option<u8> {
 /// separator/bigint suffix/bad exponent. Shapes the scanner pre-splits
 /// (`0b12`, `1.5n`, `3in`) are detected at the adjacency in coalesce, not
 /// here. Detection only; `parse_number` still produces a lenient value.
+#[apply(cpu_versions)]
 #[inline(never)]
-fn validate_number(src: &[u8], s: usize, e: usize) -> DiagCode {
+fn validate_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> DiagCode {
     let bytes = &src[s..e];
     let Some((&last, head)) = bytes.split_last() else { return DiagCode::Ok };
     let is_bigint = last == b'n';
@@ -769,7 +772,7 @@ fn validate_number(src: &[u8], s: usize, e: usize) -> DiagCode {
                         return DiagCode::InvalidNumericSeparator;
                     }
                     prev_us = true;
-                } else if matches!(radix_digit(c), Some(v) if v < radix) {
+                } else if matches!(radix_digit(c, cpu), Some(v) if v < radix) {
                     any = true;
                     prev_us = false;
                 } else {
