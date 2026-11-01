@@ -7,13 +7,23 @@
 //!
 //! [`context`]: crate::pipeline::disambiguate::context
 
-use crate::pipeline::disambiguate::{Tokens, Walks, context};
+use crate::pipeline::{
+    cpu::{Cpu, apply, cpu_versions},
+    disambiguate::{Tokens, Walks, context},
+};
 
 use super::bytes::arrow_after_params;
 
 /// Whether the ambiguous < at lt is JSX, and whether it is an unterminated element to report.
+#[apply(cpu_versions)]
 #[inline(never)]
-pub fn jsx_over_generic(tokens: &Tokens, walks: &mut Walks, lt: usize, lp: usize) -> (bool, bool) {
+pub fn jsx_over_generic(
+    tokens: &Tokens,
+    walks: &mut Walks,
+    lt: usize,
+    lp: usize,
+    _cpu: impl Cpu,
+) -> (bool, bool) {
     let site = context::before(tokens, walks, lt);
     if site.in_type || site.type_params {
         return (false, false);
