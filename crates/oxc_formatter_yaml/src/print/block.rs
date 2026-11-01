@@ -99,29 +99,42 @@ pub fn write_block_scalar<'a>(
     // Blank runs are the scalar's VALUE
     let chomping_keep = block.chomping == Chomping::Keep;
     let contents = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
-        let mut blanks = 0usize;
-        let mut wrote_any = false;
-        for words in &line_groups {
-            if words.is_empty() {
-                blanks += 1;
-                continue;
+        // The trailing blank run is the tail below, everything before it the lines
+        let trailing_blanks = trailing_blank_count(&line_groups);
+        let lines = &line_groups[..line_groups.len() - trailing_blanks];
+        let write_lines = format_with(|f: &mut YamlFormatter<'_, 'a>| {
+            let mut blanks = 0usize;
+            for (i, words) in lines.iter().enumerate() {
+                if words.is_empty() {
+                    blanks += 1;
+                    continue;
+                }
+                if blanks > 0 {
+                    // One newline entering this segment
+                    // (after the header for the first, the separator otherwise) + one per blank line.
+                    write!(f, exact_line_breaks(blanks + 1));
+                } else if i > 0 {
+                    write!(f, literal_line_break());
+                } else {
+                    write!(f, hard_line_break());
+                }
+                blanks = 0;
+                // A single word has no separator to fill: the fill would print just its text
+                if let [word] = words.as_slice() {
+                    write!(f, text(word));
+                } else {
+                    f.fill()
+                        .entries(&soft_line_break_or_space(), words.iter().map(|&word| text(word)))
+                        .finish();
+                }
             }
-            if blanks > 0 {
-                // One newline entering this segment
-                // (after the header for the first, the separator otherwise) + one per blank line.
-                write!(f, exact_line_breaks(blanks + 1));
-            } else if wrote_any {
-                write!(f, mark_as_root(&literal_line_break()));
-            } else {
-                write!(f, hard_line_break());
-            }
-            blanks = 0;
-            wrote_any = true;
-            let mut fill = f.fill();
-            for &word in words {
-                fill.entry(&soft_line_break_or_space(), &text(word));
-            }
-            fill.finish();
+        });
+        // A literal line returns to the scalar's own indention:
+        // one `mark_as_root` around all the lines marks it, nothing inside changes the indention
+        if lines.len() > 1 {
+            write!(f, mark_as_root(&write_lines));
+        } else {
+            write!(f, write_lines);
         }
         if chomping_keep {
             // Keep chomping: the trailing newlines are the VALUE
@@ -129,12 +142,12 @@ pub fn write_block_scalar<'a>(
             // Raw text keeps them exempt from EVERY layout normalization,
             // including the state effects a line element would have on the following separator.
             // `ends_with_keep_chomped_block` mirrors this guard for the root's final newline.
-            if blanks > 0 || (is_last_descendant && wrote_any) {
-                write!(f, dedent_to_root(&text(arena_newlines(blanks + 1, f))));
+            if trailing_blanks > 0 || (is_last_descendant && !lines.is_empty()) {
+                write!(f, dedent_to_root(&text(arena_newlines(trailing_blanks + 1, f))));
             }
-        } else if blanks > 0 {
+        } else if trailing_blanks > 0 {
             // The trailing blank preserved by blank-line preservation
-            write!(f, exact_line_breaks(blanks + 1));
+            write!(f, exact_line_breaks(trailing_blanks + 1));
         }
     });
 
@@ -288,12 +301,17 @@ fn remove_unnecessary_trailing_newlines<'s>(
         return lines;
     }
 
-    let trailing_blanks = lines.iter().rev().take_while(|words| words.is_empty()).count();
+    let trailing_blanks = trailing_blank_count(&lines);
     // Preserve one blank line when the source had two or more
     lines.truncate(
         lines.len() - trailing_blanks + usize::from(trailing_blanks >= 2 && !is_last_descendant),
     );
     lines
+}
+
+/// The number of blank lines (empty word groups) ending `lines`.
+fn trailing_blank_count(lines: &[Vec<&str>]) -> usize {
+    lines.iter().rev().take_while(|words| words.is_empty()).count()
 }
 
 /// Returns `true` when the stream's last descendant is a keep-chomped (`+`) block scalar
