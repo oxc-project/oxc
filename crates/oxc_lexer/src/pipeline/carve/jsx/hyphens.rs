@@ -46,12 +46,12 @@ unsafe fn jsx_glue_hyphens_avx2(
     word: *const u64,
     a: usize,
     b: usize,
-    _cpu: Avx2,
+    cpu: Avx2,
 ) {
     let mut i = a;
     let mut last = usize::MAX;
     while i < b {
-        let mut m = mm(veq(load256(src, i), b'-'));
+        let mut m = mm(veq(load256(src, i, cpu), b'-', cpu), cpu);
         let rem = b - i;
         if rem < 32 {
             m &= (1u32 << rem) - 1;
