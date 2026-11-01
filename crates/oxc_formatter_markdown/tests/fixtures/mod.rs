@@ -1,12 +1,10 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_markdown::{MarkdownFormatOptions, format, parse_for_format};
-use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
+use oxc_formatter_markdown::{MarkdownFormatOptions, ProseWrap, format, parse_for_format};
+use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
 
 mod fingerprint;
-mod options;
-use options::apply_markdown_options;
 
 struct MarkdownHarness;
 
@@ -15,10 +13,20 @@ impl FixtureFormatter for MarkdownHarness {
     /// The semantic fingerprint (see `fingerprint.rs`): `parse(format(x)) ≅ parse(x)`.
     type Fingerprint = String;
 
-    fn parse_options(json: &OptionSet) -> Self::Options {
-        let mut options = MarkdownFormatOptions::default();
-        apply_markdown_options(&mut options, json);
-        options
+    fn apply_option(options: &mut Self::Options, key: &str, value: &OptionValue) -> bool {
+        match key {
+            "proseWrap" => {
+                if let Some(s) = value.as_str() {
+                    options.prose_wrap = match s {
+                        "always" => ProseWrap::Always,
+                        "never" => ProseWrap::Never,
+                        _ => ProseWrap::Preserve,
+                    };
+                }
+            }
+            _ => return false,
+        }
+        true
     }
 
     fn format(source: &str, _path: &Path, options: &Self::Options) -> String {

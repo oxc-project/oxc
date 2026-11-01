@@ -8,7 +8,10 @@ use oxc_span::Span;
 
 use oxc_formatter_core::{
     arena_cow_str,
-    builders::{block_indent, dedent, empty_line, hard_line_break, indent, space, text},
+    builders::{
+        block_indent, dedent, empty_line, hard_line_break, if_group_breaks, indent,
+        soft_line_break_or_space, space, text, token,
+    },
     write,
 };
 
@@ -98,6 +101,8 @@ pub(super) fn write_statement_sequence_bounded<'a>(
     // (`${m}\ncolor: red` -> no `;`, but `${m}\ncolor: red;\nx: 1` -> `x: 1;`).
     // Track that run so swallowed declarations keep a source-driven `;`.
     let mut swallowed = false;
+    // Only the attribute's own declarations, not a block's
+    let style_attribute = upper == u32::MAX && f.context().is_style_attribute();
     for (i, stmt) in statements.iter().enumerate() {
         let start = stmt_start(stmt);
         if i > 0 {
@@ -118,7 +123,12 @@ pub(super) fn write_statement_sequence_bounded<'a>(
                     write!(f, space());
                 }
             } else {
-                write!(f, hard_line_break());
+                // A `style` attribute's declarations share a line when they fit
+                if style_attribute {
+                    write!(f, soft_line_break_or_space());
+                } else {
+                    write!(f, hard_line_break());
+                }
                 if gap == Gap::Blank {
                     write!(f, empty_line());
                 }
@@ -145,6 +155,13 @@ pub(super) fn write_statement_sequence_bounded<'a>(
             if has_source_semicolon {
                 write!(f, ";");
             }
+        } else if style_attribute
+            && i + 1 == statements.len()
+            && let Statement::Declaration(decl) = stmt
+        {
+            // The last declaration's `;` only when the attribute breaks
+            write_declaration(decl, f);
+            write!(f, if_group_breaks(&token(";")));
         } else {
             write_statement(stmt, f);
         }

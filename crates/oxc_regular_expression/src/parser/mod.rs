@@ -47,6 +47,37 @@ mod test {
     }
 
     #[test]
+    fn oversized_incomplete_quantifiers() {
+        let allocator = Allocator::default();
+        for pattern in [
+            "a{18446744073709551616",
+            "a{18446744073709551616,",
+            "a{1,18446744073709551616",
+            "a{18446744073709551616x}",
+            "{18446744073709551616",
+        ] {
+            let parsed = LiteralParser::new(&allocator, pattern, None, Options::default())
+                .parse()
+                .unwrap_or_else(|error| panic!("/{pattern}/: {error}"));
+            assert_eq!(parsed.body.body[0].body.len(), pattern.len());
+            for (term, byte) in parsed.body.body[0].body.iter().zip(pattern.bytes()) {
+                let Term::Character(character) = term else {
+                    panic!("expected literal character in /{pattern}/");
+                };
+                assert_eq!(character.value, u32::from(byte));
+            }
+            for flags in ["u", "v"] {
+                assert!(
+                    LiteralParser::new(&allocator, pattern, Some(flags), Options::default())
+                        .parse()
+                        .is_err(),
+                    "/{pattern}/{flags}"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn escaped_group_names() {
         let allocator = Allocator::default();
 

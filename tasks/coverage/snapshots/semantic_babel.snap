@@ -2,7 +2,7 @@ commit: b835f0c6
 
 semantic_babel Summary:
 AST Parsed     : 2304/2304 (100.00%)
-Positive Passed: 2209/2304 (95.88%)
+Positive Passed: 2210/2304 (95.92%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-open-export-default-from/input.js
 Cannot use export statement outside a module
 
@@ -84,11 +84,6 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Bindings mismatch:
 after transform: ScopeId(0): ["assertIsString"]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/for-of-lhs/input.ts
-Reference flags mismatch for "a":
-after transform: ReferenceId(3): ReferenceFlags(Read)
-rebuilt        : ReferenceId(1): ReferenceFlags(Write)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/abstract/input.ts
 Bindings mismatch:

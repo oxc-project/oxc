@@ -229,15 +229,16 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prose_wrap: Option<ProseWrapConfig>,
 
-    // ============================================================================================
-    // Prettier compatible options and only used by Prettier
-    // ============================================================================================
     /// Specify the global whitespace sensitivity.
     ///
     /// - Languages: HTML, Angular, Vue, Handlebars, Svelte
     /// - Default: `"css"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub html_whitespace_sensitivity: Option<HtmlWhitespaceSensitivityConfig>,
+
+    // ============================================================================================
+    // Prettier compatible options and only used by Prettier
+    // ============================================================================================
     /// Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.
     ///
     /// - Languages: Vue
@@ -354,6 +355,11 @@ impl FormatConfig {
     /// disabled when unset or `false`.
     pub fn is_astro_enabled(&self) -> bool {
         matches!(self.astro, Some(AstroUserConfig::Bool(true) | AstroUserConfig::Object(_)))
+    }
+
+    /// The `sortTailwindcss` settings, `None` when sorting is off.
+    pub fn tailwind_config(&self) -> Option<SortTailwindcssConfig> {
+        self.sort_tailwindcss.clone().and_then(SortTailwindcssUserConfig::into_config)
     }
 
     /// Whether Tailwind class sorting is enabled by this config.

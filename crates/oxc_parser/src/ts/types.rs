@@ -93,6 +93,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::LAngle | Kind::New => true,
             Kind::Abstract => self.lexer.peek_token().kind() == Kind::New,
             Kind::LParen => {
+                // Ordinary parameter names need only token lookahead. Patterns and modifiers
+                // still use the parser below, including its error checks.
+                let checkpoint = self.lexer.checkpoint();
+                let second = self.lexer.next_token().kind();
+                let simple = if matches!(second, Kind::RParen | Kind::Dot3) {
+                    Some(true)
+                } else if (second.is_binding_identifier() && !second.is_modifier_kind())
+                    || second == Kind::This
+                {
+                    let third = self.lexer.next_token().kind();
+                    Some(
+                        matches!(third, Kind::Colon | Kind::Comma | Kind::Question | Kind::Eq)
+                            || (third == Kind::RParen
+                                && self.lexer.next_token().kind() == Kind::Arrow),
+                    )
+                } else {
+                    None
+                };
+                self.lexer.rewind(checkpoint);
+                if let Some(is_function) = simple {
+                    return is_function;
+                }
                 let checkpoint = self.checkpoint();
                 self.bump_any();
 

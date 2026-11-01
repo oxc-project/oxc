@@ -27,7 +27,7 @@ oxc-css-parser = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
-oxc_formatter_tests = { workspace = true, features = ["conformance"] }
+oxc_formatter_tests = { workspace = true }
 pico-args = { workspace = true }
 
 [build-dependencies]

@@ -379,33 +379,17 @@ impl<'a> ContextIdentifierVisitor<'a> {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
                 self.handle_reassignment_identifier(&ident.name, current_scope);
             }
-            SimpleAssignmentTarget::TSAsExpression(node) => {
-                self.walk_assignment_target_expression_for_reassignment(
-                    &node.expression,
-                    current_scope,
-                );
-            }
-            SimpleAssignmentTarget::TSSatisfiesExpression(node) => {
-                self.walk_assignment_target_expression_for_reassignment(
-                    &node.expression,
-                    current_scope,
-                );
-            }
-            SimpleAssignmentTarget::TSNonNullExpression(node) => {
-                self.walk_assignment_target_expression_for_reassignment(
-                    &node.expression,
-                    current_scope,
-                );
-            }
-            SimpleAssignmentTarget::TSTypeAssertion(node) => {
-                self.walk_assignment_target_expression_for_reassignment(
-                    &node.expression,
-                    current_scope,
-                );
-            }
             SimpleAssignmentTarget::StaticMemberExpression(_)
             | SimpleAssignmentTarget::ComputedMemberExpression(_)
             | SimpleAssignmentTarget::PrivateFieldExpression(_) => {}
+            _ => {
+                if let Some(expression) = target.get_expression() {
+                    self.walk_assignment_target_expression_for_reassignment(
+                        expression,
+                        current_scope,
+                    );
+                }
+            }
         }
     }
 

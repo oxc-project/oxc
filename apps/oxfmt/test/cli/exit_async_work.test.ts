@@ -13,7 +13,7 @@ describe("oxfmt CLI", () => {
     const outFile = join(tmp, "out.bin");
 
     try {
-      // `a.html` is delegated to a Prettier worker, so the exit must also not wait for that worker.
+      // `a.vue` is delegated to a Prettier worker, so the exit must also not wait for that worker.
       const result = await execa("node", [CLI_PATH, "--check", "--threads", "2", "fixtures"], {
         cwd: FIXTURE_DIR,
         env: { OXFMT_TEST_OUT_FILE: outFile },
@@ -22,7 +22,7 @@ describe("oxfmt CLI", () => {
       });
 
       expect(result.timedOut).toBe(false);
-      // `a.html` is not formatted (exit code 1), but the config's `beforeExit` work sets 7 after that.
+      // `a.vue` is not formatted (exit code 1), but the config's `beforeExit` work sets 7 after that.
       expect(result.exitCode).toBe(7);
       expect((await fs.stat(outFile)).size).toBe(64 * 65_536);
     } finally {

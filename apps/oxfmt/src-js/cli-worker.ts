@@ -12,9 +12,4 @@ if (process.send !== undefined) {
 }
 
 // Re-exports core functions for use as Tinypool tasks
-export {
-  formatEmbeddedCode,
-  formatEmbeddedDoc,
-  formatFile,
-  sortTailwindClasses,
-} from "./libs/apis";
+export { formatEmbeddedDoc, formatFile, sortTailwindClasses } from "./libs/apis";

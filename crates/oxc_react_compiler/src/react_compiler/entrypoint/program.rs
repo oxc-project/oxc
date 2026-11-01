@@ -810,7 +810,7 @@ fn is_valid_props_annotation(type_annotation: Option<&TSTypeAnnotation>) -> bool
 /// the flat params list; in oxc the rest lives in `params.rest`. So the logical
 /// param count is `items.len() + rest.is_some()`.
 fn is_valid_component_params(params: &FormalParameters) -> bool {
-    let logical_len = params.items.len() + usize::from(params.rest.is_some());
+    let logical_len = params.parameters_count();
     if logical_len == 0 {
         return true;
     }

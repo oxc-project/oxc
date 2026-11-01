@@ -5,7 +5,6 @@ import { toFormatFileResult, toNullable } from "../libs/napi-callbacks";
 import type { FormatFileResult } from "../libs/napi-callbacks";
 import type {
   FormatFileParam,
-  FormatEmbeddedCodeParam,
   FormatEmbeddedDocParam,
   SortTailwindClassesArgs,
 } from "../libs/apis";
@@ -85,19 +84,6 @@ export function formatFile(
 }
 
 // ---
-
-export function formatEmbeddedCode(
-  options: FormatEmbeddedCodeParam["options"],
-  code: string,
-): Promise<string | null> {
-  return toNullable(
-    getPool().then((pool) =>
-      pool.run({ options, code } satisfies FormatEmbeddedCodeParam, {
-        name: "formatEmbeddedCode",
-      }),
-    ),
-  );
-}
 
 export function formatEmbeddedDoc(
   options: FormatEmbeddedDocParam["options"],
