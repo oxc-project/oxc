@@ -30,10 +30,44 @@ pub fn write_plain(span: Span, f: &mut YamlFormatter<'_, '_>) {
 
 /// Emits a quoted scalar with Prettier's `quoteDouble`/`quoteSingle` case.
 pub fn write_quoted(kind: FlowScalarKind, span: Span, f: &mut YamlFormatter<'_, '_>) {
-    let source = f.context().source_text();
-    // Inner content between the quotes
-    let raw = source.text_for(&Span::new(span.start + 1, span.end - 1));
+    let raw = quoted_inner(span, f);
+    let (quote, reencode) = printed_quote(kind, raw, f);
+    // Keeping its quote, nothing is re-encoded: the source text itself when the content prints as written
+    if quote == source_quote(kind) && single_line_prints_verbatim(raw, f) {
+        write!(f, text(f.context().source_text().text_for(&span)));
+        return;
+    }
+    let content = if !reencode {
+        raw
+    } else if kind == FlowScalarKind::QuoteDouble {
+        // Re-quoted with single quotes:
+        // `\"` unescapes to `"`; `'` must be doubled in single quotes.
+        // (The guarding `contains('"')` means the first replace always matches,
+        // so the chain is owned; copy it into the arena once.)
+        let content = raw.cow_replace("\\\"", "\"").cow_replace('\'', "''").into_owned();
+        f.allocator().alloc_str(&content)
+    } else {
+        // Re-quoted with double quotes:
+        // `''` unescapes to `'` (nothing else needs escaping in double quotes here)
+        arena_cow_str(&raw.cow_replace("''", "'"), f)
+    };
+    write!(f, text(quote));
+    write_flow_scalar_content(kind, content, f);
+    write!(f, text(quote));
+}
 
+/// Inner content of a quoted scalar spanning `span`, between the quotes.
+fn quoted_inner<'a>(span: Span, f: &YamlFormatter<'_, 'a>) -> &'a str {
+    f.context().source_text().text_for(&Span::new(span.start + 1, span.end - 1))
+}
+
+/// The quote a quoted scalar prints with,
+/// and whether its inner content `raw` has to be re-encoded for that quote.
+fn printed_quote(
+    kind: FlowScalarKind,
+    raw: &str,
+    f: &YamlFormatter<'_, '_>,
+) -> (&'static str, bool) {
     let has_unreencodable_escape = match kind {
         // quoteSingle cannot represent backslash escapes; keep as-is when any appear
         FlowScalarKind::QuoteSingle => raw.contains('\\'),
@@ -43,49 +77,38 @@ pub fn write_quoted(kind: FlowScalarKind, span: Span, f: &mut YamlFormatter<'_, 
         }
         FlowScalarKind::Plain => unreachable!("plain scalars are not quoted"),
     };
-
     if has_unreencodable_escape {
-        let quote = if kind == FlowScalarKind::QuoteDouble { "\"" } else { "'" };
-        write!(f, text(quote));
-        write_flow_scalar_content(kind, raw, f);
-        write!(f, text(quote));
-        return;
+        (source_quote(kind), false)
+    } else if raw.contains('"') {
+        ("'", kind == FlowScalarKind::QuoteDouble)
+    } else if raw.contains('\'') {
+        ("\"", kind == FlowScalarKind::QuoteSingle)
+    } else {
+        (f.options().single_quote.as_str(), false)
     }
+}
 
-    if raw.contains('"') {
-        // Re-quote with single quotes
-        write!(f, text("'"));
-        if kind == FlowScalarKind::QuoteDouble {
-            // `\"` unescapes to `"`; `'` must be doubled in single quotes.
-            // (The guarding `contains('"')` means the first replace always matches,
-            // so the chain is owned; copy it into the arena once.)
-            let content = raw.cow_replace("\\\"", "\"").cow_replace('\'', "''").into_owned();
-            write_flow_scalar_content(kind, f.allocator().alloc_str(&content), f);
-        } else {
-            write_flow_scalar_content(kind, raw, f);
-        }
-        write!(f, text("'"));
-        return;
+fn source_quote(kind: FlowScalarKind) -> &'static str {
+    if kind == FlowScalarKind::QuoteDouble { "\"" } else { "'" }
+}
+
+/// Whether a flow scalar spanning `span` (quotes included) prints exactly as its source text:
+/// a quoted one keeping its quote (so nothing is re-encoded), with content [single_line_prints_verbatim].
+pub fn prints_verbatim(kind: FlowScalarKind, span: Span, f: &YamlFormatter<'_, '_>) -> bool {
+    if kind == FlowScalarKind::Plain {
+        return single_line_prints_verbatim(f.context().source_text().text_for(&span), f);
     }
+    let raw = quoted_inner(span, f);
+    printed_quote(kind, raw, f).0 == source_quote(kind) && single_line_prints_verbatim(raw, f)
+}
 
-    if raw.contains('\'') {
-        // Re-quote with double quotes
-        write!(f, text("\""));
-        if kind == FlowScalarKind::QuoteSingle {
-            // `''` unescapes to `'` (nothing else needs escaping in double quotes here)
-            let content = raw.cow_replace("''", "'");
-            write_flow_scalar_content(kind, arena_cow_str(&content, f), f);
-        } else {
-            write_flow_scalar_content(kind, raw, f);
-        }
-        write!(f, text("\""));
-        return;
-    }
-
-    let quote = f.options().single_quote.as_str();
-    write!(f, text(quote));
-    write_flow_scalar_content(kind, raw, f);
-    write!(f, text(quote));
+/// Whether [write_flow_scalar_content] prints `content` as written, on one line:
+/// - `preserve`: its verbatim fast path
+/// - `never`: the line's words rejoin with the single spaces they were split at
+/// - `always`: only a single word (no space) is safe from wrapping
+fn single_line_prints_verbatim(content: &str, f: &YamlFormatter<'_, '_>) -> bool {
+    !content.contains('\n')
+        && (f.options().prose_wrap != ProseWrap::Always || !content.contains(' '))
 }
 
 /// Prettier's `printFlowScalarContent`:
