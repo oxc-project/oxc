@@ -38,7 +38,12 @@ use oxc_data_structures::{assert_unchecked, branch_hints::unlikely, str::const_s
 
 use crate::token::{KW_KIND_BASE, TokenKind};
 
-use crate::pipeline::cpu::{Cpu, apply, cpu_versions};
+use crate::pipeline::cpu::{Cpu, apply, cpu_select, cpu_versions};
+
+#[cfg(target_arch = "x86_64")]
+use crate::pipeline::cpu::Avx2;
+#[cfg(target_arch = "aarch64")]
+use crate::pipeline::cpu::Neon;
 
 const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
 const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -418,7 +423,7 @@ pub(super) fn kw_match_at(
     src: &[u8],
     pos: usize,
     len: usize,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) -> TokenKind {
     let word = &src[pos..pos + 16];
 
@@ -436,9 +441,9 @@ pub(super) fn kw_match_at(
     // SAFETY: `word` is 16 bytes, and `len` is between 1 and 16
     unsafe {
         if ts {
-            kw_match::<true>(word.as_ptr(), len)
+            kw_match::<true>(word.as_ptr(), len, cpu)
         } else {
-            kw_match::<false>(word.as_ptr(), len)
+            kw_match::<false>(word.as_ptr(), len, cpu)
         }
     }
 }
@@ -456,7 +461,11 @@ pub(super) fn kw_match_at(
 /// * `ptr` must be valid for reading 16 bytes.
 /// * `len` must be between 1 and 16 (inclusive).
 #[inline(always)]
-pub(super) unsafe fn kw_match<const IS_TS: bool>(ptr: *const u8, len: usize) -> TokenKind {
+pub(super) unsafe fn kw_match<const IS_TS: bool>(
+    ptr: *const u8,
+    len: usize,
+    cpu: impl Cpu,
+) -> TokenKind {
     // Getting `disp` does not depend on `len`, so the CPU can load it in parallel with calculating `len`
     let first_2 = ptr::read_unaligned(ptr as *const u16);
     let index = disps_index(first_2);
@@ -475,7 +484,7 @@ pub(super) unsafe fn kw_match<const IS_TS: bool>(ptr: *const u8, len: usize) -> 
         slot
     };
 
-    let is_match = text_matches(ptr, len, &KW_TEXT.0[slot]);
+    let is_match = text_matches(ptr, len, &KW_TEXT.0[slot], cpu);
     let kind = if IS_TS { KW_KINDS_TS.0[slot] } else { KW_KINDS_JS.0[slot] };
     // Whether a candidate is a keyword is unpredictable, so tell LLVM to select without a branch.
     // Without the hint, it branches to skip loading `kind` when there's no match.
@@ -487,14 +496,23 @@ pub(super) unsafe fn kw_match<const IS_TS: bool>(ptr: *const u8, len: usize) -> 
 /// # SAFETY
 ///
 /// `ptr` must be valid for reading 16 bytes, and `len` must be between 0 and 16 (inclusive).
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
 #[inline(always)]
-unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
+unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2], cpu: impl Cpu) -> bool {
+    cpu_select!(cpu, {
+        Avx2(cpu) => text_matches_avx2(ptr, len, text, cpu),
+        Neon(cpu) => text_matches_neon(ptr, len, text, cpu),
+        Generic(_) => text_matches_generic(ptr, len, text),
+    })
+}
+
+/// [`text_matches`] for AVX2.
+///
+/// # SAFETY
+///
+/// Same as [`text_matches`].
+#[cfg(target_arch = "x86_64")]
+#[inline(always)]
+unsafe fn text_matches_avx2(ptr: *const u8, len: usize, text: &[u64; 2], _cpu: Avx2) -> bool {
     use std::arch::x86_64::{_mm_and_si128, _mm_cmpeq_epi8, _mm_loadu_si128, _mm_movemask_epi8};
 
     let word = _mm_loadu_si128(ptr.cast());
@@ -505,14 +523,14 @@ unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
     _mm_movemask_epi8(eq) == 0xFFFF
 }
 
-/// Check if the word of `len` bytes at `ptr`, zero-padded to 16 bytes, is equal to `text`.
+/// [`text_matches`] for Neon.
 ///
 /// # SAFETY
 ///
-/// `ptr` must be valid for reading 16 bytes, and `len` must be between 0 and 16 (inclusive).
-#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+/// Same as [`text_matches`].
+#[cfg(target_arch = "aarch64")]
 #[inline(always)]
-unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
+unsafe fn text_matches_neon(ptr: *const u8, len: usize, text: &[u64; 2], _cpu: Neon) -> bool {
     use std::arch::aarch64::{vandq_u8, veorq_u8, vgetq_lane_u64, vld1q_u8, vreinterpretq_u64_u8};
 
     let word = vld1q_u8(ptr);
@@ -524,22 +542,13 @@ unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
     (vgetq_lane_u64::<0>(diff) | vgetq_lane_u64::<1>(diff)) == 0
 }
 
-/// Check if the word of `len` bytes at `ptr`, zero-padded to 16 bytes, is equal to `text`.
+/// [`text_matches`] for all other CPUs.
 ///
 /// # SAFETY
 ///
-/// `ptr` must be valid for reading 16 bytes, and `len` must be between 0 and 16 (inclusive).
-#[cfg(not(any(
-    all(
-        target_arch = "x86_64",
-        target_feature = "avx2",
-        target_feature = "bmi2",
-        target_feature = "popcnt"
-    ),
-    all(target_arch = "aarch64", target_feature = "neon")
-)))]
+/// Same as [`text_matches`].
 #[inline(always)]
-unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
+unsafe fn text_matches_generic(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
     use ptr::read_unaligned;
 
     let ptr = ptr as *const u64;
@@ -599,9 +608,9 @@ mod tests {
         // SAFETY: `buf` is 48 bytes. `word.len()` is between 1-16 bytes.
         unsafe {
             if is_ts {
-                kw_match::<true>(buf.as_ptr(), word.len())
+                kw_match::<true>(buf.as_ptr(), word.len(), BASELINE)
             } else {
-                kw_match::<false>(buf.as_ptr(), word.len())
+                kw_match::<false>(buf.as_ptr(), word.len(), BASELINE)
             }
         }
     }

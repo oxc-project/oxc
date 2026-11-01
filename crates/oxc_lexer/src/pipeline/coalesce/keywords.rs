@@ -49,7 +49,7 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
     kind: *mut u8,
     pos: *const u32,
     k: usize,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) {
     for ix in 0..k {
         let p = *pos.add(ix) as usize;
@@ -57,7 +57,7 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
         // Candidates are code-level identifier starts (carve cleared every
         // literal interior and JSX start from the masks), so the incumbent
         // kind is IDENT: select over it instead of a read-modify-write.
-        *kind.add(p) = kw_match::<IS_TS>(src.add(p), len) as u8;
+        *kind.add(p) = kw_match::<IS_TS>(src.add(p), len, cpu) as u8;
     }
 }
 
@@ -80,10 +80,14 @@ pub(super) unsafe fn kw_match_word(
     src: *const u8,
     word: *const u64,
     pos: usize,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) -> TokenKind {
     let len = word_len(word, pos);
-    if ts { kw_match::<true>(src.add(pos), len) } else { kw_match::<false>(src.add(pos), len) }
+    if ts {
+        kw_match::<true>(src.add(pos), len, cpu)
+    } else {
+        kw_match::<false>(src.add(pos), len, cpu)
+    }
 }
 
 /// Get the length of the word starting at `pos` from the word bitmap, capped at 16 (`kw_match`'s limit).
