@@ -81,9 +81,6 @@ void (async () => {
     releaseExternalServicesForExit();
     // `runCli()` returns `null` only for the `init` and `migrate:*` modes, which returned above.
     process.exitCode = exitCode!;
-    // After `exit`, skip the native teardown (environment cleanup and V8 isolate disposal).
-    // A microtask runs after all `exit` listeners. `process.nextTick` does not run here.
-    process.once("exit", () => queueMicrotask(() => process.exit()));
     return;
   }
 
