@@ -21,11 +21,11 @@ pub unsafe fn scan_quoted(
     mut i: usize,
     q: u8,
     saw_nl: &mut bool,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) -> usize {
     loop {
         // LF/CR are watched too: raw line terminators in strings are diagnosed.
-        let p = find(src, n, i, [q, b'\\', b'\n', b'\r']);
+        let p = find(src, n, i, [q, b'\\', b'\n', b'\r'], cpu);
         if p >= n {
             return n;
         }
@@ -54,11 +54,11 @@ pub unsafe fn scan_regex(
     n: usize,
     mut i: usize,
     nl_at: &mut usize,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) -> usize {
     let mut incl = false;
     loop {
-        let p = find(src, n, i, REGEX_BYTES);
+        let p = find(src, n, i, REGEX_BYTES, cpu);
         if p >= n {
             return n;
         }
@@ -135,10 +135,10 @@ pub unsafe fn scan_tmpl_text(
     n: usize,
     mut i: usize,
     term: &mut i32,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) -> usize {
     loop {
-        let p = find(src, n, i, [b'`', b'\\', b'$']);
+        let p = find(src, n, i, [b'`', b'\\', b'$'], cpu);
         if p >= n {
             *term = 0;
             return n;

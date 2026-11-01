@@ -199,10 +199,10 @@ pub(super) unsafe fn find_line_terminator(
     src: *const u8,
     n: usize,
     mut i: usize,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) -> usize {
     loop {
-        let p = find(src, n, i, [b'\n', b'\r', 0xE2]);
+        let p = find(src, n, i, [b'\n', b'\r', 0xE2], cpu);
         if p >= n {
             return n;
         }

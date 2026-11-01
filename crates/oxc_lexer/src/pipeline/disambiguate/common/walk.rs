@@ -81,11 +81,11 @@ impl Brackets {
 /// Bits of the 64 bytes at `base` that are brackets (bytes at or past `n` are clear). The source
 /// carries `PAD` bytes past `n`, so a whole word is readable whenever `base < n`.
 #[apply(cpu_versions)]
-fn bracket_word(src: &[u8], base: usize, n: usize, _cpu: impl Cpu) -> u64 {
+fn bracket_word(src: &[u8], base: usize, n: usize, cpu: impl Cpu) -> u64 {
     if base >= n {
         return 0;
     }
-    let mut out = bracket_bits(src, base);
+    let mut out = bracket_bits(src, base, cpu);
     if base + 64 > n {
         out &= (1u64 << (n - base)) - 1;
     }

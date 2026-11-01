@@ -121,10 +121,10 @@ pub(super) unsafe fn carve_jsx(
                 // The finders that also stop at `>` are only switched on by a `<!--` in a
                 // script (see `html_close`).
                 let s = match (in_brace, html_close) {
-                    (true, false) => find(src, n, i, OPENER_JSX7_BYTES),
-                    (true, true) => find(src, n, i, OPENER8_BYTES),
-                    (false, false) => find(src, n, i, OPENER_JSX5_BYTES),
-                    (false, true) => find(src, n, i, OPENER_BYTES),
+                    (true, false) => find(src, n, i, OPENER_JSX7_BYTES, cpu),
+                    (true, true) => find(src, n, i, OPENER8_BYTES, cpu),
+                    (false, false) => find(src, n, i, OPENER_JSX5_BYTES, cpu),
+                    (false, true) => find(src, n, i, OPENER_BYTES, cpu),
                 };
                 if s >= n {
                     break;
@@ -299,7 +299,7 @@ pub(super) unsafe fn carve_jsx(
                 }
             }
             JMode::Tag => {
-                let s = find(src, n, i, JSX_TAG_BYTES);
+                let s = find(src, n, i, JSX_TAG_BYTES, cpu);
                 if s >= n {
                     break;
                 }
@@ -356,9 +356,9 @@ pub(super) unsafe fn carve_jsx(
                     let mut sub: Vec<u32> = Vec::new();
                     while p < n && depth != 0 {
                         let q = if !sub.is_empty() {
-                            find(src, n, p, OPENER8_BYTES)
+                            find(src, n, p, OPENER8_BYTES, cpu)
                         } else {
-                            find(src, n, p, OPENER_BYTES)
+                            find(src, n, p, OPENER_BYTES, cpu)
                         };
                         if q >= n {
                             p = n;
@@ -459,7 +459,7 @@ pub(super) unsafe fn carve_jsx(
                 match c {
                     b'"' | b'\'' => {
                         // JSX attribute string: no escapes, ends at next quote.
-                        let e = find(src, n, s + 1, [c]);
+                        let e = find(src, n, s + 1, [c], cpu);
                         if e >= n {
                             lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedString);
                         }
@@ -551,7 +551,7 @@ pub(super) unsafe fn carve_jsx(
                 }
             }
             JMode::Text => {
-                let s = find(src, n, i, JSX_TEXT_BYTES);
+                let s = find(src, n, i, JSX_TEXT_BYTES, cpu);
                 let runend = if s < n { s } else { n };
                 if runend > text_start {
                     // One JTEXT token for the run; neutralize its start byte
@@ -615,7 +615,7 @@ pub(super) unsafe fn carve_jsx(
                         }
                         let mut gp = tpos + 1;
                         loop {
-                            gp = find(src, n, gp, [b'>', b'/']);
+                            gp = find(src, n, gp, [b'>', b'/'], cpu);
                             if gp >= n || *src.add(gp) == b'>' {
                                 break;
                             }
