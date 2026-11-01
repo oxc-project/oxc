@@ -3,8 +3,8 @@ checker.ts:
   sys allocs: 27
   sys reallocs: 10
   sys deallocs: 27
-  sys alloc bytes: 4820 # 4.82 kB
-  sys peak growth: 2432 # 2.43 kB
+  sys alloc bytes: 12040 # 12.04 kB
+  sys peak growth: 7300 # 7.30 kB
   arena allocs: 259307
   arena reallocs: 15233
   arena size: 12875504 # 12.88 MB
@@ -70,7 +70,7 @@ kitchen-sink.tsx:
   sys reallocs: 159
   sys deallocs: 190
   sys alloc bytes: 40245 # 40.24 kB
-  sys peak growth: 3892 # 3.89 kB
+  sys peak growth: 8680 # 8.68 kB
   arena allocs: 135713
   arena reallocs: 8759
   arena size: 6398256 # 6.40 MB
