@@ -9,6 +9,8 @@ use super::*;
 
 impl Walk {
     pub(super) fn step_op(&mut self, tokens: &Tokens, pos: usize, newline: bool) -> usize {
+        let cpu = BASELINE;
+
         let c = tokens.src[pos];
         let mut len = if is_op_char(c) || c == b'/' { tokens.op_len(pos) } else { 1 };
         let c1 = tokens.src[pos + 1];
@@ -82,7 +84,7 @@ impl Walk {
                 && tokens.ts
                 && !self.operand_allowed()
                 && !self.no_type_args
-                && lt_run_split(tokens, pos) =>
+                && lt_run_split(tokens, pos, cpu) =>
             {
                 self.less_than(tokens, pos);
                 return pos + 1;

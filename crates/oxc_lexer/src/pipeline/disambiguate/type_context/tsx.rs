@@ -22,13 +22,13 @@ pub fn jsx_over_generic(
     walks: &mut Walks,
     lt: usize,
     lp: usize,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) -> (bool, bool) {
     let site = context::before(tokens, walks, lt);
     if site.in_type || site.type_params {
         return (false, false);
     }
-    if arrow_after_params(tokens, lp) {
+    if arrow_after_params(tokens, lp, cpu) {
         return (false, site.operand);
     }
     (true, false)
