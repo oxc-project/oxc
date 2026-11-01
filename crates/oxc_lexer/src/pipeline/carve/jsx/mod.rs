@@ -91,7 +91,7 @@ pub(super) unsafe fn carve_jsx(
     kwinit: *mut u64,
     ts: bool,
     lanes: &mut Lanes,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) {
     let src = srcs.as_ptr();
     // Annex B B.1.3 (`-->` at line start) needs JS mode to stop at `>`, which JSX is full of.
@@ -132,7 +132,7 @@ pub(super) unsafe fn carve_jsx(
                 let c = *src.add(s);
                 match c {
                     b'"' | b'\'' => {
-                        i = lex_string(src, srcs, n, st, kind, s, c, lanes);
+                        i = lex_string(src, srcs, n, st, kind, s, c, lanes, cpu);
                     }
                     b'`' => {
                         let (end, opened_sub) = lex_template_segment(
@@ -145,6 +145,7 @@ pub(super) unsafe fn carve_jsx(
                             tk!(TemplateHead),
                             tk!(TemplateNoSub),
                             lanes,
+                            cpu,
                         );
                         if opened_sub {
                             stack.push(JFrame {
@@ -187,6 +188,7 @@ pub(super) unsafe fn carve_jsx(
                                 tk!(TemplateMiddle),
                                 tk!(TemplateTail),
                                 lanes,
+                                cpu,
                             );
                             if opened_sub {
                                 stack.push(JFrame {
@@ -211,7 +213,7 @@ pub(super) unsafe fn carve_jsx(
                         }
                     }
                     b'/' => {
-                        i = lex_slash(src, srcs, n, st, kind, opch, word, ts, s, lanes);
+                        i = lex_slash(src, srcs, n, st, kind, opch, word, ts, s, lanes, cpu);
                     }
                     b'<' => {
                         let c1 = if s + 1 < n { *src.add(s + 1) } else { 0 };
@@ -374,7 +376,7 @@ pub(super) unsafe fn carve_jsx(
                                 p = q + 1;
                             }
                             b'"' | b'\'' => {
-                                p = lex_string(src, srcs, n, st, kind, q, *src.add(q), lanes);
+                                p = lex_string(src, srcs, n, st, kind, q, *src.add(q), lanes, cpu);
                             }
                             b'`' => {
                                 let (end, opened) = lex_template_segment(
@@ -387,6 +389,7 @@ pub(super) unsafe fn carve_jsx(
                                     tk!(TemplateHead),
                                     tk!(TemplateNoSub),
                                     lanes,
+                                    cpu,
                                 );
                                 p = end;
                                 if opened {
@@ -422,6 +425,7 @@ pub(super) unsafe fn carve_jsx(
                                     tk!(TemplateMiddle),
                                     tk!(TemplateTail),
                                     lanes,
+                                    cpu,
                                 );
                                 p = end;
                                 if opened {

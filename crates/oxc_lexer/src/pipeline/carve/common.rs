@@ -3,6 +3,7 @@ use crate::{error::DiagCode, token::tk};
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0},
     bytes::hex_val,
+    cpu::Cpu,
     disambiguate::not_operator_position,
     find::find,
     lanes::Lanes,
@@ -30,6 +31,7 @@ pub(super) unsafe fn lex_string(
     s: usize,
     c: u8,
     lanes: &mut Lanes,
+    _cpu: impl Cpu,
 ) -> usize {
     let mut saw_nl = false;
     let e = scan_quoted(src, n, s + 1, c, &mut saw_nl);
@@ -70,6 +72,7 @@ pub(super) unsafe fn lex_template_segment(
     head_kind: u8,
     flat_kind: u8,
     lanes: &mut Lanes,
+    _cpu: impl Cpu,
 ) -> (usize, bool) {
     let mut term = 0i32;
     let end = scan_tmpl_text(src, n, s + 1, &mut term);
@@ -98,6 +101,7 @@ pub(super) unsafe fn lex_slash(
     ts: bool,
     s: usize,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) -> usize {
     let d = if s + 1 < n { *src.add(s + 1) } else { 0 };
     if d == b'/' {
@@ -120,7 +124,7 @@ pub(super) unsafe fn lex_slash(
         &mut lanes.disambiguate.walks,
         s,
     ) {
-        lex_regex(src, srcs, n, st, kind, word, s, lanes)
+        lex_regex(src, srcs, n, st, kind, word, s, lanes, cpu)
     } else if s + 1 < n && *src.add(s + 1) == b'=' {
         // `/=`: absorb the `=`.
         *kind.add(s) = tk!(SlashEq);
@@ -144,6 +148,7 @@ unsafe fn lex_regex(
     word: *const u64,
     s: usize,
     lanes: &mut Lanes,
+    _cpu: impl Cpu,
 ) -> usize {
     let mut nl_at = usize::MAX;
     let e = scan_regex(src, n, s + 1, &mut nl_at);
