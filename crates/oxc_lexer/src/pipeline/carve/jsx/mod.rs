@@ -323,7 +323,8 @@ pub(super) unsafe fn carve_jsx(
                         &lanes.disambiguate.brackets,
                         &lanes.disambiguate.closers,
                     );
-                    if prev_sig(tokens.st, tokens.kind, s).is_some_and(|q| *src.add(q) == b'=') {
+                    if prev_sig(tokens.st, tokens.kind, s, cpu).is_some_and(|q| *src.add(q) == b'=')
+                    {
                         let tpos = jsx_skip_trivia(src, n, s + 1, cpu);
                         jsx_punct(kind, opch, s, tk!(JsxLt));
                         stack.push(JFrame {

@@ -77,9 +77,9 @@ impl Default for DisambiguateState {
 impl DisambiguateState {
     /// A new lex over `n` bytes of a script or module.
     #[apply(cpu_versions)]
-    pub fn begin(&mut self, n: usize, module: bool, _cpu: impl Cpu) {
+    pub fn begin(&mut self, n: usize, module: bool, cpu: impl Cpu) {
         self.walks.restart(module);
-        self.brackets.begin(n);
+        self.brackets.begin(n, cpu);
         self.closers.clear();
     }
 
