@@ -36,6 +36,7 @@ use crate::{
         get_declaration_from_reference_id, get_declaration_of_variable, get_enclosing_function,
     },
     context::LintContext,
+    fixer::RuleFixer,
     rule::{DefaultRuleConfig, Rule},
     utils::deserialize_regex_option,
 };
@@ -605,21 +606,12 @@ impl Rule for ExhaustiveDeps {
         let undeclared_deps = found_dependencies
             .difference(&declared_dependencies)
             .filter(|dep| {
-                // `foo.current` reads should be attributed to `foo` when `foo` is also tracked.
-                // This matches react-hooks behavior for ref-like values passed as props.
-                if dep.chain.last().is_some_and(|part| part == "current") {
-                    let mut base_chain = dep.chain.clone();
-                    base_chain.pop();
-                    let base_dependency = Dependency {
-                        span: dep.span,
-                        name: dep.name,
-                        reference_id: dep.reference_id,
-                        symbol_id: dep.symbol_id,
-                        chain: base_chain,
-                    };
-                    if found_dependencies.contains(&base_dependency) {
-                        return false;
-                    }
+                // Reading an object already covers its properties, including `.current`.
+                if found_dependencies
+                    .iter()
+                    .any(|other| dep.chain.len() > other.chain.len() && dep.contains(other))
+                {
+                    return false;
                 }
 
                 if declared_dependencies.iter().any(|decl_dep| dep.contains(decl_dep)) {
@@ -638,6 +630,48 @@ impl Rule for ExhaustiveDeps {
                 true
             })
             .collect::<Vec<_>>();
+
+        let update_dependencies = |fixer: RuleFixer<'_, 'a>| {
+            let mut suggested = if !is_effect && !undeclared_deps.is_empty() {
+                // Like eslint-plugin-react-hooks, recalculate non-effect dependencies when
+                // some are missing. Effects may intentionally specify extra dependencies.
+                // https://github.com/facebook/react/blob/main/packages/eslint-plugin-react-hooks/src/rules/ExhaustiveDeps.ts
+                found_dependencies
+                    .iter()
+                    .filter(|dep| {
+                        !found_dependencies
+                            .iter()
+                            .any(|other| dep.chain.len() > other.chain.len() && dep.contains(other))
+                            && is_identifier_a_dependency(
+                                dep.name,
+                                dep.reference_id,
+                                dep.span,
+                                ctx,
+                                component_scope_id,
+                            )
+                    })
+                    .map(|dep| declared_dependencies.get(dep).unwrap_or(dep))
+                    .collect::<Vec<_>>()
+            } else {
+                declared_dependencies
+                    .iter()
+                    .filter(|dep| {
+                        is_effect
+                            || (found_dependencies.iter().any(|found| found.contains(dep))
+                                && !declared_dependencies.iter().any(|other| {
+                                    dep.chain.len() > other.chain.len() && dep.contains(other)
+                                }))
+                    })
+                    .chain(undeclared_deps.iter().copied())
+                    .collect::<Vec<_>>()
+            };
+            suggested.sort_unstable_by(|a, b| {
+                a.name.cmp(&b.name).then_with(|| {
+                    a.chain.iter().map(Str::as_str).cmp(b.chain.iter().map(Str::as_str))
+                })
+            });
+            fix::replace_dependencies(fixer, &suggested, dependencies_node, ctx)
+        };
 
         if !undeclared_deps.is_empty() {
             let undeclared = undeclared_deps.iter().copied().map(Name::from).collect::<Vec<_>>();
@@ -668,7 +702,7 @@ impl Rule for ExhaustiveDeps {
                     dependencies_node.span(),
                     mutable_ref_dependency.as_deref(),
                 ),
-                |fixer| fix::append_dependencies(fixer, &undeclared, dependencies_node.as_ref()),
+                update_dependencies,
             );
         }
 
@@ -691,17 +725,23 @@ impl Rule for ExhaustiveDeps {
             // `props.foo.bar.baz` is unnecessary (already covered by `props.foo`)
             declared_dependencies.iter().array_combinations().for_each(|[a, b]| {
                 if a.contains(b) {
-                    ctx.diagnostic(unnecessary_dependency_diagnostic(
-                        hook_name,
-                        &a.to_string(),
-                        dependencies_node.span,
-                    ));
+                    ctx.diagnostic_with_dangerous_suggestion(
+                        unnecessary_dependency_diagnostic(
+                            hook_name,
+                            &a.to_string(),
+                            dependencies_node.span,
+                        ),
+                        update_dependencies,
+                    );
                 } else if b.contains(a) {
-                    ctx.diagnostic(unnecessary_dependency_diagnostic(
-                        hook_name,
-                        &b.to_string(),
-                        dependencies_node.span,
-                    ));
+                    ctx.diagnostic_with_dangerous_suggestion(
+                        unnecessary_dependency_diagnostic(
+                            hook_name,
+                            &b.to_string(),
+                            dependencies_node.span,
+                        ),
+                        update_dependencies,
+                    );
                 }
             });
 
@@ -718,11 +758,14 @@ impl Rule for ExhaustiveDeps {
                     continue;
                 }
 
-                ctx.diagnostic(unnecessary_dependency_diagnostic(
-                    hook_name,
-                    &dep.to_string(),
-                    dependencies_node.span,
-                ));
+                ctx.diagnostic_with_dangerous_suggestion(
+                    unnecessary_dependency_diagnostic(
+                        hook_name,
+                        &dep.to_string(),
+                        dependencies_node.span,
+                    ),
+                    update_dependencies,
+                );
             }
         }
 
@@ -1469,9 +1512,9 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 }
 
 mod fix {
-    use super::Name;
-    use oxc_allocator::{Allocator, ArenaVec, CloneIn};
+    use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn};
     use oxc_ast::{
+        AstKind,
         ast::{ArrayExpression, Expression},
         builder::AstBuilder,
     };
@@ -1479,35 +1522,61 @@ mod fix {
     use oxc_str::Str;
 
     use crate::{
+        context::LintContext,
         fixer::{RuleFix, RuleFixer},
         rules::react::exhaustive_deps::Dependency,
     };
 
-    pub fn append_dependencies<'c, 'a: 'c>(
+    pub fn replace_dependencies<'c, 'a: 'c>(
         fixer: RuleFixer<'c, 'a>,
-        names: &[Name<'a>],
+        dependencies: &[&Dependency<'a>],
         deps: &ArrayExpression<'a>,
+        ctx: &LintContext<'a>,
     ) -> RuleFix {
         let mut codegen = fixer.codegen();
 
         let alloc = Allocator::default();
-        let alloc = &alloc;
-        let ast_builder = AstBuilder::new(alloc);
+        let ast_builder = AstBuilder::new(&alloc);
 
-        let mut vec = deps.elements.clone_in(alloc);
-
-        for name in names {
-            vec.push(
+        let elements = dependencies.iter().map(|dependency| {
+            if let Some(element) = deps
+                .elements
+                .iter()
+                .find(|element| element.span().contains_inclusive(dependency.span))
+            {
+                // Preserve optional chains and parentheses in retained dependencies.
+                element.clone_in(&alloc)
+            } else if !dependency.chain.is_empty()
+                && let Some(member) = ctx
+                    .nodes()
+                    .ancestors(ctx.scoping().get_reference(dependency.reference_id).node_id())
+                    .filter_map(|node| match node.kind() {
+                        AstKind::StaticMemberExpression(member) => Some(member),
+                        _ => None,
+                    })
+                    .nth(dependency.chain.len() - 1)
+            {
+                // Reuse the callback's member access so narrowing a dependency preserves `?.`.
+                Expression::StaticMemberExpression(ArenaBox::new_in(
+                    member.clone_in(&alloc),
+                    &ast_builder,
+                ))
+                .into()
+            } else {
                 Expression::new_identifier(
                     SPAN,
-                    Str::from_cow_in(&name.name, &alloc),
+                    Str::from_str_in(&dependency.to_string(), &ast_builder),
                     &ast_builder,
                 )
-                .into(),
-            );
-        }
+                .into()
+            }
+        });
 
-        codegen.print_expression(&Expression::new_array_expression(SPAN, vec, &ast_builder));
+        codegen.print_expression(&Expression::new_array_expression(
+            SPAN,
+            ArenaVec::from_iter_in(elements, &ast_builder),
+            &ast_builder,
+        ));
         fixer.replace(deps.span, codegen.into_source_text())
     }
 
@@ -4417,12 +4486,12 @@ const Component = ({ filter }) => {
         ),
         (
             "function MyComponent(props) { useEffect(() => { console.log(props.foo, props.bar); }, []); }",
-            "function MyComponent(props) { useEffect(() => { console.log(props.foo, props.bar); }, [props.foo, props.bar]); }",
+            "function MyComponent(props) { useEffect(() => { console.log(props.foo, props.bar); }, [props.bar, props.foo]); }",
         ),
         // Test adding to existing dependencies
         (
             "function MyComponent(props) { const local = someFunc(); useEffect(() => { console.log(props.foo, local); }, [props.foo]); }",
-            "function MyComponent(props) { const local = someFunc(); useEffect(() => { console.log(props.foo, local); }, [props.foo, local]); }",
+            "function MyComponent(props) { const local = someFunc(); useEffect(() => { console.log(props.foo, local); }, [local, props.foo]); }",
         ),
         // Test dependency array creation for hooks that require it
         (
@@ -4467,4 +4536,72 @@ const Component = ({ filter }) => {
     )
     .expect_fix(fix)
     .test_and_snapshot();
+}
+
+#[test]
+fn test_dependency_suggestions() {
+    use crate::tester::Tester;
+
+    let fix = vec![
+        (
+            "function FileList({ files, filter }) { const filteredFiles = files.filter(filter); return useMemo(() => filteredFiles.map(f => f.name), [files]); }",
+            "function FileList({ files, filter }) { const filteredFiles = files.filter(filter); return useMemo(() => filteredFiles.map(f => f.name), [filteredFiles]); }",
+        ),
+        (
+            "function FileList({ files, filter }) { const filteredFiles = files.filter(filter); return useMemo(() => `${filteredFiles.length} files: ${filteredFiles.join(', ')}`, []); }",
+            "function FileList({ files, filter }) { const filteredFiles = files.filter(filter); return useMemo(() => `${filteredFiles.length} files: ${filteredFiles.join(', ')}`, [filteredFiles]); }",
+        ),
+        (
+            "function A({ files, other }) { return useMemo(() => files.length, [files, other]); }",
+            "function A({ files, other }) { return useMemo(() => files.length, [files]); }",
+        ),
+        (
+            "function A({ files }) { return useMemo(() => files.length, [files.length, files]); }",
+            "function A({ files }) { return useMemo(() => files.length, [files]); }",
+        ),
+        (
+            "function A(props) { return useMemo(() => [props.user.name, props.user], []); }",
+            "function A(props) { return useMemo(() => [props.user.name, props.user], [props.user]); }",
+        ),
+        (
+            "function A({ a, b }) { return useCallback(() => b + a, []); }",
+            "function A({ a, b }) { return useCallback(() => b + a, [a, b]); }",
+        ),
+        (
+            "function A({ a, b, other }) { return useMemo(() => b + a, [a, other]); }",
+            "function A({ a, b, other }) { return useMemo(() => b + a, [a, b]); }",
+        ),
+        (
+            "function A(props, other) { return useMemo(() => props.value + other, [props]); }",
+            "function A(props, other) { return useMemo(() => props.value + other, [other, props.value]); }",
+        ),
+        (
+            "function A({ files, other }) { useEffect(() => console.log(files.length), [other]); }",
+            "function A({ files, other }) { useEffect(() => console.log(files.length), [files.length, other]); }",
+        ),
+        (
+            "function A({ obj, other }) { return useMemo(() => obj?.value + other, [obj?.value]); }",
+            "function A({ obj, other }) { return useMemo(() => obj?.value + other, [obj?.value, other]); }",
+        ),
+        (
+            "function A({ obj, other }) { return useMemo(() => obj?.value, [obj?.value, other]); }",
+            "function A({ obj, other }) { return useMemo(() => obj?.value, [obj?.value]); }",
+        ),
+        (
+            "function A({ obj, other }) { return useMemo(() => obj?.value + other, [obj]); }",
+            "function A({ obj, other }) { return useMemo(() => obj?.value + other, [obj?.value, other]); }",
+        ),
+        (
+            "function A({ obj }) { return useMemo(() => obj?.value?.name, []); }",
+            "function A({ obj }) { return useMemo(() => obj?.value?.name, [obj?.value?.name]); }",
+        ),
+    ];
+
+    // Each suggestion must also pass the rule on the next lint run.
+    let pass = fix.iter().map(|(_, fixed)| *fixed).collect::<Vec<_>>();
+    let fail = fix.iter().map(|(source, _)| *source).collect::<Vec<_>>();
+    Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, pass, fail)
+        .with_snapshot_suffix("dependency_suggestions")
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

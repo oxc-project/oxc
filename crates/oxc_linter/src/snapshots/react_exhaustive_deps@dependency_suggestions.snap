@@ -1,0 +1,117 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'filteredFiles'
+   ╭─[exhaustive_deps.tsx:1:137]
+ 1 │ function FileList({ files, filter }) { const filteredFiles = files.filter(filter); return useMemo(() => filteredFiles.map(f => f.name), [files]); }
+   ·                                                                                                         ──────┬──────                   ───────
+   ·                                                                                                               ╰── useMemo uses `filteredFiles` here
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useMemo has unnecessary dependency: files
+   ╭─[exhaustive_deps.tsx:1:137]
+ 1 │ function FileList({ files, filter }) { const filteredFiles = files.filter(filter); return useMemo(() => filteredFiles.map(f => f.name), [files]); }
+   ·                                                                                                                                         ───────
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'filteredFiles'
+   ╭─[exhaustive_deps.tsx:1:167]
+ 1 │ function FileList({ files, filter }) { const filteredFiles = files.filter(filter); return useMemo(() => `${filteredFiles.length} files: ${filteredFiles.join(', ')}`, []); }
+   ·                                                                                                                                           ──────┬──────               ──
+   ·                                                                                                                                                 ╰── useMemo uses `filteredFiles` here
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useMemo has unnecessary dependency: other
+   ╭─[exhaustive_deps.tsx:1:67]
+ 1 │ function A({ files, other }) { return useMemo(() => files.length, [files, other]); }
+   ·                                                                   ──────────────
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useMemo has unnecessary dependency: files.length
+   ╭─[exhaustive_deps.tsx:1:60]
+ 1 │ function A({ files }) { return useMemo(() => files.length, [files.length, files]); }
+   ·                                                            ─────────────────────
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'props.user'
+   ╭─[exhaustive_deps.tsx:1:73]
+ 1 │ function A(props) { return useMemo(() => [props.user.name, props.user], []); }
+   ·                                                            ──┬──        ──
+   ·                                                              ╰── useMemo uses `props.user` here
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has missing dependencies: 'b', and 'a'
+   ╭─[exhaustive_deps.tsx:1:56]
+ 1 │ function A({ a, b }) { return useCallback(() => b + a, []); }
+   ·                                                 ─   ─  ──
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'b'
+   ╭─[exhaustive_deps.tsx:1:59]
+ 1 │ function A({ a, b, other }) { return useMemo(() => b + a, [a, other]); }
+   ·                                                    ┬      ──────────
+   ·                                                    ╰── useMemo uses `b` here
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useMemo has unnecessary dependency: other
+   ╭─[exhaustive_deps.tsx:1:59]
+ 1 │ function A({ a, b, other }) { return useMemo(() => b + a, [a, other]); }
+   ·                                                           ──────────
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'other'
+   ╭─[exhaustive_deps.tsx:1:70]
+ 1 │ function A(props, other) { return useMemo(() => props.value + other, [props]); }
+   ·                                                               ──┬──  ───────
+   ·                                                                 ╰── useMemo uses `other` here
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'files.length'
+   ╭─[exhaustive_deps.tsx:1:75]
+ 1 │ function A({ files, other }) { useEffect(() => console.log(files.length), [other]); }
+   ·                                                            ──┬──          ───────
+   ·                                                              ╰── useEffect uses `files.length` here
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'other'
+   ╭─[exhaustive_deps.tsx:1:71]
+ 1 │ function A({ obj, other }) { return useMemo(() => obj?.value + other, [obj?.value]); }
+   ·                                                                ──┬──  ────────────
+   ·                                                                  ╰── useMemo uses `other` here
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useMemo has unnecessary dependency: other
+   ╭─[exhaustive_deps.tsx:1:63]
+ 1 │ function A({ obj, other }) { return useMemo(() => obj?.value, [obj?.value, other]); }
+   ·                                                               ───────────────────
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'other'
+   ╭─[exhaustive_deps.tsx:1:71]
+ 1 │ function A({ obj, other }) { return useMemo(() => obj?.value + other, [obj]); }
+   ·                                                                ──┬──  ─────
+   ·                                                                  ╰── useMemo uses `other` here
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'obj.value.name'
+   ╭─[exhaustive_deps.tsx:1:62]
+ 1 │ function A({ obj }) { return useMemo(() => obj?.value?.name, []); }
+   ·                                            ─────┬────        ──
+   ·                                                 ╰── useMemo uses `obj.value.name` here
+   ╰────
+  help: Either include it or remove the dependency array.
