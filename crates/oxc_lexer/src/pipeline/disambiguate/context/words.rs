@@ -24,7 +24,7 @@ impl Walk {
 
         // Member keys in object literals / class bodies.
         if matches!(self.top_kind(), FrameKind::Object | FrameKind::ClassBody)
-            && self.top().state == M_KEY_POS
+            && self.top().member == Member::KeyPos
         {
             return self.member_word(tokens, pos, end, kw);
         }
@@ -73,7 +73,7 @@ impl Walk {
             tk!(KwOf) => {
                 // tsc reads of after any value that ends the first expression of the head.
                 self.top_kind() == FrameKind::Head
-                    && self.top().state == F_OF
+                    && !self.top().of_closed
                     && !self.operand_allowed()
             }
             tk!(KwLet) => {
@@ -116,7 +116,7 @@ impl Walk {
                 export_as || (tokens.ts && !self.operand_allowed() && !in_module_clause)
             }
             tk!(KwStatic) => {
-                self.top_kind() == FrameKind::ClassBody && self.top().state == M_KEY_POS
+                self.top_kind() == FrameKind::ClassBody && self.top().member == Member::KeyPos
             }
             tk!(KwImplements) => self.top_kind() == FrameKind::ClassHead,
             tk!(KwFrom) => matches!(self.stmt_reg(), StmtReg::Import | StmtReg::Export),
@@ -191,7 +191,7 @@ impl Walk {
                 | KwInstanceof | KwOf | KwDebugger | KwExtends | KwImplements | KwFrom
             ) => {
                 if self.top_kind() == FrameKind::Head && matches_tk!(kw, KwOf | KwIn) {
-                    self.top_mut().state = F_NO_OF;
+                    self.top_mut().of_closed = true;
                 }
                 self.keyword(kw);
             }
@@ -211,7 +211,7 @@ impl Walk {
             }
             tk!(KwVar | KwConst | KwLet | KwUsing) => {
                 if self.top_kind().is_stmt_holder() {
-                    self.top_mut().state = D_BINDING;
+                    self.top_mut().declarator = Declarator::Binding;
                 }
                 self.keyword(kw);
             }
@@ -333,7 +333,7 @@ impl Walk {
             return end;
         }
         // The key itself.
-        self.top_mut().state = M_KEY_SEEN;
+        self.top_mut().member = Member::KeySeen;
         self.value_done();
         end
     }

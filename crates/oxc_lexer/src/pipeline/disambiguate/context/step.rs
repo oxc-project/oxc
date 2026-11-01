@@ -52,7 +52,7 @@ impl Walk {
             self.asi(tokens, pos);
         }
         // A binding that ended the line goes on with =, a comma or a type annotation only.
-        if newline && !self.operand_allowed() && self.top_declarator() == D_BOUND {
+        if newline && !self.operand_allowed() && self.top().declarator == Declarator::Bound {
             let c = tokens.src[pos];
             if !(k >= OP_KIND_BASE && matches!(c, b'=' | b',' | b':')) {
                 self.end_statement();
@@ -241,8 +241,8 @@ impl Walk {
         }
         // Member keys.
         match self.top_kind() {
-            FrameKind::Object | FrameKind::ClassBody if self.top().state == M_KEY_POS => {
-                self.top_mut().state = M_KEY_SEEN;
+            FrameKind::Object | FrameKind::ClassBody if self.top().member == Member::KeyPos => {
+                self.top_mut().member = Member::KeySeen;
                 self.value_done();
                 return;
             }

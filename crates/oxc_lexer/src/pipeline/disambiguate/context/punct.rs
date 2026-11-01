@@ -45,7 +45,7 @@ impl Walk {
             // A spread: what follows is a value, not a member key.
             b'.' if len == 3 => {
                 if self.top_kind() == FrameKind::Object {
-                    self.top_mut().state = M_VALUE;
+                    self.top_mut().member = Member::Value;
                 }
                 self.operand_done();
             }
@@ -68,7 +68,7 @@ impl Walk {
             }
             b'*' if len == 1
                 && matches!(self.top_kind(), FrameKind::Object | FrameKind::ClassBody)
-                && self.top().state == M_KEY_POS =>
+                && self.top().member == Member::KeyPos =>
             {
                 self.top_mut().mods |= MOD_GEN;
                 self.operand_done();
@@ -124,11 +124,11 @@ impl Walk {
             self.open_region(RegionRule::Stmt);
             return;
         }
-        if self.top_declarator() == D_BOUND {
-            self.top_mut().state = D_INIT;
+        if self.top().declarator == Declarator::Bound {
+            self.top_mut().declarator = Declarator::Init;
         }
         if self.top_kind() == FrameKind::ClassBody {
-            self.top_mut().state = M_VALUE;
+            self.top_mut().member = Member::Value;
         }
         self.operand_done();
     }
@@ -164,7 +164,7 @@ impl Walk {
         }
         match top {
             FrameKind::Object => {
-                self.top_mut().state = M_VALUE;
+                self.top_mut().member = Member::Value;
                 self.operand_done();
                 return;
             }
@@ -198,7 +198,7 @@ impl Walk {
             self.clear_prev();
             return;
         }
-        if tokens.ts && self.top_declarator() == D_BOUND {
+        if tokens.ts && self.top().declarator == Declarator::Bound {
             // Declarator type annotation.
             self.open_region(RegionRule::Inline);
             return;
@@ -223,11 +223,7 @@ impl Walk {
         self.pop_concise();
         match self.top_kind() {
             FrameKind::Head => {
-                let f = self.top_mut();
-                f.state = F_NO_OF;
-                f.open_questions = 0;
-                let si = self.stmt_frame();
-                self.frames[si].state = D_NONE;
+                self.top_mut().open_questions = 0;
                 self.operand_done();
             }
             FrameKind::ClassBody => {
@@ -251,8 +247,8 @@ impl Walk {
                 f.open_questions = 0;
             }
             _ => {
-                if self.top_declarator() != D_NONE {
-                    self.top_mut().state = D_BINDING;
+                if self.top().declarator != Declarator::None {
+                    self.top_mut().declarator = Declarator::Binding;
                 }
                 self.top_mut().open_questions = 0;
             }
@@ -287,7 +283,7 @@ impl Walk {
                 FrameKind::ArrowBody
             }
             // Await is the operator in a static block, yield a name.
-            FrameKind::ClassBody if top.mods & MOD_STATIC != 0 && top.state == M_KEY_POS => {
+            FrameKind::ClassBody if top.mods & MOD_STATIC != 0 && top.member == Member::KeyPos => {
                 body.is_async = true;
                 FrameKind::FnBody
             }
@@ -354,7 +350,9 @@ impl Walk {
 
     pub(super) fn open_paren(&mut self) {
         let (top, kw) = (*self.top(), self.prev_kw);
-        if matches!(top.kind, FrameKind::Object | FrameKind::ClassBody) && top.state == M_KEY_SEEN {
+        if matches!(top.kind, FrameKind::Object | FrameKind::ClassBody)
+            && top.member == Member::KeySeen
+        {
             // Method: give it a head so the body picks up its kind.
             let f = self.push(FrameKind::FnHead);
             f.is_generator = top.mods & MOD_GEN != 0;
@@ -368,7 +366,7 @@ impl Walk {
         } else if matches_tk!(kw, KwIf | KwWhile | KwFor | KwWith | KwSwitch | KwCatch)
             && self.frames[self.stmt_frame()].kind.is_stmt_holder()
         {
-            self.push(FrameKind::Head).state = if kw == tk!(KwFor) { F_OF } else { F_NO_OF };
+            self.push(FrameKind::Head).of_closed = kw != tk!(KwFor);
         } else if self.operand_allowed() || kw == tk!(KwNew) {
             // The async of async (...) waits for a => rather than making an await context.
             self.push(FrameKind::Group).mods = if kw == tk!(KwAsync) { MOD_ASYNC } else { 0 };
@@ -401,7 +399,7 @@ impl Walk {
     pub(super) fn open_bracket(&mut self) {
         let top = self.top_kind();
         let kind = if matches!(top, FrameKind::Object | FrameKind::ClassBody)
-            && self.top().state == M_KEY_POS
+            && self.top().member == Member::KeyPos
         {
             FrameKind::ComputedKey
         } else {
@@ -417,7 +415,7 @@ impl Walk {
             return;
         };
         if f.kind == FrameKind::ComputedKey {
-            self.top_mut().state = M_KEY_SEEN;
+            self.top_mut().member = Member::KeySeen;
         }
         self.value_done();
     }

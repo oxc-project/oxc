@@ -38,14 +38,15 @@ pub(super) enum FrameKind {
     ClassHead,
 }
 
-// Declarator state on statement frames and for-heads (`state`).
-pub(super) const D_NONE: u8 = 0;
-
-pub(super) const D_BINDING: u8 = 1;
-
-pub(super) const D_BOUND: u8 = 2;
-
-pub(super) const D_INIT: u8 = 3;
+/// Declarator state on statement frames.
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+pub(super) enum Declarator {
+    #[default]
+    None,
+    Binding,
+    Bound,
+    Init,
+}
 
 /// Statement register on statement frames.
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
@@ -62,17 +63,14 @@ pub(super) enum StmtReg {
     Attrs,
 }
 
-// Head state: a for head before its first semicolon, where of after a value is the keyword.
-pub(super) const F_OF: u8 = 0;
-
-pub(super) const F_NO_OF: u8 = 1;
-
-// Member state on Object / ClassBody / TypeLit (`state`).
-pub(super) const M_KEY_POS: u8 = 0;
-
-pub(super) const M_KEY_SEEN: u8 = 1;
-
-pub(super) const M_VALUE: u8 = 2;
+/// Member state on Object and ClassBody.
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+pub(super) enum Member {
+    #[default]
+    KeyPos,
+    KeySeen,
+    Value,
+}
 
 // Member modifier bits (`mods`) on Object / ClassBody.
 pub(super) const MOD_ASYNC: u8 = 1;
@@ -124,7 +122,12 @@ pub(super) struct Frame {
     pub(super) is_interface: bool,
     pub(super) region: RegionRule,
     pub(super) angle: AngleList,
-    pub(super) state: u8,
+    pub(super) declarator: Declarator,
+    pub(super) member: Member,
+    /// Head: of after a value is not the keyword, as it is in a for head.
+    pub(super) of_closed: bool,
+    /// JsxTag: open angle brackets of its type arguments.
+    pub(super) jsx_depth: u8,
     pub(super) reg: StmtReg,
     /// Modifier bits: an Object or ClassBody member's, or the async before a Group.
     pub(super) mods: u8,
@@ -136,11 +139,11 @@ impl Frame {
     /// `await` contexts of whatever encloses the class, as tsc does, so both are identifiers in
     /// it. Computed keys still see the enclosing function.
     pub(super) fn field_init(&self) -> bool {
-        self.kind == FrameKind::ClassBody && self.state == M_VALUE
+        self.kind == FrameKind::ClassBody && self.member == Member::Value
     }
 
     pub(super) fn next_member(&mut self) {
-        self.state = M_KEY_POS;
+        self.member = Member::KeyPos;
         self.mods = 0;
     }
 }

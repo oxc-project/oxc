@@ -46,12 +46,12 @@ impl Walk {
                     }
                     b'<' => {
                         if self.top_kind() == FrameKind::JsxTag {
-                            self.top_mut().state += 1;
+                            self.top_mut().jsx_depth += 1;
                         }
                     }
                     b'>' if self.top_kind() == FrameKind::JsxTag => {
-                        if self.top().state > 0 {
-                            self.top_mut().state -= 1;
+                        if self.top().jsx_depth > 0 {
+                            self.top_mut().jsx_depth -= 1;
                         } else {
                             self.top_mut().kind = FrameKind::JsxElem;
                         }

@@ -145,11 +145,6 @@ impl Walk {
         self.frames[self.stmt_frame()].reg
     }
 
-    pub(super) fn top_declarator(&self) -> u8 {
-        let f = self.top();
-        if f.kind.is_stmt_holder() { f.state } else { D_NONE }
-    }
-
     pub(super) fn set_stmt_reg(&mut self, v: StmtReg) {
         let i = self.stmt_frame();
         if self.frames[i].kind.is_stmt_holder() {
@@ -231,7 +226,7 @@ impl Walk {
         self.expect = Expect::Statement;
         let i = self.stmt_frame();
         let f = &mut self.frames[i];
-        f.state = D_NONE;
+        f.declarator = Declarator::None;
         f.reg = StmtReg::None;
         f.open_questions = 0;
         self.export_default = false;
@@ -337,7 +332,7 @@ impl Walk {
             return After::EndsDecl;
         }
         // `let x` with nothing after the binding.
-        if self.top_declarator() == D_BOUND {
+        if self.top().declarator == Declarator::Bound {
             return After::EndsDecl;
         }
         if self.operand_allowed() { After::Operand } else { After::Value }
@@ -366,7 +361,7 @@ impl Walk {
     pub(super) fn type_params_expected(&self) -> bool {
         match self.top_kind() {
             FrameKind::FnHead | FrameKind::ClassHead => true,
-            FrameKind::Object | FrameKind::ClassBody => self.top().state == M_KEY_SEEN,
+            FrameKind::Object | FrameKind::ClassBody => self.top().member == Member::KeySeen,
             _ => self.stmt_reg() == StmtReg::TypeName,
         }
     }
@@ -390,8 +385,8 @@ impl Walk {
         self.set_value();
         self.clear_prev();
         let f = self.top_mut();
-        if f.kind.is_stmt_holder() && f.state == D_BINDING {
-            f.state = D_BOUND;
+        if f.declarator == Declarator::Binding {
+            f.declarator = Declarator::Bound;
         }
     }
 
@@ -428,7 +423,7 @@ impl Walk {
     pub(super) fn member_done(&mut self) {
         if matches!(self.top_kind(), FrameKind::ClassBody | FrameKind::Object) {
             let f = self.top_mut();
-            if f.state == M_KEY_SEEN {
+            if f.member == Member::KeySeen {
                 f.next_member();
             }
         }
