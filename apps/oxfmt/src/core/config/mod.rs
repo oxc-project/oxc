@@ -230,7 +230,13 @@ fn into_outcome(
     {
         return ResolveOutcome::MissingPlugin(plugin);
     }
-    ResolveOutcome::Format(FormatPlan { path: Arc::from(path), strategy, config, validated })
+    ResolveOutcome::Format(FormatPlan {
+        path: Arc::from(path),
+        strategy,
+        config,
+        validated,
+        size: 0,
+    })
 }
 
 /// Resolve options for a pre-classified file and build a [`ResolveOutcome`].

@@ -144,7 +144,7 @@ impl WalkRunner {
         let tx_error_for_format = tx_error.clone();
 
         // Spawn formatting service on a dedicated thread so it doesn't occupy the rayon pool.
-        // It just blocks on `rx_entry` waiting for entries; `par_bridge()` inside still uses rayon.
+        // It just blocks on `rx_entry` waiting for entries; the format workers still use rayon.
         std::thread::spawn(move || {
             let format_service = FormatService::new(cwd_for_format, format_mode, source_formatter);
             format_service.run_streaming(rx_entry, &tx_error_for_format, &tx_success);

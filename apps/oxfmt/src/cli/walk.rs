@@ -642,7 +642,14 @@ fn resolve_format_plan(
 ) -> Option<FormatPlan> {
     let strategy = resolver.classify(path, None)?;
     match resolver.resolve(path, strategy) {
-        Ok(ResolveOutcome::Format(plan)) => Some(plan),
+        Ok(ResolveOutcome::Format(mut plan)) => {
+            // Record the size so that the format service can start the largest files first.
+            // A single worker processes entries in walk order, so skip the `stat`.
+            if rayon::current_num_threads() > 1 {
+                plan.size = std::fs::metadata(path).map_or(0, |m| m.len());
+            }
+            Some(plan)
+        }
         Ok(ResolveOutcome::MissingPlugin(_)) => None,
         Err(err) => {
             // Report a per-file config resolve error via the diagnostic channel.

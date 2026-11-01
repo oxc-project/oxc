@@ -36,6 +36,8 @@ pub struct FormatPlan {
     pub(crate) strategy: FormatStrategy,
     pub(crate) config: Arc<FormatConfig>,
     pub(crate) validated: Arc<ValidatedOptions>,
+    /// File size in bytes (0 if unknown). Only used to schedule larger files first.
+    pub(crate) size: u64,
 }
 
 // ---
@@ -73,7 +75,7 @@ impl SourceFormatter {
             };
         }
 
-        let FormatPlan { path, strategy, config, validated } = plan;
+        let FormatPlan { path, strategy, config, validated, size: _ } = plan;
         let core = validated.core;
         // Roots with a session take options from their dispatch config,
         // others map them directly without building one.
