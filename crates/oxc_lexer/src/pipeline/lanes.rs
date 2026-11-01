@@ -180,9 +180,9 @@ impl Lanes {
         let needs_decode = if body_len < 32 {
             return self.cook_short_dispatch::<EMIT, CRLF>(src, bs, be, base, ss, body_len, cpu);
         } else if CRLF {
-            span_has_bs_or_cr(src, bs as usize, be as usize)
+            span_has_bs_or_cr(src, bs as usize, be as usize, cpu)
         } else {
-            span_has_bs(src, bs as usize, be as usize)
+            span_has_bs(src, bs as usize, be as usize, cpu)
         };
         let (wi, lone, nes) = if needs_decode {
             unsafe {
@@ -531,19 +531,27 @@ fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
     }
 }
 
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
+#[inline(always)]
+fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
+    cpu_select!(cpu, {
+        Avx2(cpu) => {
+            // SAFETY: `Avx2` type guarantees required target features are present
+            unsafe { span_has_bs_avx2(src, bs, be, cpu) }
+        }
+        Neon(_) => span_has_bs_generic(src, bs, be),
+        Generic(_) => span_has_bs_generic(src, bs, be),
+    })
+}
+
+/// [`span_has_bs`] for AVX2.
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2,bmi2,popcnt")]
 #[inline]
-fn span_has_bs(src: &[u8], bs: usize, be: usize) -> bool {
+fn span_has_bs_avx2(src: &[u8], bs: usize, be: usize, _cpu: Avx2) -> bool {
     let mut i = bs;
     while i + 32 <= be {
         let v = unsafe { _mm256_loadu_si256(src.as_ptr().add(i) as *const __m256i) };
-        let m =
-            unsafe { _mm256_movemask_epi8(_mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\\' as i8))) };
+        let m = _mm256_movemask_epi8(_mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\\' as i8)));
         if m != 0 {
             return true;
         }
@@ -558,35 +566,37 @@ fn span_has_bs(src: &[u8], bs: usize, be: usize) -> bool {
     false
 }
 
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
+/// [`span_has_bs`] for all other CPUs.
 #[inline]
-fn span_has_bs(src: &[u8], bs: usize, be: usize) -> bool {
+fn span_has_bs_generic(src: &[u8], bs: usize, be: usize) -> bool {
     memchr::memchr(b'\\', &src[bs..be]).is_some()
 }
 
 /// Template variant of [`span_has_bs`]: a raw CR also forces the decode path.
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
+#[inline(always)]
+fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
+    cpu_select!(cpu, {
+        Avx2(cpu) => {
+            // SAFETY: `Avx2` type guarantees required target features are present
+            unsafe { span_has_bs_or_cr_avx2(src, bs, be, cpu) }
+        }
+        Neon(_) => span_has_bs_or_cr_generic(src, bs, be),
+        Generic(_) => span_has_bs_or_cr_generic(src, bs, be),
+    })
+}
+
+/// [`span_has_bs_or_cr`] for AVX2.
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2,bmi2,popcnt")]
 #[inline]
-fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize) -> bool {
+fn span_has_bs_or_cr_avx2(src: &[u8], bs: usize, be: usize, _cpu: Avx2) -> bool {
     let mut i = bs;
     while i + 32 <= be {
         let v = unsafe { _mm256_loadu_si256(src.as_ptr().add(i) as *const __m256i) };
-        let m = unsafe {
-            _mm256_movemask_epi8(_mm256_or_si256(
-                _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\\' as i8)),
-                _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\r' as i8)),
-            ))
-        };
+        let m = _mm256_movemask_epi8(_mm256_or_si256(
+            _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\\' as i8)),
+            _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\r' as i8)),
+        ));
         if m != 0 {
             return true;
         }
@@ -601,14 +611,9 @@ fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize) -> bool {
     false
 }
 
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
+/// [`span_has_bs_or_cr`] for all other CPUs.
 #[inline]
-fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize) -> bool {
+fn span_has_bs_or_cr_generic(src: &[u8], bs: usize, be: usize) -> bool {
     memchr::memchr2(b'\\', b'\r', &src[bs..be]).is_some()
 }
 
