@@ -38,6 +38,8 @@ use oxc_data_structures::{assert_unchecked, branch_hints::unlikely, str::const_s
 
 use crate::token::{KW_KIND_BASE, TokenKind};
 
+use crate::pipeline::cpu::{Cpu, apply, cpu_versions};
+
 const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
 const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
 
@@ -409,8 +411,15 @@ const fn keyword_hash_ts(disp: u8, len: usize, last: u8) -> usize {
 ///
 /// Panics if `src` does not extend 16 bytes past `pos`.
 /// The source pad guarantees that for any word in the source.
+#[apply(cpu_versions)]
 #[inline]
-pub(super) fn kw_match_at(ts: bool, src: &[u8], pos: usize, len: usize) -> TokenKind {
+pub(super) fn kw_match_at(
+    ts: bool,
+    src: &[u8],
+    pos: usize,
+    len: usize,
+    _cpu: impl Cpu,
+) -> TokenKind {
     let word = &src[pos..pos + 16];
 
     // An empty word is not a keyword. Callers never pass 0, but `kw_match` requires `len`
@@ -565,6 +574,8 @@ static LEN_MASK_WINDOW: Aligned32<[u8; 32]> = {
 
 #[cfg(test)]
 mod tests {
+    use crate::pipeline::cpu::BASELINE;
+
     use super::*;
 
     /// Bytes which can follow a word in tests. Real source has a non-word char after a word,
@@ -806,17 +817,17 @@ mod tests {
         let mut src = [0u8; 64];
         src[..36].copy_from_slice(b"instanceofabcdefghijklmnopqrstuvwxyz");
         // Length taken from the caller, not the source
-        assert_eq!(kw_match_at(false, &src, 0, 10), TokenKind::KwInstanceof);
-        assert_eq!(kw_match_at(false, &src, 0, 2), TokenKind::KwIn);
-        assert_eq!(kw_match_at(true, &src, 0, 9), TokenKind::Ident);
+        assert_eq!(kw_match_at(false, &src, 0, 10, BASELINE), TokenKind::KwInstanceof);
+        assert_eq!(kw_match_at(false, &src, 0, 2, BASELINE), TokenKind::KwIn);
+        assert_eq!(kw_match_at(true, &src, 0, 9, BASELINE), TokenKind::Ident);
         // Longer than 16 bytes, and 0 bytes
-        assert_eq!(kw_match_at(false, &src, 0, 36), TokenKind::Ident);
-        assert_eq!(kw_match_at(true, &src, 0, 36), TokenKind::Ident);
-        assert_eq!(kw_match_at(false, &src, 0, 0), TokenKind::Ident);
-        assert_eq!(kw_match_at(true, &src, 0, 0), TokenKind::Ident);
+        assert_eq!(kw_match_at(false, &src, 0, 36, BASELINE), TokenKind::Ident);
+        assert_eq!(kw_match_at(true, &src, 0, 36, BASELINE), TokenKind::Ident);
+        assert_eq!(kw_match_at(false, &src, 0, 0, BASELINE), TokenKind::Ident);
+        assert_eq!(kw_match_at(true, &src, 0, 0, BASELINE), TokenKind::Ident);
         // Mode
         src[..6].copy_from_slice(b"string");
-        assert_eq!(kw_match_at(true, &src, 0, 6), TokenKind::KwString);
-        assert_eq!(kw_match_at(false, &src, 0, 6), TokenKind::Ident);
+        assert_eq!(kw_match_at(true, &src, 0, 6, BASELINE), TokenKind::KwString);
+        assert_eq!(kw_match_at(false, &src, 0, 6, BASELINE), TokenKind::Ident);
     }
 }

@@ -87,7 +87,7 @@ impl Tokens<'_> {
     /// Keyword code of the word at `pos` of `len` bytes (0 for a plain identifier).
     #[apply(cpu_versions)]
     #[inline]
-    pub fn word_kw(&self, pos: usize, len: usize, _cpu: impl Cpu) -> u8 {
+    pub fn word_kw(&self, pos: usize, len: usize, cpu: impl Cpu) -> u8 {
         let raw = self.kind[pos];
         if raw >= KW_KIND_BASE {
             return raw;
@@ -99,7 +99,7 @@ impl Tokens<'_> {
         if !self.src[pos].is_ascii_lowercase() {
             return 0;
         }
-        let k = kw_match_at(self.ts, self.src, pos, len);
+        let k = kw_match_at(self.ts, self.src, pos, len, cpu);
         if k != TokenKind::Ident { k as u8 } else { 0 }
     }
 
