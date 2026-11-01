@@ -106,7 +106,7 @@ pub(super) fn skip_trivia_fwd(src: &[u8], n: usize, i: usize, cpu: impl Cpu) -> 
 
 /// The first non-trivia byte at or after i (or n), and whether a line terminator came first.
 #[inline(always)]
-pub(super) fn skip_trivia_nl(src: &[u8], n: usize, mut i: usize, _cpu: impl Cpu) -> (usize, bool) {
+pub(super) fn skip_trivia_nl(src: &[u8], n: usize, mut i: usize, cpu: impl Cpu) -> (usize, bool) {
     let mut broke = false;
     if i < n && !is_ws(src[i]) && src[i] != b'/' && src[i] < 0x80 {
         return (i, false);
@@ -117,17 +117,17 @@ pub(super) fn skip_trivia_nl(src: &[u8], n: usize, mut i: usize, _cpu: impl Cpu)
             broke |= c == b'\n' || c == b'\r';
             i += 1;
         } else if c == b'/' && src[i + 1] == b'/' {
-            i = line_terminator_after(src, n, i + 2);
+            i = line_terminator_after(src, n, i + 2, cpu);
         } else if c == b'/' && src[i + 1] == b'*' {
-            let e = block_comment_end(src, n, i + 2);
+            let e = block_comment_end(src, n, i + 2, cpu);
             if e >= n {
                 return (n, broke);
             }
-            broke |= line_break_in(src, i + 2, e);
+            broke |= line_break_in(src, i + 2, e, cpu);
             i = e + 1;
-        } else if c >= 0x80 && unicode_ws_len_at(src, i) != 0 {
-            broke |= line_break_in(src, i, i + 3);
-            i += unicode_ws_len_at(src, i);
+        } else if c >= 0x80 && unicode_ws_len_at(src, i, cpu) != 0 {
+            broke |= line_break_in(src, i, i + 3, cpu);
+            i += unicode_ws_len_at(src, i, cpu);
         } else {
             break;
         }
@@ -354,9 +354,9 @@ pub(super) fn skip_raw_literal(
     let c = src[i];
     match c {
         b'/' => match src[i + 1] {
-            b'/' => line_terminator_after(src, n, i + 2),
+            b'/' => line_terminator_after(src, n, i + 2, cpu),
             b'*' => {
-                let e = block_comment_end(src, n, i + 2);
+                let e = block_comment_end(src, n, i + 2, cpu);
                 if e < n { e + 1 } else { n }
             }
             _ => i,
@@ -440,9 +440,9 @@ pub(super) fn raw_template_end(src: &[u8], lim: usize, i: usize, cpu: impl Cpu) 
                 }
                 b'"' | b'\'' => j = past_raw_string(src, lim, j, c, cpu),
                 b'/' => match src[j + 1] {
-                    b'/' => j = line_terminator_after(src, lim, j + 2),
+                    b'/' => j = line_terminator_after(src, lim, j + 2, cpu),
                     b'*' => {
-                        let e = block_comment_end(src, lim, j + 2);
+                        let e = block_comment_end(src, lim, j + 2, cpu);
                         if e >= lim {
                             return (lim, lim + 1);
                         }

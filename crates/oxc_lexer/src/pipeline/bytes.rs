@@ -1,3 +1,5 @@
+use crate::pipeline::cpu::{Cpu, apply, cpu_versions};
+
 #[inline(always)]
 pub(super) const fn is_ws(c: u8) -> bool {
     c == b' ' || c == b'\t' || c == b'\n' || c == b'\r' || c == 0x0c || c == 0x0b
@@ -42,8 +44,9 @@ pub(super) const fn unicode_ws_len(c0: u8, c1: u8, c2: u8) -> usize {
 /// U+0085, U+00A0, U+1680, U+2000..=U+200B, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
 ///
 /// Safe version of [`unicode_ws_len_at_unchecked`].
+#[apply(cpu_versions)]
 #[inline]
-pub(super) fn unicode_ws_len_at(src: &[u8], p: usize) -> usize {
+pub(super) fn unicode_ws_len_at(src: &[u8], p: usize, _cpu: impl Cpu) -> usize {
     unicode_ws_len(src[p], src[p + 1], src[p + 2])
 }
 
@@ -59,7 +62,8 @@ pub(super) unsafe fn unicode_ws_len_at_unchecked(src: *const u8, p: usize) -> us
 }
 
 /// The first line terminator (LF, CR, LS or PS) at or after i, or n.
-pub(super) fn line_terminator_after(src: &[u8], n: usize, mut i: usize) -> usize {
+#[apply(cpu_versions)]
+pub(super) fn line_terminator_after(src: &[u8], n: usize, mut i: usize, _cpu: impl Cpu) -> usize {
     while i < n {
         match src[i] {
             b'\n' | b'\r' => return i,
@@ -70,14 +74,16 @@ pub(super) fn line_terminator_after(src: &[u8], n: usize, mut i: usize) -> usize
     n
 }
 
+#[apply(cpu_versions)]
 #[inline]
 /// Does src[a..b] hold a line terminator (LF, CR, or the 3-byte LS or PS)?
-pub(super) fn line_break_in(src: &[u8], a: usize, b: usize) -> bool {
-    line_terminator_after(src, b, a) < b
+pub(super) fn line_break_in(src: &[u8], a: usize, b: usize, cpu: impl Cpu) -> bool {
+    line_terminator_after(src, b, a, cpu) < b
 }
 
 /// The slash of the first */ at or after i, or n when the comment is unterminated.
-pub(super) fn block_comment_end(src: &[u8], n: usize, mut i: usize) -> usize {
+#[apply(cpu_versions)]
+pub(super) fn block_comment_end(src: &[u8], n: usize, mut i: usize, _cpu: impl Cpu) -> usize {
     while i + 1 < n {
         if src[i] == b'*' && src[i + 1] == b'/' {
             return i + 1;
