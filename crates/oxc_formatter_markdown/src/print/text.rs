@@ -130,9 +130,9 @@ pub fn push_text<'a>(
             // A line break right after an unescaped `\` would be a hard break
             // (the text's last word gets its `\` escaped instead, and may break)
             if prev_word.is_some_and(ends_with_unescaped_backslash) {
-                parts.push_str(" ");
+                parts.push_str(single_space(ws));
             } else {
-                push_whitespace(ws.contains('\n'), &cx, parts, f);
+                push_whitespace(ws, &cx, parts, f);
             }
         }
         if word.is_empty() {
@@ -176,20 +176,21 @@ pub fn push_text<'a>(
     }
 }
 
-/// The whitespace (a space run, or one holding a `newline`) between `cx.prev_word`
-/// and `cx.next_word` (`None`: the whitespace touches a node edge):
+/// The whitespace `ws` as written (a space run, or one holding a newline; a soft break's is `"\n"`)
+/// between `cx.prev_word` and `cx.next_word` (`None`: the whitespace touches a node edge):
 /// a kept line break, a separator that may break, or a space.
 pub fn push_whitespace<'a>(
-    newline: bool,
+    ws: &'a str,
     cx: &TextContext<'a>,
     parts: &mut Parts<'a>,
     f: &MarkdownFormatter<'_, 'a>,
 ) {
     let options = f.options();
+    let newline = ws.contains('\n');
     // Never a break right after a liquid tag under `always` (nor before one):
     // alone on a line it would be a flow tag.
     if cx.after_liquid && options.prose_wrap == ProseWrap::Always {
-        parts.push_str(" ");
+        parts.push_str(single_space(ws));
         return;
     }
     // A space only matters where it may become a break (`always`)
@@ -236,8 +237,14 @@ pub fn push_whitespace<'a>(
     if breakable {
         parts.push_sep(Sep::Line);
     } else {
-        parts.push_str(" ");
+        parts.push_str(single_space(ws));
     }
+}
+
+/// The space printed for whitespace `ws`: the source's own when it is one,
+/// so that it joins the words around it into one text (`Parts::push`).
+fn single_space(ws: &str) -> &str {
+    if ws == " " { ws } else { " " }
 }
 
 /// Never break before a word that would start a block.

@@ -79,7 +79,7 @@ pub fn collect_phrasing<'a>(
         parent.paragraph && wiki_link_risk(children, &opaque, f)
     };
     let collect = |initial: Raw, f: &mut MarkdownFormatter<'_, 'a>| {
-        let mut parts = Parts::new(f.allocator());
+        let mut parts = Parts::new(f.allocator(), f.context().source_text().as_str());
         f.context().raw_text().set(initial);
         collect_inlines(children, parent, &mut parts, f);
         f.context().raw_text().set(Raw::No);
@@ -385,7 +385,7 @@ pub fn collect_inlines<'a>(
                         has_cjk,
                         ..words::TextContext::default()
                     };
-                    words::push_whitespace(true, &cx, parts, f);
+                    words::push_whitespace("\n", &cx, parts, f);
                 }
             }
             Inline::HardBreak(b) => {
