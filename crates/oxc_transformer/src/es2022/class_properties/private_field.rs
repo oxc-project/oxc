@@ -708,6 +708,7 @@ impl<'a> ClassProperties<'a> {
                     let value =
                         Expression::new_binary_expression(SPAN, get_expr, operator, value, ctx);
                     // `_assertClassBrand(Class, object, _assertClassBrand(Class, object, _prop)._ + value)`
+                    assign_expr.operator = AssignmentOperator::Assign;
                     assign_expr.right =
                         self.create_assert_class_brand(class_ident2, object1, value, SPAN, ctx);
                 } else if let Some(operator) = operator.to_logical_operator() {
