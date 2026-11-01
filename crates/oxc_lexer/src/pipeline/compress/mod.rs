@@ -53,12 +53,13 @@ pub unsafe fn compress(
         *stage_pos.add(1) = n as u32;
         w += build_spans(stage_kind, stage_pos, 1, out_spans.add(w), out_kinds.add(w), cpu);
     }
-    write_sentinels(n as u32, out_spans.add(w), out_kinds.add(w));
+    write_sentinels(n as u32, out_spans.add(w), out_kinds.add(w), cpu);
     lanes_post(src, out_kinds, out_spans, w, n as u32, lanes, cpu);
     w
 }
 
-pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8) {
+#[apply(cpu_versions)]
+pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8, _cpu: impl Cpu) {
     let eof = u64::from(n) | (u64::from(n) << 32);
     for s in 0..SPAN_SENTINELS {
         *spans.cast::<u64>().add(s) = eof;
