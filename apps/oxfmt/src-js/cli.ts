@@ -2,7 +2,6 @@ import { runCli } from "./bindings";
 import {
   initExternalServices,
   disposeExternalServices,
-  releaseExternalServicesForExit,
   formatFile,
   formatEmbeddedDoc,
   sortTailwindClasses,
@@ -77,8 +76,7 @@ void (async () => {
 
   if (hasTsfnCleanupFix) {
     // Exit naturally, so that async work left by user code (JS config, plugins, preloads) still runs.
-    // Unref idle workers instead of awaiting `pool.destroy()`.
-    releaseExternalServicesForExit();
+    // Do not await `pool.destroy()`: Tinypool unrefs idle workers, and each worker exits on `disconnect`.
     // `runCli()` returns `null` only for the `init` and `migrate:*` modes, which returned above.
     process.exitCode = exitCode!;
     return;
