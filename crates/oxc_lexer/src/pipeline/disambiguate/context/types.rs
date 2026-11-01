@@ -92,7 +92,7 @@ impl Walk {
                 if top != FrameKind::TypeLit {
                     self.pop_virtual();
                     self.close_brace();
-                } else if self.pop().state == L_INTERFACE_BODY {
+                } else if self.pop().is_interface {
                     // Interface body done: statement over.
                     self.end_statement();
                 } else {

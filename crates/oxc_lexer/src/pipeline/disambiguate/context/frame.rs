@@ -47,24 +47,20 @@ pub(super) const D_BOUND: u8 = 2;
 
 pub(super) const D_INIT: u8 = 3;
 
-// Statement register on statement frames (`reg`).
-pub(super) const S_NONE: u8 = 0;
-
-pub(super) const S_CASE: u8 = 1;
-
-pub(super) const S_IMPORT: u8 = 3;
-
-pub(super) const S_EXPORT: u8 = 4;
-
-pub(super) const S_TYPE_NAME: u8 = 6;
-
-pub(super) const S_BREAK: u8 = 7;
-
-pub(super) const S_EXPORT_AS: u8 = 11;
-
-pub(super) const S_DECLARE_MODULE: u8 = 14;
-
-pub(super) const S_ATTRS: u8 = 15;
+/// Statement register on statement frames.
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+pub(super) enum StmtReg {
+    #[default]
+    None,
+    Case,
+    Import,
+    Export,
+    TypeName,
+    Break,
+    ExportAs,
+    DeclareModule,
+    Attrs,
+}
 
 // Head state: a for head before its first semicolon, where of after a value is the keyword.
 pub(super) const F_OF: u8 = 0;
@@ -96,12 +92,6 @@ pub(super) const A_VALUE: u8 = 1; // declaration type parameters or `f<T>(x)` ty
 pub(super) const A_IN_TYPE: u8 = 3; // a list inside a type
 pub(super) const A_ASSERT: u8 = 4; // an operand follows: an assertion or leading type parameters
 
-// ClassHead: an interface head (reg).
-pub(super) const C_INTERFACE: u8 = 1;
-
-// TypeLit (`state`): the body of an interface, which ends the statement when closed.
-pub(super) const L_INTERFACE_BODY: u8 = 1;
-
 #[derive(Clone, Copy, Default)]
 pub(super) struct Frame {
     pub(super) kind: FrameKind,
@@ -115,8 +105,10 @@ pub(super) struct Frame {
     pub(super) atom: bool,
     /// TypeRegion: the last token closed a `(` opened inside the region.
     pub(super) inner: bool,
+    /// ClassHead: an interface head. TypeLit: an interface body, closing it ends the statement.
+    pub(super) is_interface: bool,
     pub(super) state: u8,
-    pub(super) reg: u8,
+    pub(super) reg: StmtReg,
     /// Modifier bits: an Object or ClassBody member's, or the async before a Group.
     pub(super) mods: u8,
     pub(super) open_questions: u16,
