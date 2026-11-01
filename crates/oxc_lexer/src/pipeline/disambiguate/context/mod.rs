@@ -83,11 +83,13 @@ impl Walks {
     }
 
     #[cfg(test)]
+    #[inline(always)]
     pub(super) fn run_rules(&self) -> bool {
         !self.full_walk_only && !self.no_run_rules
     }
 
     #[cfg(not(test))]
+    #[inline(always)]
     pub(super) fn run_rules(&self) -> bool {
         true
     }
