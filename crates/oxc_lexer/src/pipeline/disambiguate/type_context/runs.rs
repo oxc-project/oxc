@@ -57,19 +57,19 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize, cpu: impl Cpu) -> Optio
     let mut lt = 0usize;
     let mut bounded = false;
     let mut steps = 0u32;
-    let mut q = tokens.prev_sig(pos);
+    let mut q = tokens.prev_sig(pos, cpu);
     while let Some(p) = q {
         steps += 1;
         if steps > RULE_SCAN_CAP {
             return None;
         }
-        let k = tokens.base_kind(p);
+        let k = tokens.base_kind(p, cpu);
         if k >= OP_KIND_BASE {
             let c = tokens.src[p];
             match c {
                 b')' | b']' | b'}' => {
-                    let o = tokens.match_delim_back(p)?;
-                    q = tokens.prev_sig(o);
+                    let o = tokens.match_delim_back(p, cpu)?;
+                    q = tokens.prev_sig(o, cpu);
                     continue;
                 }
                 b'(' | b'[' | b'{' | b';' => {
@@ -78,11 +78,11 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize, cpu: impl Cpu) -> Optio
                 }
                 b'>' => {
                     if !(p > 0 && tokens.src[p - 1] == b'=') {
-                        pending += tokens.run_len(p, b'>');
+                        pending += tokens.run_len(p, b'>', cpu);
                     }
                 }
                 b'<' if tokens.src[p + 1] != b'=' => {
-                    let n = tokens.run_len(p, b'<');
+                    let n = tokens.run_len(p, b'<', cpu);
                     if n != 1 {
                         return None;
                     }
@@ -104,7 +104,7 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize, cpu: impl Cpu) -> Optio
         ) {
             return None;
         }
-        q = tokens.prev_sig(p);
+        q = tokens.prev_sig(p, cpu);
     }
     if found == 0 {
         return if bounded || q.is_none() { Some(0) } else { None };
@@ -124,18 +124,18 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize, cpu: impl Cpu) -> Optio
 ///   `class`.
 #[apply(cpu_versions)]
 fn list_in_any_context(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
-    let t = tokens.peek(lt + 1);
+    let t = tokens.peek(lt + 1, cpu);
     if t.kind == tk!(Ident) {
-        let x = tokens.peek(t.pos + 1);
-        if x.kind == tk!(Ident) && tokens.ident_kw(x.pos) == tk!(KwExtends) {
+        let x = tokens.peek(t.pos + 1, cpu);
+        if x.kind == tk!(Ident) && tokens.ident_kw(x.pos, cpu) == tk!(KwExtends) {
             return true;
         }
     }
-    match tokens.prev_token(lt) {
-        Prev::Word(k, tk!(KwFunction | KwClass)) => !tokens.property_name(k),
+    match tokens.prev_token(lt, cpu) {
+        Prev::Word(k, tk!(KwFunction | KwClass)) => !tokens.property_name(k, cpu),
         Prev::Word(head, 0) => {
             type_args_at(tokens, lt, cpu)
-                || (!tokens.line_break_between(tokens.next_start(head + 1), lt)
+                || (!tokens.line_break_between(tokens.next_start(head + 1, cpu), lt, cpu)
                     && type_reference_head(tokens, head, cpu))
         }
         _ => false,
@@ -147,23 +147,24 @@ fn list_in_any_context(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
 #[apply(cpu_versions)]
 fn type_reference_head(tokens: &Tokens, head: usize, cpu: impl Cpu) -> bool {
     let mut h = head;
-    let mut prev = tokens.prev_token(h);
+    let mut prev = tokens.prev_token(h, cpu);
     while let Prev::Op(d, b'.') = prev {
         if tokens.src[d + 1] == b'.' {
             break;
         }
-        let Prev::Word(w, _) = tokens.prev_token(d) else {
+        let Prev::Word(w, _) = tokens.prev_token(d, cpu) else {
             break;
         };
         h = w;
-        prev = tokens.prev_token(h);
+        prev = tokens.prev_token(h, cpu);
     }
     match prev {
         // `class`, `extends` and `function` are reserved words, so a name on the next line is
         // still theirs; the others can be identifiers that a line break ends (`x = as\nA<B>>c`).
-        Prev::Word(k, tk!(KwExtends | KwClass | KwFunction)) => !tokens.property_name(k),
+        Prev::Word(k, tk!(KwExtends | KwClass | KwFunction)) => !tokens.property_name(k, cpu),
         Prev::Word(k, tk!(KwImplements | KwAs | KwSatisfies | KwKeyof | KwInterface | KwType)) => {
-            !tokens.property_name(k) && !tokens.line_break_between(tokens.next_start(k + 1), h)
+            !tokens.property_name(k, cpu)
+                && !tokens.line_break_between(tokens.next_start(k + 1, cpu), h, cpu)
         }
         Prev::Op(c, b':') => return_type_colon(tokens, c, cpu),
         _ => false,
@@ -175,18 +176,18 @@ fn type_reference_head(tokens: &Tokens, head: usize, cpu: impl Cpu) -> bool {
 /// expression follows.
 #[apply(cpu_versions)]
 #[rustfmt::skip::macros(tk)]
-fn return_type_colon(tokens: &Tokens, c: usize, _cpu: impl Cpu) -> bool {
-    let Prev::Op(rp, b')') = tokens.prev_token(c) else {
+fn return_type_colon(tokens: &Tokens, c: usize, cpu: impl Cpu) -> bool {
+    let Prev::Op(rp, b')') = tokens.prev_token(c, cpu) else {
         return false;
     };
-    let Some(lp) = tokens.match_delim_back(rp) else {
+    let Some(lp) = tokens.match_delim_back(rp, cpu) else {
         return false;
     };
-    match tokens.prev_token(lp) {
-        Prev::Word(f, tk!(KwFunction)) => !tokens.property_name(f),
+    match tokens.prev_token(lp, cpu) {
+        Prev::Word(f, tk!(KwFunction)) => !tokens.property_name(f, cpu),
         Prev::Word(_, tk!(KwCase)) => false,
         Prev::Word(name, _) => matches!(
-            tokens.prev_token(name),
+            tokens.prev_token(name, cpu),
             Prev::None
                 | Prev::Op(_, b'{' | b'}' | b';')
                 | Prev::Word(

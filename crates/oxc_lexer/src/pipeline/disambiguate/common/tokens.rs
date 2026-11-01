@@ -4,6 +4,7 @@ use crate::token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk};
 
 use crate::pipeline::{
     bytes::{is_digit, line_break_in},
+    cpu::{BASELINE, Cpu, apply, cpu_versions},
     keywords::kw_match_at,
     operators::opmap_longest,
 };
@@ -59,14 +60,17 @@ pub struct Peek {
 
 impl Prev {
     pub fn is_member_dot(self, tokens: &Tokens) -> bool {
-        matches!(self, Prev::Op(q, _) if tokens.member_dot(q))
+        let cpu = BASELINE;
+
+        matches!(self, Prev::Op(q, _) if tokens.member_dot(q, cpu))
     }
 }
 
 impl Tokens<'_> {
     /// Base kind: keywords back to `tk!(Ident)`, escaped names to their plain kind.
+    #[apply(cpu_versions)]
     #[inline]
-    pub fn base_kind(&self, pos: usize) -> u8 {
+    pub fn base_kind(&self, pos: usize, _cpu: impl Cpu) -> u8 {
         let k = self.kind[pos];
         if k >= KW_KIND_BASE {
             return tk!(Ident);
@@ -81,8 +85,9 @@ impl Tokens<'_> {
     }
 
     /// Keyword code of the word at `pos` of `len` bytes (0 for a plain identifier).
+    #[apply(cpu_versions)]
     #[inline]
-    pub fn word_kw(&self, pos: usize, len: usize) -> u8 {
+    pub fn word_kw(&self, pos: usize, len: usize, _cpu: impl Cpu) -> u8 {
         let raw = self.kind[pos];
         if raw >= KW_KIND_BASE {
             return raw;
@@ -99,23 +104,26 @@ impl Tokens<'_> {
     }
 
     /// Keyword code of the word at `w` (0 for a plain name).
+    #[apply(cpu_versions)]
     #[inline]
-    pub fn ident_kw(&self, w: usize) -> u8 {
-        let e = self.next_start(w + 1);
-        self.word_kw(w, e - w)
+    pub fn ident_kw(&self, w: usize, cpu: impl Cpu) -> u8 {
+        let e = self.next_start(w + 1, cpu);
+        self.word_kw(w, e - w, cpu)
     }
 
     /// The token start at or after `i`, or `n`.
+    #[apply(cpu_versions)]
     #[inline]
-    pub fn next_start(&self, i: usize) -> usize {
+    pub fn next_start(&self, i: usize, _cpu: impl Cpu) -> usize {
         bits::next1(self.st, i, self.n)
     }
 
     /// The significant token start at or after `i` (skipping trivia), or `n`.
+    #[apply(cpu_versions)]
     #[inline]
-    pub fn next_sig(&self, mut i: usize) -> usize {
+    pub fn next_sig(&self, mut i: usize, cpu: impl Cpu) -> usize {
         loop {
-            i = self.next_start(i);
+            i = self.next_start(i, cpu);
             if i >= self.n {
                 return self.n;
             }
@@ -127,43 +135,49 @@ impl Tokens<'_> {
         }
     }
 
+    #[apply(cpu_versions)]
     #[inline]
-    pub fn peek(&self, i: usize) -> Peek {
-        let pos = self.next_sig(i);
-        let kind = if pos < self.n { self.base_kind(pos) } else { tk!(Eof) };
+    pub fn peek(&self, i: usize, cpu: impl Cpu) -> Peek {
+        let pos = self.next_sig(i, cpu);
+        let kind = if pos < self.n { self.base_kind(pos, cpu) } else { tk!(Eof) };
         Peek { pos, kind, byte: self.src[pos] }
     }
 
     /// The significant token start before `pos` (skipping trivia), or `None` at the start.
+    #[apply(cpu_versions)]
     #[inline]
-    pub fn prev_sig(&self, pos: usize) -> Option<usize> {
+    pub fn prev_sig(&self, pos: usize, _cpu: impl Cpu) -> Option<usize> {
         walk::prev_sig(self.st, self.kind, pos)
     }
 
     /// The significant token before `p`.
-    pub fn prev_token(&self, p: usize) -> Prev {
-        let Some(q) = self.prev_sig(p) else {
+    #[apply(cpu_versions)]
+    pub fn prev_token(&self, p: usize, cpu: impl Cpu) -> Prev {
+        let Some(q) = self.prev_sig(p, cpu) else {
             return Prev::None;
         };
-        let k = self.base_kind(q);
+        let k = self.base_kind(q, cpu);
         if k >= OP_KIND_BASE {
             Prev::Op(q, self.src[q])
         } else if k == tk!(Ident) {
-            Prev::Word(q, self.ident_kw(q))
+            Prev::Word(q, self.ident_kw(q, cpu))
         } else {
             Prev::Other(q)
         }
     }
 
     /// Is the word at `w` a property name (`x.if`, `x?.if`)?
+    #[apply(cpu_versions)]
     #[inline]
-    pub fn property_name(&self, w: usize) -> bool {
-        self.prev_sig(w).is_some_and(|q| self.kind[q] >= OP_KIND_BASE && self.member_dot(q))
+    pub fn property_name(&self, w: usize, cpu: impl Cpu) -> bool {
+        self.prev_sig(w, cpu)
+            .is_some_and(|q| self.kind[q] >= OP_KIND_BASE && self.member_dot(q, cpu))
     }
 
     /// Is the operator at q a member access dot, not a spread dot or the start of ?.5?
+    #[apply(cpu_versions)]
     #[inline]
-    pub fn member_dot(&self, q: usize) -> bool {
+    pub fn member_dot(&self, q: usize, cpu: impl Cpu) -> bool {
         let src = self.src;
         match src[q] {
             b'?' => src[q + 1] == b'.' && !is_digit(src[q + 2]),
@@ -171,14 +185,15 @@ impl Tokens<'_> {
             b'.' => {
                 !(src[q + 1] == b'.' && src[q + 2] == b'.')
                     && !(q >= 2 && src[q - 1] == b'.' && src[q - 2] == b'.')
-                    && !self.numeric_dot(q)
+                    && !self.numeric_dot(q, cpu)
             }
             _ => false,
         }
     }
 
     /// Does the . at q end a decimal integer literal (1.) rather than access a member?
-    pub fn numeric_dot(&self, q: usize) -> bool {
+    #[apply(cpu_versions)]
+    pub fn numeric_dot(&self, q: usize, _cpu: impl Cpu) -> bool {
         let Some(p) = bits::prev1(self.st, q) else {
             return false;
         };
@@ -192,8 +207,9 @@ impl Tokens<'_> {
 
     /// Number of `c` bytes the token at `p` starts with (a fused `>>>` counts three, a lone `>`
     /// one).
-    pub fn run_len(&self, p: usize, c: u8) -> i32 {
-        let e = self.next_start(p + 1);
+    #[apply(cpu_versions)]
+    pub fn run_len(&self, p: usize, c: u8, cpu: impl Cpu) -> i32 {
+        let e = self.next_start(p + 1, cpu);
         let mut i = p;
         while i < e && self.src[i] == c {
             i += 1;
@@ -214,14 +230,16 @@ impl Tokens<'_> {
 
     /// The TemplateHead of the template whose tail or middle is at tail; None past cap steps.
     pub fn template_head(&self, tail: usize, steps: &mut u32, cap: u32) -> Option<usize> {
+        let cpu = BASELINE;
+
         let mut depth = 1i32;
-        let mut t = self.prev_sig(tail);
+        let mut t = self.prev_sig(tail, cpu);
         while let Some(tp) = t {
             *steps += 1;
             if *steps > cap {
                 return None;
             }
-            match self.base_kind(tp) {
+            match self.base_kind(tp, cpu) {
                 tk!(TemplateTail) => depth += 1,
                 tk!(TemplateHead) => {
                     depth -= 1;
@@ -231,27 +249,30 @@ impl Tokens<'_> {
                 }
                 _ => {}
             }
-            t = self.prev_sig(tp);
+            t = self.prev_sig(tp, cpu);
         }
         None
     }
 
     /// Does a line terminator lie in `a..b`?
+    #[apply(cpu_versions)]
     #[inline]
-    pub fn line_break_between(&self, a: usize, b: usize) -> bool {
+    pub fn line_break_between(&self, a: usize, b: usize, _cpu: impl Cpu) -> bool {
         line_break_in(self.src, a, b)
     }
 
     /// Does the identifier at `pos` equal exactly `kw`?
+    #[apply(cpu_versions)]
     #[inline]
-    pub fn ident_is(&self, pos: usize, kw: &[u8]) -> bool {
+    pub fn ident_is(&self, pos: usize, kw: &[u8], _cpu: impl Cpu) -> bool {
         walk::ident_is(self.src, pos, kw)
     }
 
     /// The opener of the `)`, `]` or `}` at `from`, or `None` if unbalanced
     /// (see [`walk::match_delim_back`]).
+    #[apply(cpu_versions)]
     #[inline]
-    pub fn match_delim_back(&self, from: usize) -> Option<usize> {
+    pub fn match_delim_back(&self, from: usize, _cpu: impl Cpu) -> Option<usize> {
         let (open, close) = match self.src[from] {
             b')' => (b'(', b')'),
             b']' => (b'[', b']'),

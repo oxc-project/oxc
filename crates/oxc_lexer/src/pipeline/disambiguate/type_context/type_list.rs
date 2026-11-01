@@ -84,7 +84,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
     let mut prev = usize::MAX;
     let mut w = bits::next1(st, lo, hi);
     while w < hi {
-        let mut k = tokens.base_kind(w);
+        let mut k = tokens.base_kind(w, cpu);
         if w == skip || is_trivia_byte(k) {
             w = bits::next1(st, w + 1, hi);
             continue;
@@ -134,7 +134,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
         elem_start = false;
         if matches_tk!(k, Ident | IdentEscaped) {
             // A qualified name's part is a name (z.infer, a.typeof).
-            let dotted = prev != usize::MAX && tokens.member_dot(prev);
+            let dotted = prev != usize::MAX && tokens.member_dot(prev, cpu);
             let kk = if dotted { 0 } else { kw_match_at(true, src, w, word_len(src, w)) as u8 };
             // A keyword type (`this`, `any`, `null`, ...) takes no type arguments; in a type
             // query it names a value, which may (`typeof this<A>`).
@@ -164,7 +164,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
             start = if start {
                 type_prefix_kind(kk)
                     || (kk == tk!(KwAbstract)
-                        && tokens.ident_is(skip_trivia_fwd(src, hi, w + 8, cpu), b"new"))
+                        && tokens.ident_is(skip_trivia_fwd(src, hi, w + 8, cpu), b"new", cpu))
             } else {
                 matches_tk!(kk, KwExtends | KwIs | KwIn | KwAs)
             };
@@ -182,7 +182,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
             // (a template type), instead of its tail as tokens.
             if k == tk!(TemplateHead) {
                 let (close, end) = raw_template_end(src, hi, w, cpu);
-                if close < hi && tokens.base_kind(close) >= OP_KIND_BASE {
+                if close < hi && tokens.base_kind(close, cpu) >= OP_KIND_BASE {
                     if end > hi {
                         return false;
                     }
@@ -333,7 +333,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
                     let a = skip_trivia_fwd(src, hi, w + 1, cpu);
                     let number = c == b'-' && start && (is_digit(src[a]) || src[a] == b'.');
                     let modifier = open.last() == Some(&b'{')
-                        && (src[a] == b'?' || (start && tokens.ident_is(a, b"readonly")));
+                        && (src[a] == b'?' || (start && tokens.ident_is(a, b"readonly", cpu)));
                     if !number && !modifier && !open.contains(&b'k') {
                         return false;
                     }

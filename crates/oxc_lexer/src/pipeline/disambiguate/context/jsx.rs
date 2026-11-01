@@ -15,7 +15,9 @@ impl Walk {
     }
 
     pub(super) fn jsx_lt(&mut self, tokens: &Tokens, pos: usize) -> usize {
-        let tpos = tokens.next_sig(pos + 1);
+        let cpu = BASELINE;
+
+        let tpos = tokens.next_sig(pos + 1, cpu);
         if tokens.src[tpos] == b'/' {
             // Closing tag: the element it closes is the nearest JsxElem frame.
             if self.pop_to(|k| k == FrameKind::JsxElem).is_none() {

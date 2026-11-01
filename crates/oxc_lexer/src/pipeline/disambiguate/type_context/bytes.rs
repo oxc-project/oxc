@@ -161,9 +161,9 @@ fn past_raw(tokens: &Tokens, lim: usize, i: usize, cpu: impl Cpu) -> Option<usiz
     }
     // Asked from the JSX carve, a template head may be carved while its tail is still
     // raw text (its substitution `}` a punctuator): cross the literal whole.
-    if tokens.base_kind(i) == tk!(TemplateHead) {
+    if tokens.base_kind(i, cpu) == tk!(TemplateHead) {
         let (close, end) = raw_template_end(src, lim, i, cpu);
-        if close < lim && tokens.base_kind(close) >= OP_KIND_BASE {
+        if close < lim && tokens.base_kind(close, cpu) >= OP_KIND_BASE {
             return (end <= lim).then_some(end);
         }
     }
@@ -236,7 +236,7 @@ fn resolve_lists(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> 
                 }
                 b'{' => braces += 1,
                 b'}' => {
-                    if !matches_tk!(tokens.base_kind(i), TemplateMiddle | TemplateTail) {
+                    if !matches_tk!(tokens.base_kind(i, cpu), TemplateMiddle | TemplateTail) {
                         braces -= 1;
                         kill(&mut stack, closers, i > budget, |e| e.braces > braces, cpu);
                     }

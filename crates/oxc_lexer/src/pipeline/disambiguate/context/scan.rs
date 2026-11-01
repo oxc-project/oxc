@@ -9,8 +9,10 @@ use crate::pipeline::disambiguate::{LOCAL_WALK_BUDGET, WALK_SCAN_CAP};
 
 /// Scan back to the anchor of a query, recording the groups the walk skips; None past the cap.
 fn scan(tokens: &Tokens, jumps: &mut Vec<Jump>, from: usize, steps: &mut u32) -> Option<Anchor> {
+    let cpu = BASELINE;
+
     jumps.clear();
-    let mut q = tokens.prev_sig(from);
+    let mut q = tokens.prev_sig(from, cpu);
     loop {
         let Some(p) = q else {
             return Some(Anchor::Stmt(0));
@@ -19,13 +21,13 @@ fn scan(tokens: &Tokens, jumps: &mut Vec<Jump>, from: usize, steps: &mut u32) ->
         if *steps > WALK_SCAN_CAP {
             return None;
         }
-        let k = tokens.base_kind(p);
+        let k = tokens.base_kind(p, cpu);
         if k >= OP_KIND_BASE {
             match tokens.src[p] {
                 b')' | b']' | b'}' => {
-                    let o = tokens.match_delim_back(p)?;
+                    let o = tokens.match_delim_back(p, cpu)?;
                     jumps.push(Jump { at: o as u32, to: p as u32 });
-                    q = tokens.prev_sig(o);
+                    q = tokens.prev_sig(o, cpu);
                     continue;
                 }
                 b'(' => {
@@ -44,10 +46,10 @@ fn scan(tokens: &Tokens, jumps: &mut Vec<Jump>, from: usize, steps: &mut u32) ->
             // A template: skip back to its head.
             let head = tokens.template_head(p, steps, WALK_SCAN_CAP)?;
             jumps.push(Jump { at: head as u32, to: p as u32 });
-            q = tokens.prev_sig(head);
+            q = tokens.prev_sig(head, cpu);
             continue;
         }
-        q = tokens.prev_sig(p);
+        q = tokens.prev_sig(p, cpu);
     }
 }
 
@@ -92,8 +94,10 @@ pub fn angles_before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> usize {
 /// What the significant token at `pos` leaves behind.
 #[inline(never)]
 pub fn after(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
+    let cpu = BASELINE;
+
     // The scan takes in the token, skipping a closer's group whole; a word here is never an anchor.
-    let from = if tokens.base_kind(pos) == tk!(Ident) { pos } else { pos + 1 };
+    let from = if tokens.base_kind(pos, cpu) == tk!(Ident) { pos } else { pos + 1 };
     if let Some(a) = local_walk(tokens, walks, from, pos + 1, Walk::classify_after) {
         return a;
     }
