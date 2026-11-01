@@ -50,7 +50,8 @@ pub(crate) struct Lanes {
 }
 
 impl Lanes {
-    pub(super) fn clear(&mut self) {
+    #[apply(cpu_versions)]
+    pub(super) fn clear(&mut self, _cpu: impl Cpu) {
         self.numbers.clear();
         self.strings.clear();
         self.templates.clear();

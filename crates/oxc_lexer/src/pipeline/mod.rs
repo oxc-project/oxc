@@ -165,7 +165,7 @@ impl Lexer {
     ) -> usize {
         debug_assert!(src.len() >= n + PAD, "source must extend PAD zeroed bytes past n");
         self.ensure(n);
-        self.lanes.clear();
+        self.lanes.clear(cpu);
         self.lanes.module = module;
         self.lanes.disambiguate.begin(n, module, cpu);
         if n == 0 {
