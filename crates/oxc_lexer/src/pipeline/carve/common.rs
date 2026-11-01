@@ -34,7 +34,7 @@ pub(super) unsafe fn lex_string(
     cpu: impl Cpu,
 ) -> usize {
     let mut saw_nl = false;
-    let e = scan_quoted(src, n, s + 1, c, &mut saw_nl);
+    let e = scan_quoted(src, n, s + 1, c, &mut saw_nl, cpu);
     let end = if e < n { e + 1 } else { n };
     if saw_nl {
         // The terminator wins over unterminated-at-EOF, same as oxc_parser.
@@ -75,7 +75,7 @@ pub(super) unsafe fn lex_template_segment(
     cpu: impl Cpu,
 ) -> (usize, bool) {
     let mut term = 0i32;
-    let end = scan_tmpl_text(src, n, s + 1, &mut term);
+    let end = scan_tmpl_text(src, n, s + 1, &mut term, cpu);
     if term == 0 {
         lanes.push_diag(s as u32, (end - s) as u32, DiagCode::UnterminatedTemplate);
     }
@@ -151,7 +151,7 @@ unsafe fn lex_regex(
     cpu: impl Cpu,
 ) -> usize {
     let mut nl_at = usize::MAX;
-    let e = scan_regex(src, n, s + 1, &mut nl_at);
+    let e = scan_regex(src, n, s + 1, &mut nl_at, cpu);
     let fs = if e < n { e + 1 } else { n };
     if nl_at != usize::MAX {
         // oxc_parser reports a line terminator in the body as "unterminated"
