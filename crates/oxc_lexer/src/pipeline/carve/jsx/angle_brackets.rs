@@ -3,6 +3,7 @@ use crate::error::DiagCode;
 use crate::pipeline::{
     bitmap::bm_get,
     bytes::{is_id_start, is_word, line_break_in},
+    cpu::{Cpu, apply, cpu_versions},
     disambiguate::jsx_over_generic,
     lanes::Lanes,
     token_view,
@@ -17,6 +18,7 @@ enum AngleVerdict {
     Ambiguous { gt: usize, lp: usize },
 }
 
+#[apply(cpu_versions)]
 #[inline]
 pub(super) unsafe fn jsx_over_type_params(
     src: *const u8,
@@ -30,11 +32,12 @@ pub(super) unsafe fn jsx_over_type_params(
     tpos: usize,
     ts: bool,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) -> bool {
     if !ts {
         return true;
     }
-    match ts_angle_verdict(srcs, n, tpos, word) {
+    match ts_angle_verdict(srcs, n, tpos, word, cpu) {
         AngleVerdict::TypeParams => false,
         AngleVerdict::Jsx => true,
         AngleVerdict::Ambiguous { gt, lp } => {
@@ -72,8 +75,15 @@ pub(super) unsafe fn jsx_over_type_params(
 /// has already cleared `word` across Unicode whitespace by the time
 /// `carve_jsx` runs, so the corrected run is free to read and no byte has to
 /// be re-scanned for a leading 0x80.
+#[apply(cpu_versions)]
 #[inline]
-unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> AngleVerdict {
+unsafe fn ts_angle_verdict(
+    src: &[u8],
+    n: usize,
+    t: usize,
+    word: *const u64,
+    _cpu: impl Cpu,
+) -> AngleVerdict {
     let mut p = t;
     // optional `const` type-parameter modifier: `<const T,>`. Like any modifier it must stay
     // on the line of its parameter; a comment between them is fine.

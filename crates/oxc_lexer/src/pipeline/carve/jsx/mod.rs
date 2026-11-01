@@ -263,7 +263,7 @@ pub(super) unsafe fn carve_jsx(
                                 mode = JMode::Tag;
                             } else if is_id_start(tc)
                                 && jsx_over_type_params(
-                                    src, srcs, st, opch, kind, word, n, s, tpos, ts, lanes,
+                                    src, srcs, st, opch, kind, word, n, s, tpos, ts, lanes, cpu,
                                 )
                             {
                                 // Element - unless `.tsx` says this is a
