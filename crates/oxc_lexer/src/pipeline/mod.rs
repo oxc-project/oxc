@@ -38,7 +38,7 @@ use carve::carve;
 use classify::classify;
 use coalesce::{KWB, coalesce};
 use compress::{STAGE_CAP, compress, write_sentinels};
-use cpu::{Cpu, DynCpu, apply, cpu_versions};
+use cpu::{BASELINE, Cpu, DynCpu, apply, cpu_versions};
 use disambiguate::{Brackets, Closers, Tokens};
 use misc::{misc_post, misc_pre};
 
@@ -101,12 +101,14 @@ impl Lexer {
     ///
     /// [`lex_utf8`]: crate::lex_utf8
     pub fn lex(&mut self, src: &[u8], n: usize, options: LexOptions) -> usize {
+        let cpu = BASELINE;
+
         assert!(
             src.len() >= n + PAD,
             "lexer: src must have >= {PAD} bytes of padding past len {n} (got {})",
             src.len()
         );
-        self.ensure(n);
+        self.ensure(n, cpu);
         let kinds = self.sig_kinds.as_mut_ptr();
         let spans = self.spans.as_mut_ptr();
         unsafe {
@@ -164,7 +166,7 @@ impl Lexer {
         cpu: impl Cpu,
     ) -> usize {
         debug_assert!(src.len() >= n + PAD, "source must extend PAD zeroed bytes past n");
-        self.ensure(n);
+        self.ensure(n, cpu);
         self.lanes.clear(cpu);
         self.lanes.module = module;
         self.lanes.disambiguate.begin(n, module, cpu);
@@ -211,7 +213,8 @@ impl Lexer {
         sig_len
     }
 
-    fn ensure(&mut self, n: usize) {
+    #[apply(cpu_versions)]
+    fn ensure(&mut self, n: usize, _cpu: impl Cpu) {
         let nb = n.div_ceil(64) + 1;
         if self.nb_cap < nb {
             self.word.resize(nb, 0);
