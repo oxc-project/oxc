@@ -4,9 +4,11 @@ use crate::pipeline::{
     bitmap::bm_next0,
     bytes::{is_word, is_ws, unicode_ws_len_at_unchecked},
     carve::common::find_line_terminator,
+    cpu::{Cpu, apply, cpu_versions},
     scan::scan_block_comment,
 };
 
+#[apply(cpu_versions)]
 #[inline]
 pub(super) unsafe fn jsx_names_equal_fast(
     src: *const u8,
@@ -15,6 +17,7 @@ pub(super) unsafe fn jsx_names_equal_fast(
     a: usize,
     b: usize,
     lim_b: usize,
+    cpu: impl Cpu,
 ) -> bool {
     let e = bm_next0(word, a, n);
     let len = e - a;
@@ -25,7 +28,7 @@ pub(super) unsafe fn jsx_names_equal_fast(
     if len <= 8
         && !matches!(ce, b'.' | b':' | b'-' | b'/')
         && ce < 0x80
-        && !(is_ws(ce) && !is_word(*src.add(e + 1)) && jsx_name_continues_after(src, n, e))
+        && !(is_ws(ce) && !is_word(*src.add(e + 1)) && jsx_name_continues_after(src, n, e, cpu))
     {
         let x = ptr::read_unaligned(src.add(a) as *const u64);
         let y = ptr::read_unaligned(src.add(b) as *const u64);
@@ -33,21 +36,23 @@ pub(super) unsafe fn jsx_names_equal_fast(
         if (x ^ y) & mask != 0 {
             return false;
         }
-        return b + len >= lim_b || !is_jsx_name_byte_at(src, b + len);
+        return b + len >= lim_b || !is_jsx_name_byte_at(src, b + len, cpu);
     }
-    jsx_names_equal(src, n, a, b, lim_b)
+    jsx_names_equal(src, n, a, b, lim_b, cpu)
 }
 
 /// Is the byte at `i` part of a JSX name? A non-ASCII lead byte is, unless it starts Unicode
 /// whitespace (`</a\u{a0}>` closes `a`).
+#[apply(cpu_versions)]
 #[inline]
-unsafe fn is_jsx_name_byte_at(src: *const u8, i: usize) -> bool {
+unsafe fn is_jsx_name_byte_at(src: *const u8, i: usize, _cpu: impl Cpu) -> bool {
     let c = *src.add(i);
     is_jsx_name_byte(c) && (c < 0x80 || unicode_ws_len_at_unchecked(src, i) == 0)
 }
 
-unsafe fn jsx_name_continues_after(src: *const u8, lim: usize, i: usize) -> bool {
-    let t = jsx_skip_trivia(src, lim, i);
+#[apply(cpu_versions)]
+unsafe fn jsx_name_continues_after(src: *const u8, lim: usize, i: usize, cpu: impl Cpu) -> bool {
+    let t = jsx_skip_trivia(src, lim, i, cpu);
     t < lim && matches!(*src.add(t), b'.' | b':')
 }
 
@@ -55,15 +60,26 @@ unsafe fn jsx_name_continues_after(src: *const u8, lim: usize, i: usize) -> bool
 /// before a name byte (`<T extends`). Anything else (a comment, other whitespace, a
 /// non-ASCII lead) takes the full skip. Kept inline: this runs once per JSX element.
 #[inline(always)]
-pub(super) unsafe fn jsx_skip_trivia_fast(src: *const u8, n: usize, mut i: usize) -> usize {
+pub(super) unsafe fn jsx_skip_trivia_fast(
+    src: *const u8,
+    n: usize,
+    mut i: usize,
+    cpu: impl Cpu,
+) -> usize {
     while i < n && *src.add(i) == b' ' {
         i += 1;
     }
     let c = *src.add(i);
-    if i < n && (is_ws(c) || c == b'/' || c >= 0x80) { jsx_skip_trivia(src, n, i) } else { i }
+    if i < n && (is_ws(c) || c == b'/' || c >= 0x80) { jsx_skip_trivia(src, n, i, cpu) } else { i }
 }
 
-pub(super) unsafe fn jsx_skip_trivia(src: *const u8, n: usize, mut i: usize) -> usize {
+#[apply(cpu_versions)]
+pub(super) unsafe fn jsx_skip_trivia(
+    src: *const u8,
+    n: usize,
+    mut i: usize,
+    _cpu: impl Cpu,
+) -> usize {
     loop {
         if i >= n {
             return n;
@@ -101,17 +117,25 @@ pub(super) unsafe fn jsx_skip_trivia(src: *const u8, n: usize, mut i: usize) -> 
     }
 }
 
-unsafe fn jsx_names_equal(src: *const u8, n: usize, a: usize, b: usize, lim_b: usize) -> bool {
+#[apply(cpu_versions)]
+unsafe fn jsx_names_equal(
+    src: *const u8,
+    n: usize,
+    a: usize,
+    b: usize,
+    lim_b: usize,
+    cpu: impl Cpu,
+) -> bool {
     let mut i = a;
     let mut j = b;
     let mut after_sep = false;
     loop {
-        i = jsx_name_next(src, i, n, after_sep);
-        j = jsx_name_next(src, j, lim_b, after_sep);
+        i = jsx_name_next(src, i, n, after_sep, cpu);
+        j = jsx_name_next(src, j, lim_b, after_sep, cpu);
         let x = if i < n { *src.add(i) } else { 0 };
         let y = if j < lim_b { *src.add(j) } else { 0 };
-        let xn = i < n && is_jsx_name_byte_at(src, i);
-        let yn = j < lim_b && is_jsx_name_byte_at(src, j);
+        let xn = i < n && is_jsx_name_byte_at(src, i, cpu);
+        let yn = j < lim_b && is_jsx_name_byte_at(src, j, cpu);
         if !xn && !yn {
             return true;
         }
@@ -124,7 +148,14 @@ unsafe fn jsx_names_equal(src: *const u8, n: usize, a: usize, b: usize, lim_b: u
     }
 }
 
-unsafe fn jsx_name_next(src: *const u8, i: usize, lim: usize, after_sep: bool) -> usize {
+#[apply(cpu_versions)]
+unsafe fn jsx_name_next(
+    src: *const u8,
+    i: usize,
+    lim: usize,
+    after_sep: bool,
+    cpu: impl Cpu,
+) -> usize {
     if i >= lim {
         return lim;
     }
@@ -133,11 +164,12 @@ unsafe fn jsx_name_next(src: *const u8, i: usize, lim: usize, after_sep: bool) -
     if !trivia {
         return i;
     }
-    let t = jsx_skip_trivia(src, lim, i);
+    let t = jsx_skip_trivia(src, lim, i, cpu);
     if after_sep || (t < lim && matches!(*src.add(t), b'.' | b':')) { t } else { i }
 }
 
-pub(super) unsafe fn jsx_name_end(src: *const u8, n: usize, mut i: usize) -> usize {
+#[apply(cpu_versions)]
+pub(super) unsafe fn jsx_name_end(src: *const u8, n: usize, mut i: usize, _cpu: impl Cpu) -> usize {
     while i < n && is_jsx_name_byte(*src.add(i)) {
         i += 1;
     }
