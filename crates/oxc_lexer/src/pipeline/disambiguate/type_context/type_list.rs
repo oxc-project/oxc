@@ -381,11 +381,11 @@ fn type_illegal_kind(k: u8) -> bool {
 #[apply(cpu_versions)]
 pub fn type_args_at(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
     let closers = tokens.closers;
-    if let Some(yes) = closers.get(lt).and_then(|r| r.args) {
+    if let Some(yes) = closers.get(lt, cpu).and_then(|r| r.args) {
         return yes;
     }
     let yes = list_closer(tokens, lt, cpu).is_some_and(|gt| list_is_type_args(tokens, lt, gt, cpu));
-    closers.set_args(lt, yes);
+    closers.set_args(lt, yes, cpu);
     yes
 }
 

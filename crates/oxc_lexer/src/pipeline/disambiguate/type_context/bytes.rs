@@ -137,16 +137,16 @@ pub(super) fn skip_trivia_nl(src: &[u8], n: usize, mut i: usize, _cpu: impl Cpu)
 
 #[apply(cpu_versions)]
 pub(super) fn list_closer(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> Option<usize> {
-    match tokens.closers.get(lt) {
-        Some(r) => r.closer(),
+    match tokens.closers.get(lt, cpu) {
+        Some(r) => r.closer(cpu),
         None => resolve_lists(tokens, lt, cpu),
     }
 }
 
 #[apply(cpu_versions)]
 fn group_closer(tokens: &Tokens, lp: usize, cpu: impl Cpu) -> Option<usize> {
-    match tokens.closers.get(lp) {
-        Some(r) => r.closer(),
+    match tokens.closers.get(lp, cpu) {
+        Some(r) => r.closer(cpu),
         None => resolve_groups(tokens, lp, cpu),
     }
 }
@@ -216,7 +216,7 @@ fn resolve_lists(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> 
                                 e.parens == parens && e.brackets == brackets && e.braces == braces;
                             let closer = balanced.then_some(i);
                             if i > budget {
-                                closers.set(e.pos as usize, closer);
+                                closers.set(e.pos as usize, closer, cpu);
                             }
                             if e.pos as usize == start {
                                 return closer;
@@ -258,7 +258,7 @@ fn resolve_lists(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> 
     }
     if n > budget {
         for e in stack.iter().filter(|e| e.dead == 0) {
-            closers.set(e.pos as usize, None);
+            closers.set(e.pos as usize, None, cpu);
         }
     }
     None
@@ -271,7 +271,7 @@ fn kill(
     closers: &Closers,
     record: bool,
     doomed: impl Fn(&Open) -> bool,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) {
     let mut dead = 0u32;
     while let Some(top) = stack.last() {
@@ -279,7 +279,7 @@ fn kill(
             dead += top.dead;
         } else if doomed(top) {
             if record {
-                closers.set(top.pos as usize, None);
+                closers.set(top.pos as usize, None, cpu);
             }
             dead += 1;
         } else {
@@ -317,7 +317,7 @@ fn resolve_groups(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize>
                     // Never empty: start is popped last.
                     let lp = open.pop().unwrap() as usize;
                     if i > budget {
-                        closers.set(lp, Some(i));
+                        closers.set(lp, Some(i), cpu);
                     }
                     if lp == start {
                         return Some(i);
@@ -330,7 +330,7 @@ fn resolve_groups(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize>
     }
     if n > budget {
         for &lp in open.iter() {
-            closers.set(lp as usize, None);
+            closers.set(lp as usize, None, cpu);
         }
     }
     None

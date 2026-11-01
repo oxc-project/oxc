@@ -80,14 +80,14 @@ impl DisambiguateState {
     pub fn begin(&mut self, n: usize, module: bool, cpu: impl Cpu) {
         self.walks.restart(module);
         self.brackets.begin(n, cpu);
-        self.closers.clear();
+        self.closers.clear(cpu);
     }
 
     /// `coalesce` starts asking: it sees keyword kinds `carve` did not, so the walks start over.
     #[apply(cpu_versions)]
-    pub fn restart(&mut self, module: bool, _cpu: impl Cpu) {
+    pub fn restart(&mut self, module: bool, cpu: impl Cpu) {
         self.walks.restart(module);
         // carve has hidden the JSX brackets these were computed over.
-        self.closers.clear();
+        self.closers.clear(cpu);
     }
 }
