@@ -1523,6 +1523,18 @@ mod test {
         assert!(ret.tokens.is_empty());
     }
 
+    // This input used a 377 MB arena before failed attempts were remembered.
+    #[test]
+    fn failed_type_arguments_in_computed_keys_are_not_retried() {
+        for source_type in [SourceType::ts(), SourceType::tsx()] {
+            let allocator = Allocator::default();
+            let source = "a<{[".repeat(20);
+            Parser::new(&allocator, &source, source_type).parse();
+            let used_bytes = allocator.used_bytes();
+            assert!(used_bytes < 1_000_000, "{used_bytes} bytes");
+        }
+    }
+
     // Each `<` here is first tried as type arguments, which parses the rest of the input (an
     // expression nested in a type, e.g. a function type's parameter initializer) before failing.
     // Without remembering the failed attempt, every level re-parsed its tail several times and
