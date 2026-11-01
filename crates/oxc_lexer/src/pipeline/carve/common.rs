@@ -105,9 +105,9 @@ pub(super) unsafe fn lex_slash(
 ) -> usize {
     let d = if s + 1 < n { *src.add(s + 1) } else { 0 };
     if d == b'/' {
-        lex_line_comment(src, srcs, n, st, kind, s, lanes)
+        lex_line_comment(src, srcs, n, st, kind, s, lanes, cpu)
     } else if d == b'*' {
-        lex_block_comment(src, srcs, n, st, kind, s, lanes)
+        lex_block_comment(src, srcs, n, st, kind, s, lanes, cpu)
     } else if not_operator_position(
         &token_view(
             src,

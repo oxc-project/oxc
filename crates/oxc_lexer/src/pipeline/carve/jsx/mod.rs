@@ -217,7 +217,7 @@ pub(super) unsafe fn carve_jsx(
                     }
                     b'<' => {
                         let c1 = if s + 1 < n { *src.add(s + 1) } else { 0 };
-                        if c1 == b'!' && html_open_comment_at(srcs, n, s, lanes.module) {
+                        if c1 == b'!' && html_open_comment_at(srcs, n, s, lanes.module, cpu) {
                             // Annex B B.1.1: the goal, not the JSX setting, decides.
                             i = lex_html_open_comment(src, srcs, n, st, kind, opch, s, lanes);
                             html_close = !lanes.module;
@@ -286,7 +286,7 @@ pub(super) unsafe fn carve_jsx(
                     }
                     b'>' => {
                         // Only a script's finder stops here: Annex B B.1.3 `-->` at line start.
-                        i = if html_close_comment_at(srcs, s, lanes.module) {
+                        i = if html_close_comment_at(srcs, s, lanes.module, cpu) {
                             lex_html_close_comment(src, srcs, n, st, kind, opch, s, lanes)
                         } else {
                             s + 1
@@ -437,8 +437,10 @@ pub(super) unsafe fn carve_jsx(
                             // is left alone.
                             b'/' => {
                                 p = match *src.add(q + 1) {
-                                    b'*' => lex_block_comment(src, srcs, n, st, kind, q, lanes),
-                                    b'/' => lex_line_comment(src, srcs, n, st, kind, q, lanes),
+                                    b'*' => {
+                                        lex_block_comment(src, srcs, n, st, kind, q, lanes, cpu)
+                                    }
+                                    b'/' => lex_line_comment(src, srcs, n, st, kind, q, lanes, cpu),
                                     _ => q + 1,
                                 };
                             }
@@ -489,9 +491,9 @@ pub(super) unsafe fn carve_jsx(
                         let d = if s + 1 < n { *src.add(s + 1) } else { 0 };
                         if d == b'*' {
                             // comment inside a tag = whitespace
-                            i = lex_block_comment(src, srcs, n, st, kind, s, lanes);
+                            i = lex_block_comment(src, srcs, n, st, kind, s, lanes, cpu);
                         } else if d == b'/' {
-                            i = lex_line_comment(src, srcs, n, st, kind, s, lanes);
+                            i = lex_line_comment(src, srcs, n, st, kind, s, lanes, cpu);
                         } else {
                             // `/>` closes the tag, with any trivia (comments, Unicode
                             // whitespace) between the two.
@@ -508,10 +510,10 @@ pub(super) unsafe fn carve_jsx(
                                 while q < gp {
                                     q = match (*src.add(q), *src.add(q + 1)) {
                                         (b'/', b'*') => {
-                                            lex_block_comment(src, srcs, n, st, kind, q, lanes)
+                                            lex_block_comment(src, srcs, n, st, kind, q, lanes, cpu)
                                         }
                                         (b'/', b'/') => {
-                                            lex_line_comment(src, srcs, n, st, kind, q, lanes)
+                                            lex_line_comment(src, srcs, n, st, kind, q, lanes, cpu)
                                         }
                                         _ => q + 1,
                                     };
@@ -600,8 +602,12 @@ pub(super) unsafe fn carve_jsx(
                         let mut q = s + 1;
                         while q < tpos {
                             q = match (*src.add(q), *src.add(q + 1)) {
-                                (b'/', b'*') => lex_block_comment(src, srcs, n, st, kind, q, lanes),
-                                (b'/', b'/') => lex_line_comment(src, srcs, n, st, kind, q, lanes),
+                                (b'/', b'*') => {
+                                    lex_block_comment(src, srcs, n, st, kind, q, lanes, cpu)
+                                }
+                                (b'/', b'/') => {
+                                    lex_line_comment(src, srcs, n, st, kind, q, lanes, cpu)
+                                }
                                 _ => q + 1,
                             };
                         }
@@ -612,8 +618,8 @@ pub(super) unsafe fn carve_jsx(
                                 break;
                             }
                             gp = match *src.add(gp + 1) {
-                                b'*' => lex_block_comment(src, srcs, n, st, kind, gp, lanes),
-                                b'/' => lex_line_comment(src, srcs, n, st, kind, gp, lanes),
+                                b'*' => lex_block_comment(src, srcs, n, st, kind, gp, lanes, cpu),
+                                b'/' => lex_line_comment(src, srcs, n, st, kind, gp, lanes, cpu),
                                 _ => gp + 1,
                             };
                         }
