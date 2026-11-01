@@ -2,6 +2,7 @@ import { runCli } from "./bindings";
 import {
   initExternalServices,
   disposeExternalServices,
+  releaseExternalServicesForExit,
   formatFile,
   formatEmbeddedCode,
   formatEmbeddedDoc,
@@ -77,13 +78,22 @@ void (async () => {
   const hasTsfnCleanupFix = hasNode24Fix || major > 25 || (major === 25 && minor >= 4);
 
   if (hasTsfnCleanupFix) {
-    // Exit now, without waiting for the Prettier workers to exit (`pool.destroy()` waits ~10 ms with 16 workers).
-    // `process.exit()` loses no output here: Rust has written and flushed all of it before `runCli()` resolved,
-    // and JS writes to `stdout`/`stderr` finish at once because they are set to blocking mode above.
-    // Each worker exits by itself when its IPC channel to this process closes (see `cli-worker.ts`).
+    // Exit naturally, so that async work that user code leaves (JS config, Vite plugins, `--import` preloads) still runs:
+    // `beforeExit` listeners, timers, unawaited writes, and errors thrown later all behave as with a plain natural exit.
+    // Do not await `pool.destroy()` (~10 ms with 16 workers); let idle workers stop holding the event loop instead.
+    releaseExternalServicesForExit();
     // (`exitCode` is not `null`: `runCli()` returns `null` only for the `init` and `migrate:*` modes,
     // and those modes return earlier in this function.)
-    process.exit(exitCode!);
+    process.exitCode = exitCode!;
+    // Node.js emits `exit` only after the event loop is empty and `beforeExit` added no more work.
+    // From there, `process.exit()` skips only the native teardown that follows a natural exit
+    // (environment cleanup and V8 isolate disposal), which costs up to tens of ms on large runs.
+    // It does not emit `exit` again, and it uses `process.exitCode`, including any value set by `exit` listeners.
+    // `queueMicrotask` runs it after every `exit` listener; `process.nextTick` does not run during a natural exit.
+    // No output is lost: Rust has written and flushed all of it before `runCli()` resolved,
+    // and JS writes to `stdout`/`stderr` finish at once because they are set to blocking mode above.
+    process.once("exit", () => queueMicrotask(() => process.exit()));
+    return;
   }
 
   // Clean up worker pool to not V8 crashes on process exit

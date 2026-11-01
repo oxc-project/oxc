@@ -1,3 +1,5 @@
+import type { ChildProcess } from "node:child_process";
+import type { Socket } from "node:net";
 import Tinypool from "tinypool";
 import { toFormatFileResult, toNullable } from "../libs/napi-callbacks";
 import type { FormatFileResult } from "../libs/napi-callbacks";
@@ -55,6 +57,18 @@ export async function disposeExternalServices(): Promise<void> {
   await pool?.destroy();
   pool = null;
   poolSize = null;
+}
+
+// Let the event loop end without destroying the pool, so the CLI can exit naturally.
+// Tinypool unrefs the IPC channel, `stdout`, and `stderr` of an idle `child_process` worker, but not its `stdin` pipe,
+// which would keep this process alive. (Tinypool 2.2.0 `ProcessWorker.unref()`)
+// Each worker exits by itself when its IPC channel to this process closes (see `cli-worker.ts`).
+export function releaseExternalServicesForExit(): void {
+  for (const worker of pool?.threads ?? []) {
+    // `process` is not part of `TinypoolWorker`; `runtime: "child_process"` workers have it.
+    // The `stdin` pipe is a `net.Socket` at runtime, which has `unref()`.
+    if ("process" in worker) ((worker.process as ChildProcess).stdin as Socket | null)?.unref();
+  }
 }
 
 // ---
