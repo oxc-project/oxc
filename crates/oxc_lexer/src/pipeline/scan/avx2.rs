@@ -1,13 +1,18 @@
 use std::arch::x86_64::*;
 
-use crate::pipeline::chunk::{load256, mm, veq};
+use crate::pipeline::{
+    chunk::{load256, mm, veq},
+    cpu::Avx2,
+};
 
 use super::common::lic_verify_at;
 
+#[target_feature(enable = "avx2,bmi2,popcnt")]
 pub unsafe fn scan_block_comment_avx2(
     src: *const u8,
     n: usize,
     mut i: usize,
+    _cpu: Avx2,
 ) -> (usize, bool, i64) {
     let mut saw_nl = false;
     let mut lic_q: i64 = -1;
@@ -56,7 +61,13 @@ pub unsafe fn scan_block_comment_avx2(
 /// metadata. A 0xE2 that isn't LS/PS (typographic punctuation in prose) is
 /// cleared from the mask and the scan continues; the LS/PS confirm can read
 /// the pad, which never matches 0x80.
-pub unsafe fn scan_line_comment_avx2(src: *const u8, n: usize, mut i: usize) -> (usize, i64) {
+#[target_feature(enable = "avx2,bmi2,popcnt")]
+pub unsafe fn scan_line_comment_avx2(
+    src: *const u8,
+    n: usize,
+    mut i: usize,
+    _cpu: Avx2,
+) -> (usize, i64) {
     let mut lic_q: i64 = -1;
     while i + 32 <= n {
         let v = load256(src, i);
