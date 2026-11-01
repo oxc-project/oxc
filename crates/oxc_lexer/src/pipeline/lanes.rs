@@ -254,8 +254,9 @@ impl Lanes {
         self.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false));
     }
 
+    #[apply(cpu_versions)]
     #[inline]
-    pub(super) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize) {
+    pub(super) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize, _cpu: impl Cpu) {
         // Escaped-identifier atoms are the one funnel every code-level
         // identifier escape passes through, so validation rides here.
         self.validate_ident_escapes(src, bs, be);
@@ -401,8 +402,9 @@ impl Lanes {
         }
     }
 
+    #[apply(cpu_versions)]
     #[inline]
-    pub(super) fn push_number(&mut self, src: &[u8], s: usize, e: usize) {
+    pub(super) fn push_number(&mut self, src: &[u8], s: usize, e: usize, _cpu: impl Cpu) {
         let len = e - s;
         if len.wrapping_sub(1) <= 7 && !(len > 1 && src[s] == b'0') {
             let keep = KEEP[len];

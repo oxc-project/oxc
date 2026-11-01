@@ -4,6 +4,7 @@ use crate::token::{is_trivia_byte, matches_tk, tk};
 
 use crate::pipeline::{
     chunk::{eqm, load64},
+    cpu::{Cpu, apply, cpu_versions},
     lanes::Lanes,
 };
 
@@ -58,6 +59,7 @@ pub(super) unsafe fn build_spans_generic(
     w
 }
 
+#[apply(cpu_versions)]
 pub(super) unsafe fn lanes_post_generic(
     src: &[u8],
     out_kinds: *const u8,
@@ -65,6 +67,7 @@ pub(super) unsafe fn lanes_post_generic(
     m: usize,
     nn: u32,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) {
     let mut inv = 0u64;
     let mut i = 0usize;
@@ -76,7 +79,14 @@ pub(super) unsafe fn lanes_post_generic(
             | eqm(x, tk!(PrivateIdentEscaped));
         inv |= eqm(x, tk!(Invalid));
         while hits != 0 {
-            emit_value(src, out_kinds, out_spans, i + (hits.trailing_zeros() >> 3) as usize, lanes);
+            emit_value(
+                src,
+                out_kinds,
+                out_spans,
+                i + (hits.trailing_zeros() >> 3) as usize,
+                lanes,
+                cpu,
+            );
             hits &= hits - 1;
         }
         i += 8;
@@ -85,7 +95,7 @@ pub(super) unsafe fn lanes_post_generic(
     while i < m {
         let k = *out_kinds.add(i);
         if matches_tk!(k, Number | BigInt | IdentEscaped | PrivateIdentEscaped) {
-            emit_value(src, out_kinds, out_spans, i, lanes);
+            emit_value(src, out_kinds, out_spans, i, lanes, cpu);
         }
         inv_dirty |= k == tk!(Invalid);
         i += 1;

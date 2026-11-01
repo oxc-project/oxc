@@ -124,7 +124,7 @@ unsafe fn lanes_post(
 ) {
     cpu_select!(cpu, {
         Avx2(cpu) => lanes_post_avx2(src, out_kinds, out_spans, m, nn, lanes, cpu),
-        Neon(_) => lanes_post_generic(src, out_kinds, out_spans, m, nn, lanes),
-        Generic(_) => lanes_post_generic(src, out_kinds, out_spans, m, nn, lanes),
+        Neon(cpu) => lanes_post_generic(src, out_kinds, out_spans, m, nn, lanes, cpu),
+        Generic(cpu) => lanes_post_generic(src, out_kinds, out_spans, m, nn, lanes, cpu),
     });
 }
