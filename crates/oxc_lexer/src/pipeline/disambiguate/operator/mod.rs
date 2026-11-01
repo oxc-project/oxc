@@ -68,11 +68,11 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: 
             continue;
         }
         if k == tk!(String) {
-            return ends_decl(tokens, walks, qi, tokens.next_start(qi + 1, cpu), p, cpu);
+            return ends_decl(tokens, walks, qi, tokens.next_start(qi + 1), p, cpu);
         }
         if matches_tk!(k, Number | TemplateNoSub | TemplateTail) {
             // A literal ends a value: division, unless TS ASI applies.
-            return ts && ends_decl(tokens, walks, qi, tokens.next_start(qi + 1, cpu), p, cpu);
+            return ts && ends_decl(tokens, walks, qi, tokens.next_start(qi + 1), p, cpu);
         }
         if matches_tk!(k, RegExp | PrivateIdent | PrivateIdentEscaped | JsxTagEnd | JsxLt) {
             return false;
@@ -81,7 +81,7 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: 
             return true;
         }
         if matches_tk!(k, Ident | IdentEscaped) {
-            let e = tokens.next_start(qi + 1, cpu);
+            let e = tokens.next_start(qi + 1);
             let newline = tokens.line_break_between(e, p, cpu);
             if tokens.property_name(qi, cpu) {
                 return ts && newline && context::after(tokens, walks, qi) == After::EndsDecl;
@@ -113,7 +113,7 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: 
                 let Some(q2) = tokens.prev_sig(qi, cpu) else {
                     return true;
                 };
-                if tokens.line_break_between(tokens.next_start(q2 + 1, cpu), qi, cpu) {
+                if tokens.line_break_between(tokens.next_start(q2 + 1), qi, cpu) {
                     return true;
                 }
                 q = Some(q2);

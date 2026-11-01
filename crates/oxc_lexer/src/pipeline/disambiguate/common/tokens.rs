@@ -106,23 +106,22 @@ impl Tokens<'_> {
     /// Keyword code of the word at `w` (0 for a plain name).
     #[inline(always)]
     pub fn ident_kw(&self, w: usize, cpu: impl Cpu) -> u8 {
-        let e = self.next_start(w + 1, cpu);
+        let e = self.next_start(w + 1);
         self.word_kw(w, e - w, cpu)
     }
 
     /// The token start at or after `i`, or `n`.
-    #[apply(cpu_versions)]
-    #[inline]
-    pub fn next_start(&self, i: usize, _cpu: impl Cpu) -> usize {
+    #[inline(always)]
+    pub fn next_start(&self, i: usize) -> usize {
         bits::next1(self.st, i, self.n)
     }
 
     /// The significant token start at or after `i` (skipping trivia), or `n`.
     #[apply(cpu_versions)]
     #[inline]
-    pub fn next_sig(&self, mut i: usize, cpu: impl Cpu) -> usize {
+    pub fn next_sig(&self, mut i: usize, _cpu: impl Cpu) -> usize {
         loop {
-            i = self.next_start(i, cpu);
+            i = self.next_start(i);
             if i >= self.n {
                 return self.n;
             }
@@ -207,8 +206,8 @@ impl Tokens<'_> {
     /// Number of `c` bytes the token at `p` starts with (a fused `>>>` counts three, a lone `>`
     /// one).
     #[apply(cpu_versions)]
-    pub fn run_len(&self, p: usize, c: u8, cpu: impl Cpu) -> i32 {
-        let e = self.next_start(p + 1, cpu);
+    pub fn run_len(&self, p: usize, c: u8, _cpu: impl Cpu) -> i32 {
+        let e = self.next_start(p + 1);
         let mut i = p;
         while i < e && self.src[i] == c {
             i += 1;

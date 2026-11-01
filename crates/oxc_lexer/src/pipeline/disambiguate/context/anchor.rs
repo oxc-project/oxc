@@ -75,7 +75,7 @@ fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
         Prev::Op(_, b'}') => !in_jsx_tag(tokens, p),
         Prev::Word(_, tk!(KwElse | KwDo | KwExport | KwDefault | KwDeclare | KwAbstract)) => true,
         Prev::Op(q, _) | Prev::Word(q, _) | Prev::Other(q) => {
-            let e = tokens.next_start(q + 1, cpu);
+            let e = tokens.next_start(q + 1);
             tokens.line_break_between(e, p, cpu) && !in_jsx_tag(tokens, p)
         }
     }
@@ -85,7 +85,7 @@ fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
 pub(super) fn anchor_at(tokens: &Tokens, p: usize) -> (u8, Option<Anchor>) {
     let cpu = BASELINE;
 
-    let e = tokens.next_start(p + 1, cpu);
+    let e = tokens.next_start(p + 1);
     let kw = tokens.word_kw(p, e - p, cpu);
     (kw, anchor_of(tokens, p, e, kw))
 }
