@@ -21,7 +21,10 @@ use crate::{
     token::StringSpan,
 };
 
-use crate::pipeline::disambiguate::DisambiguateState;
+use crate::pipeline::{
+    cpu::{Cpu, apply, cpu_versions},
+    disambiguate::DisambiguateState,
+};
 
 #[derive(Default)]
 pub(crate) struct Lanes {
@@ -62,8 +65,9 @@ impl Lanes {
         self.unicode_leads.clear();
     }
 
+    #[apply(cpu_versions)]
     #[inline]
-    pub(super) fn push_regex_flags(&mut self, src: &[u8], fs: usize, fe: usize) {
+    pub(super) fn push_regex_flags(&mut self, src: &[u8], fs: usize, fe: usize, _cpu: impl Cpu) {
         let mut f: u8 = 0;
         for (k, &c) in src[fs..fe].iter().enumerate() {
             let bit: u8 = match c {
@@ -212,14 +216,16 @@ impl Lanes {
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone), nes)
     }
 
+    #[apply(cpu_versions)]
     #[inline]
-    pub(super) fn push_string(&mut self, src: &[u8], bs: usize, be: usize) {
+    pub(super) fn push_string(&mut self, src: &[u8], bs: usize, be: usize, _cpu: impl Cpu) {
         let (sp, _) = self.cook::<true, false>(src, bs as u32, be as u32);
         self.strings.push(sp);
     }
 
+    #[apply(cpu_versions)]
     #[inline]
-    pub(super) fn push_template(&mut self, src: &[u8], bs: usize, be: usize) {
+    pub(super) fn push_template(&mut self, src: &[u8], bs: usize, be: usize, _cpu: impl Cpu) {
         let (sp, nes) = self.cook::<false, true>(src, bs as u32, be as u32);
         // A NotEscapeSequence means cooked = None per the grammar; legality
         // depends on tagged-ness (parser context), so the span carries a
@@ -229,8 +235,9 @@ impl Lanes {
 
     /// Push a string value verbatim. JSX attribute strings have no backslash
     /// escapes; the value is the raw slice between the quotes.
+    #[apply(cpu_versions)]
     #[inline]
-    pub(super) fn push_string_raw(&mut self, src: &[u8], bs: usize, be: usize) {
+    pub(super) fn push_string_raw(&mut self, src: &[u8], bs: usize, be: usize, _cpu: impl Cpu) {
         let ss = self.cooked.len() as u32;
         if be <= bs {
             self.strings.push(StringSpan::new(ss, ss & StringSpan::END_MASK, false));
@@ -1159,13 +1166,15 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
 
 #[cfg(test)]
 mod tests {
+    use crate::pipeline::cpu::BASELINE;
+
     use super::*;
 
     fn push_tpl(body: &[u8]) -> Vec<u8> {
         let mut padded = body.to_vec();
         padded.extend_from_slice(&[0u8; 64]);
         let mut l = Lanes::default();
-        l.push_template(&padded, 0, body.len());
+        l.push_template(&padded, 0, body.len(), BASELINE);
         let sp = l.templates[0];
         let s = (sp.start & StringSpan::START_MASK) as usize;
         let e = (sp.end_and_flags & StringSpan::END_MASK) as usize;

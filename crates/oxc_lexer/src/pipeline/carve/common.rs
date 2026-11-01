@@ -31,7 +31,7 @@ pub(super) unsafe fn lex_string(
     s: usize,
     c: u8,
     lanes: &mut Lanes,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) -> usize {
     let mut saw_nl = false;
     let e = scan_quoted(src, n, s + 1, c, &mut saw_nl);
@@ -53,7 +53,7 @@ pub(super) unsafe fn lex_string(
     } else {
         n
     };
-    lanes.push_string(srcs, s + 1, be);
+    lanes.push_string(srcs, s + 1, be, cpu);
     end
 }
 
@@ -72,7 +72,7 @@ pub(super) unsafe fn lex_template_segment(
     head_kind: u8,
     flat_kind: u8,
     lanes: &mut Lanes,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) -> (usize, bool) {
     let mut term = 0i32;
     let end = scan_tmpl_text(src, n, s + 1, &mut term);
@@ -83,7 +83,7 @@ pub(super) unsafe fn lex_template_segment(
     if end > s + 1 {
         bm_clear_range(st, s + 1, end - 1);
     }
-    lanes.push_template(srcs, s + 1, end - [0usize, 1, 2][term as usize]);
+    lanes.push_template(srcs, s + 1, end - [0usize, 1, 2][term as usize], cpu);
     (end, term == 2)
 }
 
@@ -148,7 +148,7 @@ unsafe fn lex_regex(
     word: *const u64,
     s: usize,
     lanes: &mut Lanes,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) -> usize {
     let mut nl_at = usize::MAX;
     let e = scan_regex(src, n, s + 1, &mut nl_at);
@@ -169,7 +169,7 @@ unsafe fn lex_regex(
     if end > s + 1 {
         bm_clear_range(st, s + 1, end - 1);
     }
-    lanes.push_regex_flags(srcs, fs, end);
+    lanes.push_regex_flags(srcs, fs, end, cpu);
     end
 }
 
