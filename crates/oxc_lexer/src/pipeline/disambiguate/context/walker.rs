@@ -316,7 +316,7 @@ impl Walk {
         // A declaration-type region whose last token completed a type.
         if let Some(i) = self.region_index() {
             let r = &self.frames[i];
-            if r.atom && matches!(r.state, R_INLINE | R_STMT) {
+            if r.atom && matches!(r.region, RegionRule::Inline | RegionRule::Stmt) {
                 // Parameter annotations (`(a: T` then `/`) are never followed by a regex; only
                 // statement-level regions matter.
                 let below = if i > 0 { self.frames[i - 1].kind } else { FrameKind::Root };

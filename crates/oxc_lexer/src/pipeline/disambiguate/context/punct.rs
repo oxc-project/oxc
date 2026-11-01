@@ -121,7 +121,7 @@ impl Walk {
         if matches!(self.stmt_reg(), StmtReg::TypeName | StmtReg::Import) {
             // `type X =`: the alias type.
             self.set_stmt_reg(StmtReg::None);
-            self.open_region(R_STMT);
+            self.open_region(RegionRule::Stmt);
             return;
         }
         if self.top_declarator() == D_BOUND {
@@ -171,7 +171,7 @@ impl Walk {
             // A member, parameter or index signature annotation.
             FrameKind::ClassBody | FrameKind::Params | FrameKind::ComputedKey => {
                 if tokens.ts {
-                    self.open_region(R_INLINE);
+                    self.open_region(RegionRule::Inline);
                 } else {
                     self.operand_done();
                 }
@@ -180,7 +180,7 @@ impl Walk {
             FrameKind::Group | FrameKind::Call => {
                 if tokens.ts && !self.operand_allowed() {
                     // Arrow parameter annotation.
-                    self.open_region(R_INLINE);
+                    self.open_region(RegionRule::Inline);
                 } else {
                     self.operand_done();
                 }
@@ -188,7 +188,7 @@ impl Walk {
             }
             FrameKind::FnHead => {
                 // Return type.
-                self.open_region(R_INLINE);
+                self.open_region(RegionRule::Inline);
                 return;
             }
             _ => {}
@@ -200,13 +200,13 @@ impl Walk {
         }
         if tokens.ts && self.top_declarator() == D_BOUND {
             // Declarator type annotation.
-            self.open_region(R_INLINE);
+            self.open_region(RegionRule::Inline);
             return;
         }
         if tokens.ts && self.closed_group && top != FrameKind::Head {
             // `(a): T =>` arrow return type; remember the group's `async`.
             let is_async = self.closed_group_async;
-            self.open_region(R_ARROW_RET);
+            self.open_region(RegionRule::ArrowRet);
             self.top_mut().mods = if is_async { MOD_ASYNC } else { 0 };
             return;
         }

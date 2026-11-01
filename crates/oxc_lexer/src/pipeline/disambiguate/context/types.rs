@@ -6,8 +6,8 @@ use crate::token::{OP_KIND_BASE, matches_tk, tk};
 use super::*;
 
 impl Walk {
-    pub(super) fn open_region(&mut self, rule: u8) {
-        self.push(FrameKind::TypeRegion).state = rule;
+    pub(super) fn open_region(&mut self, rule: RegionRule) {
+        self.push(FrameKind::TypeRegion).region = rule;
         self.operand_done();
     }
 
@@ -18,10 +18,10 @@ impl Walk {
         }
         let r = self.pop();
         self.set_value();
-        match r.state {
-            R_EXPR => self.no_type_args = true,
+        match r.region {
+            RegionRule::Expr => self.no_type_args = true,
             // The arrow after a return type takes the async of the parameter group.
-            R_ARROW_RET => {
+            RegionRule::ArrowRet => {
                 self.closed_group = true;
                 self.closed_group_async = r.mods & MOD_ASYNC != 0;
             }
@@ -49,7 +49,7 @@ impl Walk {
             // The arrow of a function type.
             b'=' => c1 == b'>' && r.inner,
             // An import equals require call.
-            b'(' => r.state == R_STMT,
+            b'(' => r.region == RegionRule::Stmt,
             _ => false,
         }
     }
@@ -100,8 +100,9 @@ impl Walk {
                 }
             }
             b'<' => {
-                let list = if self.operand_allowed() { A_ASSERT } else { A_IN_TYPE };
-                self.push(FrameKind::Angle).state = list;
+                let list =
+                    if self.operand_allowed() { AngleList::Assert } else { AngleList::InType };
+                self.push(FrameKind::Angle).angle = list;
                 self.operand_done();
             }
             b'>' if top == FrameKind::Angle => self.close_angle(),
@@ -134,35 +135,35 @@ impl Walk {
 
     pub(super) fn close_angle(&mut self) {
         let a = self.pop();
-        match a.state {
-            A_ASSERT => {
+        match a.angle {
+            AngleList::Assert => {
                 // Type assertion `<T>`: an operand follows.
                 self.type_operator();
             }
-            A_VALUE => {
+            AngleList::Value => {
                 // The head or instantiation is a value, and no second list may follow.
                 self.value_done();
                 self.no_type_args = true;
             }
-            _ => self.type_atom(false),
+            AngleList::InType => self.type_atom(false),
         }
     }
 
     pub(super) fn less_than(&mut self, tokens: &Tokens, pos: usize) {
         // Declaration type parameters, an assertion or generic arrow, type arguments, or less-than.
         let list = if !tokens.ts {
-            0
+            None
         } else if self.type_params_expected() {
-            A_VALUE
+            Some(AngleList::Value)
         } else if self.operand_allowed() {
-            A_ASSERT
+            Some(AngleList::Assert)
         } else if !self.no_type_args && type_args_at(tokens, pos) {
-            A_VALUE
+            Some(AngleList::Value)
         } else {
-            0
+            None
         };
-        if list != 0 {
-            self.push(FrameKind::Angle).state = list;
+        if let Some(list) = list {
+            self.push(FrameKind::Angle).angle = list;
         }
         self.operand_done();
     }
