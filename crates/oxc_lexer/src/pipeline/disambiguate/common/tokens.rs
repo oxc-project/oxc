@@ -104,8 +104,7 @@ impl Tokens<'_> {
     }
 
     /// Keyword code of the word at `w` (0 for a plain name).
-    #[apply(cpu_versions)]
-    #[inline]
+    #[inline(always)]
     pub fn ident_kw(&self, w: usize, cpu: impl Cpu) -> u8 {
         let e = self.next_start(w + 1, cpu);
         self.word_kw(w, e - w, cpu)
@@ -262,8 +261,7 @@ impl Tokens<'_> {
     }
 
     /// Does the identifier at `pos` equal exactly `kw`?
-    #[apply(cpu_versions)]
-    #[inline]
+    #[inline(always)]
     pub fn ident_is(&self, pos: usize, kw: &[u8], cpu: impl Cpu) -> bool {
         walk::ident_is(self.src, pos, kw, cpu)
     }
