@@ -263,6 +263,7 @@ impl Default for Lexer {
 ///   before the stage writes again.
 ///
 /// `brackets` is the lex's bracket cache, `lanes.disambiguate.brackets`.
+#[inline(always)]
 unsafe fn token_view<'a>(
     src: *const u8,
     st: *const u64,
