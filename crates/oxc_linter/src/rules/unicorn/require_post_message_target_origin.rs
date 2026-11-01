@@ -1,13 +1,13 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, ast_util::variable_declaration_kind, context::LintContext, rule::Rule};
 
 fn require_post_message_target_origin_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing the `targetOrigin` argument.")
@@ -23,12 +23,17 @@ declare_oxc_lint!(
     ///
     /// Enforce using the `targetOrigin` argument with `window.postMessage()`.
     ///
-    /// Note that this rule may have false positives, as it is not capable of
+    /// Calls on message ports (such as `event.ports[0]` or `channel.port1`) and on
+    /// `BroadcastChannel` or `Worker` instances created in place or assigned to a
+    /// `const` (such as `const worker = new Worker(url)`) are ignored, as their
+    /// `postMessage()` methods do not take a `targetOrigin` argument.
+    ///
+    /// Note that this rule may still have false positives, as it is not capable of
     /// detecting all cases correctly without type information. As such, it
     /// may not be a good idea to enable in cases where `postMessage()` may
-    /// be used with `BroadcastChannel` or worker/service worker contexts
-    /// (for example, `WorkerGlobalScope#postMessage`, where the second argument
-    /// is a transfer list or options object, not `targetOrigin`).
+    /// be called on other `BroadcastChannel` or `Worker` instances, or in
+    /// worker/service worker contexts (for example, `WorkerGlobalScope#postMessage`,
+    /// where the second argument is a transfer list or options object, not `targetOrigin`).
     ///
     /// ### Why is this bad?
     ///
@@ -47,6 +52,9 @@ declare_oxc_lint!(
     /// window.postMessage(message, 'https://example.com');
     ///
     /// window.postMessage(message, '*');
+    ///
+    /// const channel = new BroadcastChannel('example');
+    /// channel.postMessage(message);
     /// ```
     RequirePostMessageTargetOrigin,
     unicorn,
@@ -83,7 +91,9 @@ impl Rule for RequirePostMessageTargetOrigin {
             _ => return,
         };
         if member_expr.static_property_name().is_some_and(|name| name == "postMessage") {
-            if is_message_port_expression(member_expr.object()) {
+            if is_message_port_expression(member_expr.object())
+                || is_non_window_instance(member_expr.object(), ctx)
+            {
                 return;
             }
             let span = call_expr.arguments[0].span();
@@ -138,6 +148,42 @@ fn is_message_port_expression(expr: &Expression<'_>) -> bool {
     }
 }
 
+/// Returns `true` if `expr` is a `BroadcastChannel` or `Worker` instance created in place, or an
+/// identifier bound to a `const` initialized with one. Their `postMessage()` methods take no
+/// `targetOrigin` argument.
+fn is_non_window_instance(expr: &Expression<'_>, ctx: &LintContext<'_>) -> bool {
+    let expr = expr.get_inner_expression();
+    if is_non_window_constructor_call(expr) {
+        return true;
+    }
+
+    let Expression::Identifier(ident) = expr else {
+        return false;
+    };
+    let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    let AstKind::VariableDeclarator(declarator) = ctx.symbol_declaration(symbol_id).kind() else {
+        return false;
+    };
+    variable_declaration_kind(declarator, ctx.nodes())
+        .is_some_and(VariableDeclarationKind::is_const)
+        && declarator
+            .init
+            .as_ref()
+            .is_some_and(|init| is_non_window_constructor_call(init.get_inner_expression()))
+}
+
+fn is_non_window_constructor_call(expr: &Expression<'_>) -> bool {
+    let Expression::NewExpression(new_expr) = expr else {
+        return false;
+    };
+    let Expression::Identifier(callee) = &new_expr.callee else {
+        return false;
+    };
+    matches!(callee.name.as_str(), "BroadcastChannel" | "Worker")
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -163,6 +209,15 @@ fn test() {
         "channel.port1.postMessage(message)",
         "channel['port2'].postMessage(message)",
         "event?.ports[0].postMessage(message)",
+        // https://github.com/oxc-project/oxc/issues/28596
+        "const channel = new BroadcastChannel('example'); channel.postMessage({ type: 'ping' });",
+        "const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' }); worker.postMessage({ type: 'ping' });",
+        "new BroadcastChannel('example').postMessage(message)",
+        "(new Worker(url)).postMessage(message)",
+        "const worker = new Worker(url); worker?.postMessage(message)",
+        "const worker = new Worker(url) as Worker; (worker as Worker).postMessage(message)",
+        "import { Worker } from 'node:worker_threads'; const worker = new Worker(file); worker.postMessage(data);",
+        "const channel = new BroadcastChannel('example'); function send() { channel.postMessage(message); }",
     ];
 
     let fail = vec![
@@ -183,6 +238,10 @@ fn test() {
         "window?.a.b.postMessage(message)",
         "window.a?.b.postMessage(message)",
         "window?.a?.b.postMessage(message)",
+        "const popup = window.open(url); popup.postMessage(message)",
+        "let target = new Worker(url); target = window.parent; target.postMessage(message)",
+        "const worker = new Worker(url); function send(worker) { worker.postMessage(message); }",
+        "new Foo().postMessage(message)",
     ];
 
     let fix = vec![

@@ -137,3 +137,35 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Insert `, self.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+   ╭─[require_post_message_target_origin.tsx:1:58]
+ 1 │ const popup = window.open(url); popup.postMessage(message)
+   ·                                                          ▲
+   ╰────
+  help: Insert `, popup.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+   ╭─[require_post_message_target_origin.tsx:1:81]
+ 1 │ let target = new Worker(url); target = window.parent; target.postMessage(message)
+   ·                                                                                 ▲
+   ╰────
+  help: Insert `, target.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+   ╭─[require_post_message_target_origin.tsx:1:83]
+ 1 │ const worker = new Worker(url); function send(worker) { worker.postMessage(message); }
+   ·                                                                                   ▲
+   ╰────
+  help: Insert `, worker.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+   ╭─[require_post_message_target_origin.tsx:1:30]
+ 1 │ new Foo().postMessage(message)
+   ·                              ▲
+   ╰────
+  help: Insert `, self.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
