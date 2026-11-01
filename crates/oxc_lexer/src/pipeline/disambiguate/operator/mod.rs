@@ -23,7 +23,10 @@
 
 use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
 
-use crate::pipeline::keywords::is_regex_keyword;
+use crate::pipeline::{
+    cpu::{Cpu, apply, cpu_versions},
+    keywords::is_regex_keyword,
+};
 
 use super::{
     common::{Tokens, bits},
@@ -52,7 +55,8 @@ mod tests;
 ///
 /// The previous significant token decides most cases; `}`, `yield` / `await`, `of`, a TS `>` and
 /// the TS line-break cases depend on unbounded left context and ask [`context`].
-pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize) -> bool {
+#[apply(cpu_versions)]
+pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: impl Cpu) -> bool {
     let ts = tokens.ts;
     let module = tokens.module;
     let src = tokens.src;
@@ -64,11 +68,11 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize) -> bo
             continue;
         }
         if k == tk!(String) {
-            return ends_decl(tokens, walks, qi, tokens.next_start(qi + 1), p);
+            return ends_decl(tokens, walks, qi, tokens.next_start(qi + 1), p, cpu);
         }
         if matches_tk!(k, Number | TemplateNoSub | TemplateTail) {
             // A literal ends a value: division, unless TS ASI applies.
-            return ts && ends_decl(tokens, walks, qi, tokens.next_start(qi + 1), p);
+            return ts && ends_decl(tokens, walks, qi, tokens.next_start(qi + 1), p, cpu);
         }
         if matches_tk!(k, RegExp | PrivateIdent | PrivateIdentEscaped | JsxTagEnd | JsxLt) {
             return false;
@@ -131,11 +135,11 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize) -> bo
             if ch == b'}' {
                 return context::after(tokens, walks, qi) != After::Value;
             }
-            if ch == b')' && paren_close_is_regex(tokens, qi) {
+            if ch == b')' && paren_close_is_regex(tokens, qi, cpu) {
                 return true;
             }
             if ch == b')' || ch == b']' {
-                return ts && ends_decl(tokens, walks, qi, qi + 1, p);
+                return ts && ends_decl(tokens, walks, qi, qi + 1, p, cpu);
             }
             if ts && ch == b'>' && !(qi > 0 && src[qi - 1] == b'=') {
                 return context::after(tokens, walks, qi) != After::Value;
@@ -148,11 +152,20 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize) -> bo
 }
 
 /// Does a line break between e and p end the declaration the token at q completes?
-fn ends_decl(tokens: &Tokens, walks: &mut Walks, q: usize, e: usize, p: usize) -> bool {
+#[apply(cpu_versions)]
+fn ends_decl(
+    tokens: &Tokens,
+    walks: &mut Walks,
+    q: usize,
+    e: usize,
+    p: usize,
+    _cpu: impl Cpu,
+) -> bool {
     tokens.line_break_between(e, p) && context::after(tokens, walks, q) == After::EndsDecl
 }
 
-fn paren_close_is_regex(tokens: &Tokens, qi: usize) -> bool {
+#[apply(cpu_versions)]
+fn paren_close_is_regex(tokens: &Tokens, qi: usize, _cpu: impl Cpu) -> bool {
     let word =
         |p: Option<usize>| p.filter(|&w| tokens.kind[w] == tk!(Ident) && !tokens.property_name(w));
     let Some(w) = tokens.match_delim_back(qi).and_then(|lp| word(tokens.prev_sig(lp))) else {

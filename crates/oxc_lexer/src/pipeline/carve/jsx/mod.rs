@@ -245,6 +245,7 @@ pub(super) unsafe fn carve_jsx(
                             ),
                             &mut lanes.disambiguate.walks,
                             s,
+                            cpu,
                         ) {
                             // Operand position: candidate JSX. Whitespace (Unicode too) and
                             // comments may separate `<` from the name.
