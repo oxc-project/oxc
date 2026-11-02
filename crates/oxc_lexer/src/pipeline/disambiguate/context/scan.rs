@@ -74,6 +74,11 @@ fn local_walk<R>(
 }
 
 /// Context at the token starting at `pos` (not through it).
+///
+/// Level 3 runs rarely, so this entry point to it, and the Level 3 code it calls,
+/// is compiled only once, not separately for each CPU feature set.
+/// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+/// Level 3 code uses [`BASELINE`] for functions it calls.
 #[inline(never)]
 pub fn before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> Site {
     if let Some(s) = local_walk(tokens, walks, pos, pos, Walk::site) {
@@ -83,6 +88,11 @@ pub fn before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> Site {
 }
 
 /// Open < lists a > run at pos would close.
+///
+/// Level 3 runs rarely, so this entry point to it, and the Level 3 code it calls,
+/// is compiled only once, not separately for each CPU feature set.
+/// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+/// Level 3 code uses [`BASELINE`] for functions it calls.
 #[inline(never)]
 pub fn angles_before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> usize {
     if let Some(n) = local_walk(tokens, walks, pos, pos, Walk::open_angles) {
@@ -92,6 +102,11 @@ pub fn angles_before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> usize {
 }
 
 /// What the significant token at `pos` leaves behind.
+///
+/// Level 3 runs rarely, so this entry point to it, and the Level 3 code it calls,
+/// is compiled only once, not separately for each CPU feature set.
+/// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+/// Level 3 code uses [`BASELINE`] for functions it calls.
 #[inline(never)]
 pub fn after(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
     let cpu = BASELINE;

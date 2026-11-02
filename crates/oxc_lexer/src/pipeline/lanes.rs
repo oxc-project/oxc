@@ -91,6 +91,9 @@ impl Lanes {
 
     /// Record a diagnostic. Cold and non-inlined so the push stays out of
     /// the hot carve body.
+    ///
+    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
+    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
     #[cold]
     #[inline(never)]
     pub(super) fn push_diag(&mut self, off: u32, len: u32, code: DiagCode) {
@@ -101,6 +104,9 @@ impl Lanes {
     /// through the first unescaped CR/LF (for CRLF only the CR). Escaped
     /// terminators are legal LineContinuations and are skipped the way the
     /// parser's escape reader skips them. LS/PS are legal string content.
+    ///
+    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
+    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
     #[cold]
     #[inline(never)]
     pub(super) fn push_line_terminator_in_string(&mut self, src: &[u8], s: usize, end: usize) {
@@ -132,6 +138,9 @@ impl Lanes {
     /// IdentifierStart or digit right after a numeric literal (`1.5n`,
     /// `3in`, `0b12`), with oxc_parser's `invalid_number_end` span: the char
     /// at `e2` plus the run of identifier-start chars after it.
+    ///
+    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
+    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
     #[cold]
     #[inline(never)]
     pub(super) fn push_num_end_diag(&mut self, src: &[u8], e2: usize, code: DiagCode) {
@@ -143,6 +152,9 @@ impl Lanes {
     /// IdentifierStart (`1π`) is the same invalid adjacency as the ASCII
     /// case; Unicode whitespace is legal and invalid UTF-8 emits nothing
     /// here.
+    ///
+    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
+    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
     #[cold]
     #[inline(never)]
     pub(super) fn push_num_end_diag_unicode(&mut self, src: &[u8], e2: usize) {
@@ -286,6 +298,9 @@ impl Lanes {
     /// end where the parser's scanner stopped; surrogate pairs are invalid in
     /// identifiers (one diag over both escapes); a failed pair-low rewinds so
     /// the second escape is validated on its own.
+    ///
+    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
+    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
     #[cold]
     #[inline(never)]
     fn validate_ident_escapes(&mut self, src: &[u8], bs: usize, be: usize) {
@@ -933,6 +948,9 @@ unsafe fn emit_oct(
 
 /// Bad string escape, with oxc_parser's span: the backslash to just past the
 /// last byte its escape scanner consumed.
+///
+/// As it's cold code, it's compiled only once, not separately for each CPU feature set.
+/// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
 #[cold]
 #[inline(never)]
 fn push_escape_diag(diags: &mut Vec<Diagnostic>, off: u32, end: u32) {

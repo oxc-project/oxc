@@ -31,6 +31,11 @@ pub(super) unsafe fn emit_value(
     }
 }
 
+/// Push a diagnostic for each `Invalid` token.
+///
+/// As it's cold code, it's compiled only once, not separately for each CPU feature set,
+/// which keeps the binary smaller. `#[inline(never)]` stops it being inlined into
+/// the separate copies of its callers.
 #[cold]
 #[inline(never)]
 pub(super) unsafe fn invalid_diags(
