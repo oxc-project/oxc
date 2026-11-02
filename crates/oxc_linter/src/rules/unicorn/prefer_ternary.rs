@@ -10,6 +10,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -61,6 +62,7 @@ declare_oxc_lint!(
     PreferTernary,
     unicorn,
     style,
+    recommended,
     pending,
     config = PreferTernaryOption,
     version = "1.50.0",
@@ -283,10 +285,10 @@ fn is_ternary_expression(expression: &Expression<'_>) -> bool {
     matches!(expression.get_inner_expression(), Expression::ConditionalExpression(_))
 }
 
-fn is_same_assignment_target(
-    left: &AssignmentTarget<'_>,
-    right: &AssignmentTarget<'_>,
-    ctx: &LintContext<'_>,
+fn is_same_assignment_target<'a>(
+    left: &AssignmentTarget<'a>,
+    right: &AssignmentTarget<'a>,
+    ctx: &LintContext<'a>,
 ) -> bool {
     if let (
         AssignmentTarget::AssignmentTargetIdentifier(left),
@@ -299,9 +301,10 @@ fn is_same_assignment_target(
     if let (Some(left_member), Some(right_member)) =
         (left.as_member_expression(), right.as_member_expression())
     {
-        if let (Some(left_name), Some(right_name)) =
-            (member_static_property_name(left_member), member_static_property_name(right_member))
-        {
+        if let (Some(left_name), Some(right_name)) = (
+            member_static_property_name(left_member, ctx),
+            member_static_property_name(right_member, ctx),
+        ) {
             return left_name == right_name
                 && is_same_expression(
                     left_member.object().get_inner_expression(),
@@ -319,16 +322,19 @@ fn is_same_assignment_target(
     }
 }
 
-fn member_static_property_name(member: &MemberExpression<'_>) -> Option<String> {
+fn member_static_property_name<'a>(
+    member: &MemberExpression<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<JSStr<'a>> {
     if let Some(name) = member.static_property_name() {
-        return Some(name.to_string());
+        return Some(name);
     }
 
     let MemberExpression::ComputedMemberExpression(computed) = member else {
         return None;
     };
 
-    static_string_value(computed.expression.get_inner_expression())
+    static_string_value(computed.expression.get_inner_expression(), ctx.allocator())
 }
 
 #[test]
@@ -347,6 +353,9 @@ fn test() {
             }",
             None,
         ),
+        // Different lone surrogates are different names.
+        (r#"if (test) { obj["\uD800"] = a; } else { obj["\uDC00"] = b; }"#, None),
+        (r#"if (test) { obj["\uD83D\uDE00"] = a; } else { obj["\uD83D"] = b; }"#, None),
         (
             "function unicorn() {
                 if(test){
@@ -605,6 +614,10 @@ fn test() {
             }",
             None,
         ),
+        // Computed member names are compared by their JavaScript value.
+        (r#"if (test) { obj["\uD800"] = a; } else { obj["\uD800"] = b; }"#, None),
+        (r#"if (test) { obj["\uD800" + "x"] = a; } else { obj[`\uD800x`] = b; }"#, None),
+        (r#"if (test) { obj["\uD83D" + "\uDE00"] = a; } else { obj["\uD83D\uDE00"] = b; }"#, None),
         (
             "async function unicorn() {
                 if(test){

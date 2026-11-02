@@ -66,6 +66,7 @@
 
 use std::any::Any;
 
+mod ast_builder;
 pub mod config;
 mod context;
 mod cursor;
@@ -98,6 +99,7 @@ use oxc_syntax::module_record::ModuleRecord;
 
 pub use crate::lexer::{Kind, Token};
 use crate::{
+    ast_builder::ParserAstBuilder,
     config::{
         LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
     },
@@ -164,6 +166,10 @@ pub struct ParserReturn<'a> {
     /// The parsed AST.
     ///
     /// Will be empty (e.g. no statements, directives, etc) if the parser encountered a fatal error.
+    ///
+    /// Every node has a unique node ID within this AST. Program has ID zero;
+    /// other IDs follow construction order and may have gaps from discarded nodes.
+    /// Semantic analysis replaces these with its own dense node IDs.
     ///
     /// ## Validity
     /// It is possible for the AST to be present and semantically invalid. This will happen if
@@ -415,6 +421,9 @@ mod parser_parse {
 
         /// Parse a single [`Expression`].
         ///
+        /// Every node receives a unique, nonzero node ID. IDs follow construction
+        /// order and may have gaps from discarded nodes.
+        ///
         /// # Example
         ///
         /// ```rust
@@ -654,7 +663,7 @@ struct ParserImpl<'a, C: ParserConfig> {
     ctx: Context,
 
     /// Ast builder for creating AST nodes
-    ast: AstBuilder<'a>,
+    ast: ParserAstBuilder<'a>,
 
     /// Module Record Builder
     module_record_builder: ModuleRecordBuilder<'a>,
@@ -690,7 +699,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             prev_token_end: 0,
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
-            ast: AstBuilder::new(allocator),
+            ast: ParserAstBuilder::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
             is_ts: source_type.is_typescript(),
         }
@@ -847,7 +856,9 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             hashbang,
             directives,
             statements,
-            self,
+            // The default builder assigns ID zero (NodeId::ROOT) to Program.
+            // ParserAstBuilder starts at one, keeping every child ID distinct.
+            &AstBuilder::new(self.allocator()),
         )
     }
 
@@ -985,11 +996,10 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     }
 
     fn check_unfinished_errors(&mut self) {
-        use oxc_span::GetSpan;
         // PropertyDefinition : cover_initialized_name
         // It is a Syntax Error if any source text is matched by this production.
-        for expr in self.state.cover_initialized_name.values() {
-            self.errors.push(diagnostics::cover_initialized_name(expr.span()));
+        for cover in self.state.cover_initialized_name.values() {
+            self.errors.push(diagnostics::cover_initialized_name(cover.span));
         }
     }
 
@@ -1017,10 +1027,10 @@ impl<'a, C: ParserConfig> GetAllocator<'a> for ParserImpl<'a, C> {
 }
 
 impl<'a, C: ParserConfig> GetAstBuilder<'a> for ParserImpl<'a, C> {
-    type Builder = AstBuilder<'a>;
+    type Builder = ParserAstBuilder<'a>;
 
     #[inline]
-    fn builder(&self) -> &AstBuilder<'a> {
+    fn builder(&self) -> &ParserAstBuilder<'a> {
         &self.ast
     }
 }
@@ -1062,6 +1072,51 @@ mod test {
         let source_type = SourceType::default();
         for source in ["a b", "a;", "let x = 1"] {
             assert!(Parser::new(&allocator, source, source_type).parse_expression().is_err());
+        }
+    }
+
+    #[test]
+    fn simple_arrow_no_side_effects_annotations() {
+        for source in [
+            "/*#__NO_SIDE_EFFECTS__*/ value => value",
+            "/*#__NO_SIDE_EFFECTS__*/ async value => value",
+            "/*#__NO_SIDE_EFFECTS__*/ async of => of",
+        ] {
+            let allocator = Allocator::default();
+            let expr =
+                Parser::new(&allocator, source, SourceType::default()).parse_expression().unwrap();
+            let Expression::ArrowFunctionExpression(arrow) = expr else { panic!("{source}") };
+            assert!(arrow.pure, "{source}");
+        }
+    }
+
+    #[test]
+    fn identifier_continuation_pure_annotations() {
+        for source in [
+            "/*#__PURE__*/ callee()",
+            "/*#__PURE__*/ callee<T>()",
+            "/*#__PURE__*/ callee!.method()",
+        ] {
+            let allocator = Allocator::default();
+            let expr =
+                Parser::new(&allocator, source, SourceType::ts()).parse_expression().unwrap();
+            let Expression::CallExpression(call) = expr else { panic!("{source}") };
+            assert!(call.pure, "{source}");
+        }
+
+        // Check both the assignment-expression entry and a binary RHS continuation.
+        for (source, annotated_left) in [
+            ("/*#__PURE__*/ callee() + other()", true),
+            ("other() + /*#__PURE__*/ callee()", false),
+        ] {
+            let allocator = Allocator::default();
+            let expr =
+                Parser::new(&allocator, source, SourceType::default()).parse_expression().unwrap();
+            let Expression::BinaryExpression(binary) = expr else { panic!("{source}") };
+            let Expression::CallExpression(left) = &binary.left else { panic!("{source}") };
+            let Expression::CallExpression(right) = &binary.right else { panic!("{source}") };
+            assert_eq!(left.pure, annotated_left, "{source}");
+            assert_eq!(right.pure, !annotated_left, "{source}");
         }
     }
 
@@ -1125,6 +1180,33 @@ mod test {
         assert_eq!(external.id.value, "raw");
         assert!(external.body.is_some());
         assert!(external.declare);
+    }
+
+    #[test]
+    fn surrogate_halves_join_across_escape_forms() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        // Each spelling escapes U+1F600 as its two surrogate halves.
+        let escapes = [
+            r"\uD83D\uDE00",
+            r"\u{D83D}\u{DE00}",
+            r"\uD83D\u{DE00}",
+            r"\u{D83D}\uDE00",
+            // A LineContinuation contributes no code units, so the halves are adjacent.
+            "\\uD83D\\\n\\uDE00",
+        ];
+        for escape in escapes {
+            let source = format!("'{escape}'");
+            let expr = Parser::new(&allocator, &source, source_type).parse_expression().unwrap();
+            let Expression::StringLiteral(literal) = expr else { panic!("{source}") };
+            assert_eq!(literal.value.as_str(), Some("😀"), "{source}");
+
+            let source = format!("`{escape}`");
+            let expr = Parser::new(&allocator, &source, source_type).parse_expression().unwrap();
+            let Expression::TemplateLiteral(template) = expr else { panic!("{source}") };
+            let cooked = template.quasis[0].value.cooked.and_then(oxc_str::JSStr::as_str);
+            assert_eq!(cooked, Some("😀"), "{source}");
+        }
     }
 
     #[test]

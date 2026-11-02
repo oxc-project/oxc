@@ -1,4 +1,8 @@
-use oxc_ast::{AstKind, ast::Expression, match_member_expression};
+use oxc_ast::{
+    AstKind,
+    ast::{BinaryOperator, Expression},
+    match_member_expression,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -162,7 +166,7 @@ fn needs_parens_for_parent(node: &AstNode, ctx: &LintContext) -> bool {
 
     match parent.kind() {
         AstKind::BinaryExpression(bin_expr) => {
-            if bin_expr.operator == oxc_ast::ast::BinaryOperator::Exponential {
+            if bin_expr.operator == BinaryOperator::Exponential {
                 let AstKind::CallExpression(call_expr) = node.kind() else {
                     return true;
                 };

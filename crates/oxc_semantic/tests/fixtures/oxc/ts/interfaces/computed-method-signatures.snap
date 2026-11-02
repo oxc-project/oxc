@@ -65,7 +65,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/interfaces/computed-method
             "id": 5,
             "name": "importedKey",
             "node_id": 32,
-            "scope_id": 4
+            "scope_id": 1
           }
         ]
       },
@@ -80,14 +80,14 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/interfaces/computed-method
             "id": 1,
             "name": "valueKey",
             "node_id": 14,
-            "scope_id": 2
+            "scope_id": 1
           },
           {
             "flags": "ReferenceFlags(Type)",
             "id": 3,
             "name": "valueKey",
             "node_id": 22,
-            "scope_id": 3
+            "scope_id": 1
           },
           {
             "flags": "ReferenceFlags(Type)",

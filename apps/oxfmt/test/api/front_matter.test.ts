@@ -44,16 +44,17 @@ describe("CSS front matter", () => {
     expect(result.code).toBe("---\na: 1\n---\n");
   });
 
-  it("keeps non-YAML blocks verbatim", async () => {
+  it("keeps custom language blocks verbatim", async () => {
     // Custom language: never dispatched (Prettier keeps it raw too).
     const custom = await format("a.css", "---mycustomparser\na:   1\n---\nb {}\n");
     expect(custom.errors).toStrictEqual([]);
     expect(custom.code).toBe("---mycustomparser\na:   1\n---\n\nb {\n}\n");
+  });
 
-    // TOML: dispatched but no native formatter, degrades to verbatim.
-    const toml = await format("a.css", "+++\na   =   1\n+++\nb {}\n");
-    expect(toml.errors).toStrictEqual([]);
-    expect(toml.code).toBe("+++\na   =   1\n+++\n\nb {\n}\n");
+  it("formats a TOML block", async () => {
+    const result = await format("a.css", "+++\na   =   1\n+++\nb {}\n");
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toBe("+++\na = 1\n+++\n\nb {\n}\n");
   });
 
   it("keeps the block verbatim when the YAML does not parse", async () => {
@@ -62,12 +63,29 @@ describe("CSS front matter", () => {
     expect(result.code).toBe("---\nkey: [unclosed\n---\n\nb {\n}\n");
   });
 
+  it("keeps the block verbatim when its body starts with an indented delimiter", async () => {
+    // DIVERGENCES.md#front-matter-indented-delimiter
+    for (const block of ["---\n ---\na:  b\n---", "---\n  ---\n---", "---\n ...\na:  b\n..."]) {
+      // oxlint-disable-next-line no-await-in-loop
+      const result = await format("a.css", `${block}\nb {}\n`);
+      expect(result.errors).toStrictEqual([]);
+      expect(result.code).toBe(`${block}\n\nb {\n}\n`);
+    }
+  });
+
   it("keeps the block verbatim under embeddedLanguageFormatting: off", async () => {
     const result = await format("a.css", "---\ntitle:   Home\n---\nb {}\n", {
       embeddedLanguageFormatting: "off",
     });
     expect(result.errors).toStrictEqual([]);
     expect(result.code).toBe("---\ntitle:   Home\n---\n\nb {\n}\n");
+
+    // Even an empty block is not normalized
+    const empty = await format("a.css", "---\n\n---\nb {}\n", {
+      embeddedLanguageFormatting: "off",
+    });
+    expect(empty.errors).toStrictEqual([]);
+    expect(empty.code).toBe("---\n\n---\n\nb {\n}\n");
   });
 
   it("keeps a physical BOM at byte 0, before the block", async () => {

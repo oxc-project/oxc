@@ -4,6 +4,67 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2026-11-02
+
+### ⚡ Performance
+
+- b6f1ac9 formatter_markdown: Bump parser to 0.0.4 and skip unread work (#28713) (leaysgur)
+
+### 📚 Documentation
+
+- 49fbffb formatter_core: Tighten FORMATTER_POLICY (#28206) (leaysgur)
+
+## [0.75.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- 23d23d6 formatter_markdown: Honor range ignore inside directives (#28164) (leaysgur)
+
+### ⚡ Performance
+
+- 7948f0b formatter_core: Shrink `FormatElement` to 16B (#28012) (leaysgur)
+
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- e236de0 formatter_tests: Skip conformance spec calls with non-literal options (#27957) (leaysgur)
+- 2645d2c formatter_markdown: Treat link destinations and footnote references as opaque to code span fences (#27948) (leaysgur)
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+
+### ⚡ Performance
+
+- e5fdc9c formatter_core: Write into one element stack through a concrete `Formatter` (#27559) (leaysgur)
+- 1d3ef10 formatter_core: Keep the embedded IR when nothing in it is rewritten (#27673) (leaysgur)
+
+## [0.73.0] - 2026-10-13
+
+### 📚 Documentation
+
+- 37b3c48 formatter_markdown: Fix DIVERGENCES.md examples and slug to match behavior (#27358) (leaysgur)
+
+## [0.72.0] - 2026-10-05
+
+### 💥 BREAKING CHANGES
+
+- e2c68b1 oxfmt: [**BREAKING**] Format `parser:markdown` files by `oxc_formatter_markdown` (#27256) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 71e400b formatter_markdown: Fixed remaining issues found by fuzz (#27334) (leaysgur)
+- 7d0e54d formatter_markdown: Preserve line breaks around Chinese/Japanese characters in all `proseWrap` (#27331) (leaysgur)
+- 2445064 formatter_markdown: Keep a preserved line break before a delimiter row that opens no table (#27278) (leaysgur)
+- dd72fbf formatter_markdown: Keep container columns as spaces under `useTabs` (#27277) (leaysgur)
+
+### ⚡ Performance
+
+- 72f42a3 formatter_markdown: Pre-allocate the IR buffer (#27333) (leaysgur)
+
+### 📚 Documentation
+
+- 656b81c formatter_markdown: Record unclosed fences closing at a directive's closer (#27279) (leaysgur)
+- 66545bf formatter_markdown: Record setext heading wrap divergence (#27221) (leaysgur)
+
 ## [0.71.0] - 2026-09-28
 
 ### 🚀 Features

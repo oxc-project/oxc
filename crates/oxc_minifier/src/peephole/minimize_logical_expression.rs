@@ -236,7 +236,7 @@ impl<'a> PeepholeOptimizations {
         let Expression::LogicalExpression(e) = expr else { return };
         if let Expression::SequenceExpression(sequence_expr) = &e.right {
             let Some(Expression::AssignmentExpression(assignment_expr)) =
-                sequence_expr.expressions.last()
+                Self::last_expression_in_sequence(sequence_expr)
             else {
                 return;
             };
@@ -249,7 +249,7 @@ impl<'a> PeepholeOptimizations {
 
             let Expression::SequenceExpression(sequence_expr) = &mut e.right else { return };
             let Some(Expression::AssignmentExpression(assignment_expr)) =
-                sequence_expr.expressions.pop()
+                Self::pop_expression_from_sequence(sequence_expr)
             else {
                 unreachable!()
             };
@@ -320,7 +320,7 @@ impl<'a> PeepholeOptimizations {
             AssignmentTarget::PrivateFieldExpression(e) => &e.object,
             _ => return,
         };
-        if let Expression::Identifier(ident) = object.get_inner_expression()
+        if let Expression::Identifier(ident) = object
             && let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id()
         {
             ctx.state.symbols.record_member_write_effect(symbol_id, MemberWriteEffect::Hazard);

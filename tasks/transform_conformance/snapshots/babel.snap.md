@@ -1,11 +1,10 @@
-commit: fd665901
+commit: b835f0c6
 
-Passed: 731/1165
+Passed: 741/1168
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-export-namespace-from
-* babel-plugin-transform-optional-chaining
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-display-name
 
@@ -170,8 +169,11 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-unicode-sets-regex (0/4)
+# babel-plugin-transform-unicode-sets-regex (0/5)
 * basic/basic/input.js
+x Output mismatch
+
+* basic/issue-18259/input.js
 x Output mismatch
 
 * basic/string-properties/input.js
@@ -369,37 +371,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-static-block (11/24)
-* class-static-block/before-static-fields/input.js
-x Output mismatch
-
-* class-static-block/class-binding/input.js
-x Output mismatch
-
-* class-static-block/class-declaration/input.js
-x Output mismatch
-
-* class-static-block/class-inferred-name/input.js
-x Output mismatch
-
-* class-static-block/in-class-heritage/input.js
-x Output mismatch
-
-* class-static-block/multiple-static-initializers/input.js
-x Output mismatch
-
-* class-static-block/name-conflict/input.js
-x Output mismatch
-
-* class-static-block/new-target/input.js
-x Output mismatch
-
-* class-static-block/preserve-comments/input.js
-x Output mismatch
-
-* class-static-block/var-scope/input.js
-x Output mismatch
-
+# babel-plugin-transform-class-static-block (21/24)
 * integration/in-class-heritage/input.js
 x Output mismatch
 
@@ -765,7 +737,10 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-property-in-object (24/59)
+# babel-plugin-transform-private-property-in-object (24/60)
+* assumption-noUninitializedPrivateFieldAccess/static-field/input.js
+x Output mismatch
+
 * assumption-privateFieldsAsProperties/accessor/input.js
 x Output mismatch
 
@@ -916,6 +891,11 @@ x Output mismatch
 x Output mismatch
 
 * nullish-coalescing/undeclared/input.js
+x Output mismatch
+
+
+# babel-plugin-transform-optional-chaining (45/46)
+* general/iife-rest-param/input.js
 x Output mismatch
 
 

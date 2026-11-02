@@ -45,6 +45,7 @@ declare_oxc_lint!(
     NoLengthAsSliceEnd,
     unicorn,
     restriction,
+    recommended,
     fix,
     version = "0.7.0",
     short_description = "Disallow using `length` as the end argument of a `slice` call.",

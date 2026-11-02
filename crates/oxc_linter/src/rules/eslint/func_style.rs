@@ -223,14 +223,13 @@ impl Rule for FuncStyle {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::Function(func)
-                if matches!(
-                    func.r#type,
-                    FunctionType::FunctionDeclaration | FunctionType::FunctionExpression
-                ) =>
-            {
-                self.check_function(func, node, ctx);
-            }
+            AstKind::Function(func) => match func.r#type {
+                FunctionType::FunctionDeclaration => {
+                    self.check_function_declaration(func, node, ctx);
+                }
+                FunctionType::FunctionExpression => self.check_function_expression(node, ctx),
+                _ => {}
+            },
             AstKind::ArrowFunctionExpression(arrow) => self.check_arrow_function(arrow, node, ctx),
             _ => {}
         }
@@ -238,14 +237,6 @@ impl Rule for FuncStyle {
 }
 
 impl FuncStyle {
-    fn check_function<'a>(&self, func: &Function<'a>, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match func.r#type {
-            FunctionType::FunctionDeclaration => self.check_function_declaration(func, node, ctx),
-            FunctionType::FunctionExpression => self.check_function_expression(node, ctx),
-            _ => unreachable!(),
-        }
-    }
-
     fn check_function_declaration<'a>(
         &self,
         func: &Function<'a>,

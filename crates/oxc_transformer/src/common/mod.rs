@@ -32,10 +32,8 @@ impl Common<'_> {
 impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // Module imports: insert import/require statements.
-        // Drain imports from store into a local Vec first, then build statements.
-        // This avoids split-borrow issues with `ctx.state`.
         let source_type = ctx.state.source_type;
-        let imports: Vec<_> = ctx.state.module_imports.imports.drain(..).collect();
+        let imports = std::mem::take(&mut ctx.state.module_imports.imports);
         if !imports.is_empty() {
             if source_type.is_module() {
                 let stmts: Vec<_> = imports
@@ -60,9 +58,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
         {
             let var_stmt = ctx.state.var_declarations.get_var_statement(&ctx.ast);
             if let Some((var_statement, let_statement)) = var_stmt {
-                let stmts: Vec<Statement<'a>> =
-                    var_statement.into_iter().chain(let_statement).collect();
-                ctx.state.top_level_statements.insert_statements(stmts);
+                ctx.state
+                    .top_level_statements
+                    .insert_statements(var_statement.into_iter().chain(let_statement));
             }
 
             // Check stack is exhausted

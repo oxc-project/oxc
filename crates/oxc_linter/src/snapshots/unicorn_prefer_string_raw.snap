@@ -85,3 +85,87 @@ source: crates/oxc_linter/src/tester.rs
    ·           ───────────────────
    ╰────
   help: Replace `'c:\\someöäü\\path'` with `String.raw`c:\someöäü\path``.
+
+  ⚠ unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:23]
+ 1 │ export const o = { b: "a\\b" };
+   ·                       ──────
+   ╰────
+  help: Replace `"a\\b"` with `String.raw`a\b``.
+
+  ⚠ unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:18]
+ 1 │ export const s = "a\\b";
+   ·                  ──────
+   ╰────
+  help: Replace `"a\\b"` with `String.raw`a\b``.
+
+  ⚠ unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:25]
+ 1 │ export const p = { "k": "a\\b" };
+   ·                         ──────
+   ╰────
+  help: Replace `"a\\b"` with `String.raw`a\b``.
+
+  ⚠ unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:16]
+ 1 │ const o = { 0: "a\\b", [key]: "a\\b", [0]: "a\\b", 1n: "a\\b", ["k"]: "a\\b" };
+   ·                ──────
+   ╰────
+  help: Replace `"a\\b"` with `String.raw`a\b``.
+
+  ⚠ unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:31]
+ 1 │ const o = { 0: "a\\b", [key]: "a\\b", [0]: "a\\b", 1n: "a\\b", ["k"]: "a\\b" };
+   ·                               ──────
+   ╰────
+  help: Replace `"a\\b"` with `String.raw`a\b``.
+
+  ⚠ unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:44]
+ 1 │ const o = { 0: "a\\b", [key]: "a\\b", [0]: "a\\b", 1n: "a\\b", ["k"]: "a\\b" };
+   ·                                            ──────
+   ╰────
+  help: Replace `"a\\b"` with `String.raw`a\b``.
+
+  ⚠ unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:56]
+ 1 │ const o = { 0: "a\\b", [key]: "a\\b", [0]: "a\\b", 1n: "a\\b", ["k"]: "a\\b" };
+   ·                                                        ──────
+   ╰────
+  help: Replace `"a\\b"` with `String.raw`a\b``.
+
+  ⚠ unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:71]
+ 1 │ const o = { 0: "a\\b", [key]: "a\\b", [0]: "a\\b", 1n: "a\\b", ["k"]: "a\\b" };
+   ·                                                                       ──────
+   ╰────
+  help: Replace `"a\\b"` with `String.raw`a\b``.
+
+  ⚠ unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:21]
+ 1 │ const o = { "a\\b": "c\\d", ["a\\b"]: "c\\d" };
+   ·                     ──────
+   ╰────
+  help: Replace `"c\\d"` with `String.raw`c\d``.
+
+  ⚠ unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:30]
+ 1 │ const o = { "a\\b": "c\\d", ["a\\b"]: "c\\d" };
+   ·                              ──────
+   ╰────
+  help: Replace `"a\\b"` with `String.raw`a\b``.
+
+  ⚠ unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:39]
+ 1 │ const o = { "a\\b": "c\\d", ["a\\b"]: "c\\d" };
+   ·                                       ──────
+   ╰────
+  help: Replace `"c\\d"` with `String.raw`c\d``.
+
+  ⚠ unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:20]
+ 1 │ const o = { blank: ' \\t' };
+   ·                    ──────
+   ╰────
+  help: Replace `' \\t'` with `String.raw` \t``.

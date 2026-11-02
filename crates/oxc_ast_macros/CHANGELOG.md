@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.157.0] - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- 052bca9 ast: Prevent greyed out fields in AST types in IDEs (#28335) (overlookmotel)
+
+### ⚡ Performance
+
+- df90836 ast: Reduce compile time of `#[ast]` macro (#28336) (overlookmotel)
+
+## [0.154.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- 7730e14 ast: [**BREAKING**] Refactor comment attachment storage (#27512) (camc314)
+- c904b61 ast: [**BREAKING**] Add comment attachment storage (#27393) (camc314)
+
 ## [0.149.0] - 2026-09-07
 
 ### 🚀 Features

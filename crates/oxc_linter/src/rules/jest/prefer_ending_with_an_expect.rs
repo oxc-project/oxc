@@ -5,13 +5,14 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     rules::PossibleJestNode,
     utils::{
@@ -179,13 +180,7 @@ impl Rule for PreferEndingWithAnExpect {
             .map(|config| Self(Box::new(config.into_inner())))
     }
 
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        possible_jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        let node = possible_jest_node.node;
-
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -200,7 +195,11 @@ impl Rule for PreferEndingWithAnExpect {
             return;
         };
 
-        let Some(parsed_jest_fn) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
+        let Some(parsed_jest_fn) = parse_general_jest_fn_call(call_expr, &possible_jest_node, ctx)
         else {
             return;
         };
@@ -222,6 +221,10 @@ impl Rule for PreferEndingWithAnExpect {
         }
 
         ctx.diagnostic(prefer_ending_with_an_expect_diagnostic(call_expr.callee.span()));
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 

@@ -17,7 +17,7 @@ It turns a parsed AST into an IR ("Document") of `FormatElement`s, then prints t
 ### Public API
 
 Call-sites use text-in entry points;
-The AST-wrapping IR primitives (`AstNode`, `Format`, `Buffer`, …) are `pub(crate)` and not part of the contract.
+The AST-wrapping IR primitives (`AstNode`, `Format`, …) are `pub(crate)` and not part of the contract.
 
 - `format`: Format a whole file (text-in)
 - `format_fragment`: Format a JS/TSX fragment for js-in-xxx embedding, parameterized by `FragmentContext`
@@ -26,6 +26,8 @@ The AST-wrapping IR primitives (`AstNode`, `Format`, `Buffer`, …) are `pub(cra
 - `format_program`: Special-purpose AST-in entry point
 - `format_with_session`: session-aware entry whose `FormatSession` carries the host-supplied `SessionServices`
   - the dispatcher (IR channel), the string embedder (JSDoc fences), and the Tailwind sorter (plain `format` / `format_program` wrap a service-less `PhysicalFile` session)
+- `format_to_ir`: Format a whole program as a dispatched child (e.g. a Markdown code block), returning IR for the parent's document
+  - `JsEmbeddedIn` carries what it is embedded in, translated by the orchestrator from the parent's marker
 
 ### Generated code
 
@@ -79,7 +81,7 @@ js-in-xxx works with `prettier-plugin-oxfmt` which uses `format_fragment`. See `
 
 Comments (and parentheses) are where a local fix has side effects; keep the rules below in view.
 The invariants and the invariants-vs-compat-tables split live in FORMATTER_POLICY.md "Comment placement invariants"; this section is their JS/TSX translation.
-Prettier's attachment artifacts that relocate a comment across tokens are divergences to pin, never rules to emulate (DIVERGENCES.md#array-hole-trailing-comment, DIVERGENCES.md#type-alias-trailing-comment-move).
+Prettier's attachment artifacts that relocate a comment across tokens are divergences to pin, never rules to emulate (DIVERGENCES.md#array-hole-comments, DIVERGENCES.md#type-alias-trailing-comment-move).
 
 ### Vocabulary
 
@@ -208,6 +210,8 @@ The second line of each item is the drift symptom.
   - the right-hand side after `= // prettier-ignore` is reformatted
 - `union_prints_itself` (the layout arms of `AssignmentLike` and the cast site) ⇄ the union's generated `fmt` suppression check
   - a suppressed union prints from column 0, its leading comment hoisted onto the operator's line
+- `Comments::is_quiet` (the generated `fmt` fast path) ⇄ the bound of `get_trailing_comments` (the parent's end), `is_span_suppressed`, `classify_type_cast`
+  - a comment near no other one is dropped or misplaced
 
 ### Open debts
 
@@ -248,8 +252,3 @@ cargo test -p oxc_formatter --test mod
 # Run a subset by module path (directory structure = module hierarchy)
 cargo test -p oxc_formatter fixtures::js::comments
 ```
-
-### Prettier conformance
-
-The failing files in `tests/snapshots/conformance__prettier-{js,ts}.snap` are only partly audited:
-some are covered by an existing DIVERGENCES.md entry, the rest are unclassified, and no per-file list exists yet.

@@ -3,7 +3,11 @@ use oxc_formatter_core::{FormatElement, SourceText};
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{options::JsFormatOptions, utils::assignment_like::AssignmentLikeLayout};
+use crate::{
+    JsEmbeddedIn,
+    options::{JsFormatOptions, QuoteStyle},
+    utils::assignment_like::AssignmentLikeLayout,
+};
 
 use super::Comments;
 
@@ -79,15 +83,11 @@ impl TailwindContextEntry {
 /// Context object storing data relevant when formatting an object.
 pub struct JsFormatContext<'ast> {
     options: JsFormatOptions,
-
     source_text: SourceText<'ast>,
-
     source_type: SourceType,
-
     comments: Comments<'ast>,
 
     cached_elements: FxHashMap<Span, FormatElement<'ast>>,
-
     /// One-shot handoff of the assignment layout to the arrow expression on the RHS of an assignment-like,
     /// keyed by the arrow's span so no other node can consume it.
     /// Set (and cleared) by `WithAssignmentLayout` around formatting the arrow, taken by the arrow's `write`.
@@ -103,6 +103,12 @@ pub struct JsFormatContext<'ast> {
     /// Stack tracking whether we're inside a Tailwind class context.
     /// When non-empty, StringLiterals should be sorted as Tailwind classes.
     tailwind_context_stack: Vec<TailwindContextEntry>,
+
+    /// Set only for an embedded program (see [`crate::format_to_ir`]):
+    /// its sole statement prints without its semicolon.
+    embedding_omits_semicolon: bool,
+    /// What an embedded program is embedded in (see [`crate::format_to_ir`]).
+    embedded_in: Option<JsEmbeddedIn>,
 }
 
 impl std::fmt::Debug for JsFormatContext<'_> {
@@ -147,6 +153,8 @@ impl<'ast> JsFormatContext<'ast> {
             arrow_assignment_layout: None,
             quote_needed_stack: Vec::new(),
             tailwind_context_stack: Vec::new(),
+            embedding_omits_semicolon: false,
+            embedded_in: None,
         }
     }
 
@@ -230,6 +238,31 @@ impl<'ast> JsFormatContext<'ast> {
 
     pub fn is_quote_needed(&self) -> bool {
         *self.quote_needed_stack.last().unwrap_or(&false)
+    }
+
+    pub(crate) fn set_embedding_omits_semicolon(&mut self, omit: bool) {
+        self.embedding_omits_semicolon = omit;
+    }
+
+    pub(crate) fn embedding_omits_semicolon(&self) -> bool {
+        self.embedding_omits_semicolon
+    }
+
+    pub(crate) fn set_embedded_in(&mut self, embedded_in: Option<JsEmbeddedIn>) {
+        self.embedded_in = embedded_in;
+    }
+
+    /// An HTML attribute's value (see [`JsEmbeddedIn::HtmlEventHandler`]):
+    /// strings print in `'`, whatever they hold, as the attribute's quote is `"`.
+    pub(crate) fn in_html_attribute(&self) -> bool {
+        self.embedded_in == Some(JsEmbeddedIn::HtmlEventHandler)
+    }
+
+    /// The quote a string prints in, the formatter's own too (a quoted property key):
+    /// the configured one, but `'` in an HTML attribute.
+    /// A JSX attribute and a directive have their own (`FormatLiteralStringToken`).
+    pub(crate) fn string_quote_style(&self) -> QuoteStyle {
+        if self.in_html_attribute() { QuoteStyle::Single } else { self.options.quote_style }
     }
 
     /// Push a Tailwind context entry onto the stack.

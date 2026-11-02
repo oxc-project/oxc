@@ -1,13 +1,12 @@
-use std::{env, path::Path, sync::Arc};
+use std::{env, path::Path};
 
 use serde_json::Value;
 
 use oxc_napi::OxcError;
 
 use crate::core::{
-    ExternalServices, FormatResult, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
-    JsSortTailwindClassesCb, ResolveOutcome, SourceFormatter, classify_file_kind, resolve_for_api,
-    utils,
+    ExternalServices, FormatResult, JsFormatEmbeddedDocCb, JsFormatFileCb, JsSortTailwindClassesCb,
+    ResolveOutcome, SourceFormatter, classify_file, resolve_for_api, utils,
 };
 
 pub struct ApiFormatResult {
@@ -27,7 +26,6 @@ pub fn run(
     source_text: String,
     options: Option<Value>,
     format_file_cb: JsFormatFileCb,
-    format_embedded_cb: JsFormatEmbeddedCb,
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> ApiFormatResult {
@@ -45,23 +43,19 @@ pub fn run(
     let cwd = env::current_dir().expect("Failed to get current working directory");
     let num_of_threads = 1;
 
-    let external_services = ExternalServices::new(
-        format_file_cb,
-        format_embedded_cb,
-        format_embedded_doc_cb,
-        sort_tailwind_classes_cb,
-    );
+    let external_services =
+        ExternalServices::new(format_file_cb, format_embedded_doc_cb, sort_tailwind_classes_cb);
     let _cleanup = external_services.cleanup_guard();
 
     let filepath = utils::normalize_relative_path(&cwd, Path::new(filename));
-    let Some(kind) = classify_file_kind(Arc::from(filepath)) else {
+    let Some(strategy) = classify_file(&filepath) else {
         return ApiFormatResult {
             code: source_text,
             errors: vec![OxcError::new(format!("Unsupported file type: {filename}"))],
         };
     };
-    let strategy = match resolve_for_api(options.unwrap_or_default(), kind, &cwd) {
-        Ok(ResolveOutcome::Format(strategy)) => strategy,
+    let plan = match resolve_for_api(options.unwrap_or_default(), &filepath, strategy, &cwd) {
+        Ok(ResolveOutcome::Format(plan)) => plan,
         Ok(ResolveOutcome::MissingPlugin(plugin)) => {
             return ApiFormatResult {
                 code: source_text,
@@ -78,12 +72,11 @@ pub fn run(
         }
     };
 
-    // Create formatter and format
     let formatter =
         SourceFormatter::new(num_of_threads).with_external_services(Some(external_services));
 
     // Use `block_in_place()` to avoid nested async runtime access
-    match tokio::task::block_in_place(|| formatter.format(&source_text, strategy)) {
+    match tokio::task::block_in_place(|| formatter.format(&source_text, plan)) {
         FormatResult::Success { code, .. } => ApiFormatResult { code, errors: vec![] },
         FormatResult::Error(diagnostics) => {
             let errors = OxcError::from_diagnostics(filename, &source_text, diagnostics);

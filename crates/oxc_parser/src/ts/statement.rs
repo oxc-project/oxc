@@ -1,6 +1,6 @@
-use oxc_allocator::{ArenaBox, ArenaVec, Dummy, GetAllocator};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_span::{FileExtension, GetSpan};
+use oxc_span::{FileExtension, GetSpan, SPAN};
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
@@ -72,7 +72,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_ts_enum_member_name(&mut self) -> TSEnumMemberName<'a> {
         match self.cur_kind() {
             Kind::Str => {
-                let literal = self.parse_literal_string();
+                let literal = self.parse_known_literal_string();
                 TSEnumMemberName::String(self.alloc(literal))
             }
             Kind::LBrack => match self.parse_computed_property_name() {
@@ -343,7 +343,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let expression = self.parse_assignment_expression_or_higher();
         let expression_span = expression.span();
         self.error(diagnostics::interface_extend(expression_span));
-        TSTypeName::dummy(self.allocator())
+        TSTypeName::new_this_expression(SPAN, self)
     }
 
     fn parse_ts_interface_body(&mut self) -> ArenaBox<'a, TSInterfaceBody<'a>> {
@@ -459,7 +459,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         modifiers: &Modifiers,
     ) -> ArenaBox<'a, TSExternalModuleDeclaration<'a>> {
-        let id = self.parse_literal_string();
+        let id = self.parse_known_literal_string();
         if !self.ctx.has_ambient() {
             self.error(diagnostics::quoted_module_name_only_allowed_in_ambient_module(id.span()));
         }
@@ -715,7 +715,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     && self.cur_kind().is_binding_identifier()
                 {
                     // `import type something ...`
-                    identifier = self.parse_binding_identifier();
+                    identifier = self.parse_known_binding_identifier();
                     import_kind = ImportOrExportKind::Type;
                 }
                 self.parse_ts_import_equals_declaration(import_kind, identifier, start)

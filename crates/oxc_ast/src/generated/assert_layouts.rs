@@ -122,13 +122,12 @@ const _: () = {
     assert!(offset_of!(TaggedTemplateExpression, type_arguments) == 32);
     assert!(offset_of!(TaggedTemplateExpression, quasi) == 40);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<TemplateElement>() == 48);
     assert!(align_of::<TemplateElement>() == 8);
     assert!(offset_of!(TemplateElement, span) == 0);
     assert!(offset_of!(TemplateElement, node_id) == 8);
     assert!(offset_of!(TemplateElement, tail) == 12);
-    assert!(offset_of!(TemplateElement, lone_surrogates) == 13);
     assert!(offset_of!(TemplateElement, value) == 16);
 
     // Padding: 0 bytes
@@ -1000,12 +999,11 @@ const _: () = {
     assert!(offset_of!(NumericLiteral, raw) == 16);
     assert!(offset_of!(NumericLiteral, value) == 32);
 
-    // Padding: 3 bytes
+    // Padding: 4 bytes
     assert!(size_of::<StringLiteral>() == 48);
     assert!(align_of::<StringLiteral>() == 8);
     assert!(offset_of!(StringLiteral, span) == 0);
     assert!(offset_of!(StringLiteral, node_id) == 8);
-    assert!(offset_of!(StringLiteral, lone_surrogates) == 12);
     assert!(offset_of!(StringLiteral, value) == 16);
     assert!(offset_of!(StringLiteral, raw) == 32);
 
@@ -1838,15 +1836,20 @@ const _: () = {
     assert!(size_of::<CommentNewlines>() == 1);
     assert!(align_of::<CommentNewlines>() == 1);
 
-    // Padding: 0 bytes
-    assert!(size_of::<Comment>() == 16);
+    assert!(size_of::<CommentPlacement>() == 1);
+    assert!(align_of::<CommentPlacement>() == 1);
+
+    // Padding: 3 bytes
+    assert!(size_of::<Comment>() == 24);
     assert!(align_of::<Comment>() == 8);
     assert!(offset_of!(Comment, span) == 0);
-    assert!(offset_of!(Comment, attached_to) == 8);
-    assert!(offset_of!(Comment, kind) == 12);
-    assert!(offset_of!(Comment, position) == 13);
-    assert!(offset_of!(Comment, newlines) == 14);
-    assert!(offset_of!(Comment, content) == 15);
+    assert!(offset_of!(Comment, node_id) == 8);
+    assert!(offset_of!(Comment, attached_to) == 12);
+    assert!(offset_of!(Comment, placement) == 16);
+    assert!(offset_of!(Comment, kind) == 17);
+    assert!(offset_of!(Comment, position) == 18);
+    assert!(offset_of!(Comment, newlines) == 19);
+    assert!(offset_of!(Comment, content) == 20);
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -1964,17 +1967,16 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(TaggedTemplateExpression, type_arguments) == 20);
     assert!(offset_of!(TaggedTemplateExpression, quasi) == 24);
 
-    // Padding: 2 bytes
-    assert!(size_of::<TemplateElement>() == 32);
+    // Padding: 3 bytes
+    assert!(size_of::<TemplateElement>() == 36);
     assert!(align_of::<TemplateElement>() == 4);
     assert!(offset_of!(TemplateElement, span) == 0);
     assert!(offset_of!(TemplateElement, node_id) == 8);
     assert!(offset_of!(TemplateElement, tail) == 12);
-    assert!(offset_of!(TemplateElement, lone_surrogates) == 13);
     assert!(offset_of!(TemplateElement, value) == 16);
 
     // Padding: 0 bytes
-    assert!(size_of::<TemplateElementValue>() == 16);
+    assert!(size_of::<TemplateElementValue>() == 20);
     assert!(align_of::<TemplateElementValue>() == 4);
     assert!(offset_of!(TemplateElementValue, raw) == 0);
     assert!(offset_of!(TemplateElementValue, cooked) == 8);
@@ -2842,13 +2844,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(NumericLiteral, raw) == 16);
     assert!(offset_of!(NumericLiteral, value) == 24);
 
-    // Padding: 3 bytes
+    // Padding: 0 bytes
     assert!(size_of::<StringLiteral>() == 32);
     assert!(align_of::<StringLiteral>() == 4);
     assert!(offset_of!(StringLiteral, span) == 0);
     assert!(offset_of!(StringLiteral, node_id) == 8);
-    assert!(offset_of!(StringLiteral, lone_surrogates) == 12);
-    assert!(offset_of!(StringLiteral, value) == 16);
+    assert!(offset_of!(StringLiteral, value) == 12);
     assert!(offset_of!(StringLiteral, raw) == 24);
 
     // Padding: 3 bytes
@@ -3680,15 +3681,20 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<CommentNewlines>() == 1);
     assert!(align_of::<CommentNewlines>() == 1);
 
-    // Padding: 0 bytes
-    assert!(size_of::<Comment>() == 16);
+    assert!(size_of::<CommentPlacement>() == 1);
+    assert!(align_of::<CommentPlacement>() == 1);
+
+    // Padding: 3 bytes
+    assert!(size_of::<Comment>() == 24);
     assert!(align_of::<Comment>() == 4);
     assert!(offset_of!(Comment, span) == 0);
-    assert!(offset_of!(Comment, attached_to) == 8);
-    assert!(offset_of!(Comment, kind) == 12);
-    assert!(offset_of!(Comment, position) == 13);
-    assert!(offset_of!(Comment, newlines) == 14);
-    assert!(offset_of!(Comment, content) == 15);
+    assert!(offset_of!(Comment, node_id) == 8);
+    assert!(offset_of!(Comment, attached_to) == 12);
+    assert!(offset_of!(Comment, placement) == 16);
+    assert!(offset_of!(Comment, kind) == 17);
+    assert!(offset_of!(Comment, position) == 18);
+    assert!(offset_of!(Comment, newlines) == 19);
+    assert!(offset_of!(Comment, content) == 20);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]

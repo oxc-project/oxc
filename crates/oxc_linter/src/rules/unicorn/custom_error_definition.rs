@@ -1,14 +1,12 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        AssignmentTarget, Class, ClassElement, Expression, MethodDefinitionKind,
-        PropertyDefinition, Statement,
-    },
+    ast::{AssignmentTarget, Class, ClassElement, Expression, PropertyDefinition, Statement},
     match_member_expression,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, ast_util, context::LintContext, rule::Rule};
 
@@ -181,15 +179,15 @@ fn check_class<'a>(class: &Class<'a>, node: &AstNode<'a>, ctx: &LintContext<'a>)
 
     let constructor = class.body.body.iter().find_map(|el| match el {
         ClassElement::MethodDefinition(method)
-            if method.kind == MethodDefinitionKind::Constructor && method.value.body.is_some() =>
+            if method.kind.is_constructor() && method.value.body.is_some() =>
         {
             Some(method)
         }
         _ => None,
     });
-    let has_constructor_signature = class.body.body.iter().any(|el| {
-        matches!(el, ClassElement::MethodDefinition(method) if method.kind == MethodDefinitionKind::Constructor)
-    });
+    let has_constructor_signature = class.body.body.iter().any(
+        |el| matches!(el, ClassElement::MethodDefinition(method) if method.kind.is_constructor()),
+    );
 
     let name_property = class.body.body.iter().find_map(|el| {
         if let ClassElement::PropertyDefinition(prop) = el
@@ -342,7 +340,9 @@ fn has_valid_super_class(class: &Class) -> bool {
     };
     let name = match super_class.get_inner_expression() {
         Expression::Identifier(ident) => Some(ident.name.as_str()),
-        e @ match_member_expression!(Expression) => e.to_member_expression().static_property_name(),
+        e @ match_member_expression!(Expression) => {
+            e.to_member_expression().static_property_name().and_then(JSStr::as_str)
+        }
         _ => None,
     };
     name.is_some_and(is_valid_super_class_name)
@@ -378,14 +378,14 @@ fn is_valid_name_property(name_property: Option<&PropertyDefinition>, class_name
     if let Some(prop) = name_property
         && let Some(Expression::StringLiteral(lit)) = &prop.value
     {
-        return lit.value.as_str() == class_name;
+        return lit.value == class_name;
     }
 
     false
 }
 
 fn is_expected_string_literal(expr: &Expression, expected: &str) -> bool {
-    matches!(expr, Expression::StringLiteral(lit) if lit.value.as_str() == expected)
+    matches!(expr, Expression::StringLiteral(lit) if lit.value == expected)
 }
 
 #[test]

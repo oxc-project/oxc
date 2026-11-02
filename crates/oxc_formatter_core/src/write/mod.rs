@@ -6,7 +6,7 @@ pub mod formatter;
 mod macros;
 pub mod state;
 
-use crate::{Arguments, Buffer, Formatter};
+use crate::Formatter;
 
 /// Formatting trait for types that can create a formatted representation. The `biome_formatter` equivalent
 /// to [std::fmt::Display].
@@ -80,12 +80,4 @@ impl<C> Format<'_, C> for () {
     fn fmt(&self, _: &mut Formatter<'_, '_, C>) {
         // Intentionally left empty
     }
-}
-
-/// The `write` function takes a target buffer and an `Arguments` struct that can be precompiled with the `format_args!` macro.
-///
-/// The arguments will be formatted in-order into the output buffer provided.
-#[inline(always)]
-pub fn write<'ast, C>(output: &mut dyn Buffer<'ast, C>, args: Arguments<'_, 'ast, C>) {
-    Formatter::new(output).write_fmt(args);
 }

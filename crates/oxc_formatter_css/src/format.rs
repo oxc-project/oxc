@@ -3,8 +3,7 @@ use oxc_css_parser::{ParserBuilder, ParserOptions, TemplatePlaceholder, ast::Sty
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, InputKind,
-    VecBuffer,
+    Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter, InputKind,
     builders::{empty_line, hard_line_break, text},
     spec::{FrontMatter, blank_front_matter, parse_front_matter, split_bom},
     write,
@@ -31,7 +30,7 @@ pub fn format<'a>(
     options: CssFormatOptions,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
     // NOTE: this wrapper labels the run `PhysicalFile` with NO services:
-    // front matter is detected but its body degrades to verbatim (`PreserveOriginal`),
+    // front matter is detected but kept verbatim (no dispatcher),
     // and `@apply` Tailwind classes print unsorted.
     // Hosts that want them use `format_with_session` with the services installed.
     format_with_session(
@@ -62,22 +61,17 @@ pub fn format_with_session<'a>(
         session.input_kind() == InputKind::PhysicalFile,
         "format_with_session is the physical-root entry; embedded inputs go through format_to_ir"
     );
-    let ParsedCss { stylesheet, comments, source, has_bom, front_matter } = parse_for_format(
-        session.allocator(),
-        source_text,
-        options,
-        /* template_placeholders */ false,
-    )?;
+    let ParsedCss { stylesheet, comments, source, has_bom, front_matter } =
+        parse_for_format(session.allocator(), source_text, options, CssRoot::Stylesheet)?;
 
-    let context =
-        CssFormatContext::new(options, source, comments, /* template_placeholders */ false);
+    let context = CssFormatContext::new(options, source, comments, None);
     // A root `Document` owns a fresh Tailwind class scope
     let session = session.with_new_tailwind_scope();
     let mut state = FormatState::new_with_session(context, session.clone());
     // Pre-allocate: measured on 616 real-world files (bootstrap, vscode, saleor; css/scss/less),
     // 0.5x source bytes plus a 1024-element floor for tiny-file spikes avoids reallocation for 98% of the corpus.
     let capacity = (source.len() / 2).max(1024);
-    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
+    let mut buffer = Formatter::with_capacity(capacity, &mut state);
 
     write!(&mut buffer, FormatCssRoot { stylesheet: &stylesheet, has_bom, front_matter });
 
@@ -105,7 +99,7 @@ pub struct ParsedCss<'a> {
 ///
 /// [`format()`] goes through this too, so what a caller sees is exactly what gets formatted.
 /// Owns the envelope (BOM split, `\r` normalization, front matter blanking).
-/// `template_placeholders` is [`format_to_ir`]'s css-in-js parse mode.
+/// `root` is what the source is: [`format()`] parses a stylesheet, [`format_to_ir`] a fragment.
 ///
 /// # Errors
 /// Same as [`format()`].
@@ -113,16 +107,19 @@ pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
     source_text: &str,
     options: CssFormatOptions,
-    template_placeholders: bool,
+    root: CssRoot,
 ) -> Result<ParsedCss<'a>, OxcDiagnostic> {
-    let (has_bom, source_text) = split_bom(source_text);
+    let (has_bom, stripped) = split_bom(source_text);
 
     // A document root owns front matter;
     // the session's dispatcher decides whether its body actually formats (`write_front_matter`).
-    let PreparedSource { source, parse_source, front_matter } =
-        prepare_source(allocator, source_text);
+    let PreparedSource { source, parse_source, front_matter } = prepare_source(allocator, stripped);
     let (stylesheet, comments) =
-        parse_stylesheet(allocator, parse_source, options, template_placeholders)?;
+        parse_stylesheet(allocator, parse_source, options, root).map_err(|mut err| {
+            oxc_formatter_core::restore_crlf_labels(&mut err.labels, stripped);
+            oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+            err
+        })?;
 
     Ok(ParsedCss { stylesheet, comments, source, has_bom, front_matter })
 }
@@ -133,9 +130,9 @@ pub fn parse_for_format<'a>(
 /// Unlike [`format()`], this:
 /// - allocates from the session's shared arena and `GroupId` space
 /// - emits neither a BOM nor the trailing newline
-/// - `template_placeholders` enables the css-in-js parse mode
-///   (`` `PLACEHOLDER-N` `` markers + top-level declarations);
-///   JSDoc-style whole-stylesheet fragments pass `false`
+/// - parses a fragment ([`CssRoot::Fragment`]), so root declarations are statements
+/// - `embedded_in` is what the part is embedded in, for the parse mode and print rules that depend on it ([`CssEmbeddedIn`]);
+///   JSDoc / Markdown code blocks pass `None`
 ///
 /// `@apply` Tailwind classes go into the session's class scope (shared with the parent),
 /// the parent document owns the batch sort.
@@ -146,12 +143,17 @@ pub fn format_to_ir<'a>(
     session: &FormatSession<'a>,
     source_text: &str,
     options: CssFormatOptions,
-    template_placeholders: bool,
+    embedded_in: Option<CssEmbeddedIn>,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     // `FormatSession::dispatch` never hands a BOM-headed input to an embedded part,
     // so the BOM split inside `parse_for_format` is a no-op here.
+    let root = if embedded_in == Some(CssEmbeddedIn::CssInJsTemplate) {
+        CssRoot::CssInJsTemplate
+    } else {
+        CssRoot::Fragment
+    };
     let ParsedCss { stylesheet, comments, source, front_matter, .. } =
-        parse_for_format(session.allocator(), source_text, options, template_placeholders)?;
+        parse_for_format(session.allocator(), source_text, options, root)?;
     if front_matter.is_some() && !session.input_kind().owns_front_matter() {
         // A fragment (css-in-js, JSDoc fence) never acquires file envelope semantics:
         // refuse the whole child instead of partially treating its head as front matter.
@@ -160,13 +162,35 @@ pub fn format_to_ir<'a>(
         ));
     }
 
-    let context = CssFormatContext::new(options, source, comments, template_placeholders);
+    let context = CssFormatContext::new(options, source, comments, embedded_in);
     let mut state = FormatState::new_with_session(context, session.clone());
-    let mut buffer = VecBuffer::new(&mut state);
+    let mut buffer = Formatter::new(&mut state);
 
     write!(&mut buffer, FormatCssEmbedded { stylesheet: &stylesheet, front_matter });
 
     Ok(EmbeddedIr { ir: buffer.into_vec() })
+}
+
+/// What an embedded CSS part is embedded in (the host translates the parent's request into this).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CssEmbeddedIn {
+    /// A css-in-js template: SCSS grammar with `${}` placeholder markers ([`CssRoot::CssInJsTemplate`]).
+    CssInJsTemplate,
+    /// An HTML `style` attribute's value: its declarations print on one line when they fit,
+    /// the last `;` only when they do not.
+    HtmlStyleAttribute,
+}
+
+/// What a CSS source is parsed as.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CssRoot {
+    /// A file: a root declaration is an error (Css / Scss).
+    Stylesheet,
+    /// An embedded part (JSDoc / Markdown code block): the root parses as a block's contents,
+    /// so a root declaration is a statement (AGENTS.md "Error semantics").
+    Fragment,
+    /// A [`Self::Fragment`] from a css-in-js template, with `` `PLACEHOLDER-N` `` markers.
+    CssInJsTemplate,
 }
 
 /// Normalized arena source, its front matter (when present),
@@ -211,7 +235,7 @@ fn parse_stylesheet<'a>(
     allocator: &'a Allocator,
     parse_source: &'a str,
     options: CssFormatOptions,
-    tolerate_placeholders: bool,
+    root: CssRoot,
 ) -> Result<(Stylesheet<'a>, &'a [CssComment]), OxcDiagnostic> {
     debug_assert!(!parse_source.starts_with('\u{feff}'), "callers must never pass a leading BOM");
 
@@ -222,25 +246,28 @@ fn parse_stylesheet<'a>(
             // minus the leading backtick which oxc-css-parser consumes as the placeholder sigil
             // (the closing backtick `TEMPLATE_PLACEHOLDER_SUFFIX` is fixed in oxc-css-parser).
             // Only valid for SCSS; oxc-css-parser asserts that.
-            template_placeholder: tolerate_placeholders.then_some(TemplatePlaceholder {
-                prefix: TEMPLATE_PLACEHOLDER_PREFIX
-                    .strip_prefix(TEMPLATE_PLACEHOLDER_SUFFIX)
-                    .expect("placeholder prefix starts with a backtick"),
-            }),
+            template_placeholder: (root == CssRoot::CssInJsTemplate).then_some(
+                TemplatePlaceholder {
+                    prefix: TEMPLATE_PLACEHOLDER_PREFIX
+                        .strip_prefix(TEMPLATE_PLACEHOLDER_SUFFIX)
+                        .expect("placeholder prefix starts with a backtick"),
+                },
+            ),
+            block_contents: root != CssRoot::Stylesheet,
         })
         .comments()
         .build();
 
     let stylesheet = parser.parse::<Stylesheet>().map_err(|error| to_diagnostic(&error))?;
     // Any recoverable error rejects the file, a root declaration included;
-    // the css-in-js parse mode never emits one (AGENTS.md "Error semantics").
+    // a fragment never emits one (AGENTS.md "Error semantics").
     if let Some(error) = parser.recoverable_errors().first() {
         return Err(to_diagnostic(error));
     }
 
     let comments: &'a [CssComment] = ArenaVec::from_iter_in(
         parser.comments().iter().map(|c| CssComment {
-            span: to_span(&c.span),
+            span: to_span(c.span),
             inline: matches!(c.kind, oxc_css_parser::token::CommentKind::Line),
         }),
         &allocator,
@@ -251,19 +278,14 @@ fn parse_stylesheet<'a>(
 }
 
 fn to_diagnostic(error: &oxc_css_parser::error::Error) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Syntax error: {}", error.kind)).with_label(to_span(&error.span))
+    OxcDiagnostic::error(format!("Syntax error: {}", error.kind)).with_label(to_span(error.span))
 }
 
-pub fn to_span(span: &oxc_css_parser::Span) -> Span {
-    Span::new(
-        u32::try_from(span.start).unwrap_or(u32::MAX),
-        u32::try_from(span.end).unwrap_or(u32::MAX),
-    )
+pub fn to_span(span: oxc_css_parser::Span) -> Span {
+    Span::new(span.start, span.end)
 }
 
 fn write_front_matter<'a>(fm: &FrontMatter<'a>, f: &mut CssFormatter<'_, 'a>) {
-    // NOTE: TOML currently has no IR-capable formatter, so it degrades to verbatim through `PreserveOriginal`.
-    // Still need to specify here since blank TOML frontmatter will be normalized.
     oxc_formatter_core::write_front_matter(fm, &["yaml", "toml"], f);
 }
 

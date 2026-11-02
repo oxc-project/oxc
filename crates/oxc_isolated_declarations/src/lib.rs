@@ -102,7 +102,11 @@ impl<'a> IsolatedDeclarations<'a> {
             source_type,
             program.source_text,
             ArenaVec::from_iter_in(
-                program.comments.iter().filter(|c| c.is_jsdoc()).copied(),
+                program
+                    .comments
+                    .iter()
+                    .filter(|c| c.is_jsdoc())
+                    .map(|comment| comment.clone_in(self.allocator())),
                 &self,
             ),
             None,

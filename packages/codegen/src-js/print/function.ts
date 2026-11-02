@@ -1,13 +1,12 @@
 // Functions.
 
-import { typeAssertIs } from "../asserts.ts";
+import { debugAssert, typeAssertIs } from "../asserts.ts";
 import { printBindingPattern } from "./binding_pattern.ts";
 import { CAT_CLOSE_BRACKET, CAT_IDENT, CAT_OTHER, CAT_START_OF_STMT } from "./categories.ts";
 import {
   debugAssertLastFresh,
   markMapStart,
   write,
-  writeIdent,
   writeNoLast,
   writeWithMap,
   writeWithMapEnd,
@@ -24,10 +23,54 @@ import type { State } from "../state.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
+ * The keywords a named function begins with, indexed as described in `printFunction`.
+ *
+ * Each ends with a space, which separates it from the name.
+ * After `*` the space is not needed, but matches `oxc_codegen`'s style.
+ *
+ * Only TS builds include the `declare` forms.
+ */
+const NAMED_FUNCTION_PREFIXES = TS
+  ? [
+      "function ",
+      "async function ",
+      "function* ",
+      "async function* ",
+      "declare function ",
+      "declare async function ",
+      "declare function* ",
+      "declare async function* ",
+    ]
+  : ["function ", "async function ", "function* ", "async function* "];
+
+/**
+ * The keywords an anonymous function begins with, indexed as described in `printFunction`.
+ *
+ * No trailing space is needed. The generator forms have one after `*` anyway, to match `oxc_codegen`'s style.
+ *
+ * Only TS builds include the `declare` forms.
+ */
+const ANONYMOUS_FUNCTION_PREFIXES = TS
+  ? [
+      "function",
+      "async function",
+      "function* ",
+      "async function* ",
+      "declare function",
+      "declare async function",
+      "declare function* ",
+      "declare async function* ",
+    ]
+  : ["function", "async function", "function* ", "async function* "];
+
+/**
  * Print a function declaration or expression, from `async` through to the closing brace of its body.
  *
  * A function expression is parenthesized where the statement or an `export default` starts with it,
  * since it would otherwise be read as a declaration.
+ *
+ * @param node - Function
+ * @param state - Printer state
  */
 export function printFunction(node: ESTree.Function, state: State): void {
   let wrap = false;
@@ -37,32 +80,42 @@ export function printFunction(node: ESTree.Function, state: State): void {
     wrap = (state.last | 1) === CAT_START_OF_STMT;
   }
 
-  if (wrap) write(state, "(", CAT_OTHER);
+  if (wrap) {
+    writeNoLast(state, "(");
+  } else {
+    printSpaceBeforeIdentifier(state);
+  }
 
-  printSpaceBeforeIdentifier(state);
+  // The node's mapping goes on whatever keyword begins the function, which is written as a single string.
+  //
+  // The string comes from a table, rather than from testing each flag in turn.
+  // Real code mixes `async` and plain functions freely, so a branch on `async` would often be mispredicted.
+  // Bit 0 of the index is `async`, bit 1 is generator, and bit 2 is `declare` (TS builds only).
+  //
+  // V8 compiles each `flag === true` to a single compare against the `true` object, with no branch.
+  // Any value other than `true` (e.g. `null` or `undefined`) counts as `false`.
+  const generator = node.generator === true;
+  const prefixIndex = TS
+    ? ((node.async === true) as unknown as number)
+      | (((generator === true) as unknown as number) << 1)
+      | (((node.declare === true) as unknown as number) << 2)
+    : ((node.async === true) as unknown as number)
+      | (((generator === true) as unknown as number) << 1);
 
-  // The node's mapping goes on whichever of these is written first
-  const declare = TS && node.declare;
-  if (declare) {
-    writeWithMap(state, "declare ", CAT_OTHER, node.start, node.end, node);
-    writeIdent(state, node.async ? "async function" : "function");
+  const { id } = node;
+  if (id != null) {
+    writeWithMapNoLast(state, NAMED_FUNCTION_PREFIXES[prefixIndex], node.start, node.end, node);
+    writeWithMapNamed(state, id.name, id.start, id.end, id);
   } else {
     writeWithMap(
       state,
-      node.async ? "async function" : "function",
-      CAT_IDENT,
+      ANONYMOUS_FUNCTION_PREFIXES[prefixIndex],
+      // Only the generator prefixes end with a space
+      generator === true ? CAT_OTHER : CAT_IDENT,
       node.start,
       node.end,
       node,
     );
-  }
-
-  if (node.generator) write(state, "* ", CAT_OTHER);
-
-  const { id } = node;
-  if (id != null) {
-    printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(state, id.name, id.start, id.end, id);
   }
 
   if (TS) printTypeParameters(node.typeParameters, state);
@@ -83,6 +136,9 @@ export function printFunction(node: ESTree.Function, state: State): void {
 
 /**
  * Print a parameter list in parentheses.
+ *
+ * @param params - Parameters
+ * @param state - Printer state
  */
 export function printParenParams(params: ESTree.ParamPattern[], state: State): void {
   // `(params)`, as a single write when there are none
@@ -101,20 +157,35 @@ export function printParenParams(params: ESTree.ParamPattern[], state: State): v
  *
  * TypeScript parameter properties carry the modifiers which make them a property as well as a
  * parameter, and decorators can appear on either kind.
+ *
+ * @param params - Parameters
+ * @param state - Printer state
  */
 function printParams(params: ESTree.ParamPattern[], state: State): void {
+  debugAssertLastFresh(state);
+  debugAssert(state.last === CAT_OTHER && state.lastCharWritten === "(");
+
   const { length } = params;
   for (let i = 0; i < length; i++) {
     if (i > 0) write(state, ", ", CAT_OTHER);
 
     const param = params[i];
+    // In TS builds `param` can be any of several node types, so its `type` is a megamorphic load.
+    // Read it only once, and avoid reading it at all in JS builds.
+    const paramType = TS ? param.type : null;
 
     // Oxc stores TypeScript's special `this` parameter separately from formal parameters
-    // and prints it without a source mapping.
-    if (TS && param.type === "Identifier" && param.name === "this") {
-      writeIdent(state, "this");
-      if (param.typeAnnotation != null) printTypeAnnotation(param.typeAnnotation, state);
-      continue;
+    // and prints it without a source mapping
+    if (TS && paramType === "Identifier") {
+      typeAssertIs<ESTree.BindingIdentifier>(param);
+      if (param.name === "this") {
+        // `printTypeAnnotation` prints `: ` first. On next turn of loop, `, ` is written.
+        // Or if this is last param, we return to caller, who immediately writes `)` or `) =>`.
+        // In any of these cases, nothing reads `last`, so writing it is redundant.
+        writeNoLast(state, "this");
+        if (param.typeAnnotation != null) printTypeAnnotation(param.typeAnnotation, state);
+        continue;
+      }
     }
 
     const { decorators } = param;
@@ -124,21 +195,27 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
       markMapStart(state, param.start, param.end, param);
     }
 
-    if (TS && param.type === "TSParameterProperty") {
+    if (TS && paramType === "TSParameterProperty") {
+      typeAssertIs<ESTree.TSParameterProperty>(param);
+
+      // * At start of function, last char written was `(`.
+      // * On each turn of loop after the first, `, ` is written.
+      // * `printDecorators` prints a trailing ` `.
+      // * The 3 conditions below all print something ending with ` `.
+      // So in all cases, `last` is `CAT_OTHER`. Therefore there's no need to rewrite `last` as `CAT_OTHER`
+      // in the 3 conditions below. Set `lastIsStale = false` after so no error in `printBindingPattern`.
+      debugAssertLastFresh(state);
+      debugAssert(state.last === CAT_OTHER);
+
       if (param.accessibility != null) {
-        printSpaceBeforeIdentifier(state);
         writeNoLast(state, param.accessibility);
-        write(state, " ", CAT_OTHER);
+        writeNoLast(state, " ");
       }
 
-      if (param.override) {
-        printSpaceBeforeIdentifier(state);
-        write(state, "override ", CAT_OTHER);
-      }
-      if (param.readonly) {
-        printSpaceBeforeIdentifier(state);
-        write(state, "readonly ", CAT_OTHER);
-      }
+      if (param.override) writeNoLast(state, "override ");
+      if (param.readonly) writeNoLast(state, "readonly ");
+
+      if (DEBUG) state.lastIsStale = false;
 
       printBindingPattern(param.parameter, state);
     } else {
@@ -154,6 +231,9 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
  *
  * A function body has a directive prologue, so it goes through the same printer as a program does,
  * rather than through the block statement printer.
+ *
+ * @param body - Function body
+ * @param state - Printer state
  */
 export function printFunctionBody(body: ESTree.FunctionBody, state: State): void {
   // `body` is a BlockStatement holding directives + statements.
@@ -177,6 +257,9 @@ export function printFunctionBody(body: ESTree.FunctionBody, state: State): void
  * Print an arrow function's parameter list along with its `=>`.
  *
  * Oxc keeps the parentheses even around a lone parameter, so there is no single-parameter form.
+ *
+ * @param params - Parameters
+ * @param state - Printer state
  */
 export function printParenParamsArrow(params: ESTree.ParamPattern[], state: State): void {
   // `(params) => `, as a single write when there are none

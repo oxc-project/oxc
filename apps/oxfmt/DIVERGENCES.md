@@ -6,7 +6,8 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 
 - Why: uniform-rule (embedded script formats like its standalone file)
 - Pin: `conformance/fixtures/edge-cases/js-in-vue/generic-trailing-comma.vue`
-- Conformance: `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`
+- Conformance:
+  - `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`
 
 ```vue
 <!-- input -->
@@ -33,7 +34,8 @@ in ts-in-md and plain `.ts` — one rule over that internal inconsistency, the s
 
 - Why: cost
 - Pin: `conformance/fixtures/edge-cases/css-in-js/styled-extend-tag.js`
-- Conformance: `externals/prettier/js/multiparser-css/styled-components.js`
+- Conformance:
+  - `externals/prettier/js/multiparser-css/styled-components.js`
 
 ```js
 /* input */
@@ -119,3 +121,332 @@ The layout of an embedded template as a sole argument or an arrow body is decide
 Prettier falls back to the source shape when the content fails to format, while it hugs the same template with valid content.
 The verbatim content cannot be re-indented, so its source indentation stays and may look misaligned once hugged (as with any verbatim template Prettier hugs).
 Under `embeddedLanguageFormatting: off`, the source shape still decides, like Prettier.
+
+## nested-fence-length
+
+- Why: semantics (prettier/prettier#19908)
+- Pin: `conformance/fixtures/edge-cases/xxx-in-md/nested-fence-length.md`
+- Conformance:
+  - `externals/prettier/js/multiparser-markdown/codeblock.js`
+
+`````markdown
+<!-- input -->
+```md
+~~~js
+const  a = 1
+~~~
+```
+
+<!-- ours -->
+````md
+```js
+const a = 1;
+```
+````
+
+<!-- prettier -->
+```md
+```js
+const a = 1;
+```
+```
+`````
+
+A fenced code block's fence outnumbers the backtick (or tilde) runs of the content it prints, the embedded formatter's output included.
+Markdown in a code block formats its own fences, so `~~~` becomes a backtick fence the outer one must outnumber;
+Prettier keeps the outer fence at three and the inner fence closes it on the next parse.
+The same holds for markdown-in-js, whose fences are `~`.
+Prettier `main` counts the printed content since #19908; the pin (3.9.10) still counts the source.
+
+## line-ranged-code-block
+
+- Why: uniform-rule (same construct, same output: `` ```js{1,3} ``)
+- Pin: `conformance/fixtures/edge-cases/xxx-in-md/line-ranged-code-block.md`
+
+````markdown
+<!-- input -->
+```js {4}
+const a = [
+  1, 2,
+];
+console.log(a);
+```
+
+<!-- ours -->
+```js {4}
+const a = [
+  1, 2,
+];
+console.log(a);
+```
+
+<!-- prettier -->
+```js {4}
+const a = [1, 2];
+console.log(a);
+```
+````
+
+A code block whose meta addresses lines by number (`{1,3-5}`, VitePress / Docusaurus line highlighting) stays as written:
+formatting moves the lines the numbers point at.
+Above, `{4}` highlights `console.log(a)`; Prettier's output has two lines, so it highlights nothing.
+Prettier formats it when a space separates the language, and keeps `js{1,3}` as written because `js{1,3}` is no language it knows.
+
+## lwc-code-block
+
+- Why: uniform-rule (code fence names follow Shiki's vocabulary)
+- Pin: `conformance/fixtures/edge-cases/xxx-in-md/lwc-code-block.md`
+- Conformance:
+  - `externals/prettier/markdown/code/lwc/lwc.md`
+
+````markdown
+<!-- input -->
+```lwc
+<x-a attr={b}>
+    c</x-a>
+```
+
+<!-- ours -->
+```lwc
+<x-a attr={b}>
+    c</x-a>
+```
+
+<!-- prettier -->
+```lwc
+<x-a attr={b}> c</x-a>
+```
+````
+
+A Markdown code block's language is looked up in Shiki's ids and aliases (`route_embedded()` in `src/core/language.rs`);
+`lwc` is none of them, so the block stays as written.
+Prettier looks it up in linguist, where `lwc` is an alias of its Lightning Web Components language.
+
+## whitespace-only-code-block
+
+- Why: uniform-rule (embedded script formats like its standalone file)
+- Pin: `conformance/fixtures/edge-cases/xxx-in-md/whitespace-only-code-block.md`
+
+`````markdown
+<!-- input -->
+```json
+
+
+```
+
+<!-- ours -->
+```json
+
+```
+
+<!-- prettier -->
+```json
+
+
+```
+`````
+
+A blank `.json` file formats to an empty one, and so does a code block of blank lines, an empty block like `jsonc` / `css` / `js` in Prettier too.
+Prettier keeps `json` / `json5` blocks as written: their parser rejects a blank document inside Markdown.
+
+## astro-style-lang-sass
+
+- Why: cost
+- Pin: `conformance/fixtures/edge-cases/astro/style-lang-sass.astro`
+- Conformance:
+  - `externals/plugin-astro/styles/with-sass/input.astro`
+  - `externals/plugin-astro/styles/with-indented-sass/input.astro`
+  - `externals/plugin-astro/styles/format-nested-sass-style-tag-content/input.astro`
+
+```astro
+<!-- input -->
+<style lang="sass">
+.a
+      color: red
+</style>
+
+<!-- ours -->
+<style lang="sass">
+.a
+      color: red
+</style>
+
+<!-- prettier -->
+<style lang="sass">
+  .a
+    color: red
+</style>
+```
+
+`<style lang="sass">` (indented syntax) stays verbatim, consistent with Vue / Svelte and also `.sass` file.
+`prettier-plugin-astro` formats it with bundled `sass-formatter`, which we do not bundle (patched out).
+Rare in Astro projects (GitHub code search, 2026-10: about 350 files in 72 repos, vs 29k for `lang="scss"`).
+Not tested but `oxc-css-parser` already parses it, so we can add Sass support for `oxc_formatter_css` in the future.
+
+## front-matter-indented-delimiter
+
+- Why: semantics
+- Pin: `conformance/fixtures/edge-cases/xxx-in-md/front-matter-indented-delimiter.md`
+
+```markdown
+<!-- input -->
+---
+ ---
+title:   Home
+---
+
+<!-- ours -->
+---
+ ---
+title:   Home
+---
+
+<!-- prettier -->
+---
+---
+title: Home
+---
+```
+
+A front matter block whose body starts with an indented delimiter (` ---`, ` ...`, ` +++`) stays verbatim in CSS and Markdown (`write_front_matter` in `oxc_formatter_core`).
+The indented delimiter does not close the block, but the body is trimmed before formatting, so it prints at the start of a line.
+On the next parse (Prettier's and ours), the block closes there and the rest of the body moves into the document.
+
+## script-end-in-embedded-template
+
+- Why: semantics (the first `</script` ends an HTML `<script>`, the rest of the code becomes markup)
+- Pin: `conformance/fixtures/edge-cases/html/script-end-in-gql-template.html`
+
+```html
+<!-- input -->
+<script>
+  const query = gql`
+    query {
+      field # <\/script>
+    }
+  `;
+</script>
+
+<!-- ours -->
+<script>
+  const query = gql`
+    query {
+      field # <\/script>
+    }
+  `;
+</script>
+
+<!-- prettier -->
+<script>
+  const query = gql`
+    query {
+      field # </script>
+    }
+  `;
+</script>
+```
+
+An HTML `<script>` body never prints `</script`: one the formatting produces (an embedded template part printed from its cooked value, html-in-js or gql-in-js) prints as `<\/script`.
+Prettier keeps it in html-in-js, css-in-js and markdown-in-js, but a gql-in-js part prints the cooked `</script`, which closes the `<script>` there.
+
+## placeholder-case-in-child
+
+- Why: semantics (Prettier prints a lowercased placeholder in place of the `${}` expression)
+- Pin: `conformance/fixtures/edge-cases/html-in-js/placeholder-case-in-child.js`
+
+```js
+// input
+const a = html`<style>a { ${b}: ${c} }</style>`;
+
+// ours
+const a = html`<style>
+  a {
+    ${b}: ${c};
+  }
+</style>`;
+
+// prettier
+const a = html`<style>
+  a {
+    prettier_html_placeholder_0_0_in_js: ${c};
+  }
+</style>`;
+```
+
+An html-in-js placeholder is found in the child's output ASCII case-insensitively (`HTML_PLACEHOLDER_PREFIX` in `oxc_formatter`):
+CSS lowercases a property name, and the placeholder standing in it with it.
+Prettier looks for the placeholder as it wrote it, so the lowercased one stays in the output and `${b}` is lost.
+
+## pre-like-template-expression
+
+- Why: uniform-rule (same construct, same output: an expression outside `pre`-like content, whose lines indent from the line its `${` starts on; prettier/prettier#20355)
+- Pin: `conformance/fixtures/edge-cases/html-in-js/pre-like-template-expression.js`
+- Conformance:
+  - `edge-cases/html-in-js/template-expression-indent.js`
+  - `externals/prettier/js/embeded/indention/19518.js`
+
+```js
+// input
+html`
+  <form>
+    <textarea>
+${foo({
+  x: 1,
+})}</textarea>
+  </form>
+`;
+
+// ours
+html`
+  <form>
+    <textarea>
+${foo({
+  x: 1,
+})}</textarea>
+  </form>
+`;
+
+// prettier
+html`
+  <form>
+    <textarea>
+${foo({
+        x: 1,
+      })}</textarea>
+  </form>
+`;
+```
+
+A `${}` expression in `pre`-like content (`pre`, `textarea`, ...) indents its lines from the whitespace its line starts with,
+as an expression elsewhere does from the line its `${` starts on.
+A line of that content prints from the root, so the expression aligns there (`oxc_formatter_htmlish`'s `write_pre_like_text`);
+one on the line of an element before it (`<pre><b>x</b>${`) indents from that line, as elsewhere.
+Prettier 3.9.6 aligned an expression starting its line so; since 3.9.7 (prettier/prettier#19725, for idempotency) it indents it by the elements around the content instead,
+which leaves `})` right of the `${` it closes.
+Reformatting the expression changes no content: its source is code, not text in the element.
+
+## dynamic-tag-name-end-tag
+
+- Why: uniform-rule (same construct, same output: an element htm's `<//>` closes, which Prettier formats; prettier/prettier#17849)
+- Pin: `conformance/fixtures/edge-cases/html-in-js/dynamic-tag-name.js`
+- Conformance:
+  - `externals/webawesome/button/button.ts`
+
+```js
+// input
+html`<${For} each=${() => items}><li class="item">${() => content}</li><li class="item">more items</li></${For}>`;
+
+// ours
+html`<${For} each=${() => items}
+  ><li class="item">${() => content}</li>
+  <li class="item">more items</li></${For}
+>`;
+
+// prettier
+html`<${For} each=${() => items}><li class="item">${() => content}</li><li class="item">more items</li></${For}>`;
+```
+
+An element whose tag name is a `${}` expression (lit's static `html`, Solid, htm) closes at an end tag named by one, as at htm's `<//>`, and is formatted the same.
+Prettier gives each `${}` its own placeholder, so the end tag names another element than the start tag: its parser stops ("Unexpected closing tag") and the template stays as written.
+The parser is told the placeholders, not the expressions (`oxc-htmlish-parser`'s `ParserOptions::template_placeholder`):
+an end tag named by one closes the innermost element named by one, and such an element written `/>` closes there.

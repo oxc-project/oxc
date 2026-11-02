@@ -23,6 +23,7 @@ pub fn validate_no_capitalized_calls(
             allow_list.insert(entry.clone());
         }
     }
+    let allow_pattern = env.config.validate_no_capitalized_calls_pattern.clone();
 
     let mut capital_load_globals: FxHashMap<IdentifierId, Ident> = FxHashMap::default();
     let mut capitalized_properties: FxHashMap<IdentifierId, (Ident, Option<Span>)> =
@@ -42,6 +43,7 @@ pub fn validate_no_capitalized_calls(
                         // We don't want to flag CONSTANTS()
                         && name.as_str() != name.cow_to_uppercase()
                         && !allow_list.contains(name.as_str())
+                        && !allow_pattern.as_ref().is_some_and(|pattern| pattern.is_match(name.as_str()))
                     {
                         capital_load_globals.insert(lvalue_id, name);
                     }
@@ -58,7 +60,10 @@ pub fn validate_no_capitalized_calls(
                     property_span,
                     ..
                 } => {
-                    if prop_name.starts_with(|c: char| c.is_ascii_uppercase()) {
+                    // Match LoadGlobal: skip ALL-CAPS names (`Date.UTC`).
+                    if prop_name.starts_with(|c: char| c.is_ascii_uppercase())
+                        && prop_name.as_str() != prop_name.cow_to_uppercase()
+                    {
                         capitalized_properties.insert(lvalue_id, (*prop_name, *property_span));
                     }
                 }

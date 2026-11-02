@@ -1,10 +1,10 @@
 //! Block dispatch and the blank-line policy between siblings.
 
 use oxc_formatter_core::{
-    Buffer,
+    FormatElements, MemoizeFormat,
     builders::{
-        align, exact_line_breaks, group, hard_line_break, literal_line_break, mark_as_root,
-        soft_line_break_or_space, space, text, token,
+        exact_line_breaks, group, hard_line_break, literal_line_break, mark_as_root,
+        soft_line_break_or_space, space, space_align, text, token,
     },
     format_args,
     spec::{is_suppression_marker, parse_front_matter},
@@ -31,8 +31,18 @@ pub enum Parent {
         loose: bool,
         after_checkbox: bool,
     },
-    /// Blockquote or container directive.
-    Container,
+    /// Blockquote, footnote definition or container directive.
+    /// `top_level`: no prefix / indent above (a directive at the root, or in such a directive).
+    Container {
+        top_level: bool,
+    },
+}
+
+impl Parent {
+    /// No prefix / indent above: the root, or a `top_level` container.
+    const fn is_top_level(self) -> bool {
+        matches!(self, Self::Root | Self::Container { top_level: true })
+    }
 }
 
 /// Emits sibling blocks with a blank line between them, except where one line break is the rule
@@ -53,8 +63,9 @@ pub fn write_blocks<'a>(
         }
 
         // `<!-- prettier-ignore-start -->` ... `<!-- prettier-ignore-end -->`: the range is source text.
-        // Only at the document root; nested, the comments are plain HTML.
-        if parent == Parent::Root
+        // Only at the document root and in directives with no prefix / indent above them
+        // (top-level for Prettier, which has no directives); nested elsewhere, the comments are plain HTML.
+        if parent.is_top_level()
             && let Some(end) = ignore_range_end(blocks, index, f)
         {
             let source = f.context().source_text();
@@ -72,7 +83,7 @@ pub fn write_blocks<'a>(
     }
 }
 
-pub fn write_gap(
+fn write_gap(
     siblings: &[Block<'_>],
     index: usize,
     parent: Parent,
@@ -82,7 +93,7 @@ pub fn write_gap(
 }
 
 /// Whether `siblings[index]` gets a blank line before it.
-fn double_gap(
+pub fn double_gap(
     siblings: &[Block<'_>],
     index: usize,
     parent: Parent,
@@ -221,7 +232,7 @@ pub fn write_block<'a>(
         Block::Paragraph(p) => {
             let parent = inline::InlineParent {
                 paragraph: true,
-                first_in_container: parent == Parent::Container && index == 0,
+                first_in_container: matches!(parent, Parent::Container { .. }) && index == 0,
                 first_in_document: front_matter_risk(parent, siblings, index, f),
                 after_checkbox: matches!(parent, Parent::ListItem { after_checkbox: true, .. }),
                 ..inline::InlineParent::default()
@@ -255,7 +266,8 @@ pub fn write_block<'a>(
             write_verbatim(d.opening, f);
             if !d.children.is_empty() {
                 super::write_gap(after_opening, f);
-                write_blocks(&d.children, Parent::Container, f);
+                let inner = Parent::Container { top_level: parent.is_top_level() };
+                write_blocks(&d.children, inner, f);
             }
             if let Some(closing) = d.closing {
                 super::write_gap(before_closing, f);
@@ -322,47 +334,33 @@ fn write_heading<'a>(
     }
 }
 
-/// `[^label]: ` + content.
-/// A lone paragraph stays on the label's line under `never` (and under `preserve` when it is one source line);
-/// otherwise the content is aligned by 4 and the first block moves to its own line when it does not fit
-/// (or is multi-line).
+/// `[^label]: ` + content, aligned by 4.
+/// A lone paragraph that prints as one line stays on the label's line (under `always` the group decides),
+/// anything else starts on the next line (DIVERGENCES.md#footnote-kept-line-break).
 fn write_footnote_definition<'a>(
     def: &'a FootnoteDefinition<'a>,
     f: &mut MarkdownFormatter<'_, 'a>,
 ) {
     write!(f, [token("[^"), text(f.context().slice(def.label)), token("]:")]);
     let children = &def.children;
-    let inline = match children.as_slice() {
-        [Block::Paragraph(p)] => match f.options().prose_wrap {
-            ProseWrap::Never => true,
-            // Prettier asks whether the source paragraph is one line;
-            // asking whether it prints as one keeps the answer stable across passes
-            // (a line break joined away would flip it).
-            ProseWrap::Preserve => !inline::keeps_a_line_break(&p.children, f),
-            ProseWrap::Always => false,
-        },
-        _ => false,
-    };
-    if inline {
-        write!(f, space());
-        write_blocks(children, Parent::Container, f);
-        return;
-    }
-    let parent = Parent::Container;
-    write!(
-        f,
-        align(
-            4,
-            &mark_as_root(&format_with(|f| {
-                let first = format_with(|f| write_block(&children[0], children, 0, parent, f));
-                write!(f, group(&format_args!(soft_line_break_or_space(), first)));
-                for index in 1..children.len() {
-                    write_gap(children, index, parent, f);
-                    write_block(&children[index], children, index, parent, f);
-                }
-            }))
-        )
-    );
+    let parent = Parent::Container { top_level: false };
+    let first = format_with(|f| write_block(&children[0], children, 0, parent, f)).memoized();
+    let on_label_line = matches!(children.as_slice(), [Block::Paragraph(_)])
+        && f.options().prose_wrap != ProseWrap::Always
+        && !first.inspect(f).will_break();
+    let body = format_with(|f| {
+        if on_label_line {
+            write!(f, [space(), first]);
+        } else {
+            write!(f, group(&format_args!(soft_line_break_or_space(), first)));
+        }
+        for index in 1..children.len() {
+            write_gap(children, index, parent, f);
+            write_block(&children[index], children, index, parent, f);
+        }
+    });
+    // Also on the label's line: the 4-space guard of a block-start-looking line counts from the content column
+    write!(f, space_align(4, &mark_as_root(&body)));
 }
 
 /// `---`, except inside a list

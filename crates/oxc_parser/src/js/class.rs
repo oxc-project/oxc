@@ -77,7 +77,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && !(self.at(Kind::Implements)
                 && self.lexer.peek_token().kind().is_identifier_or_keyword())
         {
-            Some(self.parse_binding_identifier())
+            Some(self.parse_known_binding_identifier())
         } else {
             None
         };
@@ -267,6 +267,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 false,
                 diagnostics::cannot_appear_on_class_elements,
             );
+            if !parser.is_ts {
+                parser.verify_modifiers(
+                    modifiers,
+                    ModifierKinds::new([
+                        ModifierKind::Export,
+                        ModifierKind::Default,
+                        ModifierKind::Static,
+                        ModifierKind::Async,
+                        ModifierKind::Accessor,
+                    ]),
+                    false,
+                    |modifier, _| diagnostics::modifier_in_ts(modifier.kind, modifier.span()),
+                );
+            }
         }
 
         let start = self.cur_start();
@@ -588,14 +602,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_constructor_name(&mut self) -> Option<PropertyKey<'a>> {
         if self.at(Kind::Constructor) {
-            let ident = self.parse_identifier_name();
+            let ident = self.parse_known_identifier_name();
             return Some(PropertyKey::StaticIdentifier(self.alloc(ident)));
         }
         if self.at(Kind::Str)
-            && self.cur_string() == "constructor"
+            && self.cur_js_string() == "constructor"
             && self.lexer.peek_token().kind() == Kind::LParen
         {
-            let string_literal = self.parse_literal_string();
+            let string_literal = self.parse_known_literal_string();
             return Some(PropertyKey::StringLiteral(self.alloc(string_literal)));
         }
         None
@@ -615,6 +629,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let optional_span = (cur_token.kind() == Kind::Question).then(|| {
             let span = cur_token.span();
             self.bump_any();
+            if !self.is_ts {
+                self.error(diagnostics::optional_class_member_in_ts(span));
+            }
             span
         });
 
@@ -783,7 +800,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
         if r#abstract && name.is_private_identifier() {
-            self.error(diagnostics::abstract_with_private_identifier(name.span()));
+            let modifier = modifiers.get(ModifierKind::Abstract).unwrap();
+            self.error(diagnostics::abstract_with_private_identifier(modifier.span()));
         }
         if r#abstract && initializer.is_some() {
             let (name, span) = self.abstract_member_name(&name);

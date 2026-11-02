@@ -640,6 +640,8 @@ fn tsx_template_type_in_expression_type_arguments_is_not_jsx() {
         "x = f<A | `${<T>(x: T) => T}`>(1);",
         "x = f<`${<T>(x: T) => T}${<U>(y: U) => U}`>(1);",
         "x = f<`${`${<T>(x: T) => T}`}`>(1);",
+        "x = f<`${a}${<U>(y: U) => U}`>(1);",
+        "x = f<`a${b}c${<U>(y: U) => U}`>(1);",
     ] {
         assert!(diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
     }

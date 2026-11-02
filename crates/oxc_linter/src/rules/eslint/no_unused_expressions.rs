@@ -65,6 +65,7 @@ declare_oxc_lint!(
     NoUnusedExpressions,
     eslint,
     correctness,
+    recommended,
     config = NoUnusedExpressionsConfig,
     version = "0.14.0",
     short_description = "This rule disallows unused expressions.",

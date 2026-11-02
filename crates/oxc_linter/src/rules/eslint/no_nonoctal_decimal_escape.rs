@@ -45,6 +45,7 @@ declare_oxc_lint!(
     NoNonoctalDecimalEscape,
     eslint,
     correctness,
+    recommended,
     suggestion,
     version = "0.2.10",
     short_description = "Disallow `\\8` and `\\9` escape sequences in string literals.",

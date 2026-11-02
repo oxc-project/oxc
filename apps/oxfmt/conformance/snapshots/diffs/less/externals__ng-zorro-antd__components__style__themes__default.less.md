@@ -55,38 +55,7 @@
  @background-color-dark: hsv(0, 0, 94%); // dark grey background color
  
  // Disabled states
-@@ -465,24 +453,18 @@
- @input-padding-horizontal-base: @input-padding-horizontal;
- @input-padding-horizontal-sm: @control-padding-horizontal-sm - @line-width;
- @input-padding-horizontal-lg: @input-padding-horizontal;
- @input-padding-vertical-base: max(
--  (
--      round(
--          ((@input-height-base - @font-size-base * @line-height-base) / 2) * 10
--        ) /
--        10
--    ) -
-+  (round(
-+        ((@input-height-base - @font-size-base * @line-height-base) / 2) * 10
-+      ) /
-+      10) -
-     @border-width-base,
-   3px
- );
- @input-padding-vertical-sm: max(
--  (
--      round(
--          ((@input-height-sm - @font-size-base * @line-height-base) / 2) * 10
--        ) /
--        10
--    ) -
-+  (round(((@input-height-sm - @font-size-base * @line-height-base) / 2) * 10) /
-+      10) -
-     @border-width-base,
-   0
- );
- @input-padding-vertical-lg: (
-@@ -846,11 +828,12 @@
+@@ -846,11 +834,12 @@
  @tabs-card-head-background: @background-color-light;
  @tabs-card-height: 40px;
  @tabs-card-active-color: @primary-color;
@@ -564,16 +533,22 @@
 @input-padding-horizontal-sm: @control-padding-horizontal-sm - @line-width;
 @input-padding-horizontal-lg: @input-padding-horizontal;
 @input-padding-vertical-base: max(
-  (round(
-        ((@input-height-base - @font-size-base * @line-height-base) / 2) * 10
-      ) /
-      10) -
+  (
+      round(
+          ((@input-height-base - @font-size-base * @line-height-base) / 2) * 10
+        ) /
+        10
+    ) -
     @border-width-base,
   3px
 );
 @input-padding-vertical-sm: max(
-  (round(((@input-height-sm - @font-size-base * @line-height-base) / 2) * 10) /
-      10) -
+  (
+      round(
+          ((@input-height-sm - @font-size-base * @line-height-base) / 2) * 10
+        ) /
+        10
+    ) -
     @border-width-base,
   0
 );

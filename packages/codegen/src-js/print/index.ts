@@ -26,6 +26,7 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  *
  * The result is an object so that further outputs (a source map) can be added without a breaking change.
  *
+ * @param node - AST node to print, a `Program` or a single statement
  * @param state - Created by the entry point, so that all 4 builds share one class and so one object shape
  * @param options - The same options `state` was created from, for the parts only this build acts on
  * @returns Object holding the generated code

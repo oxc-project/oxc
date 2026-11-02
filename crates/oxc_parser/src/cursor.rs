@@ -3,6 +3,7 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::{BindingRestElement, RegExpFlags};
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl,
@@ -75,8 +76,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.lexer.get_string(self.token)
     }
 
+    /// Get the decoded value of the current string literal.
+    pub(crate) fn cur_js_string(&self) -> JSStr<'a> {
+        self.lexer.get_js_string(self.token)
+    }
+
     /// Get current template string
-    pub(crate) fn cur_template_string(&self) -> Option<&'a str> {
+    pub(crate) fn cur_template_string(&self) -> Option<JSStr<'a>> {
         self.lexer.get_template_string(self.token.start())
     }
 
@@ -232,10 +238,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Tell lexer to read a regex
-    pub(crate) fn read_regex(&mut self) -> (u32, RegExpFlags, bool) {
-        let (token, pattern_end, flags, flags_error) = self.lexer.next_regex(self.cur_kind());
+    pub(crate) fn read_regex(&mut self) -> (u32, RegExpFlags) {
+        let (token, pattern_end, flags) = self.lexer.next_regex(self.cur_kind());
         self.token = token;
-        (pattern_end, flags, flags_error)
+        (pattern_end, flags)
     }
 
     /// Tell lexer to read a template substitution tail
@@ -402,7 +408,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn parse_normal_list_into<F, T>(
+    pub(crate) fn parse_normal_list_into<F, T>(
         &mut self,
         list: &mut ArenaVec<'a, T>,
         close: Kind,
@@ -411,11 +417,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         F: FnMut(&mut Self) -> T,
     {
         loop {
-            let kind = self.cur_kind();
-            if kind == close
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
+            if self.at(close) || self.has_fatal_error() {
                 break;
             }
             let element = parse_element(self);
@@ -467,13 +469,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         close: Kind,
         separator: Kind,
         opening_span: Span,
-        parse_element: F,
+        mut parse_element: F,
     ) -> (ArenaVec<'a, T>, Option<u32>)
     where
         F: FnMut(&mut Self) -> T,
     {
-        let mut list = ArenaVec::new_in(self);
-        let trailing_separator = self.parse_delimited_list_into(
+        if self.at(close) || self.has_fatal_error() {
+            return (ArenaVec::new_in(self), None);
+        }
+        let first = parse_element(self);
+        if self.at(close) || self.has_fatal_error() {
+            let mut list = ArenaVec::with_capacity_in(1, self);
+            list.push(first);
+            return (list, None);
+        }
+        let mut list = ArenaVec::with_capacity_in(2, self);
+        list.push(first);
+        let trailing_separator = self.parse_delimited_list_rest(
             &mut list,
             close,
             separator,
@@ -496,22 +508,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     where
         F: FnMut(&mut Self) -> T,
     {
-        // Cache cur_kind() to avoid redundant calls in compound checks
-        let kind = self.cur_kind();
-        if kind == close
-            || matches!(kind, Kind::Eof | Kind::Undetermined)
-            || self.fatal_error.is_some()
-        {
+        if self.at(close) || self.has_fatal_error() {
             return None;
         }
         let element = parse_element(self);
         list.push(element);
+        self.parse_delimited_list_rest(list, close, separator, opening_span, parse_element)
+    }
+
+    pub(crate) fn parse_delimited_list_rest<F, T>(
+        &mut self,
+        list: &mut ArenaVec<'a, T>,
+        close: Kind,
+        separator: Kind,
+        opening_span: Span,
+        mut parse_element: F,
+    ) -> Option<u32>
+    where
+        F: FnMut(&mut Self) -> T,
+    {
         loop {
             let kind = self.cur_kind();
-            if kind == close
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
+            if kind == close || self.has_fatal_error() {
                 return None;
             }
             if kind != separator {
@@ -583,10 +601,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut first = true;
         loop {
             let kind = self.cur_kind();
-            if kind == close
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
+            if kind == close || self.has_fatal_error() {
                 break;
             }
 

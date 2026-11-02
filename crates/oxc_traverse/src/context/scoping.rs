@@ -157,10 +157,8 @@ impl<'a> TraverseScoping<'a> {
         child_scope_ids: &[ScopeId],
         flags: ScopeFlags,
     ) -> ScopeId {
-        // Create new scope as child of parent
         let new_scope_id = self.create_child_scope(scope_id, flags);
 
-        // Set scopes as children of new scope instead
         for &child_id in child_scope_ids {
             self.scoping.set_scope_parent_id(child_id, Some(new_scope_id));
         }

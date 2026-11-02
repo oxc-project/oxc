@@ -134,6 +134,7 @@ declare_oxc_lint!(
     NoConstantCondition,
     eslint,
     correctness,
+    recommended,
     config = NoConstantCondition,
     version = "0.0.3",
     short_description = "Disallow constant expressions in conditions.",

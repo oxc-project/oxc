@@ -1117,6 +1117,7 @@ pub struct TSMethodSignature<'a> {
     pub computed: bool,
     pub optional: bool,
     pub kind: TSMethodSignatureKind,
+    #[scope(enter_before)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[estree(skip)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,

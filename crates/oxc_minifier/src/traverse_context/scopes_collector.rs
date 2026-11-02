@@ -1095,12 +1095,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.visit_decorators(&it.decorators);
         self.visit_property_key(&it.key);
         {
-            let flags = match it.kind {
-                MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
-                MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
-                MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
-                MethodDefinitionKind::Method => ScopeFlags::Function,
-            };
+            let flags = it.kind.scope_flags();
             self.visit_function(&it.value, flags);
         }
     }
@@ -1917,6 +1912,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_method_signature(&mut self, it: &TSMethodSignature<'a>) {
+        self.visit_property_key(&it.key);
         self.add_scope(&it.scope_id);
     }
 

@@ -109,3 +109,56 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Change to `throw new TypeError(...)`
+
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+   ╭─[prefer_type_error.tsx:4:31]
+ 3 │                 if (!(x instanceof Y)) {
+ 4 │                     throw new Error("bad");
+   ·                               ─────
+ 5 │                 }
+   ╰────
+  help: Change to `throw new TypeError(...)`
+
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+   ╭─[prefer_type_error.tsx:4:31]
+ 3 │                 if (!(typeof x === "string")) {
+ 4 │                     throw new Error("bad");
+   ·                               ─────
+ 5 │                 }
+   ╰────
+  help: Change to `throw new TypeError(...)`
+
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+   ╭─[prefer_type_error.tsx:1:37]
+ 1 │ if (((x instanceof Y))) { throw new Error("bad"); }
+   ·                                     ─────
+   ╰────
+  help: Change to `throw new TypeError(...)`
+
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+   ╭─[prefer_type_error.tsx:1:42]
+ 1 │ if ((typeof x) !== "string") { throw new Error("bad"); }
+   ·                                          ─────
+   ╰────
+  help: Change to `throw new TypeError(...)`
+
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+   ╭─[prefer_type_error.tsx:1:67]
+ 1 │ if (!(Array.isArray(x)) || ((typeof x !== "string"))) { throw new Error("bad"); }
+   ·                                                                   ─────
+   ╰────
+  help: Change to `throw new TypeError(...)`
+
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+   ╭─[prefer_type_error.tsx:1:41]
+ 1 │ if ((Array.isArray)(value)) { throw new Error(); }
+   ·                                         ─────
+   ╰────
+  help: Change to `throw new TypeError(...)`
+
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+   ╭─[prefer_type_error.tsx:1:39]
+ 1 │ if (!((isFinite))(value)) { throw new Error(); }
+   ·                                       ─────
+   ╰────
+  help: Change to `throw new TypeError(...)`

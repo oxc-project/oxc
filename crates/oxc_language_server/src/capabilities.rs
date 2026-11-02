@@ -122,21 +122,4 @@ mod test {
         let capabilities = Capabilities::from(client_capabilities);
         assert!(capabilities.dynamic_watchers);
     }
-
-    #[test]
-    fn test_dynamic_watchers_intellij() {
-        let client_capabilities = ClientCapabilities {
-            workspace: Some(WorkspaceClientCapabilities {
-                did_change_watched_files: Some(DidChangeWatchedFilesClientCapabilities {
-                    dynamic_registration: Some(true),
-                    ..Default::default()
-                }),
-                ..Default::default()
-            }),
-            ..Default::default()
-        };
-
-        let capabilities = Capabilities::from(client_capabilities);
-        assert!(capabilities.dynamic_watchers);
-    }
 }

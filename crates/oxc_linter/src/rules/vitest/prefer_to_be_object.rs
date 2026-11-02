@@ -4,10 +4,11 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     utils::{
         KnownMemberExpressionProperty, ParsedExpectFnCall, ParsedJestFnCallNew, PossibleJestNode,
@@ -69,24 +70,29 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferToBeObject {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        Self::run(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        Self::run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
 impl PreferToBeObject {
-    fn run<'a>(possible_vitest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_vitest_node.node;
+    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
+        let Some(possible_vitest_node) =
+            PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
         let Some(ParsedJestFnCallNew::ExpectTypeOf(parsed_expect_call)) =
-            parse_jest_fn_call(call_expr, possible_vitest_node, ctx)
+            parse_jest_fn_call(call_expr, &possible_vitest_node, ctx)
         else {
             return;
         };

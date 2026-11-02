@@ -50,6 +50,7 @@ declare_oxc_lint!(
     PreferReadonly(tsgolint),
     typescript,
     style,
+    fix,
     config = PreferReadonlyConfig,
     version = "0.0.8",
     short_description = "Require class members that are never reassigned to be marked `readonly`.",

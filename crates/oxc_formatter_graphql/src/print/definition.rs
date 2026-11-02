@@ -1,7 +1,6 @@
 //! Document-level definition printers: operations, fragments, and the type system.
 
 use oxc_formatter_core::{
-    Buffer,
     builders::{
         block_indent, group, hard_line_break, if_group_breaks, if_group_fits_on_line, indent,
         soft_line_break_or_space, space, text,

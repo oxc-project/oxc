@@ -312,33 +312,6 @@ impl Walker<'_> {
 }
 
 /// Whitespace runs are a formatter freedom (`proseWrap`, indentation), their content is not.
-/// A run touching a Chinese / Japanese character is nothing: the printer treats a space
-/// and a line break next to CJ text as interchangeable with no whitespace
-/// (browsers drop a segment break between CJ characters), so the oracle equates all three.
 fn collapse_whitespace(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    let mut pending_space = false;
-    for word in s.split_whitespace() {
-        if pending_space && !out.ends_with(is_cj) && !word.starts_with(is_cj) {
-            out.push(' ');
-        }
-        out.push_str(word);
-        pending_space = true;
-    }
-    out
-}
-
-/// Chinese / Japanese (not Korean) by Unicode block; deliberately not the printer's table.
-fn is_cj(c: char) -> bool {
-    matches!(u32::from(c),
-        0x2E80..=0x303F   // CJK radicals, Kangxi, ideographic description, CJK symbols and punctuation
-        | 0x3040..=0x30FF // Hiragana, Katakana
-        | 0x3100..=0x312F // Bopomofo
-        | 0x31C0..=0x31EF // CJK strokes
-        | 0x3200..=0x9FFF // enclosed CJK, compatibility, ext A, unified ideographs
-        | 0xF900..=0xFAFF // compatibility ideographs
-        | 0xFE30..=0xFE4F // compatibility forms
-        | 0xFF00..=0xFF9F // fullwidth forms, halfwidth katakana
-        | 0x20000..=0x3FFFF // ext B and beyond
-    )
+    s.split_whitespace().collect::<Vec<_>>().join(" ")
 }

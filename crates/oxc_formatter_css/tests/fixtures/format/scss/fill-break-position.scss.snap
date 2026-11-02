@@ -1,0 +1,48 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Break-point in a math-y value run: Prettier breaks at an earlier separator than our core fill
+// (DIVERGENCES.md#fill-break-position).
+.a {
+  .b {
+    .c {
+      height: calc(#{$calc-application-viewport-height} - #{$mr-sticky-header-height} - var(--mr-review-bar-height));
+    }
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Break-point in a math-y value run: Prettier breaks at an earlier separator than our core fill
+// (DIVERGENCES.md#fill-break-position).
+.a {
+  .b {
+    .c {
+      height: calc(
+        #{$calc-application-viewport-height} - #{$mr-sticky-header-height} -
+          var(--mr-review-bar-height)
+      );
+    }
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Break-point in a math-y value run: Prettier breaks at an earlier separator than our core fill
+// (DIVERGENCES.md#fill-break-position).
+.a {
+  .b {
+    .c {
+      height: calc(
+        #{$calc-application-viewport-height} - #{$mr-sticky-header-height} -
+          var(--mr-review-bar-height)
+      );
+    }
+  }
+}
+
+===================== End =====================

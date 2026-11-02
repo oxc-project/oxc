@@ -1,11 +1,13 @@
 /*
- * Break-point in an over-wide math-y value run: our core fill (biome semantics)
- * breaks at the last fitting SEPARATOR (before `/ 2`).
- * DIVERGES from Prettier (DIVERGENCES.md#fill-break-position),
- * whose fill fit-check breaks INSIDE the wide chunk (after `+`).
+ * Break-point in an over-wide math-y value run:
+ * a spaced `/` glues to its left operand and the fill breaks after it (Prettier's math operator chunk),
+ * in the token soup and in a typed value alike.
  */
 .SearchBox {
   .inner {
     margin-left: sg-layout-width(logo-shopify) / 2 * -1 + sg-offset-x(page-nav) / 2;
   }
+}
+a {
+  border-image: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 30 fill / 30px / 30px space;
 }

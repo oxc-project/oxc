@@ -73,6 +73,7 @@ declare_oxc_lint!(
     PreferStructuredClone,
     unicorn,
     style,
+    recommended,
     suggestion,
     config = PreferStructuredCloneConfig,
     version = "0.9.0",
@@ -140,7 +141,7 @@ impl Rule for PreferStructuredClone {
                     }
                 } else if is_method_call(call_expr, None, Some(&[function]), None, None)
                     || is_method_call(call_expr, Some(&[function]), None, None, None)
-                    || call_expr.callee.is_specific_id(function)
+                    || call_expr.callee.is_specific_id(function.as_str())
                 {
                     ctx.diagnostic_with_suggestion(
                         prefer_structured_clone_diagnostic(call_expr.span),

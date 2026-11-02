@@ -132,6 +132,7 @@ declare_oxc_lint!(
     NoMisleadingCharacterClass,
     eslint,
     correctness,
+    recommended,
     suggestion,
     config = NoMisleadingCharacterClass,
     version = "1.17.0",

@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_dupe_class_members_diagnostic(
-    member_name: &str, /*Class member name */
+    member_name: impl std::fmt::Debug, /*Class member name */
     decl_span: Span,
     re_decl_span: Span,
 ) -> OxcDiagnostic {
@@ -57,9 +57,12 @@ declare_oxc_lint!(
     NoDupeClassMembers,
     eslint,
     correctness,
+    recommended,
     version = "0.0.3",
     short_description = "Disallow duplicate class members.",
 );
+
+const LINEAR_SEARCH_LIMIT: usize = 8;
 
 impl Rule for NoDupeClassMembers {
     fn run_once(&self, ctx: &LintContext) {
@@ -67,20 +70,29 @@ impl Rule for NoDupeClassMembers {
             let mut defined_elements = FxHashMap::default();
             let elements = &ctx.classes().elements[class_id];
             for (element_id, element) in elements.iter_enumerated() {
-                if let Some(prev_element_id) = defined_elements.insert(&element.name, element_id) {
-                    let prev_element = &elements[prev_element_id];
-                    if element.r#static == prev_element.r#static
-                        && element.is_private == prev_element.is_private
-                        && (!(element.kind.is_setter_or_getter()
-                            && prev_element.kind.is_setter_or_getter())
-                            || element.kind == prev_element.kind)
-                    {
-                        ctx.diagnostic(no_dupe_class_members_diagnostic(
-                            &element.name,
-                            prev_element.span,
-                            element.span,
-                        ));
-                    }
+                let prev_element = if elements.len() <= LINEAR_SEARCH_LIMIT {
+                    // Search backwards to preserve the map's last-seen member semantics.
+                    elements
+                        .iter()
+                        .take(element_id.index())
+                        .rfind(|previous| previous.name == element.name)
+                } else {
+                    defined_elements
+                        .insert(&element.name, element_id)
+                        .map(|prev_element_id| &elements[prev_element_id])
+                };
+                if let Some(prev_element) = prev_element
+                    && element.r#static == prev_element.r#static
+                    && element.is_private == prev_element.is_private
+                    && (!(element.kind.is_setter_or_getter()
+                        && prev_element.kind.is_setter_or_getter())
+                        || element.kind == prev_element.kind)
+                {
+                    ctx.diagnostic(no_dupe_class_members_diagnostic(
+                        &element.name,
+                        prev_element.span,
+                        element.span,
+                    ));
                 }
             }
         });
@@ -137,6 +149,10 @@ fn test() {
         "class A { *foo() {} *bar() {} *baz() {} }",
         "class A { get foo() {} get bar() {} get baz() {} }",
         "class Foo { foo(a: string): string; foo(a: number): number; foo(a: any): any {} }",
+        // Lone surrogates are distinct member names.
+        r#"class A { "\uD800"() {}  "\uDC00"() {} }"#,
+        r#"class A { "\uD800"() {}  "\uD800\uDC00"() {} }"#,
+        r#"class A { "\uD800"() {}  static "\uD800"() {} }"#,
     ];
 
     let fail = vec![
@@ -179,6 +195,10 @@ fn test() {
         "class A { set foo(value) {}  foo() {}}",
         "class A { foo;  foo = 42;}",
         "class A { foo;  foo() {}}",
+        // Lone surrogates keep their identity across key syntaxes.
+        r#"class A { "\uD800"() {}  "\uD800"() {} }"#,
+        r#"class A { "\uDC00"() {}  ["\uDC00"]() {} }"#,
+        r#"class A { "a\uD800b"() {}  [`a\uD800b`]() {} }"#,
     ];
 
     Tester::new(NoDupeClassMembers::NAME, NoDupeClassMembers::PLUGIN, pass, fail)

@@ -202,6 +202,7 @@ declare_oxc_lint!(
     NoUnusedVars,
     eslint,
     correctness,
+    recommended,
     fix = conditional_dangerous_fix_or_suggestion,
     config = NoUnusedVarsConfig,
     version = "0.7.0",

@@ -64,6 +64,7 @@ declare_oxc_lint!(
     NoDeprecatedPropsDefaultThis,
     vue,
     correctness,
+    recommended,
     pending,
     version = "1.67.0",
     short_description = "Disallow deprecated `this` access in props default function (in Vue.js 3.0.0+).",

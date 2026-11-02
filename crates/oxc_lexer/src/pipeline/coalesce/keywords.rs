@@ -6,7 +6,10 @@
 
 use std::ptr;
 
-use crate::token::TokenKind;
+use crate::{
+    cpu::{Cpu, cpu_multiversion},
+    token::TokenKind,
+};
 
 use crate::pipeline::keywords::kw_match;
 
@@ -14,6 +17,7 @@ pub const KWB: usize = 64;
 
 /// Dispatch to the key-monomorphized verify without duplicating `coalesce`
 /// itself: one predictable branch per flush, not per candidate.
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn kw_flush(
     ts: bool,
@@ -22,11 +26,12 @@ pub(super) unsafe fn kw_flush(
     kind: *mut u8,
     kwpos: *const u32,
     k: usize,
+    cpu: impl Cpu,
 ) {
     if ts {
-        kw_verify_batch::<true>(src, word, kind, kwpos, k);
+        kw_verify_batch::<true>(src, word, kind, kwpos, k, cpu);
     } else {
-        kw_verify_batch::<false>(src, word, kind, kwpos, k);
+        kw_verify_batch::<false>(src, word, kind, kwpos, k, cpu);
     }
 }
 
@@ -37,6 +42,7 @@ pub(super) unsafe fn kw_flush(
 /// for TS - monomorphized so the JS copy carries none of the wider key.
 /// Kept out of line: inlining would double both variants into each of
 /// coalesce's flush sites, and one call per KWB words is free.
+#[cpu_multiversion]
 #[inline(never)]
 unsafe fn kw_verify_batch<const IS_TS: bool>(
     src: *const u8,
@@ -44,14 +50,15 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
     kind: *mut u8,
     pos: *const u32,
     k: usize,
+    cpu: impl Cpu,
 ) {
     for ix in 0..k {
         let p = *pos.add(ix) as usize;
-        let len = word_len(word, p);
+        let len = word_len(word, p, cpu);
         // Candidates are code-level identifier starts (carve cleared every
         // literal interior and JSX start from the masks), so the incumbent
         // kind is IDENT: select over it instead of a read-modify-write.
-        *kind.add(p) = kw_match::<IS_TS>(src.add(p), len) as u8;
+        *kind.add(p) = kw_match::<IS_TS>(src.add(p), len, cpu) as u8;
     }
 }
 
@@ -67,15 +74,21 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
 /// * `word` must be the word bitmap for `src`, and valid for reading 8 bytes from byte `pos / 8`.
 /// * The byte at `pos` must be a word char.
 /// * `src` must be valid for reading 16 bytes from `pos`.
+#[cpu_multiversion]
 #[inline]
 pub(super) unsafe fn kw_match_word(
     ts: bool,
     src: *const u8,
     word: *const u64,
     pos: usize,
+    cpu: impl Cpu,
 ) -> TokenKind {
-    let len = word_len(word, pos);
-    if ts { kw_match::<true>(src.add(pos), len) } else { kw_match::<false>(src.add(pos), len) }
+    let len = word_len(word, pos, cpu);
+    if ts {
+        kw_match::<true>(src.add(pos), len, cpu)
+    } else {
+        kw_match::<false>(src.add(pos), len, cpu)
+    }
 }
 
 /// Get the length of the word starting at `pos` from the word bitmap, capped at 16 (`kw_match`'s limit).
@@ -89,58 +102,68 @@ pub(super) unsafe fn kw_match_word(
 /// # SAFETY
 ///
 /// `word` must be valid for reading 8 bytes from byte `pos / 8`.
+#[cpu_multiversion]
 #[inline(always)]
-unsafe fn word_len(word: *const u64, pos: usize) -> usize {
+unsafe fn word_len(word: *const u64, pos: usize, _cpu: impl Cpu) -> usize {
     let x = ptr::read_unaligned((word as *const u8).add(pos >> 3) as *const u64) >> (pos & 7);
     (!(x as u16)).trailing_zeros() as usize
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::token::tk;
+    use crate::{cpu::DynCpu, token::tk};
 
     use super::*;
 
-    /// Check [`kw_verify_batch`] gets each word's length from the word bitmap and sets its kind,
+    /// Check [`kw_flush`] gets each word's length from the word bitmap and sets its kind,
     /// including for words longer than 16 bytes, and words crossing a 64-byte boundary.
     #[test]
-    fn test_kw_verify_batch() {
-        let words: [(usize, &str, TokenKind, TokenKind); 6] = [
-            (3, "class", TokenKind::KwClass, TokenKind::KwClass),
-            (20, "interface", TokenKind::KwInterface, TokenKind::Ident),
-            (40, "instanceof", TokenKind::KwInstanceof, TokenKind::KwInstanceof),
-            (58, "instanceofabcdefghijklmnopqrstuvwxyz", TokenKind::Ident, TokenKind::Ident),
-            (100, "abcdefghijklmnopq", TokenKind::Ident, TokenKind::Ident),
-            (125, "typeof", TokenKind::KwTypeof, TokenKind::KwTypeof),
+    fn test_kw_flush() {
+        let cpu = DynCpu::detect();
+
+        let words: [(usize, &str, TokenKind, bool); 6] = [
+            (3, "class", TokenKind::KwClass, false),
+            (20, "interface", TokenKind::KwInterface, true),
+            (40, "instanceof", TokenKind::KwInstanceof, false),
+            (58, "instanceofabcdefghijklmnopqrstuvwxyz", TokenKind::Ident, false),
+            (100, "abcdefghijklmnopq", TokenKind::Ident, false),
+            (125, "typeof", TokenKind::KwTypeof, false),
         ];
 
         let mut src = [b' '; 256];
+        let mut kinds = [tk!(Whitespace); 256];
         let mut word_bitmap = [0u64; 5];
         let mut positions = vec![];
         for &(pos, text, _, _) in &words {
             src[pos..pos + text.len()].copy_from_slice(text.as_bytes());
             for i in pos..pos + text.len() {
+                kinds[i] = tk!(Ident);
                 word_bitmap[i >> 6] |= 1 << (i & 63);
             }
             positions.push(pos as u32);
         }
 
         for is_ts in [false, true] {
-            let mut kind = [tk!(Ident); 256];
-            // SAFETY: `src` and `kind` cover every word plus 16 bytes,
+            let mut kinds = kinds; // Clone
+            // SAFETY: `src` and `kinds` cover every word plus 16 bytes,
             // and `word_bitmap` has a spare `u64` after the last word
             unsafe {
-                let args =
-                    (src.as_ptr(), word_bitmap.as_ptr(), kind.as_mut_ptr(), positions.as_ptr());
-                if is_ts {
-                    kw_verify_batch::<true>(args.0, args.1, args.2, args.3, positions.len());
-                } else {
-                    kw_verify_batch::<false>(args.0, args.1, args.2, args.3, positions.len());
-                }
+                kw_flush(
+                    is_ts,
+                    src.as_ptr(),
+                    word_bitmap.as_ptr(),
+                    kinds.as_mut_ptr(),
+                    positions.as_ptr(),
+                    positions.len(),
+                    cpu,
+                );
             }
-            for &(pos, text, ts_kind, js_kind) in &words {
-                let expected = if is_ts { ts_kind } else { js_kind };
-                assert_eq!(kind[pos], expected as u8, "`{text}` (is_ts = {is_ts})");
+
+            for &(pos, text, mut kind, is_ts_only_keyword) in &words {
+                if is_ts_only_keyword && !is_ts {
+                    kind = TokenKind::Ident;
+                }
+                assert_eq!(kinds[pos], kind as u8, "`{text}` (is_ts = {is_ts})");
             }
         }
     }

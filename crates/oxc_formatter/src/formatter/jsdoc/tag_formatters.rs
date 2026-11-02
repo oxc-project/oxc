@@ -6,11 +6,10 @@ use super::{
     embedded::{
         format_jsdoc_js_snippet, format_type_via_formatter, is_js_ts_lang, update_template_depth,
     },
-    mdast_serialize::format_description_mdast,
+    mdast_serialize::{format_description_mdast, normalize_emphasis_markers},
     normalize::{
-        capitalize_first, normalize_markdown_emphasis, normalize_type,
-        normalize_type_preserve_quotes, normalize_type_return, strip_jsdoc_stars_preserve_newlines,
-        strip_optional_type_suffix,
+        capitalize_first, normalize_type, normalize_type_preserve_quotes, normalize_type_return,
+        strip_jsdoc_stars_preserve_newlines, strip_optional_type_suffix,
     },
     serialize::{
         JsdocFormatter, format_default_value, is_known_tag, is_named_generic_tag,
@@ -308,8 +307,8 @@ impl JsdocFormatter<'_, '_> {
                             && !formatted.contains('\n')
                             && formatter_input.contains('\n')
                         {
-                            // Estimate: @kind + space + { + type + } = tag_prefix_len + 3 + type.len()
-                            let estimated_width = tag_prefix_len + 3 + formatted.len();
+                            // Estimate: @kind + space + { + type + } = tag_prefix_len + 3 + type width
+                            let estimated_width = tag_prefix_len + 3 + str_width(&formatted);
                             if estimated_width > self.wrap_width {
                                 // Use the star-stripped multiline version
                                 normalized_type_str = Cow::Owned(formatter_input.into_owned());
@@ -399,8 +398,6 @@ impl JsdocFormatter<'_, '_> {
         if tag_line.contains('\n') {
             let desc_raw = comment_part.parsed_preserving_whitespace();
             let desc_raw = desc_raw.trim();
-            let desc_normalized = normalize_markdown_emphasis(desc_raw);
-            let desc_raw = desc_normalized.trim();
 
             let mut lines_iter = tag_line.split('\n');
             if let Some(first) = lines_iter.next() {
@@ -431,9 +428,8 @@ impl JsdocFormatter<'_, '_> {
             let t = desc_ws_raw.trim_start_matches(' ');
             t.starts_with("\n\n") || t.starts_with("\n \n")
         };
-        let desc_raw = desc_ws_raw.trim();
-        let desc_normalized = normalize_markdown_emphasis(desc_raw);
-        let desc_raw = desc_normalized.trim();
+        let desc_normalized = normalize_emphasis_markers(desc_ws_raw.trim());
+        let desc_raw = desc_normalized.as_ref();
 
         // Strip existing "Default is ..." from description when we have an actual default value
         // and `add_default_to_description` is enabled (we'll re-append a normalized version).
@@ -785,8 +781,8 @@ impl JsdocFormatter<'_, '_> {
         }
 
         let desc_text = comment_part.parsed();
-        let desc_text = normalize_markdown_emphasis(desc_text.trim());
-        let desc_text = desc_text.trim();
+        let desc_text = normalize_emphasis_markers(desc_text.trim());
+        let desc_text = desc_text.as_ref();
 
         if desc_text.is_empty() {
             self.content_lines.push(tag_line);
@@ -942,14 +938,13 @@ impl JsdocFormatter<'_, '_> {
         };
 
         let desc_text = tag.comment().parsed();
-        let desc_text = normalize_markdown_emphasis(desc_text.trim());
-        let desc_text = desc_text.trim();
+        let desc_text = normalize_emphasis_markers(desc_text.trim());
+        let desc_text = desc_text.as_ref();
         // Whitespace-preserving version for skip-formatting tags: preserves blank
         // lines within the description that parsed() strips. Used when
         // skip_wrapping is true and the content has embedded newlines.
-        let raw_ws_trimmed = raw_ws.trim();
-        let raw_ws_normalized = normalize_markdown_emphasis(raw_ws_trimmed);
-        let raw_ws_desc = raw_ws_normalized.trim();
+        let raw_ws_desc = normalize_emphasis_markers(raw_ws.trim());
+        let raw_ws_desc = raw_ws_desc.as_ref();
 
         if desc_text.is_empty() {
             self.content_lines.push(tag_line);

@@ -2,14 +2,14 @@ use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_ast::ast::*;
 use oxc_formatter_core::dispatch_fragment_ir;
 
-use crate::{ast_nodes::AstNode, format_args, formatter::prelude::*, write};
+use crate::{MarkdownInJsTemplate, ast_nodes::AstNode, format_args, formatter::prelude::*, write};
 
-/// Format a Markdown-in-JS tagged template literal via the Doc→IR path.
+/// Format a Markdown-in-JS tagged template literal through the dispatcher.
 ///
 /// Unescapes backticks in `.raw`, strips common indentation, formats as markdown,
 /// then re-escapes backticks and applies indented or dedent-to-root layout.
 pub(super) fn try_embed_markdown<'a>(
-    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
+    tagged: &AstNode<'_, 'a, TaggedTemplateExpression<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let raw = tagged.quasi.quasis[0].value.raw.as_str();
@@ -31,7 +31,7 @@ pub(super) fn try_embed_markdown<'a>(
     let text = if has_indent { strip_indentation(text, indentation, allocator) } else { text };
 
     // Phase 3: Get the IR from the dispatcher
-    let Some(ir) = dispatch_fragment_ir(f, "markdown", text, None) else {
+    let Some(ir) = dispatch_fragment_ir(f, "markdown", text, Some(&MarkdownInJsTemplate)) else {
         return false;
     };
 
@@ -39,7 +39,7 @@ pub(super) fn try_embed_markdown<'a>(
     // Markdown uses `.raw` quasi values, so only backticks need raw-style escaping
     // (template chars `${` / `\` are passed through verbatim).
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L24
-    let ir = super::escape_backticks_raw_in_ir(&ir, f);
+    let ir = super::escape_backticks_raw_in_ir(ir, f);
 
     // Phase 5: Layout
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L24-L29

@@ -1,0 +1,38 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* DIVERGENCES.md#combinator-spacing */
+col.selected||td {}
+col.selected || td {}
+.a^b {}
+.a^^b {}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* DIVERGENCES.md#combinator-spacing */
+col.selected || td {
+}
+col.selected || td {
+}
+.a ^ b {
+}
+.a ^^ b {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* DIVERGENCES.md#combinator-spacing */
+col.selected || td {
+}
+col.selected || td {
+}
+.a ^ b {
+}
+.a ^^ b {
+}
+
+===================== End =====================

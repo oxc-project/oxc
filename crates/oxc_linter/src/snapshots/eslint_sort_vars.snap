@@ -60,6 +60,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:14]
+ 1 │ var c, d, a, b
+   ·              ─
+   ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:8]
  1 │ var a, A;
    ·        ─
@@ -175,5 +182,47 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[sort_vars.tsx:1:8]
  1 │ var c, a = b = 0
    ·        ─────────
+   ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:8]
+ 1 │ var c, a, b;
+   ·        ─
+   ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:11]
+ 1 │ var c, a, b;
+   ·           ─
+   ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:8]
+ 1 │ var C, a, b;
+   ·        ─
+   ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:11]
+ 1 │ var C, a, b;
+   ·           ─
+   ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:8]
+ 1 │ var c, a, e, d;
+   ·        ─
+   ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:14]
+ 1 │ var c, a, e, d;
+   ·              ─
    ╰────
   help: Sort variable declarations in ascending order (case-sensitive by default).

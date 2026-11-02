@@ -147,27 +147,25 @@ impl<'a> PeepholeOptimizations {
         // `a ? d : (b, c, d)` => `(a || (b, c)), d`
         if let Expression::SequenceExpression(alternate) = &mut expr.alternate
             && alternate.expressions.len() > 1
-            && let Some(last) = alternate.expressions.last()
+            && let Some(last) = Self::last_expression_in_sequence(alternate)
             && ctx.expr_eq(last, &expr.consequent)
         {
-            let last_expr = alternate.expressions.pop().unwrap();
+            let last_expr = Self::pop_expression_from_sequence(alternate).unwrap();
             let seq_prefix = if alternate.expressions.len() == 1 {
                 alternate.expressions.pop().unwrap()
             } else {
                 expr.alternate.take_in(ctx)
             };
-            return Some(Expression::new_sequence_expression(
+            return Some(Self::join_sequence(
                 expr.span,
-                [
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::Or,
-                        expr.test.take_in(ctx),
-                        seq_prefix,
-                        ctx,
-                    ),
-                    last_expr,
-                ],
+                Self::join_with_left_associative_op(
+                    expr.test.span(),
+                    LogicalOperator::Or,
+                    expr.test.take_in(ctx),
+                    seq_prefix,
+                    ctx,
+                ),
+                last_expr,
                 ctx,
             ));
         }
@@ -176,28 +174,26 @@ impl<'a> PeepholeOptimizations {
         // `a ? (b, c, d) : d` => `(a && (b, c)), d`
         if let Expression::SequenceExpression(consequent) = &mut expr.consequent
             && consequent.expressions.len() > 1
-            && let Some(last) = consequent.expressions.last()
+            && let Some(last) = Self::last_expression_in_sequence(consequent)
             && ctx.expr_eq(last, &expr.alternate)
         {
-            let last_expr = consequent.expressions.pop().unwrap();
+            let last_expr = Self::pop_expression_from_sequence(consequent).unwrap();
             let seq_prefix = if consequent.expressions.len() == 1 {
                 consequent.expressions.pop().unwrap()
             } else {
                 expr.consequent.take_in(ctx)
             };
 
-            return Some(Expression::new_sequence_expression(
+            return Some(Self::join_sequence(
                 expr.span,
-                [
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::And,
-                        expr.test.take_in(ctx),
-                        seq_prefix,
-                        ctx,
-                    ),
-                    last_expr,
-                ],
+                Self::join_with_left_associative_op(
+                    expr.test.span(),
+                    LogicalOperator::And,
+                    expr.test.take_in(ctx),
+                    seq_prefix,
+                    ctx,
+                ),
+                last_expr,
                 ctx,
             ));
         }
@@ -223,7 +219,7 @@ impl<'a> PeepholeOptimizations {
 
         // `a ? c : b && c` => `(a || b) && c`
         if let Expression::LogicalExpression(logical_expr) = &mut expr.alternate
-            && logical_expr.operator == LogicalOperator::And
+            && logical_expr.operator.is_and()
             && ctx.expr_eq(&logical_expr.right, &expr.consequent)
         {
             let mut new_logical = logical_expr.take_in_box(ctx);
@@ -362,7 +358,7 @@ impl<'a> PeepholeOptimizations {
                     // `(a = foo) != null ? a : b` -> `(a = foo) ?? b`
                     let maybe_same_id_expr =
                         if is_negate { &mut expr.consequent } else { &mut expr.alternate };
-                    if maybe_same_id_expr.is_specific_id(&target_id_name) {
+                    if maybe_same_id_expr.is_specific_id(target_id_name) {
                         return Some(Expression::new_logical_expression(
                             expr.span,
                             value_expr.take_in(ctx),
@@ -387,7 +383,7 @@ impl<'a> PeepholeOptimizations {
                         let expr_to_inject_optional_chaining =
                             if is_negate { &mut expr.consequent } else { &mut expr.alternate };
                         if Self::inject_optional_chaining_if_matched(
-                            &target_id_name,
+                            target_id_name,
                             value_expr,
                             expr_to_inject_optional_chaining,
                             ctx,
@@ -578,15 +574,13 @@ impl<'a> PeepholeOptimizations {
                 let result_expr = expr.consequent.take_in(ctx);
                 // "(a ? eval : eval)(x)" => "(0, eval)(x)" — the bare branch
                 // would form a direct eval call / rebind a member call's `this`.
-                if Self::should_keep_indirect_access(&result_expr, ctx) {
-                    return Some(Self::preserve_indirect_access(expr.span, result_expr, ctx));
-                }
-                return Some(result_expr);
+                return Some(Self::preserve_indirect_access_if_needed(expr.span, result_expr, ctx));
             }
 
             // "a ? b : b" => "a, b"
-            let expressions = [expr.test.take_in(ctx), expr.consequent.take_in(ctx)];
-            return Some(Expression::new_sequence_expression(expr.span, expressions, ctx));
+            let test = expr.test.take_in(ctx);
+            let consequent = expr.consequent.take_in(ctx);
+            return Some(Self::join_sequence(expr.span, test, consequent, ctx));
         }
 
         None
@@ -689,7 +683,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// For `target_expr` = `a`, `expr` = `a.b`, this function changes `expr` to `a?.b` and returns true.
     pub fn inject_optional_chaining_if_matched(
-        target_id_name: &str,
+        target_id_name: Ident<'a>,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -713,7 +707,7 @@ impl<'a> PeepholeOptimizations {
 
     /// See [`Self::inject_optional_chaining_if_matched`]
     fn inject_optional_chaining_if_matched_inner(
-        target_id_name: &str,
+        target_id_name: Ident<'a>,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,

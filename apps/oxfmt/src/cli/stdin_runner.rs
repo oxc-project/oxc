@@ -2,7 +2,6 @@ use std::{
     env,
     io::{self, BufWriter, Read},
     path::PathBuf,
-    sync::Arc,
 };
 
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
@@ -10,8 +9,7 @@ use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use super::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
     ConfigScopes, ExternalServices, FormatResult, JsConfigLoaderCb, ResolveOutcome,
-    SourceFormatter, build_global_ignore_matchers, classify_file_kind, is_ignored,
-    resolve_ignore_paths, utils,
+    SourceFormatter, build_global_ignore_matchers, is_ignored, resolve_ignore_paths, utils,
 };
 
 pub struct StdinRunner {
@@ -52,14 +50,12 @@ impl StdinRunner {
         // Single threaded for stdin formatting
         let num_of_threads = 1;
 
-        // Read source code from stdin
         let mut source_text = String::new();
         if let Err(err) = io::stdin().read_to_string(&mut source_text) {
             utils::print_and_flush(stderr, &format!("Failed to read from stdin: {err}\n"));
             return CliRunResult::InvalidOptionConfig;
         }
 
-        // Load config
         let config_scopes = match ConfigScopes::load(
             &cwd,
             config_options.config.as_deref(),
@@ -117,12 +113,12 @@ impl StdinRunner {
             return CliRunResult::FormatSucceeded;
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(filepath.as_path())) else {
+        let Some(strategy) = config_resolver.classify(&filepath, None) else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;
         };
-        let strategy = match config_resolver.resolve(kind) {
-            Ok(ResolveOutcome::Format(strategy)) => strategy,
+        let plan = match config_resolver.resolve(&filepath, strategy) {
+            Ok(ResolveOutcome::Format(plan)) => plan,
             Ok(ResolveOutcome::MissingPlugin(_)) => {
                 utils::print_and_flush(stdout, &source_text);
                 return CliRunResult::FormatSucceeded;
@@ -133,12 +129,11 @@ impl StdinRunner {
             }
         };
 
-        // Create formatter and format
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_services(Some(self.external_services));
 
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| source_formatter.format(&source_text, strategy)) {
+        match tokio::task::block_in_place(|| source_formatter.format(&source_text, plan)) {
             FormatResult::Success { code, .. } => {
                 utils::print_and_flush(stdout, &code);
                 CliRunResult::FormatSucceeded

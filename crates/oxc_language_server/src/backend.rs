@@ -635,7 +635,7 @@ impl LanguageServer for Backend {
                 }
             })
         {
-            self.file_system.set(uri.clone(), content);
+            self.file_system.set_with_version(uri.clone(), params.text_document.version, content);
         }
 
         let document = self.file_system.get_document(&uri);
@@ -703,6 +703,7 @@ impl LanguageServer for Backend {
         self.file_system.set_with_language(
             uri.clone(),
             LanguageId::new(params.text_document.language_id.to_string()),
+            params.text_document.version,
             content,
         );
 
@@ -796,13 +797,13 @@ impl LanguageServer for Backend {
             return Ok(None);
         };
 
-        let is_open_document = self.file_system.is_open(&uri);
+        let document_version = self.file_system.get_version(&uri);
 
         let params = crate::CodeActionParams {
             uri,
             range: params.range,
             context: params.context,
-            is_open_document,
+            document_version,
         };
 
         let code_actions = worker.get_code_actions_or_commands(params).await;
@@ -882,6 +883,14 @@ impl LanguageServer for Backend {
         &self,
         params: DocumentDiagnosticParams,
     ) -> Result<DocumentDiagnosticReport> {
+        // The client can request diagnostics even if the server wants to use push mode.
+        // Some client will ignore the (not set) server diagnostic capability and still request diagnostics.
+        if self.capabilities.get().unwrap().diagnostic_mode != DiagnosticMode::Pull {
+            return Ok(DocumentDiagnosticReport::RelatedFullDocumentDiagnosticReport(
+                RelatedFullDocumentDiagnosticReport::default(),
+            ));
+        }
+
         let uri = &params.text_document.uri;
         let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
             return Ok(DocumentDiagnosticReport::RelatedFullDocumentDiagnosticReport(
@@ -961,6 +970,7 @@ impl LanguageServer for Backend {
                 Ok(Some(edits))
             }
             Err(err) => {
+                error!(err);
                 Err(Error { code: ErrorCode::ServerError(1), message: Cow::Owned(err), data: None })
             }
         }
@@ -1056,6 +1066,18 @@ impl Backend {
     /// Send multiple messages to the client, if any.
     /// Will cap the number of messages to 5, to avoid flooding the client.
     async fn send_client_messages(&self, messages: Vec<ClientMessage>) {
+        // Log every message before limiting what is shown in the client. In particular, this
+        // ensures messages omitted by the client-facing cap remain available on LSP stderr.
+        for message in &messages {
+            match message.r#type {
+                MessageType::Error => error!("{}", message.message),
+                MessageType::Warning => warn!("{}", message.message),
+                MessageType::Info => info!("{}", message.message),
+                MessageType::Log => debug!("{}", message.message),
+                message_type => warn!(?message_type, "{}", message.message),
+            }
+        }
+
         let max_messages = 5;
         let messages_to_send = if messages.len() > max_messages {
             let extra_message = ClientMessage {

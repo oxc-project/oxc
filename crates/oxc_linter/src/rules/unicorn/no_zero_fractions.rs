@@ -49,6 +49,7 @@ declare_oxc_lint!(
     NoZeroFractions,
     unicorn,
     style,
+    recommended,
     fix,
     version = "0.0.18",
     short_description = "Prevents the use of zero fractions.",

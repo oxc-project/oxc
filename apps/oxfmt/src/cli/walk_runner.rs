@@ -18,7 +18,7 @@ use super::{
 };
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
-use crate::core::{ConfigScopes, FormatStrategy, SourceFormatter, resolve_ignore_paths, utils};
+use crate::core::{ConfigScopes, FormatPlan, SourceFormatter, resolve_ignore_paths, utils};
 
 pub struct WalkRunner {
     options: FormatCommand,
@@ -122,7 +122,7 @@ impl WalkRunner {
         };
 
         // Shared channel for format entries from all scopes
-        let (tx_entry, rx_entry) = mpsc::channel::<FormatStrategy>();
+        let (tx_entry, rx_entry) = mpsc::channel::<FormatPlan>();
         // Collect format results (changed paths or unchanged count)
         let (tx_success, rx_success) = mpsc::channel();
         // Diagnostic from formatting service
@@ -211,10 +211,7 @@ impl WalkRunner {
             let warning_theme =
                 matches!(format_mode, OutputMode::Check).then(GraphicalTheme::default);
             let mut output = String::new();
-            for (idx, (path, elapsed)) in changed_paths.into_iter().enumerate() {
-                if idx != 0 {
-                    output.push('\n');
-                }
+            for (path, elapsed) in changed_paths {
                 match &warning_theme {
                     // Style per line, some log viewers reset ANSI state on line breaks
                     Some(theme) => theme.write_warning(&mut output, &path).unwrap(),
@@ -223,6 +220,7 @@ impl WalkRunner {
                 if let Some(elapsed) = elapsed {
                     write!(output, " ({}ms)", elapsed.as_millis()).unwrap();
                 }
+                output.push('\n');
             }
             utils::print_and_flush(stdout, &output);
         }
@@ -289,7 +287,7 @@ impl WalkRunner {
                 CliRunResult::FormatSucceeded
             }
             (OutputMode::Check, _) => {
-                utils::print_and_flush(stdout, "\n\n");
+                utils::print_and_flush(stdout, "\n");
                 utils::print_and_flush(
                     stdout,
                     &format!(

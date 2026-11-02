@@ -1,7 +1,7 @@
 import { extname as pathExtname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const NODE_TYPESCRIPT_SUPPORT_RANGE = "^20.19.0 || >=22.18.0";
+export const NODE_TYPESCRIPT_SUPPORT_RANGE = ">=22.18.0";
 
 const TS_MODULE_EXTENSIONS = new Set([".ts", ".mts", ".cts"]);
 

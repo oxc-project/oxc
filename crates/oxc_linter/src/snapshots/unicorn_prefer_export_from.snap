@@ -1180,3 +1180,26 @@ source: crates/oxc_linter/src/tester.rs
  3 │                 export {bar} from './foo.json' with { type: 'unknown' };
    ╰────
   help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import {a} from "\uD800";
+   · ────────────┬────────────
+   ·             ╰── Imported here.
+ 2 │ export {a};
+   ·         ┬
+   ·         ╰── Re-exported here.
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import {a} from "\uD800";
+   · ────────────┬────────────
+   ·             ╰── Imported here.
+ 2 │ export {a};
+   ·         ┬
+   ·         ╰── Re-exported here.
+ 3 │ export {b} from "\uD800";
+   ╰────
+  help: use `export ... from ...;`

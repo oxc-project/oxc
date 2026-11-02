@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, ObjectProperty,
-        ObjectPropertyKind, StringLiteral,
+        StringLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -141,26 +141,14 @@ impl Rule for IframeMissingSandbox {
                 }
 
                 if let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) {
-                    obj_expr
-                        .properties
-                        .iter()
-                        .find_map(|prop| {
-                            if let ObjectPropertyKind::ObjectProperty(prop) = prop
-                                && prop.key.is_specific_static_name("sandbox")
-                            {
-                                return Some(prop);
-                            }
-
-                            None
-                        })
-                        .map_or_else(
-                            || {
-                                ctx.diagnostic(missing_sandbox_prop(obj_expr.span));
-                            },
-                            |sandbox_prop| {
-                                validate_sandbox_property(sandbox_prop, ctx);
-                            },
-                        );
+                    obj_expr.find_property("sandbox").map_or_else(
+                        || {
+                            ctx.diagnostic(missing_sandbox_prop(obj_expr.span));
+                        },
+                        |sandbox_prop| {
+                            validate_sandbox_property(sandbox_prop, ctx);
+                        },
+                    );
                 } else {
                     ctx.diagnostic(missing_sandbox_prop(call_expr.span));
                 }
@@ -171,7 +159,11 @@ impl Rule for IframeMissingSandbox {
 }
 
 fn validate_sandbox_value(literal: &StringLiteral, ctx: &LintContext) {
-    let attrs = literal.value.split(' ');
+    let Some(value) = literal.value.as_str() else {
+        ctx.diagnostic(invalid_sandbox_prop(literal.span, ctx.source_range(literal.span)));
+        return;
+    };
+    let attrs = value.split(' ');
     let mut has_allow_same_origin = false;
     let mut has_allow_scripts = false;
     for trimmed_atr in attrs.into_iter().map(str::trim) {

@@ -265,6 +265,26 @@ pub fn line_opens_block(line: &str, in_paragraph: bool) -> bool {
     }
 }
 
+/// Under `preserve`, the source line a kept soft break at `brk` follows,
+/// which prints as it is (pipes are never escaped, so it counts as many table cells):
+/// `None` when a node on it spans lines, or when it is itself a block start or line shape
+/// (the break before it may have been dropped, joining it to the line above).
+pub fn line_above<'a>(
+    children: &[Inline<'_>],
+    brk: usize,
+    f: &MarkdownFormatter<'_, 'a>,
+) -> Option<&'a str> {
+    let start = children[..brk]
+        .iter()
+        .rposition(|c| matches!(c, Inline::SoftBreak(_) | Inline::HardBreak(_)))
+        .map_or(0, |k| k + 1);
+    let (base, line) = source_line_at(children, children[start..brk].first()?.span().start, f);
+    (base as usize + line.len() >= children[brk - 1].span().end as usize
+        && !line_opens_block(line, true)
+        && !is_line_shape_start(line))
+    .then_some(line)
+}
+
 /// A line that is not a block only because of what follows on it:
 /// a fence or math opener whose info has a backtick or a `$` (they interrupt a paragraph, so any line counts),
 /// a liquid tag not closed on the line (a later line may close it; one closed here with text after it is paragraph text),

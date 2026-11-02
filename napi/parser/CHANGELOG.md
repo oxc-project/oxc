@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.157.0] - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- 3421516 parser: Preserve default import names in reexports (#28442) (Boshen)
+- ed7df7d ast/estree: Include comments in TS Program span (#28326) (camc314)
+
+## [0.154.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- 7730e14 ast: [**BREAKING**] Refactor comment attachment storage (#27512) (camc314)
+- c904b61 ast: [**BREAKING**] Add comment attachment storage (#27393) (camc314)
+
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- b2793fa parser: Reject module syntax in script (#27220) (leaysgur)
+
 ## [0.152.0] - 2026-09-28
 
 ### 🚀 Features

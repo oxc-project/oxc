@@ -1,16 +1,22 @@
 //! Words: which spellings are keywords here (contextual keywords), the statement keywords,
 //! plain names, and member keys with their modifiers.
 
-use crate::token::{OP_KIND_BASE, matches_tk, tk};
+use crate::{
+    cpu::cpu_version,
+    token::{OP_KIND_BASE, matches_tk, tk},
+};
 
 use super::*;
 
 #[rustfmt::skip::macros(matches_tk, tk)]
 impl Walk {
     /// Step the word at `pos`; returns its end.
+    #[cpu_version(Generic)]
     pub(super) fn step_word(&mut self, tokens: &Tokens, pos: usize) -> usize {
-        let end = tokens.next_start(pos + 1);
-        let kw = if self.after_dot { 0 } else { tokens.word_kw(pos, end - pos) };
+        let cpu = BASELINE;
+
+        let end = tokens.next_start(pos + 1, cpu);
+        let kw = if self.after_dot { 0 } else { tokens.word_kw(pos, end - pos, cpu) };
 
         if self.in_type() {
             self.type_word(kw);
@@ -24,7 +30,7 @@ impl Walk {
 
         // Member keys in object literals / class bodies.
         if matches!(self.top_kind(), FrameKind::Object | FrameKind::ClassBody)
-            && self.top().state == M_KEY_POS
+            && self.top().member == Member::KeyPos
         {
             return self.member_word(tokens, pos, end, kw);
         }
@@ -36,7 +42,10 @@ impl Walk {
     }
 
     /// A word inside a type: a prefix or infix type keyword, else a type atom.
+    #[cpu_version(Generic)]
     fn type_word(&mut self, kw: u8) {
+        let cpu = BASELINE;
+
         match kw {
             tk!(
                 KwKeyof | KwTypeof | KwReadonly | KwUnique | KwInfer | KwAbstract | KwNew
@@ -55,10 +64,10 @@ impl Walk {
             _ => {
                 // A statement keyword right after a completed type is an error on the same line
                 // and was handled by the break rule on a new one; read it as an atom.
+                let query = self.prev_kw == tk!(KwTypeof);
                 self.type_atom(false);
-                if keyword_type(kw) {
-                    self.prev_kw = kw;
-                }
+                // A name takes type arguments, a keyword type only in a type query.
+                self.no_type_args = keyword_type(kw, cpu) && !query;
             }
         }
     }
@@ -67,103 +76,80 @@ impl Walk {
     /// `await`, `of`, `let`, `using`, `async`, the TypeScript declaration words, `as`,
     /// `satisfies`, `static`, `implements`, `from`) is a plain name (0) unless its position and
     /// the token after it say otherwise; every other code stands.
+    #[cpu_version(Generic)]
     fn resolve_keyword(&mut self, tokens: &Tokens, end: usize, kw: u8) -> u8 {
-        match kw {
-            tk!(KwYield | KwAwait) => {
-                if !self.scoped_keyword(kw == tk!(KwYield)) {
-                    return 0;
-                }
-            }
+        let cpu = BASELINE;
+
+        let keyword = match kw {
+            tk!(KwYield | KwAwait) => self.scoped_keyword(kw == tk!(KwYield)),
             tk!(KwOf) => {
                 // tsc reads of after any value that ends the first expression of the head.
-                if !(self.top_kind() == FrameKind::Head
-                    && self.top().state == F_OF
-                    && !self.operand_allowed())
-                {
-                    return 0;
-                }
+                self.top_kind() == FrameKind::Head
+                    && !self.top().of_closed
+                    && !self.operand_allowed()
             }
             tk!(KwLet) => {
-                let nx = tokens.peek(end);
-                let ok = nx.kind == tk!(Ident)
+                let nx = tokens.peek(end, cpu);
+                let binding = nx.kind == tk!(Ident)
                     || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'[' | b'{'));
-                let at_stmt = self.at_stmt_start() || self.top_kind() == FrameKind::Head;
-                if !ok || !at_stmt {
-                    return 0;
-                }
+                binding && (self.at_stmt_start() || self.top_kind() == FrameKind::Head)
             }
             tk!(KwUsing) => {
-                let nx = tokens.peek(end);
-                let ok = nx.kind == tk!(Ident)
-                    && !tokens.line_break_between(end, nx.pos)
-                    && self.at_stmt_start();
-                if !ok {
-                    return 0;
-                }
+                let nx = tokens.peek(end, cpu);
+                nx.kind == tk!(Ident)
+                    && !tokens.line_break_between(end, nx.pos, cpu)
+                    && self.at_stmt_start()
             }
             tk!(KwAsync) => {
                 // `async` is a modifier only when the next token is on the same line and continues
                 // a function / arrow head.
-                let nx = tokens.peek(end);
-                let follows = (matches_tk!(nx.kind, Ident | String | Number | PrivateIdent)
+                let nx = tokens.peek(end, cpu);
+                (matches_tk!(nx.kind, Ident | String | Number | PrivateIdent)
                     || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'(' | b'*' | b'[')))
-                    && !tokens.line_break_between(end, nx.pos);
-                if !follows {
-                    return 0;
-                }
+                    && !tokens.line_break_between(end, nx.pos, cpu)
             }
             tk!(KwType | KwInterface | KwNamespace | KwModule | KwDeclare) => {
                 // Statement-level TS declarations only.
-                let nx = tokens.peek(end);
-                let starts_decl = matches_tk!(nx.kind, Ident | String)
-                    && !tokens.line_break_between(end, nx.pos);
+                let nx = tokens.peek(end, cpu);
                 let at_stmt = self.at_stmt_start()
                     || self.prev_kw == tk!(KwDefault)
-                    || (kw == tk!(KwNamespace) && self.stmt_reg() == S_EXPORT_AS);
-                if !(tokens.ts && starts_decl && at_stmt) {
-                    return 0;
-                }
+                    || (kw == tk!(KwNamespace) && self.stmt_reg() == StmtReg::ExportAs);
+                tokens.ts
+                    && matches_tk!(nx.kind, Ident | String)
+                    && !tokens.line_break_between(end, nx.pos, cpu)
+                    && at_stmt
             }
             tk!(KwAs | KwSatisfies) => {
                 // Only after a value in an expression, in TS; `export as` opens `export as
                 // namespace X`.
                 let export_as = kw == tk!(KwAs) && self.prev_kw == tk!(KwExport);
                 let in_module_clause = self.top_kind() == FrameKind::ModuleSpec
-                    || matches!(self.stmt_reg(), S_IMPORT | S_EXPORT);
-                if !export_as && (!tokens.ts || self.operand_allowed() || in_module_clause) {
-                    return 0;
-                }
+                    || matches!(self.stmt_reg(), StmtReg::Import | StmtReg::Export);
+                export_as || (tokens.ts && !self.operand_allowed() && !in_module_clause)
             }
             tk!(KwStatic) => {
-                if !(self.top_kind() == FrameKind::ClassBody && self.top().state == M_KEY_POS) {
-                    return 0;
-                }
+                self.top_kind() == FrameKind::ClassBody && self.top().member == Member::KeyPos
             }
-            tk!(KwImplements) => {
-                if self.top_kind() != FrameKind::ClassHead {
-                    return 0;
-                }
-            }
-            tk!(KwFrom) if !matches!(self.stmt_reg(), S_IMPORT | S_EXPORT) => {
-                return 0;
-            }
-            _ => {}
-        }
-        kw
+            tk!(KwImplements) => self.top_kind() == FrameKind::ClassHead,
+            tk!(KwFrom) => matches!(self.stmt_reg(), StmtReg::Import | StmtReg::Export),
+            _ => true,
+        };
+        if keyword { kw } else { 0 }
     }
 
     /// True when a statement register takes the word as its name (break label, type X, import x).
+    #[cpu_version(Generic)]
     fn declared_name(&mut self, kw: u8) -> bool {
         match self.stmt_reg() {
-            S_BREAK => {
+            StmtReg::Break => {
                 // break label, export as namespace N: the statement is complete.
-                self.set_stmt_reg(S_NONE);
+                self.set_stmt_reg(StmtReg::None);
                 self.value_done();
                 self.stmt_done = true;
                 self.after_statement();
             }
-            S_EXPORT_AS if kw == tk!(KwNamespace) => {
-                self.set_stmt_reg(S_BREAK);
+            StmtReg::ExportAs if kw == tk!(KwNamespace) => {
+                self.set_stmt_reg(StmtReg::Break);
                 self.set_operand();
                 self.prev_kw = tk!(KwNamespace);
             }
@@ -173,7 +159,10 @@ impl Walk {
     }
 
     /// The transition of the keyword `kw` (0: a plain name) in expression or statement position.
+    #[cpu_version(Generic)]
     fn keyword_word(&mut self, tokens: &Tokens, end: usize, kw: u8) {
+        let cpu = BASELINE;
+
         match kw {
             tk!(KwFunction) => {
                 let value = !self.at_stmt_start()
@@ -184,7 +173,6 @@ impl Walk {
                 let f = self.push(FrameKind::FnHead);
                 f.is_value = value;
                 f.is_async = is_async;
-                f.is_generator = false;
                 self.value_done();
                 self.prev_kw = tk!(KwFunction);
                 self.export_default = false;
@@ -219,70 +207,64 @@ impl Walk {
                 | KwInstanceof | KwOf | KwDebugger | KwExtends | KwImplements | KwFrom
             ) => {
                 if self.top_kind() == FrameKind::Head && matches_tk!(kw, KwOf | KwIn) {
-                    self.top_mut().state = F_NO_OF;
+                    self.top_mut().of_closed = true;
                 }
                 self.keyword(kw);
             }
             tk!(KwCase) => {
-                self.set_stmt_reg(S_CASE);
+                self.set_stmt_reg(StmtReg::Case);
                 self.keyword(tk!(KwCase));
             }
             tk!(KwDefault) => {
-                if self.prev_kw == tk!(KwExport) {
-                    self.export_default = true;
-                    self.set_stmt_reg(S_NONE);
-                    self.set_operand();
-                } else {
-                    self.set_stmt_reg(S_CASE);
-                    self.set_operand();
-                }
-                self.clear_prev();
-                self.prev_kw = tk!(KwDefault);
+                let export = self.prev_kw == tk!(KwExport);
+                self.export_default |= export;
+                self.set_stmt_reg(if export { StmtReg::None } else { StmtReg::Case });
+                self.keyword(kw);
             }
             tk!(KwBreak | KwContinue) => {
-                self.set_stmt_reg(S_BREAK);
+                self.set_stmt_reg(StmtReg::Break);
                 self.keyword(kw);
             }
             tk!(KwVar | KwConst | KwLet | KwUsing) => {
                 if self.top_kind().is_stmt_holder() {
-                    self.top_mut().state = D_BINDING;
+                    self.top_mut().declarator = Declarator::Binding;
                 }
                 self.keyword(kw);
             }
             tk!(KwImport) => {
-                let nx = tokens.peek(end);
+                let nx = tokens.peek(end, cpu);
                 if nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'(' | b'.') {
                     // `import(...)` / `import.meta`: an expression.
                     self.value_done();
                     self.prev_kw = tk!(KwImport);
                 } else {
-                    self.set_stmt_reg(S_IMPORT);
+                    self.set_stmt_reg(StmtReg::Import);
                     self.keyword(tk!(KwImport));
                 }
             }
             tk!(KwExport) => {
                 // Only a clause (export {, export *, export type {) keeps the register.
-                let mut nx = tokens.peek(end);
-                if nx.kind == tk!(Ident) && tokens.ident_is(nx.pos, b"type") {
-                    nx = tokens.peek(nx.pos + 4);
+                let mut nx = tokens.peek(end, cpu);
+                if nx.kind == tk!(Ident) && tokens.ident_is(nx.pos, b"type", cpu) {
+                    nx = tokens.peek(nx.pos + 4, cpu);
                 }
                 let clause = nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'{' | b'*');
-                self.set_stmt_reg(if clause { S_EXPORT } else { S_NONE });
+                self.set_stmt_reg(if clause { StmtReg::Export } else { StmtReg::None });
                 self.keyword(tk!(KwExport));
                 // What follows is read at statement position, as a declaration.
                 self.expect = Expect::Statement;
             }
             tk!(KwAs) => {
                 if self.prev_kw == tk!(KwExport) {
-                    self.set_stmt_reg(S_EXPORT_AS);
+                    self.set_stmt_reg(StmtReg::ExportAs);
                     self.keyword(tk!(KwAs));
                 } else {
-                    self.open_region(R_EXPR);
+                    self.open_region(RegionRule::Expr);
                     self.prev_kw = tk!(KwAs);
                 }
             }
             tk!(KwSatisfies) => {
-                self.open_region(R_EXPR);
+                self.open_region(RegionRule::Expr);
                 self.prev_kw = tk!(KwSatisfies);
             }
             tk!(KwAsync) => {
@@ -292,22 +274,20 @@ impl Walk {
                 self.prev_kw = tk!(KwAsync);
             }
             tk!(KwType) => {
-                self.set_stmt_reg(S_TYPE_NAME);
+                self.set_stmt_reg(StmtReg::TypeName);
                 self.keyword(tk!(KwType));
             }
             tk!(KwInterface) => {
                 // Same head frame as a class: `extends`, `<` and the body may follow on later
                 // lines.
-                let f = self.push(FrameKind::ClassHead);
-                f.is_value = false;
-                f.reg = C_INTERFACE;
+                self.push(FrameKind::ClassHead).is_interface = true;
                 self.value_done();
                 self.prev_kw = tk!(KwInterface);
             }
             tk!(KwModule) if self.prev_kw == tk!(KwDeclare) => {
                 // A declared module may have no body.
                 self.keyword(kw);
-                self.set_stmt_reg(S_DECLARE_MODULE);
+                self.set_stmt_reg(StmtReg::DeclareModule);
             }
             _ => {
                 // A plain name, or any other keyword spelling used as one.
@@ -317,6 +297,7 @@ impl Walk {
     }
 
     /// A plain identifier (or keyword used as a name) in expression / statement position.
+    #[cpu_version(Generic)]
     fn plain_word(&mut self) {
         // `async x => ...`: remember the modifier for the arrow.
         let is_async = self.prev_kw == tk!(KwAsync);
@@ -325,14 +306,17 @@ impl Walk {
     }
 
     /// A word at member-key position of an object literal or class body.
+    #[cpu_version(Generic)]
     fn member_word(&mut self, tokens: &Tokens, pos: usize, end: usize, kw: u8) -> usize {
+        let cpu = BASELINE;
+
         let is_class = self.top_kind() == FrameKind::ClassBody;
         // Modifiers apply when a key can follow on the same line.
-        let nx = tokens.peek(end);
+        let nx = tokens.peek(end, cpu);
         let key_follows_any_line =
             matches_tk!(nx.kind, Ident | String | Number | BigInt | PrivateIdent)
                 || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'[' | b'*' | b'#'));
-        let key_follows = key_follows_any_line && !tokens.line_break_between(end, nx.pos);
+        let key_follows = key_follows_any_line && !tokens.line_break_between(end, nx.pos, cpu);
         if kw == tk!(KwAsync) && key_follows {
             self.top_mut().mods |= MOD_ASYNC;
             self.operand_done();
@@ -362,14 +346,14 @@ impl Walk {
             return end;
         }
         if kw == 0
-            && (tokens.ident_is(pos, b"get") || tokens.ident_is(pos, b"set"))
+            && (tokens.ident_is(pos, b"get", cpu) || tokens.ident_is(pos, b"set", cpu))
             && key_follows_any_line
         {
             self.operand_done();
             return end;
         }
         // The key itself.
-        self.top_mut().state = M_KEY_SEEN;
+        self.top_mut().member = Member::KeySeen;
         self.value_done();
         end
     }

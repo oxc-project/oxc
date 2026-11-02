@@ -1,12 +1,13 @@
 use itertools::Itertools;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression, VariableDeclarationKind},
+    ast::{Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{
     AstNode, ast_util::is_method_call, ast_util::variable_declaration_kind, context::LintContext,
@@ -69,6 +70,7 @@ declare_oxc_lint!(
     PreferSetHas,
     unicorn,
     perf,
+    recommended,
     dangerous_fix,
     version = "0.13.2",
     short_description = "Prefer `Set#has()` over `Array#includes()` when checking for existence or non-existence.",
@@ -93,7 +95,9 @@ fn is_kind_of_array_expr(expr: &Expression) -> bool {
                 return false;
             }
 
-            let Some(name) = callee.static_property_name() else { return false };
+            let Some(name) = callee.static_property_name().and_then(JSStr::as_str) else {
+                return false;
+            };
 
             is_array_of_or_from(callee) || ARRAY_METHODS_RETURNS_ARRAY.contains(&name)
         }
@@ -136,7 +140,10 @@ impl Rule for PreferSetHas {
             return;
         };
 
-        if variable_declaration_kind(declarator, ctx) == VariableDeclarationKind::Var {
+        let Some(kind) = variable_declaration_kind(declarator, ctx.nodes()) else {
+            return;
+        };
+        if kind.is_var() {
             return;
         }
 

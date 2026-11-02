@@ -2,7 +2,7 @@ use std::{
     fs,
     io::Read,
     path::{Path, PathBuf},
-    process::{Command, Stdio},
+    process::Command,
 };
 
 use cow_utils::CowUtils;
@@ -14,12 +14,17 @@ use rayon::prelude::*;
 use walkdir::WalkDir;
 
 use crate::{
-    AcornJsxFile, BabelFile, MiscFile, Test262File, TestData, TypeScriptFile, babel, test262,
-    typescript, workspace_root,
+    AcornJsxFile, BABEL_PATH, BabelFile, ESTREE_ACORN_JSX_PATH, MiscFile, TEST262_PATH,
+    TYPESCRIPT_PATH, Test262File, TestData, TypeScriptFile, babel, test262, typescript,
+    workspace_root,
 };
 
 impl TestData {
     pub fn load(filter: Option<&str>) -> Self {
+        if filter.is_none() {
+            ensure_submodules(&[TEST262_PATH, BABEL_PATH, TYPESCRIPT_PATH, ESTREE_ACORN_JSX_PATH]);
+        }
+
         let ((test262, babel), (typescript, (misc, acorn_jsx))) = rayon::join(
             || rayon::join(|| load_test262(filter), || load_babel(filter)),
             || {
@@ -31,6 +36,33 @@ impl TestData {
         );
         Self { test262, babel, typescript, misc, acorn_jsx }
     }
+}
+
+pub fn ensure_submodules(roots: &[&str]) {
+    let empty_roots: Vec<_> =
+        roots.iter().copied().filter(|root| !has_files(Path::new(root))).collect();
+    if empty_roots.is_empty() {
+        return;
+    }
+
+    println!("-------------------------------------------------------");
+    for root in &empty_roots {
+        println!("git submodule is empty for {root}");
+    }
+    println!("Running `just submodules` to clone the submodules");
+    println!("-------------------------------------------------------");
+    let status = Command::new("just")
+        .arg("submodules")
+        .status()
+        .expect("failed to execute `just submodules`");
+    assert!(status.success(), "`just submodules` failed with {status}");
+}
+
+fn has_files(root: &Path) -> bool {
+    WalkDir::new(workspace_root().join(root))
+        .into_iter()
+        .filter_map(Result::ok)
+        .any(|entry| !entry.file_type().is_dir() && entry.file_name() != ".DS_Store")
 }
 
 fn walk_and_read(
@@ -50,20 +82,6 @@ fn walk_and_read(
         .filter(|path| !skip_path(path))
         .filter(|path| filter.is_none_or(|q| path.to_string_lossy().contains(q)))
         .collect();
-
-    if paths.is_empty() && filter.is_none() {
-        println!("-------------------------------------------------------");
-        println!("git submodule is empty for {}", root.display());
-        println!("Running `just submodules` to clone the submodules");
-        println!("-------------------------------------------------------");
-        Command::new("just")
-            .args(["submodules"])
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .output()
-            .expect("failed to execute `just submodules`");
-        return walk_and_read(root, filter, skip_path);
-    }
 
     paths
         .into_par_iter()
@@ -99,7 +117,7 @@ pub fn load_test262(filter: Option<&str>) -> Vec<Test262File> {
             || s.contains("annexB/language/expressions/assignmenttargettype")
     };
 
-    walk_and_read(Path::new("test262/test"), filter, skip_path)
+    walk_and_read(Path::new(TEST262_PATH), filter, skip_path)
         .into_par_iter()
         .map(|(path, code)| {
             let meta = test262::parse_meta(&code);
@@ -148,7 +166,7 @@ fn load_babel(filter: Option<&str>) -> Vec<BabelFile> {
         not_supported || not_interesting || bad_ext
     };
 
-    walk_and_read(Path::new("babel/packages/babel-parser/test/fixtures"), filter, skip_path)
+    walk_and_read(Path::new(BABEL_PATH), filter, skip_path)
         .into_par_iter()
         .filter_map(|(path, code)| {
             let dir = workspace_root().join(&path);
@@ -208,7 +226,7 @@ fn load_typescript(filter: Option<&str>) -> Vec<TypeScriptFile> {
         !supported || unsupported
     };
 
-    let files = walk_and_read(Path::new(typescript::CASES_PATH), filter, skip_path);
+    let files = walk_and_read(Path::new(TYPESCRIPT_PATH), filter, skip_path);
     let reference_baselines = typescript::ReferenceBaselines::new();
     files
         .into_par_iter()
@@ -268,7 +286,7 @@ fn load_misc(filter: Option<&str>) -> Vec<MiscFile> {
 fn load_acorn_jsx(filter: Option<&str>) -> Vec<AcornJsxFile> {
     let skip_path = |path: &Path| path.extension().is_none_or(|ext| ext != "jsx");
 
-    walk_and_read(Path::new("estree-conformance/tests/acorn-jsx"), filter, skip_path)
+    walk_and_read(Path::new(ESTREE_ACORN_JSX_PATH), filter, skip_path)
         .into_par_iter()
         .map(|(path, code)| {
             let should_fail =
