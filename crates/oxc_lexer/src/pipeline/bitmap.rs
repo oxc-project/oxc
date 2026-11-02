@@ -182,6 +182,7 @@ unsafe fn bm_any_avx2(bm: *const u64, nw: usize, _cpu: Avx2) -> bool {
 /// # SAFETY
 ///
 /// Same as [`bm_any`].
+#[apply(cpu_version(Generic))]
 #[inline]
 unsafe fn bm_any_generic(bm: *const u64, nw: usize) -> bool {
     let mut w = 0usize;

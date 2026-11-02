@@ -548,6 +548,7 @@ unsafe fn text_matches_neon(ptr: *const u8, len: usize, text: &[u64; 2], _cpu: N
 /// # SAFETY
 ///
 /// Same as [`text_matches`].
+#[apply(cpu_version(Generic))]
 #[inline(always)]
 unsafe fn text_matches_generic(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
     use ptr::read_unaligned;

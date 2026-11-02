@@ -12,7 +12,7 @@ use oxc_ast::ast::{Comment, RegExpFlags};
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 use crate::{
-    cpu::{Cpu, apply, cpu_select, cpu_version, cpu_versions},
+    cpu::{BASELINE, Cpu, apply, cpu_select, cpu_version, cpu_versions},
     error::{DiagCode, DiagSeverity, Diagnostic},
     token::StringSpan,
 };
@@ -460,8 +460,8 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
             // SAFETY: `Avx2` type guarantees required target features are present
             unsafe { cook_short_avx2::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu) }
         }
-        Neon(cpu) => cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu),
-        Generic(cpu) => cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu),
+        Neon(_) => cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags),
+        Generic(_) => cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags),
     })
 }
 
@@ -494,7 +494,7 @@ fn cook_short_avx2<const EMIT: bool, const CRLF: bool>(
 }
 
 /// [`cook_short`] for all other CPUs.
-#[apply(cpu_versions)]
+#[apply(cpu_version(Generic))]
 #[inline]
 fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
@@ -504,8 +504,9 @@ fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
     ss: u32,
     body_len: usize,
     diags: &mut Vec<Diagnostic>,
-    cpu: impl Cpu,
 ) -> (u32, bool, bool) {
+    let cpu = BASELINE;
+
     let body = &src[bs as usize..be as usize];
     let plain = if CRLF {
         memchr::memchr2(b'\\', b'\r', body).is_none()
@@ -561,6 +562,7 @@ fn span_has_bs_avx2(src: &[u8], bs: usize, be: usize, _cpu: Avx2) -> bool {
 }
 
 /// [`span_has_bs`] for all other CPUs.
+#[apply(cpu_version(Generic))]
 #[inline]
 fn span_has_bs_generic(src: &[u8], bs: usize, be: usize) -> bool {
     memchr::memchr(b'\\', &src[bs..be]).is_some()
@@ -605,6 +607,7 @@ fn span_has_bs_or_cr_avx2(src: &[u8], bs: usize, be: usize, _cpu: Avx2) -> bool 
 }
 
 /// [`span_has_bs_or_cr`] for all other CPUs.
+#[apply(cpu_version(Generic))]
 #[inline]
 fn span_has_bs_or_cr_generic(src: &[u8], bs: usize, be: usize) -> bool {
     memchr::memchr2(b'\\', b'\r', &src[bs..be]).is_some()

@@ -65,6 +65,7 @@ unsafe fn jsx_glue_hyphens_avx2(
 }
 
 /// [`jsx_glue_hyphens`] for all other CPUs.
+#[apply(cpu_version(Generic))]
 #[inline(always)]
 unsafe fn jsx_glue_hyphens_generic(
     src: *const u8,
