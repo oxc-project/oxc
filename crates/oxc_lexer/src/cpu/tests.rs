@@ -291,13 +291,12 @@ fn double_generic(x: u32) -> u32 {
     x * 2
 }
 
-/// `double_avx2` and `double_neon` have `#[target_feature]`, so calling them is unsafe.
+/// `double_avx2` and `double_neon` have a parameter which proves the CPU supports the feature set,
+/// so calling them is safe.
 fn double(x: u32, cpu: impl Cpu) -> u32 {
     cpu_select!(cpu, {
-        // SAFETY: `Avx2` type guarantees the CPU supports the features `double_avx2` uses
-        Avx2(cpu) => unsafe { double_avx2(x, cpu) },
-        // SAFETY: `Neon` type guarantees the CPU supports the features `double_neon` uses
-        Neon(cpu) => unsafe { double_neon(x, cpu) },
+        Avx2(cpu) => double_avx2(x, cpu),
+        Neon(cpu) => double_neon(x, cpu),
         Generic(_) => double_generic(x),
     })
 }
@@ -339,13 +338,10 @@ fn quadruple_neon(_cpu: Neon, x: u32) -> u32 {
     x * 4
 }
 
-/// `quadruple_avx2` and `quadruple_neon` have `#[target_feature]`, so calling them is unsafe.
 fn quadruple(x: u32, cpu: impl Cpu) -> u32 {
     cpu_select!(cpu, {
-        // SAFETY: `Avx2` type guarantees the CPU supports the features `quadruple_avx2` uses
-        Avx2(cpu) => unsafe { quadruple_avx2(cpu, x) },
-        // SAFETY: `Neon` type guarantees the CPU supports the features `quadruple_neon` uses
-        Neon(cpu) => unsafe { quadruple_neon(cpu, x) },
+        Avx2(cpu) => quadruple_avx2(cpu, x),
+        Neon(cpu) => quadruple_neon(cpu, x),
         Generic(_) => x * 4,
     })
 }
@@ -363,13 +359,10 @@ fn is_zero_neon(v: Vec128<Neon>) -> bool {
     v.is_zero()
 }
 
-/// `is_zero_avx2` and `is_zero_neon` have `#[target_feature]`, so calling them is unsafe.
 fn is_zero(cpu: impl Cpu) -> bool {
     cpu_select!(cpu, {
-        // SAFETY: `Avx2` type guarantees the CPU supports the features `is_zero_avx2` uses
-        Avx2(cpu) => unsafe { is_zero_avx2(Vec128::splat(0, cpu)) },
-        // SAFETY: `Neon` type guarantees the CPU supports the features `is_zero_neon` uses
-        Neon(cpu) => unsafe { is_zero_neon(Vec128::splat(0, cpu)) },
+        Avx2(cpu) => is_zero_avx2(Vec128::splat(0, cpu)),
+        Neon(cpu) => is_zero_neon(Vec128::splat(0, cpu)),
         Generic(_) => true,
     })
 }
@@ -397,6 +390,153 @@ fn add_if_zero(x: u32, y: u32, cpu: impl Cpu) -> u32 {
     })
 }
 
+/// An `unsafe` function isn't wrapped, so it has `#[target_feature]`, as well as being unsafe.
+#[apply(cpu_version(Avx2))]
+#[inline]
+unsafe fn halve_avx2(x: u32, _cpu: Avx2) -> u32 {
+    x / 2
+}
+
+#[apply(cpu_version(Neon))]
+#[inline]
+unsafe fn halve_neon(x: u32, _cpu: Neon) -> u32 {
+    x / 2
+}
+
+fn halve(x: u32, cpu: impl Cpu) -> u32 {
+    cpu_select!(cpu, {
+        // SAFETY: `Avx2` type guarantees the CPU supports the features `halve_avx2` uses
+        Avx2(cpu) => unsafe { halve_avx2(x, cpu) },
+        // SAFETY: `Neon` type guarantees the CPU supports the features `halve_neon` uses
+        Neon(cpu) => unsafe { halve_neon(x, cpu) },
+        Generic(_) => x / 2,
+    })
+}
+
+/// Tests of functions which `cpu_version!` wraps in a safe function, for one CPU feature set.
+macro_rules! wrapped_tests {
+    ($module:ident, $cpu:ident) => {
+        mod $module {
+            use super::*;
+
+            #[apply(cpu_version($cpu))]
+            #[inline(never)]
+            fn generics<'a, 'b: 'a, T: Copy + Into<u32>, const N: usize>(
+                mut xs: &'a [T; N],
+                ys: &'b [T; N],
+                use_ys: bool,
+                _cpu: $cpu,
+            ) -> u32 {
+                if use_ys {
+                    xs = ys;
+                }
+                xs[N - 1].into()
+            }
+
+            // `T` can only be passed with a turbofish
+            #[apply(cpu_version($cpu))]
+            #[inline]
+            const fn size<T>(_cpu: $cpu) -> usize {
+                size_of::<T>()
+            }
+
+            // `T` might need dropping
+            #[apply(cpu_version($cpu))]
+            #[inline]
+            const fn identity<T>(x: T, _cpu: $cpu) -> T {
+                x
+            }
+
+            // Only `v` proves the CPU supports the feature set, and it's not the last parameter.
+            // Function has no inline attribute, and has a `,` after the last parameter.
+            #[apply(cpu_version($cpu))]
+            fn add_if_zero(x: u32, v: Vec128<$cpu>, y: u32) -> u32 {
+                if v.is_zero() { x + y } else { x }
+            }
+
+            struct Total(u32);
+
+            impl Total {
+                #[apply(cpu_version($cpu))]
+                #[inline]
+                fn plus(&self, x: u32, _cpu: $cpu) -> u32 {
+                    self.0 + x
+                }
+
+                #[apply(cpu_version($cpu))]
+                #[inline(never)]
+                fn add(&mut self, x: u32, _cpu: $cpu) {
+                    self.0 += x;
+                }
+
+                // `Self` in the signature, and in the body
+                #[apply(cpu_version($cpu))]
+                fn doubled(self, _cpu: $cpu) -> Self {
+                    Self(self.0 * 2)
+                }
+
+                #[apply(cpu_version($cpu))]
+                fn into_incremented(mut self, _cpu: $cpu) -> u32 {
+                    self.0 += 1;
+                    self.0
+                }
+
+                #[apply(cpu_version($cpu))]
+                #[inline]
+                const fn plus_size<T, const N: usize>(&self, _cpu: $cpu) -> usize {
+                    self.0 as usize + size_of::<T>() + N
+                }
+
+                // Only `v` proves the CPU supports the feature set
+                #[apply(cpu_version($cpu))]
+                #[inline]
+                fn plus_if_zero(&self, x: u32, v: Vec128<$cpu>) -> u32 {
+                    if v.is_zero() { self.0 + x } else { self.0 }
+                }
+            }
+
+            struct Wrapper<W>(W);
+
+            impl<W: Copy> Wrapper<W> {
+                // Bound mentions the `impl`'s generic parameter, and `>>` ends the generics
+                #[apply(cpu_version($cpu))]
+                #[inline]
+                fn convert<T: From<Vec<W>>>(&self, _cpu: $cpu) -> T {
+                    T::from(vec![self.0])
+                }
+            }
+
+            /// All these calls are safe.
+            #[test]
+            fn wrapped() {
+                let DynCpu::$cpu(cpu) = DynCpu::detect() else { return };
+
+                assert_eq!(generics(&[1u8, 2], &[3, 4], false, cpu), 2);
+                assert_eq!(generics(&[1u8, 2], &[3, 4], true, cpu), 4);
+                assert_eq!(size::<u64>(cpu), 8);
+                assert_eq!(identity(String::from("x"), cpu), "x");
+                assert_eq!(add_if_zero(1, Vec128::splat(0, cpu), 2), 3);
+                assert_eq!(add_if_zero(1, Vec128::splat(1, cpu), 2), 1);
+
+                let mut total = Total(1);
+                total.add(2, cpu);
+                assert_eq!(total.plus(3, cpu), 6);
+                assert_eq!(total.plus_size::<u16, 1>(cpu), 6);
+                assert_eq!(total.plus_if_zero(1, Vec128::splat(0, cpu)), 4);
+                assert_eq!(total.doubled(cpu).into_incremented(cpu), 7);
+
+                assert_eq!(Wrapper(3u8).convert::<Vec<u8>>(cpu), vec![3]);
+            }
+        }
+    };
+}
+
+#[cfg(target_arch = "x86_64")]
+wrapped_tests!(wrapped_avx2, Avx2);
+
+#[cfg(target_arch = "aarch64")]
+wrapped_tests!(wrapped_neon, Neon);
+
 /// Generics with `>>` and a `(...)` in them.
 #[apply(cpu_version(Generic))]
 fn nth_mapped<T: Into<Vec<u8>>, F: FnOnce(u8) -> u8, const N: usize>(bytes: T, f: F) -> u8 {
@@ -420,6 +560,8 @@ fn cpu_version_fns() {
     assert_eq!(triple(5, BASELINE), 15);
     assert_eq!(quadruple(5, cpu), 20);
     assert_eq!(quadruple(5, BASELINE), 20);
+    assert_eq!(halve(20, cpu), 10);
+    assert_eq!(halve(20, BASELINE), 10);
     assert!(is_zero(cpu));
     assert!(is_zero(BASELINE));
     assert_eq!(add_if_zero(1, 2, cpu), 3);

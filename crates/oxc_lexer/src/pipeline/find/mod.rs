@@ -32,10 +32,7 @@ pub(super) unsafe fn find<const K: usize>(
 #[inline(always)]
 pub(super) fn bracket_bits(src: &[u8], base: usize, cpu: impl Cpu) -> u64 {
     cpu_select!(cpu, {
-        Avx2(cpu) => {
-            // SAFETY: `Avx2` type guarantees required target features are present
-            unsafe { bracket_bits_avx2(src, base, cpu) }
-        }
+        Avx2(cpu) => bracket_bits_avx2(src, base, cpu),
         Neon(_) => bracket_bits_generic(src, base),
         Generic(_) => bracket_bits_generic(src, base),
     })

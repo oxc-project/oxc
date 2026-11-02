@@ -191,7 +191,11 @@
 /// A stage which needs more slots while it works adds them in its first rule.
 /// Its other rules call the stage again until it's done, and then call the next stage.
 ///
+/// [`cpu_version!`] uses these stages to parse a function which it wraps in a safe function.
+/// It passes a `version` slot to `attrs!`, which `signature!` puts in `func`.
+///
 /// [`cpu_select!`]: super::cpu_select!
+/// [`cpu_version!`]: super::cpu_version!
 macro_rules! cpu_versions {
     ($($item:tt)*) => {
         crate::cpu::__cpu_versions::attrs!(item = [ $($item)* ]);
@@ -220,13 +224,17 @@ pub(crate) use cpu_versions;
 #[doc(hidden)]
 macro_rules! attrs {
     // Entry point
-    (item = [ $($item:tt)* ]) => {
+    (
+        item = [ $($item:tt)* ]
+        $($version:tt)*
+    ) => {
         crate::cpu::__cpu_versions::attrs!(
             rest_to_match = [ $($item)* ]
             rest_to_capture = [ $($item)* ]
             outer_attrs = []
             inline_attrs = []
             item = [ $($item)* ]
+            $($version)*
         );
     };
 
@@ -243,6 +251,7 @@ macro_rules! attrs {
         outer_attrs = $outer_attrs:tt
         inline_attrs = [ $($inline_attrs:tt)* ]
         item = $item:tt
+        $($version:tt)*
     ) => {
         crate::cpu::__cpu_versions::attrs!(
             rest_to_match = [ $($rest)* ]
@@ -253,6 +262,7 @@ macro_rules! attrs {
                 $hash $attr
             ]
             item = $item
+            $($version)*
         );
     };
 
@@ -269,6 +279,7 @@ macro_rules! attrs {
         outer_attrs = [ $($outer_attrs:tt)* ]
         inline_attrs = $inline_attrs:tt
         item = $item:tt
+        $($version:tt)*
     ) => {
         crate::cpu::__cpu_versions::attrs!(
             rest_to_match = [ $($rest)* ]
@@ -279,6 +290,7 @@ macro_rules! attrs {
             ]
             inline_attrs = $inline_attrs
             item = $item
+            $($version)*
         );
     };
 
@@ -289,6 +301,7 @@ macro_rules! attrs {
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
         item = $item:tt
+        $($version:tt)*
     ) => {
         crate::cpu::__cpu_versions::generics!(
             signature = [ $($rest)* ]
@@ -297,6 +310,7 @@ macro_rules! attrs {
             outer_attrs = $outer_attrs
             inline_attrs = $inline_attrs
             item = $item
+            $($version)*
         );
     };
 
@@ -307,6 +321,7 @@ macro_rules! attrs {
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
         item = $item:tt
+        $($version:tt)*
     ) => {
         crate::cpu::__cpu_versions::generics!(
             signature = [ $($rest)* ]
@@ -315,6 +330,7 @@ macro_rules! attrs {
             outer_attrs = $outer_attrs
             inline_attrs = $inline_attrs
             item = $item
+            $($version)*
         );
     };
 
@@ -325,6 +341,7 @@ macro_rules! attrs {
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
         item = $item:tt
+        $($version:tt)*
     ) => {
         crate::cpu::__cpu_versions::generics!(
             signature = [ $($rest)* ]
@@ -333,6 +350,7 @@ macro_rules! attrs {
             outer_attrs = $outer_attrs
             inline_attrs = $inline_attrs
             item = $item
+            $($version)*
         );
     };
 
@@ -343,6 +361,7 @@ macro_rules! attrs {
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
         item = $item:tt
+        $($version:tt)*
     ) => {
         crate::cpu::__cpu_versions::generics!(
             signature = [ $($rest)* ]
@@ -351,6 +370,7 @@ macro_rules! attrs {
             outer_attrs = $outer_attrs
             inline_attrs = $inline_attrs
             item = $item
+            $($version)*
         );
     };
 
@@ -667,10 +687,12 @@ macro_rules! signature {
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
         item = $item:tt
+        $(version = $version:tt)?
     ) => {
         crate::cpu::__cpu_versions::receiver!(
             params = [ $($params)* ]
             func = {
+                $(version = $version)?
                 fn_name = $fn_name
                 outer_attrs = $outer_attrs
                 inline_attrs = $inline_attrs
@@ -689,7 +711,7 @@ macro_rules! signature {
     // Has a `where` clause, or has no body
     ($($_any:tt)*) => {
         compile_error!(
-            "`cpu_versions!` must be applied to a `fn` with a body and no `where` clause"
+            "`cpu_versions!` and wrapped `cpu_version!` functions must have a body and no `where` clause"
         );
     };
 }
@@ -835,8 +857,25 @@ pub(crate) use receiver;
 /// `mut_kw` is `[ mut ]` or `[]`, so `mut` can be put on `__impl`'s parameters only.
 ///
 /// `func` is passed on unchanged.
+///
+/// In a function which `cpu_version!` is wrapping, `func` has `version` at the top,
+/// after any `method`. No parameter is special there. So the entry point adds a `,` after
+/// the last parameter, and they're all turned into records, until none are left.
+/// A `,` from the original function can be left over after that.
 #[doc(hidden)]
 macro_rules! params {
+    // Entry point for a function which `cpu_version!` is wrapping
+    (
+        params = [ $($params:tt)* ]
+        func = { $(method = $method:tt)? version = $version:tt $($func:tt)* }
+    ) => {
+        crate::cpu::__cpu_versions::params!(
+            rest_params = [ $($params)* , ]
+            params = []
+            func = { $(method = $method)? version = $version $($func)* }
+        );
+    };
+
     // Entry point
     (
         params = [ $($params:tt)* ]
@@ -849,14 +888,28 @@ macro_rules! params {
         );
     };
 
-    // Last parameter `cpu: impl Cpu`
+    // All parameters moved, in a function which `cpu_version!` is wrapping
+    (
+        rest_params = [ $(,)? ]
+        params = $params:tt
+        func = { $(method = $method:tt)? version = $version:tt $($func:tt)* }
+    ) => {
+        crate::cpu::__cpu_versions::expand!(
+            func = { $(method = $method)? version = $version $($func)* }
+            params = $params
+        );
+    };
+
+    // Last parameter `cpu: impl Cpu`.
+    // `fn_name` rules out a function which `cpu_version!` is wrapping,
+    // where it's an ordinary parameter.
     (
         rest_params = [ $cpu_name:ident: impl $cpu_trait:ident $(,)? ]
         params = $params:tt
-        func = $func:tt
+        func = { $(method = $method:tt)? fn_name = $fn_name:ident $($func:tt)* }
     ) => {
         crate::cpu::__cpu_versions::expand!(
-            func = $func
+            func = { $(method = $method)? fn_name = $fn_name $($func)* }
             params = $params
             cpu_name = $cpu_name
             cpu_trait = $cpu_trait
@@ -909,6 +962,16 @@ macro_rules! params {
         );
     };
 
+    // In a function which `cpu_version!` is wrapping,
+    // a parameter isn't `name: Type` or `mut name: Type`
+    (
+        rest_params = $_rest_params:tt
+        params = $_params:tt
+        func = { $(method = $_method:tt)? version = $_version:tt $($_func:tt)* }
+    ) => {
+        compile_error!("Parameters of wrapped `cpu_version!` functions must be `[mut] name: Type`");
+    };
+
     // Last parameter isn't `cpu: impl Cpu`, or a parameter isn't `name: Type` or `mut name: Type`
     ($($_any:tt)*) => {
         compile_error!(
@@ -926,8 +989,42 @@ pub(crate) use params;
 /// `func` only bundles the function's slots to carry them through the stages before this one.
 ///
 /// An `#[inline(always)]` function or method is output unchanged, from `item`.
+///
+/// If `func` has a `version`, `cpu_version!` is wrapping the function. It generates the output.
 #[doc(hidden)]
 macro_rules! expand {
+    // Method which `cpu_version!` is wrapping
+    (
+        func = {
+            method = $method:tt
+            version = $version:tt
+            $($func:tt)*
+        }
+        $($rest:tt)*
+    ) => {
+        crate::cpu::__cpu_version::wrapped_method!(
+            $($func)*
+            method = $method
+            version = $version
+            $($rest)*
+        );
+    };
+
+    // Function which `cpu_version!` is wrapping
+    (
+        func = {
+            version = $version:tt
+            $($func:tt)*
+        }
+        $($rest:tt)*
+    ) => {
+        crate::cpu::__cpu_version::wrapped_fn!(
+            $($func)*
+            version = $version
+            $($rest)*
+        );
+    };
+
     // `#[inline(always)]` function or method - output unchanged
     (
         func = {

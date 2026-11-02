@@ -10,8 +10,7 @@ fn compress_blocks_matches_scalar_reference() {
     let DynCpu::Avx2(cpu) = DynCpu::detect() else { return };
 
     // Required before calling `compress_blocks_avx2`
-    // SAFETY: `Avx2` type guarantees required target features are present
-    unsafe { init_pair_luts_avx2(cpu) };
+    init_pair_luts_avx2(cpu);
 
     let mut cases: Vec<Vec<u64>> = Vec::new();
     let all_pairs: Vec<u64> = (0..65536u64)

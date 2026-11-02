@@ -50,7 +50,7 @@ impl PairLuts {
     /// 2 stack temporaries for `lut0z` and `lutpad` arrays into another stack temporary
     /// for `PairLuts`, then a second copy of `PairLuts` from the stack to the heap.
     #[apply(cpu_version(Avx2))]
-    fn new(_cpu: Avx2) -> Box<Self> {
+    fn new(_cpu: Avx2) -> Box<PairLuts> {
         // Allocate space for `PairLuts` on the heap, uninitialized
         let mut luts = Box::<PairLuts>::new_uninit();
 
