@@ -25,8 +25,9 @@ pub(super) const fn is_digit(c: u8, _cpu: impl Cpu) -> bool {
 }
 
 /// Byte length (2 or 3) of the multi-byte WhiteSpace or LineTerminator starting at c0, or 0.
+#[apply(cpu_versions)]
 #[inline(always)]
-pub(super) const fn unicode_ws_len(c0: u8, c1: u8, c2: u8) -> usize {
+pub(super) const fn unicode_ws_len(c0: u8, c1: u8, c2: u8, _cpu: impl Cpu) -> usize {
     match c0 {
         0xC2 => (c1 == 0xA0 || c1 == 0x85) as usize * 2,
         0xE1 => (c1 == 0x9A && c2 == 0x80) as usize * 3,
@@ -50,8 +51,8 @@ pub(super) const fn unicode_ws_len(c0: u8, c1: u8, c2: u8) -> usize {
 /// Safe version of [`unicode_ws_len_at_unchecked`].
 #[apply(cpu_versions)]
 #[inline]
-pub(super) fn unicode_ws_len_at(src: &[u8], p: usize, _cpu: impl Cpu) -> usize {
-    unicode_ws_len(src[p], src[p + 1], src[p + 2])
+pub(super) fn unicode_ws_len_at(src: &[u8], p: usize, cpu: impl Cpu) -> usize {
+    unicode_ws_len(src[p], src[p + 1], src[p + 2], cpu)
 }
 
 /// Byte length (2 or 3) of the multi-byte ECMAScript WhiteSpace / LineTerminator at `p`, or 0.
@@ -62,12 +63,8 @@ pub(super) fn unicode_ws_len_at(src: &[u8], p: usize, _cpu: impl Cpu) -> usize {
 /// Unsafe version of [`unicode_ws_len_at`].
 #[apply(cpu_versions)]
 #[inline(always)]
-pub(super) unsafe fn unicode_ws_len_at_unchecked(
-    src: *const u8,
-    p: usize,
-    _cpu: impl Cpu,
-) -> usize {
-    unicode_ws_len(*src.add(p), *src.add(p + 1), *src.add(p + 2))
+pub(super) unsafe fn unicode_ws_len_at_unchecked(src: *const u8, p: usize, cpu: impl Cpu) -> usize {
+    unicode_ws_len(*src.add(p), *src.add(p + 1), *src.add(p + 2), cpu)
 }
 
 /// The first line terminator (LF, CR, LS or PS) at or after i, or n.
