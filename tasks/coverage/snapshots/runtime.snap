@@ -2,7 +2,7 @@ commit: d53ebc8b
 
 runtime Summary:
 AST Parsed     : 18277/18277 (100.00%)
-Positive Passed: 17314/18277 (94.73%)
+Positive Passed: 17315/18277 (94.74%)
 minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -1676,9 +1676,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
-
-transform Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-arrow.js
-timeout: global
 
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
