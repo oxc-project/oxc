@@ -397,25 +397,12 @@ impl<'t> Mangler<'t> {
     ) {
         let (scoping, ast_nodes) = semantic.scoping_mut_and_nodes();
         let allocator = self.temp_allocator.as_ref();
-        let catch_var_bindings = ArenaVec::from_iter_in(scoping.catch_var_bindings(), &allocator);
 
         // ── Phase 1: collect constraints — names we must not reuse or shadow. ──
-        let constraints = Constraints::collect(
-            allocator,
-            scoping,
-            ast_nodes,
-            program,
-            &self.options,
-            &catch_var_bindings,
-        );
+        let constraints =
+            Constraints::collect(allocator, scoping, ast_nodes, program, &self.options);
         // ── Phase 2: assign slots — give bindings that can share a name the same slot. ──
-        let slots = SlotAssignment::compute(
-            allocator,
-            scoping,
-            ast_nodes,
-            &constraints,
-            catch_var_bindings,
-        );
+        let slots = SlotAssignment::compute(allocator, scoping, ast_nodes, &constraints);
         // ── Phase 3: rank slots by reference frequency (hottest first). ──
         let ranking = SlotRanking::tally(allocator, scoping, &slots);
         // ── Phase 4: generate that many short, collision-free names. ──
@@ -541,7 +528,6 @@ impl<'a> Constraints<'a> {
         ast_nodes: &AstNodes,
         program: &'a Program<'a>,
         options: &'a MangleOptions,
-        catch_var_bindings: &[(SymbolId, SymbolId)],
     ) -> Self {
         let top_level = options.top_level(program.source_type);
         let (exported_names, exported_symbols) = if top_level && program.source_type.is_module() {
@@ -552,12 +538,12 @@ impl<'a> Constraints<'a> {
         let (keep_name_names, mut keep_name_symbols) =
             collect_keep_name_symbols(options.keep_names, allocator, scoping, ast_nodes);
         if let Some(kept) = &mut keep_name_symbols {
-            for &(catch, outer) in catch_var_bindings {
+            for (catch, outer) in scoping.catch_var_bindings() {
                 if kept.has_bit(catch.index()) {
                     kept.set_bit(outer.index());
                 }
             }
-            for &(catch, outer) in catch_var_bindings {
+            for (catch, outer) in scoping.catch_var_bindings() {
                 if kept.has_bit(outer.index()) {
                     kept.set_bit(catch.index());
                 }
@@ -620,7 +606,6 @@ impl<'a> SlotAssignment<'a> {
         scoping: &'a Scoping,
         ast_nodes: &AstNodes,
         constraints: &Constraints,
-        mut catch_var_bindings: ArenaVec<'a, (SymbolId, SymbolId)>,
     ) -> Self {
         // Names of bindings in direct-`eval` scopes — collected here, reserved in Phase 4.
         // TODO: eval reservation is conservative — ideally we'd reserve names per-slot.
@@ -639,6 +624,8 @@ impl<'a> SlotAssignment<'a> {
         let mut reusable_slots = ArenaVec::new_in(&allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
+        let mut catch_var_bindings =
+            ArenaVec::from_iter_in(scoping.catch_var_bindings(), &allocator);
         catch_var_bindings
             .sort_unstable_by_key(|&(catch, outer)| (scoping.symbol_scope_id(outer), catch));
         let mut next_catch_var_binding = 0;

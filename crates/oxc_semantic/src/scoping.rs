@@ -101,6 +101,10 @@ pub struct Scoping {
     /// Function or Variable Symbol IDs that are marked with `@__NO_SIDE_EFFECTS__`.
     pub(crate) no_side_effects: FxHashSet<SymbolId>,
 
+    /// Simple catch parameters redeclared by `var`, mapped to the enclosing var binding.
+    /// The bindings have separate values, but the declarator must retain both bindings' name.
+    pub(crate) catch_var_bindings: FxHashMap<SymbolId, SymbolId>,
+
     /// Pre-computed enum member values and scope mappings.
     pub(crate) enum_data: EnumData,
 
@@ -122,6 +126,7 @@ impl Default for Scoping {
             symbol_table: SymbolTable::new(),
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
+            catch_var_bindings: FxHashMap::default(),
             enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
@@ -420,37 +425,12 @@ impl Scoping {
     /// The declarator carries the catch symbol because its initializer assigns to that binding.
     #[inline]
     pub fn catch_var_binding(&self, symbol_id: SymbolId) -> Option<SymbolId> {
-        if !self.symbol_flags(symbol_id).is_catch_variable() {
-            return None;
-        }
-        let declaration = self
-            .symbol_redeclarations(symbol_id)
-            .iter()
-            .find(|r| r.flags.is_function_scoped_declaration() && !r.flags.is_catch_variable())?;
-        let var_scope = self
-            .scope_ancestors(self.symbol_scope_id(symbol_id))
-            .skip(1)
-            .find(|&scope_id| self.scope_flags(scope_id).is_var())?;
-
-        // Both symbols record the same var identifier. Match its declaration and span
-        // rather than its name, which can change independently of scope binding keys.
-        let matches_declaration = |outer| {
-            (self.symbol_declaration(outer) == declaration.declaration
-                && self.symbol_span(outer) == declaration.span)
-                || self
-                    .symbol_redeclarations(outer)
-                    .iter()
-                    .any(|r| r.declaration == declaration.declaration && r.span == declaration.span)
-        };
-        self.get_binding(var_scope, self.symbol_ident(symbol_id))
-            .filter(|&outer| matches_declaration(outer))
-            .or_else(|| self.iter_bindings_in(var_scope).find(|&outer| matches_declaration(outer)))
+        self.catch_var_bindings.get(&symbol_id).copied()
     }
 
     /// Iterate `(catch parameter, enclosing var binding)` pairs in unspecified order.
     pub fn catch_var_bindings(&self) -> impl Iterator<Item = (SymbolId, SymbolId)> + '_ {
-        self.symbol_ids()
-            .filter_map(|catch| self.catch_var_binding(catch).map(|outer| (catch, outer)))
+        self.catch_var_bindings.iter().map(|(&catch, &outer)| (catch, outer))
     }
 
     #[inline]
@@ -1174,6 +1154,7 @@ impl Scoping {
             symbol_table: self.symbol_table.clone(),
             references: self.references.clone(),
             no_side_effects: self.no_side_effects.clone(),
+            catch_var_bindings: self.catch_var_bindings.clone(),
             enum_data: self.enum_data.clone(),
             scope_table: self.scope_table.clone(),
             cell: {
