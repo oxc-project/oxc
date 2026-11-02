@@ -636,6 +636,7 @@ In the head the declaration has no terminator of its own; we keep it verbatim an
 - Conformance:
   - `externals/prettier/js/ignore/issue-11077.js`
   - `externals/prettier/markdown/markdown/real-world-case.md`
+  - `externals/plugin-astro/other/prettier-ignore-js/input.astro`
 
 ```js
 // input (semi: true)

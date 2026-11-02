@@ -237,10 +237,10 @@
 {"printWidth":80,"astro":{}}
 ```
 
-- [externals/plugin-astro/other/prettier-ignore-js/input.astro](diffs/astro/externals__plugin-astro__other__prettier-ignore-js__input.astro.md)
-  - ❓unclassified
 - [edge-cases/astro/style-lang-sass.astro](diffs/astro/edge-cases__astro__style-lang-sass.astro.md)
   - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
+- [externals/plugin-astro/other/prettier-ignore-js/input.astro](diffs/astro/externals__plugin-astro__other__prettier-ignore-js__input.astro.md)
+  - crates/oxc_formatter/DIVERGENCES.md#suppressed-terminator-per-semi
 - [externals/plugin-astro/styles/format-nested-sass-style-tag-content/input.astro](diffs/astro/externals__plugin-astro__styles__format-nested-sass-style-tag-content__input.astro.md)
   - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
 - [externals/plugin-astro/styles/with-indented-sass/input.astro](diffs/astro/externals__plugin-astro__styles__with-indented-sass__input.astro.md)
