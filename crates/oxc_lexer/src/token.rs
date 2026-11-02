@@ -26,7 +26,7 @@ macro_rules! define_token_kind {
             /// The kind `byte` denotes, or `None` if it is not a declared discriminant.
             #[inline]
             #[must_use]
-            pub const fn from_u8(byte: u8) -> Option<Self> {
+            pub(crate) const fn from_u8(byte: u8) -> Option<Self> {
                 match byte {
                     $( $value => Some(Self::$variant), )+
                     _ => None,
@@ -301,7 +301,7 @@ impl TokenKind {
     /// `byte` must be a declared discriminant, i.e. `TokenKind::from_u8(byte).is_some()`.
     #[inline]
     #[must_use]
-    pub const unsafe fn from_u8_unchecked(byte: u8) -> Self {
+    pub(crate) const unsafe fn from_u8_unchecked(byte: u8) -> Self {
         debug_assert!(Self::from_u8(byte).is_some(), "not a declared TokenKind discriminant");
         // SAFETY: the caller guarantees `byte` is a declared discriminant, and
         // `TokenKind` is `#[repr(u8)]`, so it shares `u8`'s layout.
@@ -457,7 +457,7 @@ impl StringSpan {
 
     #[inline(always)]
     #[must_use]
-    pub const fn new(start: u32, end: u32, lone_surrogates: bool) -> Self {
+    pub(crate) const fn new(start: u32, end: u32, lone_surrogates: bool) -> Self {
         debug_assert!(end <= Self::END_MASK);
         let end_and_flags = if lone_surrogates { end | Self::LONE_SURROGATES_MASK } else { end };
         Self { start, end_and_flags }
@@ -465,7 +465,7 @@ impl StringSpan {
 
     #[inline(always)]
     #[must_use]
-    pub const fn with_cooked_invalid(self) -> Self {
+    pub(crate) const fn with_cooked_invalid(self) -> Self {
         Self { start: self.start | Self::COOKED_INVALID_MASK, end_and_flags: self.end_and_flags }
     }
 
