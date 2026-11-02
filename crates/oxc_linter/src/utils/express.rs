@@ -1,4 +1,4 @@
-use oxc_ast::ast::{Argument, CallExpression, Expression, FormalParameter};
+use oxc_ast::ast::{Argument, CallExpression, Expression, FormalParameter, FormalParameters};
 use oxc_str::Str;
 
 /// Check if the given call is registering an endpoint handler or middleware to
@@ -37,17 +37,11 @@ pub fn as_endpoint_registration<'a, 'n>(
     }
 }
 
-/// Check if the given expression is an endpoint handler function.
+/// Check if the given parameters match an endpoint handler function.
 ///
-/// This will yield a lot of false positives if not called on the results of
-/// [`as_endpoint_registration`].
-pub fn is_endpoint_handler(maybe_handler: &Expression<'_>) -> bool {
-    let params = match maybe_handler {
-        Expression::FunctionExpression(f) => &f.params,
-        Expression::ArrowFunctionExpression(arrow) => &arrow.params,
-        _ => return false,
-    };
-
+/// This will yield a lot of false positives if the function is not passed to
+/// a call recognized by [`as_endpoint_registration`].
+pub fn is_endpoint_handler(params: &FormalParameters<'_>) -> bool {
     // NOTE(@DonIsaac): should we check for destructuring patterns? I don't
     // really ever see them used in handlers, and their existence could indicate
     // this function is not a handler.

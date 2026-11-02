@@ -281,10 +281,10 @@ impl NoAsyncEndpointHandlers {
                 }
             }
             // `app.get('/', (async?) function (req, res) {}`
-            Expression::FunctionExpression(f) if utils::is_endpoint_handler(arg) => {
+            Expression::FunctionExpression(f) => {
                 self.check_function(ctx, endpoint, registered_at, id_name, f);
             }
-            Expression::ArrowFunctionExpression(f) if utils::is_endpoint_handler(arg) => {
+            Expression::ArrowFunctionExpression(f) => {
                 self.check_arrow(ctx, endpoint, registered_at, id_name, f);
             }
             _ => {}
@@ -299,7 +299,7 @@ impl NoAsyncEndpointHandlers {
         id_name: Option<&str>,
         f: &Function<'a>,
     ) {
-        if !f.r#async {
+        if !f.r#async || !utils::is_endpoint_handler(&f.params) {
             return;
         }
 
@@ -324,7 +324,7 @@ impl NoAsyncEndpointHandlers {
         id_name: Option<&str>,
         f: &ArrowFunctionExpression<'a>,
     ) {
-        if !f.r#async {
+        if !f.r#async || !utils::is_endpoint_handler(&f.params) {
             return;
         }
         if id_name.is_some_and(|name| self.is_allowed_name(name)) {
@@ -369,6 +369,42 @@ fn test() {
         ),
         ("weirdName.get('/', async () =>  {})", None),
         ("weirdName.get('/', async (notARequestObject) =>  {})", None),
+        (
+            "
+            interface ResponseHooks {
+                use(callback: (response: Response) => Promise<Response>): void;
+            }
+            declare const responseHooks: ResponseHooks;
+
+            async function processResponse(response: Response): Promise<Response> {
+                await response.clone().text();
+                return response;
+            }
+            responseHooks.use(processResponse);
+            ",
+            None,
+        ),
+        (
+            "
+            async function processResponse(response) {}
+            const onResponse = processResponse;
+            responseHooks.use(onResponse);
+            ",
+            None,
+        ),
+        ("async function ready() {} hooks.use(ready);", None),
+        ("async function processResponse(response, options) {} hooks.use(processResponse);", None),
+        ("async function middleware(req, ...rest) {} app.use(middleware);", None),
+        ("responseHooks.use(async function (response) {});", None),
+        ("responseHooks.use(async (response) => {});", None),
+        (
+            "const processResponse = async function (response) {}; responseHooks.use(processResponse);",
+            None,
+        ),
+        (
+            "const processResponse = async (response) => {}; responseHooks.use(processResponse);",
+            None,
+        ),
         // allowed names
         (
             "async function ctl(req, res) {}
@@ -398,6 +434,9 @@ fn test() {
         ("app.get('/', async (req, res) =>  {})", None),
         ("app.get('/', async (req, res, next) =>  {})", None),
         ("weirdName.get('/', async (req, res) =>  {})", None),
+        ("const middleware = async function (req, res) {}; app.use(middleware);", None),
+        ("async function middleware(request) {} app.use(middleware);", None),
+        ("async function middleware(error, request, response, next) {} app.use(middleware);", None),
         (
             "
             async function foo(req, res) {}
