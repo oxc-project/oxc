@@ -11,6 +11,16 @@ const unsafe fn read_byte(ptr: *const u8, _cpu: impl Cpu) -> u8 {
     unsafe { *ptr }
 }
 
+#[apply(cpu_versions)]
+const fn larger<'a>(x: &'a u8, y: &'a u8, _cpu: impl Cpu) -> &'a u8 {
+    if *x >= *y { x } else { y }
+}
+
+#[apply(cpu_versions)]
+const fn larger_at<'a, const N: usize>(xs: &'a [u8], ys: &'a [u8], _cpu: impl Cpu) -> &'a u8 {
+    if xs[N] >= ys[N] { &xs[N] } else { &ys[N] }
+}
+
 struct Counter(u32);
 
 impl Counter {
@@ -24,13 +34,18 @@ impl Counter {
         // SAFETY: Caller guarantees `ptr` is valid for reads
         self.0 + unsafe { *ptr } as u32
     }
+
+    #[apply(cpu_versions)]
+    const fn at<'a, const N: usize>(&self, bytes: &'a [u8], _cpu: impl Cpu) -> &'a u8 {
+        &bytes[self.0 as usize + N]
+    }
 }
 
 /// [`BASELINE`] as a [`DynCpu`].
 const BASELINE_DYN: DynCpu = to_dyn(BASELINE);
 
 /// Calls to `const` functions made with `cpu_versions!`, evaluated at compile time.
-const AT_COMPILE_TIME: [u32; 5] = {
+const AT_COMPILE_TIME: [u32; 8] = {
     let bytes: [u8; 2] = [1, 2];
     [
         add_one(1, BASELINE),
@@ -40,12 +55,15 @@ const AT_COMPILE_TIME: [u32; 5] = {
         unsafe { read_byte(&raw const bytes[1], BASELINE) } as u32,
         // SAFETY: Pointer is valid for reads of 1 byte
         unsafe { Counter(100).plus_byte(&raw const bytes[1], BASELINE) },
+        *larger(&bytes[0], &bytes[1], BASELINE) as u32,
+        *larger_at::<0>(&bytes, &[3, 0], BASELINE_DYN) as u32,
+        *Counter(1).at::<0>(&bytes, BASELINE) as u32,
     ]
 };
 
 #[test]
 fn const_fn_at_compile_time() {
-    assert_eq!(AT_COMPILE_TIME, [2, 11, 101, 2, 102]);
+    assert_eq!(AT_COMPILE_TIME, [2, 11, 101, 2, 102, 2, 3, 2]);
 }
 
 #[test]
@@ -60,6 +78,9 @@ fn const_fn_at_runtime() {
     assert_eq!(unsafe { read_byte(&raw const bytes[1], cpu) }, 2);
     // SAFETY: Pointer is valid for reads of 1 byte
     assert_eq!(unsafe { Counter(100).plus_byte(&raw const bytes[1], cpu) }, 102);
+    assert_eq!(*larger(&bytes[0], &bytes[1], cpu), 2);
+    assert_eq!(*larger_at::<0>(&bytes, &[3, 0], cpu), 3);
+    assert_eq!(*Counter(1).at::<0>(&bytes, cpu), 2);
 
     cpu_select!(cpu, {
         Avx2(cpu) => assert_eq!(add_one(1, cpu), 2),

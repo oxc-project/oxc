@@ -94,9 +94,8 @@
 ///
 /// The function can be a `const fn`, `unsafe fn` or `const unsafe fn`.
 ///
-/// The function can have const generic parameters (e.g. `<const IS_TS: bool>`), but no other generics.
-/// A nested function can't use its parent's generic parameters, so each nested function declares them again,
-/// and calls pass them on (`__impl::<IS_TS>(..)`).
+/// The function can have lifetime and const generic parameters (e.g. `<'a, const IS_TS: bool>`),
+/// but no other generics. Lifetimes can't have bounds.
 ///
 /// ## Expansion
 ///
@@ -211,10 +210,10 @@ pub(crate) use cpu_versions;
 ///
 /// * `fn_qualifiers` is `[]`, `[ unsafe ]`, `[ const ]` or `[ const unsafe ]`.
 ///   It's copied onto every function.
-/// * Const generic parameters are recorded twice:
-///   * `generic_params` is the declaration `<const N: Type, ..>`, which goes on every function.
-///   * `turbofish` is the arguments `::<N, ..>` for calls.
-/// * `generic_params` is `[()]` and `turbofish` is `[]` if there are none.
+/// * Generic parameters are recorded twice:
+///   * `generic_params` is the declaration `<'a, .., const N: Type, ..>`, used on every function.
+///   * `turbofish` is the const arguments `::<N, ..>` for calls. Lifetimes aren't passed.
+/// * `generic_params` is `[()]` if there are none. `turbofish` is `[]` if there are no const ones.
 /// * `generic_params`' contents are wrapped in `(...)`, because `pastey` would treat `[<...>]` as a paste.
 ///
 /// The parameters are passed on unparsed, in `params`.
@@ -346,7 +345,10 @@ macro_rules! attrs {
     (
         signature = [
             $fn_name:ident
-            $(<$(const $const_name:ident: $const_ty:ty),* $(,)?>)?
+            $(<
+                $($lifetime:lifetime),* $(,)?
+                $($(const $const_name:ident: $const_ty:ty),+ $(,)?)?
+            >)?
             ($($params:tt)*) $(-> $ret_ty:ty)? $fn_body:block
         ]
         vis = $vis:vis
@@ -363,17 +365,19 @@ macro_rules! attrs {
                 vis = $vis
                 fn_qualifiers = $fn_qualifiers
                 // Extra `(...)` parens to prevent `pastey` matching `[<...>]`
-                generic_params = [( $(<$(const $const_name: $const_ty),*>)? )]
-                turbofish = [ $(::<$($const_name),*>)? ]
+                generic_params = [( $(<$($lifetime,)* $($(const $const_name: $const_ty),+)?>)? )]
+                turbofish = [ $($(::<$($const_name),+>)?)? ]
                 ret_ty = [ $($ret_ty)? ]
                 fn_body = $fn_body
             }
         );
     };
 
-    // Not a function, or has generic parameters which aren't `const`
+    // Not a function, or has generic parameters which aren't lifetimes or `const`
     ($($_any:tt)*) => {
-        compile_error!("`cpu_versions!` must be applied to a `fn` with no generics except `const` ones");
+        compile_error!(
+            "`cpu_versions!` must be applied to a `fn` with no generics except lifetimes and consts"
+        );
     };
 }
 
