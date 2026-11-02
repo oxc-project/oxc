@@ -16,7 +16,7 @@ catalog:
   "@arethetypeswrong/core": 0.18.5
   "@napi-rs/cli": 3.10.8
   "@napi-rs/wasm-runtime": 1.2.5
-  "@types/node": 24.1.0
+  "@types/node": 26.6.6
   cross-env: ^10.1.0
   degit: 3.10.0
   eslint: 10.12.0
