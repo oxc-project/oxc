@@ -93,8 +93,41 @@ fn test_vars_simple() {
     let fix = vec![
         // unused vars should be removed
         ("let a = 1;", "", None, FixKind::DangerousSuggestion),
-        // FIXME: b should be deleted as well.
-        ("let a = 1, b = 2;", "let b = 2;", None, FixKind::DangerousSuggestion),
+        // all declarators unused: the whole declaration goes in one pass
+        ("let a = 1, b = 2;", "", None, FixKind::DangerousSuggestion),
+        ("let a = 1, b = 2, c = 3;", "", None, FixKind::DangerousSuggestion),
+        ("function f() { let a = 1, b; }", "function f() {  }", None, FixKind::DangerousSuggestion),
+        ("const a = 1, { b } = obj;", "", None, FixKind::DangerousSuggestion),
+        ("const a = 1, { b, c } = obj;", "", None, FixKind::DangerousSuggestion),
+        // ...but not when a neighbor must stay
+        (
+            "let a = 1, _b = 2;",
+            "let _b = 2;",
+            Some(json!([{ "varsIgnorePattern": "^_" }])),
+            FixKind::DangerousSuggestion,
+        ),
+        ("let a = 1, b = await f();", "let b = await f();", None, FixKind::DangerousSuggestion),
+        (
+            "let a = 1, b = 2; export { b };",
+            "let b = 2; export { b };",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const a = 1, { b, ...rest } = obj; f(rest);",
+            "const { b, ...rest } = obj; f(rest);",
+            Some(json!([{ "ignoreRestSiblings": true }])),
+            FixKind::DangerousSuggestion,
+        ),
+        // a destructured declarator next to a used one
+        ("const l = 1, { e } = r; f(l);", "const l = 1; f(l);", None, FixKind::DangerousSuggestion),
+        ("const { e } = r, l = 1; f(l);", "const l = 1; f(l);", None, FixKind::DangerousSuggestion),
+        (
+            "const l = 1, [e] = r, m = 2; f(l, m);",
+            "const l = 1, m = 2; f(l, m);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
         (
             "let a = 1; let b = 2; console.log(a);",
             "let a = 1;  console.log(a);",
@@ -531,8 +564,10 @@ fn test_vars_destructure() {
             None,
             FixKind::DangerousSuggestion,
         ),
-        // TODO: destructures in VariableDeclarations with more than one declarator
-        (r#"const l="",{e}=r"#, r"const {e}=r", None, FixKind::All),
+        // destructures in VariableDeclarations with more than one declarator
+        (r#"const l="",{e}=r"#, "", None, FixKind::All),
+        (r#"const l="",{e}=r; f(l)"#, r#"const l=""; f(l)"#, None, FixKind::All),
+        (r"const {e}=r,l=1; f(l)", r"const l=1; f(l)", None, FixKind::All),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
