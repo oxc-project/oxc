@@ -1,4 +1,9 @@
-use super::{BASELINE, Cpu, DynCpu, apply, cpu_select, cpu_versions, to_dyn};
+use super::{BASELINE, Cpu, DynCpu, apply, cpu_select, cpu_version, cpu_versions, to_dyn};
+
+#[cfg(target_arch = "x86_64")]
+use super::Avx2;
+#[cfg(target_arch = "aarch64")]
+use super::Neon;
 
 #[apply(cpu_versions)]
 const fn add_one(x: u32, _cpu: impl Cpu) -> u32 {
@@ -264,4 +269,82 @@ fn generic_params() {
         assert_eq!(Counter(100).plus_counter(1u8, cpu), 101);
         assert_eq!(Wrapper(3u8).convert::<u32>(cpu), 3);
     }
+}
+
+#[apply(cpu_version(Avx2))]
+#[inline]
+fn double_avx2(x: u32, _cpu: Avx2) -> u32 {
+    x * 2
+}
+
+#[apply(cpu_version(Neon))]
+#[inline]
+fn double_neon(x: u32, _cpu: Neon) -> u32 {
+    x * 2
+}
+
+#[apply(cpu_version(Generic))]
+#[inline]
+fn double_generic(x: u32) -> u32 {
+    x * 2
+}
+
+/// `double_avx2` and `double_neon` have `#[target_feature]`, so calling them is unsafe.
+fn double(x: u32, cpu: impl Cpu) -> u32 {
+    cpu_select!(cpu, {
+        // SAFETY: `Avx2` type guarantees the CPU supports the features `double_avx2` uses
+        Avx2(cpu) => unsafe { double_avx2(x, cpu) },
+        // SAFETY: `Neon` type guarantees the CPU supports the features `double_neon` uses
+        Neon(cpu) => unsafe { double_neon(x, cpu) },
+        Generic(_) => double_generic(x),
+    })
+}
+
+#[apply(cpu_version(Avx2))]
+#[expect(clippy::inline_always, reason = "tests an `#[inline(always)]` function")]
+#[inline(always)]
+fn triple_avx2(x: u32, _cpu: Avx2) -> u32 {
+    x * 3
+}
+
+#[apply(cpu_version(Neon))]
+#[expect(clippy::inline_always, reason = "tests an `#[inline(always)]` function")]
+#[inline(always)]
+fn triple_neon(x: u32, _cpu: Neon) -> u32 {
+    x * 3
+}
+
+/// `triple_avx2` and `triple_neon` are `#[inline(always)]`, so have no `#[target_feature]`,
+/// and calling them is safe.
+fn triple(x: u32, cpu: impl Cpu) -> u32 {
+    cpu_select!(cpu, {
+        Avx2(cpu) => triple_avx2(x, cpu),
+        Neon(cpu) => triple_neon(x, cpu),
+        Generic(_) => x * 3,
+    })
+}
+
+/// Generics with `>>` and a `(...)` in them.
+#[apply(cpu_version(Generic))]
+fn nth_mapped<T: Into<Vec<u8>>, F: FnOnce(u8) -> u8, const N: usize>(bytes: T, f: F) -> u8 {
+    f(bytes.into()[N])
+}
+
+impl Counter {
+    #[apply(cpu_version(Generic))]
+    const fn plus_generic(&self, x: u32) -> u32 {
+        self.0 + x
+    }
+}
+
+#[test]
+fn cpu_version_fns() {
+    let cpu = DynCpu::detect();
+
+    assert_eq!(double(21, cpu), 42);
+    assert_eq!(double(21, BASELINE), 42);
+    assert_eq!(triple(5, cpu), 15);
+    assert_eq!(triple(5, BASELINE), 15);
+    assert_eq!(nth_mapped::<_, _, 1>([1, 2], |byte| byte + 1), 3);
+    assert_eq!(Counter(100).plus_generic(1), 101);
 }

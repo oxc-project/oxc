@@ -11,6 +11,7 @@
 //!
 //! Code which has SIMD implementations takes a type implementing [`Cpu`],
 //! and uses [`cpu_select!`] to pick an implementation.
+//! [`cpu_version!`] marks each implementation with the CPU feature set it's for.
 //! [`cpu_versions!`] turns a function into one with a separate entry point for each CPU feature set.
 //!
 //! * Given a specific type (e.g. `Avx2`): the choice is made at compile time.
@@ -52,12 +53,17 @@
 use std::mem;
 
 mod select_macro;
+mod version_macro;
 mod versions_macro;
 
 #[cfg(test)]
 mod tests;
 
 pub(crate) use select_macro::cpu_select;
+#[cfg_attr(not(test), expect(unused_imports))]
+pub use version_macro::__cpu_version;
+#[cfg_attr(not(test), expect(unused_imports))]
+pub(crate) use version_macro::cpu_version;
 pub(crate) use versions_macro::cpu_versions;
 pub use versions_macro::{__cpu_versions, apply};
 
