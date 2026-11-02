@@ -12,7 +12,7 @@
 //! * Each punctuator in `PUNCT1` lands in a slot holding its kind.
 //! * Every other byte in 0x20 - 0x7F lands in a slot holding `Invalid` (255),
 //!   except identifier chars and whitespace. They can land anywhere,
-//!   because `classify_impl` overwrites their kind afterwards.
+//!   because the SIMD implementations of `classify` overwrite their kind afterwards.
 //!
 //! Bytes below 0x20 and from 0x80 upwards don't use the hash. `vpunct1` gives them `Invalid` directly.
 //!
