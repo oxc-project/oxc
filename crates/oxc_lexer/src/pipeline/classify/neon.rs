@@ -90,7 +90,8 @@ pub(super) unsafe fn classify_neon(
         let sprev = (wsm << 1) | cs;
         cw = wordm >> 63;
         cs = wsm >> 63;
-        *st.add(b) = (wsm & !sprev) | (wordm & !wprev) | (!wsm & !wordm);
+        // A byte starts a token unless it continues a whitespace or word run
+        *st.add(b) = !((wsm & sprev) | (wordm & wprev));
 
         i += 64;
         b += 1;
