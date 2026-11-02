@@ -56,7 +56,7 @@ fn write_placeholder<'a>(placeholder: &Placeholder<'a>, f: &mut CssFormatter<'_,
 
 /// No source gap between two spans (postcss's `hasEmptyRawBefore`):
 /// the signal for a glued `and(` / `not(`, a `(` that makes a function, and the like.
-pub fn is_glued(left: &oxc_css_parser::pos::Span, right: &oxc_css_parser::pos::Span) -> bool {
+pub fn is_glued(left: oxc_css_parser::pos::Span, right: oxc_css_parser::pos::Span) -> bool {
     left.end == right.start
 }
 
