@@ -85,7 +85,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
     let mut w = bits::next1(st, lo, hi, cpu);
     while w < hi {
         let mut k = tokens.base_kind(w, cpu);
-        if w == skip || is_trivia_byte(k) {
+        if w == skip || is_trivia_byte(k, cpu) {
             w = bits::next1(st, w + 1, hi, cpu);
             continue;
         }

@@ -220,7 +220,7 @@ pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8], cpu: impl Cpu) -> bool
 pub fn prev_sig(st: &[u64], kind: &[u8], pos: usize, cpu: impl Cpu) -> Option<usize> {
     let mut q = bits::prev1(st, pos, cpu);
     while let Some(p) = q {
-        if !is_trivia_byte(kind[p]) {
+        if !is_trivia_byte(kind[p], cpu) {
             break;
         }
         q = bits::prev1(st, p, cpu);

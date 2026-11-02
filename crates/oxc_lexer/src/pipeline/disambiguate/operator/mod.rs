@@ -63,7 +63,7 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: 
     let mut q = bits::prev1(tokens.st, p, cpu);
     while let Some(qi) = q {
         let k = tokens.kind[qi];
-        if is_trivia_byte(k) {
+        if is_trivia_byte(k, cpu) {
             q = bits::prev1(tokens.st, qi, cpu);
             continue;
         }

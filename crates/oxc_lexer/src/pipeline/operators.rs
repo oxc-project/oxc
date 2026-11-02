@@ -217,7 +217,7 @@ impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
         if (pack & mask) == key {
             // SAFETY: The top byte of all `pack` values for non-empty slots is derived
             // from a valid `TokenKind`. See above for why the slot can't be empty here.
-            let kind = unsafe { TokenKind::from_u8_unchecked((pack >> 24) as u8) };
+            let kind = unsafe { TokenKind::from_u8_unchecked((pack >> 24) as u8, cpu) };
             Some(kind)
         } else {
             None

@@ -123,7 +123,7 @@ pub(super) unsafe fn build_spans_avx2(
     m: usize,
     spans: *mut Span,
     sig_kinds: *mut u8,
-    _cpu: Avx2,
+    cpu: Avx2,
 ) -> usize {
     let sp = spans.cast::<u64>();
     let mut w = 0usize;
@@ -174,7 +174,7 @@ pub(super) unsafe fn build_spans_avx2(
         let k = *stage_kind.add(j);
         *sp.add(w) = stage_pos.add(j).cast::<u64>().read_unaligned();
         *sig_kinds.add(w) = k;
-        w += usize::from(!is_trivia_byte(k) || k == tk!(Hashbang));
+        w += usize::from(!is_trivia_byte(k, cpu) || k == tk!(Hashbang));
         j += 1;
     }
 

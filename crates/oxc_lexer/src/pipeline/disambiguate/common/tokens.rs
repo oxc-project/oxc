@@ -129,7 +129,7 @@ impl Tokens<'_> {
             if i >= self.n {
                 return self.n;
             }
-            if is_trivia_byte(self.kind[i]) {
+            if is_trivia_byte(self.kind[i], cpu) {
                 i += 1;
                 continue;
             }

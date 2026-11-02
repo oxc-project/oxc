@@ -169,7 +169,7 @@ impl Lanes {
     ) -> (StringSpan, bool) {
         let ss = self.cooked.len() as u32;
         if be <= bs {
-            return (StringSpan::new(ss, ss & StringSpan::END_MASK, false), false);
+            return (StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu), false);
         }
         let body_len = (be - bs) as usize;
 
@@ -198,7 +198,7 @@ impl Lanes {
             (ss + (be - bs), false, false)
         };
         unsafe { self.cooked.set_len(wi as usize) };
-        (StringSpan::new(ss, wi & StringSpan::END_MASK, lone), nes)
+        (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
     }
 
     #[apply(cpu_versions)]
@@ -216,7 +216,7 @@ impl Lanes {
         let (wi, lone, nes) =
             cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.diags, cpu);
         unsafe { self.cooked.set_len(wi as usize) };
-        (StringSpan::new(ss, wi & StringSpan::END_MASK, lone), nes)
+        (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
     }
 
     #[apply(cpu_versions)]
@@ -233,17 +233,17 @@ impl Lanes {
         // A NotEscapeSequence means cooked = None per the grammar; legality
         // depends on tagged-ness (parser context), so the span carries a
         // marker instead of a diagnostic.
-        self.templates.push(if nes { sp.with_cooked_invalid() } else { sp });
+        self.templates.push(if nes { sp.with_cooked_invalid(cpu) } else { sp });
     }
 
     /// Push a string value verbatim. JSX attribute strings have no backslash
     /// escapes; the value is the raw slice between the quotes.
     #[apply(cpu_versions)]
     #[inline]
-    pub(super) fn push_string_raw(&mut self, src: &[u8], bs: usize, be: usize, _cpu: impl Cpu) {
+    pub(super) fn push_string_raw(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let ss = self.cooked.len() as u32;
         if be <= bs {
-            self.strings.push(StringSpan::new(ss, ss & StringSpan::END_MASK, false));
+            self.strings.push(StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu));
             return;
         }
         let body_len = be - bs;
@@ -254,7 +254,7 @@ impl Lanes {
             self.cooked.set_len(ss as usize + body_len);
         }
         let we = ss + body_len as u32;
-        self.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false));
+        self.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu));
     }
 
     #[apply(cpu_versions)]

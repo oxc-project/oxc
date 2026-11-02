@@ -32,7 +32,7 @@ impl Walk {
 
         self.last_start = pos;
         let k = tokens.base_kind(pos, cpu);
-        if is_trivia_byte(k) {
+        if is_trivia_byte(k, cpu) {
             return pos + 1;
         }
         let newline = tokens.line_break_between(self.prev_end, pos, cpu);

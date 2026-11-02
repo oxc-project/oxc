@@ -40,6 +40,9 @@
 /// `__pipeline_impl`, `__pipeline_generic`, `__pipeline_avx2` and `__pipeline_neon`.
 /// They're private, so they're only visible in the module which defines the method.
 ///
+/// An associated function without `self` gets its entry points inside it, like a free function.
+/// So it can't use `Self`, unless it's `#[inline(always)]`.
+///
 /// They aren't methods of a trait defined inside the method, because rustc gives trait methods external
 /// linkage. That stops LLVM from inlining helpers into them, and from removing the generic entry point
 /// on aarch64 with Neon, where it can never be called.
