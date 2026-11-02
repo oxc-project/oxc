@@ -3,6 +3,28 @@ use oxc_span::SourceType;
 
 use crate::util::SemanticTester;
 
+#[test]
+fn test_catch_var_binding_after_renaming() {
+    let tester = SemanticTester::js("function f(y, z) { try {} catch (y) { var [y, z] = []; } }");
+    let mut semantic = tester.build();
+    let scoping = semantic.scoping_mut();
+    let (catch, outer) = scoping.catch_var_bindings().next().unwrap();
+    let catch_scope = scoping.symbol_scope_id(catch);
+
+    // Mangling changes symbol names without changing scope binding keys.
+    let mut cloned = scoping.clone_in_with_semantic_ids_with_another_arena();
+    cloned.set_symbol_names(&[catch, outer], "a".into());
+    assert_eq!(cloned.catch_var_binding(catch), Some(outer));
+
+    // A transformer can rename either symbol and rekey its binding. The other
+    // parameter shares the var declarator, so its identifier span must distinguish it.
+    scoping.rename_symbol(catch, catch_scope, "z".into());
+    assert_eq!(scoping.catch_var_binding(catch), Some(outer));
+    scoping.rename_symbol(outer, scoping.symbol_scope_id(outer), "_y".into());
+    assert_eq!(scoping.catch_var_binding(catch), Some(outer));
+    assert_eq!(scoping.catch_var_bindings().collect::<Vec<_>>(), vec![(catch, outer)]);
+}
+
 fn assert_root_and_single_local_reference_counts(
     tester: &SemanticTester<'_>,
     expected: &[(&str, usize, usize)],
