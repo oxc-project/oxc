@@ -1,0 +1,101 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-split-limit): Prefer `String#split()` with a limit.
+   ╭─[prefer_split_limit.tsx:1:1]
+ 1 │ string.split(',')[0]
+   · ────────────────────
+   ╰────
+  help: Pass `1` as the second argument of `split()`.
+
+  ⚠ unicorn(prefer-split-limit): Prefer `String#split()` with a limit.
+   ╭─[prefer_split_limit.tsx:1:1]
+ 1 │ string.split(/,/)[2]
+   · ────────────────────
+   ╰────
+  help: Pass `3` as the second argument of `split()`.
+
+  ⚠ unicorn(prefer-split-limit): Prefer `String#split()` with a limit.
+   ╭─[prefer_split_limit.tsx:1:1]
+ 1 │ string.split(`,`)[0]
+   · ────────────────────
+   ╰────
+  help: Pass `1` as the second argument of `split()`.
+
+  ⚠ unicorn(prefer-split-limit): Prefer `String#split()` with a limit.
+   ╭─[prefer_split_limit.tsx:1:1]
+ 1 │ string?.split(',')[0]
+   · ─────────────────────
+   ╰────
+  help: Pass `1` as the second argument of `split()`.
+
+  ⚠ unicorn(prefer-split-limit): Prefer `String#split()` with a limit.
+   ╭─[prefer_split_limit.tsx:1:1]
+ 1 │ (string.split(','))[0]
+   · ──────────────────────
+   ╰────
+  help: Pass `1` as the second argument of `split()`.
+
+  ⚠ unicorn(prefer-split-limit): Prefer `String#split()` with a limit.
+   ╭─[prefer_split_limit.tsx:1:1]
+ 1 │ string.split(',').at(1)
+   · ───────────────────────
+   ╰────
+  help: Pass `2` as the second argument of `split()`.
+
+  ⚠ unicorn(prefer-split-limit): Prefer `String#split()` with a limit.
+   ╭─[prefer_split_limit.tsx:1:1]
+ 1 │ string.split(',').at(0)
+   · ───────────────────────
+   ╰────
+  help: Pass `1` as the second argument of `split()`.
+
+  ⚠ unicorn(prefer-split-limit): Prefer `String#split()` with a limit.
+   ╭─[prefer_split_limit.tsx:1:7]
+ 1 │ const [a, b] = string.split(',')
+   ·       ──────
+   ╰────
+  help: Pass `2` as the second argument of `split()`.
+
+  ⚠ unicorn(prefer-split-limit): Prefer `String#split()` with a limit.
+   ╭─[prefer_split_limit.tsx:1:7]
+ 1 │ const [, b] = string.split(',')
+   ·       ─────
+   ╰────
+  help: Pass `2` as the second argument of `split()`.
+
+  ⚠ unicorn(prefer-split-limit): Prefer `String#split()` with a limit.
+   ╭─[prefer_split_limit.tsx:1:1]
+ 1 │ [a, b] = string.split(',')
+   · ──────
+   ╰────
+  help: Pass `2` as the second argument of `split()`.
+
+  ⚠ unicorn(prefer-split-limit): Prefer `String#split()` with a limit.
+   ╭─[prefer_split_limit.tsx:1:6]
+ 1 │ foo, [a, b] = string.split(',')
+   ·      ──────
+   ╰────
+  help: Pass `2` as the second argument of `split()`.
+
+  ⚠ unicorn(prefer-split-limit): Prefer `String#split()` with a limit.
+   ╭─[prefer_split_limit.tsx:1:1]
+ 1 │ string.split(',',)[0]
+   · ─────────────────────
+   ╰────
+  help: Pass `1` as the second argument of `split()`.
+
+  ⚠ unicorn(prefer-split-limit): Prefer `String#split()` with a limit.
+   ╭─[prefer_split_limit.tsx:1:1]
+ 1 │ string.split(',' /* comment */)[0]
+   · ──────────────────────────────────
+   ╰────
+  help: Pass `1` as the second argument of `split()`.
+
+  ⚠ unicorn(prefer-split-limit): Prefer `String#split()` with a limit.
+   ╭─[prefer_split_limit.tsx:1:5]
+ 1 │ foo(string.split(',')[0], bar)
+   ·     ────────────────────
+   ╰────
+  help: Pass `1` as the second argument of `split()`.
