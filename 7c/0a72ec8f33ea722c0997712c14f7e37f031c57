@@ -1,0 +1,19 @@
+crates/oxc_str/src/ident.rs
+  s_76642c6987546b::t_5cfad003e201f1 390-436,697-718
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7c0a72ec8f33ea722c0997712c14f7e37f031c57",
+  "prompts": {},
+  "sessions": {
+    "s_76642c6987546b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18f1c-e238-74f1-b017-ec62f96626e0",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
