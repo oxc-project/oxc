@@ -6,7 +6,7 @@ use std::{
     sync::OnceLock,
 };
 
-use crate::cpu::{Avx2, Cpu, apply, cpu_version, cpu_versions};
+use crate::cpu::{Avx2, apply, cpu_version};
 
 /// Single copy of [`PairLuts`], shared across all threads.
 ///
@@ -109,7 +109,7 @@ pub fn init_pair_luts_avx2(cpu: Avx2) {
 /// # SAFETY
 ///
 /// [`init_pair_luts_avx2`] must have been called before calling this.
-#[apply(cpu_versions)]
-pub(super) unsafe fn get_pair_luts(_cpu: impl Cpu) -> &'static PairLuts {
+#[apply(cpu_version(Avx2))]
+pub(super) unsafe fn get_pair_luts(_cpu: Avx2) -> &'static PairLuts {
     unsafe { PAIR_LUTS.get().unwrap_unchecked() }
 }
