@@ -120,9 +120,8 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: 
                 continue;
             }
             if ch == b'.' {
-                // Only a trailing-dot numeric literal (`1./2`) makes `.` end a value; member
-                // access, `...` and `?.` all precede an operand.
-                return !tokens.numeric_dot(qi, cpu);
+                // Only a spread precedes an operand; a?.<T>(b) has type arguments, 1./2 a division.
+                return qi >= 2 && src[qi - 1] == b'.' && src[qi - 2] == b'.';
             }
             if ch == b'+' || ch == b'-' {
                 // The tail of a ++ or --: postfix ends a value, prefix does not.

@@ -150,9 +150,11 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
             // `,` of the list): a reserved word there is no type. Elsewhere a keyword is read
             // as a name: a property (`{ return: T }`), a reference after `=>`, `:`, `|`. `super`
             // names a value only in a type query (`typeof super.x`).
+            let const_param = kk == tk!(KwConst) && angle_bits & 1 != 0;
             if was_elem_start
                 && type_illegal_kind(kk, cpu)
                 && !(kk == tk!(KwSuper) && last_kw == tk!(KwTypeof))
+                && !const_param
             {
                 return false;
             }
@@ -167,6 +169,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
             // At the start of a type only an operator takes an operand; any other word is a name.
             start = if start {
                 type_prefix_kind(kk, cpu)
+                    || const_param
                     || (kk == tk!(KwAbstract)
                         && tokens.ident_is(skip_trivia_fwd(src, hi, w + 8, cpu), b"new", cpu))
             } else {
