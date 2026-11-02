@@ -1002,7 +1002,7 @@ Prettier's wrapping came from a syntax fix (prettier/prettier#6133), whose chang
 
 ## start-token-no-double-parens
 
-- Why: uniform-rule (same construct, same output: `export default` and sequence arrow body)
+- Why: uniform-rule (same construct, same output: outside a statement or arrow body start, after `export default`, sequence and assignment arrow bodies)
 - Pin: `tests/fixtures/ts/parenthesis/start-token-no-double-parens.ts`
 - Conformance:
   - `externals/prettier/js/identifier/parentheses/let.js`
@@ -1031,8 +1031,11 @@ const get = (key: K) => (({ a: 1, b: 2 }) as const)[key];
 ```
 
 When an ancestor gets its own parens, a leading `{`/`function`/`class`/`let[` inside it needs none.
-Prettier already does this after `export default` (`` export default (function () {} + foo)`` ``) and for a sequence arrow body (`() => ({}, 1)`),
-but not at statement start or for other arrow bodies, e.g. the object lookup idiom above.
+These parens only guard a statement or arrow body start: unlike readability parens (e.g. the IIFE's `(function () {})()`),
+Prettier never prints them elsewhere, so the same object lookup idiom prints as ours there (`const get = ({ a: 1, b: 2 } as const)[key];`).
+Prettier also drops them under an ancestor's parens after `export default` (`` export default (function () {}.a && b) || c; ``)
+and for a sequence or assignment arrow body (`() => ({}.a, 1)`, `() => ({}.a = 1)`),
+but not at statement start or for other arrow bodies.
 
 ## inline-logical-chain-indent
 
