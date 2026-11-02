@@ -184,8 +184,31 @@ fn parse_error_is_err() {
         // when a declaration's value hits a top-level `{` (name + `:` parsed);
         // a selector error with no such head stays a hard error.
         ("a, { color: red; }", css),
-        // Pin for crates/oxc_formatter_css/DIVERGENCES.md#less-value-interpolation-rejected
+        // Pin for crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected, one input per shape.
+        // CSS: a browser drops the rule
+        ("a[id=func(\"foo\")] {}", css),
+        ("-Option/root .a {}", css),
+        (".a >>> .b {}", css),
+        (".icon.is-$(network) {}", css),
+        (":not(\".a\") {}", css),
+        ("one \"two\" three {}", css),
+        ("@import (multiple) \"a.less\";", css),
+        ("@import \"a.css\" {}", css),
+        ("@import ur l(a.css);", css),
+        ("color: red;", css),
+        ("--foo: { color: red; }", css),
+        ("@charset UTF-8;", css),
+        // SCSS: dart-sass rejects (root declarations: `display: flex;` above)
+        ("@for $i from 1 end 3 {}", scss),
+        ("a { color: @var; }", scss),
+        ("@import ur l(a.css);", scss),
+        // Less: lessc rejects
         (".a { width: @{min-width}; }", less),
+        (".a { width: #{$var}; }", less),
+        ("@IMPORT a;", less),
+        ("@c: { a: true; }\n.m() when (@c [ a ] = true) {}", less),
+        (".a { b: ++1; }", less),
+        ("@import ur l(a.css);", less),
     ] {
         assert!(format(&allocator, source, options).is_err(), "{source:?} should fail to format");
     }

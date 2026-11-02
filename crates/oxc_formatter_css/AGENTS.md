@@ -193,7 +193,7 @@ and a host-supplied `TailwindSorter` does the ordering and dedup outside this cr
 Covered: `$var: value !important;` declarations (root and inside rules), `$var` references in property values and at-rule preludes,
 `$(var)` interpolation in property names.
 
-NOT covered: `$(var)` interpolation inside values and selectors (`.icon.is-$(network)`), selector-position bare `$var` (`.$prefix`), comment substitutions (`<<$(var)>>`).
+NOT covered: `$(var)` interpolation inside values and selectors (`.icon.is-$(network)`, rejected: DIVERGENCES.md#grammar-owner-rejected), selector-position bare `$var` (`.$prefix`), comment substitutions (`<<$(var)>>`).
 
 ## Verification
 
