@@ -425,6 +425,7 @@ pub const TRIVIA_MIN: u8 = tk!(LineComment);
 pub const TRIVIA_MAX: u8 = tk!(LineTerminator);
 
 /// [`TokenKind::is_trivia`] on a raw kind byte, for the pipeline's `u8` lanes.
+#[apply(cpu_versions)]
 #[inline]
 #[must_use]
 pub const fn is_trivia_byte(kind: u8, _cpu: impl Cpu) -> bool {
