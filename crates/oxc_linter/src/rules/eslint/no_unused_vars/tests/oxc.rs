@@ -1363,6 +1363,80 @@ fn test_argument_parameter_rename_fix() {
 }
 
 #[test]
+fn test_type_parameter_rename_fix() {
+    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![];
+    let fail: Vec<(&str, Option<serde_json::Value>)> = vec![];
+    let fix = vec![
+        ("export type Foo<T> = {}", "export type Foo<_T> = {}", None, FixKind::DangerousSuggestion),
+        (
+            "export function foo<T>() {}",
+            "export function foo<_T>() {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export const foo = <T,>() => {}",
+            "export const foo = <_T,>() => {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export class Foo { bar<T>() {} }",
+            "export class Foo { bar<_T>() {} }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export type F<T> = T extends Array<infer R> ? string : never",
+            "export type F<T> = T extends Array<infer _R> ? string : never",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // avoid conflicts with existing type parameters
+        (
+            "export function foo<T, _T>(a: _T) { return a }",
+            "export function foo<_T0, _T>(a: _T) { return a }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export type Foo<T> = {}",
+            "export type Foo<_T> = {}",
+            Some(json!([{ "varsIgnorePattern": "^_" }])),
+            FixKind::DangerousSuggestion,
+        ),
+        // interfaces and classes can merge with other declarations, which must
+        // all use identical type parameter names
+        ("export interface Foo<T> {}", "export interface Foo<T> {}", None, FixKind::None),
+        (
+            "interface Array<T> { foo(): void }",
+            "interface Array<T> { foo(): void }",
+            None,
+            FixKind::None,
+        ),
+        ("export class Foo<T> {}", "export class Foo<T> {}", None, FixKind::None),
+        // we can't synthesize names for complex patterns yet
+        (
+            "export type Foo<T> = {}",
+            "export type Foo<T> = {}",
+            Some(json!([{ "varsIgnorePattern": "^ignored" }])),
+            FixKind::None,
+        ),
+        (
+            "export type Foo<T> = {}",
+            "export type Foo<T> = {}",
+            Some(json!([{ "fix": { "variables": "off" } }])),
+            FixKind::None,
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .change_rule_path_extension("ts")
+        .test();
+}
+
+#[test]
 fn test_enums() {
     let pass = vec![
         "export enum Foo { A, B }",

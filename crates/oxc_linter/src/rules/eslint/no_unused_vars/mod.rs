@@ -383,7 +383,12 @@ impl NoUnusedVars {
                 if self.is_allowed_type_parameter(symbol, declaration.id()) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
+                Self::report_with_fix_mode(
+                    self.fix.variables,
+                    ctx,
+                    diagnostic::declared(symbol, &self.vars_ignore_pattern, false),
+                    |fixer| self.rename_unused_type_parameter(fixer, symbol, declaration.id()),
+                );
             }
             // Mapped type keys are always used within the type definition
             AstKind::TSMappedType(_) => {}
