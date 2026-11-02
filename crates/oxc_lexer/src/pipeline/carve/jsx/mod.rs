@@ -1,5 +1,5 @@
 use crate::{
-    cpu::{Cpu, apply, cpu_versions},
+    cpu::{Cpu, cpu_multiversion},
     error::DiagCode,
     token::tk,
 };
@@ -81,7 +81,7 @@ enum JFrameKind {
 /// start byte keeps its `st` bit yet may be a digit/keyword/operator char,
 /// so those bits are cleared there to keep `coalesce` and `keywords` from
 /// re-interpreting it.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 pub(super) unsafe fn carve_jsx(
     srcs: &[u8],
     n: usize,
@@ -707,7 +707,7 @@ pub(super) unsafe fn carve_jsx(
 
 /// Stamp a single-byte JSX-structural punct: set its final `kind` and clear
 /// its `opch` bit so `coalesce` cannot re-fuse it (`<div>=` into `>=`).
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn jsx_punct(kind: *mut u8, opch: *mut u64, off: usize, k: u8, cpu: impl Cpu) {
     *kind.add(off) = k;

@@ -1,5 +1,5 @@
 use crate::{
-    cpu::{Cpu, apply, cpu_versions},
+    cpu::{Cpu, cpu_multiversion},
     token::tk,
 };
 
@@ -19,7 +19,7 @@ use super::{
     },
 };
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 pub(super) unsafe fn carve_js(
     srcs: &[u8],
     n: usize,

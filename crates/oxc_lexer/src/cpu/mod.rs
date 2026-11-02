@@ -11,8 +11,10 @@
 //!
 //! Code which has SIMD implementations takes a type implementing [`Cpu`],
 //! and uses [`cpu_select!`] to pick an implementation.
-//! [`cpu_version!`] marks each implementation with the CPU feature set it's for.
-//! [`cpu_versions!`] turns a function into one with a separate entry point for each CPU feature set.
+//! [`#[cpu_version]`] marks each implementation with the CPU feature set it's for.
+//! [`#[cpu_multiversion]`] turns a function into one with a separate entry point for each CPU feature set.
+//!
+//! The attribute macros are in the `oxc_lexer_macros` crate.
 //!
 //! * Given a specific type (e.g. `Avx2`): the choice is made at compile time.
 //! * Given a [`DynCpu`]: the choice is made at runtime.
@@ -49,21 +51,20 @@
 //! can use instructions that rely on support for those features without any checks.
 //!
 //! DO NOT add any other way to create these types (e.g. a `Default` impl or a public constructor).
+//!
+//! [`#[cpu_version]`]: macro@cpu_version
+//! [`#[cpu_multiversion]`]: macro@cpu_multiversion
 
 use std::mem;
 
+pub(crate) use oxc_lexer_macros::{cpu_multiversion, cpu_version};
+
 mod select_macro;
-mod version_macro;
-mod versions_macro;
 
 #[cfg(test)]
 mod tests;
 
 pub(crate) use select_macro::cpu_select;
-pub use version_macro::__cpu_version;
-pub(crate) use version_macro::cpu_version;
-pub(crate) use versions_macro::cpu_versions;
-pub use versions_macro::{__cpu_versions, apply};
 
 /// Trait for types representing a CPU feature set.
 ///
@@ -101,10 +102,12 @@ trait CpuPrivate {
 ///
 /// Same as [`Cpu::to_dyn`], but this works in `const` code too.
 /// A `const fn` can't call a trait method on a generic type, so it can't call [`Cpu::to_dyn`].
-/// [`cpu_select!`] and [`cpu_versions!`] use this function, so they work in `const` code.
+/// [`cpu_select!`] and [`#[cpu_multiversion]`] use this function, so they work in `const` code.
 ///
 /// Only [`DynCpu`] needs `cpu`. It's taken for all types so that this can only be called
 /// by code which already has one of these types.
+///
+/// [`#[cpu_multiversion]`]: macro@cpu_multiversion
 #[expect(clippy::inline_always, reason = "folds to a constant, except for `DynCpu`")]
 #[inline(always)]
 pub const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {

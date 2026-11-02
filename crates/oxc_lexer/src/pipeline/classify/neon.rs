@@ -1,5 +1,5 @@
 use crate::{
-    cpu::{Neon, apply, cpu_version},
+    cpu::{Neon, cpu_version},
     simd::{Vec128, Vec256},
     token::tk,
 };
@@ -33,7 +33,7 @@ struct Classified {
     kind: Vec128<Neon>,
 }
 
-#[apply(cpu_version(Neon))]
+#[cpu_version(Neon)]
 #[inline(never)]
 pub(super) unsafe fn classify_neon(
     ts: bool,
@@ -110,7 +110,7 @@ pub(super) unsafe fn classify_neon(
     }
 }
 
-#[apply(cpu_version(Neon))]
+#[cpu_version(Neon)]
 #[inline(always)]
 fn chunk(v: Vec128<Neon>, l: &Luts) -> Classified {
     // Mask keeps the index in TBL range; hi has no 8-15 entry, so bytes >= 0x80 give zero.
@@ -142,7 +142,7 @@ fn chunk(v: Vec128<Neon>, l: &Luts) -> Classified {
     }
 }
 
-#[apply(cpu_version(Neon))]
+#[cpu_version(Neon)]
 #[inline(always)]
 fn punct1(v: Vec128<Neon>, lo: Vec128<Neon>, hn: Vec128<Neon>, l: &Luts) -> Vec128<Neon> {
     // Every PH_A and PH_B entry is under 32, so h is in range for the 32-entry ph_t.
@@ -153,7 +153,7 @@ fn punct1(v: Vec128<Neon>, lo: Vec128<Neon>, hn: Vec128<Neon>, l: &Luts) -> Vec1
 }
 
 /// Bit i is the top bit of byte i of a-d, gathered by summing the lane bit values.
-#[apply(cpu_version(Neon))]
+#[cpu_version(Neon)]
 #[inline(always)]
 fn mm64(a: Vec128<Neon>, b: Vec128<Neon>, c: Vec128<Neon>, d: Vec128<Neon>) -> u64 {
     const BITS: [u8; 16] = [1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128];

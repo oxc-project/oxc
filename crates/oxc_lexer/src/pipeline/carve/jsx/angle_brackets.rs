@@ -1,5 +1,5 @@
 use crate::{
-    cpu::{Cpu, apply, cpu_versions},
+    cpu::{Cpu, cpu_multiversion},
     error::DiagCode,
 };
 
@@ -20,7 +20,7 @@ enum AngleVerdict {
     Ambiguous { gt: usize, lp: usize },
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub(super) unsafe fn jsx_over_type_params(
     src: *const u8,
@@ -78,7 +78,7 @@ pub(super) unsafe fn jsx_over_type_params(
 /// has already cleared `word` across Unicode whitespace by the time
 /// `carve_jsx` runs, so the corrected run is free to read and no byte has to
 /// be re-scanned for a leading 0x80.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 unsafe fn ts_angle_verdict(
     src: &[u8],

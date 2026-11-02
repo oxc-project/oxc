@@ -11,7 +11,7 @@ use oxc_span::Span;
 
 use crate::{
     PAD,
-    cpu::{BASELINE, Cpu, DynCpu, apply, cpu_versions},
+    cpu::{BASELINE, Cpu, DynCpu, cpu_multiversion},
     options::LexOptions,
     pipeline::compress::init_pair_luts,
     token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
@@ -151,7 +151,7 @@ impl Lexer {
         self.lex_raw_impl(src, n, out_kinds, out_spans, jsx, ts, module, vutf8, self.cpu)
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     unsafe fn lex_raw_impl(
         &mut self,
         src: &[u8],
@@ -212,7 +212,7 @@ impl Lexer {
         sig_len
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     fn ensure(&mut self, n: usize, _cpu: impl Cpu) {
         let nb = n.div_ceil(64) + 1;
         if self.nb_cap < nb {
@@ -265,7 +265,7 @@ impl Default for Lexer {
 ///   before the stage writes again.
 ///
 /// `brackets` is the lex's bracket cache, `lanes.disambiguate.brackets`.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn token_view<'a>(
     src: *const u8,

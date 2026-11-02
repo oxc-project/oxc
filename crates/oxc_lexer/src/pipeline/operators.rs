@@ -29,7 +29,7 @@
 //! the test's failure message gives a replacement.
 
 use crate::{
-    cpu::{BASELINE, Cpu, apply, cpu_versions},
+    cpu::{BASELINE, Cpu, cpu_multiversion},
     token::TokenKind,
 };
 
@@ -121,7 +121,7 @@ const FOUR_BYTE_OP_KIND: TokenKind = TokenKind::URShiftEq;
 /// Returns `true` if a byte is one of the operator characters `=!<>+-*&|^%?.`.
 ///
 /// Note `/` is excluded - callers handle it separately.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) const fn is_op_char(c: u8, _cpu: impl Cpu) -> bool {
     const OPCH_LO: [u8; 16] = [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 10, 3, 7, 2];
@@ -189,7 +189,7 @@ impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
     /// Hashmap collisions are possible, so caller must confirm the match with:
     /// - `(pack & 0xFFFF) == key` for 2-byte operators.
     /// - `(pack & 0xFF_FFFF) == key` for 3-byte operators.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline(always)]
     fn pack(&self, key: u32, cpu: impl Cpu) -> u32 {
         let slot = self.data.slot(key, self.mul, cpu);
@@ -200,7 +200,7 @@ impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
     ///
     /// * If an operator is found, returns `Some` containing the [`TokenKind`] of the operator.
     /// * Otherwise, returns `None`.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline(always)]
     fn lookup(&self, bytes: [u8; 4], cpu: impl Cpu) -> Option<TokenKind> {
         let mask = if self.len == 2 { 0xFFFF } else { 0xFF_FFFF };
@@ -264,7 +264,7 @@ impl<const TABLE_SIZE: usize> OpTableData<TABLE_SIZE> {
     /// using `mul` as the hash map multiplier.
     ///
     /// Returns a `usize` but it is guaranteed to be less than `TABLE_SIZE`.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline(always)]
     const fn slot(&self, key: u32, mul: u32, _cpu: impl Cpu) -> usize {
         (key.wrapping_mul(mul) >> (32 - Self::BITS)) as usize
@@ -286,7 +286,7 @@ impl<const TABLE_SIZE: usize> OpTableData<TABLE_SIZE> {
 ///
 /// Hashmap collisions are possible, so caller must additionally check that
 /// `(pack & 0xFFFF) == key` to confirm a match.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) fn opmap_pack2(key: u32, cpu: impl Cpu) -> u32 {
     OP2_TABLE.pack(key, cpu)
@@ -306,7 +306,7 @@ pub(super) fn opmap_pack2(key: u32, cpu: impl Cpu) -> u32 {
 ///
 /// Hashmap collisions are possible, so caller must additionally check that
 /// `(pack & 0xFF_FFFF) == key` to confirm a match.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) fn opmap_pack3(key: u32, cpu: impl Cpu) -> u32 {
     OP3_TABLE.pack(key, cpu)
@@ -327,7 +327,7 @@ pub(super) fn opmap_pack3(key: u32, cpu: impl Cpu) -> u32 {
 /// If no operator is found, returns `None` as `kind`, and 1 as `len`.
 ///
 /// `?.` followed by a digit is rejected as a match.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) fn opmap_longest(
     bytes: [u8; 4],

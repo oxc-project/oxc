@@ -1,7 +1,7 @@
 use oxc_span::Span;
 
 use crate::{
-    cpu::{BASELINE, apply, cpu_version},
+    cpu::{BASELINE, cpu_version},
     token::{is_trivia_byte, matches_tk, tk},
 };
 
@@ -12,7 +12,7 @@ use crate::pipeline::{
 
 use super::common::{emit_value, invalid_diags};
 
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 pub(super) unsafe fn compress_blocks_generic(
     st: *const u64,
     kind: *const u8,
@@ -40,7 +40,7 @@ pub(super) unsafe fn compress_blocks_generic(
 }
 
 /// Contents of this function is in common with AVX2 implementation.
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 pub(super) unsafe fn build_spans_generic(
     stage_kind: *const u8,
     stage_pos: *const u32,
@@ -65,7 +65,7 @@ pub(super) unsafe fn build_spans_generic(
     w
 }
 
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 pub(super) unsafe fn lanes_post_generic(
     src: &[u8],
     out_kinds: *const u8,

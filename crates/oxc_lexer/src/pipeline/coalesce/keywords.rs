@@ -7,7 +7,7 @@
 use std::ptr;
 
 use crate::{
-    cpu::{Cpu, apply, cpu_versions},
+    cpu::{Cpu, cpu_multiversion},
     token::TokenKind,
 };
 
@@ -17,7 +17,7 @@ pub const KWB: usize = 64;
 
 /// Dispatch to the key-monomorphized verify without duplicating `coalesce`
 /// itself: one predictable branch per flush, not per candidate.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn kw_flush(
     ts: bool,
@@ -42,7 +42,7 @@ pub(super) unsafe fn kw_flush(
 /// for TS - monomorphized so the JS copy carries none of the wider key.
 /// Kept out of line: inlining would double both variants into each of
 /// coalesce's flush sites, and one call per KWB words is free.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 unsafe fn kw_verify_batch<const IS_TS: bool>(
     src: *const u8,
@@ -74,7 +74,7 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
 /// * `word` must be the word bitmap for `src`, and valid for reading 8 bytes from byte `pos / 8`.
 /// * The byte at `pos` must be a word char.
 /// * `src` must be valid for reading 16 bytes from `pos`.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub(super) unsafe fn kw_match_word(
     ts: bool,
@@ -102,7 +102,7 @@ pub(super) unsafe fn kw_match_word(
 /// # SAFETY
 ///
 /// `word` must be valid for reading 8 bytes from byte `pos / 8`.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn word_len(word: *const u64, pos: usize, _cpu: impl Cpu) -> usize {
     let x = ptr::read_unaligned((word as *const u8).add(pos >> 3) as *const u64) >> (pos & 7);

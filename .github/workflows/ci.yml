@@ -692,8 +692,8 @@ jobs:
         id: filter
         uses: $/.github/actions/check-changes
         with:
-          packages: oxc_lexer,oxc_coverage
-          paths: crates/oxc_lexer/,tasks/coverage/,.cargo/lexer-avx2.toml,justfile,.github/workflows/ci.yml
+          packages: oxc_lexer,oxc_lexer_macros,oxc_coverage
+          paths: crates/oxc_lexer/,crates/oxc_lexer_macros/,tasks/coverage/,.cargo/lexer-avx2.toml,justfile,.github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 

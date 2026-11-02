@@ -1,31 +1,31 @@
-use crate::cpu::{Cpu, apply, cpu_versions};
+use crate::cpu::{Cpu, cpu_multiversion};
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) const fn is_ws(c: u8, _cpu: impl Cpu) -> bool {
     c == b' ' || c == b'\t' || c == b'\n' || c == b'\r' || c == 0x0c || c == 0x0b
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) const fn is_word(c: u8, cpu: impl Cpu) -> bool {
     is_id_start(c, cpu) || is_digit(c, cpu)
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) const fn is_id_start(c: u8, _cpu: impl Cpu) -> bool {
     (c >= b'a' && c <= b'z') || (c >= b'A' && c <= b'Z') || c == b'_' || c == b'$' || c >= 0x80
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) const fn is_digit(c: u8, _cpu: impl Cpu) -> bool {
     c >= b'0' && c <= b'9'
 }
 
 /// Byte length (2 or 3) of the multi-byte WhiteSpace or LineTerminator starting at c0, or 0.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) const fn unicode_ws_len(c0: u8, c1: u8, c2: u8, _cpu: impl Cpu) -> usize {
     match c0 {
@@ -49,7 +49,7 @@ pub(super) const fn unicode_ws_len(c0: u8, c1: u8, c2: u8, _cpu: impl Cpu) -> us
 /// U+0085, U+00A0, U+1680, U+2000..=U+200B, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
 ///
 /// Safe version of [`unicode_ws_len_at_unchecked`].
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub(super) fn unicode_ws_len_at(src: &[u8], p: usize, cpu: impl Cpu) -> usize {
     unicode_ws_len(src[p], src[p + 1], src[p + 2], cpu)
@@ -61,14 +61,14 @@ pub(super) fn unicode_ws_len_at(src: &[u8], p: usize, cpu: impl Cpu) -> usize {
 /// U+0085, U+00A0, U+1680, U+2000..=U+200B, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
 ///
 /// Unsafe version of [`unicode_ws_len_at`].
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn unicode_ws_len_at_unchecked(src: *const u8, p: usize, cpu: impl Cpu) -> usize {
     unicode_ws_len(*src.add(p), *src.add(p + 1), *src.add(p + 2), cpu)
 }
 
 /// The first line terminator (LF, CR, LS or PS) at or after i, or n.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 pub(super) fn line_terminator_after(src: &[u8], n: usize, mut i: usize, _cpu: impl Cpu) -> usize {
     while i < n {
         match src[i] {
@@ -81,14 +81,14 @@ pub(super) fn line_terminator_after(src: &[u8], n: usize, mut i: usize, _cpu: im
 }
 
 /// Does src[a..b] hold a line terminator (LF, CR, or the 3-byte LS or PS)?
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) fn line_break_in(src: &[u8], a: usize, b: usize, cpu: impl Cpu) -> bool {
     line_terminator_after(src, b, a, cpu) < b
 }
 
 /// The slash of the first */ at or after i, or n when the comment is unterminated.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 pub(super) fn block_comment_end(src: &[u8], n: usize, mut i: usize, _cpu: impl Cpu) -> usize {
     while i + 1 < n {
         if src[i] == b'*' && src[i + 1] == b'/' {
@@ -99,7 +99,7 @@ pub(super) fn block_comment_end(src: &[u8], n: usize, mut i: usize, _cpu: impl C
     n
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) fn hex_val(c: u8, _cpu: impl Cpu) -> u32 {
     if c >= b'0' && c <= b'9' {

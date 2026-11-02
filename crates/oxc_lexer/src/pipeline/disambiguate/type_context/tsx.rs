@@ -7,14 +7,14 @@
 //!
 //! [`context`]: crate::pipeline::disambiguate::context
 
-use crate::cpu::{Cpu, apply, cpu_versions};
+use crate::cpu::{Cpu, cpu_multiversion};
 
 use crate::pipeline::disambiguate::{Tokens, Walks, context};
 
 use super::bytes::arrow_after_params;
 
 /// Whether the ambiguous < at lt is JSX, and whether it is an unterminated element to report.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 pub fn jsx_over_generic(
     tokens: &Tokens,

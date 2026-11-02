@@ -1,7 +1,7 @@
 use std::{ptr, slice};
 
 use crate::{
-    cpu::{Cpu, apply, cpu_select, cpu_versions},
+    cpu::{Cpu, cpu_multiversion, cpu_select},
     error::DiagCode,
     token::{TokenKind, tk},
 };
@@ -23,7 +23,7 @@ use keywords::{kw_flush, kw_match_word};
 /// [`glue_number`] computes the kind as `NUM + is_bigint` - keep them adjacent.
 const _: () = assert!(tk!(BigInt) == tk!(Number) + 1);
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 pub unsafe fn coalesce(
     src: *const u8,
@@ -238,7 +238,7 @@ pub unsafe fn coalesce(
     kw_flush(ts, src, word, kind, kwpos, k, cpu);
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 unsafe fn glue_number(
     ts: bool,
     src: *const u8,
@@ -340,7 +340,7 @@ unsafe fn glue_number(
 }
 
 /// Cold path. Kept out of line so it does not slow the coalesce loop.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 unsafe fn munch_walk(
     src: *const u8,
@@ -375,7 +375,7 @@ unsafe fn munch_walk(
     pos
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 fn prefetch(p: *const u8, cpu: impl Cpu) {
     let _ = p; // Avoid clippy unused vars warning

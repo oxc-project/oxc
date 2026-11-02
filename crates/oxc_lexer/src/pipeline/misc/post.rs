@@ -1,11 +1,11 @@
 use crate::{
-    cpu::{Cpu, apply, cpu_versions},
+    cpu::{Cpu, cpu_multiversion},
     token::{KW_KIND_BASE, tk},
 };
 
 use crate::pipeline::bitmap::{bm_clear, bm_get, bm_prev1};
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub unsafe fn misc_post(
     src: *const u8,
@@ -22,7 +22,7 @@ pub unsafe fn misc_post(
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 unsafe fn misc_post_impl(
     src: *const u8,

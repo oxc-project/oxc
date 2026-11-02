@@ -1,5 +1,5 @@
 use crate::{
-    cpu::{Cpu, apply, cpu_versions},
+    cpu::{Cpu, cpu_multiversion},
     error::DiagCode,
     token::tk,
 };
@@ -24,7 +24,7 @@ pub(super) const OPENER8_BYTES: [u8; 8] = [b'"', b'`', b'\'', b'/', b'{', b'}', 
 
 /// Lex the string literal opening at `s`. Returns the resume index. Shared
 /// by `carve` and `carve_jsx` JS mode.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn lex_string(
     src: *const u8,
@@ -65,7 +65,7 @@ pub(super) unsafe fn lex_string(
 /// substitution-closing `}`): `head_kind` if it ends in `${`, `flat_kind` if
 /// it closes or runs to EOF. Returns `(resume index, substitution opened)`;
 /// the caller pushes its own nesting frame.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn lex_template_segment(
     src: *const u8,
@@ -94,7 +94,7 @@ pub(super) unsafe fn lex_template_segment(
 
 /// The `/` dispatch shared by `carve` and `carve_jsx` JS mode: line comment,
 /// block comment, regex, `/=`, or a bare slash left for `coalesce`.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn lex_slash(
     src: *const u8,
@@ -146,7 +146,7 @@ pub(super) unsafe fn lex_slash(
 
 /// Lex the regex literal at `s` (the regex-vs-division decision is already
 /// made): body, flag run, diagnostics. Returns the resume index.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn lex_regex(
     src: *const u8,
@@ -185,7 +185,7 @@ unsafe fn lex_regex(
 /// Skip the payload of a brace-form unicode escape whose `{` is at `s`: the
 /// escape was already joined into its identifier by `misc_pre`, and its
 /// braces must not count toward substitution nesting.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn skip_unicode_brace_escape(
     src: *const u8,
@@ -207,7 +207,7 @@ pub(super) unsafe fn skip_unicode_brace_escape(
 /// (U+2028/U+2029). Stops at LS/PS too, so the hashbang scan cannot run
 /// through one. A 0xE2 that isn't LS/PS keeps scanning; the 2-byte confirm
 /// past a trailing 0xE2 reads the pad, which can never match 0x80.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub(super) unsafe fn find_line_terminator(
     src: *const u8,

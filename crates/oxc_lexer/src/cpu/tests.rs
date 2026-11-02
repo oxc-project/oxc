@@ -1,4 +1,4 @@
-use super::{BASELINE, Cpu, DynCpu, apply, cpu_select, cpu_version, cpu_versions, to_dyn};
+use super::{BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_select, cpu_version, to_dyn};
 
 #[cfg(target_arch = "x86_64")]
 use super::Avx2;
@@ -7,76 +7,76 @@ use super::Neon;
 #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 use crate::simd::{Vec128, Vec256};
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 const fn add_one(x: u32, _cpu: impl Cpu) -> u32 {
     x + 1
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 const unsafe fn read_byte(ptr: *const u8, _cpu: impl Cpu) -> u8 {
     // SAFETY: Caller guarantees `ptr` is valid for reads
     unsafe { *ptr }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 const fn larger<'a>(x: &'a u8, y: &'a u8, _cpu: impl Cpu) -> &'a u8 {
     if *x >= *y { x } else { y }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 const fn larger_at<'a, const N: usize>(xs: &'a [u8], ys: &'a [u8], _cpu: impl Cpu) -> &'a u8 {
     if xs[N] >= ys[N] { &xs[N] } else { &ys[N] }
 }
 
 // `T` can only be passed with a turbofish
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 const fn size<T>(_cpu: impl Cpu) -> usize {
     size_of::<T>()
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 const fn first<T: Copy, const N: usize>(xs: [T; N], _cpu: impl Cpu) -> T {
     xs[0]
 }
 
 // `T` might need dropping
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 const unsafe fn identity<T>(x: T, _cpu: impl Cpu) -> T {
     x
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 fn with_bounds<X, Y: Copy, Z: Into<u32>>(x: X, y: Y, z: Z, _cpu: impl Cpu) -> (X, Y, u32) {
     (x, y, z.into())
 }
 
 // `Q` is another generic parameter
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn param_in_bound<Q, Z: Into<Q>>(z: Z, _cpu: impl Cpu) -> Q {
     z.into()
 }
 
 // `>>` closes 2 `<`s, before the end of the generic parameters
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn nested<Z: Into<Vec<u8>>, W>(z: Z, w: W, _cpu: impl Cpu) -> (Vec<u8>, W) {
     (z.into(), w)
 }
 
 // `>>>>` is `>>` twice
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn nested_at_end<Z: Into<Vec<Vec<u8>>>>(z: Z, _cpu: impl Cpu) -> Vec<Vec<u8>> {
     z.into()
 }
 
 // `>>>` is `>>` then `>`
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn nested_3<Z: Into<Vec<Vec<u8>>>, W>(z: Z, w: W, _cpu: impl Cpu) -> (Vec<Vec<u8>>, W) {
     (z.into(), w)
 }
 
 // `<<` opens 2 `<`s
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn qualified_path<U: IntoIterator, Z: Into<<U as IntoIterator>::Item>>(
     z: Z,
     _cpu: impl Cpu,
@@ -84,34 +84,34 @@ fn qualified_path<U: IntoIterator, Z: Into<<U as IntoIterator>::Item>>(
     z.into()
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn multiple_bounds<'a, T: ?Sized + AsRef<[u8]> + 'a>(x: &'a T, _cpu: impl Cpu) -> &'a [u8] {
     x.as_ref()
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn lifetime_bounds<'a, 'b: 'a, T: 'b + Copy>(x: &'a &'b T, _cpu: impl Cpu) -> T {
     **x
 }
 
 // Bound contains `,` inside `(...)`, and `->`
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn fn_bound<F: Fn(u8, u8) -> Vec<u8>, W>(f: F, w: W, _cpu: impl Cpu) -> (Vec<u8>, W) {
     (f(1, 2), w)
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn higher_ranked<F: for<'x> Fn(&'x u8) -> &'x u8>(f: F, x: &u8, _cpu: impl Cpu) -> u8 {
     *f(x)
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn assoc_type<I: Iterator<Item = u8>>(iter: I, _cpu: impl Cpu) -> u32 {
     iter.map(u32::from).sum()
 }
 
 // Const and type parameters in any order, with a trailing comma
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[rustfmt::skip]
 fn mixed<A: Copy, const N: usize, B: Copy, const M: usize,>(
     a: [A; N],
@@ -121,7 +121,7 @@ fn mixed<A: Copy, const N: usize, B: Copy, const M: usize,>(
     (a[0], b[0])
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[expect(clippy::inline_always, reason = "tests an `#[inline(always)]` function")]
 #[inline(always)]
 const fn add_two(x: u32, _cpu: impl Cpu) -> u32 {
@@ -131,40 +131,40 @@ const fn add_two(x: u32, _cpu: impl Cpu) -> u32 {
 struct Counter(u32);
 
 impl Counter {
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     const fn plus(&self, x: u32, _cpu: impl Cpu) -> u32 {
         self.0 + x
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     const unsafe fn plus_byte(&self, ptr: *const u8, _cpu: impl Cpu) -> u32 {
         // SAFETY: Caller guarantees `ptr` is valid for reads
         self.0 + unsafe { *ptr } as u32
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     const fn at<'a, const N: usize>(&self, bytes: &'a [u8], _cpu: impl Cpu) -> &'a u8 {
         &bytes[self.0 as usize + N]
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     const fn plus_size<T>(&self, _cpu: impl Cpu) -> usize {
         self.0 as usize + size_of::<T>()
     }
 
     // `>>` ends the generic parameters. They go through `pastey`, unlike a function's.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     fn plus_len<const N: usize, Z: Into<Vec<u8>>>(&self, z: Z, _cpu: impl Cpu) -> usize {
         self.0 as usize + z.into().len() + N
     }
 
     // Bound mentions `Self`
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     fn plus_counter<Z: Into<Self>>(self, z: Z, _cpu: impl Cpu) -> u32 {
         self.0 + z.into().0
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[expect(clippy::inline_always, reason = "tests an `#[inline(always)]` method")]
     #[inline(always)]
     const fn minus(&self, x: u32, _cpu: impl Cpu) -> u32 {
@@ -182,7 +182,7 @@ struct Wrapper<W>(W);
 
 impl<W: Copy> Wrapper<W> {
     // Bound mentions the `impl`'s generic parameter
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     fn convert<T: From<W>>(&self, _cpu: impl Cpu) -> T {
         T::from(self.0)
     }
@@ -191,7 +191,7 @@ impl<W: Copy> Wrapper<W> {
 /// [`BASELINE`] as a [`DynCpu`].
 const BASELINE_DYN: DynCpu = to_dyn(BASELINE);
 
-/// Calls to `const` functions made with `cpu_versions!`, evaluated at compile time.
+/// Calls to `const` functions made with `#[cpu_multiversion]`, evaluated at compile time.
 const AT_COMPILE_TIME: [u32; 11] = {
     let bytes: [u8; 2] = [1, 2];
     [
@@ -273,19 +273,19 @@ fn generic_params() {
     }
 }
 
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline]
 fn double_avx2(x: u32, _cpu: Avx2) -> u32 {
     x * 2
 }
 
-#[apply(cpu_version(Neon))]
+#[cpu_version(Neon)]
 #[inline]
 fn double_neon(x: u32, _cpu: Neon) -> u32 {
     x * 2
 }
 
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 #[inline]
 fn double_generic(x: u32) -> u32 {
     x * 2
@@ -301,14 +301,14 @@ fn double(x: u32, cpu: impl Cpu) -> u32 {
     })
 }
 
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[expect(clippy::inline_always, reason = "tests an `#[inline(always)]` function")]
 #[inline(always)]
 fn triple_avx2(x: u32, _cpu: Avx2) -> u32 {
     x * 3
 }
 
-#[apply(cpu_version(Neon))]
+#[cpu_version(Neon)]
 #[expect(clippy::inline_always, reason = "tests an `#[inline(always)]` function")]
 #[inline(always)]
 fn triple_neon(x: u32, _cpu: Neon) -> u32 {
@@ -326,13 +326,13 @@ fn triple(x: u32, cpu: impl Cpu) -> u32 {
 }
 
 /// A `cpu` parameter doesn't have to be the last parameter.
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline]
 fn quadruple_avx2(_cpu: Avx2, x: u32) -> u32 {
     x * 4
 }
 
-#[apply(cpu_version(Neon))]
+#[cpu_version(Neon)]
 #[inline]
 fn quadruple_neon(_cpu: Neon, x: u32) -> u32 {
     x * 4
@@ -347,13 +347,13 @@ fn quadruple(x: u32, cpu: impl Cpu) -> u32 {
 }
 
 /// A vector parameter proves the CPU supports the feature set, in place of a `cpu` parameter.
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline]
 fn is_zero_avx2(v: Vec128<Avx2>) -> bool {
     v.is_zero()
 }
 
-#[apply(cpu_version(Neon))]
+#[cpu_version(Neon)]
 #[inline]
 fn is_zero_neon(v: Vec128<Neon>) -> bool {
     v.is_zero()
@@ -368,14 +368,14 @@ fn is_zero(cpu: impl Cpu) -> bool {
 }
 
 /// A vector parameter doesn't have to be the last parameter.
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[expect(clippy::inline_always, reason = "tests an `#[inline(always)]` function")]
 #[inline(always)]
 fn add_if_zero_avx2(x: u32, v: Vec256<Avx2>, y: u32) -> u32 {
     if v.is_zero() { x + y } else { x }
 }
 
-#[apply(cpu_version(Neon))]
+#[cpu_version(Neon)]
 #[expect(clippy::inline_always, reason = "tests an `#[inline(always)]` function")]
 #[inline(always)]
 fn add_if_zero_neon(x: u32, v: Vec256<Neon>, y: u32) -> u32 {
@@ -391,13 +391,13 @@ fn add_if_zero(x: u32, y: u32, cpu: impl Cpu) -> u32 {
 }
 
 /// An `unsafe` function isn't wrapped, so it has `#[target_feature]`, as well as being unsafe.
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline]
 unsafe fn halve_avx2(x: u32, _cpu: Avx2) -> u32 {
     x / 2
 }
 
-#[apply(cpu_version(Neon))]
+#[cpu_version(Neon)]
 #[inline]
 unsafe fn halve_neon(x: u32, _cpu: Neon) -> u32 {
     x / 2
@@ -419,7 +419,7 @@ macro_rules! wrapped_tests {
         mod $module {
             use super::*;
 
-            #[apply(cpu_version($cpu))]
+            #[cpu_version($cpu)]
             #[inline(never)]
             fn generics<'a, 'b: 'a, T: Copy + Into<u32>, const N: usize>(
                 mut xs: &'a [T; N],
@@ -434,14 +434,14 @@ macro_rules! wrapped_tests {
             }
 
             // `T` can only be passed with a turbofish
-            #[apply(cpu_version($cpu))]
+            #[cpu_version($cpu)]
             #[inline]
             const fn size<T>(_cpu: $cpu) -> usize {
                 size_of::<T>()
             }
 
             // `T` might need dropping
-            #[apply(cpu_version($cpu))]
+            #[cpu_version($cpu)]
             #[inline]
             const fn identity<T>(x: T, _cpu: $cpu) -> T {
                 x
@@ -449,7 +449,7 @@ macro_rules! wrapped_tests {
 
             // Only `v` proves the CPU supports the feature set, and it's not the last parameter.
             // Function has no inline attribute, and has a `,` after the last parameter.
-            #[apply(cpu_version($cpu))]
+            #[cpu_version($cpu)]
             fn add_if_zero(x: u32, v: Vec128<$cpu>, y: u32) -> u32 {
                 if v.is_zero() { x + y } else { x }
             }
@@ -457,38 +457,38 @@ macro_rules! wrapped_tests {
             struct Total(u32);
 
             impl Total {
-                #[apply(cpu_version($cpu))]
+                #[cpu_version($cpu)]
                 #[inline]
                 fn plus(&self, x: u32, _cpu: $cpu) -> u32 {
                     self.0 + x
                 }
 
-                #[apply(cpu_version($cpu))]
+                #[cpu_version($cpu)]
                 #[inline(never)]
                 fn add(&mut self, x: u32, _cpu: $cpu) {
                     self.0 += x;
                 }
 
                 // `Self` in the signature, and in the body
-                #[apply(cpu_version($cpu))]
+                #[cpu_version($cpu)]
                 fn doubled(self, _cpu: $cpu) -> Self {
                     Self(self.0 * 2)
                 }
 
-                #[apply(cpu_version($cpu))]
+                #[cpu_version($cpu)]
                 fn into_incremented(mut self, _cpu: $cpu) -> u32 {
                     self.0 += 1;
                     self.0
                 }
 
-                #[apply(cpu_version($cpu))]
+                #[cpu_version($cpu)]
                 #[inline]
                 const fn plus_size<T, const N: usize>(&self, _cpu: $cpu) -> usize {
                     self.0 as usize + size_of::<T>() + N
                 }
 
                 // Only `v` proves the CPU supports the feature set
-                #[apply(cpu_version($cpu))]
+                #[cpu_version($cpu)]
                 #[inline]
                 fn plus_if_zero(&self, x: u32, v: Vec128<$cpu>) -> u32 {
                     if v.is_zero() { self.0 + x } else { self.0 }
@@ -499,7 +499,7 @@ macro_rules! wrapped_tests {
 
             impl<W: Copy> Wrapper<W> {
                 // Bound mentions the `impl`'s generic parameter, and `>>` ends the generics
-                #[apply(cpu_version($cpu))]
+                #[cpu_version($cpu)]
                 #[inline]
                 fn convert<T: From<Vec<W>>>(&self, _cpu: $cpu) -> T {
                     T::from(vec![self.0])
@@ -538,13 +538,13 @@ wrapped_tests!(wrapped_avx2, Avx2);
 wrapped_tests!(wrapped_neon, Neon);
 
 /// Generics with `>>` and a `(...)` in them.
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 fn nth_mapped<T: Into<Vec<u8>>, F: FnOnce(u8) -> u8, const N: usize>(bytes: T, f: F) -> u8 {
     f(bytes.into()[N])
 }
 
 impl Counter {
-    #[apply(cpu_version(Generic))]
+    #[cpu_version(Generic)]
     const fn plus_generic(&self, x: u32) -> u32 {
         self.0 + x
     }

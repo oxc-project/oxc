@@ -1,5 +1,5 @@
 use crate::{
-    cpu::{Avx2, apply, cpu_version},
+    cpu::{Avx2, cpu_version},
     simd::{Vec128, Vec256},
     token::tk,
 };
@@ -9,7 +9,7 @@ use super::{
     punct1_luts::{PH_A, PH_B, PH_T},
 };
 
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline(never)]
 pub(super) unsafe fn classify_avx2(
     ts: bool,
@@ -120,7 +120,7 @@ pub(super) unsafe fn classify_avx2(
     }
 }
 
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline(always)]
 fn vpunct1(
     v: Vec256<Avx2>,

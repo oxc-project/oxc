@@ -1,7 +1,7 @@
 use std::ptr;
 
 use crate::{
-    cpu::{BASELINE, apply, cpu_version},
+    cpu::{BASELINE, cpu_version},
     token::tk,
 };
 
@@ -72,7 +72,7 @@ const fn cls_table(ts: bool) -> [u16; 256] {
     t
 }
 
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 #[inline(never)]
 pub(super) unsafe fn classify_generic(
     ts: bool,
@@ -169,7 +169,7 @@ pub(super) unsafe fn classify_generic(
     }
 }
 
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 #[inline(always)]
 fn pk(fw: u64, bit: u32) -> u64 {
     (((fw >> bit) & 0x0101_0101_0101_0101).wrapping_mul(0x0102_0408_1020_4080)) >> 56

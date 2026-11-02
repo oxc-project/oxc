@@ -37,7 +37,7 @@ use constcat::concat_slices;
 use oxc_data_structures::{assert_unchecked, branch_hints::unlikely, str::const_str_eq};
 
 use crate::{
-    cpu::{BASELINE, Cpu, apply, cpu_select, cpu_version, cpu_versions},
+    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_select, cpu_version},
     token::{KW_KIND_BASE, TokenKind},
 };
 
@@ -263,7 +263,7 @@ const REGEX_KW_MASK: u64 = {
     mask
 };
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub fn is_regex_keyword(kind: u8, _cpu: impl Cpu) -> bool {
     let i = kind.wrapping_sub(KW_KIND_BASE);
@@ -384,7 +384,7 @@ const fn kinds_table<const N: usize>(keywords: &[KeywordDef], is_ts: bool) -> [T
 }
 
 /// Get index into [`DISPS_JS`] or [`DISPS_TS`] for a word, from its first 2 bytes as a little-endian `u16`.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 const fn disps_index(first_2: u16, _cpu: impl Cpu) -> usize {
     ((first_2 as u32).wrapping_mul(DISPS_MUL) >> DISPS_SHIFT) as usize
@@ -396,7 +396,7 @@ const fn disps_index(first_2: u16, _cpu: impl Cpu) -> usize {
 ///
 /// Every entry in `DISPS_JS` is less than 64, so if `len` is at most 16, the result is less than 64.
 /// Therefore, result does not need masking to the table size.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 const fn keyword_hash_js(disp: u8, len: usize, _cpu: impl Cpu) -> usize {
     (disp as usize) ^ (len << 1)
@@ -406,7 +406,7 @@ const fn keyword_hash_js(disp: u8, len: usize, _cpu: impl Cpu) -> usize {
 ///
 /// `disp` is the entry in [`DISPS_TS`] for the word, and `last` is the last byte of the word.
 /// A non-ASCII last byte can take the hash up to 255, so it's masked to the table size.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 const fn keyword_hash_ts(disp: u8, len: usize, last: u8, _cpu: impl Cpu) -> usize {
     ((disp as usize) ^ (len << 1) ^ (last as usize)) & (SLOT_COUNT - 1)
@@ -423,7 +423,7 @@ const fn keyword_hash_ts(disp: u8, len: usize, last: u8, _cpu: impl Cpu) -> usiz
 ///
 /// Panics if `src` does not extend 16 bytes past `pos`.
 /// The source pad guarantees that for any word in the source.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub(super) fn kw_match_at(
     ts: bool,
@@ -467,7 +467,7 @@ pub(super) fn kw_match_at(
 ///
 /// * `ptr` must be valid for reading 16 bytes.
 /// * `len` must be between 1 and 16 (inclusive).
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn kw_match<const IS_TS: bool>(
     ptr: *const u8,
@@ -504,7 +504,7 @@ pub(super) unsafe fn kw_match<const IS_TS: bool>(
 /// # SAFETY
 ///
 /// `ptr` must be valid for reading 16 bytes, and `len` must be between 0 and 16 (inclusive).
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2], cpu: impl Cpu) -> bool {
     cpu_select!(cpu, {
@@ -519,7 +519,7 @@ unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2], cpu: impl Cp
 /// # SAFETY
 ///
 /// Same as [`text_matches`].
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline(always)]
 unsafe fn text_matches_avx2(ptr: *const u8, len: usize, text: &[u64; 2], cpu: Avx2) -> bool {
     let word = Vec128::load_unaligned(ptr, cpu);
@@ -534,7 +534,7 @@ unsafe fn text_matches_avx2(ptr: *const u8, len: usize, text: &[u64; 2], cpu: Av
 /// # SAFETY
 ///
 /// Same as [`text_matches`].
-#[apply(cpu_version(Neon))]
+#[cpu_version(Neon)]
 #[inline(always)]
 unsafe fn text_matches_neon(ptr: *const u8, len: usize, text: &[u64; 2], cpu: Neon) -> bool {
     let word = Vec128::load_unaligned(ptr, cpu);
@@ -549,7 +549,7 @@ unsafe fn text_matches_neon(ptr: *const u8, len: usize, text: &[u64; 2], cpu: Ne
 /// # SAFETY
 ///
 /// Same as [`text_matches`].
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 #[inline(always)]
 unsafe fn text_matches_generic(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
     use ptr::read_unaligned;
@@ -568,7 +568,7 @@ unsafe fn text_matches_generic(ptr: *const u8, len: usize, text: &[u64; 2]) -> b
 /// # Panics
 ///
 /// Panics if `len` is greater than 16.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 fn len_mask(len: usize, _cpu: impl Cpu) -> &'static [u8; 16] {
     LEN_MASK_WINDOW.0[16 - len..].first_chunk::<16>().unwrap()

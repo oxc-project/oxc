@@ -1,7 +1,7 @@
 use oxc_span::Span;
 
 use crate::{
-    cpu::{Cpu, DynCpu, apply, cpu_select, cpu_versions},
+    cpu::{Cpu, DynCpu, cpu_multiversion, cpu_select},
     token::{SPAN_SENTINELS, tk},
 };
 
@@ -20,7 +20,7 @@ mod common;
 const STAGE_BLOCKS: usize = 32;
 pub const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 pub unsafe fn compress(
     src: &[u8],
@@ -58,7 +58,7 @@ pub unsafe fn compress(
     w
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8, _cpu: impl Cpu) {
     let eof = u64::from(n) | (u64::from(n) << 32);
     for s in 0..SPAN_SENTINELS {
@@ -80,7 +80,7 @@ pub(super) fn init_pair_luts(cpu: DynCpu) {
     });
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn compress_blocks(
     st: *const u64,
@@ -98,7 +98,7 @@ unsafe fn compress_blocks(
     })
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn build_spans(
     stage_kind: *const u8,
@@ -115,7 +115,7 @@ unsafe fn build_spans(
     })
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn lanes_post(
     src: &[u8],

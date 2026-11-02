@@ -172,6 +172,7 @@ oxc_formatter_toml = { path = "crates/oxc_formatter_toml" } # TOML formatter
 oxc_formatter_yaml = { path = "crates/oxc_formatter_yaml" } # YAML formatter
 oxc_language_server = { path = "crates/oxc_language_server", default-features = false } # Language server
 oxc_lexer = { path = "crates/oxc_lexer" } # JS/TS lexer (incubating; AVX2, Neon, and generic implementations)
+oxc_lexer_macros = { path = "crates/oxc_lexer_macros" } # Proc macros for `oxc_lexer`
 oxc_linter = { path = "crates/oxc_linter" } # Linting engine
 oxc_macros = { path = "crates/oxc_macros" } # Proc macros
 oxc_tasks_common = { path = "tasks/common" } # Task utilities
@@ -232,7 +233,6 @@ itertools = "0.15.0" # Iterator utilities
 itoa = "1.0.18" # Integer to string
 language-tags = "0.3.2" # Language tag parsing
 lazy-regex = "3.6.0" # Lazy regex compilation
-macro_rules_attr = "0.2.0" # Use `macro_rules!` macros as attributes
 markdown = "1.0.0" # Markdown parsing
 memchr = "2.8.2" # Fast byte searching
 mimalloc-safe = "0.1.64" # Fast allocator
@@ -248,7 +248,6 @@ oxc-markdown-parser = "0.0.3" # CommonMark + GFM parser (span-faithful, style-pr
 oxc-toml = "0.15.1" # TOML parser and formatter
 oxc-yaml-parser = "0.0.7" # YAML 1.2 parser (comment-preserving typed AST, node naming from `yaml-unist-parser`)
 papaya = { version = "0.2.5", default-features = false } # Concurrent hash map
-pastey = "0.2.3" # Identifier concatenation in declarative macros
 percent-encoding = "2.3.2" # URL encoding
 petgraph = { version = "0.8.3", default-features = false } # Graph data structures
 phf = "0.14.0" # Perfect hash function
@@ -315,6 +314,7 @@ debug = false
 # Compile macros with some optimizations to make consuming crates build faster
 oxc_macros.opt-level = 1
 oxc_ast_macros.opt-level = 1
+oxc_lexer_macros.opt-level = 1
 # Compile insta and its dependencies in release mode for faster snapshot tests
 # See: https://insta.rs/docs/quickstart/#optional-faster-runs
 insta.opt-level = 3

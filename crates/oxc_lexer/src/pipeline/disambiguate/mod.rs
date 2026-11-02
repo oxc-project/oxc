@@ -22,7 +22,7 @@
 //! buffers, and keeps what it learns across the lex in a [`DisambiguateState`] the lexer owns.
 //! [`common`] holds the parts both questions need.
 
-use crate::cpu::{Cpu, apply, cpu_versions};
+use crate::cpu::{Cpu, cpu_multiversion};
 
 mod common;
 mod context;
@@ -76,7 +76,7 @@ impl Default for DisambiguateState {
 
 impl DisambiguateState {
     /// A new lex over `n` bytes of a script or module.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     pub fn begin(&mut self, n: usize, module: bool, cpu: impl Cpu) {
         self.walks.restart(module, cpu);
         self.brackets.begin(n, cpu);
@@ -84,7 +84,7 @@ impl DisambiguateState {
     }
 
     /// `coalesce` starts asking: it sees keyword kinds `carve` did not, so the walks start over.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     pub fn restart(&mut self, module: bool, cpu: impl Cpu) {
         self.walks.restart(module, cpu);
         // carve has hidden the JSX brackets these were computed over.

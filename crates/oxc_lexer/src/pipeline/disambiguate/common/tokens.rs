@@ -1,7 +1,7 @@
 //! The token stream as the disambiguation questions read it.
 
 use crate::{
-    cpu::{BASELINE, Cpu, apply, cpu_versions},
+    cpu::{BASELINE, Cpu, cpu_multiversion},
     token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk},
 };
 
@@ -70,7 +70,7 @@ impl Prev {
 
 impl Tokens<'_> {
     /// Base kind: keywords back to `tk!(Ident)`, escaped names to their plain kind.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline(always)]
     pub fn base_kind(&self, pos: usize, _cpu: impl Cpu) -> u8 {
         let k = self.kind[pos];
@@ -87,7 +87,7 @@ impl Tokens<'_> {
     }
 
     /// Keyword code of the word at `pos` of `len` bytes (0 for a plain identifier).
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     pub fn word_kw(&self, pos: usize, len: usize, cpu: impl Cpu) -> u8 {
         let raw = self.kind[pos];
@@ -106,7 +106,7 @@ impl Tokens<'_> {
     }
 
     /// Keyword code of the word at `w` (0 for a plain name).
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline(always)]
     pub fn ident_kw(&self, w: usize, cpu: impl Cpu) -> u8 {
         let e = self.next_start(w + 1, cpu);
@@ -114,14 +114,14 @@ impl Tokens<'_> {
     }
 
     /// The token start at or after `i`, or `n`.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline(always)]
     pub fn next_start(&self, i: usize, cpu: impl Cpu) -> usize {
         bits::next1(self.st, i, self.n, cpu)
     }
 
     /// The significant token start at or after `i` (skipping trivia), or `n`.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     pub fn next_sig(&self, mut i: usize, cpu: impl Cpu) -> usize {
         loop {
@@ -137,7 +137,7 @@ impl Tokens<'_> {
         }
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     pub fn peek(&self, i: usize, cpu: impl Cpu) -> Peek {
         let pos = self.next_sig(i, cpu);
@@ -146,14 +146,14 @@ impl Tokens<'_> {
     }
 
     /// The significant token start before `pos` (skipping trivia), or `None` at the start.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     pub fn prev_sig(&self, pos: usize, cpu: impl Cpu) -> Option<usize> {
         walk::prev_sig(self.st, self.kind, pos, cpu)
     }
 
     /// The significant token before `p`.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     pub fn prev_token(&self, p: usize, cpu: impl Cpu) -> Prev {
         let Some(q) = self.prev_sig(p, cpu) else {
             return Prev::None;
@@ -169,7 +169,7 @@ impl Tokens<'_> {
     }
 
     /// Is the word at `w` a property name (`x.if`, `x?.if`)?
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     pub fn property_name(&self, w: usize, cpu: impl Cpu) -> bool {
         self.prev_sig(w, cpu)
@@ -177,7 +177,7 @@ impl Tokens<'_> {
     }
 
     /// Is the operator at q a member access dot, not a spread dot or the start of ?.5?
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     pub fn member_dot(&self, q: usize, cpu: impl Cpu) -> bool {
         let src = self.src;
@@ -194,7 +194,7 @@ impl Tokens<'_> {
     }
 
     /// Does the . at q end a decimal integer literal (1.) rather than access a member?
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     pub fn numeric_dot(&self, q: usize, cpu: impl Cpu) -> bool {
         let Some(p) = bits::prev1(self.st, q, cpu) else {
             return false;
@@ -209,7 +209,7 @@ impl Tokens<'_> {
 
     /// Number of `c` bytes the token at `p` starts with (a fused `>>>` counts three, a lone `>`
     /// one).
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     pub fn run_len(&self, p: usize, c: u8, cpu: impl Cpu) -> i32 {
         let e = self.next_start(p + 1, cpu);
         let mut i = p;
@@ -259,14 +259,14 @@ impl Tokens<'_> {
     }
 
     /// Does a line terminator lie in `a..b`?
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     pub fn line_break_between(&self, a: usize, b: usize, cpu: impl Cpu) -> bool {
         line_break_in(self.src, a, b, cpu)
     }
 
     /// Does the identifier at `pos` equal exactly `kw`?
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline(always)]
     pub fn ident_is(&self, pos: usize, kw: &[u8], cpu: impl Cpu) -> bool {
         walk::ident_is(self.src, pos, kw, cpu)
@@ -274,7 +274,7 @@ impl Tokens<'_> {
 
     /// The opener of the `)`, `]` or `}` at `from`, or `None` if unbalanced
     /// (see [`walk::match_delim_back`]).
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     pub fn match_delim_back(&self, from: usize, cpu: impl Cpu) -> Option<usize> {
         let (open, close) = match self.src[from] {

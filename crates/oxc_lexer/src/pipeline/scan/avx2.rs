@@ -1,11 +1,11 @@
 use crate::{
-    cpu::{Avx2, apply, cpu_version},
+    cpu::{Avx2, cpu_version},
     simd::Vec256,
 };
 
 use super::common::lic_verify_at;
 
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 pub unsafe fn scan_block_comment_avx2(
     src: *const u8,
     n: usize,
@@ -59,7 +59,7 @@ pub unsafe fn scan_block_comment_avx2(
 /// metadata. A 0xE2 that isn't LS/PS (typographic punctuation in prose) is
 /// cleared from the mask and the scan continues; the LS/PS confirm can read
 /// the pad, which never matches 0x80.
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 pub unsafe fn scan_line_comment_avx2(
     src: *const u8,
     n: usize,
@@ -113,7 +113,7 @@ pub unsafe fn scan_line_comment_avx2(
     (n, lic_q)
 }
 
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline(always)]
 unsafe fn lic_first(src: *const u8, base: usize, mut am: u32, cpu: Avx2) -> i64 {
     while am != 0 {

@@ -1,4 +1,4 @@
-use crate::cpu::{BASELINE, Cpu, apply, cpu_versions};
+use crate::cpu::{BASELINE, Cpu, cpu_multiversion};
 
 use super::{
     common::Tokens,
@@ -84,14 +84,14 @@ impl Walks {
         true
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[cfg(test)]
     #[inline(always)]
     pub(super) fn run_rules(&self, _cpu: impl Cpu) -> bool {
         !self.full_walk_only && !self.no_run_rules
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[cfg(not(test))]
     #[inline(always)]
     pub(super) fn run_rules(&self, _cpu: impl Cpu) -> bool {
@@ -100,7 +100,7 @@ impl Walks {
 
     /// A new lex, or a new pass over it by a stage that sees other token kinds: the full walk
     /// starts over and the bounded walks get a new budget.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     pub(super) fn restart(&mut self, module: bool, cpu: impl Cpu) {
         self.full.reset(module, cpu);
         self.spent = 0;

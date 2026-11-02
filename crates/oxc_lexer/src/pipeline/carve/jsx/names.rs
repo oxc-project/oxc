@@ -1,6 +1,6 @@
 use std::ptr;
 
-use crate::cpu::{Cpu, apply, cpu_versions};
+use crate::cpu::{Cpu, cpu_multiversion};
 
 use crate::pipeline::{
     bitmap::bm_next0,
@@ -9,7 +9,7 @@ use crate::pipeline::{
     scan::scan_block_comment,
 };
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub(super) unsafe fn jsx_names_equal_fast(
     src: *const u8,
@@ -46,14 +46,14 @@ pub(super) unsafe fn jsx_names_equal_fast(
 
 /// Is the byte at `i` part of a JSX name? A non-ASCII lead byte is, unless it starts Unicode
 /// whitespace (`</a\u{a0}>` closes `a`).
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 unsafe fn is_jsx_name_byte_at(src: *const u8, i: usize, cpu: impl Cpu) -> bool {
     let c = *src.add(i);
     is_jsx_name_byte(c, cpu) && (c < 0x80 || unicode_ws_len_at_unchecked(src, i, cpu) == 0)
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 unsafe fn jsx_name_continues_after(src: *const u8, lim: usize, i: usize, cpu: impl Cpu) -> bool {
     let t = jsx_skip_trivia(src, lim, i, cpu);
     t < lim && matches!(*src.add(t), b'.' | b':')
@@ -62,7 +62,7 @@ unsafe fn jsx_name_continues_after(src: *const u8, lim: usize, i: usize, cpu: im
 /// [`jsx_skip_trivia`] with the hot shapes inline: nothing to skip (`<div`), or plain spaces
 /// before a name byte (`<T extends`). Anything else (a comment, other whitespace, a
 /// non-ASCII lead) takes the full skip. Kept inline: this runs once per JSX element.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn jsx_skip_trivia_fast(
     src: *const u8,
@@ -81,7 +81,7 @@ pub(super) unsafe fn jsx_skip_trivia_fast(
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 pub(super) unsafe fn jsx_skip_trivia(
     src: *const u8,
     n: usize,
@@ -125,7 +125,7 @@ pub(super) unsafe fn jsx_skip_trivia(
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 unsafe fn jsx_names_equal(
     src: *const u8,
     n: usize,
@@ -156,7 +156,7 @@ unsafe fn jsx_names_equal(
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 unsafe fn jsx_name_next(
     src: *const u8,
     i: usize,
@@ -177,7 +177,7 @@ unsafe fn jsx_name_next(
     if after_sep || (t < lim && matches!(*src.add(t), b'.' | b':')) { t } else { i }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 pub(super) unsafe fn jsx_name_end(src: *const u8, n: usize, mut i: usize, cpu: impl Cpu) -> usize {
     while i < n && is_jsx_name_byte(*src.add(i), cpu) {
         i += 1;
@@ -185,7 +185,7 @@ pub(super) unsafe fn jsx_name_end(src: *const u8, n: usize, mut i: usize, cpu: i
     i
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 fn is_jsx_name_byte(c: u8, cpu: impl Cpu) -> bool {
     is_word(c, cpu) || matches!(c, b'.' | b':' | b'-')

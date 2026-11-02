@@ -1,7 +1,7 @@
 use std::mem::{self, MaybeUninit};
 
 use crate::{
-    cpu::{Avx2, apply, cpu_version},
+    cpu::{Avx2, cpu_version},
     simd::Vec256,
 };
 
@@ -11,7 +11,7 @@ const BRACKET_BYTES: [u8; 6] = [b'(', b')', b'[', b'{', b']', b'}'];
 /// First byte at or after i that is one of needles, or n.
 ///
 /// Needle order matters for speed. See comment on [`any_of`] below.
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline]
 pub unsafe fn find_avx2<const K: usize>(
     src: *const u8,
@@ -37,7 +37,7 @@ pub unsafe fn find_avx2<const K: usize>(
 }
 
 /// Bits of the 64 bytes at `base` that are brackets (`(){}[]`): bit `i` for byte `base + i`.
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline]
 pub fn bracket_bits_avx2(src: &[u8], base: usize, cpu: Avx2) -> u64 {
     let block = &src[base..base + 64];
@@ -65,7 +65,7 @@ pub fn bracket_bits_avx2(src: &[u8], base: usize, cpu: Avx2) -> u64 {
 // LLVM only does this when the 2 compares are OR-ed together directly,
 // i.e. when the bytes are at indexes `2 * j` and `2 * j + 1` in `needles`.
 // The byte sets passed to `find` are ordered to make such pairs.
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline(always)]
 fn any_of<const N: usize>(v: Vec256<Avx2>, needles: [u8; N]) -> Vec256<Avx2> {
     let mut m = array_map(needles, |c| v.eq_u8(c), v.cpu());
@@ -87,7 +87,7 @@ fn any_of<const N: usize>(v: Vec256<Avx2>, needles: [u8; N]) -> Vec256<Avx2> {
 ///
 /// `map` is `std` code, which is compiled without AVX2.
 /// If LLVM doesn't inline it into the caller, it calls the intrinsics out of line.
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline(always)]
 fn array_map<T, U, const N: usize>(array: [T; N], f: impl Fn(T) -> U, _cpu: Avx2) -> [U; N] {
     // If `f` panics, the values already in `out` aren't dropped. Ensure that can't leak memory.

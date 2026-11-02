@@ -22,7 +22,7 @@
 //!   the operator, and the line breaks after which a declaration ends without a semicolon.
 
 use crate::{
-    cpu::{Cpu, apply, cpu_versions},
+    cpu::{Cpu, cpu_multiversion},
     token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
 };
 
@@ -55,7 +55,7 @@ mod tests;
 ///
 /// The previous significant token decides most cases; `}`, `yield` / `await`, `of`, a TS `>` and
 /// the TS line-break cases depend on unbounded left context and ask [`context`].
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: impl Cpu) -> bool {
     let ts = tokens.ts;
     let module = tokens.module;
@@ -152,7 +152,7 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: 
 }
 
 /// Does a line break between e and p end the declaration the token at q completes?
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn ends_decl(
     tokens: &Tokens,
     walks: &mut Walks,
@@ -164,7 +164,7 @@ fn ends_decl(
     tokens.line_break_between(e, p, cpu) && context::after(tokens, walks, q) == After::EndsDecl
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn paren_close_is_regex(tokens: &Tokens, qi: usize, cpu: impl Cpu) -> bool {
     let word = |p: Option<usize>| {
         p.filter(|&w| tokens.kind[w] == tk!(Ident) && !tokens.property_name(w, cpu))

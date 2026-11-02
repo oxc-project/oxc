@@ -1,4 +1,4 @@
-use crate::cpu::{Cpu, apply, cpu_versions};
+use crate::cpu::{Cpu, cpu_multiversion};
 
 use crate::pipeline::lanes::Lanes;
 
@@ -10,7 +10,7 @@ mod jsx;
 use js::carve_js;
 use jsx::carve_jsx;
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 pub unsafe fn carve(
     srcs: &[u8],

@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use rustc_hash::FxHashMap;
 
-use crate::cpu::{Cpu, apply, cpu_versions};
+use crate::cpu::{Cpu, cpu_multiversion};
 
 #[derive(Clone, Copy)]
 pub struct Resolved {
@@ -11,7 +11,7 @@ pub struct Resolved {
 }
 
 impl Resolved {
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     pub fn closer(self, _cpu: impl Cpu) -> Option<usize> {
         self.closer.map(|c| c as usize)
     }
@@ -35,12 +35,12 @@ pub struct Closers {
 }
 
 impl Closers {
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     pub fn clear(&mut self, _cpu: impl Cpu) {
         self.memo.get_mut().clear();
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     pub fn get(&self, pos: usize, _cpu: impl Cpu) -> Option<Resolved> {
         let memo = self.memo.borrow();
@@ -50,13 +50,13 @@ impl Closers {
         memo.get(&(pos as u32)).copied()
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     pub fn set(&self, pos: usize, closer: Option<usize>, _cpu: impl Cpu) {
         let closer = closer.map(|c| c as u32);
         self.memo.borrow_mut().insert(pos as u32, Resolved { closer, args: None });
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     pub fn set_args(&self, lt: usize, yes: bool, _cpu: impl Cpu) {
         let mut memo = self.memo.borrow_mut();
         if memo.is_empty() {

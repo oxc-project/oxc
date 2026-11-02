@@ -1,6 +1,6 @@
 use std::slice;
 
-use crate::cpu::{Cpu, apply, cpu_versions};
+use crate::cpu::{Cpu, cpu_multiversion};
 
 use crate::pipeline::{
     bytes::{hex_val, is_digit, is_word},
@@ -14,7 +14,7 @@ use crate::pipeline::{
 /// into a range check, which is 1 op shorter but makes the chain to the exit branch 1 op longer.
 const REGEX_BYTES: [u8; 7] = [b'\\', b']', b'\n', b'\r', b'/', b'[', 0xE2];
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub unsafe fn scan_quoted(
     src: *const u8,
@@ -48,7 +48,7 @@ pub unsafe fn scan_quoted(
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub unsafe fn scan_regex(
     src: *const u8,
@@ -129,7 +129,7 @@ pub unsafe fn scan_regex(
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub unsafe fn scan_tmpl_text(
     src: *const u8,
@@ -161,7 +161,7 @@ pub unsafe fn scan_tmpl_text(
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub unsafe fn scan_ident_esc(src: *const u8, n: usize, p: usize, cpu: impl Cpu) -> usize {
     let mut i = p;
@@ -193,7 +193,7 @@ pub unsafe fn scan_ident_esc(src: *const u8, n: usize, p: usize, cpu: impl Cpu) 
     i
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub unsafe fn scan_number(src: *const u8, n: usize, pos: usize, cpu: impl Cpu) -> usize {
     if *src.add(pos) == b'0' && pos + 1 < n {
@@ -254,7 +254,7 @@ pub unsafe fn scan_number(src: *const u8, n: usize, pos: usize, cpu: impl Cpu) -
     i
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 unsafe fn scan_fraction_exponent(
     src: *const u8,
@@ -283,7 +283,7 @@ unsafe fn scan_fraction_exponent(
     (i, is_float)
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn lic_verify_at(src: *const u8, q: usize, _cpu: impl Cpu) -> bool {
     let c1 = *src.add(q + 1);

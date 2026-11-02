@@ -10,7 +10,7 @@
 //!   A `(` can, as in `f<T>(x)`. An identifier can't, as in `a < b > c`.
 
 use crate::{
-    cpu::{Cpu, apply, cpu_versions},
+    cpu::{Cpu, cpu_multiversion},
     pipeline::bytes::{is_digit, is_id_start, line_break_in},
     token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
 };
@@ -24,7 +24,7 @@ use super::bytes::{
     list_closer, raw_template_end, skip_raw_literal, skip_trivia_fwd, skip_trivia_nl,
 };
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn gt_follower(tokens: &Tokens, i: usize, cpu: impl Cpu) -> bool {
     let (src, n) = (tokens.src, tokens.n);
     let (i, broke) = skip_trivia_nl(src, n, i, cpu);
@@ -57,7 +57,7 @@ fn gt_follower(tokens: &Tokens, i: usize, cpu: impl Cpu) -> bool {
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[rustfmt::skip::macros(matches_tk)]
 fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool {
     let Tokens { src, st, kind, .. } = *tokens;
@@ -356,7 +356,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
 }
 
 /// A keyword that is a whole type by itself, as any, null or this, and takes no type arguments.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[rustfmt::skip::macros(matches_tk)]
 pub fn keyword_type(kw: u8, _cpu: impl Cpu) -> bool {
     matches_tk!(
@@ -366,7 +366,7 @@ pub fn keyword_type(kw: u8, _cpu: impl Cpu) -> bool {
     )
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 #[rustfmt::skip::macros(matches_tk)]
 fn type_illegal_kind(k: u8, _cpu: impl Cpu) -> bool {
@@ -383,7 +383,7 @@ fn type_illegal_kind(k: u8, _cpu: impl Cpu) -> bool {
 /// position: a balanced list whose contents are types and whose closer is followed by a token that
 /// cannot start an expression. In a type, every `<` after a name opens a list, so a `<` this
 /// accepts opens one in any context.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 pub fn type_args_at(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
     let closers = tokens.closers;
     if let Some(yes) = closers.get(lt, cpu).and_then(|r| r.args) {
@@ -394,14 +394,14 @@ pub fn type_args_at(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
     yes
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn list_is_type_args(tokens: &Tokens, lt: usize, gt: usize, cpu: impl Cpu) -> bool {
     !matches!(tokens.src[gt + 1], b'=' | b'>')
         && gt_follower(tokens, gt + 1, cpu)
         && type_list_legal(tokens, lt + 1, gt, cpu)
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 #[rustfmt::skip::macros(matches_tk)]
 fn type_prefix_kind(k: u8, _cpu: impl Cpu) -> bool {

@@ -1,5 +1,5 @@
 use crate::{
-    cpu::{Cpu, apply, cpu_versions},
+    cpu::{Cpu, cpu_multiversion},
     error::DiagCode,
     token::tk,
 };
@@ -11,7 +11,7 @@ use crate::pipeline::{
     scan::scan_ident_esc,
 };
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 pub unsafe fn misc_pre(
     src: *const u8,
@@ -41,7 +41,7 @@ pub unsafe fn misc_pre(
 /// copy pays nothing for it.
 ///
 /// `#[inline(always)]` so it gets compiled as part of each of [`misc_pre`]'s entry points.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn misc_pre_impl<const VUTF8: bool>(
     src: *const u8,
@@ -153,7 +153,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
 /// bytes after the lead. Second-byte ranges are per-lead, so overlongs,
 /// surrogates, and out-of-range sequences report the same maximal subpart
 /// as `std::str::from_utf8`'s `error_len`.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 unsafe fn utf8_seq_check(src: *const u8, p: usize, n: usize, _cpu: impl Cpu) -> (bool, usize) {
     let (need, lo, hi): (usize, u8, u8) = match *src.add(p) {

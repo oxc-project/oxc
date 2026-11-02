@@ -1,10 +1,10 @@
-use crate::cpu::{BASELINE, apply, cpu_version};
+use crate::cpu::{BASELINE, cpu_version};
 
 use crate::pipeline::chunk::{eqm, load64};
 
 use super::common::lic_verify_at;
 
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 pub unsafe fn scan_block_comment_generic(
     src: *const u8,
     n: usize,
@@ -59,7 +59,7 @@ pub unsafe fn scan_block_comment_generic(
 /// metadata. A 0xE2 that isn't LS/PS (typographic punctuation in prose) is
 /// cleared from the mask and the scan continues; the LS/PS confirm can read
 /// the pad, which never matches 0x80.
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 pub unsafe fn scan_line_comment_generic(src: *const u8, n: usize, mut i: usize) -> (usize, i64) {
     let cpu = BASELINE;
 
@@ -110,7 +110,7 @@ pub unsafe fn scan_line_comment_generic(src: *const u8, n: usize, mut i: usize) 
     (n, lic_q)
 }
 
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 #[inline(always)]
 unsafe fn lic_first8(src: *const u8, base: usize, mut am: u64) -> i64 {
     let cpu = BASELINE;

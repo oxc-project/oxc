@@ -70,7 +70,7 @@
 /// `Generic(...) =>` is rewritten to `DynCpu::Generic(...) =>`, with no `#[cfg]` attribute.
 /// All other tokens are copied unchanged, so the arm bodies are parsed by the `match` itself.
 ///
-/// State is a set of named slots, like in `cpu_versions!`:
+/// State is a set of named slots:
 ///
 /// * `rest` is the tokens which haven't been consumed yet.
 /// * `seen` lists the arms which have been seen so far (e.g. `[ avx2, neon ]`).

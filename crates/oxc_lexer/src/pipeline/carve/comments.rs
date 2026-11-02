@@ -1,7 +1,7 @@
 use oxc_ast::{Comment, CommentContent, CommentKind};
 
 use crate::{
-    cpu::{BASELINE, Cpu, apply, cpu_versions},
+    cpu::{BASELINE, Cpu, cpu_multiversion},
     error::DiagCode,
     token::tk,
 };
@@ -15,7 +15,7 @@ use crate::pipeline::{
 use super::common::find_line_terminator;
 
 /// Lex the `//` line comment at `s`. Returns the resume index.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn lex_line_comment(
     src: *const u8,
@@ -45,7 +45,7 @@ pub(super) unsafe fn lex_line_comment(
 
 /// Lex the `/*` block comment at `s` (unterminated at EOF is diagnosed).
 /// Returns the resume index.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn lex_block_comment(
     src: *const u8,
@@ -109,7 +109,7 @@ pub(super) unsafe fn lex_block_comment(
 /// Annex B B.1.1: does the `<` at `s` open a `<!--` comment? Always in a script; in a module
 /// only at line start, where it is diagnosed rather than read as operators. Shared by `carve`
 /// and `carve_jsx` JS mode: the goal, not the JSX setting, decides.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) fn html_open_comment_at(
     srcs: &[u8],
@@ -169,7 +169,7 @@ pub(super) unsafe fn lex_html_open_comment(
 
 /// Annex B B.1.3: does the `>` at `s` end a `-->` that opens a comment? Only in a script, and
 /// only at line start.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) fn html_close_comment_at(srcs: &[u8], s: usize, module: bool, cpu: impl Cpu) -> bool {
     !module
@@ -233,7 +233,7 @@ pub(super) unsafe fn lex_html_close_comment(
 /// back must reach a LineTerminator (or start of input) crossing nothing but
 /// whitespace and block comments; a newline inside a crossed block comment
 /// also qualifies. Cold: called only on a literal `-->`.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn html_close_at_line_start(src: &[u8], mut q: usize, _cpu: impl Cpu) -> bool {
     loop {
         if q == 0 {
@@ -276,14 +276,14 @@ fn html_close_at_line_start(src: &[u8], mut q: usize, _cpu: impl Cpu) -> bool {
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 fn classify_exact(body: &[u8], is_block: bool, cpu: impl Cpu) -> CommentContent {
     let lic = contains_license_or_preserve(body, cpu);
     classify(body, is_block, lic, cpu)
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 fn comment_body(src: &[u8], start: u32, end: u32, is_block: bool, _cpu: impl Cpu) -> &[u8] {
     let (lo, hi) = if is_block {
@@ -296,7 +296,7 @@ fn comment_body(src: &[u8], start: u32, end: u32, is_block: bool, _cpu: impl Cpu
     &src[lo..hi]
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn contains_license_or_preserve(hay: &[u8], _cpu: impl Cpu) -> bool {
     if hay.len() < 9 {
         return false;
@@ -317,7 +317,7 @@ fn contains_license_or_preserve(hay: &[u8], _cpu: impl Cpu) -> bool {
     false
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 fn classify(bytes: &[u8], is_block: bool, lic: bool, cpu: impl Cpu) -> CommentContent {
     if bytes.is_empty() {
@@ -402,15 +402,15 @@ fn classify(bytes: &[u8], is_block: bool, lic: bool, cpu: impl Cpu) -> CommentCo
     if lic { CommentContent::Legal } else { CommentContent::None }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn is_property_key_annotation(bytes: &[u8], _cpu: impl Cpu) -> bool {
     std::str::from_utf8(bytes)
         .is_ok_and(|source| matches!(source.trim().strip_prefix(['@', '#']), Some("__KEY__")))
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn is_coverage_ignore_file(source: &[u8], cpu: impl Cpu) -> bool {
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     fn starts_with_directive(source: &[u8], directive: &[u8], _cpu: impl Cpu) -> bool {
         source
             .strip_prefix(directive)
@@ -421,12 +421,12 @@ fn is_coverage_ignore_file(source: &[u8], cpu: impl Cpu) -> bool {
         || starts_with_directive(source, b"istanbul ignore file", cpu)
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn has_nl_cr(bytes: &[u8], _cpu: impl Cpu) -> bool {
     bytes.iter().any(|&b| b == b'\n' || b == b'\r')
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 fn push_comment_record(
     src: &[u8],
@@ -462,7 +462,7 @@ fn push_comment_record(
     lanes.comments.push(c);
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 fn is_lex_ws(c: u8, _cpu: impl Cpu) -> bool {
     matches!(c, b' ' | b'\t' | b'\n' | b'\r' | 0x0b | 0x0c)

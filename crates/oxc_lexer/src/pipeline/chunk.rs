@@ -1,6 +1,6 @@
 use std::ptr;
 
-use crate::cpu::{apply, cpu_version};
+use crate::cpu::cpu_version;
 
 /// Load 64 bits starting at byte `i` as a `u64`.
 ///
@@ -9,7 +9,7 @@ use crate::cpu::{apply, cpu_version};
 /// # SAFETY
 ///
 /// `src.add(i)` must be valid for reads of 8 bytes.
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 #[inline(always)]
 pub unsafe fn load64(src: *const u8, i: usize) -> u64 {
     ptr::read_unaligned(src.add(i) as *const u64)
@@ -22,7 +22,7 @@ pub unsafe fn load64(src: *const u8, i: usize) -> u64 {
 ///
 /// On a little-endian target, `trailing_zeros() >> 3` gives the offset of the first match.
 /// This is the SWAR counterpart of `Vec256::eq_u8` followed by `Vec256::movemask`.
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 #[inline(always)]
 pub fn eqm(x: u64, b: u8) -> u64 {
     let lo = 0x0101_0101_0101_0101u64;

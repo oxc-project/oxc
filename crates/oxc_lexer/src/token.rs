@@ -3,7 +3,7 @@ use std::{
     mem, slice,
 };
 
-use crate::cpu::{BASELINE, Cpu, apply, cpu_versions};
+use crate::cpu::{BASELINE, Cpu, cpu_multiversion};
 
 macro_rules! define_token_kind {
     ($( $variant:ident = $value:literal => $name:literal ),+ $(,)?) => {
@@ -26,7 +26,7 @@ macro_rules! define_token_kind {
             pub const VARIANTS: &'static [TokenKind] = &[ $( TokenKind::$variant, )+ ];
 
             /// The kind `byte` denotes, or `None` if it is not a declared discriminant.
-            #[apply(cpu_versions)]
+            #[cpu_multiversion]
             #[inline]
             #[must_use]
             pub(crate) const fn from_u8(byte: u8, _cpu: impl Cpu) -> Option<TokenKind> {
@@ -302,7 +302,7 @@ impl TokenKind {
     /// # SAFETY
     ///
     /// `byte` must be a declared discriminant, i.e. `TokenKind::from_u8(byte).is_some()`.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     #[must_use]
     pub(crate) const unsafe fn from_u8_unchecked(byte: u8, cpu: impl Cpu) -> TokenKind {
@@ -425,7 +425,7 @@ pub const TRIVIA_MIN: u8 = tk!(LineComment);
 pub const TRIVIA_MAX: u8 = tk!(LineTerminator);
 
 /// [`TokenKind::is_trivia`] on a raw kind byte, for the pipeline's `u8` lanes.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 #[must_use]
 pub const fn is_trivia_byte(kind: u8, _cpu: impl Cpu) -> bool {
@@ -467,7 +467,7 @@ impl StringSpan {
     pub const COOKED_INVALID_MASK: u32 = 0x8000_0000;
     pub const START_MASK: u32 = 0x7FFF_FFFF;
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline(always)]
     #[must_use]
     pub(crate) const fn new(start: u32, end: u32, lone_surrogates: bool, _cpu: impl Cpu) -> Self {
@@ -476,7 +476,7 @@ impl StringSpan {
         Self { start, end_and_flags }
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline(always)]
     #[must_use]
     pub(crate) const fn with_cooked_invalid(self, _cpu: impl Cpu) -> Self {

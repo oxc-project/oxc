@@ -1,7 +1,7 @@
 use oxc_span::Span;
 
 use crate::{
-    cpu::{Avx2, apply, cpu_version},
+    cpu::{Avx2, cpu_version},
     simd::{Vec128, Vec256},
     token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk},
 };
@@ -55,7 +55,7 @@ const fn bcompact() -> [[u8; 16]; 256] {
     t
 }
 
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline(never)]
 pub(super) unsafe fn compress_blocks_avx2(
     st: *const u64,
@@ -114,7 +114,7 @@ pub(super) unsafe fn compress_blocks_avx2(
     m
 }
 
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 pub(super) unsafe fn build_spans_avx2(
     stage_kind: *const u8,
     stage_pos: *const u32,
@@ -166,7 +166,7 @@ pub(super) unsafe fn build_spans_avx2(
     w
 }
 
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 pub(super) unsafe fn lanes_post_avx2(
     src: &[u8],
     out_kinds: *const u8,
@@ -218,7 +218,7 @@ pub(super) unsafe fn lanes_post_avx2(
 }
 
 /// Get a mask of the bytes of `v` which are token kinds that [`emit_value`] handles.
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline(always)]
 fn hits(v: Vec256<Avx2>) -> Vec256<Avx2> {
     (v.eq_u8(tk!(Number)) | v.eq_u8(tk!(BigInt)))

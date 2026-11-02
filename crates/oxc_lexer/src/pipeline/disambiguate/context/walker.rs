@@ -86,7 +86,7 @@ impl Walk {
         Walk { jumps: Vec::with_capacity(64), frames: Vec::with_capacity(64), ..Walk::default() }
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     pub(super) fn reset(&mut self, module: bool, _cpu: impl Cpu) {
         let frames = std::mem::take(&mut self.frames);
         let jumps = std::mem::take(&mut self.jumps);

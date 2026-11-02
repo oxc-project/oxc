@@ -1,4 +1,4 @@
-use crate::cpu::{BASELINE, Cpu, apply, cpu_select, cpu_version, cpu_versions};
+use crate::cpu::{BASELINE, Cpu, cpu_multiversion, cpu_select, cpu_version};
 
 #[cfg(target_arch = "x86_64")]
 use crate::{cpu::Avx2, simd::Vec256};
@@ -13,7 +13,7 @@ use crate::pipeline::bitmap::{bm_clear, bm_get};
 /// The caller only ever passes name/attribute regions: strings and `{}`
 /// containers are consumed whole before the next region begins, so a hyphen
 /// reached here is never a minus.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn jsx_glue_hyphens(
     src: *const u8,
@@ -33,7 +33,7 @@ pub(super) unsafe fn jsx_glue_hyphens(
 }
 
 /// [`jsx_glue_hyphens`] for AVX2.
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline(always)]
 unsafe fn jsx_glue_hyphens_avx2(
     src: *const u8,
@@ -63,7 +63,7 @@ unsafe fn jsx_glue_hyphens_avx2(
 }
 
 /// [`jsx_glue_hyphens`] for all other CPUs.
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 #[inline(always)]
 unsafe fn jsx_glue_hyphens_generic(
     src: *const u8,
@@ -86,7 +86,7 @@ unsafe fn jsx_glue_hyphens_generic(
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn glue_hyphen_at(
     n: usize,

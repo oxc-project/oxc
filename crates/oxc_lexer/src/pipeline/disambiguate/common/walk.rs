@@ -15,7 +15,7 @@
 use std::cell::{Cell, RefCell};
 
 use crate::{
-    cpu::{Cpu, apply, cpu_versions},
+    cpu::{Cpu, cpu_multiversion},
     token::{OP_KIND_BASE, is_trivia_byte},
 };
 
@@ -52,7 +52,7 @@ struct Pairs {
 
 impl Brackets {
     /// A new lex over `n` bytes: size the buffers and forget every word of the previous one.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     pub fn begin(&mut self, n: usize, _cpu: impl Cpu) {
         let nwords = n.div_ceil(64) + 1;
         self.bits.resize(nwords, Cell::new(0));
@@ -67,7 +67,7 @@ impl Brackets {
     }
 
     /// The bracket bits of word `w`, built on first use.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     fn word(&self, src: &[u8], n: usize, w: usize, cpu: impl Cpu) -> u64 {
         let (i, b) = (w >> 6, 1u64 << (w & 63));
@@ -82,7 +82,7 @@ impl Brackets {
 
 /// Bits of the 64 bytes at `base` that are brackets (bytes at or past `n` are clear). The source
 /// carries `PAD` bytes past `n`, so a whole word is readable whenever `base < n`.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn bracket_word(src: &[u8], base: usize, n: usize, cpu: impl Cpu) -> u64 {
     if base >= n {
         return 0;
@@ -98,7 +98,7 @@ fn bracket_word(src: &[u8], base: usize, n: usize, cpu: impl Cpu) -> u64 {
 /// only punctuator delimiters - template-closing `}`s and cleared literal interiors are
 /// invisible. Past [`BRACKET_STEP_CAP`] bracket steps the answer comes from a per-lex
 /// closer-to-opener table built once, so it stays exact; None if unbalanced.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub(super) fn match_delim_back(
     tokens: &Tokens,
@@ -141,7 +141,7 @@ pub(super) fn match_delim_back(
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 fn delim_memo_opener(tokens: &Tokens, from: usize, cpu: impl Cpu) -> Option<usize> {
     let (src, st, kind, n, b) = (tokens.src, tokens.st, tokens.kind, tokens.n, tokens.brackets);
@@ -184,7 +184,7 @@ fn delim_memo_opener(tokens: &Tokens, from: usize, cpu: impl Cpu) -> Option<usiz
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn delim_slot(c: u8, _cpu: impl Cpu) -> usize {
     match c {
         b'(' | b')' => 0,
@@ -193,7 +193,7 @@ fn delim_slot(c: u8, _cpu: impl Cpu) -> usize {
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub fn word_len(src: &[u8], w: usize, cpu: impl Cpu) -> usize {
     let mut e = w + 1;
@@ -205,7 +205,7 @@ pub fn word_len(src: &[u8], w: usize, cpu: impl Cpu) -> usize {
 
 /// Does the identifier at `pos` equal exactly `kw`? The following-byte check
 /// rejects longer identifiers (the source pad makes it safe at EOF).
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8], cpu: impl Cpu) -> bool {
     src[pos..].starts_with(kw) && {
@@ -215,7 +215,7 @@ pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8], cpu: impl Cpu) -> bool
 }
 
 /// Previous significant token start before `pos` (skipping trivia), or `None` at start of input.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub fn prev_sig(st: &[u64], kind: &[u8], pos: usize, cpu: impl Cpu) -> Option<usize> {
     let mut q = bits::prev1(st, pos, cpu);

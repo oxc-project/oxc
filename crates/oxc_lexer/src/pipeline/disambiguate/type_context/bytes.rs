@@ -13,7 +13,7 @@
 //! [`match_delim_back`]: crate::pipeline::disambiguate::common::Tokens::match_delim_back
 
 use crate::{
-    cpu::{Cpu, apply, cpu_versions},
+    cpu::{Cpu, cpu_multiversion},
     token::{OP_KIND_BASE, matches_tk, tk},
 };
 
@@ -59,7 +59,7 @@ static GT_SCAN_DELIM: [bool; 256] = {
 /// first `>`) and from `a << b > (c)` (no `=>` after the parameters). Every
 /// reject path returns false, i.e. today's fused `<<`, so a wrong answer can
 /// never split a real shift.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 pub fn lt_run_split(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
     let Tokens { src, st, n, .. } = *tokens;
@@ -89,7 +89,7 @@ pub fn lt_run_split(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
     list_closer(tokens, lt, cpu).is_some()
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 pub(super) fn arrow_after_params(tokens: &Tokens, lp: usize, cpu: impl Cpu) -> bool {
     let Tokens { src, n, .. } = *tokens;
     let Some(rp) = group_closer(tokens, lp, cpu) else {
@@ -99,13 +99,13 @@ pub(super) fn arrow_after_params(tokens: &Tokens, lp: usize, cpu: impl Cpu) -> b
     ar < n && src[ar] == b'=' && src[ar + 1] == b'>'
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 pub(super) fn skip_trivia_fwd(src: &[u8], n: usize, i: usize, cpu: impl Cpu) -> usize {
     skip_trivia_nl(src, n, i, cpu).0
 }
 
 /// The first non-trivia byte at or after i (or n), and whether a line terminator came first.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) fn skip_trivia_nl(src: &[u8], n: usize, mut i: usize, cpu: impl Cpu) -> (usize, bool) {
     let mut broke = false;
@@ -136,7 +136,7 @@ pub(super) fn skip_trivia_nl(src: &[u8], n: usize, mut i: usize, cpu: impl Cpu) 
     (i, broke)
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 pub(super) fn list_closer(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> Option<usize> {
     match tokens.closers.get(lt, cpu) {
         Some(r) => r.closer(cpu),
@@ -144,7 +144,7 @@ pub(super) fn list_closer(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> Option<u
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn group_closer(tokens: &Tokens, lp: usize, cpu: impl Cpu) -> Option<usize> {
     match tokens.closers.get(lp, cpu) {
         Some(r) => r.closer(cpu),
@@ -152,7 +152,7 @@ fn group_closer(tokens: &Tokens, lp: usize, cpu: impl Cpu) -> Option<usize> {
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 fn past_raw(tokens: &Tokens, lim: usize, i: usize, cpu: impl Cpu) -> Option<usize> {
     let (src, kind) = (tokens.src, tokens.kind);
@@ -172,7 +172,7 @@ fn past_raw(tokens: &Tokens, lim: usize, i: usize, cpu: impl Cpu) -> Option<usiz
 }
 
 /// The > closing the < at start, if the brackets inside balance and no ; on its level ends it.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 fn resolve_lists(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> {
     let Tokens { src, st, opch, n, closers, .. } = *tokens;
@@ -266,7 +266,7 @@ fn resolve_lists(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> 
 }
 
 /// Live openers' bracket counts only grow upward, so nothing below the first survivor is doomed.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn kill(
     stack: &mut Vec<Open>,
     closers: &Closers,
@@ -293,7 +293,7 @@ fn kill(
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 fn resolve_groups(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> {
     let Tokens { src, st, n, closers, .. } = *tokens;
@@ -340,7 +340,7 @@ fn resolve_groups(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize>
 /// If a comment, string or template carve has not reached yet starts at the token start `i`, the
 /// position just past it; else `i`. Forward scans from before the carve cursor cross raw text;
 /// carved literals have cleared interiors and are never re-entered.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub(super) fn skip_raw_literal(
     src: &[u8],
@@ -368,7 +368,7 @@ pub(super) fn skip_raw_literal(
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn past_raw_string(src: &[u8], lim: usize, i: usize, quote: u8, _cpu: impl Cpu) -> usize {
     let mut j = i + 1;
     while j < lim {
@@ -389,7 +389,7 @@ fn past_raw_string(src: &[u8], lim: usize, i: usize, quote: u8, _cpu: impl Cpu) 
 /// end (exclusive) of the whole literal, over raw bytes. `lim` when the `}` is not found before
 /// `lim`, `lim + 1` when the literal does not end before it. Cold: a template inside a
 /// speculated type-argument list.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 pub(super) fn raw_template_end(src: &[u8], lim: usize, i: usize, cpu: impl Cpu) -> (usize, usize) {
     let mut last_close = lim;
     let mut subs: Vec<u32> = Vec::new();

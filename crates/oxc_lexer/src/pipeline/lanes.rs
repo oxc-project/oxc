@@ -9,7 +9,7 @@ use oxc_ast::ast::{Comment, RegExpFlags};
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 use crate::{
-    cpu::{BASELINE, Cpu, apply, cpu_select, cpu_version, cpu_versions},
+    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_select, cpu_version},
     error::{DiagCode, DiagSeverity, Diagnostic},
     token::StringSpan,
 };
@@ -45,7 +45,7 @@ pub(crate) struct Lanes {
 }
 
 impl Lanes {
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     pub(super) fn clear(&mut self, _cpu: impl Cpu) {
         self.numbers.clear();
         self.strings.clear();
@@ -59,7 +59,7 @@ impl Lanes {
         self.unicode_leads.clear();
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     pub(super) fn push_regex_flags(&mut self, src: &[u8], fs: usize, fe: usize, _cpu: impl Cpu) {
         let mut f: u8 = 0;
@@ -163,7 +163,7 @@ impl Lanes {
         self.push_diag(e2 as u32, (end - e2) as u32, DiagCode::InvalidNumericLiteral);
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     /// `EMIT`: report malformed escapes while cooking - strings only, since
     /// template escapes are legal when tagged (the parser owns that error).
@@ -210,7 +210,7 @@ impl Lanes {
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     fn cook_short_dispatch<const EMIT: bool, const CRLF: bool>(
         &mut self,
@@ -228,14 +228,14 @@ impl Lanes {
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline(always)]
     pub(super) fn push_string(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let (sp, _) = self.cook::<true, false>(src, bs as u32, be as u32, cpu);
         self.strings.push(sp);
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline(always)]
     pub(super) fn push_template(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let (sp, nes) = self.cook::<false, true>(src, bs as u32, be as u32, cpu);
@@ -247,7 +247,7 @@ impl Lanes {
 
     /// Push a string value verbatim. JSX attribute strings have no backslash
     /// escapes; the value is the raw slice between the quotes.
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     pub(super) fn push_string_raw(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let ss = self.cooked.len() as u32;
@@ -266,7 +266,7 @@ impl Lanes {
         self.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu));
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline(always)]
     pub(super) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         // Escaped-identifier atoms are the one funnel every code-level
@@ -422,7 +422,7 @@ impl Lanes {
         }
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     #[inline]
     pub(super) fn push_number(&mut self, src: &[u8], s: usize, e: usize, cpu: impl Cpu) {
         let len = e - s;
@@ -464,7 +464,7 @@ static KEEP: [u64; 9] = [
     0xffff_ffff_ffff_ffff,
 ];
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 fn cook_short<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
@@ -486,7 +486,7 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
 }
 
 /// [`cook_short`] for AVX2.
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline]
 fn cook_short_avx2<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
@@ -514,7 +514,7 @@ fn cook_short_avx2<const EMIT: bool, const CRLF: bool>(
 }
 
 /// [`cook_short`] for all other CPUs.
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 #[inline]
 fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
@@ -547,7 +547,7 @@ fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
     cpu_select!(cpu, {
@@ -558,7 +558,7 @@ fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
 }
 
 /// [`span_has_bs`] for AVX2.
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline]
 fn span_has_bs_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
     let mut i = bs;
@@ -580,14 +580,14 @@ fn span_has_bs_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
 }
 
 /// [`span_has_bs`] for all other CPUs.
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 #[inline]
 fn span_has_bs_generic(src: &[u8], bs: usize, be: usize) -> bool {
     memchr::memchr(b'\\', &src[bs..be]).is_some()
 }
 
 /// Template variant of [`span_has_bs`]: a raw CR also forces the decode path.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
     cpu_select!(cpu, {
@@ -598,7 +598,7 @@ fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
 }
 
 /// [`span_has_bs_or_cr`] for AVX2.
-#[apply(cpu_version(Avx2))]
+#[cpu_version(Avx2)]
 #[inline]
 fn span_has_bs_or_cr_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
     let mut i = bs;
@@ -620,7 +620,7 @@ fn span_has_bs_or_cr_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
 }
 
 /// [`span_has_bs_or_cr`] for all other CPUs.
-#[apply(cpu_version(Generic))]
+#[cpu_version(Generic)]
 #[inline]
 fn span_has_bs_or_cr_generic(src: &[u8], bs: usize, be: usize) -> bool {
     memchr::memchr2(b'\\', b'\r', &src[bs..be]).is_some()
@@ -662,7 +662,7 @@ fn ident_start_run_end(s: &[u8], mut i: usize) -> usize {
     i
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 fn hexd(b: u8, _cpu: impl Cpu) -> Option<u8> {
     match b {
@@ -673,7 +673,7 @@ fn hexd(b: u8, _cpu: impl Cpu) -> Option<u8> {
     }
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
     let mut i = s;
     let mut radix: u64 = 0;
@@ -739,7 +739,7 @@ fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
     str::from_utf8(&buf[..bl]).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 fn radix_digit(c: u8, _cpu: impl Cpu) -> Option<u8> {
     match c {
@@ -757,7 +757,7 @@ fn radix_digit(c: u8, _cpu: impl Cpu) -> Option<u8> {
 /// separator/bigint suffix/bad exponent. Shapes the scanner pre-splits
 /// (`0b12`, `1.5n`, `3in`) are detected at the adjacency in coalesce, not
 /// here. Detection only; `parse_number` still produces a lenient value.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 fn validate_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> DiagCode {
     let bytes = &src[s..e];
@@ -861,7 +861,7 @@ fn validate_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> DiagCode {
     DiagCode::Ok
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 unsafe fn push_cp(out: *mut u8, mut wi: u32, cp: u32, lone: &mut bool, _cpu: impl Cpu) -> u32 {
     if cp <= 0x7F {
@@ -897,7 +897,7 @@ unsafe fn push_cp(out: *mut u8, mut wi: u32, cp: u32, lone: &mut bool, _cpu: imp
     wi
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 unsafe fn emit_oct(
     src: *const u8,
@@ -949,7 +949,7 @@ fn push_escape_diag(diags: &mut Vec<Diagnostic>, off: u32, end: u32) {
     });
 }
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
     src: *const u8,
     bs: u32,

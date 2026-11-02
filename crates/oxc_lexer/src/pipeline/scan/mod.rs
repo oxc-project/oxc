@@ -1,4 +1,4 @@
-use crate::cpu::{Cpu, apply, cpu_select, cpu_versions};
+use crate::cpu::{Cpu, cpu_multiversion, cpu_select};
 
 #[cfg(target_arch = "x86_64")]
 mod avx2;
@@ -11,7 +11,7 @@ use generic::{scan_block_comment_generic, scan_line_comment_generic};
 mod common;
 pub(super) use common::{scan_ident_esc, scan_number, scan_quoted, scan_regex, scan_tmpl_text};
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn scan_block_comment(
     src: *const u8,
@@ -28,7 +28,7 @@ pub(super) unsafe fn scan_block_comment(
 
 /// Scan a `//` line comment to its LineTerminator (LF, CR, or LS/PS),
 /// tracking the first `@license` / `@preserve` position for comment metadata.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn scan_line_comment(
     src: *const u8,
