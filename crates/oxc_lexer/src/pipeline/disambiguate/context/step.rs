@@ -10,7 +10,7 @@ use super::*;
 fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
     let cpu = BASELINE;
 
-    let k = tokens.base_kind(pos, cpu);
+    let k = tokens.base_kind(pos);
     if k >= OP_KIND_BASE {
         let c = tokens.src[pos];
         let c1 = tokens.src[pos + 1];
@@ -31,7 +31,7 @@ impl Walk {
         let cpu = BASELINE;
 
         self.last_start = pos;
-        let k = tokens.base_kind(pos, cpu);
+        let k = tokens.base_kind(pos);
         if is_trivia_byte(k) {
             return pos + 1;
         }
@@ -144,7 +144,7 @@ impl Walk {
         // A head continues onto the next line when its body (or more head) follows; otherwise the
         // break ends a bodiless signature.
         if matches!(self.top_kind(), FrameKind::FnHead | FrameKind::ClassHead) {
-            let k = tokens.base_kind(pos, cpu);
+            let k = tokens.base_kind(pos);
             // Right after `function` / `class`, the name (or a generator's `*`) may follow a
             // line break: nothing has been declared yet, so there is no signature to end.
             let unnamed = matches_tk!(self.prev_kw, KwFunction | KwClass);
@@ -173,9 +173,7 @@ impl Walk {
     /// Can the token at pos go on after a type that ended the previous line?
     #[inline(always)]
     fn continues_after_type_break(&self, tokens: &Tokens, pos: usize) -> bool {
-        let cpu = BASELINE;
-
-        if tokens.base_kind(pos, cpu) < OP_KIND_BASE {
+        if tokens.base_kind(pos) < OP_KIND_BASE {
             return false;
         }
         let (c, c1) = (tokens.src[pos], tokens.src[pos + 1]);

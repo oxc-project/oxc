@@ -84,7 +84,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
     let mut prev = usize::MAX;
     let mut w = bits::next1(st, lo, hi);
     while w < hi {
-        let mut k = tokens.base_kind(w, cpu);
+        let mut k = tokens.base_kind(w);
         if w == skip || is_trivia_byte(k) {
             w = bits::next1(st, w + 1, hi);
             continue;
@@ -183,7 +183,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
             // (a template type), instead of its tail as tokens.
             if k == tk!(TemplateHead) {
                 let (close, end) = raw_template_end(src, hi, w, cpu);
-                if close < hi && tokens.base_kind(close, cpu) >= OP_KIND_BASE {
+                if close < hi && tokens.base_kind(close) >= OP_KIND_BASE {
                     if end > hi {
                         return false;
                     }
