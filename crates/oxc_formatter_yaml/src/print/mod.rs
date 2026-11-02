@@ -155,12 +155,14 @@ pub fn write_node<'a>(node: &'a Node<'a>, f: &mut YamlFormatter<'_, 'a>) {
     }
 
     match content {
-        Content::Plain(scalar) => scalar::write_plain(to_span(scalar.span), f),
+        Content::Plain(scalar) => scalar::write_plain(to_span(scalar.span), scalar.multiline, f),
         Content::QuoteSingle(scalar) => {
-            scalar::write_quoted(scalar::FlowScalarKind::QuoteSingle, to_span(scalar.span), f);
+            let kind = scalar::FlowScalarKind::QuoteSingle;
+            scalar::write_quoted(kind, to_span(scalar.span), scalar.multiline, f);
         }
         Content::QuoteDouble(scalar) => {
-            scalar::write_quoted(scalar::FlowScalarKind::QuoteDouble, to_span(scalar.span), f);
+            let kind = scalar::FlowScalarKind::QuoteDouble;
+            scalar::write_quoted(kind, to_span(scalar.span), scalar.multiline, f);
         }
         Content::Alias(alias) => {
             // Verbatim: `*name` has no layout freedom, and no comment can lie inside
