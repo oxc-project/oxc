@@ -1,0 +1,2 @@
+x = () => (function () {}.a ? b : c);
+x = () => () => (function () {}.a ? b : c);
