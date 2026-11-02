@@ -215,7 +215,7 @@ impl Lanes {
     }
 
     #[cpu_multiversion]
-    #[inline]
+    #[inline(always)]
     fn cook_short_dispatch<const EMIT: bool, const CRLF: bool>(
         &mut self,
         src: &[u8],

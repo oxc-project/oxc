@@ -194,7 +194,7 @@ pub unsafe fn scan_ident_esc(src: *const u8, n: usize, p: usize, cpu: impl Cpu) 
 }
 
 #[cpu_multiversion]
-#[inline]
+#[inline(never)]
 pub unsafe fn scan_number(src: *const u8, n: usize, pos: usize, cpu: impl Cpu) -> usize {
     if *src.add(pos) == b'0' && pos + 1 < n {
         let c1 = *src.add(pos + 1);

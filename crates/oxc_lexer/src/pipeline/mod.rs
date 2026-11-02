@@ -216,6 +216,7 @@ impl Lexer {
     }
 
     #[cpu_multiversion]
+    #[inline(never)]
     fn ensure(&mut self, n: usize, _cpu: impl Cpu) {
         let nb = n.div_ceil(64) + 1;
         if self.nb_cap < nb {

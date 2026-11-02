@@ -384,6 +384,7 @@ fn type_illegal_kind(k: u8, _cpu: impl Cpu) -> bool {
 /// cannot start an expression. In a type, every `<` after a name opens a list, so a `<` this
 /// accepts opens one in any context.
 #[cpu_multiversion]
+#[inline(never)]
 pub fn type_args_at(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
     let closers = tokens.closers;
     if let Some(yes) = closers.get(lt, cpu).and_then(|r| r.args) {
