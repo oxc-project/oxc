@@ -3,6 +3,8 @@
 use crate::token::TokenKind;
 
 /// Single-byte punctuator and its [`TokenKind`].
+///
+/// Only exists at build time and in tests, not referenced from any runtime code.
 pub(super) struct Punct1 {
     pub byte: u8,
     pub kind: TokenKind,

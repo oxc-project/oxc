@@ -53,12 +53,12 @@ const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
 /// p-words, unique/unknown/undefined/using). Same hi-nibble rows.
 const KWINIT_TS_LO: [u8; 16] = [2, 1, 3, 3, 3, 3, 3, 3, 0, 3, 0, 1, 1, 1, 1, 1];
 
-#[inline(always)]
+/// Only called at compile time and in tests.
 pub(super) const fn is_kw_init(c: u8) -> bool {
     (KWINIT_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
 }
 
-#[inline(always)]
+/// Only called at compile time and in tests.
 pub(super) const fn is_kw_init_ts(c: u8) -> bool {
     (KWINIT_TS_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
 }
@@ -67,6 +67,8 @@ const KW_COUNT_JS: usize = 46;
 const KW_COUNT_TS: usize = 81;
 
 /// A keyword and its corresponding [`TokenKind`].
+///
+/// Only exists at build time and in tests, not referenced from any runtime code.
 #[derive(Clone, Copy)]
 struct KeywordDef {
     word: &'static str,
@@ -368,6 +370,8 @@ static KW_KINDS_TS: Aligned128<[TokenKind; SLOT_COUNT]> =
 ///
 /// Keywords whose kind is `Ident` are skipped, so they don't overwrite the kind of another keyword
 /// with the same slot.
+///
+/// Only called at compile time.
 const fn kinds_table<const N: usize>(keywords: &[KeywordDef], is_ts: bool) -> [TokenKind; N] {
     let mut kinds = [TokenKind::Ident; N];
 

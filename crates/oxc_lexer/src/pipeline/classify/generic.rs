@@ -24,6 +24,7 @@ const FL_MISC: u32 = 6;
 static CLS_JS: [u16; 256] = cls_table(false);
 static CLS_TS: [u16; 256] = cls_table(true);
 
+/// Only called at compile time.
 const fn cls_table(ts: bool) -> [u16; 256] {
     let cpu = BASELINE;
 

@@ -48,6 +48,8 @@ const OP3_HASH_TABLE_SIZE: usize = 16;
 const OP3_MUL: u32 = 0x010E_2F79;
 
 /// An operator and its corresponding [`TokenKind`].
+///
+/// Only exists at build time and in tests, not referenced from any runtime code.
 struct OpDef {
     txt: &'static str,
     kind: TokenKind,
@@ -168,6 +170,8 @@ struct OpTable<const TABLE_SIZE: usize> {
 impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
     /// Create an operator perfect hash table for operators of length `len`,
     /// using multiplier `mul`.
+    ///
+    /// Called at compile time only.
     const fn new(data: &'static OpTableData<TABLE_SIZE>, len: u32, mul: u32) -> Self {
         Self { data, len, mul }
     }
@@ -239,6 +243,8 @@ impl<const TABLE_SIZE: usize> OpTableData<TABLE_SIZE> {
 
     /// Create the data for an operator perfect hash table for operators of length `len`,
     /// using multiplier `mul`.
+    ///
+    /// Called at compile time and in tests only.
     const fn new(len: u32, mul: u32) -> Self {
         let cpu = BASELINE;
 
@@ -356,6 +362,8 @@ pub(super) fn opmap_longest(
 }
 
 /// Get a `[u8; 4]` containing all the bytes of `txt` and 0 for any remaining bytes.
+///
+/// Called at compile time and in tests only.
 const fn first_4_bytes(txt: &[u8]) -> [u8; 4] {
     let mut bytes = [0; 4];
     let mut i = 0;

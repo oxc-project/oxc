@@ -20,6 +20,7 @@ mod tests;
 static QCOMPACT: [[u32; 8]; 16] = qcompact();
 static BCOMPACT: [[u8; 16]; 256] = bcompact();
 
+/// Only called at compile time.
 const fn qcompact() -> [[u32; 8]; 16] {
     let mut t = [[0u32; 8]; 16];
     let mut mask = 0usize;
@@ -38,6 +39,7 @@ const fn qcompact() -> [[u32; 8]; 16] {
     t
 }
 
+/// Only called at compile time.
 const fn bcompact() -> [[u8; 16]; 256] {
     let mut t = [[0x80u8; 16]; 256];
     let mut mask = 0usize;
