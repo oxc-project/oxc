@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.157.0] - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- ed7df7d ast/estree: Include comments in TS Program span (#28326) (camc314)
+
 ## [0.155.0] - 2026-10-19
 
 ### 💥 BREAKING CHANGES

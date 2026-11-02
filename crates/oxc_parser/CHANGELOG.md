@@ -4,6 +4,57 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.157.0] - 2026-11-02
+
+### 🚀 Features
+
+- deed7dc parser: More friendly error for duplicate import attribute key (#28262) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- c97c43c parser: Reject TypeScript default exports in JavaScript (#28440) (Boshen)
+- 3421516 parser: Preserve default import names in reexports (#28442) (Boshen)
+- a1e7e5f parser: Reject optional class members in JavaScript (#28439) (Boshen)
+- 5b9a7bc parser: Parse sloppy let expressions and labels (#28438) (Boshen)
+- 3b36543 parser: Preserve in-context after TypeScript type arguments (#28300) (Boshen)
+- fc8acbc parser: Handle leading-zero numeric exponents (#28295) (Boshen)
+- 91a638d parser: Normalize raw template line endings with invalid escapes (#28285) (Boshen)
+- 2ac9a42 parser: Allow parenthesized private-in expressions (#28284) (Boshen)
+
+### ⚡ Performance
+
+- babf44c parser: Reuse shorthand assignment target identifiers (#28504) (Boshen)
+- dbf8482 parser: Use token lookahead for simple function types (#28489) (Boshen)
+- bca1275 parser: Avoid unused destructuring rest capacity (#28499) (Boshen)
+- 691be5c parser: Compact cover initialized name storage (#28495) (Boshen)
+- b3b5444 parser: Build simple arrow bindings directly (#28493) (Boshen)
+- e1c9baf parser: Disambiguate single-identifier arrow heads (#28491) (Boshen)
+- 10e9fc7 parser: Skip duplicate lookup for singleton import attributes (#28441) (Boshen)
+- 5238839 parser: Use a stack buffer for float separators (#28435) (Boshen)
+- 6e35e3c parser: Fast-path leaf expressions before delimiters (#28432) (Boshen)
+- 3d7512c parser: Decode Unicode identifiers once (#28414) (Boshen)
+- 30f59f4 parser: Factor object type opening brace (#28430) (Boshen)
+- 028a267 parser: Always inline postfix update parsing (#28429) (Boshen)
+- 1b5a171 parser: Reuse export kind classification (#28424) (Boshen)
+- 179a432 parser: Factor return type identifier parsing (#28416) (Boshen)
+- 553dd1d parser: Inline hot paths and fold function dispatch (#28404) (Boshen)
+- de75d56 parser: Combine parenthesized arrow lookahead (#28412) (Boshen)
+- a768a0c parser: Reuse comment annotations after rewind (#28408) (Boshen)
+- 563d92a parser: Skip redundant source cursor updates (#28409) (Boshen)
+- 7941ca9 parser: Factor tuple identifier parsing (#28398) (Boshen)
+- 426c151 parser: Construct completed tokens without intermediate writes (#28291) (Boshen)
+- c2d663d parser: Avoid vectors for single parenthesized expressions (#28374) (Boshen)
+- 50bd0a9 parser: Size delimited lists after the first element (#28373) (Boshen)
+- bd869b5 parser: Bypass redundant operand parsing (#28372) (Boshen)
+- 455fc09 parser: Skip keyword checks for plain identifier expressions (#28371) (Boshen)
+- 61303fb parser: Fast-path identifier operands (#28306) (Boshen)
+- 6cf5b1a parser: Guard arrow and conditional parsing (#28305) (Boshen)
+- 3666939 parser: Specialize identifier reference parsing (#28303) (Boshen)
+- 0d6641a parser: Skip inapplicable expression parsing paths (#28294) (Boshen)
+- 3be7997 parser: Reduce lexer search batch size (#28292) (Boshen)
+- ec8e8d4 parser: Remove redundant grammar and lexer checks (#28287) (Boshen)
+- c903f5c parser: Specialize known-token parsing (#28286) (Boshen)
+
 ## [0.156.0] - 2026-10-27
 
 ### 🐛 Bug Fixes
