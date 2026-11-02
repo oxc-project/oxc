@@ -437,32 +437,6 @@ pub mod token_flags {
 const _: () = assert!(tk!(Hashbang) > tk!(LineComment));
 const _: () = assert!(tk!(Hashbang) < tk!(LineTerminator));
 
-/// Bit 31 of a `starts` entry: reserved "newline before this token" flag.
-/// The lexer does not set it yet, but consumers must still read offsets
-/// through [`offset`].
-pub const NEWLINE_BEFORE_MASK: u32 = 0x8000_0000;
-
-pub const OFFSET_MASK: u32 = 0x7FFF_FFFF;
-
-/// Maximum lexable source length in bytes, imposed by the 31-bit offset field.
-pub const MAX_SOURCE_LEN: u32 = OFFSET_MASK;
-
-#[inline]
-pub const fn offset(s: u32) -> u32 {
-    s & OFFSET_MASK
-}
-
-#[inline]
-pub const fn newline(s: u32) -> bool {
-    (s & NEWLINE_BEFORE_MASK) != 0
-}
-
-#[inline]
-pub const fn pack_start(offset: u32, newline_before: bool) -> u32 {
-    debug_assert!(offset <= OFFSET_MASK);
-    if newline_before { offset | NEWLINE_BEFORE_MASK } else { offset }
-}
-
 #[repr(C)]
 #[derive(Debug, Default, Clone, Copy)]
 pub struct StringSpan {
