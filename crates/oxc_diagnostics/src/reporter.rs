@@ -140,36 +140,8 @@ pub struct InfoPosition {
     pub column: usize,
 }
 
-fn line_column(source: &dyn SourceCode, mut offset: usize) -> Option<InfoPosition> {
-    let data = source.data();
-    if offset > data.len() {
-        return None;
-    }
-    if offset > 0 && offset < data.len() && data[offset - 1] == b'\r' && data[offset] == b'\n' {
-        offset -= 1;
-    }
-
-    if let Some(line_starts) = source.line_starts() {
-        // `line_starts[0] == 0`, so at least one line starts at or before `offset`.
-        let line = line_starts.partition_point(|&start| start as usize <= offset);
-        let line_start = line_starts[line - 1] as usize;
-        return Some(InfoPosition { line, column: offset - line_start + 1 });
-    }
-
-    let mut line = 1;
-    let mut line_start = 0;
-    for index in memchr::memchr2_iter(b'\r', b'\n', &data[..offset]) {
-        if data[index] == b'\n' && index > 0 && data[index - 1] == b'\r' {
-            continue;
-        }
-        line += 1;
-        line_start = if data[index] == b'\r' && index + 1 < offset && data[index + 1] == b'\n' {
-            index + 2
-        } else {
-            index + 1
-        };
-    }
-    Some(InfoPosition { line, column: offset - line_start + 1 })
+fn line_column(source: &dyn SourceCode, offset: usize) -> Option<InfoPosition> {
+    source.line_column(offset).map(|(line, column)| InfoPosition { line, column })
 }
 
 impl Info {
@@ -212,7 +184,9 @@ impl Info {
 
 #[cfg(test)]
 mod test {
-    use crate::{Error, NamedSource, OxcDiagnostic};
+    use std::sync::Arc;
+
+    use crate::{Error, NamedSource, OxcDiagnostic, SourceCode};
 
     use super::{Info, line_column};
 
@@ -228,13 +202,22 @@ mod test {
                     text.push(ALPHABET[code % 3] as char);
                     code /= 3;
                 }
-                let indexed = NamedSource::new("file.js", text.clone());
+                let indexed = Arc::new(NamedSource::new("file.js", text.clone()));
+                let cloned = indexed.as_ref().clone();
                 for offset in 0..=text.len() + 1 {
                     assert_eq!(
                         line_column(&indexed, offset),
                         line_column(&text, offset),
                         "{text:?} at {offset}"
                     );
+                }
+                for offset in (0..=text.len() + 1).rev() {
+                    assert_eq!(line_column(&indexed, offset), line_column(&text, offset));
+                    assert_eq!(line_column(&cloned, offset), line_column(&text, offset));
+                }
+                indexed.line_starts().unwrap();
+                for offset in 0..=text.len() + 1 {
+                    assert_eq!(line_column(&indexed, offset), line_column(&text, offset));
                 }
             }
         }

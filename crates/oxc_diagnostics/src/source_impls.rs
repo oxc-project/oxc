@@ -803,6 +803,74 @@ impl<T: ?Sized + SourceCode> SourceCode for Arc<T> {
     fn line_starts(&self) -> Option<&[u32]> {
         self.as_ref().line_starts()
     }
+
+    fn line_column(&self, offset: usize) -> Option<(usize, usize)> {
+        self.as_ref().line_column(offset)
+    }
+}
+
+/// Resolve a position using a complete index or a direct prefix scan.
+pub fn line_column(
+    input: &[u8],
+    line_starts: Option<&[u32]>,
+    offset: usize,
+) -> Option<(usize, usize)> {
+    if offset > input.len() {
+        return None;
+    }
+    let offset = normalize_offset(input, offset);
+    if let Some(line_starts) = line_starts {
+        let line = line_starts.partition_point(|&start| start as usize <= offset);
+        return Some((line, offset - line_starts[line - 1] as usize + 1));
+    }
+    let mut line = 1;
+    let mut line_start = 0;
+    for index in memchr::memchr2_iter(b'\r', b'\n', &input[..offset]) {
+        if input[index] == b'\n' && index > 0 && input[index - 1] == b'\r' {
+            continue;
+        }
+        line += 1;
+        line_start = if input[index] == b'\r' && index + 1 < offset && input[index + 1] == b'\n' {
+            index + 2
+        } else {
+            index + 1
+        };
+    }
+    Some((line, offset - line_start + 1))
+}
+
+fn normalize_offset(input: &[u8], offset: usize) -> usize {
+    if offset > 0 && offset < input.len() && input[offset - 1] == b'\r' && input[offset] == b'\n' {
+        offset - 1
+    } else {
+        offset
+    }
+}
+
+/// Shared reporters extend this index only through their requested positions.
+#[derive(Clone, Default)]
+pub struct SourceLineIndex {
+    line_starts: Vec<u32>,
+    frontier: usize,
+}
+
+impl SourceLineIndex {
+    pub fn line_column(&mut self, input: &[u8], offset: usize) -> Option<(usize, usize)> {
+        if offset > input.len() {
+            return None;
+        }
+        let offset = normalize_offset(input, offset);
+        if offset > self.frontier {
+            for line_break in LineBreaks::new(&input[self.frontier..offset]) {
+                self.line_starts
+                    .push(u32::try_from(self.frontier + line_break.next_line_start()).ok()?);
+            }
+            self.frontier = offset;
+        }
+        let line = self.line_starts.partition_point(|&start| start as usize <= offset);
+        let line_start = line.checked_sub(1).map_or(0, |index| self.line_starts[index] as usize);
+        Some((line + 1, offset - line_start + 1))
+    }
 }
 
 /// Byte offsets at which each line of `input` starts, with CRLF counted as one line break.
@@ -819,6 +887,30 @@ pub fn line_starts(input: &[u8]) -> Option<Box<[u32]>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn source_line_index_only_scans_requested_prefixes() {
+        let input = b"first\r\nsecond\nthird\rfourth";
+        let mut index = SourceLineIndex::default();
+        assert_eq!(index.line_column(input, 1), Some((1, 2)));
+        assert_eq!(index.frontier, 1);
+        assert_eq!(index.line_starts, [] as [u32; 0]);
+
+        // An offset on the LF keeps the whole CRLF beyond the frontier.
+        assert_eq!(index.line_column(input, 6), Some((1, 6)));
+        assert_eq!(index.frontier, 5);
+        assert_eq!(index.line_starts, [] as [u32; 0]);
+        assert_eq!(index.line_column(input, 8), Some((2, 2)));
+        assert_eq!(index.frontier, 8);
+        assert_eq!(index.line_starts, [7]);
+
+        assert_eq!(index.line_column(input, 0), Some((1, 1)));
+        assert_eq!(index.frontier, 8);
+        assert_eq!(index.line_column(input, input.len() + 1), None);
+        assert_eq!(index.frontier, 8);
+        assert_eq!(index.line_column(input, input.len()), Some((4, 7)));
+        assert_eq!(index.line_starts, [7, 14, 20]);
+    }
 
     #[test]
     fn zero_context_prefix_matches_generic_path() {
