@@ -397,6 +397,37 @@ impl<'a> PeepholeOptimizations {
     ) {
         let Expression::BinaryExpression(e) = expr else { return };
 
+        // `'a' + ('b' + value)` -> `('a' + 'b') + value`. Both prefixes are
+        // strings, so reassociation preserves the conversion and evaluation order.
+        if e.operator == BinaryOperator::Addition
+            && let Expression::BinaryExpression(right) = &e.right
+            && right.operator == BinaryOperator::Addition
+            && Self::is_mergeable_string_addition_prefix(&e.left)
+            && Self::is_mergeable_string_addition_prefix(&right.left)
+            && !Self::string_expression_size_lower_bound(&e.right, ctx)
+                .is_some_and(|(_, has_non_inlineable_constant)| has_non_inlineable_constant)
+        {
+            let span = e.span;
+            let operator = e.operator;
+            let Expression::BinaryExpression(right) = e.right.take_in(ctx) else {
+                unreachable!();
+            };
+            let right = right.unbox();
+            let left_span = e.left.span().merge_within(right.left.span(), span).unwrap_or(span);
+            let mut left = Expression::new_binary_expression(
+                left_span,
+                e.left.take_in(ctx),
+                operator,
+                right.left,
+                ctx,
+            );
+            Self::substitute_rotate_binary_expression(&mut left, ctx);
+            let new_value =
+                Expression::new_binary_expression(span, left, operator, right.right, ctx);
+            ctx.replace_expression(expr, new_value);
+            return;
+        }
+
         // Handle associative rotation
         let is_associative = matches!(
             e.operator,
@@ -446,6 +477,17 @@ impl<'a> PeepholeOptimizations {
                 std::mem::swap(&mut binary_expr.left, &mut binary_expr.right);
                 ctx.notice_change();
             }
+        }
+    }
+
+    fn is_mergeable_string_addition_prefix(expr: &Expression<'a>) -> bool {
+        match expr {
+            Expression::StringLiteral(literal) => !literal.value.has_lone_surrogate(),
+            Expression::TemplateLiteral(_) => true,
+            Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
+                Self::is_mergeable_string_addition_prefix(&binary.left)
+            }
+            _ => false,
         }
     }
 
@@ -1788,6 +1830,7 @@ impl<'a> PeepholeOptimizations {
     /// expression can be folded into the parent operator.
     ///
     /// - `(a, b) + c` -> `a, b + c`
+    /// - `literal + (a, b)` -> `a, literal + b`
     /// - `(a, b) || c` -> `a, b || c`
     /// - `-(a, b)` -> `a, -b`
     /// - `await (a, b)` -> `a, await b`
@@ -1811,17 +1854,64 @@ impl<'a> PeepholeOptimizations {
             }
         };
 
-        let Expression::SequenceExpression(seq_expr) = argument else { return };
+        if let Expression::SequenceExpression(seq_expr) = argument
+            && Self::sequence_has_prefix(seq_expr)
+        {
+            let mut seq_expr = seq_expr.take_in_box(ctx);
+            *argument = Self::pop_expression_from_sequence(&mut seq_expr).unwrap();
+            seq_expr.expressions.push(expr.take_in(ctx));
+            let new_value = Expression::SequenceExpression(seq_expr);
+            ctx.replace_expression(expr, new_value);
+            return;
+        }
 
-        if seq_expr.expressions.len() <= 1 {
+        // A primitive literal can move past a sequence on the right:
+        // `literal + (a, b)` -> `(a, literal + b)`. Restrict this to values
+        // unaffected by the sequence's side effects, such as identifiers are not.
+        let Expression::BinaryExpression(binary) = expr else { return };
+        if !Self::is_immutable_primitive_literal(&binary.left) {
+            return;
+        }
+        let span = binary.span;
+        let operator = binary.operator;
+        let Expression::SequenceExpression(seq_expr) = &mut binary.right else { return };
+        if !Self::sequence_has_prefix(seq_expr)
+            || Self::last_expression_in_sequence(seq_expr)
+                .is_some_and(|last| last.value_type(ctx).is_object())
+        {
             return;
         }
 
         let mut seq_expr = seq_expr.take_in_box(ctx);
-        *argument = seq_expr.expressions.pop().unwrap();
-        seq_expr.expressions.push(expr.take_in(ctx));
+        let last = Self::pop_expression_from_sequence(&mut seq_expr).unwrap();
+        let left = binary.left.take_in(ctx);
+        let last = Expression::new_binary_expression(span, left, operator, last, ctx);
+        seq_expr.expressions.push(last);
         let new_value = Expression::SequenceExpression(seq_expr);
         ctx.replace_expression(expr, new_value);
+    }
+
+    fn sequence_has_prefix(sequence: &SequenceExpression<'a>) -> bool {
+        let Some(last) = Self::last_expression_in_sequence(sequence) else { return false };
+        if matches!(last, Expression::SequenceExpression(_)) {
+            return false;
+        }
+        sequence.expressions.len() > 1
+            || matches!(
+                sequence.expressions.last(),
+                Some(Expression::SequenceExpression(inner)) if Self::sequence_has_prefix(inner)
+            )
+    }
+
+    fn is_immutable_primitive_literal(expr: &Expression<'a>) -> bool {
+        matches!(
+            expr,
+            Expression::BooleanLiteral(_)
+                | Expression::BigIntLiteral(_)
+                | Expression::NullLiteral(_)
+                | Expression::NumericLiteral(_)
+                | Expression::StringLiteral(_)
+        ) || expr.is_no_substitution_template()
     }
 
     fn catch_body_has_same_name_var(body: &BlockStatement<'a>, name: Ident<'a>) -> bool {
