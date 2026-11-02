@@ -1,11 +1,8 @@
 use std::arch::x86_64::*;
 
-use crate::token::tk;
+use crate::{cpu::Avx2, token::tk};
 
-use crate::pipeline::{
-    chunk::{load256, mm, veq},
-    cpu::Avx2,
-};
+use crate::pipeline::chunk::{load256, mm, veq};
 
 use super::{
     luts::{MERGED_LUTS, WORD_LUTS},

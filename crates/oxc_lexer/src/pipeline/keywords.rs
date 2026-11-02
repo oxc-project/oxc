@@ -36,14 +36,15 @@ use constcat::concat_slices;
 
 use oxc_data_structures::{assert_unchecked, branch_hints::unlikely, str::const_str_eq};
 
-use crate::token::{KW_KIND_BASE, TokenKind};
-
-use crate::pipeline::cpu::{Cpu, apply, cpu_select, cpu_versions};
+use crate::{
+    cpu::{Cpu, apply, cpu_select, cpu_versions},
+    token::{KW_KIND_BASE, TokenKind},
+};
 
 #[cfg(target_arch = "x86_64")]
-use crate::pipeline::cpu::Avx2;
+use crate::cpu::Avx2;
 #[cfg(target_arch = "aarch64")]
-use crate::pipeline::cpu::Neon;
+use crate::cpu::Neon;
 
 const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
 const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -583,7 +584,7 @@ static LEN_MASK_WINDOW: Aligned32<[u8; 32]> = {
 
 #[cfg(test)]
 mod tests {
-    use crate::pipeline::cpu::BASELINE;
+    use crate::cpu::BASELINE;
 
     use super::*;
 

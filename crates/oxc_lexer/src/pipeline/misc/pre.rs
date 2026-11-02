@@ -1,9 +1,12 @@
-use crate::{error::DiagCode, token::tk};
+use crate::{
+    cpu::{Cpu, apply, cpu_versions},
+    error::DiagCode,
+    token::tk,
+};
 
 use crate::pipeline::{
     bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},
     bytes::{is_id_start, unicode_ws_len_at_unchecked},
-    cpu::{Cpu, apply, cpu_versions},
     lanes::Lanes,
     scan::scan_ident_esc,
 };

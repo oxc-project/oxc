@@ -1,8 +1,10 @@
-use crate::token::tk;
+use crate::{
+    cpu::{Cpu, apply, cpu_versions},
+    token::tk,
+};
 
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
-    cpu::{Cpu, apply, cpu_versions},
     find::find,
     lanes::Lanes,
 };

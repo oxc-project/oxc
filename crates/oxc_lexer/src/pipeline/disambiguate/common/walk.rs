@@ -16,9 +16,9 @@ use std::cell::{Cell, RefCell};
 
 use super::{Tokens, bits};
 use crate::{
+    cpu::{Cpu, apply, cpu_versions},
     pipeline::{
         bytes::{is_word, unicode_ws_len_at},
-        cpu::{Cpu, apply, cpu_versions},
         disambiguate::BRACKET_STEP_CAP,
         find::bracket_bits,
     },

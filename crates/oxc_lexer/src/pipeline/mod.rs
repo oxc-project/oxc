@@ -11,6 +11,7 @@ use oxc_span::Span;
 
 use crate::{
     PAD,
+    cpu::{BASELINE, Cpu, DynCpu, apply, cpu_versions},
     options::LexOptions,
     pipeline::compress::init_pair_luts,
     token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
@@ -23,7 +24,6 @@ mod chunk;
 mod classify;
 mod coalesce;
 mod compress;
-mod cpu;
 mod disambiguate;
 mod find;
 mod keywords;
@@ -38,7 +38,6 @@ use carve::carve;
 use classify::classify;
 use coalesce::{KWB, coalesce};
 use compress::{STAGE_CAP, compress, write_sentinels};
-use cpu::{BASELINE, Cpu, DynCpu, apply, cpu_versions};
 use disambiguate::{Brackets, Closers, Tokens};
 use misc::{misc_post, misc_pre};
 

@@ -2,9 +2,12 @@ use std::arch::x86_64::*;
 
 use oxc_span::Span;
 
-use crate::token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk};
+use crate::{
+    cpu::Avx2,
+    token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk},
+};
 
-use crate::pipeline::{cpu::Avx2, lanes::Lanes};
+use crate::pipeline::lanes::Lanes;
 
 use super::common::{emit_value, invalid_diags};
 

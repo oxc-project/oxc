@@ -7,6 +7,7 @@ use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 pub mod arena;
+mod cpu;
 #[cfg(feature = "oxc_diagnostics")]
 pub mod diagnostics;
 pub mod error;

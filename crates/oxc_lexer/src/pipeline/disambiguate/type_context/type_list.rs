@@ -10,12 +10,12 @@
 //!   A `(` can, as in `f<T>(x)`. An identifier can't, as in `a < b > c`.
 
 use crate::{
+    cpu::{Cpu, apply, cpu_versions},
     pipeline::bytes::{is_digit, is_id_start, line_break_in},
     token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
 };
 
 use crate::pipeline::{
-    cpu::{Cpu, apply, cpu_versions},
     disambiguate::common::{Tokens, bits, word_len},
     keywords::kw_match_at,
 };

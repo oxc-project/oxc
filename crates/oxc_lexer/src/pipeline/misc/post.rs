@@ -1,9 +1,9 @@
-use crate::token::{KW_KIND_BASE, tk};
-
-use crate::pipeline::{
-    bitmap::{bm_clear, bm_get, bm_prev1},
+use crate::{
     cpu::{Cpu, apply, cpu_versions},
+    token::{KW_KIND_BASE, tk},
 };
+
+use crate::pipeline::bitmap::{bm_clear, bm_get, bm_prev1};
 
 #[apply(cpu_versions)]
 #[inline]

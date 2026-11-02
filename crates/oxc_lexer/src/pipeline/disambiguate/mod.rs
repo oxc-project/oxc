@@ -22,7 +22,7 @@
 //! buffers, and keeps what it learns across the lex in a [`DisambiguateState`] the lexer owns.
 //! [`common`] holds the parts both questions need.
 
-use crate::pipeline::cpu::{Cpu, apply, cpu_versions};
+use crate::cpu::{Cpu, apply, cpu_versions};
 
 mod common;
 mod context;

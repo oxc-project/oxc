@@ -1,8 +1,9 @@
 use std::slice;
 
+use crate::cpu::{Cpu, apply, cpu_versions};
+
 use crate::pipeline::{
     bytes::{hex_val, is_digit, is_word},
-    cpu::{Cpu, apply, cpu_versions},
     find::find,
 };
 

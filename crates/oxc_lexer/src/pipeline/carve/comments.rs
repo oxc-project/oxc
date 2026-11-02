@@ -1,10 +1,13 @@
 use oxc_ast::{Comment, CommentContent, CommentKind};
 
-use crate::{error::DiagCode, token::tk};
+use crate::{
+    cpu::{BASELINE, Cpu, apply, cpu_versions},
+    error::DiagCode,
+    token::tk,
+};
 
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
-    cpu::{BASELINE, Cpu, apply, cpu_versions},
     lanes::Lanes,
     scan::{scan_block_comment, scan_line_comment},
 };
@@ -465,7 +468,7 @@ fn is_lex_ws(c: u8, _cpu: impl Cpu) -> bool {
 mod tests {
     use oxc_ast::ast::CommentContent;
 
-    use crate::pipeline::cpu::BASELINE;
+    use crate::cpu::BASELINE;
 
     use super::classify;
 

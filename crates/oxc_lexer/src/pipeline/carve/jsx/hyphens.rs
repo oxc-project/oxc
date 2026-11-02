@@ -1,12 +1,11 @@
-use crate::pipeline::{
-    bitmap::{bm_clear, bm_get},
-    cpu::{Cpu, cpu_select},
-};
+use crate::cpu::{Cpu, cpu_select};
+
+use crate::pipeline::bitmap::{bm_clear, bm_get};
 
 #[cfg(target_arch = "x86_64")]
-use crate::pipeline::{
-    chunk::{load256, mm, veq},
+use crate::{
     cpu::Avx2,
+    pipeline::chunk::{load256, mm, veq},
 };
 
 /// JSXIdentifier admits `-`, so `data-x` and `aria-label` are one name token

@@ -1,10 +1,12 @@
 use oxc_span::Span;
 
-use crate::token::{is_trivia_byte, matches_tk, tk};
+use crate::{
+    cpu::{Cpu, apply, cpu_versions},
+    token::{is_trivia_byte, matches_tk, tk},
+};
 
 use crate::pipeline::{
     chunk::{eqm, load64},
-    cpu::{Cpu, apply, cpu_versions},
     lanes::Lanes,
 };
 

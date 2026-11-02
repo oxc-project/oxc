@@ -1,10 +1,10 @@
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
-use crate::pipeline::cpu::{Cpu, cpu_select};
+use crate::cpu::{Cpu, cpu_select};
 
 #[cfg(target_arch = "x86_64")]
-use crate::pipeline::cpu::Avx2;
+use crate::cpu::Avx2;
 
 /// Get bit `i`.
 ///
