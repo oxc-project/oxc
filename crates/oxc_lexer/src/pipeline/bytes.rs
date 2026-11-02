@@ -1,22 +1,26 @@
 use crate::cpu::{Cpu, apply, cpu_versions};
 
+#[apply(cpu_versions)]
 #[inline(always)]
-pub(super) const fn is_ws(c: u8) -> bool {
+pub(super) const fn is_ws(c: u8, _cpu: impl Cpu) -> bool {
     c == b' ' || c == b'\t' || c == b'\n' || c == b'\r' || c == 0x0c || c == 0x0b
 }
 
+#[apply(cpu_versions)]
 #[inline(always)]
-pub(super) const fn is_word(c: u8) -> bool {
-    is_id_start(c) || is_digit(c)
+pub(super) const fn is_word(c: u8, cpu: impl Cpu) -> bool {
+    is_id_start(c, cpu) || is_digit(c, cpu)
 }
 
+#[apply(cpu_versions)]
 #[inline(always)]
-pub(super) const fn is_id_start(c: u8) -> bool {
+pub(super) const fn is_id_start(c: u8, _cpu: impl Cpu) -> bool {
     (c >= b'a' && c <= b'z') || (c >= b'A' && c <= b'Z') || c == b'_' || c == b'$' || c >= 0x80
 }
 
+#[apply(cpu_versions)]
 #[inline(always)]
-pub(super) const fn is_digit(c: u8) -> bool {
+pub(super) const fn is_digit(c: u8, _cpu: impl Cpu) -> bool {
     c >= b'0' && c <= b'9'
 }
 
@@ -56,8 +60,13 @@ pub(super) fn unicode_ws_len_at(src: &[u8], p: usize, _cpu: impl Cpu) -> usize {
 /// U+0085, U+00A0, U+1680, U+2000..=U+200B, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
 ///
 /// Unsafe version of [`unicode_ws_len_at`].
+#[apply(cpu_versions)]
 #[inline(always)]
-pub(super) unsafe fn unicode_ws_len_at_unchecked(src: *const u8, p: usize) -> usize {
+pub(super) unsafe fn unicode_ws_len_at_unchecked(
+    src: *const u8,
+    p: usize,
+    _cpu: impl Cpu,
+) -> usize {
     unicode_ws_len(*src.add(p), *src.add(p + 1), *src.add(p + 2))
 }
 
@@ -75,6 +84,7 @@ pub(super) fn line_terminator_after(src: &[u8], n: usize, mut i: usize, _cpu: im
 }
 
 /// Does src[a..b] hold a line terminator (LF, CR, or the 3-byte LS or PS)?
+#[apply(cpu_versions)]
 #[inline(always)]
 pub(super) fn line_break_in(src: &[u8], a: usize, b: usize, cpu: impl Cpu) -> bool {
     line_terminator_after(src, b, a, cpu) < b
@@ -92,8 +102,9 @@ pub(super) fn block_comment_end(src: &[u8], n: usize, mut i: usize, _cpu: impl C
     n
 }
 
+#[apply(cpu_versions)]
 #[inline(always)]
-pub(super) fn hex_val(c: u8) -> u32 {
+pub(super) fn hex_val(c: u8, _cpu: impl Cpu) -> u32 {
     if c >= b'0' && c <= b'9' {
         return (c - b'0') as u32;
     }

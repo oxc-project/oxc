@@ -29,6 +29,7 @@ pub(super) const PH_T1: [u8; 16] =
 #[cfg(test)]
 mod tests {
     use crate::{
+        cpu::BASELINE,
         pipeline::{
             bytes::{is_word, is_ws},
             classify::punct1::PUNCT1,
@@ -47,7 +48,7 @@ mod tests {
 
         for c in 0..256usize {
             let cb = c as u8;
-            if is_word(cb) || is_ws(cb) {
+            if is_word(cb, BASELINE) || is_ws(cb, BASELINE) {
                 continue;
             }
             assert!(punct1_hash(cb) == punct1_ord[c], "PH_A/B/T wrong at byte {c:#04x}");

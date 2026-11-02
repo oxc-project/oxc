@@ -15,6 +15,7 @@ use crate::pipeline::{
 use super::common::find_line_terminator;
 
 /// Lex the `//` line comment at `s`. Returns the resume index.
+#[apply(cpu_versions)]
 #[inline(always)]
 pub(super) unsafe fn lex_line_comment(
     src: *const u8,
@@ -29,10 +30,10 @@ pub(super) unsafe fn lex_line_comment(
     let (end, lic_q) = scan_line_comment(src, n, s + 2, cpu);
     *kind.add(s) = tk!(LineComment);
     if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1);
+        bm_clear_range(st, s + 1, end - 1, cpu);
     }
     if end < n {
-        bm_set(st, end);
+        bm_set(st, end, cpu);
     }
     let lic = lic_q >= 0 && (lic_q as usize) + 8 < end;
     let body = comment_body(&srcs[..n], s as u32, end as u32, false, cpu);
@@ -44,6 +45,7 @@ pub(super) unsafe fn lex_line_comment(
 
 /// Lex the `/*` block comment at `s` (unterminated at EOF is diagnosed).
 /// Returns the resume index.
+#[apply(cpu_versions)]
 #[inline(always)]
 pub(super) unsafe fn lex_block_comment(
     src: *const u8,
@@ -62,7 +64,7 @@ pub(super) unsafe fn lex_block_comment(
     }
     *kind.add(s) = tk!(BlockComment);
     if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1);
+        bm_clear_range(st, s + 1, end - 1, cpu);
     }
 
     let body = comment_body(&srcs[..n], s as u32, end as u32, true, cpu);
@@ -107,6 +109,7 @@ pub(super) unsafe fn lex_block_comment(
 /// Annex B B.1.1: does the `<` at `s` open a `<!--` comment? Always in a script; in a module
 /// only at line start, where it is diagnosed rather than read as operators. Shared by `carve`
 /// and `carve_jsx` JS mode: the goal, not the JSX setting, decides.
+#[apply(cpu_versions)]
 #[inline(always)]
 pub(super) fn html_open_comment_at(
     srcs: &[u8],
@@ -148,14 +151,14 @@ pub(super) unsafe fn lex_html_open_comment(
     let end = find_line_terminator(src, n, s + 4, cpu);
     *kind.add(s) = tk!(LineComment);
     if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1);
+        bm_clear_range(st, s + 1, end - 1, cpu);
     }
     if end < n {
-        bm_set(st, end);
+        bm_set(st, end, cpu);
     }
     // `<`, `!`, `-` are opchars: clear the span from `opch` or `coalesce`
     // would re-tokenize `<!--` as operators.
-    bm_clear_range(opch, s, end - 1);
+    bm_clear_range(opch, s, end - 1, cpu);
     // `comment_body` skips a 2-byte delimiter; pass s + 2 so the 4-byte
     // `<!--` is skipped. The record keeps (s, end).
     let body = comment_body(&srcs[..n], (s + 2) as u32, end as u32, false, cpu);
@@ -166,6 +169,7 @@ pub(super) unsafe fn lex_html_open_comment(
 
 /// Annex B B.1.3: does the `>` at `s` end a `-->` that opens a comment? Only in a script, and
 /// only at line start.
+#[apply(cpu_versions)]
 #[inline(always)]
 pub(super) fn html_close_comment_at(srcs: &[u8], s: usize, module: bool, cpu: impl Cpu) -> bool {
     !module
@@ -198,15 +202,15 @@ pub(super) unsafe fn lex_html_close_comment(
     let start = s - 2;
     let end = find_line_terminator(src, n, s + 1, cpu);
     *kind.add(start) = tk!(LineComment);
-    bm_set(st, start);
+    bm_set(st, start, cpu);
     if end > start + 1 {
-        bm_clear_range(st, start + 1, end - 1);
+        bm_clear_range(st, start + 1, end - 1, cpu);
     }
     if end < n {
-        bm_set(st, end);
+        bm_set(st, end, cpu);
     }
     // Clear the span from `opch` (see `<!--` above).
-    bm_clear_range(opch, start, end - 1);
+    bm_clear_range(opch, start, end - 1, cpu);
     // `-->` is a 3-byte delimiter; pass start + 1 so the 2-byte-delimiter
     // body resolves to [s + 1, end).
     let body = comment_body(&srcs[..n], (start + 1) as u32, end as u32, false, cpu);

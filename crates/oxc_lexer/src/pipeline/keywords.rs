@@ -37,7 +37,7 @@ use constcat::concat_slices;
 use oxc_data_structures::{assert_unchecked, branch_hints::unlikely, str::const_str_eq};
 
 use crate::{
-    cpu::{Cpu, apply, cpu_select, cpu_version, cpu_versions},
+    cpu::{BASELINE, Cpu, apply, cpu_select, cpu_version, cpu_versions},
     token::{KW_KIND_BASE, TokenKind},
 };
 
@@ -95,13 +95,15 @@ impl KeywordDef {
 
     /// Get a keyword's JS slot (`is_ts == false`) or TS slot (`is_ts == true`), same as [`kw_match`] does.
     const fn slot(&self, is_ts: bool) -> usize {
+        let cpu = BASELINE;
+
         let word = self.word.as_bytes();
-        let index = disps_index(word[0] as u16 | ((word[1] as u16) << 8));
+        let index = disps_index(word[0] as u16 | ((word[1] as u16) << 8), cpu);
         let len = word.len();
         if is_ts {
-            keyword_hash_ts(DISPS_TS.0[index], len, word[len - 1])
+            keyword_hash_ts(DISPS_TS.0[index], len, word[len - 1], cpu)
         } else {
-            keyword_hash_js(DISPS_JS.0[index], len)
+            keyword_hash_js(DISPS_JS.0[index], len, cpu)
         }
     }
 }
@@ -261,8 +263,9 @@ const REGEX_KW_MASK: u64 = {
     mask
 };
 
+#[apply(cpu_versions)]
 #[inline(always)]
-pub fn is_regex_keyword(kind: u8) -> bool {
+pub fn is_regex_keyword(kind: u8, _cpu: impl Cpu) -> bool {
     let i = kind.wrapping_sub(KW_KIND_BASE);
     i < 64 && (REGEX_KW_MASK >> i) & 1 != 0
 }
@@ -381,8 +384,9 @@ const fn kinds_table<const N: usize>(keywords: &[KeywordDef], is_ts: bool) -> [T
 }
 
 /// Get index into [`DISPS_JS`] or [`DISPS_TS`] for a word, from its first 2 bytes as a little-endian `u16`.
+#[apply(cpu_versions)]
 #[inline(always)]
-const fn disps_index(first_2: u16) -> usize {
+const fn disps_index(first_2: u16, _cpu: impl Cpu) -> usize {
     ((first_2 as u32).wrapping_mul(DISPS_MUL) >> DISPS_SHIFT) as usize
 }
 
@@ -392,8 +396,9 @@ const fn disps_index(first_2: u16) -> usize {
 ///
 /// Every entry in `DISPS_JS` is less than 64, so if `len` is at most 16, the result is less than 64.
 /// Therefore, result does not need masking to the table size.
+#[apply(cpu_versions)]
 #[inline(always)]
-const fn keyword_hash_js(disp: u8, len: usize) -> usize {
+const fn keyword_hash_js(disp: u8, len: usize, _cpu: impl Cpu) -> usize {
     (disp as usize) ^ (len << 1)
 }
 
@@ -401,8 +406,9 @@ const fn keyword_hash_js(disp: u8, len: usize) -> usize {
 ///
 /// `disp` is the entry in [`DISPS_TS`] for the word, and `last` is the last byte of the word.
 /// A non-ASCII last byte can take the hash up to 255, so it's masked to the table size.
+#[apply(cpu_versions)]
 #[inline(always)]
-const fn keyword_hash_ts(disp: u8, len: usize, last: u8) -> usize {
+const fn keyword_hash_ts(disp: u8, len: usize, last: u8, _cpu: impl Cpu) -> usize {
     ((disp as usize) ^ (len << 1) ^ (last as usize)) & (SLOT_COUNT - 1)
 }
 
@@ -461,6 +467,7 @@ pub(super) fn kw_match_at(
 ///
 /// * `ptr` must be valid for reading 16 bytes.
 /// * `len` must be between 1 and 16 (inclusive).
+#[apply(cpu_versions)]
 #[inline(always)]
 pub(super) unsafe fn kw_match<const IS_TS: bool>(
     ptr: *const u8,
@@ -469,14 +476,14 @@ pub(super) unsafe fn kw_match<const IS_TS: bool>(
 ) -> TokenKind {
     // Getting `disp` does not depend on `len`, so the CPU can load it in parallel with calculating `len`
     let first_2 = ptr::read_unaligned(ptr as *const u16);
-    let index = disps_index(first_2);
+    let index = disps_index(first_2, cpu);
 
     let slot = if IS_TS {
         let disp = DISPS_TS.0[index];
-        keyword_hash_ts(disp, len, *ptr.add(len - 1))
+        keyword_hash_ts(disp, len, *ptr.add(len - 1), cpu)
     } else {
         let disp = DISPS_JS.0[index];
-        let slot = keyword_hash_js(disp, len);
+        let slot = keyword_hash_js(disp, len, cpu);
         // SAFETY: Every entry in `DISPS_JS` is less than 64 (checked at compile time).
         // Caller guarantees `len` is at most 16, so `len << 1` is at most 32.
         // XOR of 2 values less than 64 is less than 64.
@@ -497,6 +504,7 @@ pub(super) unsafe fn kw_match<const IS_TS: bool>(
 /// # SAFETY
 ///
 /// `ptr` must be valid for reading 16 bytes, and `len` must be between 0 and 16 (inclusive).
+#[apply(cpu_versions)]
 #[inline(always)]
 unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2], cpu: impl Cpu) -> bool {
     cpu_select!(cpu, {
@@ -513,11 +521,11 @@ unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2], cpu: impl Cp
 /// Same as [`text_matches`].
 #[apply(cpu_version(Avx2))]
 #[inline(always)]
-unsafe fn text_matches_avx2(ptr: *const u8, len: usize, text: &[u64; 2], _cpu: Avx2) -> bool {
+unsafe fn text_matches_avx2(ptr: *const u8, len: usize, text: &[u64; 2], cpu: Avx2) -> bool {
     use std::arch::x86_64::{_mm_and_si128, _mm_cmpeq_epi8, _mm_loadu_si128, _mm_movemask_epi8};
 
     let word = _mm_loadu_si128(ptr.cast());
-    let mask = _mm_loadu_si128(len_mask_ptr(len).cast());
+    let mask = _mm_loadu_si128(len_mask_ptr(len, cpu).cast());
     let text = _mm_loadu_si128(text.as_ptr().cast());
     let masked_word = _mm_and_si128(word, mask);
     let eq = _mm_cmpeq_epi8(masked_word, text);
@@ -531,11 +539,11 @@ unsafe fn text_matches_avx2(ptr: *const u8, len: usize, text: &[u64; 2], _cpu: A
 /// Same as [`text_matches`].
 #[apply(cpu_version(Neon))]
 #[inline(always)]
-unsafe fn text_matches_neon(ptr: *const u8, len: usize, text: &[u64; 2], _cpu: Neon) -> bool {
+unsafe fn text_matches_neon(ptr: *const u8, len: usize, text: &[u64; 2], cpu: Neon) -> bool {
     use std::arch::aarch64::{vandq_u8, veorq_u8, vgetq_lane_u64, vld1q_u8, vreinterpretq_u64_u8};
 
     let word = vld1q_u8(ptr);
-    let mask = vld1q_u8(len_mask_ptr(len));
+    let mask = vld1q_u8(len_mask_ptr(len, cpu));
     let text = vld1q_u8(text.as_ptr().cast());
     let masked_word = vandq_u8(word, mask);
     let diff = vreinterpretq_u64_u8(veorq_u8(masked_word, text));
@@ -553,8 +561,10 @@ unsafe fn text_matches_neon(ptr: *const u8, len: usize, text: &[u64; 2], _cpu: N
 unsafe fn text_matches_generic(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
     use ptr::read_unaligned;
 
+    let cpu = BASELINE;
+
     let ptr = ptr as *const u64;
-    let mask_ptr = len_mask_ptr(len) as *const u64;
+    let mask_ptr = len_mask_ptr(len, cpu) as *const u64;
     let masked_first_8 = read_unaligned(ptr) & read_unaligned(mask_ptr);
     let masked_second_8 = read_unaligned(ptr.add(1)) & read_unaligned(mask_ptr.add(1));
     ((masked_first_8 ^ text[0]) | (masked_second_8 ^ text[1])) == 0
@@ -565,8 +575,9 @@ unsafe fn text_matches_generic(ptr: *const u8, len: usize, text: &[u64; 2]) -> b
 /// # SAFETY
 ///
 /// `len` must be between 0 and 16 (inclusive).
+#[apply(cpu_versions)]
 #[inline(always)]
-unsafe fn len_mask_ptr(len: usize) -> *const u8 {
+unsafe fn len_mask_ptr(len: usize, _cpu: impl Cpu) -> *const u8 {
     LEN_MASK_WINDOW.0.as_ptr().add(16 - len)
 }
 

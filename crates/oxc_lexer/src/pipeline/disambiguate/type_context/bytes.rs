@@ -70,11 +70,11 @@ pub fn lt_run_split(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
         return false;
     }
     let hc = src[head];
-    if !(is_id_start(hc) || (hc == b'\\' && src[head + 1] == b'u')) {
+    if !(is_id_start(hc, cpu) || (hc == b'\\' && src[head + 1] == b'u')) {
         return false;
     }
     // Already fused by coalesce: a shift.
-    if !bits::get(st, lt + 1) {
+    if !bits::get(st, lt + 1, cpu) {
         return false;
     }
     let Some(gt) = list_closer(tokens, lt + 1, cpu) else {
@@ -105,15 +105,16 @@ pub(super) fn skip_trivia_fwd(src: &[u8], n: usize, i: usize, cpu: impl Cpu) -> 
 }
 
 /// The first non-trivia byte at or after i (or n), and whether a line terminator came first.
+#[apply(cpu_versions)]
 #[inline(always)]
 pub(super) fn skip_trivia_nl(src: &[u8], n: usize, mut i: usize, cpu: impl Cpu) -> (usize, bool) {
     let mut broke = false;
-    if i < n && !is_ws(src[i]) && src[i] != b'/' && src[i] < 0x80 {
+    if i < n && !is_ws(src[i], cpu) && src[i] != b'/' && src[i] < 0x80 {
         return (i, false);
     }
     while i < n {
         let c = src[i];
-        if is_ws(c) {
+        if is_ws(c, cpu) {
             broke |= c == b'\n' || c == b'\r';
             i += 1;
         } else if c == b'/' && src[i + 1] == b'/' {
@@ -161,9 +162,9 @@ fn past_raw(tokens: &Tokens, lim: usize, i: usize, cpu: impl Cpu) -> Option<usiz
     }
     // Asked from the JSX carve, a template head may be carved while its tail is still
     // raw text (its substitution `}` a punctuator): cross the literal whole.
-    if tokens.base_kind(i) == tk!(TemplateHead) {
+    if tokens.base_kind(i, cpu) == tk!(TemplateHead) {
         let (close, end) = raw_template_end(src, lim, i, cpu);
-        if close < lim && tokens.base_kind(close) >= OP_KIND_BASE {
+        if close < lim && tokens.base_kind(close, cpu) >= OP_KIND_BASE {
             return (end <= lim).then_some(end);
         }
     }
@@ -182,7 +183,7 @@ fn resolve_lists(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> 
     let (mut parens, mut brackets, mut braces) = (0i32, 0i32, 0i32);
     let mut i = start + 1;
     while i < n {
-        if bits::get(st, i) {
+        if bits::get(st, i, cpu) {
             match past_raw(tokens, n, i, cpu) {
                 Some(j) if j != i => {
                     i = j;
@@ -193,8 +194,8 @@ fn resolve_lists(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> 
             }
         }
         let c = src[i];
-        if GT_SCAN_DELIM[c as usize] && bits::get(st, i) {
-            let op = bits::get(opch, i);
+        if GT_SCAN_DELIM[c as usize] && bits::get(st, i, cpu) {
+            let op = bits::get(opch, i, cpu);
             match c {
                 b'<' => {
                     if op && src[i + 1] != b'=' {
@@ -236,7 +237,7 @@ fn resolve_lists(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> 
                 }
                 b'{' => braces += 1,
                 b'}' => {
-                    if !matches_tk!(tokens.base_kind(i), TemplateMiddle | TemplateTail) {
+                    if !matches_tk!(tokens.base_kind(i, cpu), TemplateMiddle | TemplateTail) {
                         braces -= 1;
                         kill(&mut stack, closers, i > budget, |e| e.braces > braces, cpu);
                     }
@@ -302,7 +303,7 @@ fn resolve_groups(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize>
     open.push(start as u32);
     let mut i = start + 1;
     while i < n {
-        if bits::get(st, i) {
+        if bits::get(st, i, cpu) {
             match past_raw(tokens, n, i, cpu) {
                 Some(j) if j != i => {
                     i = j;

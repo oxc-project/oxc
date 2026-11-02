@@ -1,7 +1,7 @@
 use std::ptr;
 
 use crate::{
-    cpu::{apply, cpu_version},
+    cpu::{BASELINE, apply, cpu_version},
     token::tk,
 };
 
@@ -25,6 +25,8 @@ static CLS_JS: [u16; 256] = cls_table(false);
 static CLS_TS: [u16; 256] = cls_table(true);
 
 const fn cls_table(ts: bool) -> [u16; 256] {
+    let cpu = BASELINE;
+
     let mut punct = [tk!(Invalid); 256];
     let mut i = 0;
     while i < PUNCT1.len() {
@@ -36,19 +38,19 @@ const fn cls_table(ts: bool) -> [u16; 256] {
     while c < 256 {
         let b = c as u8;
         let mut f = 0u16;
-        if is_word(b) {
+        if is_word(b, cpu) {
             f |= 1 << FL_WORD;
         }
-        if is_ws(b) {
+        if is_ws(b, cpu) {
             f |= 1 << FL_WS;
         }
-        if is_digit(b) {
+        if is_digit(b, cpu) {
             f |= 1 << FL_DIGIT;
         }
         if b == b'.' {
             f |= 1 << FL_DOT;
         }
-        if is_op_char(b) {
+        if is_op_char(b, cpu) {
             f |= 1 << FL_OPCH;
         }
         if (ts && is_kw_init_ts(b)) || (!ts && is_kw_init(b)) {
@@ -57,10 +59,10 @@ const fn cls_table(ts: bool) -> [u16; 256] {
         if b == b'#' || b == b'\\' || b >= 0x80 {
             f |= 1 << FL_MISC;
         }
-        let kd = if is_ws(b) {
+        let kd = if is_ws(b, cpu) {
             tk!(Whitespace)
-        } else if is_word(b) {
-            if is_digit(b) { tk!(Number) } else { tk!(Ident) }
+        } else if is_word(b, cpu) {
+            if is_digit(b, cpu) { tk!(Number) } else { tk!(Ident) }
         } else {
             punct[c]
         };

@@ -265,6 +265,7 @@ impl Default for Lexer {
 ///   before the stage writes again.
 ///
 /// `brackets` is the lex's bracket cache, `lanes.disambiguate.brackets`.
+#[apply(cpu_versions)]
 #[inline(always)]
 unsafe fn token_view<'a>(
     src: *const u8,
@@ -277,6 +278,7 @@ unsafe fn token_view<'a>(
     module: bool,
     brackets: &'a Brackets,
     closers: &'a Closers,
+    _cpu: impl Cpu,
 ) -> Tokens<'a> {
     let nb = n.div_ceil(64) + 1;
     Tokens {

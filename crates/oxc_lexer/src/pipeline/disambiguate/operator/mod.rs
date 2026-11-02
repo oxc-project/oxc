@@ -60,19 +60,19 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: 
     let ts = tokens.ts;
     let module = tokens.module;
     let src = tokens.src;
-    let mut q = bits::prev1(tokens.st, p);
+    let mut q = bits::prev1(tokens.st, p, cpu);
     while let Some(qi) = q {
         let k = tokens.kind[qi];
         if is_trivia_byte(k) {
-            q = bits::prev1(tokens.st, qi);
+            q = bits::prev1(tokens.st, qi, cpu);
             continue;
         }
         if k == tk!(String) {
-            return ends_decl(tokens, walks, qi, tokens.next_start(qi + 1), p, cpu);
+            return ends_decl(tokens, walks, qi, tokens.next_start(qi + 1, cpu), p, cpu);
         }
         if matches_tk!(k, Number | TemplateNoSub | TemplateTail) {
             // A literal ends a value: division, unless TS ASI applies.
-            return ts && ends_decl(tokens, walks, qi, tokens.next_start(qi + 1), p, cpu);
+            return ts && ends_decl(tokens, walks, qi, tokens.next_start(qi + 1, cpu), p, cpu);
         }
         if matches_tk!(k, RegExp | PrivateIdent | PrivateIdentEscaped | JsxTagEnd | JsxLt) {
             return false;
@@ -81,13 +81,13 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: 
             return true;
         }
         if matches_tk!(k, Ident | IdentEscaped) {
-            let e = tokens.next_start(qi + 1);
+            let e = tokens.next_start(qi + 1, cpu);
             let newline = tokens.line_break_between(e, p, cpu);
             if tokens.property_name(qi, cpu) {
                 return ts && newline && context::after(tokens, walks, qi) == After::EndsDecl;
             }
             let kw = tokens.word_kw(qi, e - qi, cpu);
-            if is_regex_keyword(kw) {
+            if is_regex_keyword(kw, cpu) {
                 if ts && kw == tk!(KwVoid) {
                     // `x as void / 2` is division; `void /re/` is not.
                     return context::after(tokens, walks, qi) != After::Value;
@@ -113,7 +113,7 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: 
                 let Some(q2) = tokens.prev_sig(qi, cpu) else {
                     return true;
                 };
-                if tokens.line_break_between(tokens.next_start(q2 + 1), qi, cpu) {
+                if tokens.line_break_between(tokens.next_start(q2 + 1, cpu), qi, cpu) {
                     return true;
                 }
                 q = Some(q2);

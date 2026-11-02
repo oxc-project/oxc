@@ -41,6 +41,7 @@ pub unsafe fn misc_pre(
 /// copy pays nothing for it.
 ///
 /// `#[inline(always)]` so it gets compiled as part of each of [`misc_pre`]'s entry points.
+#[apply(cpu_versions)]
 #[inline(always)]
 unsafe fn misc_pre_impl<const VUTF8: bool>(
     src: *const u8,
@@ -93,14 +94,14 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                         continue;
                     }
                 }
-                let len = unicode_ws_len_at_unchecked(src, p);
+                let len = unicode_ws_len_at_unchecked(src, p, cpu);
                 if len != 0 {
                     *kind.add(p) = tk!(Whitespace);
-                    bm_clear_range(word, p, p + len - 1);
-                    bm_set(st, p);
-                    bm_clear_range(st, p + 1, p + len - 1);
+                    bm_clear_range(word, p, p + len - 1, cpu);
+                    bm_set(st, p, cpu);
+                    bm_clear_range(st, p + 1, p + len - 1, cpu);
                     if p + len < n {
-                        bm_set(st, p + len);
+                        bm_set(st, p + len, cpu);
                     }
                 } else if (0xC2..=0xF4).contains(&c) {
                     // Non-whitespace lead: record the position only. The
@@ -110,7 +111,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 }
                 continue;
             }
-            if !bm_get(st, p) {
+            if !bm_get(st, p, cpu) {
                 continue;
             }
             if c == b'#' {
@@ -121,10 +122,10 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 // private name whose first char is itself an escape forms
                 // one token instead of `#` + escape.
                 let c1 = *src.add(p + 1);
-                if !(is_id_start(c1) || (c1 == b'\\' && *src.add(p + 2) == b'u')) {
+                if !(is_id_start(c1, cpu) || (c1 == b'\\' && *src.add(p + 2) == b'u')) {
                     continue;
                 }
-                let e0 = bm_next0(word, p + 1, n);
+                let e0 = bm_next0(word, p + 1, n, cpu);
                 let e = if *src.add(e0) == b'\\' && *src.add(e0 + 1) == b'u' {
                     *kind.add(p) = tk!(PrivateIdentEscaped);
                     scan_ident_esc(src, n, e0, cpu)
@@ -132,7 +133,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                     *kind.add(p) = tk!(PrivateIdent);
                     e0
                 };
-                bm_clear_range(st, p + 1, e - 1);
+                bm_clear_range(st, p + 1, e - 1, cpu);
             } else {
                 if *src.add(p + 1) != b'u' {
                     continue;
@@ -140,7 +141,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 *kind.add(p) = tk!(IdentEscaped);
                 nesc += 1;
                 let e = scan_ident_esc(src, n, p, cpu);
-                bm_clear_range(st, p + 1, e - 1);
+                bm_clear_range(st, p + 1, e - 1, cpu);
             }
         }
     }

@@ -1,4 +1,4 @@
-use crate::cpu::{Cpu, cpu_select};
+use crate::cpu::{Cpu, apply, cpu_select, cpu_versions};
 
 #[cfg(target_arch = "x86_64")]
 mod avx2;
@@ -11,6 +11,7 @@ use generic::{bracket_bits_generic, find_generic};
 /// First byte at or after `i` that is one of `needles`, or `n`.
 ///
 /// Needle order matters for speed. See the comment on `any_of` in `avx2.rs`.
+#[apply(cpu_versions)]
 #[inline(always)]
 pub(super) unsafe fn find<const K: usize>(
     src: *const u8,
@@ -27,6 +28,7 @@ pub(super) unsafe fn find<const K: usize>(
 }
 
 /// Bits of the 64 bytes at `base` that are brackets (`(){}[]`). Bit `i` is for byte `base + i`.
+#[apply(cpu_versions)]
 #[inline(always)]
 pub(super) fn bracket_bits(src: &[u8], base: usize, cpu: impl Cpu) -> u64 {
     cpu_select!(cpu, {

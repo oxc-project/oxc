@@ -1,4 +1,4 @@
-use crate::cpu::{Cpu, apply, cpu_select, cpu_version};
+use crate::cpu::{BASELINE, Cpu, apply, cpu_select, cpu_version, cpu_versions};
 
 use crate::pipeline::bitmap::{bm_clear, bm_get};
 
@@ -16,6 +16,7 @@ use crate::{
 /// The caller only ever passes name/attribute regions: strings and `{}`
 /// containers are consumed whole before the next region begins, so a hyphen
 /// reached here is never a minus.
+#[apply(cpu_versions)]
 #[inline(always)]
 pub(super) unsafe fn jsx_glue_hyphens(
     src: *const u8,
@@ -58,7 +59,7 @@ unsafe fn jsx_glue_hyphens_avx2(
         while m != 0 {
             let h = i + m.trailing_zeros() as usize;
             m &= m - 1;
-            glue_hyphen_at(n, st, opch, word, h, &mut last);
+            glue_hyphen_at(n, st, opch, word, h, &mut last, cpu);
         }
         i += 32;
     }
@@ -76,16 +77,19 @@ unsafe fn jsx_glue_hyphens_generic(
     a: usize,
     b: usize,
 ) {
+    let cpu = BASELINE;
+
     let mut last = usize::MAX;
     let mut h = a;
     while h < b {
         if *src.add(h) == b'-' {
-            glue_hyphen_at(n, st, opch, word, h, &mut last);
+            glue_hyphen_at(n, st, opch, word, h, &mut last, cpu);
         }
         h += 1;
     }
 }
 
+#[apply(cpu_versions)]
 #[inline(always)]
 unsafe fn glue_hyphen_at(
     n: usize,
@@ -94,14 +98,15 @@ unsafe fn glue_hyphen_at(
     word: *const u64,
     h: usize,
     last: &mut usize,
+    cpu: impl Cpu,
 ) {
-    if h == 0 || !(bm_get(word, h - 1) || *last == h - 1) {
+    if h == 0 || !(bm_get(word, h - 1, cpu) || *last == h - 1) {
         return;
     }
-    bm_clear(st, h);
-    bm_clear(opch, h);
-    if h + 1 < n && bm_get(word, h + 1) {
-        bm_clear(st, h + 1);
+    bm_clear(st, h, cpu);
+    bm_clear(opch, h, cpu);
+    if h + 1 < n && bm_get(word, h + 1, cpu) {
+        bm_clear(st, h + 1, cpu);
     }
     *last = h;
 }

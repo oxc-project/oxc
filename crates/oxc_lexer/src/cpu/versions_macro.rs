@@ -1,6 +1,6 @@
 /// Macro to turn a function into one with a separate entry point for each CPU feature set.
 ///
-/// Used for pipeline stages, and for functions they call which aren't always inlined.
+/// Used for every function which is compiled for each CPU feature set.
 /// Each entry point is compiled with its feature set's target features enabled,
 /// so SIMD functions which the function calls can be inlined into it.
 ///

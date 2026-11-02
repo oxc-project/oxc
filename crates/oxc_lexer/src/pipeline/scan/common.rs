@@ -163,14 +163,14 @@ pub unsafe fn scan_tmpl_text(
 
 #[apply(cpu_versions)]
 #[inline]
-pub unsafe fn scan_ident_esc(src: *const u8, n: usize, p: usize, _cpu: impl Cpu) -> usize {
+pub unsafe fn scan_ident_esc(src: *const u8, n: usize, p: usize, cpu: impl Cpu) -> usize {
     let mut i = p;
     while i < n {
         if *src.add(i) == b'\\' && i + 1 < n && *src.add(i + 1) == b'u' {
             i += 2;
             if i < n && *src.add(i) == b'{' {
                 i += 1;
-                while i < n && hex_val(*src.add(i)) != 255 {
+                while i < n && hex_val(*src.add(i), cpu) != 255 {
                     i += 1;
                 }
                 if i < n && *src.add(i) == b'}' {
@@ -178,12 +178,12 @@ pub unsafe fn scan_ident_esc(src: *const u8, n: usize, p: usize, _cpu: impl Cpu)
                 }
             } else {
                 let mut k = 0;
-                while k < 4 && i < n && hex_val(*src.add(i)) != 255 {
+                while k < 4 && i < n && hex_val(*src.add(i), cpu) != 255 {
                     i += 1;
                     k += 1;
                 }
             }
-            while i < n && is_word(*src.add(i)) {
+            while i < n && is_word(*src.add(i), cpu) {
                 i += 1;
             }
             continue;
@@ -214,7 +214,7 @@ pub unsafe fn scan_number(src: *const u8, n: usize, pos: usize, cpu: impl Cpu) -
                     i += 1;
                     continue;
                 }
-                if hex_val(d) < radix {
+                if hex_val(d, cpu) < radix {
                     i += 1;
                 } else {
                     break;
@@ -225,12 +225,12 @@ pub unsafe fn scan_number(src: *const u8, n: usize, pos: usize, cpu: impl Cpu) -
             }
             return i;
         }
-        if is_digit(c1) {
+        if is_digit(c1, cpu) {
             let mut i = pos + 1;
             let mut octal = true;
             while i < n {
                 let d = *src.add(i);
-                if is_digit(d) {
+                if is_digit(d, cpu) {
                     octal &= d < b'8';
                 } else if d != b'_' {
                     break;
@@ -244,7 +244,7 @@ pub unsafe fn scan_number(src: *const u8, n: usize, pos: usize, cpu: impl Cpu) -
         }
     }
     let mut i = pos;
-    while i < n && (is_digit(*src.add(i)) || *src.add(i) == b'_') {
+    while i < n && (is_digit(*src.add(i), cpu) || *src.add(i) == b'_') {
         i += 1;
     }
     let (i, is_float) = scan_fraction_exponent(src, n, i, cpu);
@@ -260,13 +260,13 @@ unsafe fn scan_fraction_exponent(
     src: *const u8,
     n: usize,
     mut i: usize,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) -> (usize, bool) {
     let mut is_float = false;
     if i < n && *src.add(i) == b'.' {
         is_float = true;
         i += 1;
-        while i < n && (is_digit(*src.add(i)) || *src.add(i) == b'_') {
+        while i < n && (is_digit(*src.add(i), cpu) || *src.add(i) == b'_') {
             i += 1;
         }
     }
@@ -276,15 +276,16 @@ unsafe fn scan_fraction_exponent(
         if i < n && (*src.add(i) == b'+' || *src.add(i) == b'-') {
             i += 1;
         }
-        while i < n && (is_digit(*src.add(i)) || *src.add(i) == b'_') {
+        while i < n && (is_digit(*src.add(i), cpu) || *src.add(i) == b'_') {
             i += 1;
         }
     }
     (i, is_float)
 }
 
+#[apply(cpu_versions)]
 #[inline(always)]
-pub(super) unsafe fn lic_verify_at(src: *const u8, q: usize) -> bool {
+pub(super) unsafe fn lic_verify_at(src: *const u8, q: usize, _cpu: impl Cpu) -> bool {
     let c1 = *src.add(q + 1);
     // spellchecker:disable-next-line
     (c1 == b'l' && slice::from_raw_parts(src.add(q + 2), 6) == b"icense")

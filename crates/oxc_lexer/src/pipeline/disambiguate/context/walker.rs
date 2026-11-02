@@ -86,7 +86,8 @@ impl Walk {
         Walk { jumps: Vec::with_capacity(64), frames: Vec::with_capacity(64), ..Walk::default() }
     }
 
-    pub(super) fn reset(&mut self, module: bool) {
+    #[apply(cpu_versions)]
+    pub(super) fn reset(&mut self, module: bool, _cpu: impl Cpu) {
         let frames = std::mem::take(&mut self.frames);
         let jumps = std::mem::take(&mut self.jumps);
         *self = Walk { frames, jumps, ..Walk::default() };
@@ -263,9 +264,11 @@ impl Walk {
     }
 
     pub(super) fn advance(&mut self, tokens: &Tokens, limit: usize) {
+        let cpu = BASELINE;
+
         let mut pos = self.walked_to;
         loop {
-            pos = tokens.next_start(pos);
+            pos = tokens.next_start(pos, cpu);
             if pos >= limit || pos >= tokens.n {
                 break;
             }

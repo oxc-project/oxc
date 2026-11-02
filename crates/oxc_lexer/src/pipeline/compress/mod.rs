@@ -83,6 +83,7 @@ pub(super) fn init_pair_luts(cpu: DynCpu) {
     });
 }
 
+#[apply(cpu_versions)]
 #[inline(always)]
 unsafe fn compress_blocks(
     st: *const u64,
@@ -100,6 +101,7 @@ unsafe fn compress_blocks(
     })
 }
 
+#[apply(cpu_versions)]
 #[inline(always)]
 unsafe fn build_spans(
     stage_kind: *const u8,
@@ -116,6 +118,7 @@ unsafe fn build_spans(
     })
 }
 
+#[apply(cpu_versions)]
 #[inline(always)]
 unsafe fn lanes_post(
     src: &[u8],

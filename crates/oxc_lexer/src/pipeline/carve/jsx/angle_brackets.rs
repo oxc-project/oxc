@@ -54,6 +54,7 @@ pub(super) unsafe fn jsx_over_type_params(
                 lanes.module,
                 &lanes.disambiguate.brackets,
                 &lanes.disambiguate.closers,
+                cpu,
             );
             let (jsx, unterminated) =
                 jsx_over_generic(&tokens, &mut lanes.disambiguate.walks, lt, lp, cpu);
@@ -89,18 +90,18 @@ unsafe fn ts_angle_verdict(
     let mut p = t;
     // optional `const` type-parameter modifier: `<const T,>`. Like any modifier it must stay
     // on the line of its parameter; a comment between them is fine.
-    if n - p >= 6 && &src[p..p + 5] == b"const" && !is_word(src[p + 5]) {
+    if n - p >= 6 && &src[p..p + 5] == b"const" && !is_word(src[p + 5], cpu) {
         let qq = jsx_skip_trivia_fast(src.as_ptr(), n, p + 5, cpu);
         // A modifier must be on the same line as its parameter, so `const` followed by a line break
         // can only be a JSX tag name, e.g. `<const\nextends U>` is JSX.
         if line_break_in(src, p + 5, qq, cpu) {
             return AngleVerdict::Jsx;
         }
-        if qq < n && is_id_start(src[qq]) {
+        if qq < n && is_id_start(src[qq], cpu) {
             p = qq; // `const` was a modifier; advance to the real param
         }
     }
-    while p < n && bm_get(word, p) {
+    while p < n && bm_get(word, p, cpu) {
         p += 1; // first type-parameter identifier
     }
     // The signal may sit behind whitespace (Unicode too) or a comment: `<T /*c*/ extends U>`.
@@ -123,7 +124,7 @@ unsafe fn ts_angle_verdict(
     }
     // `extends` is also a legal JSX attribute name; it signals a generic only
     // as a full word not followed by `=` (attr value) or `>` (boolean attr).
-    if n - p >= 7 && &src[p..p + 7] == b"extends" && !bm_get(word, p + 7) {
+    if n - p >= 7 && &src[p..p + 7] == b"extends" && !bm_get(word, p + 7, cpu) {
         let qq = jsx_skip_trivia_fast(src.as_ptr(), n, p + 7, cpu);
         let d = if qq < n { src[qq] } else { 0 };
         if d == b'/' && !matches!(if qq + 1 < n { src[qq + 1] } else { 0 }, b'*' | b'/') {

@@ -28,7 +28,7 @@ fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
             // Out of budget: assume a tag, which only costs an anchor.
             return true;
         }
-        let k = tokens.base_kind(w);
+        let k = tokens.base_kind(w, cpu);
         if k == tk!(JsxLt) {
             return true;
         }
@@ -75,7 +75,7 @@ fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
         Prev::Op(_, b'}') => !in_jsx_tag(tokens, p),
         Prev::Word(_, tk!(KwElse | KwDo | KwExport | KwDefault | KwDeclare | KwAbstract)) => true,
         Prev::Op(q, _) | Prev::Word(q, _) | Prev::Other(q) => {
-            let e = tokens.next_start(q + 1);
+            let e = tokens.next_start(q + 1, cpu);
             tokens.line_break_between(e, p, cpu) && !in_jsx_tag(tokens, p)
         }
     }
@@ -85,7 +85,7 @@ fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
 pub(super) fn anchor_at(tokens: &Tokens, p: usize) -> (u8, Option<Anchor>) {
     let cpu = BASELINE;
 
-    let e = tokens.next_start(p + 1);
+    let e = tokens.next_start(p + 1, cpu);
     let kw = tokens.word_kw(p, e - p, cpu);
     (kw, anchor_of(tokens, p, e, kw))
 }
@@ -242,7 +242,7 @@ pub(super) fn paren_anchor(tokens: &Tokens, p: usize) -> Option<Anchor> {
             b'>' if !(q > 0 && tokens.src[q - 1] == b'=') => Some(Anchor::Expr(p)),
             _ => None,
         },
-        Prev::Other(q) => match tokens.base_kind(q) {
+        Prev::Other(q) => match tokens.base_kind(q, cpu) {
             tk!(
                 String | Number | BigInt | TemplateNoSub | TemplateTail | RegExp | PrivateIdent
             ) => Some(Anchor::Expr(p)),

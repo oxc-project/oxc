@@ -109,9 +109,9 @@ pub(super) unsafe fn carve_jsx(
     if n >= 2 && *src == b'#' && *src.add(1) == b'!' {
         let end = find_line_terminator(src, n, 2, cpu);
         *kind = tk!(Hashbang);
-        bm_clear_range(st, 1, end - 1);
+        bm_clear_range(st, 1, end - 1, cpu);
         if end < n {
-            bm_set(st, end);
+            bm_set(st, end, cpu);
         }
         i = end;
     }
@@ -163,7 +163,7 @@ pub(super) unsafe fn carve_jsx(
                     }
                     b'{' => {
                         if s >= 2 && *src.add(s - 1) == b'u' && *src.add(s - 2) == b'\\' {
-                            i = skip_unicode_brace_escape(src, n, s);
+                            i = skip_unicode_brace_escape(src, n, s, cpu);
                         } else {
                             if let Some(f) = stack.last_mut() {
                                 f.depth += 1;
@@ -230,7 +230,7 @@ pub(super) unsafe fn carve_jsx(
                             // `<<` shift: skip both, or the second `<` would
                             // read the first as an operand preceder.
                             i = s + 2;
-                        } else if c1 == b'=' || is_digit(c1) {
+                        } else if c1 == b'=' || is_digit(c1, cpu) {
                             // `<=` / `a<5`: leave for coalesce.
                             i = s + 1;
                         } else if not_operator_position(
@@ -245,6 +245,7 @@ pub(super) unsafe fn carve_jsx(
                                 lanes.module,
                                 &lanes.disambiguate.brackets,
                                 &lanes.disambiguate.closers,
+                                cpu,
                             ),
                             &mut lanes.disambiguate.walks,
                             s,
@@ -256,7 +257,7 @@ pub(super) unsafe fn carve_jsx(
                             let tc = if tpos < n { *src.add(tpos) } else { 0 };
                             if tc == b'>' {
                                 // fragment `<>`
-                                jsx_punct(kind, opch, s, tk!(JsxLt));
+                                jsx_punct(kind, opch, s, tk!(JsxLt), cpu);
                                 stack.push(JFrame {
                                     kind: JFrameKind::JsxTag,
                                     parent: JMode::Js,
@@ -265,14 +266,14 @@ pub(super) unsafe fn carve_jsx(
                                     name_s: tpos as u32,
                                 });
                                 mode = JMode::Tag;
-                            } else if is_id_start(tc)
+                            } else if is_id_start(tc, cpu)
                                 && jsx_over_type_params(
                                     src, srcs, st, opch, kind, word, n, s, tpos, ts, lanes, cpu,
                                 )
                             {
                                 // Element - unless `.tsx` says this is a
                                 // type-parameter list, which stays a less-than.
-                                jsx_punct(kind, opch, s, tk!(JsxLt));
+                                jsx_punct(kind, opch, s, tk!(JsxLt), cpu);
                                 stack.push(JFrame {
                                     kind: JFrameKind::JsxTag,
                                     parent: JMode::Js,
@@ -309,7 +310,7 @@ pub(super) unsafe fn carve_jsx(
                 // Tag/attr names that spell reserved words must stay IDENT:
                 // clear their `kwinit` so the `keywords` pass skips them.
                 if s > i {
-                    bm_clear_range(kwinit, i, s - 1);
+                    bm_clear_range(kwinit, i, s - 1, cpu);
                     jsx_glue_hyphens(src, n, st, opch, word, i, s, cpu);
                 }
                 let c = *src.add(s);
@@ -325,11 +326,12 @@ pub(super) unsafe fn carve_jsx(
                         lanes.module,
                         &lanes.disambiguate.brackets,
                         &lanes.disambiguate.closers,
+                        cpu,
                     );
                     if prev_sig(tokens.st, tokens.kind, s, cpu).is_some_and(|q| *src.add(q) == b'=')
                     {
                         let tpos = jsx_skip_trivia(src, n, s + 1, cpu);
-                        jsx_punct(kind, opch, s, tk!(JsxLt));
+                        jsx_punct(kind, opch, s, tk!(JsxLt), cpu);
                         stack.push(JFrame {
                             kind: JFrameKind::JsxTag,
                             parent: JMode::Tag,
@@ -352,7 +354,7 @@ pub(super) unsafe fn carve_jsx(
                 if ts && c == b'<' {
                     let mut depth = 1i32;
                     let mut p = s + 1;
-                    jsx_punct(kind, opch, s, tk!(Lt));
+                    jsx_punct(kind, opch, s, tk!(Lt), cpu);
                     // Open template substitutions, each counting its own
                     // nested braces - the same shape `carve` keeps in its
                     // depth vector.
@@ -370,13 +372,13 @@ pub(super) unsafe fn carve_jsx(
                         match *src.add(q) {
                             b'<' => {
                                 depth += 1;
-                                jsx_punct(kind, opch, q, tk!(Lt));
+                                jsx_punct(kind, opch, q, tk!(Lt), cpu);
                                 p = q + 1;
                             }
                             b'>' => {
                                 if !(q > 0 && *src.add(q - 1) == b'=') {
                                     depth -= 1;
-                                    jsx_punct(kind, opch, q, tk!(Gt));
+                                    jsx_punct(kind, opch, q, tk!(Gt), cpu);
                                 }
                                 p = q + 1;
                             }
@@ -469,7 +471,7 @@ pub(super) unsafe fn carve_jsx(
                         let end = if e < n { e + 1 } else { n };
                         *kind.add(s) = tk!(String);
                         if end > s + 1 {
-                            bm_clear_range(st, s + 1, end - 1);
+                            bm_clear_range(st, s + 1, end - 1, cpu);
                         }
                         let be = if e < n {
                             e
@@ -523,7 +525,7 @@ pub(super) unsafe fn carve_jsx(
                                         _ => q + 1,
                                     };
                                 }
-                                jsx_punct(kind, opch, gp, tk!(JsxTagEnd));
+                                jsx_punct(kind, opch, gp, tk!(JsxTagEnd), cpu);
                                 let parent = stack.last().map_or(JMode::Js, |f| f.parent);
                                 stack.pop();
                                 mode = parent;
@@ -543,7 +545,7 @@ pub(super) unsafe fn carve_jsx(
                         {
                             f.kind = JFrameKind::JsxElem;
                         }
-                        jsx_punct(kind, opch, s, tk!(Gt));
+                        jsx_punct(kind, opch, s, tk!(Gt), cpu);
                         mode = JMode::Text;
                         text_start = s + 1;
                         i = s + 1;
@@ -559,14 +561,14 @@ pub(super) unsafe fn carve_jsx(
                 if runend > text_start {
                     // One JTEXT token for the run; neutralize its start byte
                     // against coalesce/keywords and clear the interior.
-                    bm_set(st, text_start);
+                    bm_set(st, text_start, cpu);
                     *kind.add(text_start) = tk!(JsxText);
-                    bm_clear(opch, text_start);
-                    bm_clear(digit, text_start);
-                    bm_clear(dot, text_start);
-                    bm_clear(kwinit, text_start);
+                    bm_clear(opch, text_start, cpu);
+                    bm_clear(digit, text_start, cpu);
+                    bm_clear(dot, text_start, cpu);
+                    bm_clear(kwinit, text_start, cpu);
                     if runend > text_start + 1 {
-                        bm_clear_range(st, text_start + 1, runend - 1);
+                        bm_clear_range(st, text_start + 1, runend - 1, cpu);
                     }
                 }
                 if s >= n {
@@ -586,7 +588,7 @@ pub(super) unsafe fn carve_jsx(
                 } else if c == b'>' || c == b'}' {
                     // A stray `>`/`}` ends the run; clear its opch so
                     // coalesce can't fuse adjacent strays into `>>`.
-                    bm_clear(opch, s);
+                    bm_clear(opch, s, cpu);
                     lanes.push_diag(s as u32, 1, DiagCode::JsxTextInvalidCharacter);
                     text_start = s + 1;
                     i = s + 1;
@@ -597,7 +599,7 @@ pub(super) unsafe fn carve_jsx(
                     let c2 = if s + 2 < n { *src.add(s + 2) } else { 0 };
                     let direct = c1 == b'>'
                         || (c1 == b'/' && c2 != b'*' && c2 != b'/')
-                        || (c1 < 0x80 && is_id_start(c1));
+                        || (c1 < 0x80 && is_id_start(c1, cpu));
                     let tpos = if direct { s + 1 } else { jsx_skip_trivia(src, n, s + 1, cpu) };
                     let tc = if tpos < n { *src.add(tpos) } else { 0 };
                     if tc == b'/' {
@@ -629,22 +631,22 @@ pub(super) unsafe fn carve_jsx(
                             };
                         }
                         if gp > tpos + 1 {
-                            bm_clear_range(kwinit, tpos + 1, gp - 1);
+                            bm_clear_range(kwinit, tpos + 1, gp - 1, cpu);
                             // `</data-x>`: the name region holds no
                             // expression container, so hyphens in it are
                             // always part of the JSXIdentifier.
                             jsx_glue_hyphens(src, n, st, opch, word, tpos + 1, gp, cpu);
                         }
-                        jsx_punct(kind, opch, s, tk!(JsxLt));
+                        jsx_punct(kind, opch, s, tk!(JsxLt), cpu);
                         if gp < n {
-                            jsx_punct(kind, opch, gp, tk!(JsxTagEnd));
+                            jsx_punct(kind, opch, gp, tk!(JsxTagEnd), cpu);
                         }
                         let after = if gp < n { gp + 1 } else { n };
                         if gp >= n {
                             lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedJsxTag);
                         } else if let Some(f) = stack.last() {
                             let c2 = *src.add(tpos + 1);
-                            let cs = if (c2 < 0x80 && is_word(c2)) || c2 == b'>' {
+                            let cs = if (c2 < 0x80 && is_word(c2, cpu)) || c2 == b'>' {
                                 tpos + 1
                             } else {
                                 jsx_skip_trivia(src, gp, tpos + 1, cpu)
@@ -664,9 +666,9 @@ pub(super) unsafe fn carve_jsx(
                             text_start = after;
                         }
                         i = after;
-                    } else if tc == b'>' || is_id_start(tc) {
+                    } else if tc == b'>' || is_id_start(tc, cpu) {
                         // child element / fragment
-                        jsx_punct(kind, opch, s, tk!(JsxLt));
+                        jsx_punct(kind, opch, s, tk!(JsxLt), cpu);
                         stack.push(JFrame {
                             kind: JFrameKind::JsxTag,
                             parent: JMode::Text,
@@ -678,7 +680,7 @@ pub(super) unsafe fn carve_jsx(
                         i = s + 1;
                     } else {
                         // malformed lone `<` in text - clear opch, no `<<` fusion
-                        bm_clear(opch, s);
+                        bm_clear(opch, s, cpu);
                         text_start = s + 1;
                         i = s + 1;
                     }
@@ -705,8 +707,9 @@ pub(super) unsafe fn carve_jsx(
 
 /// Stamp a single-byte JSX-structural punct: set its final `kind` and clear
 /// its `opch` bit so `coalesce` cannot re-fuse it (`<div>=` into `>=`).
+#[apply(cpu_versions)]
 #[inline(always)]
-unsafe fn jsx_punct(kind: *mut u8, opch: *mut u64, off: usize, k: u8) {
+unsafe fn jsx_punct(kind: *mut u8, opch: *mut u64, off: usize, k: u8, cpu: impl Cpu) {
     *kind.add(off) = k;
-    bm_clear(opch, off);
+    bm_clear(opch, off, cpu);
 }

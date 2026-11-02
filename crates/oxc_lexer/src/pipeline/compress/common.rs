@@ -1,9 +1,14 @@
 use oxc_span::Span;
 
-use crate::{cpu::Cpu, error::DiagCode, token::tk};
+use crate::{
+    cpu::{Cpu, apply, cpu_versions},
+    error::DiagCode,
+    token::tk,
+};
 
 use crate::pipeline::lanes::Lanes;
 
+#[apply(cpu_versions)]
 #[inline(always)]
 pub(super) unsafe fn emit_value(
     src: &[u8],

@@ -1,3 +1,5 @@
+use crate::cpu::BASELINE;
+
 use crate::pipeline::{
     bytes::{is_digit, is_ws},
     keywords::{is_kw_init, is_kw_init_ts},
@@ -30,6 +32,8 @@ pub(super) struct MergedLuts {
 }
 
 pub(super) const MERGED_LUTS: MergedLuts = {
+    let cpu = BASELINE;
+
     let mut mrg_lo = [0; 16];
     let mut mrg_hi = [0; 16];
     let mut mrg_lo_ts = [0; 16];
@@ -46,7 +50,7 @@ pub(super) const MERGED_LUTS: MergedLuts = {
             let c = (hi << 4) | lo;
             let inset = match set {
                 0 => is_kw_init(c),
-                1 => is_op_char(c),
+                1 => is_op_char(c, cpu),
                 _ => c == b'.',
             };
             if inset {
@@ -85,6 +89,8 @@ pub(super) struct WordLuts {
 }
 
 pub(super) const WORD_LUTS: WordLuts = {
+    let cpu = BASELINE;
+
     let mut wb_lo = [0; 16];
     let mut wb_hi = [0; 16];
 
@@ -99,12 +105,12 @@ pub(super) const WORD_LUTS: WordLuts = {
             let c = (hi << 4) | lo;
             let inset = match bit {
                 0 => c == b'$',
-                1 => is_digit(c),
+                1 => is_digit(c, cpu),
                 2 => c >= b'A' && c <= b'O',
                 3 => (c >= b'P' && c <= b'Z') || c == b'_',
                 4 => c >= b'a' && c <= b'o',
                 5 => c >= b'p' && c <= b'z',
-                6 => is_ws(c) && c != b' ',
+                6 => is_ws(c, cpu) && c != b' ',
                 _ => c == b' ',
             };
             if inset {
@@ -137,7 +143,7 @@ mod tests {
             let opp = (t & 0x3C) != 0;
             let dt = (t & 0x80) != 0;
             assert!(
-                kw == is_kw_init(cb) && opp == is_op_char(cb) && dt == (cb == b'.'),
+                kw == is_kw_init(cb) && opp == is_op_char(cb, BASELINE) && dt == (cb == b'.'),
                 "MERGED_LUTS.lo / hi wrong at byte {c:#04x}"
             );
 
@@ -163,7 +169,9 @@ mod tests {
             let ws = (tb & 0xC0) != 0;
             let dg = (tb & 0x02) != 0;
             assert!(
-                wd == is_word(cb) && ws == is_ws(cb) && dg == is_digit(cb),
+                wd == is_word(cb, BASELINE)
+                    && ws == is_ws(cb, BASELINE)
+                    && dg == is_digit(cb, BASELINE),
                 " WORD_LUTS.lo / hi wrong at byte {c:#04x}"
             );
         }

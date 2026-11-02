@@ -37,9 +37,9 @@ pub(super) unsafe fn carve_js(
     if n >= 2 && *src == b'#' && *src.add(1) == b'!' {
         let end = find_line_terminator(src, n, 2, cpu);
         *kind = tk!(Hashbang);
-        bm_clear_range(st, 1, end - 1);
+        bm_clear_range(st, 1, end - 1, cpu);
         if end < n {
-            bm_set(st, end);
+            bm_set(st, end, cpu);
         }
         i = end;
     }
@@ -78,7 +78,7 @@ pub(super) unsafe fn carve_js(
             }
             b'{' => {
                 if s >= 2 && *src.add(s - 1) == b'u' && *src.add(s - 2) == b'\\' {
-                    i = skip_unicode_brace_escape(src, n, s);
+                    i = skip_unicode_brace_escape(src, n, s, cpu);
                 } else {
                     let top = depth.len() - 1;
                     depth[top] += 1;

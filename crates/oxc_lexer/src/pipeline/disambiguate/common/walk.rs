@@ -193,10 +193,11 @@ fn delim_slot(c: u8, _cpu: impl Cpu) -> usize {
     }
 }
 
+#[apply(cpu_versions)]
 #[inline(always)]
-pub fn word_len(src: &[u8], w: usize) -> usize {
+pub fn word_len(src: &[u8], w: usize, cpu: impl Cpu) -> usize {
     let mut e = w + 1;
-    while is_word(src[e]) {
+    while is_word(src[e], cpu) {
         e += 1;
     }
     e - w
@@ -209,20 +210,20 @@ pub fn word_len(src: &[u8], w: usize) -> usize {
 pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8], cpu: impl Cpu) -> bool {
     src[pos..].starts_with(kw) && {
         let after = pos + kw.len();
-        !is_word(src[after]) || unicode_ws_len_at(src, after, cpu) != 0
+        !is_word(src[after], cpu) || unicode_ws_len_at(src, after, cpu) != 0
     }
 }
 
 /// Previous significant token start before `pos` (skipping trivia), or `None` at start of input.
 #[apply(cpu_versions)]
 #[inline]
-pub fn prev_sig(st: &[u64], kind: &[u8], pos: usize, _cpu: impl Cpu) -> Option<usize> {
-    let mut q = bits::prev1(st, pos);
+pub fn prev_sig(st: &[u64], kind: &[u8], pos: usize, cpu: impl Cpu) -> Option<usize> {
+    let mut q = bits::prev1(st, pos, cpu);
     while let Some(p) = q {
         if !is_trivia_byte(kind[p]) {
             break;
         }
-        q = bits::prev1(st, p);
+        q = bits::prev1(st, p, cpu);
     }
     q
 }

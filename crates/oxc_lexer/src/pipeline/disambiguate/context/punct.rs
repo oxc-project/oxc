@@ -12,7 +12,7 @@ impl Walk {
         let cpu = BASELINE;
 
         let c = tokens.src[pos];
-        let mut len = if is_op_char(c) || c == b'/' { tokens.op_len(pos) } else { 1 };
+        let mut len = if is_op_char(c, cpu) || c == b'/' { tokens.op_len(pos) } else { 1 };
         let c1 = tokens.src[pos + 1];
 
         // Type context: brackets and separators belong to the type.

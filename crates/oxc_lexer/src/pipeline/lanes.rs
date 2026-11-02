@@ -219,12 +219,14 @@ impl Lanes {
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone), nes)
     }
 
+    #[apply(cpu_versions)]
     #[inline(always)]
     pub(super) fn push_string(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let (sp, _) = self.cook::<true, false>(src, bs as u32, be as u32, cpu);
         self.strings.push(sp);
     }
 
+    #[apply(cpu_versions)]
     #[inline(always)]
     pub(super) fn push_template(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let (sp, nes) = self.cook::<false, true>(src, bs as u32, be as u32, cpu);
@@ -255,6 +257,7 @@ impl Lanes {
         self.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false));
     }
 
+    #[apply(cpu_versions)]
     #[inline(always)]
     pub(super) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         // Escaped-identifier atoms are the one funnel every code-level
@@ -287,17 +290,22 @@ impl Lanes {
     #[inline(never)]
     fn validate_ident_escapes(&mut self, src: &[u8], bs: usize, be: usize) {
         fn hex4(src: &[u8], mut k: usize, be: usize) -> (Option<u32>, usize) {
+            let cpu = BASELINE;
+
             let mut v = 0u32;
             for _ in 0..4 {
                 if k >= be {
                     return (None, k);
                 }
-                let Some(h) = hexd(src[k]) else { return (None, k) };
+                let Some(h) = hexd(src[k], cpu) else { return (None, k) };
                 v = (v << 4) | u32::from(h);
                 k += 1;
             }
             (Some(v), k)
         }
+
+        let cpu = BASELINE;
+
         let mut i = bs;
         while i < be {
             if src[i] != b'\\' {
@@ -326,7 +334,7 @@ impl Lanes {
                 let mut any = false;
                 let mut over = false;
                 while k < be {
-                    let Some(h) = hexd(src[k]) else { break };
+                    let Some(h) = hexd(src[k], cpu) else { break };
                     value = (value << 4) | u32::from(h);
                     any = true;
                     k += 1;
@@ -444,6 +452,7 @@ static KEEP: [u64; 9] = [
     0xffff_ffff_ffff_ffff,
 ];
 
+#[apply(cpu_versions)]
 #[inline(always)]
 fn cook_short<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
@@ -527,6 +536,7 @@ fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
     }
 }
 
+#[apply(cpu_versions)]
 #[inline(always)]
 fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
     cpu_select!(cpu, {
@@ -569,6 +579,7 @@ fn span_has_bs_generic(src: &[u8], bs: usize, be: usize) -> bool {
 }
 
 /// Template variant of [`span_has_bs`]: a raw CR also forces the decode path.
+#[apply(cpu_versions)]
 #[inline(always)]
 fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
     cpu_select!(cpu, {
@@ -649,8 +660,9 @@ fn ident_start_run_end(s: &[u8], mut i: usize) -> usize {
     i
 }
 
+#[apply(cpu_versions)]
 #[inline(always)]
-fn hexd(b: u8) -> Option<u8> {
+fn hexd(b: u8, _cpu: impl Cpu) -> Option<u8> {
     match b {
         b'0'..=b'9' => Some(b - b'0'),
         b'a'..=b'f' => Some(b - b'a' + 10),
@@ -660,7 +672,7 @@ fn hexd(b: u8) -> Option<u8> {
 }
 
 #[apply(cpu_versions)]
-fn parse_number(src: &[u8], s: usize, e: usize, _cpu: impl Cpu) -> f64 {
+fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
     let mut i = s;
     let mut radix: u64 = 0;
     if e - s >= 2 && src[s] == b'0' {
@@ -686,7 +698,7 @@ fn parse_number(src: &[u8], s: usize, e: usize, _cpu: impl Cpu) -> f64 {
             if c == b'n' {
                 break;
             }
-            match hexd(c) {
+            match hexd(c, cpu) {
                 Some(h) => v = v.wrapping_mul(radix).wrapping_add(h as u64),
                 None => break,
             }
@@ -1027,8 +1039,8 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
             b'x' => {
                 // The parser's span runs to just past the leading valid hex.
                 if i + 2 <= be {
-                    let a = hexd(*src.add(i as usize));
-                    let c = hexd(*src.add((i + 1) as usize));
+                    let a = hexd(*src.add(i as usize), cpu);
+                    let c = hexd(*src.add((i + 1) as usize), cpu);
                     if let (Some(a), Some(c)) = (a, c) {
                         let v = (u32::from(a) << 4) | u32::from(c);
                         if v < 0x80 {
@@ -1053,7 +1065,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                     wi += 1;
                     nes = true;
                     if EMIT {
-                        let k = i < be && hexd(*src.add(i as usize)).is_some();
+                        let k = i < be && hexd(*src.add(i as usize), cpu).is_some();
                         push_escape_diag(diags, i - 2, i + u32::from(k));
                     }
                 }
@@ -1070,7 +1082,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                     // `\u{100000041}`.
                     let mut over_end: u32 = 0;
                     while k < be && *src.add(k as usize) != b'}' {
-                        if let Some(h) = hexd(*src.add(k as usize)) {
+                        if let Some(h) = hexd(*src.add(k as usize), cpu) {
                             cp = (cp << 4) | (h as u32);
                             any = true;
                             k += 1;
@@ -1102,10 +1114,10 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         }
                     }
                 } else if i + 4 <= be {
-                    let a = hexd(*src.add(i as usize));
-                    let b2 = hexd(*src.add((i + 1) as usize));
-                    let c = hexd(*src.add((i + 2) as usize));
-                    let d = hexd(*src.add((i + 3) as usize));
+                    let a = hexd(*src.add(i as usize), cpu);
+                    let b2 = hexd(*src.add((i + 1) as usize), cpu);
+                    let c = hexd(*src.add((i + 2) as usize), cpu);
+                    let d = hexd(*src.add((i + 3) as usize), cpu);
                     if let (Some(a), Some(b2), Some(c), Some(d)) = (a, b2, c, d) {
                         let cp = ((a as u32) << 12)
                             | ((b2 as u32) << 8)
@@ -1121,10 +1133,10 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                             && *src.add(i as usize) == b'\\'
                             && *src.add((i + 1) as usize) == b'u'
                         {
-                            let l0 = hexd(*src.add((i + 2) as usize));
-                            let l1 = hexd(*src.add((i + 3) as usize));
-                            let l2 = hexd(*src.add((i + 4) as usize));
-                            let l3 = hexd(*src.add((i + 5) as usize));
+                            let l0 = hexd(*src.add((i + 2) as usize), cpu);
+                            let l1 = hexd(*src.add((i + 3) as usize), cpu);
+                            let l2 = hexd(*src.add((i + 4) as usize), cpu);
+                            let l3 = hexd(*src.add((i + 5) as usize), cpu);
                             if let (Some(l0), Some(l1), Some(l2), Some(l3)) = (l0, l1, l2, l3) {
                                 let lo = ((l0 as u32) << 12)
                                     | ((l1 as u32) << 8)
@@ -1155,7 +1167,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                     nes = true;
                     if EMIT {
                         let mut k = i;
-                        while k < be && hexd(*src.add(k as usize)).is_some() {
+                        while k < be && hexd(*src.add(k as usize), cpu).is_some() {
                             k += 1;
                         }
                         push_escape_diag(diags, esc, k);

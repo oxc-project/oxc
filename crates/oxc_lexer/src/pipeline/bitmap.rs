@@ -1,7 +1,7 @@
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
-use crate::cpu::{Cpu, apply, cpu_select, cpu_version};
+use crate::cpu::{Cpu, apply, cpu_select, cpu_version, cpu_versions};
 
 #[cfg(target_arch = "x86_64")]
 use crate::cpu::Avx2;
@@ -14,8 +14,9 @@ use crate::cpu::Avx2;
 ///
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads of `(i / 64) + 1` words.
+#[apply(cpu_versions)]
 #[inline(always)]
-pub(super) unsafe fn bm_get(bm: *const u64, i: usize) -> bool {
+pub(super) unsafe fn bm_get(bm: *const u64, i: usize, _cpu: impl Cpu) -> bool {
     (*bm.add(i >> 6) >> (i & 63)) & 1 != 0
 }
 
@@ -29,8 +30,9 @@ pub(super) unsafe fn bm_get(bm: *const u64, i: usize) -> bool {
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads of `n.div_ceil(64) + 1` words.
 ///   The last word is read only when `i` is `n` and `n` is a multiple of 64.
+#[apply(cpu_versions)]
 #[inline(always)]
-pub(super) unsafe fn bm_next0(bm: *const u64, i: usize, n: usize) -> usize {
+pub(super) unsafe fn bm_next0(bm: *const u64, i: usize, n: usize, _cpu: impl Cpu) -> usize {
     let mut w = i >> 6;
     let mut inv = !*bm.add(w) & !((1u64 << (i & 63)).wrapping_sub(1));
     while inv == 0 {
@@ -56,8 +58,9 @@ pub(super) unsafe fn bm_next0(bm: *const u64, i: usize, n: usize) -> usize {
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads of `p.div_ceil(64)` words.
 ///   Nothing is read when `p` is 0.
+#[apply(cpu_versions)]
 #[inline(always)]
-pub(super) unsafe fn bm_prev1(bm: *const u64, p: usize) -> i64 {
+pub(super) unsafe fn bm_prev1(bm: *const u64, p: usize, _cpu: impl Cpu) -> i64 {
     if p == 0 {
         return -1;
     }
@@ -86,8 +89,9 @@ pub(super) unsafe fn bm_prev1(bm: *const u64, p: usize) -> i64 {
 ///
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads and writes of `(i / 64) + 1` words.
+#[apply(cpu_versions)]
 #[inline(always)]
-pub(super) unsafe fn bm_set(bm: *mut u64, i: usize) {
+pub(super) unsafe fn bm_set(bm: *mut u64, i: usize, _cpu: impl Cpu) {
     *bm.add(i >> 6) |= 1u64 << (i & 63);
 }
 
@@ -97,8 +101,9 @@ pub(super) unsafe fn bm_set(bm: *mut u64, i: usize) {
 ///
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads and writes of `(i / 64) + 1` words.
+#[apply(cpu_versions)]
 #[inline(always)]
-pub(super) unsafe fn bm_clear(bm: *mut u64, i: usize) {
+pub(super) unsafe fn bm_clear(bm: *mut u64, i: usize, _cpu: impl Cpu) {
     *bm.add(i >> 6) &= !(1u64 << (i & 63));
 }
 
@@ -111,8 +116,9 @@ pub(super) unsafe fn bm_clear(bm: *mut u64, i: usize) {
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads and writes of `(b / 64) + 1` words.
 ///   Nothing is accessed when `a > b`.
+#[apply(cpu_versions)]
 #[inline(always)]
-pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize) {
+pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize, _cpu: impl Cpu) {
     if a > b {
         return;
     }
@@ -143,6 +149,7 @@ pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize) {
 ///
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads of `nw` words.
+#[apply(cpu_versions)]
 #[inline(always)]
 pub(super) unsafe fn bm_any(bm: *const u64, nw: usize, cpu: impl Cpu) -> bool {
     cpu_select!(cpu, {

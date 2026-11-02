@@ -17,6 +17,7 @@ pub const KWB: usize = 64;
 
 /// Dispatch to the key-monomorphized verify without duplicating `coalesce`
 /// itself: one predictable branch per flush, not per candidate.
+#[apply(cpu_versions)]
 #[inline(always)]
 pub(super) unsafe fn kw_flush(
     ts: bool,
@@ -53,7 +54,7 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
 ) {
     for ix in 0..k {
         let p = *pos.add(ix) as usize;
-        let len = word_len(word, p);
+        let len = word_len(word, p, cpu);
         // Candidates are code-level identifier starts (carve cleared every
         // literal interior and JSX start from the masks), so the incumbent
         // kind is IDENT: select over it instead of a read-modify-write.
@@ -82,7 +83,7 @@ pub(super) unsafe fn kw_match_word(
     pos: usize,
     cpu: impl Cpu,
 ) -> TokenKind {
-    let len = word_len(word, pos);
+    let len = word_len(word, pos, cpu);
     if ts {
         kw_match::<true>(src.add(pos), len, cpu)
     } else {
@@ -101,8 +102,9 @@ pub(super) unsafe fn kw_match_word(
 /// # SAFETY
 ///
 /// `word` must be valid for reading 8 bytes from byte `pos / 8`.
+#[apply(cpu_versions)]
 #[inline(always)]
-unsafe fn word_len(word: *const u64, pos: usize) -> usize {
+unsafe fn word_len(word: *const u64, pos: usize, _cpu: impl Cpu) -> usize {
     let x = ptr::read_unaligned((word as *const u8).add(pos >> 3) as *const u64) >> (pos & 7);
     (!(x as u16)).trailing_zeros() as usize
 }

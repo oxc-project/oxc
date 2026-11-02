@@ -43,7 +43,7 @@ pub fn gt_run_split(
     while g < run && tokens.src[p + g] == b'>' {
         g += 1;
     }
-    let quick = if walks.run_rules() { run_shortcut(tokens, p, g, cpu) } else { None };
+    let quick = if walks.run_rules(cpu) { run_shortcut(tokens, p, g, cpu) } else { None };
     quick.unwrap_or_else(|| context::angles_before(tokens, walks, p)).min(g)
 }
 
@@ -63,7 +63,7 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize, cpu: impl Cpu) -> Optio
         if steps > RULE_SCAN_CAP {
             return None;
         }
-        let k = tokens.base_kind(p);
+        let k = tokens.base_kind(p, cpu);
         if k >= OP_KIND_BASE {
             let c = tokens.src[p];
             match c {
@@ -135,7 +135,7 @@ fn list_in_any_context(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
         Prev::Word(k, tk!(KwFunction | KwClass)) => !tokens.property_name(k, cpu),
         Prev::Word(head, 0) => {
             type_args_at(tokens, lt, cpu)
-                || (!tokens.line_break_between(tokens.next_start(head + 1), lt, cpu)
+                || (!tokens.line_break_between(tokens.next_start(head + 1, cpu), lt, cpu)
                     && type_reference_head(tokens, head, cpu))
         }
         _ => false,
@@ -164,7 +164,7 @@ fn type_reference_head(tokens: &Tokens, head: usize, cpu: impl Cpu) -> bool {
         Prev::Word(k, tk!(KwExtends | KwClass | KwFunction)) => !tokens.property_name(k, cpu),
         Prev::Word(k, tk!(KwImplements | KwAs | KwSatisfies | KwKeyof | KwInterface | KwType)) => {
             !tokens.property_name(k, cpu)
-                && !tokens.line_break_between(tokens.next_start(k + 1), h, cpu)
+                && !tokens.line_break_between(tokens.next_start(k + 1, cpu), h, cpu)
         }
         Prev::Op(c, b':') => return_type_colon(tokens, c, cpu),
         _ => false,

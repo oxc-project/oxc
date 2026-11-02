@@ -1,4 +1,4 @@
-use crate::cpu::{Cpu, cpu_select};
+use crate::cpu::{Cpu, apply, cpu_select, cpu_versions};
 
 #[cfg(target_arch = "x86_64")]
 mod avx2;
@@ -20,6 +20,7 @@ mod punct1_luts;
 
 mod punct1;
 
+#[apply(cpu_versions)]
 #[inline(always)]
 pub(super) unsafe fn classify(
     ts: bool,

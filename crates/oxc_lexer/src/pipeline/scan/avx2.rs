@@ -51,7 +51,7 @@ pub unsafe fn scan_block_comment_avx2(
         if c == b'\n' || c == b'\r' {
             saw_nl = true;
         }
-        if c == b'@' && lic_q < 0 && lic_verify_at(src, i) {
+        if c == b'@' && lic_q < 0 && lic_verify_at(src, i, cpu) {
             lic_q = i as i64;
         }
         i += 1;
@@ -114,7 +114,7 @@ pub unsafe fn scan_line_comment_avx2(
         {
             return (i, lic_q);
         }
-        if c == b'@' && lic_q < 0 && lic_verify_at(src, i) {
+        if c == b'@' && lic_q < 0 && lic_verify_at(src, i, cpu) {
             lic_q = i as i64;
         }
         i += 1;
@@ -124,11 +124,11 @@ pub unsafe fn scan_line_comment_avx2(
 
 #[apply(cpu_version(Avx2))]
 #[inline(always)]
-unsafe fn lic_first(src: *const u8, base: usize, mut am: u32, _cpu: Avx2) -> i64 {
+unsafe fn lic_first(src: *const u8, base: usize, mut am: u32, cpu: Avx2) -> i64 {
     while am != 0 {
         let q = base + am.trailing_zeros() as usize;
         am &= am - 1;
-        if lic_verify_at(src, q) {
+        if lic_verify_at(src, q, cpu) {
             return q as i64;
         }
     }
