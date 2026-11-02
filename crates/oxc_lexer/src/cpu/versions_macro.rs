@@ -55,7 +55,12 @@
 ///
 /// `#[inline(never)]` keeps the entry points as separate functions.
 /// Without it, they can be inlined into their callers in builds which enable AVX2 globally.
-/// `#[inline(always)]` isn't allowed, because it can't be combined with `#[target_feature]`.
+///
+/// An `#[inline(always)]` function is output unchanged, after the same checks as any other.
+/// It's compiled for each CPU feature set as part of its callers' entry points, so it needs
+/// none of its own. The macro only marks it as code which is compiled for each feature set.
+/// It couldn't have entry points anyway, because `#[inline(always)]` can't be combined with
+/// `#[target_feature]`.
 ///
 /// When SSE2 is enabled for the whole crate, `__generic` also gets `#[target_feature(enable = "sse2")]`.
 /// That's the case on nearly all x86_64 and x86 targets. It doesn't change the code `__generic` compiles to,
@@ -202,8 +207,10 @@ pub(crate) use cpu_versions;
 ///
 /// Patterns can't capture the tokens they match literally, so this is how `#` and `[...]` are captured.
 /// Captured `tt`s keep their original spans, so a compiler error about an attribute points at
-/// the attribute where the macro is used, not at this macro.
-/// e.g. `#[inline(always)]`, which can't be combined with `#[target_feature]`.
+/// the attribute where the macro is used, not at this macro. e.g. `#[inline(x)]`, which isn't valid.
+///
+/// The whole function is also kept unchanged in `item`, which `expand!` outputs for
+/// an `#[inline(always)]` function.
 ///
 /// When no attributes are left, a rule for each of `fn`, `unsafe fn`, `const fn` and `const unsafe fn`
 /// records the keywords, and passes the rest of the function on to `generics!`, in `signature`.
@@ -216,6 +223,7 @@ macro_rules! attrs {
             rest_to_capture = [ $($item)* ]
             outer_attrs = []
             inline_attrs = []
+            item = [ $($item)* ]
         );
     };
 
@@ -231,6 +239,7 @@ macro_rules! attrs {
         ]
         outer_attrs = $outer_attrs:tt
         inline_attrs = [ $($inline_attrs:tt)* ]
+        item = $item:tt
     ) => {
         crate::cpu::__cpu_versions::attrs!(
             rest_to_match = [ $($rest)* ]
@@ -240,6 +249,7 @@ macro_rules! attrs {
                 $($inline_attrs)*
                 $hash $attr
             ]
+            item = $item
         );
     };
 
@@ -255,6 +265,7 @@ macro_rules! attrs {
         ]
         outer_attrs = [ $($outer_attrs:tt)* ]
         inline_attrs = $inline_attrs:tt
+        item = $item:tt
     ) => {
         crate::cpu::__cpu_versions::attrs!(
             rest_to_match = [ $($rest)* ]
@@ -264,6 +275,7 @@ macro_rules! attrs {
                 $hash $attr
             ]
             inline_attrs = $inline_attrs
+            item = $item
         );
     };
 
@@ -273,6 +285,7 @@ macro_rules! attrs {
         rest_to_capture = [ $vis:vis fn $($rest:tt)* ]
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
+        item = $item:tt
     ) => {
         crate::cpu::__cpu_versions::generics!(
             signature = [ $($rest)* ]
@@ -280,6 +293,7 @@ macro_rules! attrs {
             fn_qualifiers = []
             outer_attrs = $outer_attrs
             inline_attrs = $inline_attrs
+            item = $item
         );
     };
 
@@ -289,6 +303,7 @@ macro_rules! attrs {
         rest_to_capture = [ $vis:vis unsafe fn $($rest:tt)* ]
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
+        item = $item:tt
     ) => {
         crate::cpu::__cpu_versions::generics!(
             signature = [ $($rest)* ]
@@ -296,6 +311,7 @@ macro_rules! attrs {
             fn_qualifiers = [ unsafe ]
             outer_attrs = $outer_attrs
             inline_attrs = $inline_attrs
+            item = $item
         );
     };
 
@@ -305,6 +321,7 @@ macro_rules! attrs {
         rest_to_capture = [ $vis:vis const fn $($rest:tt)* ]
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
+        item = $item:tt
     ) => {
         crate::cpu::__cpu_versions::generics!(
             signature = [ $($rest)* ]
@@ -312,6 +329,7 @@ macro_rules! attrs {
             fn_qualifiers = [ const ]
             outer_attrs = $outer_attrs
             inline_attrs = $inline_attrs
+            item = $item
         );
     };
 
@@ -321,6 +339,7 @@ macro_rules! attrs {
         rest_to_capture = [ $vis:vis const unsafe fn $($rest:tt)* ]
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
+        item = $item:tt
     ) => {
         crate::cpu::__cpu_versions::generics!(
             signature = [ $($rest)* ]
@@ -328,6 +347,7 @@ macro_rules! attrs {
             fn_qualifiers = [ const unsafe ]
             outer_attrs = $outer_attrs
             inline_attrs = $inline_attrs
+            item = $item
         );
     };
 
@@ -643,6 +663,7 @@ macro_rules! signature {
         fn_qualifiers = $fn_qualifiers:tt
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
+        item = $item:tt
     ) => {
         crate::cpu::__cpu_versions::receiver!(
             params = [ $($params)* ]
@@ -650,6 +671,7 @@ macro_rules! signature {
                 fn_name = $fn_name
                 outer_attrs = $outer_attrs
                 inline_attrs = $inline_attrs
+                item = $item
                 vis = $vis
                 fn_qualifiers = $fn_qualifiers
                 // Extra `(...)` parens to prevent `pastey` matching `[<...>]`
@@ -899,8 +921,25 @@ pub(crate) use params;
 /// * `expand_method!` for a method.
 ///
 /// `func` only bundles the function's slots to carry them through the stages before this one.
+///
+/// An `#[inline(always)]` function or method is output unchanged, from `item`.
 #[doc(hidden)]
 macro_rules! expand {
+    // `#[inline(always)]` function or method - output unchanged
+    (
+        func = {
+            $(method = $_method:tt)?
+            fn_name = $_fn_name:ident
+            outer_attrs = $_outer_attrs:tt
+            inline_attrs = [ #[inline(always)] ]
+            item = [ $($item:tt)* ]
+            $($_func:tt)*
+        }
+        $($_rest:tt)*
+    ) => {
+        $($item)*
+    };
+
     // Method. Must come before the function rule, which matches any `func`.
     //
     // `method` moves to after the function's slots. So `expand_method!` gets the function's slots
@@ -940,6 +979,7 @@ macro_rules! expand_func {
         fn_name = $fn_name:ident
         outer_attrs = [ $($outer_attrs:tt)* ]
         inline_attrs = [ $($inline_attrs:tt)* ]
+        item = $_item:tt
         vis = $vis:vis
         fn_qualifiers = [ $($fn_qualifiers:tt)* ]
         generic_params = [( $($generic_params:tt)* )]
@@ -1078,6 +1118,7 @@ macro_rules! expand_method {
         }
         outer_attrs = [ $($outer_attrs:tt)* ]
         inline_attrs = [ $($inline_attrs:tt)* ]
+        item = $_item:tt
         vis = $vis:vis
         fn_qualifiers = [ $($fn_qualifiers:tt)* ]
         generic_params = [( $($generic_params:tt)* )]

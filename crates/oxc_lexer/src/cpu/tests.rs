@@ -114,6 +114,13 @@ fn mixed<A: Copy, const N: usize, B: Copy, const M: usize,>(
     (a[0], b[0])
 }
 
+#[apply(cpu_versions)]
+#[expect(clippy::inline_always, reason = "tests an `#[inline(always)]` function")]
+#[inline(always)]
+const fn add_two(x: u32, _cpu: impl Cpu) -> u32 {
+    x + 2
+}
+
 struct Counter(u32);
 
 impl Counter {
@@ -149,6 +156,13 @@ impl Counter {
     fn plus_counter<Z: Into<Self>>(self, z: Z, _cpu: impl Cpu) -> u32 {
         self.0 + z.into().0
     }
+
+    #[apply(cpu_versions)]
+    #[expect(clippy::inline_always, reason = "tests an `#[inline(always)]` method")]
+    #[inline(always)]
+    const fn minus(&self, x: u32, _cpu: impl Cpu) -> u32 {
+        self.0 - x
+    }
 }
 
 impl From<u8> for Counter {
@@ -171,7 +185,7 @@ impl<W: Copy> Wrapper<W> {
 const BASELINE_DYN: DynCpu = to_dyn(BASELINE);
 
 /// Calls to `const` functions made with `cpu_versions!`, evaluated at compile time.
-const AT_COMPILE_TIME: [u32; 9] = {
+const AT_COMPILE_TIME: [u32; 11] = {
     let bytes: [u8; 2] = [1, 2];
     [
         add_one(1, BASELINE),
@@ -185,6 +199,8 @@ const AT_COMPILE_TIME: [u32; 9] = {
         *larger_at::<0>(&bytes, &[3, 0], BASELINE_DYN) as u32,
         *Counter(1).at::<0>(&bytes, BASELINE) as u32,
         first([4, 5], BASELINE),
+        add_two(1, BASELINE_DYN),
+        Counter(100).minus(1, BASELINE),
     ]
 };
 
@@ -194,7 +210,7 @@ const SIZES_AT_COMPILE_TIME: [usize; 2] =
 
 #[test]
 fn const_fn_at_compile_time() {
-    assert_eq!(AT_COMPILE_TIME, [2, 11, 101, 2, 102, 2, 3, 2, 4]);
+    assert_eq!(AT_COMPILE_TIME, [2, 11, 101, 2, 102, 2, 3, 2, 4, 3, 99]);
     assert_eq!(SIZES_AT_COMPILE_TIME, [8, 3]);
 }
 
@@ -216,6 +232,8 @@ fn const_fn_at_runtime() {
     assert_eq!(size::<u64>(cpu), 8);
     assert_eq!(first([4, 5], cpu), 4);
     assert_eq!(Counter(1).plus_size::<u16>(cpu), 3);
+    assert_eq!(add_two(1, cpu), 3);
+    assert_eq!(Counter(100).minus(1, cpu), 99);
 
     cpu_select!(cpu, {
         Avx2(cpu) => assert_eq!(add_one(1, cpu), 2),
