@@ -1,7 +1,9 @@
 use crate::cpu::BASELINE;
 
-use super::common::Tokens;
-use super::type_context::{keyword_type, lt_run_split, type_args_at};
+use super::{
+    common::Tokens,
+    type_context::{keyword_type, lt_run_split, type_args_at},
+};
 
 mod anchor;
 mod frame;

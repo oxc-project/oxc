@@ -14,16 +14,18 @@
 
 use std::cell::{Cell, RefCell};
 
-use super::{Tokens, bits};
 use crate::{
     cpu::{Cpu, apply, cpu_versions},
-    pipeline::{
-        bytes::{is_word, unicode_ws_len_at},
-        disambiguate::BRACKET_STEP_CAP,
-        find::bracket_bits,
-    },
     token::{OP_KIND_BASE, is_trivia_byte},
 };
+
+use crate::pipeline::{
+    bytes::{is_word, unicode_ws_len_at},
+    disambiguate::BRACKET_STEP_CAP,
+    find::bracket_bits,
+};
+
+use super::{Tokens, bits};
 
 /// The source's bracket bytes (`(){}[]`) as a bitmap, built per lex a 64-byte word at a time
 /// as the matches reach it: crossing a group costs a step per bracket, not per token, and a file
