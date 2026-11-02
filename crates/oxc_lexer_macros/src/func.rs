@@ -1,6 +1,6 @@
 //! The function which `#[cpu_multiversion]` or `#[cpu_version]` is applied to.
 
-use proc_macro2::{Span, TokenStream, TokenTree};
+use proc_macro2::{Delimiter, Span, TokenStream, TokenTree};
 use quote::{ToTokens, format_ident, quote};
 use syn::{
     Attribute, Block, Error, FnArg, GenericParam, Generics, Ident, ItemFn, Pat, PatIdent, PatType,
@@ -32,6 +32,12 @@ pub struct Func {
     pub generics: Generics,
     /// The `self` parameter, if the function is a method.
     pub receiver: Option<Receiver>,
+    /// `true` if the function has a `self` parameter, or uses `Self`.
+    ///
+    /// A nested function can't use `self` or `Self`, so the generated functions are methods
+    /// next to it instead. `Self` inside a nested `impl`, `trait`, `struct` or `enum` belongs
+    /// to that item, so it doesn't count. See [`contains_self`].
+    pub is_method: bool,
     /// The other parameters.
     pub params: Vec<Param>,
     /// `-> Type`, if the function has a return type.
@@ -69,6 +75,7 @@ impl Func {
                 FnArg::Typed(param) => params.push(Param::parse(param)?),
             }
         }
+        let is_method = receiver.is_some() || contains_self(original.clone());
 
         Ok(Func {
             original,
@@ -80,15 +87,11 @@ impl Func {
             name: sig.ident,
             generics: sig.generics,
             receiver,
+            is_method,
             params,
             return_type: sig.output,
             body: *block,
         })
-    }
-
-    /// `true` if the function has a `self` parameter.
-    pub fn is_method(&self) -> bool {
-        self.receiver.is_some()
     }
 
     /// `true` if one of the function's `#[inline]` attributes is `#[inline(always)]`.
@@ -104,7 +107,7 @@ impl Func {
     /// A method's are methods next to it, so their names include the method's name,
     /// e.g. `__pipeline_impl`.
     pub fn generated_name(&self, suffix: &str) -> Ident {
-        if self.is_method() {
+        if self.is_method {
             let name = &self.name;
             format_ident!("__{name}_{suffix}")
         } else {
@@ -115,7 +118,7 @@ impl Func {
     /// Path which calls a generated function: `__impl`, or `Self::__pipeline_impl` for a method.
     pub fn generated_path(&self, suffix: &str) -> TokenStream {
         let name = self.generated_name(suffix);
-        if self.is_method() { quote!(Self::#name) } else { quote!(#name) }
+        if self.is_method { quote!(Self::#name) } else { quote!(#name) }
     }
 
     /// Generic arguments for a call to a generated function, e.g. `::<T, N>`.
@@ -209,6 +212,52 @@ fn reject(token: Option<impl ToTokens>, what: &str) -> Result<()> {
     match token {
         Some(token) => Err(Error::new_spanned(token, format!("{what} aren't supported"))),
         None => Ok(()),
+    }
+}
+
+/// `true` if `tokens` contain `Self`, at any depth, outside nested items.
+///
+/// Items can only be nested in a block, so skipping them starts at the first `{ ... }`.
+/// Before it, `impl` is an `impl Trait` type in the signature, which must not start a skip.
+fn contains_self(tokens: TokenStream) -> bool {
+    tokens.into_iter().any(|token| match token {
+        TokenTree::Ident(ident) => ident == "Self",
+        TokenTree::Group(group) if group.delimiter() == Delimiter::Brace => {
+            block_contains_self(group.stream())
+        }
+        TokenTree::Group(group) => contains_self(group.stream()),
+        _ => false,
+    })
+}
+
+/// `true` if the tokens of a block contain `Self`, at any depth, outside nested items.
+fn block_contains_self(tokens: TokenStream) -> bool {
+    let mut tokens = tokens.into_iter();
+    while let Some(token) = tokens.next() {
+        match token {
+            // Comparing an `Ident` to a `&str` allocates a `String` each time, so convert it once.
+            // Nested `impl`, `trait`, `struct` and `enum` have a `Self` of their own.
+            // `union` isn't a keyword, so it can be the name of a method, e.g. `a.union(b)`.
+            TokenTree::Ident(ident) => match ident.to_string().as_str() {
+                "Self" => return true,
+                "impl" | "trait" | "struct" | "enum" => skip_item(&mut tokens),
+                _ => {}
+            },
+            TokenTree::Group(group) if block_contains_self(group.stream()) => return true,
+            _ => {}
+        }
+    }
+    false
+}
+
+/// Skip a nested item's tokens, up to its `{ ... }`, or `;` for a `struct Foo;` or `struct Foo(u8);`.
+fn skip_item(tokens: &mut impl Iterator<Item = TokenTree>) {
+    for token in tokens {
+        match token {
+            TokenTree::Group(group) if group.delimiter() == Delimiter::Brace => return,
+            TokenTree::Punct(punct) if punct.as_char() == ';' => return,
+            _ => {}
+        }
     }
 }
 

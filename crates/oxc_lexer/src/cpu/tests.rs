@@ -128,6 +128,21 @@ const fn add_two(x: u32, _cpu: impl Cpu) -> u32 {
     x + 2
 }
 
+// `Self` in nested items isn't the function's, so this isn't a method
+#[cpu_multiversion]
+fn nested_items(x: u32, _cpu: impl Cpu) -> u32 {
+    struct Inner(u32, Option<Box<Self>>);
+    impl Inner {
+        fn new(x: u32) -> Self {
+            Self(x, Some(Box::new(Self(1, None))))
+        }
+        fn total(&self) -> u32 {
+            self.0 + self.1.as_ref().map_or(0, |inner| inner.0)
+        }
+    }
+    Inner::new(x).total()
+}
+
 struct Counter(u32);
 
 impl Counter {
@@ -164,6 +179,18 @@ impl Counter {
         self.0 + z.into().0
     }
 
+    // No `self` parameter, but `Self` in the return type and body
+    #[cpu_multiversion]
+    const fn of(n: u32, _cpu: impl Cpu) -> Self {
+        Self(n)
+    }
+
+    // No `self` parameter, but `Self` in the body only
+    #[cpu_multiversion]
+    const fn double_of(n: u32, _cpu: impl Cpu) -> u32 {
+        Self(n).0 * 2
+    }
+
     #[cpu_multiversion]
     #[expect(clippy::inline_always, reason = "tests an `#[inline(always)]` method")]
     #[inline(always)]
@@ -192,7 +219,7 @@ impl<W: Copy> Wrapper<W> {
 const BASELINE_DYN: DynCpu = to_dyn(BASELINE);
 
 /// Calls to `const` functions made with `#[cpu_multiversion]`, evaluated at compile time.
-const AT_COMPILE_TIME: [u32; 11] = {
+const AT_COMPILE_TIME: [u32; 13] = {
     let bytes: [u8; 2] = [1, 2];
     [
         add_one(1, BASELINE),
@@ -208,6 +235,8 @@ const AT_COMPILE_TIME: [u32; 11] = {
         first([4, 5], BASELINE),
         add_two(1, BASELINE_DYN),
         Counter(100).minus(1, BASELINE),
+        Counter::of(5, BASELINE).0,
+        Counter::double_of(6, BASELINE_DYN),
     ]
 };
 
@@ -217,7 +246,7 @@ const SIZES_AT_COMPILE_TIME: [usize; 2] =
 
 #[test]
 fn const_fn_at_compile_time() {
-    assert_eq!(AT_COMPILE_TIME, [2, 11, 101, 2, 102, 2, 3, 2, 4, 3, 99]);
+    assert_eq!(AT_COMPILE_TIME, [2, 11, 101, 2, 102, 2, 3, 2, 4, 3, 99, 5, 12]);
     assert_eq!(SIZES_AT_COMPILE_TIME, [8, 3]);
 }
 
@@ -241,6 +270,8 @@ fn const_fn_at_runtime() {
     assert_eq!(Counter(1).plus_size::<u16>(cpu), 3);
     assert_eq!(add_two(1, cpu), 3);
     assert_eq!(Counter(100).minus(1, cpu), 99);
+    assert_eq!(Counter::of(5, cpu).0, 5);
+    assert_eq!(Counter::double_of(6, cpu), 12);
 
     cpu_select!(cpu, {
         Avx2(cpu) => assert_eq!(add_one(1, cpu), 2),
@@ -270,6 +301,13 @@ fn generic_params() {
         assert_eq!(Counter(100).plus_len::<5, _>([1u8, 2], cpu), 107);
         assert_eq!(Counter(100).plus_counter(1u8, cpu), 101);
         assert_eq!(Wrapper(3u8).convert::<u32>(cpu), 3);
+    }
+}
+
+#[test]
+fn nested_items_with_self() {
+    for cpu in [DynCpu::detect(), BASELINE_DYN] {
+        assert_eq!(nested_items(5, cpu), 6);
     }
 }
 
@@ -454,6 +492,21 @@ macro_rules! wrapped_tests {
                 if v.is_zero() { x + y } else { x }
             }
 
+            // `Self` in nested items isn't the function's, so this isn't a method
+            #[cpu_version($cpu)]
+            fn nested_items(x: u32, _cpu: $cpu) -> u32 {
+                struct Inner(u32, Option<Box<Self>>);
+                impl Inner {
+                    fn new(x: u32) -> Self {
+                        Self(x, Some(Box::new(Self(1, None))))
+                    }
+                    fn total(&self) -> u32 {
+                        self.0 + self.1.as_ref().map_or(0, |inner| inner.0)
+                    }
+                }
+                Inner::new(x).total()
+            }
+
             struct Total(u32);
 
             impl Total {
@@ -473,6 +526,19 @@ macro_rules! wrapped_tests {
                 #[cpu_version($cpu)]
                 fn doubled(self, _cpu: $cpu) -> Self {
                     Self(self.0 * 2)
+                }
+
+                // No `self` parameter, but `Self` in the return type and body
+                #[cpu_version($cpu)]
+                fn of(n: u32, _cpu: $cpu) -> Self {
+                    Self(n)
+                }
+
+                // No `self` parameter, but `Self` in the body only
+                #[cpu_version($cpu)]
+                #[inline]
+                fn double_of(n: u32, _cpu: $cpu) -> u32 {
+                    Self(n).0 * 2
                 }
 
                 #[cpu_version($cpu)]
@@ -517,6 +583,7 @@ macro_rules! wrapped_tests {
                 assert_eq!(identity(String::from("x"), cpu), "x");
                 assert_eq!(add_if_zero(1, Vec128::splat(0, cpu), 2), 3);
                 assert_eq!(add_if_zero(1, Vec128::splat(1, cpu), 2), 1);
+                assert_eq!(nested_items(5, cpu), 6);
 
                 let mut total = Total(1);
                 total.add(2, cpu);
@@ -524,6 +591,8 @@ macro_rules! wrapped_tests {
                 assert_eq!(total.plus_size::<u16, 1>(cpu), 6);
                 assert_eq!(total.plus_if_zero(1, Vec128::splat(0, cpu)), 4);
                 assert_eq!(total.doubled(cpu).into_incremented(cpu), 7);
+                assert_eq!(Total::of(5, cpu).0, 5);
+                assert_eq!(Total::double_of(6, cpu), 12);
 
                 assert_eq!(Wrapper(3u8).convert::<Vec<u8>>(cpu), vec![3]);
             }

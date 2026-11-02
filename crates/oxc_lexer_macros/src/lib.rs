@@ -61,11 +61,11 @@ mod version;
 /// The names start with `__`, so they don't clash with any real parameter names.
 ///
 /// Methods are supported too, with a `self`, `&self`, `&mut self`, `mut self` or `self: Type`
-/// parameter. Only methods can take `self`, so a method's entry points are methods next to it
-/// in the same `impl`, rather than functions inside it. Their names include the method's name,
-/// e.g. for a method `pipeline`: `__pipeline_impl`, `__pipeline_generic`, `__pipeline_avx2`
-/// and `__pipeline_neon`. They're private, so they're only visible in the module which defines
-/// the method.
+/// parameter, and so are associated functions which use `Self`. A function nested inside them
+/// can't use `self` or `Self`, so their entry points are methods next to them in the same `impl`,
+/// rather than functions inside them. Their names include the function's name, e.g. for a method
+/// `pipeline`: `__pipeline_impl`, `__pipeline_generic`, `__pipeline_avx2` and `__pipeline_neon`.
+/// They're private, so they're only visible in the module which defines the method.
 ///
 /// They aren't methods of a trait defined inside the method, because rustc gives trait methods
 /// external linkage. That stops LLVM from inlining helpers into them, and from removing the
@@ -289,11 +289,12 @@ pub fn cpu_multiversion(args: TokenStream, item: TokenStream) -> TokenStream {
 /// Like [`cpu_multiversion`] `#[inline]` and `#[inline(never)]` attributes go on `__impl`,
 /// all other attributes go on `foo`, and `mut` only goes on `__impl`'s parameters.
 ///
-/// A nested function can't use `self`, so for a method with a `self` parameter, `__impl` is
-/// a private method next to it, called `__foo_impl`. So it can't be in a trait implementation.
+/// A nested function can't use `self` or `Self`, so for a method, or an associated function
+/// which uses `Self`, `__impl` is a private method next to it, called `__foo_impl`. So it can't
+/// be in a trait implementation.
 ///
-/// A nested function can't use `Self` or the generic parameters of an `impl` either.
-/// So a wrapped associated function with no `self` parameter can't use them.
+/// A nested function can't use the generic parameters of an `impl` either.
+/// So a wrapped associated function which doesn't use `Self` can't use them.
 #[proc_macro_attribute]
 pub fn cpu_version(args: TokenStream, item: TokenStream) -> TokenStream {
     output(version::expand(args.into(), item.into()))

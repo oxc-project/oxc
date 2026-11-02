@@ -52,7 +52,7 @@ pub fn expand(args: TokenStream, item: TokenStream) -> Result<TokenStream> {
     }
 
     let versions = Multiversion { func: &func, cpu_param: &cpu_param };
-    Ok(if func.is_method() { versions.expand_method() } else { versions.expand_fn() })
+    Ok(if func.is_method { versions.expand_method() } else { versions.expand_fn() })
 }
 
 impl Multiversion<'_> {
@@ -128,7 +128,9 @@ impl Multiversion<'_> {
         }
     }
 
-    /// A method. Only methods can take `self`, so its entry points are methods next to it.
+    /// A method, or an associated function which uses `Self`.
+    /// A nested function can't use `self` or `Self`, so its entry points are methods next to it.
+    ///
     /// For the example function with a `&self` parameter:
     ///
     /// ```ignore

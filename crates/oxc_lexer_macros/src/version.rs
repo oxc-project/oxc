@@ -85,7 +85,7 @@ pub fn expand(args: TokenStream, item: TokenStream) -> Result<TokenStream> {
 /// }
 /// ```
 ///
-/// A nested function can't take `self`, so a method's `__impl` is a method `__foo_impl`
+/// A nested function can't use `self` or `Self`, so a method's `__impl` is a method `__foo_impl`
 /// next to it, with the same `#[cfg]`, and the call is `Self::__foo_impl::<N, T>(self, arr, cpu)`.
 fn wrap(func: &Func, cpu: Cpu, proof: &Proof) -> TokenStream {
     let Func {
@@ -125,7 +125,7 @@ fn wrap(func: &Func, cpu: Cpu, proof: &Proof) -> TokenStream {
         unsafe { #impl_path #turbofish (#args) }
     };
 
-    if func.is_method() {
+    if func.is_method {
         quote! {
             #(#outer_attrs)*
             #cfg_attr

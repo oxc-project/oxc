@@ -29,9 +29,9 @@ macro_rules! define_token_kind {
             #[cpu_multiversion]
             #[inline]
             #[must_use]
-            pub(crate) const fn from_u8(byte: u8, _cpu: impl Cpu) -> Option<TokenKind> {
+            pub(crate) const fn from_u8(byte: u8, _cpu: impl Cpu) -> Option<Self> {
                 match byte {
-                    $( $value => Some(TokenKind::$variant), )+
+                    $( $value => Some(Self::$variant), )+
                     _ => None,
                 }
             }
@@ -305,14 +305,11 @@ impl TokenKind {
     #[cpu_multiversion]
     #[inline]
     #[must_use]
-    pub(crate) const unsafe fn from_u8_unchecked(byte: u8, cpu: impl Cpu) -> TokenKind {
-        debug_assert!(
-            TokenKind::from_u8(byte, cpu).is_some(),
-            "not a declared TokenKind discriminant"
-        );
+    pub(crate) const unsafe fn from_u8_unchecked(byte: u8, cpu: impl Cpu) -> Self {
+        debug_assert!(Self::from_u8(byte, cpu).is_some(), "not a declared TokenKind discriminant");
         // SAFETY: the caller guarantees `byte` is a declared discriminant, and
         // `TokenKind` is `#[repr(u8)]`, so it shares `u8`'s layout.
-        unsafe { mem::transmute::<u8, TokenKind>(byte) }
+        unsafe { mem::transmute::<u8, Self>(byte) }
     }
 
     #[inline]
