@@ -683,19 +683,10 @@ fn has_own_line_comment_before_body<'a>(
 }
 
 fn should_add_parens(expression: AstNode<'_, '_, Expression<'_>>) -> bool {
-    // Add parentheses to avoid confusion between `a => b ? c : d` and `a <= b ? c : d`
-    // but only if the body isn't an object/function or class expression because parentheses are always required in that
-    // case and added by the object expression itself
-    if matches!(&*expression, Expression::ConditionalExpression(_)) {
-        !matches!(
-            ExpressionLeftSide::leftmost(&expression),
-            Expression::ObjectExpression(_)
-                | Expression::FunctionExpression(_)
-                | Expression::ClassExpression(_)
-        )
-    } else {
-        false
-    }
+    // Add parentheses to avoid confusion between `a => b ? c : d` and `a <= b ? c : d`,
+    // unless the body starts with an object, which always brings one (its own or an ancestor's).
+    matches!(&*expression, Expression::ConditionalExpression(_))
+        && !matches!(ExpressionLeftSide::leftmost(&expression), Expression::ObjectExpression(_))
 }
 
 fn has_rest_object_or_array_parameter(params: &FormalParameters) -> bool {
