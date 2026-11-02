@@ -1,6 +1,9 @@
 use std::ptr;
 
-use crate::token::tk;
+use crate::{
+    cpu::{BASELINE, cpu_version},
+    token::tk,
+};
 
 use crate::pipeline::{
     bytes::{is_digit, is_word, is_ws},
@@ -21,7 +24,10 @@ const FL_MISC: u32 = 6;
 static CLS_JS: [u16; 256] = cls_table(false);
 static CLS_TS: [u16; 256] = cls_table(true);
 
+/// Only called at compile time.
 const fn cls_table(ts: bool) -> [u16; 256] {
+    let cpu = BASELINE;
+
     let mut punct = [tk!(Invalid); 256];
     let mut i = 0;
     while i < PUNCT1.len() {
@@ -33,19 +39,19 @@ const fn cls_table(ts: bool) -> [u16; 256] {
     while c < 256 {
         let b = c as u8;
         let mut f = 0u16;
-        if is_word(b) {
+        if is_word(b, cpu) {
             f |= 1 << FL_WORD;
         }
-        if is_ws(b) {
+        if is_ws(b, cpu) {
             f |= 1 << FL_WS;
         }
-        if is_digit(b) {
+        if is_digit(b, cpu) {
             f |= 1 << FL_DIGIT;
         }
         if b == b'.' {
             f |= 1 << FL_DOT;
         }
-        if is_op_char(b) {
+        if is_op_char(b, cpu) {
             f |= 1 << FL_OPCH;
         }
         if (ts && is_kw_init_ts(b)) || (!ts && is_kw_init(b)) {
@@ -54,10 +60,10 @@ const fn cls_table(ts: bool) -> [u16; 256] {
         if b == b'#' || b == b'\\' || b >= 0x80 {
             f |= 1 << FL_MISC;
         }
-        let kd = if is_ws(b) {
+        let kd = if is_ws(b, cpu) {
             tk!(Whitespace)
-        } else if is_word(b) {
-            if is_digit(b) { tk!(Number) } else { tk!(Ident) }
+        } else if is_word(b, cpu) {
+            if is_digit(b, cpu) { tk!(Number) } else { tk!(Ident) }
         } else {
             punct[c]
         };
@@ -67,6 +73,7 @@ const fn cls_table(ts: bool) -> [u16; 256] {
     t
 }
 
+#[cpu_version(Generic)]
 #[inline(never)]
 pub(super) unsafe fn classify_generic(
     ts: bool,
@@ -163,6 +170,7 @@ pub(super) unsafe fn classify_generic(
     }
 }
 
+#[cpu_version(Generic)]
 #[inline(always)]
 fn pk(fw: u64, bit: u32) -> u64 {
     (((fw >> bit) & 0x0101_0101_0101_0101).wrapping_mul(0x0102_0408_1020_4080)) >> 56

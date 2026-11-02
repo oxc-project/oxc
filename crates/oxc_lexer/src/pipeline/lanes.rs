@@ -5,21 +5,17 @@
 
 use std::{ptr, str};
 
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
-use std::arch::x86_64::*;
-
 use oxc_ast::ast::{Comment, RegExpFlags};
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 use crate::{
+    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_select, cpu_version},
     error::{DiagCode, DiagSeverity, Diagnostic},
     token::StringSpan,
 };
+
+#[cfg(target_arch = "x86_64")]
+use crate::{cpu::Avx2, simd::Vec256};
 
 use crate::pipeline::disambiguate::DisambiguateState;
 
@@ -49,7 +45,8 @@ pub(crate) struct Lanes {
 }
 
 impl Lanes {
-    pub(super) fn clear(&mut self) {
+    #[cpu_multiversion]
+    pub(super) fn clear(&mut self, _cpu: impl Cpu) {
         self.numbers.clear();
         self.strings.clear();
         self.templates.clear();
@@ -62,8 +59,9 @@ impl Lanes {
         self.unicode_leads.clear();
     }
 
+    #[cpu_multiversion]
     #[inline]
-    pub(super) fn push_regex_flags(&mut self, src: &[u8], fs: usize, fe: usize) {
+    pub(super) fn push_regex_flags(&mut self, src: &[u8], fs: usize, fe: usize, _cpu: impl Cpu) {
         let mut f: u8 = 0;
         for (k, &c) in src[fs..fe].iter().enumerate() {
             let bit: u8 = match c {
@@ -90,6 +88,10 @@ impl Lanes {
 
     /// Record a diagnostic. Cold and non-inlined so the push stays out of
     /// the hot carve body.
+    ///
+    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
+    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+    #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
     pub(super) fn push_diag(&mut self, off: u32, len: u32, code: DiagCode) {
@@ -100,6 +102,10 @@ impl Lanes {
     /// through the first unescaped CR/LF (for CRLF only the CR). Escaped
     /// terminators are legal LineContinuations and are skipped the way the
     /// parser's escape reader skips them. LS/PS are legal string content.
+    ///
+    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
+    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+    #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
     pub(super) fn push_line_terminator_in_string(&mut self, src: &[u8], s: usize, end: usize) {
@@ -131,6 +137,10 @@ impl Lanes {
     /// IdentifierStart or digit right after a numeric literal (`1.5n`,
     /// `3in`, `0b12`), with oxc_parser's `invalid_number_end` span: the char
     /// at `e2` plus the run of identifier-start chars after it.
+    ///
+    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
+    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+    #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
     pub(super) fn push_num_end_diag(&mut self, src: &[u8], e2: usize, code: DiagCode) {
@@ -142,6 +152,10 @@ impl Lanes {
     /// IdentifierStart (`1π`) is the same invalid adjacency as the ASCII
     /// case; Unicode whitespace is legal and invalid UTF-8 emits nothing
     /// here.
+    ///
+    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
+    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+    #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
     pub(super) fn push_num_end_diag_unicode(&mut self, src: &[u8], e2: usize) {
@@ -153,6 +167,7 @@ impl Lanes {
         self.push_diag(e2 as u32, (end - e2) as u32, DiagCode::InvalidNumericLiteral);
     }
 
+    #[cpu_multiversion]
     #[inline]
     /// `EMIT`: report malformed escapes while cooking - strings only, since
     /// template escapes are legal when tagged (the parser owns that error).
@@ -163,10 +178,11 @@ impl Lanes {
         src: &[u8],
         bs: u32,
         be: u32,
+        cpu: impl Cpu,
     ) -> (StringSpan, bool) {
         let ss = self.cooked.len() as u32;
         if be <= bs {
-            return (StringSpan::new(ss, ss & StringSpan::END_MASK, false), false);
+            return (StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu), false);
         }
         let body_len = (be - bs) as usize;
 
@@ -174,14 +190,16 @@ impl Lanes {
         let base = self.cooked.as_mut_ptr();
 
         let needs_decode = if body_len < 32 {
-            return self.cook_short_dispatch::<EMIT, CRLF>(src, bs, be, base, ss, body_len);
+            return self.cook_short_dispatch::<EMIT, CRLF>(src, bs, be, base, ss, body_len, cpu);
         } else if CRLF {
-            span_has_bs_or_cr(src, bs as usize, be as usize)
+            span_has_bs_or_cr(src, bs as usize, be as usize, cpu)
         } else {
-            span_has_bs(src, bs as usize, be as usize)
+            span_has_bs(src, bs as usize, be as usize, cpu)
         };
         let (wi, lone, nes) = if needs_decode {
-            unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.diags) }
+            unsafe {
+                cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.diags, cpu)
+            }
         } else {
             unsafe {
                 ptr::copy_nonoverlapping(
@@ -193,9 +211,10 @@ impl Lanes {
             (ss + (be - bs), false, false)
         };
         unsafe { self.cooked.set_len(wi as usize) };
-        (StringSpan::new(ss, wi & StringSpan::END_MASK, lone), nes)
+        (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
     }
 
+    #[cpu_multiversion]
     #[inline]
     fn cook_short_dispatch<const EMIT: bool, const CRLF: bool>(
         &mut self,
@@ -205,35 +224,39 @@ impl Lanes {
         base: *mut u8,
         ss: u32,
         body_len: usize,
+        cpu: impl Cpu,
     ) -> (StringSpan, bool) {
         let (wi, lone, nes) =
-            cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.diags);
+            cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.diags, cpu);
         unsafe { self.cooked.set_len(wi as usize) };
-        (StringSpan::new(ss, wi & StringSpan::END_MASK, lone), nes)
+        (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
     }
 
-    #[inline]
-    pub(super) fn push_string(&mut self, src: &[u8], bs: usize, be: usize) {
-        let (sp, _) = self.cook::<true, false>(src, bs as u32, be as u32);
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) fn push_string(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
+        let (sp, _) = self.cook::<true, false>(src, bs as u32, be as u32, cpu);
         self.strings.push(sp);
     }
 
-    #[inline]
-    pub(super) fn push_template(&mut self, src: &[u8], bs: usize, be: usize) {
-        let (sp, nes) = self.cook::<false, true>(src, bs as u32, be as u32);
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) fn push_template(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
+        let (sp, nes) = self.cook::<false, true>(src, bs as u32, be as u32, cpu);
         // A NotEscapeSequence means cooked = None per the grammar; legality
         // depends on tagged-ness (parser context), so the span carries a
         // marker instead of a diagnostic.
-        self.templates.push(if nes { sp.with_cooked_invalid() } else { sp });
+        self.templates.push(if nes { sp.with_cooked_invalid(cpu) } else { sp });
     }
 
     /// Push a string value verbatim. JSX attribute strings have no backslash
     /// escapes; the value is the raw slice between the quotes.
+    #[cpu_multiversion]
     #[inline]
-    pub(super) fn push_string_raw(&mut self, src: &[u8], bs: usize, be: usize) {
+    pub(super) fn push_string_raw(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let ss = self.cooked.len() as u32;
         if be <= bs {
-            self.strings.push(StringSpan::new(ss, ss & StringSpan::END_MASK, false));
+            self.strings.push(StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu));
             return;
         }
         let body_len = be - bs;
@@ -244,15 +267,16 @@ impl Lanes {
             self.cooked.set_len(ss as usize + body_len);
         }
         let we = ss + body_len as u32;
-        self.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false));
+        self.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu));
     }
 
-    #[inline]
-    pub(super) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize) {
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         // Escaped-identifier atoms are the one funnel every code-level
         // identifier escape passes through, so validation rides here.
         self.validate_ident_escapes(src, bs, be);
-        let (sp, _) = self.cook::<false, false>(src, bs as u32, be as u32);
+        let (sp, _) = self.cook::<false, false>(src, bs as u32, be as u32, cpu);
         self.atoms.push(sp);
     }
 
@@ -260,6 +284,7 @@ impl Lanes {
     /// oxc_parser reports the decoded char with an empty span after the escape.
     /// We emit `(end, 0)`; the bridge recognizes the len-0 shape and decodes the
     /// escape text backward to recover the char.
+    #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
     fn check_escaped_ident_char(&mut self, value: u32, at_start: bool, end: usize) {
@@ -275,21 +300,31 @@ impl Lanes {
     /// end where the parser's scanner stopped; surrogate pairs are invalid in
     /// identifiers (one diag over both escapes); a failed pair-low rewinds so
     /// the second escape is validated on its own.
+    ///
+    /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
+    /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+    #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
     fn validate_ident_escapes(&mut self, src: &[u8], bs: usize, be: usize) {
+        #[cpu_version(Generic)]
         fn hex4(src: &[u8], mut k: usize, be: usize) -> (Option<u32>, usize) {
+            let cpu = BASELINE;
+
             let mut v = 0u32;
             for _ in 0..4 {
                 if k >= be {
                     return (None, k);
                 }
-                let Some(h) = hexd(src[k]) else { return (None, k) };
+                let Some(h) = hexd(src[k], cpu) else { return (None, k) };
                 v = (v << 4) | u32::from(h);
                 k += 1;
             }
             (Some(v), k)
         }
+
+        let cpu = BASELINE;
+
         let mut i = bs;
         while i < be {
             if src[i] != b'\\' {
@@ -318,7 +353,7 @@ impl Lanes {
                 let mut any = false;
                 let mut over = false;
                 while k < be {
-                    let Some(h) = hexd(src[k]) else { break };
+                    let Some(h) = hexd(src[k], cpu) else { break };
                     value = (value << 4) | u32::from(h);
                     any = true;
                     k += 1;
@@ -394,8 +429,9 @@ impl Lanes {
         }
     }
 
+    #[cpu_multiversion]
     #[inline]
-    pub(super) fn push_number(&mut self, src: &[u8], s: usize, e: usize) {
+    pub(super) fn push_number(&mut self, src: &[u8], s: usize, e: usize, cpu: impl Cpu) {
         let len = e - s;
         if len.wrapping_sub(1) <= 7 && !(len > 1 && src[s] == b'0') {
             let keep = KEEP[len];
@@ -415,11 +451,11 @@ impl Lanes {
             }
         }
         // Only non-SWAR numbers (floats, radix-prefixed, bigint, separators, leading zeros, long) reach the validation walk.
-        let code = validate_number(src, s, e);
+        let code = validate_number(src, s, e, cpu);
         if code != DiagCode::Ok {
             self.push_diag(s as u32, (e - s) as u32, code);
         }
-        self.numbers.push(parse_number(src, s, e));
+        self.numbers.push(parse_number(src, s, e, cpu));
     }
 }
 
@@ -435,13 +471,8 @@ static KEEP: [u64; 9] = [
     0xffff_ffff_ffff_ffff,
 ];
 
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
-#[inline]
+#[cpu_multiversion]
+#[inline(always)]
 fn cook_short<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
     bs: u32,
@@ -450,30 +481,49 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
     ss: u32,
     body_len: usize,
     diags: &mut Vec<Diagnostic>,
+    cpu: impl Cpu,
 ) -> (u32, bool, bool) {
-    let v = unsafe { _mm256_loadu_si256(src.as_ptr().add(bs as usize) as *const __m256i) };
-    let mut hit = unsafe { _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\\' as i8)) };
+    cpu_select!(cpu, {
+        Avx2(cpu) => {
+            cook_short_avx2::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu)
+        }
+        Neon(_) => cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags),
+        Generic(_) => cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags),
+    })
+}
+
+/// [`cook_short`] for AVX2.
+#[cpu_version(Avx2)]
+#[inline]
+fn cook_short_avx2<const EMIT: bool, const CRLF: bool>(
+    src: &[u8],
+    bs: u32,
+    be: u32,
+    base: *mut u8,
+    ss: u32,
+    body_len: usize,
+    diags: &mut Vec<Diagnostic>,
+    cpu: Avx2,
+) -> (u32, bool, bool) {
+    let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(bs as usize), cpu) };
+    let mut hit = v.eq_u8(b'\\');
     if CRLF {
         // Templates also decode when a raw CR needs LF-normalizing.
-        hit = unsafe { _mm256_or_si256(hit, _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\r' as i8))) };
+        hit |= v.eq_u8(b'\r');
     }
-    let bs_mask = unsafe { _mm256_movemask_epi8(hit) as u32 } & ((1u32 << body_len) - 1);
+    let bs_mask = hit.movemask() & ((1u32 << body_len) - 1);
     if bs_mask == 0 {
-        unsafe { _mm256_storeu_si256(base.add(ss as usize) as *mut __m256i, v) };
+        unsafe { v.store_unaligned(base.add(ss as usize)) };
         (ss + (be - bs), false, false)
     } else {
-        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags) }
+        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags, cpu) }
     }
 }
 
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
+/// [`cook_short`] for all other CPUs.
+#[cpu_version(Generic)]
 #[inline]
-fn cook_short<const EMIT: bool, const CRLF: bool>(
+fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
     bs: u32,
     be: u32,
@@ -482,6 +532,8 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
     body_len: usize,
     diags: &mut Vec<Diagnostic>,
 ) -> (u32, bool, bool) {
+    let cpu = BASELINE;
+
     let body = &src[bs as usize..be as usize];
     let plain = if CRLF {
         memchr::memchr2(b'\\', b'\r', body).is_none()
@@ -498,23 +550,28 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
         }
         (ss + (be - bs), false, false)
     } else {
-        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags) }
+        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags, cpu) }
     }
 }
 
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
+#[cpu_multiversion]
+#[inline(always)]
+fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
+    cpu_select!(cpu, {
+        Avx2(cpu) => span_has_bs_avx2(src, bs, be, cpu),
+        Neon(_) => span_has_bs_generic(src, bs, be),
+        Generic(_) => span_has_bs_generic(src, bs, be),
+    })
+}
+
+/// [`span_has_bs`] for AVX2.
+#[cpu_version(Avx2)]
 #[inline]
-fn span_has_bs(src: &[u8], bs: usize, be: usize) -> bool {
+fn span_has_bs_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
     let mut i = bs;
     while i + 32 <= be {
-        let v = unsafe { _mm256_loadu_si256(src.as_ptr().add(i) as *const __m256i) };
-        let m =
-            unsafe { _mm256_movemask_epi8(_mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\\' as i8))) };
+        let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(i), cpu) };
+        let m = v.eq_u8(b'\\').movemask();
         if m != 0 {
             return true;
         }
@@ -529,35 +586,32 @@ fn span_has_bs(src: &[u8], bs: usize, be: usize) -> bool {
     false
 }
 
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
+/// [`span_has_bs`] for all other CPUs.
+#[cpu_version(Generic)]
 #[inline]
-fn span_has_bs(src: &[u8], bs: usize, be: usize) -> bool {
+fn span_has_bs_generic(src: &[u8], bs: usize, be: usize) -> bool {
     memchr::memchr(b'\\', &src[bs..be]).is_some()
 }
 
 /// Template variant of [`span_has_bs`]: a raw CR also forces the decode path.
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
+#[cpu_multiversion]
+#[inline(always)]
+fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
+    cpu_select!(cpu, {
+        Avx2(cpu) => span_has_bs_or_cr_avx2(src, bs, be, cpu),
+        Neon(_) => span_has_bs_or_cr_generic(src, bs, be),
+        Generic(_) => span_has_bs_or_cr_generic(src, bs, be),
+    })
+}
+
+/// [`span_has_bs_or_cr`] for AVX2.
+#[cpu_version(Avx2)]
 #[inline]
-fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize) -> bool {
+fn span_has_bs_or_cr_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
     let mut i = bs;
     while i + 32 <= be {
-        let v = unsafe { _mm256_loadu_si256(src.as_ptr().add(i) as *const __m256i) };
-        let m = unsafe {
-            _mm256_movemask_epi8(_mm256_or_si256(
-                _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\\' as i8)),
-                _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\r' as i8)),
-            ))
-        };
+        let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(i), cpu) };
+        let m = (v.eq_u8(b'\\') | v.eq_u8(b'\r')).movemask();
         if m != 0 {
             return true;
         }
@@ -572,19 +626,16 @@ fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize) -> bool {
     false
 }
 
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
+/// [`span_has_bs_or_cr`] for all other CPUs.
+#[cpu_version(Generic)]
 #[inline]
-fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize) -> bool {
+fn span_has_bs_or_cr_generic(src: &[u8], bs: usize, be: usize) -> bool {
     memchr::memchr2(b'\\', b'\r', &src[bs..be]).is_some()
 }
 
 /// Decode the single `char` at byte `i`, or `None` if the bytes there are
 /// not valid UTF-8.
+#[cpu_version(Generic)]
 pub(crate) fn decode_char_at(s: &[u8], i: usize) -> Option<char> {
     let end = (i + 4).min(s.len());
     let slice = s.get(i..end)?;
@@ -600,6 +651,7 @@ pub(crate) fn decode_char_at(s: &[u8], i: usize) -> Option<char> {
 
 /// End of the run of IdentifierStart chars beginning at `i` - the tail of
 /// oxc_parser's `invalid_number_end` span (a digit ends the run).
+#[cpu_version(Generic)]
 fn ident_start_run_end(s: &[u8], mut i: usize) -> usize {
     while i < s.len() {
         let b = s[i];
@@ -619,8 +671,9 @@ fn ident_start_run_end(s: &[u8], mut i: usize) -> usize {
     i
 }
 
+#[cpu_multiversion]
 #[inline(always)]
-fn hexd(b: u8) -> Option<u8> {
+fn hexd(b: u8, _cpu: impl Cpu) -> Option<u8> {
     match b {
         b'0'..=b'9' => Some(b - b'0'),
         b'a'..=b'f' => Some(b - b'a' + 10),
@@ -629,7 +682,8 @@ fn hexd(b: u8) -> Option<u8> {
     }
 }
 
-fn parse_number(src: &[u8], s: usize, e: usize) -> f64 {
+#[cpu_multiversion]
+fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
     let mut i = s;
     let mut radix: u64 = 0;
     if e - s >= 2 && src[s] == b'0' {
@@ -655,7 +709,7 @@ fn parse_number(src: &[u8], s: usize, e: usize) -> f64 {
             if c == b'n' {
                 break;
             }
-            match hexd(c) {
+            match hexd(c, cpu) {
                 Some(h) => v = v.wrapping_mul(radix).wrapping_add(h as u64),
                 None => break,
             }
@@ -694,8 +748,9 @@ fn parse_number(src: &[u8], s: usize, e: usize) -> f64 {
     str::from_utf8(&buf[..bl]).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
 }
 
+#[cpu_multiversion]
 #[inline]
-fn radix_digit(c: u8) -> Option<u8> {
+fn radix_digit(c: u8, _cpu: impl Cpu) -> Option<u8> {
     match c {
         b'0'..=b'9' => Some(c - b'0'),
         b'a'..=b'f' => Some(c - b'a' + 10),
@@ -711,8 +766,9 @@ fn radix_digit(c: u8) -> Option<u8> {
 /// separator/bigint suffix/bad exponent. Shapes the scanner pre-splits
 /// (`0b12`, `1.5n`, `3in`) are detected at the adjacency in coalesce, not
 /// here. Detection only; `parse_number` still produces a lenient value.
+#[cpu_multiversion]
 #[inline(never)]
-fn validate_number(src: &[u8], s: usize, e: usize) -> DiagCode {
+fn validate_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> DiagCode {
     let bytes = &src[s..e];
     let Some((&last, head)) = bytes.split_last() else { return DiagCode::Ok };
     let is_bigint = last == b'n';
@@ -740,7 +796,7 @@ fn validate_number(src: &[u8], s: usize, e: usize) -> DiagCode {
                         return DiagCode::InvalidNumericSeparator;
                     }
                     prev_us = true;
-                } else if matches!(radix_digit(c), Some(v) if v < radix) {
+                } else if matches!(radix_digit(c, cpu), Some(v) if v < radix) {
                     any = true;
                     prev_us = false;
                 } else {
@@ -814,8 +870,9 @@ fn validate_number(src: &[u8], s: usize, e: usize) -> DiagCode {
     DiagCode::Ok
 }
 
+#[cpu_multiversion]
 #[inline]
-unsafe fn push_cp(out: *mut u8, mut wi: u32, cp: u32, lone: &mut bool) -> u32 {
+unsafe fn push_cp(out: *mut u8, mut wi: u32, cp: u32, lone: &mut bool, _cpu: impl Cpu) -> u32 {
     if cp <= 0x7F {
         *out.add(wi as usize) = cp as u8;
         wi += 1;
@@ -849,6 +906,7 @@ unsafe fn push_cp(out: *mut u8, mut wi: u32, cp: u32, lone: &mut bool) -> u32 {
     wi
 }
 
+#[cpu_multiversion]
 #[inline]
 unsafe fn emit_oct(
     src: *const u8,
@@ -857,6 +915,7 @@ unsafe fn emit_oct(
     mut i: u32,
     be: u32,
     mut val: u32,
+    _cpu: impl Cpu,
 ) -> (u32, u32) {
     let mut cnt = 1;
     while cnt < 3 && i < be {
@@ -885,6 +944,10 @@ unsafe fn emit_oct(
 
 /// Bad string escape, with oxc_parser's span: the backslash to just past the
 /// last byte its escape scanner consumed.
+///
+/// As it's cold code, it's compiled only once, not separately for each CPU feature set.
+/// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+#[cpu_version(Generic)]
 #[cold]
 #[inline(never)]
 fn push_escape_diag(diags: &mut Vec<Diagnostic>, off: u32, end: u32) {
@@ -896,6 +959,7 @@ fn push_escape_diag(diags: &mut Vec<Diagnostic>, off: u32, end: u32) {
     });
 }
 
+#[cpu_multiversion]
 unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
     src: *const u8,
     bs: u32,
@@ -903,6 +967,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
     out: *mut u8,
     ss: u32,
     diags: &mut Vec<Diagnostic>,
+    cpu: impl Cpu,
 ) -> (u32, bool, bool) {
     let mut wi = ss;
     let mut i = bs;
@@ -971,7 +1036,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                     wi += 1;
                 } else {
                     nes = true; // octal after backslash-0: NotEscapeSequence in templates
-                    let (nwi, ni) = emit_oct(src, out, wi, i, be, 0);
+                    let (nwi, ni) = emit_oct(src, out, wi, i, be, 0, cpu);
                     wi = nwi;
                     i = ni;
                 }
@@ -989,8 +1054,8 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
             b'x' => {
                 // The parser's span runs to just past the leading valid hex.
                 if i + 2 <= be {
-                    let a = hexd(*src.add(i as usize));
-                    let c = hexd(*src.add((i + 1) as usize));
+                    let a = hexd(*src.add(i as usize), cpu);
+                    let c = hexd(*src.add((i + 1) as usize), cpu);
                     if let (Some(a), Some(c)) = (a, c) {
                         let v = (u32::from(a) << 4) | u32::from(c);
                         if v < 0x80 {
@@ -1015,7 +1080,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                     wi += 1;
                     nes = true;
                     if EMIT {
-                        let k = i < be && hexd(*src.add(i as usize)).is_some();
+                        let k = i < be && hexd(*src.add(i as usize), cpu).is_some();
                         push_escape_diag(diags, i - 2, i + u32::from(k));
                     }
                 }
@@ -1032,7 +1097,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                     // `\u{100000041}`.
                     let mut over_end: u32 = 0;
                     while k < be && *src.add(k as usize) != b'}' {
-                        if let Some(h) = hexd(*src.add(k as usize)) {
+                        if let Some(h) = hexd(*src.add(k as usize), cpu) {
                             cp = (cp << 4) | (h as u32);
                             any = true;
                             k += 1;
@@ -1044,7 +1109,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         }
                     }
                     if k < be && *src.add(k as usize) == b'}' && any {
-                        wi = push_cp(out, wi, cp, &mut lone);
+                        wi = push_cp(out, wi, cp, &mut lone, cpu);
                         i = k + 1;
                         if over_end != 0 {
                             nes = true;
@@ -1064,10 +1129,10 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         }
                     }
                 } else if i + 4 <= be {
-                    let a = hexd(*src.add(i as usize));
-                    let b2 = hexd(*src.add((i + 1) as usize));
-                    let c = hexd(*src.add((i + 2) as usize));
-                    let d = hexd(*src.add((i + 3) as usize));
+                    let a = hexd(*src.add(i as usize), cpu);
+                    let b2 = hexd(*src.add((i + 1) as usize), cpu);
+                    let c = hexd(*src.add((i + 2) as usize), cpu);
+                    let d = hexd(*src.add((i + 3) as usize), cpu);
                     if let (Some(a), Some(b2), Some(c), Some(d)) = (a, b2, c, d) {
                         let cp = ((a as u32) << 12)
                             | ((b2 as u32) << 8)
@@ -1083,10 +1148,10 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                             && *src.add(i as usize) == b'\\'
                             && *src.add((i + 1) as usize) == b'u'
                         {
-                            let l0 = hexd(*src.add((i + 2) as usize));
-                            let l1 = hexd(*src.add((i + 3) as usize));
-                            let l2 = hexd(*src.add((i + 4) as usize));
-                            let l3 = hexd(*src.add((i + 5) as usize));
+                            let l0 = hexd(*src.add((i + 2) as usize), cpu);
+                            let l1 = hexd(*src.add((i + 3) as usize), cpu);
+                            let l2 = hexd(*src.add((i + 4) as usize), cpu);
+                            let l3 = hexd(*src.add((i + 5) as usize), cpu);
                             if let (Some(l0), Some(l1), Some(l2), Some(l3)) = (l0, l1, l2, l3) {
                                 let lo = ((l0 as u32) << 12)
                                     | ((l1 as u32) << 8)
@@ -1098,7 +1163,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                                 }
                             }
                         }
-                        wi = push_cp(out, wi, cp, &mut lone);
+                        wi = push_cp(out, wi, cp, &mut lone, cpu);
                     } else {
                         *out.add(wi as usize) = b'u';
                         wi += 1;
@@ -1117,7 +1182,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                     nes = true;
                     if EMIT {
                         let mut k = i;
-                        while k < be && hexd(*src.add(k as usize)).is_some() {
+                        while k < be && hexd(*src.add(k as usize), cpu).is_some() {
                             k += 1;
                         }
                         push_escape_diag(diags, esc, k);
@@ -1126,7 +1191,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
             }
             b'1'..=b'7' => {
                 nes = true; // octal escape: NotEscapeSequence in templates
-                let (nwi, ni) = emit_oct(src, out, wi, i, be, (nb - b'0') as u32);
+                let (nwi, ni) = emit_oct(src, out, wi, i, be, (nb - b'0') as u32, cpu);
                 wi = nwi;
                 i = ni;
             }
@@ -1159,13 +1224,15 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
 
 #[cfg(test)]
 mod tests {
+    use crate::cpu::BASELINE;
+
     use super::*;
 
     fn push_tpl(body: &[u8]) -> Vec<u8> {
         let mut padded = body.to_vec();
         padded.extend_from_slice(&[0u8; 64]);
         let mut l = Lanes::default();
-        l.push_template(&padded, 0, body.len());
+        l.push_template(&padded, 0, body.len(), BASELINE);
         let sp = l.templates[0];
         let s = (sp.start & StringSpan::START_MASK) as usize;
         let e = (sp.end_and_flags & StringSpan::END_MASK) as usize;
@@ -1200,6 +1267,7 @@ mod tests {
                 out.as_mut_ptr(),
                 0,
                 &mut diags,
+                BASELINE,
             )
         };
         out.truncate(wi as usize);
@@ -1233,6 +1301,7 @@ mod tests {
                     out_t.as_mut_ptr(),
                     0,
                     &mut diags,
+                    BASELINE,
                 )
             };
             let (wf, _, _) = unsafe {
@@ -1243,6 +1312,7 @@ mod tests {
                     out_f.as_mut_ptr(),
                     0,
                     &mut Vec::new(),
+                    BASELINE,
                 )
             };
             assert_eq!(wt, wf);
@@ -1364,6 +1434,7 @@ mod tests {
                     out.as_mut_ptr(),
                     0,
                     &mut Vec::new(),
+                    BASELINE,
                 )
             };
             out.truncate(wi as usize);

@@ -58,7 +58,7 @@ declare_oxc_lint!(
     /// ```
     NoUselessErrorCaptureStackTrace,
     unicorn,
-    restriction,
+    suspicious,
     recommended,
     suggestion,
     version = "1.20.0",

@@ -11,7 +11,10 @@
 //!
 //! Code which has SIMD implementations takes a type implementing [`Cpu`],
 //! and uses [`cpu_select!`] to pick an implementation.
-//! [`cpu_versions!`] turns a function into one with a separate entry point for each CPU feature set.
+//! [`#[cpu_version]`] marks each implementation with the CPU feature set it's for.
+//! [`#[cpu_multiversion]`] turns a function into one with a separate entry point for each CPU feature set.
+//!
+//! The attribute macros are in the `oxc_lexer_macros` crate.
 //!
 //! * Given a specific type (e.g. `Avx2`): the choice is made at compile time.
 //! * Given a [`DynCpu`]: the choice is made at runtime.
@@ -48,26 +51,30 @@
 //! can use instructions that rely on support for those features without any checks.
 //!
 //! DO NOT add any other way to create these types (e.g. a `Default` impl or a public constructor).
+//!
+//! [`#[cpu_version]`]: macro@cpu_version
+//! [`#[cpu_multiversion]`]: macro@cpu_multiversion
 
 use std::mem;
 
+pub(crate) use oxc_lexer_macros::{cpu_multiversion, cpu_version};
+
 mod select_macro;
-mod versions_macro;
 
 #[cfg(test)]
 mod tests;
 
-pub(super) use select_macro::cpu_select;
-pub(super) use versions_macro::{__cpu_versions, apply, cpu_versions};
+pub(crate) use select_macro::cpu_select;
 
 /// Trait for types representing a CPU feature set.
 ///
 /// Implemented by all types representing specific CPU feature sets, and by [`DynCpu`].
 #[expect(private_bounds)]
-pub(super) trait Cpu: CpuPrivate + Copy {
+pub trait Cpu: CpuPrivate + Copy {
     /// Get the [`DynCpu`] for this type.
     ///
     /// Same as the [`to_dyn`] function, which works in `const` code too.
+    #[expect(clippy::inline_always, reason = "only calls `to_dyn`, which folds to a constant")]
     #[inline(always)]
     fn to_dyn(self) -> DynCpu {
         to_dyn(self)
@@ -95,12 +102,15 @@ trait CpuPrivate {
 ///
 /// Same as [`Cpu::to_dyn`], but this works in `const` code too.
 /// A `const fn` can't call a trait method on a generic type, so it can't call [`Cpu::to_dyn`].
-/// [`cpu_select!`] and [`cpu_versions!`] use this function, so they work in `const` code.
+/// [`cpu_select!`] and [`#[cpu_multiversion]`] use this function, so they work in `const` code.
 ///
 /// Only [`DynCpu`] needs `cpu`. It's taken for all types so that this can only be called
 /// by code which already has one of these types.
+///
+/// [`#[cpu_multiversion]`]: macro@cpu_multiversion
+#[expect(clippy::inline_always, reason = "folds to a constant, except for `DynCpu`")]
 #[inline(always)]
-pub(super) const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {
+pub const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {
     match C::DYN_CPU {
         Some(dyn_cpu) => dyn_cpu,
         // SAFETY: `DYN_CPU` is `None` only for `DynCpu`, and for `Generic` when it's uninhabited.
@@ -118,7 +128,7 @@ pub(super) const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {
 ///
 /// [`detect`]: Self::detect
 #[derive(Clone, Copy, Debug)]
-pub(super) enum DynCpu {
+pub enum DynCpu {
     /// AVX2 feature set. Only available on x86_64.
     #[cfg(target_arch = "x86_64")]
     Avx2(Avx2),
@@ -177,7 +187,7 @@ mod generic {
     pub(super) const GENERIC: Generic = Generic(());
 }
 
-pub(super) use generic::Generic;
+pub use generic::Generic;
 
 /// x86_64 features.
 /// AVX2 or generic.
@@ -218,8 +228,7 @@ mod x86_64 {
 }
 
 #[cfg(target_arch = "x86_64")]
-#[cfg_attr(not(test), expect(unused_imports))]
-pub(super) use x86_64::{Avx2, BASELINE};
+pub use x86_64::{Avx2, BASELINE};
 
 /// aarch64 features.
 /// Neon or generic.
@@ -261,8 +270,7 @@ mod aarch64 {
 }
 
 #[cfg(target_arch = "aarch64")]
-#[cfg_attr(not(test), expect(unused_imports))]
-pub(super) use aarch64::{BASELINE, Neon};
+pub use aarch64::{BASELINE, Neon};
 
 /// Fallback implementation for other platforms.
 ///
@@ -287,5 +295,4 @@ mod other {
 }
 
 #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
-#[cfg_attr(not(test), expect(unused_imports))]
-pub(super) use other::BASELINE;
+pub use other::BASELINE;

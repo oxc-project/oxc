@@ -1358,12 +1358,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 
 [[package]]
-name = "macro_rules_attr"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df6b51dd2c42ad49398acaa235ff7f5d82f11a0ad1e25e8aeaee0a47b9df7e8a"
-
-[[package]]
 name = "markdown"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1399,9 +1393,9 @@ dependencies = [
 
 [[package]]
 name = "napi"
-version = "3.16.0"
+version = "3.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4febd3f6e8b57aa986853be5b24f80a1856753535219aec431cce854cd666fc"
+checksum = "907ff7366fb7182e28edd0f08ef8ac5d6b13b8d65a3c0b3a10bf3ac092437d6b"
 dependencies = [
  "bitflags",
  "ctor",
@@ -1855,7 +1849,6 @@ dependencies = [
  "oxc_estree_tokens",
  "oxc_formatter",
  "oxc_isolated_declarations",
- "oxc_lexer",
  "oxc_linter",
  "oxc_mangler",
  "oxc_minifier",
@@ -2280,15 +2273,23 @@ name = "oxc_lexer"
 version = "0.139.0"
 dependencies = [
  "constcat",
- "macro_rules_attr",
  "memchr",
  "oxc_ast",
  "oxc_data_structures",
  "oxc_diagnostics",
+ "oxc_lexer_macros",
  "oxc_span",
  "oxc_syntax",
- "pastey",
  "rustc-hash",
+]
+
+[[package]]
+name = "oxc_lexer_macros"
+version = "0.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.5",
 ]
 
 [[package]]
@@ -2763,11 +2764,13 @@ dependencies = [
  "mimalloc-safe",
  "oxc_allocator",
  "oxc_formatter",
+ "oxc_linter",
  "oxc_minifier",
  "oxc_parser",
  "oxc_semantic",
  "oxc_tasks_common",
  "oxc_transformer",
+ "rustc-hash",
  "saphyr",
 ]
 
@@ -3006,12 +3009,6 @@ dependencies = [
  "smallvec",
  "windows-link",
 ]
-
-[[package]]
-name = "pastey"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ee67f1008b1ba2321834326597b8e186293b049a023cdef258527550b9935b4"
 
 [[package]]
 name = "pem-rfc7468"
@@ -3459,9 +3456,9 @@ dependencies = [
 
 [[package]]
 name = "saphyr"
-version = "0.2.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0662b098655e5e779a80041b640702e341cf3ede4560ecc103cf0ef098c8e33e"
+checksum = "3aa37a62b2a28868277e83b6f651dc9581751db73d1cb51132c73c0b4ec7f70a"
 dependencies = [
  "encoding_rs",
  "hashlink",
@@ -3472,9 +3469,9 @@ dependencies = [
 
 [[package]]
 name = "saphyr-parser"
-version = "0.2.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c6220586c3dacac54bfddec87af86ddb31862d29666e7e35cf4baf70a25d387"
+checksum = "48cf5a82d41247a625f040af08e91008fec945bce3b0bffba992c44af092caa2"
 dependencies = [
  "arraydeque",
  "thiserror",

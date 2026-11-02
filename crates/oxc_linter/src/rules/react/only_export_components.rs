@@ -282,12 +282,11 @@ impl OnlyExportComponents {
                 is_react_component_name(&member.property.name)
             }
             Expression::ArrowFunctionExpression(func) => {
-                func.params.items.len() + usize::from(func.params.rest.is_some()) <= 2
-                    && has_component_name
+                func.params.parameters_count() <= 2 && has_component_name
             }
             Expression::FunctionExpression(func) => {
                 func.body.is_some()
-                    && func.params.items.len() + usize::from(func.params.rest.is_some()) <= 2
+                    && func.params.parameters_count() <= 2
                     && func
                         .id
                         .as_ref()

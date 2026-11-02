@@ -1,16 +1,22 @@
 //! Punctuation in expression context: operators, arrows, separators, and the brackets that
 //! open and close frames.
 
-use crate::token::{OP_KIND_BASE, matches_tk, tk};
+use crate::{
+    cpu::cpu_version,
+    token::{OP_KIND_BASE, matches_tk, tk},
+};
 
 use crate::pipeline::operators::is_op_char;
 
 use super::*;
 
 impl Walk {
+    #[cpu_version(Generic)]
     pub(super) fn step_op(&mut self, tokens: &Tokens, pos: usize, newline: bool) -> usize {
+        let cpu = BASELINE;
+
         let c = tokens.src[pos];
-        let mut len = if is_op_char(c) || c == b'/' { tokens.op_len(pos) } else { 1 };
+        let mut len = if is_op_char(c, cpu) || c == b'/' { tokens.op_len(pos) } else { 1 };
         let c1 = tokens.src[pos + 1];
 
         // Type context: brackets and separators belong to the type.
@@ -45,12 +51,12 @@ impl Walk {
             // A spread: what follows is a value, not a member key.
             b'.' if len == 3 => {
                 if self.top_kind() == FrameKind::Object {
-                    self.top_mut().state = M_VALUE;
+                    self.top_mut().member = Member::Value;
                 }
                 self.operand_done();
             }
             // The dot of a number such as 1. continues the literal.
-            b'.' if tokens.numeric_dot(pos) => self.set_value(),
+            b'.' if tokens.numeric_dot(pos, cpu) => self.set_value(),
             b'.' => {
                 self.operand_done();
                 self.after_dot = true;
@@ -68,7 +74,7 @@ impl Walk {
             }
             b'*' if len == 1
                 && matches!(self.top_kind(), FrameKind::Object | FrameKind::ClassBody)
-                && self.top().state == M_KEY_POS =>
+                && self.top().member == Member::KeyPos =>
             {
                 self.top_mut().mods |= MOD_GEN;
                 self.operand_done();
@@ -82,7 +88,7 @@ impl Walk {
                 && tokens.ts
                 && !self.operand_allowed()
                 && !self.no_type_args
-                && lt_run_split(tokens, pos) =>
+                && lt_run_split(tokens, pos, cpu) =>
             {
                 self.less_than(tokens, pos);
                 return pos + 1;
@@ -104,10 +110,13 @@ impl Walk {
         pos + len
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn arrow(&mut self, tokens: &Tokens, pos: usize) {
+        let cpu = BASELINE;
+
         let is_async = if self.closed_group { self.closed_group_async } else { self.arrow_async };
         // Concise body unless `{` follows.
-        let nx = tokens.peek(pos + 2);
+        let nx = tokens.peek(pos + 2, cpu);
         let block = nx.kind >= OP_KIND_BASE && nx.byte == b'{';
         if !block {
             self.push(FrameKind::Concise).is_async = is_async;
@@ -117,25 +126,29 @@ impl Walk {
         self.arrow_async = is_async;
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn assign(&mut self) {
-        if matches!(self.stmt_reg(), S_TYPE_NAME | S_IMPORT) {
+        if matches!(self.stmt_reg(), StmtReg::TypeName | StmtReg::Import) {
             // `type X =`: the alias type.
-            self.set_stmt_reg(S_NONE);
-            self.open_region(R_STMT);
+            self.set_stmt_reg(StmtReg::None);
+            self.open_region(RegionRule::Stmt);
             return;
         }
-        if self.top_declarator() == D_BOUND {
-            self.top_mut().state = D_INIT;
+        if self.top().declarator == Declarator::Bound {
+            self.top_mut().declarator = Declarator::Init;
         }
         if self.top_kind() == FrameKind::ClassBody {
-            self.top_mut().state = M_VALUE;
+            self.top_mut().member = Member::Value;
         }
         self.operand_done();
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn question(&mut self, tokens: &Tokens, pos: usize) {
+        let cpu = BASELINE;
+
         // Optional marker (`a?: T`, `a?,`, `a?)`) vs conditional.
-        let nx = tokens.peek(pos + 1);
+        let nx = tokens.peek(pos + 1, cpu);
         let member = self.top_kind() == FrameKind::ClassBody;
         let optional = nx.kind >= OP_KIND_BASE
             && (matches!(nx.byte, b':' | b',' | b')' | b']' | b'>')
@@ -149,6 +162,7 @@ impl Walk {
         self.operand_done();
     }
 
+    #[cpu_version(Generic)]
     fn colon(&mut self, tokens: &Tokens) {
         // A concise arrow body without a pending `?` of its own ends at a `:` (the `?` belongs to
         // the frame below).
@@ -164,14 +178,14 @@ impl Walk {
         }
         match top {
             FrameKind::Object => {
-                self.top_mut().state = M_VALUE;
+                self.top_mut().member = Member::Value;
                 self.operand_done();
                 return;
             }
             // A member, parameter or index signature annotation.
             FrameKind::ClassBody | FrameKind::Params | FrameKind::ComputedKey => {
                 if tokens.ts {
-                    self.open_region(R_INLINE);
+                    self.open_region(RegionRule::Inline);
                 } else {
                     self.operand_done();
                 }
@@ -180,7 +194,7 @@ impl Walk {
             FrameKind::Group | FrameKind::Call => {
                 if tokens.ts && !self.operand_allowed() {
                     // Arrow parameter annotation.
-                    self.open_region(R_INLINE);
+                    self.open_region(RegionRule::Inline);
                 } else {
                     self.operand_done();
                 }
@@ -188,25 +202,25 @@ impl Walk {
             }
             FrameKind::FnHead => {
                 // Return type.
-                self.open_region(R_INLINE);
+                self.open_region(RegionRule::Inline);
                 return;
             }
             _ => {}
         }
-        if self.stmt_reg() == S_CASE {
+        if self.stmt_reg() == StmtReg::Case {
             self.after_statement();
             self.clear_prev();
             return;
         }
-        if tokens.ts && self.top_declarator() == D_BOUND {
+        if tokens.ts && self.top().declarator == Declarator::Bound {
             // Declarator type annotation.
-            self.open_region(R_INLINE);
+            self.open_region(RegionRule::Inline);
             return;
         }
         if tokens.ts && self.closed_group && top != FrameKind::Head {
             // `(a): T =>` arrow return type; remember the group's `async`.
             let is_async = self.closed_group_async;
-            self.open_region(R_ARROW_RET);
+            self.open_region(RegionRule::ArrowRet);
             self.top_mut().mods = if is_async { MOD_ASYNC } else { 0 };
             return;
         }
@@ -219,15 +233,12 @@ impl Walk {
         self.operand_done();
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn semicolon(&mut self) {
         self.pop_concise();
         match self.top_kind() {
             FrameKind::Head => {
-                let f = self.top_mut();
-                f.state = F_NO_OF;
-                f.open_questions = 0;
-                let si = self.stmt_frame();
-                self.frames[si].state = D_NONE;
+                self.top_mut().open_questions = 0;
                 self.operand_done();
             }
             FrameKind::ClassBody => {
@@ -241,6 +252,7 @@ impl Walk {
         }
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn comma(&mut self) {
         self.pop_concise();
         let top = self.top_kind();
@@ -251,8 +263,8 @@ impl Walk {
                 f.open_questions = 0;
             }
             _ => {
-                if self.top_declarator() != D_NONE {
-                    self.top_mut().state = D_BINDING;
+                if self.top().declarator != Declarator::None {
+                    self.top_mut().declarator = Declarator::Binding;
                 }
                 self.top_mut().open_questions = 0;
             }
@@ -260,14 +272,15 @@ impl Walk {
         self.operand_done();
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn open_brace(&mut self) {
         let top = *self.top();
         let mut body = Frame::default();
         let kind = match top.kind {
-            FrameKind::ClassHead if top.reg == C_INTERFACE => {
+            FrameKind::ClassHead if top.is_interface => {
                 // Interface body: a type literal that ends the statement.
                 self.pop();
-                self.push(FrameKind::TypeLit).state = L_INTERFACE_BODY;
+                self.push(FrameKind::TypeLit).is_interface = true;
                 self.operand_done();
                 self.decorator = 0;
                 return;
@@ -287,18 +300,20 @@ impl Walk {
                 FrameKind::ArrowBody
             }
             // Await is the operator in a static block, yield a name.
-            FrameKind::ClassBody if top.mods & MOD_STATIC != 0 && top.state == M_KEY_POS => {
+            FrameKind::ClassBody if top.mods & MOD_STATIC != 0 && top.member == Member::KeyPos => {
                 body.is_async = true;
                 FrameKind::FnBody
             }
-            _ if matches!(self.stmt_reg(), S_IMPORT | S_EXPORT | S_ATTRS) => FrameKind::ModuleSpec,
+            _ if matches!(self.stmt_reg(), StmtReg::Import | StmtReg::Export | StmtReg::Attrs) => {
+                FrameKind::ModuleSpec
+            }
             _ if !self.at_stmt_start() && self.operand_allowed() => {
                 body.is_value = true;
                 FrameKind::Object
             }
             _ => {
                 // Statement frames reset their registers when a block opens.
-                self.set_stmt_reg(S_NONE);
+                self.set_stmt_reg(StmtReg::None);
                 FrameKind::Block
             }
         };
@@ -311,6 +326,7 @@ impl Walk {
         self.decorator = 0;
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn close_brace(&mut self) {
         // Virtual frames above the brace end with it.
         let Some(f) = self.pop_to(|k| k.closer() == b'}') else {
@@ -327,7 +343,7 @@ impl Walk {
                 self.clear_prev();
             }
             // An attributes clause ends its declaration, like a body.
-            FrameKind::ModuleSpec if self.stmt_reg() != S_ATTRS => {
+            FrameKind::ModuleSpec if self.stmt_reg() != StmtReg::Attrs => {
                 self.operand_done();
             }
             FrameKind::ArrowBody => {
@@ -350,9 +366,12 @@ impl Walk {
         }
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn open_paren(&mut self) {
         let (top, kw) = (*self.top(), self.prev_kw);
-        if matches!(top.kind, FrameKind::Object | FrameKind::ClassBody) && top.state == M_KEY_SEEN {
+        if matches!(top.kind, FrameKind::Object | FrameKind::ClassBody)
+            && top.member == Member::KeySeen
+        {
             // Method: give it a head so the body picks up its kind.
             let f = self.push(FrameKind::FnHead);
             f.is_generator = top.mods & MOD_GEN != 0;
@@ -366,7 +385,7 @@ impl Walk {
         } else if matches_tk!(kw, KwIf | KwWhile | KwFor | KwWith | KwSwitch | KwCatch)
             && self.frames[self.stmt_frame()].kind.is_stmt_holder()
         {
-            self.push(FrameKind::Head).state = if kw == tk!(KwFor) { F_OF } else { F_NO_OF };
+            self.push(FrameKind::Head).of_closed = kw != tk!(KwFor);
         } else if self.operand_allowed() || kw == tk!(KwNew) {
             // The async of async (...) waits for a => rather than making an await context.
             self.push(FrameKind::Group).mods = if kw == tk!(KwAsync) { MOD_ASYNC } else { 0 };
@@ -376,6 +395,7 @@ impl Walk {
         self.operand_done();
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn close_paren(&mut self) {
         let Some(f) = self.pop_to(|k| k.closer() == b')') else {
             self.unbalanced_close();
@@ -396,10 +416,11 @@ impl Walk {
         }
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn open_bracket(&mut self) {
         let top = self.top_kind();
         let kind = if matches!(top, FrameKind::Object | FrameKind::ClassBody)
-            && self.top().state == M_KEY_POS
+            && self.top().member == Member::KeyPos
         {
             FrameKind::ComputedKey
         } else {
@@ -409,13 +430,14 @@ impl Walk {
         self.operand_done();
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn close_bracket(&mut self) {
         let Some(f) = self.pop_to(|k| k.closer() == b']') else {
             self.unbalanced_close();
             return;
         };
         if f.kind == FrameKind::ComputedKey {
-            self.top_mut().state = M_KEY_SEEN;
+            self.top_mut().member = Member::KeySeen;
         }
         self.value_done();
     }
