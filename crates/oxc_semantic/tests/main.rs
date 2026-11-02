@@ -117,7 +117,10 @@ fn run_scope_snapshot_test(ctx: &TestContext<'_>) -> String {
     let scopes = get_scope_snapshot(&ctx.semantic, scopes);
 
     // pretty-print the results
-    let value: serde_json::Value = serde_json::from_str(scopes.as_str()).unwrap();
+    let mut value: serde_json::Value = serde_json::from_str(scopes.as_str()).unwrap();
+    // Dependency feature unification can enable `serde_json/preserve_order`.
+    // Keep snapshots identical whether JSON objects preserve insertion order or sort keys.
+    value.sort_all_objects();
     serde_json::to_string_pretty(&value).unwrap()
 }
 

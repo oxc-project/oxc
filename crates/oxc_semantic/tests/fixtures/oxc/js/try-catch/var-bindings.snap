@@ -24,7 +24,6 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                 "symbols": [
                   {
                     "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                    "var_binding": 2,
                     "id": 1,
                     "name": "y",
                     "node": "CatchParameter",
@@ -36,7 +35,8 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                         "node_id": 20,
                         "scope_id": 4
                       }
-                    ]
+                    ],
+                    "var_binding": 2
                   }
                 ]
               }
@@ -87,7 +87,6 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                 "symbols": [
                   {
                     "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                    "var_binding": 4,
                     "id": 5,
                     "name": "y",
                     "node": "CatchParameter",
@@ -99,7 +98,8 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                         "node_id": 46,
                         "scope_id": 8
                       }
-                    ]
+                    ],
+                    "var_binding": 4
                   }
                 ]
               }
@@ -150,7 +150,6 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                 "symbols": [
                   {
                     "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                    "var_binding": 7,
                     "id": 8,
                     "name": "y",
                     "node": "CatchParameter",
@@ -162,7 +161,8 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                         "node_id": 74,
                         "scope_id": 12
                       }
-                    ]
+                    ],
+                    "var_binding": 7
                   }
                 ]
               }
@@ -213,7 +213,6 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                 "symbols": [
                   {
                     "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                    "var_binding": 11,
                     "id": 10,
                     "name": "y",
                     "node": "CatchParameter",
@@ -225,7 +224,8 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                         "node_id": 98,
                         "scope_id": 16
                       }
-                    ]
+                    ],
+                    "var_binding": 11
                   }
                 ]
               }
@@ -287,7 +287,6 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                         "symbols": [
                           {
                             "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                            "var_binding": 15,
                             "id": 14,
                             "name": "y",
                             "node": "CatchParameter",
@@ -299,7 +298,8 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                                 "node_id": 134,
                                 "scope_id": 23
                               }
-                            ]
+                            ],
+                            "var_binding": 15
                           }
                         ]
                       }
@@ -386,7 +386,6 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                 "symbols": [
                   {
                     "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                    "var_binding": 18,
                     "id": 17,
                     "name": "y",
                     "node": "CatchParameter",
@@ -398,7 +397,8 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                         "node_id": 167,
                         "scope_id": 28
                       }
-                    ]
+                    ],
+                    "var_binding": 18
                   }
                 ]
               }
@@ -449,7 +449,6 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                 "symbols": [
                   {
                     "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                    "var_binding": 21,
                     "id": 20,
                     "name": "y",
                     "node": "CatchParameter",
@@ -461,7 +460,8 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                         "node_id": 191,
                         "scope_id": 32
                       }
-                    ]
+                    ],
+                    "var_binding": 21
                   }
                 ]
               }
@@ -488,7 +488,6 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                 "symbols": [
                   {
                     "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                    "var_binding": 21,
                     "id": 22,
                     "name": "y",
                     "node": "CatchParameter",
@@ -500,7 +499,8 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
                         "node_id": 207,
                         "scope_id": 35
                       }
-                    ]
+                    ],
+                    "var_binding": 21
                   }
                 ]
               }

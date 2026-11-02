@@ -106,3 +106,45 @@ describe("catch parameters redeclared by var", () => {
     }
   }
 });
+
+describe("catch var initializer names", () => {
+  for (const initializer of ["function() {}", "() => {}", "class {}"]) {
+    for (const declaration of [
+      `var y = ${initializer}`,
+      `var [y = ${initializer}] = []`,
+      `var {x: y = ${initializer}} = {}`,
+    ]) {
+      for (const [parameter, outerDeclaration, outerValue] of [
+        ["", "", undefined],
+        ["y", "", 5],
+        ["", "var y = 5;", 5],
+      ] as const) {
+        const code = `function f(${parameter}) {
+          ${outerDeclaration}
+          try { throw 0 } catch (y) {
+            ${declaration};
+            console.log(y.name);
+          }
+          try { throw 1 } catch (y) { var y = 2; console.log(y); }
+          console.log(y);
+        } f(5);`;
+        for (const module of [false, true]) {
+          for (const compress of [false, true]) {
+            it(`preserves ${declaration} with parameter=${parameter}, outer=${outerDeclaration}, module=${module}, compress=${compress}`, () => {
+              const result = minifySync("input.js", code, {
+                module,
+                compress: compress ? { keepNames: { function: true, class: true } } : false,
+                mangle: { keepNames: true },
+              });
+              expect(result.errors).toEqual([]);
+              const strict = module ? '"use strict";' : "";
+              const expected = [["y"], [2], [outerValue]];
+              expect(captureOutput(strict + code)).toEqual(expected);
+              expect(captureOutput(strict + result.code)).toEqual(expected);
+            });
+          }
+        }
+      }
+    }
+  }
+});

@@ -22,11 +22,11 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/with-same-name-v
             "symbols": [
               {
                 "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                "var_binding": 0,
                 "id": 1,
                 "name": "a",
                 "node": "CatchParameter",
-                "references": []
+                "references": [],
+                "var_binding": 0
               }
             ]
           }
