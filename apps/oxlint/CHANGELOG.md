@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.91.0] - 2026-11-02
+
+### 🚀 Features
+
+- 419c1b0 linter: Add allow and allowPattern options to react/capitalized-calls (Christian Vuerings)
+
+### 🐛 Bug Fixes
+
+- c67167e linter: Only run React Compiler rules on files with top-level components or hooks (Boshen)
+- 4c9d5aa linter: Treat Reanimated shared values as ref-like in React Compiler rules (Boshen)
+- ed7df7d ast/estree: Include comments in TS Program span (#28326) (camc314)
+- 31cbe37 linter: Make gitlab fingerprints unique per diagnostic (#28307) (camc314)
+
+### ⚡ Performance
+
+- fd68928 react-compiler: Skip passes lint does not need (Yagiz Nizipli)
+- 481b638 linter/plugins: Create AST nodes with `Object.create` instead of `__proto__` literals (#27816) (Charles Wang)
+
 ## [1.90.0] - 2026-10-27
 
 ### 🚀 Features

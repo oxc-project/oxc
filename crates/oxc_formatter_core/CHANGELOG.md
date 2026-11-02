@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2026-11-02
+
+### 💥 BREAKING CHANGES
+
+- 296623d oxfmt: [**BREAKING**] Format `parser:html` files by `oxc_formatter_htmlish` (#28273) (Yuji Sugiura)
+
+### ⚡ Performance
+
+- e9392c8 formatter_core: Search line terminators with memchr (#28699) (leaysgur)
+
+### 📚 Documentation
+
+- 6586050 formatter_core: Document tab width in text width policy (#28393) (leaysgur)
+- 49fbffb formatter_core: Tighten FORMATTER_POLICY (#28206) (leaysgur)
+
 ## [0.75.0] - 2026-10-27
 
 ### 🐛 Bug Fixes
