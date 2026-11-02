@@ -69,6 +69,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 let span = ident.span;
                 let name = ident.name;
                 let mut declared_symbol_id = None;
+                let mut catch_symbol_id = None;
 
                 for &scope_id in &var_scope_ids {
                     // Type-only bindings (type aliases, interfaces) live in a separate
@@ -78,6 +79,18 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                         && builder.scoping.symbol_flags(symbol_id).can_be_referenced_by_value()
                         && builder.scoping.symbol_flags(symbol_id).is_value()
                     {
+                        // A previously hoisted `var` can be cached on an inner block. Keep
+                        // walking so a catch parameter between here and the var scope is found.
+                        if builder.scoping.symbol_scope_id(symbol_id) == target_scope_id {
+                            continue;
+                        }
+                        // A simple catch parameter can be redeclared by `var`, but the `var`
+                        // also creates a separate binding in the enclosing var scope. Its
+                        // initializer assigns to the nearest catch binding.
+                        if builder.scoping.symbol_flags(symbol_id).is_catch_variable() {
+                            catch_symbol_id.get_or_insert(symbol_id);
+                            continue;
+                        }
                         builder.add_redeclare_variable(symbol_id, includes, span);
                         declared_symbol_id = Some(symbol_id);
 
@@ -100,7 +113,13 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 let symbol_id = declared_symbol_id.unwrap_or_else(|| {
                     builder.declare_symbol_on_scope(span, name, target_scope_id, includes, excludes)
                 });
-                ident.symbol_id.set(Some(symbol_id));
+                if let Some(catch_symbol_id) = catch_symbol_id {
+                    builder.add_redeclare_variable(catch_symbol_id, includes, span);
+                    builder.scoping.catch_var_bindings.insert(catch_symbol_id, symbol_id);
+                    ident.symbol_id.set(Some(catch_symbol_id));
+                } else {
+                    ident.symbol_id.set(Some(symbol_id));
+                }
 
                 // Finally, add the variable to all hoisted scopes
                 // to support redeclaration checks when declaring variables with the same name later.

@@ -1,0 +1,591 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/var-bindings.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 2,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(0x0)",
+                "id": 4,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                    "var_binding": 2,
+                    "id": 1,
+                    "name": "y",
+                    "node": "CatchParameter",
+                    "references": [
+                      {
+                        "flags": "ReferenceFlags(Read)",
+                        "id": 1,
+                        "name": "y",
+                        "node_id": 20,
+                        "scope_id": 4
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 3,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 1,
+        "node": "Function(noOuterBinding)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 2,
+            "name": "y",
+            "node": "VariableDeclarator(y)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 3,
+                "name": "y",
+                "node_id": 24,
+                "scope_id": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 6,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(0x0)",
+                "id": 8,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                    "var_binding": 4,
+                    "id": 5,
+                    "name": "y",
+                    "node": "CatchParameter",
+                    "references": [
+                      {
+                        "flags": "ReferenceFlags(Read)",
+                        "id": 5,
+                        "name": "y",
+                        "node_id": 46,
+                        "scope_id": 8
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 7,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 5,
+        "node": "Function(parameter)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 4,
+            "name": "y",
+            "node": "FormalParameter(y)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 7,
+                "name": "y",
+                "node_id": 50,
+                "scope_id": 5
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 10,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(0x0)",
+                "id": 12,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                    "var_binding": 7,
+                    "id": 8,
+                    "name": "y",
+                    "node": "CatchParameter",
+                    "references": [
+                      {
+                        "flags": "ReferenceFlags(Read)",
+                        "id": 9,
+                        "name": "y",
+                        "node_id": 74,
+                        "scope_id": 12
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 11,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 9,
+        "node": "Function(priorVar)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 7,
+            "name": "y",
+            "node": "VariableDeclarator(y)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 11,
+                "name": "y",
+                "node_id": 78,
+                "scope_id": 9
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 14,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(0x0)",
+                "id": 16,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                    "var_binding": 11,
+                    "id": 10,
+                    "name": "y",
+                    "node": "CatchParameter",
+                    "references": [
+                      {
+                        "flags": "ReferenceFlags(Read)",
+                        "id": 13,
+                        "name": "y",
+                        "node_id": 98,
+                        "scope_id": 16
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 15,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 13,
+        "node": "Function(laterVar)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 11,
+            "name": "y",
+            "node": "VariableDeclarator(y)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 15,
+                "name": "y",
+                "node_id": 106,
+                "scope_id": 13
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 18,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(0x0)",
+                    "id": 21,
+                    "node": "BlockStatement",
+                    "symbols": []
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(0x0)",
+                        "id": 23,
+                        "node": "BlockStatement",
+                        "symbols": [
+                          {
+                            "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                            "var_binding": 15,
+                            "id": 14,
+                            "name": "y",
+                            "node": "CatchParameter",
+                            "references": [
+                              {
+                                "flags": "ReferenceFlags(Read)",
+                                "id": 17,
+                                "name": "y",
+                                "node_id": 134,
+                                "scope_id": 23
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "flags": "ScopeFlags(CatchClause)",
+                    "id": 22,
+                    "node": "CatchClause",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 20,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                    "id": 13,
+                    "name": "y",
+                    "node": "CatchParameter",
+                    "references": [
+                      {
+                        "flags": "ReferenceFlags(Read)",
+                        "id": 19,
+                        "name": "y",
+                        "node_id": 138,
+                        "scope_id": 20
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 19,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 17,
+        "node": "Function(nested)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 15,
+            "name": "y",
+            "node": "VariableDeclarator(y)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 21,
+                "name": "y",
+                "node_id": 142,
+                "scope_id": 17
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 25,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(0x0)",
+                    "id": 28,
+                    "node": "BlockStatement",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 27,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                    "var_binding": 18,
+                    "id": 17,
+                    "name": "y",
+                    "node": "CatchParameter",
+                    "references": [
+                      {
+                        "flags": "ReferenceFlags(Read)",
+                        "id": 23,
+                        "name": "y",
+                        "node_id": 167,
+                        "scope_id": 28
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 26,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 24,
+        "node": "Function(nestedBlock)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 18,
+            "name": "y",
+            "node": "VariableDeclarator(y)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 25,
+                "name": "y",
+                "node_id": 171,
+                "scope_id": 24
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 30,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(0x0)",
+                "id": 32,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                    "var_binding": 21,
+                    "id": 20,
+                    "name": "y",
+                    "node": "CatchParameter",
+                    "references": [
+                      {
+                        "flags": "ReferenceFlags(Read)",
+                        "id": 27,
+                        "name": "y",
+                        "node_id": 191,
+                        "scope_id": 32
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 31,
+            "node": "CatchClause",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 33,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(0x0)",
+                "id": 35,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                    "var_binding": 21,
+                    "id": 22,
+                    "name": "y",
+                    "node": "CatchParameter",
+                    "references": [
+                      {
+                        "flags": "ReferenceFlags(Read)",
+                        "id": 29,
+                        "name": "y",
+                        "node_id": 207,
+                        "scope_id": 35
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 34,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 29,
+        "node": "Function(separateCatches)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 21,
+            "name": "y",
+            "node": "VariableDeclarator(y)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 31,
+                "name": "y",
+                "node_id": 211,
+                "scope_id": 29
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 0,
+        "name": "noOuterBinding",
+        "node": "Function(noOuterBinding)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 3,
+        "name": "parameter",
+        "node": "Function(parameter)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 6,
+        "name": "priorVar",
+        "node": "Function(priorVar)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 9,
+        "name": "laterVar",
+        "node": "Function(laterVar)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 12,
+        "name": "nested",
+        "node": "Function(nested)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 16,
+        "name": "nestedBlock",
+        "node": "Function(nestedBlock)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 19,
+        "name": "separateCatches",
+        "node": "Function(separateCatches)",
+        "references": []
+      }
+    ]
+  }
+]

@@ -57,6 +57,9 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
                 format!("\"flags\": \"{:?}\",", semantic.scoping().symbol_flags(symbol_id))
                     .as_str(),
             );
+            if let Some(var_binding) = semantic.scoping().catch_var_binding(symbol_id) {
+                result.push_str(format!("\"var_binding\": {},", var_binding.index()).as_str());
+            }
             result.push_str(format!("\"id\": {},", symbol_id.index()).as_str());
             result.push_str(format!("\"name\": {name:?},").as_str());
             result.push_str(

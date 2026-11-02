@@ -631,6 +631,26 @@ fn test_vars_catch() {
 }
 
 #[test]
+fn test_catch_var_bindings() {
+    let pass = vec![
+        "function f() { try { throw 0 } catch (e) { var e = 1; console.log(e) } return e } f();",
+    ];
+    let fail = vec![
+        "function f() { try { throw 0 } catch (e) { var e = 1; console.log(e) } } f();",
+        "function f() { try { throw 0 } catch (e) { var e = 1 } return e } f();",
+        "function f() { try { throw 0 } catch (e) { var [e] = [1]; console.log(e) } } f();",
+    ];
+    let fix = fail
+        .iter()
+        .map(|source| (*source, *source, None, FixKind::DangerousSuggestion))
+        .collect::<Vec<_>>();
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .with_snapshot_suffix("catch-var-bindings")
+        .test_and_snapshot();
+}
+
+#[test]
 fn test_vars_using() {
     let pass = vec![
         ("using a = 1; console.log(a)", None),
