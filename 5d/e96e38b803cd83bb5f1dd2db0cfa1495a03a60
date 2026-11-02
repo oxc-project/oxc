@@ -1,0 +1,25 @@
+apps/oxfmt/conformance/snapshots/prettier.snap.md
+  s_7af596349b5576::t_6a6a724852b43b 299-302,304,306,308,310,312,314,316,318,320,322,371-374,376,378,380,382,426,428,430-433,435,437,439
+crates/oxc_formatter_css/AGENTS.md
+  s_7af596349b5576::t_77650b5bf85355 196
+crates/oxc_formatter_css/DIVERGENCES.md
+  s_7af596349b5576::t_c009a2ff03ea0c 1029,1031,1033-1055,1069-1080
+crates/oxc_formatter_css/tests/fixtures/mod.rs
+  s_7af596349b5576::t_52f93d8bbcabea 187-205,207-211
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5de96e38b803cd83bb5f1dd2db0cfa1495a03a60",
+  "prompts": {},
+  "sessions": {
+    "s_7af596349b5576": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9644cd46-c7b0-45ec-9a10-fb2c74b89368",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
