@@ -82,13 +82,24 @@ pub fn normalize_whitespace(raw: &str) -> String {
 /// Mirrors Prettier's `maybeToLowerCase`.
 /// Lowercase unless the identifier contains variable/interpolation markers.
 pub fn write_maybe_lowercase<'a>(value: &'a str, f: &mut CssFormatter<'_, 'a>) {
-    if value.contains('$')
-        || value.contains('@')
-        || value.contains('#')
+    // One pass over the (short) identifier, rather than a search per marker
+    let (mut open, mut close, mut upper) = (false, false, false);
+    for b in value.bytes() {
+        match b {
+            b'$' | b'@' | b'#' => {
+                write!(f, text(value));
+                return;
+            }
+            b'(' => open = true,
+            b')' => close = true,
+            _ => upper |= b.is_ascii_uppercase(),
+        }
+    }
+    if !upper
+        || (open && close)
         || value.starts_with('%')
         || value.starts_with("--")
         || value.starts_with(":--")
-        || (value.contains('(') && value.contains(')'))
     {
         write!(f, text(value));
         return;

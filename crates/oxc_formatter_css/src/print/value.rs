@@ -12,6 +12,7 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
+use smallvec::SmallVec;
 
 use oxc_allocator::Allocator;
 use oxc_css_parser::{
@@ -513,10 +514,11 @@ impl ValueContext<'_> {
 /// Each group is paired with the start offset of the comma that follows it (`None` for the last group):
 /// comments between a group and its comma stay BEFORE the comma (`a /* c */, b`),
 /// so group printers need the boundary.
+/// Inline up to 4 groups: most values have one.
 pub(super) fn split_comma_groups<'b, 'a>(
     values: &'b [ComponentValue<'a>],
-) -> Vec<(&'b [ComponentValue<'a>], Option<u32>)> {
-    let mut groups = vec![];
+) -> SmallVec<[(&'b [ComponentValue<'a>], Option<u32>); 4]> {
+    let mut groups = SmallVec::new();
     let mut start = 0;
     let mut depth = 0i32;
     for (i, v) in values.iter().enumerate() {
@@ -534,10 +536,9 @@ pub(super) fn split_comma_groups<'b, 'a>(
             start = i + 1;
         }
     }
-    groups.push((&values[start..], None));
-    // A trailing comma produces an empty last group; Prettier drops it
-    if groups.len() > 1 && groups.last().is_some_and(|(g, _)| g.is_empty()) {
-        groups.pop();
+    // A trailing comma would leave an empty last group; Prettier drops it
+    if groups.is_empty() || start < values.len() {
+        groups.push((&values[start..], None));
     }
     groups
 }
@@ -2286,12 +2287,11 @@ pub(super) fn write_function<'a>(
     let name_span = to_span(func.name.span());
     write!(f, text(source.text_for(&name_span)));
 
-    let groups = split_comma_groups(&func.args);
-
     if func.args.is_empty() {
         write!(f, ["(", ")"]);
         return;
     }
+    let groups = split_comma_groups(&func.args);
 
     // `url(...)` as a function (e.g. `url(if(...))`): parens hug the content,
     // no break opportunities of their own (Prettier's `isURLFunctionNode`).

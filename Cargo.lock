@@ -2109,6 +2109,7 @@ dependencies = [
  "oxc_span",
  "phf",
  "pico-args",
+ "smallvec",
 ]
 
 [[package]]
