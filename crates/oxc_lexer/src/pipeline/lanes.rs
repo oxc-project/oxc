@@ -91,6 +91,7 @@ impl Lanes {
     ///
     /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
     /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+    #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
     pub(super) fn push_diag(&mut self, off: u32, len: u32, code: DiagCode) {
@@ -104,6 +105,7 @@ impl Lanes {
     ///
     /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
     /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+    #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
     pub(super) fn push_line_terminator_in_string(&mut self, src: &[u8], s: usize, end: usize) {
@@ -138,6 +140,7 @@ impl Lanes {
     ///
     /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
     /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+    #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
     pub(super) fn push_num_end_diag(&mut self, src: &[u8], e2: usize, code: DiagCode) {
@@ -152,6 +155,7 @@ impl Lanes {
     ///
     /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
     /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+    #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
     pub(super) fn push_num_end_diag_unicode(&mut self, src: &[u8], e2: usize) {
@@ -280,6 +284,7 @@ impl Lanes {
     /// oxc_parser reports the decoded char with an empty span after the escape.
     /// We emit `(end, 0)`; the bridge recognizes the len-0 shape and decodes the
     /// escape text backward to recover the char.
+    #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
     fn check_escaped_ident_char(&mut self, value: u32, at_start: bool, end: usize) {
@@ -298,9 +303,11 @@ impl Lanes {
     ///
     /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
     /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+    #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
     fn validate_ident_escapes(&mut self, src: &[u8], bs: usize, be: usize) {
+        #[cpu_version(Generic)]
         fn hex4(src: &[u8], mut k: usize, be: usize) -> (Option<u32>, usize) {
             let cpu = BASELINE;
 
@@ -628,6 +635,7 @@ fn span_has_bs_or_cr_generic(src: &[u8], bs: usize, be: usize) -> bool {
 
 /// Decode the single `char` at byte `i`, or `None` if the bytes there are
 /// not valid UTF-8.
+#[cpu_version(Generic)]
 pub(crate) fn decode_char_at(s: &[u8], i: usize) -> Option<char> {
     let end = (i + 4).min(s.len());
     let slice = s.get(i..end)?;
@@ -643,6 +651,7 @@ pub(crate) fn decode_char_at(s: &[u8], i: usize) -> Option<char> {
 
 /// End of the run of IdentifierStart chars beginning at `i` - the tail of
 /// oxc_parser's `invalid_number_end` span (a digit ends the run).
+#[cpu_version(Generic)]
 fn ident_start_run_end(s: &[u8], mut i: usize) -> usize {
     while i < s.len() {
         let b = s[i];
@@ -938,6 +947,7 @@ unsafe fn emit_oct(
 ///
 /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
 /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+#[cpu_version(Generic)]
 #[cold]
 #[inline(never)]
 fn push_escape_diag(diags: &mut Vec<Diagnostic>, off: u32, end: u32) {

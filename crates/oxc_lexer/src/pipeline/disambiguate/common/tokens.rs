@@ -1,7 +1,7 @@
 //! The token stream as the disambiguation questions read it.
 
 use crate::{
-    cpu::{BASELINE, Cpu, cpu_multiversion},
+    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version},
     token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk},
 };
 
@@ -61,6 +61,7 @@ pub struct Peek {
 }
 
 impl Prev {
+    #[cpu_version(Generic)]
     pub fn is_member_dot(self, tokens: &Tokens) -> bool {
         let cpu = BASELINE;
 
@@ -220,6 +221,7 @@ impl Tokens<'_> {
     }
 
     /// Length of the fused operator at pos, 1 when no multi-byte operator starts there.
+    #[cpu_version(Generic)]
     #[inline]
     pub fn op_len(&self, pos: usize) -> usize {
         let cpu = BASELINE;
@@ -233,6 +235,7 @@ impl Tokens<'_> {
     }
 
     /// The TemplateHead of the template whose tail or middle is at tail; None past cap steps.
+    #[cpu_version(Generic)]
     pub fn template_head(&self, tail: usize, steps: &mut u32, cap: u32) -> Option<usize> {
         let cpu = BASELINE;
 

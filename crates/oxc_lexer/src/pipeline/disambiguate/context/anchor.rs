@@ -1,4 +1,7 @@
-use crate::token::{OP_KIND_BASE, matches_tk, tk};
+use crate::{
+    cpu::cpu_version,
+    token::{OP_KIND_BASE, matches_tk, tk},
+};
 
 use super::*;
 use crate::pipeline::disambiguate::{
@@ -17,6 +20,7 @@ pub(super) enum Anchor {
 
 /// Is the word at `p` an attribute inside a JSX opening tag? Scans back over attribute names,
 /// values and `=` to the tag's `<`.
+#[cpu_version(Generic)]
 fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
     let cpu = BASELINE;
 
@@ -53,6 +57,7 @@ fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
 }
 
 /// Can the token at `f` follow a statement keyword but not a property, member or attribute name?
+#[cpu_version(Generic)]
 #[rustfmt::skip::macros(matches_tk)]
 fn keyword_follower(f: Peek) -> bool {
     if f.kind >= OP_KIND_BASE {
@@ -66,6 +71,7 @@ fn keyword_follower(f: Peek) -> bool {
 
 /// Does a statement start at `p` as far as the token before it can tell? `}` needs the JSX check
 /// (an attribute after a `{...}` value); a line break allows a statement after anything else.
+#[cpu_version(Generic)]
 fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
     let cpu = BASELINE;
 
@@ -82,6 +88,7 @@ fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
 }
 
 /// Is the word at `p` an anchor? Also its keyword code (0: a plain name).
+#[cpu_version(Generic)]
 pub(super) fn anchor_at(tokens: &Tokens, p: usize) -> (u8, Option<Anchor>) {
     let cpu = BASELINE;
 
@@ -90,6 +97,7 @@ pub(super) fn anchor_at(tokens: &Tokens, p: usize) -> (u8, Option<Anchor>) {
     (kw, anchor_of(tokens, p, e, kw))
 }
 
+#[cpu_version(Generic)]
 #[rustfmt::skip::macros(tk)]
 fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<Anchor> {
     let cpu = BASELINE;
@@ -194,6 +202,7 @@ fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<Anchor> {
 }
 
 /// Is the significant token after the word at `f` one of `ops`?
+#[cpu_version(Generic)]
 fn second_follower(tokens: &Tokens, f: usize, ops: &[u8]) -> bool {
     let cpu = BASELINE;
 
@@ -202,6 +211,7 @@ fn second_follower(tokens: &Tokens, f: usize, ops: &[u8]) -> bool {
 }
 
 /// Keyword code of the significant word after the word at `f` (0 if none).
+#[cpu_version(Generic)]
 fn second_word(tokens: &Tokens, f: usize) -> u8 {
     let cpu = BASELINE;
 
@@ -212,6 +222,7 @@ fn second_word(tokens: &Tokens, f: usize) -> u8 {
 /// The `(` at `p` holds the query: where the walk starts when the token before makes the paren an
 /// expression's (a call, a grouping, a statement head). None when it may be a type's, such as after
 /// `:`, `=`, `,`, `<` or `=>`: the walk then reaches it from an anchor further back.
+#[cpu_version(Generic)]
 #[rustfmt::skip::macros(tk)]
 pub(super) fn paren_anchor(tokens: &Tokens, p: usize) -> Option<Anchor> {
     let cpu = BASELINE;

@@ -1,7 +1,7 @@
 use oxc_ast::{Comment, CommentContent, CommentKind};
 
 use crate::{
-    cpu::{BASELINE, Cpu, cpu_multiversion},
+    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version},
     error::DiagCode,
     token::tk,
 };
@@ -131,6 +131,7 @@ pub(super) fn html_open_comment_at(
 /// As it's cold code, it's compiled only once, not separately for each CPU feature set,
 /// which keeps the binary smaller. `#[inline(never)]` stops it being inlined into
 /// the separate copies of its callers. It uses [`BASELINE`] for functions it calls.
+#[cpu_version(Generic)]
 #[cold]
 #[inline(never)]
 pub(super) unsafe fn lex_html_open_comment(
@@ -185,6 +186,7 @@ pub(super) fn html_close_comment_at(srcs: &[u8], s: usize, module: bool, cpu: im
 /// As it's cold code, it's compiled only once, not separately for each CPU feature set,
 /// which keeps the binary smaller. `#[inline(never)]` stops it being inlined into
 /// the separate copies of its callers. It uses [`BASELINE`] for functions it calls.
+#[cpu_version(Generic)]
 #[cold]
 #[inline(never)]
 pub(super) unsafe fn lex_html_close_comment(

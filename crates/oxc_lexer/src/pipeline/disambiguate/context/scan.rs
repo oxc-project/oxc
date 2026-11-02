@@ -1,13 +1,17 @@
 //! Bounded walks: the scan back from a query to an anchor, the jump plan it records for the
 //! walk, and the entry points every question goes through.
 
-use crate::token::{OP_KIND_BASE, matches_tk, tk};
+use crate::{
+    cpu::cpu_version,
+    token::{OP_KIND_BASE, matches_tk, tk},
+};
 
 use super::anchor::{Anchor, anchor_at, paren_anchor};
 use super::*;
 use crate::pipeline::disambiguate::{LOCAL_WALK_BUDGET, WALK_SCAN_CAP};
 
 /// Scan back to the anchor of a query, recording the groups the walk skips; None past the cap.
+#[cpu_version(Generic)]
 fn scan(tokens: &Tokens, jumps: &mut Vec<Jump>, from: usize, steps: &mut u32) -> Option<Anchor> {
     let cpu = BASELINE;
 
@@ -54,6 +58,7 @@ fn scan(tokens: &Tokens, jumps: &mut Vec<Jump>, from: usize, steps: &mut u32) ->
 }
 
 /// Read a bounded walk scanned back from from and walked to to; None if the full walk must answer.
+#[cpu_version(Generic)]
 fn local_walk<R>(
     tokens: &Tokens,
     walks: &mut Walks,
@@ -79,6 +84,7 @@ fn local_walk<R>(
 /// is compiled only once, not separately for each CPU feature set.
 /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
 /// Level 3 code uses [`BASELINE`] for functions it calls.
+#[cpu_version(Generic)]
 #[inline(never)]
 pub fn before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> Site {
     if let Some(s) = local_walk(tokens, walks, pos, pos, Walk::site) {
@@ -93,6 +99,7 @@ pub fn before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> Site {
 /// is compiled only once, not separately for each CPU feature set.
 /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
 /// Level 3 code uses [`BASELINE`] for functions it calls.
+#[cpu_version(Generic)]
 #[inline(never)]
 pub fn angles_before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> usize {
     if let Some(n) = local_walk(tokens, walks, pos, pos, Walk::open_angles) {
@@ -107,6 +114,7 @@ pub fn angles_before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> usize {
 /// is compiled only once, not separately for each CPU feature set.
 /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
 /// Level 3 code uses [`BASELINE`] for functions it calls.
+#[cpu_version(Generic)]
 #[inline(never)]
 pub fn after(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
     let cpu = BASELINE;
@@ -121,6 +129,7 @@ pub fn after(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
 
 impl Walk {
     /// Seed the walk at the anchor, putting the scan's jumps (nearest first) in source order.
+    #[cpu_version(Generic)]
     fn start(&mut self, tokens: &Tokens, anchor: Anchor) {
         let cpu = BASELINE;
 

@@ -22,7 +22,7 @@
 //! buffers, and keeps what it learns across the lex in a [`DisambiguateState`] the lexer owns.
 //! [`common`] holds the parts both questions need.
 
-use crate::cpu::{Cpu, cpu_multiversion};
+use crate::cpu::{Cpu, cpu_multiversion, cpu_version};
 
 mod common;
 mod context;
@@ -69,6 +69,7 @@ pub(super) struct DisambiguateState {
 }
 
 impl Default for DisambiguateState {
+    #[cpu_version(Generic)]
     fn default() -> Self {
         Self { walks: Walks::new(), brackets: Brackets::default(), closers: Closers::default() }
     }

@@ -1,13 +1,17 @@
 //! Punctuation in expression context: operators, arrows, separators, and the brackets that
 //! open and close frames.
 
-use crate::token::{OP_KIND_BASE, matches_tk, tk};
+use crate::{
+    cpu::cpu_version,
+    token::{OP_KIND_BASE, matches_tk, tk},
+};
 
 use crate::pipeline::operators::is_op_char;
 
 use super::*;
 
 impl Walk {
+    #[cpu_version(Generic)]
     pub(super) fn step_op(&mut self, tokens: &Tokens, pos: usize, newline: bool) -> usize {
         let cpu = BASELINE;
 
@@ -106,6 +110,7 @@ impl Walk {
         pos + len
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn arrow(&mut self, tokens: &Tokens, pos: usize) {
         let cpu = BASELINE;
 
@@ -121,6 +126,7 @@ impl Walk {
         self.arrow_async = is_async;
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn assign(&mut self) {
         if matches!(self.stmt_reg(), StmtReg::TypeName | StmtReg::Import) {
             // `type X =`: the alias type.
@@ -137,6 +143,7 @@ impl Walk {
         self.operand_done();
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn question(&mut self, tokens: &Tokens, pos: usize) {
         let cpu = BASELINE;
 
@@ -155,6 +162,7 @@ impl Walk {
         self.operand_done();
     }
 
+    #[cpu_version(Generic)]
     fn colon(&mut self, tokens: &Tokens) {
         // A concise arrow body without a pending `?` of its own ends at a `:` (the `?` belongs to
         // the frame below).
@@ -225,6 +233,7 @@ impl Walk {
         self.operand_done();
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn semicolon(&mut self) {
         self.pop_concise();
         match self.top_kind() {
@@ -243,6 +252,7 @@ impl Walk {
         }
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn comma(&mut self) {
         self.pop_concise();
         let top = self.top_kind();
@@ -262,6 +272,7 @@ impl Walk {
         self.operand_done();
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn open_brace(&mut self) {
         let top = *self.top();
         let mut body = Frame::default();
@@ -315,6 +326,7 @@ impl Walk {
         self.decorator = 0;
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn close_brace(&mut self) {
         // Virtual frames above the brace end with it.
         let Some(f) = self.pop_to(|k| k.closer() == b'}') else {
@@ -354,6 +366,7 @@ impl Walk {
         }
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn open_paren(&mut self) {
         let (top, kw) = (*self.top(), self.prev_kw);
         if matches!(top.kind, FrameKind::Object | FrameKind::ClassBody)
@@ -382,6 +395,7 @@ impl Walk {
         self.operand_done();
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn close_paren(&mut self) {
         let Some(f) = self.pop_to(|k| k.closer() == b')') else {
             self.unbalanced_close();
@@ -402,6 +416,7 @@ impl Walk {
         }
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn open_bracket(&mut self) {
         let top = self.top_kind();
         let kind = if matches!(top, FrameKind::Object | FrameKind::ClassBody)
@@ -415,6 +430,7 @@ impl Walk {
         self.operand_done();
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn close_bracket(&mut self) {
         let Some(f) = self.pop_to(|k| k.closer() == b']') else {
             self.unbalanced_close();

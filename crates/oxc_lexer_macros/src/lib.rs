@@ -251,6 +251,10 @@ pub fn cpu_multiversion(args: TokenStream, item: TokenStream) -> TokenStream {
 ///   A generic version only runs where the CPU feature set is `BASELINE`'s,
 ///   so it uses `BASELINE` where it needs a CPU type. The function gets no attributes.
 ///
+///   It's also the attribute for functions which only have a generic version, like the whole
+///   cold path. It checks that nothing passes them a CPU type, which would compile a copy of
+///   them for each one.
+///
 /// A function which isn't wrapped is otherwise output from its original tokens, with the `let _`
 /// check described below at the start of its body. So it compiles, and is linted, as written.
 ///

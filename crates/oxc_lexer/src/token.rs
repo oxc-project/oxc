@@ -3,7 +3,7 @@ use std::{
     mem, slice,
 };
 
-use crate::cpu::{BASELINE, Cpu, cpu_multiversion};
+use crate::cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
 macro_rules! define_token_kind {
     ($( $variant:ident = $value:literal => $name:literal ),+ $(,)?) => {
@@ -398,6 +398,7 @@ impl Display for TokenKind {
 /// pipeline only ever writes kinds that came from `opmap`'s tables or
 /// from the named constants in `pipeline`, so this holds for any range the
 /// lexer has written; it does *not* hold for uninitialised arena memory.
+#[cpu_version(Generic)]
 #[inline]
 pub const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
     // SAFETY: `TokenKind` is `#[repr(u8)]` so it has the same size and
@@ -406,6 +407,7 @@ pub const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
     unsafe { slice::from_raw_parts(bytes.as_ptr().cast::<TokenKind>(), bytes.len()) }
 }
 
+#[cpu_version(Generic)]
 #[inline]
 pub fn debug_assert_kind_bytes(bytes: &[u8]) {
     let cpu = BASELINE;

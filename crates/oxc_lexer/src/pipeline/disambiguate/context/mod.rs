@@ -1,4 +1,4 @@
-use crate::cpu::{BASELINE, Cpu, cpu_multiversion};
+use crate::cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
 use super::{
     common::Tokens,
@@ -62,6 +62,7 @@ pub struct Walks {
 }
 
 impl Walks {
+    #[cpu_version(Generic)]
     pub(super) fn new() -> Walks {
         Walks {
             full: Walk::new(),
@@ -74,11 +75,13 @@ impl Walks {
         }
     }
 
+    #[cpu_version(Generic)]
     #[cfg(test)]
     fn shortcuts(&self) -> bool {
         !self.full_walk_only
     }
 
+    #[cpu_version(Generic)]
     #[cfg(not(test))]
     fn shortcuts(&self) -> bool {
         true
@@ -107,6 +110,7 @@ impl Walks {
     }
 
     /// The full walk advanced to pos, restarted if it has passed the token there.
+    #[cpu_version(Generic)]
     fn full_to(&mut self, tokens: &Tokens, pos: usize) -> &mut Walk {
         let cpu = BASELINE;
 

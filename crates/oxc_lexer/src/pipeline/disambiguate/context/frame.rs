@@ -1,6 +1,8 @@
 //! What the walk remembers per frame: the kind of every open bracket or virtual frame,
 //! its per-kind state, and the keyword codes the walk reads off the source.
 
+use crate::cpu::cpu_version;
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub(super) enum FrameKind {
     #[default]
@@ -138,10 +140,12 @@ impl Frame {
     /// A class field initializer (`x = ...` in a class body): parsed outside the `yield` and
     /// `await` contexts of whatever encloses the class, as tsc does, so both are identifiers in
     /// it. Computed keys still see the enclosing function.
+    #[cpu_version(Generic)]
     pub(super) fn field_init(&self) -> bool {
         self.kind == FrameKind::ClassBody && self.member == Member::Value
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn next_member(&mut self) {
         self.member = Member::KeyPos;
         self.mods = 0;
@@ -149,6 +153,7 @@ impl Frame {
 }
 
 impl FrameKind {
+    #[cpu_version(Generic)]
     pub(super) fn is_virtual(self) -> bool {
         matches!(
             self,
@@ -161,6 +166,7 @@ impl FrameKind {
     }
 
     /// Frames that hold statements (and so declarator state and statement registers).
+    #[cpu_version(Generic)]
     pub(super) fn is_stmt_holder(self) -> bool {
         matches!(
             self,
@@ -168,6 +174,7 @@ impl FrameKind {
         )
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn is_type_group(self) -> bool {
         matches!(
             self,
@@ -175,6 +182,7 @@ impl FrameKind {
         )
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn closer(self) -> u8 {
         match self {
             FrameKind::Block

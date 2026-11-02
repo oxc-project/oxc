@@ -1,13 +1,17 @@
 //! Words: which spellings are keywords here (contextual keywords), the statement keywords,
 //! plain names, and member keys with their modifiers.
 
-use crate::token::{OP_KIND_BASE, matches_tk, tk};
+use crate::{
+    cpu::cpu_version,
+    token::{OP_KIND_BASE, matches_tk, tk},
+};
 
 use super::*;
 
 #[rustfmt::skip::macros(matches_tk, tk)]
 impl Walk {
     /// Step the word at `pos`; returns its end.
+    #[cpu_version(Generic)]
     pub(super) fn step_word(&mut self, tokens: &Tokens, pos: usize) -> usize {
         let cpu = BASELINE;
 
@@ -38,6 +42,7 @@ impl Walk {
     }
 
     /// A word inside a type: a prefix or infix type keyword, else a type atom.
+    #[cpu_version(Generic)]
     fn type_word(&mut self, kw: u8) {
         let cpu = BASELINE;
 
@@ -71,6 +76,7 @@ impl Walk {
     /// `await`, `of`, `let`, `using`, `async`, the TypeScript declaration words, `as`,
     /// `satisfies`, `static`, `implements`, `from`) is a plain name (0) unless its position and
     /// the token after it say otherwise; every other code stands.
+    #[cpu_version(Generic)]
     fn resolve_keyword(&mut self, tokens: &Tokens, end: usize, kw: u8) -> u8 {
         let cpu = BASELINE;
 
@@ -132,6 +138,7 @@ impl Walk {
     }
 
     /// True when a statement register takes the word as its name (break label, type X, import x).
+    #[cpu_version(Generic)]
     fn declared_name(&mut self, kw: u8) -> bool {
         match self.stmt_reg() {
             StmtReg::Break => {
@@ -152,6 +159,7 @@ impl Walk {
     }
 
     /// The transition of the keyword `kw` (0: a plain name) in expression or statement position.
+    #[cpu_version(Generic)]
     fn keyword_word(&mut self, tokens: &Tokens, end: usize, kw: u8) {
         let cpu = BASELINE;
 
@@ -289,6 +297,7 @@ impl Walk {
     }
 
     /// A plain identifier (or keyword used as a name) in expression / statement position.
+    #[cpu_version(Generic)]
     fn plain_word(&mut self) {
         // `async x => ...`: remember the modifier for the arrow.
         let is_async = self.prev_kw == tk!(KwAsync);
@@ -297,6 +306,7 @@ impl Walk {
     }
 
     /// A word at member-key position of an object literal or class body.
+    #[cpu_version(Generic)]
     fn member_word(&mut self, tokens: &Tokens, pos: usize, end: usize, kw: u8) -> usize {
         let cpu = BASELINE;
 

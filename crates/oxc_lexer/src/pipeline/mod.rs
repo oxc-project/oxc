@@ -11,7 +11,7 @@ use oxc_span::Span;
 
 use crate::{
     PAD,
-    cpu::{BASELINE, Cpu, DynCpu, cpu_multiversion},
+    cpu::{BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_version},
     options::LexOptions,
     pipeline::compress::init_pair_luts,
     token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
@@ -63,6 +63,7 @@ pub struct Lexer {
 }
 
 impl Lexer {
+    #[cpu_version(Generic)]
     pub fn new() -> Lexer {
         let cpu = DynCpu::detect();
 
@@ -99,6 +100,7 @@ impl Lexer {
     /// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `n`.
     ///
     /// [`lex_utf8`]: crate::lex_utf8
+    #[cpu_version(Generic)]
     pub fn lex(&mut self, src: &[u8], n: usize, options: LexOptions) -> usize {
         let cpu = BASELINE;
 
@@ -137,6 +139,7 @@ impl Lexer {
     ///   and `out_spans` for the same number of [`Span`] writes: `build_spans`
     ///   stores full 4-lane groups past the last token, and the sentinels
     ///   follow it.
+    #[cpu_version(Generic)]
     pub unsafe fn lex_raw(
         &mut self,
         src: &[u8],
@@ -239,6 +242,7 @@ impl Lexer {
 
     /// The kinds written by the last [`Lexer::lex`], including the trailing
     /// [`SPAN_SENTINELS`] EOF entries.
+    #[cpu_version(Generic)]
     #[must_use]
     pub fn kinds(&self) -> &[TokenKind] {
         let bytes = &self.sig_kinds[..self.sig_len + SPAN_SENTINELS];
@@ -250,6 +254,7 @@ impl Lexer {
 }
 
 impl Default for Lexer {
+    #[cpu_version(Generic)]
     fn default() -> Self {
         Self::new()
     }
