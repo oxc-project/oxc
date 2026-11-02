@@ -94,8 +94,8 @@
 ///
 /// The function can be a `const fn`, `unsafe fn` or `const unsafe fn`.
 ///
-/// The function can have lifetime and const generic parameters (e.g. `<'a, const IS_TS: bool>`),
-/// but no other generics. Lifetimes can't have bounds.
+/// The function can have generic parameters of any kind, with bounds
+/// (e.g. `<'a, 'b: 'a, T: Copy + 'a, const IS_TS: bool>`), but not a `where` clause.
 ///
 /// ## Expansion
 ///
@@ -161,7 +161,9 @@
 ///
 /// The macro works in stages. Each stage is a separate macro, which calls the next one:
 ///
-/// * `attrs!`: Sorts the attributes, then parses the rest of the function.
+/// * `attrs!`: Sorts the attributes, and records the function's qualifiers.
+/// * `generics!`: Parses the generic parameters, with `generic_param_end!`.
+/// * `signature!`: Parses the rest of the function.
 /// * `receiver!`: Checks for a `self` parameter.
 /// * `params!`: Turns the parameters into records.
 /// * `expand!`: Passes everything on to the macro which generates the output:
@@ -175,8 +177,8 @@
 /// Slots which tell a stage's rules apart come first, and slots which it only passes on come last.
 /// So when a rule doesn't match, the compiler finds out early, without matching all the other slots first.
 ///
-/// `fn_body` is matched as `tt` even where it's used. `attrs!` has already checked that it's a block,
-/// and matching it as `block` again would parse the whole body again.
+/// `fn_body` is matched as `tt` even where it's used. `signature!` has already checked that it's
+/// a block, and matching it as `block` again would parse the whole body again.
 ///
 /// A stage which needs more slots while it works adds them in its first rule.
 /// Its other rules call the stage again until it's done, and then call the next stage.
@@ -190,7 +192,7 @@ macro_rules! cpu_versions {
 
 pub(crate) use cpu_versions;
 
-/// Moves the attributes into 2 lists one at a time, then parses the rest of the function.
+/// Moves the attributes into 2 lists one at a time, then records the function's qualifiers.
 /// `#[inline]` attributes go in `inline_attrs`, which go on the entry points.
 /// All other attributes go in `outer_attrs`, which go on the outer function.
 ///
@@ -204,19 +206,7 @@ pub(crate) use cpu_versions;
 /// e.g. `#[inline(always)]`, which can't be combined with `#[target_feature]`.
 ///
 /// When no attributes are left, a rule for each of `fn`, `unsafe fn`, `const fn` and `const unsafe fn`
-/// records the keywords, and passes the rest of the function on in `signature`.
-/// The rule which matches `signature` puts the function into `func`,
-/// which bundles everything about the function except its parameters:
-///
-/// * `fn_qualifiers` is `[]`, `[ unsafe ]`, `[ const ]` or `[ const unsafe ]`.
-///   It's copied onto every function.
-/// * Generic parameters are recorded twice:
-///   * `generic_params` is the declaration `<'a, .., const N: Type, ..>`, used on every function.
-///   * `turbofish` is the const arguments `::<N, ..>` for calls. Lifetimes aren't passed.
-/// * `generic_params` is `[()]` if there are none. `turbofish` is `[]` if there are no const ones.
-/// * `generic_params`' contents are wrapped in `(...)`, because `pastey` would treat `[<...>]` as a paste.
-///
-/// The parameters are passed on unparsed, in `params`.
+/// records the keywords, and passes the rest of the function on to `generics!`, in `signature`.
 #[doc(hidden)]
 macro_rules! attrs {
     // Entry point
@@ -284,7 +274,7 @@ macro_rules! attrs {
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
     ) => {
-        crate::cpu::__cpu_versions::attrs!(
+        crate::cpu::__cpu_versions::generics!(
             signature = [ $($rest)* ]
             vis = $vis
             fn_qualifiers = []
@@ -300,7 +290,7 @@ macro_rules! attrs {
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
     ) => {
-        crate::cpu::__cpu_versions::attrs!(
+        crate::cpu::__cpu_versions::generics!(
             signature = [ $($rest)* ]
             vis = $vis
             fn_qualifiers = [ unsafe ]
@@ -316,7 +306,7 @@ macro_rules! attrs {
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
     ) => {
-        crate::cpu::__cpu_versions::attrs!(
+        crate::cpu::__cpu_versions::generics!(
             signature = [ $($rest)* ]
             vis = $vis
             fn_qualifiers = [ const ]
@@ -332,7 +322,7 @@ macro_rules! attrs {
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
     ) => {
-        crate::cpu::__cpu_versions::attrs!(
+        crate::cpu::__cpu_versions::generics!(
             signature = [ $($rest)* ]
             vis = $vis
             fn_qualifiers = [ const unsafe ]
@@ -341,16 +331,314 @@ macro_rules! attrs {
         );
     };
 
-    // The rest of the function, after `fn`
+    // Not a function
+    ($($_any:tt)*) => {
+        compile_error!("`cpu_versions!` must be applied to a `fn`");
+    };
+}
+
+pub(crate) use attrs;
+
+/// Parses the generic parameters, then passes them on to `signature!`.
+///
+/// A parameter's bounds can't be matched with a fragment. A `ty` can't be output as a bound,
+/// and a `path` can't be followed by `+`. So generic parameters are parsed one token at a time.
+///
+/// This macro handles the start of each parameter, and `generic_param_end!` handles the rest of it.
+/// Between them they move every token into `generic_params`, including the outer `<` and `>`,
+/// so it ends up as an exact copy of the function's generic parameters.
+///
+/// The tokens are kept twice, as `rest_to_match` and `rest_to_capture`, using the same trick as
+/// `attrs!`. So a compiler error about the generic parameters points at them, not at this macro.
+///
+/// The name of each type and const parameter also goes in `generic_args`.
+/// Lifetime parameters don't, because calls don't need to pass them.
+#[doc(hidden)]
+macro_rules! generics {
+    // Entry point
     (
-        signature = [
-            $fn_name:ident
-            $(<
-                $($lifetime:lifetime),* $(,)?
-                $($(const $const_name:ident: $const_ty:ty),+ $(,)?)?
-            >)?
-            ($($params:tt)*) $(-> $ret_ty:ty)? $fn_body:block
-        ]
+        signature = [ $fn_name:ident $($rest:tt)* ]
+        $($func:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::generics!(
+            rest_to_match = [ $($rest)* ]
+            rest_to_capture = [ $($rest)* ]
+            generic_params = []
+            generic_args = []
+            fn_name = $fn_name
+            $($func)*
+        );
+    };
+
+    // Opening `<`
+    (
+        rest_to_match = [ < $($_rest:tt)* ]
+        rest_to_capture = [ $token:tt $($rest:tt)* ]
+        generic_params = []
+        $($slots:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::generics!(
+            rest_to_match = [ $($rest)* ]
+            rest_to_capture = [ $($rest)* ]
+            generic_params = [ $token ]
+            $($slots)*
+        );
+    };
+
+    // No generic parameters
+    (
+        rest_to_match = $_rest_to_match:tt
+        rest_to_capture = $signature:tt
+        generic_params = []
+        $($slots:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::signature!(
+            signature = $signature
+            generic_params = []
+            $($slots)*
+        );
+    };
+
+    // Closing `>`, after a trailing comma
+    (
+        rest_to_match = [ > $($_rest:tt)* ]
+        rest_to_capture = [ $token:tt $($rest:tt)* ]
+        generic_params = [ $($generic_params:tt)* ]
+        $($slots:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::signature!(
+            signature = [ $($rest)* ]
+            generic_params = [ $($generic_params)* $token ]
+            $($slots)*
+        );
+    };
+
+    // Lifetime parameter
+    (
+        rest_to_match = $_rest_to_match:tt
+        rest_to_capture = [ $lifetime:lifetime $($rest:tt)* ]
+        generic_params = [ $($generic_params:tt)* ]
+        $($slots:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::generic_param_end!(
+            depth = []
+            rest_to_match = [ $($rest)* ]
+            rest_to_capture = [ $($rest)* ]
+            generic_params = [ $($generic_params)* $lifetime ]
+            $($slots)*
+        );
+    };
+
+    // Const parameter. Must come before the type parameter rule, because `ident` matches `const`.
+    (
+        rest_to_match = [ const $($_rest:tt)* ]
+        rest_to_capture = [ $const_kw:tt $name:ident $($rest:tt)* ]
+        generic_params = [ $($generic_params:tt)* ]
+        generic_args = [ $($generic_args:tt)* ]
+        $($slots:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::generic_param_end!(
+            depth = []
+            rest_to_match = [ $($rest)* ]
+            rest_to_capture = [ $($rest)* ]
+            generic_params = [ $($generic_params)* $const_kw $name ]
+            generic_args = [ $($generic_args)* $name ]
+            $($slots)*
+        );
+    };
+
+    // Type parameter
+    (
+        rest_to_match = $_rest_to_match:tt
+        rest_to_capture = [ $name:ident $($rest:tt)* ]
+        generic_params = [ $($generic_params:tt)* ]
+        generic_args = [ $($generic_args:tt)* ]
+        $($slots:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::generic_param_end!(
+            depth = []
+            rest_to_match = [ $($rest)* ]
+            rest_to_capture = [ $($rest)* ]
+            generic_params = [ $($generic_params)* $name ]
+            generic_args = [ $($generic_args)* $name ]
+            $($slots)*
+        );
+    };
+}
+
+pub(crate) use generics;
+
+/// Moves the rest of a generic parameter into `generic_params`, one token at a time.
+/// `generics!` has already handled the start of the parameter.
+///
+/// What's left is the parameter's bounds, or a const parameter's type.
+/// It ends at the first `,` or `>` which isn't inside `<...>`.
+/// `depth` has a `*` for each `<` which is still open.
+///
+/// `<<` and `>>` are single tokens, so they each count as 2 `<`s or `>`s.
+/// When only 1 `<` is open, `>>` closes it and also ends the generic parameters (`<T: Into<u8>>`).
+///
+/// `(...)` is a single token tree, so a `,` in `Fn(u8, u8)` isn't seen.
+/// `->` is a single token, so its `>` isn't seen either.
+#[doc(hidden)]
+macro_rules! generic_param_end {
+    // `,` - start of the next parameter
+    (
+        depth = []
+        rest_to_match = [ , $($_rest:tt)* ]
+        rest_to_capture = [ $token:tt $($rest:tt)* ]
+        generic_params = [ $($generic_params:tt)* ]
+        $($slots:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::generics!(
+            rest_to_match = [ $($rest)* ]
+            rest_to_capture = [ $($rest)* ]
+            generic_params = [ $($generic_params)* $token ]
+            $($slots)*
+        );
+    };
+
+    // `>` - end of the generic parameters
+    (
+        depth = []
+        rest_to_match = [ > $($_rest:tt)* ]
+        rest_to_capture = [ $token:tt $($rest:tt)* ]
+        generic_params = [ $($generic_params:tt)* ]
+        $($slots:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::signature!(
+            signature = [ $($rest)* ]
+            generic_params = [ $($generic_params)* $token ]
+            $($slots)*
+        );
+    };
+
+    // `>>` - closes the only open `<`, and ends the generic parameters
+    (
+        depth = [ * ]
+        rest_to_match = [ >> $($_rest:tt)* ]
+        rest_to_capture = [ $token:tt $($rest:tt)* ]
+        generic_params = [ $($generic_params:tt)* ]
+        $($slots:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::signature!(
+            signature = [ $($rest)* ]
+            generic_params = [ $($generic_params)* $token ]
+            $($slots)*
+        );
+    };
+
+    // `>>` - closes 2 `<`s
+    (
+        depth = [ * * $($depth:tt)* ]
+        rest_to_match = [ >> $($_rest:tt)* ]
+        rest_to_capture = [ $token:tt $($rest:tt)* ]
+        generic_params = [ $($generic_params:tt)* ]
+        $($slots:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::generic_param_end!(
+            depth = [ $($depth)* ]
+            rest_to_match = [ $($rest)* ]
+            rest_to_capture = [ $($rest)* ]
+            generic_params = [ $($generic_params)* $token ]
+            $($slots)*
+        );
+    };
+
+    // `>` - closes a `<`
+    (
+        depth = [ * $($depth:tt)* ]
+        rest_to_match = [ > $($_rest:tt)* ]
+        rest_to_capture = [ $token:tt $($rest:tt)* ]
+        generic_params = [ $($generic_params:tt)* ]
+        $($slots:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::generic_param_end!(
+            depth = [ $($depth)* ]
+            rest_to_match = [ $($rest)* ]
+            rest_to_capture = [ $($rest)* ]
+            generic_params = [ $($generic_params)* $token ]
+            $($slots)*
+        );
+    };
+
+    // `<`
+    (
+        depth = [ $($depth:tt)* ]
+        rest_to_match = [ < $($_rest:tt)* ]
+        rest_to_capture = [ $token:tt $($rest:tt)* ]
+        generic_params = [ $($generic_params:tt)* ]
+        $($slots:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::generic_param_end!(
+            depth = [ * $($depth)* ]
+            rest_to_match = [ $($rest)* ]
+            rest_to_capture = [ $($rest)* ]
+            generic_params = [ $($generic_params)* $token ]
+            $($slots)*
+        );
+    };
+
+    // `<<`
+    (
+        depth = [ $($depth:tt)* ]
+        rest_to_match = [ << $($_rest:tt)* ]
+        rest_to_capture = [ $token:tt $($rest:tt)* ]
+        generic_params = [ $($generic_params:tt)* ]
+        $($slots:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::generic_param_end!(
+            depth = [ * * $($depth)* ]
+            rest_to_match = [ $($rest)* ]
+            rest_to_capture = [ $($rest)* ]
+            generic_params = [ $($generic_params)* $token ]
+            $($slots)*
+        );
+    };
+
+    // Any other token
+    (
+        depth = $depth:tt
+        rest_to_match = $_rest_to_match:tt
+        rest_to_capture = [ $token:tt $($rest:tt)* ]
+        generic_params = [ $($generic_params:tt)* ]
+        $($slots:tt)*
+    ) => {
+        crate::cpu::__cpu_versions::generic_param_end!(
+            depth = $depth
+            rest_to_match = [ $($rest)* ]
+            rest_to_capture = [ $($rest)* ]
+            generic_params = [ $($generic_params)* $token ]
+            $($slots)*
+        );
+    };
+}
+
+pub(crate) use generic_param_end;
+
+/// Parses the rest of the function, after its generic parameters.
+/// Then puts the function into `func`, which bundles everything about it except its parameters:
+///
+/// * `fn_qualifiers` is `[]`, `[ unsafe ]`, `[ const ]` or `[ const unsafe ]`.
+///   It's copied onto every function.
+/// * Generic parameters are recorded twice:
+///   * `generic_params` is the declaration `<'a, T: Copy, const N: Type, ..>`,
+///     used on every function.
+///   * `turbofish` is the type and const arguments `::<T, N, ..>` for calls.
+///     Lifetimes aren't passed.
+/// * `generic_params` is `[()]` if there are none.
+///   `turbofish` is `[]` if there are no type or const ones.
+/// * `generic_params`' contents are wrapped in `(...)`,
+///   because `pastey` would treat `[<...>]` as a paste.
+///
+/// The parameters are passed on unparsed, in `params`.
+#[doc(hidden)]
+macro_rules! signature {
+    (
+        signature = [ ($($params:tt)*) $(-> $ret_ty:ty)? $fn_body:block ]
+        generic_params = [ $($generic_params:tt)* ]
+        generic_args = [ $($($generic_args:tt)+)? ]
+        fn_name = $fn_name:ident
         vis = $vis:vis
         fn_qualifiers = $fn_qualifiers:tt
         outer_attrs = $outer_attrs:tt
@@ -365,23 +653,23 @@ macro_rules! attrs {
                 vis = $vis
                 fn_qualifiers = $fn_qualifiers
                 // Extra `(...)` parens to prevent `pastey` matching `[<...>]`
-                generic_params = [( $(<$($lifetime,)* $($(const $const_name: $const_ty),+)?>)? )]
-                turbofish = [ $($(::<$($const_name),+>)?)? ]
+                generic_params = [( $($generic_params)* )]
+                turbofish = [ $(::<$($generic_args),+>)? ]
                 ret_ty = [ $($ret_ty)? ]
                 fn_body = $fn_body
             }
         );
     };
 
-    // Not a function, or has generic parameters which aren't lifetimes or `const`
+    // Has a `where` clause, or has no body
     ($($_any:tt)*) => {
         compile_error!(
-            "`cpu_versions!` must be applied to a `fn` with no generics except lifetimes and consts"
+            "`cpu_versions!` must be applied to a `fn` with a body and no `where` clause"
         );
     };
 }
 
-pub(crate) use attrs;
+pub(crate) use signature;
 
 /// Checks for a `self` parameter. If there is one, adds `method` to the top of `func`.
 /// It's at the top so `expand!` can check for it without matching the rest of `func`.
@@ -902,7 +1190,10 @@ pub(crate) use expand_method;
 
 #[doc(hidden)]
 pub mod __cpu_versions {
-    pub(crate) use super::{attrs, expand, expand_func, expand_method, params, receiver};
+    pub(crate) use super::{
+        attrs, expand, expand_func, expand_method, generic_param_end, generics, params, receiver,
+        signature,
+    };
 }
 
 /// Re-exported so call sites can import it from here, along with [`cpu_versions!`].
