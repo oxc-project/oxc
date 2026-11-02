@@ -12,7 +12,7 @@ use oxc_ast::ast::{Comment, RegExpFlags};
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 use crate::{
-    cpu::{Cpu, apply, cpu_select, cpu_versions},
+    cpu::{Cpu, apply, cpu_select, cpu_version, cpu_versions},
     error::{DiagCode, DiagSeverity, Diagnostic},
     token::StringSpan,
 };
@@ -466,8 +466,7 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
 }
 
 /// [`cook_short`] for AVX2.
-#[cfg(target_arch = "x86_64")]
-#[target_feature(enable = "avx2,bmi2,popcnt")]
+#[apply(cpu_version(Avx2))]
 #[inline]
 fn cook_short_avx2<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
@@ -540,8 +539,7 @@ fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
 }
 
 /// [`span_has_bs`] for AVX2.
-#[cfg(target_arch = "x86_64")]
-#[target_feature(enable = "avx2,bmi2,popcnt")]
+#[apply(cpu_version(Avx2))]
 #[inline]
 fn span_has_bs_avx2(src: &[u8], bs: usize, be: usize, _cpu: Avx2) -> bool {
     let mut i = bs;
@@ -582,8 +580,7 @@ fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
 }
 
 /// [`span_has_bs_or_cr`] for AVX2.
-#[cfg(target_arch = "x86_64")]
-#[target_feature(enable = "avx2,bmi2,popcnt")]
+#[apply(cpu_version(Avx2))]
 #[inline]
 fn span_has_bs_or_cr_avx2(src: &[u8], bs: usize, be: usize, _cpu: Avx2) -> bool {
     let mut i = bs;

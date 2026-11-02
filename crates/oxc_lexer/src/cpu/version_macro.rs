@@ -1,5 +1,3 @@
-#![cfg_attr(not(test), expect(unused_macros, unused_imports,))]
-
 /// Macro to mark a function as the version of some code for one CPU feature set.
 ///
 /// [`cpu_select!`] picks between the versions.

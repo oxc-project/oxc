@@ -74,7 +74,10 @@ pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8, _cpu
 /// `PairLuts` is only used by AVX2 implementation, so this function is a no-op on other CPUs.
 pub(super) fn init_pair_luts(cpu: DynCpu) {
     cpu_select!(cpu, {
-        Avx2(cpu) => init_pair_luts_avx2(cpu),
+        Avx2(cpu) => {
+            // SAFETY: `Avx2` type guarantees required target features are present
+            unsafe { init_pair_luts_avx2(cpu) }
+        }
         Neon(_) => {}
         Generic(_) => {}
     });

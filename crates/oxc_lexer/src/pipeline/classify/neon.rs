@@ -1,6 +1,9 @@
 use std::arch::aarch64::*;
 
-use crate::{cpu::Neon, token::tk};
+use crate::{
+    cpu::{Neon, apply, cpu_version},
+    token::tk,
+};
 
 use super::{
     luts::{MERGED_LUTS, WORD_LUTS},
@@ -29,8 +32,8 @@ struct Classified {
     kind: uint8x16_t,
 }
 
+#[apply(cpu_version(Neon))]
 #[inline(never)]
-#[target_feature(enable = "neon")]
 pub(super) unsafe fn classify_neon(
     ts: bool,
     src: *const u8,
@@ -106,6 +109,7 @@ pub(super) unsafe fn classify_neon(
     }
 }
 
+#[apply(cpu_version(Neon))]
 #[inline(always)]
 fn chunk(v: uint8x16_t, l: &Luts, cpu: Neon) -> Classified {
     // SAFETY: `Neon` type guarantees required target features are present
@@ -140,6 +144,7 @@ fn chunk(v: uint8x16_t, l: &Luts, cpu: Neon) -> Classified {
     }
 }
 
+#[apply(cpu_version(Neon))]
 #[inline(always)]
 fn punct1(v: uint8x16_t, lo: uint8x16_t, hn: uint8x16_t, l: &Luts, _cpu: Neon) -> uint8x16_t {
     // SAFETY: `Neon` type guarantees required target features are present
@@ -152,12 +157,14 @@ fn punct1(v: uint8x16_t, lo: uint8x16_t, hn: uint8x16_t, l: &Luts, _cpu: Neon) -
     }
 }
 
+#[apply(cpu_version(Neon))]
 #[inline(always)]
 fn veq(v: uint8x16_t, c: u8, _cpu: Neon) -> uint8x16_t {
     // SAFETY: `Neon` type guarantees required target features are present
     unsafe { vceqq_u8(v, vdupq_n_u8(c)) }
 }
 
+#[apply(cpu_version(Neon))]
 #[inline(always)]
 fn lut(t: &[u8; 16], _cpu: Neon) -> uint8x16_t {
     // SAFETY: `Neon` type guarantees required target features are present.
@@ -166,6 +173,7 @@ fn lut(t: &[u8; 16], _cpu: Neon) -> uint8x16_t {
 }
 
 /// Bit i is the top bit of byte i of a-d, gathered by summing the lane bit values.
+#[apply(cpu_version(Neon))]
 #[inline(always)]
 fn mm64(a: uint8x16_t, b: uint8x16_t, c: uint8x16_t, d: uint8x16_t, cpu: Neon) -> u64 {
     const BITS: [u8; 16] = [1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128];

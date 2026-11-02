@@ -1,7 +1,7 @@
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
-use crate::cpu::{Cpu, cpu_select};
+use crate::cpu::{Cpu, apply, cpu_select, cpu_version};
 
 #[cfg(target_arch = "x86_64")]
 use crate::cpu::Avx2;
@@ -157,9 +157,8 @@ pub(super) unsafe fn bm_any(bm: *const u64, nw: usize, cpu: impl Cpu) -> bool {
 /// # SAFETY
 ///
 /// Same as [`bm_any`].
-#[cfg(target_arch = "x86_64")]
+#[apply(cpu_version(Avx2))]
 #[inline]
-#[target_feature(enable = "avx2,bmi2,popcnt")]
 unsafe fn bm_any_avx2(bm: *const u64, nw: usize, _cpu: Avx2) -> bool {
     let mut w = 0usize;
     while w + 4 <= nw {

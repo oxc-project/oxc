@@ -1,12 +1,12 @@
 use std::arch::x86_64::*;
 
-use crate::cpu::Avx2;
+use crate::cpu::{Avx2, apply, cpu_version};
 
 use crate::pipeline::chunk::{load256, mm, veq};
 
 use super::common::lic_verify_at;
 
-#[target_feature(enable = "avx2,bmi2,popcnt")]
+#[apply(cpu_version(Avx2))]
 pub unsafe fn scan_block_comment_avx2(
     src: *const u8,
     n: usize,
@@ -32,14 +32,14 @@ pub unsafe fn scan_block_comment_avx2(
             if lic_q < 0 {
                 let am = at & bodymask;
                 if am != 0 {
-                    lic_q = lic_first(src, i, am);
+                    lic_q = lic_first(src, i, am, cpu);
                 }
             }
             return (i + j + 1, saw_nl, lic_q);
         }
         saw_nl |= nl != 0;
         if lic_q < 0 && at != 0 {
-            lic_q = lic_first(src, i, at);
+            lic_q = lic_first(src, i, at, cpu);
         }
         i += 32;
     }
@@ -64,7 +64,7 @@ pub unsafe fn scan_block_comment_avx2(
 /// metadata. A 0xE2 that isn't LS/PS (typographic punctuation in prose) is
 /// cleared from the mask and the scan continues; the LS/PS confirm can read
 /// the pad, which never matches 0x80.
-#[target_feature(enable = "avx2,bmi2,popcnt")]
+#[apply(cpu_version(Avx2))]
 pub unsafe fn scan_line_comment_avx2(
     src: *const u8,
     n: usize,
@@ -93,13 +93,13 @@ pub unsafe fn scan_line_comment_avx2(
             if lic_q < 0 {
                 let am = at & if t > 0 { (1u32 << t) - 1 } else { 0 };
                 if am != 0 {
-                    lic_q = lic_first(src, i, am);
+                    lic_q = lic_first(src, i, am, cpu);
                 }
             }
             return (i + t, lic_q);
         }
         if lic_q < 0 && at != 0 {
-            lic_q = lic_first(src, i, at);
+            lic_q = lic_first(src, i, at, cpu);
         }
         i += 32;
     }
@@ -122,8 +122,9 @@ pub unsafe fn scan_line_comment_avx2(
     (n, lic_q)
 }
 
+#[apply(cpu_version(Avx2))]
 #[inline(always)]
-unsafe fn lic_first(src: *const u8, base: usize, mut am: u32) -> i64 {
+unsafe fn lic_first(src: *const u8, base: usize, mut am: u32, _cpu: Avx2) -> i64 {
     while am != 0 {
         let q = base + am.trailing_zeros() as usize;
         am &= am - 1;

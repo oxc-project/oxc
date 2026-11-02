@@ -60,9 +60,7 @@ mod versions_macro;
 mod tests;
 
 pub(crate) use select_macro::cpu_select;
-#[cfg_attr(not(test), expect(unused_imports))]
 pub use version_macro::__cpu_version;
-#[cfg_attr(not(test), expect(unused_imports))]
 pub(crate) use version_macro::cpu_version;
 pub(crate) use versions_macro::cpu_versions;
 pub use versions_macro::{__cpu_versions, apply};

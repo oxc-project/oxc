@@ -3,7 +3,7 @@ use std::arch::x86_64::*;
 use oxc_span::Span;
 
 use crate::{
-    cpu::Avx2,
+    cpu::{Avx2, apply, cpu_version},
     token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk},
 };
 
@@ -56,8 +56,8 @@ const fn bcompact() -> [[u8; 16]; 256] {
     t
 }
 
+#[apply(cpu_version(Avx2))]
 #[inline(never)]
-#[target_feature(enable = "avx2,bmi2,popcnt")]
 pub(super) unsafe fn compress_blocks_avx2(
     st: *const u64,
     kind: *const u8,
@@ -116,7 +116,7 @@ pub(super) unsafe fn compress_blocks_avx2(
     m
 }
 
-#[target_feature(enable = "avx2,bmi2,popcnt")]
+#[apply(cpu_version(Avx2))]
 pub(super) unsafe fn build_spans_avx2(
     stage_kind: *const u8,
     stage_pos: *const u32,
@@ -181,7 +181,7 @@ pub(super) unsafe fn build_spans_avx2(
     w
 }
 
-#[target_feature(enable = "avx2,bmi2,popcnt")]
+#[apply(cpu_version(Avx2))]
 pub(super) unsafe fn lanes_post_avx2(
     src: &[u8],
     out_kinds: *const u8,

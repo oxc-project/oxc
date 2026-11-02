@@ -2,7 +2,7 @@
 mod primitives_avx2 {
     use std::arch::x86_64::*;
 
-    use crate::cpu::Avx2;
+    use crate::cpu::{Avx2, apply, cpu_version};
 
     /// Load 256 bits starting at byte `i` as an `__m256i`.
     ///
@@ -11,6 +11,7 @@ mod primitives_avx2 {
     /// # SAFETY
     ///
     /// `src.add(i)` must be valid for reads of 32 bytes.
+    #[apply(cpu_version(Avx2))]
     #[inline(always)]
     pub unsafe fn load256(src: *const u8, i: usize, _cpu: Avx2) -> __m256i {
         _mm256_loadu_si256(src.add(i) as *const __m256i)
@@ -20,6 +21,7 @@ mod primitives_avx2 {
     ///
     /// Returns a `__m256i` where each of the 32 lanes is `0xFF`
     /// where the lane in `v` equals `c`, and `0x00` where it does not.
+    #[apply(cpu_version(Avx2))]
     #[inline(always)]
     pub fn veq(v: __m256i, c: u8, _cpu: Avx2) -> __m256i {
         // SAFETY: These intrinsics touch no memory. `Avx2` type guarantees CPU supports AVX2.
@@ -29,6 +31,7 @@ mod primitives_avx2 {
     /// Gather the top bit of each byte of chunk `v` into a 32-bit mask.
     ///
     /// Bit N of the result is the top bit of byte N in `v`.
+    #[apply(cpu_version(Avx2))]
     #[inline(always)]
     pub fn mm(v: __m256i, _cpu: Avx2) -> u32 {
         // SAFETY: This intrinsic touches no memory. `Avx2` type guarantees CPU supports AVX2.

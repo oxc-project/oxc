@@ -37,7 +37,7 @@ use constcat::concat_slices;
 use oxc_data_structures::{assert_unchecked, branch_hints::unlikely, str::const_str_eq};
 
 use crate::{
-    cpu::{Cpu, apply, cpu_select, cpu_versions},
+    cpu::{Cpu, apply, cpu_select, cpu_version, cpu_versions},
     token::{KW_KIND_BASE, TokenKind},
 };
 
@@ -511,7 +511,7 @@ unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2], cpu: impl Cp
 /// # SAFETY
 ///
 /// Same as [`text_matches`].
-#[cfg(target_arch = "x86_64")]
+#[apply(cpu_version(Avx2))]
 #[inline(always)]
 unsafe fn text_matches_avx2(ptr: *const u8, len: usize, text: &[u64; 2], _cpu: Avx2) -> bool {
     use std::arch::x86_64::{_mm_and_si128, _mm_cmpeq_epi8, _mm_loadu_si128, _mm_movemask_epi8};
@@ -529,7 +529,7 @@ unsafe fn text_matches_avx2(ptr: *const u8, len: usize, text: &[u64; 2], _cpu: A
 /// # SAFETY
 ///
 /// Same as [`text_matches`].
-#[cfg(target_arch = "aarch64")]
+#[apply(cpu_version(Neon))]
 #[inline(always)]
 unsafe fn text_matches_neon(ptr: *const u8, len: usize, text: &[u64; 2], _cpu: Neon) -> bool {
     use std::arch::aarch64::{vandq_u8, veorq_u8, vgetq_lane_u64, vld1q_u8, vreinterpretq_u64_u8};

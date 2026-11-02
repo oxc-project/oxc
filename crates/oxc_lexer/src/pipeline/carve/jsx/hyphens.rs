@@ -1,4 +1,4 @@
-use crate::cpu::{Cpu, cpu_select};
+use crate::cpu::{Cpu, apply, cpu_select, cpu_version};
 
 use crate::pipeline::bitmap::{bm_clear, bm_get};
 
@@ -35,7 +35,7 @@ pub(super) unsafe fn jsx_glue_hyphens(
 }
 
 /// [`jsx_glue_hyphens`] for AVX2.
-#[cfg(target_arch = "x86_64")]
+#[apply(cpu_version(Avx2))]
 #[inline(always)]
 unsafe fn jsx_glue_hyphens_avx2(
     src: *const u8,

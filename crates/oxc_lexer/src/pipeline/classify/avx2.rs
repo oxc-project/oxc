@@ -1,6 +1,9 @@
 use std::arch::x86_64::*;
 
-use crate::{cpu::Avx2, token::tk};
+use crate::{
+    cpu::{Avx2, apply, cpu_version},
+    token::tk,
+};
 
 use crate::pipeline::chunk::{load256, mm, veq};
 
@@ -9,8 +12,8 @@ use super::{
     punct1_luts::{PH_A, PH_B, PH_T0, PH_T1},
 };
 
+#[apply(cpu_version(Avx2))]
 #[inline(never)]
-#[target_feature(enable = "avx2,bmi2,popcnt")]
 pub(super) unsafe fn classify_avx2(
     ts: bool,
     src: *const u8,
@@ -142,6 +145,7 @@ pub(super) unsafe fn classify_avx2(
     }
 }
 
+#[apply(cpu_version(Avx2))]
 #[inline(always)]
 fn vpunct1(
     v: __m256i,
