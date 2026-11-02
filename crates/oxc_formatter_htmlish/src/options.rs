@@ -14,14 +14,15 @@ pub enum HtmlishVariant {
     /// Prettier's `parser: angular` equivalent.
     Angular,
     /// Prettier's `parser: html` on an XHTML file (`.xhtml`, `.xht`), which an XML parser may read:
-    /// read and printed as HTML, but the doctype keeps its case.
+    /// read and printed as HTML, but `/>` closes every element and the doctype keeps its case.
     Xhtml,
 }
 
 impl HtmlishVariant {
     pub(crate) fn to_dialect(self) -> Dialect {
         match self {
-            Self::Html | Self::Xhtml => Dialect::Html,
+            Self::Html => Dialect::Html,
+            Self::Xhtml => Dialect::Xhtml,
             Self::Vue => Dialect::Vue,
             Self::Angular => Dialect::Angular,
         }

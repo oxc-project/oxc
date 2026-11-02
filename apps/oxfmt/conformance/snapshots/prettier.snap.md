@@ -670,7 +670,7 @@
 
 ## html
 
-221/228 (96.93%)
+222/228 (97.37%)
 
 ### Failed
 
@@ -684,11 +684,6 @@
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#script-display-none
 - externals/prettier/html/tags/tags2.html (💥💥✨✨, 97.17%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#dialog-out-of-flow
-
-### Error
-
-- externals/prettier/misc/filename-matters/html-doctype/xhtml-doctype.xhtml: Syntax error: missing end tag of raw text element at 16..74
-  - ❓unclassified
 
 ## vue
 
