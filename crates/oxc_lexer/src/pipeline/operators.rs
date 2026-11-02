@@ -154,8 +154,8 @@ struct OpTablesData {
     op3: OpTableData<OP3_HASH_TABLE_SIZE>,
 }
 
-const OP2_TABLE: OpTable<OP2_HASH_TABLE_SIZE> = OpTable::new(&OP_TABLES_DATA.op2, 2, OP2_MUL);
-const OP3_TABLE: OpTable<OP3_HASH_TABLE_SIZE> = OpTable::new(&OP_TABLES_DATA.op3, 3, OP3_MUL);
+static OP2_TABLE: OpTable<OP2_HASH_TABLE_SIZE> = OpTable::new(&OP_TABLES_DATA.op2, 2, OP2_MUL);
+static OP3_TABLE: OpTable<OP3_HASH_TABLE_SIZE> = OpTable::new(&OP_TABLES_DATA.op3, 3, OP3_MUL);
 
 /// Operator hash table.
 struct OpTable<const TABLE_SIZE: usize> {
