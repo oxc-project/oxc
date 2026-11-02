@@ -86,7 +86,7 @@ impl Walk {
             b'<' if c1 == b'<'
                 && len == 2
                 && tokens.ts
-                && !self.operand_allowed()
+                && (!self.operand_allowed() || self.after_dot)
                 && !self.no_type_args
                 && lt_run_split(tokens, pos, cpu) =>
             {

@@ -159,29 +159,14 @@ pub unsafe fn coalesce(
                     let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, p, run, cpu);
                     if g != 0 {
                         // Only `>`s stay split; the rest still munches, or `>>&&` would emit two `&`s.
-                        cursor = munch_walk(src, n, st, opch, kind, p + g, cpu);
+                        cursor = munch_walk(ts, src, n, st, opch, kind, p + g, lanes, cpu);
                         continue;
                     }
                 }
-                // Mirror case: `Array<<T>(x: T) => T>` opens two lists, not `<<` shift-left.
-                if b0 == b'<' && b1 == b'<' && ts {
-                    let tokens = token_view(
-                        src,
-                        st,
-                        opch,
-                        kind,
-                        n,
-                        true,
-                        0,
-                        lanes.module,
-                        &lanes.disambiguate.brackets,
-                        &lanes.disambiguate.closers,
-                        cpu,
-                    );
-                    if lt_run_split(&tokens, p, cpu) {
-                        cursor = munch_walk(src, n, st, opch, kind, p + 2, cpu);
-                        continue;
-                    }
+                // A << may open two lists; longer runs always reach munch_walk.
+                if b1 == b'<' && ts && (b0 == b'<' || (q >> 16) as u8 == b'<') {
+                    cursor = munch_walk(ts, src, n, st, opch, kind, p, lanes, cpu);
+                    continue;
                 }
                 if run == 2 {
                     let key = q & 0xFFFF;
@@ -197,7 +182,7 @@ pub unsafe fn coalesce(
                     continue;
                 }
                 if run > 3 {
-                    cursor = munch_walk(src, n, st, opch, kind, p, cpu);
+                    cursor = munch_walk(ts, src, n, st, opch, kind, p, lanes, cpu);
                     continue;
                 }
                 let b2 = (q >> 16) as u8;
@@ -324,10 +309,10 @@ unsafe fn glue_number(
                 if g != 0 {
                     // The split `>`s stay single tokens, but whatever borders on them is still an operator run and has to be
                     // munched, or a following `&&` / `??` / `**` is emitted a byte at a time.
-                    return munch_walk(src, n, st, opch, kind, e2 + g, cpu);
+                    return munch_walk(ts, src, n, st, opch, kind, e2 + g, lanes, cpu);
                 }
             }
-            let q = munch_walk(src, n, st, opch, kind, e2, cpu);
+            let q = munch_walk(ts, src, n, st, opch, kind, e2, lanes, cpu);
             if q < n && *src.add(q) == b'.' && is_digit(*src.add(q + 1), cpu) && bm_get(st, q, cpu)
             {
                 p = q;
@@ -343,12 +328,14 @@ unsafe fn glue_number(
 #[cpu_multiversion]
 #[inline(never)]
 unsafe fn munch_walk(
+    ts: bool,
     src: *const u8,
     n: usize,
     st: *mut u64,
     opch: *const u64,
     kind: *mut u8,
     mut pos: usize,
+    lanes: &Lanes,
     cpu: impl Cpu,
 ) -> usize {
     let end = bm_next0(opch, pos, n, cpu);
@@ -358,6 +345,26 @@ unsafe fn munch_walk(
         let bytes = *src.add(pos).cast::<[u8; 4]>();
         let (opk, opl) = opmap_longest(bytes, rem as u32, cpu);
         if let Some(opk) = opk {
+            // Two list openers, not a shift: Array<<T>(x: T) => T>, a?.<<T>(x: T) => T>(b).
+            if ts && opk == TokenKind::LShift {
+                let tokens = token_view(
+                    src,
+                    st,
+                    opch,
+                    kind,
+                    n,
+                    true,
+                    0,
+                    lanes.module,
+                    &lanes.disambiguate.brackets,
+                    &lanes.disambiguate.closers,
+                    cpu,
+                );
+                if lt_run_split(&tokens, pos, cpu) {
+                    pos += 2;
+                    continue;
+                }
+            }
             *kind.add(pos) = opk as u8;
             let mut j = 1usize;
             while j < opl as usize {
