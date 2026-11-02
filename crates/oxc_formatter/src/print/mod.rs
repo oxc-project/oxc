@@ -1103,8 +1103,17 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, BindingPattern<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameterRest<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, [self.rest()]);
-        write!(f, self.type_annotation());
+        let content = format_with(|f| {
+            write!(f, [self.rest()]);
+            write!(f, self.type_annotation());
+        });
+        // Same as `FormalParameter`, minus the hug (a rest parameter is never hugged)
+        let decorators = self.decorators();
+        if decorators.is_empty() {
+            write!(f, [content]);
+        } else {
+            write!(f, [group(&decorators), group(&content)]);
+        }
     }
 }
 

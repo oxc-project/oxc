@@ -1,0 +1,86 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Decorators on a rest parameter are printed like those on other parameters
+class C { m(@d ...args: unknown[]) {} }
+class C2 { constructor(@Inject(TOKEN) ...deps: any[]) {} }
+class C3 { m(@d x, @e ...rest) {} }
+class C4 { async rest(@(await p) ...args: unknown[]) {} }
+class C5 { m(@d @e ...args) {} }
+class C6 {
+  constructor(
+    @Inject(VERY_LONG_TOKEN_NAME_FOR_DEPENDENCY_INJECTION) private readonly a: A,
+    @Inject(ANOTHER_VERY_LONG_TOKEN_NAME) ...rest: unknown[]
+  ) {}
+}
+class C7 { m(@d
+  ...args) {} }
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Decorators on a rest parameter are printed like those on other parameters
+class C {
+  m(@d ...args: unknown[]) {}
+}
+class C2 {
+  constructor(@Inject(TOKEN) ...deps: any[]) {}
+}
+class C3 {
+  m(@d x, @e ...rest) {}
+}
+class C4 {
+  async rest(@(await p) ...args: unknown[]) {}
+}
+class C5 {
+  m(@d @e ...args) {}
+}
+class C6 {
+  constructor(
+    @Inject(VERY_LONG_TOKEN_NAME_FOR_DEPENDENCY_INJECTION)
+    private readonly a: A,
+    @Inject(ANOTHER_VERY_LONG_TOKEN_NAME) ...rest: unknown[]
+  ) {}
+}
+class C7 {
+  m(
+    @d
+    ...args
+  ) {}
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Decorators on a rest parameter are printed like those on other parameters
+class C {
+  m(@d ...args: unknown[]) {}
+}
+class C2 {
+  constructor(@Inject(TOKEN) ...deps: any[]) {}
+}
+class C3 {
+  m(@d x, @e ...rest) {}
+}
+class C4 {
+  async rest(@(await p) ...args: unknown[]) {}
+}
+class C5 {
+  m(@d @e ...args) {}
+}
+class C6 {
+  constructor(
+    @Inject(VERY_LONG_TOKEN_NAME_FOR_DEPENDENCY_INJECTION) private readonly a: A,
+    @Inject(ANOTHER_VERY_LONG_TOKEN_NAME) ...rest: unknown[]
+  ) {}
+}
+class C7 {
+  m(
+    @d
+    ...args
+  ) {}
+}
+
+===================== End =====================
