@@ -251,8 +251,8 @@ pub fn cpu_multiversion(args: TokenStream, item: TokenStream) -> TokenStream {
 ///   A generic version only runs where the CPU feature set is `BASELINE`'s,
 ///   so it uses `BASELINE` where it needs a CPU type. The function gets no attributes.
 ///
-/// A function which isn't wrapped is otherwise output unchanged, from its original tokens.
-/// So it compiles, and is linted, exactly as written.
+/// A function which isn't wrapped is otherwise output from its original tokens, with the `let _`
+/// check described below at the start of its body. So it compiles, and is linted, as written.
 ///
 /// The parameters must be `name: Type` or `mut name: Type` (no other patterns).
 ///

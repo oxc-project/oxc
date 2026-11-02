@@ -14,7 +14,7 @@
 //!
 //! [`cpu_version`]: crate::cpu_version
 
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::{Delimiter, Group, Span, TokenStream};
 use quote::quote;
 use syn::{Error, GenericArgument, Ident, PathArguments, Result, Type, parse2, spanned::Spanned};
 
@@ -49,21 +49,54 @@ pub fn expand(args: TokenStream, item: TokenStream) -> Result<TokenStream> {
 
     let proof = find_proof(&func, cpu)?;
     let cfg_attr = cpu.cfg_attr();
-    let original = &func.original;
 
     // An `#[inline(always)]` function can't have `#[target_feature]`.
     // It's compiled as part of its callers, with their features.
     if func.is_inline_always() {
-        return Ok(quote!(#cfg_attr #original));
+        let checked_fn = with_proof(&func, &proof);
+        return Ok(quote!(#cfg_attr #checked_fn));
     }
 
     // An `unsafe` function's callers need an `unsafe` block anyway, so it isn't wrapped
     if func.unsafety.is_some() {
         let target_feature_attr = cpu.target_feature_attr();
-        return Ok(quote!(#cfg_attr #target_feature_attr #original));
+        let checked_fn = with_proof(&func, &proof);
+        return Ok(quote!(#cfg_attr #target_feature_attr #checked_fn));
     }
 
     Ok(wrap(&func, cpu, &proof))
+}
+
+/// The original function, with the proof check at the start of its body.
+/// For a function which isn't wrapped, so there's no wrapper to hold the check.
+///
+/// For the example function as an `unsafe fn`:
+///
+/// ```ignore
+/// /// Do some stuff (AVX2 version).
+/// #[inline(never)]
+/// unsafe fn foo<'a, const N: usize, T>(mut arr: &'a [T; N], cpu: Avx2) -> bool {
+///     let _: crate::cpu::Avx2 = cpu;
+///     // ... original function body ...
+/// }
+/// ```
+fn with_proof(func: &Func, proof: &Proof) -> TokenStream {
+    // Everything but the body
+    let mut head = func.original.clone().into_iter().collect::<Vec<_>>();
+    head.pop();
+
+    let Proof { param_name, ty } = proof;
+    let statements = func.body.stream();
+    let body = quote! {
+        // `find_proof` only matched the type's name.
+        // This fails to compile if it's not the real type.
+        let _: #ty = #param_name;
+        #statements
+    };
+    let mut body = Group::new(Delimiter::Brace, body);
+    body.set_span(func.body.span());
+
+    quote!(#(#head)* #body)
 }
 
 /// Wrap the function in one which is safe to call. See the docs on `cpu_version`.
