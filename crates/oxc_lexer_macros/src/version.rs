@@ -20,7 +20,7 @@ use syn::{Error, GenericArgument, Ident, PathArguments, Result, Type, parse2, sp
 
 use crate::{
     cpu::Cpu,
-    func::{Func, is_impl_cpu, respan},
+    func::{Attrs, Func, Macro, is_impl_cpu, respan},
 };
 
 /// A parameter which proves that the CPU supports a feature set.
@@ -40,7 +40,7 @@ struct Proof {
 /// `args` is the attribute's argument: `Avx2`, `Neon` or `Generic`. `item` is the function.
 pub fn expand(args: TokenStream, item: TokenStream) -> Result<TokenStream> {
     let cpu = parse_cpu(args)?;
-    let func = Func::parse(item)?;
+    let func = Func::parse(item, Macro::Version)?;
 
     if cpu == Cpu::Generic {
         check_no_cpu_params(&func)?;
@@ -88,9 +88,8 @@ pub fn expand(args: TokenStream, item: TokenStream) -> Result<TokenStream> {
 /// A nested function can't use `self` or `Self`, so a method's `__impl` is a method `__foo_impl`
 /// next to it, with the same `#[cfg]`, and the call is `Self::__foo_impl::<N, T>(self, arr, cpu)`.
 fn wrap(func: &Func, cpu: Cpu, proof: &Proof) -> TokenStream {
-    let Func {
-        outer_attrs, inline_attrs, vis, constness, name, generics, return_type, body, ..
-    } = func;
+    let Attrs { outer: outer_attrs, entry_points: entry_attrs, impl_fn: impl_attrs } = &func.attrs;
+    let Func { vis, constness, name, generics, return_type, body, .. } = func;
     let cfg_attr = cpu.cfg_attr();
 
     let params = func.params();
@@ -104,7 +103,8 @@ fn wrap(func: &Func, cpu: Cpu, proof: &Proof) -> TokenStream {
     let impl_name = func.generated_name("impl");
     let params_with_mut = func.params_with_mut();
     let impl_fn = quote! {
-        #(#inline_attrs)*
+        #(#impl_attrs)*
+        #(#entry_attrs)*
         #target_feature_attr
         #constness fn #impl_name #generics (#params_with_mut) #return_type
         #where_clause

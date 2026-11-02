@@ -18,10 +18,8 @@ use syn::{
 pub struct Func {
     /// The function's original tokens. Output when a macro leaves the function unchanged.
     pub original: TokenStream,
-    /// All attributes except `#[inline]` ones. They go on the outer function.
-    pub outer_attrs: Vec<Attribute>,
-    /// `#[inline]` attributes. They go on the functions which have `#[target_feature]`.
-    pub inline_attrs: Vec<Attribute>,
+    /// The attributes, sorted by which of the generated functions they go on.
+    pub attrs: Attrs,
     /// Visibility, e.g. `pub(crate)`. Empty if the function is private.
     pub vis: TokenStream,
     /// `const`, if the function is a `const fn`.
@@ -50,7 +48,8 @@ pub struct Func {
 
 impl Func {
     /// Parse a function. Error if it isn't one, or it's a kind the macros don't support.
-    pub fn parse(original: TokenStream) -> Result<Func> {
+    /// `mac` is the macro expanding it.
+    pub fn parse(original: TokenStream, mac: Macro) -> Result<Func> {
         let FuncParts { attrs, vis, sig, body } = parse2(original.clone())?;
 
         reject(sig.asyncness, "`async` functions")?;
@@ -65,8 +64,7 @@ impl Func {
             }
         };
 
-        let (inline_attrs, outer_attrs) =
-            attrs.into_iter().partition(|attr| attr.path().is_ident("inline"));
+        let attrs = Attrs::new(attrs, mac)?;
 
         let mut receiver = None;
         let mut params = Vec::new();
@@ -80,8 +78,7 @@ impl Func {
 
         Ok(Func {
             original,
-            outer_attrs,
-            inline_attrs,
+            attrs,
             vis: call_site(&vis),
             constness: sig.constness.map(|_| <Token![const]>::default()),
             unsafety,
@@ -97,9 +94,10 @@ impl Func {
 
     /// `true` if one of the function's `#[inline]` attributes is `#[inline(always)]`.
     pub fn is_inline_always(&self) -> bool {
-        self.inline_attrs
-            .iter()
-            .any(|attr| attr.parse_args::<Ident>().is_ok_and(|arg| arg == "always"))
+        self.attrs.entry_points.iter().any(|attr| {
+            attr.path().is_ident("inline")
+                && attr.parse_args::<Ident>().is_ok_and(|arg| arg == "always")
+        })
     }
 
     /// Name for a function which a macro generates for this one, e.g. `__impl`.
@@ -163,6 +161,67 @@ impl Func {
         let receiver = self.receiver.as_ref().map(|receiver| receiver.self_token.to_token_stream());
         let args = self.params.iter().map(Param::arg);
         list(receiver, args)
+    }
+}
+
+/// The macro expanding the function. `#[track_caller]` goes on different functions for each.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Macro {
+    /// `#[cpu_multiversion]`. Its entry points call `__impl`.
+    Multiversion,
+    /// `#[cpu_version]`. `__impl` is its entry point.
+    Version,
+}
+
+/// A function's attributes, separated by which of the generated functions they go on.
+///
+/// `#[track_caller]` goes on all of them, so the caller's location passes through each.
+///
+/// `#[cfg]` and `#[cfg_attr]` never reach the macros. rustc evaluates them before it runs
+/// an attribute macro, wherever they are in the list.
+///
+/// `#[target_feature]` is an error, because the macros add it.
+pub struct Attrs {
+    /// On the outer function, which replaces the original: doc comments, `#[must_use]`,
+    /// and anything not listed below.
+    pub outer: Vec<Attribute>,
+    /// On the entry points, the functions with `#[target_feature]` which get called:
+    /// `#[inline]` and `#[cold]`.
+    pub entry_points: Vec<Attribute>,
+    /// On `__impl`, the function with the body: lint attributes, as that's where the lints fire.
+    /// A lint attribute on a method wouldn't cover its sibling `__foo_impl`.
+    pub impl_fn: Vec<Attribute>,
+}
+
+impl Attrs {
+    /// Separate attributes by which of the generated functions they go on.
+    /// Error for attributes the macros don't support. `mac` is the macro expanding the function.
+    fn new(attrs: Vec<Attribute>, mac: Macro) -> Result<Attrs> {
+        let mut sorted = Attrs { outer: Vec::new(), entry_points: Vec::new(), impl_fn: Vec::new() };
+
+        for attr in attrs {
+            // Comparing a path to a `&str` allocates a `String` each time, so convert it once.
+            // `None` for a path with `::` in it, e.g. `rustfmt::skip`.
+            let name = attr.path().get_ident().map(Ident::to_string);
+            match name.as_deref() {
+                Some("inline" | "cold") => sorted.entry_points.push(attr),
+                Some("expect" | "allow" | "warn" | "deny" | "forbid") => sorted.impl_fn.push(attr),
+                Some("track_caller") => {
+                    // `cpu_version`'s `__impl` is an entry point, and gets it from `impl_fn`
+                    sorted.outer.push(attr.clone());
+                    if mac == Macro::Multiversion {
+                        sorted.entry_points.push(attr.clone());
+                    }
+                    sorted.impl_fn.push(attr);
+                }
+                Some("target_feature") => {
+                    return Err(Error::new_spanned(attr, "`#[target_feature]` isn't supported"));
+                }
+                _ => sorted.outer.push(attr),
+            }
+        }
+
+        Ok(sorted)
     }
 }
 

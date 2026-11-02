@@ -77,8 +77,16 @@ mod version;
 /// so `#[cfg]` (or `cpu_select!`, which uses it) would grey out the function's signature.
 /// Branches of `cfg_select!` are just dropped, so nothing is greyed out.
 ///
-/// `#[inline]` and `#[inline(never)]` attributes go on the entry points.
-/// All other attributes (e.g. doc comments) go on `compress`.
+/// Attributes go on the generated function where they take effect:
+///
+/// - `#[inline]` and `#[cold]` go on the entry points. They're the functions which get called.
+/// - Lint attributes (`#[expect]`, `#[allow]`, etc.) go on `__impl`, where the lints fire.
+///   On a method, they wouldn't cover its sibling `__pipeline_impl`.
+/// - `#[track_caller]` goes on all of them, so the caller's location passes through.
+/// - All other attributes (doc comments, `#[must_use]`, etc.) go on `compress`.
+///
+/// `#[cfg]` and `#[cfg_attr]` are evaluated by rustc before the macro runs, wherever they are
+/// in the list. `#[target_feature]` is an error, because the macro adds it.
 ///
 /// `#[inline(never)]` keeps the entry points as separate functions.
 /// Without it, they can be inlined into their callers in builds which enable AVX2 globally.
@@ -286,8 +294,9 @@ pub fn cpu_multiversion(args: TokenStream, item: TokenStream) -> TokenStream {
 /// that a parameter's type `Avx2` is really `crate::cpu::Avx2`. It might be a type alias or
 /// a generic parameter with that name. The `let _` fails to compile if so, and generates no code.
 ///
-/// Like [`cpu_multiversion`] `#[inline]` and `#[inline(never)]` attributes go on `__impl`,
-/// all other attributes go on `foo`, and `mut` only goes on `__impl`'s parameters.
+/// Attributes go where [`cpu_multiversion`] puts them. `__impl` is the entry point here, so it
+/// gets `#[inline]`, `#[cold]` and lint attributes. All other attributes go on `foo`, and `mut`
+/// only goes on `__impl`'s parameters.
 ///
 /// A nested function can't use `self` or `Self`, so for a method, or an associated function
 /// which uses `Self`, `__impl` is a private method next to it, called `__foo_impl`. So it can't

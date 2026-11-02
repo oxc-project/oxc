@@ -20,7 +20,7 @@ use syn::{Error, Result};
 
 use crate::{
     cpu::Cpu,
-    func::{Func, Param, is_impl_cpu},
+    func::{Func, Macro, Param, is_impl_cpu},
 };
 
 /// The function, with its `cpu: impl Cpu` parameter split off.
@@ -40,7 +40,7 @@ pub fn expand(args: TokenStream, item: TokenStream) -> Result<TokenStream> {
         return Err(Error::new_spanned(args, "`cpu_multiversion` takes no arguments"));
     }
 
-    let mut func = Func::parse(item)?;
+    let mut func = Func::parse(item, Macro::Multiversion)?;
     let Some(cpu_param) = func.params.pop_if(|param| is_impl_cpu(&param.ty)) else {
         return Err(Error::new_spanned(&func.name, "the last parameter must be `cpu: impl Cpu`"));
     };
@@ -107,7 +107,7 @@ impl Multiversion<'_> {
     /// }
     /// ```
     fn expand_fn(&self) -> TokenStream {
-        let outer_attrs = &*self.func.outer_attrs;
+        let outer_attrs = &*self.func.attrs.outer;
         let signature = self.signature();
         let impl_fn = self.impl_fn();
         let generic_fn = self.entry_point(Cpu::Generic);
@@ -198,7 +198,7 @@ impl Multiversion<'_> {
     /// }
     /// ```
     fn expand_method(&self) -> TokenStream {
-        let outer_attrs = &*self.func.outer_attrs;
+        let outer_attrs = &*self.func.attrs.outer;
         let signature = self.signature();
         let cpu_match = cfg_select(|simd| self.cpu_match(simd));
         let impl_fn = self.impl_fn();
@@ -238,6 +238,7 @@ impl Multiversion<'_> {
     }
 
     /// `__impl`: the original function, which is compiled as part of each entry point.
+    /// Lint attributes go on it, as that's where the lints fire.
     ///
     /// ```ignore
     /// #[inline(always)]
@@ -246,6 +247,7 @@ impl Multiversion<'_> {
     /// }
     /// ```
     fn impl_fn(&self) -> TokenStream {
+        let impl_attrs = &*self.func.attrs.impl_fn;
         let Func { constness, unsafety, generics, return_type, body, .. } = self.func;
         let name = self.func.generated_name("impl");
         let params = self.func.params_with_mut();
@@ -253,6 +255,7 @@ impl Multiversion<'_> {
         let where_clause = &generics.where_clause;
 
         quote! {
+            #(#impl_attrs)*
             #[inline(always)]
             #constness #unsafety fn #name #generics (#params #cpu_name: #cpu_ty) #return_type
             #where_clause
@@ -261,6 +264,7 @@ impl Multiversion<'_> {
     }
 
     /// An entry point: calls `__impl`, compiled with one feature set's target features.
+    /// `#[inline]` and `#[cold]` go on it, as it's the function which gets called.
     ///
     /// ```ignore
     /// #[inline(never)]
@@ -270,7 +274,8 @@ impl Multiversion<'_> {
     /// }
     /// ```
     fn entry_point(&self, cpu: Cpu) -> TokenStream {
-        let Func { inline_attrs, constness, unsafety, generics, return_type, .. } = self.func;
+        let entry_attrs = &*self.func.attrs.entry_points;
+        let Func { constness, unsafety, generics, return_type, .. } = self.func;
         let target_feature_attr = cpu.target_feature_attr();
         let name = self.func.generated_name(cpu.lower_name());
         let params = self.func.params();
@@ -280,7 +285,7 @@ impl Multiversion<'_> {
         let call = self.call("impl");
 
         quote! {
-            #(#inline_attrs)*
+            #(#entry_attrs)*
             #target_feature_attr
             #constness #unsafety fn #name #generics (#params #cpu_name: #cpu_ty) #return_type
             #where_clause

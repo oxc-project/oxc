@@ -1,3 +1,5 @@
+use std::panic::Location;
+
 use super::{BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_select, cpu_version, to_dyn};
 
 #[cfg(target_arch = "x86_64")]
@@ -143,6 +145,29 @@ fn nested_items(x: u32, _cpu: impl Cpu) -> u32 {
     Inner::new(x).total()
 }
 
+// Lint attributes go on `__impl`, where the lint fires
+#[cpu_multiversion]
+#[expect(unused_variables, reason = "tests lint attributes go on the function with the body")]
+fn unused_in_body(x: u32, _cpu: impl Cpu) -> u32 {
+    let unused = x;
+    x
+}
+
+// `#[cold]` goes on the entry points, with `#[inline]`
+#[cpu_multiversion]
+#[cold]
+#[inline(never)]
+fn cold_add_one(x: u32, _cpu: impl Cpu) -> u32 {
+    x + 1
+}
+
+// `#[track_caller]` goes on every generated function, so the caller's location passes through
+#[cpu_multiversion]
+#[track_caller]
+fn caller_line(_cpu: impl Cpu) -> u32 {
+    Location::caller().line()
+}
+
 struct Counter(u32);
 
 impl Counter {
@@ -189,6 +214,37 @@ impl Counter {
     #[cpu_multiversion]
     const fn double_of(n: u32, _cpu: impl Cpu) -> u32 {
         Self(n).0 * 2
+    }
+
+    // Lint attributes go on `__plus_unused_impl`, where the lint fires.
+    // On `plus_unused` the expectation would be unfulfilled, as its body only calls entry points.
+    #[cpu_multiversion]
+    #[expect(unused_variables, reason = "tests lint attributes go on the function with the body")]
+    fn plus_unused(&self, x: u32, _cpu: impl Cpu) -> u32 {
+        let unused = x;
+        self.0
+    }
+
+    // rustc evaluates `#[cfg]` before the macro runs, wherever it is in the list.
+    // The macro doesn't have to remove the sibling functions, or this would fail to compile.
+    #[cpu_multiversion]
+    #[cfg(any())]
+    fn removed(&self, _cpu: impl Cpu) -> Missing {
+        Missing
+    }
+
+    // rustc expands `#[cfg_attr]` before the macro runs too, so the macro sees `#[expect]`
+    #[cpu_multiversion]
+    #[cfg_attr(all(), expect(unused_variables, reason = "tests `cfg_attr` is expanded first"))]
+    fn plus_unused_cfg_attr(&self, x: u32, _cpu: impl Cpu) -> u32 {
+        let unused = x;
+        self.0
+    }
+
+    #[cpu_multiversion]
+    #[track_caller]
+    fn caller_line(&self, _cpu: impl Cpu) -> u32 {
+        Location::caller().line()
     }
 
     #[cpu_multiversion]
@@ -308,6 +364,18 @@ fn generic_params() {
 fn nested_items_with_self() {
     for cpu in [DynCpu::detect(), BASELINE_DYN] {
         assert_eq!(nested_items(5, cpu), 6);
+    }
+}
+
+#[test]
+fn attributes() {
+    for cpu in [DynCpu::detect(), BASELINE_DYN] {
+        assert_eq!(unused_in_body(3, cpu), 3);
+        assert_eq!(cold_add_one(1, cpu), 2);
+        assert_eq!(caller_line(cpu), line!());
+        assert_eq!(Counter(5).plus_unused(1, cpu), 5);
+        assert_eq!(Counter(5).plus_unused_cfg_attr(1, cpu), 5);
+        assert_eq!(Counter(5).caller_line(cpu), line!());
     }
 }
 
@@ -541,6 +609,32 @@ macro_rules! wrapped_tests {
                     Self(n).0 * 2
                 }
 
+                // Lint attributes go on `__plus_unused_impl`, where the lint fires
+                #[cpu_version($cpu)]
+                #[expect(
+                    unused_variables,
+                    reason = "tests lint attributes go on the function with the body"
+                )]
+                fn plus_unused(&self, x: u32, _cpu: $cpu) -> u32 {
+                    let unused = x;
+                    self.0
+                }
+
+                // rustc evaluates `#[cfg]` before the macro runs, wherever it is in the list.
+                // The macro doesn't have to remove `__removed_impl`, or this would fail to compile.
+                #[cpu_version($cpu)]
+                #[cfg(any())]
+                fn removed(&self, _cpu: $cpu) -> Missing {
+                    Missing
+                }
+
+                // `#[track_caller]` goes on `__caller_line_impl` too, once
+                #[cpu_version($cpu)]
+                #[track_caller]
+                fn caller_line(&self, _cpu: $cpu) -> u32 {
+                    Location::caller().line()
+                }
+
                 #[cpu_version($cpu)]
                 fn into_incremented(mut self, _cpu: $cpu) -> u32 {
                     self.0 += 1;
@@ -593,6 +687,8 @@ macro_rules! wrapped_tests {
                 assert_eq!(total.doubled(cpu).into_incremented(cpu), 7);
                 assert_eq!(Total::of(5, cpu).0, 5);
                 assert_eq!(Total::double_of(6, cpu), 12);
+                assert_eq!(Total(2).plus_unused(1, cpu), 2);
+                assert_eq!(Total(2).caller_line(cpu), line!());
 
                 assert_eq!(Wrapper(3u8).convert::<Vec<u8>>(cpu), vec![3]);
             }
