@@ -17,11 +17,7 @@ pub(super) use pair_luts::init_pair_luts_avx2;
 #[cfg(test)]
 mod tests;
 
-static QCOMPACT: [[u32; 8]; 16] = qcompact();
-static BCOMPACT: [[u8; 16]; 256] = bcompact();
-
-/// Only called at compile time.
-const fn qcompact() -> [[u32; 8]; 16] {
+static QCOMPACT: [[u32; 8]; 16] = {
     let mut t = [[0u32; 8]; 16];
     let mut mask = 0usize;
     while mask < 16 {
@@ -37,10 +33,9 @@ const fn qcompact() -> [[u32; 8]; 16] {
         mask += 1;
     }
     t
-}
+};
 
-/// Only called at compile time.
-const fn bcompact() -> [[u8; 16]; 256] {
+static BCOMPACT: [[u8; 16]; 256] = {
     let mut t = [[0x80u8; 16]; 256];
     let mut mask = 0usize;
     while mask < 256 {
@@ -55,7 +50,7 @@ const fn bcompact() -> [[u8; 16]; 256] {
         mask += 1;
     }
     t
-}
+};
 
 #[cpu_version(Avx2)]
 #[inline(never)]
