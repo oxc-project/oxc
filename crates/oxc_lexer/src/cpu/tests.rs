@@ -4,6 +4,8 @@ use super::{BASELINE, Cpu, DynCpu, apply, cpu_select, cpu_version, cpu_versions,
 use super::Avx2;
 #[cfg(target_arch = "aarch64")]
 use super::Neon;
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+use crate::simd::{Vec128, Vec256};
 
 #[apply(cpu_versions)]
 const fn add_one(x: u32, _cpu: impl Cpu) -> u32 {
@@ -324,6 +326,77 @@ fn triple(x: u32, cpu: impl Cpu) -> u32 {
     })
 }
 
+/// A `cpu` parameter doesn't have to be the last parameter.
+#[apply(cpu_version(Avx2))]
+#[inline]
+fn quadruple_avx2(_cpu: Avx2, x: u32) -> u32 {
+    x * 4
+}
+
+#[apply(cpu_version(Neon))]
+#[inline]
+fn quadruple_neon(_cpu: Neon, x: u32) -> u32 {
+    x * 4
+}
+
+/// `quadruple_avx2` and `quadruple_neon` have `#[target_feature]`, so calling them is unsafe.
+fn quadruple(x: u32, cpu: impl Cpu) -> u32 {
+    cpu_select!(cpu, {
+        // SAFETY: `Avx2` type guarantees the CPU supports the features `quadruple_avx2` uses
+        Avx2(cpu) => unsafe { quadruple_avx2(cpu, x) },
+        // SAFETY: `Neon` type guarantees the CPU supports the features `quadruple_neon` uses
+        Neon(cpu) => unsafe { quadruple_neon(cpu, x) },
+        Generic(_) => x * 4,
+    })
+}
+
+/// A vector parameter proves the CPU supports the feature set, in place of a `cpu` parameter.
+#[apply(cpu_version(Avx2))]
+#[inline]
+fn is_zero_avx2(v: Vec128<Avx2>) -> bool {
+    v.is_zero()
+}
+
+#[apply(cpu_version(Neon))]
+#[inline]
+fn is_zero_neon(v: Vec128<Neon>) -> bool {
+    v.is_zero()
+}
+
+/// `is_zero_avx2` and `is_zero_neon` have `#[target_feature]`, so calling them is unsafe.
+fn is_zero(cpu: impl Cpu) -> bool {
+    cpu_select!(cpu, {
+        // SAFETY: `Avx2` type guarantees the CPU supports the features `is_zero_avx2` uses
+        Avx2(cpu) => unsafe { is_zero_avx2(Vec128::splat(0, cpu)) },
+        // SAFETY: `Neon` type guarantees the CPU supports the features `is_zero_neon` uses
+        Neon(cpu) => unsafe { is_zero_neon(Vec128::splat(0, cpu)) },
+        Generic(_) => true,
+    })
+}
+
+/// A vector parameter doesn't have to be the last parameter.
+#[apply(cpu_version(Avx2))]
+#[expect(clippy::inline_always, reason = "tests an `#[inline(always)]` function")]
+#[inline(always)]
+fn add_if_zero_avx2(x: u32, v: Vec256<Avx2>, y: u32) -> u32 {
+    if v.is_zero() { x + y } else { x }
+}
+
+#[apply(cpu_version(Neon))]
+#[expect(clippy::inline_always, reason = "tests an `#[inline(always)]` function")]
+#[inline(always)]
+fn add_if_zero_neon(x: u32, v: Vec256<Neon>, y: u32) -> u32 {
+    if v.into_halves().0.is_zero() { x + y } else { x }
+}
+
+fn add_if_zero(x: u32, y: u32, cpu: impl Cpu) -> u32 {
+    cpu_select!(cpu, {
+        Avx2(cpu) => add_if_zero_avx2(x, Vec256::splat(0, cpu), y),
+        Neon(cpu) => add_if_zero_neon(x, Vec256::splat(0, cpu), y),
+        Generic(_) => x + y,
+    })
+}
+
 /// Generics with `>>` and a `(...)` in them.
 #[apply(cpu_version(Generic))]
 fn nth_mapped<T: Into<Vec<u8>>, F: FnOnce(u8) -> u8, const N: usize>(bytes: T, f: F) -> u8 {
@@ -345,6 +418,12 @@ fn cpu_version_fns() {
     assert_eq!(double(21, BASELINE), 42);
     assert_eq!(triple(5, cpu), 15);
     assert_eq!(triple(5, BASELINE), 15);
+    assert_eq!(quadruple(5, cpu), 20);
+    assert_eq!(quadruple(5, BASELINE), 20);
+    assert!(is_zero(cpu));
+    assert!(is_zero(BASELINE));
+    assert_eq!(add_if_zero(1, 2, cpu), 3);
+    assert_eq!(add_if_zero(1, 2, BASELINE), 3);
     assert_eq!(nth_mapped::<_, _, 1>([1, 2], |byte| byte + 1), 3);
     assert_eq!(Counter(100).plus_generic(1), 101);
 }

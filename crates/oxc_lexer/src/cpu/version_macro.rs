@@ -17,15 +17,19 @@
 /// }
 /// ```
 ///
-/// * `Avx2`: The last parameter must be `cpu: Avx2` (any name instead of `cpu` is fine).
+/// * `Avx2`: A parameter must prove that the CPU supports AVX2.
+///   Any parameter can do that, if its type is `Avx2`, `Vec128<Avx2>` or `Vec256<Avx2>`.
+///   A vector can only exist if the CPU supports its feature set.
+///   The type must be written with its `<Avx2>`, because the macro only sees tokens.
+///
 ///   The function gets `#[cfg(target_arch = "x86_64")]`,
 ///   and `#[target_feature(enable = "avx2,bmi2,popcnt")]` unless it's `#[inline(always)]`,
 ///   which can't be combined with `#[target_feature]`.
 ///   An `#[inline(always)]` function is compiled as part of its callers, with their features.
-/// * `Neon`: The same, with `cpu: Neon`, `#[cfg(target_arch = "aarch64")]` and
-///   `#[target_feature(enable = "neon")]`.
+/// * `Neon`: The same, with `Neon`, `Vec128<Neon>` or `Vec256<Neon>`,
+///   `#[cfg(target_arch = "aarch64")]` and `#[target_feature(enable = "neon")]`.
 /// * `Generic`: No parameter can have a CPU type
-///   (`Avx2`, `Neon`, `Generic`, `DynCpu` or `impl Cpu`).
+///   (`Avx2`, `Neon`, `Generic`, `DynCpu` or `impl Cpu`), or be a `Vec128` or `Vec256`.
 ///   A generic version only runs where the CPU feature set is [`BASELINE`]'s,
 ///   so it uses [`BASELINE`] where it needs a CPU type. The function gets no attributes.
 ///
@@ -293,40 +297,56 @@ pub(crate) use tail;
 /// Checks the parameters, then outputs the function.
 ///
 /// The parameters' tokens are dropped from `params` one at a time.
-/// * `Avx2` and `Neon`: Until only the last parameter is left.
-///   It must be `cpu: Avx2` or `cpu: Neon`.
+/// * `Avx2` and `Neon`: Until a parameter proves that the CPU supports the feature set.
+///   That's a parameter with that CPU type, or a `Vec128` or `Vec256` of that feature set.
 /// * `Generic`: Until none are left. No parameter can be `cpu: Avx2` etc along the way.
 #[doc(hidden)]
 macro_rules! check {
-    // `Avx2` version, with last parameter `cpu: Avx2`
+    // `Avx2` version, with a parameter which proves the CPU supports AVX2
+    (kind = Avx2 params = [ $_name:ident: Avx2 $(, $($_rest:tt)*)? ] $($slots:tt)*) => {
+        crate::cpu::__cpu_version::check!(avx2 $($slots)*);
+    };
+    (kind = Avx2 params = [ $_name:ident: Vec128<Avx2> $(, $($_rest:tt)*)? ] $($slots:tt)*) => {
+        crate::cpu::__cpu_version::check!(avx2 $($slots)*);
+    };
+    (kind = Avx2 params = [ $_name:ident: Vec256<Avx2> $(, $($_rest:tt)*)? ] $($slots:tt)*) => {
+        crate::cpu::__cpu_version::check!(avx2 $($slots)*);
+    };
     (
-        kind = Avx2
-        params = [ $_cpu_name:ident: Avx2 $(,)? ]
+        avx2
         inline_always = $inline_always:tt
-        item = [ $($item:tt)* ]
+        item = $item:tt
     ) => {
         crate::cpu::__cpu_version::check!(
             output
             cfg = [ target_arch = "x86_64" ]
             features = "avx2,bmi2,popcnt"
             inline_always = $inline_always
-            item = [ $($item)* ]
+            item = $item
         );
     };
 
-    // `Neon` version, with last parameter `cpu: Neon`
+    // `Neon` version, with a parameter which proves the CPU supports Neon
+    (kind = Neon params = [ $_name:ident: Neon $(, $($_rest:tt)*)? ] $($slots:tt)*) => {
+        crate::cpu::__cpu_version::check!(neon $($slots)*);
+    };
+    (kind = Neon params = [ $_name:ident: Vec128<Neon> $(, $($_rest:tt)*)? ] $($slots:tt)*) => {
+        crate::cpu::__cpu_version::check!(neon $($slots)*);
+    };
+    (kind = Neon params = [ $_name:ident: Vec256<Neon> $(, $($_rest:tt)*)? ] $($slots:tt)*) => {
+        crate::cpu::__cpu_version::check!(neon $($slots)*);
+    };
     (
-        kind = Neon
-        params = [ $_cpu_name:ident: Neon $(,)? ]
+        neon
         inline_always = $inline_always:tt
-        item = [ $($item:tt)* ]
+        item = $item:tt
     ) => {
         crate::cpu::__cpu_version::check!(
             output
             cfg = [ target_arch = "aarch64" ]
             features = "neon"
             inline_always = $inline_always
-            item = [ $($item)* ]
+            item = $item
         );
     };
 
@@ -371,8 +391,22 @@ macro_rules! check {
     (kind = Generic params = [ $_name:ident: impl Cpu $(, $($_rest:tt)*)? ] $($_slots:tt)*) => {
         crate::cpu::__cpu_version::check!(generic_with_cpu);
     };
+    (
+        kind = Generic
+        params = [ $_name:ident: Vec128<$_cpu:ident> $(, $($_rest:tt)*)? ]
+        $($_slots:tt)*
+    ) => {
+        crate::cpu::__cpu_version::check!(generic_with_cpu);
+    };
+    (
+        kind = Generic
+        params = [ $_name:ident: Vec256<$_cpu:ident> $(, $($_rest:tt)*)? ]
+        $($_slots:tt)*
+    ) => {
+        crate::cpu::__cpu_version::check!(generic_with_cpu);
+    };
     (generic_with_cpu) => {
-        compile_error!("`cpu_version(Generic)` functions can't have a parameter with a CPU type");
+        compile_error!("`cpu_version(Generic)` functions can't have a parameter with a CPU or SIMD Vec type");
     };
 
     // `Generic` version, all parameters checked
@@ -400,12 +434,16 @@ macro_rules! check {
         );
     };
 
-    // `Avx2` or `Neon` version, with last parameter not `cpu: Avx2` / `cpu: Neon`
+    // `Avx2` or `Neon` version, with no parameter which proves the CPU supports the feature set
     (kind = Avx2 params = [] $($_slots:tt)*) => {
-        compile_error!("`cpu_version(Avx2)` functions must have `cpu: Avx2` as last parameter");
+        compile_error!(
+            "`cpu_version(Avx2)` functions must have an `Avx2`, `Vec128<Avx2>` or `Vec256<Avx2>` parameter"
+        );
     };
     (kind = Neon params = [] $($_slots:tt)*) => {
-        compile_error!("`cpu_version(Neon)` functions must have `cpu: Neon` as last parameter");
+        compile_error!(
+            "`cpu_version(Neon)` functions must have a `Neon`, `Vec128<Neon>` or `Vec256<Neon>` parameter"
+        );
     };
 
     // Not `Avx2`, `Neon` or `Generic`

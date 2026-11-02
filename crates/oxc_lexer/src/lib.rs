@@ -13,6 +13,7 @@ pub mod diagnostics;
 pub mod error;
 pub mod options;
 mod pipeline;
+mod simd;
 mod token;
 
 pub use arena::{Arena, LexResult, LineEntry};
