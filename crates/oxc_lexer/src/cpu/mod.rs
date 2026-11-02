@@ -98,27 +98,6 @@ trait CpuPrivate {
     const DYN_CPU: Option<DynCpu>;
 }
 
-/// Get the [`DynCpu`] for a type implementing [`Cpu`].
-///
-/// Same as [`Cpu::to_dyn`], but this works in `const` code too.
-/// A `const fn` can't call a trait method on a generic type, so it can't call [`Cpu::to_dyn`].
-/// [`cpu_select!`] and [`#[cpu_multiversion]`] use this function, so they work in `const` code.
-///
-/// Only [`DynCpu`] needs `cpu`. It's taken for all types so that this can only be called
-/// by code which already has one of these types.
-///
-/// [`#[cpu_multiversion]`]: macro@cpu_multiversion
-#[expect(clippy::inline_always, reason = "folds to a constant, except for `DynCpu`")]
-#[inline(always)]
-pub const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {
-    match C::DYN_CPU {
-        Some(dyn_cpu) => dyn_cpu,
-        // SAFETY: `DYN_CPU` is `None` only for `DynCpu`, and for `Generic` when it's uninhabited.
-        // No value of an uninhabited type exists, so `cpu` must be a `DynCpu`.
-        None => unsafe { mem::transmute_copy::<C, DynCpu>(&cpu) },
-    }
-}
-
 /// Enum representing a CPU feature set.
 ///
 /// Used for runtime feature detection.
@@ -145,6 +124,27 @@ impl Cpu for DynCpu {}
 
 impl CpuPrivate for DynCpu {
     const DYN_CPU: Option<DynCpu> = None;
+}
+
+/// Get the [`DynCpu`] for a type implementing [`Cpu`].
+///
+/// Same as [`Cpu::to_dyn`], but this works in `const` code too.
+/// A `const fn` can't call a trait method on a generic type, so it can't call [`Cpu::to_dyn`].
+/// [`cpu_select!`] and [`#[cpu_multiversion]`] use this function, so they work in `const` code.
+///
+/// Only [`DynCpu`] needs `cpu`. It's taken for all types so that this can only be called
+/// by code which already has one of these types.
+///
+/// [`#[cpu_multiversion]`]: macro@cpu_multiversion
+#[expect(clippy::inline_always, reason = "folds to a constant, except for `DynCpu`")]
+#[inline(always)]
+pub const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {
+    match C::DYN_CPU {
+        Some(dyn_cpu) => dyn_cpu,
+        // SAFETY: `DYN_CPU` is `None` only for `DynCpu`, and for `Generic` when it's uninhabited.
+        // No value of an uninhabited type exists, so `cpu` must be a `DynCpu`.
+        None => unsafe { mem::transmute_copy::<C, DynCpu>(&cpu) },
+    }
 }
 
 /// Generic implementation.
