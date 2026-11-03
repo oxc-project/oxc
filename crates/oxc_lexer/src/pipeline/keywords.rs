@@ -37,14 +37,10 @@ use constcat::concat_slices;
 use oxc_data_structures::{assert_unchecked, branch_hints::unlikely, str::const_str_eq};
 
 use crate::{
-    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_select, cpu_version},
+    cpu::{Avx2, BASELINE, Cpu, Neon, cpu_multiversion, cpu_select, cpu_version},
+    simd::Vec128,
     token::{KW_KIND_BASE, TokenKind},
 };
-
-#[cfg(target_arch = "x86_64")]
-use crate::{cpu::Avx2, simd::Vec128};
-#[cfg(target_arch = "aarch64")]
-use crate::{cpu::Neon, simd::Vec128};
 
 const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
 const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];

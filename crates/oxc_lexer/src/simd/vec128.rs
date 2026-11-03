@@ -257,7 +257,7 @@ where
     // ----------------------------------------
 
     /// Create a [`Vec128`] with all bits zero.
-    #[cfg_attr(all(not(test), target_arch = "x86_64"), expect(dead_code))]
+    #[cfg_attr(not(any(test, target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub fn zero(cpu: C) -> Self {
         <Self as Vec128Impl>::zero(cpu)
@@ -280,7 +280,6 @@ where
     // ----------------------------------------
 
     /// Get the [`CpuSimd`] token from this [`Vec128`].
-    #[cfg_attr(target_arch = "x86_64", expect(dead_code))]
     #[inline(always)]
     pub fn cpu(self) -> C {
         <Self as Vec128Impl>::cpu(self)
@@ -296,7 +295,7 @@ where
     ///
     /// * `ptr` must be valid for reading 16 bytes.
     /// * `ptr` must be aligned on 16.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
+    #[cfg_attr(not(any(test, target_arch = "x86_64")), expect(dead_code))]
     #[inline(always)]
     pub unsafe fn load(ptr: *const u8, cpu: C) -> Self {
         // SAFETY: Caller guarantees the same requirements as the trait method has
@@ -347,7 +346,6 @@ where
     ///
     /// `slice` can be any slice of integers which is 8 bytes in total
     /// (e.g. `&[u8; 8]`, `&[i32; 2]`).
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn read_low_unaligned(slice: &impl IntArray64, cpu: C) -> Self {
         <Self as Vec128Impl>::read_low_unaligned(slice, cpu)
@@ -359,7 +357,7 @@ where
     ///
     /// * `ptr` must be valid for writing 16 bytes.
     /// * `ptr` must be aligned on 16.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
+    #[cfg_attr(not(any(test, target_arch = "x86_64")), expect(dead_code))]
     #[inline(always)]
     pub unsafe fn store(self, ptr: *mut u8) {
         // SAFETY: Caller guarantees the same requirements as the trait method has
@@ -382,7 +380,6 @@ where
     /// # SAFETY
     ///
     /// `ptr` must be valid for writing 8 bytes.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub unsafe fn store_low_unaligned(self, ptr: *mut u8) {
         // SAFETY: Caller guarantees the same requirements as the trait method has
@@ -436,7 +433,7 @@ where
 
     /// Add either another [`Vec128`] or a `u8` to every byte of this [`Vec128`],
     /// wrapping on overflow.
-    #[cfg_attr(all(not(test), target_arch = "x86_64"), expect(dead_code))]
+    #[cfg_attr(not(any(test, target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub fn add_u8(self, other: impl Operand128<u8, C>) -> Self {
         <Self as Vec128Impl>::add_u8(self, other)
@@ -444,7 +441,7 @@ where
 
     /// Add either another [`Vec128`] or a `u8` to every byte of this [`Vec128`],
     /// stopping at 255.
-    #[cfg_attr(all(not(test), target_arch = "x86_64"), expect(dead_code))]
+    #[cfg_attr(not(any(test, target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub fn saturating_add_u8(self, other: impl Operand128<u8, C>) -> Self {
         <Self as Vec128Impl>::saturating_add_u8(self, other)
@@ -486,7 +483,6 @@ where
     /// `other` is either an `i8`, or another [`Vec128`] to compare byte by byte.
     ///
     /// Each byte of the result is `0xFF` if the byte in `self` is less, otherwise `0x00`.
-    #[cfg_attr(all(not(test), target_arch = "x86_64"), expect(dead_code))]
     #[inline(always)]
     pub fn lt_i8(self, other: impl Operand128<i8, C>) -> Self {
         <Self as Vec128Impl>::lt_i8(self, other)
@@ -508,7 +504,6 @@ where
     /// Shift the whole of this [`Vec128`] right by `BYTES` bytes, filling with zeros.
     ///
     /// Byte `N` moves to byte 0.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn shr_bytes<const BYTES: i32>(self) -> Self {
         <Self as Vec128Impl>::shr_bytes::<BYTES>(self)
@@ -533,7 +528,6 @@ where
     /// Each byte of the result comes from `other` if the same byte of `mask` is `0xFF`,
     /// or from `self` if it's `0x00`.
     /// Other values in `mask` give different results on different CPUs.
-    #[cfg_attr(all(not(test), target_arch = "x86_64"), expect(dead_code))]
     #[inline(always)]
     pub fn blend(self, other: impl Operand128<u8, C>, mask: Self) -> Self {
         <Self as Vec128Impl>::blend(self, other, mask)
@@ -546,7 +540,6 @@ where
     /// Get one of the 2 `u64`s of this [`Vec128`].
     ///
     /// `INDEX` is 0 for the low 8 bytes, or 1 for the high 8 bytes.
-    #[cfg_attr(all(not(test), target_arch = "x86_64"), expect(dead_code))]
     #[inline(always)]
     pub fn get_u64<const INDEX: i32>(self) -> u64 {
         <Self as Vec128Impl>::get_u64::<INDEX>(self)

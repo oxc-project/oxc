@@ -51,9 +51,33 @@ mod version;
 ///
 /// The entry points are functions defined inside `compress`:
 ///
-/// - `__avx2`: Takes `cpu: Avx2`. Compiled with AVX2 enabled. Only exists on x86_64.
-/// - `__neon`: Takes `cpu: Neon`. Compiled with Neon enabled. Only exists on aarch64.
+/// - `__avx2`: Takes `cpu: Avx2`. Compiled with AVX2 enabled on x86_64.
+/// - `__neon`: Takes `cpu: Neon`. Compiled with Neon enabled on aarch64.
 /// - `__generic`: Takes `cpu: Generic`.
+///
+/// All 3 exist on every platform. On a platform which doesn't have a SIMD feature set,
+/// that feature set's type is uninhabited, so its entry point can never be called,
+/// and the compiler removes it. Its target features only apply on the platform which has them,
+/// so there are none there. `Generic` is uninhabited on aarch64 with Neon enabled at compile time,
+/// so the same applies to `__generic` there.
+///
+/// Where the feature set's type is uninhabited, the entry point starts with `unreachable!()`,
+/// before it calls `__impl`.
+/// Without it, the copies of every function for that feature set (e.g. `__impl::<Neon>`
+/// on x86_64) would be part of the call graph, even though they can never run. That changes how
+/// rustc's MIR inliner treats other code, which changes the code it compiles to, e.g. in functions
+/// which only have a generic version. rustc removes code after `unreachable!()` early enough
+/// that this doesn't happen.
+///
+/// The call to `__impl` stays, so the entry point still uses its parameters. Without the call,
+/// clippy would report lints on their types which don't apply, e.g. `ptr_arg` on a `&mut Vec`.
+/// `#[allow(unreachable_code)]` silences rustc's warning that the call can't be reached.
+/// On the platform which has the feature set, there's no `unreachable!()`, so it does nothing.
+/// It can't affect the original code, which is in `__impl`, a separate function.
+///
+/// `__impl` is still compiled, type-checked and linted on every platform, because it's generic
+/// over the CPU type, and rustc checks a generic function's body once, for all types.
+/// Only the copy of it for that feature set isn't generated.
 ///
 /// Each entry point calls `__impl`, an `#[inline(always)]` function containing the original
 /// function body. So the body is compiled as part of each entry point, and the AVX2 functions
@@ -73,12 +97,6 @@ mod version;
 /// They aren't methods of a trait defined inside the method, because rustc gives trait methods
 /// external linkage. That stops LLVM from inlining helpers into them, and from removing the
 /// generic entry point on aarch64 with Neon, where it can never be called.
-///
-/// Code for other platforms is removed with `cfg_select!`, not `#[cfg]` attributes.
-/// That code contains copies of the function's parameters.
-/// Rust Analyzer greys out the original code of anything in a node disabled by `#[cfg]`,
-/// so `#[cfg]` (or `cpu_select!`, which uses it) would grey out the function's signature.
-/// Branches of `cfg_select!` are just dropped, so nothing is greyed out.
 ///
 /// Attributes go on the generated function where they take effect:
 ///
@@ -113,7 +131,7 @@ mod version;
 ///
 /// The MIR inliner doesn't inline a function with target features which its caller doesn't have,
 /// and it ignores features which are enabled for the whole crate. `__avx2` and `__neon` are
-/// protected by their own target features in the same way.
+/// protected by their own target features in the same way, on the platforms which have them.
 ///
 /// Only `#[inline]` functions need this. The MIR inliner never inlines `#[inline(never)]`
 /// functions, and only inlines functions without an inline attribute if they don't call
@@ -159,65 +177,50 @@ mod version;
 ///     }
 ///
 ///     #[inline(never)]
-///     // Stops the MIR inliner inlining `__generic` into this function. See the docs above.
-///     #[cfg_attr(target_feature = "sse2", target_feature(enable = "sse2"))]
-///     unsafe fn __generic(src: &[u8], n: usize, cpu: Generic) -> usize {
+///     #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
+///     #[allow(unreachable_code)]
+///     unsafe fn __avx2(src: &[u8], n: usize, cpu: Avx2) -> usize {
+///         // `Avx2` is uninhabited on other platforms. See above.
+///         #[cfg(not(target_arch = "x86_64"))]
+///         unreachable!();
 ///         __impl(src, n, cpu)
 ///     }
 ///
-///     cfg_select! {
-///         target_arch = "x86_64" => {
-///             #[inline(never)]
-///             #[target_feature(enable = "avx2,bmi2,popcnt")]
-///             unsafe fn __avx2(src: &[u8], n: usize, cpu: Avx2) -> usize {
-///                 __impl(src, n, cpu)
-///             }
+///     #[inline(never)]
+///     #[cfg_attr(target_arch = "aarch64", target_feature(enable = "neon"))]
+///     #[allow(unreachable_code)]
+///     unsafe fn __neon(src: &[u8], n: usize, cpu: Neon) -> usize {
+///         // `Neon` is uninhabited on other platforms. See above.
+///         #[cfg(not(target_arch = "aarch64"))]
+///         unreachable!();
+///         __impl(src, n, cpu)
+///     }
 ///
-///             match to_dyn(cpu) {
-///                 // SAFETY: `Avx2` type guarantees the CPU supports the features `__avx2` uses
-///                 DynCpu::Avx2(cpu) => unsafe { __avx2(src, n, cpu) },
-///                 // `Neon` type is uninhabited on x86_64
-///                 DynCpu::Neon(_) => unreachable!(),
-///                 // SAFETY: `__generic` only has `#[target_feature(enable = "sse2")]`
-///                 // when SSE2 is enabled for the whole crate, so the CPU supports it
-///                 DynCpu::Generic(cpu) => unsafe { __generic(src, n, cpu) },
-///             }
-///         }
-///         target_arch = "aarch64" => {
-///             #[inline(never)]
-///             #[target_feature(enable = "neon")]
-///             unsafe fn __neon(src: &[u8], n: usize, cpu: Neon) -> usize {
-///                 __impl(src, n, cpu)
-///             }
+///     #[inline(never)]
+///     // Stops the MIR inliner inlining `__generic` into this function. See the docs above.
+///     #[cfg_attr(target_feature = "sse2", target_feature(enable = "sse2"))]
+///     #[allow(unreachable_code)]
+///     unsafe fn __generic(src: &[u8], n: usize, cpu: Generic) -> usize {
+///         // `Generic` is uninhabited on aarch64 with Neon enabled. See above.
+///         #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+///         unreachable!();
+///         __impl(src, n, cpu)
+///     }
 ///
-///             match to_dyn(cpu) {
-///                 // `Avx2` type is uninhabited on aarch64
-///                 DynCpu::Avx2(_) => unreachable!(),
-///                 // SAFETY: `Neon` type guarantees the CPU supports the features `__neon` uses
-///                 DynCpu::Neon(cpu) => unsafe { __neon(src, n, cpu) },
-///                 DynCpu::Generic(cpu) => unsafe { __generic(src, n, cpu) },
-///             }
-///         }
-///         _ => {
-///             match to_dyn(cpu) {
-///                 // `Avx2` and `Neon` types are uninhabited on other platforms
-///                 DynCpu::Avx2(_) => unreachable!(),
-///                 DynCpu::Neon(_) => unreachable!(),
-///                 // SAFETY: `__generic` only has `#[target_feature(enable = "sse2")]`
-///                 // when SSE2 is enabled for the whole crate, so the CPU supports it
-///                 DynCpu::Generic(cpu) => unsafe { __generic(src, n, cpu) },
-///             }
-///         }
+///     match to_dyn(cpu) {
+///         // SAFETY: `Avx2` type guarantees the CPU supports the features `__avx2` uses
+///         DynCpu::Avx2(cpu) => unsafe { __avx2(src, n, cpu) },
+///         // SAFETY: `Neon` type guarantees the CPU supports the features `__neon` uses
+///         DynCpu::Neon(cpu) => unsafe { __neon(src, n, cpu) },
+///         // SAFETY: `__generic` only has `#[target_feature(enable = "sse2")]`
+///         // when SSE2 is enabled for the whole crate, so the CPU supports it
+///         DynCpu::Generic(cpu) => unsafe { __generic(src, n, cpu) },
 ///     }
 /// }
 /// ```
 ///
-/// `DynCpu` has a variant for each feature set on every platform, so each `match` has an arm
-/// for each. On a platform without a SIMD feature set, that feature set's type is uninhabited,
-/// so its arm can never run, and is `unreachable!()`.
-///
-/// For a method, the `match` is the whole body of the outer method, in a `cfg_select!` of its
-/// own, and the other functions are methods next to it.
+/// For a method, the `match` is the whole body of the outer method,
+/// and the other functions are methods next to it.
 #[proc_macro_attribute]
 pub fn cpu_multiversion(args: TokenStream, item: TokenStream) -> TokenStream {
     output(multiversion::expand(args.into(), item.into()))
@@ -249,15 +252,20 @@ pub fn cpu_multiversion(args: TokenStream, item: TokenStream) -> TokenStream {
 ///   A vector can only exist if the CPU supports its feature set.
 ///   The type must be written with its `<Avx2>`, because the macro only sees the type's name.
 ///
-///   The function gets `#[cfg(target_arch = "x86_64")]`. What else it gets depends on its kind:
+///   What the function gets depends on its kind:
 ///   - `#[inline(always)]`: Nothing, because it can't be combined with `#[target_feature]`.
 ///     It's compiled as part of its callers, with their features.
-///   - `unsafe fn`: It gets `#[target_feature(enable = "avx2,bmi2,popcnt")]`.
+///   - `unsafe fn`: It gets
+///     `#[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]`.
 ///   - Any other function: It's wrapped in a safe function. See below.
 ///
 /// - `Neon`:
 ///   The same, with `Neon`, `Vec128<Neon>` or `Vec256<Neon>`,
-///   `#[cfg(target_arch = "aarch64")]` and `#[target_feature(enable = "neon")]`.
+///   and `#[cfg_attr(target_arch = "aarch64", target_feature(enable = "neon"))]`.
+///
+/// `Avx2` and `Neon` versions exist on every platform, so they're compiled and type-checked
+/// everywhere. Their target features only apply on the platform which has them.
+/// Elsewhere, the proof parameter's type is uninhabited, so the function can never be called.
 ///
 /// - `Generic`:
 ///   No parameter can have a CPU type (`Avx2`, `Neon`, `Generic`, `DynCpu` or `impl Cpu`),
@@ -291,11 +299,10 @@ pub fn cpu_multiversion(args: TokenStream, item: TokenStream) -> TokenStream {
 /// expands to:
 ///
 /// ```ignore
-/// #[cfg(target_arch = "x86_64")]
 /// #[inline(always)]
 /// fn foo<const N: usize>(arr: [u64; N], cpu: Avx2) -> bool {
 ///     #[inline(never)]
-///     #[target_feature(enable = "avx2,bmi2,popcnt")]
+///     #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
 ///     fn __impl<const N: usize>(mut arr: [u64; N], cpu: Avx2) -> bool {
 ///         // ...
 ///     }

@@ -2,16 +2,14 @@
 ///
 /// Arms use normal `match` syntax, but there must be exactly these 3 arms, in this order:
 ///
-/// - `Avx2(...)`: Only compiled on x86_64.
-///   On other platforms, the arm's body is replaced with `unreachable!()`.
-/// - `Neon(...)`: Only compiled on aarch64.
-///   On other platforms, the arm's body is replaced with `unreachable!()`.
-/// - `Generic(...)`: Compiled everywhere.
-///   On aarch64 with Neon enabled at compile time, it's compiled and type-checked,
-///   but can never run, so the compiler removes it. See [`Generic`].
+/// - `Avx2(...)`
+/// - `Neon(...)`
+/// - `Generic(...)`
 ///
+/// All 3 arms are compiled and type-checked on every platform.
 /// [`DynCpu`] has all 3 variants on every platform. On a platform which doesn't have
-/// a SIMD feature set, its type is uninhabited, so its arm can never run.
+/// a feature set, its type is uninhabited, so its arm can never run, and the compiler removes it.
+/// e.g. `Avx2` on aarch64, or [`Generic`] on aarch64 with Neon enabled at compile time.
 /// The arm is still needed, because the type's field is private, so outside the module which
 /// defines the type, rustc doesn't know that it's uninhabited.
 ///
@@ -59,16 +57,8 @@
 ///
 /// ```ignore
 /// match to_dyn(cpu) {
-///     #[cfg(not(target_arch = "x86_64"))]
-///     DynCpu::Avx2(_) => unreachable!(),
-///     #[cfg(target_arch = "x86_64")]
 ///     DynCpu::Avx2(cpu) => classify_avx2(self, cpu),
-///
-///     #[cfg(not(target_arch = "aarch64"))]
-///     DynCpu::Neon(_) => unreachable!(),
-///     #[cfg(target_arch = "aarch64")]
 ///     DynCpu::Neon(cpu) => classify_neon(self, cpu),
-///
 ///     DynCpu::Generic(_) => classify_generic(self),
 /// }
 /// ```
@@ -76,11 +66,7 @@
 /// ## Implementation
 ///
 /// Tokens of the arms are consumed one at a time, and copied into `arms`.
-/// `Avx2(...) =>` is rewritten to `DynCpu::Avx2(...) =>`, with a `#[cfg]` attribute for x86_64.
-/// Before it goes an arm `DynCpu::Avx2(_) => unreachable!(),` for other platforms.
-/// That replaces the body without having to find where it ends.
-/// `Neon(...) =>` is rewritten the same way, with `#[cfg]` attributes for aarch64.
-/// `Generic(...) =>` is rewritten to `DynCpu::Generic(...) =>`, with no `#[cfg]` attribute.
+/// `Avx2(...) =>` is rewritten to `DynCpu::Avx2(...) =>`, and the same for `Neon` and `Generic`.
 /// All other tokens are copied unchanged, so the arm bodies are parsed by the `match` itself.
 ///
 /// State is a set of named slots:
@@ -127,9 +113,6 @@ macro_rules! cpu_select {
             seen = [ avx2 ]
             arms = [
                 $($arms)*
-                #[cfg(not(target_arch = "x86_64"))]
-                crate::cpu::DynCpu::Avx2(_) => unreachable!(),
-                #[cfg(target_arch = "x86_64")]
                 crate::cpu::DynCpu::Avx2($($pat)*) =>
             ]
             cpu = $cpu
@@ -153,9 +136,6 @@ macro_rules! cpu_select {
             seen = [ avx2, neon ]
             arms = [
                 $($arms)*
-                #[cfg(not(target_arch = "aarch64"))]
-                crate::cpu::DynCpu::Neon(_) => unreachable!(),
-                #[cfg(target_arch = "aarch64")]
                 crate::cpu::DynCpu::Neon($($pat)*) =>
             ]
             cpu = $cpu

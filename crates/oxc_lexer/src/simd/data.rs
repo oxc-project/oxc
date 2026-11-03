@@ -163,7 +163,6 @@ impl VecData256 {
     }
 
     /// Create a [`VecData256`] from an array of `u32`s, each in native byte order.
-    #[cfg_attr(not(any(test, target_arch = "x86_64")), expect(dead_code))]
     #[inline(always)]
     pub const fn from_u32s(values: [u32; 8]) -> Self {
         let mut bytes = [[0; 4]; 8];
@@ -201,7 +200,6 @@ impl VecData256 {
     }
 
     /// Get a mutable reference to the contents of this [`VecData256`], as `u32`s in native byte order.
-    #[cfg_attr(not(any(test, target_arch = "x86_64")), expect(dead_code))]
     #[inline(always)]
     pub const fn as_u32s_mut(&mut self) -> &mut [u32; 8] {
         // SAFETY: `VecData256` is 32 bytes, aligned on 32. `[u32; 8]` is 32 bytes, aligned on 4.
@@ -226,7 +224,6 @@ impl VecData256 {
     }
 
     /// Get the low and high 16 bytes of this [`VecData256`], as 2 [`VecData128`]s.
-    #[cfg_attr(not(any(test, target_arch = "x86_64")), expect(dead_code))]
     #[inline(always)]
     pub const fn as_halves(&self) -> &[VecData128; 2] {
         // SAFETY: `VecData256` is 32 bytes, aligned on 32. `[VecData128; 2]` is 32 bytes, aligned on 16.

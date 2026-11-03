@@ -1,21 +1,15 @@
 use crate::cpu::{Cpu, cpu_multiversion, cpu_select};
 
-#[cfg(target_arch = "x86_64")]
 mod avx2;
-#[cfg(target_arch = "x86_64")]
 use avx2::classify_avx2;
 
-#[cfg(target_arch = "aarch64")]
 mod neon;
-#[cfg(target_arch = "aarch64")]
 use neon::classify_neon;
 
 mod generic;
 use generic::classify_generic;
 
-#[cfg(any(test, target_arch = "x86_64", target_arch = "aarch64"))]
 mod luts;
-#[cfg(any(test, target_arch = "x86_64", target_arch = "aarch64"))]
 mod punct1_luts;
 
 mod punct1;

@@ -1,12 +1,6 @@
 use std::panic::Location;
 
-use super::{BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_select, cpu_version, to_dyn};
-
-#[cfg(target_arch = "x86_64")]
-use super::Avx2;
-#[cfg(target_arch = "aarch64")]
-use super::Neon;
-#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+use super::{Avx2, BASELINE, Cpu, DynCpu, Neon, cpu_multiversion, cpu_select, cpu_version, to_dyn};
 use crate::simd::{Vec128, Vec256};
 
 #[cpu_multiversion]
@@ -670,11 +664,9 @@ macro_rules! wrapped_tests {
             #[test]
             fn wrapped() {
                 // This module can see the CPU types' private fields. So on aarch64 with Neon,
-                // rustc knows that `Avx2` and `Generic` are uninhabited, and this always matches.
-                #[cfg_attr(
-                    all(target_arch = "aarch64", target_feature = "neon"),
-                    expect(irrefutable_let_patterns)
-                )]
+                // rustc knows that `Avx2` and `Generic` are uninhabited, and for `Neon` this always
+                // matches. `allow`, not `expect`, because for `Avx2` it doesn't.
+                #[allow(irrefutable_let_patterns, clippy::allow_attributes)]
                 let DynCpu::$cpu(cpu) = DynCpu::detect() else { return };
 
                 assert_eq!(generics(&[1u8, 2], &[3, 4], false, cpu), 2);
@@ -702,10 +694,8 @@ macro_rules! wrapped_tests {
     };
 }
 
-#[cfg(target_arch = "x86_64")]
 wrapped_tests!(wrapped_avx2, Avx2);
 
-#[cfg(target_arch = "aarch64")]
 wrapped_tests!(wrapped_neon, Neon);
 
 /// Generics with `>>` and a `(...)` in them.

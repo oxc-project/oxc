@@ -19,7 +19,10 @@ pub enum Cpu {
 }
 
 impl Cpu {
-    /// All the feature sets, in the order which `cpu_select!` requires its arms to be in.
+    /// All the feature sets.
+    ///
+    /// The macros generate code for each feature set in this order,
+    /// e.g. `#[cpu_multiversion]`'s entry points and the arms of its `match`.
     pub const ALL: [Cpu; 3] = [Cpu::Avx2, Cpu::Neon, Cpu::Generic];
 
     /// The feature set called `ident`, e.g. the `Avx2` in `#[cpu_version(Avx2)]`.
@@ -72,18 +75,30 @@ impl Cpu {
         }
     }
 
-    /// `#[cfg(...)]` attribute for the platform which supports the feature set.
-    /// `None` for `Generic`, which every platform supports.
-    pub fn cfg_attr(self) -> Option<TokenStream> {
-        let arch = self.target_arch()?;
-        Some(quote!(#[cfg(target_arch = #arch)]))
+    /// `cfg` predicate for the platforms where the feature set's type is uninhabited,
+    /// so no value of it can exist.
+    ///
+    /// Must match the `cfg_select!` in the type's definition in `oxc_lexer`'s `cpu` module.
+    pub fn uninhabited_cfg(self) -> TokenStream {
+        match self {
+            Cpu::Avx2 => quote!(not(target_arch = "x86_64")),
+            Cpu::Neon => quote!(not(target_arch = "aarch64")),
+            Cpu::Generic => quote!(all(target_arch = "aarch64", target_feature = "neon")),
+        }
     }
 
-    /// Attribute which compiles a function with the feature set's target features.
+    /// Attribute which compiles a function with the feature set's target features,
+    /// on the platform which supports the feature set.
+    ///
+    /// Other platforms don't have those target features, so there the attribute does nothing.
     pub fn target_feature_attr(self) -> TokenStream {
         match self {
-            Cpu::Avx2 => quote!(#[target_feature(enable = "avx2,bmi2,popcnt")]),
-            Cpu::Neon => quote!(#[target_feature(enable = "neon")]),
+            Cpu::Avx2 => quote! {
+                #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
+            },
+            Cpu::Neon => quote! {
+                #[cfg_attr(target_arch = "aarch64", target_feature(enable = "neon"))]
+            },
             // Generic code has no target features of its own. This stops the MIR inliner
             // inlining a generic entry point into the function which calls it.
             // See the docs on `cpu_multiversion`.

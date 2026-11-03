@@ -1,7 +1,7 @@
-use crate::cpu::{BASELINE, Cpu, cpu_multiversion, cpu_select, cpu_version};
-
-#[cfg(target_arch = "x86_64")]
-use crate::{cpu::Avx2, simd::Vec256};
+use crate::{
+    cpu::{Avx2, BASELINE, Cpu, cpu_multiversion, cpu_select, cpu_version},
+    simd::Vec256,
+};
 
 use crate::pipeline::bitmap::{bm_clear, bm_get};
 

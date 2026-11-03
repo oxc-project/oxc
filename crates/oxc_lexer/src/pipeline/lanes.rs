@@ -9,13 +9,11 @@ use oxc_ast::ast::{Comment, RegExpFlags};
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 use crate::{
-    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_select, cpu_version},
+    cpu::{Avx2, BASELINE, Cpu, cpu_multiversion, cpu_select, cpu_version},
     error::{DiagCode, DiagSeverity, Diagnostic},
+    simd::Vec256,
     token::StringSpan,
 };
-
-#[cfg(target_arch = "x86_64")]
-use crate::{cpu::Avx2, simd::Vec256};
 
 use crate::pipeline::disambiguate::DisambiguateState;
 

@@ -7,9 +7,7 @@ use crate::{
 
 use crate::pipeline::lanes::Lanes;
 
-#[cfg(target_arch = "x86_64")]
 mod avx2;
-#[cfg(target_arch = "x86_64")]
 use avx2::{build_spans_avx2, compress_blocks_avx2, init_pair_luts_avx2, lanes_post_avx2};
 
 mod generic;

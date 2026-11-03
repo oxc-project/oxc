@@ -37,7 +37,6 @@ pub(super) const KWINIT_MASK: u8 = 0x03;
 /// Bits of a [`MERGED_LUTS`] lookup which are set if a byte is an operator char.
 pub(super) const OPCH_MASK: u8 = 0x3c;
 /// Bit of a [`MERGED_LUTS`] lookup which is set if a byte is `.`.
-#[cfg_attr(all(target_arch = "x86_64", not(test)), expect(dead_code))]
 pub(super) const DOT_MASK: u8 = 0x80;
 
 pub(super) const MERGED_LUTS: MergedLuts = {

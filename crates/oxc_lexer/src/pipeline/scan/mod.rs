@@ -1,8 +1,6 @@
 use crate::cpu::{Cpu, cpu_multiversion, cpu_select};
 
-#[cfg(target_arch = "x86_64")]
 mod avx2;
-#[cfg(target_arch = "x86_64")]
 use avx2::{scan_block_comment_avx2, scan_line_comment_avx2};
 
 mod generic;

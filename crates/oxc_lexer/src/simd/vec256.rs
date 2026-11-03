@@ -260,7 +260,6 @@ where
     // ----------------------------------------
 
     /// Create a [`Vec256`] with all bits zero.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn zero(cpu: C) -> Self {
         <Self as Vec256Impl>::zero(cpu)
@@ -279,14 +278,12 @@ where
     }
 
     /// Create a [`Vec256`] by repeating `v` twice.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn splat_v128(v: Vec128<C>) -> Self {
         <Self as Vec256Impl>::splat_v128(v)
     }
 
     /// Create a [`Vec256`] by zero-extending the low 8 bytes of `v` to 8 `u32`s.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn widen_u8_to_u32(v: Vec128<C>) -> Self {
         <Self as Vec256Impl>::widen_u8_to_u32(v)
@@ -297,7 +294,6 @@ where
     // ----------------------------------------
 
     /// Get the [`CpuSimd`] token from this [`Vec256`].
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn cpu(self) -> C {
         <Self as Vec256Impl>::cpu(self)
@@ -313,7 +309,7 @@ where
     ///
     /// * `ptr` must be valid for reading 32 bytes.
     /// * `ptr` must be aligned on 32.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
+    #[cfg_attr(not(any(test, target_arch = "x86_64")), expect(dead_code))]
     #[inline(always)]
     pub unsafe fn load(ptr: *const u8, cpu: C) -> Self {
         // SAFETY: Caller guarantees the same requirements as the trait method has
@@ -353,7 +349,7 @@ where
     ///
     /// * `ptr` must be valid for writing 32 bytes.
     /// * `ptr` must be aligned on 32.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
+    #[cfg_attr(not(any(test, target_arch = "x86_64")), expect(dead_code))]
     #[inline(always)]
     pub unsafe fn store(self, ptr: *mut u8) {
         // SAFETY: Caller guarantees the same requirements as the trait method has
@@ -415,7 +411,6 @@ where
     /// Shift each of the 16 `u16`s of this [`Vec256`] left by `BITS` bits.
     ///
     /// `BITS` must be between 1 and 15 (inclusive).
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn shl_u16<const BITS: i32>(self) -> Self {
         <Self as Vec256Impl>::shl_u16::<BITS>(self)
@@ -424,7 +419,6 @@ where
     /// Shift each of the 16 `u16`s of this [`Vec256`] right by `BITS` bits.
     ///
     /// `BITS` must be between 1 and 15 (inclusive).
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn shr_u16<const BITS: i32>(self) -> Self {
         <Self as Vec256Impl>::shr_u16::<BITS>(self)
@@ -468,7 +462,6 @@ where
 
     /// Add either another [`Vec256`] or a `u32` to every `u32` of this [`Vec256`],
     /// wrapping on overflow.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn add_u32(self, other: impl Operand256<u32, C>) -> Self {
         <Self as Vec256Impl>::add_u32(self, other)
@@ -481,7 +474,6 @@ where
     /// Compare every byte of this [`Vec256`] to either another [`Vec256`] or a `u8`.
     ///
     /// Each byte of the result is `0xFF` if the bytes are equal, otherwise `0x00`.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn eq_u8(self, other: impl Operand256<u8, C>) -> Self {
         <Self as Vec256Impl>::eq_u8(self, other)
@@ -498,7 +490,6 @@ where
     /// `other` is either an `i8`, or another [`Vec256`] to compare byte by byte.
     ///
     /// Each byte of the result is `0xFF` if the byte in `self` is less, otherwise `0x00`.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn lt_i8(self, other: impl Operand256<i8, C>) -> Self {
         <Self as Vec256Impl>::lt_i8(self, other)
@@ -508,7 +499,6 @@ where
     /// `other` is either an `i8`, or another [`Vec256`] to compare byte by byte.
     ///
     /// Each byte of the result is `0xFF` if the byte in `self` is greater, otherwise `0x00`.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn gt_i8(self, other: impl Operand256<i8, C>) -> Self {
         <Self as Vec256Impl>::gt_i8(self, other)
@@ -523,7 +513,6 @@ where
     /// Each byte of the result comes from `other` if the same byte of `mask` is `0xFF`,
     /// or from `self` if it's `0x00`.
     /// Other values in `mask` give different results on different CPUs.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn blend(self, other: impl Operand256<u8, C>, mask: Self) -> Self {
         <Self as Vec256Impl>::blend(self, other, mask)
@@ -537,7 +526,6 @@ where
     ///
     /// The result is `[s0, o0, s1, o1, s4, o4, s5, o5]`,
     /// where `sN` and `oN` are the `u32`s at index `N` in `self` and `other`.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn unpack_lo_u32(self, other: Self) -> Self {
         <Self as Vec256Impl>::unpack_lo_u32(self, other)
@@ -547,7 +535,6 @@ where
     ///
     /// The result is `[s2, o2, s3, o3, s6, o6, s7, o7]`,
     /// where `sN` and `oN` are the `u32`s at index `N` in `self` and `other`.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn unpack_hi_u32(self, other: Self) -> Self {
         <Self as Vec256Impl>::unpack_hi_u32(self, other)
@@ -558,14 +545,14 @@ where
     // ----------------------------------------
 
     /// Create a [`Vec256`] from its low and high 128 bits.
-    #[cfg_attr(all(not(test), target_arch = "x86_64"), expect(dead_code))]
+    #[cfg_attr(not(any(test, target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub fn from_halves(low: Vec128<C>, high: Vec128<C>) -> Self {
         <Self as Vec256Impl>::from_halves(low, high)
     }
 
     /// Get the low and high 128 bits of this [`Vec256`].
-    #[cfg_attr(all(not(test), target_arch = "x86_64"), expect(dead_code))]
+    #[cfg_attr(not(any(test, target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub fn into_halves(self) -> (Vec128<C>, Vec128<C>) {
         <Self as Vec256Impl>::into_halves(self)
@@ -573,7 +560,6 @@ where
 
     /// Get a [`Vec256`] made of the low 128 bits of this [`Vec256`],
     /// followed by the low 128 bits of `other`.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn join_lo_halves(self, other: Self) -> Self {
         <Self as Vec256Impl>::join_lo_halves(self, other)
@@ -581,7 +567,6 @@ where
 
     /// Get a [`Vec256`] made of the high 128 bits of this [`Vec256`],
     /// followed by the high 128 bits of `other`.
-    #[cfg_attr(all(not(test), target_arch = "aarch64"), expect(dead_code))]
     #[inline(always)]
     pub fn join_hi_halves(self, other: Self) -> Self {
         <Self as Vec256Impl>::join_hi_halves(self, other)
