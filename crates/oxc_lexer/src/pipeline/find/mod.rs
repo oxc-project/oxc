@@ -1,9 +1,9 @@
 use crate::cpu::{Cpu, DynCpu, cpu_multiversion, to_dyn};
 
 mod avx2;
-use avx2::{bracket_bits_avx2, find_avx2};
-
 mod generic;
+
+use avx2::{bracket_bits_avx2, find_avx2};
 use generic::{bracket_bits_generic, find_generic};
 
 /// First byte at or after `i` that is one of `needles`, or `n`.

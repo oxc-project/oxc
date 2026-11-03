@@ -1,18 +1,15 @@
 use crate::cpu::{Cpu, DynCpu, cpu_multiversion, to_dyn};
 
 mod avx2;
-use avx2::classify_avx2;
-
-mod neon;
-use neon::classify_neon;
-
 mod generic;
-use generic::classify_generic;
-
 mod luts;
+mod neon;
+mod punct1;
 mod punct1_luts;
 
-mod punct1;
+use avx2::classify_avx2;
+use generic::classify_generic;
+use neon::classify_neon;
 
 #[cpu_multiversion]
 #[inline(always)]

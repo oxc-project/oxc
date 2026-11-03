@@ -1,11 +1,12 @@
 use crate::{error::DiagCode, token::TokenKind};
 
-use crate::pipeline::disambiguate::tests::{
-    FileType, diag_codes_of, division, gt_run_fused, gt_run_split, is_fused_gt, kinds_of, regex,
-    stream,
+use crate::pipeline::disambiguate::{
+    FORWARD_SCAN_CAP,
+    tests::{
+        FileType, diag_codes_of, division, gt_run_fused, gt_run_split, is_fused_gt, kinds_of,
+        regex, stream,
+    },
 };
-
-use crate::pipeline::disambiguate::FORWARD_SCAN_CAP;
 
 // Reduce repeated boilerplate in tests below.
 // Can reference `ScriptJS` directly, instead of `FileType::ScriptJS`.

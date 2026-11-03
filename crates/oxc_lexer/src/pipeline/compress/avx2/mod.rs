@@ -11,6 +11,7 @@ use crate::pipeline::lanes::Lanes;
 use super::common::{emit_value, invalid_diags};
 
 mod pair_luts;
+
 use pair_luts::get_pair_luts;
 pub(super) use pair_luts::init_pair_luts_avx2;
 

@@ -8,12 +8,11 @@ use crate::{
 use crate::pipeline::lanes::Lanes;
 
 mod avx2;
-use avx2::{build_spans_avx2, compress_blocks_avx2, init_pair_luts_avx2, lanes_post_avx2};
-
-mod generic;
-use generic::{build_spans_generic, compress_blocks_generic, lanes_post_generic};
-
 mod common;
+mod generic;
+
+use avx2::{build_spans_avx2, compress_blocks_avx2, init_pair_luts_avx2, lanes_post_avx2};
+use generic::{build_spans_generic, compress_blocks_generic, lanes_post_generic};
 
 const STAGE_BLOCKS: usize = 32;
 pub const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;

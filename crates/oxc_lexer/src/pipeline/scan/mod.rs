@@ -1,13 +1,13 @@
 use crate::cpu::{Cpu, DynCpu, cpu_multiversion, to_dyn};
 
 mod avx2;
-use avx2::{scan_block_comment_avx2, scan_line_comment_avx2};
-
-mod generic;
-use generic::{scan_block_comment_generic, scan_line_comment_generic};
-
 mod common;
+mod generic;
+
 pub(super) use common::{scan_ident_esc, scan_number, scan_quoted, scan_regex, scan_tmpl_text};
+
+use avx2::{scan_block_comment_avx2, scan_line_comment_avx2};
+use generic::{scan_block_comment_generic, scan_line_comment_generic};
 
 #[cpu_multiversion]
 #[inline(always)]

@@ -1,7 +1,8 @@
 use std::panic::Location;
 
-use super::{Avx2, BASELINE, Cpu, DynCpu, Neon, cpu_multiversion, cpu_version, to_dyn};
 use crate::simd::{Vec128, Vec256};
+
+use super::{Avx2, BASELINE, Cpu, DynCpu, Neon, cpu_multiversion, cpu_version, to_dyn};
 
 #[cpu_multiversion]
 const fn add_one(x: u32, _cpu: impl Cpu) -> u32 {

@@ -34,13 +34,11 @@ pub(super) const PH_T: VecData256 = VecData256::from_bytes([
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        cpu::BASELINE,
-        pipeline::{
-            bytes::{is_word, is_ws},
-            classify::punct1::PUNCT1,
-        },
-        token::tk,
+    use crate::{cpu::BASELINE, token::tk};
+
+    use crate::pipeline::{
+        bytes::{is_word, is_ws},
+        classify::punct1::PUNCT1,
     };
 
     use super::*;
