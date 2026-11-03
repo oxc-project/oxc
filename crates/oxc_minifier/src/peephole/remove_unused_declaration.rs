@@ -148,6 +148,28 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// `var e = init` inside `catch (e)` stays to declare the enclosing binding, but `init`
+    /// only writes the catch parameter. When that parameter is never read, take `init` out
+    /// so the caller can drop it or keep just its side effects.
+    pub fn take_dead_catch_var_init(
+        decl: &mut VariableDeclarator<'a>,
+        kind: VariableDeclarationKind,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if !kind.is_var() || decl.init.is_none() || !Self::can_remove_unused_declarators(ctx) {
+            return None;
+        }
+        let BindingPattern::BindingIdentifier(ident) = &decl.id else { return None };
+        let symbol_id = ident.symbol_id.get()?;
+        ctx.scoping().catch_var_binding(symbol_id)?;
+        if !Self::symbol_is_unused_by_count(symbol_id, ctx)
+            || Self::class_initializer_name_needs_to_be_kept(decl, ctx)
+        {
+            return None;
+        }
+        decl.init.take()
+    }
+
     /// Filter unused declarators out of a `KeepVar`-synthesized `var`
     /// statement. Both callers pass `KeepVar` output: a TRANSIENT statement
     /// that is not (yet) part of the live tree, whose declarators never

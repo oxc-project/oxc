@@ -8,13 +8,9 @@ use crate::{
 
 #[test]
 fn catch_var_preserves_enclosing_binding() {
-    for source in [
-        "function f() { try { throw 0 } catch (y) { var y = 1 } return y } use(f);",
-        "function f(y) { try { throw 0 } catch (y) { var y = 1 } return y } use(f);",
+    test_same_smallest(
         "function f() { try { throw 0 } catch (y) { var [y] = value } return y } use(f);",
-    ] {
-        test_same_smallest(source);
-    }
+    );
     test_smallest(
         "function f() { while (false) { try {} catch (y) { var y = 1 } } return y } use(f);",
         "function f() { var y; return y } use(f);",
@@ -22,6 +18,34 @@ fn catch_var_preserves_enclosing_binding() {
     test_smallest(
         "function f() { return y; try {} catch (y) { var y = 1 } } use(f);",
         "function f() { return y; var y } use(f);",
+    );
+    // The initializer only writes the unread catch parameter.
+    test_smallest(
+        "function f() { try { throw 0 } catch (y) { var y = 1 } return y } use(f);",
+        "function f() { try { throw 0 } catch (y) { var y } return y } use(f);",
+    );
+    test_smallest(
+        "function f(y) { try { throw 0 } catch (y) { var y = 1 } return y } use(f);",
+        "function f(y) { try { throw 0 } catch (y) { var y } return y } use(f);",
+    );
+    test_smallest(
+        "function f() { try { throw 0 } catch (y) { var y = g() } return y } use(f);",
+        "function f() { try { throw 0 } catch (y) { g(); var y } return y } use(f);",
+    );
+    // A `var` regenerated from dead code inside a surviving catch still redeclares the
+    // catch parameter, so it must not be inlined away from the enclosing binding.
+    test_smallest(
+        "function f() { try { throw 0 } catch (y) { while (0) { var y } y = 2; use(y) } return y } use(f);",
+        "function f() { try { throw 0 } catch (y) { var y = 2; use(y) } return y } use(f);",
+    );
+    // When the inner catch is removed, the regenerated `var` redeclares the outer catch.
+    test_smallest(
+        "function f() { try { throw 0 } catch (y) { while (0) { try {} catch (y) { var y } } y = 2; use(y) } return y } use(f);",
+        "function f() { try { throw 0 } catch (y) { var y = 2; use(y) } return y } use(f);",
+    );
+    test_smallest(
+        "function f() { try { throw 0 } catch (y) { while (0) { try {} catch (y) { var y } } } return y } use(f);",
+        "function f() { try { throw 0 } catch (y) { var y } return y } use(f);",
     );
 }
 

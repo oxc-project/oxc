@@ -656,12 +656,19 @@ impl<'a> SlotAssignment<'a> {
 
             // Sort `bindings` in declaration order.
             tmp_bindings.clear();
-            tmp_bindings.extend(
-                bindings
-                    .values()
-                    .copied()
-                    .filter(|&binding| constraints.is_mangle_candidate(binding, scoping)),
-            );
+            tmp_bindings.extend(bindings.values().copied().filter(|&binding| {
+                // A catch parameter redeclared by `var` must print the enclosing binding's
+                // name. That binding's scope is an ancestor, so its slot is already assigned
+                // and kept live through this catch (see below). Share it instead of taking a
+                // slot of its own.
+                if !catch_var_bindings.is_empty()
+                    && let Some(var_binding) = scoping.catch_var_binding(binding)
+                {
+                    slots[binding.index()] = slots[var_binding.index()];
+                    return false;
+                }
+                constraints.is_mangle_candidate(binding, scoping)
+            }));
             if tmp_bindings.is_empty() {
                 continue;
             }
@@ -801,14 +808,6 @@ impl<'a> SlotAssignment<'a> {
                 && slots[shadower.index()] != SLOT_UNASSIGNED
             {
                 slots[id.symbol_id().index()] = slots[shadower.index()];
-            }
-        }
-
-        // The printed `var` must declare the enclosing binding's name as well as assign
-        // to the catch parameter. Unassigned outer slots preserve both original names.
-        for (catch, outer) in catch_var_bindings {
-            if slots[catch.index()] != SLOT_UNASSIGNED {
-                slots[catch.index()] = slots[outer.index()];
             }
         }
 

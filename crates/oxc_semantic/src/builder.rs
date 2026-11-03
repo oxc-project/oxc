@@ -584,7 +584,17 @@ impl<'a> SemanticBuilder<'a> {
             .scoping
             .get_binding(scope_id, name)
             .or_else(|| self.hoisting_variables.get(&(scope_id, name)).copied())?;
+        self.check_redeclared_symbol(symbol_id, span, name, excludes)
+    }
 
+    /// Like [`Self::check_redeclaration`], for a symbol that has already been looked up.
+    pub(crate) fn check_redeclared_symbol(
+        &self,
+        symbol_id: SymbolId,
+        span: Span,
+        name: Ident<'a>,
+        excludes: SymbolFlags,
+    ) -> Option<SymbolId> {
         let flags = self.scoping.symbol_flags(symbol_id);
 
         // A named function expression binds its own name in the function's scope, so a same-named

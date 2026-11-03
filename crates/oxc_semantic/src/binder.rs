@@ -76,15 +76,17 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                     // local bindings here to find catch parameters without repeating diagnostics.
                     // Type-only bindings (type aliases, interfaces) live in a separate
                     // declaration space, so a hoisted `var` must not merge into them.
-                    if builder.scoping.scope_has_binding(scope_id, name)
+                    if let Some(symbol_id) = builder.scoping.get_binding(scope_id, name)
                         && let Some(symbol_id) =
-                            builder.check_redeclaration(scope_id, span, name, excludes)
+                            builder.check_redeclared_symbol(symbol_id, span, name, excludes)
                         && builder.scoping.symbol_flags(symbol_id).can_be_referenced_by_value()
                         && builder.scoping.symbol_flags(symbol_id).is_value()
                     {
                         // A simple catch parameter can be redeclared by `var`, but the `var`
                         // also creates a separate binding in the enclosing var scope. Its
-                        // initializer assigns to the nearest catch binding.
+                        // initializer assigns to the nearest catch binding. Destructured catch
+                        // parameters have already reported a redeclaration error above; they
+                        // are linked the same way so recovery keeps the two bindings apart.
                         if builder.scoping.symbol_flags(symbol_id).is_catch_variable() {
                             catch_symbol_id.get_or_insert(symbol_id);
                             continue;

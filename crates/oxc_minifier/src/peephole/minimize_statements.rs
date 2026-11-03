@@ -266,6 +266,13 @@ impl<'a> PeepholeOptimizations {
                 // records the mutation for the fixed-point loop driver.
                 ctx.drop_variable_declarator(&decl);
             } else {
+                if let Some(mut init) = Self::take_dead_catch_var_init(&mut decl, kind, ctx) {
+                    if Self::remove_unused_expression(&mut init, ctx) {
+                        ctx.drop_expression(&init);
+                    } else {
+                        Self::push_new_expression_stmt_to_result(init, result, ctx);
+                    }
+                }
                 if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut()
                     && kind == prev_var_decl.kind
                 {
