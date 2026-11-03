@@ -1,0 +1,21 @@
+crates/oxc_linter/src/rules/eslint/no_fallthrough.rs
+  s_d711b51613c0a6::t_daf1e82361fefb 12,15,18,271,275,277-287,289-301,303,305-307,340-364,637-666,737-746
+crates/oxc_linter/src/snapshots/eslint_no_fallthrough.snap
+  s_d711b51613c0a6::t_22298a6433674c 240-288
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "85f9d5b1dab93c1ce4961273b6a53f86d523aa74",
+  "prompts": {},
+  "sessions": {
+    "s_d711b51613c0a6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a143-9134-75c0-9b99-c903d4a6eb1a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
