@@ -1,0 +1,19 @@
+Cargo.lock
+  s_cac1c0af6b5088::t_afe694b8ef3a75 2125
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "af9c5c32f20274c50f6f1444d0b7ca8646cc4c0c",
+  "prompts": {},
+  "sessions": {
+    "s_cac1c0af6b5088": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a061f52-14ed-4bcd-b1ae-2c3600f4477c",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

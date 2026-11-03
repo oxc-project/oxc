@@ -1,0 +1,21 @@
+Cargo.toml
+  s_cac1c0af6b5088::t_c1812412e1b0b1 303
+crates/oxc_formatter_htmlish/examples/bench_htmlish.rs
+  s_cac1c0af6b5088::t_fddbf8121fcf44 1-109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8334c6cb3df394592e0329647fc38ec482cf0d03",
+  "prompts": {},
+  "sessions": {
+    "s_cac1c0af6b5088": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a061f52-14ed-4bcd-b1ae-2c3600f4477c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

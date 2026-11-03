@@ -1,0 +1,19 @@
+crates/oxc_formatter/DIVERGENCES.md
+  s_0ddd0eb6d094ac::t_c86d08d4ece910 1005,1034-1038
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a13e652b8e6e0e4a6bc1b21e6f1feacc767aa40d",
+  "prompts": {},
+  "sessions": {
+    "s_0ddd0eb6d094ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4662d2d0-e6bf-4f02-bf6a-625f784701c7",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

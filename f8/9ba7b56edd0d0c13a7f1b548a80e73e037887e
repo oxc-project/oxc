@@ -1,0 +1,23 @@
+crates/oxc_formatter/tests/fixtures/js/arrow-function/conditional-body-parens.js.snap
+  s_0ddd0eb6d094ac::t_cd87755fe5b8ba 1-21
+crates/oxc_formatter/src/print/arrow_function_expression.rs
+  s_0ddd0eb6d094ac::t_6e64a8e44d2829 686-689
+crates/oxc_formatter/tests/fixtures/js/arrow-function/conditional-body-parens.js
+  s_0ddd0eb6d094ac::t_0252726d60957a 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f89ba7b56edd0d0c13a7f1b548a80e73e037887e",
+  "prompts": {},
+  "sessions": {
+    "s_0ddd0eb6d094ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4662d2d0-e6bf-4f02-bf6a-625f784701c7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+Cargo.lock
+  s_cac1c0af6b5088::t_e652ef605402e7 1690
+crates/oxc_formatter_css/src/format.rs
+  s_cac1c0af6b5088::t_ae5eeb8eaf1ab2 211-212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "891195b02049bd500d4bc9d8f08e7381606fd31b",
+  "prompts": {},
+  "sessions": {
+    "s_cac1c0af6b5088": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a061f52-14ed-4bcd-b1ae-2c3600f4477c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+Cargo.lock
+  s_cac1c0af6b5088::t_74cf54c72c62d1 2177
+crates/oxc_formatter_markdown/Cargo.toml
+  s_cac1c0af6b5088::t_04bc3831574825 21
+crates/oxc_formatter_markdown/examples/phases_markdown.rs
+  s_cac1c0af6b5088::t_107bde8ba5d5f9 1-85
+crates/oxc_formatter_markdown/src/format.rs
+  s_cac1c0af6b5088::t_5e029a55d91701 154-167,177-178,180-192
+crates/oxc_formatter_markdown/src/print/block.rs
+  s_cac1c0af6b5088::t_6a33c80d4a1433 75-76,123-127
+crates/oxc_formatter_markdown/src/print/inline.rs
+  s_cac1c0af6b5088::t_28a985bdbeb829 529-530
+crates/oxc_formatter_markdown/src/print/line_shape.rs
+  s_cac1c0af6b5088::t_2a85d385723d48 63-64,71,78,86-90,139,238,251-252,255,258,266-294
+crates/oxc_formatter_markdown/src/print/mod.rs
+  s_cac1c0af6b5088::t_69262a5c38c76a 76-84,155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "31ff16000c3999e9974f98a90a110b7ee4890c45",
+  "prompts": {},
+  "sessions": {
+    "s_cac1c0af6b5088": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a061f52-14ed-4bcd-b1ae-2c3600f4477c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

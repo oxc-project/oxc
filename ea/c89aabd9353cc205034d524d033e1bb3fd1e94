@@ -1,0 +1,27 @@
+Cargo.toml
+  s_cac1c0af6b5088::t_e245d8a81470cb 303-306
+crates/oxc_formatter_css/examples/bench_css.rs
+  s_cac1c0af6b5088::t_f4d4b24f909107 1-107
+crates/oxc_formatter_htmlish/examples/bench_htmlish.rs
+  s_cac1c0af6b5088::t_72fb1ad72087e9 1-109
+crates/oxc_formatter_markdown/examples/bench_markdown.rs
+  s_cac1c0af6b5088::t_6b6489d1b13f3b 1-102
+crates/oxc_formatter_yaml/examples/bench_yaml.rs
+  s_cac1c0af6b5088::t_a06389aecc115a 1-102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "eac89aabd9353cc205034d524d033e1bb3fd1e94",
+  "prompts": {},
+  "sessions": {
+    "s_cac1c0af6b5088": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a061f52-14ed-4bcd-b1ae-2c3600f4477c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

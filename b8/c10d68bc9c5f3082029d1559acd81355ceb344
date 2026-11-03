@@ -1,0 +1,19 @@
+crates/oxc_formatter_htmlish/src/print/attribute.rs
+  s_cac1c0af6b5088::t_74d47376cfad3c 121-123,131-133,145,165-166,174-175
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b8c10d68bc9c5f3082029d1559acd81355ceb344",
+  "prompts": {},
+  "sessions": {
+    "s_cac1c0af6b5088": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a061f52-14ed-4bcd-b1ae-2c3600f4477c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

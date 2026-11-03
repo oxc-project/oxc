@@ -1,0 +1,21 @@
+Cargo.toml
+  s_cac1c0af6b5088::t_e9dc982bd5f13f 303
+crates/oxc_formatter_markdown/examples/bench_markdown.rs
+  s_cac1c0af6b5088::t_c64ad3e08e79b8 1-102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e61f4ac427d9312f824751ffbc18b7ebfcf21c3a",
+  "prompts": {},
+  "sessions": {
+    "s_cac1c0af6b5088": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a061f52-14ed-4bcd-b1ae-2c3600f4477c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
