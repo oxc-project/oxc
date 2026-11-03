@@ -752,6 +752,12 @@ impl<'a> ClassProperties<'a> {
     ///   -> `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
     /// * `object.#prop &&= value`
     ///   -> `_classPrivateFieldGet2(_prop, object) && _classPrivateFieldSet2(_prop, object, value)`
+    ///
+    /// A setter's return value is not the value of the assignment. If `#prop` is an accessor and
+    /// the value is used, assign to the setter instead of calling it:
+    ///
+    /// * `object.#prop += value`
+    ///   -> `_toSetter(_set_prop.bind(_assertClassBrand(Class, object)))._ = _get_prop.call(_assertClassBrand(Class, object)) + value`
     //
     // `#[inline]` so that compiler sees `expr` is an `Expression::AssignmentExpression` with
     // `AssignmentTarget::PrivateFieldExpression` on left, and that clones in
@@ -765,6 +771,8 @@ impl<'a> ClassProperties<'a> {
         class_binding: Option<&BoundIdentifier<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        let is_value_used = Self::is_value_used(ctx);
+
         expr.replace_with(|expr| {
             let Expression::AssignmentExpression(assign_expr) = expr else {
                 unreachable!();
@@ -808,12 +816,13 @@ impl<'a> ClassProperties<'a> {
                 let value = Expression::new_binary_expression(SPAN, get_call, operator, value, ctx);
 
                 // `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
-                self.create_private_setter(
+                self.create_private_setter_with_value(
                     &field.name,
                     class_binding,
                     set_binding,
                     object1,
                     value,
+                    is_value_used,
                     span,
                     ctx,
                 )
@@ -832,12 +841,13 @@ impl<'a> ClassProperties<'a> {
                 );
 
                 // `_classPrivateFieldSet2(_prop, object, value)`
-                let set_call = self.create_private_setter(
+                let set_call = self.create_private_setter_with_value(
                     &field.name,
                     class_binding,
                     set_binding,
                     object2,
                     value,
+                    is_value_used,
                     SPAN,
                     ctx,
                 );
@@ -1141,6 +1151,7 @@ impl<'a> ClassProperties<'a> {
             let UpdateExpression { span, prefix, .. } = **update_expr;
             update_expr.span = SPAN;
             update_expr.argument = temp_binding.create_read_write_simple_target(ctx);
+            let is_value_used = Self::is_value_used(ctx);
             expr.replace_with(|update_expr| {
                 if prefix {
                     // Source = `++object.#prop` (prefix `++`)
@@ -1148,12 +1159,13 @@ impl<'a> ClassProperties<'a> {
                     let value =
                         Expression::new_sequence_expression(SPAN, [assignment, update_expr], ctx);
                     // `_classPrivateFieldSet(_prop, object, <value>)`
-                    self.create_private_setter(
+                    self.create_private_setter_with_value(
                         &private_name,
                         class_binding.as_ref(),
                         set_binding.as_ref(),
                         object1,
                         value,
+                        is_value_used,
                         span,
                         ctx,
                     )
@@ -2199,6 +2211,33 @@ impl<'a> ClassProperties<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
+        self.create_private_setter_with_value(
+            private_name,
+            class_binding,
+            prop_binding,
+            object,
+            value,
+            false,
+            span,
+            ctx,
+        )
+    }
+
+    /// Same as [`Self::create_private_setter`], but if `is_value_used` is `true`, the expression
+    /// evaluates to `value`, not to the return value of a setter:
+    ///
+    /// `_toSetter(_prop.bind(_assertClassBrand(Class, object)))._ = value`
+    fn create_private_setter_with_value(
+        &self,
+        private_name: &str,
+        class_binding: Option<&BoundIdentifier<'a>>,
+        prop_binding: Option<&BoundIdentifier<'a>>,
+        object: Expression<'a>,
+        value: Expression<'a>,
+        is_value_used: bool,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
         let Some(prop_binding) = prop_binding else {
             // `_writeOnlyError("#method")`
             return self.create_sequence_with_read_only_error(
@@ -2213,6 +2252,16 @@ impl<'a> ClassProperties<'a> {
         if let Some(class_binding) = class_binding {
             let class_ident = class_binding.create_read_expression(ctx);
             let object = self.create_assert_class_brand_without_value(class_ident, object, ctx);
+            if is_value_used {
+                let target = self.create_to_setter_for_bind_call(prop_ident, object, SPAN, ctx);
+                return Expression::new_assignment_expression(
+                    span,
+                    AssignmentOperator::Assign,
+                    AssignmentTarget::from(target.into_member_expression()),
+                    value,
+                    ctx,
+                );
+            }
             let arguments =
                 ArenaVec::from_array_in([Argument::from(object), Argument::from(value)], ctx);
             let callee = create_member_callee(prop_ident, static_ident!("call"), span, ctx);
@@ -2222,6 +2271,11 @@ impl<'a> ClassProperties<'a> {
             // `_privateFieldSet(_prop, object, value)`
             self.create_private_field_set(prop_ident, object, value, ctx)
         }
+    }
+
+    /// Whether the value of the current expression is used.
+    fn is_value_used(ctx: &TraverseCtx<'a>) -> bool {
+        !matches!(ctx.parent(), Ancestor::ExpressionStatementExpression(_))
     }
 
     /// * [`Helper::ReadOnlyError`][]: `_readOnlyError("#method")`
