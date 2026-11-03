@@ -1,5 +1,5 @@
 use crate::{
-    cpu::{Avx2, BASELINE, Cpu, cpu_multiversion, cpu_select, cpu_version},
+    cpu::{Avx2, BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_version, to_dyn},
     simd::Vec256,
 };
 
@@ -25,11 +25,10 @@ pub(super) unsafe fn jsx_glue_hyphens(
     b: usize,
     cpu: impl Cpu,
 ) {
-    cpu_select!(cpu, {
-        Avx2(cpu) => jsx_glue_hyphens_avx2(src, n, st, opch, word, a, b, cpu),
-        Neon(_) => jsx_glue_hyphens_generic(src, n, st, opch, word, a, b),
-        Generic(_) => jsx_glue_hyphens_generic(src, n, st, opch, word, a, b),
-    })
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => jsx_glue_hyphens_avx2(src, n, st, opch, word, a, b, cpu),
+        _ => jsx_glue_hyphens_generic(src, n, st, opch, word, a, b),
+    }
 }
 
 /// [`jsx_glue_hyphens`] for AVX2.

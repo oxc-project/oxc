@@ -37,7 +37,7 @@ use constcat::concat_slices;
 use oxc_data_structures::{assert_unchecked, branch_hints::unlikely, str::const_str_eq};
 
 use crate::{
-    cpu::{Avx2, BASELINE, Cpu, Neon, cpu_multiversion, cpu_select, cpu_version},
+    cpu::{Avx2, BASELINE, Cpu, DynCpu, Neon, cpu_multiversion, cpu_version, to_dyn},
     simd::Vec128,
     token::{KW_KIND_BASE, TokenKind},
 };
@@ -507,11 +507,11 @@ pub(super) unsafe fn kw_match<const IS_TS: bool>(
 #[cpu_multiversion]
 #[inline(always)]
 unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2], cpu: impl Cpu) -> bool {
-    cpu_select!(cpu, {
-        Avx2(cpu) => text_matches_avx2(ptr, len, text, cpu),
-        Neon(cpu) => text_matches_neon(ptr, len, text, cpu),
-        Generic(_) => text_matches_generic(ptr, len, text),
-    })
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => text_matches_avx2(ptr, len, text, cpu),
+        DynCpu::Neon(cpu) => text_matches_neon(ptr, len, text, cpu),
+        DynCpu::Generic(_) => text_matches_generic(ptr, len, text),
+    }
 }
 
 /// [`text_matches`] for AVX2.

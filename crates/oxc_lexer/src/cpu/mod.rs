@@ -13,7 +13,25 @@
 //! It's the best one which is known at compile time to be available.
 //!
 //! Code which has SIMD implementations takes a type implementing [`Cpu`],
-//! and uses [`cpu_select!`] to pick an implementation.
+//! and picks an implementation with a `match` on [`to_dyn`]:
+//!
+//! ```ignore
+//! match to_dyn(cpu) {
+//!     DynCpu::Avx2(cpu) => classify_avx2(self, cpu),
+//!     DynCpu::Neon(cpu) => classify_neon(self, cpu),
+//!     DynCpu::Generic(_) => classify_generic(self),
+//! }
+//! ```
+//!
+//! [`DynCpu`] has all 3 variants on every platform. On a platform which doesn't have
+//! a feature set, its type is uninhabited, so its arm can never run, and the compiler removes it.
+//! The arm is still needed, because the type's field is private, so outside this module
+//! rustc doesn't know that it's uninhabited.
+//!
+//! Use the [`to_dyn`] function, not the [`Cpu::to_dyn`] method. The method is an extra
+//! `#[inline(always)]` function around it, and that changes the code which some callers
+//! compile to, because rustc's MIR inliner treats them differently.
+//!
 //! [`#[cpu_version]`] marks each implementation with the CPU feature set it's for.
 //! [`#[cpu_multiversion]`] turns a function into one with a separate entry point for each CPU feature set.
 //! [`#[cpu_impl]`] marks methods which only work on one CPU feature set's platform.
@@ -23,7 +41,7 @@
 //! * Given a specific type (e.g. `Avx2`): the choice is made at compile time.
 //! * Given a [`DynCpu`]: the choice is made at runtime.
 //!
-//! Functions which use [`cpu_select!`] typically take a generic `impl Cpu`.
+//! Functions which pick an implementation typically take a generic `impl Cpu`.
 //! This compiles a separate version of the function for each [`Cpu`] type that callers use with it.
 //!
 //! [`DynCpu`] also implements [`Cpu`], so functions that receive an `impl Cpu`
@@ -66,12 +84,8 @@ use std::{convert::Infallible as Never, mem};
 
 pub(crate) use oxc_lexer_macros::{cpu_impl, cpu_multiversion, cpu_version};
 
-mod select_macro;
-
 #[cfg(test)]
 mod tests;
-
-pub(crate) use select_macro::cpu_select;
 
 /// Trait for types representing a CPU feature set.
 ///
@@ -143,7 +157,9 @@ impl CpuPrivate for DynCpu {
 ///
 /// Same as [`Cpu::to_dyn`], but this works in `const` code too.
 /// A `const fn` can't call a trait method on a generic type, so it can't call [`Cpu::to_dyn`].
-/// [`cpu_select!`] and [`#[cpu_multiversion]`] use this function, so they work in `const` code.
+/// [`#[cpu_multiversion]`] uses this function, so it works in `const` code.
+/// Code which picks an implementation uses it too: `match to_dyn(cpu) { ... }`.
+/// See the module docs for why it's preferred to [`Cpu::to_dyn`] there.
 ///
 /// Only [`DynCpu`] needs `cpu`. It's taken for all types so that this can only be called
 /// by code which already has one of these types.

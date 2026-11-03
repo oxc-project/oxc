@@ -9,7 +9,7 @@ use oxc_ast::ast::{Comment, RegExpFlags};
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 use crate::{
-    cpu::{Avx2, BASELINE, Cpu, cpu_multiversion, cpu_select, cpu_version},
+    cpu::{Avx2, BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_version, to_dyn},
     error::{DiagCode, DiagSeverity, Diagnostic},
     simd::Vec256,
     token::StringSpan,
@@ -481,13 +481,12 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
     diags: &mut Vec<Diagnostic>,
     cpu: impl Cpu,
 ) -> (u32, bool, bool) {
-    cpu_select!(cpu, {
-        Avx2(cpu) => {
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => {
             cook_short_avx2::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu)
         }
-        Neon(_) => cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags),
-        Generic(_) => cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags),
-    })
+        _ => cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags),
+    }
 }
 
 /// [`cook_short`] for AVX2.
@@ -555,11 +554,10 @@ fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
 #[cpu_multiversion]
 #[inline(always)]
 fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
-    cpu_select!(cpu, {
-        Avx2(cpu) => span_has_bs_avx2(src, bs, be, cpu),
-        Neon(_) => span_has_bs_generic(src, bs, be),
-        Generic(_) => span_has_bs_generic(src, bs, be),
-    })
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => span_has_bs_avx2(src, bs, be, cpu),
+        _ => span_has_bs_generic(src, bs, be),
+    }
 }
 
 /// [`span_has_bs`] for AVX2.
@@ -595,11 +593,10 @@ fn span_has_bs_generic(src: &[u8], bs: usize, be: usize) -> bool {
 #[cpu_multiversion]
 #[inline(always)]
 fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
-    cpu_select!(cpu, {
-        Avx2(cpu) => span_has_bs_or_cr_avx2(src, bs, be, cpu),
-        Neon(_) => span_has_bs_or_cr_generic(src, bs, be),
-        Generic(_) => span_has_bs_or_cr_generic(src, bs, be),
-    })
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => span_has_bs_or_cr_avx2(src, bs, be, cpu),
+        _ => span_has_bs_or_cr_generic(src, bs, be),
+    }
 }
 
 /// [`span_has_bs_or_cr`] for AVX2.

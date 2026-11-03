@@ -11,7 +11,7 @@
 //! - [`cpu_impl`]: Methods of one feature set's types, which exist on every platform,
 //!   but only work on the platform which has the feature set.
 //!
-//! `oxc_lexer`'s `cpu_select!` macro chooses between versions.
+//! `oxc_lexer` code chooses between versions with a `match` on `to_dyn(cpu)`.
 //!
 //! The macros are only for `oxc_lexer`.
 //! Their output refers to its `cpu` and `simd` modules by path.
@@ -228,7 +228,7 @@ pub fn cpu_multiversion(args: TokenStream, item: TokenStream) -> TokenStream {
 
 /// Marks a function as the version of some code for one CPU feature set.
 ///
-/// `cpu_select!` picks between the versions.
+/// A `match` on `to_dyn(cpu)` picks between the versions.
 ///
 /// Applied to a function with one of:
 ///

@@ -1,4 +1,4 @@
-use crate::cpu::{Cpu, cpu_multiversion, cpu_select};
+use crate::cpu::{Cpu, DynCpu, cpu_multiversion, to_dyn};
 
 mod avx2;
 use avx2::{bracket_bits_avx2, find_avx2};
@@ -18,20 +18,18 @@ pub(super) unsafe fn find<const K: usize>(
     needles: [u8; K],
     cpu: impl Cpu,
 ) -> usize {
-    cpu_select!(cpu, {
-        Avx2(cpu) => find_avx2(src, n, i, needles, cpu),
-        Neon(_) => find_generic(src, n, i, needles),
-        Generic(_) => find_generic(src, n, i, needles),
-    })
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => find_avx2(src, n, i, needles, cpu),
+        _ => find_generic(src, n, i, needles),
+    }
 }
 
 /// Bits of the 64 bytes at `base` that are brackets (`(){}[]`). Bit `i` is for byte `base + i`.
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) fn bracket_bits(src: &[u8], base: usize, cpu: impl Cpu) -> u64 {
-    cpu_select!(cpu, {
-        Avx2(cpu) => bracket_bits_avx2(src, base, cpu),
-        Neon(_) => bracket_bits_generic(src, base),
-        Generic(_) => bracket_bits_generic(src, base),
-    })
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => bracket_bits_avx2(src, base, cpu),
+        _ => bracket_bits_generic(src, base),
+    }
 }

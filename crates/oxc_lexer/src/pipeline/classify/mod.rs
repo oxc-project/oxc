@@ -1,4 +1,4 @@
-use crate::cpu::{Cpu, cpu_multiversion, cpu_select};
+use crate::cpu::{Cpu, DynCpu, cpu_multiversion, to_dyn};
 
 mod avx2;
 use avx2::classify_avx2;
@@ -31,11 +31,17 @@ pub(super) unsafe fn classify(
     kind: *mut u8,
     cpu: impl Cpu,
 ) {
-    cpu_select!(cpu, {
-        Avx2(cpu) => classify_avx2(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu),
-        Neon(cpu) => classify_neon(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu),
-        Generic(_) => classify_generic(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind),
-    });
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => {
+            classify_avx2(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu)
+        }
+        DynCpu::Neon(cpu) => {
+            classify_neon(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu)
+        }
+        DynCpu::Generic(_) => {
+            classify_generic(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind)
+        }
+    };
 
     *word.add(nb) = 0;
     *st.add(nb) = 0;
