@@ -456,11 +456,32 @@ fn annex_b_block_function_without_hoisting() {
         "function _() { var g = 0; { let g; { function g() {} } } return g; }",
         // The root scope is not mangled, so the function keeps its name in its block.
         "{ let e; { function e() {} let x = 1; use(x); } }",
+        "{ function a() {} } { function b() {} } { function c() {} let x = 1; use(x); } let a, b, c;",
+        // The function is named with a var scope that has no bindings of its own.
+        "function _() { { let g; { function g() {} } } }",
+        // Several functions share the names of bindings declared after them.
+        "function _() { let x; { function g() { return x; } function h() {} } let g, h; return [x, g, h]; }",
+        // The parameter that shadows the function expression's name prevents the write.
+        "(function g(g) { { function g() {} } return g; })",
+        // Bindings visible to direct `eval` keep their names, without affecting other functions.
+        "function _() { eval(''); { let e; { function e() {} let x = 1; use(x); } } } function f() { var g; { function g() {} } return g; }",
+        "function _() { { function g() {} eval(''); let x = 1; } let g; var y = 1; return y; }",
+    ];
+    let keep_class_name_cases = [
+        // The class prevents the write and keeps its name, so the function keeps its name too.
+        "function _() { class e {} { function e() {} let x = 1; use(x); } return e; }",
     ];
 
     let mut snapshot = String::new();
-    cases.into_iter().fold(&mut snapshot, |w, case| {
-        let options = MangleOptions::default();
+    let keep_class_names = MangleOptions {
+        keep_names: MangleOptionsKeepNames { function: false, class: true },
+        ..MangleOptions::default()
+    };
+    let cases = cases
+        .into_iter()
+        .map(|case| (case, MangleOptions::default()))
+        .chain(keep_class_name_cases.into_iter().map(|case| (case, keep_class_names.clone())));
+    cases.fold(&mut snapshot, |w, (case, options)| {
         write!(w, "{case}\n{}\n", mangle_script(case, &options)).unwrap();
         w
     });
