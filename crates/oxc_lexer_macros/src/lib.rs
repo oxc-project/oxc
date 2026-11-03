@@ -173,6 +173,8 @@ mod version;
 ///             match to_dyn(cpu) {
 ///                 // SAFETY: `Avx2` type guarantees the CPU supports the features `__avx2` uses
 ///                 DynCpu::Avx2(cpu) => unsafe { __avx2(src, n, cpu) },
+///                 // `Neon` type is uninhabited on x86_64
+///                 DynCpu::Neon(_) => unreachable!(),
 ///                 // SAFETY: `__generic` only has `#[target_feature(enable = "sse2")]`
 ///                 // when SSE2 is enabled for the whole crate, so the CPU supports it
 ///                 DynCpu::Generic(cpu) => unsafe { __generic(src, n, cpu) },
@@ -186,6 +188,8 @@ mod version;
 ///             }
 ///
 ///             match to_dyn(cpu) {
+///                 // `Avx2` type is uninhabited on aarch64
+///                 DynCpu::Avx2(_) => unreachable!(),
 ///                 // SAFETY: `Neon` type guarantees the CPU supports the features `__neon` uses
 ///                 DynCpu::Neon(cpu) => unsafe { __neon(src, n, cpu) },
 ///                 DynCpu::Generic(cpu) => unsafe { __generic(src, n, cpu) },
@@ -193,6 +197,9 @@ mod version;
 ///         }
 ///         _ => {
 ///             match to_dyn(cpu) {
+///                 // `Avx2` and `Neon` types are uninhabited on other platforms
+///                 DynCpu::Avx2(_) => unreachable!(),
+///                 DynCpu::Neon(_) => unreachable!(),
 ///                 // SAFETY: `__generic` only has `#[target_feature(enable = "sse2")]`
 ///                 // when SSE2 is enabled for the whole crate, so the CPU supports it
 ///                 DynCpu::Generic(cpu) => unsafe { __generic(src, n, cpu) },
@@ -201,6 +208,10 @@ mod version;
 ///     }
 /// }
 /// ```
+///
+/// `DynCpu` has a variant for each feature set on every platform, so each `match` has an arm
+/// for each. On a platform without a SIMD feature set, that feature set's type is uninhabited,
+/// so its arm can never run, and is `unreachable!()`.
 ///
 /// For a method, the `match` is the whole body of the outer method, in a `cfg_select!` of its
 /// own, and the other functions are methods next to it.

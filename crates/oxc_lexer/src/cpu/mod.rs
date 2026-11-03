@@ -1,8 +1,11 @@
 //! Types representing CPU feature sets, used to choose between SIMD and generic implementations.
 //!
-//! - `Avx2`: x86_64 with AVX2, BMI2 and POPCNT.
-//! - `Neon`: aarch64 with Neon.
-//! - [`Generic`]: No SIMD. Exists on all platforms.
+//! - [`Avx2`]: x86_64 with AVX2, BMI2 and POPCNT.
+//! - [`Neon`]: aarch64 with Neon.
+//! - [`Generic`]: No SIMD.
+//!
+//! All 3 types exist on all platforms. On a platform where a feature set is never used,
+//! its type is uninhabited - it can never be created.
 //!
 //! [`DynCpu`] is an enum of these types. [`DynCpu::detect`] returns the best one available.
 //!
@@ -26,22 +29,24 @@
 //! can do either a compile-time or runtime features check, depending on whether it's called with
 //! a concrete type (e.g. `Avx2`) or [`DynCpu`].
 //!
-//! `Avx2`, `Neon`, and [`Generic`] types are all zero-sized, so can be passed between functions
+//! [`Avx2`], [`Neon`] and [`Generic`] types are all zero-sized, so can be passed between functions
 //! without any runtime cost. They operate at the level of the type system only.
 //!
 //! # SAFETY
 //!
 //! These types are unforgeable.
 //!
-//! * Code outside this file can't create them.
-//! * Each has a private field, and only 3 places create them:
-//!   - `DynCpu::detect` only creates an `Avx2` if that feature set is available.
-//!   - [`BASELINE`] is only a `Neon` when Neon is enabled at compile time, which guarantees it's available.
+//! * Each has a private field, so code outside this module can't create them.
+//! * Only 3 places create them:
+//!   - `DynCpu::detect` only creates an [`Avx2`] if that feature set is available.
+//!   - [`BASELINE`] is only a [`Neon`] when Neon is enabled at compile time,
+//!     which guarantees it's available.
 //!     Otherwise it's a [`Generic`], which guarantees nothing.
 //!   - `CpuPrivate::DYN_CPU` holds an instance of the type.
 //!     The trait is private, so only code in this file can read it.
 //!     Only [`to_dyn`] reads it, and it takes an instance of the same type,
 //!     so it only gives one to code which already has one.
+//! * On a platform where a type is uninhabited, it can't be created at all.
 //! * A [`DynCpu`] can only be built from one of these types, so it's unforgeable too.
 //! * [`Cpu`] trait is sealed, so no other type can implement it.
 //!
@@ -55,7 +60,7 @@
 //! [`#[cpu_version]`]: macro@cpu_version
 //! [`#[cpu_multiversion]`]: macro@cpu_multiversion
 
-use std::mem;
+use std::{convert::Infallible as Never, mem};
 
 pub(crate) use oxc_lexer_macros::{cpu_multiversion, cpu_version};
 
@@ -93,8 +98,8 @@ pub trait Cpu: CpuPrivate + Copy {
 trait CpuPrivate {
     /// The [`DynCpu`] which [`to_dyn`] returns for this type.
     ///
-    /// `Avx2`, `Neon` and [`Generic`] each have only one value, so this can hold it.
-    /// `None` for [`DynCpu`] itself, and for [`Generic`] when it's uninhabited.
+    /// [`Avx2`], [`Neon`] and [`Generic`] each have only one value, so this can hold it.
+    /// `None` for [`DynCpu`] itself, and for each of them on platforms where it's uninhabited.
     const DYN_CPU: Option<DynCpu>;
 }
 
@@ -108,16 +113,22 @@ trait CpuPrivate {
 /// [`detect`]: Self::detect
 #[derive(Clone, Copy, Debug)]
 pub enum DynCpu {
-    /// AVX2 feature set. Only available on x86_64.
-    #[cfg(target_arch = "x86_64")]
+    /// AVX2 feature set.
+    /// Exists on all platforms, but can only be created on x86_64. See [`Avx2`].
+    #[cfg_attr(not(target_arch = "x86_64"), expect(dead_code))]
     Avx2(Avx2),
-    /// Neon feature set. Only available on aarch64.
-    #[cfg(target_arch = "aarch64")]
-    Neon(Neon),
+    /// Generic feature set.
     /// Exists on all platforms, but can never be created on aarch64
     /// when Neon is enabled at compile time. See [`Generic`].
     #[cfg_attr(all(target_arch = "aarch64", target_feature = "neon"), expect(dead_code))]
     Generic(Generic),
+    // `Neon` is last. rustc numbers variants in the order they're declared, uninhabited ones too.
+    // So on x86_64, where `Neon` is uninhabited, the 2 variants which can exist are 0 and 1,
+    // like a `bool`.
+    /// Neon feature set.
+    /// Exists on all platforms, but can only be created on aarch64. See [`Neon`].
+    #[cfg_attr(not(target_arch = "aarch64"), expect(dead_code))]
+    Neon(Neon),
 }
 
 impl Cpu for DynCpu {}
@@ -141,158 +152,134 @@ impl CpuPrivate for DynCpu {
 pub const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {
     match C::DYN_CPU {
         Some(dyn_cpu) => dyn_cpu,
-        // SAFETY: `DYN_CPU` is `None` only for `DynCpu`, and for `Generic` when it's uninhabited.
+        // SAFETY: `DYN_CPU` is `None` only for `DynCpu`, and for CPU types which are uninhabited.
         // No value of an uninhabited type exists, so `cpu` must be a `DynCpu`.
         None => unsafe { mem::transmute_copy::<C, DynCpu>(&cpu) },
     }
 }
 
-/// Generic implementation.
-mod generic {
-    use super::*;
-
-    /// Generic CPU feature set.
-    ///
-    /// On aarch64 with Neon enabled at compile time, this type is uninhabited - `Generic` can never be created.
-    /// So [`DynCpu::Generic`] can never exist there, and the compiler removes code which handles it.
-    /// Every aarch64 target with `std` enables Neon by default, so in practice this applies to all aarch64 builds.
-    ///
-    /// The type still exists there, so code which uses it is still compiled and type-checked.
-    /// That means generic code is still linted, and is visible to rust-analyzer, when working on an ARM Mac.
-    #[derive(Clone, Copy, Debug)]
-    pub struct Generic(GenericInner);
-
-    #[cfg(not(all(target_arch = "aarch64", target_feature = "neon")))]
-    type GenericInner = ();
-
-    // When Neon is enabled at compile time, Neon is always available, so the generic implementation
-    // is never needed. `Infallible` has no values, which makes `Generic` impossible to create.
-    #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
-    type GenericInner = std::convert::Infallible;
-
-    impl Cpu for Generic {}
-
-    impl CpuPrivate for Generic {
-        const DYN_CPU: Option<DynCpu> = cfg_select! {
-            all(target_arch = "aarch64", target_feature = "neon") => None,
-            _ => Some(DynCpu::Generic(GENERIC)),
-        };
-    }
-
-    /// [`Generic`] feature set.
-    ///
-    /// Private within this file. Used only to define [`BASELINE`] and `CpuPrivate::DYN_CPU`.
-    /// Not available on aarch64 with Neon enabled at compile time, where a [`Generic`] can't be created.
-    #[cfg(not(all(target_arch = "aarch64", target_feature = "neon")))]
-    pub(super) const GENERIC: Generic = Generic(());
-}
-
-pub use generic::Generic;
-
-/// x86_64 features.
-/// AVX2 or generic.
-#[cfg(target_arch = "x86_64")]
-mod x86_64 {
-    use super::*;
-
-    /// x64_64 AVX2 CPU feature set.
-    #[derive(Clone, Copy, Debug)]
-    pub struct Avx2(());
-
-    impl Cpu for Avx2 {}
-
-    impl CpuPrivate for Avx2 {
-        const DYN_CPU: Option<DynCpu> = Some(DynCpu::Avx2(Avx2(())));
-    }
-
-    /// Feature set to use without detecting the CPU's features.
-    ///
-    /// Always [`Generic`] on x86_64.
-    pub const BASELINE: Generic = generic::GENERIC;
-
-    impl DynCpu {
-        /// Detect CPU feature set for x86_64 platform.
-        pub fn detect() -> Self {
-            // Currently a compile-time check. Later on will be replaced by runtime detection.
-            if cfg!(all(
-                target_feature = "avx2",
-                target_feature = "bmi2",
-                target_feature = "popcnt"
-            )) {
-                Avx2(()).to_dyn()
-            } else {
-                BASELINE.to_dyn()
-            }
-        }
-    }
-}
-
-#[cfg(target_arch = "x86_64")]
-pub use x86_64::{Avx2, BASELINE};
-
-/// aarch64 features.
-/// Neon or generic.
-#[cfg(target_arch = "aarch64")]
-mod aarch64 {
-    use super::*;
-
-    /// aarch64 Neon CPU feature set.
-    #[derive(Clone, Copy, Debug)]
-    pub struct Neon(());
-
-    impl Cpu for Neon {}
-
-    impl CpuPrivate for Neon {
-        const DYN_CPU: Option<DynCpu> = Some(DynCpu::Neon(Neon(())));
-    }
-
-    /// Feature set to use without detecting the CPU's features.
-    ///
-    /// Neon is enabled at compile time, which guarantees that it's available.
-    #[cfg(target_feature = "neon")]
-    pub const BASELINE: Neon = Neon(());
-
-    /// Feature set to use without detecting the CPU's features.
-    ///
-    /// Neon is disabled at compile time, so only the generic feature set is known to be available.
-    #[cfg(not(target_feature = "neon"))]
-    pub const BASELINE: Generic = generic::GENERIC;
-
-    impl DynCpu {
-        /// Detect CPU feature set for aarch64 platform.
-        pub fn detect() -> Self {
-            // Neon is always enabled except on `aarch64*-unknown-none-softfloat` platforms
-            // or when it's specifically disabled by compiling with `-C target-feature=-neon`.
-            // Either way, it can be detected at compile time. No runtime feature check.
-            BASELINE.to_dyn()
-        }
-    }
-}
-
-#[cfg(target_arch = "aarch64")]
-pub use aarch64::{BASELINE, Neon};
-
-/// Fallback implementation for other platforms.
+/// x86_64 AVX2 CPU feature set.
 ///
-/// Only generic feature set is available.
+/// On platforms other than x86_64, this type is uninhabited - `Avx2` can never be created.
+/// So [`DynCpu::Avx2`] can never exist there, and the compiler removes code which handles it.
+///
+/// The type still exists there, so [`DynCpu`] has the same variants on every platform.
+#[derive(Clone, Copy, Debug)]
+pub struct Avx2(
+    cfg_select! {
+        target_arch = "x86_64" => (),
+        _ => Never,
+    },
+);
+
+impl Cpu for Avx2 {}
+
+impl CpuPrivate for Avx2 {
+    const DYN_CPU: Option<DynCpu> = cfg_select! {
+        target_arch = "x86_64" => Some(DynCpu::Avx2(Avx2(()))),
+        _ => None,
+    };
+}
+
+/// aarch64 Neon CPU feature set.
+///
+/// On platforms other than aarch64, this type is uninhabited - `Neon` can never be created.
+/// So [`DynCpu::Neon`] can never exist there, and the compiler removes code which handles it.
+///
+/// The type still exists there, so [`DynCpu`] has the same variants on every platform.
+#[derive(Clone, Copy, Debug)]
+pub struct Neon(
+    cfg_select! {
+        target_arch = "aarch64" => (),
+        _ => Never,
+    },
+);
+
+impl Cpu for Neon {}
+
+impl CpuPrivate for Neon {
+    const DYN_CPU: Option<DynCpu> = cfg_select! {
+        target_arch = "aarch64" => Some(DynCpu::Neon(Neon(()))),
+        _ => None,
+    };
+}
+
+/// Generic CPU feature set.
+///
+/// On aarch64 with Neon enabled at compile time, this type is uninhabited - `Generic` can never be created.
+/// So [`DynCpu::Generic`] can never exist there, and the compiler removes code which handles it.
+/// Every aarch64 target with `std` enables Neon by default, so in practice this applies to all aarch64 builds.
+///
+/// The type still exists there, so code which uses it is still compiled and type-checked.
+/// That means generic code is still linted, and is visible to rust-analyzer, when working on an ARM Mac.
+#[derive(Clone, Copy, Debug)]
+pub struct Generic(
+    cfg_select! {
+        not(all(target_arch = "aarch64", target_feature = "neon")) => (),
+        _ => Never,
+    },
+);
+
+impl Cpu for Generic {}
+
+impl CpuPrivate for Generic {
+    const DYN_CPU: Option<DynCpu> = cfg_select! {
+        not(all(target_arch = "aarch64", target_feature = "neon")) => {
+            Some(DynCpu::Generic(Generic(())))
+        }
+        _ => None,
+    };
+}
+
+/// Feature set to use without detecting the CPU's features.
+///
+/// Always [`Generic`] on x86_64.
+#[cfg(target_arch = "x86_64")]
+pub const BASELINE: Generic = Generic(());
+
+/// Feature set to use without detecting the CPU's features.
+///
+/// Neon is enabled at compile time, which guarantees that it's available.
+#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+pub const BASELINE: Neon = Neon(());
+
+/// Feature set to use without detecting the CPU's features.
+///
+/// Neon is disabled at compile time, so only the generic feature set is known to be available.
+#[cfg(all(target_arch = "aarch64", not(target_feature = "neon")))]
+pub const BASELINE: Generic = Generic(());
+
+/// Feature set to use without detecting the CPU's features.
+///
+/// Only the generic feature set is available on platforms other than x86_64 and aarch64.
 #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
-mod other {
-    use super::*;
+pub const BASELINE: Generic = Generic(());
 
-    /// Feature set to use without detecting the CPU's features.
-    ///
-    /// Only the generic feature set is available on platforms other than x86_64 and aarch64.
-    pub const BASELINE: Generic = generic::GENERIC;
-
-    impl DynCpu {
-        /// Detect CPU feature set for other platform.
-        ///
-        /// Only generic feature set is available.
-        pub fn detect() -> Self {
+impl DynCpu {
+    /// Detect CPU feature set.
+    #[cfg(target_arch = "x86_64")]
+    pub fn detect() -> Self {
+        // Currently a compile-time check. Later on will be replaced by runtime detection.
+        if cfg!(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")) {
+            Avx2(()).to_dyn()
+        } else {
             BASELINE.to_dyn()
         }
     }
-}
 
-#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
-pub use other::BASELINE;
+    /// Detect CPU feature set.
+    #[cfg(target_arch = "aarch64")]
+    pub fn detect() -> Self {
+        // Neon is always enabled except on `aarch64*-unknown-none-softfloat` platforms
+        // or when it's specifically disabled by compiling with `-C target-feature=-neon`.
+        // Either way, it can be detected at compile time. No runtime feature check.
+        BASELINE.to_dyn()
+    }
+
+    /// Detect CPU feature set.
+    #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+    pub fn detect() -> Self {
+        // Only generic feature set is available
+        BASELINE.to_dyn()
+    }
+}

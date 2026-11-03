@@ -14,14 +14,17 @@ pub enum Cpu {
     Avx2,
     /// aarch64 with Neon
     Neon,
-    /// No SIMD. Exists on all platforms.
+    /// No SIMD
     Generic,
 }
 
 impl Cpu {
+    /// All the feature sets, in the order which `cpu_select!` requires its arms to be in.
+    pub const ALL: [Cpu; 3] = [Cpu::Avx2, Cpu::Neon, Cpu::Generic];
+
     /// The feature set called `ident`, e.g. the `Avx2` in `#[cpu_version(Avx2)]`.
     pub fn from_ident(ident: &Ident) -> Option<Cpu> {
-        [Cpu::Avx2, Cpu::Neon, Cpu::Generic].into_iter().find(|cpu| ident == cpu.name())
+        Cpu::ALL.into_iter().find(|cpu| ident == cpu.name())
     }
 
     /// Name of the type, and of the `DynCpu` variant.
@@ -59,8 +62,8 @@ impl Cpu {
         quote!(crate::cpu::DynCpu::#name)
     }
 
-    /// `#[cfg(...)]` attribute for the platform the feature set exists on.
-    /// `None` for `Generic`, which exists everywhere.
+    /// `#[cfg(...)]` attribute for the platform which supports the feature set.
+    /// `None` for `Generic`, which every platform supports.
     pub fn cfg_attr(self) -> Option<TokenStream> {
         let arch = match self {
             Cpu::Avx2 => "x86_64",

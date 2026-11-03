@@ -669,6 +669,12 @@ macro_rules! wrapped_tests {
             /// All these calls are safe.
             #[test]
             fn wrapped() {
+                // This module can see the CPU types' private fields. So on aarch64 with Neon,
+                // rustc knows that `Avx2` and `Generic` are uninhabited, and this always matches.
+                #[cfg_attr(
+                    all(target_arch = "aarch64", target_feature = "neon"),
+                    expect(irrefutable_let_patterns)
+                )]
                 let DynCpu::$cpu(cpu) = DynCpu::detect() else { return };
 
                 assert_eq!(generics(&[1u8, 2], &[3, 4], false, cpu), 2);

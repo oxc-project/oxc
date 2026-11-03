@@ -83,6 +83,7 @@ impl Multiversion<'_> {
     ///
     ///             match crate::cpu::to_dyn(cpu) {
     ///                 crate::cpu::DynCpu::Avx2(cpu) => unsafe { __avx2::<N, T>(arr, cpu) },
+    ///                 crate::cpu::DynCpu::Neon(_) => unreachable!(),
     ///                 crate::cpu::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
     ///             }
     ///         }
@@ -94,12 +95,15 @@ impl Multiversion<'_> {
     ///             }
     ///
     ///             match crate::cpu::to_dyn(cpu) {
+    ///                 crate::cpu::DynCpu::Avx2(_) => unreachable!(),
     ///                 crate::cpu::DynCpu::Neon(cpu) => unsafe { __neon::<N, T>(arr, cpu) },
     ///                 crate::cpu::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
     ///             }
     ///         }
     ///         _ => {
     ///             match crate::cpu::to_dyn(cpu) {
+    ///                 crate::cpu::DynCpu::Avx2(_) => unreachable!(),
+    ///                 crate::cpu::DynCpu::Neon(_) => unreachable!(),
     ///                 crate::cpu::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
     ///             }
     ///         }
@@ -143,6 +147,7 @@ impl Multiversion<'_> {
     ///                 crate::cpu::DynCpu::Avx2(cpu) => unsafe {
     ///                     Self::__foo_avx2::<N, T>(self, arr, cpu)
     ///                 },
+    ///                 crate::cpu::DynCpu::Neon(_) => unreachable!(),
     ///                 crate::cpu::DynCpu::Generic(cpu) => unsafe {
     ///                     Self::__foo_generic::<N, T>(self, arr, cpu)
     ///                 },
@@ -150,6 +155,7 @@ impl Multiversion<'_> {
     ///         }
     ///         target_arch = "aarch64" => {
     ///             match crate::cpu::to_dyn(cpu) {
+    ///                 crate::cpu::DynCpu::Avx2(_) => unreachable!(),
     ///                 crate::cpu::DynCpu::Neon(cpu) => unsafe {
     ///                     Self::__foo_neon::<N, T>(self, arr, cpu)
     ///                 },
@@ -160,6 +166,8 @@ impl Multiversion<'_> {
     ///         }
     ///         _ => {
     ///             match crate::cpu::to_dyn(cpu) {
+    ///                 crate::cpu::DynCpu::Avx2(_) => unreachable!(),
+    ///                 crate::cpu::DynCpu::Neon(_) => unreachable!(),
     ///                 crate::cpu::DynCpu::Generic(cpu) => unsafe {
     ///                     Self::__foo_generic::<N, T>(self, arr, cpu)
     ///                 },
@@ -296,18 +304,32 @@ impl Multiversion<'_> {
     }
 
     /// `match` which calls the entry point for the CPU's feature set.
-    /// `simd` is the SIMD feature set which exists on the platform, if there is one.
+    /// `simd` is the SIMD feature set which the platform has, if there is one.
+    ///
+    /// `DynCpu` has a variant for each feature set on every platform.
+    /// The type of a SIMD feature set which the platform doesn't have is uninhabited,
+    /// so its arm can never run, and is `unreachable!()`.
+    /// The arm is still needed, because the type's field is private, so outside the module which
+    /// defines the type, rustc doesn't know that it's uninhabited.
     ///
     /// ```ignore
     /// match crate::cpu::to_dyn(cpu) {
     ///     crate::cpu::DynCpu::Avx2(cpu) => unsafe { __avx2::<N, T>(arr, cpu) },
+    ///     crate::cpu::DynCpu::Neon(_) => unreachable!(),
     ///     crate::cpu::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
     /// }
     /// ```
     fn cpu_match(&self, simd: Option<Cpu>) -> TokenStream {
         let cpu_name = self.cpu_param.arg();
-        let arms = simd.into_iter().chain([Cpu::Generic]).map(|cpu| {
+        let arms = Cpu::ALL.into_iter().map(|cpu| {
             let variant = cpu.variant();
+
+            if cpu != Cpu::Generic && simd != Some(cpu) {
+                return quote! {
+                    #variant(_) => unreachable!(),
+                };
+            }
+
             let call = self.call(cpu.lower_name());
 
             // SAFETY: `Avx2` and `Neon` types guarantee the CPU supports the features their
