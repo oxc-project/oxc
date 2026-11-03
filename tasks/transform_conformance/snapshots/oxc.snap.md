@@ -34,7 +34,7 @@ after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
 
 
-# babel-plugin-transform-class-properties (31/35)
+# babel-plugin-transform-class-properties (32/36)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
