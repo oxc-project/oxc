@@ -58,8 +58,8 @@
 //! * Each has a private field, so code outside this module can't create them.
 //! * Only 3 places create them:
 //!   - `DynCpu::detect` only creates an [`Avx2`] if that feature set is available.
-//!   - [`BASELINE`] is only a [`Neon`] when Neon is enabled at compile time,
-//!     which guarantees it's available.
+//!   - [`BASELINE`] is only an [`Avx2`] or a [`Neon`] when that feature set is enabled
+//!     at compile time, which guarantees it's available.
 //!     Otherwise it's a [`Generic`], which guarantees nothing.
 //!   - `CpuPrivate::DYN_CPU` holds an instance of the type.
 //!     The trait is private, so only code in this file can read it.
@@ -139,7 +139,33 @@ trait CpuPrivate {
 /// via target feature detection.
 ///
 /// [`detect`]: Self::detect
-#[cfg(target_arch = "x86_64")]
+#[cfg(all(
+    target_arch = "x86_64",
+    all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
+))]
+#[derive(Clone, Copy, Debug)]
+pub enum DynCpu {
+    // Can never be created on x86_64 when AVX2, BMI2 and POPCNT are enabled at compile time.
+    // See `Generic`.
+    #[expect(dead_code)]
+    Generic(Generic),
+    Avx2(Avx2),
+    #[expect(dead_code)]
+    Neon(Neon),
+}
+
+/// Enum representing a CPU feature set.
+///
+/// Used for runtime feature detection.
+///
+/// Implements [`Cpu`] and also provides a [`detect`] method which initializes [`DynCpu`]
+/// via target feature detection.
+///
+/// [`detect`]: Self::detect
+#[cfg(all(
+    target_arch = "x86_64",
+    not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
+))]
 #[derive(Clone, Copy, Debug)]
 #[repr(u8)] // So `detect` can transmute it to/from `AtomicI8`
 pub enum DynCpu {
@@ -187,11 +213,15 @@ pub enum DynCpu {
 }
 
 /// On aarch64 with neon enabled, [`DynCpu`] has only 1 inhabited variant, so is a ZST.
-/// Ditto when arch is not x86_64 or aarch64.
+/// Ditto on x86_64 with AVX2, BMI2 and POPCNT enabled, and when arch is not x86_64 or aarch64.
 /// On all other platforms it's 1 byte.
 const _: () = {
     let expected_size = cfg_select! {
         all(target_arch = "aarch64", target_feature = "neon") => 0,
+        all(
+            target_arch = "x86_64",
+            all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
+        ) => 0,
         not(any(target_arch = "x86_64", target_arch = "aarch64")) => 0,
         _ => 1,
     };
@@ -279,16 +309,30 @@ impl CpuPrivate for Neon {
 
 /// Generic CPU feature set.
 ///
-/// On aarch64 with Neon enabled at compile time, this type is uninhabited - `Generic` can never be created.
-/// So [`DynCpu::Generic`] can never exist there, and the compiler removes code which handles it.
-/// Every aarch64 target with `std` enables Neon by default, so in practice this applies to all aarch64 builds.
+/// Where a SIMD feature set is enabled at compile time, this type is uninhabited -
+/// `Generic` can never be created for:
+///
+/// - aarch64 with Neon enabled.
+///   Every aarch64 target with `std` enables Neon by default,
+///   so in practice this applies to all aarch64 builds.
+/// - x86_64 with AVX2, BMI2 and POPCNT all enabled, e.g. with `-C target-cpu=x86-64-v3`.
+///
+/// The SIMD feature set is always available there, so the generic code would never run.
+/// [`DynCpu::Generic`] can never exist there, and the compiler removes code which handles it,
+/// so the generic code isn't in the binary.
 ///
 /// The type still exists there, so code which uses it is still compiled and type-checked.
 /// That means generic code is still linted, and is visible to rust-analyzer, when working on an ARM Mac.
 #[derive(Clone, Copy, Debug)]
 pub struct Generic(
     cfg_select! {
-        not(all(target_arch = "aarch64", target_feature = "neon")) => (),
+        not(any(
+            all(target_arch = "aarch64", target_feature = "neon"),
+            all(
+                target_arch = "x86_64",
+                all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
+            )
+        )) => (),
         _ => Never,
     },
 );
@@ -297,7 +341,13 @@ impl Cpu for Generic {}
 
 impl CpuPrivate for Generic {
     const DYN_CPU: Option<DynCpu> = cfg_select! {
-        not(all(target_arch = "aarch64", target_feature = "neon")) => {
+        not(any(
+            all(target_arch = "aarch64", target_feature = "neon"),
+            all(
+                target_arch = "x86_64",
+                all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
+            )
+        )) => {
             Some(DynCpu::Generic(Generic(())))
         }
         _ => None,
@@ -306,8 +356,21 @@ impl CpuPrivate for Generic {
 
 /// Feature set to use without detecting the CPU's features.
 ///
-/// Always [`Generic`] on x86_64.
-#[cfg(target_arch = "x86_64")]
+/// AVX2, BMI2 and POPCNT are enabled at compile time, which guarantees that they're available.
+#[cfg(all(
+    target_arch = "x86_64",
+    all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
+))]
+pub const BASELINE: Avx2 = Avx2(());
+
+/// Feature set to use without detecting the CPU's features.
+///
+/// AVX2, BMI2 and POPCNT aren't all enabled at compile time,
+/// so only the generic feature set is known to be available.
+#[cfg(all(
+    target_arch = "x86_64",
+    not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
+))]
 pub const BASELINE: Generic = Generic(());
 
 /// Feature set to use without detecting the CPU's features.
@@ -330,9 +393,23 @@ pub const BASELINE: Generic = Generic(());
 
 impl DynCpu {
     /// Detect CPU feature set.
+    #[cfg(all(
+        target_arch = "x86_64",
+        all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
+    ))]
+    #[inline]
+    pub fn detect() -> Self {
+        // AVX2, BMI2 and POPCNT are enabled at compile time
+        Avx2(()).to_dyn()
+    }
+
+    /// Detect CPU feature set.
     ///
     /// The result is cached, so only the first call checks the CPU's features.
-    #[cfg(target_arch = "x86_64")]
+    #[cfg(all(
+        target_arch = "x86_64",
+        not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
+    ))]
     #[inline]
     pub fn detect() -> Self {
         use std::sync::atomic::{AtomicI8, Ordering};

@@ -84,7 +84,15 @@ impl Cpu {
         match self {
             Cpu::Avx2 => quote!(not(target_arch = "x86_64")),
             Cpu::Neon => quote!(not(target_arch = "aarch64")),
-            Cpu::Generic => quote!(all(target_arch = "aarch64", target_feature = "neon")),
+            Cpu::Generic => quote! {
+                any(
+                    all(target_arch = "aarch64", target_feature = "neon"),
+                    all(
+                        target_arch = "x86_64",
+                        target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"
+                    )
+                )
+            },
         }
     }
 
