@@ -106,10 +106,10 @@ fn check_eslint_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
         return;
     }
 
-    let applied = callee.object().without_parentheses();
+    let applied = callee.object().get_inner_expression();
 
     if args0.is_null_or_undefined() {
-        if !matches!(applied, Expression::Identifier(_)) {
+        if as_member_expression_without_chain_expression(applied).is_some() {
             return;
         }
     } else if let Some(applied) = as_member_expression_without_chain_expression(applied) {
@@ -136,15 +136,18 @@ fn check_eslint_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
 }
 
 fn as_member_expression_without_chain_expression<'a>(
-    expr: &'a Expression,
+    mut expr: &'a Expression,
 ) -> Option<&'a MemberExpression<'a>> {
-    match expr {
-        Expression::ChainExpression(chain_expr) => match chain_expr.expression {
-            match_member_expression!(ChainElement) => chain_expr.expression.as_member_expression(),
-            _ => None,
-        },
-        match_member_expression!(Expression) => expr.as_member_expression(),
-        _ => None,
+    loop {
+        match expr {
+            Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
+                ChainElement::TSNonNullExpression(non_null) => {
+                    expr = non_null.expression.get_inner_expression();
+                }
+                _ => return chain_expr.expression.as_member_expression(),
+            },
+            _ => return expr.as_member_expression(),
+        }
     }
 }
 
@@ -169,6 +172,20 @@ fn test() {
         "(a?.b).c.foo.apply(a?.b.c, args);",
         "a?.b.c.foo.apply((a?.b).c, args);",
         "class C { #apply; foo() { foo.#apply(undefined, args); } }",
+        // Wrappers must preserve a method's receiver.
+        "(obj.foo).apply(null, args);",
+        "obj.foo!.apply(null, args);",
+        "(obj.foo as Function).apply(undefined, args);",
+        "(obj.foo satisfies Function).apply(null, args);",
+        "(obj?.foo)!.apply(null, args);",
+        "(obj?.foo!).apply(null, args);",
+        "(obj?.foo!!).apply(null, args);",
+        "obj.foo!.apply(otherObj, args);",
+        // Non-member expressions still need a null or undefined receiver and variadic arguments.
+        "(c ? a : b).apply(obj, args);",
+        "a!.apply(obj, args);",
+        "(c ? a : b).apply(null, [1, 2]);",
+        "(a as Function).apply(null, ...args);",
     ];
 
     let fail = vec![
@@ -192,6 +209,25 @@ fn test() {
         "(a?.b.c).foo.apply(a?.b.c, args);",
         "(a?.b).c.foo.apply((a?.b).c, args);",
         "class C { #foo; foo() { obj.#foo.apply(obj, args); } }",
+        // https://github.com/oxc-project/oxc/issues/28728
+        "(c ? a : b).apply(null, args);",
+        "m!.apply(null, args);",
+        "(a as typeof b).apply(null, args);",
+        "(a satisfies typeof b).apply(null, args);",
+        "((a as typeof b)!).apply(undefined, args);",
+        "(foo).apply(null, args);",
+        "getCallback().apply(null, args);",
+        "(a || b).apply(void 0, args);",
+        "(function () {}).apply(null, args);",
+        "(0, obj.foo).apply(null, args);",
+        "(c ? a : b)?.apply?.(undefined, args);",
+        "obj.foo!.apply(obj, args);",
+        "(obj.foo as Function).apply(obj, args);",
+        "(obj.foo satisfies Function).apply(obj, args);",
+        "(obj?.foo)!.apply(obj, args);",
+        "(obj?.foo!).apply(obj, args);",
+        "(obj?.foo!!).apply(obj, args);",
+        "(obj?.foo()!).apply(null, args);",
     ];
 
     Tester::new(PreferSpread::NAME, PreferSpread::PLUGIN, pass, fail).test_and_snapshot();
