@@ -2211,29 +2211,16 @@ impl<'a> ClassProperties<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let Some(prop_binding) = prop_binding else {
-            // `_writeOnlyError("#method")`
-            return self.create_sequence_with_read_only_error(
-                private_name,
-                object,
-                Some(value),
-                span,
-                ctx,
-            );
-        };
-        let prop_ident = prop_binding.create_read_expression(ctx);
-        if let Some(class_binding) = class_binding {
-            let class_ident = class_binding.create_read_expression(ctx);
-            let object = self.create_assert_class_brand_without_value(class_ident, object, ctx);
-            let arguments =
-                ArenaVec::from_array_in([Argument::from(object), Argument::from(value)], ctx);
-            let callee = create_member_callee(prop_ident, static_ident!("call"), span, ctx);
-            // `_prop.call(_assertClassBrand(Class, object), value)`
-            Expression::new_call_expression(span, callee, None, arguments, false, ctx)
-        } else {
-            // `_privateFieldSet(_prop, object, value)`
-            self.create_private_field_set(prop_ident, object, value, ctx)
-        }
+        self.create_private_setter_with_value(
+            private_name,
+            class_binding,
+            prop_binding,
+            object,
+            value,
+            false,
+            span,
+            ctx,
+        )
     }
 
     /// Same as [`Self::create_private_setter`], but if `is_value_used` is `true`, the expression
@@ -2251,30 +2238,39 @@ impl<'a> ClassProperties<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let (Some(class_binding), Some(prop_binding), true) =
-            (class_binding, prop_binding, is_value_used)
-        else {
-            return self.create_private_setter(
+        let Some(prop_binding) = prop_binding else {
+            // `_writeOnlyError("#method")`
+            return self.create_sequence_with_read_only_error(
                 private_name,
-                class_binding,
-                prop_binding,
                 object,
-                value,
+                Some(value),
                 span,
                 ctx,
             );
         };
-        let class_ident = class_binding.create_read_expression(ctx);
         let prop_ident = prop_binding.create_read_expression(ctx);
-        let object = self.create_assert_class_brand_without_value(class_ident, object, ctx);
-        let target = self.create_to_setter_for_bind_call(prop_ident, object, SPAN, ctx);
-        Expression::new_assignment_expression(
-            span,
-            AssignmentOperator::Assign,
-            AssignmentTarget::from(target.into_member_expression()),
-            value,
-            ctx,
-        )
+        if let Some(class_binding) = class_binding {
+            let class_ident = class_binding.create_read_expression(ctx);
+            let object = self.create_assert_class_brand_without_value(class_ident, object, ctx);
+            if is_value_used {
+                let target = self.create_to_setter_for_bind_call(prop_ident, object, SPAN, ctx);
+                return Expression::new_assignment_expression(
+                    span,
+                    AssignmentOperator::Assign,
+                    AssignmentTarget::from(target.into_member_expression()),
+                    value,
+                    ctx,
+                );
+            }
+            let arguments =
+                ArenaVec::from_array_in([Argument::from(object), Argument::from(value)], ctx);
+            let callee = create_member_callee(prop_ident, static_ident!("call"), span, ctx);
+            // `_prop.call(_assertClassBrand(Class, object), value)`
+            Expression::new_call_expression(span, callee, None, arguments, false, ctx)
+        } else {
+            // `_privateFieldSet(_prop, object, value)`
+            self.create_private_field_set(prop_ident, object, value, ctx)
+        }
     }
 
     /// Whether the value of the current expression is used.
