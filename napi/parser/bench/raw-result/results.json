@@ -1,0 +1,2075 @@
+{
+  "date": "2026-11-03",
+  "aiAssisted": true,
+  "scope": "Experimental eager raw-result storage; receiver behavior changes; no full-build speedup claim.",
+  "build": {
+    "base": "62a8e7818e86abe19e86a7125a017f665ba4448c",
+    "commit": "62a8e7818e86abe19e86a7125a017f665ba4448c",
+    "node": "v26.13.0",
+    "v8": "14.6.202.34-node.40",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M4 Pro",
+    "baselineSourceSha256": "4b2a775e2f702c2a5acbeaaed5ec46240eb51c51e62f7a50d0fa6cda5e000e5d",
+    "hashes": {
+      "napi/parser/src-js/raw-transfer/eager.js": "ecabb151c54db6e1cab200156b94e7da6288b3c59020a41d335398dd03057667",
+      "napi/parser/src-js/raw-transfer/common.js": "de4e84fe741b37608f8b8179d8dc76a7d878ac4b187f469cd39dfac40617dab7",
+      "napi/parser/src-js/generated/constants.js": "2b7beaf3d35613c4b2bb3d7bffc7f523f36cf111060f318f0c528504d1d89f6f",
+      "napi/parser/src-js/parser.darwin-arm64.node": "1ba1571fd9591b10f3172c3112d98151c8d2433807f78e093359705ee99155b8",
+      "napi/parser/src-js/generated/deserialize/js.js": "d7ed3443c50392af5bd3b9df724a49fbf6386a8a82170b205ef69d750105d2ba",
+      "napi/parser/src-js/generated/deserialize/js_parent.js": "ad5cbb96343cce18d08cece82940238e1bb6cff0d83b94ea82ff3d5abc760334",
+      "napi/parser/src-js/generated/deserialize/js_range.js": "53c60f4f056ad273cd8d3fcaf6cb5e6fa58f99f66d14a2fa7dcd64a7839896dd",
+      "napi/parser/src-js/generated/deserialize/js_range_parent.js": "64398ccc055a8c4fbfecfe9e83e5c38bbc029a5db2ed776eeb8bda704b5cb63d",
+      "napi/parser/src-js/generated/deserialize/ts.js": "7bdc861f69064a89b64bc90d70b31b7b05b38d4d964b0ebbae16d2b72dd4ced3",
+      "napi/parser/src-js/generated/deserialize/ts_parent.js": "6b182bad974270cbb16199fc10838860b1f9811b9a7a40bf57297189f1b88779",
+      "napi/parser/src-js/generated/deserialize/ts_range.js": "04d2b62a900c8883d41f1d48ff6fd84ac539fd3a9caa60fc4455a7a1d043d98b",
+      "napi/parser/src-js/generated/deserialize/ts_range_parent.js": "62732f48971dfccdff91fa89e2e54b8647c25dca4cbdc53998372a0781aa4143",
+      "packages/codegen/dist/index.js": "e4d38ab62b866e75f5dfcf48c020eda8ebf8ee7d5d10044f00cd603d2dbfb7e2",
+      "packages/codegen/dist/print_js.js": "2e1190d3cc2cc2a5f4e2de3075923b7e4eb4f83394cce6fece8cd1f097600a03",
+      "packages/codegen/dist/print_js_maps.js": "297474b3e9d275758f9a1381d754547710169c241c3a722d0c43ce78911c8001",
+      "packages/codegen/dist/print_ts.js": "327b56d274118900529920dcb11349b1de20e9b29c1a50142a20c8a1cf34c59e",
+      "packages/codegen/dist/print_ts_maps.js": "28b164d1eb256ae4ec9e89e8fb22ae835de06706561f1768ce66f4992730c703"
+    }
+  },
+  "throughput": {
+    "method": "Five paired unprofiled fresh processes per mode, rotating order, preloaded sources, two warmups and forced GC before the pass; natural GC within timing.",
+    "rows": [
+      {
+        "mode": "raw",
+        "variant": "baseline",
+        "repetitions": 5,
+        "medianMilliseconds": 1440.52875,
+        "minMilliseconds": 1423.808375,
+        "maxMilliseconds": 1462.4384579999996,
+        "medianCpuMilliseconds": 2629.975,
+        "medianMaxRssMiB": 1131.59375,
+        "medianRetainedHeapMiB": 192.35733795166016
+      },
+      {
+        "mode": "raw",
+        "variant": "poc",
+        "repetitions": 5,
+        "medianMilliseconds": 1035.7993329999995,
+        "minMilliseconds": 1010.3264169999998,
+        "maxMilliseconds": 1047.2562080000002,
+        "medianCpuMilliseconds": 1271.683,
+        "medianMaxRssMiB": 506.890625,
+        "medianRetainedHeapMiB": 193.42691040039062
+      },
+      {
+        "mode": "maps",
+        "variant": "baseline",
+        "repetitions": 5,
+        "medianMilliseconds": 2966.3976249999996,
+        "minMilliseconds": 2937.525458,
+        "maxMilliseconds": 3015.220792,
+        "medianCpuMilliseconds": 4598.581,
+        "medianMaxRssMiB": 1155.109375,
+        "medianRetainedHeapMiB": 194.13780975341797
+      },
+      {
+        "mode": "maps",
+        "variant": "poc",
+        "repetitions": 5,
+        "medianMilliseconds": 2498.447542,
+        "minMilliseconds": 2444.8740000000003,
+        "maxMilliseconds": 2581.6055410000004,
+        "medianCpuMilliseconds": 3008.145,
+        "medianMaxRssMiB": 559.03125,
+        "medianRetainedHeapMiB": 195.19640350341797
+      },
+      {
+        "mode": "retain",
+        "variant": "baseline",
+        "repetitions": 5,
+        "medianMilliseconds": 2019.9845420000001,
+        "minMilliseconds": 1909.1828330000003,
+        "maxMilliseconds": 2271.773667,
+        "medianCpuMilliseconds": 5072.667,
+        "medianMaxRssMiB": 4312.015625,
+        "medianRetainedHeapMiB": 3938.979667663574
+      },
+      {
+        "mode": "retain",
+        "variant": "poc",
+        "repetitions": 5,
+        "medianMilliseconds": 2169.2745410000007,
+        "minMilliseconds": 2097.7657500000005,
+        "maxMilliseconds": 2344.6132079999998,
+        "medianCpuMilliseconds": 6038.393,
+        "medianMaxRssMiB": 4269.0625,
+        "medianRetainedHeapMiB": 3910.911148071289
+      }
+    ],
+    "pairedTimeReductionsPercent": {
+      "raw": [
+        29.23583751357144, 27.300568766850347, 27.487384778836027, 29.1731335883674,
+        29.040562287744677
+      ],
+      "maps": [
+        15.379783933382019, 17.13881953093139, 12.971696065189484, 16.46753087493732,
+        16.77096811734252
+      ],
+      "retain": [
+        -10.076222018910224, 7.6595621970469585, -16.070849021378283, 2.7236509510683544,
+        -9.057002607133722
+      ]
+    },
+    "samples": [
+      {
+        "variant": "baseline",
+        "mode": "raw",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 1446.8623750000006,
+        "cpuMilliseconds": 2670.287,
+        "maxRssMiB": 1137.96875,
+        "heapBeforeGc": {
+          "rss": 1193066496,
+          "heapTotal": 351404032,
+          "heapUsed": 292283456,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 1193246720,
+          "heapTotal": 339607552,
+          "heapUsed": 201721192,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 0,
+        "checksum": 402128,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "raw",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 1023.8600419999998,
+        "cpuMilliseconds": 1253.611,
+        "maxRssMiB": 506.40625,
+        "heapBeforeGc": {
+          "rss": 530989056,
+          "heapTotal": 275120128,
+          "heapUsed": 218087168,
+          "external": 6453414010,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 531005440,
+          "heapTotal": 271712256,
+          "heapUsed": 202779992,
+          "external": 6453414050,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 0,
+        "checksum": 402128,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "baseline",
+        "mode": "maps",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2964.9349169999996,
+        "cpuMilliseconds": 4598.581,
+        "maxRssMiB": 1163.9375,
+        "heapBeforeGc": {
+          "rss": 1220460544,
+          "heapTotal": 459407360,
+          "heapUsed": 412336544,
+          "external": 6458061658,
+          "arrayBuffers": 6447251647
+        },
+        "heapAfterGc": {
+          "rss": 1220476928,
+          "heapTotal": 386007040,
+          "heapUsed": 203570952,
+          "external": 6458061698,
+          "arrayBuffers": 6446789299
+        },
+        "retained": 0,
+        "checksum": 346293451,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "maps",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2508.934333,
+        "cpuMilliseconds": 3015.265,
+        "maxRssMiB": 558.640625,
+        "heapBeforeGc": {
+          "rss": 585777152,
+          "heapTotal": 332480512,
+          "heapUsed": 284200704,
+          "external": 6462660339,
+          "arrayBuffers": 6450454651
+        },
+        "heapAfterGc": {
+          "rss": 585302016,
+          "heapTotal": 284033024,
+          "heapUsed": 204646608,
+          "external": 6461269610,
+          "arrayBuffers": 6446789299
+        },
+        "retained": 0,
+        "checksum": 346293451,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "baseline",
+        "mode": "retain",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 1909.1828330000003,
+        "cpuMilliseconds": 4467.714,
+        "maxRssMiB": 4307.203125,
+        "heapBeforeGc": {
+          "rss": 4516167680,
+          "heapTotal": 4181819392,
+          "heapUsed": 4140738152,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 4516233216,
+          "heapTotal": 4180312064,
+          "heapUsed": 4130297184,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 32267,
+        "checksum": 811154,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "retain",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2101.5563340000003,
+        "cpuMilliseconds": 5412.132,
+        "maxRssMiB": 4262.203125,
+        "heapBeforeGc": {
+          "rss": 4467113984,
+          "heapTotal": 4147740672,
+          "heapUsed": 4110962616,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 4469047296,
+          "heapTotal": 4148068352,
+          "heapUsed": 4104478648,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 32267,
+        "checksum": 811154,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "raw",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 1047.2562080000002,
+        "cpuMilliseconds": 1289.282,
+        "maxRssMiB": 506.1875,
+        "heapBeforeGc": {
+          "rss": 530726912,
+          "heapTotal": 275382272,
+          "heapUsed": 211459176,
+          "external": 6453414010,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 530776064,
+          "heapTotal": 273022976,
+          "heapUsed": 202830784,
+          "external": 6453414050,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 0,
+        "checksum": 402128,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "baseline",
+        "mode": "raw",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 1440.52875,
+        "cpuMilliseconds": 2629.975,
+        "maxRssMiB": 1129.40625,
+        "heapBeforeGc": {
+          "rss": 1184268288,
+          "heapTotal": 384696320,
+          "heapUsed": 340335192,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 1184268288,
+          "heapTotal": 340393984,
+          "heapUsed": 201683192,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 0,
+        "checksum": 402128,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "maps",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2498.447542,
+        "cpuMilliseconds": 3008.145,
+        "maxRssMiB": 559.78125,
+        "heapBeforeGc": {
+          "rss": 586924032,
+          "heapTotal": 332546048,
+          "heapUsed": 262172240,
+          "external": 6462214203,
+          "arrayBuffers": 6450008515
+        },
+        "heapAfterGc": {
+          "rss": 586694656,
+          "heapTotal": 279052288,
+          "heapUsed": 204681144,
+          "external": 6460823474,
+          "arrayBuffers": 6446789299
+        },
+        "retained": 0,
+        "checksum": 346293451,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "baseline",
+        "mode": "maps",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 3015.220792,
+        "cpuMilliseconds": 4905.317,
+        "maxRssMiB": 1155.109375,
+        "heapBeforeGc": {
+          "rss": 1211219968,
+          "heapTotal": 461242368,
+          "heapUsed": 418349184,
+          "external": 6458074666,
+          "arrayBuffers": 6447264655
+        },
+        "heapAfterGc": {
+          "rss": 1211219968,
+          "heapTotal": 375521280,
+          "heapUsed": 203569200,
+          "external": 6458074706,
+          "arrayBuffers": 6446789299
+        },
+        "retained": 0,
+        "checksum": 346293451,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "retain",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2097.7657500000005,
+        "cpuMilliseconds": 5950.855,
+        "maxRssMiB": 4269.0625,
+        "heapBeforeGc": {
+          "rss": 4476321792,
+          "heapTotal": 4156915712,
+          "heapUsed": 4115280920,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 4475977728,
+          "heapTotal": 4156456960,
+          "heapUsed": 4100889648,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 32267,
+        "checksum": 811154,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "baseline",
+        "mode": "retain",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2271.773667,
+        "cpuMilliseconds": 6305.677,
+        "maxRssMiB": 4328.59375,
+        "heapBeforeGc": {
+          "rss": 4538580992,
+          "heapTotal": 4203118592,
+          "heapUsed": 4134724088,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 4538220544,
+          "heapTotal": 4201545728,
+          "heapUsed": 4126704160,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 32267,
+        "checksum": 811154,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "baseline",
+        "mode": "raw",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 1431.147125,
+        "cpuMilliseconds": 2584.652,
+        "maxRssMiB": 1131.34375,
+        "heapBeforeGc": {
+          "rss": 1186250752,
+          "heapTotal": 908722176,
+          "heapUsed": 868052096,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 1186299904,
+          "heapTotal": 343801856,
+          "heapUsed": 201784696,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 0,
+        "checksum": 402128,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "raw",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 1037.7622080000006,
+        "cpuMilliseconds": 1271.683,
+        "maxRssMiB": 506.953125,
+        "heapBeforeGc": {
+          "rss": 531562496,
+          "heapTotal": 275644416,
+          "heapUsed": 211433344,
+          "external": 6453414010,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 531578880,
+          "heapTotal": 272236544,
+          "heapUsed": 202813560,
+          "external": 6453414050,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 0,
+        "checksum": 402128,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "baseline",
+        "mode": "maps",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2966.3976249999996,
+        "cpuMilliseconds": 4729.531,
+        "maxRssMiB": 1150.78125,
+        "heapBeforeGc": {
+          "rss": 1206681600,
+          "heapTotal": 404881408,
+          "heapUsed": 358604056,
+          "external": 6458045272,
+          "arrayBuffers": 6447235261
+        },
+        "heapAfterGc": {
+          "rss": 1206681600,
+          "heapTotal": 383647744,
+          "heapUsed": 203443184,
+          "external": 6458045312,
+          "arrayBuffers": 6446789299
+        },
+        "retained": 0,
+        "checksum": 346293451,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "maps",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2581.6055410000004,
+        "cpuMilliseconds": 3097.478,
+        "maxRssMiB": 558.515625,
+        "heapBeforeGc": {
+          "rss": 585646080,
+          "heapTotal": 332480512,
+          "heapUsed": 283846800,
+          "external": 6462660339,
+          "arrayBuffers": 6450454651
+        },
+        "heapAfterGc": {
+          "rss": 585007104,
+          "heapTotal": 282460160,
+          "heapUsed": 204678264,
+          "external": 6461269610,
+          "arrayBuffers": 6446789299
+        },
+        "retained": 0,
+        "checksum": 346293451,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "baseline",
+        "mode": "retain",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2019.9845420000001,
+        "cpuMilliseconds": 5072.667,
+        "maxRssMiB": 4319.125,
+        "heapBeforeGc": {
+          "rss": 4527063040,
+          "heapTotal": 4188897280,
+          "heapUsed": 4151624208,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 4528799744,
+          "heapTotal": 4188962816,
+          "heapUsed": 4130335544,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 32267,
+        "checksum": 811154,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "retain",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2344.6132079999998,
+        "cpuMilliseconds": 6656.184,
+        "maxRssMiB": 4277.4375,
+        "heapBeforeGc": {
+          "rss": 4462084096,
+          "heapTotal": 4143611904,
+          "heapUsed": 4105211080,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 4484808704,
+          "heapTotal": 4164583424,
+          "heapUsed": 4100882368,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 32267,
+        "checksum": 811154,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "raw",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 1035.7993329999995,
+        "cpuMilliseconds": 1273.517,
+        "maxRssMiB": 506.890625,
+        "heapBeforeGc": {
+          "rss": 531513344,
+          "heapTotal": 274857984,
+          "heapUsed": 211474760,
+          "external": 6453414010,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 531513344,
+          "heapTotal": 272498688,
+          "heapUsed": 202822816,
+          "external": 6453414050,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 0,
+        "checksum": 402128,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "baseline",
+        "mode": "raw",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 1462.4384579999996,
+        "cpuMilliseconds": 2655.787,
+        "maxRssMiB": 1134,
+        "heapBeforeGc": {
+          "rss": 1188921344,
+          "heapTotal": 348520448,
+          "heapUsed": 283525432,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 1189085184,
+          "heapTotal": 335151104,
+          "heapUsed": 201701288,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 0,
+        "checksum": 402128,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "maps",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2494.1659589999995,
+        "cpuMilliseconds": 2999.442,
+        "maxRssMiB": 559.03125,
+        "heapBeforeGc": {
+          "rss": 586137600,
+          "heapTotal": 332480512,
+          "heapUsed": 284250408,
+          "external": 6462660339,
+          "arrayBuffers": 6450454651
+        },
+        "heapAfterGc": {
+          "rss": 585711616,
+          "heapTotal": 282984448,
+          "heapUsed": 204674664,
+          "external": 6461269610,
+          "arrayBuffers": 6446789299
+        },
+        "retained": 0,
+        "checksum": 346293451,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "baseline",
+        "mode": "maps",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2985.864042000001,
+        "cpuMilliseconds": 4593.988,
+        "maxRssMiB": 1163.03125,
+        "heapBeforeGc": {
+          "rss": 1219526656,
+          "heapTotal": 437944320,
+          "heapUsed": 394764896,
+          "external": 6458501182,
+          "arrayBuffers": 6447691171
+        },
+        "heapAfterGc": {
+          "rss": 1219526656,
+          "heapTotal": 378929152,
+          "heapUsed": 203568248,
+          "external": 6458501222,
+          "arrayBuffers": 6446789299
+        },
+        "retained": 0,
+        "checksum": 346293451,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "retain",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2169.2745410000007,
+        "cpuMilliseconds": 6084.313,
+        "maxRssMiB": 4267.484375,
+        "heapBeforeGc": {
+          "rss": 4474585088,
+          "heapTotal": 4156129280,
+          "heapUsed": 4115260584,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 4474322944,
+          "heapTotal": 4154884096,
+          "heapUsed": 4100883680,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 32267,
+        "checksum": 811154,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "baseline",
+        "mode": "retain",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2230.012292,
+        "cpuMilliseconds": 5913.842,
+        "maxRssMiB": 4307.21875,
+        "heapBeforeGc": {
+          "rss": 4514824192,
+          "heapTotal": 4179722240,
+          "heapUsed": 4143231136,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 4516315136,
+          "heapTotal": 4180836352,
+          "heapUsed": 4130445224,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 32267,
+        "checksum": 811154,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "baseline",
+        "mode": "raw",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 1423.808375,
+        "cpuMilliseconds": 2625.823,
+        "maxRssMiB": 1131.59375,
+        "heapBeforeGc": {
+          "rss": 1186562048,
+          "heapTotal": 384172032,
+          "heapUsed": 334637624,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 1186562048,
+          "heapTotal": 346423296,
+          "heapUsed": 201688944,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 0,
+        "checksum": 402128,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "raw",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 1010.3264169999998,
+        "cpuMilliseconds": 1236.227,
+        "maxRssMiB": 506.921875,
+        "heapBeforeGc": {
+          "rss": 531546112,
+          "heapTotal": 276168704,
+          "heapUsed": 211791832,
+          "external": 6453414010,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 531546112,
+          "heapTotal": 272236544,
+          "heapUsed": 202830248,
+          "external": 6453414050,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 0,
+        "checksum": 402128,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "baseline",
+        "mode": "maps",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2937.525458,
+        "cpuMilliseconds": 4471.27,
+        "maxRssMiB": 1149.359375,
+        "heapBeforeGc": {
+          "rss": 1205190656,
+          "heapTotal": 487489536,
+          "heapUsed": 447432304,
+          "external": 6458523664,
+          "arrayBuffers": 6447713653
+        },
+        "heapAfterGc": {
+          "rss": 1205190656,
+          "heapTotal": 379977728,
+          "heapUsed": 203566096,
+          "external": 6458523704,
+          "arrayBuffers": 6446789299
+        },
+        "retained": 0,
+        "checksum": 346293451,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "maps",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2444.8740000000003,
+        "cpuMilliseconds": 2939.433,
+        "maxRssMiB": 561.953125,
+        "heapBeforeGc": {
+          "rss": 589250560,
+          "heapTotal": 333791232,
+          "heapUsed": 285174408,
+          "external": 6462660339,
+          "arrayBuffers": 6450454651
+        },
+        "heapAfterGc": {
+          "rss": 588775424,
+          "heapTotal": 282722304,
+          "heapUsed": 204684600,
+          "external": 6461269610,
+          "arrayBuffers": 6446789299
+        },
+        "retained": 0,
+        "checksum": 346293451,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "baseline",
+        "mode": "retain",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 1992.8567080000003,
+        "cpuMilliseconds": 4953.457,
+        "maxRssMiB": 4312.015625,
+        "heapBeforeGc": {
+          "rss": 4519411712,
+          "heapTotal": 4185227264,
+          "heapUsed": 4148378864,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 4521164800,
+          "heapTotal": 4185292800,
+          "heapUsed": 4130319544,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 32267,
+        "checksum": 811154,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "variant": "poc",
+        "mode": "retain",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        },
+        "elapsedMilliseconds": 2173.3497919999995,
+        "cpuMilliseconds": 6038.393,
+        "maxRssMiB": 4275.15625,
+        "heapBeforeGc": {
+          "rss": 4482662400,
+          "heapTotal": 4163207168,
+          "heapUsed": 4113969328,
+          "external": 6453409102,
+          "arrayBuffers": 6442599091
+        },
+        "heapAfterGc": {
+          "rss": 4482367488,
+          "heapTotal": 4162748416,
+          "heapUsed": 4100887568,
+          "external": 6453409142,
+          "arrayBuffers": 6442599091
+        },
+        "retained": 32267,
+        "checksum": 811154,
+        "errors": 0,
+        "imports": 0,
+        "nodes": 0,
+        "outputBytes": 0,
+        "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  "correctness": [
+    {
+      "variant": "baseline",
+      "mode": "verify",
+      "node": "v26.13.0",
+      "v8": "14.6.202.34-node.40",
+      "flags": ["--expose-gc", "--max-old-space-size=6144"],
+      "profile": "none",
+      "corpus": {
+        "files": 32267,
+        "bytes": 197999377,
+        "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+      },
+      "elapsedMilliseconds": 28679.276833,
+      "cpuMilliseconds": 35597.926,
+      "maxRssMiB": 924.875,
+      "heapBeforeGc": {
+        "rss": 969768960,
+        "heapTotal": 406437888,
+        "heapUsed": 306628376,
+        "external": 6457673121,
+        "arrayBuffers": 6446831755
+      },
+      "heapAfterGc": {
+        "rss": 968589312,
+        "heapTotal": 362414080,
+        "heapUsed": 204905984,
+        "external": 6457673161,
+        "arrayBuffers": 6446789299
+      },
+      "retained": 0,
+      "checksum": 3379795,
+      "errors": 0,
+      "imports": 214521,
+      "nodes": 33579124,
+      "outputBytes": 217840905,
+      "outputSha256": "c56c4b008d33671dc659dc7f48e677d98d96cdb789173e36acc8934e56818cc5"
+    },
+    {
+      "variant": "poc",
+      "mode": "verify",
+      "node": "v26.13.0",
+      "v8": "14.6.202.34-node.40",
+      "flags": ["--expose-gc", "--max-old-space-size=6144"],
+      "profile": "none",
+      "corpus": {
+        "files": 32267,
+        "bytes": 197999377,
+        "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+      },
+      "elapsedMilliseconds": 27998.505291999998,
+      "cpuMilliseconds": 32475.654,
+      "maxRssMiB": 1002.640625,
+      "heapBeforeGc": {
+        "rss": 1051279360,
+        "heapTotal": 332759040,
+        "heapUsed": 242646944,
+        "external": 6457655001,
+        "arrayBuffers": 6446813635
+      },
+      "heapAfterGc": {
+        "rss": 1050542080,
+        "heapTotal": 305790976,
+        "heapUsed": 205120832,
+        "external": 6457655041,
+        "arrayBuffers": 6446789299
+      },
+      "retained": 0,
+      "checksum": 3379795,
+      "errors": 0,
+      "imports": 214521,
+      "nodes": 33579124,
+      "outputBytes": 217840905,
+      "outputSha256": "c56c4b008d33671dc659dc7f48e677d98d96cdb789173e36acc8934e56818cc5"
+    }
+  ],
+  "contract": {
+    "node": "v26.13.0",
+    "optionsChecked": 64,
+    "jsonDifferences": [
+      {
+        "filename": "x.js",
+        "source": "const x = \"\ud800\";",
+        "range": false,
+        "key": "program"
+      },
+      {
+        "filename": "x.js",
+        "source": "#!/usr/bin/env node\r\n/* \u96ea\ud83d\ude00 */ export const x = [123n, /\u96ea/gu, '\\uD800'];",
+        "range": true,
+        "key": "module"
+      },
+      {
+        "filename": "x.js",
+        "source": "#!/usr/bin/env node\r\n/* \u96ea\ud83d\ude00 */ export const x = [123n, /\u96ea/gu, '\\uD800'];",
+        "range": true,
+        "key": "comments"
+      },
+      {
+        "filename": "x.ts",
+        "source": "#!/usr/bin/env node\n/* \ud83d\ude00 */ export type T = string; const x: T = '\\uDFFF';",
+        "range": true,
+        "key": "module"
+      },
+      {
+        "filename": "x.ts",
+        "source": "#!/usr/bin/env node\n/* \ud83d\ude00 */ export type T = string; const x: T = '\\uDFFF';",
+        "range": true,
+        "key": "comments"
+      },
+      {
+        "filename": "x.jsx",
+        "source": "// \ud83d\ude00\r\nexport default <div title='\u96ea'>\ud83d\ude00</div>;",
+        "range": true,
+        "key": "module"
+      },
+      {
+        "filename": "x.jsx",
+        "source": "// \ud83d\ude00\r\nexport default <div title='\u96ea'>\ud83d\ude00</div>;",
+        "range": true,
+        "key": "comments"
+      },
+      {
+        "filename": "x.tsx",
+        "source": "/* \ud83d\ude00 */ export const x: JSX.Element = <div>{123n}</div>;",
+        "range": true,
+        "key": "module"
+      },
+      {
+        "filename": "x.tsx",
+        "source": "/* \ud83d\ude00 */ export const x: JSX.Element = <div>{123n}</div>;",
+        "range": true,
+        "key": "comments"
+      },
+      {
+        "filename": "x.js",
+        "source": "export const = ;",
+        "range": true,
+        "key": "module"
+      },
+      {
+        "filename": "x.js",
+        "source": "export const = ;",
+        "range": true,
+        "key": "errors"
+      },
+      {
+        "filename": "x.ts",
+        "source": "let x: = ;",
+        "range": true,
+        "key": "errors"
+      },
+      {
+        "filename": "x.js",
+        "source": "const x = \"\ud800\";",
+        "range": true,
+        "key": "program"
+      },
+      {
+        "filename": "x.js",
+        "source": "let x; let x;",
+        "range": true,
+        "key": "errors"
+      }
+    ],
+    "compatibility": {
+      "ownDescriptors": "equal",
+      "ownKeyOrder": "equal",
+      "prototype": "Object.prototype",
+      "privateStorageVisibleToReflectOwnKeys": false,
+      "getterIdentity": "shared instead of unique per result",
+      "detachedForeignReceiver": "TypeError instead of original result field",
+      "proxyWithDefaultReceiver": "TypeError instead of original result field",
+      "getterOnAnotherResult": "returns receiver's field instead of original result field",
+      "inheritedReceiver": "TypeError instead of original result field",
+      "dataLifetimeAfterRemovingAllAccessors": "Private data remains live with the emptied owner; main releases closure captures after major GC."
+    }
+  },
+  "diagnostics": {
+    "lifetime": [
+      {
+        "repeat": 1,
+        "variant": "closure",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 1,
+        "variant": "field",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 1,
+        "variant": "define",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 1,
+        "variant": "bound",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 1,
+        "variant": "private",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 1,
+        "variant": "plain",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 2,
+        "variant": "closure",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 2,
+        "variant": "field",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 2,
+        "variant": "define",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 2,
+        "variant": "bound",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 2,
+        "variant": "private",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 2,
+        "variant": "plain",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 3,
+        "variant": "closure",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 3,
+        "variant": "field",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 3,
+        "variant": "define",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 3,
+        "variant": "bound",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 3,
+        "variant": "private",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      },
+      {
+        "repeat": 3,
+        "variant": "plain",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "collections": ["s", "s", "mc"]
+      }
+    ],
+    "gc": [
+      {
+        "variant": "baseline",
+        "flags": [],
+        "counts": {
+          "s": 98,
+          "mc": 6
+        },
+        "totals": {
+          "pause": 419.49800000000005,
+          "allocated": 4056412128,
+          "promoted": 1514721080
+        }
+      },
+      {
+        "variant": "poc",
+        "flags": [],
+        "counts": {
+          "s": 194
+        },
+        "totals": {
+          "pause": 53.339,
+          "allocated": 4039576848,
+          "promoted": 36555544
+        }
+      },
+      {
+        "variant": "baseline",
+        "flags": ["--no-allocation-site-pretenuring"],
+        "counts": {
+          "s": 234,
+          "mc": 6
+        },
+        "totals": {
+          "pause": 829.2420000000001,
+          "allocated": 4055240776,
+          "promoted": 3811520144
+        }
+      },
+      {
+        "variant": "poc",
+        "flags": ["--no-allocation-site-pretenuring"],
+        "counts": {
+          "s": 196,
+          "mc": 1
+        },
+        "totals": {
+          "pause": 59.23300000000004,
+          "allocated": 4046842000,
+          "promoted": 45809344
+        }
+      },
+      {
+        "variant": "baseline",
+        "flags": ["--no-maglev"],
+        "counts": {
+          "s": 88,
+          "mc": 6
+        },
+        "totals": {
+          "pause": 329.28100000000006,
+          "allocated": 4040992584,
+          "promoted": 1339395784
+        }
+      },
+      {
+        "variant": "poc",
+        "flags": ["--no-maglev"],
+        "counts": {
+          "s": 197,
+          "mc": 1
+        },
+        "totals": {
+          "pause": 55.044000000000004,
+          "allocated": 4048389408,
+          "promoted": 43685104
+        }
+      }
+    ],
+    "deletedAccessors": [
+      {
+        "variant": "closure",
+        "operation": "delete",
+        "afterRelease": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 128,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 128,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "repeat": 1
+      },
+      {
+        "variant": "private",
+        "operation": "delete",
+        "afterRelease": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 128,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 128,
+          "wrapper": 128,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "repeat": 1
+      },
+      {
+        "variant": "closure",
+        "operation": "delete",
+        "afterRelease": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 128,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 128,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "repeat": 2
+      },
+      {
+        "variant": "private",
+        "operation": "delete",
+        "afterRelease": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 128,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 128,
+          "wrapper": 128,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "repeat": 2
+      },
+      {
+        "variant": "closure",
+        "operation": "delete",
+        "afterRelease": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 128,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 0,
+          "wrapper": 128,
+          "getter": 0,
+          "youngPayload": 0
+        },
+        "repeat": 3
+      },
+      {
+        "variant": "private",
+        "operation": "delete",
+        "afterRelease": {
+          "payload": 0,
+          "wrapper": 0,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+        "initialYoung": 128,
+        "minor": {
+          "payload": 128,
+          "wrapper": 128,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "major": {
+          "payload": 128,
+          "wrapper": 128,
+          "getter": 128,
+          "youngPayload": 0
+        },
+        "repeat": 3
+      }
+    ]
+  },
+  "allocationSampling": [
+    {
+      "artifact": "target/raw-result/allocations/raw-baseline-1.json.heapprofile",
+      "estimatedAllocatedBytes": 4064048456,
+      "sampledAllocations": 123675,
+      "includesObjectsCollectedByMinorAndMajorGc": true,
+      "excludesNativeAllocations": true
+    },
+    {
+      "artifact": "target/raw-result/allocations/raw-poc-1.json.heapprofile",
+      "estimatedAllocatedBytes": 4053931600,
+      "sampledAllocations": 123364,
+      "includesObjectsCollectedByMinorAndMajorGc": true,
+      "excludesNativeAllocations": true
+    }
+  ],
+  "checks": {
+    "napi": {
+      "command": "RUN_RAW_TESTS=1 RUN_RAW_RANGE_TESTS=1 RUN_RAW_TOKENS_TESTS=1 pnpm -C napi/parser test",
+      "node": "v26.12.1",
+      "testsPassed": 178470,
+      "profile": "coverage, tokens"
+    },
+    "focusedNode26": {
+      "node": "v26.13.0",
+      "testsPassed": 13,
+      "profile": "release, allocator,tokens"
+    },
+    "parserConformance": "cargo coverage parser: completed, snapshots unchanged; existing expected failures remain",
+    "format": "just fmt: passed",
+    "lint": "Focused Oxlint: passed",
+    "astGeneration": "just ast: generated layout output unchanged",
+    "packageParents": {
+      "dryRun": "npm pack --dry-run --ignore-scripts --json",
+      "packagedParentDeserializers": [],
+      "preexisting": true
+    },
+    "harnessSmoke": "256-file baseline/POC raw, maps and retain workloads passed, including cross-variant corpus/checksum assertions."
+  },
+  "excluded": "Interrupted target/raw-result/final samples with severe background contention; generated private-wrapper screen and earlier Node 26.12.1 confirm are not the final implementation measurements.",
+  "rawArtifacts": "target/raw-result/; profiles and instrumented elapsed times are separate from throughput."
+}

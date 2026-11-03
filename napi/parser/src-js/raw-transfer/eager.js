@@ -105,42 +105,48 @@ function deserialize(buffer, sourceText, sourceStartPos, sourceByteLen, options)
   // Return buffer to cache, to be reused
   returnBufferToCache(buffer);
 
-  // We cannot lazily deserialize in the getters, because the buffer might be re-used to parse
-  // another file before the getter is called
-  if (tokens !== null) {
-    return {
-      get program() {
-        return data.program;
-      },
-      get module() {
-        return data.module;
-      },
-      get comments() {
-        return data.comments;
-      },
-      get tokens() {
-        return tokens;
-      },
-      get errors() {
-        return data.errors;
-      },
-    };
+  return Reflect.construct(RawResult, [data, tokens], Object);
+}
+
+let resultDescriptors, tokenResultDescriptors;
+class RawResult {
+  #data;
+  #tokens;
+
+  constructor(data, tokens) {
+    this.#data = data;
+    this.#tokens = tokens;
+    Object.defineProperties(this, tokens === null ? resultDescriptors : tokenResultDescriptors);
   }
 
-  return {
-    get program() {
-      return data.program;
-    },
-    get module() {
-      return data.module;
-    },
-    get comments() {
-      return data.comments;
-    },
-    get errors() {
-      return data.errors;
-    },
-  };
+  get program() {
+    return this.#data.program;
+  }
+
+  get module() {
+    return this.#data.module;
+  }
+
+  get comments() {
+    return this.#data.comments;
+  }
+
+  get tokens() {
+    return this.#tokens;
+  }
+
+  get errors() {
+    return this.#data.errors;
+  }
+
+  static {
+    const descriptors = Object.getOwnPropertyDescriptors(this.prototype);
+    const keys = ["program", "module", "comments", "tokens", "errors"];
+    for (const key of keys) descriptors[key].enumerable = true;
+    const { program, module, comments, tokens, errors } = descriptors;
+    resultDescriptors = { program, module, comments, errors };
+    tokenResultDescriptors = { program, module, comments, tokens, errors };
+  }
 }
 
 // `ESTreeKind` discriminants (set by Rust side)
