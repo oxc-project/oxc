@@ -1,0 +1,31 @@
+crates/oxc_react_compiler/fixtures/repro-ref-like-name-non-ascii.js
+  s_54351baaed4d95::t_2cfb418026fbce 1-17
+crates/oxc_react_compiler/src/react_compiler_typeinference/infer_types.rs
+  s_eac50e95950cf9::t_80dfd2ae947d1b 242
+crates/oxc_react_compiler/tests/snapshots/repro-ref-like-name-non-ascii.snap
+  s_eac50e95950cf9::t_cc62d86db78c57 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "359b4f1287add0c7fa916c849e0d6d2707b35549",
+  "prompts": {},
+  "sessions": {
+    "s_54351baaed4d95": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a13c-57f9-7e72-9f6d-b641ff5ec45e",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_eac50e95950cf9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a13e-8a90-7393-8675-1037cf50a854",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
