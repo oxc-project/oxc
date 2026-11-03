@@ -68,10 +68,18 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
                 let decl_node =
                     self.ast_nodes.get_node(self.scoping.symbol_declaration(*symbol_id));
                 self.is_name_set_declare_node(decl_node, *symbol_id)
+                    || self.has_name_set_redeclaration_node(*symbol_id)
                     || self.has_name_set_reference_node(*symbol_id)
             })
             .for_each(|symbol_id| symbol_ids.set_bit(symbol_id.index()));
         symbol_ids
+    }
+
+    fn has_name_set_redeclaration_node(&self, symbol_id: SymbolId) -> bool {
+        self.scoping.symbol_redeclarations(symbol_id).iter().any(|redeclaration| {
+            let node = self.ast_nodes.get_node(redeclaration.declaration);
+            self.is_name_set_declare_node(node, symbol_id)
+        })
     }
 
     fn has_name_set_reference_node(&self, symbol_id: SymbolId) -> bool {
@@ -286,6 +294,25 @@ mod test {
         assert_eq!(collect(function_only(), "var foo = (() => {})"), data("foo"));
         assert_eq!(collect(class_only(), "var Foo = class {}"), data("Foo"));
         assert_eq!(collect(class_only(), "var Foo = (class {})"), data("Foo"));
+    }
+
+    #[test]
+    fn test_redeclaration_init() {
+        for source in [
+            "var foo; var foo = function() {}",
+            "(function() { try {} catch (foo) { var foo = function() {} } })",
+            "(function(foo) { try {} catch (foo) { var foo = () => {} } })",
+            "(function() { var foo; try {} catch (foo) { var [foo = () => {}] = [] } })",
+        ] {
+            assert_eq!(collect(function_only(), source), data("foo"));
+        }
+        for source in [
+            "var Foo; var Foo = class {}",
+            "function f() { try {} catch (Foo) { var Foo = class {} } }",
+            "function f(Foo) { try {} catch (Foo) { var {x: Foo = class {}} = {} } }",
+        ] {
+            assert_eq!(collect(class_only(), source), data("Foo"));
+        }
     }
 
     #[test]

@@ -1,7 +1,79 @@
-use oxc_semantic::{Reference, ReferenceFlags, SymbolFlags};
-use oxc_span::SourceType;
+use oxc_allocator::Allocator;
+use oxc_ast_visit::VisitMut;
+use oxc_parser::Parser;
+use oxc_semantic::{Reference, ReferenceFlags, SemanticBuilder, SymbolFlags};
+use oxc_span::{SPAN, SourceType, Span};
 
 use crate::util::SemanticTester;
+
+#[test]
+fn test_catch_var_binding_after_renaming() {
+    struct DummySpans;
+    impl VisitMut<'_> for DummySpans {
+        fn visit_span(&mut self, span: &mut Span) {
+            *span = SPAN;
+        }
+    }
+
+    for dummy_spans in [false, true] {
+        let allocator = Allocator::default();
+        let source = "function f(y, z) { try {} catch (y) { var [y, z] = []; } }";
+        let mut parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+        if dummy_spans {
+            // Generated ASTs can give every identifier the same dummy span.
+            DummySpans.visit_program(&mut parsed.program);
+        }
+        let ret = SemanticBuilder::new_compiler().with_build_nodes(true).build(&parsed.program);
+        assert!(ret.diagnostics.is_empty());
+        let mut scoping = ret.semantic.into_scoping();
+        let (catch, outer) = scoping.catch_var_bindings().next().unwrap();
+        let catch_scope = scoping.symbol_scope_id(catch);
+
+        // Mangling changes symbol names without changing scope binding keys.
+        let mut cloned = scoping.clone_in_with_semantic_ids_with_another_arena();
+        cloned.set_symbol_names(&[catch, outer], "z".into());
+        assert_eq!(cloned.catch_var_binding(catch), Some(outer));
+
+        // Renaming either binding must retain the pair even when another binding
+        // shares both the var declaration node and the identifier span.
+        scoping.rename_symbol(catch, catch_scope, "z".into());
+        assert_eq!(scoping.catch_var_binding(catch), Some(outer));
+        scoping.rename_symbol(outer, scoping.symbol_scope_id(outer), "_y".into());
+        assert_eq!(scoping.catch_var_binding(catch), Some(outer));
+        assert_eq!(scoping.catch_var_bindings().collect::<Vec<_>>(), vec![(catch, outer)]);
+    }
+}
+
+#[test]
+fn test_catch_var_binding_after_redeclaration_removal() {
+    let tester = SemanticTester::js("try {} catch (e) { var e; }");
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let (catch, outer) = scoping.catch_var_bindings().next().unwrap();
+    let declaration_span = scoping.symbol_redeclarations(catch).last().unwrap().span;
+
+    for clear_all in [false, true] {
+        let mut scoping = scoping.clone_in_with_semantic_ids_with_another_arena();
+        if clear_all {
+            scoping.clear_symbol_redeclarations(catch);
+        } else {
+            scoping.remove_symbol_declaration(catch, declaration_span);
+        }
+        assert!(scoping.symbol_redeclarations(catch).is_empty());
+        assert_eq!(scoping.catch_var_binding(catch), Some(outer));
+
+        let mut scoping = scoping.clone_in_with_semantic_ids_with_another_arena();
+        assert_eq!(scoping.catch_var_bindings().collect::<Vec<_>>(), vec![(catch, outer)]);
+        scoping.add_symbol_redeclaration(
+            catch,
+            SymbolFlags::FunctionScopedVariable,
+            scoping.symbol_declaration(outer),
+            declaration_span,
+        );
+        assert_eq!(scoping.symbol_redeclarations(catch).len(), 2);
+        assert_eq!(scoping.catch_var_binding(catch), Some(outer));
+    }
+}
 
 fn assert_root_and_single_local_reference_counts(
     tester: &SemanticTester<'_>,

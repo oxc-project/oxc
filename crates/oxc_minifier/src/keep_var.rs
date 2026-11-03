@@ -57,17 +57,21 @@ impl<'a> KeepVar<'a> {
 
     pub fn get_variable_declaration(
         self,
-        builder: &impl GetAstBuilder<'a>,
+        ctx: &crate::TraverseCtx<'a>,
     ) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
         if self.vars.is_empty() {
             return None;
         }
 
-        let builder = builder.builder();
+        let builder = ctx.builder();
 
         let kind = VariableDeclarationKind::Var;
         let decls = ArenaVec::from_iter_in(
             self.vars.into_iter().map(|(name, span, symbol_id)| {
+                // Initializers are gone, so only the enclosing var binding is declared.
+                // The catch scope itself may have been removed with the dead statement.
+                let symbol_id =
+                    symbol_id.map(|id| ctx.scoping().catch_var_binding(id).unwrap_or(id));
                 let id = symbol_id.map_or_else(
                     || BindingPattern::new_binding_identifier(span, name, builder),
                     |symbol_id| {
@@ -86,8 +90,8 @@ impl<'a> KeepVar<'a> {
 
     pub fn get_variable_declaration_statement(
         self,
-        builder: &impl GetAstBuilder<'a>,
+        ctx: &crate::TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
-        self.get_variable_declaration(builder).map(Statement::VariableDeclaration)
+        self.get_variable_declaration(ctx).map(Statement::VariableDeclaration)
     }
 }
