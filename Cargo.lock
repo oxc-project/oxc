@@ -2273,7 +2273,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_lexer"
-version = "0.139.0"
+version = "0.157.0"
 dependencies = [
  "constcat",
  "memchr",
@@ -2288,7 +2288,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_lexer_macros"
-version = "0.0.0"
+version = "0.157.0"
 dependencies = [
  "proc-macro2",
  "quote",
