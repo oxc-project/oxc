@@ -22,6 +22,7 @@ use super::{CpuSimd, Vec128, Vec128Impl, Vec256, Vec256Impl};
 /// `C` is the CPU feature set of the [`Vec128`].
 pub trait Operand128<T, C: CpuSimd> {
     /// Convert to a [`Vec128`].
+    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     fn into_vec128(self, cpu: C) -> Vec128<C>;
 }
 
@@ -74,6 +75,7 @@ where
 /// `C` is the CPU feature set of the [`Vec256`].
 pub trait Operand256<T, C: CpuSimd> {
     /// Convert to a [`Vec256`].
+    #[cfg_attr(not(any(target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     fn into_vec256(self, cpu: C) -> Vec256<C>;
 }
 

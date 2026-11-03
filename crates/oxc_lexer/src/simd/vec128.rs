@@ -25,6 +25,7 @@ use super::{
 ///
 /// The methods which every CPU type has are in [`Vec128Impl`], and are also inherent methods.
 /// The `avx2` and `neon` modules have the methods which only one CPU type has.
+#[cfg_attr(not(any(target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
 pub struct Vec128<C: CpuSimd> {
     pub(super) inner: <C::Vec128 as Vec128Impl>::Inner,
     pub(super) cpu: C,
@@ -264,12 +265,14 @@ where
     }
 
     /// Create a [`Vec128`] by repeating `n` 16 times.
+    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub fn splat(n: u8, cpu: C) -> Self {
         <Self as Vec128Impl>::splat(n, cpu)
     }
 
     /// Create a [`Vec128`] by repeating `n` 4 times.
+    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub fn splat_u32(n: u32, cpu: C) -> Self {
         <Self as Vec128Impl>::splat_u32(n, cpu)
@@ -398,6 +401,7 @@ where
     // ----------------------------------------
 
     /// Check if all the bits of this [`Vec128`] are zero.
+    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub fn is_zero(self) -> bool {
         <Self as Vec128Impl>::is_zero(self)
@@ -492,6 +496,7 @@ where
     /// `other` is either an `i8`, or another [`Vec128`] to compare byte by byte.
     ///
     /// Each byte of the result is `0xFF` if the byte in `self` is greater, otherwise `0x00`.
+    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub fn gt_i8(self, other: impl Operand128<i8, C>) -> Self {
         <Self as Vec128Impl>::gt_i8(self, other)

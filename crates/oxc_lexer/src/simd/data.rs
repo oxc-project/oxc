@@ -94,6 +94,7 @@ impl VecData128 {
     /// Get a `*const u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for aligned reads of 16 bytes.
+    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub const fn as_ptr(&self) -> *const u8 {
         self.0.as_slice().as_ptr()
@@ -102,6 +103,7 @@ impl VecData128 {
     /// Get a `*mut u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for aligned writes of 16 bytes.
+    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub const fn as_mut_ptr(&mut self) -> *mut u8 {
         self.0.as_mut_ptr()
@@ -210,6 +212,7 @@ impl VecData256 {
     /// Get a `*const u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for aligned reads of 32 bytes.
+    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub const fn as_ptr(&self) -> *const u8 {
         self.0.as_slice().as_ptr()
@@ -218,6 +221,7 @@ impl VecData256 {
     /// Get a `*mut u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for aligned writes of 32 bytes.
+    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub const fn as_mut_ptr(&mut self) -> *mut u8 {
         self.0.as_mut_ptr()

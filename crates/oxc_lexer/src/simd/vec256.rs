@@ -21,6 +21,7 @@ use super::{CpuSimd, Vec128, VecData256, arrays::IntArray256, operand::Operand25
 ///
 /// The methods which every CPU type has are in [`Vec256Impl`], and are also inherent methods.
 /// The `avx2` and `neon` modules have the methods which only one CPU type has.
+#[cfg_attr(not(any(target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
 pub struct Vec256<C: CpuSimd> {
     pub(super) inner: <C::Vec256 as Vec256Impl>::Inner,
     pub(super) cpu: C,
@@ -266,6 +267,7 @@ where
     }
 
     /// Create a [`Vec256`] by repeating `n` 32 times.
+    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub fn splat(n: u8, cpu: C) -> Self {
         <Self as Vec256Impl>::splat(n, cpu)
