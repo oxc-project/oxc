@@ -17,7 +17,7 @@ use oxc_diagnostics::{
 };
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
-    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
+    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintPlugins, LintRunner,
     LintServiceOptions, Linter, OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
 };
 
@@ -97,7 +97,9 @@ impl CliRunner {
         } = self.options;
 
         if basic_options.init {
-            return crate::mode::run_init(&self.cwd, stdout);
+            let mut plugins = LintPlugins::default();
+            enable_plugins.apply_overrides(&mut plugins);
+            return crate::mode::run_init(&self.cwd, plugins, stdout);
         }
 
         let external_linter = self.external_linter.as_ref();
@@ -763,7 +765,7 @@ fn render_config_builder_error(
 mod test {
     use std::fs;
 
-    use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
+    use crate::{DEFAULT_OXLINTRC_NAME, cli::CliRunResult, tester::Tester};
     use oxc_linter::rules::RULES;
 
     fn markdown_rule_row<'a>(output: &'a str, plugin: &str, name: &str) -> Vec<&'a str> {
@@ -1333,6 +1335,64 @@ mod test {
         let content = fs::read_to_string(config_path).unwrap();
 
         insta::assert_snapshot!("init_config", content);
+    }
+
+    #[test]
+    fn test_init_config_respects_plugin_flags() {
+        let cases: &[(&[&str], &[&str])] = &[
+            (&["--react-plugin"], &["oxc", "react", "typescript", "unicorn"]),
+            (
+                &["--import-plugin", "--jsx-a11y-plugin", "--promise-plugin"],
+                &["import", "jsx-a11y", "oxc", "promise", "typescript", "unicorn"],
+            ),
+            (
+                &[
+                    "--disable-unicorn-plugin",
+                    "--disable-typescript-plugin",
+                    "--disable-oxc-plugin",
+                ],
+                &[],
+            ),
+            (&["--react-plugin", "--disable-unicorn-plugin"], &["oxc", "react", "typescript"]),
+        ];
+
+        for (flags, expected_plugins) in cases {
+            let temp_dir = tempfile::tempdir().unwrap();
+            let mut args = vec!["--init"];
+            args.extend_from_slice(flags);
+            let (_, result) =
+                Tester::new().with_cwd(temp_dir.path().to_path_buf()).test_output(&args);
+            assert!(matches!(result, CliRunResult::ConfigFileInitSucceeded));
+
+            let config: serde_json::Value = serde_json::from_str(
+                &fs::read_to_string(temp_dir.path().join(DEFAULT_OXLINTRC_NAME)).unwrap(),
+            )
+            .unwrap();
+            let mut plugins: Vec<String> =
+                serde_json::from_value(config["plugins"].clone()).unwrap();
+            plugins.sort_unstable();
+            assert_eq!(plugins.as_slice(), *expected_plugins, "plugin flags: {flags:?}");
+        }
+    }
+
+    #[test]
+    fn test_init_config_enables_plugin_rules() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        tester.test(&["--init", "--react-plugin"]);
+        fs::write(temp_dir.path().join("app.jsx"), "export const App = () => <Missing />;")
+            .unwrap();
+
+        let output = tester.test_output_verbose(&["--format", "json", "app.jsx"]);
+        let report: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert!(
+            report["diagnostics"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|diagnostic| diagnostic["code"] == "react(jsx-no-undef)"),
+            "React rules should be enabled by the generated config: {output}"
+        );
     }
 
     #[test]
