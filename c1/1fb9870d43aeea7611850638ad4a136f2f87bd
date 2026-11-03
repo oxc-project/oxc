@@ -1,0 +1,21 @@
+apps/oxlint/src/lint.rs
+  s_83c28baeb899eb::t_3a2670ae149a89 764,766,1328-1332,1336,1339-1468
+apps/oxlint/src/mode/init.rs
+  s_83c28baeb899eb::t_d65c9c2404925f 1-5,7,12-38,50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c11fb9870d43aeea7611850638ad4a136f2f87bd",
+  "prompts": {},
+  "sessions": {
+    "s_83c28baeb899eb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a132-0481-7902-896b-524a566f15af",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
