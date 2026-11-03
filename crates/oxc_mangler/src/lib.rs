@@ -538,14 +538,11 @@ impl<'a> Constraints<'a> {
         let (keep_name_names, mut keep_name_symbols) =
             collect_keep_name_symbols(options.keep_names, allocator, scoping, ast_nodes);
         if let Some(kept) = &mut keep_name_symbols {
+            // A linked catch parameter takes the enclosing binding's slot, so keeping the
+            // catch's name means keeping the enclosing binding's name.
             for (catch, outer) in scoping.catch_var_bindings() {
                 if kept.has_bit(catch.index()) {
                     kept.set_bit(outer.index());
-                }
-            }
-            for (catch, outer) in scoping.catch_var_bindings() {
-                if kept.has_bit(outer.index()) {
-                    kept.set_bit(catch.index());
                 }
             }
         }
@@ -624,24 +621,16 @@ impl<'a> SlotAssignment<'a> {
         let mut reusable_slots = ArenaVec::new_in(&allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
-        let mut catch_var_bindings =
-            ArenaVec::from_iter_in(scoping.catch_var_bindings(), &allocator);
-        catch_var_bindings
-            .sort_unstable_by_key(|&(catch, outer)| (scoping.symbol_scope_id(outer), catch));
-        let mut next_catch_var_binding = 0;
+        // `(enclosing var binding, catch parameter)` pairs, sorted to look up by binding.
+        let mut catch_var_bindings = ArenaVec::from_iter_in(
+            scoping.catch_var_bindings().map(|(catch, outer)| (outer, catch)),
+            &allocator,
+        );
+        catch_var_bindings.sort_unstable();
 
         // Walk down the scope tree and assign a slot number for each symbol. Doing it as a scope
         // walk (rather than a flat symbol loop) generates better code.
         for (scope_id, bindings) in scoping.iter_bindings() {
-            let first_catch_var_binding = next_catch_var_binding;
-            while catch_var_bindings
-                .get(next_catch_var_binding)
-                .is_some_and(|&(_, outer)| scoping.symbol_scope_id(outer) == scope_id)
-            {
-                next_catch_var_binding += 1;
-            }
-            let scope_catch_var_bindings =
-                &catch_var_bindings[first_catch_var_binding..next_catch_var_binding];
             if bindings.is_empty() {
                 continue;
             }
@@ -657,22 +646,9 @@ impl<'a> SlotAssignment<'a> {
             // Sort `bindings` in declaration order.
             tmp_bindings.clear();
             tmp_bindings.extend(bindings.values().copied().filter(|&binding| {
-                if !constraints.is_mangle_candidate(binding, scoping) {
-                    return false;
-                }
-                if !catch_var_bindings.is_empty()
-                    && let Some(outer) = scoping.catch_var_binding(binding)
-                {
-                    let slot = slots[outer.index()];
-                    // Share an ancestor's slot without reserving one that would be discarded.
-                    // Scopes inserted by transforms can precede their new ancestors in ID order;
-                    // let the final remapping handle an outer slot that is not assigned yet.
-                    if slot != SLOT_UNASSIGNED || !constraints.is_mangle_candidate(outer, scoping) {
-                        slots[binding.index()] = slot;
-                        return false;
-                    }
-                }
-                true
+                // A linked catch parameter shares the enclosing binding's slot (see the end).
+                (catch_var_bindings.is_empty() || scoping.catch_var_binding(binding).is_none())
+                    && constraints.is_mangle_candidate(binding, scoping)
             }));
             if tmp_bindings.is_empty() {
                 continue;
@@ -722,24 +698,33 @@ impl<'a> SlotAssignment<'a> {
                 debug_assert!(constraints.is_mangle_candidate(symbol_id, scoping));
                 slots[symbol_id.index()] = assigned_slot;
 
-                // `var` is hoisted, so include the scope where it is declared
-                // (for cases like `function foo() { { var x; let y; } }`).
-                let declared_scope_id =
-                    ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
-                let redeclared_scope_ids = scoping
-                    .symbol_redeclarations(symbol_id)
+                // Catch parameters redeclared by a `var` of this binding print its name too,
+                // so their uses keep this slot live as well.
+                let linked_catches = catch_var_bindings
+                    [catch_var_bindings.partition_point(|&(outer, _)| outer < symbol_id)..]
                     .iter()
-                    .map(|r| ast_nodes.get_node(r.declaration).scope_id());
-                let referenced_scope_ids =
-                    scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
+                    .take_while(|&&(outer, _)| outer == symbol_id)
+                    .map(|&(_, catch)| catch);
+                let used_scope_ids = iter::once(symbol_id).chain(linked_catches).flat_map(|id| {
+                    // `var` is hoisted, so include the scope where it is declared
+                    // (for cases like `function foo() { { var x; let y; } }`).
+                    let declared_scope_id =
+                        ast_nodes.get_node(scoping.symbol_declaration(id)).scope_id();
+                    let redeclared_scope_ids = scoping
+                        .symbol_redeclarations(id)
+                        .iter()
+                        .map(|r| ast_nodes.get_node(r.declaration).scope_id());
+                    scoping
+                        .get_resolved_references(id)
+                        .map(Reference::scope_id)
+                        .chain(redeclared_scope_ids)
+                        .chain([declared_scope_id])
+                });
 
                 // The scopes this symbol is alive in: for each use, walk up to (but not including)
                 // `scope_id`, marking the descendant scopes it passes through.
                 let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
-                for used_scope_id in referenced_scope_ids
-                    .chain(redeclared_scope_ids)
-                    .chain([scope_id, declared_scope_id])
-                {
+                for used_scope_id in used_scope_ids.chain([scope_id]) {
                     for ancestor_id in scoping.scope_ancestors(used_scope_id) {
                         let ancestor_index = ancestor_id.index();
                         // Stop when we reach scope_id or any of its ancestors
@@ -760,38 +745,6 @@ impl<'a> SlotAssignment<'a> {
                             break;
                         }
                         slot_liveness_bitset.set_bit(ancestor_index);
-                    }
-                }
-            }
-
-            // A catch-local `var` also declares the enclosing binding. Its slot must stay
-            // live through the catch parameter's uses so intervening bindings cannot take it.
-            for &(catch, outer) in scope_catch_var_bindings {
-                let slot = slots[outer.index()];
-                if slot == SLOT_UNASSIGNED {
-                    continue;
-                }
-                let liveness = &mut slot_liveness[slot as usize];
-                let used_scope_ids = scoping
-                    .get_resolved_references(catch)
-                    .map(Reference::scope_id)
-                    .chain(
-                        scoping
-                            .symbol_redeclarations(catch)
-                            .iter()
-                            .map(|r| ast_nodes.get_node(r.declaration).scope_id()),
-                    )
-                    .chain([scoping.symbol_scope_id(catch)]);
-                for used_scope_id in used_scope_ids {
-                    for ancestor_id in scoping.scope_ancestors(used_scope_id) {
-                        let index = ancestor_id.index();
-                        if index == scope_id_index
-                            || ancestor_set.has_bit(index)
-                            || liveness.has_bit(index)
-                        {
-                            break;
-                        }
-                        liveness.set_bit(index);
                     }
                 }
             }
@@ -818,10 +771,8 @@ impl<'a> SlotAssignment<'a> {
 
         // The printed `var` must declare the enclosing binding's name as well as assign
         // to the catch parameter. Unassigned outer slots preserve both original names.
-        for (catch, outer) in catch_var_bindings {
-            if slots[catch.index()] != SLOT_UNASSIGNED {
-                slots[catch.index()] = slots[outer.index()];
-            }
+        for (outer, catch) in catch_var_bindings {
+            slots[catch.index()] = slots[outer.index()];
         }
 
         let total_slots = slot_liveness.len();
