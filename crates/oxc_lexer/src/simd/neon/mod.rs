@@ -15,19 +15,21 @@
 //!
 //! # Differences from AVX2
 //!
-//! Methods have the same names as the methods of `Vec128<Avx2>` which do the same job,
-//! but these differ in behavior:
+//! Methods have the same names as the methods of `Vec128<Avx2>` and `Vec256<Avx2>`
+//! which do the same job, but these differ in behavior:
 //!
 //! * [`shuffle_u8s`] reads all 8 bits of each control byte.
 //!   On AVX2, a control byte with the top bit set gives 0, and otherwise only its low 4 bits count.
-//! * [`blend`] selects each bit separately. On AVX2, it selects whole bytes, using their top bits.
+//! * `blend` selects each bit separately. On AVX2, it selects whole bytes, using their top bits.
 //! * [`Vec256::shuffle_u8s`] is 1 lookup in a 32-entry table, with a 16-byte control.
 //!   On AVX2, it's 2 separate lookups in 16-entry tables, with a 32-byte control.
+//! * `load`, `store`, `read` and `write` use the same instructions as their unaligned versions.
+//!   Neon has no separate aligned load and store instructions.
 //!
-//! `Vec128<Avx2>` also has some methods which `Vec128<Neon>` doesn't:
+//! Some methods only exist for one CPU, because the other CPU has no matching instruction:
 //!
-//! * `movemask`. Neon has no equivalent of x86's `pmovmskb`, so it would be several instructions.
-//! * Aligned `load` and `store`. Aligned loads and stores have no advantage on Neon.
+//! * AVX2 only: `movemask` (Neon has no equivalent of x86's `pmovmskb`) and `Vec256::shuffle_u32s`.
+//! * Neon only: `shl_u8`, `shr_u8`, `pairwise_add_u8` and `test_u8`.
 //!
 //! # Performance
 //!
@@ -37,7 +39,6 @@
 //!
 //! [`Neon`]: crate::cpu::Neon
 //! [`Vec256::shuffle_u8s`]: super::Vec256::shuffle_u8s
-//! [`blend`]: super::Vec128::blend
 //! [`shuffle_u8s`]: super::Vec128::shuffle_u8s
 //! [`uint8x16_t`]: std::arch::aarch64::uint8x16_t
 //! [`uint8x16x2_t`]: std::arch::aarch64::uint8x16x2_t

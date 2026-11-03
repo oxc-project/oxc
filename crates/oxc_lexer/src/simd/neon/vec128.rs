@@ -1,7 +1,7 @@
 //! Methods of `Vec128<Neon>`, which wraps a [`uint8x16_t`].
 //!
-//! Methods have the same names as the methods of `Vec128<Avx2>` which do the same job.
-//! The `neon` module docs list the ones which behave differently.
+//! Implements [`Vec128Impl`], and has the methods which only Neon has.
+//! The `neon` module docs list the methods which behave differently from AVX2.
 //!
 //! [`uint8x16_t`]: std::arch::aarch64::uint8x16_t
 
@@ -21,7 +21,6 @@ use crate::{
     },
 };
 
-/// Creation methods.
 impl Vec128<Neon> {
     /// Create a [`Vec128`] wrapping a [`uint8x16_t`].
     ///
@@ -30,43 +29,70 @@ impl Vec128<Neon> {
     pub(super) fn new(inner: uint8x16_t, cpu: Neon) -> Self {
         Self { inner, cpu }
     }
+}
 
-    /// Get [`Neon`] token from this [`Vec128`].
-    #[inline(always)]
-    pub fn cpu(self) -> Neon {
-        self.cpu
-    }
+impl Vec128Impl for Vec128<Neon> {
+    type Cpu = Neon;
+    type Inner = uint8x16_t;
+
+    // ----------------------------------------
+    // Creation methods
+    // ----------------------------------------
 
     /// Create a [`Vec128`] with all bits zero.
     #[inline(always)]
-    pub fn zero(cpu: Neon) -> Self {
+    fn zero(cpu: Neon) -> Self {
         Self::splat(0, cpu)
     }
 
     /// Create a [`Vec128`] by repeating `n` 16 times.
     #[inline(always)]
-    pub fn splat(n: u8, cpu: Neon) -> Self {
+    fn splat(n: u8, cpu: Neon) -> Self {
         // SAFETY: `Neon` type guarantees platform supports Neon
         Self::new(unsafe { vdupq_n_u8(n) }, cpu)
     }
 
     /// Create a [`Vec128`] by repeating `n` 4 times.
     #[inline(always)]
-    pub fn splat_u32(n: u32, cpu: Neon) -> Self {
+    fn splat_u32(n: u32, cpu: Neon) -> Self {
         // SAFETY: `Neon` type guarantees platform supports Neon
         Self::new(unsafe { vreinterpretq_u8_u32(vdupq_n_u32(n)) }, cpu)
     }
-}
 
-/// Loads and stores.
-impl Vec128<Neon> {
+    // ----------------------------------------
+    // Accessors
+    // ----------------------------------------
+
+    /// Get [`Neon`] token from this [`Vec128`].
+    #[inline(always)]
+    fn cpu(self) -> Neon {
+        self.cpu
+    }
+
+    // ----------------------------------------
+    // Loads and stores
+    // ----------------------------------------
+
+    /// Read a [`Vec128`] at pointer `ptr`, which must be aligned.
+    ///
+    /// # SAFETY
+    ///
+    /// * `ptr` must be valid for reading 16 bytes.
+    /// * `ptr` must be aligned on 16.
+    #[inline(always)]
+    unsafe fn load(ptr: *const u8, cpu: Neon) -> Self {
+        // Neon has no separate aligned load instruction, so this is the same as `load_unaligned`.
+        // SAFETY: Caller guarantees `ptr` is valid for reading 16 bytes.
+        unsafe { Self::load_unaligned(ptr, cpu) }
+    }
+
     /// Read a [`Vec128`] at pointer `ptr`, with no alignment requirement.
     ///
     /// # SAFETY
     ///
     /// `ptr` must be valid for reading 16 bytes.
     #[inline(always)]
-    pub unsafe fn load_unaligned(ptr: *const u8, cpu: Neon) -> Self {
+    unsafe fn load_unaligned(ptr: *const u8, cpu: Neon) -> Self {
         // SAFETY: Caller guarantees `ptr` is valid for reading 16 bytes.
         // `Neon` type guarantees platform supports Neon.
         Self::new(unsafe { vld1q_u8(ptr) }, cpu)
@@ -78,21 +104,17 @@ impl Vec128<Neon> {
     /// # SAFETY
     ///
     /// `ptr` must be valid for reading 8 bytes.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
-    pub unsafe fn load_low_unaligned(ptr: *const u8, cpu: Neon) -> Self {
+    unsafe fn load_low_unaligned(ptr: *const u8, cpu: Neon) -> Self {
         // SAFETY: Caller guarantees `ptr` is valid for reading 8 bytes.
         // `Neon` type guarantees platform supports Neon.
         Self::new(unsafe { vcombine_u8(vld1_u8(ptr), vdup_n_u8(0)) }, cpu)
     }
 
     /// Read a [`Vec128`] from a [`VecData128`], which is aligned on 16.
-    ///
-    /// Neon has no separate aligned load instruction, so this is the same as [`read_unaligned`].
-    ///
-    /// [`read_unaligned`]: Self::read_unaligned
     #[inline(always)]
-    pub fn read(data: &VecData128, cpu: Neon) -> Self {
+    fn read(data: &VecData128, cpu: Neon) -> Self {
+        // Neon has no separate aligned load instruction, so this is the same as `read_unaligned`
         Self::read_unaligned(data, cpu)
     }
 
@@ -101,7 +123,7 @@ impl Vec128<Neon> {
     /// `slice` can be any slice of integers which is 16 bytes in total
     /// (e.g. `&[u8; 16]`, `&[i64; 2]`).
     #[inline(always)]
-    pub fn read_unaligned(slice: &impl IntArray128, cpu: Neon) -> Self {
+    fn read_unaligned(slice: &impl IntArray128, cpu: Neon) -> Self {
         // SAFETY: `IntArray128` guarantees `slice.as_ptr()`
         // is valid for unaligned reads of 16 bytes
         unsafe { Self::load_unaligned(slice.as_ptr(), cpu) }
@@ -112,12 +134,24 @@ impl Vec128<Neon> {
     ///
     /// `slice` can be any slice of integers which is 8 bytes in total
     /// (e.g. `&[u8; 8]`, `&[i32; 2]`).
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
-    pub fn read_low_unaligned(slice: &impl IntArray64, cpu: Neon) -> Self {
+    fn read_low_unaligned(slice: &impl IntArray64, cpu: Neon) -> Self {
         // SAFETY: `IntArray64` guarantees `slice.as_ptr()`
         // is valid for unaligned reads of 8 bytes
         unsafe { Self::load_low_unaligned(slice.as_ptr(), cpu) }
+    }
+
+    /// Store a [`Vec128`] at pointer `ptr`, which must be aligned.
+    ///
+    /// # SAFETY
+    ///
+    /// * `ptr` must be valid for writing 16 bytes.
+    /// * `ptr` must be aligned on 16.
+    #[inline(always)]
+    unsafe fn store(self, ptr: *mut u8) {
+        // Neon has no separate aligned store instruction, so this is the same as `store_unaligned`.
+        // SAFETY: Caller guarantees `ptr` is valid for writing 16 bytes.
+        unsafe { self.store_unaligned(ptr) }
     }
 
     /// Store a [`Vec128`] at pointer `ptr`, with no alignment requirement.
@@ -126,7 +160,7 @@ impl Vec128<Neon> {
     ///
     /// `ptr` must be valid for writing 16 bytes.
     #[inline(always)]
-    pub unsafe fn store_unaligned(self, ptr: *mut u8) {
+    unsafe fn store_unaligned(self, ptr: *mut u8) {
         // This is all `vst1q_u8` does. Calling it would give the same instructions,
         // but it's a function which the compiler has to instantiate and then inline.
         // SAFETY: Caller guarantees `ptr` is valid for writing 16 bytes.
@@ -138,9 +172,8 @@ impl Vec128<Neon> {
     /// # SAFETY
     ///
     /// `ptr` must be valid for writing 8 bytes.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
-    pub unsafe fn store_low_unaligned(self, ptr: *mut u8) {
+    unsafe fn store_low_unaligned(self, ptr: *mut u8) {
         // SAFETY: Caller guarantees `ptr` is valid for writing 8 bytes.
         // `Vec128` type guarantees platform supports Neon.
         unsafe { vst1_u8(ptr, vget_low_u8(self.inner)) }
@@ -151,19 +184,19 @@ impl Vec128<Neon> {
     /// Neon has no separate aligned store instruction, so this does the same as [`store_unaligned`].
     ///
     /// [`store_unaligned`]: Self::store_unaligned
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
-    pub fn write(self, dst: &mut VecData128) {
+    fn write(self, dst: &mut VecData128) {
         // SAFETY: `VecData128` guarantees `dst.as_mut_ptr()` is valid for writes of 16 bytes
         unsafe { self.store_unaligned(dst.as_mut_ptr()) }
     }
-}
 
-/// Bitwise ops.
-impl Vec128<Neon> {
+    // ----------------------------------------
+    // Bitwise ops
+    // ----------------------------------------
+
     /// Check if all the bits of this [`Vec128`] are zero.
     #[inline(always)]
-    pub fn is_zero(self) -> bool {
+    fn is_zero(self) -> bool {
         // Neon has no equivalent of x86's `ptest`, so combine the 2 halves,
         // and test the result for 0
         (self.get_u64::<0>() | self.get_u64::<1>()) == 0
@@ -171,11 +204,172 @@ impl Vec128<Neon> {
 
     /// Invert all the bits of this [`Vec128`].
     #[inline(always)]
-    pub fn not(self) -> Self {
+    fn not(self) -> Self {
         // SAFETY: `Vec128` type guarantees platform supports Neon
         Self::new(unsafe { vmvnq_u8(self.inner) }, self.cpu)
     }
 
+    /// AND this [`Vec128`] with either another [`Vec128`] or a `u8`.
+    #[inline(always)]
+    fn and(self, other: impl Operand128<u8, Neon>) -> Self {
+        let other = other.into_vec128(self.cpu);
+        // SAFETY: `Vec128` type guarantees platform supports Neon
+        Self::new(unsafe { vandq_u8(self.inner, other.inner) }, self.cpu)
+    }
+
+    /// OR this [`Vec128`] with either another [`Vec128`] or a `u8`.
+    #[inline(always)]
+    fn or(self, other: impl Operand128<u8, Neon>) -> Self {
+        let other = other.into_vec128(self.cpu);
+        // SAFETY: `Vec128` type guarantees platform supports Neon
+        Self::new(unsafe { vorrq_u8(self.inner, other.inner) }, self.cpu)
+    }
+
+    /// XOR this [`Vec128`] with either another [`Vec128`] or a `u8`.
+    #[inline(always)]
+    fn xor(self, other: impl Operand128<u8, Neon>) -> Self {
+        let other = other.into_vec128(self.cpu);
+        // SAFETY: `Vec128` type guarantees platform supports Neon
+        Self::new(unsafe { veorq_u8(self.inner, other.inner) }, self.cpu)
+    }
+
+    // ----------------------------------------
+    // Arithmetic ops
+    // ----------------------------------------
+
+    /// Add either another [`Vec128`] or a `u8` to every byte of this [`Vec128`],
+    /// wrapping on overflow.
+    #[inline(always)]
+    fn add_u8(self, other: impl Operand128<u8, Neon>) -> Self {
+        let other = other.into_vec128(self.cpu);
+        // SAFETY: `Vec128` type guarantees platform supports Neon
+        Self::new(unsafe { vaddq_u8(self.inner, other.inner) }, self.cpu)
+    }
+
+    /// Add either another [`Vec128`] or a `u8` to every byte of this [`Vec128`],
+    /// stopping at 255.
+    #[inline(always)]
+    fn saturating_add_u8(self, other: impl Operand128<u8, Neon>) -> Self {
+        let other = other.into_vec128(self.cpu);
+        // SAFETY: `Vec128` type guarantees platform supports Neon
+        Self::new(unsafe { vqaddq_u8(self.inner, other.inner) }, self.cpu)
+    }
+
+    /// Subtract either another [`Vec128`] or a `u8` from every byte of this [`Vec128`],
+    /// wrapping on overflow.
+    #[inline(always)]
+    fn sub_u8(self, other: impl Operand128<u8, Neon>) -> Self {
+        let other = other.into_vec128(self.cpu);
+        // SAFETY: `Vec128` type guarantees platform supports Neon
+        Self::new(unsafe { vsubq_u8(self.inner, other.inner) }, self.cpu)
+    }
+
+    /// Subtract either another [`Vec128`] or a `u8` from every byte of this [`Vec128`],
+    /// stopping at 0.
+    #[inline(always)]
+    fn saturating_sub_u8(self, other: impl Operand128<u8, Neon>) -> Self {
+        let other = other.into_vec128(self.cpu);
+        // SAFETY: `Vec128` type guarantees platform supports Neon
+        Self::new(unsafe { vqsubq_u8(self.inner, other.inner) }, self.cpu)
+    }
+
+    // ----------------------------------------
+    // Comparison
+    // ----------------------------------------
+
+    /// Compare every byte of this [`Vec128`] to either another [`Vec128`] or a `u8`.
+    ///
+    /// Each byte of the result is `0xFF` if the bytes are equal, otherwise `0x00`.
+    #[inline(always)]
+    fn eq_u8(self, other: impl Operand128<u8, Neon>) -> Self {
+        let other = other.into_vec128(self.cpu);
+        // SAFETY: `Vec128` type guarantees platform supports Neon
+        Self::new(unsafe { vceqq_u8(self.inner, other.inner) }, self.cpu)
+    }
+
+    /// Check if every byte of this [`Vec128`] equals either another [`Vec128`] or a `u8`.
+    #[inline(always)]
+    fn all_eq_u8(self, other: impl Operand128<u8, Neon>) -> bool {
+        self.xor(other).is_zero()
+    }
+
+    /// Compare every byte of this [`Vec128`] to `other`, as signed integers.
+    /// `other` is either an `i8`, or another [`Vec128`] to compare byte by byte.
+    ///
+    /// Each byte of the result is `0xFF` if the byte in `self` is less, otherwise `0x00`.
+    #[inline(always)]
+    fn lt_i8(self, other: impl Operand128<i8, Neon>) -> Self {
+        other.into_vec128(self.cpu).gt_i8(self)
+    }
+
+    /// Compare every byte of this [`Vec128`] to `other`, as signed integers.
+    /// `other` is either an `i8`, or another [`Vec128`] to compare byte by byte.
+    ///
+    /// Each byte of the result is `0xFF` if the byte in `self` is greater, otherwise `0x00`.
+    #[inline(always)]
+    fn gt_i8(self, other: impl Operand128<i8, Neon>) -> Self {
+        let other = other.into_vec128(self.cpu);
+        let (left, right) = (self.inner, other.inner);
+        // SAFETY: `Vec128` type guarantees platform supports Neon
+        let result = unsafe { vcgtq_s8(vreinterpretq_s8_u8(left), vreinterpretq_s8_u8(right)) };
+        Self::new(result, self.cpu)
+    }
+
+    // ----------------------------------------
+    // Bytewise ops
+    // ----------------------------------------
+
+    /// Shift the whole of this [`Vec128`] right by `BYTES` bytes, filling with zeros.
+    ///
+    /// Byte `N` moves to byte 0.
+    #[inline(always)]
+    fn shr_bytes<const BYTES: i32>(self) -> Self {
+        let zero = Self::zero(self.cpu);
+        // SAFETY: `Vec128` type guarantees platform supports Neon
+        Self::new(unsafe { vextq_u8::<BYTES>(self.inner, zero.inner) }, self.cpu)
+    }
+
+    /// Rearrange the bytes of this [`Vec128`].
+    ///
+    /// For each byte `i`:
+    ///
+    /// * If `control[i]` is 16 or more, `result[i]` is 0.
+    /// * Otherwise, `result[i]` is `self[control[i]]`.
+    ///
+    /// Often used as a 16-entry lookup table, with `self` as the table.
+    #[inline(always)]
+    fn shuffle_u8s(self, control: Self) -> Self {
+        // SAFETY: `Vec128` type guarantees platform supports Neon
+        Self::new(unsafe { vqtbl1q_u8(self.inner, control.inner) }, self.cpu)
+    }
+
+    /// Combine the bits of this [`Vec128`] and either another [`Vec128`] or a `u8`.
+    ///
+    /// Each bit of the result comes from `other` if the same bit of `mask` is set,
+    /// otherwise from `self`.
+    #[inline(always)]
+    fn blend(self, other: impl Operand128<u8, Neon>, mask: Self) -> Self {
+        let other = other.into_vec128(self.cpu);
+        // SAFETY: `Vec128` type guarantees platform supports Neon
+        Self::new(unsafe { vbslq_u8(mask.inner, other.inner, self.inner) }, self.cpu)
+    }
+
+    // ----------------------------------------
+    // `u64`-wise ops
+    // ----------------------------------------
+
+    /// Get one of the 2 `u64`s of this [`Vec128`].
+    ///
+    /// `INDEX` is 0 for the low 8 bytes, or 1 for the high 8 bytes.
+    #[inline(always)]
+    fn get_u64<const INDEX: i32>(self) -> u64 {
+        // SAFETY: `Vec128` type guarantees platform supports Neon
+        unsafe { vgetq_lane_u64::<INDEX>(vreinterpretq_u64_u8(self.inner)) }
+    }
+}
+
+/// Methods which are specific to this architecture.
+impl Vec128<Neon> {
     /// Shift each of the 16 bytes of this [`Vec128`] left by `BITS` bits.
     #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
@@ -191,73 +385,6 @@ impl Vec128<Neon> {
         Self::new(unsafe { vshrq_n_u8::<BITS>(self.inner) }, self.cpu)
     }
 
-    /// AND this [`Vec128`] with either another [`Vec128`] or a `u8`.
-    #[inline(always)]
-    pub fn and(self, other: impl Operand128<u8>) -> Self {
-        let other = other.into_vec128(self.cpu);
-        // SAFETY: `Vec128` type guarantees platform supports Neon
-        Self::new(unsafe { vandq_u8(self.inner, other.inner) }, self.cpu)
-    }
-
-    /// OR this [`Vec128`] with either another [`Vec128`] or a `u8`.
-    #[inline(always)]
-    pub fn or(self, other: impl Operand128<u8>) -> Self {
-        let other = other.into_vec128(self.cpu);
-        // SAFETY: `Vec128` type guarantees platform supports Neon
-        Self::new(unsafe { vorrq_u8(self.inner, other.inner) }, self.cpu)
-    }
-
-    /// XOR this [`Vec128`] with either another [`Vec128`] or a `u8`.
-    #[inline(always)]
-    pub fn xor(self, other: impl Operand128<u8>) -> Self {
-        let other = other.into_vec128(self.cpu);
-        // SAFETY: `Vec128` type guarantees platform supports Neon
-        Self::new(unsafe { veorq_u8(self.inner, other.inner) }, self.cpu)
-    }
-}
-
-/// Arithmetic ops.
-impl Vec128<Neon> {
-    /// Add either another [`Vec128`] or a `u8` to every byte of this [`Vec128`],
-    /// wrapping on overflow.
-    #[cfg_attr(not(test), expect(dead_code))]
-    #[inline(always)]
-    pub fn add_u8(self, other: impl Operand128<u8>) -> Self {
-        let other = other.into_vec128(self.cpu);
-        // SAFETY: `Vec128` type guarantees platform supports Neon
-        Self::new(unsafe { vaddq_u8(self.inner, other.inner) }, self.cpu)
-    }
-
-    /// Add either another [`Vec128`] or a `u8` to every byte of this [`Vec128`],
-    /// stopping at 255.
-    #[cfg_attr(not(test), expect(dead_code))]
-    #[inline(always)]
-    pub fn saturating_add_u8(self, other: impl Operand128<u8>) -> Self {
-        let other = other.into_vec128(self.cpu);
-        // SAFETY: `Vec128` type guarantees platform supports Neon
-        Self::new(unsafe { vqaddq_u8(self.inner, other.inner) }, self.cpu)
-    }
-
-    /// Subtract either another [`Vec128`] or a `u8` from every byte of this [`Vec128`],
-    /// wrapping on overflow.
-    #[cfg_attr(not(test), expect(dead_code))]
-    #[inline(always)]
-    pub fn sub_u8(self, other: impl Operand128<u8>) -> Self {
-        let other = other.into_vec128(self.cpu);
-        // SAFETY: `Vec128` type guarantees platform supports Neon
-        Self::new(unsafe { vsubq_u8(self.inner, other.inner) }, self.cpu)
-    }
-
-    /// Subtract either another [`Vec128`] or a `u8` from every byte of this [`Vec128`],
-    /// stopping at 0.
-    #[cfg_attr(not(test), expect(dead_code))]
-    #[inline(always)]
-    pub fn saturating_sub_u8(self, other: impl Operand128<u8>) -> Self {
-        let other = other.into_vec128(self.cpu);
-        // SAFETY: `Vec128` type guarantees platform supports Neon
-        Self::new(unsafe { vqsubq_u8(self.inner, other.inner) }, self.cpu)
-    }
-
     /// Add adjacent pairs of bytes in this [`Vec128`] and `other`, wrapping on overflow.
     ///
     /// The result is `[s0 + s1, s2 + s3, .., s14 + s15, o0 + o1, o2 + o3, .., o14 + o15]`,
@@ -267,116 +394,14 @@ impl Vec128<Neon> {
         // SAFETY: `Vec128` type guarantees platform supports Neon
         Self::new(unsafe { vpaddq_u8(self.inner, other.inner) }, self.cpu)
     }
-}
-
-/// Comparison.
-impl Vec128<Neon> {
-    /// Compare every byte of this [`Vec128`] to either another [`Vec128`] or a `u8`.
-    ///
-    /// Each byte of the result is `0xFF` if the bytes are equal, otherwise `0x00`.
-    #[inline(always)]
-    pub fn eq_u8(self, other: impl Operand128<u8>) -> Self {
-        let other = other.into_vec128(self.cpu);
-        // SAFETY: `Vec128` type guarantees platform supports Neon
-        Self::new(unsafe { vceqq_u8(self.inner, other.inner) }, self.cpu)
-    }
-
-    /// Check if every byte of this [`Vec128`] equals either another [`Vec128`] or a `u8`.
-    #[inline(always)]
-    pub fn all_eq_u8(self, other: impl Operand128<u8>) -> bool {
-        self.xor(other).is_zero()
-    }
 
     /// Check every byte of this [`Vec128`] against either another [`Vec128`] or a `u8`.
     ///
     /// Each byte of the result is `0xFF` if the bytes share any set bits, otherwise `0x00`.
     #[inline(always)]
-    pub fn test_u8(self, other: impl Operand128<u8>) -> Self {
+    pub fn test_u8(self, other: impl Operand128<u8, Neon>) -> Self {
         let other = other.into_vec128(self.cpu);
         // SAFETY: `Vec128` type guarantees platform supports Neon
         Self::new(unsafe { vtstq_u8(self.inner, other.inner) }, self.cpu)
-    }
-
-    /// Compare every byte of this [`Vec128`] to `other`, as signed integers.
-    /// `other` is either an `i8`, or another [`Vec128`] to compare byte by byte.
-    ///
-    /// Each byte of the result is `0xFF` if the byte in `self` is less, otherwise `0x00`.
-    #[inline(always)]
-    pub fn lt_i8(self, other: impl Operand128<i8>) -> Self {
-        other.into_vec128(self.cpu).gt_i8(self)
-    }
-
-    /// Compare every byte of this [`Vec128`] to `other`, as signed integers.
-    /// `other` is either an `i8`, or another [`Vec128`] to compare byte by byte.
-    ///
-    /// Each byte of the result is `0xFF` if the byte in `self` is greater, otherwise `0x00`.
-    #[inline(always)]
-    pub fn gt_i8(self, other: impl Operand128<i8>) -> Self {
-        let other = other.into_vec128(self.cpu);
-        let (left, right) = (self.inner, other.inner);
-        // SAFETY: `Vec128` type guarantees platform supports Neon
-        let result = unsafe { vcgtq_s8(vreinterpretq_s8_u8(left), vreinterpretq_s8_u8(right)) };
-        Self::new(result, self.cpu)
-    }
-}
-
-/// Bytewise ops.
-impl Vec128<Neon> {
-    /// Shift the whole of this [`Vec128`] right by `BYTES` bytes, filling with zeros.
-    ///
-    /// Byte `N` moves to byte 0.
-    #[cfg_attr(not(test), expect(dead_code))]
-    #[inline(always)]
-    pub fn shr_bytes<const BYTES: i32>(self) -> Self {
-        let zero = Self::zero(self.cpu);
-        // SAFETY: `Vec128` type guarantees platform supports Neon
-        Self::new(unsafe { vextq_u8::<BYTES>(self.inner, zero.inner) }, self.cpu)
-    }
-
-    /// Rearrange the bytes of this [`Vec128`].
-    ///
-    /// For each byte `i`:
-    ///
-    /// * If `control[i]` is 16 or more, `result[i]` is 0.
-    /// * Otherwise, `result[i]` is `self[control[i]]`.
-    ///
-    /// Often used as a 16-entry lookup table, with `self` as the table.
-    #[inline(always)]
-    pub fn shuffle_u8s(self, control: Self) -> Self {
-        // SAFETY: `Vec128` type guarantees platform supports Neon
-        Self::new(unsafe { vqtbl1q_u8(self.inner, control.inner) }, self.cpu)
-    }
-
-    /// Combine the bits of this [`Vec128`] and either another [`Vec128`] or a `u8`.
-    ///
-    /// Each bit of the result comes from `other` if the same bit of `mask` is set,
-    /// otherwise from `self`.
-    #[inline(always)]
-    pub fn blend(self, other: impl Operand128<u8>, mask: Self) -> Self {
-        let other = other.into_vec128(self.cpu);
-        // SAFETY: `Vec128` type guarantees platform supports Neon
-        Self::new(unsafe { vbslq_u8(mask.inner, other.inner, self.inner) }, self.cpu)
-    }
-}
-
-/// `u64`-wise ops.
-impl Vec128<Neon> {
-    /// Get one of the 2 `u64`s of this [`Vec128`].
-    ///
-    /// `INDEX` is 0 for the low 8 bytes, or 1 for the high 8 bytes.
-    #[inline(always)]
-    pub fn get_u64<const INDEX: i32>(self) -> u64 {
-        // SAFETY: `Vec128` type guarantees platform supports Neon
-        unsafe { vgetq_lane_u64::<INDEX>(vreinterpretq_u64_u8(self.inner)) }
-    }
-}
-
-impl Vec128Impl for Vec128<Neon> {
-    type Cpu = Neon;
-
-    #[inline(always)]
-    fn read(data: &VecData128, cpu: Neon) -> Self {
-        // Inherent methods take priority, so this calls `Vec128::read` above, not itself
-        Vec128::read(data, cpu)
     }
 }

@@ -1,5 +1,7 @@
 //! Methods of `Vec128<Avx2>`, which wraps an [`__m128i`].
 //!
+//! Implements [`Vec128Impl`], and has the methods which only AVX2 has.
+//!
 //! These are 128-bit operations, so the intrinsics are from SSE2 to SSE4.1,
 //! which every CPU with AVX2 supports.
 //!
@@ -21,48 +23,59 @@ use crate::{
     },
 };
 
-/// Creation methods.
 impl Vec128<Avx2> {
     /// Create a [`Vec128`] wrapping an [`__m128i`].
     ///
-    /// Internal method only.
+    /// Internal method only. `pub(super)` so `Vec256` methods can use it.
     #[inline(always)]
-    fn new(inner: __m128i, cpu: Avx2) -> Self {
+    pub(super) fn new(inner: __m128i, cpu: Avx2) -> Self {
         Self { inner, cpu }
     }
+}
 
-    /// Get [`Avx2`] token from this [`Vec128`].
-    #[expect(dead_code)]
-    #[inline(always)]
-    pub fn cpu(self) -> Avx2 {
-        self.cpu
-    }
+impl Vec128Impl for Vec128<Avx2> {
+    type Cpu = Avx2;
+    type Inner = __m128i;
+
+    // ----------------------------------------
+    // Creation methods
+    // ----------------------------------------
 
     /// Create a [`Vec128`] with all bits zero.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
-    pub fn zero(cpu: Avx2) -> Self {
+    fn zero(cpu: Avx2) -> Self {
         // SAFETY: `Avx2` type guarantees platform supports AVX2, which includes SSE2
         Self::new(unsafe { _mm_setzero_si128() }, cpu)
     }
 
     /// Create a [`Vec128`] by repeating `n` 16 times.
     #[inline(always)]
-    pub fn splat(n: u8, cpu: Avx2) -> Self {
+    fn splat(n: u8, cpu: Avx2) -> Self {
         // SAFETY: `Avx2` type guarantees platform supports AVX2, which includes SSE2
         Self::new(unsafe { _mm_set1_epi8(n.cast_signed()) }, cpu)
     }
 
     /// Create a [`Vec128`] by repeating `n` 4 times.
     #[inline(always)]
-    pub fn splat_u32(n: u32, cpu: Avx2) -> Self {
+    fn splat_u32(n: u32, cpu: Avx2) -> Self {
         // SAFETY: `Avx2` type guarantees platform supports AVX2, which includes SSE2
         Self::new(unsafe { _mm_set1_epi32(n.cast_signed()) }, cpu)
     }
-}
 
-/// Loads and stores.
-impl Vec128<Avx2> {
+    // ----------------------------------------
+    // Accessors
+    // ----------------------------------------
+
+    /// Get [`Avx2`] token from this [`Vec128`].
+    #[inline(always)]
+    fn cpu(self) -> Avx2 {
+        self.cpu
+    }
+
+    // ----------------------------------------
+    // Loads and stores
+    // ----------------------------------------
+
     /// Read a [`Vec128`] at pointer `ptr`, which must be aligned.
     ///
     /// # SAFETY
@@ -70,7 +83,7 @@ impl Vec128<Avx2> {
     /// * `ptr` must be valid for reading 16 bytes.
     /// * `ptr` must be aligned on 16.
     #[inline(always)]
-    pub unsafe fn load(ptr: *const u8, cpu: Avx2) -> Self {
+    unsafe fn load(ptr: *const u8, cpu: Avx2) -> Self {
         #[expect(clippy::cast_ptr_alignment, reason = "caller guarantees `ptr` is aligned")]
         let ptr = ptr.cast::<__m128i>();
 
@@ -85,7 +98,7 @@ impl Vec128<Avx2> {
     ///
     /// `ptr` must be valid for reading 16 bytes.
     #[inline(always)]
-    pub unsafe fn load_unaligned(ptr: *const u8, cpu: Avx2) -> Self {
+    unsafe fn load_unaligned(ptr: *const u8, cpu: Avx2) -> Self {
         #[expect(clippy::cast_ptr_alignment, reason = "intrinsic doesn't require alignment")]
         let ptr = ptr.cast::<__m128i>();
 
@@ -101,7 +114,7 @@ impl Vec128<Avx2> {
     ///
     /// `ptr` must be valid for reading 8 bytes.
     #[inline(always)]
-    pub unsafe fn load_low_unaligned(ptr: *const u8, cpu: Avx2) -> Self {
+    unsafe fn load_low_unaligned(ptr: *const u8, cpu: Avx2) -> Self {
         #[expect(clippy::cast_ptr_alignment, reason = "intrinsic doesn't require alignment")]
         let ptr = ptr.cast::<__m128i>();
 
@@ -112,7 +125,7 @@ impl Vec128<Avx2> {
 
     /// Read a [`Vec128`] from a [`VecData128`], which is aligned on 16.
     #[inline(always)]
-    pub fn read(data: &VecData128, cpu: Avx2) -> Self {
+    fn read(data: &VecData128, cpu: Avx2) -> Self {
         // SAFETY: `VecData128` guarantees `data.as_ptr()`
         // is valid for aligned reads of 16 bytes
         unsafe { Self::load(data.as_ptr(), cpu) }
@@ -123,7 +136,7 @@ impl Vec128<Avx2> {
     /// `slice` can be any slice of integers which is 16 bytes in total
     /// (e.g. `&[u8; 16]`, `&[i64; 2]`).
     #[inline(always)]
-    pub fn read_unaligned(slice: &impl IntArray128, cpu: Avx2) -> Self {
+    fn read_unaligned(slice: &impl IntArray128, cpu: Avx2) -> Self {
         // SAFETY: `IntArray128` guarantees `slice.as_ptr()`
         // is valid for unaligned reads of 16 bytes
         unsafe { Self::load_unaligned(slice.as_ptr(), cpu) }
@@ -135,7 +148,7 @@ impl Vec128<Avx2> {
     /// `slice` can be any slice of integers which is 8 bytes in total
     /// (e.g. `&[u8; 8]`, `&[i32; 2]`).
     #[inline(always)]
-    pub fn read_low_unaligned(slice: &impl IntArray64, cpu: Avx2) -> Self {
+    fn read_low_unaligned(slice: &impl IntArray64, cpu: Avx2) -> Self {
         // SAFETY: `IntArray64` guarantees `slice.as_ptr()`
         // is valid for unaligned reads of 8 bytes
         unsafe { Self::load_low_unaligned(slice.as_ptr(), cpu) }
@@ -147,9 +160,8 @@ impl Vec128<Avx2> {
     ///
     /// * `ptr` must be valid for writing 16 bytes.
     /// * `ptr` must be aligned on 16.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
-    pub unsafe fn store(self, ptr: *mut u8) {
+    unsafe fn store(self, ptr: *mut u8) {
         #[expect(clippy::cast_ptr_alignment, reason = "caller guarantees `ptr` is aligned")]
         let ptr = ptr.cast::<__m128i>();
 
@@ -164,7 +176,7 @@ impl Vec128<Avx2> {
     ///
     /// `ptr` must be valid for writing 16 bytes.
     #[inline(always)]
-    pub unsafe fn store_unaligned(self, ptr: *mut u8) {
+    unsafe fn store_unaligned(self, ptr: *mut u8) {
         #[expect(clippy::cast_ptr_alignment, reason = "intrinsic doesn't require alignment")]
         let ptr = ptr.cast::<__m128i>();
 
@@ -179,7 +191,7 @@ impl Vec128<Avx2> {
     ///
     /// `ptr` must be valid for writing 8 bytes.
     #[inline(always)]
-    pub unsafe fn store_low_unaligned(self, ptr: *mut u8) {
+    unsafe fn store_low_unaligned(self, ptr: *mut u8) {
         #[expect(clippy::cast_ptr_alignment, reason = "intrinsic doesn't require alignment")]
         let ptr = ptr.cast::<__m128i>();
 
@@ -189,42 +201,33 @@ impl Vec128<Avx2> {
     }
 
     /// Write a [`Vec128`] into a [`VecData128`], which is aligned on 16.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
-    pub fn write(self, dst: &mut VecData128) {
+    fn write(self, dst: &mut VecData128) {
         // SAFETY: `VecData128` guarantees `dst.as_mut_ptr()`
         // is valid for aligned writes of 16 bytes
         unsafe { self.store(dst.as_mut_ptr()) }
     }
-}
 
-/// Bitwise ops.
-impl Vec128<Avx2> {
-    /// Gather the top bit of each byte of this [`Vec128`] into a 16-bit mask.
-    ///
-    /// Bit N of the result is the top bit of byte N. Bits 16-31 of the result are zero.
-    #[inline(always)]
-    pub fn movemask(self) -> u32 {
-        // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE2
-        unsafe { _mm_movemask_epi8(self.inner).cast_unsigned() }
-    }
+    // ----------------------------------------
+    // Bitwise ops
+    // ----------------------------------------
 
     /// Check if all the bits of this [`Vec128`] are zero.
     #[inline(always)]
-    pub fn is_zero(self) -> bool {
+    fn is_zero(self) -> bool {
         // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE4.1
         unsafe { _mm_testz_si128(self.inner, self.inner) != 0 }
     }
 
     /// Invert all the bits of this [`Vec128`].
     #[inline(always)]
-    pub fn not(self) -> Self {
+    fn not(self) -> Self {
         self.xor(Self::splat(0xFF, self.cpu))
     }
 
     /// AND this [`Vec128`] with either another [`Vec128`] or a `u8`.
     #[inline(always)]
-    pub fn and(self, other: impl Operand128<u8>) -> Self {
+    fn and(self, other: impl Operand128<u8, Avx2>) -> Self {
         let other = other.into_vec128(self.cpu);
         // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE2
         Self::new(unsafe { _mm_and_si128(self.inner, other.inner) }, self.cpu)
@@ -232,7 +235,7 @@ impl Vec128<Avx2> {
 
     /// OR this [`Vec128`] with either another [`Vec128`] or a `u8`.
     #[inline(always)]
-    pub fn or(self, other: impl Operand128<u8>) -> Self {
+    fn or(self, other: impl Operand128<u8, Avx2>) -> Self {
         let other = other.into_vec128(self.cpu);
         // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE2
         Self::new(unsafe { _mm_or_si128(self.inner, other.inner) }, self.cpu)
@@ -240,20 +243,20 @@ impl Vec128<Avx2> {
 
     /// XOR this [`Vec128`] with either another [`Vec128`] or a `u8`.
     #[inline(always)]
-    pub fn xor(self, other: impl Operand128<u8>) -> Self {
+    fn xor(self, other: impl Operand128<u8, Avx2>) -> Self {
         let other = other.into_vec128(self.cpu);
         // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE2
         Self::new(unsafe { _mm_xor_si128(self.inner, other.inner) }, self.cpu)
     }
-}
 
-/// Arithmetic ops.
-impl Vec128<Avx2> {
+    // ----------------------------------------
+    // Arithmetic ops
+    // ----------------------------------------
+
     /// Add either another [`Vec128`] or a `u8` to every byte of this [`Vec128`],
     /// wrapping on overflow.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
-    pub fn add_u8(self, other: impl Operand128<u8>) -> Self {
+    fn add_u8(self, other: impl Operand128<u8, Avx2>) -> Self {
         let other = other.into_vec128(self.cpu);
         // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE2
         Self::new(unsafe { _mm_add_epi8(self.inner, other.inner) }, self.cpu)
@@ -261,9 +264,8 @@ impl Vec128<Avx2> {
 
     /// Add either another [`Vec128`] or a `u8` to every byte of this [`Vec128`],
     /// stopping at 255.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
-    pub fn saturating_add_u8(self, other: impl Operand128<u8>) -> Self {
+    fn saturating_add_u8(self, other: impl Operand128<u8, Avx2>) -> Self {
         let other = other.into_vec128(self.cpu);
         // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE2
         Self::new(unsafe { _mm_adds_epu8(self.inner, other.inner) }, self.cpu)
@@ -272,7 +274,7 @@ impl Vec128<Avx2> {
     /// Subtract either another [`Vec128`] or a `u8` from every byte of this [`Vec128`],
     /// wrapping on overflow.
     #[inline(always)]
-    pub fn sub_u8(self, other: impl Operand128<u8>) -> Self {
+    fn sub_u8(self, other: impl Operand128<u8, Avx2>) -> Self {
         let other = other.into_vec128(self.cpu);
         // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE2
         Self::new(unsafe { _mm_sub_epi8(self.inner, other.inner) }, self.cpu)
@@ -281,20 +283,21 @@ impl Vec128<Avx2> {
     /// Subtract either another [`Vec128`] or a `u8` from every byte of this [`Vec128`],
     /// stopping at 0.
     #[inline(always)]
-    pub fn saturating_sub_u8(self, other: impl Operand128<u8>) -> Self {
+    fn saturating_sub_u8(self, other: impl Operand128<u8, Avx2>) -> Self {
         let other = other.into_vec128(self.cpu);
         // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE2
         Self::new(unsafe { _mm_subs_epu8(self.inner, other.inner) }, self.cpu)
     }
-}
 
-/// Comparison.
-impl Vec128<Avx2> {
+    // ----------------------------------------
+    // Comparison
+    // ----------------------------------------
+
     /// Compare every byte of this [`Vec128`] to either another [`Vec128`] or a `u8`.
     ///
     /// Each byte of the result is `0xFF` if the bytes are equal, otherwise `0x00`.
     #[inline(always)]
-    pub fn eq_u8(self, other: impl Operand128<u8>) -> Self {
+    fn eq_u8(self, other: impl Operand128<u8, Avx2>) -> Self {
         let other = other.into_vec128(self.cpu);
         // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE2
         Self::new(unsafe { _mm_cmpeq_epi8(self.inner, other.inner) }, self.cpu)
@@ -302,7 +305,7 @@ impl Vec128<Avx2> {
 
     /// Check if every byte of this [`Vec128`] equals either another [`Vec128`] or a `u8`.
     #[inline(always)]
-    pub fn all_eq_u8(self, other: impl Operand128<u8>) -> bool {
+    fn all_eq_u8(self, other: impl Operand128<u8, Avx2>) -> bool {
         self.xor(other).is_zero()
     }
 
@@ -310,9 +313,8 @@ impl Vec128<Avx2> {
     /// `other` is either an `i8`, or another [`Vec128`] to compare byte by byte.
     ///
     /// Each byte of the result is `0xFF` if the byte in `self` is less, otherwise `0x00`.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
-    pub fn lt_i8(self, other: impl Operand128<i8>) -> Self {
+    fn lt_i8(self, other: impl Operand128<i8, Avx2>) -> Self {
         other.into_vec128(self.cpu).gt_i8(self)
     }
 
@@ -321,20 +323,21 @@ impl Vec128<Avx2> {
     ///
     /// Each byte of the result is `0xFF` if the byte in `self` is greater, otherwise `0x00`.
     #[inline(always)]
-    pub fn gt_i8(self, other: impl Operand128<i8>) -> Self {
+    fn gt_i8(self, other: impl Operand128<i8, Avx2>) -> Self {
         let other = other.into_vec128(self.cpu);
         // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE2
         Self::new(unsafe { _mm_cmpgt_epi8(self.inner, other.inner) }, self.cpu)
     }
-}
 
-/// Bytewise ops.
-impl Vec128<Avx2> {
+    // ----------------------------------------
+    // Bytewise ops
+    // ----------------------------------------
+
     /// Shift the whole of this [`Vec128`] right by `BYTES` bytes, filling with zeros.
     ///
     /// Byte `N` moves to byte 0.
     #[inline(always)]
-    pub fn shr_bytes<const BYTES: i32>(self) -> Self {
+    fn shr_bytes<const BYTES: i32>(self) -> Self {
         // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE2
         Self::new(unsafe { _mm_srli_si128::<BYTES>(self.inner) }, self.cpu)
     }
@@ -346,7 +349,7 @@ impl Vec128<Avx2> {
     /// * If the top bit of `control[i]` is set, `result[i]` is 0.
     /// * Otherwise, `result[i]` is `self[control[i] & 0x0F]`.
     #[inline(always)]
-    pub fn shuffle_u8s(self, control: Self) -> Self {
+    fn shuffle_u8s(self, control: Self) -> Self {
         // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSSE3
         Self::new(unsafe { _mm_shuffle_epi8(self.inner, control.inner) }, self.cpu)
     }
@@ -355,21 +358,35 @@ impl Vec128<Avx2> {
     ///
     /// Each byte of the result comes from `other` if the top bit of the same byte of `mask` is set,
     /// otherwise from `self`. Other bits of `mask` are ignored.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
-    pub fn blend(self, other: impl Operand128<u8>, mask: Self) -> Self {
+    fn blend(self, other: impl Operand128<u8, Avx2>, mask: Self) -> Self {
         let other = other.into_vec128(self.cpu);
         // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE4.1
         Self::new(unsafe { _mm_blendv_epi8(self.inner, other.inner, mask.inner) }, self.cpu)
     }
+
+    // ----------------------------------------
+    // `u64`-wise ops
+    // ----------------------------------------
+
+    /// Get one of the 2 `u64`s of this [`Vec128`].
+    ///
+    /// `INDEX` is 0 for the low 8 bytes, or 1 for the high 8 bytes.
+    #[inline(always)]
+    fn get_u64<const INDEX: i32>(self) -> u64 {
+        // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE4.1
+        unsafe { _mm_extract_epi64::<INDEX>(self.inner).cast_unsigned() }
+    }
 }
 
-impl Vec128Impl for Vec128<Avx2> {
-    type Cpu = Avx2;
-
+/// Methods which are specific to this architecture.
+impl Vec128<Avx2> {
+    /// Gather the top bit of each byte of this [`Vec128`] into a 16-bit mask.
+    ///
+    /// Bit N of the result is the top bit of byte N. Bits 16-31 of the result are zero.
     #[inline(always)]
-    fn read(data: &VecData128, cpu: Avx2) -> Self {
-        // Inherent methods take priority, so this calls `Vec128::read` above, not itself
-        Vec128::read(data, cpu)
+    pub fn movemask(self) -> u32 {
+        // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE2
+        unsafe { _mm_movemask_epi8(self.inner).cast_unsigned() }
     }
 }

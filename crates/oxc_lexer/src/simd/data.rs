@@ -103,7 +103,6 @@ impl VecData128 {
     /// Get a `*mut u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for aligned writes of 16 bytes.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub const fn as_mut_ptr(&mut self) -> *mut u8 {
         self.0.as_mut_ptr()
@@ -223,7 +222,6 @@ impl VecData256 {
     /// Get a `*mut u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for aligned writes of 32 bytes.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub const fn as_mut_ptr(&mut self) -> *mut u8 {
         self.0.as_mut_ptr()
