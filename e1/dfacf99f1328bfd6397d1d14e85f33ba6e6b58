@@ -1,0 +1,19 @@
+crates/oxc_linter/src/tsgolint.rs
+  s_b86441561d7eef::t_c06cdcb42aa5c1 1355,1357-1363,1367,1369-1387,1391-1395,1397,1399,1414,1435-1439
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e1dfacf99f1328bfd6397d1d14e85f33ba6e6b58",
+  "prompts": {},
+  "sessions": {
+    "s_b86441561d7eef": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a112-4f8a-7f31-b40a-be29056cb45b",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
