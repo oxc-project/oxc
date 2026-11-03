@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/unicorn/no_zero_fractions.rs
+  s_33e172bf0ee6ac::t_9e89ee74a0c293 109-112,142-145,229-232
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8e16c07da18c511dcde1061c697aff6b09d0ba49",
+  "prompts": {},
+  "sessions": {
+    "s_33e172bf0ee6ac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a132-31a4-7b80-9789-f8396734b6c5",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
