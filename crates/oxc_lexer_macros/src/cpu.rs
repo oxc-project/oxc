@@ -27,7 +27,8 @@ impl Cpu {
 
     /// The feature set called `ident`, e.g. the `Avx2` in `#[cpu_version(Avx2)]`.
     pub fn from_ident(ident: &Ident) -> Option<Cpu> {
-        Cpu::ALL.into_iter().find(|cpu| ident == cpu.name())
+        let name = ident.to_string();
+        Cpu::ALL.into_iter().find(|cpu| cpu.name() == name)
     }
 
     /// Name of the type, and of the `DynCpu` variant.
