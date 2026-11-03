@@ -1,0 +1,25 @@
+Cargo.lock
+  s_858f11f6fce375::t_e69f97b66d569d 2276,2291
+Cargo.toml
+  s_858f11f6fce375::t_b1e97a0671296e 139-140
+crates/oxc_lexer/Cargo.toml
+  s_858f11f6fce375::t_cdef0364af9079 3
+crates/oxc_lexer_macros/Cargo.toml
+  s_858f11f6fce375::t_4ec4b9cfe6e275 3,11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c972d713d8d2152c49b5253621f85443c9de7523",
+  "prompts": {},
+  "sessions": {
+    "s_858f11f6fce375": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a094-c465-7f12-b878-ffbf3302025e",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
