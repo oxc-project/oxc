@@ -1,0 +1,19 @@
+crates/oxc_lexer/Cargo.toml
+  s_858f11f6fce375::t_a8b2449a219e99 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ca82ef9eeab398469f62a059e2092a01e577d974",
+  "prompts": {},
+  "sessions": {
+    "s_858f11f6fce375": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a094-c465-7f12-b878-ffbf3302025e",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
