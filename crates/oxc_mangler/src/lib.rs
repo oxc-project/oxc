@@ -535,8 +535,20 @@ impl<'a> Constraints<'a> {
         } else {
             (ArenaIdentHashSet::new_in(allocator), None)
         };
-        let (keep_name_names, keep_name_symbols) =
+        let (keep_name_names, mut keep_name_symbols) =
             collect_keep_name_symbols(options.keep_names, allocator, scoping, ast_nodes);
+        if let Some(kept) = &mut keep_name_symbols {
+            for (catch, outer) in scoping.catch_var_bindings() {
+                if kept.has_bit(catch.index()) {
+                    kept.set_bit(outer.index());
+                }
+            }
+            for (catch, outer) in scoping.catch_var_bindings() {
+                if kept.has_bit(outer.index()) {
+                    kept.set_bit(catch.index());
+                }
+            }
+        }
         let reserved = ArenaIdentHashSet::from_iter_in(
             options.reserved.iter().map(|name| Ident::from(name.as_str())),
             allocator,
@@ -612,10 +624,24 @@ impl<'a> SlotAssignment<'a> {
         let mut reusable_slots = ArenaVec::new_in(&allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
+        let mut catch_var_bindings =
+            ArenaVec::from_iter_in(scoping.catch_var_bindings(), &allocator);
+        catch_var_bindings
+            .sort_unstable_by_key(|&(catch, outer)| (scoping.symbol_scope_id(outer), catch));
+        let mut next_catch_var_binding = 0;
 
         // Walk down the scope tree and assign a slot number for each symbol. Doing it as a scope
         // walk (rather than a flat symbol loop) generates better code.
         for (scope_id, bindings) in scoping.iter_bindings() {
+            let first_catch_var_binding = next_catch_var_binding;
+            while catch_var_bindings
+                .get(next_catch_var_binding)
+                .is_some_and(|&(_, outer)| scoping.symbol_scope_id(outer) == scope_id)
+            {
+                next_catch_var_binding += 1;
+            }
+            let scope_catch_var_bindings =
+                &catch_var_bindings[first_catch_var_binding..next_catch_var_binding];
             if bindings.is_empty() {
                 continue;
             }
@@ -726,6 +752,38 @@ impl<'a> SlotAssignment<'a> {
                 }
             }
 
+            // A catch-local `var` also declares the enclosing binding. Its slot must stay
+            // live through the catch parameter's uses so intervening bindings cannot take it.
+            for &(catch, outer) in scope_catch_var_bindings {
+                let slot = slots[outer.index()];
+                if slot == SLOT_UNASSIGNED {
+                    continue;
+                }
+                let liveness = &mut slot_liveness[slot as usize];
+                let used_scope_ids = scoping
+                    .get_resolved_references(catch)
+                    .map(Reference::scope_id)
+                    .chain(
+                        scoping
+                            .symbol_redeclarations(catch)
+                            .iter()
+                            .map(|r| ast_nodes.get_node(r.declaration).scope_id()),
+                    )
+                    .chain([scoping.symbol_scope_id(catch)]);
+                for used_scope_id in used_scope_ids {
+                    for ancestor_id in scoping.scope_ancestors(used_scope_id) {
+                        let index = ancestor_id.index();
+                        if index == scope_id_index
+                            || ancestor_set.has_bit(index)
+                            || liveness.has_bit(index)
+                        {
+                            break;
+                        }
+                        liveness.set_bit(index);
+                    }
+                }
+            }
+
             // Repair an orphaned named-fn-expr name: a same-named body declaration
             // (`var foo`, parameter `foo`) overwrites the fn-expr's binding-map entry,
             // so the fn-expr symbol never appears in `bindings` and the main pass leaves
@@ -743,6 +801,14 @@ impl<'a> SlotAssignment<'a> {
                 && slots[shadower.index()] != SLOT_UNASSIGNED
             {
                 slots[id.symbol_id().index()] = slots[shadower.index()];
+            }
+        }
+
+        // The printed `var` must declare the enclosing binding's name as well as assign
+        // to the catch parameter. Unassigned outer slots preserve both original names.
+        for (catch, outer) in catch_var_bindings {
+            if slots[catch.index()] != SLOT_UNASSIGNED {
+                slots[catch.index()] = slots[outer.index()];
             }
         }
 

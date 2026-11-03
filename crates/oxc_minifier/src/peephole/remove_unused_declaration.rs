@@ -119,6 +119,12 @@ impl<'a> PeepholeOptimizations {
         match &decl.id {
             BindingPattern::BindingIdentifier(ident) => {
                 if let Some(symbol_id) = ident.symbol_id.get() {
+                    if kind.is_var()
+                        && let Some(outer) = ctx.scoping().catch_var_binding(symbol_id)
+                        && !Self::symbol_is_unused_by_count(outer, ctx)
+                    {
+                        return false;
+                    }
                     let is_unused = Self::symbol_is_unused_by_count(symbol_id, ctx)
                         || Self::self_recursive_function_declarator_is_unused(decl, symbol_id, ctx);
                     return is_unused && !Self::class_initializer_name_needs_to_be_kept(decl, ctx);

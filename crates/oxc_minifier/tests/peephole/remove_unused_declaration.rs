@@ -6,6 +6,25 @@ use crate::{
     test_same_options, test_same_options_source_type, test_same_smallest, test_smallest,
 };
 
+#[test]
+fn catch_var_preserves_enclosing_binding() {
+    for source in [
+        "function f() { try { throw 0 } catch (y) { var y = 1 } return y } use(f);",
+        "function f(y) { try { throw 0 } catch (y) { var y = 1 } return y } use(f);",
+        "function f() { try { throw 0 } catch (y) { var [y] = value } return y } use(f);",
+    ] {
+        test_same_smallest(source);
+    }
+    test_smallest(
+        "function f() { while (false) { try {} catch (y) { var y = 1 } } return y } use(f);",
+        "function f() { var y; return y } use(f);",
+    );
+    test_smallest(
+        "function f() { return y; try {} catch (y) { var y = 1 } } use(f);",
+        "function f() { return y; var y } use(f);",
+    );
+}
+
 // Leak regression: dropping an unused declarator must walk the whole
 // declarator, not just the init — references can also live in the binding's
 // TS type annotation (e.g. computed keys in a type literal). A leaked type

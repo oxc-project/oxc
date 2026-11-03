@@ -1,0 +1,27 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-unused-vars): Variable 'e' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:48]
+ 1 │ function f() { try { throw 0 } catch (e) { var e = 1; console.log(e) } } f();
+   ·                                                ┬
+   ·                                                ╰── 'e' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
+   ╭─[no_unused_vars.tsx:1:39]
+ 1 │ function f() { try { throw 0 } catch (e) { var e = 1 } return e } f();
+   ·                                       ┬
+   ·                                       ╰── 'e' is declared here
+   ╰────
+  help: Consider handling this error.
+
+  ⚠ eslint(no-unused-vars): Variable 'e' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:49]
+ 1 │ function f() { try { throw 0 } catch (e) { var [e] = [1]; console.log(e) } } f();
+   ·                                                 ┬
+   ·                                                 ╰── 'e' is declared here
+   ╰────
+  help: Consider removing this declaration.
