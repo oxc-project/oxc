@@ -44,6 +44,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
         if kind.is_lexical() {
             self.id.bound_names(&mut |ident| {
+                builder.declare_annex_b_blocker(ident.name);
                 let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
                 ident.symbol_id.set(Some(symbol_id));
             });
@@ -101,6 +102,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                     builder.declare_symbol_on_scope(span, name, target_scope_id, includes, excludes)
                 });
                 ident.symbol_id.set(Some(symbol_id));
+                builder.declare_annex_b_var(target_scope_id, name);
 
                 // Finally, add the variable to all hoisted scopes
                 // to support redeclaration checks when declaring variables with the same name later.
@@ -133,6 +135,9 @@ impl<'a> Binder<'a> for Class<'a> {
             SymbolFlags::Class
         };
         let Some(ident) = &self.id else { return };
+        if self.is_declaration() {
+            builder.declare_annex_b_blocker(ident.name);
+        }
         let symbol_id =
             builder.declare_symbol(ident.span, ident.name, includes, SymbolFlags::ClassExcludes);
         ident.symbol_id.set(Some(symbol_id));
@@ -159,9 +164,15 @@ impl<'a> Binder<'a> for Function<'a> {
                 includes |= SymbolFlags::AsyncOrGeneratorFunction;
             }
 
+            // Annex B.3.3 places these in their own implicit block, so they neither conflict with
+            // nor hoist like declarations in the enclosing scope.
+            let is_if_statement_function = is_declaration
+                && !builder.source_type.is_typescript()
+                && is_function_decl_part_of_if_statement(self, builder);
+
             let excludes = if builder.source_type.is_typescript() {
                 SymbolFlags::FunctionExcludes
-            } else if is_declaration && is_function_decl_part_of_if_statement(self, builder) {
+            } else if is_if_statement_function {
                 SymbolFlags::empty()
             } else {
                 // `var x; function x() {}` is valid in non-strict mode, but `TypeScript`
@@ -170,10 +181,21 @@ impl<'a> Binder<'a> for Function<'a> {
                 SymbolFlags::FunctionExcludes - SymbolFlags::FunctionScopedVariable
             };
 
+            let scope_flags = builder.current_scope_flags();
+            let is_block_declaration =
+                is_declaration && !is_if_statement_function && !scope_flags.is_var();
+            if is_block_declaration {
+                builder.declare_annex_b_blocker(ident.name);
+            }
+
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
 
-            let scope_flags = builder.current_scope_flags();
+            if is_if_statement_function {
+                builder.declare_annex_b_if_statement_function(symbol_id);
+            } else if is_declaration && scope_flags.is_var() {
+                builder.declare_annex_b_var(builder.current_scope_id, ident.name);
+            }
 
             // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
             // scopes also create an implicit var-like binding in the enclosing function
@@ -186,22 +208,7 @@ impl<'a> Binder<'a> for Function<'a> {
                 && !scope_flags.is_strict_mode()
             // no Annex B in strict mode / modules
             {
-                let block_scope_id = builder.current_scope_id;
-                let var_scope_id = builder
-                    .scoping
-                    .scope_ancestors(block_scope_id)
-                    .skip(1)
-                    .find(|&id| builder.scoping.scope_flags(id).is_var());
-                if let Some(var_scope_id) = var_scope_id
-                    && !builder.scoping.scope_has_binding(var_scope_id, ident.name)
-                {
-                    builder.scoping.move_binding_by_symbol_id(
-                        block_scope_id,
-                        var_scope_id,
-                        symbol_id,
-                    );
-                    builder.hoisting_variables.insert((block_scope_id, ident.name), symbol_id);
-                }
+                builder.hoist_annex_b_function(ident.name, symbol_id);
             }
 
             // Save `@__NO_SIDE_EFFECTS__`

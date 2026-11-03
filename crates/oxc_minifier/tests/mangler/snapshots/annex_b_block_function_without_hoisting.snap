@@ -1,0 +1,122 @@
+---
+source: crates/oxc_minifier/tests/mangler/mod.rs
+---
+function _() { var x = 1; let g; { function g() {} } return x; }
+function _() {
+	var e = 1;
+	let t;
+	{
+		function t() {}
+	}
+	return e;
+}
+
+function _() { var x = 1; { use(x); let g; { function g() {} } } return x; }
+function _() {
+	var e = 1;
+	{
+		use(e);
+		let n;
+		{
+			function t() {}
+		}
+	}
+	return e;
+}
+
+function _() { var x = 1; { use(x); { function g() {} } let g; } return x; }
+function _() {
+	var e = 1;
+	{
+		use(e);
+		{
+			function t() {}
+		}
+		let n;
+	}
+	return e;
+}
+
+function _() { var x = 1; { function g() {} } let g = 2; return [x, g]; }
+function _() {
+	var e = 1;
+	{
+		function t() {}
+	}
+	let t = 2;
+	return [e, t];
+}
+
+function _() { var g; { function g() {} } return g; }
+function _() {
+	var e;
+	{
+		function e() {}
+	}
+	return e;
+}
+
+function _() { var g; try {} catch (g) { { function g() {} } } return g; }
+function _() {
+	var e;
+	try {} catch (t) {
+		{
+			function e() {}
+		}
+	}
+	return e;
+}
+
+function _() { var g; try {} catch ([g]) { { function g() {} } } return g; }
+function _() {
+	var e;
+	try {} catch ([e]) {
+		{
+			function t() {}
+		}
+	}
+	return e;
+}
+
+function _() { { function g() {} } var g; return g; }
+function _() {
+	{
+		function e() {}
+	}
+	var e;
+	return e;
+}
+
+function _() { var g; { if (false) function g() {} { function g() {} } } return g; }
+function _() {
+	var e;
+	{
+		if (false) function e() {}
+		{
+			function e() {}
+		}
+	}
+	return e;
+}
+
+function _() { var g = 0; { let g; { function g() {} } } return g; }
+function _() {
+	var e = 0;
+	{
+		let e;
+		{
+			function t() {}
+		}
+	}
+	return e;
+}
+
+{ let e; { function e() {} let x = 1; use(x); } }
+{
+	let t;
+	{
+		function e() {}
+		let t = 1;
+		use(t);
+	}
+}

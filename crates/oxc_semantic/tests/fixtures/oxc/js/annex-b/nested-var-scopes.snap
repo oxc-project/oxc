@@ -1,0 +1,290 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/nested-var-scopes.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function)",
+            "id": 2,
+            "node": "Function(g)",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(0x0)",
+        "id": 1,
+        "node": "BlockStatement",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(Function)",
+                "id": 5,
+                "node": "Function(h)",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 4,
+            "node": "BlockStatement",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 3,
+        "node": "Function(inner)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(BlockScopedVariable)",
+            "id": 2,
+            "name": "g",
+            "node": "VariableDeclarator(g)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 0,
+                "name": "g",
+                "node_id": 20,
+                "scope_id": 3
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(Function)",
+            "id": 3,
+            "name": "h",
+            "node": "Function(h)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 1,
+                "name": "h",
+                "node_id": 21,
+                "scope_id": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(Function)",
+                "id": 8,
+                "node": "Function(h)",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 7,
+            "node": "BlockStatement",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function | Arrow)",
+        "id": 6,
+        "node": "ArrowFunctionExpression",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(Function)",
+            "id": 5,
+            "name": "h",
+            "node": "Function(h)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 2,
+                "name": "h",
+                "node_id": 34,
+                "scope_id": 6
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(Function)",
+                    "id": 12,
+                    "node": "Function(g)",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 11,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(Function)",
+                    "id": 8,
+                    "name": "g",
+                    "node": "Function(g)",
+                    "references": []
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 10,
+            "node": "BlockStatement",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(BlockScopedVariable)",
+                "id": 9,
+                "name": "g",
+                "node": "VariableDeclarator(g)",
+                "references": []
+              }
+            ]
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(Function)",
+                    "id": 15,
+                    "node": "Function(g)",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 14,
+                "node": "BlockStatement",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(Function)",
+            "id": 13,
+            "node": "Function(nested)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(Function)",
+                "id": 11,
+                "name": "g",
+                "node": "Function(g)",
+                "references": []
+              }
+            ]
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(Function)",
+                "id": 17,
+                "node": "Function(g)",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 16,
+            "node": "BlockStatement",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(Function)",
+                "id": 12,
+                "name": "g",
+                "node": "Function(g)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 9,
+        "node": "Function(undoThenRehoist)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(Function)",
+            "id": 10,
+            "name": "nested",
+            "node": "Function(nested)",
+            "references": []
+          },
+          {
+            "flags": "SymbolFlags(BlockScopedVariable)",
+            "id": 13,
+            "name": "g",
+            "node": "VariableDeclarator(g)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 4,
+                "name": "g",
+                "node_id": 73,
+                "scope_id": 9
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 0,
+        "name": "g",
+        "node": "Function(g)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 3,
+            "name": "g",
+            "node_id": 40,
+            "scope_id": 0
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 1,
+        "name": "inner",
+        "node": "Function(inner)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 4,
+        "name": "arrow",
+        "node": "VariableDeclarator(arrow)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 6,
+        "name": "h",
+        "node": "VariableDeclarator(h)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 7,
+        "name": "undoThenRehoist",
+        "node": "Function(undoThenRehoist)",
+        "references": []
+      }
+    ]
+  }
+]

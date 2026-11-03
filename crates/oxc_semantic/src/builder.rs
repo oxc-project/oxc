@@ -29,6 +29,7 @@ use oxc_syntax::{
 
 use crate::{
     Semantic,
+    annex_b::AnnexBHoists,
     binder::{Binder, ModuleInstanceState},
     checker,
     class::ClassTableBuilder,
@@ -92,6 +93,8 @@ pub struct SemanticBuilder<'a> {
     /// declarations in that scope can still detect redeclarations via `check_redeclaration`.
     /// A single flat map avoids allocating a per-scope inner map for every hoisting scope.
     pub(crate) hoisting_variables: FxHashMap<(ScopeId, Ident<'a>), SymbolId>,
+    /// Annex B function declaration hoisting state. See [`crate::annex_b`].
+    pub(crate) annex_b: AnnexBHoists<'a>,
 
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
@@ -158,6 +161,7 @@ impl<'a> SemanticBuilder<'a> {
             module_instance_state_cache: FxHashMap::default(),
             node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
+            annex_b: AnnexBHoists::default(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unused_labels: UnusedLabels::default(),
@@ -927,6 +931,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(parent_id) = parent_id {
             if self.scoping.scope_flags(self.current_scope_id).contains_direct_eval() {
                 self.scoping.scope_flags_mut(parent_id).insert(ScopeFlags::DirectEval);
+            }
+            if self.annex_b.has_pending_in(self.current_scope_id) {
+                self.finish_annex_b_hoists();
             }
             self.current_scope_id = parent_id;
         }
