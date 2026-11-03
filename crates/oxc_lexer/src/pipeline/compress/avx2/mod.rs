@@ -74,41 +74,71 @@ pub(super) unsafe fn compress_blocks_avx2(
         if mword == 0 {
             continue;
         }
-        let base = b * 64;
-        let o0: u32 = 0;
+
+        let o0 = 0;
         let o1 = o0 + (mword & 0xffff).count_ones();
         let o2 = o1 + ((mword >> 16) & 0xffff).count_ones();
         let o3 = o2 + ((mword >> 32) & 0xffff).count_ones();
         let o4 = o3 + (mword >> 48).count_ones();
+
+        let base = b * 64;
         let mut basev = Vec256::splat_u32(base as u32, cpu);
-        macro_rules! pair {
-            ($p:expr, $off:expr) => {{
-                let sub0 = ((mword >> (16 * $p)) & 0xff) as usize;
-                let sub1 = ((mword >> (16 * $p + 8)) & 0xff) as usize;
-                let pc0 = sub0.count_ones() as usize;
-                let row0 = Vec128::read_low_unaligned(&lut0z[sub0], cpu);
-                let row1 = Vec128::load_unaligned(lutpad.add(sub1 * 32 + 8 - pc0), cpu);
-                let ctrl = row0 | row1;
-                let kw = Vec128::load_unaligned(kind.add(base + 16 * $p), cpu);
-                let lo = basev.add_u32(Vec256::widen_u8_to_u32(ctrl));
-                lo.store_unaligned(starts.add(m + $off as usize).cast::<u8>());
-                let hi = basev.add_u32(Vec256::widen_u8_to_u32(ctrl.shr_bytes::<8>()));
-                hi.store_unaligned(starts.add(m + $off as usize + 8).cast::<u8>());
-                basev = basev.add_u32(16);
-                kw.shuffle_u8s(ctrl)
-            }};
-        }
-        let ka = pair!(0, o0);
-        let kb = pair!(1, o1);
+
+        let ka = compress_pair(0, mword, o0, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
+        let kb = compress_pair(1, mword, o1, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
         ka.store_unaligned(kinds.add(m + o0 as usize));
         kb.store_unaligned(kinds.add(m + o1 as usize));
-        let kc = pair!(2, o2);
-        let kd = pair!(3, o3);
+        let kc = compress_pair(2, mword, o2, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
+        let kd = compress_pair(3, mword, o3, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
         kc.store_unaligned(kinds.add(m + o2 as usize));
         kd.store_unaligned(kinds.add(m + o3 as usize));
+
         m += o4 as usize;
     }
     m
+}
+
+/// Compress 16 bits of a block's token-start mask `mword`: bits `16 * p` to `16 * p + 15`.
+///
+/// Writes the positions of the tokens which start at those bits to `starts`,
+/// from index `m + off`, and returns their kinds, gathered into the low bytes of a [`Vec128`].
+///
+/// Each lane of `basev` holds the position of bit `16 * p`.
+/// Adds 16 to it, ready for the next 16 bits.
+///
+/// # SAFETY
+///
+/// - `kind` must be valid for reading 16 bytes at `base + 16 * p`.
+/// - `starts` must be valid for writing 16 `u32`s at `m + off`.
+/// - `lutpad` must point to the `lutpad` table of `PairLuts`.
+#[cpu_version(Avx2)]
+#[inline(always)]
+unsafe fn compress_pair(
+    p: usize,
+    mword: u64,
+    off: u32,
+    lut0z: &[[u8; 8]; 256],
+    lutpad: *const u8,
+    kind: *const u8,
+    base: usize,
+    starts: *mut u32,
+    m: usize,
+    basev: &mut Vec256<Avx2>,
+    cpu: Avx2,
+) -> Vec128<Avx2> {
+    let sub0 = ((mword >> (16 * p)) & 0xff) as usize;
+    let sub1 = ((mword >> (16 * p + 8)) & 0xff) as usize;
+    let pc0 = sub0.count_ones() as usize;
+    let row0 = Vec128::read_low_unaligned(&lut0z[sub0], cpu);
+    let row1 = Vec128::load_unaligned(lutpad.add(sub1 * 32 + 8 - pc0), cpu);
+    let ctrl = row0 | row1;
+    let kw = Vec128::load_unaligned(kind.add(base + 16 * p), cpu);
+    let lo = basev.add_u32(Vec256::widen_u8_to_u32(ctrl));
+    lo.store_unaligned(starts.add(m + off as usize).cast::<u8>());
+    let hi = basev.add_u32(Vec256::widen_u8_to_u32(ctrl.shr_bytes::<8>()));
+    hi.store_unaligned(starts.add(m + off as usize + 8).cast::<u8>());
+    *basev = basev.add_u32(16);
+    kw.shuffle_u8s(ctrl)
 }
 
 #[cpu_version(Avx2)]
