@@ -1,5 +1,3 @@
-use oxc_htmlish_parser::Dialect;
-
 use crate::HtmlishVariant;
 
 /// What the variant changes in the shared rules, resolved once per document.
@@ -25,11 +23,11 @@ impl DialectRules {
     /// `sfc`: a Vue file read as a single-file component, not as HTML.
     /// `standalone`: a file of its own, not a part embedded in another language.
     pub fn new(variant: HtmlishVariant, sfc: bool, standalone: bool) -> Self {
-        let dialect = variant.to_dialect();
         Self {
-            names_ignore_case: dialect == Dialect::Html || (dialect == Dialect::Vue && !sfc),
-            keeps_element_gap_kind: dialect == Dialect::Vue,
-            has_blocks: dialect == Dialect::Angular,
+            names_ignore_case: matches!(variant, HtmlishVariant::Html | HtmlishVariant::Xhtml)
+                || (variant == HtmlishVariant::Vue && !sfc),
+            keeps_element_gap_kind: variant == HtmlishVariant::Vue,
+            has_blocks: variant == HtmlishVariant::Angular,
             lowercase_doctype: variant != HtmlishVariant::Xhtml,
             lowercase_known_names: standalone && variant == HtmlishVariant::Html,
         }

@@ -36,7 +36,15 @@ use constcat::concat_slices;
 
 use oxc_data_structures::{assert_unchecked, branch_hints::unlikely, str::const_str_eq};
 
-use crate::token::{KW_KIND_BASE, TokenKind};
+use crate::{
+    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_select, cpu_version},
+    token::{KW_KIND_BASE, TokenKind},
+};
+
+#[cfg(target_arch = "x86_64")]
+use crate::{cpu::Avx2, simd::Vec128};
+#[cfg(target_arch = "aarch64")]
+use crate::{cpu::Neon, simd::Vec128};
 
 const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
 const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -45,12 +53,12 @@ const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
 /// p-words, unique/unknown/undefined/using). Same hi-nibble rows.
 const KWINIT_TS_LO: [u8; 16] = [2, 1, 3, 3, 3, 3, 3, 3, 0, 3, 0, 1, 1, 1, 1, 1];
 
-#[inline(always)]
+/// Only called at compile time and in tests.
 pub(super) const fn is_kw_init(c: u8) -> bool {
     (KWINIT_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
 }
 
-#[inline(always)]
+/// Only called at compile time and in tests.
 pub(super) const fn is_kw_init_ts(c: u8) -> bool {
     (KWINIT_TS_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
 }
@@ -59,6 +67,8 @@ const KW_COUNT_JS: usize = 46;
 const KW_COUNT_TS: usize = 81;
 
 /// A keyword and its corresponding [`TokenKind`].
+///
+/// Only exists at build time and in tests, not referenced from any runtime code.
 #[derive(Clone, Copy)]
 struct KeywordDef {
     word: &'static str,
@@ -87,13 +97,15 @@ impl KeywordDef {
 
     /// Get a keyword's JS slot (`is_ts == false`) or TS slot (`is_ts == true`), same as [`kw_match`] does.
     const fn slot(&self, is_ts: bool) -> usize {
+        let cpu = BASELINE;
+
         let word = self.word.as_bytes();
-        let index = disps_index(word[0] as u16 | ((word[1] as u16) << 8));
+        let index = disps_index(word[0] as u16 | ((word[1] as u16) << 8), cpu);
         let len = word.len();
         if is_ts {
-            keyword_hash_ts(DISPS_TS.0[index], len, word[len - 1])
+            keyword_hash_ts(DISPS_TS.0[index], len, word[len - 1], cpu)
         } else {
-            keyword_hash_js(DISPS_JS.0[index], len)
+            keyword_hash_js(DISPS_JS.0[index], len, cpu)
         }
     }
 }
@@ -253,8 +265,9 @@ const REGEX_KW_MASK: u64 = {
     mask
 };
 
+#[cpu_multiversion]
 #[inline(always)]
-pub fn is_regex_keyword(kind: u8) -> bool {
+pub fn is_regex_keyword(kind: u8, _cpu: impl Cpu) -> bool {
     let i = kind.wrapping_sub(KW_KIND_BASE);
     i < 64 && (REGEX_KW_MASK >> i) & 1 != 0
 }
@@ -357,6 +370,8 @@ static KW_KINDS_TS: Aligned128<[TokenKind; SLOT_COUNT]> =
 ///
 /// Keywords whose kind is `Ident` are skipped, so they don't overwrite the kind of another keyword
 /// with the same slot.
+///
+/// Only called at compile time.
 const fn kinds_table<const N: usize>(keywords: &[KeywordDef], is_ts: bool) -> [TokenKind; N] {
     let mut kinds = [TokenKind::Ident; N];
 
@@ -373,8 +388,9 @@ const fn kinds_table<const N: usize>(keywords: &[KeywordDef], is_ts: bool) -> [T
 }
 
 /// Get index into [`DISPS_JS`] or [`DISPS_TS`] for a word, from its first 2 bytes as a little-endian `u16`.
+#[cpu_multiversion]
 #[inline(always)]
-const fn disps_index(first_2: u16) -> usize {
+const fn disps_index(first_2: u16, _cpu: impl Cpu) -> usize {
     ((first_2 as u32).wrapping_mul(DISPS_MUL) >> DISPS_SHIFT) as usize
 }
 
@@ -384,8 +400,9 @@ const fn disps_index(first_2: u16) -> usize {
 ///
 /// Every entry in `DISPS_JS` is less than 64, so if `len` is at most 16, the result is less than 64.
 /// Therefore, result does not need masking to the table size.
+#[cpu_multiversion]
 #[inline(always)]
-const fn keyword_hash_js(disp: u8, len: usize) -> usize {
+const fn keyword_hash_js(disp: u8, len: usize, _cpu: impl Cpu) -> usize {
     (disp as usize) ^ (len << 1)
 }
 
@@ -393,8 +410,9 @@ const fn keyword_hash_js(disp: u8, len: usize) -> usize {
 ///
 /// `disp` is the entry in [`DISPS_TS`] for the word, and `last` is the last byte of the word.
 /// A non-ASCII last byte can take the hash up to 255, so it's masked to the table size.
+#[cpu_multiversion]
 #[inline(always)]
-const fn keyword_hash_ts(disp: u8, len: usize, last: u8) -> usize {
+const fn keyword_hash_ts(disp: u8, len: usize, last: u8, _cpu: impl Cpu) -> usize {
     ((disp as usize) ^ (len << 1) ^ (last as usize)) & (SLOT_COUNT - 1)
 }
 
@@ -409,8 +427,15 @@ const fn keyword_hash_ts(disp: u8, len: usize, last: u8) -> usize {
 ///
 /// Panics if `src` does not extend 16 bytes past `pos`.
 /// The source pad guarantees that for any word in the source.
+#[cpu_multiversion]
 #[inline]
-pub(super) fn kw_match_at(ts: bool, src: &[u8], pos: usize, len: usize) -> TokenKind {
+pub(super) fn kw_match_at(
+    ts: bool,
+    src: &[u8],
+    pos: usize,
+    len: usize,
+    cpu: impl Cpu,
+) -> TokenKind {
     let word = &src[pos..pos + 16];
 
     // An empty word is not a keyword. Callers never pass 0, but `kw_match` requires `len`
@@ -427,9 +452,9 @@ pub(super) fn kw_match_at(ts: bool, src: &[u8], pos: usize, len: usize) -> Token
     // SAFETY: `word` is 16 bytes, and `len` is between 1 and 16
     unsafe {
         if ts {
-            kw_match::<true>(word.as_ptr(), len)
+            kw_match::<true>(word.as_ptr(), len, cpu)
         } else {
-            kw_match::<false>(word.as_ptr(), len)
+            kw_match::<false>(word.as_ptr(), len, cpu)
         }
     }
 }
@@ -446,18 +471,23 @@ pub(super) fn kw_match_at(ts: bool, src: &[u8], pos: usize, len: usize) -> Token
 ///
 /// * `ptr` must be valid for reading 16 bytes.
 /// * `len` must be between 1 and 16 (inclusive).
+#[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn kw_match<const IS_TS: bool>(ptr: *const u8, len: usize) -> TokenKind {
+pub(super) unsafe fn kw_match<const IS_TS: bool>(
+    ptr: *const u8,
+    len: usize,
+    cpu: impl Cpu,
+) -> TokenKind {
     // Getting `disp` does not depend on `len`, so the CPU can load it in parallel with calculating `len`
     let first_2 = ptr::read_unaligned(ptr as *const u16);
-    let index = disps_index(first_2);
+    let index = disps_index(first_2, cpu);
 
     let slot = if IS_TS {
         let disp = DISPS_TS.0[index];
-        keyword_hash_ts(disp, len, *ptr.add(len - 1))
+        keyword_hash_ts(disp, len, *ptr.add(len - 1), cpu)
     } else {
         let disp = DISPS_JS.0[index];
-        let slot = keyword_hash_js(disp, len);
+        let slot = keyword_hash_js(disp, len, cpu);
         // SAFETY: Every entry in `DISPS_JS` is less than 64 (checked at compile time).
         // Caller guarantees `len` is at most 16, so `len << 1` is at most 32.
         // XOR of 2 values less than 64 is less than 64.
@@ -466,7 +496,7 @@ pub(super) unsafe fn kw_match<const IS_TS: bool>(ptr: *const u8, len: usize) -> 
         slot
     };
 
-    let is_match = text_matches(ptr, len, &KW_TEXT.0[slot]);
+    let is_match = text_matches(ptr, len, &KW_TEXT.0[slot], cpu);
     let kind = if IS_TS { KW_KINDS_TS.0[slot] } else { KW_KINDS_JS.0[slot] };
     // Whether a candidate is a keyword is unpredictable, so tell LLVM to select without a branch.
     // Without the hint, it branches to skip loading `kind` when there's no match.
@@ -478,79 +508,77 @@ pub(super) unsafe fn kw_match<const IS_TS: bool>(ptr: *const u8, len: usize) -> 
 /// # SAFETY
 ///
 /// `ptr` must be valid for reading 16 bytes, and `len` must be between 0 and 16 (inclusive).
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
+#[cpu_multiversion]
 #[inline(always)]
-unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
-    use std::arch::x86_64::{_mm_and_si128, _mm_cmpeq_epi8, _mm_loadu_si128, _mm_movemask_epi8};
-
-    let word = _mm_loadu_si128(ptr.cast());
-    let mask = _mm_loadu_si128(len_mask_ptr(len).cast());
-    let text = _mm_loadu_si128(text.as_ptr().cast());
-    let masked_word = _mm_and_si128(word, mask);
-    let eq = _mm_cmpeq_epi8(masked_word, text);
-    _mm_movemask_epi8(eq) == 0xFFFF
+unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2], cpu: impl Cpu) -> bool {
+    cpu_select!(cpu, {
+        Avx2(cpu) => text_matches_avx2(ptr, len, text, cpu),
+        Neon(cpu) => text_matches_neon(ptr, len, text, cpu),
+        Generic(_) => text_matches_generic(ptr, len, text),
+    })
 }
 
-/// Check if the word of `len` bytes at `ptr`, zero-padded to 16 bytes, is equal to `text`.
+/// [`text_matches`] for AVX2.
 ///
 /// # SAFETY
 ///
-/// `ptr` must be valid for reading 16 bytes, and `len` must be between 0 and 16 (inclusive).
-#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+/// Same as [`text_matches`].
+#[cpu_version(Avx2)]
 #[inline(always)]
-unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
-    use std::arch::aarch64::{vandq_u8, veorq_u8, vgetq_lane_u64, vld1q_u8, vreinterpretq_u64_u8};
-
-    let word = vld1q_u8(ptr);
-    let mask = vld1q_u8(len_mask_ptr(len));
-    let text = vld1q_u8(text.as_ptr().cast());
-    let masked_word = vandq_u8(word, mask);
-    let diff = vreinterpretq_u64_u8(veorq_u8(masked_word, text));
-    // NEON has no equivalent of x86's `ptest`, so combine the 2 halves, and test the result for 0
-    (vgetq_lane_u64::<0>(diff) | vgetq_lane_u64::<1>(diff)) == 0
+unsafe fn text_matches_avx2(ptr: *const u8, len: usize, text: &[u64; 2], cpu: Avx2) -> bool {
+    let word = Vec128::load_unaligned(ptr, cpu);
+    let mask = Vec128::read_unaligned(len_mask(len, cpu), cpu);
+    let text = Vec128::read_unaligned(text, cpu);
+    let masked_word = word & mask;
+    masked_word.all_eq_u8(text)
 }
 
-/// Check if the word of `len` bytes at `ptr`, zero-padded to 16 bytes, is equal to `text`.
+/// [`text_matches`] for Neon.
 ///
 /// # SAFETY
 ///
-/// `ptr` must be valid for reading 16 bytes, and `len` must be between 0 and 16 (inclusive).
-#[cfg(not(any(
-    all(
-        target_arch = "x86_64",
-        target_feature = "avx2",
-        target_feature = "bmi2",
-        target_feature = "popcnt"
-    ),
-    all(target_arch = "aarch64", target_feature = "neon")
-)))]
+/// Same as [`text_matches`].
+#[cpu_version(Neon)]
 #[inline(always)]
-unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
+unsafe fn text_matches_neon(ptr: *const u8, len: usize, text: &[u64; 2], cpu: Neon) -> bool {
+    let word = Vec128::load_unaligned(ptr, cpu);
+    let mask = Vec128::read_unaligned(len_mask(len, cpu), cpu);
+    let text = Vec128::read_unaligned(text, cpu);
+    let masked_word = word & mask;
+    masked_word.all_eq_u8(text)
+}
+
+/// [`text_matches`] for all other CPUs.
+///
+/// # SAFETY
+///
+/// Same as [`text_matches`].
+#[cpu_version(Generic)]
+#[inline(always)]
+unsafe fn text_matches_generic(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
     use ptr::read_unaligned;
 
+    let cpu = BASELINE;
+
     let ptr = ptr as *const u64;
-    let mask_ptr = len_mask_ptr(len) as *const u64;
+    let mask_ptr = len_mask(len, cpu).as_ptr() as *const u64;
     let masked_first_8 = read_unaligned(ptr) & read_unaligned(mask_ptr);
     let masked_second_8 = read_unaligned(ptr.add(1)) & read_unaligned(mask_ptr.add(1));
     ((masked_first_8 ^ text[0]) | (masked_second_8 ^ text[1])) == 0
 }
 
-/// Get a pointer to 16 bytes which are a mask with the first `len` bytes set to `0xFF`, and the rest 0.
+/// Get 16 bytes which are a mask with the first `len` bytes set to `0xFF`, and the rest 0.
 ///
-/// # SAFETY
+/// # Panics
 ///
-/// `len` must be between 0 and 16 (inclusive).
+/// Panics if `len` is greater than 16.
+#[cpu_multiversion]
 #[inline(always)]
-unsafe fn len_mask_ptr(len: usize) -> *const u8 {
-    LEN_MASK_WINDOW.0.as_ptr().add(16 - len)
+fn len_mask(len: usize, _cpu: impl Cpu) -> &'static [u8; 16] {
+    LEN_MASK_WINDOW.0[16 - len..].first_chunk::<16>().unwrap()
 }
 
-/// 16 x `0xFF` bytes followed by 16 x 0 bytes, for [`len_mask_ptr`].
+/// 16 x `0xFF` bytes followed by 16 x 0 bytes, for [`len_mask`].
 static LEN_MASK_WINDOW: Aligned32<[u8; 32]> = {
     let mut window = [0; 32];
 
@@ -565,6 +593,8 @@ static LEN_MASK_WINDOW: Aligned32<[u8; 32]> = {
 
 #[cfg(test)]
 mod tests {
+    use crate::cpu::BASELINE;
+
     use super::*;
 
     /// Bytes which can follow a word in tests. Real source has a non-word char after a word,
@@ -588,9 +618,9 @@ mod tests {
         // SAFETY: `buf` is 48 bytes. `word.len()` is between 1-16 bytes.
         unsafe {
             if is_ts {
-                kw_match::<true>(buf.as_ptr(), word.len())
+                kw_match::<true>(buf.as_ptr(), word.len(), BASELINE)
             } else {
-                kw_match::<false>(buf.as_ptr(), word.len())
+                kw_match::<false>(buf.as_ptr(), word.len(), BASELINE)
             }
         }
     }
@@ -806,17 +836,17 @@ mod tests {
         let mut src = [0u8; 64];
         src[..36].copy_from_slice(b"instanceofabcdefghijklmnopqrstuvwxyz");
         // Length taken from the caller, not the source
-        assert_eq!(kw_match_at(false, &src, 0, 10), TokenKind::KwInstanceof);
-        assert_eq!(kw_match_at(false, &src, 0, 2), TokenKind::KwIn);
-        assert_eq!(kw_match_at(true, &src, 0, 9), TokenKind::Ident);
+        assert_eq!(kw_match_at(false, &src, 0, 10, BASELINE), TokenKind::KwInstanceof);
+        assert_eq!(kw_match_at(false, &src, 0, 2, BASELINE), TokenKind::KwIn);
+        assert_eq!(kw_match_at(true, &src, 0, 9, BASELINE), TokenKind::Ident);
         // Longer than 16 bytes, and 0 bytes
-        assert_eq!(kw_match_at(false, &src, 0, 36), TokenKind::Ident);
-        assert_eq!(kw_match_at(true, &src, 0, 36), TokenKind::Ident);
-        assert_eq!(kw_match_at(false, &src, 0, 0), TokenKind::Ident);
-        assert_eq!(kw_match_at(true, &src, 0, 0), TokenKind::Ident);
+        assert_eq!(kw_match_at(false, &src, 0, 36, BASELINE), TokenKind::Ident);
+        assert_eq!(kw_match_at(true, &src, 0, 36, BASELINE), TokenKind::Ident);
+        assert_eq!(kw_match_at(false, &src, 0, 0, BASELINE), TokenKind::Ident);
+        assert_eq!(kw_match_at(true, &src, 0, 0, BASELINE), TokenKind::Ident);
         // Mode
         src[..6].copy_from_slice(b"string");
-        assert_eq!(kw_match_at(true, &src, 0, 6), TokenKind::KwString);
-        assert_eq!(kw_match_at(false, &src, 0, 6), TokenKind::Ident);
+        assert_eq!(kw_match_at(true, &src, 0, 6, BASELINE), TokenKind::KwString);
+        assert_eq!(kw_match_at(false, &src, 0, 6, BASELINE), TokenKind::Ident);
     }
 }

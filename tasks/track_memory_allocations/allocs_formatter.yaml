@@ -1,7 +1,7 @@
 checker.ts:
   file size: 2922154 # 2.92 MB
   sys allocs: 18979
-  sys reallocs: 494
+  sys reallocs: 491
   sys deallocs: 18978
   sys alloc bytes: 6244889 # 6.24 MB
   sys peak growth: 2973842 # 2.97 MB

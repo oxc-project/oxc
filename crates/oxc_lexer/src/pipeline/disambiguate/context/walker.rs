@@ -1,6 +1,8 @@
 //! The walk: its frame stack and flags, the operations the token steps use on them, the
 //! jump plan a bounded walk follows, and what a query reads off the state.
 
+use crate::cpu::cpu_version;
+
 use super::*;
 
 /// A balanced group a bounded walk skips, from its opener to its closer.
@@ -24,12 +26,14 @@ pub(super) enum Expect {
 
 impl Walk {
     /// May an operand start here?
+    #[cpu_version(Generic)]
     #[inline]
     pub(super) fn operand_allowed(&self) -> bool {
         self.expect != Expect::Operator
     }
 
     /// May a statement start here?
+    #[cpu_version(Generic)]
     #[inline]
     pub(super) fn at_stmt_start(&self) -> bool {
         self.expect == Expect::Statement
@@ -82,11 +86,13 @@ pub(super) struct Walk {
 }
 
 impl Walk {
+    #[cpu_version(Generic)]
     pub(super) fn new() -> Walk {
         Walk { jumps: Vec::with_capacity(64), frames: Vec::with_capacity(64), ..Walk::default() }
     }
 
-    pub(super) fn reset(&mut self, module: bool) {
+    #[cpu_multiversion]
+    pub(super) fn reset(&mut self, module: bool, _cpu: impl Cpu) {
         let frames = std::mem::take(&mut self.frames);
         let jumps = std::mem::take(&mut self.jumps);
         *self = Walk { frames, jumps, ..Walk::default() };
@@ -94,37 +100,45 @@ impl Walk {
         self.frames.push(Frame { kind: FrameKind::Root, is_async: module, ..Frame::default() });
     }
 
+    #[cpu_version(Generic)]
     #[inline]
     pub(super) fn top(&self) -> &Frame {
         self.frames.last().unwrap()
     }
 
+    #[cpu_version(Generic)]
     #[inline]
     pub(super) fn top_mut(&mut self) -> &mut Frame {
         self.frames.last_mut().unwrap()
     }
 
+    #[cpu_version(Generic)]
     #[inline]
     pub(super) fn top_kind(&self) -> FrameKind {
         self.top().kind
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn push(&mut self, kind: FrameKind) -> &mut Frame {
         self.frames.push(Frame { kind, ..Frame::default() });
         self.frames.last_mut().unwrap()
     }
 
+    #[cpu_version(Generic)]
+    #[inline(always)]
     pub(super) fn pop(&mut self) -> Frame {
         if self.frames.len() > 1 { self.frames.pop().unwrap() } else { *self.top() }
     }
 
     /// A closer with no frame to close: past here a bounded walk guesses.
+    #[cpu_version(Generic)]
     pub(super) fn unbalanced(&mut self) {
         if self.seed_depth != 0 {
             self.seed_lost = true;
         }
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn unbalanced_close(&mut self) {
         self.unbalanced();
         self.after_statement();
@@ -132,6 +146,7 @@ impl Walk {
     }
 
     /// Index of the innermost frame that owns statements / declarations.
+    #[cpu_version(Generic)]
     pub(super) fn stmt_frame(&self) -> usize {
         let mut i = self.frames.len() - 1;
         while self.frames[i].kind.is_virtual() {
@@ -140,18 +155,14 @@ impl Walk {
         i
     }
 
-    /// Statement register of the innermost statement holder (S_NONE inside expression frames).
-    pub(super) fn stmt_reg(&self) -> u8 {
-        let i = self.stmt_frame();
-        if self.frames[i].kind.is_stmt_holder() { self.frames[i].reg } else { S_NONE }
+    /// Statement register of the innermost statement holder (None inside expression frames).
+    #[cpu_version(Generic)]
+    pub(super) fn stmt_reg(&self) -> StmtReg {
+        self.frames[self.stmt_frame()].reg
     }
 
-    pub(super) fn top_declarator(&self) -> u8 {
-        let f = self.top();
-        if f.kind.is_stmt_holder() { f.state } else { D_NONE }
-    }
-
-    pub(super) fn set_stmt_reg(&mut self, v: u8) {
+    #[cpu_version(Generic)]
+    pub(super) fn set_stmt_reg(&mut self, v: StmtReg) {
         let i = self.stmt_frame();
         if self.frames[i].kind.is_stmt_holder() {
             self.frames[i].reg = v;
@@ -159,6 +170,7 @@ impl Walk {
     }
 
     /// Innermost function-like scope: where `yield` / `await` look up their keyword-ness.
+    #[cpu_version(Generic)]
     fn scope(&self) -> usize {
         let mut i = self.frames.len() - 1;
         loop {
@@ -176,12 +188,14 @@ impl Walk {
     }
 
     /// Is the top of the stack (ignoring nothing) a type context?
+    #[cpu_version(Generic)]
     pub(super) fn in_type(&self) -> bool {
         let k = self.top_kind();
         k == FrameKind::TypeRegion || k.is_type_group() || (k == FrameKind::Sub && self.top().decl)
     }
 
     /// The nearest TypeRegion above the nearest bracket frame, if any.
+    #[cpu_version(Generic)]
     pub(super) fn region_index(&self) -> Option<usize> {
         let mut i = self.frames.len() - 1;
         loop {
@@ -197,6 +211,8 @@ impl Walk {
     }
 
     /// Pop concise arrow bodies sitting on top of the stack.
+    #[cpu_version(Generic)]
+    #[inline(always)]
     pub(super) fn pop_concise(&mut self) {
         while self.top_kind() == FrameKind::Concise {
             self.pop();
@@ -204,6 +220,7 @@ impl Walk {
     }
 
     /// End every virtual frame above the nearest bracket frame (used by closers and separators).
+    #[cpu_version(Generic)]
     pub(super) fn pop_virtual(&mut self) {
         while self.top_kind().is_virtual() {
             self.pop();
@@ -211,6 +228,7 @@ impl Walk {
     }
 
     /// Pop through the nearest bracket frame when wanted accepts its kind; any other is a barrier.
+    #[cpu_version(Generic)]
     pub(super) fn pop_to(&mut self, wanted: impl Fn(FrameKind) -> bool) -> Option<Frame> {
         let mut i = self.frames.len();
         while i > 1 {
@@ -228,48 +246,57 @@ impl Walk {
         None
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn after_statement(&mut self) {
         self.expect = Expect::Statement;
         let i = self.stmt_frame();
         let f = &mut self.frames[i];
-        f.state = D_NONE;
-        f.reg = S_NONE;
+        f.declarator = Declarator::None;
+        f.reg = StmtReg::None;
         f.open_questions = 0;
         self.export_default = false;
         self.decorator = 0;
     }
 
     /// Statement boundary reached (`;`, ASI, block end).
+    #[cpu_version(Generic)]
     pub(super) fn end_statement(&mut self) {
         // Bodiless signatures and open type regions end with the statement.
         self.pop_virtual();
         self.after_statement();
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn set_value(&mut self) {
         self.expect = Expect::Operator;
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn set_operand(&mut self) {
         self.expect = Expect::Operand;
     }
 
     /// An operator or keyword after which an operand may start.
+    #[cpu_version(Generic)]
     pub(super) fn operand_done(&mut self) {
         self.set_operand();
         self.clear_prev();
     }
 
     /// A keyword that expects an operand, remembered for the next token.
+    #[cpu_version(Generic)]
     pub(super) fn keyword(&mut self, kw: u8) {
         self.operand_done();
         self.prev_kw = kw;
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn advance(&mut self, tokens: &Tokens, limit: usize) {
+        let cpu = BASELINE;
+
         let mut pos = self.walked_to;
         loop {
-            pos = tokens.next_start(pos);
+            pos = tokens.next_start(pos, cpu);
             if pos >= limit || pos >= tokens.n {
                 break;
             }
@@ -285,6 +312,7 @@ impl Walk {
     /// After stepping the token at `pos` (ending at `end`): the next position to walk, following a
     /// planned jump when the token opens a group or a frame that allows one. A jump lands on a
     /// closer or separator, so no line break is reported before it.
+    #[cpu_version(Generic)]
     fn jump(&mut self, pos: usize, end: usize, limit: usize) -> usize {
         while let Some(&Jump { at, to }) = self.jumps.get(self.next_jump) {
             let (at, to) = (at as usize, to as usize);
@@ -301,6 +329,7 @@ impl Walk {
     }
 
     /// What the token at pos leaves behind: it is stepped unless it is the tail of the last one.
+    #[cpu_version(Generic)]
     pub(super) fn after_token(&mut self, tokens: &Tokens, pos: usize) -> After {
         if pos >= self.walked_to {
             let end = self.step(tokens, pos);
@@ -310,6 +339,7 @@ impl Walk {
     }
 
     /// The state left behind by the last processed token.
+    #[cpu_version(Generic)]
     pub(super) fn classify_after(&self) -> After {
         if self.stmt_done {
             return After::EndsDecl;
@@ -317,7 +347,7 @@ impl Walk {
         // A declaration-type region whose last token completed a type.
         if let Some(i) = self.region_index() {
             let r = &self.frames[i];
-            if r.atom && matches!(r.state, R_INLINE | R_STMT) {
+            if r.atom && matches!(r.region, RegionRule::Inline | RegionRule::Stmt) {
                 // Parameter annotations (`(a: T` then `/`) are never followed by a regex; only
                 // statement-level regions matter.
                 let below = if i > 0 { self.frames[i - 1].kind } else { FrameKind::Root };
@@ -338,13 +368,14 @@ impl Walk {
             return After::EndsDecl;
         }
         // `let x` with nothing after the binding.
-        if self.top_declarator() == D_BOUND {
+        if self.top().declarator == Declarator::Bound {
             return After::EndsDecl;
         }
         if self.operand_allowed() { After::Operand } else { After::Value }
     }
 
     /// Is yield or await a keyword here? A bounded walk that cannot tell loses its footing.
+    #[cpu_version(Generic)]
     pub(super) fn scoped_keyword(&mut self, generator: bool) -> bool {
         let i = self.scope();
         if i == 0 && self.seed_depth != 0 {
@@ -354,6 +385,7 @@ impl Walk {
         !s.field_init() && if generator { s.is_generator } else { s.is_async }
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn site(&self) -> Site {
         let in_type = self.in_type();
         Site {
@@ -364,15 +396,17 @@ impl Walk {
     }
 
     /// Would a `<` at the next token open a type-parameter list of a declaration head or member?
+    #[cpu_version(Generic)]
     pub(super) fn type_params_expected(&self) -> bool {
         match self.top_kind() {
             FrameKind::FnHead | FrameKind::ClassHead => true,
-            FrameKind::Object | FrameKind::ClassBody => self.top().state == M_KEY_SEEN,
-            _ => self.stmt_reg() == S_TYPE_NAME,
+            FrameKind::Object | FrameKind::ClassBody => self.top().member == Member::KeySeen,
+            _ => self.stmt_reg() == StmtReg::TypeName,
         }
     }
 
     /// Consecutive open `<` lists at the top of the stack.
+    #[cpu_version(Generic)]
     pub(super) fn open_angles(&self) -> usize {
         let mut i = self.frames.len();
         let mut k = 0;
@@ -387,15 +421,17 @@ impl Walk {
         k
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn value_done(&mut self) {
         self.set_value();
         self.clear_prev();
         let f = self.top_mut();
-        if f.kind.is_stmt_holder() && f.state == D_BINDING {
-            f.state = D_BOUND;
+        if f.declarator == Declarator::Binding {
+            f.declarator = Declarator::Bound;
         }
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn clear_prev(&mut self) {
         self.no_type_args = false;
         self.after_dot = false;
@@ -405,6 +441,7 @@ impl Walk {
         self.closed_group = false;
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn type_atom(&mut self, inner: bool) {
         if let Some(i) = self.region_index() {
             let r = &mut self.frames[i];
@@ -415,6 +452,7 @@ impl Walk {
         self.no_type_args = true;
     }
 
+    #[cpu_version(Generic)]
     pub(super) fn type_operator(&mut self) {
         if let Some(i) = self.region_index() {
             let r = &mut self.frames[i];
@@ -426,10 +464,11 @@ impl Walk {
 
     /// After a method / accessor body or nested object closed inside a member container, the next
     /// member key may follow.
+    #[cpu_version(Generic)]
     pub(super) fn member_done(&mut self) {
         if matches!(self.top_kind(), FrameKind::ClassBody | FrameKind::Object) {
             let f = self.top_mut();
-            if f.state == M_KEY_SEEN {
+            if f.member == Member::KeySeen {
                 f.next_member();
             }
         }

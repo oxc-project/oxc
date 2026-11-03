@@ -932,6 +932,32 @@ fn test_fold_concat_chaining() {
     test("var y; [1].concat(x).concat(y)", "var y; [1].concat(x, y)"); // x might have a getter that updates y, but that side effect is preserved correctly
     test("var x; [1].concat(x.a).concat(x)", "var x; [1].concat(x.a, x)"); // x.a might have a getter that updates x, but that side effect is preserved correctly
     test_same("x = [].map(a => a + 1).concat(1)");
+    // Merging would read `arr` after `arr.pop()` runs.
+    test_same("function f(arr) { return [].concat(arr).concat(arr.pop()) }");
+    // The innermost call still folds its leading literals into the array it is called on.
+    test(
+        "function f(arr) { return [1].concat(1, [2], arr).concat(arr.pop()) }",
+        "function f(arr) { return [1, 1, 2].concat(arr).concat(arr.pop()) }",
+    );
+    test(
+        "function f(arr) { return [].concat(1, arr).concat(2).concat(arr.pop()) }",
+        "function f(arr) { return [1].concat(arr).concat(2).concat(arr.pop()) }",
+    );
+    test_same("x = [].concat(a).concat(b)"); // reading the global `b` may run a getter
+    // A spread runs an iterator, and the values it passes are read later.
+    test_same("function f(arr) { return [].concat(arr).concat(...arr) }");
+    test_same("function f(arr) { return [].concat(...arr).concat(arr.pop()) }");
+    // Primitives and array literals have no elements that a later argument can change.
+    test("var y; x = [].concat(1).concat(y, f())", "var y; x = [1].concat(y, f())");
+    test(
+        "function f(a) { return [].concat([a]).concat(a.pop()) }",
+        "function f(a) { return [a].concat(a.pop()) }",
+    );
+    // The read and the side effect are in the same call, so merging keeps their order.
+    test(
+        "function f(arr) { return [].concat(arr, arr.pop()).concat(1) }",
+        "function f(arr) { return [].concat(arr, arr.pop(), 1) }",
+    );
 
     // string
     test("x = '1'.concat(1).concat(2,['abc']).concat('abc')", "x = '112abcabc'");

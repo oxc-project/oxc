@@ -170,15 +170,78 @@ fn gt_run_region_must_scan_as_a_type_list() {
 
 #[test]
 fn lt_lt_openers_close_with_a_split_gt_run() {
-    for code in
-        ["let e: Map<<T>(x: T) => T, Set<U>> = null!;", "const r = f<<T>(x: T) => Array<T>>(0);"]
-    {
-        let ks = kinds_of(code, ScriptTS);
-        assert!(
-            !ks.iter().any(|k| matches!(k, TokenKind::LShift | TokenKind::RShift)),
-            "{code:?}: {ks:?}"
-        );
+    for code in [
+        "let e: Map<<T>(x: T) => T, Set<U>> = null!;",
+        "const r = f<<T>(x: T) => Array<T>>(0);",
+        "a?.<<T>(x: T) => U>(b);",
+        "a?.<<T>(x: T) => A<B>>(b);",
+        "a?. <<T>(x: T) => A<B>>(b);",
+        "a?.b?.<<T>(x: T) => A<B>>(c);",
+        "a!<<T>(x: T) => A<B>>(b);",
+        "a!?.<<T>(x: T) => A<B>>(b);",
+    ] {
+        for file_type in [ScriptTS, ScriptTSX] {
+            let ks = kinds_of(code, file_type);
+            assert!(
+                !ks.iter().any(|k| matches!(k, TokenKind::LShift | TokenKind::RShift)),
+                "{code:?}: {ks:?}"
+            );
+        }
     }
+    let ks = kinds_of("x = a!<<b;", ScriptTS);
+    assert!(ks.contains(&TokenKind::LShift), "{ks:?}");
+}
+
+#[test]
+fn optional_call_type_arguments_are_never_jsx() {
+    for code in [
+        "a?.<T>(b);",
+        "a?.<T>();",
+        "a?.b?.<T>(c);",
+        "a?.<T[]>(b);",
+        "a?.<T.U>(b);",
+        "a?.<T<U>>(b);",
+        "a?.<T | U>(b);",
+        "a?.<div>(b);",
+        "a?. <T>(b);",
+        "a?./*c*/<T>(b);",
+        "a?.\n<T>(b);",
+        "x = a?.<T>(b) + 1;",
+        "if (a?.<T>(b)) {}",
+        "a?.< <T>(x: T) => T>(b);",
+    ] {
+        let ks = kinds_of(code, ScriptTSX);
+        assert!(!ks.contains(&TokenKind::JsxLt), "{code:?} must not open JSX: {ks:?}");
+        assert_eq!(diag_codes_of(code, ScriptTSX), [], "{code:?}");
+    }
+    stream(
+        "a?.<T>(b); <div/>;",
+        ScriptTSX,
+        "IDENT ?. < IDENT > ( IDENT ) ; JSX_LT IDENT / JSX_TAG_END ;",
+    );
+    stream(
+        "<a>{b?.<T>(c)}</a>;",
+        ScriptTSX,
+        "JSX_LT IDENT > { IDENT ?. < IDENT > ( IDENT ) } JSX_LT / IDENT JSX_TAG_END ;",
+    );
+    division("x = a?.<T>(b) / 2;", ScriptTSX);
+    regex("a?.<T>(b);\n/re/g;", ScriptTSX);
+}
+
+#[test]
+fn const_type_parameter_inside_a_type_list() {
+    for code in [
+        "f<<const T>(x: T) => T>(y);",
+        "f<A, <const T>(x: T) => T>(y);",
+        "f<A, <T, const U>(x: T) => U>(y);",
+        "a?.<A, <const T>(x: T) => T>(y);",
+    ] {
+        assert_eq!(diag_codes_of(code, ScriptTSX), [], "{code:?}");
+    }
+    gt_run_split("x = f<A, <const T>(y: T) => B<C>>(1);");
+    // In a type argument list const is still no type.
+    gt_run_fused("x = f<A<const>>(1);");
+    gt_run_fused("x = f<A<const T>>(1);");
 }
 
 #[test]

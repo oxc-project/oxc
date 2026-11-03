@@ -267,7 +267,7 @@ fn parse_stylesheet<'a>(
 
     let comments: &'a [CssComment] = ArenaVec::from_iter_in(
         parser.comments().iter().map(|c| CssComment {
-            span: to_span(&c.span),
+            span: to_span(c.span),
             inline: matches!(c.kind, oxc_css_parser::token::CommentKind::Line),
         }),
         &allocator,
@@ -278,14 +278,11 @@ fn parse_stylesheet<'a>(
 }
 
 fn to_diagnostic(error: &oxc_css_parser::error::Error) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Syntax error: {}", error.kind)).with_label(to_span(&error.span))
+    OxcDiagnostic::error(format!("Syntax error: {}", error.kind)).with_label(to_span(error.span))
 }
 
-pub fn to_span(span: &oxc_css_parser::Span) -> Span {
-    Span::new(
-        u32::try_from(span.start).unwrap_or(u32::MAX),
-        u32::try_from(span.end).unwrap_or(u32::MAX),
-    )
+pub fn to_span(span: oxc_css_parser::Span) -> Span {
+    Span::new(span.start, span.end)
 }
 
 fn write_front_matter<'a>(fm: &FrontMatter<'a>, f: &mut CssFormatter<'_, 'a>) {

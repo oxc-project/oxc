@@ -1,11 +1,11 @@
 use oxc_span::Span;
 
-use crate::token::{SPAN_SENTINELS, tk};
-
-use crate::pipeline::{
-    cpu::{Cpu, DynCpu, apply, cpu_select, cpu_versions},
-    lanes::Lanes,
+use crate::{
+    cpu::{Cpu, DynCpu, cpu_multiversion, cpu_select},
+    token::{SPAN_SENTINELS, tk},
 };
+
+use crate::pipeline::lanes::Lanes;
 
 #[cfg(target_arch = "x86_64")]
 mod avx2;
@@ -20,7 +20,7 @@ mod common;
 const STAGE_BLOCKS: usize = 32;
 pub const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
 
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 pub unsafe fn compress(
     src: &[u8],
@@ -53,12 +53,13 @@ pub unsafe fn compress(
         *stage_pos.add(1) = n as u32;
         w += build_spans(stage_kind, stage_pos, 1, out_spans.add(w), out_kinds.add(w), cpu);
     }
-    write_sentinels(n as u32, out_spans.add(w), out_kinds.add(w));
+    write_sentinels(n as u32, out_spans.add(w), out_kinds.add(w), cpu);
     lanes_post(src, out_kinds, out_spans, w, n as u32, lanes, cpu);
     w
 }
 
-pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8) {
+#[cpu_multiversion]
+pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8, _cpu: impl Cpu) {
     let eof = u64::from(n) | (u64::from(n) << 32);
     for s in 0..SPAN_SENTINELS {
         *spans.cast::<u64>().add(s) = eof;
@@ -79,6 +80,7 @@ pub(super) fn init_pair_luts(cpu: DynCpu) {
     });
 }
 
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn compress_blocks(
     st: *const u64,
@@ -96,6 +98,7 @@ unsafe fn compress_blocks(
     })
 }
 
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn build_spans(
     stage_kind: *const u8,
@@ -112,6 +115,7 @@ unsafe fn build_spans(
     })
 }
 
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn lanes_post(
     src: &[u8],

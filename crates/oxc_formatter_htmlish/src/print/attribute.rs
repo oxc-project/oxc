@@ -198,8 +198,15 @@ fn write_tailwind_classes<'a>(
 fn write_quoted_value<'a>(raw: &'a str, f: &mut HtmlishFormatter<'_, 'a>) {
     let doubles = raw.bytes().filter(|&b| b == b'"').count();
     let singles = raw.bytes().filter(|&b| b == b'\'').count();
-    let (quote, escaped) = if doubles > singles { ("'", "&apos;") } else { ("\"", "&quot;") };
-    let printed = arena_cow_str(&raw.cow_replace(quote, escaped), f);
+    // A `char` pattern: a 1-char `&str` would build a substring searcher per call
+    let (quote, pattern, escaped) =
+        if doubles > singles { ("'", '\'', "&apos;") } else { ("\"", '"', "&quot;") };
+    // The chosen quote is the rarer one, so most values have none to escape
+    let printed = if doubles.min(singles) == 0 {
+        raw
+    } else {
+        arena_cow_str(&raw.cow_replace(pattern, escaped), f)
+    };
     write!(f, [text(quote), text(printed), text(quote)]);
 }
 

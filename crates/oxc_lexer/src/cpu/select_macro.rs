@@ -19,7 +19,7 @@
 /// ## Static selection
 ///
 /// ```ignore
-/// use crate::pipeline::cpu::{Cpu, cpu_select};
+/// use crate::cpu::{Cpu, cpu_select};
 ///
 /// fn classify(&mut self, cpu: impl Cpu) {
 ///     // Compiles down to a single arm (no runtime branch)
@@ -34,7 +34,7 @@
 /// ## Dynamic selection
 ///
 /// ```ignore
-/// use crate::pipeline::cpu::{DynCpu, cpu_select};
+/// use crate::cpu::{DynCpu, cpu_select};
 ///
 /// fn classify(cpu: DynCpu) {
 ///     // Runtime match over options available on the current platform
@@ -70,7 +70,7 @@
 /// `Generic(...) =>` is rewritten to `DynCpu::Generic(...) =>`, with no `#[cfg]` attribute.
 /// All other tokens are copied unchanged, so the arm bodies are parsed by the `match` itself.
 ///
-/// State is a set of named slots, like in `cpu_versions!`:
+/// State is a set of named slots:
 ///
 /// * `rest` is the tokens which haven't been consumed yet.
 /// * `seen` lists the arms which have been seen so far (e.g. `[ avx2, neon ]`).
@@ -87,7 +87,7 @@
 macro_rules! cpu_select {
     // Entry point
     ($cpu:expr, { $($arms:tt)* }) => {
-        crate::pipeline::cpu::cpu_select!(
+        crate::cpu::cpu_select!(
             @munch
             rest = [ $($arms)* ]
             seen = []
@@ -107,14 +107,14 @@ macro_rules! cpu_select {
         arms = [ $($arms:tt)* ]
         cpu = $cpu:tt
     ) => {
-        crate::pipeline::cpu::cpu_select!(
+        crate::cpu::cpu_select!(
             @munch
             rest = [ $($rest)* ]
             seen = [ avx2 ]
             arms = [
                 $($arms)*
                 #[cfg(target_arch = "x86_64")]
-                crate::pipeline::cpu::DynCpu::Avx2($($pat)*) =>
+                crate::cpu::DynCpu::Avx2($($pat)*) =>
             ]
             cpu = $cpu
         )
@@ -131,14 +131,14 @@ macro_rules! cpu_select {
         arms = [ $($arms:tt)* ]
         cpu = $cpu:tt
     ) => {
-        crate::pipeline::cpu::cpu_select!(
+        crate::cpu::cpu_select!(
             @munch
             rest = [ $($rest)* ]
             seen = [ avx2, neon ]
             arms = [
                 $($arms)*
                 #[cfg(target_arch = "aarch64")]
-                crate::pipeline::cpu::DynCpu::Neon($($pat)*) =>
+                crate::cpu::DynCpu::Neon($($pat)*) =>
             ]
             cpu = $cpu
         )
@@ -155,13 +155,13 @@ macro_rules! cpu_select {
         arms = [ $($arms:tt)* ]
         cpu = $cpu:tt
     ) => {
-        crate::pipeline::cpu::cpu_select!(
+        crate::cpu::cpu_select!(
             @munch
             rest = [ $($rest)* ]
             seen = [ avx2, neon, generic ]
             arms = [
                 $($arms)*
-                crate::pipeline::cpu::DynCpu::Generic($($pat)*) =>
+                crate::cpu::DynCpu::Generic($($pat)*) =>
             ]
             cpu = $cpu
         )
@@ -177,7 +177,7 @@ macro_rules! cpu_select {
         ]
         $($_any:tt)*
     ) => {
-        crate::pipeline::cpu::cpu_select!(@error)
+        crate::cpu::cpu_select!(@error)
     };
 
     // Any other token.
@@ -208,7 +208,7 @@ macro_rules! cpu_select {
         arms = [ $($arms:tt)* ]
         cpu = $cpu:tt
     ) => {
-        crate::pipeline::cpu::cpu_select!(
+        crate::cpu::cpu_select!(
             @munch
             rest = [ $($rest)* ]
             seen = $seen
@@ -228,7 +228,7 @@ macro_rules! cpu_select {
         arms = [ $($arms:tt)* ]
         cpu = $cpu:tt
     ) => {
-        match crate::pipeline::cpu::to_dyn($cpu) {
+        match crate::cpu::to_dyn($cpu) {
             $($arms)*
         }
     };
@@ -236,7 +236,7 @@ macro_rules! cpu_select {
     // All tokens consumed, but an arm is missing.
     // The rules above handle every other case, so this rule matches anything.
     (@munch $($_any:tt)*) => {
-        crate::pipeline::cpu::cpu_select!(@error)
+        crate::cpu::cpu_select!(@error)
     };
 
     // Error for any arms which don't follow the rules

@@ -1,6 +1,9 @@
 //! The token stream as the disambiguation questions read it.
 
-use crate::token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk};
+use crate::{
+    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version},
+    token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk},
+};
 
 use crate::pipeline::{
     bytes::{is_digit, line_break_in},
@@ -58,15 +61,19 @@ pub struct Peek {
 }
 
 impl Prev {
+    #[cpu_version(Generic)]
     pub fn is_member_dot(self, tokens: &Tokens) -> bool {
-        matches!(self, Prev::Op(q, _) if tokens.member_dot(q))
+        let cpu = BASELINE;
+
+        matches!(self, Prev::Op(q, _) if tokens.member_dot(q, cpu))
     }
 }
 
 impl Tokens<'_> {
     /// Base kind: keywords back to `tk!(Ident)`, escaped names to their plain kind.
-    #[inline]
-    pub fn base_kind(&self, pos: usize) -> u8 {
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub fn base_kind(&self, pos: usize, _cpu: impl Cpu) -> u8 {
         let k = self.kind[pos];
         if k >= KW_KIND_BASE {
             return tk!(Ident);
@@ -81,8 +88,9 @@ impl Tokens<'_> {
     }
 
     /// Keyword code of the word at `pos` of `len` bytes (0 for a plain identifier).
+    #[cpu_multiversion]
     #[inline]
-    pub fn word_kw(&self, pos: usize, len: usize) -> u8 {
+    pub fn word_kw(&self, pos: usize, len: usize, cpu: impl Cpu) -> u8 {
         let raw = self.kind[pos];
         if raw >= KW_KIND_BASE {
             return raw;
@@ -94,32 +102,35 @@ impl Tokens<'_> {
         if !self.src[pos].is_ascii_lowercase() {
             return 0;
         }
-        let k = kw_match_at(self.ts, self.src, pos, len);
+        let k = kw_match_at(self.ts, self.src, pos, len, cpu);
         if k != TokenKind::Ident { k as u8 } else { 0 }
     }
 
     /// Keyword code of the word at `w` (0 for a plain name).
-    #[inline]
-    pub fn ident_kw(&self, w: usize) -> u8 {
-        let e = self.next_start(w + 1);
-        self.word_kw(w, e - w)
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub fn ident_kw(&self, w: usize, cpu: impl Cpu) -> u8 {
+        let e = self.next_start(w + 1, cpu);
+        self.word_kw(w, e - w, cpu)
     }
 
     /// The token start at or after `i`, or `n`.
-    #[inline]
-    pub fn next_start(&self, i: usize) -> usize {
-        bits::next1(self.st, i, self.n)
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub fn next_start(&self, i: usize, cpu: impl Cpu) -> usize {
+        bits::next1(self.st, i, self.n, cpu)
     }
 
     /// The significant token start at or after `i` (skipping trivia), or `n`.
+    #[cpu_multiversion]
     #[inline]
-    pub fn next_sig(&self, mut i: usize) -> usize {
+    pub fn next_sig(&self, mut i: usize, cpu: impl Cpu) -> usize {
         loop {
-            i = self.next_start(i);
+            i = self.next_start(i, cpu);
             if i >= self.n {
                 return self.n;
             }
-            if is_trivia_byte(self.kind[i]) {
+            if is_trivia_byte(self.kind[i], cpu) {
                 i += 1;
                 continue;
             }
@@ -127,73 +138,81 @@ impl Tokens<'_> {
         }
     }
 
+    #[cpu_multiversion]
     #[inline]
-    pub fn peek(&self, i: usize) -> Peek {
-        let pos = self.next_sig(i);
-        let kind = if pos < self.n { self.base_kind(pos) } else { tk!(Eof) };
+    pub fn peek(&self, i: usize, cpu: impl Cpu) -> Peek {
+        let pos = self.next_sig(i, cpu);
+        let kind = if pos < self.n { self.base_kind(pos, cpu) } else { tk!(Eof) };
         Peek { pos, kind, byte: self.src[pos] }
     }
 
     /// The significant token start before `pos` (skipping trivia), or `None` at the start.
+    #[cpu_multiversion]
     #[inline]
-    pub fn prev_sig(&self, pos: usize) -> Option<usize> {
-        walk::prev_sig(self.st, self.kind, pos)
+    pub fn prev_sig(&self, pos: usize, cpu: impl Cpu) -> Option<usize> {
+        walk::prev_sig(self.st, self.kind, pos, cpu)
     }
 
     /// The significant token before `p`.
-    pub fn prev_token(&self, p: usize) -> Prev {
-        let Some(q) = self.prev_sig(p) else {
+    #[cpu_multiversion]
+    pub fn prev_token(&self, p: usize, cpu: impl Cpu) -> Prev {
+        let Some(q) = self.prev_sig(p, cpu) else {
             return Prev::None;
         };
-        let k = self.base_kind(q);
+        let k = self.base_kind(q, cpu);
         if k >= OP_KIND_BASE {
             Prev::Op(q, self.src[q])
         } else if k == tk!(Ident) {
-            Prev::Word(q, self.ident_kw(q))
+            Prev::Word(q, self.ident_kw(q, cpu))
         } else {
             Prev::Other(q)
         }
     }
 
     /// Is the word at `w` a property name (`x.if`, `x?.if`)?
+    #[cpu_multiversion]
     #[inline]
-    pub fn property_name(&self, w: usize) -> bool {
-        self.prev_sig(w).is_some_and(|q| self.kind[q] >= OP_KIND_BASE && self.member_dot(q))
+    pub fn property_name(&self, w: usize, cpu: impl Cpu) -> bool {
+        self.prev_sig(w, cpu)
+            .is_some_and(|q| self.kind[q] >= OP_KIND_BASE && self.member_dot(q, cpu))
     }
 
     /// Is the operator at q a member access dot, not a spread dot or the start of ?.5?
+    #[cpu_multiversion]
     #[inline]
-    pub fn member_dot(&self, q: usize) -> bool {
+    pub fn member_dot(&self, q: usize, cpu: impl Cpu) -> bool {
         let src = self.src;
         match src[q] {
-            b'?' => src[q + 1] == b'.' && !is_digit(src[q + 2]),
+            b'?' => src[q + 1] == b'.' && !is_digit(src[q + 2], cpu),
             // A spread is three token starts before coalesce, ending here, or one after it.
             b'.' => {
                 !(src[q + 1] == b'.' && src[q + 2] == b'.')
                     && !(q >= 2 && src[q - 1] == b'.' && src[q - 2] == b'.')
-                    && !self.numeric_dot(q)
+                    && !self.numeric_dot(q, cpu)
             }
             _ => false,
         }
     }
 
     /// Does the . at q end a decimal integer literal (1.) rather than access a member?
-    pub fn numeric_dot(&self, q: usize) -> bool {
-        let Some(p) = bits::prev1(self.st, q) else {
+    #[cpu_multiversion]
+    pub fn numeric_dot(&self, q: usize, cpu: impl Cpu) -> bool {
+        let Some(p) = bits::prev1(self.st, q, cpu) else {
             return false;
         };
         let digits = &self.src[p..q];
         // A fraction, a prefixed or exponent literal, or a legacy octal takes no dot.
         self.kind[p] == tk!(Number)
             && (p == 0 || self.src[p - 1] != b'.')
-            && digits.iter().all(|&c| is_digit(c) || c == b'_')
+            && digits.iter().all(|&c| is_digit(c, cpu) || c == b'_')
             && !(digits.len() > 1 && digits[0] == b'0' && digits.iter().all(|&c| c < b'8'))
     }
 
     /// Number of `c` bytes the token at `p` starts with (a fused `>>>` counts three, a lone `>`
     /// one).
-    pub fn run_len(&self, p: usize, c: u8) -> i32 {
-        let e = self.next_start(p + 1);
+    #[cpu_multiversion]
+    pub fn run_len(&self, p: usize, c: u8, cpu: impl Cpu) -> i32 {
+        let e = self.next_start(p + 1, cpu);
         let mut i = p;
         while i < e && self.src[i] == c {
             i += 1;
@@ -202,26 +221,32 @@ impl Tokens<'_> {
     }
 
     /// Length of the fused operator at pos, 1 when no multi-byte operator starts there.
+    #[cpu_version(Generic)]
     #[inline]
     pub fn op_len(&self, pos: usize) -> usize {
+        let cpu = BASELINE;
+
         let bytes = <[u8; 4]>::try_from(&self.src[pos..pos + 4]).unwrap();
         // Provide `max_len` as static value 4 to remove branches in `opmap_longest`.
         // When at the very end of source, `bytes` can contain `\0` padding bytes,
         // but these bytes cannot match any operator. This adds redundant work at the very end
         // of the file (very rare case) in return for fewer branches everywhere else (common).
-        opmap_longest(bytes, 4).1 as usize
+        opmap_longest(bytes, 4, cpu).1 as usize
     }
 
     /// The TemplateHead of the template whose tail or middle is at tail; None past cap steps.
+    #[cpu_version(Generic)]
     pub fn template_head(&self, tail: usize, steps: &mut u32, cap: u32) -> Option<usize> {
+        let cpu = BASELINE;
+
         let mut depth = 1i32;
-        let mut t = self.prev_sig(tail);
+        let mut t = self.prev_sig(tail, cpu);
         while let Some(tp) = t {
             *steps += 1;
             if *steps > cap {
                 return None;
             }
-            match self.base_kind(tp) {
+            match self.base_kind(tp, cpu) {
                 tk!(TemplateTail) => depth += 1,
                 tk!(TemplateHead) => {
                     depth -= 1;
@@ -231,32 +256,35 @@ impl Tokens<'_> {
                 }
                 _ => {}
             }
-            t = self.prev_sig(tp);
+            t = self.prev_sig(tp, cpu);
         }
         None
     }
 
     /// Does a line terminator lie in `a..b`?
+    #[cpu_multiversion]
     #[inline]
-    pub fn line_break_between(&self, a: usize, b: usize) -> bool {
-        line_break_in(self.src, a, b)
+    pub fn line_break_between(&self, a: usize, b: usize, cpu: impl Cpu) -> bool {
+        line_break_in(self.src, a, b, cpu)
     }
 
     /// Does the identifier at `pos` equal exactly `kw`?
-    #[inline]
-    pub fn ident_is(&self, pos: usize, kw: &[u8]) -> bool {
-        walk::ident_is(self.src, pos, kw)
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub fn ident_is(&self, pos: usize, kw: &[u8], cpu: impl Cpu) -> bool {
+        walk::ident_is(self.src, pos, kw, cpu)
     }
 
     /// The opener of the `)`, `]` or `}` at `from`, or `None` if unbalanced
     /// (see [`walk::match_delim_back`]).
+    #[cpu_multiversion]
     #[inline]
-    pub fn match_delim_back(&self, from: usize) -> Option<usize> {
+    pub fn match_delim_back(&self, from: usize, cpu: impl Cpu) -> Option<usize> {
         let (open, close) = match self.src[from] {
             b')' => (b'(', b')'),
             b']' => (b'[', b']'),
             _ => (b'{', b'}'),
         };
-        walk::match_delim_back(self, from, open, close)
+        walk::match_delim_back(self, from, open, close, cpu)
     }
 }

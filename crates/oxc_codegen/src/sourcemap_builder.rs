@@ -54,6 +54,7 @@ pub struct SourcemapBuilder<'a> {
     tokens: Vec<oxc_sourcemap::Token>,
     last_generated_update: usize,
     last_position: Option<u32>,
+    last_token_has_name: bool,
     line_offset_tables: LineOffsetTables,
     generated_line: u32,
     generated_column: u32,
@@ -76,6 +77,7 @@ impl<'a> SourcemapBuilder<'a> {
             tokens: Vec::with_capacity(source_len / 4),
             last_generated_update: 0,
             last_position: None,
+            last_token_has_name: false,
             line_offset_tables,
             generated_line: 0,
             generated_column: 0,
@@ -137,6 +139,21 @@ impl<'a> SourcemapBuilder<'a> {
 
     pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&'a str>) {
         if self.last_position == Some(position) {
+            if let Some(name) = name
+                && !self.last_token_has_name
+            {
+                let name_id = self.add_name(name);
+                let token = self.tokens.last_mut().unwrap();
+                *token = oxc_sourcemap::Token::new(
+                    token.get_dst_line(),
+                    token.get_dst_col(),
+                    token.get_src_line(),
+                    token.get_src_col(),
+                    token.get_source_id(),
+                    Some(name_id),
+                );
+                self.last_token_has_name = true;
+            }
             return;
         }
         let (original_line, original_column) = self.search_original_line_and_column(position);
@@ -151,6 +168,7 @@ impl<'a> SourcemapBuilder<'a> {
             name_id,
         ));
         self.last_position = Some(position);
+        self.last_token_has_name = name_id.is_some();
     }
 
     fn add_name(&mut self, name: &'a str) -> u32 {
@@ -661,6 +679,34 @@ mod test {
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             Some("b")
         );
+    }
+
+    #[test]
+    fn duplicate_source_mappings_preserve_names_and_coordinates() {
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), "first second");
+        builder.add_source_mapping(b"", 0, None);
+        builder.add_source_mapping(b"(a", 0, Some("first"));
+        builder.add_source_mapping(b"(a", 0, Some("ignored"));
+        builder.add_source_mapping(b"(a\n", 6, None);
+        builder.add_source_mapping(b"(a\nb", 6, Some("second"));
+        builder.add_source_mapping(b"(a\nb", 6, None);
+        builder.add_source_mapping(b"(a\nb", 6, Some("ignored"));
+
+        let sm = builder.into_sourcemap();
+        let tokens = sm
+            .get_source_view_tokens()
+            .map(|token| {
+                (
+                    token.get_dst_line(),
+                    token.get_dst_col(),
+                    token.get_src_line(),
+                    token.get_src_col(),
+                    token.get_name(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(tokens, [(0, 0, 0, 0, Some("first")), (1, 0, 0, 6, Some("second"))]);
+        assert_eq!(sm.get_names().collect::<Vec<_>>(), ["first", "second"]);
     }
 
     #[test]

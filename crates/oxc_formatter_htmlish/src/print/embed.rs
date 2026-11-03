@@ -184,6 +184,7 @@ pub fn write_embedded_content<'a>(
 /// printed as `<\/script`, where `\/` means `/` (in a JS string or template, and in JSON).
 ///
 /// A nested HTML part prints its end tags as one text (`tag.rs`), so none is split across texts.
+/// A JSX closing tag is (`</ script>` prints `</script>`), left as is: rare, and JSX has no escape for it.
 fn escape_script_end<'a>(
     ir: ArenaVec<'a, FormatElement<'a>>,
     f: &HtmlishFormatter<'_, 'a>,
@@ -191,12 +192,13 @@ fn escape_script_end<'a>(
     let allocator = f.allocator();
     let indent_width = f.options().indent_width();
     map_text_in_ir(ir, allocator, &mut |text, out| {
+        let bytes = text.as_bytes();
         let is_script_end = |i: usize| {
-            let bytes = &text.as_bytes()[i + 2..];
-            bytes.get(..6).is_some_and(|name| name.eq_ignore_ascii_case(b"script"))
-                && !bytes.get(6).is_some_and(|&b| b.is_ascii_alphanumeric() || b == b'_')
+            bytes.get(i + 1..i + 8).is_some_and(|tag| tag.eq_ignore_ascii_case(b"/script"))
+                && !bytes.get(i + 8).is_some_and(|&b| b.is_ascii_alphanumeric() || b == b'_')
         };
-        let mut ends = text.match_indices("</").filter(|&(i, _)| is_script_end(i)).peekable();
+        // Searched by `<`, which most texts lack: a `"</"` pattern builds a searcher per text
+        let mut ends = text.match_indices('<').filter(|&(i, _)| is_script_end(i)).peekable();
         if ends.peek().is_none() {
             return false;
         }

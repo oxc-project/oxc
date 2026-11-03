@@ -1,10 +1,7 @@
-#[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
-
-use crate::pipeline::cpu::{Cpu, cpu_select};
+use crate::cpu::{Cpu, cpu_multiversion, cpu_select, cpu_version};
 
 #[cfg(target_arch = "x86_64")]
-use crate::pipeline::cpu::Avx2;
+use crate::{cpu::Avx2, simd::Vec256};
 
 /// Get bit `i`.
 ///
@@ -14,8 +11,9 @@ use crate::pipeline::cpu::Avx2;
 ///
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads of `(i / 64) + 1` words.
+#[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn bm_get(bm: *const u64, i: usize) -> bool {
+pub(super) unsafe fn bm_get(bm: *const u64, i: usize, _cpu: impl Cpu) -> bool {
     (*bm.add(i >> 6) >> (i & 63)) & 1 != 0
 }
 
@@ -29,8 +27,9 @@ pub(super) unsafe fn bm_get(bm: *const u64, i: usize) -> bool {
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads of `n.div_ceil(64) + 1` words.
 ///   The last word is read only when `i` is `n` and `n` is a multiple of 64.
+#[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn bm_next0(bm: *const u64, i: usize, n: usize) -> usize {
+pub(super) unsafe fn bm_next0(bm: *const u64, i: usize, n: usize, _cpu: impl Cpu) -> usize {
     let mut w = i >> 6;
     let mut inv = !*bm.add(w) & !((1u64 << (i & 63)).wrapping_sub(1));
     while inv == 0 {
@@ -56,8 +55,9 @@ pub(super) unsafe fn bm_next0(bm: *const u64, i: usize, n: usize) -> usize {
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads of `p.div_ceil(64)` words.
 ///   Nothing is read when `p` is 0.
+#[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn bm_prev1(bm: *const u64, p: usize) -> i64 {
+pub(super) unsafe fn bm_prev1(bm: *const u64, p: usize, _cpu: impl Cpu) -> i64 {
     if p == 0 {
         return -1;
     }
@@ -86,8 +86,9 @@ pub(super) unsafe fn bm_prev1(bm: *const u64, p: usize) -> i64 {
 ///
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads and writes of `(i / 64) + 1` words.
+#[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn bm_set(bm: *mut u64, i: usize) {
+pub(super) unsafe fn bm_set(bm: *mut u64, i: usize, _cpu: impl Cpu) {
     *bm.add(i >> 6) |= 1u64 << (i & 63);
 }
 
@@ -97,8 +98,9 @@ pub(super) unsafe fn bm_set(bm: *mut u64, i: usize) {
 ///
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads and writes of `(i / 64) + 1` words.
+#[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn bm_clear(bm: *mut u64, i: usize) {
+pub(super) unsafe fn bm_clear(bm: *mut u64, i: usize, _cpu: impl Cpu) {
     *bm.add(i >> 6) &= !(1u64 << (i & 63));
 }
 
@@ -111,8 +113,9 @@ pub(super) unsafe fn bm_clear(bm: *mut u64, i: usize) {
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads and writes of `(b / 64) + 1` words.
 ///   Nothing is accessed when `a > b`.
+#[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize) {
+pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize, _cpu: impl Cpu) {
     if a > b {
         return;
     }
@@ -143,6 +146,7 @@ pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize) {
 ///
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads of `nw` words.
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn bm_any(bm: *const u64, nw: usize, cpu: impl Cpu) -> bool {
     cpu_select!(cpu, {
@@ -157,14 +161,13 @@ pub(super) unsafe fn bm_any(bm: *const u64, nw: usize, cpu: impl Cpu) -> bool {
 /// # SAFETY
 ///
 /// Same as [`bm_any`].
-#[cfg(target_arch = "x86_64")]
+#[cpu_version(Avx2)]
 #[inline]
-#[target_feature(enable = "avx2,bmi2,popcnt")]
-unsafe fn bm_any_avx2(bm: *const u64, nw: usize, _cpu: Avx2) -> bool {
+unsafe fn bm_any_avx2(bm: *const u64, nw: usize, cpu: Avx2) -> bool {
     let mut w = 0usize;
     while w + 4 <= nw {
-        let v = _mm256_loadu_si256(bm.add(w) as *const __m256i);
-        if _mm256_testz_si256(v, v) == 0 {
+        let v = Vec256::load_unaligned(bm.add(w).cast::<u8>(), cpu);
+        if !v.is_zero() {
             return true;
         }
         w += 4;
@@ -183,6 +186,7 @@ unsafe fn bm_any_avx2(bm: *const u64, nw: usize, _cpu: Avx2) -> bool {
 /// # SAFETY
 ///
 /// Same as [`bm_any`].
+#[cpu_version(Generic)]
 #[inline]
 unsafe fn bm_any_generic(bm: *const u64, nw: usize) -> bool {
     let mut w = 0usize;

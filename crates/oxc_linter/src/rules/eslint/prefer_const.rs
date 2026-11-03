@@ -327,10 +327,13 @@ impl PreferConst {
             return false;
         }
 
-        let references: Vec<_> = symbol_table.get_resolved_references(symbol_id).collect();
+        let references = symbol_table
+            .get_resolved_reference_ids(symbol_id)
+            .iter()
+            .map(|&reference_id| symbol_table.get_reference(reference_id));
         let symbol_scope = symbol_table.symbol_scope_id(symbol_id);
         let has_cross_scope_write = references
-            .iter()
+            .clone()
             .filter(|r| r.is_write())
             .any(|r| ctx.nodes().get_node(r.node_id()).scope_id() != symbol_scope);
         if has_cross_scope_write {
@@ -338,7 +341,7 @@ impl PreferConst {
         }
 
         if matches!(self.0.destructuring, Destructuring::All) {
-            let write_count = references.iter().filter(|r| r.is_write()).count();
+            let write_count = references.filter(|r| r.is_write()).count();
             if write_count > 1
                 || matches!(ctx.nodes().kind(decl_node), AstKind::VariableDeclarator(decl) if decl.init.is_some())
             {
@@ -474,10 +477,13 @@ impl PreferConst {
         let symbol_table = ctx.scoping();
 
         // Get all references to this symbol
-        let references: Vec<_> = symbol_table.get_resolved_references(symbol_id).collect();
+        let references = symbol_table
+            .get_resolved_reference_ids(symbol_id)
+            .iter()
+            .map(|&reference_id| symbol_table.get_reference(reference_id));
 
         // Count write references (assignments)
-        let write_count = references.iter().filter(|r| r.is_write()).count();
+        let write_count = references.clone().filter(|r| r.is_write()).count();
 
         // If configured to ignore reads before the initial assignment and this variable has an
         // initializer, then suppress the suggestion when there exists a read that appears before
@@ -487,7 +493,7 @@ impl PreferConst {
             let decl_node_id = symbol_table.symbol_declaration(symbol_id);
             let decl_start = ctx.nodes().get_node(decl_node_id).span().start;
 
-            let has_read_before_decl = references.iter().any(|r| {
+            let has_read_before_decl = references.clone().any(|r| {
                 if !r.is_read() {
                     return false;
                 }
@@ -513,7 +519,7 @@ impl PreferConst {
 
         // Handle ignoreReadBeforeAssign option
         if self.0.ignore_read_before_assign && !has_init && write_count == 1 {
-            let mut write_only_refs = references.iter().filter(|r| r.is_write() && !r.is_read());
+            let mut write_only_refs = references.clone().filter(|r| r.is_write() && !r.is_read());
 
             if let Some(write_ref) = write_only_refs.next()
                 && write_only_refs.next().is_none()
@@ -522,7 +528,7 @@ impl PreferConst {
 
                 // Check if there are any reads before the write
                 let mut has_seen_write = false;
-                let has_read_before_write = references.iter().any(|r| {
+                let has_read_before_write = references.clone().any(|r| {
                     if r.node_id() == write_node_id {
                         has_seen_write = true;
                         return false;
@@ -553,7 +559,7 @@ impl PreferConst {
             return false;
         }
 
-        let mut write_only_refs = references.iter().filter(|r| r.is_write() && !r.is_read());
+        let mut write_only_refs = references.filter(|r| r.is_write() && !r.is_read());
 
         let Some(write_ref) = write_only_refs.next() else {
             return false;
