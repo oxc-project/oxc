@@ -115,7 +115,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 });
                 if let Some(catch_symbol_id) = catch_symbol_id {
                     builder.add_redeclare_variable(catch_symbol_id, includes, span);
-                    builder.scoping.catch_var_bindings.insert(catch_symbol_id, symbol_id);
+                    builder.scoping.set_catch_var_binding(catch_symbol_id, symbol_id);
                     ident.symbol_id.set(Some(catch_symbol_id));
                 } else {
                     ident.symbol_id.set(Some(symbol_id));

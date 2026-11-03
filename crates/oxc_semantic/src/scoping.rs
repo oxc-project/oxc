@@ -101,10 +101,6 @@ pub struct Scoping {
     /// Function or Variable Symbol IDs that are marked with `@__NO_SIDE_EFFECTS__`.
     pub(crate) no_side_effects: FxHashSet<SymbolId>,
 
-    /// Simple catch parameters redeclared by `var`, mapped to the enclosing var binding.
-    /// The bindings have separate values, but the declarator must retain both bindings' name.
-    pub(crate) catch_var_bindings: FxHashMap<SymbolId, SymbolId>,
-
     /// Pre-computed enum member values and scope mappings.
     pub(crate) enum_data: EnumData,
 
@@ -126,7 +122,6 @@ impl Default for Scoping {
             symbol_table: SymbolTable::new(),
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
-            catch_var_bindings: FxHashMap::default(),
             enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
@@ -283,17 +278,22 @@ mod scoping_cell {
 }
 use scoping_cell::ScopingCell;
 
+#[derive(Default)]
+struct SymbolRedeclarations<'cell> {
+    /// `None` preserves the absence of declaration records when only a catch-var link remains.
+    declarations: Option<ArenaVec<'cell, Redeclaration>>,
+    /// Enclosing var binding of a redeclared simple catch parameter. Both bindings must keep
+    /// the same name, but have separate values.
+    catch_var_binding: Option<SymbolId>,
+}
+
 pub struct ScopingInner<'cell> {
     /* Symbol Table Fields */
     symbol_names: ArenaVec<'cell, Ident<'cell>>,
     resolved_references: ArenaVec<'cell, ArenaVec<'cell, ReferenceId>>,
-    /// Redeclarations of a symbol.
-    ///
-    /// NOTE:
-    /// Once a symbol is redeclared, there are at least two entries here. The first
-    /// entry is the original symbol information, and the rest are redeclarations.
-    /// i.e. `symbol_redeclarations[symbol_id].len() >= 2` always.
-    symbol_redeclarations: FxHashMap<SymbolId, ArenaVec<'cell, Redeclaration>>,
+    /// Redeclaration records and related binding identities, grouped by symbol.
+    /// Declaration lists start with the original symbol information.
+    symbol_redeclarations: FxHashMap<SymbolId, SymbolRedeclarations<'cell>>,
     /* Scope Tree Fields */
     /// Symbol bindings in a scope.
     ///
@@ -412,25 +412,38 @@ impl Scoping {
     #[inline]
     /// Get all redeclarations associated with a symbol.
     pub fn symbol_redeclarations(&self, symbol_id: SymbolId) -> &[Redeclaration] {
-        self.cell.borrow_dependent().symbol_redeclarations.get(&symbol_id).map_or_else(
-            || {
-                static EMPTY: &[Redeclaration] = &[];
-                EMPTY
-            },
-            |v| v.as_slice(),
-        )
+        self.cell
+            .borrow_dependent()
+            .symbol_redeclarations
+            .get(&symbol_id)
+            .and_then(|r| r.declarations.as_ref())
+            .map_or(&[], |r| r.as_slice())
     }
 
     /// Get the enclosing var binding declared by a `var` that redeclares this catch parameter.
     /// The declarator carries the catch symbol because its initializer assigns to that binding.
     #[inline]
     pub fn catch_var_binding(&self, symbol_id: SymbolId) -> Option<SymbolId> {
-        self.catch_var_bindings.get(&symbol_id).copied()
+        self.cell
+            .borrow_dependent()
+            .symbol_redeclarations
+            .get(&symbol_id)
+            .and_then(|r| r.catch_var_binding)
+    }
+
+    pub(crate) fn set_catch_var_binding(&mut self, catch: SymbolId, outer: SymbolId) {
+        self.cell.with_dependent_mut(|_, cell| {
+            cell.symbol_redeclarations.entry(catch).or_default().catch_var_binding = Some(outer);
+        });
     }
 
     /// Iterate `(catch parameter, enclosing var binding)` pairs in unspecified order.
     pub fn catch_var_bindings(&self) -> impl Iterator<Item = (SymbolId, SymbolId)> + '_ {
-        self.catch_var_bindings.iter().map(|(&catch, &outer)| (catch, outer))
+        self.cell
+            .borrow_dependent()
+            .symbol_redeclarations
+            .iter()
+            .filter_map(|(&catch, r)| r.catch_var_binding.map(|outer| (catch, outer)))
     }
 
     #[inline]
@@ -523,8 +536,12 @@ impl Scoping {
         declaration: NodeId,
         span: Span,
     ) {
-        let is_first_redeclared =
-            !self.cell.borrow_dependent().symbol_redeclarations.contains_key(&symbol_id);
+        let is_first_redeclared = self
+            .cell
+            .borrow_dependent()
+            .symbol_redeclarations
+            .get(&symbol_id)
+            .is_none_or(|r| r.declarations.is_none());
         // Borrow checker doesn't allow us to call `self.symbol_span` in `with_dependent_mut`,
         // so we need construct `Redeclaration` here.
         let first_declaration = is_first_redeclared.then(|| Redeclaration {
@@ -535,34 +552,40 @@ impl Scoping {
 
         self.cell.with_dependent_mut(|allocator, cell| {
             let redeclaration = Redeclaration { span, declaration, flags };
-            match cell.symbol_redeclarations.entry(symbol_id) {
-                Entry::Occupied(occupied) => {
-                    occupied.into_mut().push(redeclaration);
-                }
-                Entry::Vacant(vacant) => {
-                    let first_declaration = first_declaration.unwrap_or_else(|| {
-                        unreachable!(
-                            "The above step has already been checked, and it was first declared."
-                        )
-                    });
-                    let v = ArenaVec::from_array_in([first_declaration, redeclaration], &allocator);
-                    vacant.insert(v);
-                }
+            let records =
+                &mut cell.symbol_redeclarations.entry(symbol_id).or_default().declarations;
+            if let Some(declarations) = records {
+                declarations.push(redeclaration);
+            } else {
+                let first_declaration = first_declaration.unwrap_or_else(|| {
+                    unreachable!(
+                        "The above step has already been checked, and it was first declared."
+                    )
+                });
+                let v = ArenaVec::from_array_in([first_declaration, redeclaration], &allocator);
+                *records = Some(v);
             }
         });
     }
 
-    /// Remove all redeclaration metadata for a symbol.
+    /// Remove all declaration records for a symbol, retaining any catch-var binding identity.
     pub fn clear_symbol_redeclarations(&mut self, symbol_id: SymbolId) {
         self.cell.with_dependent_mut(|_allocator, cell| {
-            cell.symbol_redeclarations.remove(&symbol_id);
+            if let Entry::Occupied(mut entry) = cell.symbol_redeclarations.entry(symbol_id) {
+                if entry.get().catch_var_binding.is_some() {
+                    entry.get_mut().declarations = None;
+                } else {
+                    entry.remove();
+                }
+            }
         });
     }
 
     /// Remove one declaration from a merged symbol and promote the first surviving declaration.
     pub fn remove_symbol_declaration(&mut self, symbol_id: SymbolId, span: Span) {
         let replacement = self.cell.with_dependent_mut(|_allocator, cell| {
-            let redeclarations = cell.symbol_redeclarations.get_mut(&symbol_id)?;
+            let records = cell.symbol_redeclarations.get_mut(&symbol_id)?;
+            let redeclarations = records.declarations.as_mut()?;
             redeclarations.retain(|redeclaration| redeclaration.span != span);
 
             let first = redeclarations.first()?.clone();
@@ -571,7 +594,11 @@ impl Scoping {
                 .fold(SymbolFlags::None, |flags, redeclaration| flags | redeclaration.flags);
             let has_redeclarations = redeclarations.len() > 1;
             if !has_redeclarations {
-                cell.symbol_redeclarations.remove(&symbol_id);
+                if records.catch_var_binding.is_some() {
+                    records.declarations = None;
+                } else {
+                    cell.symbol_redeclarations.remove(&symbol_id);
+                }
             }
 
             Some((first, flags))
@@ -1154,7 +1181,6 @@ impl Scoping {
             symbol_table: self.symbol_table.clone(),
             references: self.references.clone(),
             no_side_effects: self.no_side_effects.clone(),
-            catch_var_bindings: self.catch_var_bindings.clone(),
             enum_data: self.enum_data.clone(),
             scope_table: self.scope_table.clone(),
             cell: {
@@ -1167,7 +1193,17 @@ impl Scoping {
                     symbol_redeclarations: cell
                         .symbol_redeclarations
                         .iter()
-                        .map(|(k, v)| (*k, v.clone_in_with_semantic_ids(allocator)))
+                        .map(|(k, v)| {
+                            (
+                                *k,
+                                SymbolRedeclarations {
+                                    declarations: v
+                                        .declarations
+                                        .clone_in_with_semantic_ids(allocator),
+                                    catch_var_binding: v.catch_var_binding,
+                                },
+                            )
+                        })
                         .collect(),
                     bindings: cell
                         .bindings

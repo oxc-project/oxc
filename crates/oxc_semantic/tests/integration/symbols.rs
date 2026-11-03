@@ -44,6 +44,37 @@ fn test_catch_var_binding_after_renaming() {
     }
 }
 
+#[test]
+fn test_catch_var_binding_after_redeclaration_removal() {
+    let tester = SemanticTester::js("try {} catch (e) { var e; }");
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let (catch, outer) = scoping.catch_var_bindings().next().unwrap();
+    let declaration_span = scoping.symbol_redeclarations(catch).last().unwrap().span;
+
+    for clear_all in [false, true] {
+        let mut scoping = scoping.clone_in_with_semantic_ids_with_another_arena();
+        if clear_all {
+            scoping.clear_symbol_redeclarations(catch);
+        } else {
+            scoping.remove_symbol_declaration(catch, declaration_span);
+        }
+        assert!(scoping.symbol_redeclarations(catch).is_empty());
+        assert_eq!(scoping.catch_var_binding(catch), Some(outer));
+
+        let mut scoping = scoping.clone_in_with_semantic_ids_with_another_arena();
+        assert_eq!(scoping.catch_var_bindings().collect::<Vec<_>>(), vec![(catch, outer)]);
+        scoping.add_symbol_redeclaration(
+            catch,
+            SymbolFlags::FunctionScopedVariable,
+            scoping.symbol_declaration(outer),
+            declaration_span,
+        );
+        assert_eq!(scoping.symbol_redeclarations(catch).len(), 2);
+        assert_eq!(scoping.catch_var_binding(catch), Some(outer));
+    }
+}
+
 fn assert_root_and_single_local_reference_counts(
     tester: &SemanticTester<'_>,
     expected: &[(&str, usize, usize)],
