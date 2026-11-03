@@ -115,16 +115,23 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
         let parent_node_id = self.ast_nodes.parent_id(node_id);
         match self.ast_nodes.kind(parent_node_id) {
             // Check for direct assignment: foo = function() {}
+            // `(foo) = function() {}` does not name the function.
             AstKind::AssignmentExpression(assign_expr) => {
-                Self::is_assignment_target_id_of_specific_reference(&assign_expr.left, reference_id)
+                !assign_expr.left_parenthesized
+                    && Self::is_assignment_target_id_of_specific_reference(
+                        &assign_expr.left,
+                        reference_id,
+                    )
                     && self.is_expression_whose_name_needs_to_be_kept(&assign_expr.right)
             }
             // Check for assignments within assignment targets with defaults: [foo = function() {}] = []
             AstKind::AssignmentTargetWithDefault(assign_target) => {
-                Self::is_assignment_target_id_of_specific_reference(
-                    &assign_target.binding,
-                    reference_id,
-                ) && self.is_expression_whose_name_needs_to_be_kept(&assign_target.init)
+                !assign_target.binding_parenthesized
+                    && Self::is_assignment_target_id_of_specific_reference(
+                        &assign_target.binding,
+                        reference_id,
+                    )
+                    && self.is_expression_whose_name_needs_to_be_kept(&assign_target.init)
             }
             AstKind::IdentifierReference(_)
             | AstKind::TSAsExpression(_)
@@ -316,6 +323,16 @@ mod test {
             collect(function_only(), "var foo; ({ foo = function() {} } = {})"),
             data("foo")
         );
+    }
+
+    #[test]
+    fn test_parenthesized_assign() {
+        let none = FxHashSet::default();
+        assert_eq!(collect(function_only(), "var foo; (foo) = function() {}"), none);
+        assert_eq!(collect(function_only(), "var foo; (foo) ||= () => {}"), none);
+        assert_eq!(collect(class_only(), "var Foo; (Foo) = class {}"), none);
+        assert_eq!(collect(function_only(), "var foo; [(foo) = function() {}] = []"), none);
+        assert_eq!(collect(function_only(), "var foo; ({ a: (foo) = () => {} } = {})"), none);
     }
 
     #[test]

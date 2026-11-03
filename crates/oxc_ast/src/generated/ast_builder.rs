@@ -383,6 +383,35 @@ impl<'a> Expression<'a> {
         ))
     }
 
+    /// Build an [`Expression::AssignmentExpression`] with `left_parenthesized`.
+    ///
+    /// This node contains an [`AssignmentExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `operator`
+    /// * `left_parenthesized`: `true` if `left` is an identifier wrapped in parentheses, e.g. `(a) = function() {}`.
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_assignment_expression_with_left_parenthesized(
+        span: Span,
+        operator: AssignmentOperator,
+        left_parenthesized: bool,
+        left: AssignmentTarget<'a>,
+        right: Expression<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::AssignmentExpression(AssignmentExpression::boxed_with_left_parenthesized(
+            span,
+            operator,
+            left_parenthesized,
+            left,
+            right,
+            builder.builder(),
+        ))
+    }
+
     /// Build an [`Expression::AwaitExpression`].
     ///
     /// This node contains an [`AwaitExpression`] that will be stored in the memory arena.
@@ -1885,6 +1914,35 @@ impl<'a> ArrayExpressionElement<'a> {
         ))
     }
 
+    /// Build an [`ArrayExpressionElement::AssignmentExpression`] with `left_parenthesized`.
+    ///
+    /// This node contains an [`AssignmentExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `operator`
+    /// * `left_parenthesized`: `true` if `left` is an identifier wrapped in parentheses, e.g. `(a) = function() {}`.
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_assignment_expression_with_left_parenthesized(
+        span: Span,
+        operator: AssignmentOperator,
+        left_parenthesized: bool,
+        left: AssignmentTarget<'a>,
+        right: Expression<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::AssignmentExpression(AssignmentExpression::boxed_with_left_parenthesized(
+            span,
+            operator,
+            left_parenthesized,
+            left,
+            right,
+            builder.builder(),
+        ))
+    }
+
     /// Build an [`ArrayExpressionElement::AwaitExpression`].
     ///
     /// This node contains an [`AwaitExpression`] that will be stored in the memory arena.
@@ -3288,6 +3346,35 @@ impl<'a> PropertyKey<'a> {
         Self::AssignmentExpression(AssignmentExpression::boxed(
             span,
             operator,
+            left,
+            right,
+            builder.builder(),
+        ))
+    }
+
+    /// Build a [`PropertyKey::AssignmentExpression`] with `left_parenthesized`.
+    ///
+    /// This node contains an [`AssignmentExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `operator`
+    /// * `left_parenthesized`: `true` if `left` is an identifier wrapped in parentheses, e.g. `(a) = function() {}`.
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_assignment_expression_with_left_parenthesized(
+        span: Span,
+        operator: AssignmentOperator,
+        left_parenthesized: bool,
+        left: AssignmentTarget<'a>,
+        right: Expression<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::AssignmentExpression(AssignmentExpression::boxed_with_left_parenthesized(
+            span,
+            operator,
+            left_parenthesized,
             left,
             right,
             builder.builder(),
@@ -5179,6 +5266,35 @@ impl<'a> Argument<'a> {
         ))
     }
 
+    /// Build an [`Argument::AssignmentExpression`] with `left_parenthesized`.
+    ///
+    /// This node contains an [`AssignmentExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `operator`
+    /// * `left_parenthesized`: `true` if `left` is an identifier wrapped in parentheses, e.g. `(a) = function() {}`.
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_assignment_expression_with_left_parenthesized(
+        span: Span,
+        operator: AssignmentOperator,
+        left_parenthesized: bool,
+        left: AssignmentTarget<'a>,
+        right: Expression<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::AssignmentExpression(AssignmentExpression::boxed_with_left_parenthesized(
+            span,
+            operator,
+            left_parenthesized,
+            left,
+            right,
+            builder.builder(),
+        ))
+    }
+
     /// Build an [`Argument::AwaitExpression`].
     ///
     /// This node contains an [`AwaitExpression`] that will be stored in the memory arena.
@@ -6375,7 +6491,14 @@ impl<'a> AssignmentExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        AssignmentExpression { node_id: Cell::new(builder.node_id()), span, operator, left, right }
+        AssignmentExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            operator,
+            left_parenthesized: Default::default(),
+            left,
+            right,
+        }
     }
 
     /// Build an [`AssignmentExpression`], and store it in the memory arena.
@@ -6398,6 +6521,71 @@ impl<'a> AssignmentExpression<'a> {
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, operator, left, right, builder), &builder.allocator())
+    }
+
+    /// Build an [`AssignmentExpression`] with `left_parenthesized`.
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AssignmentExpression::boxed_with_left_parenthesized`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `operator`
+    /// * `left_parenthesized`: `true` if `left` is an identifier wrapped in parentheses, e.g. `(a) = function() {}`.
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_with_left_parenthesized(
+        span: Span,
+        operator: AssignmentOperator,
+        left_parenthesized: bool,
+        left: AssignmentTarget<'a>,
+        right: Expression<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        AssignmentExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            operator,
+            left_parenthesized,
+            left,
+            right,
+        }
+    }
+
+    /// Build an [`AssignmentExpression`] with `left_parenthesized`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AssignmentExpression::new_with_left_parenthesized`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `operator`
+    /// * `left_parenthesized`: `true` if `left` is an identifier wrapped in parentheses, e.g. `(a) = function() {}`.
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn boxed_with_left_parenthesized(
+        span: Span,
+        operator: AssignmentOperator,
+        left_parenthesized: bool,
+        left: AssignmentTarget<'a>,
+        right: Expression<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
+        ArenaBox::new_in(
+            Self::new_with_left_parenthesized(
+                span,
+                operator,
+                left_parenthesized,
+                left,
+                right,
+                builder,
+            ),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -7055,6 +7243,34 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         ))
     }
 
+    /// Build an [`AssignmentTargetMaybeDefault::AssignmentTargetWithDefault`] with `binding_parenthesized`.
+    ///
+    /// This node contains an [`AssignmentTargetWithDefault`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `binding_parenthesized`: `true` if `binding` is an identifier wrapped in parentheses, e.g. `[(a) = function() {}] = []`.
+    /// * `binding`
+    /// * `init`
+    #[inline]
+    pub fn new_assignment_target_with_default_with_binding_parenthesized(
+        span: Span,
+        binding_parenthesized: bool,
+        binding: AssignmentTarget<'a>,
+        init: Expression<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::AssignmentTargetWithDefault(
+            AssignmentTargetWithDefault::boxed_with_binding_parenthesized(
+                span,
+                binding_parenthesized,
+                binding,
+                init,
+                builder.builder(),
+            ),
+        )
+    }
+
     /// Build an [`AssignmentTargetMaybeDefault::AssignmentTargetIdentifier`].
     ///
     /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
@@ -7322,7 +7538,13 @@ impl<'a> AssignmentTargetWithDefault<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        AssignmentTargetWithDefault { node_id: Cell::new(builder.node_id()), span, binding, init }
+        AssignmentTargetWithDefault {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            binding_parenthesized: Default::default(),
+            binding,
+            init,
+        }
     }
 
     /// Build an [`AssignmentTargetWithDefault`], and store it in the memory arena.
@@ -7343,6 +7565,65 @@ impl<'a> AssignmentTargetWithDefault<'a> {
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, binding, init, builder), &builder.allocator())
+    }
+
+    /// Build an [`AssignmentTargetWithDefault`] with `binding_parenthesized`.
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AssignmentTargetWithDefault::boxed_with_binding_parenthesized`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `binding_parenthesized`: `true` if `binding` is an identifier wrapped in parentheses, e.g. `[(a) = function() {}] = []`.
+    /// * `binding`
+    /// * `init`
+    #[inline]
+    pub fn new_with_binding_parenthesized(
+        span: Span,
+        binding_parenthesized: bool,
+        binding: AssignmentTarget<'a>,
+        init: Expression<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        AssignmentTargetWithDefault {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            binding_parenthesized,
+            binding,
+            init,
+        }
+    }
+
+    /// Build an [`AssignmentTargetWithDefault`] with `binding_parenthesized`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AssignmentTargetWithDefault::new_with_binding_parenthesized`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `binding_parenthesized`: `true` if `binding` is an identifier wrapped in parentheses, e.g. `[(a) = function() {}] = []`.
+    /// * `binding`
+    /// * `init`
+    #[inline]
+    pub fn boxed_with_binding_parenthesized(
+        span: Span,
+        binding_parenthesized: bool,
+        binding: AssignmentTarget<'a>,
+        init: Expression<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
+        ArenaBox::new_in(
+            Self::new_with_binding_parenthesized(
+                span,
+                binding_parenthesized,
+                binding,
+                init,
+                builder,
+            ),
+            &builder.allocator(),
+        )
     }
 }
 
@@ -10489,6 +10770,35 @@ impl<'a> ForStatementInit<'a> {
         ))
     }
 
+    /// Build a [`ForStatementInit::AssignmentExpression`] with `left_parenthesized`.
+    ///
+    /// This node contains an [`AssignmentExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `operator`
+    /// * `left_parenthesized`: `true` if `left` is an identifier wrapped in parentheses, e.g. `(a) = function() {}`.
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_assignment_expression_with_left_parenthesized(
+        span: Span,
+        operator: AssignmentOperator,
+        left_parenthesized: bool,
+        left: AssignmentTarget<'a>,
+        right: Expression<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::AssignmentExpression(AssignmentExpression::boxed_with_left_parenthesized(
+            span,
+            operator,
+            left_parenthesized,
+            left,
+            right,
+            builder.builder(),
+        ))
+    }
+
     /// Build a [`ForStatementInit::AwaitExpression`].
     ///
     /// This node contains an [`AwaitExpression`] that will be stored in the memory arena.
@@ -13519,6 +13829,35 @@ impl<'a> ArrowFunctionBody<'a> {
         Self::AssignmentExpression(AssignmentExpression::boxed(
             span,
             operator,
+            left,
+            right,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`ArrowFunctionBody::AssignmentExpression`] with `left_parenthesized`.
+    ///
+    /// This node contains an [`AssignmentExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `operator`
+    /// * `left_parenthesized`: `true` if `left` is an identifier wrapped in parentheses, e.g. `(a) = function() {}`.
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_assignment_expression_with_left_parenthesized(
+        span: Span,
+        operator: AssignmentOperator,
+        left_parenthesized: bool,
+        left: AssignmentTarget<'a>,
+        right: Expression<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::AssignmentExpression(AssignmentExpression::boxed_with_left_parenthesized(
+            span,
+            operator,
+            left_parenthesized,
             left,
             right,
             builder.builder(),
@@ -16944,6 +17283,35 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         ))
     }
 
+    /// Build an [`ExportDefaultDeclarationKind::AssignmentExpression`] with `left_parenthesized`.
+    ///
+    /// This node contains an [`AssignmentExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `operator`
+    /// * `left_parenthesized`: `true` if `left` is an identifier wrapped in parentheses, e.g. `(a) = function() {}`.
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_assignment_expression_with_left_parenthesized(
+        span: Span,
+        operator: AssignmentOperator,
+        left_parenthesized: bool,
+        left: AssignmentTarget<'a>,
+        right: Expression<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::AssignmentExpression(AssignmentExpression::boxed_with_left_parenthesized(
+            span,
+            operator,
+            left_parenthesized,
+            left,
+            right,
+            builder.builder(),
+        ))
+    }
+
     /// Build an [`ExportDefaultDeclarationKind::AwaitExpression`].
     ///
     /// This node contains an [`AwaitExpression`] that will be stored in the memory arena.
@@ -19020,6 +19388,35 @@ impl<'a> JSXExpression<'a> {
         Self::AssignmentExpression(AssignmentExpression::boxed(
             span,
             operator,
+            left,
+            right,
+            builder.builder(),
+        ))
+    }
+
+    /// Build a [`JSXExpression::AssignmentExpression`] with `left_parenthesized`.
+    ///
+    /// This node contains an [`AssignmentExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `operator`
+    /// * `left_parenthesized`: `true` if `left` is an identifier wrapped in parentheses, e.g. `(a) = function() {}`.
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_assignment_expression_with_left_parenthesized(
+        span: Span,
+        operator: AssignmentOperator,
+        left_parenthesized: bool,
+        left: AssignmentTarget<'a>,
+        right: Expression<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::AssignmentExpression(AssignmentExpression::boxed_with_left_parenthesized(
+            span,
+            operator,
+            left_parenthesized,
             left,
             right,
             builder.builder(),

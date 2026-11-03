@@ -2107,7 +2107,13 @@ impl GenExpr for AssignmentExpression<'_> {
             && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_));
         p.wrap(wrap || precedence >= self.precedence(), |p| {
             p.add_source_mapping(self.span);
-            if !cjs_module_lexer::try_print_exports_computed_target(p, &self.left, ctx) {
+            if self.left_parenthesized
+                && let AssignmentTarget::AssignmentTargetIdentifier(ident) = &self.left
+            {
+                p.print_ascii_byte(b'(');
+                ident.print(p, ctx);
+                p.print_ascii_byte(b')');
+            } else if !cjs_module_lexer::try_print_exports_computed_target(p, &self.left, ctx) {
                 self.left.print(p, ctx);
             }
             // `a! = b`: keep a separator so the non-null `!` doesn't glue to `=` as `!=`.
@@ -2230,9 +2236,20 @@ impl Gen for AssignmentTargetMaybeDefault<'_> {
     }
 }
 
+fn is_parenthesized_identifier_binding(target: &AssignmentTargetWithDefault<'_>) -> bool {
+    target.binding_parenthesized
+        && matches!(target.binding, AssignmentTarget::AssignmentTargetIdentifier(_))
+}
+
 impl Gen for AssignmentTargetWithDefault<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        self.binding.print(p, ctx);
+        if is_parenthesized_identifier_binding(self) {
+            p.print_ascii_byte(b'(');
+            self.binding.print(p, ctx);
+            p.print_ascii_byte(b')');
+        } else {
+            self.binding.print(p, ctx);
+        }
         p.print_soft_space();
         p.print_equal();
         p.print_soft_space();
@@ -2277,8 +2294,15 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
                 PropertyKey::StaticIdentifier(ident) => Some(&ident.name),
                 _ => None,
             };
-            let value_name =
-                self.binding.identifier().map(|id| p.get_identifier_reference_name(id));
+            // `{a: (a) = f}` cannot be shortened to `{(a) = f}`.
+            let value_name = match &self.binding {
+                AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(target)
+                    if is_parenthesized_identifier_binding(target) =>
+                {
+                    None
+                }
+                binding => binding.identifier().map(|id| p.get_identifier_reference_name(id)),
+            };
             match (key_name, value_name) {
                 (Some(key_name), Some(value_name)) => key_name == value_name,
                 _ => false,

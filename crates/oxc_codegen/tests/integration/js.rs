@@ -472,6 +472,42 @@ fn assignment() {
     test_minify(r#"(class { "test-key" = key });"#, r#"(class{"test-key"=key});"#);
 }
 
+/// A parenthesized identifier target is not an IdentifierRef, so it must not name an anonymous
+/// function or class on the right.
+#[test]
+fn parenthesized_assignment_target() {
+    let cases = [
+        ("(a) = function(){};", "(a) = function() {};\n", "(a)=function(){};"),
+        ("((a)) = class {};", "(a) = class {};\n", "(a)=class{};"),
+        ("(a) ||= () => {};", "(a) ||= () => {};\n", "(a)||=()=>{};"),
+        ("x = (a) = function(){};", "x = (a) = function() {};\n", "x=(a)=function(){};"),
+        ("(a) = 1;", "(a) = 1;\n", "(a)=1;"),
+        ("[(b) = function(){}] = [];", "[(b) = function() {}] = [];\n", "[(b)=function(){}]=[];"),
+        ("({ c: (d) = class {} } = {});", "({c: (d) = class {}} = {});\n", "({c:(d)=class{}}={});"),
+        (
+            "({ a: (a) = function(){} } = {});",
+            "({a: (a) = function() {}} = {});\n",
+            "({a:(a)=function(){}}={});",
+        ),
+        // Not identifiers: no name inference, so no parentheses needed.
+        ("(a.b) = function(){};", "a.b = function() {};\n", "a.b=function(){};"),
+        ("(a = function(){});", "a = function() {};\n", "a=function(){};"),
+        ("[b = function(){}] = [];", "[b = function() {}] = [];\n", "[b=function(){}]=[];"),
+    ];
+    for (source, expected, expected_minified) in cases {
+        test(source, expected);
+        test_minify(source, expected_minified);
+        test_with_parse_options(
+            source,
+            expected,
+            oxc_parser::ParseOptions {
+                preserve_parens: false,
+                ..oxc_parser::ParseOptions::default()
+            },
+        );
+    }
+}
+
 #[test]
 fn r#yield() {
     test("function * foo() { yield * 1 }", "function* foo() {\n\tyield* 1;\n}\n");

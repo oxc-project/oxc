@@ -469,6 +469,7 @@ impl<'a> Dummy<'a> for AssignmentExpression<'a> {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
             operator: Dummy::dummy(allocator),
+            left_parenthesized: Dummy::dummy(allocator),
             left: Dummy::dummy(allocator),
             right: Dummy::dummy(allocator),
         }
@@ -560,6 +561,7 @@ impl<'a> Dummy<'a> for AssignmentTargetWithDefault<'a> {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
+            binding_parenthesized: Dummy::dummy(allocator),
             binding: Dummy::dummy(allocator),
             init: Dummy::dummy(allocator),
         }

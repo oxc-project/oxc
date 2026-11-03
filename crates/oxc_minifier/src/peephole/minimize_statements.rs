@@ -342,6 +342,12 @@ impl<'a> PeepholeOptimizations {
         let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left else {
             return false;
         };
+        // `var a; (a) = function() {}` leaves the function anonymous, `var a = function() {}` does not.
+        if assign_expr.left_parenthesized
+            && ctx.is_expression_whose_name_needs_to_be_kept(&assign_expr.right)
+        {
+            return false;
+        }
         let Some(Statement::VariableDeclaration(var_decl)) = result.last_mut() else {
             return false;
         };

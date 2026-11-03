@@ -126,8 +126,14 @@ impl<'a> LogicalAssignmentOperators {
         let span = assignment_expr.span;
         let assign_op = AssignmentOperator::Assign;
         let right = assignment_expr.right.take_in(ctx);
-        let right =
-            Expression::new_assignment_expression(SPAN, assign_op, assign_target, right, ctx);
+        let right = Expression::new_assignment_expression_with_left_parenthesized(
+            SPAN,
+            assign_op,
+            assignment_expr.left_parenthesized,
+            assign_target,
+            right,
+            ctx,
+        );
 
         let logical_expr =
             Expression::new_logical_expression(span, left_expr, operator, right, ctx);

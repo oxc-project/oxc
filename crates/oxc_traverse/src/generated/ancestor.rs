@@ -4369,6 +4369,8 @@ pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_NODE_ID: usize =
 pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_SPAN: usize = offset_of!(AssignmentExpression, span);
 pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_OPERATOR: usize =
     offset_of!(AssignmentExpression, operator);
+pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_LEFT_PARENTHESIZED: usize =
+    offset_of!(AssignmentExpression, left_parenthesized);
 pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_LEFT: usize = offset_of!(AssignmentExpression, left);
 pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_RIGHT: usize =
     offset_of!(AssignmentExpression, right);
@@ -4399,6 +4401,14 @@ impl<'a, 't> AssignmentExpressionWithoutLeft<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_OPERATOR)
                 as *const AssignmentOperator)
+        }
+    }
+
+    #[inline]
+    pub fn left_parenthesized(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_LEFT_PARENTHESIZED)
+                as *const bool)
         }
     }
 
@@ -4444,6 +4454,14 @@ impl<'a, 't> AssignmentExpressionWithoutRight<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_OPERATOR)
                 as *const AssignmentOperator)
+        }
+    }
+
+    #[inline]
+    pub fn left_parenthesized(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_LEFT_PARENTHESIZED)
+                as *const bool)
         }
     }
 
@@ -4672,6 +4690,8 @@ pub(crate) const OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_NODE_ID: usize =
     offset_of!(AssignmentTargetWithDefault, node_id);
 pub(crate) const OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_SPAN: usize =
     offset_of!(AssignmentTargetWithDefault, span);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_BINDING_PARENTHESIZED: usize =
+    offset_of!(AssignmentTargetWithDefault, binding_parenthesized);
 pub(crate) const OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_BINDING: usize =
     offset_of!(AssignmentTargetWithDefault, binding);
 pub(crate) const OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_INIT: usize =
@@ -4697,6 +4717,15 @@ impl<'a, 't> AssignmentTargetWithDefaultWithoutBinding<'a, 't> {
     pub fn span(self) -> &'t Span {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn binding_parenthesized(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8)
+                .add(OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_BINDING_PARENTHESIZED)
+                as *const bool)
         }
     }
 
@@ -4736,6 +4765,15 @@ impl<'a, 't> AssignmentTargetWithDefaultWithoutInit<'a, 't> {
     pub fn span(self) -> &'t Span {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn binding_parenthesized(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8)
+                .add(OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_BINDING_PARENTHESIZED)
+                as *const bool)
         }
     }
 

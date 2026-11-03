@@ -2740,6 +2740,11 @@ impl<'parent, 'a> AstNode<'parent, 'a, AssignmentExpression<'a>> {
     }
 
     #[inline]
+    pub fn left_parenthesized(&self) -> bool {
+        self.inner.left_parenthesized
+    }
+
+    #[inline]
     pub fn left(&self) -> AstNode<'_, 'a, AssignmentTarget<'a>> {
         let following_span_start = self.inner.right.span().start;
         AstNode {
@@ -2983,6 +2988,11 @@ impl<'parent, 'a> AstNode<'parent, 'a, AssignmentTargetWithDefault<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn binding_parenthesized(&self) -> bool {
+        self.inner.binding_parenthesized
     }
 
     #[inline]

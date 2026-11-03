@@ -960,6 +960,12 @@ fn test_compress_destructuring_assignment_target() {
     test("({ y: y = f() } = x)", "({ y = f() } = x)");
     test("({ y: y = y } = x)", "({ y = y } = x)");
     test("({ y: y = function() {} } = x)", "({ y = function() {} } = x)");
+    // `(y)` leaves the function anonymous, `{ y = function() {} }` would name it `y`.
+    let keep_names =
+        CompressOptions { keep_names: CompressOptionsKeepNames::all_true(), ..default_options() };
+    test_same_options("({ y: (y) = function() {} } = x)", &keep_names);
+    test_same_options("({ y: (y) = class {} } = x)", &keep_names);
+    test_options("({ y: (y) = f() } = x)", "({ y = f() } = x)", &keep_names);
     test("({ y: y = f(), z: z } = x)", "({ y = f(), z } = x)");
     test("({ a: { y: y = f() } } = x)", "({ a: { y = f() } } = x)");
     test("[{ y: y = f() }] = x", "[{ y = f() }] = x");

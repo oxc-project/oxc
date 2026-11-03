@@ -777,6 +777,13 @@ pub struct AssignmentExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     pub operator: AssignmentOperator,
+    /// `true` if `left` is an identifier wrapped in parentheses, e.g. `(a) = function() {}`.
+    ///
+    /// A parenthesized target is not an *IdentifierRef*, so an anonymous function or class on
+    /// the right is not named after it. Set regardless of `preserve_parens`.
+    #[builder(default)]
+    #[estree(skip)]
+    pub left_parenthesized: bool,
     pub left: AssignmentTarget<'a>,
     pub right: Expression<'a>,
 }
@@ -913,6 +920,12 @@ pub enum AssignmentTargetMaybeDefault<'a> {
 pub struct AssignmentTargetWithDefault<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    /// `true` if `binding` is an identifier wrapped in parentheses, e.g. `[(a) = function() {}] = []`.
+    ///
+    /// See [`AssignmentExpression::left_parenthesized`].
+    #[builder(default)]
+    #[estree(skip)]
+    pub binding_parenthesized: bool,
     #[estree(rename = "left")]
     pub binding: AssignmentTarget<'a>,
     #[estree(rename = "right")]

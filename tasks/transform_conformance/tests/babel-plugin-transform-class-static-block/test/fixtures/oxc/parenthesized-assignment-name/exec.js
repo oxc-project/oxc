@@ -1,0 +1,12 @@
+let assigned;
+(assigned) = class { static { this.seen = this.name; } };
+expect([assigned.name, assigned.seen]).toEqual(["", ""]);
+let logical;
+(logical) ||= class { static { this.seen = this.name; } };
+expect([logical.name, logical.seen]).toEqual(["", ""]);
+let other;
+[(other) = class { static { this.seen = this.name; } }] = [];
+expect([other.name, other.seen]).toEqual(["", ""]);
+let target;
+({ target: (target) = class { static { this.seen = this.name; } } } = {});
+expect([target.name, target.seen]).toEqual(["", ""]);
