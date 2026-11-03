@@ -2,11 +2,16 @@
 //! plain names, and member keys with their modifiers.
 
 use crate::{
-    cpu::cpu_version,
+    cpu::{BASELINE, cpu_version},
     token::{OP_KIND_BASE, matches_tk, tk},
 };
 
-use super::*;
+use crate::pipeline::disambiguate::{common::Tokens, type_context::keyword_type};
+
+use super::{
+    frame::{Declarator, FrameKind, MOD_ASYNC, MOD_STATIC, Member, RegionRule, StmtReg},
+    walker::{Expect, Walk},
+};
 
 #[rustfmt::skip::macros(matches_tk, tk)]
 impl Walk {
