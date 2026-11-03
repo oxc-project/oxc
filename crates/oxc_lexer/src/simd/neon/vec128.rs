@@ -8,7 +8,7 @@ use std::arch::aarch64::*;
 use crate::{
     cpu::Neon,
     simd::{
-        Vec128,
+        Vec128, Vec128Impl, VecData128,
         arrays::{IntArray64, IntArray128},
         operand::Operand128,
     },
@@ -79,6 +79,16 @@ impl Vec128<Neon> {
         Self::new(unsafe { vcombine_u8(vld1_u8(ptr), vdup_n_u8(0)) }, cpu)
     }
 
+    /// Read a [`Vec128`] from a [`VecData128`], which is aligned on 16.
+    ///
+    /// Neon has no separate aligned load instruction, so this is the same as [`read_unaligned`].
+    ///
+    /// [`read_unaligned`]: Self::read_unaligned
+    #[inline(always)]
+    pub fn read(data: &VecData128, cpu: Neon) -> Self {
+        Self::read_unaligned(data, cpu)
+    }
+
     /// Read a [`Vec128`] from a slice of integers, with no alignment requirement.
     ///
     /// `slice` can be any slice of integers which is 16 bytes in total
@@ -127,6 +137,18 @@ impl Vec128<Neon> {
         // SAFETY: Caller guarantees `ptr` is valid for writing 8 bytes.
         // `Vec128` type guarantees platform supports Neon.
         unsafe { vst1_u8(ptr, vget_low_u8(self.inner)) }
+    }
+
+    /// Write a [`Vec128`] into a [`VecData128`], which is aligned on 16.
+    ///
+    /// Neon has no separate aligned store instruction, so this does the same as [`store_unaligned`].
+    ///
+    /// [`store_unaligned`]: Self::store_unaligned
+    #[cfg_attr(not(test), expect(dead_code))]
+    #[inline(always)]
+    pub fn write(self, dst: &mut VecData128) {
+        // SAFETY: `VecData128` guarantees `dst.as_mut_ptr()` is valid for writes of 16 bytes
+        unsafe { self.store_unaligned(dst.as_mut_ptr()) }
     }
 }
 
@@ -339,5 +361,15 @@ impl Vec128<Neon> {
     pub fn get_u64<const INDEX: i32>(self) -> u64 {
         // SAFETY: `Vec128` type guarantees platform supports Neon
         unsafe { vgetq_lane_u64::<INDEX>(vreinterpretq_u64_u8(self.inner)) }
+    }
+}
+
+impl Vec128Impl for Vec128<Neon> {
+    type Cpu = Neon;
+
+    #[inline(always)]
+    fn read(data: &VecData128, cpu: Neon) -> Self {
+        // Inherent methods take priority, so this calls `Vec128::read` above, not itself
+        Vec128::read(data, cpu)
     }
 }

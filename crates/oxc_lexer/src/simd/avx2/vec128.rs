@@ -8,7 +8,7 @@ use std::arch::x86_64::*;
 use crate::{
     cpu::Avx2,
     simd::{
-        Vec128,
+        Vec128, Vec128Impl, VecData128,
         arrays::{IntArray64, IntArray128},
         operand::Operand128,
     },
@@ -62,7 +62,6 @@ impl Vec128<Avx2> {
     ///
     /// * `ptr` must be valid for reading 16 bytes.
     /// * `ptr` must be aligned on 16.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub unsafe fn load(ptr: *const u8, cpu: Avx2) -> Self {
         #[expect(clippy::cast_ptr_alignment, reason = "caller guarantees `ptr` is aligned")]
@@ -102,6 +101,14 @@ impl Vec128<Avx2> {
         // SAFETY: Caller guarantees `ptr` is valid for reading 8 bytes.
         // `Avx2` type guarantees platform supports AVX2, which includes SSE2.
         Self::new(unsafe { _mm_loadl_epi64(ptr) }, cpu)
+    }
+
+    /// Read a [`Vec128`] from a [`VecData128`], which is aligned on 16.
+    #[inline(always)]
+    pub fn read(data: &VecData128, cpu: Avx2) -> Self {
+        // SAFETY: `VecData128` guarantees `data.as_ptr()`
+        // is valid for aligned reads of 16 bytes
+        unsafe { Self::load(data.as_ptr(), cpu) }
     }
 
     /// Read a [`Vec128`] from a slice of integers, with no alignment requirement.
@@ -172,6 +179,15 @@ impl Vec128<Avx2> {
         // SAFETY: Caller guarantees `ptr` is valid for writing 8 bytes.
         // `Vec128` type guarantees platform supports AVX2, which includes SSE2.
         unsafe { _mm_storel_epi64(ptr, self.inner) }
+    }
+
+    /// Write a [`Vec128`] into a [`VecData128`], which is aligned on 16.
+    #[cfg_attr(not(test), expect(dead_code))]
+    #[inline(always)]
+    pub fn write(self, dst: &mut VecData128) {
+        // SAFETY: `VecData128` guarantees `dst.as_mut_ptr()`
+        // is valid for aligned writes of 16 bytes
+        unsafe { self.store(dst.as_mut_ptr()) }
     }
 }
 
@@ -338,5 +354,15 @@ impl Vec128<Avx2> {
         let other = other.into_vec128(self.cpu);
         // SAFETY: `Vec128` type guarantees platform supports AVX2, which includes SSE4.1
         Self::new(unsafe { _mm_blendv_epi8(self.inner, other.inner, mask.inner) }, self.cpu)
+    }
+}
+
+impl Vec128Impl for Vec128<Avx2> {
+    type Cpu = Avx2;
+
+    #[inline(always)]
+    fn read(data: &VecData128, cpu: Avx2) -> Self {
+        // Inherent methods take priority, so this calls `Vec128::read` above, not itself
+        Vec128::read(data, cpu)
     }
 }

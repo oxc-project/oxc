@@ -20,12 +20,17 @@
 //! `test_punct1_hash` checks the tables against `PUNCT1`.
 //! Nothing generates them, so a change to `PUNCT1` needs new values found for them.
 
-pub(super) const PH_A: [u8; 16] = [4, 13, 19, 20, 0, 14, 7, 8, 10, 26, 22, 0, 29, 23, 3, 2];
-pub(super) const PH_B: [u8; 16] = [24, 26, 2, 16, 31, 25, 19, 30, 0, 0, 0, 0, 0, 0, 0, 0];
-pub(super) const PH_T: [u8; 32] = [
+use crate::simd::{VecData128, VecData256};
+
+pub(super) const PH_A: VecData128 =
+    VecData128::from_bytes([4, 13, 19, 20, 0, 14, 7, 8, 10, 26, 22, 0, 29, 23, 3, 2]);
+pub(super) const PH_B: VecData128 =
+    VecData128::from_bytes([24, 26, 2, 16, 31, 25, 19, 30, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+pub(super) const PH_T: VecData256 = VecData256::from_bytes([
     68, 38, 58, 76, 255, 72, 42, 52, 34, 33, 255, 255, 70, 48, 37, 55, // Low half
     40, 255, 43, 50, 64, 61, 255, 255, 35, 36, 80, 89, 255, 82, 32, 41, // High half
-];
+]);
 
 #[cfg(test)]
 mod tests {

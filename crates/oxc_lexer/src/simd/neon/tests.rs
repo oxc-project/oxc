@@ -3,7 +3,7 @@ use std::{array, mem::transmute};
 use crate::{
     cpu::{DynCpu, Neon},
     simd::{
-        Vec128, Vec256,
+        Vec128, Vec256, VecData128, VecData256,
         operand::Operand128,
         tests::{map2, pattern},
     },
@@ -96,6 +96,12 @@ fn vec128_read_low_unaligned() {
 #[test]
 fn vec128_load_store() {
     let DynCpu::Neon(cpu) = DynCpu::detect() else { return };
+
+    let src = VecData128::from_bytes(pattern(37, 11));
+    let mut dest = VecData128::from_bytes([0; 16]);
+    Vec128::read(&src, cpu).write(&mut dest);
+    assert_eq!(*dest.as_bytes(), *src.as_bytes());
+    assert_eq!(to_bytes128(src.read(cpu)), *src.as_bytes());
 
     let src = pattern::<18>(37, 11);
     let mut dest = [0; 18];
@@ -318,6 +324,15 @@ fn vec256_load_unaligned() {
     // SAFETY: `src` is valid for reading 32 bytes starting at offset 1
     let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(1), cpu) };
     assert_eq!(to_bytes256(v)[..], src[1..33]);
+}
+
+#[test]
+fn vec256_read() {
+    let DynCpu::Neon(cpu) = DynCpu::detect() else { return };
+
+    let src = VecData256::from_bytes(pattern(37, 11));
+    assert_eq!(to_bytes256(Vec256::read(&src, cpu)), *src.as_bytes());
+    assert_eq!(to_bytes256(src.read(cpu)), *src.as_bytes());
 }
 
 #[test]

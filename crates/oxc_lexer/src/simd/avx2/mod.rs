@@ -7,7 +7,8 @@
 //!
 //! * Methods which load or store via a raw pointer are unsafe.
 //!   The caller must ensure the pointer is valid.
-//! * All other methods are safe, including `read_*` methods which read from a reference.
+//! * All other methods are safe, including `read*` and `write` methods,
+//!   which read from and write to a reference.
 //!
 //! [`Avx2`] is zero-sized, so a vector is the same size as the type it wraps.
 //!

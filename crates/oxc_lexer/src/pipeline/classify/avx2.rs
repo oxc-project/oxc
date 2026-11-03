@@ -1,6 +1,6 @@
 use crate::{
     cpu::{Avx2, cpu_version},
-    simd::{Vec128, Vec256},
+    simd::Vec256,
     token::tk,
 };
 
@@ -38,15 +38,15 @@ pub(super) unsafe fn classify_avx2(
     // which cost ~18 cyc per tail byte (up to ~1.1k cyc when n mod 64 is
     // near 63) and dominated small-file lexing.
     let nb_ceil = n.div_ceil(64);
-    let v_pha = Vec256::splat_v128(Vec128::read_unaligned(&PH_A, cpu));
-    let v_phb = Vec256::splat_v128(Vec128::read_unaligned(&PH_B, cpu));
-    let (pht, _) = PH_T.as_chunks::<16>();
-    let v_pht0 = Vec256::splat_v128(Vec128::read_unaligned(&pht[0], cpu));
-    let v_pht1 = Vec256::splat_v128(Vec128::read_unaligned(&pht[1], cpu));
-    let v_mlo = Vec256::splat_v128(Vec128::read_unaligned(&mrg_lo, cpu));
-    let v_mhi = Vec256::splat_v128(Vec128::read_unaligned(&MERGED_LUTS.hi, cpu));
-    let v_wblo = Vec256::splat_v128(Vec128::read_unaligned(&WORD_LUTS.lo, cpu));
-    let v_wbhi = Vec256::splat_v128(Vec128::read_unaligned(&WORD_LUTS.hi, cpu));
+    let v_pha = Vec256::splat_v128(PH_A.read(cpu));
+    let v_phb = Vec256::splat_v128(PH_B.read(cpu));
+    let pht = PH_T.as_halves();
+    let v_pht0 = Vec256::splat_v128(pht[0].read(cpu));
+    let v_pht1 = Vec256::splat_v128(pht[1].read(cpu));
+    let v_mlo = Vec256::splat_v128(mrg_lo.read(cpu));
+    let v_mhi = Vec256::splat_v128(MERGED_LUTS.hi.read(cpu));
+    let v_wblo = Vec256::splat_v128(WORD_LUTS.lo.read(cpu));
+    let v_wbhi = Vec256::splat_v128(WORD_LUTS.hi.read(cpu));
     while b < nb_ceil {
         let v0 = Vec256::load_unaligned(src.add(i), cpu);
         let v1 = Vec256::load_unaligned(src.add(i + 32), cpu);

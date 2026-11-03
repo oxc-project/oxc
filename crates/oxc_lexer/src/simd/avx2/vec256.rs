@@ -7,7 +7,7 @@ use std::arch::x86_64::*;
 
 use crate::{
     cpu::Avx2,
-    simd::{Vec128, Vec256, arrays::IntArray256, operand::Operand256},
+    simd::{Vec128, Vec256, Vec256Impl, VecData256, arrays::IntArray256, operand::Operand256},
 };
 
 /// Creation methods.
@@ -70,7 +70,6 @@ impl Vec256<Avx2> {
     ///
     /// * `ptr` must be valid for reading 32 bytes.
     /// * `ptr` must be aligned on 32.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub unsafe fn load(ptr: *const u8, cpu: Avx2) -> Self {
         #[expect(clippy::cast_ptr_alignment, reason = "caller guarantees `ptr` is aligned")]
@@ -94,6 +93,14 @@ impl Vec256<Avx2> {
         // SAFETY: Caller guarantees `ptr` is valid for reading 32 bytes.
         // `Avx2` type guarantees platform supports AVX2.
         Self::new(unsafe { _mm256_loadu_si256(ptr) }, cpu)
+    }
+
+    /// Read a [`Vec256`] from a [`VecData256`], which is aligned on 32.
+    #[inline(always)]
+    pub fn read(data: &VecData256, cpu: Avx2) -> Self {
+        // SAFETY: `VecData256` guarantees `data.as_ptr()`
+        // is valid for aligned reads of 32 bytes
+        unsafe { Self::load(data.as_ptr(), cpu) }
     }
 
     /// Read a [`Vec256`] from a slice of integers, with no alignment requirement.
@@ -137,6 +144,17 @@ impl Vec256<Avx2> {
         // SAFETY: Caller guarantees `ptr` is valid for writing 32 bytes.
         // `Vec256` type guarantees platform supports AVX2.
         unsafe { _mm256_storeu_si256(ptr, self.inner) }
+    }
+
+    /// Write a [`Vec256`] into a [`VecData256`].
+    ///
+    /// This is an aligned write.
+    #[cfg_attr(not(test), expect(dead_code))]
+    #[inline(always)]
+    pub fn write(self, dst: &mut VecData256) {
+        // SAFETY: `VecData256` guarantees `dst.as_mut_ptr()`
+        // is valid for aligned writes of 32 bytes
+        unsafe { self.store(dst.as_mut_ptr()) }
     }
 }
 
@@ -378,5 +396,15 @@ impl Vec256<Avx2> {
     pub fn join_hi_halves(self, other: Self) -> Self {
         // SAFETY: `Vec256` type guarantees platform supports AVX2
         Self::new(unsafe { _mm256_permute2x128_si256::<0x31>(self.inner, other.inner) }, self.cpu)
+    }
+}
+
+impl Vec256Impl for Vec256<Avx2> {
+    type Cpu = Avx2;
+
+    #[inline(always)]
+    fn read(data: &VecData256, cpu: Avx2) -> Self {
+        // Inherent methods take priority, so this calls `Vec256::read` above, not itself
+        Vec256::read(data, cpu)
     }
 }

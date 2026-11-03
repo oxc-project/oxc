@@ -3,7 +3,7 @@ use std::{array, mem::transmute};
 use crate::{
     cpu::{Avx2, DynCpu},
     simd::{
-        Vec128, Vec256,
+        Vec128, Vec256, VecData128, VecData256,
         operand::Operand128,
         tests::{map2, pattern},
     },
@@ -121,6 +121,12 @@ fn vec256_load_store() {
     // SAFETY: `src` and `dest` are 32 bytes and aligned on 32
     unsafe { Vec256::load(src.0.as_ptr(), cpu).store(dest.0.as_mut_ptr()) };
     assert_eq!(dest.0, src.0);
+
+    let src = VecData256::from_bytes(pattern(37, 11));
+    let mut dest = VecData256::from_bytes([0; 32]);
+    Vec256::read(&src, cpu).write(&mut dest);
+    assert_eq!(*dest.as_bytes(), *src.as_bytes());
+    assert_eq!(to_bytes256(src.read(cpu)), *src.as_bytes());
 
     let src = pattern::<34>(37, 11);
     let mut dest = [0; 34];
@@ -425,6 +431,12 @@ fn vec128_load_store() {
     // SAFETY: `src` and `dest` are 16 bytes and aligned on 32, which is also aligned on 16
     unsafe { Vec128::load(src.0.as_ptr(), cpu).store(dest.0.as_mut_ptr()) };
     assert_eq!(dest.0, src.0);
+
+    let src = VecData128::from_bytes(pattern(37, 11));
+    let mut dest = VecData128::from_bytes([0; 16]);
+    Vec128::read(&src, cpu).write(&mut dest);
+    assert_eq!(*dest.as_bytes(), *src.as_bytes());
+    assert_eq!(to_bytes128(src.read(cpu)), *src.as_bytes());
 
     let src = pattern::<18>(37, 11);
     let mut dest = [0; 18];

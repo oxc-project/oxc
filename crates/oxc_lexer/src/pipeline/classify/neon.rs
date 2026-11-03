@@ -1,6 +1,6 @@
 use crate::{
     cpu::{Neon, cpu_version},
-    simd::{Vec128, Vec256},
+    simd::{Vec128, Vec256, VecData128},
     token::tk,
 };
 
@@ -51,13 +51,13 @@ pub(super) unsafe fn classify_neon(
 ) {
     let mrg_lo = if ts { MERGED_LUTS.lo_ts } else { MERGED_LUTS.lo };
     let l = Luts {
-        wb_lo: Vec128::read_unaligned(&WORD_LUTS.lo, cpu),
-        wb_hi: Vec128::read_unaligned(&WORD_LUTS.hi, cpu),
-        mrg_lo: Vec128::read_unaligned(&mrg_lo, cpu),
-        mrg_hi: Vec128::read_unaligned(&MERGED_LUTS.hi, cpu),
-        ph_a: Vec128::read_unaligned(&PH_A, cpu),
-        ph_b: Vec128::read_unaligned(&PH_B, cpu),
-        ph_t: Vec256::read_unaligned(&PH_T, cpu),
+        wb_lo: WORD_LUTS.lo.read(cpu),
+        wb_hi: WORD_LUTS.hi.read(cpu),
+        mrg_lo: mrg_lo.read(cpu),
+        mrg_hi: MERGED_LUTS.hi.read(cpu),
+        ph_a: PH_A.read(cpu),
+        ph_b: PH_B.read(cpu),
+        ph_t: PH_T.read(cpu),
     };
 
     let mut cw: u64 = 0;
@@ -156,8 +156,10 @@ fn punct1(v: Vec128<Neon>, lo: Vec128<Neon>, hn: Vec128<Neon>, l: &Luts) -> Vec1
 #[cpu_version(Neon)]
 #[inline(always)]
 fn mm64(a: Vec128<Neon>, b: Vec128<Neon>, c: Vec128<Neon>, d: Vec128<Neon>) -> u64 {
-    const BITS: [u8; 16] = [1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128];
-    let m = Vec128::read_unaligned(&BITS, a.cpu());
+    const BITS: VecData128 =
+        VecData128::from_bytes([1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128]);
+
+    let m = BITS.read(a.cpu());
     let ab = (a & m).pairwise_add_u8(b & m);
     let cd = (c & m).pairwise_add_u8(d & m);
     let s = ab.pairwise_add_u8(cd);

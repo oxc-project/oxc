@@ -7,7 +7,7 @@ use std::arch::aarch64::*;
 
 use crate::{
     cpu::Neon,
-    simd::{Vec128, Vec256, arrays::IntArray256, operand::Operand256},
+    simd::{Vec128, Vec256, Vec256Impl, VecData256, arrays::IntArray256, operand::Operand256},
 };
 
 /// Creation methods.
@@ -61,6 +61,16 @@ impl Vec256<Neon> {
         // SAFETY: Caller guarantees `ptr` is valid for reading 32 bytes.
         // `Neon` type guarantees platform supports Neon.
         Self::new(unsafe { ptr.cast::<uint8x16x2_t>().read_unaligned() }, cpu)
+    }
+
+    /// Read a [`Vec256`] from a [`VecData256`], which is aligned on 32.
+    ///
+    /// Neon has no separate aligned load instruction, so this is the same as [`read_unaligned`].
+    ///
+    /// [`read_unaligned`]: Self::read_unaligned
+    #[inline(always)]
+    pub fn read(data: &VecData256, cpu: Neon) -> Self {
+        Self::read_unaligned(data, cpu)
     }
 
     /// Read a [`Vec256`] from a slice of integers, with no alignment requirement.
@@ -123,5 +133,15 @@ impl Vec256<Neon> {
     pub fn shuffle_u8s(self, control: Vec128<Neon>) -> Vec128<Neon> {
         // SAFETY: `Vec256` type guarantees platform supports Neon
         Vec128::new(unsafe { vqtbl2q_u8(self.inner, control.inner) }, self.cpu)
+    }
+}
+
+impl Vec256Impl for Vec256<Neon> {
+    type Cpu = Neon;
+
+    #[inline(always)]
+    fn read(data: &VecData256, cpu: Neon) -> Self {
+        // Inherent methods take priority, so this calls `Vec256::read` above, not itself
+        Vec256::read(data, cpu)
     }
 }

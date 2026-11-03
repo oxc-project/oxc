@@ -2,7 +2,7 @@ use oxc_span::Span;
 
 use crate::{
     cpu::{Avx2, cpu_version},
-    simd::{Vec128, Vec256},
+    simd::{Vec128, Vec256, VecData128, VecData256},
     token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk},
 };
 
@@ -17,15 +17,15 @@ pub(super) use pair_luts::init_pair_luts_avx2;
 #[cfg(test)]
 mod tests;
 
-static QCOMPACT: [[u32; 8]; 16] = {
-    let mut t = [[0u32; 8]; 16];
+static QCOMPACT: [VecData256; 16] = {
+    let mut t = [VecData256::from_u32s([0; 8]); 16];
     let mut mask = 0usize;
     while mask < 16 {
         let (mut q, mut k) = (0usize, 0usize);
         while q < 4 {
             if mask & (1 << q) != 0 {
-                t[mask][2 * k] = (2 * q) as u32;
-                t[mask][2 * k + 1] = (2 * q + 1) as u32;
+                t[mask].as_u32s_mut()[2 * k] = (2 * q) as u32;
+                t[mask].as_u32s_mut()[2 * k + 1] = (2 * q + 1) as u32;
                 k += 1;
             }
             q += 1;
@@ -35,14 +35,14 @@ static QCOMPACT: [[u32; 8]; 16] = {
     t
 };
 
-static BCOMPACT: [[u8; 16]; 256] = {
-    let mut t = [[0x80u8; 16]; 256];
+static BCOMPACT: [VecData128; 256] = {
+    let mut t = [VecData128::from_bytes([0x80; 16]); 256];
     let mut mask = 0usize;
     while mask < 256 {
         let (mut b, mut k) = (0usize, 0usize);
         while b < 8 {
             if mask & (1 << b) != 0 {
-                t[mask][k] = b as u8;
+                t[mask].as_bytes_mut()[k] = b as u8;
                 k += 1;
             }
             b += 1;
@@ -140,12 +140,12 @@ pub(super) unsafe fn build_spans_avx2(
 
         let ma = (sig & 0xf) as usize;
         let mb = (sig >> 4) as usize;
-        let ca = a.shuffle_u32s(Vec256::read_unaligned(&QCOMPACT[ma], cpu));
+        let ca = a.shuffle_u32s(QCOMPACT[ma].read(cpu));
         ca.store_unaligned(sp.add(w).cast::<u8>());
-        let cb = b.shuffle_u32s(Vec256::read_unaligned(&QCOMPACT[mb], cpu));
+        let cb = b.shuffle_u32s(QCOMPACT[mb].read(cpu));
         cb.store_unaligned(sp.add(w + ma.count_ones() as usize).cast::<u8>());
 
-        let kc = k8.shuffle_u8s(Vec128::read_unaligned(&BCOMPACT[sig as usize], cpu));
+        let kc = k8.shuffle_u8s(BCOMPACT[sig as usize].read(cpu));
         kc.store_low_unaligned(sig_kinds.add(w));
         w += sig.count_ones() as usize;
         j += 8;
