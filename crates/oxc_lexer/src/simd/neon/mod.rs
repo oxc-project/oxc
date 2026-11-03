@@ -3,6 +3,10 @@
 //! `Vec128<Neon>` wraps a [`uint8x16_t`], and `Vec256<Neon>` wraps a [`uint8x16x2_t`].
 //! Neon registers are 128 bits, so a `Vec256<Neon>` is a pair of registers.
 //!
+//! On other platforms, they can never be created, and wrap a [`VecData128`] / pair of
+//! [`VecData128`]s, which have the same sizes and alignments. Their method bodies are only
+//! compiled on aarch64, but code using the types can be compiled and linted on any platform.
+//!
 //! Each vector holds a [`Neon`], so a vector can only exist if the CPU supports Neon.
 //! That removes the need for the caller of a vector's methods to promise it does.
 //!
@@ -40,8 +44,9 @@
 //! [`Neon`]: crate::cpu::Neon
 //! [`Vec256::shuffle_u8s`]: super::Vec256::shuffle_u8s
 //! [`shuffle_u8s`]: super::Vec128::shuffle_u8s
-//! [`uint8x16_t`]: std::arch::aarch64::uint8x16_t
-//! [`uint8x16x2_t`]: std::arch::aarch64::uint8x16x2_t
+//! [`uint8x16_t`]: https://doc.rust-lang.org/std/arch/aarch64/struct.uint8x16_t.html
+//! [`uint8x16x2_t`]: https://doc.rust-lang.org/std/arch/aarch64/struct.uint8x16x2_t.html
+//! [`VecData128`]: super::VecData128
 
 mod vec128;
 mod vec256;

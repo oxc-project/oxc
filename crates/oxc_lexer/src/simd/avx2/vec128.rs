@@ -5,17 +5,18 @@
 //! These are 128-bit operations, so the intrinsics are from SSE2 to SSE4.1,
 //! which every CPU with AVX2 supports.
 //!
-//! [`__m128i`]: std::arch::x86_64::__m128i
+//! [`__m128i`]: https://doc.rust-lang.org/std/arch/x86_64/struct.__m128i.html
 
 #![expect(
     clippy::inline_always,
     reason = "wrappers must inline to get the `target_feature`s of the function calling them"
 )]
 
+#[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
 use crate::{
-    cpu::Avx2,
+    cpu::{Avx2, cpu_impl},
     simd::{
         Vec128, Vec128Impl, VecData128,
         arrays::{IntArray64, IntArray128},
@@ -23,19 +24,32 @@ use crate::{
     },
 };
 
+/// Type which `Vec128<Avx2>` wraps.
+///
+/// On platforms other than x86_64, `Vec128<Avx2>` can never be created,
+/// and it wraps a [`VecData128`], for same size and alignment as `__m128i`.
+type Vec128Inner = cfg_select! {
+    target_arch = "x86_64" => __m128i,
+    _ => VecData128,
+};
+
+#[cpu_impl(Avx2)]
 impl Vec128<Avx2> {
     /// Create a [`Vec128`] wrapping an [`__m128i`].
     ///
     /// Internal method only. `pub(super)` so `Vec256` methods can use it.
+    ///
+    /// [`__m128i`]: https://doc.rust-lang.org/std/arch/x86_64/struct.__m128i.html
     #[inline(always)]
-    pub(super) fn new(inner: __m128i, cpu: Avx2) -> Self {
+    pub(super) fn new(inner: Vec128Inner, cpu: Avx2) -> Self {
         Self { inner, cpu }
     }
 }
 
+#[cpu_impl(Avx2)]
 impl Vec128Impl for Vec128<Avx2> {
     type Cpu = Avx2;
-    type Inner = __m128i;
+    type Inner = Vec128Inner;
 
     // ----------------------------------------
     // Creation methods
@@ -380,6 +394,7 @@ impl Vec128Impl for Vec128<Avx2> {
 }
 
 /// Methods which are specific to this architecture.
+#[cpu_impl(Avx2)]
 impl Vec128<Avx2> {
     /// Gather the top bit of each byte of this [`Vec128`] into a 16-bit mask.
     ///

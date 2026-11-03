@@ -23,7 +23,6 @@ use std::{
     ptr,
 };
 
-#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 use super::{
     CpuSimd, Vec128Impl, Vec256Impl,
     arrays::{IntArray128, IntArray256},
@@ -112,7 +111,6 @@ impl VecData128 {
     ///
     /// [`Vec128`]: super::Vec128
     /// [`Vec128::read`]: super::Vec128::read
-    #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
     #[inline(always)]
     pub fn read<C: CpuSimd>(&self, cpu: C) -> C::Vec128 {
         C::Vec128::read(self, cpu)
@@ -240,7 +238,6 @@ impl VecData256 {
     ///
     /// [`Vec256`]: super::Vec256
     /// [`Vec256::read`]: super::Vec256::read
-    #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
     #[inline(always)]
     pub fn read<C: CpuSimd>(&self, cpu: C) -> C::Vec256 {
         C::Vec256::read(self, cpu)

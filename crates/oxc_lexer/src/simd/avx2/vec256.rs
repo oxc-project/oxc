@@ -5,33 +5,47 @@
 //! Some AVX2 instructions treat a 256-bit vector as 2 separate 128-bit halves
 //! (e.g. `shuffle_u8s`, `unpack_lo_u32`). The docs of those methods say so.
 //!
-//! [`__m256i`]: std::arch::x86_64::__m256i
+//! [`__m256i`]: https://doc.rust-lang.org/std/arch/x86_64/struct.__m256i.html
 
 #![expect(
     clippy::inline_always,
     reason = "wrappers must inline to get the `target_feature`s of the function calling them"
 )]
 
+#[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
 use crate::{
-    cpu::Avx2,
+    cpu::{Avx2, cpu_impl},
     simd::{Vec128, Vec256, Vec256Impl, VecData256, arrays::IntArray256, operand::Operand256},
 };
 
+/// Type which `Vec256<Avx2>` wraps.
+///
+/// On platforms other than x86_64, `Vec256<Avx2>` can never be created,
+/// and it wraps a [`VecData256`], for same size and alignment as `__m256i`.
+type Vec256Inner = cfg_select! {
+    target_arch = "x86_64" => __m256i,
+    _ => VecData256,
+};
+
+#[cpu_impl(Avx2)]
 impl Vec256<Avx2> {
     /// Create a [`Vec256`] wrapping an [`__m256i`].
     ///
     /// Internal method only.
+    ///
+    /// [`__m256i`]: https://doc.rust-lang.org/std/arch/x86_64/struct.__m256i.html
     #[inline(always)]
-    fn new(inner: __m256i, cpu: Avx2) -> Self {
+    fn new(inner: Vec256Inner, cpu: Avx2) -> Self {
         Self { inner, cpu }
     }
 }
 
+#[cpu_impl(Avx2)]
 impl Vec256Impl for Vec256<Avx2> {
     type Cpu = Avx2;
-    type Inner = __m256i;
+    type Inner = Vec256Inner;
 
     // ----------------------------------------
     // Creation methods
@@ -401,6 +415,7 @@ impl Vec256Impl for Vec256<Avx2> {
 }
 
 /// Methods which are specific to this architecture.
+#[cpu_impl(Avx2)]
 impl Vec256<Avx2> {
     /// Gather the top bit of each byte of this [`Vec256`] into a 32-bit mask.
     ///

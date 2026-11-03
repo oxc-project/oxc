@@ -3,17 +3,18 @@
 //! Implements [`Vec128Impl`], and has the methods which only Neon has.
 //! The `neon` module docs list the methods which behave differently from AVX2.
 //!
-//! [`uint8x16_t`]: std::arch::aarch64::uint8x16_t
+//! [`uint8x16_t`]: https://doc.rust-lang.org/std/arch/aarch64/struct.uint8x16_t.html
 
 #![expect(
     clippy::inline_always,
     reason = "thin wrappers, which should compile down to just the intrinsics they call"
 )]
 
+#[cfg(target_arch = "aarch64")]
 use std::arch::aarch64::*;
 
 use crate::{
-    cpu::Neon,
+    cpu::{Neon, cpu_impl},
     simd::{
         Vec128, Vec128Impl, VecData128,
         arrays::{IntArray64, IntArray128},
@@ -21,19 +22,32 @@ use crate::{
     },
 };
 
+/// Type which `Vec128<Neon>` wraps.
+///
+/// On platforms other than aarch64, `Vec128<Neon>` can never be created,
+/// and it wraps a [`VecData128`], for same size and alignment as `uint8x16_t`.
+type Vec128Inner = cfg_select! {
+    target_arch = "aarch64" => uint8x16_t,
+    _ => VecData128,
+};
+
+#[cpu_impl(Neon)]
 impl Vec128<Neon> {
     /// Create a [`Vec128`] wrapping a [`uint8x16_t`].
     ///
     /// Internal method only. `pub(super)` so `Vec256` methods can use it.
+    ///
+    /// [`uint8x16_t`]: https://doc.rust-lang.org/std/arch/aarch64/struct.uint8x16_t.html
     #[inline(always)]
-    pub(super) fn new(inner: uint8x16_t, cpu: Neon) -> Self {
+    pub(super) fn new(inner: Vec128Inner, cpu: Neon) -> Self {
         Self { inner, cpu }
     }
 }
 
+#[cpu_impl(Neon)]
 impl Vec128Impl for Vec128<Neon> {
     type Cpu = Neon;
-    type Inner = uint8x16_t;
+    type Inner = Vec128Inner;
 
     // ----------------------------------------
     // Creation methods
@@ -369,6 +383,7 @@ impl Vec128Impl for Vec128<Neon> {
 }
 
 /// Methods which are specific to this architecture.
+#[cpu_impl(Neon)]
 impl Vec128<Neon> {
     /// Shift each of the 16 bytes of this [`Vec128`] left by `BITS` bits.
     #[cfg_attr(not(test), expect(dead_code))]

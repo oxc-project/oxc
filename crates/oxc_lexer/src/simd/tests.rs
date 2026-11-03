@@ -10,23 +10,19 @@
 use std::{array, mem::transmute};
 
 use crate::{
-    cpu::DynCpu,
+    cpu::{Avx2, DynCpu, Neon},
     simd::{
         CpuSimd, Vec128, Vec256, VecData128, VecData256, operand::Operand128, vec128::Vec128Impl,
         vec256::Vec256Impl,
     },
 };
 
-#[cfg(target_arch = "x86_64")]
-use crate::cpu::Avx2;
-#[cfg(target_arch = "aarch64")]
-use crate::cpu::Neon;
-
 /// Get this platform's CPU type with SIMD vectors, if the CPU supports it.
 pub(super) fn simd_cpu() -> Option<
     cfg_select! {
         target_arch = "x86_64" => Avx2,
         target_arch = "aarch64" => Neon,
+        _ => Avx2,
     },
 > {
     match DynCpu::detect() {
@@ -89,6 +85,16 @@ pub(super) fn map_u16(bytes: [u8; 32], f: impl Fn(u16) -> u16) -> [u8; 32] {
         out[i..i + 2].copy_from_slice(&value.to_le_bytes());
     }
     out
+}
+
+/// Each CPU type's vectors have the same size and alignment on every platform,
+/// including those where they wrap a [`VecData128`] or [`VecData256`] instead of a SIMD type.
+#[test]
+fn size_and_alignment() {
+    assert_eq!((size_of::<Vec128<Avx2>>(), align_of::<Vec128<Avx2>>()), (16, 16));
+    assert_eq!((size_of::<Vec256<Avx2>>(), align_of::<Vec256<Avx2>>()), (32, 32));
+    assert_eq!((size_of::<Vec128<Neon>>(), align_of::<Vec128<Neon>>()), (16, 16));
+    assert_eq!((size_of::<Vec256<Neon>>(), align_of::<Vec256<Neon>>()), (32, 16));
 }
 
 #[test]
