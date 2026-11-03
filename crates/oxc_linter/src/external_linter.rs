@@ -79,6 +79,7 @@ pub struct LoadPluginResult {
 pub struct LintFileResult {
     pub rule_index: u32,
     pub message: String,
+    pub help: Option<String>,
     pub start: u32,
     pub end: u32,
     pub fixes: Option<Vec<JsFix>>,
