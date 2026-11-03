@@ -716,45 +716,74 @@ impl<'a> SlotAssignment<'a> {
                 );
             }
 
+            // A block function that can write the var scope binding of the same name keeps
+            // sharing its name, so that it still writes that binding after renaming. The binding
+            // is one of this scope's, so it got a slot above if it gets one at all.
+            let independent_bindings = tmp_bindings.len();
+            for &(_, symbol_id, alias) in annex_b_functions_in_scope {
+                if let Some(alias) = alias
+                    && constraints.is_mangle_candidate_in(symbol_id, scope_id, scoping)
+                    && let Ok(index) = tmp_bindings[..independent_bindings].binary_search(&alias)
+                {
+                    let alias_slot = reusable_slots[index];
+                    tmp_bindings.push(symbol_id);
+                    reusable_slots.push(alias_slot);
+                }
+            }
+
             // Pre-compute the set of ancestors from root to scope_id (exclusive) for O(1) tests.
             ancestor_set.clear();
             for ancestor_id in scoping.scope_ancestors(scope_id).skip(1) {
                 ancestor_set.set_bit(ancestor_id.index());
             }
 
+            let scope_id_index = scope_id.index();
             for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
                 debug_assert!(
                     constraints.is_mangle_candidate(symbol_id, scoping)
                         || constraints.is_mangle_candidate_in(symbol_id, scope_id, scoping)
                 );
                 slots[symbol_id.index()] = assigned_slot;
-                mark_slot_liveness(
-                    &mut slot_liveness[assigned_slot as usize],
-                    symbol_id,
-                    scope_id,
-                    &ancestor_set,
-                    scoping,
-                    ast_nodes,
-                );
-            }
 
-            // A block function that can write the var scope binding of the same name keeps
-            // sharing its name, so that it still writes that binding after renaming.
-            for &(_, symbol_id, alias) in annex_b_functions_in_scope {
-                if let Some(alias) = alias
-                    && slots[alias.index()] != SLOT_UNASSIGNED
-                    && constraints.is_mangle_candidate_in(symbol_id, scope_id, scoping)
+                // `var` is hoisted, so include the scope where it is declared
+                // (for cases like `function foo() { { var x; let y; } }`).
+                let declared_scope_id =
+                    ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
+                let redeclared_scope_ids = scoping
+                    .symbol_redeclarations(symbol_id)
+                    .iter()
+                    .map(|r| ast_nodes.get_node(r.declaration).scope_id());
+                let referenced_scope_ids =
+                    scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
+
+                // The scopes this symbol is alive in: for each use, walk up to (but not including)
+                // `scope_id`, marking the descendant scopes it passes through.
+                let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
+                for used_scope_id in referenced_scope_ids
+                    .chain(redeclared_scope_ids)
+                    .chain([scope_id, declared_scope_id])
                 {
-                    let assigned_slot = slots[alias.index()];
-                    slots[symbol_id.index()] = assigned_slot;
-                    mark_slot_liveness(
-                        &mut slot_liveness[assigned_slot as usize],
-                        symbol_id,
-                        scope_id,
-                        &ancestor_set,
-                        scoping,
-                        ast_nodes,
-                    );
+                    for ancestor_id in scoping.scope_ancestors(used_scope_id) {
+                        let ancestor_index = ancestor_id.index();
+                        // Stop when we reach scope_id or any of its ancestors
+                        if ancestor_index == scope_id_index || ancestor_set.has_bit(ancestor_index)
+                        {
+                            break;
+                        }
+                        if slot_liveness_bitset.has_bit(ancestor_index) {
+                            debug_assert!(
+                                scoping.scope_ancestors(ancestor_id).skip(1).all(|a| {
+                                    let idx = a.index();
+                                    slot_liveness_bitset.has_bit(idx)
+                                        || idx == scope_id_index
+                                        || ancestor_set.has_bit(idx)
+                                }),
+                                "Invariant violated: ancestor chain should be fully marked live"
+                            );
+                            break;
+                        }
+                        slot_liveness_bitset.set_bit(ancestor_index);
+                    }
                 }
             }
 
@@ -868,53 +897,6 @@ impl<'a> AnnexBBlockFunctions<'a> {
                     )
             });
         (!is_shadowed).then_some(alias)
-    }
-}
-
-/// Mark the scopes in which `symbol_id`, bound in `scope_id`, is alive in `slot_liveness_bitset`:
-/// for each use, walk up to (but not including) `scope_id`, marking the scopes it passes through.
-#[inline]
-fn mark_slot_liveness(
-    slot_liveness_bitset: &mut BitSet,
-    symbol_id: SymbolId,
-    scope_id: ScopeId,
-    ancestor_set: &BitSet,
-    scoping: &Scoping,
-    ast_nodes: &AstNodes,
-) {
-    // `var` is hoisted, so include the scope where it is declared
-    // (for cases like `function foo() { { var x; let y; } }`).
-    let declared_scope_id = ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
-    let redeclared_scope_ids = scoping
-        .symbol_redeclarations(symbol_id)
-        .iter()
-        .map(|r| ast_nodes.get_node(r.declaration).scope_id());
-    let referenced_scope_ids = scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
-
-    let scope_id_index = scope_id.index();
-    for used_scope_id in
-        referenced_scope_ids.chain(redeclared_scope_ids).chain([scope_id, declared_scope_id])
-    {
-        for ancestor_id in scoping.scope_ancestors(used_scope_id) {
-            let ancestor_index = ancestor_id.index();
-            // Stop when we reach scope_id or any of its ancestors
-            if ancestor_index == scope_id_index || ancestor_set.has_bit(ancestor_index) {
-                break;
-            }
-            if slot_liveness_bitset.has_bit(ancestor_index) {
-                debug_assert!(
-                    scoping.scope_ancestors(ancestor_id).skip(1).all(|a| {
-                        let idx = a.index();
-                        slot_liveness_bitset.has_bit(idx)
-                            || idx == scope_id_index
-                            || ancestor_set.has_bit(idx)
-                    }),
-                    "Invariant violated: ancestor chain should be fully marked live"
-                );
-                break;
-            }
-            slot_liveness_bitset.set_bit(ancestor_index);
-        }
     }
 }
 

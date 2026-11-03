@@ -120,3 +120,95 @@ function _() {
 		use(t);
 	}
 }
+
+{ function a() {} } { function b() {} } { function c() {} let x = 1; use(x); } let a, b, c;
+{
+	function a() {}
+}
+{
+	function b() {}
+}
+{
+	function c() {}
+	let e = 1;
+	use(e);
+}
+let a, b, c;
+
+function _() { { let g; { function g() {} } } }
+function _() {
+	{
+		let t;
+		{
+			function e() {}
+		}
+	}
+}
+
+function _() { let x; { function g() { return x; } function h() {} } let g, h; return [x, g, h]; }
+function _() {
+	let e;
+	{
+		function t() {
+			return e;
+		}
+		function n() {}
+	}
+	let t, n;
+	return [
+		e,
+		t,
+		n
+	];
+}
+
+(function g(g) { { function g() {} } return g; })
+(function e(e) {
+	{
+		function e() {}
+	}
+	return e;
+});
+
+function _() { eval(''); { let e; { function e() {} let x = 1; use(x); } } } function f() { var g; { function g() {} } return g; }
+function _() {
+	eval("");
+	{
+		let t;
+		{
+			function e() {}
+			let t = 1;
+			use(t);
+		}
+	}
+}
+function f() {
+	var t;
+	{
+		function t() {}
+	}
+	return t;
+}
+
+function _() { { function g() {} eval(''); let x = 1; } let g; var y = 1; return y; }
+function _() {
+	{
+		function g() {}
+		eval("");
+		let x = 1;
+	}
+	let g;
+	var y = 1;
+	return y;
+}
+
+function _() { class e {} { function e() {} let x = 1; use(x); } return e; }
+function _() {
+	class e {}
+	{
+		function e() {}
+		let t = 1;
+		use(t);
+	}
+	return e;
+}
