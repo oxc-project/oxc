@@ -4,6 +4,70 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.91.0] - 2026-11-02
+
+### 🚀 Features
+
+- 004647a track_memory_allocs: Add allocation tracking for linter rules (#28470) (Cam McHenry)
+- 419c1b0 linter: Add allow and allowPattern options to react/capitalized-calls (Christian Vuerings)
+
+### 🐛 Bug Fixes
+
+- a205cd3 linter/eslint/no-control-regex: Detect raw control characters (#28548) (camc314)
+- 7c65777 linter/unicorn/prefer-global-this: Align typeof and worker API handling (#28549) (camc314)
+- 987d5f1 linter/unicorn/no-invalid-fetch-options: Avoid treating unknown methods as GET (#28547) (camc314)
+- e234dc8 linter/unicorn/no-useless-error-capture-stack-trace: Move to suspicious category (#28545) (camc314)
+- b3dc411 linter/typescript/no-non-null-asserted-nullish-coalescing: Move to suspicious category (#28546) (camc314)
+- cb64638 regular_expression: Reject incomplete Unicode atom escapes (#28448) (Boshen)
+- c67167e linter: Only run React Compiler rules on files with top-level components or hooks (Boshen)
+- 4c9d5aa linter: Treat Reanimated shared values as ref-like in React Compiler rules (Boshen)
+- 61fe2af linter/react: Ignore impure calls in async components in react/purity (Rahul Kashyap)
+
+### ⚡ Performance
+
+- bb947dc linter: Skip numeric separator formatting for short integers (#28485) (Cam McHenry)
+- 1043dfa linter: Avoid collecting prefer-const binding identifiers (#28484) (Cam McHenry)
+- 7c93eef linter: Reduce branches-sharing-code scratch allocations (#28483) (Cam McHenry)
+- c0065fd linter: Allocate escape-case replacements only when needed (#28482) (Cam McHenry)
+- d837414 linter: Lazily normalize capitalized-comments text (#28481) (Cam McHenry)
+- 6baaad6 linter: Avoid no-var binding identifier allocations (#28480) (Cam McHenry)
+- 882053b linter: Skip read-only parameters in no-param-reassign (#28479) (Cam McHenry)
+- 92deebf linter: Reduce no-unmodified-loop-condition allocations (#28478) (Cam McHenry)
+- f01d52d linter: Reduce no-duplicate-case allocations (#28477) (Cam McHenry)
+- 6a72d84 linter: Reduce no-dupe-class-members allocations (#28476) (Cam McHenry)
+- 77599ef linter: Reduce no-this-before-super allocations (#28475) (Cam McHenry)
+- 2ea9f58 linter/no-dupe-else-if: Use smallvec to reduce allocs (#28474) (Cam McHenry)
+- 69f0204 linter/react/rules-of-hooks: Reduce allocs (#28473) (Cam McHenry)
+- b138c20 linter: Reduce allocs in no-dupe-keys (#28472) (Cam McHenry)
+- 6f3e982 linter: Avoid operator allocations in no-useless-length-check (#28471) (Cam McHenry)
+- fd68928 react-compiler: Skip passes lint does not need (Yagiz Nizipli)
+- 224f4dd linter/eslint/sort-keys: Reserve initial capacity for string (#27624) (Cam McHenry)
+- e4e01a3 linter/import/no-cycle: Compare visited modules by absolute resolved path (#27517) (Cam McHenry)
+- 741b29b linter/import/no-cycle: Cache sorted module record snapshots (#27516) (Cam McHenry)
+- 20022bb linter/import/no-cycle: Reuse traversal buffers between imports (#27481) (Cam McHenry)
+- fd5edb7 linter/import/no-cycle: Reuse module records in diagnostic stack (#27480) (Cam McHenry)
+- 73e877c linter/import/no-cycle: Don't allocate paths already seen (#27478) (Cam McHenry)
+- 1515d53 linter/react/forward-ref-uses-ref: Narrow forward-ref-uses-ref dispatch (#28367) (Cam McHenry)
+- ee51c01 linter/react/no-string-refs: Narrow AST dispatch (#28366) (Cam McHenry)
+- bbfd692 linter/react/no-children-pop: Narrow AST dispatch (#28365) (Cam McHenry)
+- a86158b linter/unicorn/prefer-set-size: Narrow AST dispatch (#28364) (Cam McHenry)
+- a777fa6 linter/eslint/no-iterator: Narrow member dispatch (#28363) (Cam McHenry)
+- bc5e94d linter/eslint/no-extra-boolean-cast: Narrow AST dispatch (#28362) (Cam McHenry)
+- 93c6e6d linter/unicorn/no-useless-fallback-in-spread: Narrow AST dispatch (#28361) (Cam McHenry)
+- 1a1f66e linter/typescript/no-this-alias: Narrow AST dispatch (#28360) (Cam McHenry)
+- b102a91 linter/typescript/no-wrapper-object-types: Index references (#28359) (Cam McHenry)
+- dbd8a0b linter/eslint/no-unassigned-vars: Batch by declaration (#28358) (Cam McHenry)
+- 1108352 linter/typescript/prefer-as-const: Narrow AST dispatch (#28357) (Cam McHenry)
+- d65531f linter/eslint/no-const-assign: Batch by declaration (#28356) (Cam McHenry)
+- 1ec9991 linter/oxc/number-arg-out-of-range: Narrow AST dispatch (#28355) (Cam McHenry)
+- 7a1243e linter/unicorn/no-invalid-fetch-options: Narrow AST dispatch (#28354) (Cam McHenry)
+- 2ab73cc linter/unicorn/no-single-promise-in-promise-methods: Narrow AST dispatch (#28353) (Cam McHenry)
+- 483c4c9 linter/eslint/no-compare-neg-zero: Narrow no-compare-neg-zero dispatch (#28352) (Cam McHenry)
+- 56c99c6 linter/eslint/no-unsafe-negation: Narrow AST dispatch (#28351) (Cam McHenry)
+- 84d974b linter/unicorn/prefer-string-starts-ends-with: Narrow AST dispatch (#28350) (Cam McHenry)
+- 142ef4f unicorn: Narrow no-await-in-promise-methods dispatch (#28349) (Cam McHenry)
+- a3dc7a2 linter/unicorn/no-await-expression-member: Optimize AST dispatch (#28348) (Cam McHenry)
+
 ## [1.90.0] - 2026-10-27
 
 ### 🚀 Features
