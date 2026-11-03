@@ -518,12 +518,14 @@ function markMapNamed(
   const { sourceText } = state;
   if (start > sourceText.length) return;
 
-  // `oxc_codegen` suppresses consecutive source positions as it records them. Do this before
-  // recovering a name or retaining the mapping, since member-level marks commonly duplicate keys.
+  // `oxc_codegen` suppresses consecutive source positions as it records them. A named child can
+  // still enrich its unnamed parent mapping, but a mapping which already has a name is complete.
   // On the first mapping the read is index -1, which on a typed array is `undefined` - never equal.
   let { mapPositions } = state;
-  const { mapPositionsLen } = state;
-  if (mapPositions[mapPositionsLen - 1] === start) return;
+  const { mapNames, mapPositionsLen } = state;
+  const mappingIndex = mapPositionsLen >> 1;
+  const duplicatePosition = mapPositions[mapPositionsLen - 1] === start;
+  if (duplicatePosition && mapNames[mapNames.length - 2] === mappingIndex - 1) return;
 
   // A mapping carries a name only when the identifier printed differs from the one in the source.
   // When possible, the mapping records the name from source, but if the source range is invalid,
@@ -563,17 +565,19 @@ function markMapNamed(
     // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`.
     // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
     if (originalName === undefined || !isSameToken(originalName, printedName, hashLength)) {
-      state.mapNames.push(
-        mapPositionsLen >> 1,
+      mapNames.push(
+        duplicatePosition ? mappingIndex - 1 : mappingIndex,
         originalName === undefined ? printedName : originalName,
       );
     }
   }
 
-  if (mapPositionsLen === mapPositions.length) mapPositions = state.growMapPositions();
-  mapPositions[mapPositionsLen] = state.spilledOutputLength + state.output.length;
-  mapPositions[mapPositionsLen + 1] = start;
-  state.mapPositionsLen = mapPositionsLen + 2;
+  if (!duplicatePosition) {
+    if (mapPositionsLen === mapPositions.length) mapPositions = state.growMapPositions();
+    mapPositions[mapPositionsLen] = state.spilledOutputLength + state.output.length;
+    mapPositions[mapPositionsLen + 1] = start;
+    state.mapPositionsLen = mapPositionsLen + 2;
+  }
 }
 
 /**
