@@ -432,3 +432,40 @@ fn annex_b_block_scoped_function() {
         insta::assert_snapshot!("annex_b_block_scoped_function", snapshot);
     });
 }
+
+/// A sloppy block function whose Annex B var binding is prevented by a lexical declaration stays
+/// block-scoped. Renaming must not let it alias a binding of its var scope, because the renamed
+/// declarations may no longer prevent the var binding.
+/// A block function that writes an existing var binding must keep sharing its name.
+#[test]
+fn annex_b_block_function_without_hoisting() {
+    let cases = [
+        // `return x` must not return the function.
+        "function _() { var x = 1; let g; { function g() {} } return x; }",
+        "function _() { var x = 1; { use(x); let g; { function g() {} } } return x; }",
+        "function _() { var x = 1; { use(x); { function g() {} } let g; } return x; }",
+        "function _() { var x = 1; { function g() {} } let g = 2; return [x, g]; }",
+        // The function writes `var g`, so both must keep the same name.
+        "function _() { var g; { function g() {} } return g; }",
+        "function _() { var g; try {} catch (g) { { function g() {} } } return g; }",
+        // A destructured catch parameter prevents the write.
+        "function _() { var g; try {} catch ([g]) { { function g() {} } } return g; }",
+        "function _() { { function g() {} } var g; return g; }",
+        "function _() { var g; { if (false) function g() {} { function g() {} } } return g; }",
+        // The function is blocked by `let g`, so it must not write `var g`.
+        "function _() { var g = 0; { let g; { function g() {} } } return g; }",
+        // The root scope is not mangled, so the function keeps its name in its block.
+        "{ let e; { function e() {} let x = 1; use(x); } }",
+    ];
+
+    let mut snapshot = String::new();
+    cases.into_iter().fold(&mut snapshot, |w, case| {
+        let options = MangleOptions::default();
+        write!(w, "{case}\n{}\n", mangle_script(case, &options)).unwrap();
+        w
+    });
+
+    insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
+        insta::assert_snapshot!("annex_b_block_function_without_hoisting", snapshot);
+    });
+}
