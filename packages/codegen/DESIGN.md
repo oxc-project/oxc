@@ -617,6 +617,7 @@ so that arm can run.
 
 ### Things ESTree cannot express
 
+- `(a) = f` versus `a = f` (an assignment target never holds a `ParenthesizedExpression`, even with `preserveParens`)
 - `import "m";` versus `import {} from "m";`
 - An absent `with` clause versus an empty `with {}`
 - `assert {...}` versus `with {...}`

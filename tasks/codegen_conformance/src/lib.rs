@@ -18,8 +18,8 @@ use napi_derive::napi;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{
-    ArrowFunctionExpression, ExportAllDeclaration, ExportFromDeclaration, Function,
-    ImportDeclaration, WithClauseKeyword,
+    ArrowFunctionExpression, AssignmentExpression, AssignmentTargetWithDefault,
+    ExportAllDeclaration, ExportFromDeclaration, Function, ImportDeclaration, WithClauseKeyword,
 };
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
@@ -163,6 +163,25 @@ impl<'a> VisitMut<'a> for Normalize {
             arrow.pife = false;
         }
         walk_mut::walk_arrow_function_expression(self, arrow);
+    }
+
+    /// ESTree has no way to record that an identifier assignment target was parenthesized,
+    /// which is what Oxc's `left_parenthesized` flag tracks (and prints parentheses for).
+    ///
+    /// Unlike `pife`, `preserve_parens` does not help here - an assignment target never holds
+    /// a `ParenthesizedExpression`, so the parentheses are gone from the ESTree AST either way.
+    fn visit_assignment_expression(&mut self, expr: &mut AssignmentExpression<'a>) {
+        expr.left_parenthesized = false;
+        walk_mut::walk_assignment_expression(self, expr);
+    }
+
+    /// As `visit_assignment_expression`, for `binding_parenthesized` in `[(a) = 1] = []`.
+    fn visit_assignment_target_with_default(
+        &mut self,
+        target: &mut AssignmentTargetWithDefault<'a>,
+    ) {
+        target.binding_parenthesized = false;
+        walk_mut::walk_assignment_target_with_default(self, target);
     }
 
     /// ESTree cannot distinguish `import "m"` from `import {} from "m"` - `specifiers` is `[]` for both.
