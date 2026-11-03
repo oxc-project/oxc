@@ -119,6 +119,18 @@ trait CpuPrivate {
     const DYN_CPU: Option<DynCpu>;
 }
 
+// `DynCpu` is defined differently for each architecture.
+//
+// All variants exist on all architectures, but variants impossible on each architecture
+// are uninhabited. This allows code for all architectures to be compiled and linted
+// on any machine, and Rust Analyzer sees all the code for all archs "as one".
+// But the uninhabited variants allow compiler to apply dead code removal to code paths
+// which aren't for the architecture crate is being compiled for.
+//
+// Variants are ordered so that `Generic` is always 0, and the SIMD feature set
+// available on the platform is 1. Uninhabited variants don't exist at runtime,
+// so this type behaves like a `bool`.
+
 /// Enum representing a CPU feature set.
 ///
 /// Used for runtime feature detection.
@@ -127,25 +139,63 @@ trait CpuPrivate {
 /// via target feature detection.
 ///
 /// [`detect`]: Self::detect
+#[cfg(target_arch = "x86_64")]
 #[derive(Clone, Copy, Debug)]
 pub enum DynCpu {
-    /// AVX2 feature set.
-    /// Exists on all platforms, but can only be created on x86_64. See [`Avx2`].
-    #[cfg_attr(not(target_arch = "x86_64"), expect(dead_code))]
-    Avx2(Avx2),
-    /// Generic feature set.
-    /// Exists on all platforms, but can never be created on aarch64
-    /// when Neon is enabled at compile time. See [`Generic`].
-    #[cfg_attr(all(target_arch = "aarch64", target_feature = "neon"), expect(dead_code))]
     Generic(Generic),
-    // `Neon` is last. rustc numbers variants in the order they're declared, uninhabited ones too.
-    // So on x86_64, where `Neon` is uninhabited, the 2 variants which can exist are 0 and 1,
-    // like a `bool`.
-    /// Neon feature set.
-    /// Exists on all platforms, but can only be created on aarch64. See [`Neon`].
-    #[cfg_attr(not(target_arch = "aarch64"), expect(dead_code))]
+    Avx2(Avx2),
+    #[expect(dead_code)]
     Neon(Neon),
 }
+
+/// Enum representing a CPU feature set.
+///
+/// Used for runtime feature detection.
+///
+/// Implements [`Cpu`] and also provides a [`detect`] method which initializes [`DynCpu`]
+/// via target feature detection.
+///
+/// [`detect`]: Self::detect
+#[cfg(target_arch = "aarch64")]
+#[derive(Clone, Copy, Debug)]
+pub enum DynCpu {
+    // Can never be created on aarch64 when Neon is enabled at compile time. See `Generic`.
+    #[cfg_attr(target_feature = "neon", expect(dead_code))]
+    Generic(Generic),
+    Neon(Neon),
+    #[expect(dead_code)]
+    Avx2(Avx2),
+}
+
+/// Enum representing a CPU feature set.
+///
+/// Used for runtime feature detection.
+///
+/// Implements [`Cpu`] and also provides a [`detect`] method which initializes [`DynCpu`]
+/// via target feature detection.
+///
+/// [`detect`]: Self::detect
+#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+#[derive(Clone, Copy, Debug)]
+pub enum DynCpu {
+    Generic(Generic),
+    #[expect(dead_code)]
+    Avx2(Avx2),
+    #[expect(dead_code)]
+    Neon(Neon),
+}
+
+/// On aarch64 with neon enabled, [`DynCpu`] has only 1 inhabited variant, so is a ZST.
+/// Ditto when arch is not x86_64 or aarch64.
+/// On all other platforms it's 1 byte.
+const _: () = {
+    let expected_size = cfg_select! {
+        all(target_arch = "aarch64", target_feature = "neon") => 0,
+        not(any(target_arch = "x86_64", target_arch = "aarch64")) => 0,
+        _ => 1,
+    };
+    assert!(size_of::<DynCpu>() == expected_size);
+};
 
 impl Cpu for DynCpu {}
 
