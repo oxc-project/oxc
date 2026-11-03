@@ -1,8 +1,9 @@
 use std::{ptr, slice};
 
 use crate::{
-    cpu::{Cpu, cpu_multiversion, cpu_select},
+    cpu::{Cpu, cpu_multiversion},
     error::DiagCode,
+    simd::prefetch,
     token::{TokenKind, tk},
 };
 
@@ -380,20 +381,4 @@ unsafe fn munch_walk(
         bm_set(st, pos, cpu);
     }
     pos
-}
-
-#[cpu_multiversion]
-#[inline(always)]
-fn prefetch(p: *const u8, cpu: impl Cpu) {
-    let _ = p; // Avoid clippy unused vars warning
-
-    cpu_select!(cpu, {
-        Avx2(_) => {
-            use std::arch::x86_64;
-            // SAFETY: `Avx2` type guarantees CPU supports AVX2
-            unsafe { x86_64::_mm_prefetch(p as *const i8, x86_64::_MM_HINT_T0) }
-        }
-        Neon(_) => { /* no-op */ }
-        Generic(_) => { /* no-op */ }
-    });
 }

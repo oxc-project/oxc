@@ -22,6 +22,7 @@
 //! - `data` has [`VecData128`] and [`VecData256`], aligned byte arrays to read into vectors.
 //! - `arrays` has traits for arrays of integers which vectors can read without alignment.
 //! - `operand` has traits which let an operation take either a vector or a scalar.
+//! - `prefetch` has a function which asks the CPU to fetch memory into the cache.
 //!
 //! [`cpu_impl`]: crate::cpu::cpu_impl
 
@@ -32,10 +33,12 @@ mod avx2;
 mod data;
 mod neon;
 mod operand;
+mod prefetch;
 mod vec128;
 mod vec256;
 
 pub use data::{VecData128, VecData256};
+pub use prefetch::prefetch;
 pub use vec128::Vec128;
 pub use vec256::Vec256;
 
