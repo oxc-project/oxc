@@ -2263,6 +2263,15 @@ mod test {
 
     #[test]
     #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_tsgolint_failure() {
+        // The fixture has a fake `tsgolint` that exits with an error.
+        // Only the error is printed; diagnostics from regular linting are not.
+        let args = &["--type-aware"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_failure".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
     fn test_tsgolint_tsconfig_extends_config_err() {
         let args = &["--type-aware", "-D", "no-floating-promises"];
         Tester::new()
@@ -2489,6 +2498,27 @@ mod suppression {
             !stdout.contains("typescript-eslint(array-type)"),
             "array-type error should be suppressed with --suppress-all.\nOutput: {stdout}"
         );
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_suppress_all_does_not_write_file_when_tsgolint_fails() {
+        // The fixture has a fake `tsgolint` that exits with an error.
+        // The suppression file is not written, because the lint results are incomplete.
+        let args = &["--suppress-all", "--type-aware"];
+        let (stdout, result) =
+            Tester::new().with_cwd("fixtures/cli/tsgolint_failure".into()).test_output(args);
+        // Remove the file before the assertions, so that a failed test does not leave it behind.
+        let suppression_file = std::env::current_dir()
+            .unwrap()
+            .join("fixtures/cli/tsgolint_failure/oxlint-suppressions.json");
+        let file_exists = suppression_file.exists();
+        let _ = std::fs::remove_file(&suppression_file);
+        assert!(
+            matches!(result, CliRunResult::TsGoLintError),
+            "Expected TsGoLintError, got {result:?}.\nOutput: {stdout}"
+        );
+        assert!(!file_exists, "The suppression file should not be written when tsgolint fails");
     }
 
     #[test]
