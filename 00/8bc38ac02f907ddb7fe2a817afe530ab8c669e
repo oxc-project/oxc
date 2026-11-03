@@ -1,0 +1,19 @@
+crates/oxc_lexer_macros/README.md
+  s_1d33e520d83639::t_895c8c81cc87af 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "008bc38ac02f907ddb7fe2a817afe530ab8c669e",
+  "prompts": {},
+  "sessions": {
+    "s_1d33e520d83639": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a094-fb83-7ce0-80cc-345016fd42cf",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
