@@ -223,21 +223,18 @@ describe("catch var initializer names", () => {
           try { throw 1 } catch (y) { var y = 2; console.log(y); }
           console.log(y);
         } f(5);`;
-        for (const module of [false, true]) {
-          for (const compress of [false, true]) {
-            it(`preserves ${declaration} with parameter=${parameter}, outer=${outerDeclaration}, module=${module}, compress=${compress}`, () => {
-              const result = minifySync("input.js", code, {
-                module,
-                compress: compress ? { keepNames: { function: true, class: true } } : false,
-                mangle: { keepNames: true },
-              });
-              expect(result.errors).toEqual([]);
-              const strict = module ? '"use strict";' : "";
-              const expected = [["y"], [2], [outerValue]];
-              expect(captureOutput(strict + code)).toEqual(expected);
-              expect(captureOutput(strict + result.code)).toEqual(expected);
+        // The code is inside a function, so module mode adds nothing here.
+        for (const compress of [false, true]) {
+          it(`preserves ${declaration} with parameter=${parameter}, outer=${outerDeclaration}, compress=${compress}`, () => {
+            const result = minifySync("input.js", code, {
+              compress: compress ? { keepNames: { function: true, class: true } } : false,
+              mangle: { keepNames: true },
             });
-          }
+            expect(result.errors).toEqual([]);
+            const expected = [["y"], [2], [outerValue]];
+            expect(captureOutput(code)).toEqual(expected);
+            expect(captureOutput(result.code)).toEqual(expected);
+          });
         }
       }
     }

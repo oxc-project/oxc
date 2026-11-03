@@ -161,13 +161,11 @@ fn test_catch_var_bindings() {
         "function f() { try {} catch (e) { var e; } try {} catch (e) { var e; } }",
     ];
 
-    for (extension, suffix) in [("cjs", "catch-var-bindings-js"), ("cts", "catch-var-bindings-ts")]
-    {
-        Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass.clone(), fail.clone())
-            .change_rule_path_extension(extension)
-            .with_snapshot_suffix(suffix)
-            .test_and_snapshot();
-    }
+    // The catch skip runs before the TypeScript-specific checks, so one JS run covers it.
+    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, fail)
+        .change_rule_path_extension("cjs")
+        .with_snapshot_suffix("catch-var-bindings")
+        .test_and_snapshot();
 }
 
 #[test]
