@@ -608,12 +608,11 @@ impl<'a> SemanticBuilder<'a> {
         // Only the value meaning conflicts. A type sharing the symbol belongs to the outer scope:
         // `type x = 0; { var x; interface x {} }`
         let hoisted_id = self.hoisting_variables.get(&(scope_id, name)).copied();
-        if let Some(symbol_id) = hoisted_id {
-            let flags = self.scoping.symbol_flags(symbol_id);
-            if flags.intersection(SymbolFlags::Value).intersects(excludes) {
-                let symbol_span = self.scoping.symbol_span(symbol_id);
-                self.error(redeclaration(&name, symbol_span, span));
-            }
+        if let Some(symbol_id) = hoisted_id
+            && self.scoping.symbol_flags(symbol_id).intersects(excludes & SymbolFlags::Value)
+        {
+            let symbol_span = self.scoping.symbol_span(symbol_id);
+            self.error(redeclaration(&name, symbol_span, span));
         }
 
         binding_id.or(hoisted_id)
