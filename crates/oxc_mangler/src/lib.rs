@@ -656,12 +656,24 @@ impl<'a> SlotAssignment<'a> {
 
             // Sort `bindings` in declaration order.
             tmp_bindings.clear();
-            tmp_bindings.extend(
-                bindings
-                    .values()
-                    .copied()
-                    .filter(|&binding| constraints.is_mangle_candidate(binding, scoping)),
-            );
+            tmp_bindings.extend(bindings.values().copied().filter(|&binding| {
+                if !constraints.is_mangle_candidate(binding, scoping) {
+                    return false;
+                }
+                if !catch_var_bindings.is_empty()
+                    && let Some(outer) = scoping.catch_var_binding(binding)
+                {
+                    let slot = slots[outer.index()];
+                    // Share an ancestor's slot without reserving one that would be discarded.
+                    // Scopes inserted by transforms can precede their new ancestors in ID order;
+                    // let the final remapping handle an outer slot that is not assigned yet.
+                    if slot != SLOT_UNASSIGNED || !constraints.is_mangle_candidate(outer, scoping) {
+                        slots[binding.index()] = slot;
+                        return false;
+                    }
+                }
+                true
+            }));
             if tmp_bindings.is_empty() {
                 continue;
             }

@@ -9,6 +9,7 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
+use oxc_syntax::symbol::SymbolId;
 
 use crate::{
     TraverseCtx, generated::ancestor::Ancestor, is_terminated::IsTerminated, keep_var::KeepVar,
@@ -342,6 +343,9 @@ impl<'a> PeepholeOptimizations {
         let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left else {
             return false;
         };
+        let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id() else {
+            return false;
+        };
         let Some(Statement::VariableDeclaration(var_decl)) = result.last_mut() else {
             return false;
         };
@@ -353,7 +357,7 @@ impl<'a> PeepholeOptimizations {
             let BindingPattern::BindingIdentifier(kind) = &decl.id else {
                 break;
             };
-            if kind.name == id.name {
+            if kind.symbol_id() == symbol_id {
                 if decl.init.is_none()
                     && (declaration_kind.is_var() || assign_expr.right.is_literal_value(true, ctx))
                 {
@@ -1000,7 +1004,8 @@ impl<'a> PeepholeOptimizations {
                         if let Some(prev_var_decl_item) = prev_var_decl_no_init_item
                             && let BindingPattern::BindingIdentifier(decl_id) =
                                 &prev_var_decl_item.id
-                            && id.name == decl_id.name
+                            && ctx.scoping().get_reference(id.reference_id()).symbol_id()
+                                == Some(decl_id.symbol_id())
                         {
                             let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop()
                             else {
@@ -1056,7 +1061,8 @@ impl<'a> PeepholeOptimizations {
             };
             if let Some(prev_var_decl_item) = prev_var_decl_no_init_item
                 && let BindingPattern::BindingIdentifier(decl_id) = &prev_var_decl_item.id
-                && id.name == decl_id.name
+                && ctx.scoping().get_reference(id.reference_id()).symbol_id()
+                    == Some(decl_id.symbol_id())
             {
                 let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop() else {
                     unreachable!()
@@ -1253,7 +1259,7 @@ impl<'a> PeepholeOptimizations {
             }
             let replaced = Self::substitute_single_use_symbol_in_expression(
                 target_expr,
-                prev_decl_id.name,
+                prev_decl_id.symbol_id(),
                 prev_decl_init,
                 prev_decl_init.may_have_side_effects(ctx),
                 ctx,
@@ -1276,14 +1282,14 @@ impl<'a> PeepholeOptimizations {
     /// `substituteSingleUseSymbolInExpr`: <https://github.com/evanw/esbuild/blob/v0.25.9/internal/js_parser/js_parser.go#L9642>
     fn substitute_single_use_symbol_in_expression(
         target_expr: &mut Expression<'a>,
-        search_for: Ident<'a>,
+        search_for: SymbolId,
         replacement: &mut Expression<'a>,
         replacement_has_side_effect: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<bool> {
         match target_expr {
             Expression::Identifier(id) => {
-                if id.name == search_for {
+                if ctx.scoping().get_reference(id.reference_id()).symbol_id() == Some(search_for) {
                     // Preserve the span of the target identifier so that comments
                     // attached to it (via `attached_to`) remain correctly associated
                     // with the replacement expression.
@@ -1771,7 +1777,7 @@ impl<'a> PeepholeOptimizations {
             }
             Expression::TaggedTemplateExpression(tagged_expr) => {
                 // A member tag would change `this`: `let c = a.b; c``` => `(0, a.b)```
-                let keep_indirect = tagged_expr.tag.is_specific_id(search_for)
+                let keep_indirect = matches!(tagged_expr.tag, Expression::Identifier(_))
                     && match &*replacement {
                         match_member_expression!(Expression) => true,
                         Expression::ChainExpression(chain) => {

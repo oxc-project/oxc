@@ -76,7 +76,8 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
     }
 
     fn has_name_set_redeclaration_node(&self, symbol_id: SymbolId) -> bool {
-        self.scoping.symbol_redeclarations(symbol_id).iter().any(|redeclaration| {
+        // The original declaration is the first entry and was already checked by `collect`.
+        self.scoping.symbol_redeclarations(symbol_id).iter().skip(1).any(|redeclaration| {
             let node = self.ast_nodes.get_node(redeclaration.declaration);
             self.is_name_set_declare_node(node, symbol_id)
         })

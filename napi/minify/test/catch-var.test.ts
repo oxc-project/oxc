@@ -89,6 +89,101 @@ describe("catch parameters redeclared by var", () => {
       } f();`,
       [[2], [undefined]],
     ],
+    [
+      "regenerated var inside a surviving catch",
+      `function f() {
+        try { throw 1 } catch (e) {
+          while (0) { var e }
+          e = 2;
+          console.log(e);
+        }
+        return e;
+      } console.log(f());`,
+      [[2], [undefined]],
+    ],
+    [
+      "regenerated var from a removed nested catch",
+      `function f() {
+        try { throw 1 } catch (e) {
+          while (0) { try {} catch (e) { var e } }
+          e = 2;
+          console.log(e);
+        }
+        return e;
+      } console.log(f());`,
+      [[2], [undefined]],
+    ],
+    [
+      "regenerated var before for-in assignment",
+      `function f() {
+        try { throw 1 } catch (e) {
+          while (0) { try {} catch (e) { var e } }
+          for (e in { x: 1, y: 2 }) { console.log(e) }
+        }
+        return e;
+      } console.log(f());`,
+      [["x"], ["y"], [undefined]],
+    ],
+    [
+      "regenerated var in a dead conditional",
+      `function f() {
+        try { throw 1 } catch (e) {
+          if (false) { try {} catch (e) { var e } }
+          e = 2;
+          console.log(e);
+        }
+        return e;
+      } console.log(f());`,
+      [[2], [undefined]],
+    ],
+    [
+      "regenerated var from a dead switch case",
+      `function f() {
+        try { throw 1 } catch (e) {
+          switch (0) { case 1: try {} catch (e) { var e } }
+          e = 2;
+          console.log(e);
+        }
+        return e;
+      } console.log(f());`,
+      [[2], [undefined]],
+    ],
+    [
+      "regenerated var before for-of assignment",
+      `function f(e) {
+        try { throw 1 } catch (e) {
+          while (0) { try {} catch (e) { var e } }
+          for (e of [2, 3]) { console.log(e) }
+        }
+        return e;
+      } console.log(f(5));`,
+      [[2], [3], [5]],
+    ],
+    [
+      "regenerated var with direct eval",
+      `function f() {
+        try { throw 1 } catch (e) {
+          while (0) { var e }
+          e = 2;
+          console.log(eval("e"));
+        }
+        return eval("e");
+      } console.log(f());`,
+      [[2], [undefined]],
+    ],
+    [
+      "regenerated var with a captured catch binding",
+      `function f() {
+        var read;
+        try { throw 1 } catch (e) {
+          while (0) { try {} catch (e) { var e } }
+          read = () => e;
+          e = 2;
+        }
+        console.log(read(), e);
+      } f();`,
+      [[2, undefined]],
+    ],
   ];
 
   for (const module of [false, true]) {

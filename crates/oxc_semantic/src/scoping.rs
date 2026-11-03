@@ -428,6 +428,11 @@ impl Scoping {
         self.catch_var_bindings.get(&symbol_id).copied()
     }
 
+    /// Record that a `var` in this catch parameter's body also declares `var_binding`.
+    pub fn add_catch_var_binding(&mut self, catch_symbol_id: SymbolId, var_binding: SymbolId) {
+        self.catch_var_bindings.insert(catch_symbol_id, var_binding);
+    }
+
     /// Iterate `(catch parameter, enclosing var binding)` pairs in unspecified order.
     pub fn catch_var_bindings(&self) -> impl Iterator<Item = (SymbolId, SymbolId)> + '_ {
         self.catch_var_bindings.iter().map(|(&catch, &outer)| (catch, outer))

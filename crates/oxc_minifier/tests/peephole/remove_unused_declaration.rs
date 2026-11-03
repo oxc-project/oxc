@@ -1,3 +1,9 @@
+use cow_utils::CowUtils;
+use oxc_allocator::Allocator;
+use oxc_ast::AstKind;
+use oxc_codegen::Codegen;
+use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
 use crate::{
@@ -23,6 +29,57 @@ fn catch_var_preserves_enclosing_binding() {
         "function f() { return y; try {} catch (y) { var y = 1 } } use(f);",
         "function f() { return y; var y } use(f);",
     );
+}
+
+#[test]
+fn regenerated_var_preserves_surviving_catch_binding() {
+    for dead_code in ["while (0) { var y }", "while (0) { try {} catch (y) { var y } }"] {
+        test_smallest(
+            &format!(
+                "function f() {{ try {{ throw 0 }} catch (y) {{ {dead_code} y = 2; use(y) }} return y }} use(f);"
+            ),
+            "function f() { try { throw 0 } catch (y) { var y = 2; use(y) } return y } use(f);",
+        );
+    }
+}
+
+#[test]
+fn hoisted_var_does_not_merge_writes_to_a_catch_parameter() {
+    for body in ["y = 2; use(y)", "for (y in obj) use(y)", "for (y of obj) use(y)"] {
+        let source = format!(
+            "function f() {{ try {{ throw 0 }} catch (y) {{ var y; {body} }} return y }} use(f);"
+        );
+        let allocator = Allocator::default();
+        let parsed = Parser::new(&allocator, &source, SourceType::mjs()).parse();
+        assert!(parsed.diagnostics.is_empty());
+        let mut program = parsed.program;
+        let built = SemanticBuilder::new_compiler().with_build_nodes(true).build(&program);
+        assert!(built.diagnostics.is_empty());
+        let semantic = built.semantic;
+        let (catch, outer) = semantic.scoping().catch_var_bindings().next().unwrap();
+        let mut remapped = false;
+        for node in semantic.nodes() {
+            if let AstKind::VariableDeclarator(decl) = node.kind()
+                && let Some(id) = decl.id.get_binding_identifier()
+                && id.symbol_id.get() == Some(catch)
+            {
+                // Model a hoisted declaration supplied by a preceding transform. Its identifier
+                // declares the outer binding, while the catch's writes keep their own symbol.
+                id.symbol_id.set(Some(outer));
+                remapped = true;
+            }
+        }
+        assert!(remapped);
+        let scoping = semantic.into_scoping();
+        crate::Compressor::new(&allocator).build_with_scoping(
+            &mut program,
+            scoping,
+            CompressOptions::smallest(),
+        );
+        let output = Codegen::new().build(&program).code;
+        let expected = source.cow_replace("y = 2; use(y)", "y = 2, use(y)");
+        assert_eq!(output, crate::run(&expected, SourceType::mjs(), None), "{body}");
+    }
 }
 
 // Leak regression: dropping an unused declarator must walk the whole

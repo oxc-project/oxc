@@ -76,15 +76,22 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                     // local bindings here to find catch parameters without repeating diagnostics.
                     // Type-only bindings (type aliases, interfaces) live in a separate
                     // declaration space, so a hoisted `var` must not merge into them.
-                    if builder.scoping.scope_has_binding(scope_id, name)
-                        && let Some(symbol_id) =
-                            builder.check_redeclaration(scope_id, span, name, excludes)
+                    if let Some(symbol_id) = builder.scoping.get_binding(scope_id, name)
+                        && let Some(symbol_id) = builder.check_redeclaration_with_binding(
+                            scope_id,
+                            Some(symbol_id),
+                            span,
+                            name,
+                            excludes,
+                        )
                         && builder.scoping.symbol_flags(symbol_id).can_be_referenced_by_value()
                         && builder.scoping.symbol_flags(symbol_id).is_value()
                     {
                         // A simple catch parameter can be redeclared by `var`, but the `var`
                         // also creates a separate binding in the enclosing var scope. Its
-                        // initializer assigns to the nearest catch binding.
+                        // initializer assigns to the nearest catch binding. Destructured catch
+                        // parameters already reported an error above; keep the bindings separate
+                        // during recovery too.
                         if builder.scoping.symbol_flags(symbol_id).is_catch_variable() {
                             catch_symbol_id.get_or_insert(symbol_id);
                             continue;
@@ -113,7 +120,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 });
                 if let Some(catch_symbol_id) = catch_symbol_id {
                     builder.add_redeclare_variable(catch_symbol_id, includes, span);
-                    builder.scoping.catch_var_bindings.insert(catch_symbol_id, symbol_id);
+                    builder.scoping.add_catch_var_binding(catch_symbol_id, symbol_id);
                     ident.symbol_id.set(Some(catch_symbol_id));
                 } else {
                     ident.symbol_id.set(Some(symbol_id));
