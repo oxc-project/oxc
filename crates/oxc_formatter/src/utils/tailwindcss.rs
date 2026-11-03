@@ -7,6 +7,8 @@
 //!
 //! Based on [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
 
+use unicode_width::UnicodeWidthStr;
+
 use oxc_ast::ast::*;
 use oxc_formatter_core::FormatElement;
 use oxc_span::GetSpan;
@@ -108,6 +110,21 @@ pub fn is_tailwind_function_call(
             _ => return false,
         }
     }
+}
+
+/// Returns the printed width of a class list after its whitespace is collapsed,
+/// i.e. trimmed and with each whitespace run replaced by a single space.
+///
+/// Duplicate classes aren't removed here, because the sorter removes only duplicates
+/// of classes known to Tailwind CSS. So this is an upper bound of the printed width
+/// when `preserveDuplicates` is off.
+pub fn collapsed_class_list_width(content: &str) -> usize {
+    let mut classes = content.split_whitespace();
+    let Some(first) = classes.next() else {
+        // Whitespace-only content is printed as a single space
+        return usize::from(!content.is_empty());
+    };
+    classes.fold(first.width(), |width, class| width + 1 + class.width())
 }
 
 // ============================================================================

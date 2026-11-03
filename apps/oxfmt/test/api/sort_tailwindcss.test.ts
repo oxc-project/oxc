@@ -566,6 +566,50 @@ shadow-lg\` : "font-normal"}\`} />;`;
     expect(result.errors).toStrictEqual([]);
   });
 
+  describe("assignment layout measures the argument after collapsing whitespace", () => {
+    // The call argument is "short" (Prettier's `isLoneShortArgument`) when its printed width
+    // is at most a quarter of the print width, and the call is then not broken.
+    const cases = [
+      ["string literal", `"p-4                           flex"`, `"flex p-4"`],
+      ["template literal", "`p-4                           flex`", "`flex p-4`"],
+    ];
+
+    for (const [name, arg, sorted] of cases) {
+      it(`${name}`, async () => {
+        const input = `const vaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = cn(${arg});\n`;
+
+        const result = await format("test.ts", input, {
+          experimentalTailwindcss: { functions: ["cn"] },
+        });
+
+        expect(result.code).toBe(
+          `const vaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n  cn(${sorted});\n`,
+        );
+        expect(result.errors).toStrictEqual([]);
+
+        // Formatting the output again should not change it.
+        const second = await format("test.ts", result.code, {
+          experimentalTailwindcss: { functions: ["cn"] },
+        });
+        expect(second.code).toBe(result.code);
+      });
+    }
+
+    it("keeps measuring the source text when preserveWhitespace is true", async () => {
+      const input = `const vaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = cn("p-4                           flex");\n`;
+
+      const result = await format("test.ts", input, {
+        experimentalTailwindcss: { functions: ["cn"], preserveWhitespace: true },
+      });
+
+      // Whitespace is kept, so the argument is still long and the call is broken.
+      expect(result.code).toBe(
+        `const vaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = cn(\n  "flex                           p-4",\n);\n`,
+      );
+      expect(result.errors).toStrictEqual([]);
+    });
+  });
+
   // Tests for can_collapse_whitespace in template literal expressions
   // These test the whitespace preservation logic based on adjacent quasi whitespace
 

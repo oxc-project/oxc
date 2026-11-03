@@ -21,6 +21,7 @@ use crate::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
+        tailwindcss::{collapsed_class_list_width, is_tailwind_function_call},
         typecast::is_cast_target,
     },
     write,
@@ -1210,8 +1211,13 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
             1 => match args.iter().next() {
                 // An embedded template is formatted, so its source length says nothing
                 Some(first_argument) => first_argument.as_expression().is_none_or(|e| {
+                    let collapses_tailwind_whitespace =
+                        f.options().sort_tailwindcss.as_ref().is_some_and(|opts| {
+                            !opts.preserve_whitespace
+                                && is_tailwind_function_call(&call_expression.callee, opts)
+                        });
                     embed_hug(e, Some(call_expression), f).is_some()
-                        || !is_short_argument(e, threshold, f)
+                        || !is_short_argument(e, threshold, collapses_tailwind_whitespace, f)
                 }),
                 None => false,
             },
@@ -1237,13 +1243,25 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
 /// This function checks if [`Argument`] is short
 /// We need it to decide if [`CallExpression`] with the argument is breakable or not
 /// If the argument is short the function call isn't breakable
+///
+/// `collapses_tailwind_whitespace` is `true` when the argument is sorted as Tailwind CSS classes
+/// with `preserveWhitespace` off. Its whitespace is collapsed when printed, so its length is
+/// measured on the collapsed text, as Prettier sees it after `prettier-plugin-tailwindcss` rewrote it.
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/utils/index.js#L433-L484>
-fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> bool {
+fn is_short_argument(
+    argument: &Expression,
+    threshold: u16,
+    collapses_tailwind_whitespace: bool,
+    f: &JsFormatter,
+) -> bool {
     match argument {
         Expression::Identifier(identifier) => identifier.name.width() <= threshold as usize,
-        Expression::UnaryExpression(unary_expression) => {
-            is_short_argument(&unary_expression.argument, threshold, f)
-        }
+        Expression::UnaryExpression(unary_expression) => is_short_argument(
+            &unary_expression.argument,
+            threshold,
+            collapses_tailwind_whitespace,
+            f,
+        ),
         Expression::RegExpLiteral(regex) => regex.regex.pattern.text.width() <= threshold as usize,
         Expression::StringLiteral(literal) => {
             let formatter = FormatLiteralStringToken::new(
@@ -1251,8 +1269,15 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> 
                 false,
                 StringLiteralParentKind::Expression,
             );
+            let text = formatter.clean_text(f);
 
-            formatter.clean_text(f).width() <= threshold as usize
+            let width = if collapses_tailwind_whitespace {
+                // Opening and closing quotes
+                2 + collapsed_class_list_width(&text[1..text.len() - 1])
+            } else {
+                text.width()
+            };
+            width <= threshold as usize
         }
         Expression::TemplateLiteral(literal) => {
             // Besides checking length exceed we also need to check that the template doesn't have any expressions.
@@ -1260,7 +1285,11 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> 
             // Prettier: https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L402-L405
             literal.quasis.len() == 1 && {
                 let raw = literal.quasis[0].value.raw;
-                raw.width() <= threshold as usize && !raw.contains('\n')
+                if collapses_tailwind_whitespace {
+                    collapsed_class_list_width(&raw) <= threshold as usize
+                } else {
+                    raw.width() <= threshold as usize && !raw.contains('\n')
+                }
             }
         }
         Expression::CallExpression(call) => {
