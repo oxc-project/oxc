@@ -283,6 +283,8 @@ impl LintRunner {
         }
 
         if let Some(type_aware_linter) = self.type_aware_linter.take() {
+            // Native work has joined; type-aware linting only needs the shared directives.
+            self.lint_service.release_module_graph();
             type_aware_linter.lint(
                 files,
                 self.directives_store.map(),

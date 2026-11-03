@@ -89,6 +89,10 @@ impl LintService {
         self.runtime.set_disable_directives_map(map);
     }
 
+    pub(crate) fn release_module_graph(&mut self) {
+        self.runtime.release_module_graph();
+    }
+
     pub fn run_source(
         &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
