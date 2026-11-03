@@ -1363,6 +1363,85 @@ fn test_argument_parameter_rename_fix() {
 }
 
 #[test]
+fn test_type_parameter_remove_fix() {
+    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![];
+    let fail: Vec<(&str, Option<serde_json::Value>)> = vec![];
+    let fix = vec![
+        ("export type Foo<T> = {}", "export type Foo = {}", None, FixKind::DangerousSuggestion),
+        (
+            "export function foo<T>() {}",
+            "export function foo() {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export const foo = <T,>() => {}",
+            "export const foo = () => {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export class Foo { bar<T>() {} }",
+            "export class Foo { bar() {} }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export function foo<T, U>(u: U) { return u }",
+            "export function foo<U>(u: U) { return u }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export function foo<T, U>(t: T) { return t }",
+            "export function foo<T>(t: T) { return t }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export function foo<T, U, V>(t: T, v: V) { return [t, v] }",
+            "export function foo<T, V>(t: T, v: V) { return [t, v] }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export type Foo<T, U,> = T",
+            "export type Foo<T,> = T",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export type Foo<T extends string = 'a'> = {}",
+            "export type Foo = {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // `infer` type parameters can't simply be removed
+        (
+            "export type F<T> = T extends Array<infer R> ? string : never",
+            "export type F<T> = T extends Array<infer R> ? string : never",
+            None,
+            FixKind::None,
+        ),
+        // interfaces and classes can merge with other declarations, which must
+        // all declare identical type parameters
+        ("export interface Foo<T> {}", "export interface Foo<T> {}", None, FixKind::None),
+        ("export class Foo<T> {}", "export class Foo<T> {}", None, FixKind::None),
+        (
+            "export type Foo<T> = {}",
+            "export type Foo<T> = {}",
+            Some(json!([{ "fix": { "variables": "off" } }])),
+            FixKind::None,
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .change_rule_path_extension("ts")
+        .test();
+}
+
+#[test]
 fn test_enums() {
     let pass = vec![
         "export enum Foo { A, B }",
