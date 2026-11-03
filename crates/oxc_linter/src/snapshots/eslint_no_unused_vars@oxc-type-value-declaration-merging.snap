@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-unused-vars): Interface 'Foo' is declared but never used. Unused interfaces should start with a '_'.
+   ╭─[no_unused_vars.ts:1:15]
+ 1 │ declare const Foo: unknown; interface Foo {}
+   ·               ─┬─
+   ·                ╰── 'Foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Interface 'Foo' is declared but never used. Unused interfaces should start with a '_'.
+   ╭─[no_unused_vars.ts:1:15]
+ 1 │ declare const Foo: unknown; interface Foo { next: Foo }
+   ·               ─┬─
+   ·                ╰── 'Foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Interface 'Foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:11]
+ 1 │ interface Foo { next: Foo } declare const Foo: unknown;
+   ·           ─┬─
+   ·            ╰── 'Foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'Foo' is declared but never used. Unused type aliases should start with a '_'.
+   ╭─[no_unused_vars.ts:1:15]
+ 1 │ declare const Foo: unknown; type Foo = { next: Foo };
+   ·               ─┬─
+   ·                ╰── 'Foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'Foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:6]
+ 1 │ type Foo = { next: Foo }; declare const Foo: unknown;
+   ·      ─┬─
+   ·       ╰── 'Foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.ts:1:15]
+ 1 │ declare const Foo: typeof Foo;
+   ·               ─┬─
+   ·                ╰── 'Foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Interface is declared but only used as a type. Unused interfaces should start with a '_'.
+   ╭─[no_unused_vars.ts:1:15]
+ 1 │ declare const Foo: typeof Foo; interface Foo {}
+   ·               ─┬─
+   ·                ╰── 'Foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias is declared but only used as a type. Unused type aliases should start with a '_'.
+   ╭─[no_unused_vars.ts:1:15]
+ 1 │ declare const Foo: typeof Foo; type Foo = {};
+   ·               ─┬─
+   ·                ╰── 'Foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'Foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:7]
+ 1 │ class Foo { method() { const foo: Foo = this; return foo; } }
+   ·       ─┬─
+   ·        ╰── 'Foo' is declared here
+   ╰────
+  help: Consider removing this declaration.

@@ -154,6 +154,10 @@ impl<'a> Symbol<'_, 'a> {
                 if self
                     .get_ref_relevant_node(reference)
                     .is_some_and(|node| self.declaration().span().contains_inclusive(node.span()))
+                    // A variable's annotation can use a same-named interface or type alias.
+                    // Only `typeof` references refer to the variable itself in this case.
+                    && (!matches!(self.declaration().kind(), AstKind::VariableDeclarator(_))
+                        || self.reference_contains_type_query(reference))
                 {
                     continue;
                 }

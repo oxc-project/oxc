@@ -1661,6 +1661,46 @@ fn test_type_references() {
 }
 
 #[test]
+fn test_type_value_declaration_merging() {
+    let pass = vec![
+        // https://github.com/oxc-project/oxc/issues/28723
+        "
+        declare const Worker2: { prototype: Worker2; new (): Worker2 };
+        interface Worker2 extends EventTarget {}
+        export {};
+        ",
+        "
+        interface Worker2 extends EventTarget {}
+        declare const Worker2: { prototype: Worker2; new (): Worker2 };
+        export {};
+        ",
+        "declare let Foo: Foo; interface Foo {}",
+        "declare var Foo: Foo; interface Foo {}",
+        "const Foo: Foo = {}; interface Foo {}",
+        "declare const Foo: Foo; type Foo = {};",
+        "type Foo = {}; declare const Foo: Foo;",
+        "const Foo: Foo = {}; type Foo = {};",
+    ];
+    let fail = vec![
+        "declare const Foo: unknown; interface Foo {}",
+        "declare const Foo: unknown; interface Foo { next: Foo }",
+        "interface Foo { next: Foo } declare const Foo: unknown;",
+        "declare const Foo: unknown; type Foo = { next: Foo };",
+        "type Foo = { next: Foo }; declare const Foo: unknown;",
+        "declare const Foo: typeof Foo;",
+        "declare const Foo: typeof Foo; interface Foo {}",
+        "declare const Foo: typeof Foo; type Foo = {};",
+        "class Foo { method() { const foo: Foo = this; return foo; } }",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .with_snapshot_suffix("oxc-type-value-declaration-merging")
+        .change_rule_path_extension("ts")
+        .test_and_snapshot();
+}
+
+#[test]
 fn test_ts_in_assignment() {
     let pass = vec![
         r"export const onClick = (value, key) => {
