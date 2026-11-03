@@ -1,3 +1,11 @@
+//! Methods of `Vec256<Neon>`, which wraps a [`uint8x16x2_t`].
+//!
+//! Neon registers are 128 bits, so a `Vec256<Neon>` is a pair of registers,
+//! and its bitwise methods work on each half separately.
+//! It only has the few methods which Neon code needs, far fewer than `Vec256<Avx2>`.
+//!
+//! [`uint8x16x2_t`]: std::arch::aarch64::uint8x16x2_t
+
 #![expect(
     clippy::inline_always,
     reason = "thin wrappers, which should compile down to just the intrinsics they call"

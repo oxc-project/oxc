@@ -1,3 +1,12 @@
+//! Bitwise operators for [`Vec128`] and [`Vec256`].
+//!
+//! `!v`, `v & x`, `v | x` and `v ^ x` call the vector's `not`, `and`, `or` and `xor` methods,
+//! and so do `&=`, `|=` and `^=`. As with those methods, `x` can be a vector or a `u8`,
+//! so `v & 0x0f` works.
+//!
+//! The operators are only implemented for vectors of `CpuType`,
+//! which is the CPU feature set with vector types on this platform.
+
 #![expect(
     clippy::inline_always,
     reason = "operators call vector methods, which must inline into the function calling them"

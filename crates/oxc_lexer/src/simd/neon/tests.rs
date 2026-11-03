@@ -1,3 +1,7 @@
+//! Tests for the methods of `Vec128<Neon>` and `Vec256<Neon>`.
+//!
+//! Each test returns early without checking anything if the CPU doesn't support Neon.
+
 use std::{array, mem::transmute};
 
 use crate::{

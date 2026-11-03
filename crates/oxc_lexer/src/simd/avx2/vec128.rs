@@ -1,3 +1,10 @@
+//! Methods of `Vec128<Avx2>`, which wraps an [`__m128i`].
+//!
+//! These are 128-bit operations, so the intrinsics are from SSE2 to SSE4.1,
+//! which every CPU with AVX2 supports.
+//!
+//! [`__m128i`]: std::arch::x86_64::__m128i
+
 #![expect(
     clippy::inline_always,
     reason = "wrappers must inline to get the `target_feature`s of the function calling them"

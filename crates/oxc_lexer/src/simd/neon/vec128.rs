@@ -1,3 +1,10 @@
+//! Methods of `Vec128<Neon>`, which wraps a [`uint8x16_t`].
+//!
+//! Methods have the same names as the methods of `Vec128<Avx2>` which do the same job.
+//! The `neon` module docs list the ones which behave differently.
+//!
+//! [`uint8x16_t`]: std::arch::aarch64::uint8x16_t
+
 #![expect(
     clippy::inline_always,
     reason = "thin wrappers, which should compile down to just the intrinsics they call"

@@ -1,3 +1,11 @@
+//! Traits for the right-hand side of a vector operation, which can be a vector or a scalar.
+//!
+//! e.g. `v.and(w)` ANDs 2 vectors, and `v.and(0x0f)` ANDs every byte of `v` with `0x0f`.
+//! A scalar is repeated to fill a vector.
+//!
+//! The traits only cover vectors of `CpuType`,
+//! which is the CPU feature set with vector types on this platform.
+
 #![expect(
     clippy::inline_always,
     reason = "conversions call vector methods, which must inline into the function calling them"

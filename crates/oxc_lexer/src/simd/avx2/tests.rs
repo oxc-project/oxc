@@ -1,3 +1,7 @@
+//! Tests for the methods of `Vec128<Avx2>` and `Vec256<Avx2>`.
+//!
+//! Each test returns early without checking anything if the CPU doesn't support AVX2.
+
 use std::{array, mem::transmute};
 
 use crate::{

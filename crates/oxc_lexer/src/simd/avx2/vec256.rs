@@ -1,3 +1,10 @@
+//! Methods of `Vec256<Avx2>`, which wraps an [`__m256i`].
+//!
+//! Some AVX2 instructions treat a 256-bit vector as 2 separate 128-bit halves
+//! (e.g. `shuffle_u8s`, `unpack_lo_u32`). The docs of those methods say so.
+//!
+//! [`__m256i`]: std::arch::x86_64::__m256i
+
 #![expect(
     clippy::inline_always,
     reason = "wrappers must inline to get the `target_feature`s of the function calling them"

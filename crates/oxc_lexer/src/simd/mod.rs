@@ -1,3 +1,23 @@
+//! SIMD vector types.
+//!
+//! [`Vec128`] and [`Vec256`] wrap a platform's SIMD vector types and intrinsics in a safe API.
+//! They're generic over a CPU feature set `C` which implements [`CpuSimd`] (`Avx2` or `Neon`).
+//! A vector holds a `C`, so it can only exist if the CPU supports that feature set.
+//! So only the methods which load or store via a raw pointer are unsafe.
+//!
+//! Each feature set's methods are in its own module, `avx2` on x86_64 and `neon` on aarch64.
+//! Other platforms have no vector types.
+//!
+//! The other modules:
+//!
+//! - `data` has [`VecData128`] and [`VecData256`], aligned byte arrays to read into vectors.
+//! - `arrays` has traits for arrays of integers which vectors can read without alignment.
+//! - `operand` has traits which let an operation take either a vector or a scalar.
+//! - `bit_traits` implements the `!`, `&`, `|` and `^` operators for vectors.
+//!
+//! `operand` and `bit_traits` only cover vectors of `CpuType`,
+//! which is the CPU feature set with vector types on this platform.
+
 #[cfg(target_arch = "x86_64")]
 use crate::cpu::Avx2 as CpuType;
 #[cfg(target_arch = "aarch64")]

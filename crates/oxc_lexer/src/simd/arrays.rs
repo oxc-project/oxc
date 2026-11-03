@@ -1,3 +1,17 @@
+//! Traits for arrays of integers which vectors can read with no alignment requirement.
+//!
+//! Each trait is implemented for every array of integers of one size,
+//! e.g. [`IntArray128`] for `[u8; 16]`, `[u32; 4]`, `[u64; 2]` etc.
+//!
+//! - [`IntArray64`] is for 8 bytes, which `Vec128::read_low_unaligned` reads.
+//! - [`IntArray128`] is for 16 bytes, which `Vec128::read_unaligned` reads.
+//! - [`IntArray256`] is for 32 bytes, which `Vec256::read_unaligned` reads.
+//!
+//! [`VecData128`] and [`VecData256`] implement `IntArray128` and `IntArray256` too.
+//!
+//! [`VecData128`]: super::VecData128
+//! [`VecData256`]: super::VecData256
+
 use std::ptr;
 
 /// Array of integers which `Vec128::read_low_unaligned` can read.
