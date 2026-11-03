@@ -1,0 +1,21 @@
+crates/oxc_linter/src/rules/eslint/no_useless_assignment.rs
+  s_8ff7d0a5c5d2e0::t_f715410ac59b40 128-253,493,541-542,571-572,930,939-940,948-950,1597-1654,2017-2052,2058-2089
+crates/oxc_linter/src/snapshots/eslint_no_useless_assignment.snap
+  s_8ff7d0a5c5d2e0::t_c7960be4ae1476 663-707
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "91704d780bf8e3b4e305b4ffd06e862058d4acfc",
+  "prompts": {},
+  "sessions": {
+    "s_8ff7d0a5c5d2e0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a1a1-ecf0-7493-9e86-21b2e326530e",
+        "model": "gpt-6.1-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
