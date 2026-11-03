@@ -1052,10 +1052,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ╰────
   help: for octal literals use the '0o' prefix instead
 
-  × Keywords cannot contain escape characters
-   ╭─[babel/packages/babel-parser/test/fixtures/core/object/invalid-escape-get/input.js:1:4]
+  × Expected `,` or `}` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/core/object/invalid-escape-get/input.js:1:13]
  1 │ ({ ge\u0074 x() {} })
-   ·    ────────
+   ·  ┬          ┬
+   ·  │          ╰── `,` or `}` expected
+   ·  ╰── Opened here
    ╰────
 
   × A 'get' accessor must not have any formal parameters.
@@ -2974,22 +2976,25 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   note: Classes are always strict mode code
 
-  × Keywords cannot contain escape characters
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class/invalid-escape-get/input.js:1:11]
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class/invalid-escape-get/input.js:1:20]
  1 │ class X { ge\u0074 x() {} }
-   ·           ────────
+   ·                    ┬
+   ·                    ╰── `;` expected
    ╰────
 
-  × Keywords cannot contain escape characters
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class/invalid-escape-set/input.js:1:11]
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class/invalid-escape-set/input.js:1:20]
  1 │ class X { se\u0074 x(value) {} }
-   ·           ────────
+   ·                    ┬
+   ·                    ╰── `;` expected
    ╰────
 
-  × Keywords cannot contain escape characters
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class/invalid-escape-static/input.js:1:11]
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class/invalid-escape-static/input.js:1:23]
  1 │ class X { st\u0061tic y() {} }
-   ·           ───────────
+   ·                       ┬
+   ·                       ╰── `;` expected
    ╰────
 
   × Cannot assign to 'arguments' in strict mode
@@ -6301,22 +6306,26 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Keywords cannot contain escape characters
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-async-class-method/input.js:1:11]
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-async-class-method/input.js:1:22]
  1 │ class X { \u0061sync x() { await x } }
-   ·           ──────────
+   ·                      ┬
+   ·                      ╰── `;` expected
    ╰────
 
-  × Keywords cannot contain escape characters
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-async-obj-method/input.js:1:4]
+  × Expected `,` or `}` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-async-obj-method/input.js:1:15]
  1 │ ({ \u0061sync x() { await x } })
-   ·    ──────────
+   ·  ┬            ┬
+   ·  │            ╰── `,` or `}` expected
+   ·  ╰── Opened here
    ╰────
 
-  × Keywords cannot contain escape characters
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-async-static-class-method/input.js:1:18]
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-async-static-class-method/input.js:1:29]
  1 │ class X { static \u0061sync x() { await x } }
-   ·                  ──────────
+   ·                             ┬
+   ·                             ╰── `;` expected
    ╰────
 
   × Keywords cannot contain escape characters
