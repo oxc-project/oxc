@@ -537,39 +537,66 @@ impl CliRunner {
         let diff_manager = suppression_manager.build_diff();
 
         let rule_timing_store = debug_timings.then(RuleTimingStore::new);
-        let lint_result = if let Some(rule_timing_store) = &rule_timing_store {
-            lint_runner.lint_files::<true>(
-                &files_to_lint,
-                tx_error.clone(),
-                &diff_manager,
-                Some(rule_timing_store),
-            )
-        } else {
-            lint_runner.lint_files::<false>(&files_to_lint, tx_error.clone(), &diff_manager, None)
-        };
 
-        match lint_result {
-            Ok(lint_runner) => {
+        // Lint on a separate thread, and render the diagnostics on this thread while linting runs.
+        // When there are many diagnostics, rendering them after linting would take a large part
+        // of the run time, with all the lint threads idle.
+        // The diagnostics are rendered into a buffer, and the buffer is written to `stdout` only
+        // after linting finishes. So output that JS plugins or `tsgolint` print during linting
+        // does not appear between the diagnostics, and a `tsgolint` failure prints only its error.
+        let (lint_result, diagnostic_result, rendered) = std::thread::scope(|scope| {
+            let lint_thread = scope.spawn(|| -> Result<_, String> {
+                let lint_result = if let Some(rule_timing_store) = &rule_timing_store {
+                    lint_runner.lint_files::<true>(
+                        &files_to_lint,
+                        tx_error.clone(),
+                        &diff_manager,
+                        Some(rule_timing_store),
+                    )
+                } else {
+                    lint_runner.lint_files::<false>(
+                        &files_to_lint,
+                        tx_error.clone(),
+                        &diff_manager,
+                        None,
+                    )
+                };
+                let lint_runner = lint_result?;
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
-            }
+
+                // A suppression file can contain regular lint rules that were not run in
+                // type-check-only mode, so its runtime diff is incomplete and cannot be used to
+                // validate the baseline.
+                let result = if type_check_only {
+                    Ok(())
+                } else {
+                    suppression_manager.finalize(diff_manager, &tx_error, &cwd)
+                };
+
+                // Close the channel, so that `diagnostic_service.run` returns.
+                drop(tx_error);
+                Ok(result)
+            });
+
+            let mut rendered = Vec::new();
+            let diagnostic_result = diagnostic_service.run(&mut rendered);
+            let lint_result =
+                lint_thread.join().unwrap_or_else(|payload| std::panic::resume_unwind(payload));
+            (lint_result, diagnostic_result, rendered)
+        });
+
+        let result = match lint_result {
+            Ok(result) => result,
             Err(err) => {
                 print_and_flush_stdout(stdout, &format!("{err}\n"));
                 return CliRunResult::TsGoLintError;
             }
-        }
-
-        // A suppression file can contain regular lint rules that were not run in type-check-only
-        // mode, so its runtime diff is incomplete and cannot be used to validate the baseline.
-        let result = if type_check_only {
-            Ok(())
-        } else {
-            suppression_manager.finalize(diff_manager, &tx_error, &cwd)
         };
+        stdout.write_all(&rendered).or_else(check_for_writer_error).unwrap();
+        stdout.flush().or_else(check_for_writer_error).unwrap();
+        drop(rendered);
+
         let suppress_all_succeeded = suppression_options.suppress_all && result.is_ok();
-
-        drop(tx_error);
-
-        let diagnostic_result = diagnostic_service.run(stdout);
 
         let oxlint_suppression_file_action = if let Err(report_suppression_error) = result {
             OxlintSuppressionFileAction::UnableToPerformFsOperation(report_suppression_error)
