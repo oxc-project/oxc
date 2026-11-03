@@ -1604,6 +1604,20 @@ mod test {
     }
 
     #[test]
+    fn test_import_plugin_multi_group() {
+        // Regression test for overlapping import-graph groups.
+        // The CLI tester uses a 1-thread pool, so `group_size` is 4 and two groups are open at once.
+        // Groups take files longest path first, so the `_` padding in the fixture names sets the batches:
+        // 0. `hub`, `closed_*`: a chain into `hub` that finishes on its own.
+        // 1. `cycle_a`, `diamond_*`: `cycle_a` imports `hub` from the finished group 0.
+        // 2. `cycle_b`: `cycle_b` and `cycle_a` import each other, so groups 1 and 2 merge.
+        let args = &["--import-plugin", "-D", "import/no-cycle", "."];
+        Tester::new()
+            .with_cwd("fixtures/cli/import_plugin_multi_group".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_import_plugin_detects_cycles_with_auto_discovered_tsconfig_paths() {
         let args = &["--import-plugin", "-D", "import/no-cycle", "deep/src/dep-a.ts"];
         Tester::new().with_cwd("fixtures/lsp/ts_path_alias".into()).test_and_snapshot(args);
