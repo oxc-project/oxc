@@ -37,19 +37,19 @@ Negative Passed: 275/275 (100.00%)
    ╰────
 
   × Identifier `g` has already been declared
-   ╭─[misc/fail/annex-b-function-catch-destructured-var-then-lexical-declaration.js:1:27]
+   ╭─[misc/fail/annex-b-function-catch-destructured-var-then-lexical-declaration.js:1:50]
  1 │ function f() { { function g() {} } try {} catch (g) { var [g, g] = []; } let g; }
-   ·                           ┬                                                  ┬
-   ·                           │                                                  ╰── It can not be redeclared here
-   ·                           ╰── `g` has already been declared here
+   ·                                                  ┬                           ┬
+   ·                                                  │                           ╰── It can not be redeclared here
+   ·                                                  ╰── `g` has already been declared here
    ╰────
 
   × Identifier `g` has already been declared
-   ╭─[misc/fail/annex-b-function-catch-var-then-lexical-declaration.js:1:27]
+   ╭─[misc/fail/annex-b-function-catch-var-then-lexical-declaration.js:1:50]
  1 │ function f() { { function g() {} } try {} catch (g) { var g; } let g; }
-   ·                           ┬                                        ┬
-   ·                           │                                        ╰── It can not be redeclared here
-   ·                           ╰── `g` has already been declared here
+   ·                                                  ┬                 ┬
+   ·                                                  │                 ╰── It can not be redeclared here
+   ·                                                  ╰── `g` has already been declared here
    ╰────
 
   × Identifier `g` has already been declared
@@ -61,11 +61,11 @@ Negative Passed: 275/275 (100.00%)
    ╰────
 
   × Identifier `g` has already been declared
-   ╭─[misc/fail/annex-b-function-var-then-lexical-declaration.js:1:27]
+   ╭─[misc/fail/annex-b-function-var-then-lexical-declaration.js:1:40]
  1 │ function f() { { function g() {} } var g; let g; }
-   ·                           ┬                   ┬
-   ·                           │                   ╰── It can not be redeclared here
-   ·                           ╰── `g` has already been declared here
+   ·                                        ┬      ┬
+   ·                                        │      ╰── It can not be redeclared here
+   ·                                        ╰── `g` has already been declared here
    ╰────
 
   × Cannot assign to 'arguments' in strict mode

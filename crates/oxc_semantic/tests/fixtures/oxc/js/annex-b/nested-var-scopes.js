@@ -21,9 +21,9 @@ const arrow = () => {
 let h;
 g();
 
-// A hoist undone by an enclosing block's declaration, then a hoist in a nested function,
-// then a sibling's hoist undone by a later declaration in the var scope.
-function undoThenRehoist() {
+// A function prevented by a later declaration in an enclosing block, then a function in a nested
+// var scope, then a sibling prevented by a later declaration in the var scope.
+function nestedVarScopeBetweenPreventedFunctions() {
   {
     {
       function g() {}
