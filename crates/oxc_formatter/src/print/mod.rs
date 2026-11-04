@@ -1107,7 +1107,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameterRest<'a>> {
             write!(f, [self.rest()]);
             write!(f, self.type_annotation());
         });
-        // Same as `FormalParameter`, minus the hug (a rest parameter is never hugged)
+        // Decorators are laid out as on `FormalParameter`, an undecorated rest parameter stays ungrouped
         let decorators = self.decorators();
         if decorators.is_empty() {
             write!(f, [content]);

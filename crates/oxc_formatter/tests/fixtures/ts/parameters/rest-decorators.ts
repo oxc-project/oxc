@@ -12,3 +12,9 @@ class C6 {
 }
 class C7 { m(@d
   ...args) {} }
+// Comments around the decorator keep their place
+class C8 { m(@d /* c */ ...args) {} }
+class C9 { m(@d // c
+  ...args) {} }
+class C10 { m(@d ...args // c
+) {} }
