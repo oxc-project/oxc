@@ -1,7 +1,7 @@
-use crate::cpu::{Cpu, cpu_multiversion, cpu_select, cpu_version};
-
-#[cfg(target_arch = "x86_64")]
-use crate::{cpu::Avx2, simd::Vec256};
+use crate::{
+    cpu::{Avx2, Cpu, DynCpu, cpu_multiversion, cpu_version, to_dyn},
+    simd::Vec256,
+};
 
 /// Get bit `i`.
 ///
@@ -149,11 +149,10 @@ pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize, _cpu: impl
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn bm_any(bm: *const u64, nw: usize, cpu: impl Cpu) -> bool {
-    cpu_select!(cpu, {
-        Avx2(cpu) => bm_any_avx2(bm, nw, cpu),
-        Neon(_) => bm_any_generic(bm, nw),
-        Generic(_) => bm_any_generic(bm, nw),
-    })
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => bm_any_avx2(bm, nw, cpu),
+        _ => bm_any_generic(bm, nw),
+    }
 }
 
 /// [`bm_any`] for AVX2.

@@ -14,14 +14,21 @@ pub enum Cpu {
     Avx2,
     /// aarch64 with Neon
     Neon,
-    /// No SIMD. Exists on all platforms.
+    /// No SIMD
     Generic,
 }
 
 impl Cpu {
+    /// All the feature sets.
+    ///
+    /// The macros generate code for each feature set in this order,
+    /// e.g. `#[cpu_multiversion]`'s entry points and the arms of its `match`.
+    pub const ALL: [Cpu; 3] = [Cpu::Avx2, Cpu::Neon, Cpu::Generic];
+
     /// The feature set called `ident`, e.g. the `Avx2` in `#[cpu_version(Avx2)]`.
     pub fn from_ident(ident: &Ident) -> Option<Cpu> {
-        [Cpu::Avx2, Cpu::Neon, Cpu::Generic].into_iter().find(|cpu| ident == cpu.name())
+        let name = ident.to_string();
+        Cpu::ALL.into_iter().find(|cpu| cpu.name() == name)
     }
 
     /// Name of the type, and of the `DynCpu` variant.
@@ -59,22 +66,40 @@ impl Cpu {
         quote!(crate::cpu::DynCpu::#name)
     }
 
-    /// `#[cfg(...)]` attribute for the platform the feature set exists on.
-    /// `None` for `Generic`, which exists everywhere.
-    pub fn cfg_attr(self) -> Option<TokenStream> {
-        let arch = match self {
-            Cpu::Avx2 => "x86_64",
-            Cpu::Neon => "aarch64",
-            Cpu::Generic => return None,
-        };
-        Some(quote!(#[cfg(target_arch = #arch)]))
+    /// The `target_arch` of the platform which supports the feature set.
+    /// `None` for `Generic`, which every platform supports.
+    pub fn target_arch(self) -> Option<&'static str> {
+        match self {
+            Cpu::Avx2 => Some("x86_64"),
+            Cpu::Neon => Some("aarch64"),
+            Cpu::Generic => None,
+        }
     }
 
-    /// Attribute which compiles a function with the feature set's target features.
+    /// `cfg` predicate for the platforms where the feature set's type is uninhabited,
+    /// so no value of it can exist.
+    ///
+    /// Must match the `cfg_select!` in the type's definition in `oxc_lexer`'s `cpu` module.
+    pub fn uninhabited_cfg(self) -> TokenStream {
+        match self {
+            Cpu::Avx2 => quote!(not(target_arch = "x86_64")),
+            Cpu::Neon => quote!(not(target_arch = "aarch64")),
+            Cpu::Generic => quote!(all(target_arch = "aarch64", target_feature = "neon")),
+        }
+    }
+
+    /// Attribute which compiles a function with the feature set's target features,
+    /// on the platform which supports the feature set.
+    ///
+    /// Other platforms don't have those target features, so there the attribute does nothing.
     pub fn target_feature_attr(self) -> TokenStream {
         match self {
-            Cpu::Avx2 => quote!(#[target_feature(enable = "avx2,bmi2,popcnt")]),
-            Cpu::Neon => quote!(#[target_feature(enable = "neon")]),
+            Cpu::Avx2 => quote! {
+                #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
+            },
+            Cpu::Neon => quote! {
+                #[cfg_attr(target_arch = "aarch64", target_feature(enable = "neon"))]
+            },
             // Generic code has no target features of its own. This stops the MIR inliner
             // inlining a generic entry point into the function which calls it.
             // See the docs on `cpu_multiversion`.

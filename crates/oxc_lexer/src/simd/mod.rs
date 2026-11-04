@@ -1,66 +1,67 @@
-#[cfg(target_arch = "x86_64")]
-mod avx2;
-#[cfg(target_arch = "aarch64")]
-mod neon;
+//! SIMD vector types.
+//!
+//! [`Vec128`] and [`Vec256`] wrap a platform's SIMD vector types and intrinsics in a safe API.
+//! They're generic over a CPU feature set `C` which implements [`CpuSimd`] (`Avx2` or `Neon`).
+//! A vector holds a `C`, so it can only exist if the CPU supports that feature set.
+//! So only the methods which load or store via a raw pointer are unsafe.
+//!
+//! [`Vec128`] and [`Vec256`] are in the `vec128` and `vec256` modules, along with the
+//! [`Vec128Impl`] and [`Vec256Impl`] traits, which hold the methods which every feature set has,
+//! and the `!`, `&`, `|` and `^` operators.
+//! Each feature set implements the traits in its own module, `avx2` or `neon`,
+//! along with the methods which only it has.
+//!
+//! The vector types and all their methods exist on every platform, so code which uses them
+//! compiles everywhere. Each feature set's method bodies are only compiled on its own platform
+//! (`avx2` on x86_64, `neon` on aarch64). Elsewhere, the feature set's type is uninhabited,
+//! so its vectors can never be created, and its methods are `unreachable!()`.
+//! See [`cpu_impl`].
+//!
+//! The other modules:
+//!
+//! - `data` has [`VecData128`] and [`VecData256`], aligned byte arrays to read into vectors.
+//! - `arrays` has traits for arrays of integers which vectors can read without alignment.
+//! - `operand` has traits which let an operation take either a vector or a scalar.
+//! - `prefetch` has a function which asks the CPU to fetch memory into the cache.
+//!
+//! [`cpu_impl`]: crate::cpu::cpu_impl
 
-#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+use crate::cpu::{Avx2, Neon};
+
 mod arrays;
-#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
-mod bit_traits;
-#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+mod avx2;
+mod data;
+mod neon;
 mod operand;
+mod prefetch;
+mod vec128;
+mod vec256;
 
-#[cfg(all(test, any(target_arch = "x86_64", target_arch = "aarch64")))]
+pub use data::{VecData128, VecData256};
+pub use prefetch::prefetch;
+pub use vec128::Vec128;
+pub use vec256::Vec256;
+
+use vec128::Vec128Impl;
+use vec256::Vec256Impl;
+
+#[cfg(test)]
 mod tests;
 
-#[cfg(target_arch = "x86_64")]
-use crate::cpu::Avx2 as CpuType;
-#[cfg(target_arch = "aarch64")]
-use crate::cpu::Neon as CpuType;
-
 /// CPU feature set which has SIMD vector types.
-#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 pub trait CpuSimd: Copy {
-    /// Type which a [`Vec128`] wraps.
-    type Vec128Inner: Copy;
-    /// Type which a [`Vec256`] wraps.
-    type Vec256Inner: Copy;
+    /// [`Vec128`] for this CPU feature set.
+    type Vec128: Vec128Impl<Cpu = Self>;
+    /// [`Vec256`] for this CPU feature set.
+    type Vec256: Vec256Impl<Cpu = Self>;
 }
 
-#[cfg(target_arch = "x86_64")]
-impl CpuSimd for crate::cpu::Avx2 {
-    type Vec128Inner = std::arch::x86_64::__m128i;
-    type Vec256Inner = std::arch::x86_64::__m256i;
+impl CpuSimd for Avx2 {
+    type Vec128 = Vec128<Avx2>;
+    type Vec256 = Vec256<Avx2>;
 }
 
-#[cfg(target_arch = "aarch64")]
-impl CpuSimd for crate::cpu::Neon {
-    type Vec128Inner = std::arch::aarch64::uint8x16_t;
-    type Vec256Inner = std::arch::aarch64::uint8x16x2_t;
-}
-
-/// 128-bit SIMD vector.
-///
-/// Holds a `C`, so a vector can only exist if the CPU supports that feature set.
-/// `C` is zero-sized, so [`Vec128`] is the same size as the type it wraps.
-///
-/// The methods are in the `avx2` and `neon` modules.
-#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
-#[derive(Clone, Copy)]
-pub struct Vec128<C: CpuSimd> {
-    inner: C::Vec128Inner,
-    cpu: C,
-}
-
-/// 256-bit SIMD vector.
-///
-/// Holds a `C`, so a vector can only exist if the CPU supports that feature set.
-/// `C` is zero-sized, so [`Vec256`] is the same size as the type it wraps.
-///
-/// The methods are in the `avx2` and `neon` modules.
-#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
-#[derive(Clone, Copy)]
-pub struct Vec256<C: CpuSimd> {
-    inner: C::Vec256Inner,
-    cpu: C,
+impl CpuSimd for Neon {
+    type Vec128 = Vec128<Neon>;
+    type Vec256 = Vec256<Neon>;
 }

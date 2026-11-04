@@ -1,9 +1,6 @@
 use crate::cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
-use super::{
-    common::Tokens,
-    type_context::{keyword_type, lt_run_split, type_args_at},
-};
+use super::common::Tokens;
 
 mod anchor;
 mod frame;
@@ -15,10 +12,8 @@ mod types;
 mod walker;
 mod words;
 
-use frame::*;
-use walker::{Expect, Jump, Walk};
-
 pub(super) use scan::{after, angles_before, before};
+use walker::Walk;
 
 #[cfg(test)]
 mod tests;

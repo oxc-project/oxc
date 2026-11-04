@@ -11,11 +11,11 @@
 
 use crate::{
     cpu::{Cpu, cpu_multiversion},
-    pipeline::bytes::{is_digit, is_id_start, line_break_in},
     token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
 };
 
 use crate::pipeline::{
+    bytes::{is_digit, is_id_start, line_break_in},
     disambiguate::common::{Tokens, bits, word_len},
     keywords::kw_match_at,
 };

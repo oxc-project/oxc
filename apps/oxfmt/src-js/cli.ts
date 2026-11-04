@@ -35,8 +35,8 @@ void (async () => {
 
   // LSP uses stdout for communication, so write logs to stderr to avoid breaking the protocol.
   // Since LSP is handled on the Rust side, we have to check the flag here. (`runCli()` starts the server and waits)
-  // Also, for Oxfmt, this only actually affects loading JS/TS config files.
-  // The call to Prettier is currently done via `child_process`, so it won't break LSP.
+  // Also, for Oxfmt, this affects loading JS/TS config files,
+  // and Prettier calls in `worker_threads`, whose stdout is piped through this `process.stdout`.
   if (args.includes("--lsp")) process.stdout.write = process.stderr.write.bind(process.stderr);
 
   // Call the Rust CLI first, to parse args and determine mode

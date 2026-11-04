@@ -2,12 +2,17 @@
 //!
 //! `Vec256<Avx2>` wraps an [`__m256i`], and `Vec128<Avx2>` wraps an [`__m128i`].
 //!
+//! On other platforms, they can never be created, and wrap a [`VecData256`] / [`VecData128`],
+//! which have the same sizes and alignments. Their method bodies are only compiled on x86_64,
+//! but code using the types can be compiled and linted on any platform.
+//!
 //! Each vector holds an [`Avx2`], so a vector can only exist if the CPU supports AVX2.
 //! That removes the need for the caller of a vector's methods to promise it does.
 //!
 //! * Methods which load or store via a raw pointer are unsafe.
 //!   The caller must ensure the pointer is valid.
-//! * All other methods are safe, including `read_*` methods which read from a reference.
+//! * All other methods are safe, including `read*` and `write` methods,
+//!   which read from and write to a reference.
 //!
 //! [`Avx2`] is zero-sized, so a vector is the same size as the type it wraps.
 //!
@@ -21,8 +26,10 @@
 //! but every vector operation is a function call, passing the vectors via memory.
 //!
 //! [`Avx2`]: crate::cpu::Avx2
-//! [`__m128i`]: std::arch::x86_64::__m128i
-//! [`__m256i`]: std::arch::x86_64::__m256i
+//! [`__m128i`]: https://doc.rust-lang.org/std/arch/x86_64/struct.__m128i.html
+//! [`__m256i`]: https://doc.rust-lang.org/std/arch/x86_64/struct.__m256i.html
+//! [`VecData128`]: super::VecData128
+//! [`VecData256`]: super::VecData256
 
 mod vec128;
 mod vec256;

@@ -48,20 +48,18 @@ pub fn expand(args: TokenStream, item: TokenStream) -> Result<TokenStream> {
     }
 
     let proof = find_proof(&func, cpu)?;
-    let cfg_attr = cpu.cfg_attr();
 
     // An `#[inline(always)]` function can't have `#[target_feature]`.
     // It's compiled as part of its callers, with their features.
     if func.is_inline_always() {
-        let checked_fn = with_proof(&func, &proof);
-        return Ok(quote!(#cfg_attr #checked_fn));
+        return Ok(with_proof(&func, &proof));
     }
 
     // An `unsafe` function's callers need an `unsafe` block anyway, so it isn't wrapped
     if func.unsafety.is_some() {
         let target_feature_attr = cpu.target_feature_attr();
         let checked_fn = with_proof(&func, &proof);
-        return Ok(quote!(#cfg_attr #target_feature_attr #checked_fn));
+        return Ok(quote!(#target_feature_attr #checked_fn));
     }
 
     Ok(wrap(&func, cpu, &proof))
@@ -103,11 +101,10 @@ fn with_proof(func: &Func, proof: &Proof) -> TokenStream {
 ///
 /// ```ignore
 /// /// Do some stuff (AVX2 version).
-/// #[cfg(target_arch = "x86_64")]
 /// #[inline(always)]
 /// fn foo<'a, const N: usize, T>(arr: &'a [T; N], cpu: Avx2) -> bool {
 ///     #[inline(never)]
-///     #[target_feature(enable = "avx2,bmi2,popcnt")]
+///     #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
 ///     fn __impl<'a, const N: usize, T>(mut arr: &'a [T; N], cpu: Avx2) -> bool {
 ///         // ... original function body ...
 ///     }
@@ -119,11 +116,10 @@ fn with_proof(func: &Func, proof: &Proof) -> TokenStream {
 /// ```
 ///
 /// A nested function can't use `self` or `Self`, so a method's `__impl` is a method `__foo_impl`
-/// next to it, with the same `#[cfg]`, and the call is `Self::__foo_impl::<N, T>(self, arr, cpu)`.
+/// next to it, and the call is `Self::__foo_impl::<N, T>(self, arr, cpu)`.
 fn wrap(func: &Func, cpu: Cpu, proof: &Proof) -> TokenStream {
     let Attrs { outer: outer_attrs, entry_points: entry_attrs, impl_fn: impl_attrs } = &func.attrs;
     let Func { vis, constness, name, generics, return_type, body, .. } = func;
-    let cfg_attr = cpu.cfg_attr();
 
     let params = func.params();
     let where_clause = &generics.where_clause;
@@ -161,17 +157,14 @@ fn wrap(func: &Func, cpu: Cpu, proof: &Proof) -> TokenStream {
     if func.is_method {
         quote! {
             #(#outer_attrs)*
-            #cfg_attr
             #[inline(always)]
             #signature { #checked_call }
 
-            #cfg_attr
             #impl_fn
         }
     } else {
         quote! {
             #(#outer_attrs)*
-            #cfg_attr
             #[inline(always)]
             #signature {
                 #impl_fn

@@ -3,13 +3,13 @@
  *
  * These must be plain functions because:
  * - They can be called as `tinypool` RPC functions via `cli-worker.ts`
- *   - Tinypool runs workers as `child_process`, so each worker is an isolated process
- *   - Module-level caches are shared only within each worker process
+ *   - Tinypool runs workers as `worker_threads`, so each worker has its own module instance
+ *   - Module-level caches are shared only within each worker thread
  * - They can also be imported directly via `index.ts` (Node.js API)
  *   - In this case, module-level caches are shared globally
  *
  * The `CACHES.xxx` are for lazy loading
- * and avoiding redundant dynamic imports within the same process.
+ * and avoiding redundant dynamic imports within the same thread.
  */
 
 import type { Options, Plugin } from "prettier";

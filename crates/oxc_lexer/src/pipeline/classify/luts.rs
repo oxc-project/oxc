@@ -1,4 +1,4 @@
-use crate::cpu::BASELINE;
+use crate::{cpu::BASELINE, simd::VecData128};
 
 use crate::pipeline::{
     bytes::{is_digit, is_ws},
@@ -27,9 +27,9 @@ use crate::pipeline::{
 /// `lo_ts` is the TypeScript version of `lo`, which has more keyword-initial letters.
 /// The other bits, and `hi`, are the same for both.
 pub(super) struct MergedLuts {
-    pub lo: [u8; 16],
-    pub hi: [u8; 16],
-    pub lo_ts: [u8; 16],
+    pub lo: VecData128,
+    pub hi: VecData128,
+    pub lo_ts: VecData128,
 }
 
 /// Bits of a [`MERGED_LUTS`] lookup which are set if a byte can start a keyword.
@@ -37,7 +37,6 @@ pub(super) const KWINIT_MASK: u8 = 0x03;
 /// Bits of a [`MERGED_LUTS`] lookup which are set if a byte is an operator char.
 pub(super) const OPCH_MASK: u8 = 0x3c;
 /// Bit of a [`MERGED_LUTS`] lookup which is set if a byte is `.`.
-#[cfg_attr(all(target_arch = "x86_64", not(test)), expect(dead_code))]
 pub(super) const DOT_MASK: u8 = 0x80;
 
 pub(super) const MERGED_LUTS: MergedLuts = {
@@ -78,7 +77,11 @@ pub(super) const MERGED_LUTS: MergedLuts = {
         i += 1;
     }
 
-    MergedLuts { lo: mrg_lo, hi: mrg_hi, lo_ts: mrg_lo_ts }
+    MergedLuts {
+        lo: VecData128::from_bytes(mrg_lo),
+        hi: VecData128::from_bytes(mrg_hi),
+        lo_ts: VecData128::from_bytes(mrg_lo_ts),
+    }
 };
 
 /// Nibble lookup tables which classify bytes as identifier chars or whitespace.
@@ -94,8 +97,8 @@ pub(super) const MERGED_LUTS: MergedLuts = {
 /// Bytes >= 0x80 get no bits.
 /// The SIMD implementations of `classify` count them as identifier chars separately.
 pub(super) struct WordLuts {
-    pub lo: [u8; 16],
-    pub hi: [u8; 16],
+    pub lo: VecData128,
+    pub hi: VecData128,
 }
 
 /// Bits of a [`WORD_LUTS`] lookup which are set if a byte is an identifier char.
@@ -141,7 +144,7 @@ pub(super) const WORD_LUTS: WordLuts = {
         i += 1;
     }
 
-    WordLuts { lo: wb_lo, hi: wb_hi }
+    WordLuts { lo: VecData128::from_bytes(wb_lo), hi: VecData128::from_bytes(wb_hi) }
 };
 
 #[cfg(test)]

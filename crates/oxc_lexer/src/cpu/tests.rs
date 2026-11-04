@@ -1,13 +1,8 @@
 use std::panic::Location;
 
-use super::{BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_select, cpu_version, to_dyn};
-
-#[cfg(target_arch = "x86_64")]
-use super::Avx2;
-#[cfg(target_arch = "aarch64")]
-use super::Neon;
-#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 use crate::simd::{Vec128, Vec256};
+
+use super::{Avx2, BASELINE, Cpu, DynCpu, Neon, cpu_multiversion, cpu_version, to_dyn};
 
 #[cpu_multiversion]
 const fn add_one(x: u32, _cpu: impl Cpu) -> u32 {
@@ -329,11 +324,11 @@ fn const_fn_at_runtime() {
     assert_eq!(Counter::of(5, cpu).0, 5);
     assert_eq!(Counter::double_of(6, cpu), 12);
 
-    cpu_select!(cpu, {
-        Avx2(cpu) => assert_eq!(add_one(1, cpu), 2),
-        Neon(cpu) => assert_eq!(add_one(1, cpu), 2),
-        Generic(cpu) => assert_eq!(add_one(1, cpu), 2),
-    });
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => assert_eq!(add_one(1, cpu), 2),
+        DynCpu::Neon(cpu) => assert_eq!(add_one(1, cpu), 2),
+        DynCpu::Generic(cpu) => assert_eq!(add_one(1, cpu), 2),
+    }
 }
 
 #[test]
@@ -400,11 +395,11 @@ fn double_generic(x: u32) -> u32 {
 /// `double_avx2` and `double_neon` have a parameter which proves the CPU supports the feature set,
 /// so calling them is safe.
 fn double(x: u32, cpu: impl Cpu) -> u32 {
-    cpu_select!(cpu, {
-        Avx2(cpu) => double_avx2(x, cpu),
-        Neon(cpu) => double_neon(x, cpu),
-        Generic(_) => double_generic(x),
-    })
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => double_avx2(x, cpu),
+        DynCpu::Neon(cpu) => double_neon(x, cpu),
+        DynCpu::Generic(_) => double_generic(x),
+    }
 }
 
 #[cpu_version(Avx2)]
@@ -424,11 +419,11 @@ fn triple_neon(x: u32, _cpu: Neon) -> u32 {
 /// `triple_avx2` and `triple_neon` are `#[inline(always)]`, so have no `#[target_feature]`,
 /// and calling them is safe.
 fn triple(x: u32, cpu: impl Cpu) -> u32 {
-    cpu_select!(cpu, {
-        Avx2(cpu) => triple_avx2(x, cpu),
-        Neon(cpu) => triple_neon(x, cpu),
-        Generic(_) => x * 3,
-    })
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => triple_avx2(x, cpu),
+        DynCpu::Neon(cpu) => triple_neon(x, cpu),
+        DynCpu::Generic(_) => x * 3,
+    }
 }
 
 /// A `cpu` parameter doesn't have to be the last parameter.
@@ -445,11 +440,11 @@ fn quadruple_neon(_cpu: Neon, x: u32) -> u32 {
 }
 
 fn quadruple(x: u32, cpu: impl Cpu) -> u32 {
-    cpu_select!(cpu, {
-        Avx2(cpu) => quadruple_avx2(cpu, x),
-        Neon(cpu) => quadruple_neon(cpu, x),
-        Generic(_) => x * 4,
-    })
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => quadruple_avx2(cpu, x),
+        DynCpu::Neon(cpu) => quadruple_neon(cpu, x),
+        DynCpu::Generic(_) => x * 4,
+    }
 }
 
 /// A vector parameter proves the CPU supports the feature set, in place of a `cpu` parameter.
@@ -466,11 +461,11 @@ fn is_zero_neon(v: Vec128<Neon>) -> bool {
 }
 
 fn is_zero(cpu: impl Cpu) -> bool {
-    cpu_select!(cpu, {
-        Avx2(cpu) => is_zero_avx2(Vec128::splat(0, cpu)),
-        Neon(cpu) => is_zero_neon(Vec128::splat(0, cpu)),
-        Generic(_) => true,
-    })
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => is_zero_avx2(Vec128::splat(0, cpu)),
+        DynCpu::Neon(cpu) => is_zero_neon(Vec128::splat(0, cpu)),
+        DynCpu::Generic(_) => true,
+    }
 }
 
 /// A vector parameter doesn't have to be the last parameter.
@@ -489,11 +484,11 @@ fn add_if_zero_neon(x: u32, v: Vec256<Neon>, y: u32) -> u32 {
 }
 
 fn add_if_zero(x: u32, y: u32, cpu: impl Cpu) -> u32 {
-    cpu_select!(cpu, {
-        Avx2(cpu) => add_if_zero_avx2(x, Vec256::splat(0, cpu), y),
-        Neon(cpu) => add_if_zero_neon(x, Vec256::splat(0, cpu), y),
-        Generic(_) => x + y,
-    })
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => add_if_zero_avx2(x, Vec256::splat(0, cpu), y),
+        DynCpu::Neon(cpu) => add_if_zero_neon(x, Vec256::splat(0, cpu), y),
+        DynCpu::Generic(_) => x + y,
+    }
 }
 
 /// An `unsafe` function isn't wrapped, so it has `#[target_feature]`, as well as being unsafe.
@@ -510,13 +505,13 @@ unsafe fn halve_neon(x: u32, _cpu: Neon) -> u32 {
 }
 
 fn halve(x: u32, cpu: impl Cpu) -> u32 {
-    cpu_select!(cpu, {
+    match to_dyn(cpu) {
         // SAFETY: `Avx2` type guarantees the CPU supports the features `halve_avx2` uses
-        Avx2(cpu) => unsafe { halve_avx2(x, cpu) },
+        DynCpu::Avx2(cpu) => unsafe { halve_avx2(x, cpu) },
         // SAFETY: `Neon` type guarantees the CPU supports the features `halve_neon` uses
-        Neon(cpu) => unsafe { halve_neon(x, cpu) },
-        Generic(_) => x / 2,
-    })
+        DynCpu::Neon(cpu) => unsafe { halve_neon(x, cpu) },
+        DynCpu::Generic(_) => x / 2,
+    }
 }
 
 /// Tests of functions which `cpu_version!` wraps in a safe function, for one CPU feature set.
@@ -669,6 +664,10 @@ macro_rules! wrapped_tests {
             /// All these calls are safe.
             #[test]
             fn wrapped() {
+                // This module can see the CPU types' private fields. So on aarch64 with Neon,
+                // rustc knows that `Avx2` and `Generic` are uninhabited, and for `Neon` this always
+                // matches. `allow`, not `expect`, because for `Avx2` it doesn't.
+                #[allow(irrefutable_let_patterns, clippy::allow_attributes)]
                 let DynCpu::$cpu(cpu) = DynCpu::detect() else { return };
 
                 assert_eq!(generics(&[1u8, 2], &[3, 4], false, cpu), 2);
@@ -696,10 +695,8 @@ macro_rules! wrapped_tests {
     };
 }
 
-#[cfg(target_arch = "x86_64")]
 wrapped_tests!(wrapped_avx2, Avx2);
 
-#[cfg(target_arch = "aarch64")]
 wrapped_tests!(wrapped_neon, Neon);
 
 /// Generics with `>>` and a `(...)` in them.

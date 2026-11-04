@@ -2,11 +2,16 @@
 //! and the `<` that may open one.
 
 use crate::{
-    cpu::cpu_version,
+    cpu::{BASELINE, cpu_version},
     token::{OP_KIND_BASE, matches_tk, tk},
 };
 
-use super::*;
+use crate::pipeline::disambiguate::{common::Tokens, type_context::type_args_at};
+
+use super::{
+    frame::{AngleList, FrameKind, MOD_ASYNC, RegionRule},
+    walker::Walk,
+};
 
 impl Walk {
     #[cpu_version(Generic)]
