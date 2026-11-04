@@ -1249,7 +1249,6 @@ fn is_short_argument(
     f: &JsFormatter,
 ) -> bool {
     // Decided by `callee` alone: a Tailwind one pushes its context, a non-Tailwind one hides an outer one
-    // (except for a call printed as a `MemberChain`, which pushes none)
     let collapses_tailwind_whitespace =
         || tailwind_context_for_callee(callee, f).is_some_and(|ctx| !ctx.preserve_whitespace);
 
