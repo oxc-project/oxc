@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use javascript_globals::GLOBALS_BUILTIN;
 
 use oxc_diagnostics::OxcDiagnostic;
@@ -142,14 +143,11 @@ impl Rule for NoRedeclare {
                 } else {
                     None
                 };
-                let mut iter =
-                    iter.filter(|rd| report_flags.is_none_or(|flags| rd.flags.intersects(flags)));
-
-                if let Some(first) = iter.next() {
-                    iter.fold(first, |prev, next| {
-                        ctx.diagnostic(no_redeclare_diagnostic(name, prev.span, next.span));
-                        next
-                    });
+                for (prev, next) in iter
+                    .filter(|rd| report_flags.is_none_or(|flags| rd.flags.intersects(flags)))
+                    .tuple_windows::<(_, _)>()
+                {
+                    ctx.diagnostic(no_redeclare_diagnostic(name, prev.span, next.span));
                 }
 
                 continue;
