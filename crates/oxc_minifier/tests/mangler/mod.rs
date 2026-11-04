@@ -4,7 +4,9 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
+use oxc_semantic::{SemanticBuilder, SymbolId};
 use oxc_span::SourceType;
+use oxc_syntax::reference::ReferenceId;
 
 mod property_mangler;
 
@@ -430,5 +432,109 @@ fn annex_b_block_scoped_function() {
 
     insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
         insta::assert_snapshot!("annex_b_block_scoped_function", snapshot);
+    });
+}
+
+/// The bindings of a script that renaming must preserve: the symbol each reference resolves to,
+/// the bindings of the root scope, and the binding that keeps each Annex B block function in its
+/// block. Symbol ids are in declaration order, so they match between a script and its mangled
+/// output.
+#[derive(Debug, PartialEq, Eq)]
+struct BindingStructure {
+    references: Vec<Option<SymbolId>>,
+    root_bindings: Vec<SymbolId>,
+    annex_b_block_functions: Vec<(SymbolId, SymbolId)>,
+}
+
+fn binding_structure(source_text: &str) -> BindingStructure {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::script()).parse();
+    assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
+    let semantic = SemanticBuilder::new().build(&ret.program).semantic;
+    let scoping = semantic.scoping();
+    let references = (0..scoping.references_len())
+        .map(|id| scoping.get_reference(ReferenceId::from_usize(id)).symbol_id())
+        .collect();
+    let mut root_bindings =
+        scoping.get_bindings(scoping.root_scope_id()).values().copied().collect::<Vec<_>>();
+    root_bindings.sort_unstable();
+    let mut annex_b_block_functions = scoping.annex_b_block_functions().to_vec();
+    annex_b_block_functions.sort_unstable();
+    BindingStructure { references, root_bindings, annex_b_block_functions }
+}
+
+/// A sloppy-mode block function that Annex B.3.2 does not bind in its var scope must keep the
+/// name of the binding that keeps it in its block. Otherwise the renamed function may write an
+/// unrelated `var`, or get a var binding and create a global.
+#[test]
+fn annex_b_block_function_without_var_binding() {
+    let cases = [
+        // `return x` must not return the function.
+        "function _() { var x = 1; let g; { function g() {} } return x; }",
+        "function _() { var x = 1; { use(x); let g; { function g() {} } } return x; }",
+        "function _() { var x = 1; { use(x); { function g() {} } let g; } return x; }",
+        "function _() { var x = 1; { function g() {} } let g = 2; return [x, g]; }",
+        // The function writes `var g`, so both must keep the same name.
+        "function _() { var g; { function g() {} } return g; }",
+        "function _() { var g; try {} catch (g) { { function g() {} } } return g; }",
+        "function _() { { function g() {} } var g; return g; }",
+        "function _() { var g; { if (false) function g() {} { function g() {} } } return g; }",
+        // A destructured catch parameter prevents the write.
+        "function _() { var g; try {} catch ([g]) { { function g() {} } } return g; }",
+        // The function is kept in its block by `let g`, so it must not write `var g`.
+        "function _() { var g = 0; { let g; { function g() {} } } return g; }",
+        // A function kept in its block by a block function that has a var binding.
+        "function _() { var x = 1; { { function g() {} } function g() {} } return x; }",
+        // A function kept in its block by a block function that is kept by `let g`.
+        "function _() { var x = 1; let g; { { function g() {} } function g() {} } return x; }",
+        // The root scope is not mangled. Renaming the function or `let e` creates a global.
+        "{ let e; { function e() {} let x = 1; use(x); } }",
+        "{ function a() {} } { function b() {} } { function c() {} let x = 1; use(x); } let a, b, c;",
+        "function _() { { let g; { function g() {} } } }",
+        // Several functions kept in their blocks by bindings declared after them.
+        "function _() { let x; { function g() { return x; } function h() {} } let g, h; return [x, g, h]; }",
+        // The parameter that shadows the function expression's name keeps the function in its block.
+        "(function g(g) { { function g() {} } return g; })",
+        // Bindings visible to direct `eval` keep their names, without affecting other functions.
+        "function _() { eval(''); { let e; { function e() {} let x = 1; use(x); } } } function f() { var g; { function g() {} } return g; }",
+        "function _() { { function g() {} eval(''); let x = 1; } let g; var y = 1; return y; }",
+    ];
+    let keep_class_names = MangleOptions {
+        keep_names: MangleOptionsKeepNames { function: false, class: true },
+        ..MangleOptions::default()
+    };
+    let keep_function_names = MangleOptions {
+        keep_names: MangleOptionsKeepNames { function: true, class: false },
+        ..MangleOptions::default()
+    };
+    let top_level = MangleOptions { top_level: Some(true), ..MangleOptions::default() };
+    let cases = cases.into_iter().map(|case| (case, MangleOptions::default())).chain([
+        // The class keeps its name, so the function it keeps in its block keeps its name too.
+        (
+            "function _() { class e {} { function e() {} let x = 1; use(x); } return e; }",
+            keep_class_names,
+        ),
+        // The function keeps its name, so the `var` it writes keeps its name too.
+        (
+            "function _() { var g; { function g() {} } let x = 1; return [g, x]; }",
+            keep_function_names.clone(),
+        ),
+        ("function _() { { let g; { function g() {} } let x = 1; use(x); } }", keep_function_names),
+        ("{ let e; { function e() {} let x = 1; use(x); } }", top_level),
+    ]);
+
+    let mut snapshot = String::new();
+    let mut changed = Vec::new();
+    for (case, options) in cases {
+        let mangled = mangle_script(case, &options);
+        if binding_structure(case) != binding_structure(&mangled) {
+            changed.push(format!("{case}\n{mangled}"));
+        }
+        write!(snapshot, "{case}\n{mangled}\n").unwrap();
+    }
+    assert!(changed.is_empty(), "mangling changed the bindings of:\n\n{}", changed.join("\n"));
+
+    insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
+        insta::assert_snapshot!("annex_b_block_function_without_var_binding", snapshot);
     });
 }

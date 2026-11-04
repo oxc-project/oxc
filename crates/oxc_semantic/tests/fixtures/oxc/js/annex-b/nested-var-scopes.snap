@@ -132,6 +132,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/nested-var-scopes.
                 "node": "BlockStatement",
                 "symbols": [
                   {
+                    "annex_b_block_binding": 9,
                     "flags": "SymbolFlags(Function)",
                     "id": 8,
                     "name": "g",
@@ -200,6 +201,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/nested-var-scopes.
             "node": "BlockStatement",
             "symbols": [
               {
+                "annex_b_block_binding": 13,
                 "flags": "SymbolFlags(Function)",
                 "id": 12,
                 "name": "g",

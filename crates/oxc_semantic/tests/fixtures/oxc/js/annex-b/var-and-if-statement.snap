@@ -22,6 +22,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/var-and-if-stateme
             "node": "BlockStatement",
             "symbols": [
               {
+                "annex_b_block_binding": 2,
                 "flags": "SymbolFlags(Function)",
                 "id": 1,
                 "name": "g",
@@ -86,6 +87,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/var-and-if-stateme
                 "node": "Function(g)",
                 "symbols": [
                   {
+                    "annex_b_block_binding": 4,
                     "flags": "SymbolFlags(Function)",
                     "id": 5,
                     "name": "g",
@@ -141,6 +143,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/var-and-if-stateme
                 "node": "Function(g)",
                 "symbols": [
                   {
+                    "annex_b_block_binding": 7,
                     "flags": "SymbolFlags(Function)",
                     "id": 8,
                     "name": "g",

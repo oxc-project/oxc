@@ -1,0 +1,271 @@
+---
+source: crates/oxc_minifier/tests/mangler/mod.rs
+---
+function _() { var x = 1; let g; { function g() {} } return x; }
+function _() {
+	var e = 1;
+	let t;
+	{
+		function t() {}
+	}
+	return e;
+}
+
+function _() { var x = 1; { use(x); let g; { function g() {} } } return x; }
+function _() {
+	var e = 1;
+	{
+		use(e);
+		let t;
+		{
+			function t() {}
+		}
+	}
+	return e;
+}
+
+function _() { var x = 1; { use(x); { function g() {} } let g; } return x; }
+function _() {
+	var e = 1;
+	{
+		use(e);
+		{
+			function t() {}
+		}
+		let t;
+	}
+	return e;
+}
+
+function _() { var x = 1; { function g() {} } let g = 2; return [x, g]; }
+function _() {
+	var e = 1;
+	{
+		function t() {}
+	}
+	let t = 2;
+	return [e, t];
+}
+
+function _() { var g; { function g() {} } return g; }
+function _() {
+	var e;
+	{
+		function e() {}
+	}
+	return e;
+}
+
+function _() { var g; try {} catch (g) { { function g() {} } } return g; }
+function _() {
+	var e;
+	try {} catch (t) {
+		{
+			function e() {}
+		}
+	}
+	return e;
+}
+
+function _() { { function g() {} } var g; return g; }
+function _() {
+	{
+		function e() {}
+	}
+	var e;
+	return e;
+}
+
+function _() { var g; { if (false) function g() {} { function g() {} } } return g; }
+function _() {
+	var e;
+	{
+		if (false) function e() {}
+		{
+			function e() {}
+		}
+	}
+	return e;
+}
+
+function _() { var g; try {} catch ([g]) { { function g() {} } } return g; }
+function _() {
+	var e;
+	try {} catch ([e]) {
+		{
+			function e() {}
+		}
+	}
+	return e;
+}
+
+function _() { var g = 0; { let g; { function g() {} } } return g; }
+function _() {
+	var e = 0;
+	{
+		let e;
+		{
+			function e() {}
+		}
+	}
+	return e;
+}
+
+function _() { var x = 1; { { function g() {} } function g() {} } return x; }
+function _() {
+	var e = 1;
+	{
+		{
+			function t() {}
+		}
+		function t() {}
+	}
+	return e;
+}
+
+function _() { var x = 1; let g; { { function g() {} } function g() {} } return x; }
+function _() {
+	var e = 1;
+	let t;
+	{
+		{
+			function t() {}
+		}
+		function t() {}
+	}
+	return e;
+}
+
+{ let e; { function e() {} let x = 1; use(x); } }
+{
+	let e;
+	{
+		function e() {}
+		let t = 1;
+		use(t);
+	}
+}
+
+{ function a() {} } { function b() {} } { function c() {} let x = 1; use(x); } let a, b, c;
+{
+	function a() {}
+}
+{
+	function b() {}
+}
+{
+	function c() {}
+	let e = 1;
+	use(e);
+}
+let a, b, c;
+
+function _() { { let g; { function g() {} } } }
+function _() {
+	{
+		let e;
+		{
+			function e() {}
+		}
+	}
+}
+
+function _() { let x; { function g() { return x; } function h() {} } let g, h; return [x, g, h]; }
+function _() {
+	let e;
+	{
+		function t() {
+			return e;
+		}
+		function n() {}
+	}
+	let t, n;
+	return [
+		e,
+		t,
+		n
+	];
+}
+
+(function g(g) { { function g() {} } return g; })
+(function e(e) {
+	{
+		function e() {}
+	}
+	return e;
+});
+
+function _() { eval(''); { let e; { function e() {} let x = 1; use(x); } } } function f() { var g; { function g() {} } return g; }
+function _() {
+	eval("");
+	{
+		let e;
+		{
+			function e() {}
+			let t = 1;
+			use(t);
+		}
+	}
+}
+function f() {
+	var e;
+	{
+		function e() {}
+	}
+	return e;
+}
+
+function _() { { function g() {} eval(''); let x = 1; } let g; var y = 1; return y; }
+function _() {
+	{
+		function g() {}
+		eval("");
+		let x = 1;
+	}
+	let g;
+	var y = 1;
+	return y;
+}
+
+function _() { class e {} { function e() {} let x = 1; use(x); } return e; }
+function _() {
+	class e {}
+	{
+		function e() {}
+		let t = 1;
+		use(t);
+	}
+	return e;
+}
+
+function _() { var g; { function g() {} } let x = 1; return [g, x]; }
+function _() {
+	var g;
+	{
+		function g() {}
+	}
+	let e = 1;
+	return [g, e];
+}
+
+function _() { { let g; { function g() {} } let x = 1; use(x); } }
+function _() {
+	{
+		let g;
+		{
+			function g() {}
+		}
+		let e = 1;
+		use(e);
+	}
+}
+
+{ let e; { function e() {} let x = 1; use(x); } }
+{
+	let e;
+	{
+		function e() {}
+		let t = 1;
+		use(t);
+	}
+}

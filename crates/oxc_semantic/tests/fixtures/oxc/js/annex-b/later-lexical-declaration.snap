@@ -22,6 +22,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/later-lexical-decl
             "node": "BlockStatement",
             "symbols": [
               {
+                "annex_b_block_binding": 2,
                 "flags": "SymbolFlags(Function)",
                 "id": 1,
                 "name": "g",
@@ -69,6 +70,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/later-lexical-decl
             "node": "BlockStatement",
             "symbols": [
               {
+                "annex_b_block_binding": 5,
                 "flags": "SymbolFlags(Function)",
                 "id": 4,
                 "name": "g",
@@ -125,6 +127,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/later-lexical-decl
                 "node": "BlockStatement",
                 "symbols": [
                   {
+                    "annex_b_block_binding": 8,
                     "flags": "SymbolFlags(Function)",
                     "id": 7,
                     "name": "g",
@@ -172,6 +175,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/later-lexical-decl
                 "node": "BlockStatement",
                 "symbols": [
                   {
+                    "annex_b_block_binding": 11,
                     "flags": "SymbolFlags(Function)",
                     "id": 10,
                     "name": "g",

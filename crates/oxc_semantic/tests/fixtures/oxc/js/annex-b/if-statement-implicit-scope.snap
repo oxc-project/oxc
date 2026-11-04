@@ -26,6 +26,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/if-statement-impli
                     "node": "Function(g)",
                     "symbols": [
                       {
+                        "annex_b_block_binding": 2,
                         "flags": "SymbolFlags(Function)",
                         "id": 3,
                         "name": "g",
@@ -116,6 +117,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/if-statement-impli
             "node": "Function(g)",
             "symbols": [
               {
+                "annex_b_block_binding": 6,
                 "flags": "SymbolFlags(Function)",
                 "id": 7,
                 "name": "g",

@@ -24,6 +24,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
                 "node": "BlockStatement",
                 "symbols": [
                   {
+                    "annex_b_block_binding": 1,
                     "flags": "SymbolFlags(Function)",
                     "id": 2,
                     "name": "g",
@@ -71,6 +72,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
                 "node": "BlockStatement",
                 "symbols": [
                   {
+                    "annex_b_block_binding": 4,
                     "flags": "SymbolFlags(Function)",
                     "id": 5,
                     "name": "g",
@@ -197,6 +199,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
                     "node": "BlockStatement",
                     "symbols": [
                       {
+                        "annex_b_block_binding": 10,
                         "flags": "SymbolFlags(Function)",
                         "id": 11,
                         "name": "g",
@@ -274,6 +277,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
                     "node": "Function(g)",
                     "symbols": [
                       {
+                        "annex_b_block_binding": 15,
                         "flags": "SymbolFlags(Function)",
                         "id": 16,
                         "name": "g",
@@ -382,6 +386,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
                     "node": "Function(g)",
                     "symbols": [
                       {
+                        "annex_b_block_binding": 19,
                         "flags": "SymbolFlags(Function)",
                         "id": 20,
                         "name": "g",
@@ -467,6 +472,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
                     "node": "Function(g)",
                     "symbols": [
                       {
+                        "annex_b_block_binding": 23,
                         "flags": "SymbolFlags(Function)",
                         "id": 24,
                         "name": "g",
