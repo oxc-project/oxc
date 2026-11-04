@@ -84,16 +84,17 @@ pub fn tailwind_context_for_jsx_attribute(
         .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace))
 }
 
-/// Whether a template literal printed at this point (under `tag` when tagged) has its line breaks collapsed.
-/// - Reads what `TemplateElement` reads: the current Tailwind context, or the one a Tailwind `tag` pushes
+/// Whether a template literal printed at this point has its whitespace, including line breaks, collapsed.
+/// - `callee` is the tag of a tagged template, or the callee of the call it's an argument of
+/// - Reads what `TemplateElement` reads: the current Tailwind context, or the one a Tailwind `callee` pushes
 pub fn tailwind_collapses_template_line_breaks(
-    tag: Option<&Expression<'_>>,
+    callee: Option<&Expression<'_>>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
     f.context()
         .tailwind_context()
         .copied()
-        .or_else(|| tag.and_then(|tag| tailwind_context_for_callee(tag, f)))
+        .or_else(|| callee.and_then(|callee| tailwind_context_for_callee(callee, f)))
         .is_some_and(|ctx| !ctx.preserve_whitespace)
 }
 
@@ -151,19 +152,17 @@ fn is_tailwind_function_call(callee: &Expression<'_>, options: &SortTailwindcssO
     }
 }
 
-/// Returns the printed width of a class list after its whitespace is collapsed,
-/// i.e. trimmed and with each whitespace run replaced by a single space.
-///
-/// Duplicate classes aren't removed here, because the sorter removes only duplicates
-/// of classes known to Tailwind CSS. So this is an upper bound of the printed width
-/// when `preserveDuplicates` is off.
+/// Printed width of a class list with collapsed whitespace:
+/// trimmed, then split on ASCII whitespace and joined with single spaces, as the sorter does.
+/// - Whitespace-only content is printed as a single space
+/// - An upper bound: the sorter also drops duplicates of known classes
 pub fn collapsed_class_list_width(content: &str) -> usize {
-    let mut classes = content.split_whitespace();
-    let Some(first) = classes.next() else {
-        // Whitespace-only content is printed as a single space
+    let trimmed = content.trim();
+    if trimmed.is_empty() {
         return usize::from(!content.is_empty());
-    };
-    classes.fold(first.width(), |width, class| width + 1 + class.width())
+    }
+    // Each class plus its separator, minus the last separator
+    trimmed.split_ascii_whitespace().map(|class| class.width() + 1).sum::<usize>() - 1
 }
 
 // ============================================================================
@@ -338,7 +337,7 @@ pub fn write_tailwind_string_literal<'a>(
         }
         write!(f, quote);
         // Quotes, and the single space the content is normalized to
-        return 2 + usize::from(!content.is_empty());
+        return 2 + collapsed_class_list_width(content);
     }
 
     let collapse = can_collapse_whitespace(string_literal.span, string_literal.ancestors(), f);
@@ -362,12 +361,10 @@ pub fn write_tailwind_string_literal<'a>(
     }
     write!(f, quote);
 
-    // The sorter joins the classes with single spaces, splitting on ASCII whitespace:
-    // each class plus its separator, minus the last separator (`trimmed` has at least one class)
-    let joined_width =
-        trimmed.split_ascii_whitespace().map(|class| class.width() + 1).sum::<usize>() - 1;
     // Quotes, the kept boundary spaces, and the classes
-    2 + usize::from(keeps_leading_space) + joined_width + usize::from(keeps_trailing_space)
+    2 + usize::from(keeps_leading_space)
+        + collapsed_class_list_width(trimmed)
+        + usize::from(keeps_trailing_space)
 }
 
 /// Writes a template element (quasi) with Tailwind class sorting.
