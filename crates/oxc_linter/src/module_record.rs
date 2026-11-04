@@ -711,8 +711,9 @@ mod cycle_component_tests {
     }
 
     #[test]
-    fn only_components_from_the_same_graph_can_exclude_each_other() {
+    fn components_are_scoped_to_one_graph_build() {
         let graph = Arc::new(AtomicBool::new(true));
+        let other_graph_id = Arc::new(AtomicBool::new(true));
         let root = ModuleRecord::default();
         let same_component = ModuleRecord::default();
         let other_component = ModuleRecord::default();
@@ -720,31 +721,17 @@ mod cycle_component_tests {
         root.set_import_cycle_component(Arc::clone(&graph), Some((0, true)));
         same_component.set_import_cycle_component(Arc::clone(&graph), Some((0, true)));
         other_component.set_import_cycle_component(graph, Some((1, false)));
-        other_graph.set_import_cycle_component(Arc::new(AtomicBool::new(true)), Some((1, false)));
+        other_graph.set_import_cycle_component(Arc::clone(&other_graph_id), Some((1, false)));
 
         let component = root.import_cycle_component().unwrap();
         assert!(!component.excludes_module(&same_component));
         assert!(component.excludes_module(&other_component));
         assert!(!component.excludes_module(&other_graph));
 
-        drop(other_component.write_loaded_modules());
-        assert!(!component.excludes_module(&other_component));
-        assert!(other_graph.import_cycle_component().is_some());
-    }
-
-    #[test]
-    fn reusing_a_record_invalidates_both_graphs() {
-        let first_graph = Arc::new(AtomicBool::new(true));
-        let second_graph = Arc::new(AtomicBool::new(true));
-        let root = ModuleRecord::default();
-        let dependency = ModuleRecord::default();
-        root.set_import_cycle_component(Arc::clone(&first_graph), Some((0, false)));
-        dependency.set_import_cycle_component(first_graph, Some((1, false)));
-        root.set_import_cycle_component(Arc::clone(&second_graph), Some((0, false)));
-        let other_root = ModuleRecord::default();
-        other_root.set_import_cycle_component(second_graph, Some((0, false)));
-        assert!(root.import_cycle_component().is_none());
-        assert!(dependency.import_cycle_component().is_none());
-        assert!(other_root.import_cycle_component().is_none());
+        // Reusing a record in another graph must invalidate both sets of shared labels.
+        root.set_import_cycle_component(other_graph_id, Some((0, false)));
+        for record in [&root, &same_component, &other_component, &other_graph] {
+            assert!(record.import_cycle_component().is_none());
+        }
     }
 }

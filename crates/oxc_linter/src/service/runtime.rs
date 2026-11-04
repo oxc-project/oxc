@@ -1686,26 +1686,19 @@ mod cycle_component_tests {
     }
 
     #[test]
-    fn combines_sections_by_file_and_excludes_files_only_leading_to_a_cycle() {
-        let (modules, requests) = graph(false);
-        let components = import_cycle_components(&modules, &requests);
-        // b.ts imports the last (empty) a.vue section, but returning to that file closes a cycle
-        // for the first section as well. Pointer-level SCCs would miss this cycle.
-        assert!(components[0].1);
-        assert_eq!(components[0], components[1]);
-        assert!(!components[2].1);
-    }
-
-    #[test]
-    fn type_only_edges_do_not_create_default_policy_components() {
-        let (modules, requests) = graph(true);
-        assert!(import_cycle_components(&modules, &requests).iter().all(|&(_, cyclic)| !cyclic));
-    }
-
-    #[test]
-    fn edges_into_previously_finished_groups_cannot_close_a_new_cycle() {
-        let (modules, requests) = graph(false);
-        assert_eq!(import_cycle_components(&modules, &requests[2..]), [(0, false)]);
+    fn file_components_follow_the_default_traversal_policy() {
+        for type_only in [false, true] {
+            let (modules, requests) = graph(type_only);
+            let components = import_cycle_components(&modules, &requests);
+            // b.ts imports the last (empty) a.vue section. Returning to that file still closes
+            // a cycle for the first section, unless its edge to b.ts is type-only.
+            assert_eq!(components[0].1, !type_only);
+            assert_eq!(components[1].1, !type_only);
+            assert_eq!(components[0].0 == components[1].0, !type_only);
+            assert!(!components[2].1); // c.ts only leads into the cycle.
+            // Dependencies in a previously finished group cannot return to this group.
+            assert_eq!(import_cycle_components(&modules, &requests[2..]), [(0, false)]);
+        }
     }
 
     #[test]
@@ -1724,8 +1717,6 @@ mod cycle_component_tests {
         use std::{fs, path::Path};
 
         use oxc_allocator::Allocator;
-        use oxc_parser::Parser;
-        use oxc_semantic::SemanticBuilder;
         use oxc_span::SourceType;
         use rustc_hash::FxHashMap;
 
@@ -1772,16 +1763,24 @@ mod cycle_component_tests {
         let lint = |path: &Path| {
             let allocator = Allocator::default();
             let source = fs::read_to_string(path).unwrap();
-            let parsed =
-                Parser::new(&allocator, &source, SourceType::from_path(path).unwrap()).parse();
-            assert!(parsed.diagnostics.is_empty());
-            let semantic = SemanticBuilder::new_linter().build(allocator.alloc(parsed.program));
-            assert!(semantic.diagnostics.is_empty());
+            let (_, semantic, parser_tokens) = runtime
+                .process_source_section(
+                    path,
+                    &allocator,
+                    &source,
+                    SourceType::from_path(path).unwrap(),
+                    true,
+                )
+                .unwrap();
             let module = Arc::clone(
                 runtime.modules_by_path.pin().get(path.as_os_str()).unwrap().last().unwrap(),
             );
-            let context =
-                ContextSubHost::new(semantic.semantic, module, 0, ContextSubHostOptions::default());
+            let context = ContextSubHost::new(
+                semantic,
+                module,
+                0,
+                ContextSubHostOptions { parser_tokens, ..ContextSubHostOptions::default() },
+            );
             runtime.linter.run(path, vec![context], &allocator)
         };
 

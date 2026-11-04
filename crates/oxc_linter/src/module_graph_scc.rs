@@ -67,6 +67,7 @@ mod tests {
     #[test]
     fn agrees_with_reachability_for_every_three_node_graph() {
         const N: usize = 3;
+        assert_eq!(cyclic_components(&[]), []);
         for mask in 0..(1 << (N * N)) {
             let edges: Vec<Vec<usize>> = (0..N)
                 .map(|node| (0..N).filter(|&dep| mask & (1 << (node * N + dep)) != 0).collect())
@@ -99,11 +100,6 @@ mod tests {
                 }
             }
         }
-    }
-
-    #[test]
-    fn empty_graph() {
-        assert_eq!(cyclic_components(&[]), []);
     }
 
     #[test]
