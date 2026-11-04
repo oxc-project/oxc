@@ -3,6 +3,7 @@
 use std::{
     fmt,
     path::{Path, PathBuf},
+    sync::atomic::{AtomicBool, Ordering},
     sync::{Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak},
 };
 
@@ -14,6 +15,29 @@ use oxc_str::CompactStr;
 pub use oxc_syntax::module_record::RequestedModule;
 
 type SortedLoadedModules = Arc<[(CompactStr, Weak<ModuleRecord>)]>;
+
+/// File-level SCC information for the default import/no-cycle graph policy.
+#[derive(Debug)]
+pub struct ImportCycleComponent {
+    // Shared by all completed groups in one graph build. Mutating any linked record invalidates
+    // the entire build's classifications, including records that can reach the changed record.
+    graph_valid: Arc<AtomicBool>,
+    // usize::MAX retains the graph invalidation token without classifying this record.
+    id: usize,
+    cyclic: bool,
+}
+
+impl ImportCycleComponent {
+    pub(crate) fn is_cyclic(&self) -> bool {
+        self.cyclic
+    }
+
+    pub(crate) fn excludes_module(&self, module: &ModuleRecord) -> bool {
+        module.import_cycle_component().is_some_and(|other| {
+            Arc::ptr_eq(&self.graph_valid, &other.graph_valid) && self.id != other.id
+        })
+    }
+}
 
 /// ESM Module Record
 ///
@@ -54,6 +78,8 @@ pub struct ModuleRecord {
     loaded_modules: RwLock<FxHashMap<CompactStr, Weak<ModuleRecord>>>,
 
     sorted_loaded_modules: RwLock<Option<SortedLoadedModules>>,
+
+    import_cycle_component: OnceLock<ImportCycleComponent>,
 
     /// `[[ImportEntries]]`
     ///
@@ -110,6 +136,7 @@ impl fmt::Debug for ModuleRecord {
             .field("requested_modules", &self.requested_modules)
             .field("loaded_modules", &loaded_modules)
             .field("sorted_loaded_modules", &self.sorted_loaded_modules)
+            .field("import_cycle_component", &self.import_cycle_component)
             .field("import_entries", &self.import_entries)
             .field("local_export_entries", &self.local_export_entries)
             .field("indirect_export_entries", &self.indirect_export_entries)
@@ -549,7 +576,7 @@ impl ModuleRecord {
         }))
     }
 
-    /// Invalidates the sorted snapshot before granting write access.
+    /// Invalidates sorted snapshots and cached cycle components before granting write access.
     ///
     /// # Panics
     ///
@@ -558,8 +585,33 @@ impl ModuleRecord {
         &self,
     ) -> RwLockWriteGuard<'_, FxHashMap<CompactStr, Weak<ModuleRecord>>> {
         let loaded_modules = self.loaded_modules.write().unwrap();
+        if let Some(component) = self.import_cycle_component.get() {
+            component.graph_valid.store(false, Ordering::Release);
+        }
         *self.sorted_loaded_modules.write().unwrap() = None;
         loaded_modules
+    }
+
+    pub(crate) fn import_cycle_component(&self) -> Option<&ImportCycleComponent> {
+        self.import_cycle_component.get().filter(|component| {
+            component.id != usize::MAX && component.graph_valid.load(Ordering::Acquire)
+        })
+    }
+
+    pub(crate) fn set_import_cycle_component(
+        &self,
+        graph_valid: Arc<AtomicBool>,
+        component: Option<(usize, bool)>,
+    ) {
+        let (id, cyclic) = component.unwrap_or((usize::MAX, true));
+        if let Err(component) =
+            self.import_cycle_component.set(ImportCycleComponent { graph_valid, id, cyclic })
+        {
+            // Records normally belong to one graph build. If reused, neither graph's cached
+            // classifications are safe; retain traversal as the fallback instead of panicking.
+            component.graph_valid.store(false, Ordering::Release);
+            self.import_cycle_component.get().unwrap().graph_valid.store(false, Ordering::Release);
+        }
     }
 
     /// Get a loaded module by upgrading the weak reference to an Arc.
@@ -633,5 +685,66 @@ impl ModuleRecord {
             out.extend(remote_module_record.exported_bindings.keys().cloned());
             remote_module_record.collect_star_exported_bindings(visited, out);
         }
+    }
+}
+
+#[cfg(test)]
+mod cycle_component_tests {
+    use std::sync::{Arc, atomic::AtomicBool};
+
+    use super::ModuleRecord;
+
+    #[test]
+    fn mutating_an_unclassified_dependency_invalidates_the_whole_graph() {
+        let graph = Arc::new(AtomicBool::new(true));
+        let root = ModuleRecord::default();
+        let dependency = ModuleRecord::default();
+        root.set_import_cycle_component(Arc::clone(&graph), Some((0, false)));
+        // An earlier group with no no-cycle rule still participates in invalidation.
+        dependency.set_import_cycle_component(graph, None);
+        assert!(root.import_cycle_component().is_some());
+        assert!(dependency.import_cycle_component().is_none());
+
+        drop(dependency.write_loaded_modules());
+
+        assert!(root.import_cycle_component().is_none());
+    }
+
+    #[test]
+    fn only_components_from_the_same_graph_can_exclude_each_other() {
+        let graph = Arc::new(AtomicBool::new(true));
+        let root = ModuleRecord::default();
+        let same_component = ModuleRecord::default();
+        let other_component = ModuleRecord::default();
+        let other_graph = ModuleRecord::default();
+        root.set_import_cycle_component(Arc::clone(&graph), Some((0, true)));
+        same_component.set_import_cycle_component(Arc::clone(&graph), Some((0, true)));
+        other_component.set_import_cycle_component(graph, Some((1, false)));
+        other_graph.set_import_cycle_component(Arc::new(AtomicBool::new(true)), Some((1, false)));
+
+        let component = root.import_cycle_component().unwrap();
+        assert!(!component.excludes_module(&same_component));
+        assert!(component.excludes_module(&other_component));
+        assert!(!component.excludes_module(&other_graph));
+
+        drop(other_component.write_loaded_modules());
+        assert!(!component.excludes_module(&other_component));
+        assert!(other_graph.import_cycle_component().is_some());
+    }
+
+    #[test]
+    fn reusing_a_record_invalidates_both_graphs() {
+        let first_graph = Arc::new(AtomicBool::new(true));
+        let second_graph = Arc::new(AtomicBool::new(true));
+        let root = ModuleRecord::default();
+        let dependency = ModuleRecord::default();
+        root.set_import_cycle_component(Arc::clone(&first_graph), Some((0, false)));
+        dependency.set_import_cycle_component(first_graph, Some((1, false)));
+        root.set_import_cycle_component(Arc::clone(&second_graph), Some((0, false)));
+        let other_root = ModuleRecord::default();
+        other_root.set_import_cycle_component(second_graph, Some((0, false)));
+        assert!(root.import_cycle_component().is_none());
+        assert!(dependency.import_cycle_component().is_none());
+        assert!(other_root.import_cycle_component().is_none());
     }
 }

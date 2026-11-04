@@ -152,10 +152,17 @@ impl Rule for NoCycle {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
 
-        // Gated on unbounded `max_depth` (the default), where the walks below explore the whole
-        // reachable subgraph anyway so the prefilter replaces their work. Under a shallow depth cap
-        // they are cheap and an unbounded prefilter could cost more than it saves.
-        if self.max_depth == u32::MAX && !self.can_be_in_cycle(module_record) {
+        let component =
+            if self.uses_scc_prefilter() { module_record.import_cycle_component() } else { None };
+
+        // A valid shared classification replaces the per-file reachability prefilter. Without it,
+        // retain that prefilter only for unbounded walks: under a shallow depth cap, the diagnostic
+        // walks are cheap and an unbounded prefilter could cost more than it saves.
+        if let Some(component) = component {
+            if !component.is_cyclic() {
+                return;
+            }
+        } else if self.max_depth == u32::MAX && !self.can_be_in_cycle(module_record) {
             return;
         }
 
@@ -166,6 +173,9 @@ impl Rule for NoCycle {
         let mut traversed = FxHashSet::default();
         for (key, weak_module_record) in direct_imports.iter() {
             let loaded_module_record = weak_module_record.upgrade().unwrap();
+            if component.is_some_and(|component| component.excludes_module(&loaded_module_record)) {
+                continue;
+            }
             if !self.should_traverse_module(key, &loaded_module_record, module_record) {
                 continue;
             }
@@ -183,7 +193,10 @@ impl Rule for NoCycle {
             let visitor_result = ModuleGraphVisitorBuilder::default()
                 .max_depth(self.max_depth.saturating_sub(1))
                 .reuse_traversed(traversed)
-                .filter(|(key, val), parent| self.should_traverse_module(key, val, parent))
+                .filter(|(key, val), parent| {
+                    !component.is_some_and(|component| component.excludes_module(val))
+                        && self.should_traverse_module(key, val, parent)
+                })
                 .event(|event, (key, val), _| match event {
                     ModuleGraphVisitorEvent::Enter => {
                         stack.push((key.clone(), Arc::clone(val)));
@@ -213,6 +226,13 @@ impl Rule for NoCycle {
 }
 
 impl NoCycle {
+    pub(crate) fn uses_scc_prefilter(&self) -> bool {
+        self.max_depth == u32::MAX
+            && self.ignore_types
+            && !self.ignore_external
+            && !self.allow_unsafe_dynamic_cyclic_dependency
+    }
+
     /// Is `root` in a cycle at all? True iff some module reachable from it imports it back — one
     /// traversal answering for every direct import at once, instead of one walk per import.
     ///
@@ -262,7 +282,7 @@ impl NoCycle {
         false
     }
 
-    fn should_traverse_module(
+    pub(crate) fn should_traverse_module(
         &self,
         key: &CompactStr,
         module: &Arc<ModuleRecord>,
