@@ -9,17 +9,8 @@ import {
   CAT_OTHER,
   CAT_REGEX_SLASH,
 } from "./categories.ts";
-import {
-  write,
-  writeIdent,
-  writeNoLast,
-  writeWithMap,
-  writeWithMapNoLast,
-} from "./write.ts";
-import {
-  printSpaceBeforeIdentifier,
-  printSpaceBeforeOperator,
-} from "./space.ts";
+import { write, writeIdent, writeNoLast, writeWithMap, writeWithMapNoLast } from "./write.ts";
+import { printSpaceBeforeIdentifier, printSpaceBeforeOperator } from "./space.ts";
 import { printNonNegativeFloat } from "./number.ts";
 import { CTX_TYPESCRIPT } from "./operators.ts";
 import { PREC_PREFIX } from "./precedence.ts";
@@ -71,14 +62,7 @@ export function printLiteral(
       break;
     case "boolean":
       printSpaceBeforeIdentifier(state);
-      writeWithMap(
-        state,
-        value ? "true" : "false",
-        CAT_IDENT,
-        node.start,
-        node.end,
-        node,
-      );
+      writeWithMap(state, value ? "true" : "false", CAT_IDENT, node.start, node.end, node);
       break;
     default:
       typeAssertIs<LiteralExtras>(node);
@@ -228,11 +212,7 @@ function printRegExpLiteral(node: ESTree.RegExpLiteral, state: State): void {
  * @param state - Printer state
  * @param precedence - Precedence of the position this expression sits in
  */
-function printBigIntLiteral(
-  node: ESTree.BigIntLiteral,
-  state: State,
-  precedence: number,
-): void {
+function printBigIntLiteral(node: ESTree.BigIntLiteral, state: State, precedence: number): void {
   const value = node.bigint;
   if (value.startsWith("-")) {
     if (precedence >= PREC_PREFIX) {
