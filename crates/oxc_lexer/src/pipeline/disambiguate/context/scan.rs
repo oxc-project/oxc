@@ -2,13 +2,17 @@
 //! walk, and the entry points every question goes through.
 
 use crate::{
-    cpu::cpu_version,
+    cpu::{BASELINE, cpu_version},
     token::{OP_KIND_BASE, matches_tk, tk},
 };
 
-use super::anchor::{Anchor, anchor_at, paren_anchor};
-use super::*;
-use crate::pipeline::disambiguate::{LOCAL_WALK_BUDGET, WALK_SCAN_CAP};
+use crate::pipeline::disambiguate::{LOCAL_WALK_BUDGET, WALK_SCAN_CAP, common::Tokens};
+
+use super::{
+    After, Site, Walks,
+    anchor::{Anchor, anchor_at, paren_anchor},
+    walker::{Expect, Jump, Walk},
+};
 
 /// Scan back to the anchor of a query, recording the groups the walk skips; None past the cap.
 #[cpu_version(Generic)]

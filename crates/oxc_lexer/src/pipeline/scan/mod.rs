@@ -1,15 +1,13 @@
-use crate::cpu::{Cpu, cpu_multiversion, cpu_select};
+use crate::cpu::{Cpu, DynCpu, cpu_multiversion, to_dyn};
 
-#[cfg(target_arch = "x86_64")]
 mod avx2;
-#[cfg(target_arch = "x86_64")]
-use avx2::{scan_block_comment_avx2, scan_line_comment_avx2};
-
-mod generic;
-use generic::{scan_block_comment_generic, scan_line_comment_generic};
-
 mod common;
+mod generic;
+
 pub(super) use common::{scan_ident_esc, scan_number, scan_quoted, scan_regex, scan_tmpl_text};
+
+use avx2::{scan_block_comment_avx2, scan_line_comment_avx2};
+use generic::{scan_block_comment_generic, scan_line_comment_generic};
 
 #[cpu_multiversion]
 #[inline(always)]
@@ -19,11 +17,10 @@ pub(super) unsafe fn scan_block_comment(
     i: usize,
     cpu: impl Cpu,
 ) -> (usize, bool, i64) {
-    cpu_select!(cpu, {
-        Avx2(cpu) => scan_block_comment_avx2(src, n, i, cpu),
-        Neon(_) => scan_block_comment_generic(src, n, i),
-        Generic(_) => scan_block_comment_generic(src, n, i),
-    })
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => scan_block_comment_avx2(src, n, i, cpu),
+        _ => scan_block_comment_generic(src, n, i),
+    }
 }
 
 /// Scan a `//` line comment to its LineTerminator (LF, CR, or LS/PS),
@@ -36,9 +33,8 @@ pub(super) unsafe fn scan_line_comment(
     i: usize,
     cpu: impl Cpu,
 ) -> (usize, i64) {
-    cpu_select!(cpu, {
-        Avx2(cpu) => scan_line_comment_avx2(src, n, i, cpu),
-        Neon(_) => scan_line_comment_generic(src, n, i),
-        Generic(_) => scan_line_comment_generic(src, n, i),
-    })
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => scan_line_comment_avx2(src, n, i, cpu),
+        _ => scan_line_comment_generic(src, n, i),
+    }
 }

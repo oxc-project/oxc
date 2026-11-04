@@ -52,7 +52,7 @@ pub fn tailwind_context_for_string_literal<'a>(
 /// Returns `true` for:
 /// - `class` and `className` (default attributes)
 /// - Custom attributes specified in `attributes` option
-pub fn is_tailwind_jsx_attribute(
+fn is_tailwind_jsx_attribute(
     attr_name: &JSXAttributeName<'_>,
     options: &SortTailwindcssOptions,
 ) -> bool {
@@ -70,6 +70,48 @@ pub fn is_tailwind_jsx_attribute(
     options.attributes.iter().any(|a| a == name)
 }
 
+/// Returns the Tailwind context to push while printing the value of the JSX attribute `attr_name`.
+///
+/// Also read by the opening element layout, which must agree with the print on whether the value is collapsed.
+pub fn tailwind_context_for_jsx_attribute(
+    attr_name: &JSXAttributeName<'_>,
+    f: &JsFormatter<'_, '_>,
+) -> Option<TailwindContextEntry> {
+    f.options()
+        .sort_tailwindcss
+        .as_ref()
+        .filter(|opts| is_tailwind_jsx_attribute(attr_name, opts))
+        .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace))
+}
+
+/// Whether a template literal printed at this point (under `tag` when tagged) has its line breaks collapsed.
+/// - Reads what `TemplateElement` reads: the current Tailwind context, or the one a Tailwind `tag` pushes
+pub fn tailwind_collapses_template_line_breaks(
+    tag: Option<&Expression<'_>>,
+    f: &JsFormatter<'_, '_>,
+) -> bool {
+    f.context()
+        .tailwind_context()
+        .copied()
+        .or_else(|| tag.and_then(|tag| tailwind_context_for_callee(tag, f)))
+        .is_some_and(|ctx| !ctx.preserve_whitespace)
+}
+
+/// Returns the Tailwind context to push while printing the arguments of a call to `callee`,
+/// or the quasi of a template tagged with it.
+///
+/// Also read by layout decisions, which must agree with the print on whether the classes are collapsed.
+pub fn tailwind_context_for_callee(
+    callee: &Expression<'_>,
+    f: &JsFormatter<'_, '_>,
+) -> Option<TailwindContextEntry> {
+    f.options()
+        .sort_tailwindcss
+        .as_ref()
+        .filter(|opts| is_tailwind_function_call(callee, opts))
+        .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace))
+}
+
 /// Checks if a callee expression is a Tailwind function.
 ///
 /// Traverses through `CallExpression` and `MemberExpression` nodes to find the
@@ -82,10 +124,7 @@ pub fn is_tailwind_jsx_attribute(
 /// - `foo().clsx(...)` - chained calls
 ///
 /// Based on [prettier-plugin-tailwindcss's `isSortableExpression`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/28beb4e008b913414562addec4abb8ab261f3828/src/index.ts#L584-L605).
-pub fn is_tailwind_function_call(
-    callee: &Expression<'_>,
-    options: &SortTailwindcssOptions,
-) -> bool {
+fn is_tailwind_function_call(callee: &Expression<'_>, options: &SortTailwindcssOptions) -> bool {
     if options.functions.is_empty() {
         return false;
     }
@@ -243,17 +282,20 @@ where
 // Write Functions
 // ============================================================================
 
-/// Writes a string literal with Tailwind class sorting.
+/// Writes a string literal with Tailwind class sorting, and returns its printed width.
 ///
 /// Handles whitespace based on context:
 /// - Trims and normalizes whitespace by default
 /// - Preserves boundary spaces when required by concat/template context
 /// - With `preserve_whitespace`, outputs content unchanged
+///
+/// The width is an upper bound: the sorter also drops duplicates of known classes,
+/// so a layout decided near a threshold can still change on the next pass.
 pub fn write_tailwind_string_literal<'a>(
     string_literal: &AstNode<'_, 'a, StringLiteral<'a>>,
     ctx: TailwindContextEntry,
     f: &mut JsFormatter<'_, 'a>,
-) {
+) -> usize {
     debug_assert!(
         !string_literal.value.is_empty(),
         "Empty string literals should be skipped for Tailwind sorting"
@@ -284,7 +326,7 @@ pub fn write_tailwind_string_literal<'a>(
         let index = f.session().add_tailwind_class(content.to_string());
         f.write_element(FormatElement::TailwindClass(index));
         write!(f, quote);
-        return;
+        return normalized_string.width();
     }
 
     let trimmed = content.trim();
@@ -295,15 +337,18 @@ pub fn write_tailwind_string_literal<'a>(
             write!(f, text(" "));
         }
         write!(f, quote);
-        return;
+        // Quotes, and the single space the content is normalized to
+        return 2 + usize::from(!content.is_empty());
     }
 
     let collapse = can_collapse_whitespace(string_literal.span, string_literal.ancestors(), f);
     let has_leading_ws = content.starts_with(|c: char| c.is_ascii_whitespace());
     let has_trailing_ws = content.ends_with(|c: char| c.is_ascii_whitespace());
+    let keeps_leading_space = has_leading_ws && !collapse.start;
+    let keeps_trailing_space = has_trailing_ws && !collapse.end;
 
     // Leading space
-    if has_leading_ws && !collapse.start {
+    if keeps_leading_space {
         write!(f, text(" "));
     }
 
@@ -312,10 +357,17 @@ pub fn write_tailwind_string_literal<'a>(
     f.write_element(FormatElement::TailwindClass(index));
 
     // Trailing space
-    if has_trailing_ws && !collapse.end {
+    if keeps_trailing_space {
         write!(f, text(" "));
     }
     write!(f, quote);
+
+    // The sorter joins the classes with single spaces, splitting on ASCII whitespace:
+    // each class plus its separator, minus the last separator (`trimmed` has at least one class)
+    let joined_width =
+        trimmed.split_ascii_whitespace().map(|class| class.width() + 1).sum::<usize>() - 1;
+    // Quotes, the kept boundary spaces, and the classes
+    2 + usize::from(keeps_leading_space) + joined_width + usize::from(keeps_trailing_space)
 }
 
 /// Writes a template element (quasi) with Tailwind class sorting.

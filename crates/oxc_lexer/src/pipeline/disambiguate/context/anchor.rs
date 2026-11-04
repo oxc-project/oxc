@@ -1,12 +1,11 @@
 use crate::{
-    cpu::cpu_version,
+    cpu::{BASELINE, cpu_version},
     token::{OP_KIND_BASE, matches_tk, tk},
 };
 
-use super::*;
 use crate::pipeline::disambiguate::{
     RULE_SCAN_CAP,
-    common::{Peek, Prev},
+    common::{Peek, Prev, Tokens},
 };
 
 /// Where a bounded walk starts.

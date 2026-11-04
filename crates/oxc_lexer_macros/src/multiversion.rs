@@ -68,41 +68,36 @@ impl Multiversion<'_> {
     ///     }
     ///
     ///     #[inline(never)]
-    ///     #[cfg_attr(target_feature = "sse2", target_feature(enable = "sse2"))]
-    ///     unsafe fn __generic<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Generic) -> bool {
+    ///     #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
+    ///     #[allow(unreachable_code)]
+    ///     unsafe fn __avx2<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Avx2) -> bool {
+    ///         #[cfg(not(target_arch = "x86_64"))]
+    ///         unreachable!();
     ///         __impl::<N, T>(arr, cpu)
     ///     }
     ///
-    ///     cfg_select! {
-    ///         target_arch = "x86_64" => {
-    ///             #[inline(never)]
-    ///             #[target_feature(enable = "avx2,bmi2,popcnt")]
-    ///             unsafe fn __avx2<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Avx2) -> bool {
-    ///                 __impl::<N, T>(arr, cpu)
-    ///             }
+    ///     #[inline(never)]
+    ///     #[cfg_attr(target_arch = "aarch64", target_feature(enable = "neon"))]
+    ///     #[allow(unreachable_code)]
+    ///     unsafe fn __neon<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Neon) -> bool {
+    ///         #[cfg(not(target_arch = "aarch64"))]
+    ///         unreachable!();
+    ///         __impl::<N, T>(arr, cpu)
+    ///     }
     ///
-    ///             match crate::cpu::to_dyn(cpu) {
-    ///                 crate::cpu::DynCpu::Avx2(cpu) => unsafe { __avx2::<N, T>(arr, cpu) },
-    ///                 crate::cpu::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
-    ///             }
-    ///         }
-    ///         target_arch = "aarch64" => {
-    ///             #[inline(never)]
-    ///             #[target_feature(enable = "neon")]
-    ///             unsafe fn __neon<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Neon) -> bool {
-    ///                 __impl::<N, T>(arr, cpu)
-    ///             }
+    ///     #[inline(never)]
+    ///     #[cfg_attr(target_feature = "sse2", target_feature(enable = "sse2"))]
+    ///     #[allow(unreachable_code)]
+    ///     unsafe fn __generic<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Generic) -> bool {
+    ///         #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+    ///         unreachable!();
+    ///         __impl::<N, T>(arr, cpu)
+    ///     }
     ///
-    ///             match crate::cpu::to_dyn(cpu) {
-    ///                 crate::cpu::DynCpu::Neon(cpu) => unsafe { __neon::<N, T>(arr, cpu) },
-    ///                 crate::cpu::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
-    ///             }
-    ///         }
-    ///         _ => {
-    ///             match crate::cpu::to_dyn(cpu) {
-    ///                 crate::cpu::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
-    ///             }
-    ///         }
+    ///     match crate::cpu::to_dyn(cpu) {
+    ///         crate::cpu::DynCpu::Avx2(cpu) => unsafe { __avx2::<N, T>(arr, cpu) },
+    ///         crate::cpu::DynCpu::Neon(cpu) => unsafe { __neon::<N, T>(arr, cpu) },
+    ///         crate::cpu::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
     ///     }
     /// }
     /// ```
@@ -110,20 +105,16 @@ impl Multiversion<'_> {
         let outer_attrs = &*self.func.attrs.outer;
         let signature = self.signature();
         let impl_fn = self.impl_fn();
-        let generic_fn = self.entry_point(Cpu::Generic);
-        let simd_fn_and_cpu_match = cfg_select(|simd| {
-            let simd_fn = simd.map(|cpu| self.entry_point(cpu));
-            let cpu_match = self.cpu_match(simd);
-            quote!(#simd_fn #cpu_match)
-        });
+        let entry_points = self.entry_points();
+        let cpu_match = self.cpu_match();
 
         quote! {
             #(#outer_attrs)*
             #[inline(always)]
             #signature {
                 #impl_fn
-                #generic_fn
-                #simd_fn_and_cpu_match
+                #entry_points
+                #cpu_match
             }
         }
     }
@@ -137,34 +128,12 @@ impl Multiversion<'_> {
     /// /// Do some stuff.
     /// #[inline(always)]
     /// unsafe fn foo<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: impl Cpu) -> bool {
-    ///     cfg_select! {
-    ///         target_arch = "x86_64" => {
-    ///             match crate::cpu::to_dyn(cpu) {
-    ///                 crate::cpu::DynCpu::Avx2(cpu) => unsafe {
-    ///                     Self::__foo_avx2::<N, T>(self, arr, cpu)
-    ///                 },
-    ///                 crate::cpu::DynCpu::Generic(cpu) => unsafe {
-    ///                     Self::__foo_generic::<N, T>(self, arr, cpu)
-    ///                 },
-    ///             }
-    ///         }
-    ///         target_arch = "aarch64" => {
-    ///             match crate::cpu::to_dyn(cpu) {
-    ///                 crate::cpu::DynCpu::Neon(cpu) => unsafe {
-    ///                     Self::__foo_neon::<N, T>(self, arr, cpu)
-    ///                 },
-    ///                 crate::cpu::DynCpu::Generic(cpu) => unsafe {
-    ///                     Self::__foo_generic::<N, T>(self, arr, cpu)
-    ///                 },
-    ///             }
-    ///         }
-    ///         _ => {
-    ///             match crate::cpu::to_dyn(cpu) {
-    ///                 crate::cpu::DynCpu::Generic(cpu) => unsafe {
-    ///                     Self::__foo_generic::<N, T>(self, arr, cpu)
-    ///                 },
-    ///             }
-    ///         }
+    ///     match crate::cpu::to_dyn(cpu) {
+    ///         crate::cpu::DynCpu::Avx2(cpu) => unsafe { Self::__foo_avx2::<N, T>(self, arr, cpu) },
+    ///         crate::cpu::DynCpu::Neon(cpu) => unsafe { Self::__foo_neon::<N, T>(self, arr, cpu) },
+    ///         crate::cpu::DynCpu::Generic(cpu) => unsafe {
+    ///             Self::__foo_generic::<N, T>(self, arr, cpu)
+    ///         },
     ///     }
     /// }
     ///
@@ -174,47 +143,45 @@ impl Multiversion<'_> {
     /// }
     ///
     /// #[inline(never)]
-    /// #[cfg_attr(target_feature = "sse2", target_feature(enable = "sse2"))]
-    /// unsafe fn __foo_generic<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: crate::cpu::Generic) -> bool {
+    /// #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
+    /// #[allow(unreachable_code)]
+    /// unsafe fn __foo_avx2<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: crate::cpu::Avx2) -> bool {
+    ///     #[cfg(not(target_arch = "x86_64"))]
+    ///     unreachable!();
     ///     Self::__foo_impl::<N, T>(self, arr, cpu)
     /// }
     ///
-    /// cfg_select! {
-    ///     target_arch = "x86_64" => {
-    ///         #[inline(never)]
-    ///         #[target_feature(enable = "avx2,bmi2,popcnt")]
-    ///         unsafe fn __foo_avx2<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: crate::cpu::Avx2) -> bool {
-    ///             Self::__foo_impl::<N, T>(self, arr, cpu)
-    ///         }
-    ///     }
-    ///     target_arch = "aarch64" => {
-    ///         #[inline(never)]
-    ///         #[target_feature(enable = "neon")]
-    ///         unsafe fn __foo_neon<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: crate::cpu::Neon) -> bool {
-    ///             Self::__foo_impl::<N, T>(self, arr, cpu)
-    ///         }
-    ///     }
-    ///     _ => {}
+    /// #[inline(never)]
+    /// #[cfg_attr(target_arch = "aarch64", target_feature(enable = "neon"))]
+    /// #[allow(unreachable_code)]
+    /// unsafe fn __foo_neon<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: crate::cpu::Neon) -> bool {
+    ///     #[cfg(not(target_arch = "aarch64"))]
+    ///     unreachable!();
+    ///     Self::__foo_impl::<N, T>(self, arr, cpu)
+    /// }
+    ///
+    /// #[inline(never)]
+    /// #[cfg_attr(target_feature = "sse2", target_feature(enable = "sse2"))]
+    /// #[allow(unreachable_code)]
+    /// unsafe fn __foo_generic<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: crate::cpu::Generic) -> bool {
+    ///     #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+    ///     unreachable!();
+    ///     Self::__foo_impl::<N, T>(self, arr, cpu)
     /// }
     /// ```
     fn expand_method(&self) -> TokenStream {
         let outer_attrs = &*self.func.attrs.outer;
         let signature = self.signature();
-        let cpu_match = cfg_select(|simd| self.cpu_match(simd));
+        let cpu_match = self.cpu_match();
         let impl_fn = self.impl_fn();
-        let generic_fn = self.entry_point(Cpu::Generic);
-        let simd_fn = cfg_select(|simd| match simd {
-            Some(cpu) => self.entry_point(cpu),
-            None => quote!(),
-        });
+        let entry_points = self.entry_points();
 
         quote! {
             #(#outer_attrs)*
             #[inline(always)]
             #signature { #cpu_match }
             #impl_fn
-            #generic_fn
-            #simd_fn
+            #entry_points
         }
     }
 
@@ -263,13 +230,31 @@ impl Multiversion<'_> {
         }
     }
 
+    /// The entry points for all the feature sets: `__avx2`, `__neon` and `__generic`.
+    ///
+    /// They all exist on every platform. `__avx2` only has AVX2's target features on x86_64,
+    /// and `__neon` only has Neon's on aarch64. See [`entry_point`] for what they do elsewhere.
+    ///
+    /// [`entry_point`]: Self::entry_point
+    fn entry_points(&self) -> TokenStream {
+        Cpu::ALL.into_iter().map(|cpu| self.entry_point(cpu)).collect()
+    }
+
     /// An entry point: calls `__impl`, compiled with one feature set's target features.
     /// `#[inline]` and `#[cold]` go on it, as it's the function which gets called.
     ///
+    /// On platforms where the feature set's type is uninhabited, it starts with `unreachable!()`,
+    /// before calling `__impl`. It can never be called there. See the docs on `cpu_multiversion`
+    /// for why. That's `__avx2` on platforms other than x86_64, `__neon` on platforms other than
+    /// aarch64, and `__generic` on aarch64 with Neon enabled at compile time.
+    ///
     /// ```ignore
     /// #[inline(never)]
-    /// #[target_feature(enable = "avx2,bmi2,popcnt")]
+    /// #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
+    /// #[allow(unreachable_code)]
     /// unsafe fn __avx2<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Avx2) -> bool {
+    ///     #[cfg(not(target_arch = "x86_64"))]
+    ///     unreachable!();
     ///     __impl::<N, T>(arr, cpu)
     /// }
     /// ```
@@ -282,31 +267,39 @@ impl Multiversion<'_> {
         let cpu_name = self.cpu_param.arg();
         let cpu_ty = cpu.ty();
         let where_clause = &generics.where_clause;
+        let uninhabited_cfg = cpu.uninhabited_cfg();
         let call = self.call("impl");
 
         quote! {
             #(#entry_attrs)*
             #target_feature_attr
+            #[allow(unreachable_code)]
             #constness #unsafety fn #name #generics (#params #cpu_name: #cpu_ty) #return_type
             #where_clause
             {
+                #[cfg(#uninhabited_cfg)]
+                unreachable!();
                 #call
             }
         }
     }
 
     /// `match` which calls the entry point for the CPU's feature set.
-    /// `simd` is the SIMD feature set which exists on the platform, if there is one.
+    ///
+    /// `DynCpu` has a variant for each feature set on every platform, so the `match` has an arm
+    /// for each. On a platform which doesn't have a SIMD feature set, that feature set's type
+    /// is uninhabited, so its arm can never run.
     ///
     /// ```ignore
     /// match crate::cpu::to_dyn(cpu) {
     ///     crate::cpu::DynCpu::Avx2(cpu) => unsafe { __avx2::<N, T>(arr, cpu) },
+    ///     crate::cpu::DynCpu::Neon(cpu) => unsafe { __neon::<N, T>(arr, cpu) },
     ///     crate::cpu::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
     /// }
     /// ```
-    fn cpu_match(&self, simd: Option<Cpu>) -> TokenStream {
+    fn cpu_match(&self) -> TokenStream {
         let cpu_name = self.cpu_param.arg();
-        let arms = simd.into_iter().chain([Cpu::Generic]).map(|cpu| {
+        let arms = Cpu::ALL.into_iter().map(|cpu| {
             let variant = cpu.variant();
             let call = self.call(cpu.lower_name());
 
@@ -339,35 +332,6 @@ impl Multiversion<'_> {
 
         quote! {
             #path #turbofish (#args #cpu_name)
-        }
-    }
-}
-
-/// `cfg_select!` with a branch for each platform which has a SIMD feature set, and a fallback.
-/// `branch` makes the contents of each, given the platform's SIMD feature set, if it has one.
-///
-/// ```ignore
-/// cfg_select! {
-///     target_arch = "x86_64" => { ... }
-///     target_arch = "aarch64" => { ... }
-///     _ => { ... }
-/// }
-/// ```
-///
-/// Code for other platforms is removed with `cfg_select!`, not `#[cfg]` attributes.
-/// That code contains copies of the function's parameters. Rust Analyzer greys out the
-/// original code of anything in a node disabled by `#[cfg]`, so `#[cfg]` would grey out
-/// the function's signature. Branches of `cfg_select!` are just dropped.
-fn cfg_select(branch: impl Fn(Option<Cpu>) -> TokenStream) -> TokenStream {
-    let x86_64 = branch(Some(Cpu::Avx2));
-    let aarch64 = branch(Some(Cpu::Neon));
-    let other = branch(None);
-
-    quote! {
-        cfg_select! {
-            target_arch = "x86_64" => { #x86_64 }
-            target_arch = "aarch64" => { #aarch64 }
-            _ => { #other }
         }
     }
 }

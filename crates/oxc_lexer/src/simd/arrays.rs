@@ -1,3 +1,17 @@
+//! Traits for arrays of integers which vectors can read with no alignment requirement.
+//!
+//! Each trait is implemented for every array of integers of one size,
+//! e.g. [`IntArray128`] for `[u8; 16]`, `[u32; 4]`, `[u64; 2]` etc.
+//!
+//! - [`IntArray64`] is for 8 bytes, which `Vec128::read_low_unaligned` reads.
+//! - [`IntArray128`] is for 16 bytes, which `Vec128::read_unaligned` reads.
+//! - [`IntArray256`] is for 32 bytes, which `Vec256::read_unaligned` reads.
+//!
+//! [`VecData128`] and [`VecData256`] implement `IntArray128` and `IntArray256` too.
+//!
+//! [`VecData128`]: super::VecData128
+//! [`VecData256`]: super::VecData256
+
 use std::ptr;
 
 /// Array of integers which `Vec128::read_low_unaligned` can read.
@@ -9,6 +23,7 @@ pub unsafe trait IntArray64 {
     /// Get a `*const u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for unaligned reads of 8 bytes.
+    #[cfg_attr(not(any(target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[expect(clippy::inline_always, reason = "no-op at runtime")]
     #[inline(always)]
     fn as_ptr(&self) -> *const u8 {
@@ -25,6 +40,7 @@ pub unsafe trait IntArray128 {
     /// Get a `*const u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for unaligned reads of 16 bytes.
+    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[expect(clippy::inline_always, reason = "no-op at runtime")]
     #[inline(always)]
     fn as_ptr(&self) -> *const u8 {
@@ -41,6 +57,7 @@ pub unsafe trait IntArray256 {
     /// Get a `*const u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for unaligned reads of 32 bytes.
+    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[expect(clippy::inline_always, reason = "no-op at runtime")]
     #[inline(always)]
     fn as_ptr(&self) -> *const u8 {

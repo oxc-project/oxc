@@ -13,7 +13,6 @@ use crate::{
     PAD,
     cpu::{BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_version},
     options::LexOptions,
-    pipeline::compress::init_pair_luts,
     token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
 };
 
@@ -37,7 +36,7 @@ pub(crate) use lanes::{Lanes, decode_char_at};
 use carve::carve;
 use classify::classify;
 use coalesce::{KWB, coalesce};
-use compress::{STAGE_CAP, compress, write_sentinels};
+use compress::{STAGE_CAP, compress, init_pair_luts, write_sentinels};
 use disambiguate::{Brackets, Closers, Tokens};
 use misc::{misc_post, misc_pre};
 

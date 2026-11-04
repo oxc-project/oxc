@@ -1,6 +1,6 @@
 parser_misc Summary:
-AST Parsed     : 132/132 (100.00%)
-Positive Passed: 132/132 (100.00%)
+AST Parsed     : 133/133 (100.00%)
+Positive Passed: 133/133 (100.00%)
 Negative Passed: 270/270 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
@@ -4759,36 +4759,13 @@ Negative Passed: 270/270 (100.00%)
  3 │ }
    ╰────
 
-  × Keywords cannot contain escape characters
-   ╭─[misc/fail/oxc-27290-escaped.js:2:3]
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/oxc-27290-escaped.js:2:16]
  1 │ class A {
  2 │   pr\u0069vate x;
-   ·   ────────────
+   ·                ┬
+   ·                ╰── `;` expected
  3 │   publ\u0069c f() {}
-   ╰────
-
-  × TS(8009): The 'private' modifier can only be used in TypeScript files.
-   ╭─[misc/fail/oxc-27290-escaped.js:2:3]
- 1 │ class A {
- 2 │   pr\u0069vate x;
-   ·   ───────
- 3 │   publ\u0069c f() {}
-   ╰────
-
-  × Keywords cannot contain escape characters
-   ╭─[misc/fail/oxc-27290-escaped.js:3:3]
- 2 │   pr\u0069vate x;
- 3 │   publ\u0069c f() {}
-   ·   ───────────
- 4 │ }
-   ╰────
-
-  × TS(8009): The 'public' modifier can only be used in TypeScript files.
-   ╭─[misc/fail/oxc-27290-escaped.js:3:3]
- 2 │   pr\u0069vate x;
- 3 │   publ\u0069c f() {}
-   ·   ──────
- 4 │ }
    ╰────
 
   × TS(8009): The 'private' modifier can only be used in TypeScript files.

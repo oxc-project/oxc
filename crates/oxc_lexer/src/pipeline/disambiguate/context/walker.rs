@@ -1,9 +1,14 @@
 //! The walk: its frame stack and flags, the operations the token steps use on them, the
 //! jump plan a bounded walk follows, and what a query reads off the state.
 
-use crate::cpu::cpu_version;
+use crate::cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
-use super::*;
+use crate::pipeline::disambiguate::common::Tokens;
+
+use super::{
+    After, Site,
+    frame::{Declarator, Frame, FrameKind, Member, RegionRule, StmtReg},
+};
 
 /// A balanced group a bounded walk skips, from its opener to its closer.
 #[derive(Clone, Copy)]

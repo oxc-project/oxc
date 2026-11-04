@@ -21,7 +21,7 @@ use crate::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
-        tailwindcss::{collapsed_class_list_width, is_tailwind_function_call},
+        tailwindcss::{collapsed_class_list_width, tailwind_context_for_callee},
         typecast::is_cast_target,
     },
     write,
@@ -1212,10 +1212,8 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
                 // An embedded template is formatted, so its source length says nothing
                 Some(first_argument) => first_argument.as_expression().is_none_or(|e| {
                     let collapses_tailwind_whitespace =
-                        f.options().sort_tailwindcss.as_ref().is_some_and(|opts| {
-                            !opts.preserve_whitespace
-                                && is_tailwind_function_call(&call_expression.callee, opts)
-                        });
+                        tailwind_context_for_callee(&call_expression.callee, f)
+                            .is_some_and(|ctx| !ctx.preserve_whitespace);
                     embed_hug(e, Some(call_expression), f).is_some()
                         || !is_short_argument(e, threshold, collapses_tailwind_whitespace, f)
                 }),

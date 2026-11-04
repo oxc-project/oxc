@@ -1031,7 +1031,7 @@ pub fn is_verbatim_multiline_template_sole_arg(
 ) -> bool {
     matches!(arguments, [argument] if argument.as_expression().is_some_and(|expr| {
         embed_hug(expr, call, f).is_none()
-            && is_multiline_template_starting_on_same_line(expr, f.source_text())
+            && is_multiline_template_starting_on_same_line(expr, f)
     }))
 }
 

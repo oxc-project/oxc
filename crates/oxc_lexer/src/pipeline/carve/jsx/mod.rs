@@ -27,6 +27,7 @@ use super::{
 mod angle_brackets;
 mod hyphens;
 mod names;
+
 use angle_brackets::jsx_over_type_params;
 use hyphens::jsx_glue_hyphens;
 use names::{jsx_name_end, jsx_names_equal_fast, jsx_skip_trivia, jsx_skip_trivia_fast};

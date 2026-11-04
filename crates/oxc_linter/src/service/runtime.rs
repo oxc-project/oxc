@@ -9,13 +9,12 @@ use std::{
 };
 
 use indexmap::IndexSet;
-use rayon::iter::ParallelDrainRange;
 use rayon::{
     Scope,
     iter::IntoParallelRefIterator,
     prelude::{ParallelIterator, ParallelSliceMut},
 };
-use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet, FxHasher};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHasher};
 use self_cell::self_cell;
 use smallvec::SmallVec;
 
@@ -66,6 +65,147 @@ pub struct Runtime {
     modules_by_path: ModulesByPath,
     /// Collected disable directives from linted files
     disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
+}
+
+/// Resolved module requests of each section of a module.
+type ModuleResolvedRequests = SmallVec<[Vec<ResolvedModuleRequest>; 1]>;
+
+/// Groups of modules in `Runtime::resolve_modules`.
+///
+/// Groups that depend on each other's unfinished modules are merged. Merged groups are tracked like a
+/// union-find: a group that was merged into another group points to it with `merged_into`.
+#[derive(Default)]
+struct ModuleGroups<'alloc_pool> {
+    groups: Vec<ModuleGroup<'alloc_pool>>,
+}
+
+#[derive(Default)]
+struct ModuleGroup<'alloc_pool> {
+    /// The group this group was merged into.
+    merged_into: Option<usize>,
+    /// Whether all modules in this group are processed and its modules to be linted are dispatched.
+    finished: bool,
+    /// How many modules are queued but not processed in this group.
+    pending_module_count: usize,
+    /// How many modules from `sorted_paths` started this group.
+    entry_count: usize,
+    /// Modules that belong to `self.paths` in this group.
+    /// They are passed to `on_module_to_lint` when the group finishes.
+    modules_to_lint: Vec<ModuleToLint<'alloc_pool>>,
+    /// Resolved module requests from modules in this group.
+    /// This is used to populate `loaded_modules` when the group finishes.
+    module_paths_and_resolved_requests: Vec<(Arc<OsStr>, ModuleResolvedRequests)>,
+}
+
+impl<'alloc_pool> ModuleGroups<'alloc_pool> {
+    /// Id of the group that `push` adds next.
+    fn next_id(&self) -> usize {
+        self.groups.len()
+    }
+
+    /// Add a group started by `entry_count` modules from `sorted_paths`.
+    fn push(&mut self, entry_count: usize) {
+        self.groups.push(ModuleGroup {
+            pending_module_count: entry_count,
+            entry_count,
+            ..ModuleGroup::default()
+        });
+    }
+
+    /// Find the group that the group `id` was merged into.
+    fn find(&mut self, id: usize) -> usize {
+        let root = self.root(id);
+        // Path compression
+        let mut id = id;
+        while let Some(parent) = self.groups[id].merged_into {
+            self.groups[id].merged_into = Some(root);
+            id = parent;
+        }
+        root
+    }
+
+    /// Like `find`, but without path compression, so it only needs `&self`.
+    fn root(&self, mut id: usize) -> usize {
+        while let Some(parent) = self.groups[id].merged_into {
+            id = parent;
+        }
+        id
+    }
+
+    fn get_mut(&mut self, id: usize) -> &mut ModuleGroup<'alloc_pool> {
+        &mut self.groups[id]
+    }
+
+    /// Merge two unfinished groups, which must be results of `find`. Returns the id of the merged group.
+    fn merge(&mut self, a: usize, b: usize) -> usize {
+        // Keep the group with more modules, so fewer modules are moved.
+        let (into, from) = if self.groups[a].module_paths_and_resolved_requests.len()
+            >= self.groups[b].module_paths_and_resolved_requests.len()
+        {
+            (a, b)
+        } else {
+            (b, a)
+        };
+        let from_group = take(&mut self.groups[from]);
+        self.groups[from].merged_into = Some(into);
+        let into_group = &mut self.groups[into];
+        into_group.pending_module_count += from_group.pending_module_count;
+        into_group.entry_count += from_group.entry_count;
+        into_group.modules_to_lint.extend(from_group.modules_to_lint);
+        into_group
+            .module_paths_and_resolved_requests
+            .extend(from_group.module_paths_and_resolved_requests);
+        into
+    }
+
+    /// Merge `group_id` with `dep_group_id` when that dependency sits in a different unfinished group.
+    ///
+    /// Both ids must already be results of `find`. A finished group already has its modules in the
+    /// graph, so it is left alone.
+    fn merge_if_unfinished(&mut self, group_id: usize, dep_group_id: usize) -> usize {
+        if dep_group_id != group_id && !self.groups[dep_group_id].finished {
+            self.merge(group_id, dep_group_id)
+        } else {
+            group_id
+        }
+    }
+
+    /// Every direct dependency of a group that is about to finish is either in this group or in a
+    /// group that has already finished. The `unwrap` when linking `loaded_modules` only catches a
+    /// dependency that was never processed at all.
+    #[cfg(debug_assertions)]
+    fn debug_assert_finished_group_deps(
+        &self,
+        group_id: usize,
+        encountered_paths: &FxHashMap<Arc<OsStr>, usize>,
+    ) {
+        let group = &self.groups[group_id];
+        for (_, sections) in &group.module_paths_and_resolved_requests {
+            for request in sections.iter().flatten() {
+                let dep_path = &request.resolved_requested_path;
+                let dep_group = self.root(encountered_paths[dep_path]);
+                debug_assert!(
+                    dep_group == group_id || self.groups[dep_group].finished,
+                    "group {group_id} finished while {} is in unfinished group {dep_group}",
+                    dep_path.display()
+                );
+            }
+        }
+    }
+
+    /// Every group that was not merged into another one has finished. `entries_in_flight == 0` is
+    /// supposed to mean exactly that. If a counting bug clears the counter early, debug builds
+    /// panic here instead of returning a partial graph. The other failure — the counter never
+    /// reaching 0 — blocks forever on `recv`.
+    #[cfg(debug_assertions)]
+    fn debug_assert_roots_finished(&self) {
+        for (id, group) in self.groups.iter().enumerate() {
+            debug_assert!(
+                group.merged_into.is_some() || group.finished,
+                "group {id} is still unfinished at the end of the graph walk"
+            );
+        }
+    }
 }
 
 /// Output of `Runtime::process_path`
@@ -365,7 +505,7 @@ impl Runtime {
         tx_error: Option<&'a DiagnosticSender>,
         on_module_to_lint: impl Fn(&'a Self, ModuleToLint) + Send + Sync + Clone + 'a,
     ) {
-        if self.resolver.is_none() {
+        if !self.is_cross_module() {
             paths.par_iter().for_each(|path| {
                 let output =
                     self.process_path(file_system, paths, path, check_syntax_errors, tx_error);
@@ -407,33 +547,44 @@ impl Runtime {
 
         // Create a sorted copy of paths for processing
         let mut sorted_paths: Vec<_> = paths.iter().cloned().collect();
-        // Sort by path length descending - longer paths tend to be deeper in the directory tree.
-        // This achieves the "deeper paths first" heuristic described above in O(1) per comparison.
-        sorted_paths.par_sort_unstable_by(|a, b| b.len().cmp(&a.len()));
+        // Longer paths first: they tend to be deeper in the directory tree, which is the
+        // "deeper paths first" heuristic described above. Length differs on the common path,
+        // so that comparison stays O(1). Equal lengths tie-break on path bytes. Without that,
+        // `par_sort_unstable_by` may order equal-length paths differently each run and the
+        // groups change with it.
+        sorted_paths.par_sort_unstable_by(|a, b| b.len().cmp(&a.len()).then_with(|| a.cmp(b)));
 
-        // The general idea is processing `sorted_paths` and their dependencies in groups. We start from a group of modules
-        // in `sorted_paths` that is small enough to hold in memory but big enough to make use of the rayon thread pool.
-        // We build the module graph from one group, run lint on them, drop sources and semantics but keep the module
-        // graph, and then move on to the next group.
-        // This size is empirical based on AFFiNE@97cc814a.
+        // The general idea is processing `sorted_paths` and their dependencies in groups. A group starts from modules
+        // in `sorted_paths` and grows with their dependencies. When all modules in a group are processed, we run lint
+        // on the group's modules to be linted and drop their sources and semantics, but keep the module graph.
+        //
+        // `threads * 4` was measured on AFFiNE@97cc814a when the next group waited for the previous one to finish.
+        // Groups overlap now, so this is the size of one batch, not the number of files resident at once.
         let group_size = rayon::current_num_threads() * 4;
 
-        // Stores modules that belongs to `self.paths` in current group.
-        // They are passed to `on_module_to_lint` at the end of each group.
-        let mut modules_to_lint: Vec<ModuleToLint> = Vec::with_capacity(group_size);
+        // New batches start while earlier ones are still open, so the pool does not go idle at the end of a batch.
+        // The loop condition is `entries_in_flight < 2 * group_size`, and the batch just started can hold another
+        // `group_size` entries, so unfinished batches can contain `3 * group_size - 1` entry files. Dependencies
+        // pulled in by those entries (including lint targets discovered as dependencies, and groups merged into
+        // one component) are not counted by `entries_in_flight`.
+        let max_entries_in_flight = group_size * 2;
 
         // Set self to immutable reference so it can be shared among spawned tasks.
         let me: &Self = self;
 
-        // `encountered_paths` prevents duplicated processing.
-        // It is a superset of keys of `modules_by_path` as it also contains paths that are queued to process.
-        let mut encountered_paths =
-            FxHashSet::<Arc<OsStr>>::with_capacity_and_hasher(sorted_paths.len(), FxBuildHasher);
+        // `encountered_paths` maps paths that are queued to process to the id of the group they were queued in.
+        // It prevents duplicated processing. Its keys are a superset of keys of `modules_by_path`.
+        let mut encountered_paths = FxHashMap::<Arc<OsStr>, usize>::with_capacity_and_hasher(
+            sorted_paths.len(),
+            FxBuildHasher,
+        );
 
-        // Resolved module requests from modules in current group.
-        // This is used to populate `loaded_modules` at the end of each group.
-        let mut module_paths_and_resolved_requests =
-            Vec::<(Arc<OsStr>, SmallVec<[Vec<ResolvedModuleRequest>; 1]>)>::new();
+        let mut groups = ModuleGroups::default();
+
+        // How many modules from `sorted_paths` started unfinished groups.
+        // A group finishes only after every module queued into it has been processed. The loop starts any
+        // further groups before testing this, so zero means every file has been processed.
+        let mut entries_in_flight = 0usize;
 
         // There are two sets of threads: threads for the graph and threads for the modules.
         // - The graph thread is the one thread that calls `resolve_modules`. It's the only thread that updates the module graph, so no need for locks.
@@ -443,98 +594,119 @@ impl Runtime {
         // This channel is for posting `ModuleProcessOutput` from module threads to the graph thread.
         let (tx_process_output, rx_process_output) = mpsc::channel::<ModuleProcessOutput>();
 
+        // Whether the graph thread is one of rayon's worker threads. It's not when `scope` was created by
+        // `rayon::in_place_scope` outside of the thread pool.
+        let is_worker_thread = rayon::current_thread_index().is_some();
+
+        let spawn_process_path = |path: Arc<OsStr>| {
+            let tx_process_output = tx_process_output.clone();
+            scope.spawn(move |_| {
+                tx_process_output
+                    .send(me.process_path(file_system, paths, &path, check_syntax_errors, tx_error))
+                    .unwrap();
+            });
+        };
+
         // The cursor of `sorted_paths` that points to the start path of the next group.
         let mut group_start = 0usize;
 
-        // The group loop. Each iteration of this loop processes a group of modules.
-        while group_start < sorted_paths.len() {
-            // How many modules are queued but not processed in this group.
-            let mut pending_module_count = 0;
-
-            // Bootstrap the group by processing modules to be linted.
-            while pending_module_count < group_size && group_start < sorted_paths.len() {
-                let path = &sorted_paths[group_start];
-                group_start += 1;
-
-                // Check if this module to be linted is already processed as a dependency in former groups
-                if encountered_paths.insert(Arc::clone(path)) {
-                    pending_module_count += 1;
-                    let path = Arc::clone(path);
-                    let tx_process_output = tx_process_output.clone();
-                    scope.spawn(move |_| {
-                        tx_process_output
-                            .send(me.process_path(
-                                file_system,
-                                paths,
-                                &path,
-                                check_syntax_errors,
-                                tx_error,
-                            ))
-                            .unwrap();
-                    });
+        // Each iteration of this loop adds one module to the module graph.
+        loop {
+            // Start new groups by processing modules to be linted.
+            while entries_in_flight < max_entries_in_flight && group_start < sorted_paths.len() {
+                // Paths already queued as dependencies of an earlier group are skipped. The group is
+                // created only after the batch is known, so its id is the index `push` assigns.
+                let mut batch = Vec::new();
+                while batch.len() < group_size && group_start < sorted_paths.len() {
+                    let path = Arc::clone(&sorted_paths[group_start]);
+                    group_start += 1;
+                    if !encountered_paths.contains_key(&path) {
+                        batch.push(path);
+                    }
+                }
+                if batch.is_empty() {
+                    break;
+                }
+                let group_id = groups.next_id();
+                let entry_count = batch.len();
+                groups.push(entry_count);
+                entries_in_flight += entry_count;
+                for path in batch {
+                    encountered_paths.insert(Arc::clone(&path), group_id);
+                    spawn_process_path(path);
                 }
             }
 
-            // Loop until all queued modules in this group are processed.
-            // Each iteration adds one module to the module graph.
-            while pending_module_count > 0 {
-                let Ok(ModuleProcessOutput { path, mut processed_module }) =
-                    // Most heavy-lifting is done in the module threads. The graph thread would be mostly idle if it
-                    // only updates the graph and blocks on awaiting `rx_process_output`.
-                    // To avoid this waste, the graph module peeks the `rx_process_output` without blocking, and ...
-                    rx_process_output.try_recv()
-                else {
+            if entries_in_flight == 0 {
+                #[cfg(debug_assertions)]
+                groups.debug_assert_roots_finished();
+                break;
+            }
+
+            let ModuleProcessOutput { path, mut processed_module } = if is_worker_thread {
+                // Most heavy-lifting is done in the module threads. The graph thread would be mostly idle if it
+                // only updates the graph and blocks on awaiting `rx_process_output`.
+                // To avoid this waste, the graph module peeks the `rx_process_output` without blocking, and ...
+                let Ok(output) = rx_process_output.try_recv() else {
                     // yield if `rx_process_output` is empty, giving rayon chances to dispatch module processing or linting to this thread.
                     rayon::yield_now();
                     continue;
                 };
-                pending_module_count -= 1;
+                output
+            } else {
+                // The graph thread is not one of rayon's worker threads, so blocking it doesn't take a thread
+                // away from module processing or linting. Blocking also means that the graph thread picks up
+                // each output as soon as it arrives, rather than after finishing whatever job it yielded to.
+                //
+                // A module job that panics never sends, so this `recv` does not return and rayon's scope never
+                // reaches panic propagation. Release builds set `panic = "abort"`. The previous `try_recv` loop
+                // hung in that situation as well (spinning), so blocking here is not a new failure mode.
+                rx_process_output.recv().unwrap()
+            };
 
-                // Spawns tasks for processing dependencies to module threads
-                for record_result in &processed_module.section_module_records {
-                    let Ok(record) = record_result.as_ref() else {
-                        continue;
-                    };
-                    for request in &record.resolved_module_requests {
-                        let dep_path = &request.resolved_requested_path;
-                        if encountered_paths.insert(Arc::clone(dep_path)) {
-                            scope.spawn({
-                                let tx_process_output = tx_process_output.clone();
-                                let dep_path = Arc::clone(dep_path);
-                                move |_| {
-                                    tx_process_output
-                                        .send(me.process_path(
-                                            file_system,
-                                            paths,
-                                            &dep_path,
-                                            check_syntax_errors,
-                                            tx_error,
-                                        ))
-                                        .unwrap();
-                                }
-                            });
-                            pending_module_count += 1;
-                        }
+            let mut group_id = groups.find(encountered_paths[&path]);
+            groups.get_mut(group_id).pending_module_count -= 1;
+
+            // Spawns tasks for processing dependencies to module threads
+            for record_result in &processed_module.section_module_records {
+                let Ok(record) = record_result.as_ref() else {
+                    continue;
+                };
+                for request in &record.resolved_module_requests {
+                    let dep_path = &request.resolved_requested_path;
+                    // Most dependencies are already queued, so look up before cloning the `Arc` for the key.
+                    if let Some(&queued_in) = encountered_paths.get(dep_path) {
+                        // If the dependency is in another unfinished group, it or its dependencies may not be
+                        // processed yet, so neither group can finish before the other. Merge them into one group.
+                        let dep_group_id = groups.find(queued_in);
+                        group_id = groups.merge_if_unfinished(group_id, dep_group_id);
+                    } else {
+                        encountered_paths.insert(Arc::clone(dep_path), group_id);
+                        spawn_process_path(Arc::clone(dep_path));
+                        groups.get_mut(group_id).pending_module_count += 1;
                     }
                 }
+            }
 
-                // Populate this module to `modules_by_path`
-                self.modules_by_path.pin().insert(
-                    Arc::clone(&path),
-                    processed_module
-                        .section_module_records
-                        .iter()
-                        .filter_map(|resolved_module_record| {
-                            Some(Arc::clone(&resolved_module_record.as_ref().ok()?.module_record))
-                        })
-                        .collect(),
-                );
+            // Populate this module to `modules_by_path`
+            self.modules_by_path.pin().insert(
+                Arc::clone(&path),
+                processed_module
+                    .section_module_records
+                    .iter()
+                    .filter_map(|resolved_module_record| {
+                        Some(Arc::clone(&resolved_module_record.as_ref().ok()?.module_record))
+                    })
+                    .collect(),
+            );
 
-                // We want to write to `loaded_modules` when the dependencies of this module are processed, but it's hard
-                // to track when that happens, so here we store dependency relationships in `module_paths_and_resolved_requests`,
-                // and use it to populate `loaded_modules` after `pending_module_count` reaches 0. That's when all dependencies
-                // in this group are processed.
-                module_paths_and_resolved_requests.push((
+            // We want to write to `loaded_modules` when the dependencies of this module are processed, but it's hard
+            // to track when that happens, so here we store dependency relationships in `module_paths_and_resolved_requests`,
+            // and use it to populate `loaded_modules` after the group's `pending_module_count` reaches 0. That's when all
+            // dependencies in this group are processed.
+            {
+                let group = groups.get_mut(group_id);
+                group.module_paths_and_resolved_requests.push((
                     Arc::clone(&path),
                     processed_module
                         .section_module_records
@@ -550,25 +722,41 @@ impl Runtime {
                 if let Some(entry_module) =
                     ModuleToLint::from_processed_module(path, processed_module)
                 {
-                    modules_to_lint.push(entry_module);
+                    group.modules_to_lint.push(entry_module);
                 }
-            } // while pending_module_count > 0
+
+                if group.pending_module_count > 0 {
+                    continue;
+                }
+            }
+
+            #[cfg(debug_assertions)]
+            groups.debug_assert_finished_group_deps(group_id, &encountered_paths);
 
             // Now all dependencies in this group are processed.
-            // Writing to `loaded_modules` based on `module_paths_and_resolved_requests`
-            module_paths_and_resolved_requests.par_drain(..).for_each(|(path, requested_module_paths)| {
+            let group = groups.get_mut(group_id);
+            group.finished = true;
+            entries_in_flight -= group.entry_count;
+
+            // Writing to `loaded_modules` based on `module_paths_and_resolved_requests`.
+            // `take` drops the vec's capacity; `drain` would keep it for the rest of the run.
+            // This stays serial: from a non-worker graph thread, a parallel iterator is injected behind the parses
+            // already queued, and the graph thread would block until they all ran. It must also finish before the
+            // lint jobs below are spawned, because they read `loaded_modules` of this group and finished groups.
+            let modules_by_path = self.modules_by_path.pin();
+            for (path, requested_module_paths) in
+                take(&mut group.module_paths_and_resolved_requests)
+            {
                 if requested_module_paths.is_empty() {
-                    return;
+                    continue;
                 }
-                let modules_by_path = self.modules_by_path.pin();
                 let records = modules_by_path.get(&path).unwrap();
                 assert_eq!(
-                    records.len(), requested_module_paths.len(),
+                    records.len(),
+                    requested_module_paths.len(),
                     "This is an internal logic error. Please file an issue at https://github.com/oxc-project/oxc/issues",
                 );
-                for (record, requested_module_paths) in
-                    records.iter().zip(requested_module_paths)
-                {
+                for (record, requested_module_paths) in records.iter().zip(requested_module_paths) {
                     let mut loaded_modules = record.write_loaded_modules();
                     for request in requested_module_paths {
                         // TODO: revise how to store multiple sections in loaded_modules
@@ -580,9 +768,11 @@ impl Runtime {
                         loaded_modules.insert(request.specifier, Arc::downgrade(dep_module_record));
                     }
                 }
-            });
-            #[expect(clippy::iter_with_drain)]
-            for entry in modules_to_lint.drain(..) {
+            }
+
+            // From a non-worker these land on rayon's FIFO injector, behind parses already queued.
+            // Running them first was measured on VS Code and AFFiNE (4 cores) and did not lower peak RSS.
+            for entry in take(&mut group.modules_to_lint) {
                 let on_entry = on_module_to_lint.clone();
                 scope.spawn(move |_| {
                     on_entry(me, entry);
@@ -602,6 +792,20 @@ impl Runtime {
         self.run_impl::<TIMINGS>(file_system, paths, tx_error, diff_manager, rule_timing_store);
     }
 
+    fn is_cross_module(&self) -> bool {
+        self.resolver.is_some()
+    }
+
+    fn with_module_scope<'scope>(&self, op: impl FnOnce(&Scope<'scope>) + Send) {
+        // With imports, keep the graph loop on the caller so waiting for parses leaves all workers
+        // available. Without imports, `scope` runs the parallel parse/lint loop on a pool worker.
+        if self.is_cross_module() {
+            rayon::in_place_scope(op);
+        } else {
+            rayon::scope(op);
+        }
+    }
+
     fn run_impl<const TIMINGS: bool>(
         &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
@@ -613,7 +817,7 @@ impl Runtime {
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
-        rayon::scope(|scope| {
+        self.with_module_scope(|scope| {
             self.resolve_modules(
                 file_system,
                 &paths_set,
@@ -759,7 +963,7 @@ impl Runtime {
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
         let messages = Mutex::new(Vec::<Message>::new());
-        rayon::scope(|scope| {
+        self.with_module_scope(|scope| {
             self.resolve_modules(
                 file_system,
                 &paths_set,
@@ -847,7 +1051,7 @@ impl Runtime {
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
-        rayon::scope(|scope| {
+        self.with_module_scope(|scope| {
             self.resolve_modules(
                 file_system,
                 &paths_set,
@@ -904,7 +1108,7 @@ impl Runtime {
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
         let messages = Mutex::new(Vec::<Message>::new());
-        rayon::scope(|scope| {
+        self.with_module_scope(|scope| {
             self.resolve_modules(
                 file_system,
                 &paths_set,
@@ -1181,5 +1385,145 @@ impl Runtime {
                 .collect();
         }
         Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic, tokens))
+    }
+}
+
+#[cfg(test)]
+mod module_groups {
+    use std::{ffi::OsStr, sync::Arc};
+
+    use smallvec::SmallVec;
+
+    use super::ModuleGroups;
+
+    fn requests(path: &str) -> (Arc<OsStr>, SmallVec<[Vec<super::ResolvedModuleRequest>; 1]>) {
+        (Arc::from(OsStr::new(path)), SmallVec::new())
+    }
+
+    #[test]
+    fn push_assigns_ids_and_counts() {
+        let mut groups = ModuleGroups::default();
+        assert_eq!(groups.next_id(), 0);
+        groups.push(4);
+        assert_eq!(groups.next_id(), 1);
+        groups.push(1);
+
+        assert_eq!(groups.get_mut(0).entry_count, 4);
+        assert_eq!(groups.get_mut(0).pending_module_count, 4);
+        assert!(!groups.get_mut(0).finished);
+        assert!(groups.get_mut(0).merged_into.is_none());
+        assert_eq!(groups.get_mut(1).entry_count, 1);
+        assert_eq!(groups.get_mut(1).pending_module_count, 1);
+        assert_eq!(groups.find(0), 0);
+        assert_eq!(groups.find(1), 1);
+    }
+
+    #[test]
+    fn merge_accumulates_into_the_larger_group_and_zeroes_the_donor() {
+        let mut groups = ModuleGroups::default();
+        groups.push(2);
+        groups.push(5);
+        // Extra dependencies queued into group 1, distinct from its entry count.
+        groups.get_mut(1).pending_module_count += 3;
+        // Group 0 has more recorded modules, so it is the survivor even though it has fewer entries.
+        groups.get_mut(0).module_paths_and_resolved_requests.push(requests("a.ts"));
+        groups.get_mut(0).module_paths_and_resolved_requests.push(requests("b.ts"));
+        groups.get_mut(1).module_paths_and_resolved_requests.push(requests("c.ts"));
+
+        let root = groups.merge(0, 1);
+
+        assert_eq!(root, 0);
+        assert_eq!(groups.get_mut(0).entry_count, 7);
+        assert_eq!(groups.get_mut(0).pending_module_count, 10);
+        assert_eq!(groups.get_mut(0).module_paths_and_resolved_requests.len(), 3);
+        assert!(groups.get_mut(0).merged_into.is_none());
+        // `take` replaces the donor with `Default` before `merged_into` is set.
+        assert_eq!(groups.get_mut(1).entry_count, 0);
+        assert_eq!(groups.get_mut(1).pending_module_count, 0);
+        assert!(groups.get_mut(1).module_paths_and_resolved_requests.is_empty());
+        assert!(!groups.get_mut(1).finished);
+        assert_eq!(groups.get_mut(1).merged_into, Some(0));
+    }
+
+    #[test]
+    fn merge_into_larger_dependency_group_changes_group_id() {
+        let mut groups = ModuleGroups::default();
+        groups.push(2);
+        groups.push(1);
+        groups.get_mut(0).module_paths_and_resolved_requests.push(requests("a.ts"));
+        // The dependency group has more recorded modules, so it becomes the root.
+        groups.get_mut(1).module_paths_and_resolved_requests.push(requests("b.ts"));
+        groups.get_mut(1).module_paths_and_resolved_requests.push(requests("c.ts"));
+        groups.get_mut(1).pending_module_count += 2;
+
+        let group_id = groups.merge_if_unfinished(0, 1);
+
+        assert_eq!(group_id, 1);
+        assert_eq!(groups.find(0), group_id);
+        assert_eq!(groups.find(1), group_id);
+        assert_eq!(groups.get_mut(group_id).entry_count, 3);
+        assert_eq!(groups.get_mut(group_id).pending_module_count, 5);
+        let paths: Vec<_> = groups
+            .get_mut(group_id)
+            .module_paths_and_resolved_requests
+            .iter()
+            .map(|(path, _)| path.as_ref())
+            .collect();
+        assert_eq!(paths, [OsStr::new("b.ts"), OsStr::new("c.ts"), OsStr::new("a.ts")]);
+        assert!(groups.get_mut(group_id).merged_into.is_none());
+        assert!(!groups.get_mut(group_id).finished);
+        assert_eq!(groups.get_mut(0).merged_into, Some(group_id));
+        assert_eq!(groups.get_mut(0).entry_count, 0);
+        assert_eq!(groups.get_mut(0).pending_module_count, 0);
+        assert!(groups.get_mut(0).module_paths_and_resolved_requests.is_empty());
+    }
+
+    #[test]
+    fn find_compresses_a_merge_chain() {
+        let mut groups = ModuleGroups::default();
+        groups.push(1);
+        groups.push(2);
+        groups.push(4);
+
+        // 2 is merged into 1, then 1 is merged into 0. 2's parent is still 1 until `find`.
+        assert_eq!(groups.merge(1, 2), 1);
+        assert_eq!(groups.merge(0, 1), 0);
+        assert_eq!(groups.get_mut(2).merged_into, Some(1));
+        assert_eq!(groups.get_mut(1).merged_into, Some(0));
+
+        assert_eq!(groups.find(2), 0);
+        assert_eq!(groups.get_mut(2).merged_into, Some(0));
+        assert_eq!(groups.get_mut(1).merged_into, Some(0));
+        assert_eq!(groups.find(0), 0);
+        assert!(groups.get_mut(0).merged_into.is_none());
+        assert_eq!(groups.get_mut(0).entry_count, 7);
+        assert_eq!(groups.get_mut(1).entry_count, 0);
+        assert_eq!(groups.get_mut(2).entry_count, 0);
+    }
+
+    #[test]
+    fn finished_groups_are_not_merged() {
+        let mut groups = ModuleGroups::default();
+        groups.push(3);
+        groups.push(4);
+        groups.get_mut(0).finished = true;
+
+        assert_eq!(groups.merge_if_unfinished(1, 0), 1);
+        assert!(groups.get_mut(0).merged_into.is_none());
+        assert_eq!(groups.get_mut(0).entry_count, 3);
+        assert!(groups.get_mut(0).finished);
+        assert!(groups.get_mut(1).merged_into.is_none());
+        assert_eq!(groups.get_mut(1).entry_count, 4);
+
+        // The same root is not merged with itself.
+        assert_eq!(groups.merge_if_unfinished(1, 1), 1);
+        assert_eq!(groups.get_mut(1).entry_count, 4);
+
+        // Two unfinished groups still merge.
+        groups.push(1);
+        assert_eq!(groups.merge_if_unfinished(1, 2), 1);
+        assert_eq!(groups.get_mut(2).merged_into, Some(1));
+        assert_eq!(groups.get_mut(2).entry_count, 0);
+        assert_eq!(groups.get_mut(1).entry_count, 5);
     }
 }
