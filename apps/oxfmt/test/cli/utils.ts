@@ -340,12 +340,9 @@ function normalizeOutput(output: string, cwd: string): string {
 
   return (
     output
-      // Collapse Vite+ diagnostics first, they contain ANSI codes of their own
-      .replace(
-        // oxlint-disable-next-line no-control-regex
-        /vite\.config\.ts \(\d+:\d+\) [\s\S]*?─╯(?:\x1b\[[0-9;]*m)*\n?/g,
-        "<Vite+ diagnostic>\n",
-      )
+      // Collapse Vite+ diagnostics first, they contain ANSI codes of their own.
+      // e.g. `vite.config.ts (1:2) [UNRESOLVED_IMPORT] ...`, followed by ` - ...` detail lines
+      .replace(/vite\.config\.ts \(\d+:\d+\) [^\n]*(?:\n - [^\n]*)*\n?/g, "<Vite+ diagnostic>\n")
       // Make ANSI style codes visible so snapshots can pin color behavior
       // oxlint-disable-next-line no-control-regex
       .replace(/\x1b/g, "<esc>")
