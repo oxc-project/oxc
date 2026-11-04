@@ -54,7 +54,7 @@ impl<'a> Normalize {
 impl<'a> Traverse<'a> for Normalize {
     fn exit_program(&mut self, node: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         if self.options.remove_unnecessary_use_strict && node.source_type.is_module() {
-            node.directives.drain_filter(|d| d.directive.as_str() == "use strict");
+            node.directives.drain_filter(|d| d.is_use_strict());
         }
     }
 
@@ -680,7 +680,7 @@ impl<'a> Normalize {
                 .map(|scope_id| ctx.scoping().scope_flags(scope_id))
                 .is_some_and(ScopeFlags::is_strict_mode)
         {
-            body.directives.drain_filter(|d| d.directive.as_str() == "use strict");
+            body.directives.drain_filter(|d| d.is_use_strict());
         }
     }
 }

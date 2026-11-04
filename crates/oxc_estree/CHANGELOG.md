@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.157.0] - 2026-11-02
+
+### ⚡ Performance
+
+- 8239dac parser: Replace dragonbox_ecma with zmij_ecma (#28282) (Boshen)
+
+## [0.156.0] - 2026-10-27
+
+### ⚡ Performance
+
+- 1ed93af data_structures: Copy short strings without a memcpy call (#27953) (leaysgur)
+
 ## [0.137.0] - 2026-06-18
 
 ### 💥 BREAKING CHANGES

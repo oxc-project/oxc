@@ -135,6 +135,30 @@ export function Component({ value }) {
 }
 
 #[test]
+fn bails_out_when_manual_memoization_cannot_be_preserved() {
+    let sources = [
+        include_str!("../fixtures/keep-manual-memo-missing-deps-rest-props.jsx"),
+        include_str!("../fixtures/keep-manual-memo-missing-deps.jsx"),
+        include_str!("../fixtures/keep-manual-memo-extra-deps.jsx"),
+        include_str!("../fixtures/keep-manual-memo-use-callback-partial-deps.jsx"),
+        include_str!("../fixtures/keep-manual-memo-non-inline-callback.jsx"),
+        include_str!("../fixtures/keep-manual-memo-one-of-two.jsx"),
+        include_str!("../fixtures/keep-manual-memo-no-hoisted-property-read.jsx"),
+        include_str!("../fixtures/keep-manual-memo-set-state-still-bails.jsx"),
+    ];
+
+    for source in sources {
+        let allocator = Allocator::default();
+        let (_program, result) =
+            transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+        assert!(!result.changed, "manual memoization must be left untouched:\n{source}");
+        assert!(!result.fatal, "bailouts must be recoverable: {:?}", result.diagnostics);
+        assert!(result.diagnostics.has_errors(), "expected a bailout diagnostic:\n{source}");
+    }
+}
+
+#[test]
 fn skips_non_react_code() {
     let source = "function add(a, b) {\n  return a + b;\n}\n";
     let allocator = Allocator::default();

@@ -1,4 +1,5 @@
 use oxc_ast::AstKind;
+use oxc_semantic::AstNode;
 
 use crate::{
     context::LintContext,
@@ -53,12 +54,14 @@ it('bar', () => {});
 ```
 ";
 
-pub fn run<'a>(jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-    let node = jest_node.node;
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     let AstKind::CallExpression(call_expr) = node.kind() else {
         return;
     };
-    let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, jest_node, ctx) else {
+    let Some(jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx) else {
+        return;
+    };
+    let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, &jest_node, ctx) else {
         return;
     };
     let ParsedGeneralJestFnCall { kind, name, .. } = &jest_fn_call;

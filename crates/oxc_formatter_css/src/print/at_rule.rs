@@ -15,7 +15,6 @@ use oxc_css_parser::{
         SupportsConditionKind, SupportsInParens, SupportsInParensKind, SupportsNot, SupportsOr,
         TokenSeq, UnknownAtRulePrelude,
     },
-    pos::Span,
     token::{Token, TokenWithSpan},
 };
 
@@ -48,8 +47,7 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
 
     // Comments inside the params:
     // postcss keeps them embedded in the params string / media tokens; reconstruct from the source.
-    let region_end =
-        statement::params_region_end(at_rule.block.as_ref(), to_span(at_rule.span()).end, f);
+    let region_end = statement::params_region_end(at_rule.block.as_ref(), at_rule.span().end, f);
     let has_params_comments = f
         .context()
         .comments()
@@ -90,7 +88,7 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
         // so we route them through the normal structured printer
         // for internal consistency over Prettier byte-equality.
         if unknown_string_params {
-            let prelude_start = to_span(prelude.span()).start;
+            let prelude_start = prelude.span().start;
             write_verbatim_at_rule_tail(
                 name_span.end,
                 prelude_start,
@@ -173,7 +171,7 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
     if let Some(prelude) = &at_rule.prelude {
         // postcss folds a no-gap, non-paren prelude into the at-rule NAME
         // (`@page:first` stays tight); reproduce by checking the source gap.
-        let name_end = to_span(at_rule.name.span()).end;
+        let name_end = at_rule.name.span().end;
         let prelude_span = to_span(prelude.span());
         let fused =
             name_end == prelude_span.start && !source.text_for(&prelude_span).starts_with('(');
@@ -204,7 +202,7 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
     // is written here, so nothing inside the prelude is lost to the statement loop's cursor guard.
     if let Some(block) = &at_rule.block {
         let prelude_end =
-            at_rule.prelude.as_ref().map_or(name_span.end, |prelude| to_span(prelude.span()).end);
+            at_rule.prelude.as_ref().map_or(name_span.end, |prelude| prelude.span().end);
         value::write_comments_before_block(prelude_end, region_end, f);
         if !is_control_directive {
             write!(f, space());
@@ -764,17 +762,16 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
                 // oxc-css-parser's CustomSelector span excludes the leading `:`
                 write!(f, ":");
                 write!(f, text(source.text_for(&custom_span)));
-                head_separator(to_span(custom.selector.span()).end, f);
+                head_separator(custom.selector.span().end, f);
                 // Selectors share THIS group: when the prelude breaks,
                 // each selector gets its own line.
                 for (i, complex) in custom.selector.selectors.iter().enumerate() {
                     if i > 0 {
-                        let comma =
-                            custom.selector.comma_spans.get(i - 1).map(|sp| to_span(sp).start);
+                        let comma = custom.selector.comma_spans.get(i - 1).map(|sp| sp.start);
                         value::write_group_comma(comma, f);
                         write!(f, soft_line_break_or_space());
                     }
-                    value::flush_value_comments(to_span(complex.span()).start, f);
+                    value::flush_value_comments(complex.span().start, f);
                     selector::write_complex_selector(complex, f);
                 }
             });
@@ -791,12 +788,12 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
             let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 if let Some(prefix) = &namespace.prefix {
                     let span = to_span(prefix.span());
-                    let prelude_end = to_span(namespace.span()).end;
+                    let prelude_end = namespace.span().end;
                     value::write_with_comments(span, prelude_end, f, |f| {
                         write!(f, text(source.text_for(&span)));
                     });
                     write!(f, space());
-                    value::flush_value_comments(to_span(namespace.uri.span()).start, f);
+                    value::flush_value_comments(namespace.uri.span().start, f);
                 }
                 match &namespace.uri {
                     NamespacePreludeUri::Str(InterpolableStr::Literal(str)) => {
@@ -821,7 +818,7 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
             let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 for (i, layer) in layers.names.iter().enumerate() {
                     if i > 0 {
-                        let comma = layers.comma_spans.get(i - 1).map(|sp| to_span(sp).start);
+                        let comma = layers.comma_spans.get(i - 1).map(|sp| sp.start);
                         value::write_group_comma(comma, f);
                         write!(f, space());
                     }
@@ -868,10 +865,10 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
                 .map(|(i, path)| ImportPath {
                     span: path.span,
                     raw: path.raw,
-                    comma_start: import.comma_spans.get(i).map(|sp| to_span(sp).start),
+                    comma_start: import.comma_spans.get(i).map(|sp| sp.start),
                 })
                 .collect();
-            write_import_path_list(&paths, to_span(import.span()).end, f);
+            write_import_path_list(&paths, import.span().end, f);
         }
         // Only reached for SCSS-family names parsed AS CSS (see `is_value_parsed_at_rule`);
         // other `Unknown` preludes print verbatim via the `write_at_rule` early return.
@@ -897,7 +894,7 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
 
 /// One `@import` path with the start of its trailing comma (see [`value::write_group_comma`]'s pairing).
 struct ImportPath<'a> {
-    span: Span,
+    span: oxc_css_parser::Span,
     raw: &'a str,
     comma_start: Option<u32>,
 }
@@ -928,9 +925,9 @@ fn write_import_path_list<'a>(
         let mut trailing: Vec<Option<u32>> = vec![None; n];
         let mut leads: Vec<Vec<comments::CssComment>> = Vec::with_capacity(n);
         for (i, path) in paths.iter().enumerate() {
-            let path_start = to_span(&path.span).start;
+            let path_start = path.span.start;
             let prev = (i > 0).then(|| &paths[i - 1]);
-            let prev_end = prev.map(|prev| to_span(&prev.span).end);
+            let prev_end = prev.map(|prev| prev.span.end);
             let mut lead: Vec<comments::CssComment> = all
                 .iter()
                 .filter(|c| c.span.end <= path_start)
@@ -953,10 +950,7 @@ fn write_import_path_list<'a>(
         let chunk_w: Vec<u32> = paths
             .iter()
             .enumerate()
-            .map(|(i, p)| {
-                let span = to_span(&p.span);
-                span.end - span.start + u32::from(i + 1 < n)
-            })
+            .map(|(i, p)| p.span.end - p.span.start + u32::from(i + 1 < n))
             .collect();
         let mut breaks_before = vec![false; n];
         let mut x = 8; // after `@import `
@@ -999,7 +993,7 @@ fn write_import_path_list<'a>(
         write!(f, indent(&body));
     } else if has_comments {
         let path = &paths[0];
-        let path_start = to_span(&path.span).start;
+        let path_start = path.span.start;
         let lead: Vec<comments::CssComment> =
             f.context().comments().take_before(path_start).to_vec();
         for &comment in &lead {
@@ -1095,9 +1089,8 @@ fn write_token_value<'a>(
                 write!(f, ",");
                 let sep_blank =
                     groups_ref[i - 1].iter().any(|t| matches!(&t.token, Token::Colon(_))) && {
-                        let prev_end = groups_ref[i - 1].last().map_or(0, |t| to_span(&t.span).end);
-                        let next_start =
-                            group_tokens.first().map_or(prev_end, |t| to_span(&t.span).start);
+                        let prev_end = groups_ref[i - 1].last().map_or(0, |t| t.span.end);
+                        let next_start = group_tokens.first().map_or(prev_end, |t| t.span.start);
                         comments::classify_gap(source.bytes_range(prev_end, next_start))
                             == comments::Gap::Blank
                     };
@@ -1139,7 +1132,7 @@ fn write_token_comma_group_after<'a>(
         && tokens.len() > 1
         && matches!(&tokens[1].token, Token::LParen(_))
         && matches!(&tokens[0].token, Token::Ident(_))
-        && !source.text_for(&to_span(&tokens[0].span)).eq_ignore_ascii_case("if");
+        && !source.text_for(&to_span(tokens[0].span)).eq_ignore_ascii_case("if");
 
     let mut filler = f.fill();
     if let Some(head) = head {
@@ -1169,7 +1162,7 @@ fn write_token_comma_group_after<'a>(
             if matches!(&curr.token, Token::LParen(_) | Token::LBracket(_) | Token::LBrace(_)) {
                 // Opener glues to the run when fused in source,
                 // after a colon (`$arg: (...)`), or as a call (`name(...)`).
-                let glued = to_span(&prev.span).end == to_span(&curr.span).start
+                let glued = is_glued(prev.span, curr.span)
                     || matches!(&prev.token, Token::Colon(_))
                     || (run_end == 1 && hug_lparen);
                 if !glued {
@@ -1188,7 +1181,7 @@ fn write_token_comma_group_after<'a>(
                 run_end = j;
                 continue;
             }
-            let tight = to_span(&prev.span).end == to_span(&curr.span).start
+            let tight = is_glued(prev.span, curr.span)
                 || matches!(
                     &curr.token,
                     Token::Comma(_)
@@ -1297,7 +1290,7 @@ fn write_token_run<'a>(run: &[TokenWithSpan<'a>], hug_lparen: bool, f: &mut CssF
                 if j > 0 {
                     write_token_pair_space(run, j, hug_lparen, f);
                 }
-                let span = to_span(&tok.span);
+                let span = to_span(tok.span);
                 write!(f, text(source.text_for(&span)));
                 j += 1;
                 continue;
@@ -1334,7 +1327,7 @@ fn write_token_run<'a>(run: &[TokenWithSpan<'a>], hug_lparen: bool, f: &mut CssF
         if j > 0 {
             write_token_pair_space(run, j, hug_lparen, f);
         }
-        let span = to_span(&tok.span);
+        let span = to_span(tok.span);
         match &tok.token {
             Token::Str(_) => {
                 write_raw_str(source.text_for(&span), f);
@@ -1370,7 +1363,7 @@ fn write_token_pair_space<'a>(
     let source = f.context().source_text();
     let prev = &run[j - 1];
     let tok = &run[j];
-    let gap = to_span(&prev.span).end != to_span(&tok.span).start;
+    let gap = !is_glued(prev.span, tok.span);
     let wordish = |t: &Token<'_>| {
         matches!(t, Token::Ident(_) | Token::DollarVar(_) | Token::AtKeyword(_) | Token::RParen(_))
     };
@@ -1392,7 +1385,7 @@ fn write_token_pair_space<'a>(
         (_, Token::LParen(_)) if j == 1 && hug_lparen => false,
         (Token::Colon(_) | Token::Comma(_), _) => true,
         (Token::Ident(_), Token::Asterisk(_))
-            if !gap && source.text_for(&to_span(&prev.span)).ends_with('-') =>
+            if !gap && source.text_for(&to_span(prev.span)).ends_with('-') =>
         {
             false
         }
@@ -1446,11 +1439,11 @@ fn write_import_prelude<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatter<'_,
     // `oxc-css-parser` routes Scss/Sass there directly).
     // Rebuild the typed path list and print it through the same comment-aware fill.
     if let Some(paths) = import_as_path_list(import, f) {
-        write_import_path_list(&paths, to_span(import.span()).end, f);
+        write_import_path_list(&paths, import.span().end, f);
         return;
     }
 
-    let prelude_end = to_span(import.span()).end;
+    let prelude_end = import.span().end;
     // Non-standard import tail (`@import "a", "b"` / `@import "a" b c(d)`):
     // reference compilers accept an arbitrary post-URL mix of idents,
     // functions, parens, and comma-chained imports; oxc-css-parser keeps it as raw tokens
@@ -1638,7 +1631,7 @@ fn push_media_condition_words<'b, 'a>(
     for kind in kinds {
         let (keyword, in_parens) = split_media_condition_kind(kind);
         match keyword {
-            Some(keyword) if is_glued(keyword.span(), &in_parens.span) => {
+            Some(keyword) if is_glued(keyword.span(), in_parens.span) => {
                 words.push(ImportWord::GluedCall(keyword, in_parens));
             }
             Some(keyword) => {
@@ -1679,13 +1672,13 @@ fn import_as_path_list<'a>(
             Token::Comma(_) if expect_comma => {
                 expect_comma = false;
                 if let Some(last) = paths.last_mut() {
-                    last.comma_start = Some(to_span(&tok.span).start);
+                    last.comma_start = Some(tok.span.start);
                 }
             }
             Token::Str(_) if !expect_comma => {
                 paths.push(ImportPath {
                     span: tok.span,
-                    raw: source.text_for(&to_span(&tok.span)),
+                    raw: source.text_for(&to_span(tok.span)),
                     comma_start: None,
                 });
                 expect_comma = true;
@@ -1700,7 +1693,7 @@ fn import_as_path_list<'a>(
 fn write_import_prelude_inner<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
     // A `//` between the parts breaks the prelude either way
-    let prelude_end = to_span(import.span()).end;
+    let prelude_end = import.span().end;
     value::write_with_comments(to_span(import.href.span()), prelude_end, f, |f| {
         write_import_href(&import.href, f);
     });
@@ -1718,7 +1711,7 @@ fn write_import_prelude_inner<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatt
         });
     }
     if let Some(media) = &import.media {
-        let media_span = to_span(media.span());
+        let media_span = media.span();
         head_separator(media_span.end, f);
         value::flush_value_comments(media_span.start, f);
         // No own group/indent: the queries share the prelude-level group
@@ -1781,7 +1774,7 @@ fn write_import_modifiers<'a>(
     for (i, &(group_values, comma)) in groups.iter().enumerate().skip(1) {
         let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
             if let Some(first) = group_values.first() {
-                value::flush_value_comments(to_span(first.span()).start, f);
+                value::flush_value_comments(first.span().start, f);
             }
             let words = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 write_import_modifier_group(None, group_values, f);
@@ -1868,7 +1861,7 @@ fn write_import_href<'a>(href: &ImportPreludeHref<'a>, f: &mut CssFormatter<'_, 
 /// oxc-css-parser parses the options form as a dedicated `LessImportPrelude`,
 /// which otherwise falls into the verbatim catch-all and skips quote normalization.
 fn write_less_import_prelude<'a>(import: &LessImportPrelude<'a>, f: &mut CssFormatter<'_, 'a>) {
-    if !has_unclaimed_comments_before(to_span(&import.span).end, f) {
+    if !has_unclaimed_comments_before(import.span.end, f) {
         let mut groups: Vec<Vec<ImportWord<'_, 'a>>> = vec![vec![]];
         if !import.options.names.is_empty() {
             groups[0].push(ImportWord::LessOptions(&import.options));
@@ -1917,8 +1910,7 @@ fn write_media_query_list<'a>(list: &MediaQueryList<'a>, f: &mut CssFormatter<'_
     // The indent governs the inter-query `,`-breaks and a `//` break inside a query;
     // without either a single query never breaks, and dropping the indent avoids
     // leaking a level into an embedded `${}` placeholder break (a media value is flat text, like Prettier).
-    let breaks_inside =
-        f.context().comments().iter_before(to_span(list.span()).end).any(|c| c.inline);
+    let breaks_inside = f.context().comments().iter_before(list.span().end).any(|c| c.inline);
     if list.queries.len() > 1 || breaks_inside {
         write!(f, group(&indent(&body)));
     } else {
@@ -1931,7 +1923,7 @@ fn write_media_query_list<'a>(list: &MediaQueryList<'a>, f: &mut CssFormatter<'_
 fn write_media_query_list_inner<'a>(list: &MediaQueryList<'a>, f: &mut CssFormatter<'_, 'a>) {
     for (i, query) in list.queries.iter().enumerate() {
         if i > 0 {
-            value::write_group_comma(list.comma_spans.get(i - 1).map(|sp| to_span(sp).start), f);
+            value::write_group_comma(list.comma_spans.get(i - 1).map(|sp| sp.start), f);
             write!(f, soft_line_break_or_space());
         }
         write_media_query(query, f);
@@ -1944,7 +1936,7 @@ fn write_media_query<'a>(query: &MediaQuery<'a>, f: &mut CssFormatter<'_, 'a>) {
         MediaQuery::ConditionOnly(condition) => write_media_condition(condition, f),
         MediaQuery::WithType(with_type) => {
             // A `//` among the words breaks the query
-            let query_end = to_span(query.span()).end;
+            let query_end = query.span().end;
             let write_word = |span: oxc_span::Span, f: &mut CssFormatter<'_, 'a>| {
                 value::write_with_comments(span, query_end, f, |f| {
                     write_maybe_lowercase(source.text_for(&span), f);
@@ -1964,16 +1956,13 @@ fn write_media_query<'a>(query: &MediaQuery<'a>, f: &mut CssFormatter<'_, 'a>) {
                 if is_glued_media_type_and(condition)
                     && let Some(first) = condition.condition.conditions.first()
                 {
-                    let word = to_span(&oxc_css_parser::pos::Span {
-                        start: condition.and.span().start,
-                        end: first.span().end,
-                    });
+                    let word = oxc_span::Span::new(condition.and.span().start, first.span().end);
                     value::write_adjusted_verbatim(source.text_for(&word), f);
                     write_media_condition_from(&condition.condition, 1, f);
                 } else {
                     write_word(to_span(condition.and.span()), f);
                     write!(f, space());
-                    value::flush_value_comments(to_span(condition.condition.span()).start, f);
+                    value::flush_value_comments(condition.condition.span().start, f);
                     write_media_condition(&condition.condition, f);
                 }
             }
@@ -2005,7 +1994,7 @@ fn write_media_condition_from<'a>(
     skip: usize,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    let condition_end = to_span(condition.span()).end;
+    let condition_end = condition.span().end;
     for (i, kind) in condition.conditions.iter().enumerate().skip(skip) {
         if i > 0 {
             write!(f, space());
@@ -2024,11 +2013,8 @@ fn write_media_condition_kind<'a>(kind: &MediaConditionKind<'a>, f: &mut CssForm
     let source = f.context().source_text();
     let (keyword, in_parens) = split_media_condition_kind(kind);
     if let Some(keyword) = keyword {
-        if is_glued(keyword.span(), &in_parens.span) {
-            let word = to_span(&oxc_css_parser::pos::Span {
-                start: keyword.span().start,
-                end: in_parens.span.end,
-            });
+        if is_glued(keyword.span(), in_parens.span) {
+            let word = oxc_span::Span::new(keyword.span().start, in_parens.span.end);
             value::write_adjusted_verbatim(source.text_for(&word), f);
             return;
         }
@@ -2050,7 +2036,7 @@ fn split_media_condition_kind<'b, 'a>(
 }
 
 fn is_glued_media_type_and(condition: &MediaConditionAfterMediaType<'_>) -> bool {
-    is_glued(condition.and.span(), &condition.condition.span)
+    is_glued(condition.and.span(), condition.condition.span)
 }
 
 fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter<'_, 'a>) {
@@ -2078,7 +2064,7 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
             // Lenient bare operand (`print and speech`):
             // `oxc-css-parser` accepts an unparenthesized ident as <general-enclosed>;
             // the source shape must survive, so only reprint parens that exist.
-            if f.context().source_text().text_for(&to_span(&in_parens.span)).starts_with('(') {
+            if f.context().source_text().text_for(&to_span(in_parens.span)).starts_with('(') {
                 write_general_enclosed(seq, f);
             } else {
                 write_token_seq_normalized(seq, f);
@@ -2116,13 +2102,13 @@ fn write_token_seq_normalized<'a>(seq: &TokenSeq<'a>, f: &mut CssFormatter<'_, '
                     | Token::Colon(_),
                 ) => false,
                 (Token::Comma(_) | Token::Colon(_), _) => true,
-                _ => to_span(&prev.span).end != to_span(&tok.span).start,
+                _ => !is_glued(prev.span, tok.span),
             };
             if needs_space {
                 write!(f, space());
             }
         }
-        let span = to_span(&tok.span);
+        let span = to_span(tok.span);
         write!(f, text(source.text_for(&span)));
     }
 }
@@ -2189,7 +2175,7 @@ fn write_supports_condition<'a>(condition: &SupportsCondition<'a>, f: &mut CssFo
     // A fill of keywords and parenthesized terms:
     // a long condition breaks AFTER `and`/`or`, one indent in
     // (`postcss-values` prints the params as a value group, so each word/paren is its own fill entry).
-    let end = to_span(condition.span()).end;
+    let end = condition.span().end;
     let keyword = |keyword| format_with(move |f| write_supports_keyword(keyword, end, f));
     let term = |in_parens| format_with(move |f| write_supports_term(in_parens, end, f));
     let not = |not| format_with(move |f| write_supports_not(not, end, f));
@@ -2270,7 +2256,7 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
             // An inline comment inside `selector(...)` forces the parens
             // open and trails the selector.
             // oxc-css-parser's span may stop at the selector; scan to the `)`.
-            let span_end = to_span(in_parens.span()).end;
+            let span_end = in_parens.span().end;
             let bytes = source.as_bytes();
             let mut scan = span_end.saturating_sub(1) as usize;
             while scan < bytes.len() && bytes[scan] != b')' {

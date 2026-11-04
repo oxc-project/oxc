@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2026-11-02
+
+### ⚡ Performance
+
+- b6f1ac9 formatter_markdown: Bump parser to 0.0.4 and skip unread work (#28713) (leaysgur)
+
+### 📚 Documentation
+
+- 49fbffb formatter_core: Tighten FORMATTER_POLICY (#28206) (leaysgur)
+
+## [0.75.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- 23d23d6 formatter_markdown: Honor range ignore inside directives (#28164) (leaysgur)
+
+### ⚡ Performance
+
+- 7948f0b formatter_core: Shrink `FormatElement` to 16B (#28012) (leaysgur)
+
 ## [0.74.0] - 2026-10-19
 
 ### 🐛 Bug Fixes

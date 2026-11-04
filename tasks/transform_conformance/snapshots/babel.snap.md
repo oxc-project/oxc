@@ -1,11 +1,10 @@
-commit: a56fe4a4
+commit: b835f0c6
 
-Passed: 741/1167
+Passed: 741/1168
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-export-namespace-from
-* babel-plugin-transform-optional-chaining
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-display-name
 
@@ -892,6 +891,11 @@ x Output mismatch
 x Output mismatch
 
 * nullish-coalescing/undeclared/input.js
+x Output mismatch
+
+
+# babel-plugin-transform-optional-chaining (45/46)
+* general/iife-rest-param/input.js
 x Output mismatch
 
 

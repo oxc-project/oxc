@@ -9,17 +9,19 @@ use oxc_ecmascript::{
     constant_evaluation::{
         ConstantEvaluation, ConstantValue, DetermineValueType, evaluate_to_js_string,
     },
-    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext, is_typed_array_constructor},
+    side_effects::{
+        MayHaveSideEffects, MayHaveSideEffectsContext, is_error_constructor,
+        is_typed_array_constructor,
+    },
 };
 use oxc_semantic::ReferenceFlags;
-use oxc_span::GetSpan;
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, SPAN};
 use oxc_str::static_ident;
-use oxc_syntax::precedence::GetPrecedence;
 use oxc_syntax::{
     identifier::is_identifier_name_patched,
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
+    precedence::GetPrecedence,
 };
 
 use crate::TraverseCtx;
@@ -94,7 +96,7 @@ impl<'a> PeepholeOptimizations {
         prop: &mut AssignmentTargetProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // `a: a` -> `a`
+        // `a: a` -> `a`, `a: a = b` -> `a = b`
         if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(assign_target_prop_prop) =
             prop
         {
@@ -103,11 +105,16 @@ impl<'a> PeepholeOptimizations {
                 return;
             };
             if prop_name == ident.name {
+                let ident = ident.take_in(ctx);
+                // `identifier_mut` also matches `a: a = b`, so keep its default.
+                let init = match &mut assign_target_prop_prop.binding {
+                    AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(target) => {
+                        Some(target.init.take_in(ctx))
+                    }
+                    _ => None,
+                };
                 let new_prop = AssignmentTargetProperty::new_assignment_target_property_identifier(
-                    ident.span,
-                    ident.take_in(ctx),
-                    None,
-                    ctx,
+                    ident.span, ident, init, ctx,
                 );
                 ctx.replace_assignment_target_property(prop, new_prop);
             }
@@ -1172,7 +1179,7 @@ impl<'a> PeepholeOptimizations {
             // `BigInt(1n)` -> `1n`
             "BigInt" => match arg {
                 None => None,
-                Some(arg) => matches!(arg, Expression::BigIntLiteral(_)).then(|| arg.take_in(ctx)),
+                Some(arg) => arg.is_big_int_literal().then(|| arg.take_in(ctx)),
             },
             _ => None,
         };
@@ -1335,8 +1342,7 @@ impl<'a> PeepholeOptimizations {
         let Expression::NewExpression(e) = expr else { return };
         let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
-        if !matches!(name, "Error" | "AggregateError" | "Function" | "RegExp")
-            && !Self::is_native_error_name(name)
+        if !matches!(name, "Function" | "RegExp" | "AggregateError") && !is_error_constructor(name)
         {
             return;
         }
@@ -1353,27 +1359,10 @@ impl<'a> PeepholeOptimizations {
                             !ty.is_undetermined() && !ty.is_object()
                         }))
             }
-            "Error" | "AggregateError" | "Function" => true,
-            _ if Self::is_native_error_name(name) => true,
-            _ => unreachable!(),
+            _ => true,
         } {
             ctx.replace_expression_with(expr, Self::transform_new_expr_to_call_expr);
         }
-    }
-
-    /// Whether the name matches any native error name.
-    ///
-    /// See <https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-native-error-types-used-in-this-standard> for the list of native errors.
-    fn is_native_error_name(name: &str) -> bool {
-        matches!(
-            name,
-            "EvalError"
-                | "RangeError"
-                | "ReferenceError"
-                | "SyntaxError"
-                | "TypeError"
-                | "URIError"
-        )
     }
 
     pub fn substitute_chain_call_expression(
@@ -1421,7 +1410,10 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         match key {
-            PropertyKey::NumericLiteral(_) if *computed => {
+            // `-2`, `-0`, `Infinity` and `NaN` are not valid literal keys, so they keep their brackets.
+            PropertyKey::NumericLiteral(n)
+                if *computed && n.value.is_finite() && n.value.is_sign_positive() =>
+            {
                 // Bool field flip on an existing AST node, not a slot replacement.
                 *computed = false;
             }

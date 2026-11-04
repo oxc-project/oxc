@@ -11,7 +11,7 @@ use oxc_ecmascript::{
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::JSStr;
-use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
+use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -243,12 +243,8 @@ impl<'a> PeepholeOptimizations {
         };
         let e = e.unbox();
         ctx.drop_expression(&e.right);
-        if Self::should_keep_indirect_access(&e.left, ctx) {
-            // `(o.f OP V)()` => `(0, o.f)()`
-            Self::preserve_indirect_access(e.right.span(), e.left, ctx)
-        } else {
-            e.left
-        }
+        // `(o.f OP V)()` => `(0, o.f)()`
+        Self::preserve_indirect_access_if_needed(e.right.span(), e.left, ctx)
     }
 
     /// Unfold the right side of the logical expression.
@@ -261,17 +257,14 @@ impl<'a> PeepholeOptimizations {
             unreachable!();
         };
         let mut e = e.unbox();
-        if !Self::remove_unused_expression(&mut e.left, ctx) {
+        if Self::remove_unused_expression(&mut e.left, ctx) {
+            ctx.drop_expression(&e.left);
+            // `(V OP o.f)` => `(0, o.f)`
+            // `(V OP x)` => `x`
+            Self::preserve_indirect_access_if_needed(e.left.span(), e.right, ctx)
+        } else {
             // `(a(), V) OP 1` => `(a(), V, 1)`
             Self::join_sequence(e.span, e.left, e.right, ctx)
-        } else if Self::should_keep_indirect_access(&e.right, ctx) {
-            // `(V OP o.f)` => `(0, o.f)`
-            ctx.drop_expression(&e.left);
-            Self::preserve_indirect_access(e.left.span(), e.right, ctx)
-        } else {
-            // `(V OP x)` => `x`
-            ctx.drop_expression(&e.left);
-            e.right
         }
     }
 
@@ -1209,7 +1202,7 @@ pub(super) fn is_cjs_module_exports_hint(expr: &Expression<'_>) -> bool {
     let Expression::AssignmentExpression(assign) = expr else {
         return false;
     };
-    assign.operator == AssignmentOperator::Assign
+    assign.operator.is_assign()
         && assign
             .left
             .as_member_expression()

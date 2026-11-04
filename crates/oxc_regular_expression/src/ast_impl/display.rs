@@ -325,13 +325,11 @@ fn character_to_string(
     let result = match this.kind {
         // Not a surrogate, like BMP, or all units in unicode mode
         CharacterKind::Symbol => Cow::Owned(ch.to_string()),
-        CharacterKind::ControlLetter => match ch {
-            '\n' => Cow::Borrowed(r"\cJ"),
-            '\r' => Cow::Borrowed(r"\cM"),
-            '\t' => Cow::Borrowed(r"\cI"),
-            '\u{0019}' => Cow::Borrowed(r"\cY"),
-            _ => Cow::Owned(format!(r"\c{ch}")),
-        },
+        CharacterKind::ControlLetter => {
+            // Store the decoded value, and print its canonical ASCII control letter.
+            let letter = char::from_u32(cp + 0x40).expect("Invalid control letter `Character`!");
+            Cow::Owned(format!(r"\c{letter}"))
+        }
         CharacterKind::Identifier => Cow::Owned(format!(r"\{ch}")),
         CharacterKind::SingleEscape => match ch {
             '\n' => Cow::Borrowed(r"\n"),
@@ -513,12 +511,12 @@ mod test {
         (r"/(.)(.)(.)(.)(.)(.)(.)(.)\8\8/", None),
         // Class escape from: <https://github.com/tc39/test262/blob/d62fa93c8f9ce5e687c0bbaa5d2b59670ab2ff60/test/annexB/language/literals/regexp/class-escape.js>
         (r"/\c0/", None),
-        (r"/[\c0]/", None),
+        (r"/[\c0]/", Some(r"/[\cP]/")),
         (r"/\c1/", None),
-        (r"/[\c10]+/", None),
+        (r"/[\c10]+/", Some(r"/[\cQ0]+/")),
         (r"/\c8/", None),
-        (r"/[\c8]/", None),
-        (r"/[\c80]+/", None),
+        (r"/[\c8]/", Some(r"/[\cX]/")),
+        (r"/[\c80]+/", Some(r"/[\cX0]+/")),
         (r"/\c_/", None),
         // Capitalize hex unicodes --
         (r"/^|\udf06/gu", Some(r"/^|\uDF06/gu")),

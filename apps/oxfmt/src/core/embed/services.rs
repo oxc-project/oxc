@@ -9,8 +9,6 @@
 use std::sync::Arc;
 
 use oxc_formatter_core::SessionServices;
-#[cfg(not(feature = "napi"))]
-use oxc_formatter_core::StringEmbedder;
 #[cfg(feature = "napi")]
 use oxc_formatter_core::TailwindSorter;
 #[cfg(feature = "napi")]
@@ -32,18 +30,11 @@ pub fn for_root(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionService
     // so the root's doubles as the fence adapter's.
     let dispatcher = dispatch_config.root_dispatcher(None);
     let string_embedder = dispatcher.as_ref().map(|dispatcher| {
-        let fence_dispatcher = Arc::clone(dispatcher);
-        let dispatch_config = Arc::clone(dispatch_config);
-        Arc::new(move |language: &str, code: &str, print_width: usize| {
-            super::jsdoc_fence::format_native_fence(
-                language,
-                code,
-                print_width,
-                &fence_dispatcher,
-                &dispatch_config,
-                None,
-            )
-        }) as StringEmbedder
+        super::jsdoc_fence::build_string_embedder(
+            Arc::clone(dispatcher),
+            Arc::clone(dispatch_config),
+            None,
+        )
     });
     SessionServices { dispatcher, string_embedder, tailwind_sorter: None }
 }
@@ -54,7 +45,7 @@ pub fn for_root(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionService
 /// The options (including `filepath`) are captured in the closures and passed to JS on each call;
 /// per-language options are mapped lazily at dispatch time (see [`ResolvedDispatchConfig`]).
 ///
-/// This is the assembly point only: closure factories live in `embed::{prettier_string, dispatcher, prettier_doc}`,
+/// This is the assembly point only: closure factories live in `embed::{jsdoc_fence, dispatcher, prettier_doc}`,
 /// and the napi callback `Arc`s come from the transport ([`ExternalServices`]).
 ///
 /// NOTE: Tailwind data paths
@@ -75,7 +66,7 @@ pub fn for_root(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionService
 ///    Goes through the string embedder's fence adapter, which returns a formatted string (not parent-integrated IR),
 ///    so there is no parent index space to join:
 ///    `FormatSession::dispatch_to_string` collects the child's classes in a fresh scope and sorts it before printing.
-///    The `prettier_string::build_string_embedder` factory receives the sorter for this case.
+///    The `jsdoc_fence::build_string_embedder` factory receives the sorter for this case.
 ///
 /// All four paths use the SAME `sort_tailwindcss_classes` napi callback; only the wiring differs.
 /// Moving sorting to the wrong layer (e.g. sorting inside embedded CSS instead of at the root) would double-sort or drop classes.
@@ -105,11 +96,12 @@ pub fn for_root(
         }) as TailwindSorter
     });
 
-    let string_embedder = needs_embedded.then(|| {
-        super::prettier_string::build_string_embedder(
-            Arc::clone(&external_services.format_embedded),
-            sorter.clone(),
+    // Fences never take the Prettier fallback (a native fence never falls back)
+    let string_embedder = dispatch_config.root_dispatcher(None).map(|fence_dispatcher| {
+        super::jsdoc_fence::build_string_embedder(
+            fence_dispatcher,
             Arc::clone(dispatch_config),
+            sorter.clone(),
         )
     });
 

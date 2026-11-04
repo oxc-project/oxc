@@ -16,6 +16,10 @@ declare_react_compiler_lint!(
     /// not call known-impure functions such as `Math.random()`, `Date.now()`,
     /// or `performance.now()` during render.
     ///
+    /// Async function components are exempt, including impure calls in nested
+    /// callbacks. An async component is a Server Component: it renders once per
+    /// request and does not re-render. Async hooks are still checked.
+    ///
     upstream = "purity",
     ///
     /// ### Why is this bad?
@@ -39,6 +43,10 @@ declare_react_compiler_lint!(
     /// function Component() {
     ///   const [rand, setRand] = useState(0);
     ///   return <button onClick={() => setRand(Math.random())}>{rand}</button>;
+    /// }
+    ///
+    /// async function Posts({ posts }) {
+    ///   return <ul>{posts.map(post => <li key={post.id}>{Date.now()}</li>)}</ul>;
     /// }
     /// ```
     Purity,

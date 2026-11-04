@@ -8,7 +8,10 @@ use oxc_span::Span;
 
 use oxc_formatter_core::{
     arena_cow_str,
-    builders::{block_indent, dedent, empty_line, hard_line_break, indent, space, text},
+    builders::{
+        block_indent, dedent, empty_line, hard_line_break, if_group_breaks, indent,
+        soft_line_break_or_space, space, text, token,
+    },
     write,
 };
 
@@ -20,23 +23,18 @@ use crate::{
     },
     format::to_span,
     print::{
-        CssFormatter, at_rule, format_with, has_comments_between, less, postcss_simple_vars, scss,
-        selector,
+        CssFormatter, at_rule, format_with, has_comments_between, is_glued, less,
+        postcss_simple_vars, scss, selector,
         value::{self, ValueContext},
         write_maybe_lowercase,
     },
 };
 
-/// Start offset of a statement.
-pub(super) fn stmt_start(stmt: &Statement<'_>) -> u32 {
-    to_span(stmt.span()).start
-}
-
 /// End offset of a statement, extended over a trailing semicolon
 /// (oxc-css-parser's spans exclude it; postcss's `locEnd` includes it,
 /// and blank-line detection counts from after the `;`).
 pub(super) fn stmt_end(stmt: &Statement<'_>, f: &CssFormatter<'_, '_>) -> u32 {
-    end_with_semicolon(to_span(stmt.span()).end, f)
+    end_with_semicolon(stmt.span().end, f)
 }
 
 /// Extends `end` over any whitespace, comments and a final `;` in the source.
@@ -52,7 +50,7 @@ pub(super) fn params_region_end<'a>(
             let with_semi = end_with_semicolon(span_end, f);
             if with_semi > span_end { with_semi - 1 } else { span_end }
         },
-        |block| to_span(&block.span).start,
+        |block| block.span.start,
     )
 }
 
@@ -98,8 +96,10 @@ pub(super) fn write_statement_sequence_bounded<'a>(
     // (`${m}\ncolor: red` -> no `;`, but `${m}\ncolor: red;\nx: 1` -> `x: 1;`).
     // Track that run so swallowed declarations keep a source-driven `;`.
     let mut swallowed = false;
+    // Only the attribute's own declarations, not a block's
+    let style_attribute = upper == u32::MAX && f.context().is_style_attribute();
     for (i, stmt) in statements.iter().enumerate() {
-        let start = stmt_start(stmt);
+        let start = stmt.span().start;
         if i > 0 {
             let prev_end = stmt_end(&statements[i - 1], f);
             // Trailing comment on the same line as the previous statement
@@ -118,7 +118,12 @@ pub(super) fn write_statement_sequence_bounded<'a>(
                     write!(f, space());
                 }
             } else {
-                write!(f, hard_line_break());
+                // A `style` attribute's declarations share a line when they fit
+                if style_attribute {
+                    write!(f, soft_line_break_or_space());
+                } else {
+                    write!(f, hard_line_break());
+                }
                 if gap == Gap::Blank {
                     write!(f, empty_line());
                 }
@@ -136,7 +141,7 @@ pub(super) fn write_statement_sequence_bounded<'a>(
         let end = stmt_end(stmt, f);
         // `stmt_end` already consumes a trailing `;`,
         // so a source `;` is present exactly when it advanced past the raw statement span.
-        let has_source_semicolon = end > to_span(stmt.span()).end;
+        let has_source_semicolon = end > stmt.span().end;
         if is_suppressed {
             write!(f, text(source.slice_range(start, end)));
         } else if swallowed && let Statement::Declaration(decl) = stmt {
@@ -145,6 +150,13 @@ pub(super) fn write_statement_sequence_bounded<'a>(
             if has_source_semicolon {
                 write!(f, ";");
             }
+        } else if style_attribute
+            && i + 1 == statements.len()
+            && let Statement::Declaration(decl) = stmt
+        {
+            // The last declaration's `;` only when the attribute breaks
+            write_declaration(decl, f);
+            write!(f, if_group_breaks(&token(";")));
         } else {
             write_statement(stmt, f);
         }
@@ -174,7 +186,7 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
             if decl.name.has_placeholder() {
                 // A css-in-js `${foo}: ${bar}` declaration keeps the source `;`
                 // (Prettier preserves it: `${foo}: ${bar};` vs `${foo}: ${bar}`).
-                let end = to_span(decl.span()).end;
+                let end = decl.span().end;
                 if end_with_semicolon(end, f) > end {
                     write!(f, ";");
                 }
@@ -196,7 +208,7 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
             // Preserve a trailing `;` from the source
             // (Prettier keeps `${foo};` as `${foo};` and `${foo}` as `${foo}`):
             // the `;` is consumed by the statement separator, so recover it from the source gap.
-            let end = to_span(&placeholder.span).end;
+            let end = placeholder.span.end;
             if end_with_semicolon(end, f) > end {
                 write!(f, ";");
             }
@@ -230,12 +242,9 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
             write!(f, "@");
             let name_span = to_span(unknown.name.span());
             write_maybe_lowercase(source.text_for(&name_span), f);
-            let region_end =
-                params_region_end(unknown.block.as_ref(), to_span(&unknown.span).end, f);
-            let prelude_start = unknown
-                .prelude
-                .as_ref()
-                .map_or(region_end, |prelude| to_span(prelude.span()).start);
+            let region_end = params_region_end(unknown.block.as_ref(), unknown.span.end, f);
+            let prelude_start =
+                unknown.prelude.as_ref().map_or(region_end, |prelude| prelude.span().start);
             at_rule::write_verbatim_at_rule_tail(
                 name_span.end,
                 prelude_start,
@@ -250,16 +259,16 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
             for (i, sel) in keyframe_block.selectors.iter().enumerate() {
                 if i > 0 {
                     value::write_group_comma(
-                        keyframe_block.comma_spans.get(i - 1).map(|sp| to_span(sp).start),
+                        keyframe_block.comma_spans.get(i - 1).map(|sp| sp.start),
                         f,
                     );
                     write!(f, hard_line_break());
                 }
-                value::flush_value_comments(to_span(sel.span()).start, f);
+                value::flush_value_comments(sel.span().start, f);
                 selector::write_keyframe_selector(sel, f);
             }
             // Trailing comments before `{` stay on the selector line
-            value::flush_trailing_value_comments(to_span(keyframe_block.block.span()).start, f);
+            value::flush_trailing_value_comments(keyframe_block.block.span().start, f);
             write!(f, space());
             write_block(&keyframe_block.block, f);
         }
@@ -281,13 +290,13 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
 
 /// Mirrors Prettier's `css-rule`.
 fn write_qualified_rule<'a>(rule: &QualifiedRule<'a>, f: &mut CssFormatter<'_, 'a>) {
-    let sel_span = to_span(rule.selector.span());
-    let block_start = to_span(rule.block.span()).start;
+    let sel_start = rule.selector.span().start;
+    let block_start = rule.block.span().start;
     // Comments inside the selector (both `//` and `/* */`) make Prettier print the raw selector verbatim (`selector-unknown`).
     // Reordering them would change which compound they annotate.
     // A trailing `//` comment pushes `{` to the next line.
-    if has_comments_between(sel_span.start, block_start, f) {
-        write_verbatim_prelude_rule(sel_span.start, &rule.block, false, f);
+    if has_comments_between(sel_start, block_start, f) {
+        write_verbatim_prelude_rule(sel_start, &rule.block, false, f);
         return;
     }
     selector::write_selector_list(&rule.selector, selector::SelectorListStyle::Hard, f);
@@ -303,7 +312,7 @@ fn write_qualified_rule<'a>(rule: &QualifiedRule<'a>, f: &mut CssFormatter<'_, '
 /// Prettier prints the prelude verbatim, interior whitespace and newlines included,
 /// unlike selector garbage mode's collapsing.
 fn write_unknown_qualified_rule<'a>(rule: &UnknownQualifiedRule<'a>, f: &mut CssFormatter<'_, 'a>) {
-    write_verbatim_prelude_rule(to_span(&rule.span).start, &rule.block, false, f);
+    write_verbatim_prelude_rule(rule.span.start, &rule.block, false, f);
 }
 
 /// Prelude printed verbatim from `start` to the block,
@@ -319,7 +328,7 @@ pub(super) fn write_verbatim_prelude_rule<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) {
     let source = f.context().source_text();
-    let block_start = to_span(&block.span).start;
+    let block_start = block.span.start;
     let raw = source.slice_range(start, block_start).trim_end();
     let _ = f.context().comments().take_before(block_start);
     if adjust {
@@ -364,9 +373,8 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
     // Prettier prints the WHOLE `raws.between`
     // (prop → value, `:` and any comments included) trimmed but otherwise verbatim,
     // with a space before a leading `//` comment and a space before the value.
-    let colon_end = to_span(&decl.colon_span).end;
-    let between_upper =
-        if decl.value.is_empty() { colon_end } else { to_span(decl.value[0].span()).start };
+    let colon_end = decl.colon_span.end;
+    let between_upper = if decl.value.is_empty() { colon_end } else { decl.value[0].span().start };
     let between = source.slice_range(name_span.end, between_upper);
     let trimmed_between = between.trim_ascii();
     // `lastLineHasInlineComment`: the value drops to the next line,
@@ -378,7 +386,7 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
     // (Prettier 3.9.5 #19517; the SPACED `+_` is ours alone, postcss-less cannot parse it).
     // Comments around the marker keep the verbatim path.
     let merge_marker =
-        decl.less_property_merge.as_ref().map(|merge| to_span(&merge.span)).filter(|span| {
+        decl.less_property_merge.as_ref().map(|merge| to_span(merge.span)).filter(|span| {
             source.slice_range(name_span.end, span.start).trim_ascii().is_empty()
                 && source.slice_range(span.end, between_upper).trim_ascii() == ":"
         });
@@ -422,7 +430,7 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
         // which is its value: `--x: ;` substitutes a space where `--x:;` substitutes nothing, so it is kept verbatim.
         // Scan up to the `;` in the source.
         if is_custom_property {
-            let colon_end = to_span(&decl.colon_span).end;
+            let colon_end = decl.colon_span.end;
             let bytes = source.as_bytes();
             let mut i = colon_end as usize;
             while i < bytes.len() && (bytes[i] == b' ' || bytes[i] == b'\t') {
@@ -437,8 +445,8 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
 
         // `filter: progid:...` values are printed verbatim
         // (the parser accepts the prefix case-insensitively; postcss rejects an uppercase one).
-        let value_start = to_span(decl.value[0].span()).start;
-        let value_end = to_span(decl.value[decl.value.len() - 1].span()).end;
+        let value_start = decl.value[0].span().start;
+        let value_end = decl.value[decl.value.len() - 1].span().end;
         let value_text = source.slice_range(value_start, value_end);
         if value_text
             .as_bytes()
@@ -458,7 +466,7 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             && decl.value.len() > 1
             // Only when oxc-css-parser split ONE string apart (no gaps between parts).
             && decl.value.windows(2).all(|w| {
-                to_span(w[0].span()).end == to_span(w[1].span()).start
+                is_glued(w[0].span(), w[1].span())
             })
         {
             // A string containing SCSS interpolation that `oxc-css-parser` tokenized apart (`"#{".5"}"`):
@@ -512,7 +520,7 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
 
             // The `;` position bounds wrapped trailing comments.
             // Only when such comments exist (keeps simple declarations on the single-component fast path).
-            let decl_end_pre = to_span(decl.span()).end;
+            let decl_end_pre = decl.span().end;
             let semi = end_with_semicolon(decl_end_pre, f);
             let bound = if semi > decl_end_pre { semi - 1 } else { decl_end_pre };
             // A single interpolated component is exempt,
@@ -550,7 +558,7 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
     if let Some(important) = &decl.important {
         value::write_trailing_important(important, f);
     }
-    write_terminator_tail_comments(to_span(decl.span()).end, f);
+    write_terminator_tail_comments(decl.span().end, f);
 }
 
 /// The run between a variable name and its `:`: normally just the colon,
@@ -708,7 +716,7 @@ fn respace_value_tokens(v: &str) -> String {
 /// Mirrors Prettier's block printing: `{` + indented statements + `}`.
 /// An empty block prints as `{\n}`.
 pub(super) fn write_block<'a>(block: &SimpleBlock<'a>, f: &mut CssFormatter<'_, 'a>) {
-    let block_span = to_span(&block.span);
+    let block_span = block.span;
     let r_curly = block_span.end.saturating_sub(1);
 
     write!(f, "{");

@@ -41,3 +41,20 @@ class C {
     x = await (#x in b);
   }
 }
+
+// The object of `a.#x` keeps the same parens as `a.x` and `a[x]`
+class D {
+  #x;
+  m(a, b) {
+    x = (a ?? b).#x;
+    x = (a || b).#x;
+    x = (a + b).#x;
+    x = (a in b).#x;
+    x = (#x in b).#x;
+    x = (a ?? b)?.#x;
+    x = (a?.b).#x;
+    x = (1).#x;
+    x = (1)[0];
+    x = (<div />).#x;
+  }
+}

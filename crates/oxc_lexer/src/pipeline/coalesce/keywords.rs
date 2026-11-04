@@ -6,17 +6,18 @@
 
 use std::ptr;
 
-use crate::token::TokenKind;
-
-use crate::pipeline::{
-    cpu::{Cpu, apply, cpu_versions},
-    keywords::kw_match,
+use crate::{
+    cpu::{Cpu, cpu_multiversion},
+    token::TokenKind,
 };
+
+use crate::pipeline::keywords::kw_match;
 
 pub const KWB: usize = 64;
 
 /// Dispatch to the key-monomorphized verify without duplicating `coalesce`
 /// itself: one predictable branch per flush, not per candidate.
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn kw_flush(
     ts: bool,
@@ -41,7 +42,7 @@ pub(super) unsafe fn kw_flush(
 /// for TS - monomorphized so the JS copy carries none of the wider key.
 /// Kept out of line: inlining would double both variants into each of
 /// coalesce's flush sites, and one call per KWB words is free.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline(never)]
 unsafe fn kw_verify_batch<const IS_TS: bool>(
     src: *const u8,
@@ -49,15 +50,15 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
     kind: *mut u8,
     pos: *const u32,
     k: usize,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) {
     for ix in 0..k {
         let p = *pos.add(ix) as usize;
-        let len = word_len(word, p);
+        let len = word_len(word, p, cpu);
         // Candidates are code-level identifier starts (carve cleared every
         // literal interior and JSX start from the masks), so the incumbent
         // kind is IDENT: select over it instead of a read-modify-write.
-        *kind.add(p) = kw_match::<IS_TS>(src.add(p), len) as u8;
+        *kind.add(p) = kw_match::<IS_TS>(src.add(p), len, cpu) as u8;
     }
 }
 
@@ -73,17 +74,21 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
 /// * `word` must be the word bitmap for `src`, and valid for reading 8 bytes from byte `pos / 8`.
 /// * The byte at `pos` must be a word char.
 /// * `src` must be valid for reading 16 bytes from `pos`.
-#[apply(cpu_versions)]
+#[cpu_multiversion]
 #[inline]
 pub(super) unsafe fn kw_match_word(
     ts: bool,
     src: *const u8,
     word: *const u64,
     pos: usize,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) -> TokenKind {
-    let len = word_len(word, pos);
-    if ts { kw_match::<true>(src.add(pos), len) } else { kw_match::<false>(src.add(pos), len) }
+    let len = word_len(word, pos, cpu);
+    if ts {
+        kw_match::<true>(src.add(pos), len, cpu)
+    } else {
+        kw_match::<false>(src.add(pos), len, cpu)
+    }
 }
 
 /// Get the length of the word starting at `pos` from the word bitmap, capped at 16 (`kw_match`'s limit).
@@ -97,15 +102,16 @@ pub(super) unsafe fn kw_match_word(
 /// # SAFETY
 ///
 /// `word` must be valid for reading 8 bytes from byte `pos / 8`.
+#[cpu_multiversion]
 #[inline(always)]
-unsafe fn word_len(word: *const u64, pos: usize) -> usize {
+unsafe fn word_len(word: *const u64, pos: usize, _cpu: impl Cpu) -> usize {
     let x = ptr::read_unaligned((word as *const u8).add(pos >> 3) as *const u64) >> (pos & 7);
     (!(x as u16)).trailing_zeros() as usize
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{pipeline::cpu::DynCpu, token::tk};
+    use crate::{cpu::DynCpu, token::tk};
 
     use super::*;
 

@@ -87,12 +87,12 @@ pub(super) fn write_selector_list<'a>(
                 // A comment trailing the comma stays on the same line:
                 // a lone block comment (`a, /* b */ c`), or a run ending in a `//` (`a, /* b */ // c`).
                 // A `//` ends the line itself; the separator below then merges into its break.
-                let next_start = to_span(complex.span()).start;
+                let next_start = complex.span().start;
                 if let Some(comment) = f.context().comments().peek()
                     && comment.span.end <= next_start
                 {
                     let source = f.context().source_text();
-                    let prev_end = to_span(list.selectors[i - 1].span()).end;
+                    let prev_end = list.selectors[i - 1].span().end;
                     if comments::classify_gap(source.bytes_range(prev_end, comment.span.start))
                         == comments::Gap::None
                     {
@@ -111,13 +111,13 @@ pub(super) fn write_selector_list<'a>(
                 }
             }
             // Comments on their own line between selectors
-            let start = to_span(complex.span()).start;
+            let start = complex.span().start;
             for &comment in f.context().comments().take_before(start) {
                 write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
             }
             if placeholder_idx == Some(i) {
                 let source = f.context().source_text();
-                let end = to_span(list.selectors[list.selectors.len() - 1].span()).end;
+                let end = list.selectors[list.selectors.len() - 1].span().end;
                 let raw = source.slice_range(start, end);
                 // Comments inside the chunk are part of the verbatim text
                 let _ = f.context().comments().take_before(end);
@@ -213,7 +213,7 @@ fn write_combinator(
                 // Deprecated shadow-DOM combinators (`/deep/` and less.js's `/name/` (`/shadow/`));
                 // print as written: the tools give a meaning match it case-sensitively
                 CombinatorKind::Deep | CombinatorKind::Slashed => {
-                    let span = to_span(&combinator.span);
+                    let span = to_span(combinator.span);
                     write!(f, text(f.context().source_text().text_for(&span)));
                 }
                 CombinatorKind::ShadowChild => write!(f, "^"),
@@ -526,10 +526,10 @@ fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
     }
     if let Some(matcher) = &nth.matcher {
         write!(f, " ");
-        let matcher_span = to_span(&matcher.span);
+        let matcher_span = to_span(matcher.span);
         if let Some(selector) = &matcher.selector {
             // The `of` keyword as written, then the selector list
-            let keyword_end = to_span(selector.span()).start;
+            let keyword_end = selector.span().start;
             let keyword = source.slice_range(matcher_span.start, keyword_end).trim_ascii_end();
             write!(f, [text(keyword), " "]);
             write_selector_list_inline(selector, f);

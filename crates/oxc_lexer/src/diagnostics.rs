@@ -82,8 +82,8 @@ enum NumErr {
 
 /// Port of oxc_parser's numeric scanner (`lexer/numeric.rs`), stopping at
 /// its first diagnostic. Mirrors the quirks exactly: no separators in
-/// legacy-octal-like decimals, a legacy-octal exponent only as lowercase `e`
-/// after an `8`/`9` flipped the run to NonOctalDecimal, and `.` after a
+/// legacy-octal-like decimals, an exponent only after an `8`/`9` flipped
+/// the run to NonOctalDecimal, and `.` after a
 /// pure-octal run simply ends the token. Each method notes the parser
 /// function it ports.
 struct NumericWalk<'a> {
@@ -131,11 +131,10 @@ impl NumericWalk<'_> {
             Some(b'b' | b'B') => self.non_decimal(|c| matches!(c, b'0' | b'1')),
             Some(b'o' | b'O') => self.non_decimal(|c| matches!(c, b'0'..=b'7')),
             Some(b'x' | b'X') => self.non_decimal(u8::is_ascii_hexdigit),
-            // `0e...`: the parser returns straight out of the exponent read -
-            // no trailing-char check on this path.
             Some(b'e' | b'E') => {
                 self.bump();
-                self.exponent()
+                self.exponent()?;
+                self.check_after()
             }
             Some(b'.') => {
                 self.bump();
@@ -196,10 +195,10 @@ impl NumericWalk<'_> {
                 self.bump();
                 self.optional_fraction_then_exponent()
             }
-            // Lowercase only, faithfully: the parser rejects `08E1`.
-            Some(b'e') if decimal => {
+            Some(b'e' | b'E') if decimal => {
                 self.bump();
-                self.exponent()
+                self.exponent()?;
+                self.check_after()
             }
             _ => self.check_after(),
         }

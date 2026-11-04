@@ -1,15 +1,25 @@
-use crate::{lanes::Lanes, token::tk};
+use crate::{
+    cpu::{Cpu, cpu_multiversion},
+    token::tk,
+};
 
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
-    find::{find_line_terminator, find_opener, find_opener6},
+    find::find,
+    lanes::Lanes,
 };
 
-use super::common::{
-    html_close_comment_at, html_open_comment_at, lex_html_close_comment, lex_html_open_comment,
-    lex_slash, lex_string, lex_template_segment, skip_unicode_brace_escape,
+use super::{
+    comments::{
+        html_close_comment_at, html_open_comment_at, lex_html_close_comment, lex_html_open_comment,
+    },
+    common::{
+        OPENER_BYTES, OPENER8_BYTES, find_line_terminator, lex_slash, lex_string,
+        lex_template_segment, skip_unicode_brace_escape,
+    },
 };
 
+#[cpu_multiversion]
 pub(super) unsafe fn carve_js(
     srcs: &[u8],
     n: usize,
@@ -19,29 +29,34 @@ pub(super) unsafe fn carve_js(
     word: *const u64,
     ts: bool,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) {
     let src = srcs.as_ptr();
     let mut depth: Vec<u32> = Vec::with_capacity(64);
     let mut i = 0usize;
     if n >= 2 && *src == b'#' && *src.add(1) == b'!' {
-        let end = find_line_terminator(src, n, 2);
+        let end = find_line_terminator(src, n, 2, cpu);
         *kind = tk!(Hashbang);
-        bm_clear_range(st, 1, end - 1);
+        bm_clear_range(st, 1, end - 1, cpu);
         if end < n {
-            bm_set(st, end);
+            bm_set(st, end, cpu);
         }
         i = end;
     }
     loop {
         let nsub = depth.len();
-        let s = if nsub != 0 { find_opener6(src, n, i) } else { find_opener(src, n, i) };
+        let s = if nsub != 0 {
+            find(src, n, i, OPENER8_BYTES, cpu)
+        } else {
+            find(src, n, i, OPENER_BYTES, cpu)
+        };
         if s >= n {
             break;
         }
         let c = *src.add(s);
         match c {
             b'"' | b'\'' => {
-                i = lex_string(src, srcs, n, st, kind, s, c, lanes);
+                i = lex_string(src, srcs, n, st, kind, s, c, lanes, cpu);
             }
             b'`' => {
                 let (end, opened_sub) = lex_template_segment(
@@ -54,6 +69,7 @@ pub(super) unsafe fn carve_js(
                     tk!(TemplateHead),
                     tk!(TemplateNoSub),
                     lanes,
+                    cpu,
                 );
                 if opened_sub {
                     depth.push(0);
@@ -62,7 +78,7 @@ pub(super) unsafe fn carve_js(
             }
             b'{' => {
                 if s >= 2 && *src.add(s - 1) == b'u' && *src.add(s - 2) == b'\\' {
-                    i = skip_unicode_brace_escape(src, n, s);
+                    i = skip_unicode_brace_escape(src, n, s, cpu);
                 } else {
                     let top = depth.len() - 1;
                     depth[top] += 1;
@@ -86,6 +102,7 @@ pub(super) unsafe fn carve_js(
                         tk!(TemplateMiddle),
                         tk!(TemplateTail),
                         lanes,
+                        cpu,
                     );
                     if opened_sub {
                         depth.push(0);
@@ -94,11 +111,11 @@ pub(super) unsafe fn carve_js(
                 }
             }
             b'/' => {
-                i = lex_slash(src, srcs, n, st, kind, opch, word, ts, s, lanes);
+                i = lex_slash(src, srcs, n, st, kind, opch, word, ts, s, lanes, cpu);
             }
             b'<' => {
                 // Annex B B.1.1: `<!--` begins a line comment.
-                i = if html_open_comment_at(srcs, n, s, lanes.module) {
+                i = if html_open_comment_at(srcs, n, s, lanes.module, cpu) {
                     lex_html_open_comment(src, srcs, n, st, kind, opch, s, lanes)
                 } else {
                     s + 1
@@ -106,7 +123,7 @@ pub(super) unsafe fn carve_js(
             }
             b'>' => {
                 // Annex B B.1.3: `-->` begins a line comment, but only at line start.
-                i = if html_close_comment_at(srcs, s, lanes.module) {
+                i = if html_close_comment_at(srcs, s, lanes.module, cpu) {
                     lex_html_close_comment(src, srcs, n, st, kind, opch, s, lanes)
                 } else {
                     s + 1

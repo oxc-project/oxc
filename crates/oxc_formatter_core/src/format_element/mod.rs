@@ -205,42 +205,52 @@ pub const LINE_TERMINATORS: [char; 3] = ['\r', LINE_SEPARATOR, PARAGRAPH_SEPARAT
 /// Replace the line terminators matching the provided list with "\n"
 /// since its the only line break type supported by the printer
 pub fn normalize_newlines<const N: usize>(text: &str, terminators: [char; N]) -> Cow<'_, str> {
-    // Most texts have none: rule them out by the terminators' first UTF-8 bytes, all at once
+    // Searched by the terminators' first UTF-8 bytes, all at once:
+    // a `[char; N]` pattern would decode every char in between
     const { assert!(N >= 1 && N <= 3) };
+    let bytes = text.as_bytes();
     let first_bytes = terminators.map(|c| c.encode_utf8(&mut [0; 4]).as_bytes()[0]);
-    let first = if N == 1 {
-        memchr::memchr(first_bytes[0], text.as_bytes())
-    } else {
-        let byte = |i: usize| first_bytes[i.min(N - 1)];
-        memchr::memchr3(byte(0), byte(1), byte(2), text.as_bytes())
+    let find = |from: usize| {
+        let found = if N == 1 {
+            memchr::memchr(first_bytes[0], &bytes[from..])
+        } else {
+            let byte = |i: usize| first_bytes[i.min(N - 1)];
+            memchr::memchr3(byte(0), byte(1), byte(2), &bytes[from..])
+        };
+        found.map(|i| from + i)
     };
-    // A first UTF-8 byte starts a char, so the search can resume there
-    let Some(first) = first else { return Cow::Borrowed(text) };
 
     let mut result = String::new();
     let mut last_end = 0;
-
-    for (start, part) in text[first..].match_indices(terminators) {
-        let start = first + start;
+    let mut from = 0;
+    while let Some(start) = find(from) {
+        // A first UTF-8 byte starts a char, so `start` is a char boundary
+        let Some(terminator) = terminators.into_iter().find(|&c| text[start..].starts_with(c))
+        else {
+            // Another char with the same first byte
+            from = start + 1;
+            continue;
+        };
+        if last_end == 0 {
+            // Never longer than `text`
+            result.reserve(text.len());
+        }
         result.push_str(&text[last_end..start]);
         result.push('\n');
-
-        last_end = start + part.len();
-        // If the current character is \r and the
-        // next is \n, skip over the entire sequence
-        if part == "\r" && text[last_end..].starts_with('\n') {
+        last_end = start + terminator.len_utf8();
+        // `\r\n` is one line break
+        if terminator == '\r' && bytes.get(last_end) == Some(&b'\n') {
             last_end += 1;
         }
+        from = last_end;
     }
 
-    // If the result is empty no line terminators were matched,
-    // return the entire input text without allocating a new String
-    if result.is_empty() {
-        Cow::Borrowed(text)
-    } else {
-        result.push_str(&text[last_end..text.len()]);
-        Cow::Owned(result)
+    // Nothing matched
+    if last_end == 0 {
+        return Cow::Borrowed(text);
     }
+    result.push_str(&text[last_end..]);
+    Cow::Owned(result)
 }
 
 impl<'a> FormatElement<'a> {
@@ -581,10 +591,43 @@ pub fn text_width(text: &str, indent_width: IndentWidth) -> u32 {
 
 #[cfg(test)]
 mod tests {
+    use cow_utils::CowUtils;
+
     use super::*;
 
     fn indent_width(value: u8) -> IndentWidth {
         IndentWidth::try_from(value).expect("valid indent width")
+    }
+
+    #[test]
+    fn normalize_newlines_edge_cases() {
+        let texts = [
+            "",
+            "a",
+            "a\nb",
+            "\r",
+            "\r\n",
+            "\n\r",
+            "\r\r",
+            "\r\r\n",
+            "\r\n\r\n",
+            "a\rb\r\nc\nd",
+            "a\r",
+            "\ra",
+            "あ\r\nい\rう",
+            "\u{2028}\r\u{2029}",
+            "\u{2028}\n",
+            "…€\u{2028}…",
+        ];
+        for text in texts {
+            let crlf = text.cow_replace("\r\n", "\n");
+            let cr = crlf.cow_replace('\r', "\n");
+            assert_eq!(normalize_newlines(text, ['\r']), cr, "{text:?}");
+            let all = cr.cow_replace(&LINE_TERMINATORS[..], "\n");
+            assert_eq!(normalize_newlines(text, LINE_TERMINATORS), all, "{text:?}");
+        }
+        // Chars sharing a terminator's first byte (`0xE2`) are not terminators
+        assert!(matches!(normalize_newlines("a…€b", LINE_TERMINATORS), Cow::Borrowed(_)));
     }
 
     #[test]
