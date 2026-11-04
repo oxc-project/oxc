@@ -12,13 +12,15 @@ Object)` gives the result `Object.prototype` while installing the private brand.
 The constructor's prototype getters are only descriptor templates; the public
 result does not inherit from that prototype.
 
-## Throughput results
+## Historical throughput results
 
 Five serial paired fresh-process repetitions on 2026-11-03, Apple M4 Pro,
 Node 26.13.0 / V8 14.6.202.34-node.40, matching local release bindings built with
 `allocator,tokens`, production local JS printer. These are warmed corpus
 measurements of the eager raw entry point, not full-build or cold-start results.
 The public sync/async routing is covered by NAPI and contract tests.
+These runs discarded results during warmup, including the retained workload.
+The follow-up below corrects that mismatch without changing the runtime POC.
 
 | Workload                                  | Main median (range), seconds | POC median (range), seconds | Median change   | Median max RSS MiB, main → POC |
 | ----------------------------------------- | ---------------------------- | --------------------------- | --------------- | ------------------------------ |
@@ -38,6 +40,80 @@ Rust/Node activity inflated samples. Its partial files remain under
 private-wrapper samples are under `confirm/`; final samples use the actual edited
 `eager.js`. The interactive host's background apps/indexers were not disabled;
 final timing ranges and all individual samples are retained in `results.json`.
+
+## Retained-result follow-up
+
+Neither proposed replacement reliably removed the retained-AST regression. The
+runtime remains the shared-getter POC at `ce917242118dab18f6b7529bf0cc02e9e6812911`.
+[All follow-up samples, manifests, diagnostic summaries and exact trial patches](retention-results.json)
+are preserved, including unfavorable samples and screening outliers.
+
+Two alternatives were confirmed through the actual public eager implementation,
+with five serial, rotated fresh-process repetitions per workload and matching
+retention during warmup. Each series compared main, the original POC, and one
+replacement using the same native/generated/printer artifacts:
+
+| Retained workload, separate series          | Main median | Original POC median | Replacement median | Replacement vs main |
+| ------------------------------------------- | ----------: | ------------------: | -----------------: | ------------------: |
+| Read-only data properties                   |      2.659s |              2.709s |             2.809s |      5.7% more time |
+| Literal getters with private-field stamping |      2.587s |              2.631s |             2.667s |      3.1% more time |
+
+The data-property replacement used a fresh literal in public field order and
+`Object.defineProperties` to make its fields read-only. It changes accessors
+into configurable data properties. The literal-getter replacement stamped
+private fields onto a literal returned by a base constructor, removing both
+`Reflect.construct` and `Object.defineProperties`. Its getters were unique per
+result and referenced the receiver's private fields. The 13 focused tests and
+64 contract combinations plus async cases passed for both trials, with their
+descriptor/receiver differences made explicit. Neither replacement beat the
+original POC's retained median in its own confirmation series, so neither was
+kept. The literal lifetime probe reclaimed discarded payloads during minor GC,
+but retained private payloads after deleting accessors from live owners.
+
+An isolated construction probe wrapped 32,267 preallocated tiny payloads. Five
+rotated repetitions had medians of 13.3ms for main, 25.4ms for the original POC,
+25.6ms for shared-getter stamping, 27.6ms for read-only data properties, and
+27.6ms for constructing an instance then resetting its prototype. A later
+single literal-getter sample took 18.2ms; it is not a paired median. These
+construction differences alone do not explain the historical 149ms retained
+gap, and removing reflection did not improve the complete retained workload.
+
+Warmup lifetime materially affects the comparison. The worker now retains
+warmup results in `retain` mode, releases them before the premeasurement forced
+GC, and records the policy. A final control alternated policy order over five
+repetitions and reversed baseline/POC order on even repetitions:
+
+| Warmup policy, original POC |  Main median (range) |   POC median (range) |   Median change |
+| --------------------------- | -------------------: | -------------------: | --------------: |
+| Discard results             | 3.166s (2.750–4.860) | 3.819s (3.553–4.547) | 20.6% more time |
+| Retain results              | 2.842s (2.728–3.482) | 2.869s (2.768–2.917) |  1.0% more time |
+
+The matching-policy pairs included three slower and two faster POC results.
+This corrects the benchmark's lifetime mismatch; it does not fix the runtime or
+establish retained-workload parity. The host had background contention, and
+absolute rates visibly shifted during the literal confirmation. The cause of
+that shift was not established. Do not pool absolute timings between series.
+The exploratory screen includes 17.5s main and 9.4s POC retention outliers;
+none were removed from the evidence.
+
+Matched Node 26.13.0 V8 source supports two separate costs. The constructor
+[fast path checks the initial map's constructor](https://github.com/nodejs/node/blob/v26.13.0/deps/v8/src/builtins/builtins-constructor-gen.cc#L337),
+so a target/new-target mismatch can take the runtime allocation path.
+[`DefineProperties`](https://github.com/nodejs/node/blob/v26.13.0/deps/v8/src/objects/js-objects.cc#L1147)
+still enumerates and converts descriptors before applying them; caching the
+JavaScript descriptor objects does not eliminate that work. These source paths
+are not a measurement of the optimized machine code's exact cost.
+
+V8's [allocation-site pretenuring decisions](https://github.com/nodejs/node/blob/v26.13.0/deps/v8/src/heap/pretenuring-handler.cc#L43)
+use survival feedback, so warmup lifetimes can change allocation behavior. In
+separate instrumented retained passes, discarded warmup produced 1781MB promoted
+for main versus 3869MB for the original POC; matching warmup produced 1941MB
+versus 1553MB. Exploratory CPU profiles attributed 35% of main's samples and 61%
+of the POC's samples to GC. These runs
+were contended and instrumented, so their elapsed times are not throughput
+claims. Disabling allocation-site pretenuring still left a retained gap
+(main 3.595s, POC 3.937s, inline data 3.786s in one traced control): adaptive
+pretenuring is not the sole cause. The remaining regression is unresolved.
 
 ## Compatibility
 
@@ -163,6 +239,10 @@ pnpm -C packages/codegen build
 node napi/parser/bench/raw-result/prepare.mjs
 node napi/parser/bench/raw-result/contract.mjs
 node napi/parser/bench/raw-result/run.mjs "$CORPUS" baseline,poc raw,maps,retain 3 paired
+OXC_BENCH_WARMUP=discard node napi/parser/bench/raw-result/run.mjs "$CORPUS" baseline,poc retain 3 legacy-warmup
+node napi/parser/bench/raw-result/run.mjs "$CORPUS" baseline,prior,stamped,data,literal raw,maps,retain 3 retention-screen
+node napi/parser/bench/raw-result/contract.mjs literal
+node --expose-gc napi/parser/bench/raw-result/construction.mjs stamped /tmp/stamped-construction.json
 node napi/parser/bench/raw-result/run.mjs "$CORPUS" baseline,poc verify 1 correctness
 node napi/parser/bench/raw-result/diagnose.mjs "$CORPUS"
 node napi/parser/bench/raw-result/summarize.mjs paired
@@ -172,6 +252,9 @@ node --expose-gc --allow-natives-syntax napi/parser/bench/raw-result/lifetime.mj
 
 The runner launches serial fresh processes and rotates variant order. Sources
 are preloaded and hashed; two evenly spaced warmup passes precede forced GC.
+The default `OXC_BENCH_WARMUP=matching` retains warmup results only in `retain`
+mode, then releases them before forced GC. `OXC_BENCH_WARMUP=discard` reproduces
+the historical behavior. Warmup owners are not held through the measured pass.
 There is no forced GC inside the measured pass. Natural GC is included.
 `raw` consumes AST body/error counts; `maps` prints the complete AST with source
 maps; `retain` holds **every result** until after the pass and reads them again
@@ -194,6 +277,13 @@ paired run saves a build manifest with native/generated-JS/printer hashes.
 `prepare.mjs` extracts main's wrapper from the pinned base, redirects all imports
 to this worktree, and asserts its patch boundaries. Set `OXC_BENCH_BASE` only
 when intentionally adapting the baseline to another revision.
+The `prior` variant extracts the original POC at the pinned `ce917` commit.
+`retention-results.json` embeds exact patches against that commit for the two
+public implementation trials. To reproduce those trials, apply one patch in an
+isolated checkout and compare `baseline,prior,poc`; the generated `data` variant
+uses a helper and is not identical to the inline public trial. The constructor
+probe retains wrappers around tiny preallocated payloads, includes natural GC,
+and does not estimate complete parsing throughput.
 
 Required focused checks:
 

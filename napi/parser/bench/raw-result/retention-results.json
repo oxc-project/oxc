@@ -1,0 +1,3166 @@
+{
+  "schemaVersion": 1,
+  "decision": "No runtime replacement selected; retained-AST regression unresolved. Keep original POC implementation and correct benchmark warmup.",
+  "baseCommit": "62a8e7818e86abe19e86a7125a017f665ba4448c",
+  "originalPocCommit": "ce917242118dab18f6b7529bf0cc02e9e6812911",
+  "method": {
+    "series": "Serial fresh-process children; rotate variant order in each series. All completed samples retained. Do not pool absolute timings between series.",
+    "warmup": "Two evenly spaced warmup passes. Matching warmup retains results only for retain mode; release warmup owners before premeasurement forced GC. Discard reproduces historical warmup.",
+    "finalControl": "Five repetitions. Alternate policy order by repetition, and reverse baseline/poc order on even repetitions.",
+    "limitations": [
+      "Interactive host with background activity. Initial profiling/screening overlapped unrelated tests. Extreme screening outliers retained.",
+      "Absolute rates visibly changed during literal confirmation; cause not established.",
+      "Instrumented trace/profile elapsed times are not throughput estimates. GC sums exclude uncollected tail and native allocations.",
+      "Comparison of medians is descriptive, not a confidence interval or statistical guarantee."
+    ],
+    "variantNames": {
+      "baseline": "Pinned main closure accessors",
+      "prior": "Original POC from ce917 with local imports and wrapResult export",
+      "poc": "Actual public eager.js at measurement time: original POC in retention-final, inline data properties in data-confirm/no-pretenure, literal getters in literal-confirm",
+      "stamped": "Private fields stamped onto shared-getter own properties",
+      "data": "Read-only data literal through helper",
+      "literal": "Private fields stamped onto literal own getters",
+      "reset": "Construct normal private instance, reset prototype to Object.prototype"
+    }
+  },
+  "series": {
+    "retention-screen": {
+      "common": {
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        }
+      },
+      "builds": {
+        "all": {
+          "base": "62a8e7818e86abe19e86a7125a017f665ba4448c",
+          "commit": "ce917242118dab18f6b7529bf0cc02e9e6812911",
+          "node": "v26.13.0",
+          "v8": "14.6.202.34-node.40",
+          "platform": "darwin",
+          "arch": "arm64",
+          "cpu": "Apple M4 Pro",
+          "baselineSourceSha256": "4b2a775e2f702c2a5acbeaaed5ec46240eb51c51e62f7a50d0fa6cda5e000e5d",
+          "variants": {
+            "baseline": "f4ce941545471ac772848b79239ec7a80e7ba92ce3d00021c1ff659726711401",
+            "helper": "b6befc50b658fe8a73cc7ee0405de7fc8f80db4c52cfd35a5d872865fe395b3d",
+            "define": "bcdb0fc77277514ebb41f9ea4a7c9ed276a64dd86fb9c8a2d133e1e53e20ac72",
+            "bound": "b3b143f32edaab0fa16bd139904303401ece371903f230c7b96834ffa78d9ff8",
+            "private": "87cbb798bde32c6ab0fbfbd02f1b8149bb13b91eb65f9796e90a77e4e4348df1",
+            "stamped": "8478d58cba678e020b2c8e0235b3605dde12ee4fd3cba388e82f608f30fcfbee",
+            "literal": "8925f008908a6e2500c46c1ae783f6ca784a79cb2ff3875ec9d48b8572d7884c",
+            "data": "532da87054a4a57b7f48f4f98803d9df4d99231228f29cc93a47c414e7043987",
+            "plain": "485bda5cf1869ab85f9ba82b4249878ef8ef95c7a7e8bf31b03a28ee187ee3d8",
+            "prior": "b4c77c4e6540bcbefefbc6bfdbae594f452376bab173b39f46b2e962ddd5bcea",
+            "reset": "29d025daef553c52b2e1c07d5f297b3b5732b36d100a0e5d3d4ec7352a604dea"
+          },
+          "hashes": {
+            "napi/parser/bench/raw-result/prepare.mjs": "66c4494f4d2338c62f0ff29cee2a7c4145282e5fe6f22c17573ebf207f2a41ad",
+            "napi/parser/bench/raw-result/run.mjs": "58854984ca015f44369d4abe3c6d050430e74077d9d124677725908478ebbe03",
+            "napi/parser/bench/raw-result/worker.mjs": "599144a90d17cc5fa665bf0ba347c9a3aad5d5b69c1d0ccf6ba5f15c89f77a7c",
+            "napi/parser/bench/raw-result/corpus.mjs": "c4dce3130f8afe5e2c64505279757c4d7db3c34bab22ff4852a33cc1a0010c6d",
+            "napi/parser/src-js/raw-transfer/eager.js": "ecabb151c54db6e1cab200156b94e7da6288b3c59020a41d335398dd03057667",
+            "napi/parser/src-js/raw-transfer/common.js": "de4e84fe741b37608f8b8179d8dc76a7d878ac4b187f469cd39dfac40617dab7",
+            "napi/parser/src-js/generated/constants.js": "2b7beaf3d35613c4b2bb3d7bffc7f523f36cf111060f318f0c528504d1d89f6f",
+            "napi/parser/src-js/parser.darwin-arm64.node": "1ba1571fd9591b10f3172c3112d98151c8d2433807f78e093359705ee99155b8",
+            "napi/parser/src-js/generated/deserialize/js.js": "d7ed3443c50392af5bd3b9df724a49fbf6386a8a82170b205ef69d750105d2ba",
+            "napi/parser/src-js/generated/deserialize/js_parent.js": "ad5cbb96343cce18d08cece82940238e1bb6cff0d83b94ea82ff3d5abc760334",
+            "napi/parser/src-js/generated/deserialize/js_range.js": "53c60f4f056ad273cd8d3fcaf6cb5e6fa58f99f66d14a2fa7dcd64a7839896dd",
+            "napi/parser/src-js/generated/deserialize/js_range_parent.js": "64398ccc055a8c4fbfecfe9e83e5c38bbc029a5db2ed776eeb8bda704b5cb63d",
+            "napi/parser/src-js/generated/deserialize/ts.js": "7bdc861f69064a89b64bc90d70b31b7b05b38d4d964b0ebbae16d2b72dd4ced3",
+            "napi/parser/src-js/generated/deserialize/ts_parent.js": "6b182bad974270cbb16199fc10838860b1f9811b9a7a40bf57297189f1b88779",
+            "napi/parser/src-js/generated/deserialize/ts_range.js": "04d2b62a900c8883d41f1d48ff6fd84ac539fd3a9caa60fc4455a7a1d043d98b",
+            "napi/parser/src-js/generated/deserialize/ts_range_parent.js": "62732f48971dfccdff91fa89e2e54b8647c25dca4cbdc53998372a0781aa4143",
+            "packages/codegen/dist/index.js": "e4d38ab62b866e75f5dfcf48c020eda8ebf8ee7d5d10044f00cd603d2dbfb7e2",
+            "packages/codegen/dist/print_js.js": "2e1190d3cc2cc2a5f4e2de3075923b7e4eb4f83394cce6fece8cd1f097600a03",
+            "packages/codegen/dist/print_js_maps.js": "297474b3e9d275758f9a1381d754547710169c241c3a722d0c43ce78911c8001",
+            "packages/codegen/dist/print_ts.js": "327b56d274118900529920dcb11349b1de20e9b29c1a50142a20c8a1cf34c59e",
+            "packages/codegen/dist/print_ts_maps.js": "28b164d1eb256ae4ec9e89e8fb22ae835de06706561f1768ce66f4992730c703"
+          }
+        }
+      },
+      "groups": [
+        {
+          "warmupRetention": "matching",
+          "mode": "raw",
+          "variant": "baseline",
+          "checksum": 402128,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 1501.2534999999998,
+          "minMilliseconds": 1472.307167,
+          "maxMilliseconds": 1518.6582079999998,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 1518.6582079999998,
+              "cpuMilliseconds": 2927.541,
+              "maxRssMiB": 1136.671875,
+              "heapAfterGcMiB": 192.3756866455078
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 1472.307167,
+              "cpuMilliseconds": 2767.522,
+              "maxRssMiB": 1126.609375,
+              "heapAfterGcMiB": 192.3907241821289
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 1501.2534999999998,
+              "cpuMilliseconds": 3004.81,
+              "maxRssMiB": 1135.171875,
+              "heapAfterGcMiB": 192.38683319091797
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "raw",
+          "variant": "prior",
+          "checksum": 402128,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 1067.6867920000004,
+          "minMilliseconds": 1021.9034999999999,
+          "maxMilliseconds": 1073.752167,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 1067.6867920000004,
+              "cpuMilliseconds": 1325.425,
+              "maxRssMiB": 511.328125,
+              "heapAfterGcMiB": 193.4314727783203
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 1073.752167,
+              "cpuMilliseconds": 1331.566,
+              "maxRssMiB": 507.34375,
+              "heapAfterGcMiB": 193.4210433959961
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 1021.9034999999999,
+              "cpuMilliseconds": 1247.672,
+              "maxRssMiB": 506.8125,
+              "heapAfterGcMiB": 193.41263580322266
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "raw",
+          "variant": "stamped",
+          "checksum": 402128,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 1066.983041,
+          "minMilliseconds": 1062.5752920000004,
+          "maxMilliseconds": 1118.472417,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 1062.5752920000004,
+              "cpuMilliseconds": 1317.692,
+              "maxRssMiB": 509.78125,
+              "heapAfterGcMiB": 193.43118286132812
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 1066.983041,
+              "cpuMilliseconds": 1315.741,
+              "maxRssMiB": 510.84375,
+              "heapAfterGcMiB": 193.42412567138672
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 1118.472417,
+              "cpuMilliseconds": 1335.59,
+              "maxRssMiB": 507.203125,
+              "heapAfterGcMiB": 193.4289321899414
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "raw",
+          "variant": "data",
+          "checksum": 402128,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 1055.5527499999994,
+          "minMilliseconds": 1053.337125,
+          "maxMilliseconds": 1063.2331670000003,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 1055.5527499999994,
+              "cpuMilliseconds": 1302.981,
+              "maxRssMiB": 510.359375,
+              "heapAfterGcMiB": 193.42276763916016
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 1063.2331670000003,
+              "cpuMilliseconds": 1321.877,
+              "maxRssMiB": 510.125,
+              "heapAfterGcMiB": 193.42166137695312
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 1053.337125,
+              "cpuMilliseconds": 1284.374,
+              "maxRssMiB": 506.46875,
+              "heapAfterGcMiB": 193.3752899169922
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "raw",
+          "variant": "literal",
+          "checksum": 402128,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 1038.958792,
+          "minMilliseconds": 1035.6572910000004,
+          "maxMilliseconds": 1051.9371660000006,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 1051.9371660000006,
+              "cpuMilliseconds": 1349.713,
+              "maxRssMiB": 529.375,
+              "heapAfterGcMiB": 193.41057586669922
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 1038.958792,
+              "cpuMilliseconds": 1293.477,
+              "maxRssMiB": 512.96875,
+              "heapAfterGcMiB": 193.43316650390625
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 1035.6572910000004,
+              "cpuMilliseconds": 1285.857,
+              "maxRssMiB": 512.71875,
+              "heapAfterGcMiB": 193.38699340820312
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "maps",
+          "variant": "baseline",
+          "checksum": 346293451,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 3027.5739580000004,
+          "minMilliseconds": 2919.4729580000003,
+          "maxMilliseconds": 3029.173792,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 3029.173792,
+              "cpuMilliseconds": 4749.18,
+              "maxRssMiB": 1158.78125,
+              "heapAfterGcMiB": 194.13573455810547
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 3027.5739580000004,
+              "cpuMilliseconds": 4659.988,
+              "maxRssMiB": 1160.078125,
+              "heapAfterGcMiB": 194.0954360961914
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2919.4729580000003,
+              "cpuMilliseconds": 4567.478,
+              "maxRssMiB": 1150.8125,
+              "heapAfterGcMiB": 194.1273193359375
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "maps",
+          "variant": "prior",
+          "checksum": 346293451,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2621.813083,
+          "minMilliseconds": 2565.4060000000004,
+          "maxMilliseconds": 2630.4535,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2565.4060000000004,
+              "cpuMilliseconds": 3110.304,
+              "maxRssMiB": 563.359375,
+              "heapAfterGcMiB": 195.19170379638672
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2621.813083,
+              "cpuMilliseconds": 3111.377,
+              "maxRssMiB": 556.296875,
+              "heapAfterGcMiB": 195.20249938964844
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2630.4535,
+              "cpuMilliseconds": 3115.351,
+              "maxRssMiB": 548.671875,
+              "heapAfterGcMiB": 195.20441436767578
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "maps",
+          "variant": "stamped",
+          "checksum": 346293451,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2569.9185839999996,
+          "minMilliseconds": 2442.0616660000005,
+          "maxMilliseconds": 2608.320083,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2608.320083,
+              "cpuMilliseconds": 3154.488,
+              "maxRssMiB": 561.9375,
+              "heapAfterGcMiB": 195.17926025390625
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2569.9185839999996,
+              "cpuMilliseconds": 3120.625,
+              "maxRssMiB": 561.78125,
+              "heapAfterGcMiB": 195.16976165771484
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2442.0616660000005,
+              "cpuMilliseconds": 2934.658,
+              "maxRssMiB": 561.078125,
+              "heapAfterGcMiB": 195.2065887451172
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "maps",
+          "variant": "data",
+          "checksum": 346293451,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2587.603625,
+          "minMilliseconds": 2444.3915829999996,
+          "maxMilliseconds": 2594.370875,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2587.603625,
+              "cpuMilliseconds": 3137.068,
+              "maxRssMiB": 561.46875,
+              "heapAfterGcMiB": 195.1892547607422
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2594.370875,
+              "cpuMilliseconds": 3129.108,
+              "maxRssMiB": 560.84375,
+              "heapAfterGcMiB": 195.18675994873047
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2444.3915829999996,
+              "cpuMilliseconds": 2931.299,
+              "maxRssMiB": 560.125,
+              "heapAfterGcMiB": 195.19075775146484
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "maps",
+          "variant": "literal",
+          "checksum": 346293451,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2533.380584,
+          "minMilliseconds": 2424.53525,
+          "maxMilliseconds": 2568.610667,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2568.610667,
+              "cpuMilliseconds": 3141.437,
+              "maxRssMiB": 567.46875,
+              "heapAfterGcMiB": 195.18018341064453
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2533.380584,
+              "cpuMilliseconds": 3037.594,
+              "maxRssMiB": 554.71875,
+              "heapAfterGcMiB": 195.20240020751953
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2424.53525,
+              "cpuMilliseconds": 2886.236,
+              "maxRssMiB": 546.484375,
+              "heapAfterGcMiB": 195.20071411132812
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "baseline",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2211.4787090000004,
+          "minMilliseconds": 1999.6811660000003,
+          "maxMilliseconds": 17505.872084000002,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 1999.6811660000003,
+              "cpuMilliseconds": 4905.281,
+              "maxRssMiB": 4320.421875,
+              "heapAfterGcMiB": 3935.527069091797
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2211.4787090000004,
+              "cpuMilliseconds": 5928.92,
+              "maxRssMiB": 4290.859375,
+              "heapAfterGcMiB": 3938.9719772338867
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 17505.872084000002,
+              "cpuMilliseconds": 9636.353,
+              "maxRssMiB": 4293.875,
+              "heapAfterGcMiB": 3938.9044189453125
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "prior",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2295.9827090000003,
+          "minMilliseconds": 1898.2385410000006,
+          "maxMilliseconds": 9376.519625,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2295.9827090000003,
+              "cpuMilliseconds": 6238.597,
+              "maxRssMiB": 4276.890625,
+              "heapAfterGcMiB": 3910.963150024414
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 1898.2385410000006,
+              "cpuMilliseconds": 4475.964,
+              "maxRssMiB": 4292.046875,
+              "heapAfterGcMiB": 3910.9650802612305
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 9376.519625,
+              "cpuMilliseconds": 13339.564,
+              "maxRssMiB": 4185.96875,
+              "heapAfterGcMiB": 3914.352226257324
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "stamped",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2395.5340830000005,
+          "minMilliseconds": 2121.0435,
+          "maxMilliseconds": 2483.0287080000003,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2483.0287080000003,
+              "cpuMilliseconds": 7319.626,
+              "maxRssMiB": 4294.96875,
+              "heapAfterGcMiB": 3911.424980163574
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2395.5340830000005,
+              "cpuMilliseconds": 6814.809,
+              "maxRssMiB": 4261.71875,
+              "heapAfterGcMiB": 3914.8265838623047
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2121.0435,
+              "cpuMilliseconds": 5323.004,
+              "maxRssMiB": 4291.28125,
+              "heapAfterGcMiB": 3914.8166732788086
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "data",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 1940.9996250000004,
+          "minMilliseconds": 1903.4084999999995,
+          "maxMilliseconds": 2076.665584,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 1940.9996250000004,
+              "cpuMilliseconds": 4758.733,
+              "maxRssMiB": 4284.8125,
+              "heapAfterGcMiB": 3909.681953430176
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2076.665584,
+              "cpuMilliseconds": 5413.412,
+              "maxRssMiB": 4289.359375,
+              "heapAfterGcMiB": 3913.1011352539062
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 1903.4084999999995,
+              "cpuMilliseconds": 4328.24,
+              "maxRssMiB": 4287.59375,
+              "heapAfterGcMiB": 3909.699333190918
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "literal",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2221.1299579999995,
+          "minMilliseconds": 2126.277333,
+          "maxMilliseconds": 2358.1648750000004,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2358.1648750000004,
+              "cpuMilliseconds": 6697.692,
+              "maxRssMiB": 4296.6875,
+              "heapAfterGcMiB": 3937.485061645508
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2221.1299579999995,
+              "cpuMilliseconds": 5726.194,
+              "maxRssMiB": 4298.171875,
+              "heapAfterGcMiB": 3937.5011291503906
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2126.277333,
+              "cpuMilliseconds": 5618.556,
+              "maxRssMiB": 4313.125,
+              "heapAfterGcMiB": 3937.55069732666
+            }
+          ]
+        }
+      ]
+    },
+    "data-confirm": {
+      "common": {
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        }
+      },
+      "builds": {
+        "all": {
+          "base": "62a8e7818e86abe19e86a7125a017f665ba4448c",
+          "commit": "ce917242118dab18f6b7529bf0cc02e9e6812911",
+          "node": "v26.13.0",
+          "v8": "14.6.202.34-node.40",
+          "platform": "darwin",
+          "arch": "arm64",
+          "cpu": "Apple M4 Pro",
+          "baselineSourceSha256": "4b2a775e2f702c2a5acbeaaed5ec46240eb51c51e62f7a50d0fa6cda5e000e5d",
+          "variants": {
+            "baseline": "f4ce941545471ac772848b79239ec7a80e7ba92ce3d00021c1ff659726711401",
+            "helper": "b6befc50b658fe8a73cc7ee0405de7fc8f80db4c52cfd35a5d872865fe395b3d",
+            "define": "bcdb0fc77277514ebb41f9ea4a7c9ed276a64dd86fb9c8a2d133e1e53e20ac72",
+            "bound": "b3b143f32edaab0fa16bd139904303401ece371903f230c7b96834ffa78d9ff8",
+            "private": "87cbb798bde32c6ab0fbfbd02f1b8149bb13b91eb65f9796e90a77e4e4348df1",
+            "stamped": "8478d58cba678e020b2c8e0235b3605dde12ee4fd3cba388e82f608f30fcfbee",
+            "literal": "8925f008908a6e2500c46c1ae783f6ca784a79cb2ff3875ec9d48b8572d7884c",
+            "data": "532da87054a4a57b7f48f4f98803d9df4d99231228f29cc93a47c414e7043987",
+            "plain": "485bda5cf1869ab85f9ba82b4249878ef8ef95c7a7e8bf31b03a28ee187ee3d8",
+            "prior": "b4c77c4e6540bcbefefbc6bfdbae594f452376bab173b39f46b2e962ddd5bcea",
+            "reset": "29d025daef553c52b2e1c07d5f297b3b5732b36d100a0e5d3d4ec7352a604dea"
+          },
+          "hashes": {
+            "napi/parser/bench/raw-result/prepare.mjs": "88d529cdac1e043593e6e8b702726a39a1717754935a91fecaa02dac434c313e",
+            "napi/parser/bench/raw-result/run.mjs": "c916b684b0df624fb35f13f924e4ec532d15951d5b6c609051114d827960de56",
+            "napi/parser/bench/raw-result/worker.mjs": "599144a90d17cc5fa665bf0ba347c9a3aad5d5b69c1d0ccf6ba5f15c89f77a7c",
+            "napi/parser/bench/raw-result/corpus.mjs": "c4dce3130f8afe5e2c64505279757c4d7db3c34bab22ff4852a33cc1a0010c6d",
+            "napi/parser/bench/raw-result/construction.mjs": "af99bd22ad0e3fc0fcf2f1f02284a277ccc2007ac6f4fc649434115cc70c0f11",
+            "napi/parser/bench/raw-result/contract.mjs": "908d9928d8a52eb46ae3cab31f69b4ea250ee6413f54b6c443575c6cb16a4d9f",
+            "napi/parser/bench/raw-result/lifetime.mjs": "db47999a3a1e686067fdd1634ebd06692511ebf67a8d90709a3dee2ac0b3cb25",
+            "napi/parser/src-js/index.js": "65c354c99e91484366eb4fd3c32f388a7e4ce66e9ddc20901bfff8b99ef7c09b",
+            "napi/parser/src-js/raw-transfer/eager.js": "5da6c71d85a065497639177f95b036451d9617b0be960055382373d20948ad61",
+            "napi/parser/src-js/raw-transfer/common.js": "de4e84fe741b37608f8b8179d8dc76a7d878ac4b187f469cd39dfac40617dab7",
+            "napi/parser/src-js/generated/constants.js": "2b7beaf3d35613c4b2bb3d7bffc7f523f36cf111060f318f0c528504d1d89f6f",
+            "napi/parser/src-js/parser.darwin-arm64.node": "1ba1571fd9591b10f3172c3112d98151c8d2433807f78e093359705ee99155b8",
+            "napi/parser/src-js/generated/deserialize/js.js": "d7ed3443c50392af5bd3b9df724a49fbf6386a8a82170b205ef69d750105d2ba",
+            "napi/parser/src-js/generated/deserialize/js_parent.js": "ad5cbb96343cce18d08cece82940238e1bb6cff0d83b94ea82ff3d5abc760334",
+            "napi/parser/src-js/generated/deserialize/js_range.js": "53c60f4f056ad273cd8d3fcaf6cb5e6fa58f99f66d14a2fa7dcd64a7839896dd",
+            "napi/parser/src-js/generated/deserialize/js_range_parent.js": "64398ccc055a8c4fbfecfe9e83e5c38bbc029a5db2ed776eeb8bda704b5cb63d",
+            "napi/parser/src-js/generated/deserialize/ts.js": "7bdc861f69064a89b64bc90d70b31b7b05b38d4d964b0ebbae16d2b72dd4ced3",
+            "napi/parser/src-js/generated/deserialize/ts_parent.js": "6b182bad974270cbb16199fc10838860b1f9811b9a7a40bf57297189f1b88779",
+            "napi/parser/src-js/generated/deserialize/ts_range.js": "04d2b62a900c8883d41f1d48ff6fd84ac539fd3a9caa60fc4455a7a1d043d98b",
+            "napi/parser/src-js/generated/deserialize/ts_range_parent.js": "62732f48971dfccdff91fa89e2e54b8647c25dca4cbdc53998372a0781aa4143",
+            "packages/codegen/dist/index.js": "e4d38ab62b866e75f5dfcf48c020eda8ebf8ee7d5d10044f00cd603d2dbfb7e2",
+            "packages/codegen/dist/print_js.js": "2e1190d3cc2cc2a5f4e2de3075923b7e4eb4f83394cce6fece8cd1f097600a03",
+            "packages/codegen/dist/print_js_maps.js": "297474b3e9d275758f9a1381d754547710169c241c3a722d0c43ce78911c8001",
+            "packages/codegen/dist/print_ts.js": "327b56d274118900529920dcb11349b1de20e9b29c1a50142a20c8a1cf34c59e",
+            "packages/codegen/dist/print_ts_maps.js": "28b164d1eb256ae4ec9e89e8fb22ae835de06706561f1768ce66f4992730c703"
+          }
+        }
+      },
+      "groups": [
+        {
+          "warmupRetention": "matching",
+          "mode": "raw",
+          "variant": "baseline",
+          "checksum": 402128,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2100.3582079999996,
+          "minMilliseconds": 2081.5149170000004,
+          "maxMilliseconds": 2202.2569169999997,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2100.3582079999996,
+              "cpuMilliseconds": 3660.496,
+              "maxRssMiB": 1135.390625,
+              "heapAfterGcMiB": 192.40734100341797
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2202.2569169999997,
+              "cpuMilliseconds": 4205.314,
+              "maxRssMiB": 1135.265625,
+              "heapAfterGcMiB": 192.38241577148438
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2096.4822080000004,
+              "cpuMilliseconds": 3728.671,
+              "maxRssMiB": 1133.21875,
+              "heapAfterGcMiB": 192.37519073486328
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 2109.9408750000002,
+              "cpuMilliseconds": 3872.834,
+              "maxRssMiB": 1137.015625,
+              "heapAfterGcMiB": 192.3814697265625
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 2081.5149170000004,
+              "cpuMilliseconds": 3672.49,
+              "maxRssMiB": 1135.09375,
+              "heapAfterGcMiB": 192.3799819946289
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "raw",
+          "variant": "prior",
+          "checksum": 402128,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 1539.6159580000003,
+          "minMilliseconds": 1530.336875,
+          "maxMilliseconds": 1559.1756249999999,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 1559.1756249999999,
+              "cpuMilliseconds": 1891.755,
+              "maxRssMiB": 510.25,
+              "heapAfterGcMiB": 193.43061065673828
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 1545.547791,
+              "cpuMilliseconds": 1902.671,
+              "maxRssMiB": 517.703125,
+              "heapAfterGcMiB": 193.3881072998047
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 1539.6159580000003,
+              "cpuMilliseconds": 1851.916,
+              "maxRssMiB": 510.25,
+              "heapAfterGcMiB": 193.44448852539062
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 1530.336875,
+              "cpuMilliseconds": 1858.545,
+              "maxRssMiB": 510.09375,
+              "heapAfterGcMiB": 193.42625427246094
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 1536.7902089999998,
+              "cpuMilliseconds": 1861.234,
+              "maxRssMiB": 511.25,
+              "heapAfterGcMiB": 193.4205780029297
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "raw",
+          "variant": "poc",
+          "checksum": 402128,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 1549.953375,
+          "minMilliseconds": 1541.962375,
+          "maxMilliseconds": 1552.7254160000002,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 1552.5619580000002,
+              "cpuMilliseconds": 1886.543,
+              "maxRssMiB": 510.859375,
+              "heapAfterGcMiB": 193.4224395751953
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 1549.953375,
+              "cpuMilliseconds": 1890.357,
+              "maxRssMiB": 510.09375,
+              "heapAfterGcMiB": 193.41493225097656
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 1552.7254160000002,
+              "cpuMilliseconds": 1914.189,
+              "maxRssMiB": 520.359375,
+              "heapAfterGcMiB": 193.42469024658203
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 1544.057417,
+              "cpuMilliseconds": 1866.831,
+              "maxRssMiB": 505.875,
+              "heapAfterGcMiB": 193.3949966430664
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 1541.962375,
+              "cpuMilliseconds": 1870.057,
+              "maxRssMiB": 510.03125,
+              "heapAfterGcMiB": 193.40670013427734
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "maps",
+          "variant": "baseline",
+          "checksum": 346293451,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 4311.734834000001,
+          "minMilliseconds": 4286.2305,
+          "maxMilliseconds": 4368.325749999999,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 4351.040249999999,
+              "cpuMilliseconds": 6375.228,
+              "maxRssMiB": 1165.03125,
+              "heapAfterGcMiB": 194.1403350830078
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 4368.325749999999,
+              "cpuMilliseconds": 6503.833,
+              "maxRssMiB": 1153.09375,
+              "heapAfterGcMiB": 194.15438842773438
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 4286.2305,
+              "cpuMilliseconds": 6420.287,
+              "maxRssMiB": 1152.28125,
+              "heapAfterGcMiB": 194.1443862915039
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 4297.043959,
+              "cpuMilliseconds": 6456.459,
+              "maxRssMiB": 1156.234375,
+              "heapAfterGcMiB": 194.13485717773438
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 4311.734834000001,
+              "cpuMilliseconds": 6497.88,
+              "maxRssMiB": 1155.15625,
+              "heapAfterGcMiB": 194.1551742553711
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "maps",
+          "variant": "prior",
+          "checksum": 346293451,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 3724.3785,
+          "minMilliseconds": 3715.1260410000004,
+          "maxMilliseconds": 3784.2291669999995,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 3755.6062089999996,
+              "cpuMilliseconds": 4492.019,
+              "maxRssMiB": 559.765625,
+              "heapAfterGcMiB": 195.20179748535156
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 3784.2291669999995,
+              "cpuMilliseconds": 4516.133,
+              "maxRssMiB": 559.703125,
+              "heapAfterGcMiB": 195.19275665283203
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 3724.3785,
+              "cpuMilliseconds": 4444.104,
+              "maxRssMiB": 560.921875,
+              "heapAfterGcMiB": 195.19679260253906
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 3715.1260410000004,
+              "cpuMilliseconds": 4418.886,
+              "maxRssMiB": 556.1875,
+              "heapAfterGcMiB": 195.20052337646484
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 3721.802708000001,
+              "cpuMilliseconds": 4450.348,
+              "maxRssMiB": 563.765625,
+              "heapAfterGcMiB": 195.19457244873047
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "maps",
+          "variant": "poc",
+          "checksum": 346293451,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 3728.335000000001,
+          "minMilliseconds": 3718.837708000001,
+          "maxMilliseconds": 3816.5167500000007,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 3816.5167500000007,
+              "cpuMilliseconds": 4554.707,
+              "maxRssMiB": 559.171875,
+              "heapAfterGcMiB": 195.18749237060547
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 3760.319292000001,
+              "cpuMilliseconds": 4493.127,
+              "maxRssMiB": 558.96875,
+              "heapAfterGcMiB": 195.1512908935547
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 3718.837708000001,
+              "cpuMilliseconds": 4433.161,
+              "maxRssMiB": 560.34375,
+              "heapAfterGcMiB": 195.1887435913086
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 3722.6936669999996,
+              "cpuMilliseconds": 4447.943,
+              "maxRssMiB": 562.546875,
+              "heapAfterGcMiB": 195.31951904296875
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 3728.335000000001,
+              "cpuMilliseconds": 4443.972,
+              "maxRssMiB": 560.25,
+              "heapAfterGcMiB": 195.1829605102539
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "baseline",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2658.576959,
+          "minMilliseconds": 2544.372375,
+          "maxMilliseconds": 3187.4979999999996,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2646.0437079999992,
+              "cpuMilliseconds": 6052.246,
+              "maxRssMiB": 4314.46875,
+              "heapAfterGcMiB": 3935.552963256836
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2544.372375,
+              "cpuMilliseconds": 5877.045,
+              "maxRssMiB": 4306.625,
+              "heapAfterGcMiB": 3935.5110626220703
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 3187.4979999999996,
+              "cpuMilliseconds": 8838.839,
+              "maxRssMiB": 4313.34375,
+              "heapAfterGcMiB": 3938.935562133789
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 3158.622541999999,
+              "cpuMilliseconds": 8144.024,
+              "maxRssMiB": 4283.875,
+              "heapAfterGcMiB": 3938.972442626953
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 2658.576959,
+              "cpuMilliseconds": 5983.429,
+              "maxRssMiB": 4318.984375,
+              "heapAfterGcMiB": 3935.563003540039
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "prior",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2708.7786670000005,
+          "minMilliseconds": 2672.863958000001,
+          "maxMilliseconds": 2797.2862920000007,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2708.7786670000005,
+              "cpuMilliseconds": 6289.306,
+              "maxRssMiB": 4289.484375,
+              "heapAfterGcMiB": 3910.904960632324
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2672.863958000001,
+              "cpuMilliseconds": 5980.027,
+              "maxRssMiB": 4284,
+              "heapAfterGcMiB": 3910.9175033569336
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2797.2862920000007,
+              "cpuMilliseconds": 6307.103,
+              "maxRssMiB": 4270.234375,
+              "heapAfterGcMiB": 3910.9356231689453
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 2687.8154159999995,
+              "cpuMilliseconds": 5586.591,
+              "maxRssMiB": 4284.234375,
+              "heapAfterGcMiB": 3910.9137954711914
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 2777.6198750000003,
+              "cpuMilliseconds": 6332.666,
+              "maxRssMiB": 4291.359375,
+              "heapAfterGcMiB": 3910.912307739258
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "poc",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2808.928333,
+          "minMilliseconds": 2625.421042000001,
+          "maxMilliseconds": 3266.772916,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2808.928333,
+              "cpuMilliseconds": 6552.455,
+              "maxRssMiB": 4291.84375,
+              "heapAfterGcMiB": 3909.6644744873047
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 3266.772916,
+              "cpuMilliseconds": 9185.91,
+              "maxRssMiB": 4272.484375,
+              "heapAfterGcMiB": 3909.664375305176
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 3225.5731669999996,
+              "cpuMilliseconds": 8783.132,
+              "maxRssMiB": 4283.515625,
+              "heapAfterGcMiB": 3909.668113708496
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 2625.421042000001,
+              "cpuMilliseconds": 5906.008,
+              "maxRssMiB": 4280.46875,
+              "heapAfterGcMiB": 3909.6674728393555
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 2686.162958000001,
+              "cpuMilliseconds": 6115.007,
+              "maxRssMiB": 4290.546875,
+              "heapAfterGcMiB": 3909.6653213500977
+            }
+          ]
+        }
+      ]
+    },
+    "literal-confirm": {
+      "common": {
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        }
+      },
+      "builds": {
+        "all": {
+          "base": "62a8e7818e86abe19e86a7125a017f665ba4448c",
+          "commit": "ce917242118dab18f6b7529bf0cc02e9e6812911",
+          "node": "v26.13.0",
+          "v8": "14.6.202.34-node.40",
+          "platform": "darwin",
+          "arch": "arm64",
+          "cpu": "Apple M4 Pro",
+          "baselineSourceSha256": "4b2a775e2f702c2a5acbeaaed5ec46240eb51c51e62f7a50d0fa6cda5e000e5d",
+          "variants": {
+            "baseline": "f4ce941545471ac772848b79239ec7a80e7ba92ce3d00021c1ff659726711401",
+            "helper": "b6befc50b658fe8a73cc7ee0405de7fc8f80db4c52cfd35a5d872865fe395b3d",
+            "define": "bcdb0fc77277514ebb41f9ea4a7c9ed276a64dd86fb9c8a2d133e1e53e20ac72",
+            "bound": "b3b143f32edaab0fa16bd139904303401ece371903f230c7b96834ffa78d9ff8",
+            "private": "87cbb798bde32c6ab0fbfbd02f1b8149bb13b91eb65f9796e90a77e4e4348df1",
+            "stamped": "8478d58cba678e020b2c8e0235b3605dde12ee4fd3cba388e82f608f30fcfbee",
+            "literal": "8925f008908a6e2500c46c1ae783f6ca784a79cb2ff3875ec9d48b8572d7884c",
+            "data": "532da87054a4a57b7f48f4f98803d9df4d99231228f29cc93a47c414e7043987",
+            "plain": "485bda5cf1869ab85f9ba82b4249878ef8ef95c7a7e8bf31b03a28ee187ee3d8",
+            "prior": "b4c77c4e6540bcbefefbc6bfdbae594f452376bab173b39f46b2e962ddd5bcea",
+            "reset": "29d025daef553c52b2e1c07d5f297b3b5732b36d100a0e5d3d4ec7352a604dea"
+          },
+          "hashes": {
+            "napi/parser/bench/raw-result/prepare.mjs": "88d529cdac1e043593e6e8b702726a39a1717754935a91fecaa02dac434c313e",
+            "napi/parser/bench/raw-result/run.mjs": "c916b684b0df624fb35f13f924e4ec532d15951d5b6c609051114d827960de56",
+            "napi/parser/bench/raw-result/worker.mjs": "599144a90d17cc5fa665bf0ba347c9a3aad5d5b69c1d0ccf6ba5f15c89f77a7c",
+            "napi/parser/bench/raw-result/corpus.mjs": "c4dce3130f8afe5e2c64505279757c4d7db3c34bab22ff4852a33cc1a0010c6d",
+            "napi/parser/bench/raw-result/construction.mjs": "af99bd22ad0e3fc0fcf2f1f02284a277ccc2007ac6f4fc649434115cc70c0f11",
+            "napi/parser/bench/raw-result/contract.mjs": "b503de7a3df707eb22da7fc299a2e8fcfecc2ff09e584d63b922f118ea7e2bbc",
+            "napi/parser/bench/raw-result/lifetime.mjs": "db47999a3a1e686067fdd1634ebd06692511ebf67a8d90709a3dee2ac0b3cb25",
+            "napi/parser/src-js/index.js": "164a44660eb797757b760cb945c082fd123a45a33274398ea6490790b2ed3ede",
+            "napi/parser/src-js/raw-transfer/eager.js": "028823accaaba5b969eaf7d3c4f8d215d724829d68a360144343742169a9ea9c",
+            "napi/parser/src-js/raw-transfer/common.js": "de4e84fe741b37608f8b8179d8dc76a7d878ac4b187f469cd39dfac40617dab7",
+            "napi/parser/src-js/generated/constants.js": "2b7beaf3d35613c4b2bb3d7bffc7f523f36cf111060f318f0c528504d1d89f6f",
+            "napi/parser/src-js/parser.darwin-arm64.node": "1ba1571fd9591b10f3172c3112d98151c8d2433807f78e093359705ee99155b8",
+            "napi/parser/src-js/generated/deserialize/js.js": "d7ed3443c50392af5bd3b9df724a49fbf6386a8a82170b205ef69d750105d2ba",
+            "napi/parser/src-js/generated/deserialize/js_parent.js": "ad5cbb96343cce18d08cece82940238e1bb6cff0d83b94ea82ff3d5abc760334",
+            "napi/parser/src-js/generated/deserialize/js_range.js": "53c60f4f056ad273cd8d3fcaf6cb5e6fa58f99f66d14a2fa7dcd64a7839896dd",
+            "napi/parser/src-js/generated/deserialize/js_range_parent.js": "64398ccc055a8c4fbfecfe9e83e5c38bbc029a5db2ed776eeb8bda704b5cb63d",
+            "napi/parser/src-js/generated/deserialize/ts.js": "7bdc861f69064a89b64bc90d70b31b7b05b38d4d964b0ebbae16d2b72dd4ced3",
+            "napi/parser/src-js/generated/deserialize/ts_parent.js": "6b182bad974270cbb16199fc10838860b1f9811b9a7a40bf57297189f1b88779",
+            "napi/parser/src-js/generated/deserialize/ts_range.js": "04d2b62a900c8883d41f1d48ff6fd84ac539fd3a9caa60fc4455a7a1d043d98b",
+            "napi/parser/src-js/generated/deserialize/ts_range_parent.js": "62732f48971dfccdff91fa89e2e54b8647c25dca4cbdc53998372a0781aa4143",
+            "packages/codegen/dist/index.js": "e4d38ab62b866e75f5dfcf48c020eda8ebf8ee7d5d10044f00cd603d2dbfb7e2",
+            "packages/codegen/dist/print_js.js": "2e1190d3cc2cc2a5f4e2de3075923b7e4eb4f83394cce6fece8cd1f097600a03",
+            "packages/codegen/dist/print_js_maps.js": "297474b3e9d275758f9a1381d754547710169c241c3a722d0c43ce78911c8001",
+            "packages/codegen/dist/print_ts.js": "327b56d274118900529920dcb11349b1de20e9b29c1a50142a20c8a1cf34c59e",
+            "packages/codegen/dist/print_ts_maps.js": "28b164d1eb256ae4ec9e89e8fb22ae835de06706561f1768ce66f4992730c703"
+          }
+        }
+      },
+      "groups": [
+        {
+          "warmupRetention": "matching",
+          "mode": "raw",
+          "variant": "baseline",
+          "checksum": 402128,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2097.8019999999997,
+          "minMilliseconds": 1469.8156660000004,
+          "maxMilliseconds": 2231.9492089999994,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2117.7931659999995,
+              "cpuMilliseconds": 3749.233,
+              "maxRssMiB": 1130.265625,
+              "heapAfterGcMiB": 192.40003967285156
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2089.335166,
+              "cpuMilliseconds": 3702.777,
+              "maxRssMiB": 1130.578125,
+              "heapAfterGcMiB": 192.3438491821289
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2097.8019999999997,
+              "cpuMilliseconds": 3736.179,
+              "maxRssMiB": 1135.46875,
+              "heapAfterGcMiB": 192.36495971679688
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 2231.9492089999994,
+              "cpuMilliseconds": 3885.425,
+              "maxRssMiB": 1135.53125,
+              "heapAfterGcMiB": 192.3770294189453
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 1469.8156660000004,
+              "cpuMilliseconds": 2918.062,
+              "maxRssMiB": 1138.234375,
+              "heapAfterGcMiB": 192.3690948486328
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "raw",
+          "variant": "prior",
+          "checksum": 402128,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 1557.5402079999994,
+          "minMilliseconds": 997.4066249999996,
+          "maxMilliseconds": 1591.2967909999998,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 1557.5402079999994,
+              "cpuMilliseconds": 1901.694,
+              "maxRssMiB": 510.515625,
+              "heapAfterGcMiB": 193.4283905029297
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 1591.2967909999998,
+              "cpuMilliseconds": 1953.918,
+              "maxRssMiB": 517.625,
+              "heapAfterGcMiB": 193.3935546875
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 1578.0992079999996,
+              "cpuMilliseconds": 1918.208,
+              "maxRssMiB": 506.546875,
+              "heapAfterGcMiB": 193.3947525024414
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 997.4066249999996,
+              "cpuMilliseconds": 1239.99,
+              "maxRssMiB": 518.75,
+              "heapAfterGcMiB": 193.40296936035156
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 1012.1510410000001,
+              "cpuMilliseconds": 1231.008,
+              "maxRssMiB": 506.25,
+              "heapAfterGcMiB": 193.4239959716797
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "raw",
+          "variant": "poc",
+          "checksum": 402128,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 1517.3138749999998,
+          "minMilliseconds": 990.732125,
+          "maxMilliseconds": 1527.0990419999998,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 1527.0990419999998,
+              "cpuMilliseconds": 1873.936,
+              "maxRssMiB": 513.828125,
+              "heapAfterGcMiB": 193.4379119873047
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 1520.5645830000003,
+              "cpuMilliseconds": 1859.826,
+              "maxRssMiB": 513.875,
+              "heapAfterGcMiB": 193.43759155273438
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 1517.3138749999998,
+              "cpuMilliseconds": 1858.961,
+              "maxRssMiB": 512.96875,
+              "heapAfterGcMiB": 193.43014526367188
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 990.732125,
+              "cpuMilliseconds": 1246.444,
+              "maxRssMiB": 524.828125,
+              "heapAfterGcMiB": 193.43607330322266
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 990.8502919999996,
+              "cpuMilliseconds": 1228.719,
+              "maxRssMiB": 512.953125,
+              "heapAfterGcMiB": 193.42910766601562
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "maps",
+          "variant": "baseline",
+          "checksum": 346293451,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 4374.580875,
+          "minMilliseconds": 2857.2552910000004,
+          "maxMilliseconds": 4434.867541,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 4374.580875,
+              "cpuMilliseconds": 6581.313,
+              "maxRssMiB": 1158.109375,
+              "heapAfterGcMiB": 194.1438446044922
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 4434.867541,
+              "cpuMilliseconds": 6542.122,
+              "maxRssMiB": 1154.59375,
+              "heapAfterGcMiB": 194.14856719970703
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 4384.555375,
+              "cpuMilliseconds": 6600.48,
+              "maxRssMiB": 1160.546875,
+              "heapAfterGcMiB": 194.16212463378906
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 2857.2552910000004,
+              "cpuMilliseconds": 4457.622,
+              "maxRssMiB": 1157.78125,
+              "heapAfterGcMiB": 194.14958953857422
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 2872.798375,
+              "cpuMilliseconds": 4473.794,
+              "maxRssMiB": 1156.140625,
+              "heapAfterGcMiB": 194.14559936523438
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "maps",
+          "variant": "prior",
+          "checksum": 346293451,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 3713.21825,
+          "minMilliseconds": 2397.6110830000002,
+          "maxMilliseconds": 3828.1777920000004,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 3820.1810830000013,
+              "cpuMilliseconds": 4581.763,
+              "maxRssMiB": 559.953125,
+              "heapAfterGcMiB": 195.15452575683594
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 3713.21825,
+              "cpuMilliseconds": 4428.687,
+              "maxRssMiB": 560.78125,
+              "heapAfterGcMiB": 195.20330047607422
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 3828.1777920000004,
+              "cpuMilliseconds": 4599.908,
+              "maxRssMiB": 567.984375,
+              "heapAfterGcMiB": 195.19847869873047
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 2421.775458,
+              "cpuMilliseconds": 2920.903,
+              "maxRssMiB": 560.953125,
+              "heapAfterGcMiB": 195.1968231201172
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 2397.6110830000002,
+              "cpuMilliseconds": 2875.106,
+              "maxRssMiB": 559.703125,
+              "heapAfterGcMiB": 195.21029663085938
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "maps",
+          "variant": "poc",
+          "checksum": 346293451,
+          "errors": 0,
+          "retained": 0,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 3718.7957909999996,
+          "minMilliseconds": 2392.983375,
+          "maxMilliseconds": 3999.6633330000004,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 3735.602959,
+              "cpuMilliseconds": 4417.022,
+              "maxRssMiB": 548.15625,
+              "heapAfterGcMiB": 195.16547393798828
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 3718.7957909999996,
+              "cpuMilliseconds": 4462.438,
+              "maxRssMiB": 563.1875,
+              "heapAfterGcMiB": 195.20230102539062
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 3999.6633330000004,
+              "cpuMilliseconds": 4666.966,
+              "maxRssMiB": 545.140625,
+              "heapAfterGcMiB": 195.16165161132812
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 2415.055208,
+              "cpuMilliseconds": 2877.256,
+              "maxRssMiB": 543.765625,
+              "heapAfterGcMiB": 195.15841674804688
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 2392.983375,
+              "cpuMilliseconds": 2888.908,
+              "maxRssMiB": 562.015625,
+              "heapAfterGcMiB": 195.1926727294922
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "baseline",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2587.4832079999996,
+          "minMilliseconds": 1864.344666,
+          "maxMilliseconds": 2853.6797080000006,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2630.8441249999996,
+              "cpuMilliseconds": 5930.825,
+              "maxRssMiB": 4317.296875,
+              "heapAfterGcMiB": 3935.5229721069336
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2587.4832079999996,
+              "cpuMilliseconds": 5893.919,
+              "maxRssMiB": 4323.09375,
+              "heapAfterGcMiB": 3935.5414657592773
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2853.6797080000006,
+              "cpuMilliseconds": 6747.39,
+              "maxRssMiB": 4308.796875,
+              "heapAfterGcMiB": 3935.5295333862305
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 1864.344666,
+              "cpuMilliseconds": 4486.824,
+              "maxRssMiB": 4312.640625,
+              "heapAfterGcMiB": 3938.960777282715
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 1931.8211659999997,
+              "cpuMilliseconds": 4906.729,
+              "maxRssMiB": 4313.75,
+              "heapAfterGcMiB": 3938.978271484375
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "prior",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2630.8998330000004,
+          "minMilliseconds": 1861.31275,
+          "maxMilliseconds": 2700.476458,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2655.6810419999993,
+              "cpuMilliseconds": 5967.411,
+              "maxRssMiB": 4288.046875,
+              "heapAfterGcMiB": 3910.954170227051
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2630.8998330000004,
+              "cpuMilliseconds": 5775.521,
+              "maxRssMiB": 4288.765625,
+              "heapAfterGcMiB": 3910.9130630493164
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2700.476458,
+              "cpuMilliseconds": 6023.125,
+              "maxRssMiB": 4287.390625,
+              "heapAfterGcMiB": 3910.906753540039
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 1865.9841250000004,
+              "cpuMilliseconds": 4562.862,
+              "maxRssMiB": 4280.0625,
+              "heapAfterGcMiB": 3914.3493041992188
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 1861.31275,
+              "cpuMilliseconds": 4501.414,
+              "maxRssMiB": 4291.140625,
+              "heapAfterGcMiB": 3914.3829956054688
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "poc",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2666.795166,
+          "minMilliseconds": 1857.8314579999997,
+          "maxMilliseconds": 3214.9424169999993,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2718.5001249999996,
+              "cpuMilliseconds": 6422.594,
+              "maxRssMiB": 4315.53125,
+              "heapAfterGcMiB": 3934.047119140625
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 3214.9424169999993,
+              "cpuMilliseconds": 8267.885,
+              "maxRssMiB": 4277.640625,
+              "heapAfterGcMiB": 3937.465377807617
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2666.795166,
+              "cpuMilliseconds": 6038.896,
+              "maxRssMiB": 4314.96875,
+              "heapAfterGcMiB": 3934.079902648926
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 1876.227167,
+              "cpuMilliseconds": 4638.762,
+              "maxRssMiB": 4309.796875,
+              "heapAfterGcMiB": 3937.4836959838867
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 1857.8314579999997,
+              "cpuMilliseconds": 4570.348,
+              "maxRssMiB": 4314.453125,
+              "heapAfterGcMiB": 3937.5087661743164
+            }
+          ]
+        }
+      ]
+    },
+    "retention-final": {
+      "common": {
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        }
+      },
+      "builds": {
+        "all": {
+          "base": "62a8e7818e86abe19e86a7125a017f665ba4448c",
+          "commit": "ce917242118dab18f6b7529bf0cc02e9e6812911",
+          "node": "v26.13.0",
+          "v8": "14.6.202.34-node.40",
+          "platform": "darwin",
+          "arch": "arm64",
+          "cpu": "Apple M4 Pro",
+          "baselineSourceSha256": "4b2a775e2f702c2a5acbeaaed5ec46240eb51c51e62f7a50d0fa6cda5e000e5d",
+          "variants": {
+            "baseline": "f4ce941545471ac772848b79239ec7a80e7ba92ce3d00021c1ff659726711401",
+            "helper": "b6befc50b658fe8a73cc7ee0405de7fc8f80db4c52cfd35a5d872865fe395b3d",
+            "define": "bcdb0fc77277514ebb41f9ea4a7c9ed276a64dd86fb9c8a2d133e1e53e20ac72",
+            "bound": "b3b143f32edaab0fa16bd139904303401ece371903f230c7b96834ffa78d9ff8",
+            "private": "87cbb798bde32c6ab0fbfbd02f1b8149bb13b91eb65f9796e90a77e4e4348df1",
+            "stamped": "8478d58cba678e020b2c8e0235b3605dde12ee4fd3cba388e82f608f30fcfbee",
+            "literal": "8925f008908a6e2500c46c1ae783f6ca784a79cb2ff3875ec9d48b8572d7884c",
+            "data": "532da87054a4a57b7f48f4f98803d9df4d99231228f29cc93a47c414e7043987",
+            "plain": "485bda5cf1869ab85f9ba82b4249878ef8ef95c7a7e8bf31b03a28ee187ee3d8",
+            "prior": "b4c77c4e6540bcbefefbc6bfdbae594f452376bab173b39f46b2e962ddd5bcea",
+            "reset": "29d025daef553c52b2e1c07d5f297b3b5732b36d100a0e5d3d4ec7352a604dea"
+          },
+          "hashes": {
+            "napi/parser/bench/raw-result/prepare.mjs": "88d529cdac1e043593e6e8b702726a39a1717754935a91fecaa02dac434c313e",
+            "napi/parser/bench/raw-result/run.mjs": "c916b684b0df624fb35f13f924e4ec532d15951d5b6c609051114d827960de56",
+            "napi/parser/bench/raw-result/worker.mjs": "599144a90d17cc5fa665bf0ba347c9a3aad5d5b69c1d0ccf6ba5f15c89f77a7c",
+            "napi/parser/bench/raw-result/corpus.mjs": "c4dce3130f8afe5e2c64505279757c4d7db3c34bab22ff4852a33cc1a0010c6d",
+            "napi/parser/bench/raw-result/construction.mjs": "af99bd22ad0e3fc0fcf2f1f02284a277ccc2007ac6f4fc649434115cc70c0f11",
+            "napi/parser/bench/raw-result/contract.mjs": "71a409174781140b60296c745ee120d203edee590c2d622339a8dc684c421de5",
+            "napi/parser/bench/raw-result/lifetime.mjs": "db47999a3a1e686067fdd1634ebd06692511ebf67a8d90709a3dee2ac0b3cb25",
+            "napi/parser/src-js/index.js": "164a44660eb797757b760cb945c082fd123a45a33274398ea6490790b2ed3ede",
+            "napi/parser/src-js/raw-transfer/eager.js": "ecabb151c54db6e1cab200156b94e7da6288b3c59020a41d335398dd03057667",
+            "napi/parser/src-js/raw-transfer/common.js": "de4e84fe741b37608f8b8179d8dc76a7d878ac4b187f469cd39dfac40617dab7",
+            "napi/parser/src-js/generated/constants.js": "2b7beaf3d35613c4b2bb3d7bffc7f523f36cf111060f318f0c528504d1d89f6f",
+            "napi/parser/src-js/parser.darwin-arm64.node": "1ba1571fd9591b10f3172c3112d98151c8d2433807f78e093359705ee99155b8",
+            "napi/parser/src-js/generated/deserialize/js.js": "d7ed3443c50392af5bd3b9df724a49fbf6386a8a82170b205ef69d750105d2ba",
+            "napi/parser/src-js/generated/deserialize/js_parent.js": "ad5cbb96343cce18d08cece82940238e1bb6cff0d83b94ea82ff3d5abc760334",
+            "napi/parser/src-js/generated/deserialize/js_range.js": "53c60f4f056ad273cd8d3fcaf6cb5e6fa58f99f66d14a2fa7dcd64a7839896dd",
+            "napi/parser/src-js/generated/deserialize/js_range_parent.js": "64398ccc055a8c4fbfecfe9e83e5c38bbc029a5db2ed776eeb8bda704b5cb63d",
+            "napi/parser/src-js/generated/deserialize/ts.js": "7bdc861f69064a89b64bc90d70b31b7b05b38d4d964b0ebbae16d2b72dd4ced3",
+            "napi/parser/src-js/generated/deserialize/ts_parent.js": "6b182bad974270cbb16199fc10838860b1f9811b9a7a40bf57297189f1b88779",
+            "napi/parser/src-js/generated/deserialize/ts_range.js": "04d2b62a900c8883d41f1d48ff6fd84ac539fd3a9caa60fc4455a7a1d043d98b",
+            "napi/parser/src-js/generated/deserialize/ts_range_parent.js": "62732f48971dfccdff91fa89e2e54b8647c25dca4cbdc53998372a0781aa4143",
+            "packages/codegen/dist/index.js": "e4d38ab62b866e75f5dfcf48c020eda8ebf8ee7d5d10044f00cd603d2dbfb7e2",
+            "packages/codegen/dist/print_js.js": "2e1190d3cc2cc2a5f4e2de3075923b7e4eb4f83394cce6fece8cd1f097600a03",
+            "packages/codegen/dist/print_js_maps.js": "297474b3e9d275758f9a1381d754547710169c241c3a722d0c43ce78911c8001",
+            "packages/codegen/dist/print_ts.js": "327b56d274118900529920dcb11349b1de20e9b29c1a50142a20c8a1cf34c59e",
+            "packages/codegen/dist/print_ts_maps.js": "28b164d1eb256ae4ec9e89e8fb22ae835de06706561f1768ce66f4992730c703"
+          }
+        }
+      },
+      "groups": [
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "baseline",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2841.63475,
+          "minMilliseconds": 2727.726791,
+          "maxMilliseconds": 3481.9472080000005,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 3481.9472080000005,
+              "cpuMilliseconds": 9197.975,
+              "maxRssMiB": 4282.8125,
+              "heapAfterGcMiB": 3938.9981079101562
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2913.4860419999995,
+              "cpuMilliseconds": 7024.676,
+              "maxRssMiB": 4316.625,
+              "heapAfterGcMiB": 3935.5523071289062
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2802.154458,
+              "cpuMilliseconds": 6644.901,
+              "maxRssMiB": 4323.078125,
+              "heapAfterGcMiB": 3935.5386352539062
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 2727.726791,
+              "cpuMilliseconds": 6202.267,
+              "maxRssMiB": 4309.25,
+              "heapAfterGcMiB": 3935.5281677246094
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 2841.63475,
+              "cpuMilliseconds": 6847.506,
+              "maxRssMiB": 4305.890625,
+              "heapAfterGcMiB": 3935.5224227905273
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "poc",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2869.25,
+          "minMilliseconds": 2768.12875,
+          "maxMilliseconds": 2917.354541999999,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2869.25,
+              "cpuMilliseconds": 6728.649,
+              "maxRssMiB": 4289.65625,
+              "heapAfterGcMiB": 3910.901168823242
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 2917.354541999999,
+              "cpuMilliseconds": 6256.02,
+              "maxRssMiB": 4283.890625,
+              "heapAfterGcMiB": 3910.910400390625
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2787.716625,
+              "cpuMilliseconds": 6257.755,
+              "maxRssMiB": 4286.71875,
+              "heapAfterGcMiB": 3910.929962158203
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 2768.12875,
+              "cpuMilliseconds": 6432.569,
+              "maxRssMiB": 4288.25,
+              "heapAfterGcMiB": 3910.901435852051
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 2916.463666999999,
+              "cpuMilliseconds": 6624.625,
+              "maxRssMiB": 4284.109375,
+              "heapAfterGcMiB": 3910.939239501953
+            }
+          ]
+        },
+        {
+          "warmupRetention": "discard",
+          "mode": "retain",
+          "variant": "baseline",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 3165.6008329999995,
+          "minMilliseconds": 2749.940042,
+          "maxMilliseconds": 4859.669959000001,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 3165.6008329999995,
+              "cpuMilliseconds": 6960.45,
+              "maxRssMiB": 4312.5625,
+              "heapAfterGcMiB": 3935.55509185791
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 3114.0143749999997,
+              "cpuMilliseconds": 7473.688,
+              "maxRssMiB": 4306.8125,
+              "heapAfterGcMiB": 3938.9132080078125
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 2749.940042,
+              "cpuMilliseconds": 6264.678,
+              "maxRssMiB": 4314.046875,
+              "heapAfterGcMiB": 3935.523750305176
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 3322.977833000001,
+              "cpuMilliseconds": 8947.994,
+              "maxRssMiB": 4297.875,
+              "heapAfterGcMiB": 3935.5415573120117
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 4859.669959000001,
+              "cpuMilliseconds": 16734.132,
+              "maxRssMiB": 4313.4375,
+              "heapAfterGcMiB": 3935.510429382324
+            }
+          ]
+        },
+        {
+          "warmupRetention": "discard",
+          "mode": "retain",
+          "variant": "poc",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 3818.791792,
+          "minMilliseconds": 3552.963167000001,
+          "maxMilliseconds": 4547.315667,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 3869.83375,
+              "cpuMilliseconds": 12294.009,
+              "maxRssMiB": 4283.984375,
+              "heapAfterGcMiB": 3910.9629287719727
+            },
+            {
+              "repeat": 2,
+              "elapsedMilliseconds": 3668.0002080000004,
+              "cpuMilliseconds": 11419.524,
+              "maxRssMiB": 4265.828125,
+              "heapAfterGcMiB": 3910.8912048339844
+            },
+            {
+              "repeat": 3,
+              "elapsedMilliseconds": 3552.963167000001,
+              "cpuMilliseconds": 11364.464,
+              "maxRssMiB": 4273.28125,
+              "heapAfterGcMiB": 3910.941566467285
+            },
+            {
+              "repeat": 4,
+              "elapsedMilliseconds": 3818.791792,
+              "cpuMilliseconds": 11673.324,
+              "maxRssMiB": 4270.03125,
+              "heapAfterGcMiB": 3911.0016021728516
+            },
+            {
+              "repeat": 5,
+              "elapsedMilliseconds": 4547.315667,
+              "cpuMilliseconds": 15314.723,
+              "maxRssMiB": 4271.4375,
+              "heapAfterGcMiB": 3910.922233581543
+            }
+          ]
+        }
+      ]
+    },
+    "retention-gc": {
+      "common": {
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144", "--trace-gc-nvp"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        }
+      },
+      "builds": {
+        "all": {
+          "base": "62a8e7818e86abe19e86a7125a017f665ba4448c",
+          "commit": "ce917242118dab18f6b7529bf0cc02e9e6812911",
+          "node": "v26.13.0",
+          "v8": "14.6.202.34-node.40",
+          "platform": "darwin",
+          "arch": "arm64",
+          "cpu": "Apple M4 Pro",
+          "baselineSourceSha256": "4b2a775e2f702c2a5acbeaaed5ec46240eb51c51e62f7a50d0fa6cda5e000e5d",
+          "variants": {
+            "baseline": "146bab04c7c48c0d914975a173fd4cb011e97968bf40840a0f97abc4b12faf02",
+            "helper": "546ee47824ec6d1945dbf4242d0325779c20a880e4f4205b534d564b3b2404cf",
+            "define": "29177f78ec6a02f2b23f6e26542d7d435dd12c4c4d3ae31d94bb049e31998220",
+            "bound": "a593698cb400077a44b5de1080f2a8007395f7d25e12ed93ac094ed416264265",
+            "private": "45111eefdb25a58daa5ffdd11f069b5fd2c54bb8bfa055175ab4e61d1dfa444d",
+            "stamped": "c473f8b4889a2c96dff75b81f4b7def33c27a7840bf8bf4a46a2c3aae183c728",
+            "data": "99a61a08b184811b0067331981a0bf133431b2eee4ca0e71421bc2d87d4f7c7f",
+            "plain": "c445c7a94eb2c10a349f5b5e3408a50abf9d725461c26fe34283d81d710a461b",
+            "prior": "6136747c5fff726a6cc66db7efee1aac2f41fd32dc31cd34265177de1183edee"
+          },
+          "hashes": {
+            "napi/parser/bench/raw-result/prepare.mjs": "ccfbe529fbed4d53159d6974f26d55f3324f60738532baaa7adfd56114a9c0da",
+            "napi/parser/bench/raw-result/run.mjs": "58854984ca015f44369d4abe3c6d050430e74077d9d124677725908478ebbe03",
+            "napi/parser/bench/raw-result/worker.mjs": "4417d9b80d0a0ecd51c2f025d3b2d889cd872ea69e923ddba37da77787e4aa02",
+            "napi/parser/bench/raw-result/corpus.mjs": "c4dce3130f8afe5e2c64505279757c4d7db3c34bab22ff4852a33cc1a0010c6d",
+            "napi/parser/src-js/raw-transfer/eager.js": "ecabb151c54db6e1cab200156b94e7da6288b3c59020a41d335398dd03057667",
+            "napi/parser/src-js/raw-transfer/common.js": "de4e84fe741b37608f8b8179d8dc76a7d878ac4b187f469cd39dfac40617dab7",
+            "napi/parser/src-js/generated/constants.js": "2b7beaf3d35613c4b2bb3d7bffc7f523f36cf111060f318f0c528504d1d89f6f",
+            "napi/parser/src-js/parser.darwin-arm64.node": "1ba1571fd9591b10f3172c3112d98151c8d2433807f78e093359705ee99155b8",
+            "napi/parser/src-js/generated/deserialize/js.js": "d7ed3443c50392af5bd3b9df724a49fbf6386a8a82170b205ef69d750105d2ba",
+            "napi/parser/src-js/generated/deserialize/js_parent.js": "ad5cbb96343cce18d08cece82940238e1bb6cff0d83b94ea82ff3d5abc760334",
+            "napi/parser/src-js/generated/deserialize/js_range.js": "53c60f4f056ad273cd8d3fcaf6cb5e6fa58f99f66d14a2fa7dcd64a7839896dd",
+            "napi/parser/src-js/generated/deserialize/js_range_parent.js": "64398ccc055a8c4fbfecfe9e83e5c38bbc029a5db2ed776eeb8bda704b5cb63d",
+            "napi/parser/src-js/generated/deserialize/ts.js": "7bdc861f69064a89b64bc90d70b31b7b05b38d4d964b0ebbae16d2b72dd4ced3",
+            "napi/parser/src-js/generated/deserialize/ts_parent.js": "6b182bad974270cbb16199fc10838860b1f9811b9a7a40bf57297189f1b88779",
+            "napi/parser/src-js/generated/deserialize/ts_range.js": "04d2b62a900c8883d41f1d48ff6fd84ac539fd3a9caa60fc4455a7a1d043d98b",
+            "napi/parser/src-js/generated/deserialize/ts_range_parent.js": "62732f48971dfccdff91fa89e2e54b8647c25dca4cbdc53998372a0781aa4143",
+            "packages/codegen/dist/index.js": "e4d38ab62b866e75f5dfcf48c020eda8ebf8ee7d5d10044f00cd603d2dbfb7e2",
+            "packages/codegen/dist/print_js.js": "2e1190d3cc2cc2a5f4e2de3075923b7e4eb4f83394cce6fece8cd1f097600a03",
+            "packages/codegen/dist/print_js_maps.js": "297474b3e9d275758f9a1381d754547710169c241c3a722d0c43ce78911c8001",
+            "packages/codegen/dist/print_ts.js": "327b56d274118900529920dcb11349b1de20e9b29c1a50142a20c8a1cf34c59e",
+            "packages/codegen/dist/print_ts_maps.js": "28b164d1eb256ae4ec9e89e8fb22ae835de06706561f1768ce66f4992730c703"
+          }
+        }
+      },
+      "groups": [
+        {
+          "warmupRetention": "discard",
+          "mode": "retain",
+          "variant": "baseline",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2944.247791,
+          "minMilliseconds": 2944.247791,
+          "maxMilliseconds": 2944.247791,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2944.247791,
+              "cpuMilliseconds": 5936.887,
+              "maxRssMiB": 4309.15625,
+              "heapAfterGcMiB": 3935.5272827148438
+            }
+          ]
+        },
+        {
+          "warmupRetention": "discard",
+          "mode": "retain",
+          "variant": "prior",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 4371.84825,
+          "minMilliseconds": 4371.84825,
+          "maxMilliseconds": 4371.84825,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 4371.84825,
+              "cpuMilliseconds": 9459.187,
+              "maxRssMiB": 4283.96875,
+              "heapAfterGcMiB": 3910.9238052368164
+            }
+          ]
+        },
+        {
+          "warmupRetention": "discard",
+          "mode": "retain",
+          "variant": "stamped",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 4087.275290999999,
+          "minMilliseconds": 4087.275290999999,
+          "maxMilliseconds": 4087.275290999999,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 4087.275290999999,
+              "cpuMilliseconds": 9393.213,
+              "maxRssMiB": 4265.84375,
+              "heapAfterGcMiB": 3911.4328994750977
+            }
+          ]
+        },
+        {
+          "warmupRetention": "discard",
+          "mode": "retain",
+          "variant": "data",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 3937.3427919999995,
+          "minMilliseconds": 3937.3427919999995,
+          "maxMilliseconds": 3937.3427919999995,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 3937.3427919999995,
+              "cpuMilliseconds": 9373.785,
+              "maxRssMiB": 4271.53125,
+              "heapAfterGcMiB": 3909.6801376342773
+            }
+          ]
+        }
+      ],
+      "gcMeasuredPass": [
+        {
+          "variant": "baseline",
+          "collections": {
+            "s": 106,
+            "mc": 2
+          },
+          "pauseMilliseconds": 886.5490000000002,
+          "promotedBytes": 1780579048,
+          "allocatedBytes": 4207944232
+        },
+        {
+          "variant": "prior",
+          "collections": {
+            "s": 229,
+            "mc": 4
+          },
+          "pauseMilliseconds": 1933.7169999999999,
+          "promotedBytes": 3869246960,
+          "allocatedBytes": 4237881272
+        },
+        {
+          "variant": "stamped",
+          "collections": {
+            "s": 211,
+            "mc": 4
+          },
+          "pauseMilliseconds": 1735.4170000000001,
+          "promotedBytes": 3886520856,
+          "allocatedBytes": 4572295464
+        },
+        {
+          "variant": "data",
+          "collections": {
+            "s": 218,
+            "mc": 4
+          },
+          "pauseMilliseconds": 1683.6069999999997,
+          "promotedBytes": 3890601792,
+          "allocatedBytes": 4308196616
+        }
+      ]
+    },
+    "retention-matching-gc": {
+      "common": {
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144", "--trace-gc-nvp"],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        }
+      },
+      "builds": {
+        "all": {
+          "base": "62a8e7818e86abe19e86a7125a017f665ba4448c",
+          "commit": "ce917242118dab18f6b7529bf0cc02e9e6812911",
+          "node": "v26.13.0",
+          "v8": "14.6.202.34-node.40",
+          "platform": "darwin",
+          "arch": "arm64",
+          "cpu": "Apple M4 Pro",
+          "baselineSourceSha256": "4b2a775e2f702c2a5acbeaaed5ec46240eb51c51e62f7a50d0fa6cda5e000e5d",
+          "variants": {
+            "baseline": "146bab04c7c48c0d914975a173fd4cb011e97968bf40840a0f97abc4b12faf02",
+            "helper": "546ee47824ec6d1945dbf4242d0325779c20a880e4f4205b534d564b3b2404cf",
+            "define": "29177f78ec6a02f2b23f6e26542d7d435dd12c4c4d3ae31d94bb049e31998220",
+            "bound": "a593698cb400077a44b5de1080f2a8007395f7d25e12ed93ac094ed416264265",
+            "private": "45111eefdb25a58daa5ffdd11f069b5fd2c54bb8bfa055175ab4e61d1dfa444d",
+            "stamped": "c473f8b4889a2c96dff75b81f4b7def33c27a7840bf8bf4a46a2c3aae183c728",
+            "data": "99a61a08b184811b0067331981a0bf133431b2eee4ca0e71421bc2d87d4f7c7f",
+            "plain": "c445c7a94eb2c10a349f5b5e3408a50abf9d725461c26fe34283d81d710a461b",
+            "prior": "6136747c5fff726a6cc66db7efee1aac2f41fd32dc31cd34265177de1183edee",
+            "reset": "b0628e532e10921d6831d074fcfadb270c5575c20665f79f6707550f2e0d46e8"
+          },
+          "hashes": {
+            "napi/parser/bench/raw-result/prepare.mjs": "5e2206e02a633eacf0cdf4d74db748ac7e32dd9b223ecb7bda593fc75576a272",
+            "napi/parser/bench/raw-result/run.mjs": "58854984ca015f44369d4abe3c6d050430e74077d9d124677725908478ebbe03",
+            "napi/parser/bench/raw-result/worker.mjs": "599144a90d17cc5fa665bf0ba347c9a3aad5d5b69c1d0ccf6ba5f15c89f77a7c",
+            "napi/parser/bench/raw-result/corpus.mjs": "c4dce3130f8afe5e2c64505279757c4d7db3c34bab22ff4852a33cc1a0010c6d",
+            "napi/parser/src-js/raw-transfer/eager.js": "ecabb151c54db6e1cab200156b94e7da6288b3c59020a41d335398dd03057667",
+            "napi/parser/src-js/raw-transfer/common.js": "de4e84fe741b37608f8b8179d8dc76a7d878ac4b187f469cd39dfac40617dab7",
+            "napi/parser/src-js/generated/constants.js": "2b7beaf3d35613c4b2bb3d7bffc7f523f36cf111060f318f0c528504d1d89f6f",
+            "napi/parser/src-js/parser.darwin-arm64.node": "1ba1571fd9591b10f3172c3112d98151c8d2433807f78e093359705ee99155b8",
+            "napi/parser/src-js/generated/deserialize/js.js": "d7ed3443c50392af5bd3b9df724a49fbf6386a8a82170b205ef69d750105d2ba",
+            "napi/parser/src-js/generated/deserialize/js_parent.js": "ad5cbb96343cce18d08cece82940238e1bb6cff0d83b94ea82ff3d5abc760334",
+            "napi/parser/src-js/generated/deserialize/js_range.js": "53c60f4f056ad273cd8d3fcaf6cb5e6fa58f99f66d14a2fa7dcd64a7839896dd",
+            "napi/parser/src-js/generated/deserialize/js_range_parent.js": "64398ccc055a8c4fbfecfe9e83e5c38bbc029a5db2ed776eeb8bda704b5cb63d",
+            "napi/parser/src-js/generated/deserialize/ts.js": "7bdc861f69064a89b64bc90d70b31b7b05b38d4d964b0ebbae16d2b72dd4ced3",
+            "napi/parser/src-js/generated/deserialize/ts_parent.js": "6b182bad974270cbb16199fc10838860b1f9811b9a7a40bf57297189f1b88779",
+            "napi/parser/src-js/generated/deserialize/ts_range.js": "04d2b62a900c8883d41f1d48ff6fd84ac539fd3a9caa60fc4455a7a1d043d98b",
+            "napi/parser/src-js/generated/deserialize/ts_range_parent.js": "62732f48971dfccdff91fa89e2e54b8647c25dca4cbdc53998372a0781aa4143",
+            "packages/codegen/dist/index.js": "e4d38ab62b866e75f5dfcf48c020eda8ebf8ee7d5d10044f00cd603d2dbfb7e2",
+            "packages/codegen/dist/print_js.js": "2e1190d3cc2cc2a5f4e2de3075923b7e4eb4f83394cce6fece8cd1f097600a03",
+            "packages/codegen/dist/print_js_maps.js": "297474b3e9d275758f9a1381d754547710169c241c3a722d0c43ce78911c8001",
+            "packages/codegen/dist/print_ts.js": "327b56d274118900529920dcb11349b1de20e9b29c1a50142a20c8a1cf34c59e",
+            "packages/codegen/dist/print_ts_maps.js": "28b164d1eb256ae4ec9e89e8fb22ae835de06706561f1768ce66f4992730c703"
+          }
+        }
+      },
+      "groups": [
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "baseline",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2220.60775,
+          "minMilliseconds": 2220.60775,
+          "maxMilliseconds": 2220.60775,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2220.60775,
+              "cpuMilliseconds": 5317.79,
+              "maxRssMiB": 4316.09375,
+              "heapAfterGcMiB": 3935.554412841797
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "prior",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2249.7493750000003,
+          "minMilliseconds": 2249.7493750000003,
+          "maxMilliseconds": 2249.7493750000003,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2249.7493750000003,
+              "cpuMilliseconds": 5289.348,
+              "maxRssMiB": 4290.578125,
+              "heapAfterGcMiB": 3910.9407653808594
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "stamped",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2912.1872089999997,
+          "minMilliseconds": 2912.1872089999997,
+          "maxMilliseconds": 2912.1872089999997,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2912.1872089999997,
+              "cpuMilliseconds": 6647.789,
+              "maxRssMiB": 4285.203125,
+              "heapAfterGcMiB": 3911.4194946289062
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "data",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 3086.1994160000004,
+          "minMilliseconds": 3086.1994160000004,
+          "maxMilliseconds": 3086.1994160000004,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 3086.1994160000004,
+              "cpuMilliseconds": 7581.342,
+              "maxRssMiB": 4272.953125,
+              "heapAfterGcMiB": 3909.6986541748047
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "reset",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 2508.327625,
+          "minMilliseconds": 2508.327625,
+          "maxMilliseconds": 2508.327625,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 2508.327625,
+              "cpuMilliseconds": 7077.944,
+              "maxRssMiB": 4288.6875,
+              "heapAfterGcMiB": 3924.2018508911133
+            }
+          ]
+        }
+      ],
+      "gcMeasuredPass": [
+        {
+          "variant": "baseline",
+          "collections": {
+            "s": 103,
+            "mc": 2
+          },
+          "pauseMilliseconds": 604.9610000000004,
+          "promotedBytes": 1940645408,
+          "allocatedBytes": 4191293952
+        },
+        {
+          "variant": "prior",
+          "collections": {
+            "s": 82,
+            "mc": 2
+          },
+          "pauseMilliseconds": 536.9219999999999,
+          "promotedBytes": 1552782568,
+          "allocatedBytes": 4115032568
+        },
+        {
+          "variant": "stamped",
+          "collections": {
+            "s": 132,
+            "mc": 2
+          },
+          "pauseMilliseconds": 958.0970000000002,
+          "promotedBytes": 2435673792,
+          "allocatedBytes": 4152009656
+        },
+        {
+          "variant": "data",
+          "collections": {
+            "s": 127,
+            "mc": 2
+          },
+          "pauseMilliseconds": 860.2279999999998,
+          "promotedBytes": 2134006496,
+          "allocatedBytes": 4207690296
+        },
+        {
+          "variant": "reset",
+          "collections": {
+            "s": 127,
+            "mc": 3
+          },
+          "pauseMilliseconds": 658.5109999999999,
+          "promotedBytes": 2280140424,
+          "allocatedBytes": 4138228736
+        }
+      ]
+    },
+    "retention-no-pretenure": {
+      "common": {
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": [
+          "--expose-gc",
+          "--max-old-space-size=6144",
+          "--trace-gc-nvp",
+          "--no-allocation-site-pretenuring"
+        ],
+        "profile": "none",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        }
+      },
+      "builds": {
+        "all": {
+          "base": "62a8e7818e86abe19e86a7125a017f665ba4448c",
+          "commit": "ce917242118dab18f6b7529bf0cc02e9e6812911",
+          "node": "v26.13.0",
+          "v8": "14.6.202.34-node.40",
+          "platform": "darwin",
+          "arch": "arm64",
+          "cpu": "Apple M4 Pro",
+          "baselineSourceSha256": "4b2a775e2f702c2a5acbeaaed5ec46240eb51c51e62f7a50d0fa6cda5e000e5d",
+          "variants": {
+            "baseline": "f4ce941545471ac772848b79239ec7a80e7ba92ce3d00021c1ff659726711401",
+            "helper": "b6befc50b658fe8a73cc7ee0405de7fc8f80db4c52cfd35a5d872865fe395b3d",
+            "define": "bcdb0fc77277514ebb41f9ea4a7c9ed276a64dd86fb9c8a2d133e1e53e20ac72",
+            "bound": "b3b143f32edaab0fa16bd139904303401ece371903f230c7b96834ffa78d9ff8",
+            "private": "87cbb798bde32c6ab0fbfbd02f1b8149bb13b91eb65f9796e90a77e4e4348df1",
+            "stamped": "8478d58cba678e020b2c8e0235b3605dde12ee4fd3cba388e82f608f30fcfbee",
+            "literal": "8925f008908a6e2500c46c1ae783f6ca784a79cb2ff3875ec9d48b8572d7884c",
+            "data": "532da87054a4a57b7f48f4f98803d9df4d99231228f29cc93a47c414e7043987",
+            "plain": "485bda5cf1869ab85f9ba82b4249878ef8ef95c7a7e8bf31b03a28ee187ee3d8",
+            "prior": "b4c77c4e6540bcbefefbc6bfdbae594f452376bab173b39f46b2e962ddd5bcea",
+            "reset": "29d025daef553c52b2e1c07d5f297b3b5732b36d100a0e5d3d4ec7352a604dea"
+          },
+          "hashes": {
+            "napi/parser/bench/raw-result/prepare.mjs": "88d529cdac1e043593e6e8b702726a39a1717754935a91fecaa02dac434c313e",
+            "napi/parser/bench/raw-result/run.mjs": "c916b684b0df624fb35f13f924e4ec532d15951d5b6c609051114d827960de56",
+            "napi/parser/bench/raw-result/worker.mjs": "599144a90d17cc5fa665bf0ba347c9a3aad5d5b69c1d0ccf6ba5f15c89f77a7c",
+            "napi/parser/bench/raw-result/corpus.mjs": "c4dce3130f8afe5e2c64505279757c4d7db3c34bab22ff4852a33cc1a0010c6d",
+            "napi/parser/bench/raw-result/construction.mjs": "af99bd22ad0e3fc0fcf2f1f02284a277ccc2007ac6f4fc649434115cc70c0f11",
+            "napi/parser/bench/raw-result/contract.mjs": "908d9928d8a52eb46ae3cab31f69b4ea250ee6413f54b6c443575c6cb16a4d9f",
+            "napi/parser/bench/raw-result/lifetime.mjs": "db47999a3a1e686067fdd1634ebd06692511ebf67a8d90709a3dee2ac0b3cb25",
+            "napi/parser/src-js/index.js": "65c354c99e91484366eb4fd3c32f388a7e4ce66e9ddc20901bfff8b99ef7c09b",
+            "napi/parser/src-js/raw-transfer/eager.js": "5da6c71d85a065497639177f95b036451d9617b0be960055382373d20948ad61",
+            "napi/parser/src-js/raw-transfer/common.js": "de4e84fe741b37608f8b8179d8dc76a7d878ac4b187f469cd39dfac40617dab7",
+            "napi/parser/src-js/generated/constants.js": "2b7beaf3d35613c4b2bb3d7bffc7f523f36cf111060f318f0c528504d1d89f6f",
+            "napi/parser/src-js/parser.darwin-arm64.node": "1ba1571fd9591b10f3172c3112d98151c8d2433807f78e093359705ee99155b8",
+            "napi/parser/src-js/generated/deserialize/js.js": "d7ed3443c50392af5bd3b9df724a49fbf6386a8a82170b205ef69d750105d2ba",
+            "napi/parser/src-js/generated/deserialize/js_parent.js": "ad5cbb96343cce18d08cece82940238e1bb6cff0d83b94ea82ff3d5abc760334",
+            "napi/parser/src-js/generated/deserialize/js_range.js": "53c60f4f056ad273cd8d3fcaf6cb5e6fa58f99f66d14a2fa7dcd64a7839896dd",
+            "napi/parser/src-js/generated/deserialize/js_range_parent.js": "64398ccc055a8c4fbfecfe9e83e5c38bbc029a5db2ed776eeb8bda704b5cb63d",
+            "napi/parser/src-js/generated/deserialize/ts.js": "7bdc861f69064a89b64bc90d70b31b7b05b38d4d964b0ebbae16d2b72dd4ced3",
+            "napi/parser/src-js/generated/deserialize/ts_parent.js": "6b182bad974270cbb16199fc10838860b1f9811b9a7a40bf57297189f1b88779",
+            "napi/parser/src-js/generated/deserialize/ts_range.js": "04d2b62a900c8883d41f1d48ff6fd84ac539fd3a9caa60fc4455a7a1d043d98b",
+            "napi/parser/src-js/generated/deserialize/ts_range_parent.js": "62732f48971dfccdff91fa89e2e54b8647c25dca4cbdc53998372a0781aa4143",
+            "packages/codegen/dist/index.js": "e4d38ab62b866e75f5dfcf48c020eda8ebf8ee7d5d10044f00cd603d2dbfb7e2",
+            "packages/codegen/dist/print_js.js": "2e1190d3cc2cc2a5f4e2de3075923b7e4eb4f83394cce6fece8cd1f097600a03",
+            "packages/codegen/dist/print_js_maps.js": "297474b3e9d275758f9a1381d754547710169c241c3a722d0c43ce78911c8001",
+            "packages/codegen/dist/print_ts.js": "327b56d274118900529920dcb11349b1de20e9b29c1a50142a20c8a1cf34c59e",
+            "packages/codegen/dist/print_ts_maps.js": "28b164d1eb256ae4ec9e89e8fb22ae835de06706561f1768ce66f4992730c703"
+          }
+        }
+      },
+      "groups": [
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "baseline",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 3595.155917000001,
+          "minMilliseconds": 3595.155917000001,
+          "maxMilliseconds": 3595.155917000001,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 3595.155917000001,
+              "cpuMilliseconds": 12146.658,
+              "maxRssMiB": 4304.796875,
+              "heapAfterGcMiB": 3935.501396179199
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "prior",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 3936.815958,
+          "minMilliseconds": 3936.815958,
+          "maxMilliseconds": 3936.815958,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 3936.815958,
+              "cpuMilliseconds": 13335.089,
+              "maxRssMiB": 4277.640625,
+              "heapAfterGcMiB": 3914.3232803344727
+            }
+          ]
+        },
+        {
+          "warmupRetention": "matching",
+          "mode": "retain",
+          "variant": "poc",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 3786.288917,
+          "minMilliseconds": 3786.288917,
+          "maxMilliseconds": 3786.288917,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 3786.288917,
+              "cpuMilliseconds": 13095.14,
+              "maxRssMiB": 4274.296875,
+              "heapAfterGcMiB": 3909.654525756836
+            }
+          ]
+        }
+      ],
+      "gcMeasuredPass": [
+        {
+          "variant": "baseline",
+          "collections": {
+            "s": 198,
+            "mc": 4
+          },
+          "pauseMilliseconds": 1226.0930000000005,
+          "promotedBytes": 3932775224,
+          "allocatedBytes": 4717651864
+        },
+        {
+          "variant": "prior",
+          "collections": {
+            "s": 192,
+            "mc": 4
+          },
+          "pauseMilliseconds": 1713.0750000000007,
+          "promotedBytes": 3908044064,
+          "allocatedBytes": 4532288880
+        },
+        {
+          "variant": "poc",
+          "collections": {
+            "s": 189,
+            "mc": 4
+          },
+          "pauseMilliseconds": 1670.7110000000005,
+          "promotedBytes": 3901677664,
+          "allocatedBytes": 4695971840
+        }
+      ]
+    },
+    "retention-profile": {
+      "common": {
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "flags": ["--expose-gc", "--max-old-space-size=6144"],
+        "profile": "cpu",
+        "corpus": {
+          "files": 32267,
+          "bytes": 197999377,
+          "sha256": "599ac3c424add45883bb9a894ae5ba7c631d9f03b6a887ddf2245e037608de12"
+        }
+      },
+      "builds": {
+        "all": {
+          "base": "62a8e7818e86abe19e86a7125a017f665ba4448c",
+          "commit": "ce917242118dab18f6b7529bf0cc02e9e6812911",
+          "node": "v26.13.0",
+          "v8": "14.6.202.34-node.40",
+          "platform": "darwin",
+          "arch": "arm64",
+          "cpu": "Apple M4 Pro",
+          "baselineSourceSha256": "4b2a775e2f702c2a5acbeaaed5ec46240eb51c51e62f7a50d0fa6cda5e000e5d",
+          "variants": {
+            "baseline": "146bab04c7c48c0d914975a173fd4cb011e97968bf40840a0f97abc4b12faf02",
+            "helper": "546ee47824ec6d1945dbf4242d0325779c20a880e4f4205b534d564b3b2404cf",
+            "define": "29177f78ec6a02f2b23f6e26542d7d435dd12c4c4d3ae31d94bb049e31998220",
+            "bound": "a593698cb400077a44b5de1080f2a8007395f7d25e12ed93ac094ed416264265",
+            "private": "45111eefdb25a58daa5ffdd11f069b5fd2c54bb8bfa055175ab4e61d1dfa444d",
+            "stamped": "c473f8b4889a2c96dff75b81f4b7def33c27a7840bf8bf4a46a2c3aae183c728",
+            "data": "99a61a08b184811b0067331981a0bf133431b2eee4ca0e71421bc2d87d4f7c7f",
+            "plain": "c445c7a94eb2c10a349f5b5e3408a50abf9d725461c26fe34283d81d710a461b",
+            "prior": "6136747c5fff726a6cc66db7efee1aac2f41fd32dc31cd34265177de1183edee"
+          },
+          "hashes": {
+            "napi/parser/bench/raw-result/prepare.mjs": "ccfbe529fbed4d53159d6974f26d55f3324f60738532baaa7adfd56114a9c0da",
+            "napi/parser/bench/raw-result/run.mjs": "58854984ca015f44369d4abe3c6d050430e74077d9d124677725908478ebbe03",
+            "napi/parser/bench/raw-result/worker.mjs": "4417d9b80d0a0ecd51c2f025d3b2d889cd872ea69e923ddba37da77787e4aa02",
+            "napi/parser/bench/raw-result/corpus.mjs": "c4dce3130f8afe5e2c64505279757c4d7db3c34bab22ff4852a33cc1a0010c6d",
+            "napi/parser/src-js/raw-transfer/eager.js": "ecabb151c54db6e1cab200156b94e7da6288b3c59020a41d335398dd03057667",
+            "napi/parser/src-js/raw-transfer/common.js": "de4e84fe741b37608f8b8179d8dc76a7d878ac4b187f469cd39dfac40617dab7",
+            "napi/parser/src-js/generated/constants.js": "2b7beaf3d35613c4b2bb3d7bffc7f523f36cf111060f318f0c528504d1d89f6f",
+            "napi/parser/src-js/parser.darwin-arm64.node": "1ba1571fd9591b10f3172c3112d98151c8d2433807f78e093359705ee99155b8",
+            "napi/parser/src-js/generated/deserialize/js.js": "d7ed3443c50392af5bd3b9df724a49fbf6386a8a82170b205ef69d750105d2ba",
+            "napi/parser/src-js/generated/deserialize/js_parent.js": "ad5cbb96343cce18d08cece82940238e1bb6cff0d83b94ea82ff3d5abc760334",
+            "napi/parser/src-js/generated/deserialize/js_range.js": "53c60f4f056ad273cd8d3fcaf6cb5e6fa58f99f66d14a2fa7dcd64a7839896dd",
+            "napi/parser/src-js/generated/deserialize/js_range_parent.js": "64398ccc055a8c4fbfecfe9e83e5c38bbc029a5db2ed776eeb8bda704b5cb63d",
+            "napi/parser/src-js/generated/deserialize/ts.js": "7bdc861f69064a89b64bc90d70b31b7b05b38d4d964b0ebbae16d2b72dd4ced3",
+            "napi/parser/src-js/generated/deserialize/ts_parent.js": "6b182bad974270cbb16199fc10838860b1f9811b9a7a40bf57297189f1b88779",
+            "napi/parser/src-js/generated/deserialize/ts_range.js": "04d2b62a900c8883d41f1d48ff6fd84ac539fd3a9caa60fc4455a7a1d043d98b",
+            "napi/parser/src-js/generated/deserialize/ts_range_parent.js": "62732f48971dfccdff91fa89e2e54b8647c25dca4cbdc53998372a0781aa4143",
+            "packages/codegen/dist/index.js": "e4d38ab62b866e75f5dfcf48c020eda8ebf8ee7d5d10044f00cd603d2dbfb7e2",
+            "packages/codegen/dist/print_js.js": "2e1190d3cc2cc2a5f4e2de3075923b7e4eb4f83394cce6fece8cd1f097600a03",
+            "packages/codegen/dist/print_js_maps.js": "297474b3e9d275758f9a1381d754547710169c241c3a722d0c43ce78911c8001",
+            "packages/codegen/dist/print_ts.js": "327b56d274118900529920dcb11349b1de20e9b29c1a50142a20c8a1cf34c59e",
+            "packages/codegen/dist/print_ts_maps.js": "28b164d1eb256ae4ec9e89e8fb22ae835de06706561f1768ce66f4992730c703"
+          }
+        }
+      },
+      "groups": [
+        {
+          "warmupRetention": "discard",
+          "mode": "retain",
+          "variant": "baseline",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 3058.478583,
+          "minMilliseconds": 3058.478583,
+          "maxMilliseconds": 3058.478583,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 3058.478583,
+              "cpuMilliseconds": 5814.811,
+              "maxRssMiB": 4316.984375,
+              "heapAfterGcMiB": 3940.2551879882812
+            }
+          ]
+        },
+        {
+          "warmupRetention": "discard",
+          "mode": "retain",
+          "variant": "prior",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 4945.67,
+          "minMilliseconds": 4945.67,
+          "maxMilliseconds": 4945.67,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 4945.67,
+              "cpuMilliseconds": 12188.484,
+              "maxRssMiB": 4264.71875,
+              "heapAfterGcMiB": 3915.8152465820312
+            }
+          ]
+        },
+        {
+          "warmupRetention": "discard",
+          "mode": "retain",
+          "variant": "stamped",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 4715.175125,
+          "minMilliseconds": 4715.175125,
+          "maxMilliseconds": 4715.175125,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 4715.175125,
+              "cpuMilliseconds": 10010.646,
+              "maxRssMiB": 4280.796875,
+              "heapAfterGcMiB": 3916.2637481689453
+            }
+          ]
+        },
+        {
+          "warmupRetention": "discard",
+          "mode": "retain",
+          "variant": "data",
+          "checksum": 811154,
+          "errors": 0,
+          "retained": 32267,
+          "outputBytes": 0,
+          "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "medianMilliseconds": 5348.990583,
+          "minMilliseconds": 5348.990583,
+          "maxMilliseconds": 5348.990583,
+          "samples": [
+            {
+              "repeat": 1,
+              "elapsedMilliseconds": 5348.990583,
+              "cpuMilliseconds": 11852.989,
+              "maxRssMiB": 4291.21875,
+              "heapAfterGcMiB": 3914.497978210449
+            }
+          ]
+        }
+      ],
+      "profiles": [
+        {
+          "variant": "baseline",
+          "sampleCount": 1976,
+          "topSelfSamples": [
+            {
+              "function": "(garbage collector)",
+              "count": 685,
+              "percent": 34.66599190283401
+            },
+            {
+              "function": "ResolveTask",
+              "count": 493,
+              "percent": 24.94939271255061
+            },
+            {
+              "function": "deserializeExpression",
+              "count": 69,
+              "percent": 3.4919028340080973
+            },
+            {
+              "function": "deserializeArrayExpressionElement",
+              "count": 41,
+              "percent": 2.074898785425101
+            },
+            {
+              "function": "deserializeIdentifierReference",
+              "count": 39,
+              "percent": 1.9736842105263157
+            },
+            {
+              "function": "deserializeNumericLiteral",
+              "count": 39,
+              "percent": 1.9736842105263157
+            },
+            {
+              "function": "deserializeVecArrayExpressionElement",
+              "count": 38,
+              "percent": 1.9230769230769231
+            },
+            {
+              "function": "deserializeStr",
+              "count": 37,
+              "percent": 1.8724696356275303
+            }
+          ]
+        },
+        {
+          "variant": "prior",
+          "sampleCount": 2918,
+          "topSelfSamples": [
+            {
+              "function": "(garbage collector)",
+              "count": 1781,
+              "percent": 61.03495544893763
+            },
+            {
+              "function": "ResolveTask",
+              "count": 479,
+              "percent": 16.415352981494173
+            },
+            {
+              "function": "deserializeArrayExpressionElement",
+              "count": 43,
+              "percent": 1.4736120630568883
+            },
+            {
+              "function": "deserializeExpression",
+              "count": 42,
+              "percent": 1.4393420150788212
+            },
+            {
+              "function": "deserializeVecArrayExpressionElement",
+              "count": 34,
+              "percent": 1.1651816312542838
+            },
+            {
+              "function": "deserializeNumericLiteral",
+              "count": 33,
+              "percent": 1.1309115832762167
+            },
+            {
+              "function": "RawResult",
+              "count": 31,
+              "percent": 1.0623714873200822
+            },
+            {
+              "function": "deserializeStr",
+              "count": 30,
+              "percent": 1.0281014393420151
+            }
+          ]
+        },
+        {
+          "variant": "stamped",
+          "sampleCount": 2617,
+          "topSelfSamples": [
+            {
+              "function": "(garbage collector)",
+              "count": 1554,
+              "percent": 59.38097057699656
+            },
+            {
+              "function": "ResolveTask",
+              "count": 460,
+              "percent": 17.57737867787543
+            },
+            {
+              "function": "deserializeExpression",
+              "count": 52,
+              "percent": 1.9870080244554833
+            },
+            {
+              "function": "ResultBase",
+              "count": 49,
+              "percent": 1.8723729461215133
+            },
+            {
+              "function": "deserializeVecArrayExpressionElement",
+              "count": 31,
+              "percent": 1.184562476117692
+            },
+            {
+              "function": "deserializeStr",
+              "count": 29,
+              "percent": 1.108139090561712
+            },
+            {
+              "function": "deserializeArrayExpressionElement",
+              "count": 26,
+              "percent": 0.9935040122277417
+            },
+            {
+              "function": "deserializeNumericLiteral",
+              "count": 20,
+              "percent": 0.7642338555598013
+            }
+          ]
+        },
+        {
+          "variant": "data",
+          "sampleCount": 3035,
+          "topSelfSamples": [
+            {
+              "function": "(garbage collector)",
+              "count": 1912,
+              "percent": 62.99835255354201
+            },
+            {
+              "function": "ResolveTask",
+              "count": 498,
+              "percent": 16.408566721581547
+            },
+            {
+              "function": "deserializeExpression",
+              "count": 53,
+              "percent": 1.7462932454695221
+            },
+            {
+              "function": "createResult",
+              "count": 39,
+              "percent": 1.28500823723229
+            },
+            {
+              "function": "deserializeStr",
+              "count": 37,
+              "percent": 1.2191103789126854
+            },
+            {
+              "function": "deserializeArrayExpressionElement",
+              "count": 36,
+              "percent": 1.186161449752883
+            },
+            {
+              "function": "deserializeVecArrayExpressionElement",
+              "count": 33,
+              "percent": 1.0873146622734762
+            },
+            {
+              "function": "deserializeNumericLiteral",
+              "count": 32,
+              "percent": 1.0543657331136738
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "construction": {
+    "method": "Preallocate 32267 tiny payloads, two 257-result warmups, force GC before timing; retain wrappers during timing, assert identity outside timing. Natural GC may be included. Not a complete parsing workload.",
+    "pairedSamples": [
+      {
+        "repeat": 1,
+        "variant": "baseline",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 13.272708999999992,
+        "checksum": 0
+      },
+      {
+        "repeat": 1,
+        "variant": "prior",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 25.351749999999996,
+        "checksum": 0
+      },
+      {
+        "repeat": 1,
+        "variant": "stamped",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 25.638083999999992,
+        "checksum": 0
+      },
+      {
+        "repeat": 1,
+        "variant": "data",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 30.565583000000004,
+        "checksum": 0
+      },
+      {
+        "repeat": 1,
+        "variant": "reset",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 28.101957999999996,
+        "checksum": 0
+      },
+      {
+        "repeat": 2,
+        "variant": "prior",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 25.960667,
+        "checksum": 0
+      },
+      {
+        "repeat": 2,
+        "variant": "stamped",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 25.868875000000003,
+        "checksum": 0
+      },
+      {
+        "repeat": 2,
+        "variant": "data",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 27.575833999999986,
+        "checksum": 0
+      },
+      {
+        "repeat": 2,
+        "variant": "reset",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 27.772458,
+        "checksum": 0
+      },
+      {
+        "repeat": 2,
+        "variant": "baseline",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 13.78791600000001,
+        "checksum": 0
+      },
+      {
+        "repeat": 3,
+        "variant": "stamped",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 25.327167000000003,
+        "checksum": 0
+      },
+      {
+        "repeat": 3,
+        "variant": "data",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 27.411,
+        "checksum": 0
+      },
+      {
+        "repeat": 3,
+        "variant": "reset",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 26.674458999999985,
+        "checksum": 0
+      },
+      {
+        "repeat": 3,
+        "variant": "baseline",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 13.054833000000002,
+        "checksum": 0
+      },
+      {
+        "repeat": 3,
+        "variant": "prior",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 25.972250000000003,
+        "checksum": 0
+      },
+      {
+        "repeat": 4,
+        "variant": "data",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 27.643624999999986,
+        "checksum": 0
+      },
+      {
+        "repeat": 4,
+        "variant": "reset",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 26.726458000000008,
+        "checksum": 0
+      },
+      {
+        "repeat": 4,
+        "variant": "baseline",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 16.340500000000006,
+        "checksum": 0
+      },
+      {
+        "repeat": 4,
+        "variant": "prior",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 24.609207999999995,
+        "checksum": 0
+      },
+      {
+        "repeat": 4,
+        "variant": "stamped",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 25.74024999999999,
+        "checksum": 0
+      },
+      {
+        "repeat": 5,
+        "variant": "reset",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 27.602041000000014,
+        "checksum": 0
+      },
+      {
+        "repeat": 5,
+        "variant": "baseline",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 12.537125000000003,
+        "checksum": 0
+      },
+      {
+        "repeat": 5,
+        "variant": "prior",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 25.015916000000004,
+        "checksum": 0
+      },
+      {
+        "repeat": 5,
+        "variant": "stamped",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 24.705457999999993,
+        "checksum": 0
+      },
+      {
+        "repeat": 5,
+        "variant": "data",
+        "node": "v26.13.0",
+        "v8": "14.6.202.34-node.40",
+        "count": 32267,
+        "elapsedMilliseconds": 27.21525000000001,
+        "checksum": 0
+      }
+    ],
+    "literalSingleSample": {
+      "variant": "literal",
+      "node": "v26.13.0",
+      "v8": "14.6.202.34-node.40",
+      "count": 32267,
+      "elapsedMilliseconds": 18.151083,
+      "checksum": 0
+    }
+  },
+  "trialPatchesAgainstOriginalPoc": {
+    "dataInline": "diff --git a/napi/parser/src-js/raw-transfer/eager.js b/napi/parser/src-js/raw-transfer/eager.js\nindex 81b5bc9cc7..254d875ca4 100644\n--- a/napi/parser/src-js/raw-transfer/eager.js\n+++ b/napi/parser/src-js/raw-transfer/eager.js\n@@ -10,7 +10,7 @@ const require = createRequire(import.meta.url);\n  * @param {string} filename - Filename\n  * @param {string} sourceText - Source text of file\n  * @param {Object} options - Parsing options\n- * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`\n+ * @returns {Object} - Object with read-only properties for `program`, `module`, `comments`, and `errors`\n  */\n export function parseSyncRaw(filename, sourceText, options) {\n   return parseSyncRawImpl(filename, sourceText, options, deserialize);\n@@ -32,7 +32,7 @@ export function parseSyncRaw(filename, sourceText, options) {\n  * @param {string} filename - Filename\n  * @param {string} sourceText - Source text of file\n  * @param {Object} options - Parsing options\n- * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`\n+ * @returns {Object} - Object with read-only properties for `program`, `module`, `comments`, and `errors`\n  */\n export function parse(filename, sourceText, options) {\n   return parseAsyncRawImpl(filename, sourceText, options, deserialize);\n@@ -61,7 +61,7 @@ const deserializerNames = [\n  * @param {number} sourceStartPos - Position of first byte of source text in buffer\n  * @param {number} sourceByteLen - Length of source text in UTF-8 bytes\n  * @param {Object} options - Parsing options\n- * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`\n+ * @returns {Object} - Object with read-only properties for `program`, `module`, `comments`, and `errors`\n  */\n function deserialize(buffer, sourceText, sourceStartPos, sourceByteLen, options) {\n   const isJs = isJsAst(buffer),\n@@ -105,49 +105,30 @@ function deserialize(buffer, sourceText, sourceStartPos, sourceByteLen, options)\n   // Return buffer to cache, to be reused\n   returnBufferToCache(buffer);\n \n-  return Reflect.construct(RawResult, [data, tokens], Object);\n+  const result =\n+    tokens === null\n+      ? { program: data.program, module: data.module, comments: data.comments, errors: data.errors }\n+      : {\n+          program: data.program,\n+          module: data.module,\n+          comments: data.comments,\n+          tokens,\n+          errors: data.errors,\n+        };\n+  return Object.defineProperties(\n+    result,\n+    tokens === null ? resultDescriptors : tokenResultDescriptors,\n+  );\n }\n \n-let resultDescriptors, tokenResultDescriptors;\n-class RawResult {\n-  #data;\n-  #tokens;\n-\n-  constructor(data, tokens) {\n-    this.#data = data;\n-    this.#tokens = tokens;\n-    Object.defineProperties(this, tokens === null ? resultDescriptors : tokenResultDescriptors);\n-  }\n-\n-  get program() {\n-    return this.#data.program;\n-  }\n-\n-  get module() {\n-    return this.#data.module;\n-  }\n-\n-  get comments() {\n-    return this.#data.comments;\n-  }\n-\n-  get tokens() {\n-    return this.#tokens;\n-  }\n-\n-  get errors() {\n-    return this.#data.errors;\n-  }\n-\n-  static {\n-    const descriptors = Object.getOwnPropertyDescriptors(this.prototype);\n-    const keys = [\"program\", \"module\", \"comments\", \"tokens\", \"errors\"];\n-    for (const key of keys) descriptors[key].enumerable = true;\n-    const { program, module, comments, tokens, errors } = descriptors;\n-    resultDescriptors = { program, module, comments, errors };\n-    tokenResultDescriptors = { program, module, comments, tokens, errors };\n-  }\n-}\n+const readOnlyDescriptor = { writable: false };\n+const resultDescriptors = {\n+  program: readOnlyDescriptor,\n+  module: readOnlyDescriptor,\n+  comments: readOnlyDescriptor,\n+  errors: readOnlyDescriptor,\n+};\n+const tokenResultDescriptors = { ...resultDescriptors, tokens: readOnlyDescriptor };\n \n // `ESTreeKind` discriminants (set by Rust side)\n const PRIVATE_IDENTIFIER_KIND = 2;\n",
+    "literalPrivate": "diff --git a/napi/parser/src-js/raw-transfer/eager.js b/napi/parser/src-js/raw-transfer/eager.js\nindex 81b5bc9cc7..6543f645ba 100644\n--- a/napi/parser/src-js/raw-transfer/eager.js\n+++ b/napi/parser/src-js/raw-transfer/eager.js\n@@ -105,47 +105,56 @@ function deserialize(buffer, sourceText, sourceStartPos, sourceByteLen, options)\n   // Return buffer to cache, to be reused\n   returnBufferToCache(buffer);\n \n-  return Reflect.construct(RawResult, [data, tokens], Object);\n+  return new RawResult(data, tokens);\n }\n \n-let resultDescriptors, tokenResultDescriptors;\n-class RawResult {\n+class ResultBase {\n+  constructor(result) {\n+    return result;\n+  }\n+}\n+\n+class RawResult extends ResultBase {\n   #data;\n   #tokens;\n \n   constructor(data, tokens) {\n+    super(\n+      tokens === null\n+        ? {\n+            get program() {\n+              return this.#data.program;\n+            },\n+            get module() {\n+              return this.#data.module;\n+            },\n+            get comments() {\n+              return this.#data.comments;\n+            },\n+            get errors() {\n+              return this.#data.errors;\n+            },\n+          }\n+        : {\n+            get program() {\n+              return this.#data.program;\n+            },\n+            get module() {\n+              return this.#data.module;\n+            },\n+            get comments() {\n+              return this.#data.comments;\n+            },\n+            get tokens() {\n+              return this.#tokens;\n+            },\n+            get errors() {\n+              return this.#data.errors;\n+            },\n+          },\n+    );\n     this.#data = data;\n     this.#tokens = tokens;\n-    Object.defineProperties(this, tokens === null ? resultDescriptors : tokenResultDescriptors);\n-  }\n-\n-  get program() {\n-    return this.#data.program;\n-  }\n-\n-  get module() {\n-    return this.#data.module;\n-  }\n-\n-  get comments() {\n-    return this.#data.comments;\n-  }\n-\n-  get tokens() {\n-    return this.#tokens;\n-  }\n-\n-  get errors() {\n-    return this.#data.errors;\n-  }\n-\n-  static {\n-    const descriptors = Object.getOwnPropertyDescriptors(this.prototype);\n-    const keys = [\"program\", \"module\", \"comments\", \"tokens\", \"errors\"];\n-    for (const key of keys) descriptors[key].enumerable = true;\n-    const { program, module, comments, tokens, errors } = descriptors;\n-    resultDescriptors = { program, module, comments, errors };\n-    tokenResultDescriptors = { program, module, comments, tokens, errors };\n   }\n }\n \n"
+  },
+  "v8Sources": {
+    "construction": "https://github.com/nodejs/node/blob/v26.13.0/deps/v8/src/builtins/builtins-constructor-gen.cc#L337",
+    "derivedMap": "https://github.com/nodejs/node/blob/v26.13.0/deps/v8/src/objects/js-function.cc#L1156",
+    "defineProperties": "https://github.com/nodejs/node/blob/v26.13.0/deps/v8/src/objects/js-objects.cc#L1147",
+    "pretenuring": "https://github.com/nodejs/node/blob/v26.13.0/deps/v8/src/heap/pretenuring-handler.cc#L43"
+  },
+  "literalLifetime": [
+    {
+      "variant": "literal",
+      "operation": "discard",
+      "node": "v26.13.0",
+      "v8": "14.6.202.34-node.40",
+      "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+      "initialYoung": 128,
+      "minor": {
+        "payload": 0,
+        "wrapper": 0,
+        "getter": 128,
+        "youngPayload": 0
+      },
+      "major": {
+        "payload": 0,
+        "wrapper": 0,
+        "getter": 0,
+        "youngPayload": 0
+      },
+      "measuredCollectionSequence": ["s", "s", "mc"]
+    },
+    {
+      "variant": "literal",
+      "operation": "delete",
+      "afterRelease": {
+        "payload": 0,
+        "wrapper": 0,
+        "getter": 0,
+        "youngPayload": 0
+      },
+      "node": "v26.13.0",
+      "v8": "14.6.202.34-node.40",
+      "flags": ["--expose-gc", "--allow-natives-syntax", "--trace-gc-nvp"],
+      "initialYoung": 128,
+      "minor": {
+        "payload": 128,
+        "wrapper": 128,
+        "getter": 128,
+        "youngPayload": 0
+      },
+      "major": {
+        "payload": 128,
+        "wrapper": 128,
+        "getter": 0,
+        "youngPayload": 0
+      },
+      "measuredCollectionSequence": ["s", "s", "mc"]
+    }
+  ],
+  "followupValidation": {
+    "focusedTests": 13,
+    "contract": {
+      "variants": ["poc", "prior", "stamped", "data", "literal", "reset"],
+      "fixtureOptionCombinationsPerVariant": 64,
+      "asyncCasesPerVariant": 8
+    },
+    "smoke": {
+      "warmupPolicies": ["matching", "discard"],
+      "files": 256,
+      "variants": ["baseline", "poc"],
+      "modes": ["raw", "maps", "retain"],
+      "totalSamples": 12
+    },
+    "fullSuiteReuse": "Original 178470 NAPI tests and parser conformance reused: runtime source, native binding, generated deserializers and printer restored unchanged. Trials each passed 13 focused tests with descriptor differences explicit."
+  }
+}

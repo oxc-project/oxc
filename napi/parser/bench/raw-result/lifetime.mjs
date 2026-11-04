@@ -8,6 +8,22 @@ const nextTurn = () => new Promise((resolve) => setImmediate(resolve));
 const descriptor = Object.getOwnPropertyDescriptor;
 // oxlint-disable-next-line typescript/no-implied-eval -- V8 intrinsic syntax requires a flagged runtime.
 const inYoungGeneration = new Function("value", "return %InYoungGeneration(value)");
+class ResultBase {
+  constructor(result) {
+    return result;
+  }
+}
+class LiteralResult extends ResultBase {
+  #data;
+  constructor(data) {
+    super({
+      get program() {
+        return this.#data;
+      },
+    });
+    this.#data = data;
+  }
+}
 let privateDescriptors;
 class PrivateResult {
   #data;
@@ -65,6 +81,7 @@ function wrap(data) {
     });
   }
   if (variant === "private") return Reflect.construct(PrivateResult, [data], Object);
+  if (variant === "literal") return new LiteralResult(data);
   if (variant === "plain") return { program: data };
   throw new Error(variant);
 }
@@ -112,7 +129,10 @@ globalThis.gc();
 const major = alive();
 console.log("LIFETIME_END");
 assert.equal(initialYoung, refs.length);
-assert.equal(major.payload, operation === "delete" && variant === "private" ? refs.length : 0);
+assert.equal(
+  major.payload,
+  operation === "delete" && ["private", "literal"].includes(variant) ? refs.length : 0,
+);
 assert.equal(major.wrapper, operation === "delete" ? refs.length : 0);
 let afterRelease;
 if (operation === "delete") {

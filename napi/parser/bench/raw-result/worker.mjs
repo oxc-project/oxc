@@ -23,6 +23,8 @@ assert.ok(
   "worker.mjs CORPUS VARIANT MODE OUTPUT [LIMIT] [none|cpu|heap]",
 );
 assert.ok(["raw", "maps", "retain", "verify"].includes(mode));
+const warmupRetention = process.env.OXC_BENCH_WARMUP ?? "matching";
+assert.ok(["matching", "discard"].includes(warmupRetention));
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const { parseSyncRaw } = await import(
   variant === "poc"
@@ -111,10 +113,11 @@ function execute(file, measured = false) {
 if (mode !== "verify") {
   for (let pass = 0; pass < 2; pass++) {
     for (let i = 0; i < files.length; i += Math.max(1, Math.floor(files.length / 256))) {
-      execute(files[i]);
+      execute(files[i], mode === "retain" && warmupRetention === "matching");
     }
   }
 }
+retained.length = 0;
 checksum = errors = 0;
 globalThis.gc();
 let session;
@@ -166,6 +169,7 @@ const report = {
   v8: process.versions.v8,
   flags: process.execArgv,
   profile,
+  warmup: { passes: mode === "verify" ? 0 : 2, retention: warmupRetention },
   corpus: metadata,
   elapsedMilliseconds,
   cpuMilliseconds: (cpuUsage.user + cpuUsage.system) / 1000,

@@ -53,6 +53,7 @@ for (let run = 0; run < Number(runsText); run++) {
       const previous = results.find((row) => row.mode === mode);
       if (previous) {
         assert.deepEqual(result.corpus, previous.corpus);
+        assert.deepEqual(result.warmup, previous.warmup);
         assert.equal(result.checksum, previous.checksum);
       }
       results.push(result);

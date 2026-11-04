@@ -6,7 +6,8 @@ checkout and external reproduction were preserved. Implementation:
 [`eager.js`](../../src-js/raw-transfer/eager.js). Method, commands and caveats:
 [README](README.md). [All samples and checks](results.json).
 
-Five paired fresh-process repetitions, Apple M4 Pro, Node 26.13.0:
+Historical five paired fresh-process repetitions, Apple M4 Pro, Node 26.13.0.
+These runs discarded results during warmup, including the retained workload:
 
 | Workload                           | Main median | POC median |          Change |
 | ---------------------------------- | ----------: | ---------: | --------------: |
@@ -20,6 +21,28 @@ two faster); there is no consistent retained-AST benefit. Median peak RSS fell
 was similar at 4312 → 4269 MiB. Warmups, preloading and forced GC precede timing;
 profiles and GC instrumentation are separate. Earlier heavily contended partial
 runs were excluded, and all final individual samples/ranges are preserved.
+
+The follow-up investigated private-field stamping and read-only data properties.
+Neither removed the retained regression, so the runtime POC remains unchanged.
+In separate five-repetition confirmations through the public implementation,
+data properties took 2.809s versus main's 2.659s and the original POC's 2.709s;
+literal getters with private-field stamping took 2.667s versus 2.587s and 2.631s.
+A single literal-getter construction sample was faster, but neither trial
+established a complete retained-workload improvement. Both passed the 13 focused tests
+and 64 contract combinations plus async cases, with representation differences
+explicitly checked.
+
+The benchmark now matches warmup retention to the measured workload and releases
+warmup owners before forced GC. Five counterbalanced repetitions of the original
+POC measured 3.166s main versus 3.819s POC with discarded warmup (+20.6%), and
+2.842s versus 2.869s with retained warmup (+1.0%; three slower, two faster pairs).
+This corrects methodology, not runtime behavior. Matched V8 source and GC traces
+support survival feedback affecting allocation-site pretenuring; a traced control
+with that feature disabled still left a gap. The retained regression remains
+unresolved. Background contention and visible rate changes limit comparisons;
+absolute timings from different series must not be pooled. All completed samples,
+including screening outliers, manifests, exact trial patches and diagnostic
+summaries are in [the follow-up evidence](retention-results.json).
 
 The evidence supports **old-space accessor pairs retaining getter closures and
 their captured ASTs across minor GC**. In three fresh controlled repetitions,
@@ -49,6 +72,10 @@ imports match prior evidence. Generated output remains 217,840,905 bytes,
 SHA-256 `c56c4b008d33671dc659dc7f48e677d98d96cdb789173e36acc8934e56818cc5`.
 All 178,470 NAPI tests passed, as did focused Node 26.13 tests, parser conformance
 with unchanged snapshots, generation, formatting and focused lint.
+Those full-suite results remain applicable because the follow-up restored the
+exact original runtime, native binding, generated deserializers and printer.
+The follow-up reran focused tests and contract checks and exercised the updated
+benchmark harness separately.
 
 Baseline JSON/raw differences for metadata ranges and literal lone surrogates
 were recorded separately. Local parent tests pass; the existing package file
