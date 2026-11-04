@@ -494,7 +494,7 @@ impl<'a> ClassProperties<'a> {
             is_static,
             is_declaration,
             is_method,
-            ..
+            is_accessor,
         } = self.classes_stack.find_get_set_private_prop(&field_expr.field);
 
         if self.private_fields_as_properties {
@@ -565,6 +565,7 @@ impl<'a> ClassProperties<'a> {
                 get_binding.as_ref(),
                 set_binding.as_ref(),
                 class_binding.as_ref(),
+                is_accessor,
                 ctx,
             );
         } else {
@@ -770,6 +771,7 @@ impl<'a> ClassProperties<'a> {
         get_binding: Option<&BoundIdentifier<'a>>,
         set_binding: Option<&BoundIdentifier<'a>>,
         class_binding: Option<&BoundIdentifier<'a>>,
+        is_accessor: bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let is_value_used = Self::is_value_used(ctx);
@@ -808,6 +810,7 @@ impl<'a> ClassProperties<'a> {
                     &field.name,
                     class_binding,
                     get_binding,
+                    is_accessor,
                     object2,
                     SPAN,
                     ctx,
@@ -836,6 +839,7 @@ impl<'a> ClassProperties<'a> {
                     &field.name,
                     class_binding,
                     get_binding,
+                    is_accessor,
                     object1,
                     SPAN,
                     ctx,
@@ -976,7 +980,7 @@ impl<'a> ClassProperties<'a> {
             is_static,
             is_method,
             is_declaration,
-            ..
+            is_accessor,
         } = self.classes_stack.find_get_set_private_prop(&field_expr.field);
 
         let temp_var_name_base = get_var_name_from_node(field_expr);
@@ -1139,6 +1143,7 @@ impl<'a> ClassProperties<'a> {
                 &private_name,
                 class_binding.as_ref(),
                 get_binding.as_ref(),
+                is_accessor,
                 object2,
                 SPAN,
                 ctx,
@@ -2172,27 +2177,34 @@ impl<'a> ClassProperties<'a> {
     }
 
     /// * Getter: `_prop.call(_assertClassBrand(Class, object))`
+    /// * Method: `_assertClassBrand(Class, object, _prop)`
     /// * Prop: `_privateFieldGet(_prop, object)`
-    /// * Prop binding is `None`: `_readOnlyError("#method")`
+    /// * Prop binding is `None`: `_writeOnlyError("#method")`
     fn create_private_getter(
         &self,
         private_name: &str,
         class_binding: Option<&BoundIdentifier<'a>>,
         prop_binding: Option<&BoundIdentifier<'a>>,
+        is_accessor: bool,
         object: Expression<'a>,
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let Some(prop_binding) = prop_binding else {
-            // `_readOnlyError("#method")`
+            // `_writeOnlyError("#method")`
             return self.create_sequence_with_write_only_error(private_name, object, span, ctx);
         };
         let prop_ident = prop_binding.create_read_expression(ctx);
         if let Some(class_binding) = class_binding {
             let class_ident = class_binding.create_read_expression(ctx);
-            let object = self.create_assert_class_brand_without_value(class_ident, object, ctx);
-            // `_prop.call(_assertClassBrand(Class, object))`
-            create_call_call(prop_ident, object, span, ctx)
+            if is_accessor {
+                let object = self.create_assert_class_brand_without_value(class_ident, object, ctx);
+                // `_prop.call(_assertClassBrand(Class, object))`
+                create_call_call(prop_ident, object, span, ctx)
+            } else {
+                // `_assertClassBrand(Class, object, _prop)`
+                self.create_assert_class_brand(class_ident, object, prop_ident, span, ctx)
+            }
         } else {
             // `_privateFieldGet(_prop, object)`
             self.create_private_field_get(prop_ident, object, ctx)
