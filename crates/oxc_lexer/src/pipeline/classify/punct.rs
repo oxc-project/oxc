@@ -88,7 +88,7 @@ pub(super) const PH_T: VecData256 = VecData256::from_bytes([
 
 #[cfg(test)]
 mod tests {
-    use crate::{cpu::BASELINE, token::tk};
+    use crate::cpu::BASELINE;
 
     use crate::pipeline::bytes::{is_word, is_ws};
 
@@ -96,25 +96,30 @@ mod tests {
 
     #[test]
     fn test_punct1_hash() {
-        let mut punct1_ord = [tk!(Invalid); 256];
-        for i in 0..PUNCT1.len() {
-            punct1_ord[PUNCT1[i].byte as usize] = PUNCT1[i].kind as u8;
+        let mut kinds = [TokenKind::Invalid; 256];
+        for punct in &PUNCT1 {
+            assert!(
+                punct.byte >= 0x20,
+                "{:?} is a control char, which SIMD classify maps to Invalid",
+                punct.byte as char
+            );
+            kinds[punct.byte as usize] = punct.kind;
         }
 
-        for c in 0..256usize {
-            let cb = c as u8;
-            if is_word(cb, BASELINE) || is_ws(cb, BASELINE) {
+        for byte in 0..=255 {
+            // `is_word` returns `true` for all values >= 128, so non-ASCII bytes are skipped
+            if is_word(byte, BASELINE) || is_ws(byte, BASELINE) || byte < 0x20 {
                 continue;
             }
-            assert!(punct1_hash(cb) == punct1_ord[c], "PH_A/B/T wrong at byte {c:#04x}");
+            assert!(
+                punct1_hash(byte) == kinds[byte as usize] as u8,
+                "PH_A / PH_B / PH_T wrong at byte {byte:#04x}"
+            );
         }
     }
 
-    fn punct1_hash(c: u8) -> u8 {
-        if c < 0x20 {
-            return tk!(Invalid);
-        }
-        let h = (PH_A[(c & 15) as usize] ^ PH_B[((c >> 4) & 15) as usize]) & 31;
+    fn punct1_hash(byte: u8) -> u8 {
+        let h = PH_A[(byte & 15) as usize] ^ PH_B[((byte >> 4) & 15) as usize];
         PH_T[h as usize]
     }
 }
