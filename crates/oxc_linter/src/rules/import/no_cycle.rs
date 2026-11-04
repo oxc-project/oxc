@@ -155,9 +155,8 @@ impl Rule for NoCycle {
         let component =
             if self.uses_scc_prefilter() { module_record.import_cycle_component() } else { None };
 
-        // A valid shared classification replaces the per-file reachability prefilter. Without it,
-        // retain that prefilter only for unbounded walks: under a shallow depth cap, the diagnostic
-        // walks are cheap and an unbounded prefilter could cost more than it saves.
+        // Reuse shared labels when available; otherwise check reachability for this file.
+        // Bounded searches skip the unbounded prefilter to avoid unnecessary work.
         if let Some(component) = component {
             if !component.is_cyclic() {
                 return;
@@ -171,6 +170,7 @@ impl Rule for NoCycle {
 
         let mut stack = Vec::new();
         let mut traversed = FxHashSet::default();
+        // Keep the diagnostic walk, but prune imports that cannot lead back to this file.
         for (key, weak_module_record) in direct_imports.iter() {
             let loaded_module_record = weak_module_record.upgrade().unwrap();
             if component.is_some_and(|component| component.excludes_module(&loaded_module_record)) {

@@ -1,61 +1,65 @@
-/// Returns a component identifier and whether that component is cyclic for each node.
+/// Returns `(component_id, is_cyclic)` for each node, in input order.
 ///
 /// Iterative Kosaraju keeps both passes linear and avoids overflowing the call stack on deep
 /// dependency chains. Identifiers are node indices, so they are smaller than `edges.len()`.
 pub fn cyclic_components(edges: &[Vec<usize>]) -> Vec<(usize, bool)> {
-    let mut reversed = vec![Vec::new(); edges.len()];
+    // 1. Build reverse edges for the later walk back through the graph.
+    let mut reverse_edges = vec![Vec::new(); edges.len()];
     for (node, dependencies) in edges.iter().enumerate() {
         for &dependency in dependencies {
-            reversed[dependency].push(node);
+            reverse_edges[dependency].push(node);
         }
     }
 
+    // 2. Walk dependencies depth-first, recording nodes when their walks finish.
     let mut visited = vec![false; edges.len()];
-    let mut order = Vec::with_capacity(edges.len());
-    let mut stack = Vec::new();
+    let mut finish_order = Vec::with_capacity(edges.len());
+    let mut dfs_stack = Vec::new();
     for root in 0..edges.len() {
         if visited[root] {
             continue;
         }
         visited[root] = true;
-        stack.push((root, 0));
-        while let Some((node, next_edge)) = stack.last_mut() {
+        dfs_stack.push((root, 0));
+        while let Some((node, next_edge)) = dfs_stack.last_mut() {
             if let Some(&dependency) = edges[*node].get(*next_edge) {
                 *next_edge += 1;
                 if !visited[dependency] {
                     visited[dependency] = true;
-                    stack.push((dependency, 0));
+                    dfs_stack.push((dependency, 0));
                 }
             } else {
-                order.push(*node);
-                stack.pop();
+                finish_order.push(*node);
+                dfs_stack.pop();
             }
         }
     }
 
+    // 3. Reverse finish order keeps each backward walk inside one unassigned SCC.
     let mut components = vec![(usize::MAX, false); edges.len()];
-    let mut pending = Vec::new();
-    let mut members = Vec::new();
-    for &root in order.iter().rev() {
+    let mut component_stack = Vec::new();
+    let mut component_nodes = Vec::new();
+    for &root in finish_order.iter().rev() {
         if components[root].0 != usize::MAX {
             continue;
         }
         components[root].0 = root;
-        pending.push(root);
-        while let Some(node) = pending.pop() {
-            members.push(node);
-            for &dependency in &reversed[node] {
+        component_stack.push(root);
+        while let Some(node) = component_stack.pop() {
+            component_nodes.push(node);
+            for &dependency in &reverse_edges[node] {
                 if components[dependency].0 == usize::MAX {
                     components[dependency].0 = root;
-                    pending.push(dependency);
+                    component_stack.push(dependency);
                 }
             }
         }
-        let cyclic = members.len() > 1 || edges[root].contains(&root);
-        for &node in &members {
-            components[node].1 = cyclic;
+        // A singleton is cyclic only if it has a self-loop.
+        let is_cyclic = component_nodes.len() > 1 || edges[root].contains(&root);
+        for &node in &component_nodes {
+            components[node].1 = is_cyclic;
         }
-        members.clear();
+        component_nodes.clear();
     }
     components
 }

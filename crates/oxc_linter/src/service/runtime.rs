@@ -835,10 +835,11 @@ impl Runtime {
             group.finished = true;
             entries_in_flight -= group.entry_count;
 
+            // 1. Classify this completed group's graph once.
             let cycle_components =
                 cycle_graph.classify_group(&self.modules_by_path, group, &self.linter);
 
-            // Writing to `loaded_modules` based on `module_paths_and_resolved_requests`.
+            // 2. Link imports and attach SCC labels before dispatching lint jobs.
             // `take` drops the vec's capacity; `drain` would keep it for the rest of the run.
             // This stays serial: from a non-worker graph thread, a parallel iterator is injected behind the parses
             // already queued, and the graph thread would block until they all ran. It must also finish before the
@@ -877,6 +878,7 @@ impl Runtime {
                 }
             }
 
+            // 3. Dispatch lint jobs; workers reuse the labels stored on each module.
             // From a non-worker these land on rayon's FIFO injector, behind parses already queued.
             // Running them first was measured on VS Code and AFFiNE (4 cores) and did not lower peak RSS.
             for entry in take(&mut group.modules_to_lint) {

@@ -79,6 +79,7 @@ pub struct ModuleRecord {
 
     sorted_loaded_modules: RwLock<Option<SortedLoadedModules>>,
 
+    // Published after linking; all lint workers read the same labels.
     import_cycle_component: OnceLock<ImportCycleComponent>,
 
     /// `[[ImportEntries]]`
@@ -593,6 +594,7 @@ impl ModuleRecord {
     }
 
     pub(crate) fn import_cycle_component(&self) -> Option<&ImportCycleComponent> {
+        // Missing, unclassified or stale labels require the original graph walk.
         self.import_cycle_component.get().filter(|component| {
             component.id != usize::MAX && component.graph_valid.load(Ordering::Acquire)
         })
