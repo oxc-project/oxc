@@ -19,6 +19,7 @@ use crate::{
     context::TraverseCtx,
     utils::ast_builder::{
         create_assignment, create_bind_call, create_call_call, create_member_callee,
+        wrap_expression_in_arrow_function_iife,
     },
 };
 
@@ -470,6 +471,24 @@ impl<'a> ClassProperties<'a> {
     ) {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
         if matches!(&assign_expr.left, AssignmentTarget::PrivateFieldExpression(_)) {
+            if !self.private_fields_as_properties
+                && assign_expr.operator.to_logical_operator().is_some()
+                && ctx
+                    .ancestors()
+                    .take_while(|ancestor| {
+                        !matches!(
+                            ancestor,
+                            Ancestor::FunctionBodyStatements(_)
+                                | Ancestor::ArrowFunctionExpressionBody(_)
+                        )
+                    })
+                    .any(|ancestor| matches!(ancestor, Ancestor::FormalParameterInitializer(_)))
+            {
+                // Keep receiver temporaries local to each parameter evaluation, including
+                // recursive calls from getters. The assignment is transformed in the IIFE.
+                *expr = wrap_expression_in_arrow_function_iife(expr.take_in(ctx), ctx);
+                return;
+            }
             self.transform_assignment_expression_impl(expr, ctx);
         }
     }
@@ -798,8 +817,13 @@ impl<'a> ClassProperties<'a> {
                 );
             }
 
-            // Make 2 copies of `object`
-            let (object1, object2) = self.duplicate_object(object.into_inner_expression(), ctx);
+            // Logical assignment reads before preparing the setter. A getter can reassign
+            // the receiver binding, so preserve its original value for the subsequent write.
+            let (object1, object2) = duplicate_expression(
+                object.into_inner_expression(),
+                operator.to_logical_operator().is_some(),
+                ctx,
+            );
 
             if let Some(operator) = operator.to_binary_operator() {
                 // `object.#prop += value`

@@ -1,6 +1,6 @@
 commit: b835f0c6
 
-Passed: 309/438
+Passed: 310/439
 
 # All Passed:
 * babel-plugin-transform-class-static-block
