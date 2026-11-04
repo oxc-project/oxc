@@ -29,7 +29,7 @@ use oxc_syntax::{
 
 use crate::{
     Semantic,
-    annex_b::AnnexBHoists,
+    annex_b::AnnexBFunction,
     binder::{Binder, ModuleInstanceState},
     checker,
     class::ClassTableBuilder,
@@ -88,13 +88,14 @@ pub struct SemanticBuilder<'a> {
     /// Nesting depth of TypeScript ambient contexts.
     ambient_depth: u32,
     /// Symbols that have been hoisted out of a scope (e.g. `var` declarations hoisted to
-    /// the enclosing function scope, or Annex B function declarations hoisted to the var scope).
+    /// the enclosing function scope).
     /// Keyed by the `(original scope, name)` the symbol was declared in, so that future
     /// declarations in that scope can still detect redeclarations via `check_redeclaration`.
     /// A single flat map avoids allocating a per-scope inner map for every hoisting scope.
     pub(crate) hoisting_variables: FxHashMap<(ScopeId, Ident<'a>), SymbolId>,
-    /// Annex B function declaration hoisting state. See [`crate::annex_b`].
-    pub(crate) annex_b: AnnexBHoists<'a>,
+    /// Function declarations in blocks of the var scopes being bound, in source order, whose
+    /// Annex B var binding is decided when their var scope has been bound. See [`crate::annex_b`].
+    pub(crate) annex_b_functions: Vec<AnnexBFunction>,
 
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
@@ -161,7 +162,7 @@ impl<'a> SemanticBuilder<'a> {
             module_instance_state_cache: FxHashMap::default(),
             node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
-            annex_b: AnnexBHoists::default(),
+            annex_b_functions: Vec::new(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unused_labels: UnusedLabels::default(),
@@ -932,8 +933,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             if self.scoping.scope_flags(self.current_scope_id).contains_direct_eval() {
                 self.scoping.scope_flags_mut(parent_id).insert(ScopeFlags::DirectEval);
             }
-            if self.annex_b.has_pending_in(self.current_scope_id) {
-                self.finish_annex_b_hoists();
+            if self.has_annex_b_functions_in_current_scope() {
+                self.bind_annex_b_functions();
             }
             self.current_scope_id = parent_id;
         }
@@ -1027,6 +1028,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         control_flow!(self, |cfg| cfg.release_error_harness(error_harness));
         /* cfg */
+
+        if self.has_annex_b_functions_in_current_scope() {
+            self.bind_annex_b_functions();
+        }
+        debug_assert!(self.annex_b_functions.is_empty());
 
         // Resolve all remaining unresolved references by walking up the scope chain.
         // This replaces the old bubble-up approach where references were merged on every scope exit.

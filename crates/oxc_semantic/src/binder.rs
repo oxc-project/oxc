@@ -44,7 +44,6 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
         if kind.is_lexical() {
             self.id.bound_names(&mut |ident| {
-                builder.declare_annex_b_blocker(ident.name);
                 let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
                 ident.symbol_id.set(Some(symbol_id));
             });
@@ -102,7 +101,6 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                     builder.declare_symbol_on_scope(span, name, target_scope_id, includes, excludes)
                 });
                 ident.symbol_id.set(Some(symbol_id));
-                builder.declare_annex_b_var(target_scope_id, name);
 
                 // Finally, add the variable to all hoisted scopes
                 // to support redeclaration checks when declaring variables with the same name later.
@@ -135,9 +133,6 @@ impl<'a> Binder<'a> for Class<'a> {
             SymbolFlags::Class
         };
         let Some(ident) = &self.id else { return };
-        if self.is_declaration() {
-            builder.declare_annex_b_blocker(ident.name);
-        }
         let symbol_id =
             builder.declare_symbol(ident.span, ident.name, includes, SymbolFlags::ClassExcludes);
         ident.symbol_id.set(Some(symbol_id));
@@ -164,11 +159,8 @@ impl<'a> Binder<'a> for Function<'a> {
                 includes |= SymbolFlags::AsyncOrGeneratorFunction;
             }
 
-            // Annex B.3.3 places these in their own implicit block, so they neither conflict with
-            // nor hoist like declarations in the enclosing scope.
-            let is_if_statement_function = is_declaration
-                && !builder.source_type.is_typescript()
-                && is_function_decl_part_of_if_statement(self, builder);
+            let is_if_statement_function =
+                is_declaration && is_function_decl_part_of_if_statement(self, builder);
 
             let excludes = if builder.source_type.is_typescript() {
                 SymbolFlags::FunctionExcludes
@@ -181,25 +173,14 @@ impl<'a> Binder<'a> for Function<'a> {
                 SymbolFlags::FunctionExcludes - SymbolFlags::FunctionScopedVariable
             };
 
-            let scope_flags = builder.current_scope_flags();
-            let is_block_declaration =
-                is_declaration && !is_if_statement_function && !scope_flags.is_var();
-            if is_block_declaration {
-                builder.declare_annex_b_blocker(ident.name);
-            }
-
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
 
-            if is_if_statement_function {
-                builder.declare_annex_b_if_statement_function(symbol_id);
-            } else if is_declaration && scope_flags.is_var() {
-                builder.declare_annex_b_var(builder.current_scope_id, ident.name);
-            }
+            let scope_flags = builder.current_scope_flags();
 
             // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
-            // scopes also create an implicit var-like binding in the enclosing function
-            // scope. Hoist to the var scope — same pattern as var hoisting (line 46).
+            // scopes may also create a var binding in the enclosing function or script.
+            // Decided once the var scope has been bound. See `crate::annex_b`.
             if is_declaration // function expressions are bound in their own (var) scope
                 && !self.r#async // Annex B only applies to plain functions
                 && !self.generator // not generators or async generators
@@ -208,7 +189,7 @@ impl<'a> Binder<'a> for Function<'a> {
                 && !scope_flags.is_strict_mode()
             // no Annex B in strict mode / modules
             {
-                builder.hoist_annex_b_function(ident.name, symbol_id);
+                builder.declare_annex_b_function(symbol_id, is_if_statement_function);
             }
 
             // Save `@__NO_SIDE_EFFECTS__`

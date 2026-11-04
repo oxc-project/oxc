@@ -1,4 +1,5 @@
-// A later `var` of the same name shares the hoisted function's binding.
+// A later `var` of the same name prevents the function's binding from moving to the var scope.
+// The function stays bound in its block. Annex B makes it write the `var` when evaluated.
 function laterVar() {
   {
     function g() {}
@@ -23,11 +24,12 @@ function ifStatementFunction() {
   return g();
 }
 
-function ifStatementFunctionThenLet() {
+// An `if` branch function that redeclares a `let` in the same block is that `let`'s symbol.
+// It does not get a var binding, and neither does the `let`.
+function ifStatementFunctionAfterLet() {
   {
-    function g() {}
+    let g;
+    if (true) function g() {}
   }
-  if (false) function g() {}
-  let g = 1;
   return g;
 }

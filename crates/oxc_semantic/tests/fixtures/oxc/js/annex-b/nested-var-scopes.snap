@@ -211,7 +211,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/nested-var-scopes.
         ],
         "flags": "ScopeFlags(Function)",
         "id": 9,
-        "node": "Function(undoThenRehoist)",
+        "node": "Function(nestedVarScopeBetweenPreventedFunctions)",
         "symbols": [
           {
             "flags": "SymbolFlags(Function)",
@@ -281,8 +281,8 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/nested-var-scopes.
       {
         "flags": "SymbolFlags(Function)",
         "id": 7,
-        "name": "undoThenRehoist",
-        "node": "Function(undoThenRehoist)",
+        "name": "nestedVarScopeBetweenPreventedFunctions",
+        "node": "Function(nestedVarScopeBetweenPreventedFunctions)",
         "references": []
       }
     ]
