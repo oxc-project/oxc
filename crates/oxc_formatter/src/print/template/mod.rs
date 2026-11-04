@@ -23,7 +23,10 @@ use crate::{
         call_expression::is_test_each_pattern,
         expression::is_member_expression_without_chain_wrappers,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        tailwindcss::{tailwind_context_for_callee, write_tailwind_template_element},
+        tailwindcss::{
+            tailwind_context_for_callee, tailwind_context_for_class_list,
+            write_tailwind_template_element,
+        },
     },
     write,
 };
@@ -110,16 +113,9 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TaggedTemplateExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TemplateElement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let source = f.source_text().text_for(self);
-
         // Check if we're in a Tailwind context via the stack
         // (handles JSXAttribute, CallExpression, TaggedTemplateExpression, and nested contexts)
-        let tailwind_ctx = f.context().tailwind_context().copied().filter(|_| {
-            // No whitespace means only one class, so no need to sort
-            source.as_bytes().iter().any(|&b| b.is_ascii_whitespace())
-        });
-
-        if let Some(ctx) = tailwind_ctx {
+        if let Some(ctx) = tailwind_context_for_class_list(self, f) {
             write_tailwind_template_element(self, ctx, f);
         } else {
             write!(f, text(self.value.raw.as_str()));

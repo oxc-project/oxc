@@ -26,18 +26,14 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, CallExpression<'a>> {
         // Check if this is a Tailwind function call (e.g., clsx, cn, tw)
         let tailwind_ctx_to_push = tailwind_context_for_callee(&self.callee, f);
 
-        // For nested non-Tailwind calls inside a Tailwind context, disable sorting
-        // to prevent sorting strings inside the nested call's arguments.
+        // For nested non-Tailwind calls inside a Tailwind context, hide the context
+        // to prevent sorting strings and templates inside the nested call's arguments.
         // (e.g., `classNames("a", x.includes("\n") ? "b" : "c")` - don't sort "\n")
-        let was_disabled = if tailwind_ctx_to_push.is_none()
-            && let Some(ctx) = f.context_mut().tailwind_context_mut()
-        {
-            let was = ctx.disabled;
-            ctx.disabled = true;
-            Some(was)
-        } else {
-            None
-        };
+        let hides_tailwind_ctx =
+            tailwind_ctx_to_push.is_none() && f.context().tailwind_context().is_some();
+        if hides_tailwind_ctx {
+            f.context_mut().hide_tailwind_context();
+        }
 
         // NOTE: Decided before this call pushes its Tailwind context, and `MemberChain` pushes none,
         // so a Tailwind call with a multiline template takes the branch below, which sorts it
@@ -77,11 +73,8 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, CallExpression<'a>> {
             }
         }
 
-        // Restore the previous disabled state
-        if let Some(was) = was_disabled
-            && let Some(ctx) = f.context_mut().tailwind_context_mut()
-        {
-            ctx.disabled = was;
+        if hides_tailwind_ctx {
+            f.context_mut().pop_tailwind_context();
         }
     }
 }
