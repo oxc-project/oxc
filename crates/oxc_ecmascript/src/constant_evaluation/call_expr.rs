@@ -13,7 +13,7 @@ use smallvec::SmallVec;
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_str::{JSStr, JSStrBuilder};
+use oxc_str::{JSChar, JSStr, JSStrBuilder};
 use oxc_syntax::{
     identifier::is_white_space, line_terminator::is_line_terminator, number::ToJsString,
 };
@@ -428,6 +428,26 @@ fn try_fold_string_replace<'a>(
     };
     if replace_value.contains('$') {
         return None;
+    }
+    if name == "replaceAll" && search_value.is_empty() {
+        if replace_value.is_empty() {
+            return Some(ConstantValue::String(s.value));
+        }
+        let capacity = value.encode_utf16().try_fold(replace_value.len(), |capacity, unit| {
+            capacity
+                .checked_add(JSChar::from_u32(u32::from(unit))?.len_bytes())?
+                .checked_add(replace_value.len())
+        })?;
+        if capacity > u32::MAX as usize || capacity > isize::MAX as usize {
+            return None;
+        }
+        let mut result = JSStrBuilder::with_capacity_in(capacity, ctx);
+        result.push_str(replace_value);
+        for unit in value.encode_utf16() {
+            result.push_code_unit(unit);
+            result.push_str(replace_value);
+        }
+        return Some(ConstantValue::String(result.into_js_str()));
     }
     let result = match name {
         "replace" => value.cow_replacen(search_value, replace_value, 1),

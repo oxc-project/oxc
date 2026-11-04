@@ -227,6 +227,19 @@ fn test_fold_string_replace_all() {
 }
 
 #[test]
+fn test_fold_string_replace_all_empty_search_utf16() {
+    test(r"x = 'a😀z'.replaceAll('', '-')", r"x = '-a-\uD83D-\uDE00-z-'");
+    test(r"x = '😀😀'.replaceAll('', '-')", r"x = '-\uD83D-\uDE00-\uD83D-\uDE00-'");
+    test(r"x = '😀'.replaceAll('', '😁')", r"x = '😁\uD83D😁\uDE00😁'");
+    test("x = '😀'.replaceAll('', '')", "x = '😀'");
+    test("x = ''.replaceAll('', '-')", "x = '-'");
+    test(
+        r"x = (() => ((p) => 'a😀z'.replaceAll('', p))('-'))()",
+        r"x = ((p) => '-a-\uD83D-\uDE00-z-')('-')",
+    );
+}
+
+#[test]
 fn test_fold_string_substring() {
     test("x = 'abcde'.substring(0,2)", "x = 'ab'");
     test("x = 'abcde'.substring(1,2)", "x = 'b'");
