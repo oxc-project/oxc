@@ -293,6 +293,39 @@ pub struct ConfigStore {
 }
 
 impl ConfigStore {
+    /// Find a potentially enabled rule without resolving globs for every source file.
+    /// Overrides may not match any selected file, so this inventory is conservative.
+    pub(crate) fn find_rule(&self, predicate: impl Fn(&RuleEnum) -> bool) -> Option<&RuleEnum> {
+        std::iter::once(&self.base).chain(self.nested_configs.values()).find_map(|config| {
+            config
+                .base_rules
+                .iter()
+                .chain(config.overrides.iter().flat_map(|entry| &entry.rules.builtin_rules))
+                .find_map(|(rule, severity)| {
+                    (severity.is_warn_deny() && predicate(rule)).then_some(rule)
+                })
+                .or_else(|| {
+                    // Adding a plugin in an override can also enable its category rules.
+                    crate::rules::RULES.iter().find(|rule| {
+                        predicate(rule)
+                            && !config.base_rules.iter().any(|(configured, _)| configured == *rule)
+                            && config
+                                .categories
+                                .get(&rule.category())
+                                .is_some_and(|severity| severity.is_warn_deny())
+                            && LintPlugins::try_from(rule.plugin_name()).is_ok_and(|plugin| {
+                                !config.plugins().contains(plugin)
+                                    && config.overrides.iter().any(|entry| {
+                                        entry
+                                            .plugins
+                                            .is_some_and(|plugins| plugins.contains(plugin))
+                                    })
+                            })
+                    })
+                })
+        })
+    }
+
     pub fn new(
         base_config: Config,
         nested_configs: FxHashMap<PathBuf, Config>,
@@ -463,6 +496,65 @@ mod test {
         ($json:tt) => {
             serde_json::from_value(serde_json::json!($json)).unwrap()
         };
+    }
+
+    #[test]
+    fn find_rule_includes_overrides_nested_configs_and_added_plugin_categories() {
+        fn build(value: Value, external: &mut ExternalPluginStore) -> Config {
+            ConfigStoreBuilder::from_oxlintrc(
+                true,
+                serde_json::from_value(value).unwrap(),
+                None,
+                external,
+                None,
+            )
+            .unwrap()
+            .build(external)
+            .unwrap()
+        }
+        let eligible = |rule: &RuleEnum| matches!(rule, RuleEnum::ImportNoCycle(rule) if rule.uses_scc_prefilter());
+        for (value, expected) in [
+            (serde_json::json!({"categories": {}, "plugins": ["import"]}), false),
+            (
+                serde_json::json!({"categories": {}, "plugins": ["import"], "rules": {"import/no-cycle": "off"}}),
+                false,
+            ),
+            (
+                serde_json::json!({"categories": {}, "plugins": ["import"], "rules": {"import/no-cycle": ["error", {"maxDepth": 1}]}}),
+                false,
+            ),
+            (
+                serde_json::json!({"categories": {}, "plugins": ["import"], "rules": {"import/no-cycle": "error"}}),
+                true,
+            ),
+            (
+                serde_json::json!({"categories": {}, "plugins": ["import"], "overrides": [{"files": ["*.ts"], "rules": {"import/no-cycle": "error"}}]}),
+                true,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [{"files": ["*.ts"], "plugins": ["import"]}]}),
+                true,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": ["import"], "rules": {"import/no-cycle": "off"}, "overrides": [{"files": ["*.ts"], "plugins": ["import"]}]}),
+                false,
+            ),
+        ] {
+            let mut external = ExternalPluginStore::default();
+            let description = value.to_string();
+            let base = build(value, &mut external);
+            let store = ConfigStore::new(base, FxHashMap::default(), external);
+            assert_eq!(store.find_rule(eligible).is_some(), expected, "{description}");
+        }
+        let mut external = ExternalPluginStore::default();
+        let base = build(serde_json::json!({"categories": {}}), &mut external);
+        let nested = build(
+            serde_json::json!({"plugins": ["import"], "rules": {"import/no-cycle": "error"}}),
+            &mut external,
+        );
+        let nested = FxHashMap::from_iter([(PathBuf::from("nested"), nested)]);
+        let store = ConfigStore::new(base, nested, external);
+        assert!(store.find_rule(eligible).is_some());
     }
 
     #[expect(clippy::default_trait_access)]

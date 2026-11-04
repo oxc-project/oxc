@@ -1,3 +1,20 @@
+use std::sync::atomic::AtomicBool;
+
+use crate::rules::import::no_cycle::NoCycle;
+
+/// One graph build and the exact rule options used to select its edges.
+#[derive(Debug)]
+pub struct ImportCycleGraph {
+    pub rule: NoCycle,
+    pub valid: AtomicBool,
+}
+
+impl ImportCycleGraph {
+    pub fn new(rule: NoCycle) -> Self {
+        Self { rule, valid: AtomicBool::new(true) }
+    }
+}
+
 /// Returns `(component_id, is_cyclic)` for each node, in input order.
 ///
 /// Iterative Kosaraju keeps both passes linear and avoids overflowing the call stack on deep

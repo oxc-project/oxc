@@ -12,6 +12,7 @@ use std::{
     ptr::{self, NonNull},
     rc::Rc,
     string::ToString,
+    sync::Arc,
     time::Duration,
 };
 
@@ -309,6 +310,14 @@ impl Linter {
     /// number of rules depends on which file is being linted.
     pub fn number_of_rules(&self, type_aware: bool) -> Option<usize> {
         self.config.number_of_rules(type_aware)
+    }
+
+    pub(crate) fn import_cycle_graph(&self) -> Option<Arc<module_graph_scc::ImportCycleGraph>> {
+        let rule = self.config.find_rule(
+            |rule| matches!(rule, RuleEnum::ImportNoCycle(rule) if rule.uses_scc_prefilter()),
+        )?;
+        let RuleEnum::ImportNoCycle(rule) = rule else { unreachable!() };
+        Some(Arc::new(module_graph_scc::ImportCycleGraph::new(rule.clone())))
     }
 
     /// Return `true` if `Linter` has an external linter (JS plugins).

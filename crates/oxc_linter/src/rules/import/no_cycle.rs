@@ -69,7 +69,7 @@ fn format_cycle(stack: &[(CompactStr, Arc<ModuleRecord>)], cwd: &Path) -> String
 }
 
 // <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-cycle.md>
-#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoCycle {
     /// Maximum dependency depth to traverse
@@ -152,8 +152,9 @@ impl Rule for NoCycle {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
 
-        let component =
-            if self.uses_scc_prefilter() { module_record.import_cycle_component() } else { None };
+        let component = module_record
+            .import_cycle_component()
+            .filter(|component| component.supports_rule(self));
 
         // Reuse shared labels when available; otherwise check reachability for this file.
         // Bounded searches skip the unbounded prefilter to avoid unnecessary work.
@@ -226,9 +227,9 @@ impl Rule for NoCycle {
 }
 
 impl NoCycle {
-    // Cached SCCs exclude type-only edges. Avoid a full prepass for bounded searches.
+    // Avoid a full prepass for bounded searches. Cached edge policies must match exactly.
     pub(crate) fn uses_scc_prefilter(&self) -> bool {
-        self.max_depth == u32::MAX && self.ignore_types
+        self.max_depth == u32::MAX
     }
 
     /// Is `root` in a cycle at all? True iff some module reachable from it imports it back — one

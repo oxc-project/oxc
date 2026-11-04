@@ -3,7 +3,7 @@
 use std::{
     fmt,
     path::{Path, PathBuf},
-    sync::atomic::{AtomicBool, Ordering},
+    sync::atomic::Ordering,
     sync::{Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak},
 };
 
@@ -14,28 +14,33 @@ use oxc_span::Span;
 use oxc_str::CompactStr;
 pub use oxc_syntax::module_record::RequestedModule;
 
+use crate::{module_graph_scc::ImportCycleGraph, rules::import::no_cycle::NoCycle};
+
 type SortedLoadedModules = Arc<[(CompactStr, Weak<ModuleRecord>)]>;
 
-/// File-level SCC information for the default import/no-cycle graph policy.
+/// File-level SCC information for one configured import/no-cycle graph policy.
 #[derive(Debug)]
 pub struct ImportCycleComponent {
     // Shared by all completed groups in one graph build. Mutating any linked record invalidates
     // the entire build's classifications, including records that can reach the changed record.
-    graph_valid: Arc<AtomicBool>,
-    // usize::MAX retains the graph invalidation token without classifying this record.
+    graph: Arc<ImportCycleGraph>,
     id: usize,
     cyclic: bool,
 }
 
 impl ImportCycleComponent {
+    pub(crate) fn supports_rule(&self, rule: &NoCycle) -> bool {
+        self.graph.rule == *rule
+    }
+
     pub(crate) fn is_cyclic(&self) -> bool {
         self.cyclic
     }
 
     pub(crate) fn excludes_module(&self, module: &ModuleRecord) -> bool {
-        module.import_cycle_component().is_some_and(|other| {
-            Arc::ptr_eq(&self.graph_valid, &other.graph_valid) && self.id != other.id
-        })
+        module
+            .import_cycle_component()
+            .is_some_and(|other| Arc::ptr_eq(&self.graph, &other.graph) && self.id != other.id)
     }
 }
 
@@ -587,32 +592,31 @@ impl ModuleRecord {
     ) -> RwLockWriteGuard<'_, FxHashMap<CompactStr, Weak<ModuleRecord>>> {
         let loaded_modules = self.loaded_modules.write().unwrap();
         if let Some(component) = self.import_cycle_component.get() {
-            component.graph_valid.store(false, Ordering::Release);
+            component.graph.valid.store(false, Ordering::Release);
         }
         *self.sorted_loaded_modules.write().unwrap() = None;
         loaded_modules
     }
 
     pub(crate) fn import_cycle_component(&self) -> Option<&ImportCycleComponent> {
-        // Missing, unclassified or stale labels require the original graph walk.
-        self.import_cycle_component.get().filter(|component| {
-            component.id != usize::MAX && component.graph_valid.load(Ordering::Acquire)
-        })
+        // Missing or stale labels require the original graph walk.
+        self.import_cycle_component
+            .get()
+            .filter(|component| component.graph.valid.load(Ordering::Acquire))
     }
 
     pub(crate) fn set_import_cycle_component(
         &self,
-        graph_valid: Arc<AtomicBool>,
-        component: Option<(usize, bool)>,
+        graph: Arc<ImportCycleGraph>,
+        (id, cyclic): (usize, bool),
     ) {
-        let (id, cyclic) = component.unwrap_or((usize::MAX, true));
         if let Err(component) =
-            self.import_cycle_component.set(ImportCycleComponent { graph_valid, id, cyclic })
+            self.import_cycle_component.set(ImportCycleComponent { graph, id, cyclic })
         {
             // Records normally belong to one graph build. If reused, neither graph's cached
             // classifications are safe; retain traversal as the fallback instead of panicking.
-            component.graph_valid.store(false, Ordering::Release);
-            self.import_cycle_component.get().unwrap().graph_valid.store(false, Ordering::Release);
+            component.graph.valid.store(false, Ordering::Release);
+            self.import_cycle_component.get().unwrap().graph.valid.store(false, Ordering::Release);
         }
     }
 
@@ -692,20 +696,22 @@ impl ModuleRecord {
 
 #[cfg(test)]
 mod cycle_component_tests {
-    use std::sync::{Arc, atomic::AtomicBool};
+    use std::sync::Arc;
+
+    use crate::{module_graph_scc::ImportCycleGraph, rules::import::no_cycle::NoCycle};
 
     use super::ModuleRecord;
 
     #[test]
-    fn mutating_an_unclassified_dependency_invalidates_the_whole_graph() {
-        let graph = Arc::new(AtomicBool::new(true));
+    fn mutating_a_dependency_invalidates_the_whole_graph() {
+        let graph = Arc::new(ImportCycleGraph::new(NoCycle::default()));
         let root = ModuleRecord::default();
         let dependency = ModuleRecord::default();
-        root.set_import_cycle_component(Arc::clone(&graph), Some((0, false)));
-        // An earlier group with no no-cycle rule still participates in invalidation.
-        dependency.set_import_cycle_component(graph, None);
+        root.set_import_cycle_component(Arc::clone(&graph), (0, false));
+        // Dependencies from earlier groups share the same invalidation token.
+        dependency.set_import_cycle_component(graph, (1, false));
         assert!(root.import_cycle_component().is_some());
-        assert!(dependency.import_cycle_component().is_none());
+        assert!(dependency.import_cycle_component().is_some());
 
         drop(dependency.write_loaded_modules());
 
@@ -714,24 +720,28 @@ mod cycle_component_tests {
 
     #[test]
     fn components_are_scoped_to_one_graph_build() {
-        let graph = Arc::new(AtomicBool::new(true));
-        let other_graph_id = Arc::new(AtomicBool::new(true));
+        let graph = Arc::new(ImportCycleGraph::new(NoCycle::default()));
+        let other_graph_id = Arc::new(ImportCycleGraph::new(NoCycle::default()));
         let root = ModuleRecord::default();
         let same_component = ModuleRecord::default();
         let other_component = ModuleRecord::default();
         let other_graph = ModuleRecord::default();
-        root.set_import_cycle_component(Arc::clone(&graph), Some((0, true)));
-        same_component.set_import_cycle_component(Arc::clone(&graph), Some((0, true)));
-        other_component.set_import_cycle_component(graph, Some((1, false)));
-        other_graph.set_import_cycle_component(Arc::clone(&other_graph_id), Some((1, false)));
+        root.set_import_cycle_component(Arc::clone(&graph), (0, true));
+        same_component.set_import_cycle_component(Arc::clone(&graph), (0, true));
+        other_component.set_import_cycle_component(graph, (1, false));
+        other_graph.set_import_cycle_component(Arc::clone(&other_graph_id), (1, false));
 
         let component = root.import_cycle_component().unwrap();
+        assert!(component.supports_rule(&NoCycle::default()));
+        let other_policy: NoCycle =
+            serde_json::from_value(serde_json::json!({"ignoreTypes": false})).unwrap();
+        assert!(!component.supports_rule(&other_policy));
         assert!(!component.excludes_module(&same_component));
         assert!(component.excludes_module(&other_component));
         assert!(!component.excludes_module(&other_graph));
 
         // Reusing a record in another graph must invalidate both sets of shared labels.
-        root.set_import_cycle_component(other_graph_id, Some((0, false)));
+        root.set_import_cycle_component(other_graph_id, (0, false));
         for record in [&root, &same_component, &other_component, &other_graph] {
             assert!(record.import_cycle_component().is_none());
         }

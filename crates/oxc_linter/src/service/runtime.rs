@@ -2,10 +2,10 @@ use std::{
     borrow::Cow,
     ffi::OsStr,
     fs,
-    hash::BuildHasherDefault,
+    hash::{BuildHasherDefault, Hash, Hasher},
     mem::take,
     path::{Path, PathBuf},
-    sync::atomic::{AtomicBool, Ordering},
+    sync::atomic::Ordering,
     sync::{Arc, Mutex, mpsc},
 };
 
@@ -28,13 +28,12 @@ use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_str::CompactStr;
 
 use crate::{
-    Fixer, Linter, Message, PossibleFixes, RuleEnum, RuleTimingStore,
+    Fixer, Linter, Message, PossibleFixes, RuleTimingStore,
     context::{ContextSubHost, ContextSubHostOptions},
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
-    module_graph_scc::cyclic_components,
+    module_graph_scc::{ImportCycleGraph, cyclic_components},
     module_record::ModuleRecord,
-    rules::import::no_cycle::NoCycle,
     suppression::DiffManager,
     utils::read_to_arena_str,
 };
@@ -44,53 +43,51 @@ use super::LintServiceOptions;
 type ModulesByPath =
     papaya::HashMap<Arc<OsStr>, SmallVec<[Arc<ModuleRecord>; 1]>, BuildHasherDefault<FxHasher>>;
 
+// Compare paths like no-cycle does, while sharing the existing path allocation.
+struct CyclePath(Arc<OsStr>);
+
+impl PartialEq for CyclePath {
+    fn eq(&self, other: &Self) -> bool {
+        Path::new(&self.0) == Path::new(&other.0)
+    }
+}
+
+impl Eq for CyclePath {}
+
+impl Hash for CyclePath {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        Path::new(&self.0).hash(state);
+    }
+}
+
 struct CycleGraphState {
-    valid: Arc<AtomicBool>,
-    paths: FxHashSet<PathBuf>,
+    graph: Arc<ImportCycleGraph>,
+    paths: FxHashSet<CyclePath>,
     next_component: usize,
 }
 
 impl CycleGraphState {
-    fn new() -> Self {
-        Self {
-            valid: Arc::new(AtomicBool::new(true)),
-            paths: FxHashSet::default(),
-            next_component: 0,
-        }
+    fn new(graph: Arc<ImportCycleGraph>) -> Self {
+        Self { graph, paths: FxHashSet::default(), next_component: 0 }
     }
 
-    fn register_path(&mut self, path: &OsStr) {
-        // Graph scheduling keys are raw OsStrs, but no-cycle compares Paths. If two raw paths
-        // compare equal (e.g. dir/./a.ts and dir/a.ts), SCCs could span finished groups. Fall back
-        // to the existing traversal for this entire graph rather than pruning those aliases.
-        if !self.paths.insert(PathBuf::from(path)) {
-            self.valid.store(false, Ordering::Release);
+    // False disables the cache for the remaining run, including all earlier labels.
+    fn register_path(&mut self, path: &Arc<OsStr>) -> bool {
+        if !self.graph.valid.load(Ordering::Acquire) {
+            return false;
         }
+        if !self.paths.insert(CyclePath(Arc::clone(path))) {
+            self.graph.valid.store(false, Ordering::Release);
+            return false;
+        }
+        true
     }
 
-    /// Classify only groups with a lint target that can use the default-policy cache.
-    /// Component IDs remain unique across all completed groups in this graph build.
-    fn classify_group(
-        &mut self,
-        modules_by_path: &ModulesByPath,
-        group: &ModuleGroup<'_>,
-        linter: &Linter,
-    ) -> Option<Vec<(usize, bool)>> {
-        if !self.valid.load(Ordering::Acquire) {
+    fn classify_edges(&mut self, edges: &[Vec<usize>]) -> Option<Vec<(usize, bool)>> {
+        if !self.graph.valid.load(Ordering::Acquire) {
             return None;
         }
-        let needs_components = group.modules_to_lint.iter().any(|entry| {
-            linter.config.resolve(Path::new(&entry.path)).rules.iter().any(|(rule, severity)| {
-                severity.is_warn_deny()
-                    && matches!(rule, RuleEnum::ImportNoCycle(rule) if rule.uses_scc_prefilter())
-            })
-        });
-        if !needs_components {
-            return None;
-        }
-
-        let mut components =
-            import_cycle_components(modules_by_path, &group.module_paths_and_resolved_requests);
+        let mut components = cyclic_components(edges);
         for (id, _) in &mut components {
             *id += self.next_component;
         }
@@ -266,40 +263,72 @@ impl<'alloc_pool> ModuleGroups<'alloc_pool> {
     }
 }
 
-/// Classify files in a completed group using the default no-cycle edge filter.
-/// Records from different sections of one file share a node. Dependencies in earlier finished
-/// groups cannot lead back into this group, so SCCs cannot span those group boundaries.
-fn import_cycle_components(
+/// Link a completed group, collecting SCC edges alongside the existing target lookups.
+/// Earlier groups cannot lead back here; classify every group while the cache is enabled so
+/// later groups can also prune imports into earlier groups.
+fn link_modules(
     modules_by_path: &ModulesByPath,
-    requests_by_path: &[(Arc<OsStr>, ModuleResolvedRequests)],
-) -> Vec<(usize, bool)> {
+    requests_by_path: Vec<(Arc<OsStr>, ModuleResolvedRequests)>,
+    cycle_graph: Option<&mut CycleGraphState>,
+) {
+    let Some(cache) = cycle_graph.filter(|cache| cache.graph.valid.load(Ordering::Acquire)) else {
+        link_imports(modules_by_path, requests_by_path, |_, _, _, _| {});
+        return;
+    };
+    let modules = modules_by_path.pin();
+    // Borrow keys from the graph map so the requests can still move into loaded_modules.
     let indices: FxHashMap<&OsStr, usize> = requests_by_path
         .iter()
         .enumerate()
-        .map(|(index, (path, _))| (path.as_ref(), index))
+        .map(|(index, (path, _))| {
+            let (path, _) = modules.get_key_value(path).unwrap();
+            (path.as_ref(), index)
+        })
         .collect();
-    let mut edges = vec![Vec::new(); requests_by_path.len()];
+    let mut edges = vec![Vec::new(); indices.len()];
+
+    // 1. Collect cycle edges alongside the existing target lookups.
+    link_imports(modules_by_path, requests_by_path, |index, record, request, target| {
+        if let Some(&dependency) = indices.get(request.resolved_requested_path.as_ref())
+            && cache.graph.rule.should_traverse_module(&request.specifier, target, record)
+        {
+            edges[index].push(dependency);
+        }
+    });
+
+    // 2. Publish labels only when there is a valid analysis to share.
+    if let Some(components) = cache.classify_edges(&edges) {
+        for (path, index) in indices {
+            for record in modules.get(path).unwrap() {
+                record.set_import_cycle_component(Arc::clone(&cache.graph), components[index]);
+            }
+        }
+    }
+}
+
+/// A generic linking pass. The empty callback compiles away when SCC analysis is disabled.
+fn link_imports(
+    modules_by_path: &ModulesByPath,
+    requests_by_path: Vec<(Arc<OsStr>, ModuleResolvedRequests)>,
+    mut on_import: impl FnMut(usize, &ModuleRecord, &ResolvedModuleRequest, &Arc<ModuleRecord>),
+) {
     let modules = modules_by_path.pin();
-    let rule = NoCycle::default();
-    for (index, (path, sections)) in requests_by_path.iter().enumerate() {
-        let records = modules.get(path).unwrap();
+    for (index, (path, sections)) in requests_by_path.into_iter().enumerate() {
+        let records = modules.get(&path).unwrap();
+        assert_eq!(records.len(), sections.len(), "Module records and requests must align");
         for (record, requests) in records.iter().zip(sections) {
+            let mut loaded_modules = record.write_loaded_modules();
             for request in requests {
-                let Some(&dependency) = indices.get(request.resolved_requested_path.as_ref())
-                else {
-                    continue;
-                };
+                // TODO: revise how to store multiple sections in loaded_modules.
                 let Some(target) = modules.get(&request.resolved_requested_path).unwrap().last()
                 else {
                     continue;
                 };
-                if rule.should_traverse_module(&request.specifier, target, record) {
-                    edges[index].push(dependency);
-                }
+                on_import(index, record, &request, target);
+                loaded_modules.insert(request.specifier, Arc::downgrade(target));
             }
         }
     }
-    cyclic_components(&edges)
 }
 
 /// Output of `Runtime::process_path`
@@ -688,7 +717,7 @@ impl Runtime {
         // This channel is for posting `ModuleProcessOutput` from module threads to the graph thread.
         let (tx_process_output, rx_process_output) = mpsc::channel::<ModuleProcessOutput>();
 
-        let mut cycle_graph = CycleGraphState::new();
+        let mut cycle_graph = self.linter.import_cycle_graph().map(CycleGraphState::new);
 
         // Whether the graph thread is one of rayon's worker threads. It's not when `scope` was created by
         // `rayon::in_place_scope` outside of the thread pool.
@@ -760,7 +789,9 @@ impl Runtime {
                 rx_process_output.recv().unwrap()
             };
 
-            cycle_graph.register_path(&path);
+            if cycle_graph.as_mut().is_some_and(|cache| !cache.register_path(&path)) {
+                cycle_graph = None;
+            }
             let mut group_id = groups.find(encountered_paths[&path]);
             groups.get_mut(group_id).pending_module_count -= 1;
 
@@ -835,50 +866,15 @@ impl Runtime {
             group.finished = true;
             entries_in_flight -= group.entry_count;
 
-            // 1. Classify this completed group's graph once.
-            let cycle_components =
-                cycle_graph.classify_group(&self.modules_by_path, group, &self.linter);
+            // Link and publish labels before workers can read this group's graph.
+            // Keep linking serial: an external parallel iterator would wait behind queued parses.
+            link_modules(
+                &self.modules_by_path,
+                take(&mut group.module_paths_and_resolved_requests),
+                cycle_graph.as_mut(),
+            );
 
-            // 2. Link imports and attach SCC labels before dispatching lint jobs.
-            // `take` drops the vec's capacity; `drain` would keep it for the rest of the run.
-            // This stays serial: from a non-worker graph thread, a parallel iterator is injected behind the parses
-            // already queued, and the graph thread would block until they all ran. It must also finish before the
-            // lint jobs below are spawned, because they read `loaded_modules` of this group and finished groups.
-            let modules_by_path = self.modules_by_path.pin();
-            for (index, (path, requested_module_paths)) in
-                take(&mut group.module_paths_and_resolved_requests).into_iter().enumerate()
-            {
-                if requested_module_paths.is_empty() {
-                    continue;
-                }
-                let records = modules_by_path.get(&path).unwrap();
-                assert_eq!(
-                    records.len(),
-                    requested_module_paths.len(),
-                    "This is an internal logic error. Please file an issue at https://github.com/oxc-project/oxc/issues",
-                );
-                for (record, requested_module_paths) in records.iter().zip(requested_module_paths) {
-                    {
-                        let mut loaded_modules = record.write_loaded_modules();
-                        for request in requested_module_paths {
-                            // TODO: revise how to store multiple sections in loaded_modules
-                            let Some(dep_module_record) = modules_by_path
-                                .get(&request.resolved_requested_path)
-                                .unwrap()
-                                .last()
-                            else {
-                                continue;
-                            };
-                            loaded_modules
-                                .insert(request.specifier, Arc::downgrade(dep_module_record));
-                        }
-                    }
-                    let component = cycle_components.as_ref().map(|components| components[index]);
-                    record.set_import_cycle_component(Arc::clone(&cycle_graph.valid), component);
-                }
-            }
-
-            // 3. Dispatch lint jobs; workers reuse the labels stored on each module.
+            // Dispatch lint jobs; workers reuse the labels stored on each module.
             // From a non-worker these land on rayon's FIFO injector, behind parses already queued.
             // Running them first was measured on VS Code and AFFiNE (4 cores) and did not lower peak RSS.
             for entry in take(&mut group.modules_to_lint) {
@@ -1645,9 +1641,13 @@ mod cycle_component_tests {
     use smallvec::smallvec;
 
     use super::{
-        ModuleResolvedRequests, ModulesByPath, ResolvedModuleRequest, import_cycle_components,
+        CycleGraphState, ModuleResolvedRequests, ModulesByPath, ResolvedModuleRequest, link_modules,
     };
-    use crate::module_record::{ImportEntry, ImportImportName, ModuleRecord, NameSpan};
+    use crate::{
+        module_graph_scc::ImportCycleGraph,
+        module_record::{ImportEntry, ImportImportName, ModuleRecord, NameSpan},
+        rules::import::no_cycle::NoCycle,
+    };
 
     fn record(path: &str) -> ModuleRecord {
         let mut record = ModuleRecord::default();
@@ -1688,29 +1688,49 @@ mod cycle_component_tests {
     }
 
     #[test]
-    fn file_components_follow_the_default_traversal_policy() {
+    fn file_components_follow_the_selected_traversal_policy() {
         for type_only in [false, true] {
-            let (modules, requests) = graph(type_only);
-            let components = import_cycle_components(&modules, &requests);
-            // b.ts imports the last (empty) a.vue section. Returning to that file still closes
-            // a cycle for the first section, unless its edge to b.ts is type-only.
-            assert_eq!(components[0].1, !type_only);
-            assert_eq!(components[1].1, !type_only);
-            assert_eq!(components[0].0 == components[1].0, !type_only);
-            assert!(!components[2].1); // c.ts only leads into the cycle.
-            // Dependencies in a previously finished group cannot return to this group.
-            assert_eq!(import_cycle_components(&modules, &requests[2..]), [(0, false)]);
+            let (modules, mut requests) = graph(type_only);
+            let later_group = requests.split_off(2);
+            let mut cache =
+                CycleGraphState::new(Arc::new(ImportCycleGraph::new(NoCycle::default())));
+            link_modules(&modules, requests, Some(&mut cache));
+            link_modules(&modules, later_group, Some(&mut cache));
+            let records = modules.pin();
+            let a = &records.get(OsStr::new("a.vue")).unwrap()[0];
+            let b = &records.get(OsStr::new("b.ts")).unwrap()[0];
+            let c = &records.get(OsStr::new("c.ts")).unwrap()[0];
+            let component = a.import_cycle_component().unwrap();
+            // The first a.vue section can cycle through b.ts and return to its last section.
+            assert_eq!(component.is_cyclic(), !type_only);
+            assert_eq!(b.import_cycle_component().unwrap().is_cyclic(), !type_only);
+            assert_eq!(component.excludes_module(b), type_only);
+            // Later groups reuse earlier labels and cannot close a cycle back from a.vue.
+            let component = c.import_cycle_component().unwrap();
+            assert!(!component.is_cyclic());
+            assert!(component.excludes_module(a));
         }
+
+        let (modules, requests) = graph(false);
+        link_modules(&modules, requests, None);
+        let records = modules.pin();
+        for path in ["a.vue", "b.ts", "c.ts"] {
+            assert!(records.get(OsStr::new(path)).unwrap()[0].import_cycle_component().is_none());
+        }
+        assert_eq!(records.get(OsStr::new("a.vue")).unwrap()[0].loaded_modules().len(), 1);
     }
 
     #[test]
     fn path_equivalent_aliases_invalidate_already_published_components() {
-        let mut graph = super::CycleGraphState::new();
-        graph.register_path(OsStr::new("dir/a.ts"));
+        let mut cache = CycleGraphState::new(Arc::new(ImportCycleGraph::new(NoCycle::default())));
+        assert!(cache.register_path(&Arc::from(OsStr::new("dir/a.ts"))));
         let root = record("root.ts");
-        root.set_import_cycle_component(Arc::clone(&graph.valid), Some((0, false)));
+        root.set_import_cycle_component(Arc::clone(&cache.graph), (0, false));
         assert!(root.import_cycle_component().is_some());
-        graph.register_path(OsStr::new("dir/./a.ts"));
+        assert!(!cache.register_path(&Arc::from(OsStr::new("dir/./a.ts"))));
         assert!(root.import_cycle_component().is_none());
+        let paths_before = cache.paths.len();
+        assert!(!cache.register_path(&Arc::from(OsStr::new("later.ts"))));
+        assert_eq!(cache.paths.len(), paths_before);
     }
 }
