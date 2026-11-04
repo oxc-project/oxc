@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Format, SourceText};
+use oxc_formatter_core::Format;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -13,6 +13,7 @@ use crate::{
         expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         suppressed::write_suppressed_expression,
+        tailwindcss::tailwind_collapses_template_line_breaks,
         typecast::{format_leading_comments_and_open_paren, is_cast_target},
     },
     write,
@@ -165,7 +166,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         }
                         Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
                         _ => embed_hug(expression, None, f).unwrap_or_else(|| {
-                            is_multiline_template_starting_on_same_line(expression, f.source_text())
+                            is_multiline_template_starting_on_same_line(expression, f)
                         }),
                     };
                     // A cast-wrapped body has no kind (see `is_cast_target`)
@@ -355,18 +356,23 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
 /// ```
 ///
 /// Returns `false` because the template isn't on the same line as the '+' token.
+///
+/// A template whose line breaks Tailwind sorting collapses,
+/// is printed on one line, so it returns `false` too.
 pub fn is_multiline_template_starting_on_same_line(
     expression: &Expression,
-    source_text: SourceText,
+    f: &JsFormatter<'_, '_>,
 ) -> bool {
-    let (start, template) = match expression {
-        Expression::TemplateLiteral(template) => (template.span.start, template.as_ref()),
-        Expression::TaggedTemplateExpression(tagged) => (tagged.span.start, &tagged.quasi),
+    let (template, tag) = match expression {
+        Expression::TemplateLiteral(template) => (template.as_ref(), None),
+        Expression::TaggedTemplateExpression(tagged) => (&tagged.quasi, Some(&tagged.tag)),
         _ => return false,
     };
 
+    let source_text = f.source_text();
     template.quasis.iter().any(|quasi| source_text.contains_newline(quasi.span))
-        && !source_text.has_line_terminator_before(start)
+        && !source_text.has_line_terminator_before(expression.span().start)
+        && !tailwind_collapses_template_line_breaks(tag, f)
 }
 
 struct ArrowChain<'a, 'b> {
