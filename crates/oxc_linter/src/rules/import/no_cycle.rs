@@ -226,11 +226,9 @@ impl Rule for NoCycle {
 }
 
 impl NoCycle {
+    // Cached SCCs exclude type-only edges. Avoid a full prepass for bounded searches.
     pub(crate) fn uses_scc_prefilter(&self) -> bool {
-        self.max_depth == u32::MAX
-            && self.ignore_types
-            && !self.ignore_external
-            && !self.allow_unsafe_dynamic_cyclic_dependency
+        self.max_depth == u32::MAX && self.ignore_types
     }
 
     /// Is `root` in a cycle at all? True iff some module reachable from it imports it back — one
