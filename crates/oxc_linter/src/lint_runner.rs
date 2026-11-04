@@ -26,6 +26,9 @@ pub struct LintRunner {
     /// Current working directory
     cwd: PathBuf,
     type_check_only: bool,
+    /// The regular pass writes fixed files, so type-aware linting must wait until it is done to
+    /// read them.
+    regular_pass_writes_files: bool,
 }
 
 /// Manages disable directives across all linting engines.
@@ -239,6 +242,7 @@ impl LintRunnerBuilder {
         };
 
         let cwd = self.lint_service_options.cwd().to_path_buf();
+        let regular_pass_writes_files = self.regular_linter.options().fix.is_some();
         let mut lint_service = LintService::new(self.regular_linter, self.lint_service_options);
         lint_service.set_disable_directives_map(directives_coordinator.map());
 
@@ -248,6 +252,7 @@ impl LintRunnerBuilder {
             directives_store: directives_coordinator,
             cwd,
             type_check_only: self.type_check_only,
+            regular_pass_writes_files,
         })
     }
 }
@@ -270,6 +275,13 @@ impl LintRunner {
     ) -> Result<Self, String> {
         let fs: &(dyn crate::RuntimeFileSystem + Sync + Send) = &OsFileSystem;
 
+        // Start type-aware linting first so it runs alongside the regular pass. Its diagnostics
+        // are only filtered and reported after the regular pass has collected disable directives.
+        let mut type_aware_run = None;
+        if !self.regular_pass_writes_files {
+            type_aware_run = self.type_aware_linter.take().map(|linter| linter.start(files));
+        }
+
         if self.type_check_only {
             self.lint_service.collect_parse_diagnostics(fs, files.to_owned(), &tx_error);
         } else {
@@ -282,9 +294,10 @@ impl LintRunner {
             );
         }
 
-        if let Some(type_aware_linter) = self.type_aware_linter.take() {
-            type_aware_linter.lint(
-                files,
+        let type_aware_run = type_aware_run
+            .or_else(|| self.type_aware_linter.take().map(|linter| linter.start(files)));
+        if let Some(type_aware_run) = type_aware_run {
+            type_aware_run.finish(
                 self.directives_store.map(),
                 tx_error,
                 fs,
