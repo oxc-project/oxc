@@ -467,7 +467,7 @@ fn test_fold_math_functions_abs() {
     test_value("Math.abs('')", "0");
     test_value("Math.abs(NaN)", "NaN");
     test_value("Math.abs(-0)", "0");
-    test_value("Math.abs(-Infinity)", "Infinity");
+    test_value("Math.abs(-Infinity)", "1e400");
     test_value("Math.abs([])", "0");
     test_value("Math.abs([2])", "2");
     test_value("Math.abs([1,2])", "NaN");
@@ -515,8 +515,8 @@ fn test_fold_math_functions_fround() {
     test_same_value("Math.fround(Math.random())");
 
     test_value("Math.fround(NaN)", "NaN");
-    test_value("Math.fround(Infinity)", "Infinity");
-    test_value("Math.fround(-Infinity)", "-Infinity");
+    test_value("Math.fround(Infinity)", "1e400");
+    test_value("Math.fround(-Infinity)", "-1e400");
     test_value("Math.fround(1)", "1");
     test_value("Math.fround(0)", "0");
     test_value("Math.fround(16777217)", "16777216");
@@ -596,7 +596,7 @@ fn test_fold_math_functions_clz32() {
 fn test_fold_math_functions_max() {
     test_same_value("Math.max(Math.random(), 1)");
 
-    test_value("Math.max()", "-Infinity");
+    test_value("Math.max()", "-1e400");
     test_value("Math.max(0)", "0");
     test_value("Math.max(0, 1)", "1");
     test_value("Math.max(0, 1, -1, 200)", "200");
@@ -611,11 +611,11 @@ fn test_fold_math_functions_max() {
 fn test_fold_math_functions_min() {
     test_same_value("Math.min(Math.random(), 1)");
 
-    test_value("Math.min()", "Infinity");
+    test_value("Math.min()", "1e400");
     test_value("Math.min(3)", "3");
     test_value("Math.min(0, 1)", "0");
     test_value("Math.min(0, 1, -1, 200)", "-1");
-    test_value("Math.min(0, -1, -Infinity)", "-Infinity");
+    test_value("Math.min(0, -1, -Infinity)", "-1e400");
     test_value("Math.min(0, -1, -Infinity, NaN)", "NaN");
     test_value("Math.min(0, -0)", "-0");
     test_value("Math.min(-0, 0)", "-0");
@@ -629,7 +629,7 @@ fn test_fold_math_functions_pow() {
     test_value("Math.pow(2, 2)", "4");
     test_value("Math.pow(2, 32)", "2 ** 32");
     test_value("Math.pow(Infinity, 0)", "1");
-    test_value("Math.pow(Infinity, 1)", "Infinity");
+    test_value("Math.pow(Infinity, 1)", "1e400");
     test_value("Math.pow('a', 33)", "NaN");
     test_value("Math.pow(2, 3)", "8");
     test_value("Math.pow(a, 3)", "a ** 3");
@@ -653,7 +653,7 @@ fn test_fold_math_functions_sqrt() {
     test_same_value("Math.sqrt(...a)");
     test_same_value("Math.sqrt(a)"); // a maybe -0
     test_same_value("Math.sqrt(2n)");
-    test_value("Math.sqrt(Infinity)", "Infinity");
+    test_value("Math.sqrt(Infinity)", "1e400");
     test_value("Math.sqrt(NaN)", "NaN");
     test_value("Math.sqrt(0)", "0");
     test_value("Math.sqrt(-0)", "-0");
@@ -679,9 +679,9 @@ fn test_fold_math_functions_cbrt() {
     // unlike `Math.sqrt`, `Math.cbrt` of a negative number is not NaN
     test_value("Math.cbrt(-1)", "-1");
     test_value("Math.cbrt(-8)", "-2");
-    test_value("Math.cbrt(-Infinity)", "-Infinity");
+    test_value("Math.cbrt(-Infinity)", "-1e400");
     test_value("Math.cbrt(NaN)", "NaN");
-    test_value("Math.cbrt(Infinity)", "Infinity");
+    test_value("Math.cbrt(Infinity)", "1e400");
     test_same_value("Math.cbrt(-2)");
 }
 
@@ -856,14 +856,14 @@ fn test_fold_parse_numbers_additional() {
     test_value("parseFloat('')", "NaN");
     test_value("parseFloat(' ')", "NaN");
     test_value("parseFloat('abc')", "NaN");
-    test_value("parseFloat('Infinity')", "Infinity");
-    test_value("parseFloat('-Infinity')", "-Infinity");
+    test_value("parseFloat('Infinity')", "1e400");
+    test_value("parseFloat('-Infinity')", "-1e400");
     // `TrimString` removes `WhiteSpace` and `LineTerminator`: U+FEFF is one, U+0085 is not
     test_value("parseFloat('\\u{FEFF}7')", "7");
     test_value("parseInt('\\u{FEFF}7')", "7");
     test_value("parseFloat('\\u00857')", "NaN");
     test_value("parseInt('\\u00857')", "NaN");
-    test_value("parseFloat('+Infinity')", "Infinity");
+    test_value("parseFloat('+Infinity')", "1e400");
     test_same_value("parseInt(unknown)");
     test_same_value("parseInt((foo, '0'))"); // foo may have side effects
     test_same_value("parseFloat(unknown)");
@@ -1198,8 +1198,8 @@ fn test_to_string() {
 
 #[test]
 fn test_number_constants() {
-    test("v = Number.POSITIVE_INFINITY", "v = Infinity");
-    test("v = Number.NEGATIVE_INFINITY", "v = -Infinity");
+    test("v = Number.POSITIVE_INFINITY", "v = 1e400");
+    test("v = Number.NEGATIVE_INFINITY", "v = -1e400");
     test("v = Number.NaN", "v = NaN");
     test("v = Number.MAX_SAFE_INTEGER", "v = 2**53-1");
     test("v = Number.MIN_SAFE_INTEGER", "v = -(2**53-1)");
