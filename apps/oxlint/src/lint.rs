@@ -592,9 +592,7 @@ impl CliRunner {
                 return CliRunResult::TsGoLintError;
             }
         };
-        stdout.write_all(&rendered).or_else(check_for_writer_error).unwrap();
-        stdout.flush().or_else(check_for_writer_error).unwrap();
-        drop(rendered);
+        write_and_flush_stdout(stdout, &rendered);
 
         let suppress_all_succeeded = suppression_options.suppress_all && result.is_ok();
 
@@ -751,7 +749,11 @@ impl CliRunner {
 }
 
 pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
-    stdout.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
+    write_and_flush_stdout(stdout, message.as_bytes());
+}
+
+fn write_and_flush_stdout(stdout: &mut dyn Write, bytes: &[u8]) {
+    stdout.write_all(bytes).or_else(check_for_writer_error).unwrap();
     stdout.flush().or_else(check_for_writer_error).unwrap();
 }
 
