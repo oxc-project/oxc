@@ -6,7 +6,7 @@ use crate::{
 
 use super::{
     luts::{DIGIT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, WORD_LUTS, WORD_MASK, WS_MASK},
-    punct::{PH_A, PH_B, PH_T},
+    punct::{PUNCT_HASH_HI, PUNCT_HASH_KINDS, PUNCT_HASH_LO},
 };
 
 #[cpu_version(Avx2)]
@@ -38,11 +38,11 @@ pub(super) unsafe fn classify_avx2(
     // which cost ~18 cyc per tail byte (up to ~1.1k cyc when n mod 64 is
     // near 63) and dominated small-file lexing.
     let nb_ceil = n.div_ceil(64);
-    let v_pha = Vec256::splat_v128(PH_A.read(cpu));
-    let v_phb = Vec256::splat_v128(PH_B.read(cpu));
-    let pht = PH_T.as_halves();
-    let v_pht0 = Vec256::splat_v128(pht[0].read(cpu));
-    let v_pht1 = Vec256::splat_v128(pht[1].read(cpu));
+    let v_punct_lo = Vec256::splat_v128(PUNCT_HASH_LO.read(cpu));
+    let v_punct_hi = Vec256::splat_v128(PUNCT_HASH_HI.read(cpu));
+    let punct_kinds_halves = PUNCT_HASH_KINDS.as_halves();
+    let v_punct_kinds0 = Vec256::splat_v128(punct_kinds_halves[0].read(cpu));
+    let v_punct_kinds1 = Vec256::splat_v128(punct_kinds_halves[1].read(cpu));
     let v_mlo = Vec256::splat_v128(mrg_lo.read(cpu));
     let v_mhi = Vec256::splat_v128(MERGED_LUTS.hi.read(cpu));
     let v_wblo = Vec256::splat_v128(WORD_LUTS.lo.read(cpu));
@@ -85,11 +85,11 @@ pub(super) unsafe fn classify_avx2(
         cw = wordm >> 63;
         cs = wsm >> 63;
         *st.add(b) = (wsm & !sprev) | (wordm & !wprev) | (!wsm & !wordm);
-        let k0 = vpunct1(v0, hn0, v_pha, v_phb, v_pht0, v_pht1)
+        let k0 = punct_kinds(v0, hn0, v_punct_lo, v_punct_hi, v_punct_kinds0, v_punct_kinds1)
             .blend(tk!(Whitespace), !nws0)
             .blend(tk!(Ident), w0)
             .blend(tk!(Number), d0);
-        let k1 = vpunct1(v1, hn1, v_pha, v_phb, v_pht0, v_pht1)
+        let k1 = punct_kinds(v1, hn1, v_punct_lo, v_punct_hi, v_punct_kinds0, v_punct_kinds1)
             .blend(tk!(Whitespace), !nws1)
             .blend(tk!(Ident), w1)
             .blend(tk!(Number), d1);
@@ -122,17 +122,17 @@ pub(super) unsafe fn classify_avx2(
 
 #[cpu_version(Avx2)]
 #[inline(always)]
-fn vpunct1(
+fn punct_kinds(
     v: Vec256<Avx2>,
     hn: Vec256<Avx2>,
-    pa: Vec256<Avx2>,
-    pb: Vec256<Avx2>,
-    pt0: Vec256<Avx2>,
-    pt1: Vec256<Avx2>,
+    v_punct_lo: Vec256<Avx2>,
+    v_punct_hi: Vec256<Avx2>,
+    v_punct_kinds0: Vec256<Avx2>,
+    v_punct_kinds1: Vec256<Avx2>,
 ) -> Vec256<Avx2> {
-    let h = pa.shuffle_u8s(v) ^ pb.shuffle_u8s(hn);
-    let o0 = pt0.shuffle_u8s(h);
-    let o1 = pt1.shuffle_u8s(h);
+    let h = v_punct_lo.shuffle_u8s(v) ^ v_punct_hi.shuffle_u8s(hn);
+    let o0 = v_punct_kinds0.shuffle_u8s(h);
+    let o1 = v_punct_kinds1.shuffle_u8s(h);
     let ord = o0.blend(o1, h.shl_u16::<3>());
     let ctl = v.lt_i8(0x20);
     ord.blend(tk!(Invalid), ctl)
