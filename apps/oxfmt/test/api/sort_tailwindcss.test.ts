@@ -566,6 +566,23 @@ shadow-lg\` : "font-normal"}\`} />;`;
     expect(result.errors).toStrictEqual([]);
   });
 
+  it("should measure the argument with whitespace when preserveWhitespace is true", async () => {
+    const input = `const vaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = cn("p-4                           flex");\n`;
+
+    const result = await format("test.ts", input, {
+      experimentalTailwindcss: { functions: ["cn"], preserveWhitespace: true },
+    });
+
+    // Whitespace is kept, so the argument is long and the call is broken.
+    expect(result.code).toMatchInlineSnapshot(`
+      "const vaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = cn(
+        "flex                           p-4",
+      );
+      "
+    `);
+    expect(result.errors).toStrictEqual([]);
+  });
+
   it("should not break JSX element for multiline class string that gets collapsed", async () => {
     const input = `const A = (
   <div
@@ -660,7 +677,7 @@ const B = (
     expect(result.errors).toStrictEqual([]);
   });
 
-  it("should decide layouts from the collapsed template literal and object key", async () => {
+  it("should decide layouts from collapsed Tailwind classes", async () => {
     const input = `const a = clsx(\`
   p-4 flex items-center justify-between \${active ? "bg-white" : "bg-black"} text-black hover:bg-gray-100
 \`);
@@ -671,13 +688,16 @@ const b = () => tw\`
   p-4 flex items-center justify-between bg-white text-black hover:bg-gray-100
 \`;
 const c = clsx({ "a   b": someVeryLongConditionIdentifierNameThatIsReallyQuiteLongToForceBreakingHereAndMore });
+const ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd = clsx("p-4                           flex");
+const eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee = clsx(\`p-4                           flex\`);
+const f = clsx({ kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk: foo(\`p-4                           flex\`) });
 `;
     const options = { tabWidth: 4, experimentalTailwindcss: { functions: ["clsx", "tw"] } };
 
     const result = await format("test.ts", input, options);
 
     // The line breaks are collapsed, so the template is not hugged as multiline,
-    // and the collapsed key is short.
+    // and the collapsed key and call arguments are short.
     expect(result.code).toMatchInlineSnapshot(`
       "const a = clsx(
           \`flex items-center justify-between p-4 \${active ? "bg-white" : "bg-black"} text-black hover:bg-gray-100\`,
@@ -688,6 +708,14 @@ const c = clsx({ "a   b": someVeryLongConditionIdentifierNameThatIsReallyQuiteLo
       const b = () => tw\`flex items-center justify-between bg-white p-4 text-black hover:bg-gray-100\`;
       const c = clsx({
           "a b": someVeryLongConditionIdentifierNameThatIsReallyQuiteLongToForceBreakingHereAndMore,
+      });
+      const ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd =
+          clsx("flex p-4");
+      const eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee =
+          clsx(\`flex p-4\`);
+      const f = clsx({
+          kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk:
+              foo(\`flex p-4\`),
       });
       "
     `);
