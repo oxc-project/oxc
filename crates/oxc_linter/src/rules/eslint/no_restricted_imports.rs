@@ -1111,12 +1111,17 @@ impl NoRestrictedImports {
 
         let import_statement_spans: FxHashSet<Span> =
             module_record.import_entries.iter().map(|entry| entry.statement_span).collect();
-        let mut side_effect_import_map: FxHashMap<&CompactStr, Vec<Span>> = FxHashMap::default();
+        // `(statement span, is `import type`)` for every import statement without bindings.
+        let mut side_effect_import_map: FxHashMap<&CompactStr, Vec<(Span, bool)>> =
+            FxHashMap::default();
 
         for (source, requests) in &module_record.requested_modules {
             for request in requests {
                 if request.is_import && !import_statement_spans.contains(&request.statement_span) {
-                    side_effect_import_map.entry(source).or_default().push(request.statement_span);
+                    side_effect_import_map
+                        .entry(source)
+                        .or_default()
+                        .push((request.statement_span, request.is_type));
                 }
             }
         }
@@ -1128,7 +1133,10 @@ impl NoRestrictedImports {
                         !spans.is_empty(),
                         "all import entries must have at least one import entry"
                     );
-                    if let Some(span) = spans.first() {
+                    let allow_type_imports = path.allow_type_imports.is_some_and(|x| x);
+                    if let Some((span, _)) =
+                        spans.iter().find(|(_, is_type)| !(*is_type && allow_type_imports))
+                    {
                         ctx.diagnostic(diagnostic_path(*span, path.message.clone(), source));
                     }
                 }
@@ -1139,6 +1147,13 @@ impl NoRestrictedImports {
             let mut whitelist_found = false;
             let mut err = None;
             for pattern in &self.patterns {
+                // `import type {} from '…'` is still a type import.
+                let allow_type_imports = pattern.allow_type_imports.is_some_and(|x| x);
+                let Some((span, _)) =
+                    spans.iter().find(|(_, is_type)| !(*is_type && allow_type_imports))
+                else {
+                    continue;
+                };
                 match pattern.get_group_glob_result(source) {
                     GlobResult::Whitelist => {
                         whitelist_found = true;
@@ -1146,7 +1161,7 @@ impl NoRestrictedImports {
                     }
                     GlobResult::Found => {
                         err = Some(get_diagnostic_from_import_name_result_pattern(
-                            spans[0],
+                            *span,
                             source,
                             &ImportNameViolation::General,
                             pattern,
@@ -1157,7 +1172,7 @@ impl NoRestrictedImports {
 
                 if pattern.get_regex_result(source) && !pattern.is_side_effect_import_allowed() {
                     ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
-                        spans[0],
+                        *span,
                         source,
                         &ImportNameViolation::General,
                         pattern,
@@ -2071,6 +2086,19 @@ fn test() {
     ];
 
     let pass_typescript = vec![
+        // https://github.com/oxc-project/oxc/issues/28780
+        (
+            "import type {} from '@mui/x-data-grid-pro/themeAugmentation';",
+            Some(serde_json::json!([{
+                "patterns": [{ "group": ["@mui/*/*"], "allowTypeImports": true }],
+            }])),
+        ),
+        (
+            "import type {} from 'import-foo';",
+            Some(serde_json::json!([{
+                "paths": [{ "name": "import-foo", "allowTypeImports": true }],
+            }])),
+        ),
         ("import foo from 'foo';", None),
         ("import foo = require('foo');", None),
         ("import 'foo';", None),
@@ -3359,6 +3387,18 @@ fn test() {
     ];
 
     let fail_typescript = vec![
+        (
+            "import {} from '@mui/x-data-grid-pro/themeAugmentation';",
+            Some(serde_json::json!([{
+                "patterns": [{ "group": ["@mui/*/*"], "allowTypeImports": true }],
+            }])),
+        ),
+        (
+            "import {} from 'import-foo';",
+            Some(serde_json::json!([{
+                "paths": [{ "name": "import-foo", "allowTypeImports": true }],
+            }])),
+        ),
         ("import foo from 'import1';", Some(serde_json::json!(["import1", "import2"]))),
         ("import foo = require('import1');", Some(serde_json::json!(["import1", "import2"]))),
         ("export { foo } from 'import1';", Some(serde_json::json!(["import1", "import2"]))),

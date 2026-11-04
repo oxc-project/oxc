@@ -862,6 +862,18 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────
    ╰────
 
+  ⚠ eslint(no-restricted-imports): '@mui/x-data-grid-pro/themeAugmentation' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import {} from '@mui/x-data-grid-pro/themeAugmentation';
+   · ────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'import-foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import {} from 'import-foo';
+   · ────────────────────────────
+   ╰────
+
   ⚠ eslint(no-restricted-imports): 'import1' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import foo from 'import1';
