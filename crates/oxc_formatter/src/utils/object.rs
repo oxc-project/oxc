@@ -60,17 +60,9 @@ pub fn write_member_name<'a>(
         if let Some(ctx) = tailwind_context_for_string_literal(string, f) {
             // Reuse the existing Tailwind string literal writer
             string.format_leading_comments(f);
-            write_tailwind_string_literal(string, ctx, f);
+            let width = write_tailwind_string_literal(string, ctx, f);
             string.format_trailing_comments(f);
-
-            // Compute the normalized width based on the same cleaned string token
-            FormatLiteralStringToken::new(
-                f.source_text().text_for(string),
-                false,
-                StringLiteralParentKind::Member,
-            )
-            .clean_text(f)
-            .width()
+            width
         } else {
             let format = FormatLiteralStringToken::new(
                 f.source_text().text_for(string),

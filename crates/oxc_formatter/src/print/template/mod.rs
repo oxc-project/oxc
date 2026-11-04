@@ -23,7 +23,7 @@ use crate::{
         call_expression::is_test_each_pattern,
         expression::is_member_expression_without_chain_wrappers,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        tailwindcss::{is_tailwind_function_call, write_tailwind_template_element},
+        tailwindcss::{tailwind_context_for_callee, write_tailwind_template_element},
     },
     write,
 };
@@ -86,13 +86,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TaggedTemplateExpression<'a>> {
         write!(f, [line_suffix_boundary()]);
 
         // Check if this is a Tailwind function call (e.g., tw`flex p-4`)
-        // Extract context entry before mutating f
-        let tailwind_ctx_to_push = f
-            .options()
-            .sort_tailwindcss
-            .as_ref()
-            .filter(|opts| is_tailwind_function_call(&self.tag, opts))
-            .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace));
+        let tailwind_ctx_to_push = tailwind_context_for_callee(&self.tag, f);
 
         if let Some(ctx) = tailwind_ctx_to_push {
             f.context_mut().push_tailwind_context(ctx);
