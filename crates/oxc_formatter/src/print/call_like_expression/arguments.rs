@@ -29,8 +29,13 @@ use crate::{
     source_text::line_breaks,
     utils::{
         call_expression::is_test_call_expression,
-        expression::as_call_expression_without_chain_wrappers, is_long_curried_call,
-        member_chain::simple_argument::SimpleArgument, tailwindcss::tailwind_context_for_callee,
+        expression::as_call_expression_without_chain_wrappers,
+        is_long_curried_call,
+        member_chain::simple_argument::SimpleArgument,
+        tailwindcss::{
+            tailwind_call_collapses_whitespace, tailwind_collapses_template_line_breaks,
+            tailwind_context_for_callee,
+        },
         typecast::is_cast_target,
     },
     write,
@@ -379,7 +384,7 @@ fn should_group_first_argument(
         return false;
     }
 
-    is_relatively_short_argument(second)
+    is_relatively_short_argument(second, f)
 }
 
 /// Core logic for checking if the last argument should be grouped.
@@ -535,32 +540,31 @@ fn is_simple_ts_type(ty: &TSType<'_>) -> bool {
 
 /// Checks if `argument` is "short" enough to be groupable. This aims to be
 /// logically similar to Prettier's [`isHopefullyShortCallArgument`](https://github.com/prettier/prettier/blob/093745f0ec429d3db47c1edd823357e0ef24e226/src/language-js/print/call-arguments.js#L279),
-fn is_relatively_short_argument(argument: &Expression<'_>) -> bool {
+fn is_relatively_short_argument(argument: &Expression<'_>, f: &JsFormatter<'_, '_>) -> bool {
+    // Read while printing the arguments, so in their Tailwind context
+    let collapses = tailwind_collapses_template_line_breaks(None, f);
+    let is_simple = |expression, depth| {
+        SimpleArgument::from(expression).is_simple_with_depth(depth, collapses, f)
+    };
     match argument {
         Expression::BinaryExpression(binary) => {
-            SimpleArgument::from(&binary.left).is_simple_with_depth(1)
-                && SimpleArgument::from(&binary.right).is_simple_with_depth(1)
+            is_simple(&binary.left, 1) && is_simple(&binary.right, 1)
         }
         Expression::LogicalExpression(logical) => {
-            SimpleArgument::from(&logical.left).is_simple_with_depth(1)
-                && SimpleArgument::from(&logical.right).is_simple_with_depth(1)
+            is_simple(&logical.left, 1) && is_simple(&logical.right, 1)
         }
         Expression::TSAsExpression(expr) => {
-            is_simple_ts_type(&expr.type_annotation)
-                && SimpleArgument::from(&expr.expression).is_simple_with_depth(1)
+            is_simple_ts_type(&expr.type_annotation) && is_simple(&expr.expression, 1)
         }
         Expression::TSSatisfiesExpression(expr) => {
-            is_simple_ts_type(&expr.type_annotation)
-                && SimpleArgument::from(&expr.expression).is_simple_with_depth(1)
+            is_simple_ts_type(&expr.type_annotation) && is_simple(&expr.expression, 1)
         }
         Expression::RegExpLiteral(_) => true,
-        Expression::CallExpression(call) => {
-            call.arguments.len() <= 1 && SimpleArgument::from(argument).is_simple()
-        }
+        Expression::CallExpression(call) => call.arguments.len() <= 1 && is_simple(argument, 0),
         Expression::NewExpression(new_expr) => {
-            new_expr.arguments.len() <= 1 && SimpleArgument::from(argument).is_simple()
+            new_expr.arguments.len() <= 1 && is_simple(argument, 0)
         }
-        _ => SimpleArgument::from(argument).is_simple(),
+        _ => is_simple(argument, 0),
     }
 }
 
@@ -1043,6 +1047,8 @@ fn is_commonjs_or_amd_call(
 
 /// Returns `true` for a sole template argument printed verbatim (not embedded)
 /// that [starts on the same line and spans lines](is_multiline_template_starting_on_same_line).
+/// - Never for a Tailwind `call` collapsing it, checked by the callee
+///   since `CallExpression` reads this before its arguments push the context
 pub fn is_verbatim_multiline_template_sole_arg(
     arguments: &[Argument],
     call: Option<&CallExpression>,
@@ -1051,7 +1057,7 @@ pub fn is_verbatim_multiline_template_sole_arg(
     matches!(arguments, [argument] if argument.as_expression().is_some_and(|expr| {
         embed_hug(expr, call, f).is_none()
             && is_multiline_template_starting_on_same_line(expr, f)
-    }))
+    })) && !call.is_some_and(|call| tailwind_call_collapses_whitespace(&call.callee, f))
 }
 
 /// This function is used to check if the code is a hook-like code:

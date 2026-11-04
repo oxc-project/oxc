@@ -255,6 +255,62 @@ const d = cn(x.y("a  b"), cn.x("p-4  flex"));
     expect(second.code).toBe(result.code);
   });
 
+  it("should decide call layouts from multiline templates collapsed by sorting", async () => {
+    const input = `const a = foo.bar(cn(\`
+  p-4 flex
+\`)).baz().qux();
+const b = cn.a(x).b(y).c(z).d(\`
+  p-4 flex
+\`);
+const c = cn.aaaaaaaa(xxxxxxxx).bbbbbbbbb(yyyyyyy).ccccccccc(zzzzzzz).ddddddddddd(eeeeeee).fffff(\`
+  p-4 flex
+\`);
+const d = cn(() => { a(); }, \`
+  p-4 flex
+\`);
+const e = cn.a(new Foo(\`
+  p-4 flex
+\`)).b().c();
+const f = cn.a(foo(\`
+  x  y
+\`)).b().c();
+`;
+    const options = { experimentalTailwindcss: { functions: ["cn"] } };
+
+    const result = await format("test.ts", input, options);
+
+    // Like a template written on one line, also under \`new\` (\`e\`),
+    // except in a nested non-Tailwind call (\`f\`), which keeps it
+    expect(result.code).toMatchInlineSnapshot(`
+      "const a = foo.bar(cn(\`flex p-4\`)).baz().qux();
+      const b = cn.a(x).b(y).c(z).d(\`flex p-4\`);
+      const c = cn
+        .aaaaaaaa(xxxxxxxx)
+        .bbbbbbbbb(yyyyyyy)
+        .ccccccccc(zzzzzzz)
+        .ddddddddddd(eeeeeee)
+        .fffff(\`flex p-4\`);
+      const d = cn(() => {
+        a();
+      }, \`flex p-4\`);
+      const e = cn.a(new Foo(\`flex p-4\`)).b().c();
+      const f = cn
+        .a(
+          foo(\`
+        x  y
+      \`),
+        )
+        .b()
+        .c();
+      "
+    `);
+    expect(result.errors).toStrictEqual([]);
+
+    // Formatting the output again should not change it.
+    const second = await format("test.ts", result.code, options);
+    expect(second.code).toBe(result.code);
+  });
+
   it("should preserve whitespace when preserveWhitespace is true", async () => {
     // Input with leading/trailing whitespace in class string
     const input = `const A = <div className="  p-4 flex  ">Hello</div>;`;

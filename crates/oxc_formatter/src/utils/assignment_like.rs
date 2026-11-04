@@ -21,7 +21,7 @@ use crate::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
-        tailwindcss::{collapsed_class_list_width, tailwind_context_for_callee},
+        tailwindcss::{collapsed_class_list_width, tailwind_call_collapses_whitespace},
         typecast::is_cast_target,
     },
     write,
@@ -1248,9 +1248,7 @@ fn is_short_argument(
     callee: &Expression,
     f: &JsFormatter,
 ) -> bool {
-    // Decided by `callee` alone: a Tailwind one pushes its context, a non-Tailwind one hides an outer one
-    let collapses_tailwind_whitespace =
-        || tailwind_context_for_callee(callee, f).is_some_and(|ctx| !ctx.preserve_whitespace);
+    let collapses_tailwind_whitespace = || tailwind_call_collapses_whitespace(callee, f);
 
     match argument {
         Expression::Identifier(identifier) => identifier.name.width() <= threshold as usize,

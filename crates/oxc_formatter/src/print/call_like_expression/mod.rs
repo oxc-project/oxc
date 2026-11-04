@@ -33,9 +33,6 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, CallExpression<'a>> {
             f.context_mut().hide_tailwind_context();
         }
 
-        // NOTE: Read before the arguments push the Tailwind context,
-        // so a Tailwind call with a multiline template it collapses stays out of `MemberChain`,
-        // which would break the chain on the template's line breaks in the source
         if callee.is_member_expression()
             && !is_verbatim_multiline_template_sole_arg(arguments.as_slice(), Some(self), f)
             && !is_simple_module_import(&self.arguments(), f.comments())

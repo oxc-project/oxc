@@ -23,6 +23,7 @@ use crate::{
             groups::{ChainMembers, MemberChainGroup, MemberChainGroupsBuilder, TailChainGroups},
             simple_argument::SimpleArgument,
         },
+        tailwindcss::tailwind_call_collapses_whitespace,
     },
     write,
 };
@@ -147,7 +148,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
                     has_function_like_argument || has_arrow_or_function_expression_arg(call);
             }
 
-            has_complex_args = has_complex_args || !has_simple_arguments(call);
+            has_complex_args = has_complex_args || !has_simple_arguments(call, f);
 
             if calls_count > 2 && has_complex_args {
                 return true;
@@ -376,8 +377,15 @@ fn has_arrow_or_function_expression_arg(call: &AstNode<'_, '_, CallExpression<'_
     })
 }
 
-fn has_simple_arguments<'a>(call: &AstNode<'_, 'a, CallExpression<'a>>) -> bool {
-    call.arguments().iter().all(|argument| SimpleArgument::new(&argument).is_simple())
+fn has_simple_arguments<'a>(
+    call: &AstNode<'_, 'a, CallExpression<'a>>,
+    f: &JsFormatter<'_, 'a>,
+) -> bool {
+    // Read before the call pushes its Tailwind context
+    let tailwind_collapses = tailwind_call_collapses_whitespace(&call.callee, f);
+    call.arguments()
+        .iter()
+        .all(|argument| SimpleArgument::new(&argument).is_simple(tailwind_collapses, f))
 }
 
 /// In order to detect those cases, we use an heuristic: if the first

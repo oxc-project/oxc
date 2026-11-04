@@ -106,6 +106,16 @@ pub fn tailwind_context_for_callee(
         .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace))
 }
 
+/// Whether the classes in the arguments of a call to `callee` have their whitespace (line breaks included) collapsed.
+/// - Decided by `callee` alone: a Tailwind one pushes its context, a non-Tailwind one hides an outer one
+/// - For layout decisions read before the call pushes it
+pub fn tailwind_call_collapses_whitespace(
+    callee: &Expression<'_>,
+    f: &JsFormatter<'_, '_>,
+) -> bool {
+    tailwind_context_for_callee(callee, f).is_some_and(|ctx| !ctx.preserve_whitespace)
+}
+
 /// Checks if a callee expression is a Tailwind function.
 ///
 /// Traverses through `CallExpression` and `MemberExpression` nodes to find the
