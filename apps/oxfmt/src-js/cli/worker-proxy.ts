@@ -32,8 +32,13 @@ async function getPool(): Promise<Tinypool> {
   // older versions deadlock when a worker loads the addon during `block_on`. (napi-rs/napi-rs#3670)
   pool ??= new Tinypool({
     filename: new URL("./cli-worker.js", import.meta.url).href,
-    minThreads: poolSize,
+    // Spawn workers on demand: each one loads its own copy of Prettier,
+    // and most runs delegate only a few files to Prettier.
+    minThreads: 1,
     maxThreads: poolSize,
+    // Keep spawned workers. The default (0) removes idle workers above `minThreads`.
+    // `setTimeout` accepts at most 2^31 - 1 ms; `Infinity` would fire after 1 ms.
+    idleTimeout: 2 ** 31 - 1,
   });
   return pool;
 }
