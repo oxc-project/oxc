@@ -22,8 +22,8 @@ export async function initExternalServices(numThreads: number): Promise<void> {
 }
 
 // Create the pool lazily on first use,
-// so runs that never delegate to Prettier spawn no workers at all.
-// (e.g. Rust-tier files only)
+// so runs that never send a task to the pool spawn no workers at all.
+// (e.g. Rust-tier files only, without Tailwind sorting)
 async function getPool(): Promise<Tinypool> {
   // Rust always calls `initExternalServices` before formatting, so this is defensive.
   if (poolSize === null) throw new Error("External services are not initialized");
@@ -32,12 +32,14 @@ async function getPool(): Promise<Tinypool> {
   // older versions deadlock when a worker loads the addon during `block_on`. (napi-rs/napi-rs#3670)
   pool ??= new Tinypool({
     filename: new URL("./cli-worker.js", import.meta.url).href,
-    // Spawn workers on demand: each one loads its own copy of Prettier,
-    // and most runs delegate only a few files to Prettier.
+    // Spawn workers on demand up to `poolSize`, and keep them alive for later tasks.
+    // - Each worker loads its own copy of JS deps (e.g. Prettier, Tailwind sorter),
+    //   and many runs send only a few tasks to the pool
+    // - The default `idleTimeout: 0` removes idle workers above `minThreads` right away
+    // - Unlike Piscina, Tinypool does not special-case `Infinity` and passes it to `setTimeout` as is,
+    //   where Node.js replaces it with 1 ms, so use the max delay `setTimeout` accepts instead
     minThreads: 1,
     maxThreads: poolSize,
-    // Keep spawned workers. The default (0) removes idle workers above `minThreads`.
-    // `setTimeout` accepts at most 2^31 - 1 ms; `Infinity` would fire after 1 ms.
     idleTimeout: 2 ** 31 - 1,
   });
   return pool;
