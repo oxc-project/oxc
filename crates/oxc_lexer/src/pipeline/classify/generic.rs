@@ -11,7 +11,7 @@ use crate::pipeline::{
     operators::is_op_char,
 };
 
-use super::punct1::PUNCT1;
+use super::punct::PUNCT1;
 
 const FL_WORD: u32 = 0;
 const FL_WS: u32 = 1;

@@ -1,4 +1,6 @@
-//! Lookup tables which map single-byte punctuators to their `TokenKind`, using a perfect hash.
+//! Details of single-byte punctuators, and lookup tables which map them to their `TokenKind`s.
+//!
+//! The lookup tables (`PH_A`, `PH_B` and `PH_T`) use a perfect hash.
 //!
 //! `vpunct1` does the lookup for 32 bytes at once, with 4 `vpshufb`s. For a byte `c`:
 //!
@@ -10,8 +12,8 @@
 //!
 //! The hash is perfect for the bytes which matter:
 //!
-//! * Each punctuator in `PUNCT1` lands in a slot holding its kind.
-//! * Every other byte in 0x20 - 0x7F lands in a slot holding `Invalid` (255),
+//! - Each punctuator in `PUNCT1` lands in a slot holding its kind.
+//! - Every other byte in 0x20 - 0x7F lands in a slot holding `Invalid` (255),
 //!   except identifier chars and whitespace. They can land anywhere,
 //!   because the SIMD implementations of `classify` overwrite their kind afterwards.
 //!
@@ -20,7 +22,59 @@
 //! `test_punct1_hash` checks the tables against `PUNCT1`.
 //! Nothing generates them, so a change to `PUNCT1` needs new values found for them.
 
-use crate::simd::{VecData128, VecData256};
+use crate::{
+    simd::{VecData128, VecData256},
+    token::TokenKind,
+};
+
+/// Single-byte punctuator and its [`TokenKind`].
+///
+/// Only exists at build time and in tests, not referenced from any runtime code.
+pub(super) struct Punct1 {
+    pub byte: u8,
+    pub kind: TokenKind,
+}
+
+impl Punct1 {
+    const fn new(c: char, kind: TokenKind) -> Self {
+        assert!(c.is_ascii());
+        Self { byte: c as u8, kind }
+    }
+}
+
+/// Single-byte punctuators and their [`TokenKind`]s.
+/// `#` maps to `Invalid` - a bare `#` is invalid on its own
+/// (private names and hashbangs are resolved earlier).
+///
+/// Does not exist at runtime - used only at compile time and in tests.
+pub(super) const PUNCT1: [Punct1; 26] = [
+    Punct1::new('(', TokenKind::LParen),
+    Punct1::new(')', TokenKind::RParen),
+    Punct1::new('[', TokenKind::LBracket),
+    Punct1::new(']', TokenKind::RBracket),
+    Punct1::new('{', TokenKind::LBrace),
+    Punct1::new('}', TokenKind::RBrace),
+    Punct1::new(';', TokenKind::Semi),
+    Punct1::new(',', TokenKind::Comma),
+    Punct1::new('.', TokenKind::Dot),
+    Punct1::new('<', TokenKind::Lt),
+    Punct1::new('>', TokenKind::Gt),
+    Punct1::new('+', TokenKind::Plus),
+    Punct1::new('-', TokenKind::Minus),
+    Punct1::new('*', TokenKind::Star),
+    Punct1::new('/', TokenKind::Slash),
+    Punct1::new('%', TokenKind::Percent),
+    Punct1::new('&', TokenKind::Amp),
+    Punct1::new('|', TokenKind::Pipe),
+    Punct1::new('^', TokenKind::Caret),
+    Punct1::new('!', TokenKind::Bang),
+    Punct1::new('~', TokenKind::Tilde),
+    Punct1::new('?', TokenKind::Question),
+    Punct1::new(':', TokenKind::Colon),
+    Punct1::new('=', TokenKind::Eq),
+    Punct1::new('@', TokenKind::At),
+    Punct1::new('#', TokenKind::Invalid),
+];
 
 pub(super) const PH_A: VecData128 =
     VecData128::from_bytes([4, 13, 19, 20, 0, 14, 7, 8, 10, 26, 22, 0, 29, 23, 3, 2]);
@@ -36,10 +90,7 @@ pub(super) const PH_T: VecData256 = VecData256::from_bytes([
 mod tests {
     use crate::{cpu::BASELINE, token::tk};
 
-    use crate::pipeline::{
-        bytes::{is_word, is_ws},
-        classify::punct1::PUNCT1,
-    };
+    use crate::pipeline::bytes::{is_word, is_ws};
 
     use super::*;
 

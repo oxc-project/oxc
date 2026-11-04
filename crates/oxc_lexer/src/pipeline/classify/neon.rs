@@ -8,7 +8,7 @@ use super::{
     luts::{
         DIGIT_MASK, DOT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, WORD_LUTS, WORD_MASK, WS_MASK,
     },
-    punct1_luts::{PH_A, PH_B, PH_T},
+    punct::{PH_A, PH_B, PH_T},
 };
 
 struct Luts {

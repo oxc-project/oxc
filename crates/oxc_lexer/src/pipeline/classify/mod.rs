@@ -4,8 +4,7 @@ mod avx2;
 mod generic;
 mod luts;
 mod neon;
-mod punct1;
-mod punct1_luts;
+mod punct;
 
 use avx2::classify_avx2;
 use generic::classify_generic;
