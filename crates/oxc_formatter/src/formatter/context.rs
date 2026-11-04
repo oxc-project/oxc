@@ -31,11 +31,6 @@ pub struct TailwindContextEntry {
     /// Whether this is the last quasi in a template literal.
     /// Used for template element boundary detection.
     pub is_last_quasi: bool,
-    /// Whether Tailwind sorting is disabled in this context.
-    /// Used to prevent sorting strings inside nested non-Tailwind call expressions.
-    /// For example, in `classNames("a", x.includes("\n") ? "b" : "c")`, the `"\n"`
-    /// inside `includes()` should NOT be sorted as a Tailwind class.
-    pub disabled: bool,
 }
 
 impl TailwindContextEntry {
@@ -48,7 +43,6 @@ impl TailwindContextEntry {
             quasi_after_has_leading_ws: true,   // Default: can collapse
             is_first_quasi: true,
             is_last_quasi: true,
-            disabled: false,
         }
     }
 
@@ -66,7 +60,6 @@ impl TailwindContextEntry {
             quasi_after_has_leading_ws,
             is_first_quasi: true,
             is_last_quasi: true,
-            disabled: false,
         }
     }
 
@@ -100,9 +93,9 @@ pub struct JsFormatContext<'ast> {
     /// structures (e.g., `{ a: { "b-c": 1 } }` where only the inner object needs quoted keys).
     quote_needed_stack: Vec<bool>,
 
-    /// Stack tracking whether we're inside a Tailwind class context.
-    /// When non-empty, StringLiterals should be sorted as Tailwind classes.
-    tailwind_context_stack: Vec<TailwindContextEntry>,
+    /// Stack tracking whether we're inside a Tailwind class context, read by [`Self::tailwind_context`].
+    /// - `None` hides the context below it, inside a nested non-Tailwind call
+    tailwind_context_stack: Vec<Option<TailwindContextEntry>>,
 
     /// Set only for an embedded program (see [`crate::format_to_ir`]):
     /// its sole statement prints without its semicolon.
@@ -268,7 +261,13 @@ impl<'ast> JsFormatContext<'ast> {
     /// Push a Tailwind context entry onto the stack.
     /// Call this when entering a JSXAttribute or CallExpression with Tailwind class context.
     pub fn push_tailwind_context(&mut self, entry: TailwindContextEntry) {
-        self.tailwind_context_stack.push(entry);
+        self.tailwind_context_stack.push(Some(entry));
+    }
+
+    /// Hide the current Tailwind context until the matching [`Self::pop_tailwind_context`].
+    /// Call this when entering a nested non-Tailwind CallExpression.
+    pub fn hide_tailwind_context(&mut self) {
+        self.tailwind_context_stack.push(None);
     }
 
     /// Pop a Tailwind context entry from the stack.
@@ -278,13 +277,9 @@ impl<'ast> JsFormatContext<'ast> {
     }
 
     /// Get the current Tailwind context, if any.
-    /// Returns `Some` if we're inside a Tailwind class context (JSXAttribute or CallExpression).
+    /// Returns `Some` if we're inside a Tailwind class context (JSXAttribute or CallExpression),
+    /// and not inside a nested non-Tailwind call (see [`Self::hide_tailwind_context`]).
     pub fn tailwind_context(&self) -> Option<&TailwindContextEntry> {
-        self.tailwind_context_stack.last()
-    }
-
-    /// Get a mutable reference to the current Tailwind context, if any.
-    pub fn tailwind_context_mut(&mut self) -> Option<&mut TailwindContextEntry> {
-        self.tailwind_context_stack.last_mut()
+        self.tailwind_context_stack.last().and_then(Option::as_ref)
     }
 }
