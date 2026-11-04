@@ -50,7 +50,7 @@ pub fn tailwind_context_for_string_literal<'a>(
 /// Returns `true` for:
 /// - `class` and `className` (default attributes)
 /// - Custom attributes specified in `attributes` option
-pub fn is_tailwind_jsx_attribute(
+fn is_tailwind_jsx_attribute(
     attr_name: &JSXAttributeName<'_>,
     options: &SortTailwindcssOptions,
 ) -> bool {
@@ -66,6 +66,20 @@ pub fn is_tailwind_jsx_attribute(
 
     // Custom attributes from options
     options.attributes.iter().any(|a| a == name)
+}
+
+/// Returns the Tailwind context to push while printing the value of the JSX attribute `attr_name`.
+///
+/// Also read by the opening element layout, which must agree with the print on whether the value is collapsed.
+pub fn tailwind_context_for_jsx_attribute(
+    attr_name: &JSXAttributeName<'_>,
+    f: &JsFormatter<'_, '_>,
+) -> Option<TailwindContextEntry> {
+    f.options()
+        .sort_tailwindcss
+        .as_ref()
+        .filter(|opts| is_tailwind_jsx_attribute(attr_name, opts))
+        .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace))
 }
 
 /// Checks if a callee expression is a Tailwind function.

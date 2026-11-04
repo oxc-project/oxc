@@ -4,7 +4,8 @@ use oxc_ast::ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement};
 use oxc_span::GetSpan;
 
 use crate::{
-    ast_nodes::AstNode, formatter::prelude::*, utils::tailwindcss::is_tailwind_jsx_attribute, write,
+    ast_nodes::AstNode, formatter::prelude::*,
+    utils::tailwindcss::tailwind_context_for_jsx_attribute, write,
 };
 
 pub struct FormatOpeningElement<'a, 'b> {
@@ -56,13 +57,10 @@ impl<'a, 'b> FormatOpeningElement<'a, 'b> {
     }
 }
 
-/// Returns whether the printed string literal value of this attribute contains a line break,
-/// or `None` if the attribute's initializer isn't a [`StringLiteral`](oxc_ast::ast::StringLiteral).
-///
-/// When Tailwind CSS class sorting applies to the attribute and `preserveWhitespace` is off,
-/// all whitespace in the value (including line breaks) is collapsed into single spaces when printed.
-/// Deciding the layout from the source value would then break the element as if the value were
-/// still multiline, and the next format run would join it back, so formatting wouldn't be idempotent.
+/// Whether this attribute's string literal value is printed with a line break,
+/// or `None` if the value isn't a string literal.
+/// - Tailwind sorting without `preserveWhitespace` collapses line breaks,
+///   so checking the source value alone would make formatting non-idempotent
 fn string_literal_attribute_has_line_break(
     attribute: &JSXAttributeItem<'_>,
     f: &JsFormatter<'_, '_>,
@@ -78,9 +76,8 @@ fn string_literal_attribute_has_line_break(
         return Some(false);
     }
 
-    let collapses_whitespace = f.options().sort_tailwindcss.as_ref().is_some_and(|opts| {
-        !opts.preserve_whitespace && is_tailwind_jsx_attribute(&attr.name, opts)
-    });
+    let collapses_whitespace = tailwind_context_for_jsx_attribute(&attr.name, f)
+        .is_some_and(|ctx| !ctx.preserve_whitespace);
     Some(!collapses_whitespace)
 }
 
