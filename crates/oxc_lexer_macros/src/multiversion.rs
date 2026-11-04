@@ -80,7 +80,7 @@ impl Multiversion<'_> {
     ///     #[allow(unreachable_code)]
     ///     #[inline(never)]
     ///     unsafe fn __neon<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Neon) -> bool {
-    ///         #[cfg(not(target_arch = "aarch64"))]
+    ///         #[cfg(not(all(target_arch = "aarch64", target_feature = "neon")))]
     ///         unreachable!();
     ///         __impl::<N, T>(arr, cpu)
     ///     }
@@ -161,7 +161,7 @@ impl Multiversion<'_> {
     /// #[allow(unreachable_code)]
     /// #[inline(never)]
     /// unsafe fn __foo_neon<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: crate::cpu::Neon) -> bool {
-    ///     #[cfg(not(target_arch = "aarch64"))]
+    ///     #[cfg(not(all(target_arch = "aarch64", target_feature = "neon")))]
     ///     unreachable!();
     ///     Self::__foo_impl::<N, T>(self, arr, cpu)
     /// }
@@ -257,9 +257,13 @@ impl Multiversion<'_> {
     ///
     /// On platforms where the feature set's type is uninhabited, it starts with `unreachable!()`,
     /// before calling `__impl`. It can never be called there. See the docs on `cpu_multiversion`
-    /// for why. That's `__avx2` on platforms other than x86_64, `__neon` on platforms other than
-    /// aarch64, and `__generic` where a SIMD feature set is enabled at compile time
-    /// (Neon on aarch64, or AVX2, BMI2 and POPCNT on x86_64).
+    /// for why. That's:
+    ///
+    /// - `__avx2` on platforms other than x86_64
+    /// - `__neon` on platforms other than aarch64
+    /// - `__neon` on aarch64 with Neon disabled at compile time
+    /// - `__generic` where a SIMD feature set is enabled at compile time
+    ///   (Neon on aarch64, or AVX2, BMI2 and POPCNT on x86_64)
     ///
     /// ```ignore
     /// #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
