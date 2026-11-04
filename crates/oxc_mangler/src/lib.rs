@@ -6,15 +6,12 @@ use std::{
 use itertools::Itertools;
 use keep_names::collect_name_symbols;
 use oxc_index::IndexVec;
-use oxc_syntax::{class::ClassId, scope::ScopeId, symbol::SymbolFlags};
+use oxc_syntax::class::ClassId;
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 pub use base54::base54;
 use oxc_allocator::{Allocator, ArenaVec, BitSet};
-use oxc_ast::{
-    AstKind,
-    ast::{Declaration, Program, Statement},
-};
+use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, Stats, SymbolId};
@@ -509,9 +506,8 @@ struct SlotAssignment<'a> {
     /// other symbols.
     slots: ArenaVec<'a, Slot>,
     total_slots: usize,
-    /// Names of bindings in direct-`eval` scopes, and of Annex B block functions that keep their
-    /// names — nothing may shadow them.
-    reserved_names: ArenaIdentHashSet<'a>,
+    /// Names of bindings in direct-`eval` scopes — they keep their names, nothing may shadow them.
+    eval_reserved_names: ArenaIdentHashSet<'a>,
 }
 
 /// Phase 3 output — slots ranked by reference count, hottest first.
@@ -573,17 +569,8 @@ impl<'a> Constraints<'a> {
     /// rename set.
     #[inline]
     fn is_mangle_candidate(&self, symbol_id: SymbolId, scoping: &Scoping) -> bool {
-        self.is_mangle_candidate_in(symbol_id, scoping.symbol_scope_id(symbol_id), scoping)
-    }
+        let scope_id = scoping.symbol_scope_id(symbol_id);
 
-    /// Whether `symbol_id` will receive a mangled name if it is bound in `scope_id`.
-    #[inline]
-    fn is_mangle_candidate_in(
-        &self,
-        symbol_id: SymbolId,
-        scope_id: ScopeId,
-        scoping: &Scoping,
-    ) -> bool {
         !(scope_id == scoping.root_scope_id()
             && (!self.top_level
                 || self.exported_symbols.as_ref().is_some_and(|e| e.has_bit(symbol_id.index())))
@@ -601,19 +588,16 @@ impl<'a> SlotAssignment<'a> {
     /// each scope's bindings take the slots that aren't live in it, allocating fresh slots only
     /// when none are free. `slot_liveness[slot]` records the scopes a slot passes through live so
     /// descendant scopes can tell what's free. Invariant on the result: two symbols sharing a slot
-    /// never have overlapping live ranges, so giving them one name is always safe. The exception
-    /// is an Annex B block function sharing the slot of a same-named binding in its var scope (see
-    /// [`AnnexBBlockFunctions`]), which they also share in the original source.
+    /// never have overlapping live ranges, so giving them one name is always safe.
     fn compute(
         allocator: &'a Allocator,
         scoping: &'a Scoping,
         ast_nodes: &AstNodes,
         constraints: &Constraints,
     ) -> Self {
-        // Names of bindings in direct-`eval` scopes and of kept Annex B block functions —
-        // collected here, reserved in Phase 4.
+        // Names of bindings in direct-`eval` scopes — collected here, reserved in Phase 4.
         // TODO: eval reservation is conservative — ideally we'd reserve names per-slot.
-        let mut reserved_names = ArenaIdentHashSet::new_in(allocator);
+        let mut eval_reserved_names = ArenaIdentHashSet::new_in(allocator);
 
         // All symbols with their assigned slots. Keyed by symbol id.
         let mut slots = ArenaVec::from_iter_in(
@@ -628,57 +612,30 @@ impl<'a> SlotAssignment<'a> {
         let mut reusable_slots = ArenaVec::new_in(&allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
-        let annex_b = AnnexBBlockFunctions::collect(scoping, ast_nodes, allocator);
-        let mut annex_b_cursor = 0;
 
         // Walk down the scope tree and assign a slot number for each symbol. Doing it as a scope
         // walk (rather than a flat symbol loop) generates better code.
         for (scope_id, bindings) in scoping.iter_bindings() {
-            // Scopes are visited in increasing id order, so the entries of `scope_id` come next.
-            let annex_b_start = annex_b_cursor;
-            while annex_b.functions.get(annex_b_cursor).is_some_and(|f| f.0 == scope_id) {
-                annex_b_cursor += 1;
-            }
-            let annex_b_functions_in_scope = &annex_b.functions[annex_b_start..annex_b_cursor];
-
-            if bindings.is_empty() && annex_b_functions_in_scope.is_empty() {
+            if bindings.is_empty() {
                 continue;
             }
             // Scopes with direct eval: collect binding names as reserved (they can be
             // accessed by eval at runtime) and skip slot assignment (keep original names).
             if scoping.scope_flags(scope_id).contains_direct_eval() {
                 for (name, _) in bindings {
-                    reserved_names.insert(*name);
-                }
-                for &(_, symbol_id, _) in annex_b_functions_in_scope {
-                    reserved_names.insert(scoping.symbol_ident(symbol_id));
+                    eval_reserved_names.insert(*name);
                 }
                 continue;
             }
 
             // Sort `bindings` in declaration order.
             tmp_bindings.clear();
-            tmp_bindings.extend(bindings.values().copied().filter(|&binding| {
-                constraints.is_mangle_candidate(binding, scoping) && !annex_b.contains(binding)
-            }));
-            tmp_bindings.extend(annex_b_functions_in_scope.iter().filter_map(
-                |&(_, symbol_id, alias)| {
-                    (alias.is_none()
-                        && constraints.is_mangle_candidate_in(symbol_id, scope_id, scoping))
-                    .then_some(symbol_id)
-                },
-            ));
-            // A block function that keeps its name, e.g. because its var scope is the root scope,
-            // also keeps it in its block, where the root scope's names are not otherwise reserved.
-            for &(_, symbol_id, alias) in annex_b_functions_in_scope {
-                let keeps_name = !constraints.is_mangle_candidate_in(symbol_id, scope_id, scoping)
-                    || alias.is_some_and(|alias| {
-                        !constraints.is_mangle_candidate_in(alias, scope_id, scoping)
-                    });
-                if keeps_name {
-                    reserved_names.insert(scoping.symbol_ident(symbol_id));
-                }
-            }
+            tmp_bindings.extend(
+                bindings
+                    .values()
+                    .copied()
+                    .filter(|&binding| constraints.is_mangle_candidate(binding, scoping)),
+            );
             if tmp_bindings.is_empty() {
                 continue;
             }
@@ -716,21 +673,6 @@ impl<'a> SlotAssignment<'a> {
                 );
             }
 
-            // A block function that can write the var scope binding of the same name keeps
-            // sharing its name, so that it still writes that binding after renaming. The binding
-            // is one of this scope's, so it got a slot above if it gets one at all.
-            let independent_bindings = tmp_bindings.len();
-            for &(_, symbol_id, alias) in annex_b_functions_in_scope {
-                if let Some(alias) = alias
-                    && constraints.is_mangle_candidate_in(symbol_id, scope_id, scoping)
-                    && let Ok(index) = tmp_bindings[..independent_bindings].binary_search(&alias)
-                {
-                    let alias_slot = reusable_slots[index];
-                    tmp_bindings.push(symbol_id);
-                    reusable_slots.push(alias_slot);
-                }
-            }
-
             // Pre-compute the set of ancestors from root to scope_id (exclusive) for O(1) tests.
             ancestor_set.clear();
             for ancestor_id in scoping.scope_ancestors(scope_id).skip(1) {
@@ -739,10 +681,7 @@ impl<'a> SlotAssignment<'a> {
 
             let scope_id_index = scope_id.index();
             for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
-                debug_assert!(
-                    constraints.is_mangle_candidate(symbol_id, scoping)
-                        || constraints.is_mangle_candidate_in(symbol_id, scope_id, scoping)
-                );
+                debug_assert!(constraints.is_mangle_candidate(symbol_id, scoping));
                 slots[symbol_id.index()] = assigned_slot;
 
                 // `var` is hoisted, so include the scope where it is declared
@@ -808,95 +747,7 @@ impl<'a> SlotAssignment<'a> {
         }
 
         let total_slots = slot_liveness.len();
-        Self { slots, total_slots, reserved_names }
-    }
-}
-
-/// Sloppy-mode plain function declarations that remain bound in a block.
-///
-/// Annex B.3.2 may give such a function a `var` binding in its var scope, depending on the names
-/// of enclosing declarations, so renaming it can change which binding it writes. Its slot is
-/// assigned together with the var scope's bindings, the same as a hoisted function. If the var
-/// scope has a binding of the same name that is not shadowed by an enclosing declaration, the
-/// function shares its slot: either it writes that binding, or the binding prevents the write.
-struct AnnexBBlockFunctions<'a> {
-    /// `(var scope, function, var scope binding of the same name)`, sorted by var scope.
-    functions: ArenaVec<'a, (ScopeId, SymbolId, Option<SymbolId>)>,
-    /// The functions in `functions`. `None` if there are none.
-    symbols: Option<BitSet<'a>>,
-}
-
-impl<'a> AnnexBBlockFunctions<'a> {
-    fn collect(scoping: &Scoping, ast_nodes: &AstNodes, allocator: &'a Allocator) -> Self {
-        let mut functions = ArenaVec::new_in(&allocator);
-        if !scoping.scope_flags(scoping.root_scope_id()).is_strict_mode() {
-            for (scope_id, bindings) in scoping.iter_bindings() {
-                let scope_flags = scoping.scope_flags(scope_id);
-                if bindings.is_empty() || scope_flags.is_var() || scope_flags.is_strict_mode() {
-                    continue;
-                }
-                for &symbol_id in bindings.values() {
-                    if Self::is_plain_function(symbol_id, scoping)
-                        && let Some(var_scope_id) = scoping
-                            .scope_ancestors(scope_id)
-                            .find(|&id| scoping.scope_flags(id).is_var())
-                    {
-                        let alias = Self::alias(symbol_id, var_scope_id, scoping, ast_nodes);
-                        functions.push((var_scope_id, symbol_id, alias));
-                    }
-                }
-            }
-        }
-        if functions.is_empty() {
-            return Self { functions, symbols: None };
-        }
-        functions.sort_unstable();
-        let mut symbols = BitSet::new_in(scoping.symbols_len(), allocator);
-        for &(_, symbol_id, _) in &functions {
-            symbols.set_bit(symbol_id.index());
-        }
-        Self { functions, symbols: Some(symbols) }
-    }
-
-    #[inline]
-    fn contains(&self, symbol_id: SymbolId) -> bool {
-        self.symbols.as_ref().is_some_and(|symbols| symbols.has_bit(symbol_id.index()))
-    }
-
-    /// Whether `symbol_id` is a function declaration that is not `async` or a generator.
-    fn is_plain_function(symbol_id: SymbolId, scoping: &Scoping) -> bool {
-        let flags = scoping.symbol_flags(symbol_id);
-        flags.is_function()
-            && !flags
-                .intersects(SymbolFlags::FunctionExpression | SymbolFlags::AsyncOrGeneratorFunction)
-    }
-
-    fn alias(
-        symbol_id: SymbolId,
-        var_scope_id: ScopeId,
-        scoping: &Scoping,
-        ast_nodes: &AstNodes,
-    ) -> Option<SymbolId> {
-        let name = scoping.symbol_ident(symbol_id);
-        let alias = scoping.get_binding(var_scope_id, name)?;
-        // A declaration of the same name in an enclosing block shadows the var scope's binding,
-        // unless it is a simple catch parameter (Annex B.3.4), or a function declaration that
-        // is the body of an `if` statement, which has its own implicit block (Annex B.3.3).
-        let is_shadowed = scoping
-            .scope_ancestors(scoping.symbol_scope_id(symbol_id))
-            .skip(1)
-            .take_while(|&id| id != var_scope_id)
-            .filter_map(|id| scoping.get_binding(id, name))
-            .any(|binding| {
-                !scoping
-                    .symbol_flags(binding)
-                    .contains(SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable)
-                    && !matches!(
-                        ast_nodes.parent_kind(scoping.symbol_declaration(binding)),
-                        AstKind::IfStatement(_)
-                    )
-            });
-        (!is_shadowed).then_some(alias)
+        Self { slots, total_slots, eval_reserved_names }
     }
 }
 
@@ -950,7 +801,7 @@ impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
                     && (!constraints.top_level || constraints.exported_names.contains(&name)))
                 // TODO: only skip the names that are kept in the current scope
                 || constraints.keep_name_names.contains(&name)
-                || slots.reserved_names.contains(&name)
+                || slots.eval_reserved_names.contains(&name)
         };
 
         let count = ranking.frequencies.len();
