@@ -798,6 +798,12 @@ impl<'a> PeepholeOptimizations {
         if symbol_value.references.has_reads() {
             return false;
         }
+        // Eval in the binding's scope can read writes from a nested block or function,
+        // even when that nested scope has no direct eval or resolved reads of its own.
+        let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+        if ctx.scoping().scope_flags(scope_id).contains_direct_eval() {
+            return false;
+        }
         let span = assign_expr.span;
         let new_expr = assign_expr.right.take_in(ctx);
         // `(a = o.f)()` => `(0, o.f)()`

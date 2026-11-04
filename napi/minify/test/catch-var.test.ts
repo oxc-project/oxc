@@ -160,6 +160,30 @@ describe("catch parameters redeclared by var", () => {
       [[2], [3], [5]],
     ],
     [
+      "eval observes a catch write in a nested block",
+      `function f() {
+        try { throw 1 } catch (y) {
+          { var y; y = 2; }
+          console.log(eval("y"));
+        }
+        return y;
+      } console.log(f());`,
+      [[2], [undefined]],
+    ],
+    [
+      "eval observes a catch write in a nested function",
+      `function f() {
+        try { throw 1 } catch (y) {
+          var y;
+          function set() { y = 2; }
+          set();
+          console.log(eval("y"));
+        }
+        return y;
+      } console.log(f());`,
+      [[2], [undefined]],
+    ],
+    [
       "regenerated var with direct eval",
       `function f() {
         try { throw 1 } catch (e) {
