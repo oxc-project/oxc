@@ -23,20 +23,19 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, CallExpression<'a>> {
         let type_arguments = self.type_arguments();
         let arguments = self.arguments();
 
-        // Check if this is a Tailwind function call (e.g., clsx, cn, tw)
-        let tailwind_ctx_to_push = tailwind_context_for_callee(&self.callee, f);
-
         // For nested non-Tailwind calls inside a Tailwind context, hide the context
         // to prevent sorting strings and templates inside the nested call's arguments.
         // (e.g., `classNames("a", x.includes("\n") ? "b" : "c")` - don't sort "\n")
-        let hides_tailwind_ctx =
-            tailwind_ctx_to_push.is_none() && f.context().tailwind_context().is_some();
+        // A Tailwind call pushes its own context, around its arguments only
+        let hides_tailwind_ctx = f.context().tailwind_context().is_some()
+            && tailwind_context_for_callee(&self.callee, f).is_none();
         if hides_tailwind_ctx {
             f.context_mut().hide_tailwind_context();
         }
 
-        // NOTE: Decided before this call pushes its Tailwind context, and `MemberChain` pushes none,
-        // so a Tailwind call with a multiline template takes the branch below, which sorts it
+        // NOTE: Read before the arguments push the Tailwind context,
+        // so a Tailwind call with a multiline template it collapses stays out of `MemberChain`,
+        // which would break the chain on the template's line breaks in the source
         if callee.is_member_expression()
             && !is_verbatim_multiline_template_sole_arg(arguments.as_slice(), Some(self), f)
             && !is_simple_module_import(&self.arguments(), f.comments())
@@ -53,18 +52,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, CallExpression<'a>> {
                         type_arguments
                     ]
                 );
-
-                // If this IS a Tailwind function call, push the Tailwind context before formatting arguments
-                if let Some(ctx) = tailwind_ctx_to_push {
-                    f.context_mut().push_tailwind_context(ctx);
-                }
-
                 write!(f, arguments);
-
-                // Pop Tailwind context after formatting
-                if tailwind_ctx_to_push.is_some() {
-                    f.context_mut().pop_tailwind_context();
-                }
             });
             if matches!(callee.as_ref(), Expression::CallExpression(_)) {
                 write!(f, [group(&format_inner)]);

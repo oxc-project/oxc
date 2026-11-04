@@ -229,6 +229,32 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
+  it("should sort classes in calls printed as member chains", async () => {
+    // Outside JSX, since a `className` context would sort them anyway
+    const input = `const a = tw.style("p-4  flex");
+const b = cn.a("p-4  flex").b("m-2  block").c();
+const c = cn.foo["a  b"]("x  y");
+const d = cn(x.y("a  b"), cn.x("p-4  flex"));
+`;
+    const options = { experimentalTailwindcss: { functions: ["cn", "tw"] } };
+
+    const result = await format("test.ts", input, options);
+
+    // Like the plugin, only the arguments are sorted, not the computed key `["a  b"]`
+    expect(result.code).toMatchInlineSnapshot(`
+      "const a = tw.style("flex p-4");
+      const b = cn.a("flex p-4").b("m-2 block").c();
+      const c = cn.foo["a  b"]("x y");
+      const d = cn(x.y("a  b"), cn.x("flex p-4"));
+      "
+    `);
+    expect(result.errors).toStrictEqual([]);
+
+    // Formatting the output again should not change it.
+    const second = await format("test.ts", result.code, options);
+    expect(second.code).toBe(result.code);
+  });
+
   it("should preserve whitespace when preserveWhitespace is true", async () => {
     // Input with leading/trailing whitespace in class string
     const input = `const A = <div className="  p-4 flex  ">Hello</div>;`;
