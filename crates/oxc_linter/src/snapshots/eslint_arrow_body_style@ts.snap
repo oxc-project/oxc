@@ -1,0 +1,59 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
+   ╭─[arrow_body_style.ts:1:17]
+ 1 │ var foo = () => <Foo>{ id };
+   ·                 ───────────
+   ╰────
+  help: Surround the arrow body with braces and use a return statement.
+
+  ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
+   ╭─[arrow_body_style.ts:1:17]
+ 1 │ var foo = () => <Foo>({ id });
+   ·                 ─────────────
+   ╰────
+  help: Surround the arrow body with braces and use a return statement.
+
+  ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
+   ╭─[arrow_body_style.ts:1:17]
+ 1 │ var foo = () => ({ id }) as Foo;
+   ·                 ───────────────
+   ╰────
+  help: Surround the arrow body with braces and use a return statement.
+
+  ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
+   ╭─[arrow_body_style.ts:1:17]
+ 1 │ var foo = () => ({ id }) satisfies Foo;
+   ·                 ──────────────────────
+   ╰────
+  help: Surround the arrow body with braces and use a return statement.
+
+  ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
+   ╭─[arrow_body_style.ts:1:17]
+ 1 │ var foo = () => ({ id })!;
+   ·                 ─────────
+   ╰────
+  help: Surround the arrow body with braces and use a return statement.
+
+  ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
+   ╭─[arrow_body_style.ts:1:17]
+ 1 │ var foo = () => (({ id }) as Foo);
+   ·                 ─────────────────
+   ╰────
+  help: Surround the arrow body with braces and use a return statement.
+
+  ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
+   ╭─[arrow_body_style.ts:1:17]
+ 1 │ var foo = () => <Foo>JSON.parse(id);
+   ·                 ───────────────────
+   ╰────
+  help: Surround the arrow body with braces and use a return statement.
+
+  ⚠ eslint(arrow-body-style): Expected block statement surrounding arrow body.
+   ╭─[arrow_body_style.ts:1:17]
+ 1 │ var foo = () => ({ id }) as Foo;
+   ·                 ───────────────
+   ╰────
+  help: Surround the arrow body with braces and use a return statement.

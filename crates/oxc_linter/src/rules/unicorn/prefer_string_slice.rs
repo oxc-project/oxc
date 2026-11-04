@@ -39,6 +39,7 @@ declare_oxc_lint!(
     PreferStringSlice,
     unicorn,
     pedantic,
+    recommended,
     conditional_fix,
     version = "0.0.18",
     short_description = "Prefer `String#slice()` over `String#substr()` and `String#substring()`.",
@@ -55,18 +56,19 @@ impl Rule for PreferStringSlice {
         };
 
         if let MemberExpression::StaticMemberExpression(v) = member_expr {
-            if !matches!(v.property.name.as_str(), "substr" | "substring") {
-                return;
-            }
             let method_name = v.property.name.as_str();
-            let has_spread_arguments = call_expr.arguments.iter().any(Argument::is_spread);
-            let has_unsafe_arguments = match method_name {
-                "substr" => has_spread_arguments || call_expr.arguments.len() >= 2,
-                "substring" => {
-                    has_spread_arguments || !is_safe_substring_arguments(&call_expr.arguments)
-                }
-                _ => unreachable!(),
+            let is_substr = match method_name {
+                "substr" => true,
+                "substring" => false,
+                _ => return,
             };
+            let has_spread_arguments = call_expr.arguments.iter().any(Argument::is_spread);
+            let has_unsafe_arguments = has_spread_arguments
+                || if is_substr {
+                    call_expr.arguments.len() >= 2
+                } else {
+                    !is_safe_substring_arguments(&call_expr.arguments)
+                };
 
             if has_unsafe_arguments {
                 ctx.diagnostic(prefer_string_slice_diagnostic(v.property.span, method_name));

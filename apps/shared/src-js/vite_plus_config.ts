@@ -25,7 +25,10 @@ export async function loadViteConfigField(
   vitePlusCache ??= import("vite-plus");
   const { resolveConfig } = await vitePlusCache;
 
-  const config = (await resolveConfig({ configFile: path }, "build")) as Record<string, unknown>;
+  const config = (await resolveConfig({ configFile: path }, "build")) as unknown as Record<
+    string,
+    unknown
+  >;
 
   // Signal "skip" when the field is missing
   if (!(fieldName in config)) return null;

@@ -1,0 +1,15 @@
+@media `PLACEHOLDER-0` {
+color: blue;
+}
+@media not `PLACEHOLDER-1` { color: blue; }
+@media `PLACEHOLDER-2` and (min-width: 1px) { color: blue; }
+@media `PLACEHOLDER-3`, `PLACEHOLDER-4` { color: blue; }
+@media `PLACEHOLDER-5` /* c */ and (min-width: 1px) { color: blue; }
+@import url(x) `PLACEHOLDER-6`;
+@import url(x) screen, `PLACEHOLDER-7`;
+@media screen and `PLACEHOLDER-8` { color: blue; }
+@media `PLACEHOLDER-9` and `PLACEHOLDER-10` { color: blue; }
+@supports `PLACEHOLDER-11` { color: blue; }
+@supports not `PLACEHOLDER-12` { color: blue; }
+@media print-`PLACEHOLDER-13` { color: blue; }
+@media `PLACEHOLDER-14``PLACEHOLDER-15` { color: blue; }

@@ -92,16 +92,14 @@ impl<'a> PeepholeOptimizations {
         let Expression::UnaryExpression(unary_expr) = e else { return false };
         match unary_expr.operator {
             UnaryOperator::Void | UnaryOperator::LogicalNot => {
-                let new_expr = unary_expr.argument.take_in(ctx);
-                ctx.replace_expression(e, new_expr);
+                ctx.replace_expression_with(e, Self::unwrap_unary);
                 Self::remove_unused_expression(e, ctx)
             }
             UnaryOperator::Typeof => {
                 if unary_expr.argument.is_identifier_reference() {
                     true
                 } else {
-                    let new_expr = unary_expr.argument.take_in(ctx);
-                    ctx.replace_expression(e, new_expr);
+                    ctx.replace_expression_with(e, Self::unwrap_unary);
                     Self::remove_unused_expression(e, ctx)
                 }
             }
@@ -180,7 +178,7 @@ impl<'a> PeepholeOptimizations {
                         };
                         if let Some((name, id)) = name_and_id
                             && Self::inject_optional_chaining_if_matched(
-                                &name,
+                                name,
                                 id,
                                 logical_right,
                                 ctx,
@@ -242,6 +240,9 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
+        if !ctx.is_tree_shake_only() {
+            Self::de_morgan_for_void_expr(logical_expr, ctx);
+        }
         false
     }
 
@@ -602,9 +603,10 @@ impl<'a> PeepholeOptimizations {
                         false
                     }
                     (false, false) => {
-                        let new_expr = Expression::new_sequence_expression(
+                        let new_expr = Self::join_sequence(
                             binary_expr.span,
-                            [binary_expr.left.take_in(ctx), binary_expr.right.take_in(ctx)],
+                            binary_expr.left.take_in(ctx),
+                            binary_expr.right.take_in(ctx),
                             ctx,
                         );
                         ctx.replace_expression(e, new_expr);
@@ -613,6 +615,9 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             BinaryOperator::Addition => {
+                if !e.may_have_side_effects(ctx) {
+                    return true;
+                }
                 Self::fold_string_addition_chain(e, ctx);
                 matches!(e, Expression::StringLiteral(_))
             }
@@ -793,7 +798,10 @@ impl<'a> PeepholeOptimizations {
         if symbol_value.references.has_reads() {
             return false;
         }
+        let span = assign_expr.span;
         let new_expr = assign_expr.right.take_in(ctx);
+        // `(a = o.f)()` => `(0, o.f)()`
+        let new_expr = Self::preserve_indirect_access_if_needed(span, new_expr, ctx);
         ctx.replace_expression(e, new_expr);
         false
     }
@@ -868,7 +876,10 @@ impl<'a> PeepholeOptimizations {
         // refs dead). Safe in value positions too — a plain `=` assignment's
         // value IS the RHS value.
         let Expression::AssignmentExpression(assign_expr) = e else { unreachable!() };
+        let span = assign_expr.span;
         let new_expr = assign_expr.right.take_in(ctx);
+        // `(b.x = o.f)()` => `(0, o.f)()`
+        let new_expr = Self::preserve_indirect_access_if_needed(span, new_expr, ctx);
         ctx.replace_expression(e, new_expr);
         false
     }
@@ -904,7 +915,7 @@ impl<'a> PeepholeOptimizations {
         match target {
             AssignmentTarget::StaticMemberExpression(e) => Some(e.property.name.as_str()),
             AssignmentTarget::ComputedMemberExpression(e) => match &e.expression {
-                Expression::StringLiteral(s) => Some(s.value.as_str()),
+                Expression::StringLiteral(s) => s.value.as_str(),
                 _ => None,
             },
             _ => None,
@@ -1096,10 +1107,9 @@ impl<'a> PeepholeOptimizations {
             // Unwrap parens and sequence tails — `(0, x)` — so the
             // classification does not change when a later fold surfaces
             // the inner expression.
-            let mut e = super_class.get_inner_expression();
-            while let Expression::SequenceExpression(seq) = e {
-                let Some(last) = seq.expressions.last() else { break };
-                e = last.get_inner_expression();
+            let mut e = super_class;
+            if let Expression::SequenceExpression(seq) = e {
+                e = Self::last_expression_in_sequence(seq).unwrap_or(e);
             }
             // Keep the existing statically-provable TypeError for literal
             // arrow heritage: `class C extends (() => {}) {}`.

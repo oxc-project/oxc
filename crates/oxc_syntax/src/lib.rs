@@ -23,6 +23,8 @@ mod serialize;
 pub mod symbol;
 pub mod xml_entities;
 
+pub use node::GetNodeId;
+
 mod generated {
     #[cfg(debug_assertions)]
     mod assert_layouts;

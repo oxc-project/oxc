@@ -43,6 +43,13 @@ struct State {
     /// Pruned-scope info per declaration, indexed densely by declaration id
     /// (declaration ids share the identifier id space).
     pruned: IndexVec<DeclarationId, Option<PrunedInfo>>,
+    /// Results of hook calls. Hooks are never memoized, so a hook call is
+    /// always outside of a scope.
+    hook_results: FxHashSet<DeclarationId>,
+    /// Hook results that are read inside a scope. If left as temporaries,
+    /// codegen would inline the hook call into the scope, where it would only
+    /// be called when the scope recomputes.
+    hook_results_used_in_scope: Vec<IdentifierId>,
 }
 
 struct PrunedInfo {
@@ -65,11 +72,18 @@ pub fn promote_used_temporaries(func: &mut ReactiveFunction, env: &mut Environme
         tags: FxHashSet::default(),
         promoted: FxHashSet::default(),
         pruned: IndexVec::from_vec((0..env.identifiers.len()).map(|_| None).collect()),
+        hook_results: FxHashSet::default(),
+        hook_results_used_in_scope: Vec::new(),
     };
 
     // Phase 1: collect promotable temporaries (jsx tags, pruned scope usage)
     let mut active_scopes: Vec<ScopeId> = Vec::new();
     collect_promotable_block(&func.body, &mut state, &mut active_scopes, env);
+    for id in std::mem::take(&mut state.hook_results_used_in_scope) {
+        if env.identifiers[id].name.is_none() {
+            promote_identifier(id, &mut state, env);
+        }
+    }
 
     // Promote params
     for param in &func.params {
@@ -161,6 +175,9 @@ fn collect_promotable_place(
 ) {
     if !active_scopes.is_empty() {
         let identifier = &env.identifiers[place.identifier];
+        if state.hook_results.contains(&identifier.declaration_id) {
+            state.hook_results_used_in_scope.push(place.identifier);
+        }
         if let Some(pruned) = state.pruned[identifier.declaration_id].as_mut()
             && let Some(last) = active_scopes.last()
             && !pruned.active_scopes.contains(last)
@@ -177,6 +194,15 @@ fn collect_promotable_instruction(
     env: &Environment,
 ) {
     collect_promotable_value(&instr.value, state, active_scopes, env);
+    if let Some(lvalue) = &instr.lvalue
+        && let ReactiveValue::Instruction(
+            InstructionValue::CallExpression { callee: hook, .. }
+            | InstructionValue::MethodCall { property: hook, .. },
+        ) = &instr.value
+        && env.get_hook_kind_for_id(hook.identifier).ok().flatten().is_some()
+    {
+        state.hook_results.insert(env.identifiers[lvalue.identifier].declaration_id);
+    }
 }
 
 fn collect_promotable_value(
@@ -561,8 +587,10 @@ fn promote_interposed_instruction(
                 | InstructionValue::PropertyDelete { .. }
                 | InstructionValue::ComputedStore { .. }
                 | InstructionValue::ComputedDelete { .. }
-                | InstructionValue::PostfixUpdate { .. }
-                | InstructionValue::PrefixUpdate { .. }
+                | InstructionValue::PostfixUpdateLocal { .. }
+                | InstructionValue::PostfixUpdateContext { .. }
+                | InstructionValue::PrefixUpdateLocal { .. }
+                | InstructionValue::PrefixUpdateContext { .. }
                 | InstructionValue::StoreLocal { .. }
                 | InstructionValue::StoreContext { .. }
                 | InstructionValue::StoreGlobal { .. }

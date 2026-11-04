@@ -82,7 +82,7 @@ declare_oxc_lint!(
     NoUnnecessaryBooleanLiteralCompare(tsgolint),
     typescript,
     suspicious,
-    pending,
+    fix,
     config = NoUnnecessaryBooleanLiteralCompareConfig,
     version = "1.12.0",
     short_description = "This rule disallows unnecessary equality comparisons with boolean literals.",
@@ -90,7 +90,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUnnecessaryBooleanLiteralCompare {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

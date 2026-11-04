@@ -36,10 +36,10 @@ pub struct NoUnusedVarsOptions {
     /// Specifies exceptions to this rule for unused arguments. Arguments whose
     /// names match this pattern will be ignored.
     ///
-    /// By default, this pattern is `^_` unless options are configured with an
-    /// object. In this case it will default to [`None`]. Note that this
-    /// behavior deviates from both ESLint and TypeScript-ESLint, which never
-    /// provide a default pattern.
+    /// By default, names starting with `_` are ignored, except for the bare `_`
+    /// parameter. If options are configured with an object, this will default
+    /// to [`None`]. Note that this behavior deviates from both ESLint and
+    /// TypeScript-ESLint, which never provide a default pattern.
     ///
     /// #### Example
     ///
@@ -267,18 +267,18 @@ impl NoUnusedVarsFixMode {
     }
 }
 
-// Represents an `Option<Regex>` with an additional `Default` variant,
-// which represents the default ignore pattern for when no pattern is
-// explicitly provided.
+// Represents an `Option<Regex>` with variants for implicit defaults and an optimized `^_` pattern.
 #[derive(Debug, Clone, Copy, JsonSchema)]
 #[serde(untagged)]
 pub enum IgnorePattern<R> {
-    /// No ignore pattern was provided, use the default pattern. This
-    /// means that the pattern is `^_`.
+    /// No ignore pattern was provided; use the field-specific default behavior.
     #[serde(skip)]
     // skip serialization since this is only a marker for default behavior, not an actual pattern to be used.
     // The schema generation would produce two `null` options.
     Default,
+    /// The explicitly configured pattern is `^_`.
+    #[serde(skip)]
+    PrefixUnderscore,
     /// The ignore pattern is explicitly none.
     None,
     /// The ignore pattern is a regex.
@@ -298,10 +298,10 @@ impl<R> IgnorePattern<R> {
         matches!(self, Self::None)
     }
 
-    /// Returns `true` if the pattern is [`IgnorePattern::Some`] or [`IgnorePattern::Default`].
+    /// Returns `true` if the pattern is not [`IgnorePattern::None`].
     #[inline]
     pub fn is_some(&self) -> bool {
-        matches!(self, Self::Some(_) | Self::Default)
+        !self.is_none()
     }
 
     /// Returns the inner value if it is [`IgnorePattern::Some`], otherwise
@@ -331,6 +331,7 @@ impl<R> IgnorePattern<R> {
     pub fn as_ref(&self) -> IgnorePattern<&R> {
         match self {
             Self::Default => IgnorePattern::Default,
+            Self::PrefixUnderscore => IgnorePattern::PrefixUnderscore,
             Self::None => IgnorePattern::None,
             Self::Some(r) => IgnorePattern::Some(r),
         }
@@ -343,7 +344,7 @@ where
     pub(super) fn diagnostic_help(&self, symbol_kind_plural: &str) -> Cow<'static, str> {
         match self {
             Self::None => Cow::Borrowed(""),
-            Self::Default => {
+            Self::Default | Self::PrefixUnderscore => {
                 Cow::Owned(format!(" Unused {symbol_kind_plural} should start with a '_'."))
             }
             Self::Some(reg) => {
@@ -359,7 +360,7 @@ impl TryFrom<Option<&str>> for IgnorePattern<Regex> {
     fn try_from(value: Option<&str>) -> Result<Self, Self::Error> {
         match value {
             None => Ok(Self::None),
-            Some("^_") => Ok(Self::Default),
+            Some("^_") => Ok(Self::PrefixUnderscore),
             Some(pattern) => RegexBuilder::new(pattern).build().map(Self::Some),
         }
     }
@@ -743,12 +744,16 @@ mod tests {
         .unwrap();
 
         assert_eq!(rule.vars, VarsOption::Local);
-        assert!(rule.vars_ignore_pattern.is_default());
+        assert!(rule.vars_ignore_pattern.is_some());
+        assert!(!rule.vars_ignore_pattern.is_default());
         assert_eq!(rule.args, ArgsOption::All);
-        assert!(rule.args_ignore_pattern.is_default());
+        assert!(rule.args_ignore_pattern.is_some());
+        assert!(!rule.args_ignore_pattern.is_default());
         assert_eq!(rule.caught_errors, CaughtErrors::all());
-        assert!(rule.caught_errors_ignore_pattern.is_default());
-        assert!(rule.destructured_array_ignore_pattern.is_default());
+        assert!(rule.caught_errors_ignore_pattern.is_some());
+        assert!(!rule.caught_errors_ignore_pattern.is_default());
+        assert!(rule.destructured_array_ignore_pattern.is_some());
+        assert!(!rule.destructured_array_ignore_pattern.is_default());
         assert!(rule.ignore_rest_siblings);
         assert!(!rule.ignore_class_with_static_init_block);
         assert!(!rule.ignore_using_declarations);
@@ -768,7 +773,7 @@ mod tests {
         .unwrap();
         // option object provided, no default varsIgnorePattern
         assert!(rule.vars_ignore_pattern.is_none());
-        assert!(rule.args_ignore_pattern.is_default());
+        assert!(matches!(rule.args_ignore_pattern, IgnorePattern::PrefixUnderscore));
 
         let rule: NoUnusedVarsOptions = json!([
             {
@@ -779,7 +784,7 @@ mod tests {
         .unwrap();
 
         // option object provided, no default argsIgnorePattern
-        assert!(matches!(rule.vars_ignore_pattern, IgnorePattern::Default));
+        assert!(matches!(rule.vars_ignore_pattern, IgnorePattern::PrefixUnderscore));
         assert!(rule.args_ignore_pattern.is_none());
     }
 
@@ -850,7 +855,7 @@ mod tests {
         parse_unicode_rule(Some(&pat)).expect("json strings should get parsed into a regex");
 
         let pat = json!("^_");
-        assert!(parse_unicode_rule(Some(&pat)).unwrap().is_default());
+        assert!(matches!(parse_unicode_rule(Some(&pat)).unwrap(), IgnorePattern::PrefixUnderscore));
     }
 
     #[test]

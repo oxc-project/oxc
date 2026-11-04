@@ -23,6 +23,14 @@ declare_oxc_lint!(
     ///
     /// Disallow let or var variables that are read but never assigned.
     ///
+    /// #### Ignored Files
+    /// This rule ignores `.svelte` and `.vue` files entirely. Oxlint only parses the
+    /// `<script>` blocks of these files, so a binding that the template assigns looks
+    /// like it is never assigned. In Svelte the template writes through
+    /// `bind:this={el}` and `bind:value={x}`; in Vue a `<script setup>` `let` is a
+    /// `setup-let` binding that `v-model="x"` and inline handlers such as
+    /// `@click="x = 1"` assign to directly.
+    ///
     /// ### Why is this bad?
     ///
     /// This rule flags let or var declarations that are never assigned a value but are still read or used in the code.
@@ -50,33 +58,37 @@ declare_oxc_lint!(
     NoUnassignedVars,
     eslint,
     correctness,
+    recommended,
     version = "1.10.0",
     short_description = "Disallow let or var variables that are read but never assigned.",
 );
 
 impl Rule for NoUnassignedVars {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::VariableDeclarator(declarator) = node.kind() else {
+        let AstKind::VariableDeclaration(declaration) = node.kind() else {
             return;
         };
-        if declarator.init.is_some() {
+        if declaration.kind.is_const() || declaration.declare {
             return;
         }
-        let parent_node = ctx.nodes().parent_node(node.id());
-        let AstKind::VariableDeclaration(parent) = parent_node.kind() else {
-            return;
-        };
-        if parent.kind.is_const() || parent.declare {
+        let mut identifiers = declaration
+            .declarations
+            .iter()
+            .filter_map(|declarator| match (&declarator.id, &declarator.init) {
+                (BindingPattern::BindingIdentifier(ident), None) => Some(ident),
+                _ => None,
+            })
+            .peekable();
+        if identifiers.peek().is_none() {
             return;
         }
-        let grand_parent = ctx.nodes().parent_node(parent_node.id());
         if matches!(
-            grand_parent.kind(),
+            ctx.nodes().parent_kind(node.id()),
             AstKind::ForStatement(_) | AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
         ) {
             return;
         }
-        if ctx.nodes().ancestors(node.id()).skip(1).any(|ancestor| {
+        if ctx.nodes().ancestors(node.id()).any(|ancestor| {
             matches!(
                 ancestor.kind(),
                 AstKind::TSExternalModuleDeclaration(_)
@@ -86,22 +98,26 @@ impl Rule for NoUnassignedVars {
         }) {
             return;
         }
-        let BindingPattern::BindingIdentifier(ident) = &declarator.id else {
-            return;
-        };
-        let symbol_id = ident.symbol_id();
-        let mut has_read = false;
-        for reference in ctx.symbol_references(symbol_id) {
-            if reference.is_write() {
-                return;
+        for ident in identifiers {
+            let mut has_read = false;
+            for reference in ctx.symbol_references(ident.symbol_id()) {
+                if reference.is_write() {
+                    has_read = false;
+                    break;
+                }
+                if reference.is_read() {
+                    has_read = true;
+                }
             }
-            if reference.is_read() {
-                has_read = true;
+            if has_read {
+                ctx.diagnostic(no_unassigned_vars_diagnostic(ident.span, ident.name.as_str()));
             }
         }
-        if has_read {
-            ctx.diagnostic(no_unassigned_vars_diagnostic(ident.span, ident.name.as_str()));
-        }
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        // ignore svelte/vue: their templates can assign a binding, which we can't see.
+        !ctx.file_extension().is_some_and(|ext| ext == "svelte" || ext == "vue")
     }
 }
 
@@ -136,6 +152,8 @@ fn test() {
                         }
                     ",
         "for (let p of pathToRemove) { p.remove() }",
+        "for (let a, b; check(a, b);) { break; }",
+        "declare let a, b; log(a, b);",
     ];
 
     let fail = vec![
@@ -148,6 +166,9 @@ fn test() {
         "let config; function init() { return config?.enabled; }",
         "let x: number; log(x);",
         "let x: number | undefined; log(x);",
+        "let assigned, unassigned; assigned = 1; log(assigned, unassigned);",
+        "let a, b; log(a, b); a = 1;",
+        "let initialized = 1, unassigned; log(initialized, unassigned);",
         "const foo = (two: string): void => { let one: string | undefined; if (one === two) {} }",
         "
                             declare module 'module' {
@@ -159,4 +180,62 @@ fn test() {
     ];
 
     Tester::new(NoUnassignedVars::NAME, NoUnassignedVars::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn test_svelte() {
+    use crate::tester::Tester;
+
+    // The markup is stripped before linting; it documents the template-side write
+    // (`bind:this`, `bind:value`) that makes these bindings assigned in reality.
+    let pass = vec![
+        "<script lang=\"ts\">
+            let dialog: HTMLDialogElement;
+            function openDialog() { dialog.showModal(); }
+         </script>
+         <dialog bind:this={dialog}></dialog>",
+        "<script>
+            let value;
+            log(value);
+         </script>
+         <input bind:value />",
+        // Both blocks of a two-script component are linted; neither may report.
+        "<script module>
+            let shared;
+            log(shared);
+         </script>
+         <script>
+            let value;
+            log(value);
+         </script>
+         <input bind:value />",
+    ];
+
+    Tester::new(NoUnassignedVars::NAME, NoUnassignedVars::PLUGIN, pass, vec![])
+        .change_rule_path("test.svelte")
+        .test();
+}
+
+#[test]
+fn test_vue() {
+    use crate::tester::Tester;
+
+    // A `<script setup>` `let` is a `setup-let` binding: `v-model` and inline handlers
+    // compile to direct assignments to it, so the script alone cannot see the write.
+    let pass = vec![
+        "<script setup>
+            let msg;
+            log(msg);
+         </script>
+         <template><input v-model=\"msg\" /></template>",
+        "<script setup>
+            let count;
+            log(count);
+         </script>
+         <template><button @click=\"count = 1\">go</button></template>",
+    ];
+
+    Tester::new(NoUnassignedVars::NAME, NoUnassignedVars::PLUGIN, pass, vec![])
+        .change_rule_path("test.vue")
+        .test();
 }

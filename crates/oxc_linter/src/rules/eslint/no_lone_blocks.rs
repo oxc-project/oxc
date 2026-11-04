@@ -1,5 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_ast::ast::{Declaration, VariableDeclarationKind};
+use oxc_ast::ast::Declaration;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -83,9 +83,7 @@ impl Rule for NoLoneBlocks {
         if is_lone_blocks {
             for child in &stmt.body {
                 match child.as_declaration() {
-                    Some(Declaration::VariableDeclaration(decl))
-                        if decl.kind != VariableDeclarationKind::Var =>
-                    {
+                    Some(Declaration::VariableDeclaration(decl)) if !decl.kind.is_var() => {
                         is_lone_blocks = false;
                     }
                     Some(

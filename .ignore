@@ -6,7 +6,7 @@ target/**
 tasks/coverage/test262/**
 tasks/coverage/babel/**
 tasks/coverage/typescript/**
-tasks/prettier_conformance/prettier/**
+apps/oxfmt/conformance/fixtures/externals/**
 apps/**/dist
 
 **/*.snap

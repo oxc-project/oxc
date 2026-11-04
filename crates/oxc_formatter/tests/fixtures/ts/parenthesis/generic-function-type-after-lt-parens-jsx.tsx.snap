@@ -1,0 +1,21 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Deviates from Prettier (DIVERGENCES.md#generic-function-type-after-lt-parens).
+<C< <T>() => T> />;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Deviates from Prettier (DIVERGENCES.md#generic-function-type-after-lt-parens).
+<C<(<T>() => T)> />;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Deviates from Prettier (DIVERGENCES.md#generic-function-type-after-lt-parens).
+<C<(<T>() => T)> />;
+
+===================== End =====================

@@ -1,13 +1,14 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
-        CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression,
+        CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression, ObjectProperty,
         ObjectPropertyKind, PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule};
@@ -62,6 +63,7 @@ declare_oxc_lint!(
     NoDeprecatedDestroyedLifecycle,
     vue,
     correctness,
+    recommended,
     fix,
     version = "1.35.0",
     short_description = "Disallow using deprecated `destroyed` and `beforeDestroy` lifecycle hooks in Vue.js 3.0.0+.",
@@ -111,7 +113,7 @@ fn check_object_properties<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContex
         let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
             continue;
         };
-        if let Some(name) = obj_prop.key.static_name() {
+        if let Some(name) = obj_prop.key.static_name().and_then(StaticPropertyName::into_cow_str) {
             existing_keys.insert(name.into_owned());
         }
     }
@@ -183,19 +185,18 @@ enum KeyType {
 }
 
 /// Get the property key name, span, whether it's a shorthand property, and key type
-fn get_property_key_info(
-    prop: &oxc_ast::ast::ObjectProperty,
-) -> Option<(String, Span, bool, KeyType)> {
+fn get_property_key_info(prop: &ObjectProperty) -> Option<(String, Span, bool, KeyType)> {
     match &prop.key {
         PropertyKey::StaticIdentifier(ident) => {
             Some((ident.name.to_string(), ident.span, prop.shorthand, KeyType::Identifier))
         }
         PropertyKey::StringLiteral(lit) => {
-            Some((lit.value.to_string(), lit.span, false, KeyType::StringLiteral))
+            Some((lit.value.as_str()?.to_owned(), lit.span, false, KeyType::StringLiteral))
         }
-        PropertyKey::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => {
-            tpl.single_quasi().map(|s| (s.to_string(), tpl.span, false, KeyType::TemplateLiteral))
-        }
+        PropertyKey::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => tpl
+            .single_quasi()
+            .and_then(JSStr::as_str)
+            .map(|s| (s.to_owned(), tpl.span, false, KeyType::TemplateLiteral)),
         _ => None,
     }
 }

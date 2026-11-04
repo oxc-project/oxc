@@ -12,6 +12,10 @@ query   Q   {
   weird   {   layout   }
 }
 
+type   Normal   {
+  b:   Int
+}
+
 ==================== Output ====================
 -----------------------------------
 { endOfLine: "lf", printWidth: 80 }
@@ -24,6 +28,10 @@ type   Weird   {
 # oxfmt-ignore
 query   Q   {
   weird   {   layout   }
+}
+
+type Normal {
+  b: Int
 }
 
 ------------------------------------
@@ -39,6 +47,10 @@ query   Q   {
   weird   {   layout   }
 }
 
+type Normal {
+  b: Int
+}
+
 -------------------------------------
 { endOfLine: "crlf", printWidth: 80 }
 -------------------------------------
@@ -52,6 +64,10 @@ query   Q   {
   weird   {   layout   }
 }
 
+type Normal {
+  b: Int
+}
+
 --------------------------------------
 { endOfLine: "crlf", printWidth: 100 }
 --------------------------------------
@@ -63,6 +79,10 @@ type   Weird   {
 # oxfmt-ignore
 query   Q   {
   weird   {   layout   }
+}
+
+type Normal {
+  b: Int
 }
 
 ===================== End =====================

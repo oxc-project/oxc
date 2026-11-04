@@ -6,7 +6,7 @@
 //!   `SafeByteMatchTable`.
 
 /// Batch size for searching
-pub const SEARCH_BATCH_SIZE: usize = 32;
+pub const SEARCH_BATCH_SIZE: usize = 16;
 
 /// Safe byte matcher lookup table.
 ///

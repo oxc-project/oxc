@@ -3,7 +3,7 @@ use oxc_macros::declare_oxc_lint;
 use crate::{
     context::LintContext,
     rule::Rule,
-    rules::shared::valid_expect::{DOCUMENTATION, ValidExpectConfig},
+    rules::shared::valid_expect::{DOCUMENTATION, SHORT_DESCRIPTION, ValidExpectConfig},
 };
 
 #[derive(Debug, Default, Clone)]
@@ -13,10 +13,12 @@ declare_oxc_lint!(
     ValidExpect,
     jest,
     correctness,
+    recommended,
     suggestion,
     config = ValidExpectConfig,
     docs = DOCUMENTATION,
     version = "0.0.14",
+    short_description = SHORT_DESCRIPTION,
 );
 
 impl Rule for ValidExpect {

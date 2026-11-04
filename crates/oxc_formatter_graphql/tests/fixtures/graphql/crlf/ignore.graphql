@@ -7,3 +7,7 @@ type   Weird   {
 query   Q   {
   weird   {   layout   }
 }
+
+type   Normal   {
+  b:   Int
+}

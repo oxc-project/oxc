@@ -39,3 +39,21 @@ const y = (a) =>
 
 // No comment: hugged layouts must stay unchanged
 foo(bar, (a) => (b) => ({ someVeryLongPropertyName: 1, anotherVeryLongPropertyName: 2 }));
+
+// No chain: a single arrow in a call follows the same rule
+pinia._p.push(() =>
+  // @ts-expect-error: invalid state
+  ({ external: { dark: true } })
+);
+call(() =>
+  // comment
+  []
+);
+call(() =>
+  /* block comment */
+  ({})
+);
+call(first, () =>
+  // comment
+  ({})
+);

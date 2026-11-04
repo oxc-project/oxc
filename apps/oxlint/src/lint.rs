@@ -12,7 +12,9 @@ use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 
 use oxc_config::GitignoreChecker;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
+use oxc_diagnostics::{
+    DiagnosticSender, DiagnosticService, GraphicalReportHandler, GraphicalTheme, OxcDiagnostic,
+};
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
     ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
@@ -26,7 +28,8 @@ use crate::{
         CliRunResult, DebugOption, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions,
     },
     config_loader::{
-        CliConfigLoadError, ConfigLoadError, ConfigLoader, materialize_default_plugins,
+        CliConfigLoadError, ConfigLoadError, ConfigLoader, config_discovery,
+        materialize_default_plugins,
     },
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
@@ -112,7 +115,7 @@ impl CliRunner {
         };
 
         let handler = if cfg!(any(test, feature = "testing")) {
-            GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
+            GraphicalReportHandler::new_themed(GraphicalTheme::none())
         } else {
             GraphicalReportHandler::new()
         };
@@ -192,7 +195,7 @@ impl CliRunner {
         // Currently it only disables Oxlint's own ignore sources (`.eslintignore`, `--ignore-path`, `--ignore-pattern`),
         // not git's. (Aligns with during walk filtering behavior)
         let mut gitignore_checker = GitignoreChecker::new();
-        paths.retain(|p| !gitignore_checker.is_gitignored(p, &self.cwd));
+        paths.retain(|p| !gitignore_checker.is_gitignored_walk_root(p, &self.cwd));
 
         // If explicit paths were provided but all have been filtered,
         // or the default cwd target is gitignored, return early.
@@ -245,7 +248,8 @@ impl CliRunner {
             // as the passed config file takes absolute precedence.
             basic_options.config.is_none() &&
             !misc_options.print_config &&
-            !self.options.list_rules;
+            !self.options.list_rules &&
+            config_discovery().nested_configs();
 
         let config_result = {
             let mut config_loader =
@@ -513,7 +517,6 @@ impl CliRunner {
 
         let cwd = options.cwd().to_path_buf();
 
-        // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
             .with_type_aware(type_aware)
@@ -585,7 +588,12 @@ impl CliRunner {
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
             oxlint_suppression_file_action,
-            rule_timings: rule_timing_store.as_ref().map(RuleTimingStore::collect),
+            rule_timings: rule_timing_store.as_ref().map(|store| {
+                crate::output_formatter::RuleTimings {
+                    records: store.collect(),
+                    js_plugin_runtime: store.js_plugin_runtime(),
+                }
+            }),
         }) {
             print_and_flush_stdout(stdout, &end);
         }
@@ -753,10 +761,20 @@ fn render_config_builder_error(
 
 #[cfg(test)]
 mod test {
-    use std::fs;
+    use std::{fs, process::Termination};
 
-    use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
+    use crate::{DEFAULT_OXLINTRC_NAME, cli::CliRunResult, tester::Tester};
     use oxc_linter::rules::RULES;
+
+    fn markdown_rule_row<'a>(output: &'a str, plugin: &str, name: &str) -> Vec<&'a str> {
+        output
+            .lines()
+            .find_map(|line| {
+                let cells = line.split('|').skip(1).take(5).map(str::trim).collect::<Vec<_>>();
+                (cells.len() == 5 && cells[0] == name && cells[1] == plugin).then_some(cells)
+            })
+            .unwrap_or_else(|| panic!("Missing rule row for {plugin}/{name}"))
+    }
 
     // lints the full directory of fixtures,
     // so do not snapshot it, test only
@@ -858,13 +876,16 @@ mod test {
         let (_, result) = Tester::new().with_cwd(pkg_path.clone()).test_output(&[]);
         assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
 
-        // Explicitly passed gitignored targets are skipped too;
-        // `--no-ignore` only disables Oxlint's own ignore sources, not git's.
-        let (_, result) = Tester::new().with_cwd(pkg_path.clone()).test_output(&["index.ts"]);
+        // Explicitly passed gitignored directories are skipped too.
+        let (_, result) = Tester::new().with_cwd(repo_path).test_output(&["sub/generated/pkg"]);
         assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
-        let (_, result) =
-            Tester::new().with_cwd(pkg_path).test_output(&["--no-ignore", "index.ts"]);
-        assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
+
+        // But an explicitly named file is linted even when gitignored;
+        // `.gitignore` only scopes discovery.
+        let (stdout, result) =
+            Tester::new().with_cwd(pkg_path).test_output(&["-D", "no-debugger", "index.ts"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
+        assert!(stdout.contains("on 1 file"), "{stdout}");
     }
 
     #[cfg(unix)]
@@ -1304,14 +1325,147 @@ mod test {
         let config_path = temp_dir.path().join(DEFAULT_OXLINTRC_NAME);
         assert!(!fs::exists(&config_path).unwrap());
 
-        let args = &["--init"];
-        Tester::new().with_cwd(temp_dir.path().to_path_buf()).test(args);
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        let (output, result) = tester.test_output(&["--init"]);
+        assert_eq!(output, "Configuration file created\n");
+        assert!(matches!(result, CliRunResult::ConfigFileInitSucceeded));
+        assert_eq!(result.report(), std::process::ExitCode::SUCCESS);
 
         assert!(fs::exists(&config_path).unwrap());
 
-        let content = fs::read_to_string(config_path).unwrap();
+        let content = fs::read_to_string(&config_path).unwrap();
 
         insta::assert_snapshot!("init_config", content);
+
+        assert_init_config_already_exists(&tester);
+        assert_eq!(fs::read_to_string(config_path).unwrap(), content);
+    }
+
+    fn assert_init_config_already_exists(tester: &Tester) {
+        let (output, result) = tester.test_output(&["--init"]);
+        assert_eq!(output, "Oxlint config file already exists.\nRemove it and re-run.\n");
+        assert!(matches!(result, CliRunResult::ConfigFileInitFailed));
+        assert_eq!(result.report(), std::process::ExitCode::FAILURE);
+    }
+
+    #[test]
+    fn test_init_config_existing_file() {
+        for (name, content) in [
+            (".oxlintrc.json", r#"{"rules":{"eqeqeq":"error"}}"#),
+            (".oxlintrc.json", "invalid JSON"),
+            (".oxlintrc.jsonc", "// custom config\n{}"),
+            ("oxlint.config.ts", "export default { rules: { eqeqeq: 'error' } };"),
+            ("oxlint.config.mts", "export default { rules: { eqeqeq: 'error' } };"),
+        ] {
+            let temp_dir = tempfile::tempdir().unwrap();
+            let config_path = temp_dir.path().join(name);
+            fs::write(&config_path, content).unwrap();
+
+            assert_init_config_already_exists(
+                &Tester::new().with_cwd(temp_dir.path().to_path_buf()),
+            );
+
+            assert_eq!(fs::read_to_string(config_path).unwrap(), content);
+            assert_eq!(fs::read_dir(temp_dir.path()).unwrap().count(), 1);
+        }
+    }
+
+    #[test]
+    fn test_init_config_multiple_existing_files() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let configs = [
+            (".oxlintrc.jsonc", "// custom config\n{}"),
+            ("oxlint.config.ts", "export default {};"),
+        ];
+        for (name, content) in configs {
+            fs::write(temp_dir.path().join(name), content).unwrap();
+        }
+
+        assert_init_config_already_exists(&Tester::new().with_cwd(temp_dir.path().to_path_buf()));
+
+        for (name, content) in configs {
+            assert_eq!(fs::read_to_string(temp_dir.path().join(name)).unwrap(), content);
+        }
+        assert_eq!(fs::read_dir(temp_dir.path()).unwrap().count(), configs.len());
+    }
+
+    #[test]
+    fn test_init_config_existing_directory() {
+        for name in [".oxlintrc.json", ".oxlintrc.jsonc", "oxlint.config.ts", "oxlint.config.mts"] {
+            let temp_dir = tempfile::tempdir().unwrap();
+            let config_path = temp_dir.path().join(name);
+            fs::create_dir(&config_path).unwrap();
+
+            assert_init_config_already_exists(
+                &Tester::new().with_cwd(temp_dir.path().to_path_buf()),
+            );
+
+            assert!(config_path.is_dir());
+            assert_eq!(fs::read_dir(&config_path).unwrap().count(), 0);
+            assert_eq!(fs::read_dir(temp_dir.path()).unwrap().count(), 1);
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_init_config_existing_symlink() {
+        for name in [".oxlintrc.json", ".oxlintrc.jsonc", "oxlint.config.ts", "oxlint.config.mts"] {
+            for dangling in [false, true] {
+                let temp_dir = tempfile::tempdir().unwrap();
+                let config_path = temp_dir.path().join(name);
+                let target = temp_dir.path().join("target");
+                let content = r#"{"rules":{"eqeqeq":"error"}}"#;
+                if !dangling {
+                    fs::write(&target, content).unwrap();
+                }
+                std::os::unix::fs::symlink(&target, &config_path).unwrap();
+
+                assert_init_config_already_exists(
+                    &Tester::new().with_cwd(temp_dir.path().to_path_buf()),
+                );
+
+                assert_eq!(fs::read_link(&config_path).unwrap(), target);
+                if dangling {
+                    assert!(!target.exists());
+                } else {
+                    assert_eq!(fs::read_to_string(target).unwrap(), content);
+                }
+                assert_eq!(
+                    fs::read_dir(temp_dir.path()).unwrap().count(),
+                    if dangling { 1 } else { 2 }
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_init_config_in_child_directory() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let parent_config_path = temp_dir.path().join(DEFAULT_OXLINTRC_NAME);
+        let content = r#"{"rules":{"eqeqeq":"error"}}"#;
+        fs::write(&parent_config_path, content).unwrap();
+        let child_dir = temp_dir.path().join("child");
+        fs::create_dir(&child_dir).unwrap();
+
+        let (output, result) = Tester::new().with_cwd(child_dir.clone()).test_output(&["--init"]);
+
+        assert_eq!(output, "Configuration file created\n");
+        assert!(matches!(result, CliRunResult::ConfigFileInitSucceeded));
+        assert!(child_dir.join(DEFAULT_OXLINTRC_NAME).is_file());
+        assert_eq!(fs::read_to_string(parent_config_path).unwrap(), content);
+    }
+
+    #[test]
+    fn test_init_config_missing_directory() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let cwd = temp_dir.path().join("missing");
+
+        let (output, result) = Tester::new().with_cwd(cwd.clone()).test_output(&["--init"]);
+
+        assert_eq!(output, "Failed to create configuration file\n");
+        assert!(matches!(result, CliRunResult::ConfigFileInitFailed));
+        assert_eq!(result.report(), std::process::ExitCode::FAILURE);
+        assert!(!cwd.exists());
     }
 
     #[test]
@@ -1583,6 +1737,20 @@ mod test {
     }
 
     #[test]
+    fn test_import_plugin_multi_group() {
+        // Regression test for overlapping import-graph groups.
+        // The CLI tester uses a 1-thread pool, so `group_size` is 4 and two groups are open at once.
+        // Groups take files longest path first, so the `_` padding in the fixture names sets the batches:
+        // 0. `hub`, `closed_*`: a chain into `hub` that finishes on its own.
+        // 1. `cycle_a`, `diamond_*`: `cycle_a` imports `hub` from the finished group 0.
+        // 2. `cycle_b`: `cycle_b` and `cycle_a` import each other, so groups 1 and 2 merge.
+        let args = &["--import-plugin", "-D", "import/no-cycle", "."];
+        Tester::new()
+            .with_cwd("fixtures/cli/import_plugin_multi_group".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_import_plugin_detects_cycles_with_auto_discovered_tsconfig_paths() {
         let args = &["--import-plugin", "-D", "import/no-cycle", "deep/src/dep-a.ts"];
         Tester::new().with_cwd("fixtures/lsp/ts_path_alias".into()).test_and_snapshot(args);
@@ -1651,6 +1819,39 @@ mod test {
             })
             .collect();
         assert!(rule_names.is_sorted(), "The rules list should be sorted by scope and value");
+
+        for (scope, value, expected) in [
+            ("eslint", "no-implied-eval", false),
+            ("typescript", "no-implied-eval", true),
+            ("typescript", "prefer-string-starts-ends-with", false),
+            ("unicorn", "prefer-string-starts-ends-with", true),
+            ("vue", "no-dupe-keys", false),
+            ("eslint", "no-dupe-keys", true),
+        ] {
+            let rule = rules
+                .iter()
+                .find(|rule| rule["scope"] == scope && rule["value"] == value)
+                .unwrap_or_else(|| panic!("Missing rule {scope}/{value}"));
+            assert_eq!(rule["default"], expected, "Incorrect default for {scope}/{value}");
+        }
+    }
+
+    #[test]
+    fn test_rules_markdown_output_uses_qualified_rule_names() {
+        let (stdout, _) = Tester::new().with_cwd("fixtures".into()).test_output(&["--rules"]);
+
+        for (plugin, name, expected) in [
+            ("eslint", "no-implied-eval", ""),
+            ("typescript", "no-implied-eval", "✅"),
+            ("typescript", "prefer-string-starts-ends-with", ""),
+            ("unicorn", "prefer-string-starts-ends-with", "✅"),
+            ("vue", "no-dupe-keys", ""),
+            ("eslint", "no-dupe-keys", "✅"),
+        ] {
+            let row = markdown_rule_row(&stdout, plugin, name);
+            assert_eq!(row[2], expected, "Incorrect default for {plugin}/{name}");
+            assert_eq!(row[3], expected, "Incorrect enabled state for {plugin}/{name}");
+        }
     }
 
     #[test]
@@ -1736,6 +1937,17 @@ mod test {
     fn test_tsgolint_type_check_only() {
         let args = &["--type-check-only"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_skips_rules() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_type_check_only_rules".into())
+            .test_and_snapshot_multiple(&[
+                &["--type-check-only", "index.ts"],
+                &["--type-check-only", "type-error.ts"],
+            ]);
     }
 
     #[test]
@@ -1877,6 +2089,17 @@ mod test {
 
     #[test]
     #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_tsgolint_same_name_rule_severity_with_overrides() {
+        // `unicorn/prefer-string-starts-ends-with` must not change the severity of the typescript rule
+        // See: https://github.com/oxc-project/oxc/issues/28136
+        let args = &["a.ts", "b.tsx"];
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_same_name_overrides".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
     fn test_tsgolint_fix() {
         Tester::new().test_fix_with_args(
             "fixtures/cli/tsgolint_fix/fix.ts",
@@ -2013,6 +2236,12 @@ export { redundant };
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_tuple_rules".into())
             .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_no_js_runtime() {
+        let args = &[];
+        Tester::new().with_cwd("fixtures/cli/no_js_runtime".into()).test_and_snapshot(args);
     }
 }
 
@@ -2383,7 +2612,7 @@ mod suppression {
     #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
     fn test_prunning_errors_update_the_file_when_errors_are_decreased() {
         SuppressionTester::new()
-            .with_cwd("with_arg_and_decreased_errors")
+            .with_cwd("with_arg_and_decreased_errors_prune")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)

@@ -132,6 +132,7 @@ declare_oxc_lint!(
     ConstructorSuper,
     eslint,
     correctness,
+    recommended,
     version = "0.0.3",
     short_description = "Enforce correct usage of `super()` in class constructors.",
 );
@@ -276,7 +277,7 @@ impl Rule for ConstructorSuper {
                     // Treat as single path
                     if super_call_spans.len() > 1 {
                         let mut sorted_spans = super_call_spans;
-                        sorted_spans.sort_by_key(|s| s.start);
+                        sorted_spans.sort_unstable_by_key(|s| s.start);
                         let first_super_span = sorted_spans[0];
 
                         for &span in sorted_spans.iter().skip(1) {
@@ -311,7 +312,7 @@ impl Rule for ConstructorSuper {
 
                     if has_duplicate && super_call_spans.len() > 1 {
                         let mut sorted_spans = super_call_spans;
-                        sorted_spans.sort_by_key(|s| s.start);
+                        sorted_spans.sort_unstable_by_key(|s| s.start);
                         let first_super_span = sorted_spans[0];
 
                         for &span in sorted_spans.iter().skip(1) {

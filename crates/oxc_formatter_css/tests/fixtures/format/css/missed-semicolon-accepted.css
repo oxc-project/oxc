@@ -1,0 +1,5 @@
+/* DIVERGENCES.md#missed-semicolon-accepted */
+a {
+  left: 0
+  top: 0;
+}

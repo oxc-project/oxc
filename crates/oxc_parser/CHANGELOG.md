@@ -4,6 +4,211 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.157.0] - 2026-11-02
+
+### 🚀 Features
+
+- deed7dc parser: More friendly error for duplicate import attribute key (#28262) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- c97c43c parser: Reject TypeScript default exports in JavaScript (#28440) (Boshen)
+- 3421516 parser: Preserve default import names in reexports (#28442) (Boshen)
+- a1e7e5f parser: Reject optional class members in JavaScript (#28439) (Boshen)
+- 5b9a7bc parser: Parse sloppy let expressions and labels (#28438) (Boshen)
+- 3b36543 parser: Preserve in-context after TypeScript type arguments (#28300) (Boshen)
+- fc8acbc parser: Handle leading-zero numeric exponents (#28295) (Boshen)
+- 91a638d parser: Normalize raw template line endings with invalid escapes (#28285) (Boshen)
+- 2ac9a42 parser: Allow parenthesized private-in expressions (#28284) (Boshen)
+
+### ⚡ Performance
+
+- babf44c parser: Reuse shorthand assignment target identifiers (#28504) (Boshen)
+- dbf8482 parser: Use token lookahead for simple function types (#28489) (Boshen)
+- bca1275 parser: Avoid unused destructuring rest capacity (#28499) (Boshen)
+- 691be5c parser: Compact cover initialized name storage (#28495) (Boshen)
+- b3b5444 parser: Build simple arrow bindings directly (#28493) (Boshen)
+- e1c9baf parser: Disambiguate single-identifier arrow heads (#28491) (Boshen)
+- 10e9fc7 parser: Skip duplicate lookup for singleton import attributes (#28441) (Boshen)
+- 5238839 parser: Use a stack buffer for float separators (#28435) (Boshen)
+- 6e35e3c parser: Fast-path leaf expressions before delimiters (#28432) (Boshen)
+- 3d7512c parser: Decode Unicode identifiers once (#28414) (Boshen)
+- 30f59f4 parser: Factor object type opening brace (#28430) (Boshen)
+- 028a267 parser: Always inline postfix update parsing (#28429) (Boshen)
+- 1b5a171 parser: Reuse export kind classification (#28424) (Boshen)
+- 179a432 parser: Factor return type identifier parsing (#28416) (Boshen)
+- 553dd1d parser: Inline hot paths and fold function dispatch (#28404) (Boshen)
+- de75d56 parser: Combine parenthesized arrow lookahead (#28412) (Boshen)
+- a768a0c parser: Reuse comment annotations after rewind (#28408) (Boshen)
+- 563d92a parser: Skip redundant source cursor updates (#28409) (Boshen)
+- 7941ca9 parser: Factor tuple identifier parsing (#28398) (Boshen)
+- 426c151 parser: Construct completed tokens without intermediate writes (#28291) (Boshen)
+- c2d663d parser: Avoid vectors for single parenthesized expressions (#28374) (Boshen)
+- 50bd0a9 parser: Size delimited lists after the first element (#28373) (Boshen)
+- bd869b5 parser: Bypass redundant operand parsing (#28372) (Boshen)
+- 455fc09 parser: Skip keyword checks for plain identifier expressions (#28371) (Boshen)
+- 61303fb parser: Fast-path identifier operands (#28306) (Boshen)
+- 6cf5b1a parser: Guard arrow and conditional parsing (#28305) (Boshen)
+- 3666939 parser: Specialize identifier reference parsing (#28303) (Boshen)
+- 0d6641a parser: Skip inapplicable expression parsing paths (#28294) (Boshen)
+- 3be7997 parser: Reduce lexer search batch size (#28292) (Boshen)
+- ec8e8d4 parser: Remove redundant grammar and lexer checks (#28287) (Boshen)
+- c903f5c parser: Specialize known-token parsing (#28286) (Boshen)
+
+## [0.156.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- af0258d parser: Parse source imports named type (#28062) (camc314)
+- 83633a7 parser: Parse escaped class field names after initializers (#28061) (camc314)
+- 90c58ac parser: Parse postfix updates of sloppy `let` identifiers (#28060) (camc314)
+
+### ⚡ Performance
+
+- a22c9f2 parser: Move annotation comment handling out of hot paths (#28139) (camc314)
+
+## [0.154.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- 7730e14 ast: [**BREAKING**] Refactor comment attachment storage (#27512) (camc314)
+- c904b61 ast: [**BREAKING**] Add comment attachment storage (#27393) (camc314)
+- b5e8eff parser: [**BREAKING**] Assign node IDs during parsing (#27411) (camc314)
+
+### 🐛 Bug Fixes
+
+- c57d9c7 parser: Apply no-side-effects annotations after export (#27504) (camc314)
+
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- 6a7d48b parser: Report abstract private field error on modifier (#27314) (camc314)
+- 2ff6fb5 parser: Include generator marker in overload diagnostic span (#27313) (camc314)
+- 4359a66 parser: Reject TypeScript class modifiers in JavaScript (#27312) (camc314)
+- d0b9372 parser: Remove type-dependent tuple rest diagnostics (#27234) (camc314)
+- 3d61a59 parser: Validate TypeScript type member separators (#27222) (camc314)
+- b2793fa parser: Reject module syntax in script (#27220) (leaysgur)
+- 5914a24 parser: Report `TS1243` for abstract async methods (#27192) (camc314)
+- c6c6e5e parser: Report `TS1242` for interfaces with `abstract` modifier (#27191) (camc314)
+- dd0bbb9 parser: Avoid duplicate index signature modifier diagnostic (#27190) (camc314)
+
+## [0.152.0] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- 5186328 parser: Handle HTML comment values (#22933) (Boshen)
+- 01ff33e parser: Reject module export names containing a lone surrogate (#26953) (Dunqing)
+
+## [0.151.0] - 2026-09-21
+
+### 🐛 Bug Fixes
+
+- 7811f0a parser: Preserve reparsed `await` tokens (#26619) (camc314)
+- 3130405 parser: Recover await using object binding patterns (#26721) (camc314)
+- 827fdbd parser: Reject invalid modifiers on import aliases (#26622) (camc314)
+
+## [0.150.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- 8ca76da parser: Reject `accessor` modifiers on methods (#26617) (camc314)
+- 1916f31 parser: Reject `readonly` modifier on constructors (#26612) (camc314)
+- 1c42008 parser: Handle escaped let in for loops (#26583) (camc314)
+- d21d5cf parser: Recognize annotated empty arrows in conditionals (#26537) (camc314)
+- d7713ad parser: Classify Unicode line breaks in block comments (#26536) (camc314)
+- b32d25d parser: Reject escaped import-phase keywords (#26534) (camc314)
+- 47b8311 parser: Recognize contextual binding names in type lookaheads (#26532) (camc314)
+- d6b6705 parser: Require arrow separator in TypeScript function types (#26529) (camc314)
+- e98beef parser: Disambiguate await using in for initializers (#26527) (camc314)
+- 92afee6 parser: Allow parenthesized JSX comma expressions with preserve_parens=false (#26524) (camc314)
+- 31508b1 parser: Reject return types on constructor overloads (#26523) (camc314)
+- a091fc4 parser: Validate await context for await using declarations (#26495) (camc314)
+- 5501e86 parser: Disallow in expressions in using for-loop initializers (#26490) (camc314)
+- c8e5fa7 parser: Allow escaped type names in import and export specifiers (#26487) (camc314)
+- 2dcee2f parser: Reject async modifiers on class fields (#26486) (camc314)
+- 973d58e parser: Require comma after TypeScript this parameter (#26480) (camc314)
+- cfa47ab parser: Allow `in` expressions in class static blocks (#26423) (camc314)
+- d61e3bf parser: Validate TS named tuple rest elements (#26419) (camc314)
+- 10521b2 parser: Allow escaped type default import bindings (#26409) (camc314)
+- 72cb5e3 parser: Reject rest parameters in getters (#26400) (camc314)
+- 4e76602 parser: Allow `in` in arrow block bodies within `for` initializers (#26395) (camc314)
+- b20fc19 parser: Reject partially parenthesized mixed coalesce expressions (#26394) (camc314)
+
+## [0.149.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 66744f0 parser: [**BREAKING**] Rename `panicked` to `fatal_error` in `ParserReturn` (#26382) (overlookmotel)
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🚀 Features
+
+- bfb4c57 parser: Distinguish unapplied no-side-effects comments (#26120) (碳苯 Carbon)
+
+### 🐛 Bug Fixes
+
+- 1400a0f parser: Require a string source after `export ... from` (#26389) (camc314)
+- 9a02337 parser: Correctly round large nondecimal literals (#26379) (camc314)
+- c966aca parser: Do not omit `<` token opening type argument list (#26328) (overlookmotel)
+- 3ab9bd1 parser: Do not re-lex template substitution tail after fatal error (#26230) (overlookmotel)
+- 07851b9 parser: Fix debug assert failure when lexer error with tokens enabled (#26229) (overlookmotel)
+
+### ⚡ Performance
+
+- 356def6 parser: Shrink annotation comment ranges (#26356) (overlookmotel)
+- a5be474 parser: Shave instruction off `parse_jsx_element_name` (#26355) (overlookmotel)
+- 9780663 parser: Remove fatal error guard from `parse_jsx_element_name` (#26354) (overlookmotel)
+- 766e12f parser: Remove `token` field from `LexerCheckpoint` (#26350) (overlookmotel)
+
+## [0.148.0] - 2026-08-31
+
+### 🚀 Features
+
+- 5672585 parser: Attach all comments to nodes (#25944) (camc314)
+
+### 🐛 Bug Fixes
+
+- dc09a3a parser: Avoid panic on escaped string export names (#26146) (camc314)
+- d5163d0 parser: Correctly classify unapplied pure annotations (#26084) (camc314)
+
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 2dad1e0 parser: Track irregular line terminators in trivia (#25947) (camc314)
+
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- 8ab883a codegen: Preserve property key annotations (#25766) (Dunqing)
+- fca2e0c parser: Reject initialized lexical declarations in for-in (#25700) (Boshen)
+- ae9be8f parser: Forbid type parameters on quoted constructors (#25696) (Boshen)
+- 23a7ad0 parser: Stop delimited lists at end of file (#25542) (Boshen)
+- 73acba9 parser: Preserve fatal errors during await reparse (#25541) (Boshen)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🐛 Bug Fixes
+
+- c49f4ce parser: Preserve terminal license comments (#25400) (camc314)
+- 12937b3 parser: Reject comma expressions in class fields (#25385) (Cameron)
+- 9e93ba6 parser: Reset auto-accessor initializer context (#25384) (camc314)
+- cc2e28d parser: Reject trailing tokens in `Parser::parse_expression` (#25371) (camc314)
+- 4d723ca parser: Report TS1035 for quoted module names (#25305) (camc314)
+
+### ⚡ Performance
+
+- e420816 parser: Optimize trailing comma tracking (#25376) (camc314)
+
 ## [0.143.0] - 2026-08-03
 
 ### 💥 BREAKING CHANGES

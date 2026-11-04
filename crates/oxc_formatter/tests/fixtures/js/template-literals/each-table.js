@@ -17,3 +17,11 @@ it.each`
     ${[]}
     ${[[]]}
   `("should return undefined when source is $source", ({ source }) => {});
+
+// Cells whose expressions carry `expand_parent` sources (long member chain, call arguments)
+// still measure as single-line columns; the softline removal wins
+it.each`
+  a | expected
+  ${wrapper.instance().methods().filterProp().someOtherLongMethod().value()} | ${1}
+  ${buildSomething(argumentNumberOne, argumentNumberTwo, argumentNumberThree)} | ${2}
+`("returns $expected", ({ a, expected }) => {});

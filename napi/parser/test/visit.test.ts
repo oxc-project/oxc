@@ -262,3 +262,28 @@ it("visitor keys", () => {
   expect(visitorKeys.ParenthesizedExpression).toEqual(["expression"]);
   expect(visitorKeys.V8IntrinsicExpression).toEqual(["name", "arguments"]);
 });
+
+it("emits node keys in a stable order", () => {
+  const { program } = parseSync(
+    "test.ts",
+    "const fn = async <T>(arg: T): Promise<T> => await arg;",
+  );
+  const [declaration] = program.body;
+  if (declaration.type !== "VariableDeclaration") throw new Error("Expected variable declaration");
+  const [{ init }] = declaration.declarations;
+  if (init?.type !== "ArrowFunctionExpression") throw new Error("Expected arrow function");
+
+  expect(Object.keys(init)).toStrictEqual([
+    "type",
+    "expression",
+    "async",
+    "typeParameters",
+    "params",
+    "returnType",
+    "body",
+    "id",
+    "generator",
+    "start",
+    "end",
+  ]);
+});

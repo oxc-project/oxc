@@ -19,10 +19,10 @@ const plugin: Plugin = {
           Program(program) {
             context.report({
               message:
-                "program:\n" +
-                `start/end: [${program.start},${program.end}]\n` +
-                `range: [${program.range}]\n` +
-                `loc: [${JSON.stringify(program.loc)}]`,
+                "program:\n"
+                + `start/end: [${program.start},${program.end}]\n`
+                + `range: [${program.range}]\n`
+                + `loc: [${JSON.stringify(program.loc)}]`,
               node: program,
             });
             visits.push(program.type);
@@ -49,10 +49,10 @@ const plugin: Plugin = {
 
             context.report({
               message:
-                `ident "${ident.name}":\n` +
-                `start/end: [${ident.start},${ident.end}]\n` +
-                `range: [${ident.range}]\n` +
-                `loc: [${JSON.stringify(loc)}]`,
+                `ident "${ident.name}":\n`
+                + `start/end: [${ident.start},${ident.end}]\n`
+                + `range: [${ident.range}]\n`
+                + `loc: [${JSON.stringify(loc)}]`,
               node: ident,
             });
             visits.push(`${ident.type}: ${ident.name}`);

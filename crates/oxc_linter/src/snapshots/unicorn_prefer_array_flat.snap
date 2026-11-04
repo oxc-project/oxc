@@ -125,48 +125,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:1]
- 1 │ [].concat(maybeArray)
-   · ─────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ [].concat( ((0, maybeArray)) )
-   · ──────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ [].concat( ((maybeArray)) )
-   · ───────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ [].concat( [foo] )
-   · ──────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ [].concat( [[foo]] )
-   · ────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:22]
- 1 │ function foo(){return[].concat(maybeArray)}
-   ·                      ─────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
  1 │ [].concat(...array)
    · ───────────────────
    ╰────
@@ -258,41 +216,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:1]
- 1 │ [].concat.call([], maybeArray)
-   · ──────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ [].concat.call([], ((0, maybeArray)))
-   · ─────────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ [].concat.call([], ((maybeArray)))
-   · ──────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ [].concat.call([], [foo])
-   · ─────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ [].concat.call([], [[foo]])
-   · ───────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
  1 │ [].concat.call([], ...array)
    · ────────────────────────────
    ╰────
@@ -377,41 +300,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:1]
- 1 │ Array.prototype.concat.call([], maybeArray)
-   · ───────────────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ Array.prototype.concat.call([], ((0, maybeArray)))
-   · ──────────────────────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ Array.prototype.concat.call([], ((maybeArray)))
-   · ───────────────────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ Array.prototype.concat.call([], [foo])
-   · ──────────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ Array.prototype.concat.call([], [[foo]])
-   · ────────────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
  1 │ Array.prototype.concat.call([], ...array)
    · ─────────────────────────────────────────
    ╰────
@@ -476,31 +364,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Call `.flat()` on the array instead.
 
   ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:2:13]
- 1 │ before()
- 2 │             Array.prototype.concat.call([], +1)
-   ·             ───────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:1]
  1 │ Array.prototype.concat.apply([], (0, array))
    · ────────────────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ Array.prototype.concat.call([], (0, array))
-   · ───────────────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:29]
- 1 │ async function a() { return [].concat(await getArray()); }
-   ·                             ───────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
 
@@ -515,24 +381,8 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:2:13]
  1 │ before()
- 2 │             Array.prototype.concat.call([], 1)
-   ·             ──────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:2:13]
- 1 │ before()
  2 │             Array.prototype.concat.apply([], 1.)
    ·             ────────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:2:13]
- 1 │ before()
- 2 │             Array.prototype.concat.call([], 1.)
-   ·             ───────────────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
 
@@ -547,45 +397,8 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:2:13]
  1 │ before()
- 2 │             Array.prototype.concat.call([], .1)
-   ·             ───────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:2:13]
- 1 │ before()
  2 │             Array.prototype.concat.apply([], 1.0)
    ·             ─────────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:2:13]
- 1 │ before()
- 2 │             Array.prototype.concat.call([], 1.0)
-   ·             ────────────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ [].concat(some./**/array)
-   · ─────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ [/**/].concat(some./**/array)
-   · ─────────────────────────────
-   ╰────
-  help: Call `.flat()` on the array instead.
-
-  ⚠ unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ [/**/].concat(some.array)
-   · ─────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
 

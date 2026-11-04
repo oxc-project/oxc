@@ -1,0 +1,21 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<p>CDATA: <![CDATA[text]]> here.</p>
+<p>a <![CDATA[x]]> b <![CDATA[y]]> c</p>
+
+==================== Output ====================
+-------------------------------------------------------
+{ htmlWhitespaceSensitivity: "ignore", printWidth: 80 }
+-------------------------------------------------------
+<p>CDATA: <![CDATA[text]]> here.</p>
+<p>a <![CDATA[x]]> b <![CDATA[y]]> c</p>
+
+--------------------------------------------------------
+{ htmlWhitespaceSensitivity: "ignore", printWidth: 100 }
+--------------------------------------------------------
+<p>CDATA: <![CDATA[text]]> here.</p>
+<p>a <![CDATA[x]]> b <![CDATA[y]]> c</p>
+
+===================== End =====================

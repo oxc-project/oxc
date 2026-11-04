@@ -87,13 +87,6 @@ macro_rules! parser_diagnostics {
 }
 
 parser_diagnostics! {
-    redeclaration(name: &'a str, declare_span: Span, redeclare_span: Span) => {
-        OxcDiagnostic::error(format!("Identifier `{name}` has already been declared")).with_labels([
-            declare_span.label(format!("`{name}` has already been declared here")),
-            redeclare_span.label("It can not be redeclared here"),
-        ])
-    };
-
     overlong_source() => {
         OxcDiagnostic::error("Source length exceeds 4 GiB limit")
     };
@@ -428,20 +421,6 @@ parser_diagnostics! {
         ])
     };
 
-    // A rest element cannot follow another rest element. ts(1265)
-    rest_element_cannot_follow_another_rest_element(seen_span: Span, span: Span) => {
-        ts_error("1265", "A rest element cannot follow another rest element.")
-            .with_labels([span.label("Second rest element here"), seen_span.label("First seen here")])
-    };
-
-    // An optional element cannot follow a rest element. ts(1266)
-    optional_element_cannot_follow_rest_element(span: Span, rest_span: Span) => {
-        ts_error("1266", "An optional element cannot follow a rest element.").with_labels([
-            span.label("Optional element here"),
-            rest_span.label("Rest element seen here"),
-        ])
-    };
-
     // A type-only import can specify a default import or named bindings, but not both. ts(1363)
     type_only_import_default_and_named(specifier_span: Span) => {
         ts_error(
@@ -488,11 +467,6 @@ parser_diagnostics! {
             "The left-hand side of an assignment expression must be a variable or a property access.",
         )
         .with_label(span)
-    };
-
-    new_optional_chain(span: Span) => {
-        OxcDiagnostic::error("Optional chaining cannot appear in the callee of new expressions")
-            .with_label(span)
     };
 
     invalid_new_optional_chain(span: Span) => {
@@ -759,6 +733,11 @@ parser_diagnostics! {
         .with_label(span)
     };
 
+    initializer_in_for_in_lexical_declaration(span: Span) => {
+        OxcDiagnostic::error("for-in loop variable declaration may not have an initializer")
+            .with_label(span)
+    };
+
     using_declarations_must_be_initialized(span: Span) => {
         OxcDiagnostic::error("Using declarations must have an initializer.")
             .with_label(span)
@@ -852,10 +831,6 @@ parser_diagnostics! {
             .with_label(span)
     };
 
-    private_in_private(span: Span) => {
-        OxcDiagnostic::error("Unexpected right-hand side of private-in expression").with_label(span)
-    };
-
     unexpected_private_identifier(span: Span) => {
         OxcDiagnostic::error("Unexpected private identifier").with_label(span)
     };
@@ -880,12 +855,34 @@ parser_diagnostics! {
         OxcDiagnostic::error("A rest parameter cannot have an initializer.").with_label(span)
     };
 
+    top_level(statement: &'static str, span: Span) => {
+        OxcDiagnostic::error(format!(
+            "'{statement}' declaration can only be used at the top level of a module"
+        ))
+        .with_label(span)
+    };
+
+    module_code(statement: &'static str, span: Span) => {
+        OxcDiagnostic::error(format!("Cannot use {statement} outside a module")).with_label(span)
+    };
+
     import_requires_a_specifier(span: Span) => {
         OxcDiagnostic::error("import() requires a specifier.").with_label(span)
     };
 
+    declare_modifier_on_import(span: Span) => {
+        ts_error("1079", "A 'declare' modifier cannot be used with an import declaration.")
+            .with_label(span)
+    };
+
     modifier_cannot_be_used_here(modifier: Modifier, allowed: Option<ModifierKinds>) => {
         OxcDiagnostic::error(format!("'{}' modifier cannot be used here.", modifier.kind))
+            .with_label(modifier.span())
+            .with_allowed_modifier_help(allowed)
+    };
+
+    accessor_only_on_property_declaration(modifier: Modifier, allowed: Option<ModifierKinds>) => {
+        ts_error("1275", "'accessor' modifier can only appear on a property declaration.")
             .with_label(modifier.span())
             .with_allowed_modifier_help(allowed)
     };
@@ -1184,6 +1181,16 @@ parser_diagnostics! {
         ts_error("5087", "A labeled tuple element is declared as rest with a '...' before the name, rather than before the type.").with_label(span)
     };
 
+    modifier_in_ts(kind: ModifierKind, span: Span) => {
+        ts_error("8009", format!("The '{kind}' modifier can only be used in TypeScript files."))
+            .with_label(span)
+    };
+
+    optional_class_member_in_ts(span: Span) => {
+        OxcDiagnostic::error("Optional class members can only be used in TypeScript files.")
+            .with_label(span)
+    };
+
     parameter_modifiers_in_ts(modifier: Modifier, allowed: Option<ModifierKinds>) => {
         ts_error("8012", "Parameter modifiers can only be used in TypeScript files.")
             .with_label(modifier.span())
@@ -1339,6 +1346,15 @@ parser_diagnostics! {
         OxcDiagnostic::error("Only string literals are allowed as module attribute values.")
             .with_label(span)
             .with_help("Wrap this with quotes")
+    };
+
+    duplicate_import_attribute_key(name: &'a str, previous_span: Span, duplicate_span: Span) => {
+        OxcDiagnostic::error(format!("Duplicate import attribute key `{name}`"))
+            .with_labels([
+                previous_span.label(format!("`{name}` was already specified here")),
+                duplicate_span.label("This key is repeated"),
+            ])
+            .with_help("Each import attribute key must be unique")
     };
 
     // TS18058

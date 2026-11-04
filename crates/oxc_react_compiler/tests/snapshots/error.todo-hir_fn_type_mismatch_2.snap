@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.todo-hir_fn_type_mismatch_2
 ---
 Parse errors:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unexpected token", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(680), length: 3 }, primary: false }]), help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unexpected token", labels: [LabeledSpan { label: None, span: Span { start: 680, end: 683 }, primary: false }], help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

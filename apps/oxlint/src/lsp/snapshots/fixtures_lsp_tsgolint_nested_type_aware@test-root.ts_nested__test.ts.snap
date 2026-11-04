@@ -9,7 +9,7 @@ File URI: file://<variable>/fixtures/lsp/tsgolint/nested_type_aware/test-root.ts
 
 code: "eslint(no-unused-expressions)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html"
-message: "Expected expression to be used\nhelp: Consider using this expression or removing it"
+message: String("Expected expression to be used\nhelp: Consider using this expression or removing it")
 range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 8 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/lsp/tsgolint/nested_type_aware/test-root.ts"
@@ -65,7 +65,7 @@ File URI: file://<variable>/fixtures/lsp/tsgolint/nested_type_aware/nested/test.
 
 code: "eslint(no-unused-expressions)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html"
-message: "Expected expression to be used\nhelp: Consider using this expression or removing it"
+message: String("Expected expression to be used\nhelp: Consider using this expression or removing it")
 range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 8 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/lsp/tsgolint/nested_type_aware/nested/test.ts"

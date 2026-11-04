@@ -4,6 +4,151 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2026-11-02
+
+### 💥 BREAKING CHANGES
+
+- 296623d oxfmt: [**BREAKING**] Format `parser:html` files by `oxc_formatter_htmlish` (#28273) (Yuji Sugiura)
+
+### ⚡ Performance
+
+- 633ee96 formatter_css: Use `u32` spans (#28708) (leaysgur)
+- ff7c203 formatter_css: Avoid repeated scans and allocations in values (#28706) (leaysgur)
+
+### 📚 Documentation
+
+- 01ed68a oxfmt,formatter_htmlish,formatter: Clean up behavior comments (#28384) (Yuji Sugiura)
+- a363c27 formatter_css,formatter_yaml: Point parser citations at AGENTS.md (#28466) (Yuji Sugiura)
+
+## [0.75.0] - 2026-10-27
+
+### ⚡ Performance
+
+- 7948f0b formatter_core: Shrink `FormatElement` to 16B (#28012) (leaysgur)
+
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 81c75e7 formatter/css: Keep glued css-in-js statement placeholders glued (#27814) (leaysgur)
+- 5b2acb0 formatter_core: Report error position releative to CRLF source (#27777) (leaysgur)
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+
+### ⚡ Performance
+
+- e5fdc9c formatter_core: Write into one element stack through a concrete `Formatter` (#27559) (leaysgur)
+
+## [0.73.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- c2e6d5f formatter_toml: [**BREAKING**] Add `oxc_formatter_toml` crate wrapping `oxc-toml` (#27365) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 76ec31b formatter_css: Support css-in-js placeholders in property names and conditions (#27640) (leaysgur)
+- 99bb268 formatter_css: Keep css-in-js placeholder as media type (#27639) (leaysgur)
+- 372849e formatter: Fix crash on css-in-js comment containing interpolation (#27638) (leaysgur)
+- d730fdd formatter_core: Leave blank frontmatter without dispatcher (#27359) (leaysgur)
+
+### 📚 Documentation
+
+- 4a28c91 formatter_css: Clarify `missed-semicolon-accepted` divergence (#27433) (leaysgur)
+
+## [0.72.0] - 2026-10-05
+
+### 💥 BREAKING CHANGES
+
+- e2c68b1 oxfmt: [**BREAKING**] Format `parser:markdown` files by `oxc_formatter_markdown` (#27256) (leaysgur)
+
+### 🚀 Features
+
+- b538e3c formatter_css: Parse embedded CSS as a block's contents (#27284) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- e9ae2d8 formatter_css: Fix layouts found in mdn-content repo (css-in-md) (#27326) (leaysgur)
+- 6c08f2a formatter_css: Apply the `url()` import exception to a lone comma group (#27288) (leaysgur)
+- 1967302 formatter_css: Hug a spaced `ident (` only at the at-rule prelude head (#27283) (leaysgur)
+
+### 📚 Documentation
+
+- 51506c6 formatter_css: Record divergences found in mdn-content (css-in-md) (#27327) (leaysgur)
+
+## [0.69.0] - 2026-09-21
+
+### 📚 Documentation
+
+- d8a716c formatter_css: Unify DIVERGENCES reference (#26749) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- dc45cc3 formatter_test: Test Prettier dynamic snippet tests (#26469) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- aef8b4a formatter_css: Handle less-test-suites failures (#26513) (leaysgur)
+
+## [0.67.0] - 2026-09-07
+
+### 🚀 Features
+
+- 68e12ab formatter_css: Follow the oxc-css-parser's acceptance line (#26337) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 3d00a76 formatter_css: Keep comment inside important and simple-vars colon (#26370) (leaysgur)
+- 172ddb6 formatter_css: Keep a same-line line comment on its line (#26321) (leaysgur)
+- cafaf32 formatter_css: Never drop comments inside an at-rule prelude (#26320) (leaysgur)
+- 534a0fe formatter_css: Keep a line comment on its comma's line (#26319) (leaysgur)
+- 99cfd75 formatter_css: Hide raw comment printing API, use strcut instead (#26316) (leaysgur)
+- 2028896 formatter_css: Preserve comments around SCSS/Less variable values (#26276) (leaysgur)
+- 6752abc formatter_css: Keep leading comments before (#26272) (leaysgur)
+- 3b054de formatter_graphql: Align comment printing after open `{` (#26271) (leaysgur)
+- b3c287a formatter_css: Fix SCSS bracket list printing (#26270) (leaysgur)
+- bac770a formatter_css: Preserve comment in SCSS paren comma list (#26269) (leaysgur)
+- c7b57ef formatter_css: Print SCSS map consisntent with and without comment (#26268) (leaysgur)
+- 063e2b6 formatter_css: Preserve trailing comma in single-item scss lists (#26245) (leaysgur)
+
+### 📚 Documentation
+
+- 4fabdcc formatter,formatter_css,formatter_graphql,formatter_yaml: Update DIVERGENCES.md (#26267) (leaysgur)
+
+## [0.66.0] - 2026-08-31
+
+### 🚀 Features
+
+- 1fb37b6 formatter/css: Format declaration-shaped raw-prelude rules (postcss nested config blocks) (#26194) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 57e8e22 formatter_css: Space a folded sign after a call in Less operations (#26134) (leaysgur)
+
+### 📚 Documentation
+
+- 181953b oxfmt,formatter_core,formatter,formatter_yaml,formatter_css,formatter_graphql: Extract `DIVERGENCES.md` out from `AGENTS.md` (#26121) (leaysgur)
+
+## [0.64.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- 5c0a5ff formatter_css: Fill own-line block comments inside space-separated values (#25578) (leaysgur)
+- 53debfa formatter_css: Keep trailing comma and indent after comment-preceded last map value (#25577) (leaysgur)
+- 40d38a0 formatter_css: Keep multi value function args intact after leading comment (#25518) (leaysgur)
+
+## [0.63.0] - 2026-08-10
+
+### 🚀 Features
+
+- fd02a89 oxfmt: Dispatch yaml-in-css(frontmatter) to `oxc_formatter_yaml` (#25336) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 2eaede9 formatter_core: Unify leading-BOM handlings (#25340) (leaysgur)
+- e23dccf formatter_css: Bump oxc-css-parser to accept unknown at-rule with interpolated (#25277) (leaysgur)
+
 ## [0.62.0] - 2026-08-03
 
 ### 🐛 Bug Fixes

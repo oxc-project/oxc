@@ -43,12 +43,25 @@ impl<'a> PeepholeOptimizations {
                     || matches!(first, Statement::FunctionDeclaration(_))
                     || (matches!(first, Statement::IfStatement(decl) if decl.alternate.is_some())
                         && matches!(ctx.parent(), Ancestor::IfStatementConsequent(_)))
+                    || (first.is_iteration_statement() && ctx.parent().is_labeled_statement())
                 {
                     return;
                 }
 
                 let new_stmt = s.body.remove(0);
-                ctx.replace_statement(stmt, new_stmt);
+                // The unwrap drops no references and preserves side effects,
+                // and the enclosing nodes exit later in this pass, so it needs
+                // no extra pass on its own. A direct body-list item is the
+                // exception: `var` symbol values and the constructor `super()`
+                // scan depend on that position, and a later pass sees it.
+                if matches!(
+                    ctx.parent(),
+                    Ancestor::ProgramBody(_) | Ancestor::FunctionBodyStatements(_)
+                ) {
+                    ctx.replace_statement(stmt, new_stmt);
+                } else {
+                    ctx.replace_statement_settled(stmt, new_stmt);
+                }
             }
             _ => {}
         }
@@ -197,19 +210,60 @@ impl<'a> PeepholeOptimizations {
         }
         match test_boolean {
             Some(false) => match &for_stmt.init {
+                Some(ForStatementInit::VariableDeclaration(decl)) if !decl.kind.is_var() => {
+                    ctx.replace_statement_with(stmt, |stmt, ctx| {
+                        let Statement::ForStatement(for_stmt) = stmt else { unreachable!() };
+                        let scope_id = for_stmt.scope_id();
+                        let ForStatement { span, init, test, update, body, .. } = for_stmt.unbox();
+                        let Some(ForStatementInit::VariableDeclaration(decl)) = init else {
+                            unreachable!()
+                        };
+                        let mut keep_var = KeepVar::new();
+                        keep_var.visit_statement(&body);
+                        ctx.drop_statement(&body);
+                        if let Some(test) = test {
+                            ctx.drop_expression(&test);
+                        }
+                        if let Some(update) = update {
+                            ctx.drop_expression(&update);
+                        }
+                        let mut statements =
+                            ArenaVec::from_array_in([Statement::VariableDeclaration(decl)], ctx);
+                        if let Some(var_stmt) =
+                            keep_var.get_variable_declaration_statement(&ctx.ast)
+                        {
+                            statements.push(var_stmt);
+                        }
+                        // The initializer still runs, including destructuring effects and TDZ
+                        // checks. Reuse the loop scope to keep its lexical bindings isolated.
+                        Statement::new_block_statement_with_scope_id(
+                            span, statements, scope_id, ctx,
+                        )
+                    });
+                }
                 Some(ForStatementInit::VariableDeclaration(_)) => {
                     let mut keep_var = KeepVar::new();
                     keep_var.visit_statement(&for_stmt.body);
                     let mut var_decl = keep_var.get_variable_declaration(&ctx.ast);
-                    let Some(ForStatementInit::VariableDeclaration(var_init)) = &mut for_stmt.init
-                    else {
-                        return;
-                    };
-                    if var_init.kind.is_var() {
+                    let init_is_var = matches!(
+                        &for_stmt.init,
+                        Some(ForStatementInit::VariableDeclaration(var_init)) if var_init.kind.is_var()
+                    );
+                    if init_is_var {
                         if let Some(var_decl) = &mut var_decl {
+                            let Some(ForStatementInit::VariableDeclaration(var_init)) =
+                                &mut for_stmt.init
+                            else {
+                                unreachable!()
+                            };
                             var_decl.declarations.splice(0..0, var_init.declarations.take_in(ctx));
                         } else {
-                            var_decl = Some(var_init.take_in_box(ctx));
+                            let Some(ForStatementInit::VariableDeclaration(var_init)) =
+                                for_stmt.init.take()
+                            else {
+                                unreachable!()
+                            };
+                            var_decl = Some(var_init);
                         }
                     }
                     let new_stmt = var_decl.map_or_else(
@@ -230,7 +284,6 @@ impl<'a> PeepholeOptimizations {
                 _ => {}
             },
             Some(true) => {
-                // Remove the test expression.
                 if let Some(old) = for_stmt.test.take() {
                     ctx.drop_expression(&old);
                 }
@@ -246,9 +299,9 @@ impl<'a> PeepholeOptimizations {
     /// ```
     pub fn try_fold_labeled(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::LabeledStatement(s) = stmt else { return };
-        let id = s.label.name.as_str();
+        let id = s.label.name;
 
-        if ctx.options().drop_labels.contains(id) {
+        if ctx.options().drop_labels.contains(id.as_str()) {
             let new_stmt = Statement::new_empty_statement(s.span, ctx);
             ctx.replace_statement(stmt, new_stmt);
             return;
@@ -258,8 +311,8 @@ impl<'a> PeepholeOptimizations {
         // Check if we need to remove the whole block.
         match &mut s.body {
             Statement::BreakStatement(break_stmt)
-                if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id) => {}
-            Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
+                if break_stmt.label.as_ref().is_some_and(|l| l.name == id) => {}
+            Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name == id))) => {}
             Statement::EmptyStatement(_) => {
                 let new_stmt = Statement::new_empty_statement(s.span, ctx);
                 ctx.replace_statement(stmt, new_stmt);
@@ -280,6 +333,93 @@ impl<'a> PeepholeOptimizations {
             let new_stmt = Statement::new_empty_statement(expr_stmt.span, ctx);
             ctx.replace_statement(stmt, new_stmt);
         }
+    }
+
+    pub fn try_fold_switch(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Statement::SwitchStatement(switch_stmt) = stmt else { return };
+
+        // Remove empty case clauses that don't affect behavior.
+        // Handles fall-through semantics: remove empty cases before default or at end (if no default).
+        // e.g., `switch(x){ case 0: foo(); break; case 1: default: bar() }`
+        // => `switch(x){ case 0: foo(); break; default: bar() }`
+        // https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
+        let case_count = switch_stmt.cases.len();
+        if case_count == 1 {
+            if Self::is_switch_case_removable(&switch_stmt.cases[0], true) {
+                ctx.drop_switch_case(&switch_stmt.cases.pop().unwrap());
+            }
+        } else if case_count > 1 {
+            // Determine the range [0, end] to check for removable cases.
+            // 1. default exists and is empty: check the full switch.
+            // 2. default exists and is non-removable and last: check only cases before that default.
+            // 3. default exists, is non-removable, and is not last: skip this optimization (`end = 0`).
+            // 4. no default case: check the full switch and allow a trailing unlabeled `break`.
+            let default_pos = switch_stmt.cases.iter().rposition(SwitchCase::is_default_case);
+            let (end, allow_break) = if let Some(default_pos) = default_pos {
+                if Self::is_switch_case_removable(&switch_stmt.cases[default_pos], true) {
+                    (case_count, true)
+                } else if default_pos == case_count - 1 {
+                    (default_pos, false)
+                } else {
+                    (0, false)
+                }
+            } else {
+                (case_count, true)
+            };
+
+            if end > 0 {
+                // Last non-removable case index in [0, end]. Returns None if all cases are removable.
+                let last_non_removable_case_before_end = switch_stmt.cases[..end]
+                    .iter()
+                    .rposition(|case| !Self::is_switch_case_removable(case, allow_break));
+
+                // Calculate the start of the removable suffix.
+                // 1. next case after last non-removable: remove from pos + 1
+                // 2. no non-removable case: all cases are removable, start from 0
+                let start = match last_non_removable_case_before_end {
+                    Some(pos) => pos + 1,
+                    None => 0,
+                };
+
+                // Remove the removable suffix if any
+                if start < end && default_pos.is_none_or(|pos| pos >= start) {
+                    for removed_case in switch_stmt.cases.drain(start..end) {
+                        ctx.drop_switch_case(&removed_case);
+                    }
+                }
+            }
+        }
+
+        if switch_stmt.cases.is_empty() {
+            let new_stmt = Statement::new_expression_statement(
+                switch_stmt.span,
+                switch_stmt.discriminant.take_in(ctx),
+                ctx,
+            );
+            ctx.replace_statement(stmt, new_stmt);
+        } else if let Some(last_case) = switch_stmt.cases.last_mut()
+            && let Some(Statement::BreakStatement(last_break)) = last_case.consequent.last()
+            && last_break.label.is_none()
+        {
+            let dropped = last_case.consequent.pop().unwrap();
+            ctx.drop_statement(&dropped);
+        }
+    }
+
+    fn is_switch_case_removable(stmt: &SwitchCase, allow_break: bool) -> bool {
+        let is_empty = if stmt.consequent.len() == 1 {
+            match stmt.consequent.last() {
+                Some(Statement::EmptyStatement(_)) => true,
+                Some(Statement::BreakStatement(break_stmt)) => {
+                    allow_break && break_stmt.label.is_none()
+                }
+                _ => false,
+            }
+        } else {
+            stmt.consequent.is_empty()
+        };
+
+        is_empty && stmt.test.as_ref().is_none_or(Expression::is_literal)
     }
 
     pub fn try_fold_try(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -314,10 +454,8 @@ impl<'a> PeepholeOptimizations {
         if s.block.body.is_empty()
             && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
         {
-            let new_stmt = if let Some(finalizer) = &mut s.finalizer {
-                let mut block = BlockStatement::boxed(finalizer.span, [], ctx);
-                std::mem::swap(finalizer, &mut block);
-                Statement::BlockStatement(block)
+            let new_stmt = if let Some(finalizer) = s.finalizer.take() {
+                Statement::BlockStatement(finalizer)
             } else {
                 Statement::new_empty_statement(s.span, ctx)
             };
@@ -329,44 +467,24 @@ impl<'a> PeepholeOptimizations {
     pub fn try_fold_conditional_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ConditionalExpression(e) = expr else { return };
         let Some(v) = e.test.evaluate_value_to_boolean(ctx) else { return };
-        let new_expr = if e.test.may_have_side_effects(ctx) {
-            // "(a, true) ? b : c" => "a, b"
-            Expression::new_sequence_expression(
-                e.span,
-                [
-                    {
-                        let mut test = e.test.take_in(ctx);
-                        Self::remove_unused_expression(&mut test, ctx);
-                        test
-                    },
-                    if v { e.consequent.take_in(ctx) } else { e.alternate.take_in(ctx) },
-                ],
-                ctx,
-            )
-        } else {
-            let result_expr = if v { e.consequent.take_in(ctx) } else { e.alternate.take_in(ctx) };
-            let should_keep_as_sequence_expr = Self::should_keep_indirect_access(&result_expr, ctx);
-            // "(1 ? a.b : 0)()" => "(0, a.b)()"
-            if should_keep_as_sequence_expr {
-                Expression::new_sequence_expression(
-                    e.span,
-                    [
-                        Expression::new_numeric_literal(
-                            e.span,
-                            0.0,
-                            None,
-                            NumberBase::Decimal,
-                            ctx,
-                        ),
-                        result_expr,
-                    ],
-                    ctx,
-                )
+
+        ctx.drop_expression(if v { &e.alternate } else { &e.consequent });
+        ctx.replace_expression_with(expr, |e, ctx| {
+            let Expression::ConditionalExpression(e) = e else {
+                unreachable!();
+            };
+            let mut e = e.unbox();
+            let result_expr = if v { e.consequent } else { e.alternate };
+
+            if Self::remove_unused_expression(&mut e.test, ctx) {
+                ctx.drop_expression(&e.test);
+                // `(1 ? a.b : 0)()` => `(0, a.b)()`
+                Self::preserve_indirect_access_if_needed(e.span, result_expr, ctx)
             } else {
-                result_expr
+                // `(a, true) ? b : c` => `a, b`
+                Self::join_sequence(e.span, e.test, result_expr, ctx)
             }
-        };
-        ctx.replace_expression(expr, new_expr);
+        });
     }
 
     pub fn remove_sequence_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -393,13 +511,7 @@ impl<'a> PeepholeOptimizations {
                 // so `remove_unused_expression` would return `true` and produce a
                 // structurally-identical fresh `0`.
                 if !e.is_number_0() && Self::remove_unused_expression(e, ctx) {
-                    let new_expr = Expression::new_numeric_literal(
-                        e.span(),
-                        0.0,
-                        None,
-                        NumberBase::Decimal,
-                        ctx,
-                    );
+                    let new_expr = Expression::new_number_0(e.span(), ctx);
                     ctx.replace_expression(e, new_expr);
                 }
                 return true;
@@ -502,7 +614,11 @@ impl<'a> PeepholeOptimizations {
         if !params.items.iter().all(|param| {
             param.pattern.is_binding_identifier()
                 && param.initializer.as_ref().is_none_or(|init| !init.may_have_side_effects(ctx))
-        }) {
+        }) || params
+            .rest
+            .as_ref()
+            .is_some_and(|rest| !rest.rest.argument.is_binding_identifier())
+        {
             return;
         }
         if body_has_side_effects {
@@ -574,6 +690,10 @@ impl<'a> PeepholeOptimizations {
                 match access_value {
                     Expression::Identifier(id) => id.name == "eval" && ctx.is_global_reference(id),
                     match_member_expression!(Expression) => true,
+                    // Example case: `(0, o?.f)()` (`this` is undefined) -> `(o?.f)()` (`this` is `o`)
+                    Expression::ChainExpression(chain) => {
+                        matches!(&chain.expression, match_member_expression!(ChainElement))
+                    }
                     _ => false,
                 }
             }
@@ -592,10 +712,10 @@ impl<'a> PeepholeOptimizations {
                         Expression::Identifier(_)
                         // Example case: `delete (0, foo.#a)` (no error) -> `delete foo.#a` (error)
                         | Expression::PrivateFieldExpression(_)
-                        // Example case: `typeof (0, foo.bar)` (noop) -> `typeof foo.bar` (deletes bar)
+                        // Example case: `delete (0, foo.bar)` (noop) -> `delete foo.bar` (deletes bar)
                         | Expression::ComputedMemberExpression(_)
                         | Expression::StaticMemberExpression(_) => true,
-                        // Example case: `typeof (0, foo?.bar)` (noop) -> `typeof foo?.bar` (deletes bar)
+                        // Example case: `delete (0, foo?.bar)` (noop) -> `delete foo?.bar` (deletes bar)
                         Expression::ChainExpression(chain) => {
                             matches!(&chain.expression, match_member_expression!(ChainElement))
                         }
@@ -621,10 +741,23 @@ impl<'a> PeepholeOptimizations {
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         Expression::new_sequence_expression(
-            span,
-            [Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx), expr],
+            span.merge(expr.span()),
+            [Expression::new_number_0(span, ctx), expr],
             ctx,
         )
+    }
+
+    /// Wrap `expr` as `(0, expr)` only if [`Self::should_keep_indirect_access`] flags it.
+    pub fn preserve_indirect_access_if_needed(
+        span: Span,
+        expr: Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        if Self::should_keep_indirect_access(&expr, ctx) {
+            Self::preserve_indirect_access(span, expr, ctx)
+        } else {
+            expr
+        }
     }
 
     pub fn remove_dead_code_exit_class_body(body: &mut ClassBody<'a>, _ctx: &mut TraverseCtx<'a>) {

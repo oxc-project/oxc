@@ -4,14 +4,14 @@ use oxc_index::IndexSlice;
 
 use oxc_diagnostics::Diagnostics;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{
     each_instruction_value_operand_with_functions, each_terminal_operand,
 };
 use crate::react_compiler_hir::{
-    FunctionId, HirFunction, IdentifierId, InstructionValue, ParamPattern, Place, PlaceOrSpread,
-    PropertyLiteral, ReturnVariant, Terminal,
+    FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue, ParamPattern, Place,
+    PlaceOrSpread, PropertyLiteral, ReturnVariant, Terminal,
 };
 use oxc_span::Span;
 
@@ -23,6 +23,7 @@ pub fn validate_use_memo(func: &HirFunction, env: &mut Environment) -> Diagnosti
     validate_use_memo_impl(
         func,
         &env.functions,
+        &env.identifiers,
         &mut env.errors,
         env.config.validate_no_void_use_memo,
     )
@@ -37,6 +38,7 @@ struct FuncExprInfo {
 fn validate_use_memo_impl(
     func: &HirFunction,
     functions: &IndexSlice<FunctionId, [HirFunction]>,
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'_>]>,
     errors: &mut Diagnostics,
     validate_no_void_use_memo: bool,
 ) -> Diagnostics {
@@ -86,6 +88,7 @@ fn validate_use_memo_impl(
                 InstructionValue::CallExpression { callee, args, .. } => {
                     handle_possible_use_memo_call(
                         functions,
+                        identifiers,
                         errors,
                         &mut void_memo_errors,
                         &use_memos,
@@ -100,6 +103,7 @@ fn validate_use_memo_impl(
                 InstructionValue::MethodCall { property, args, .. } => {
                     handle_possible_use_memo_call(
                         functions,
+                        identifiers,
                         errors,
                         &mut void_memo_errors,
                         &use_memos,
@@ -126,14 +130,7 @@ fn validate_use_memo_impl(
     // Report unused useMemo results
     if !unused_use_memos.is_empty() {
         for (span, _) in unused_use_memos.values() {
-            void_memo_errors.push(
-                ErrorCategory::VoidUseMemo
-                    .diagnostic("useMemo() result is unused")
-                    .with_help(
-                        "This useMemo() value is unused. useMemo() is for computing and caching values, not for arbitrary side effects",
-                    )
-                    .with_label(span.label("useMemo() result is unused")),
-            );
+            void_memo_errors.push(diagnostics::unused_use_memo(*span));
         }
     }
 
@@ -143,6 +140,7 @@ fn validate_use_memo_impl(
 #[allow(clippy::too_many_arguments)]
 fn handle_possible_use_memo_call(
     functions: &IndexSlice<FunctionId, [HirFunction]>,
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'_>]>,
     errors: &mut Diagnostics,
     void_memo_errors: &mut Diagnostics,
     use_memos: &FxHashSet<IdentifierId>,
@@ -177,46 +175,22 @@ fn handle_possible_use_memo_call(
             ParamPattern::Place(place) => place.span,
             ParamPattern::Spread(spread) => spread.place.span,
         };
-        errors.push(
-            ErrorCategory::UseMemo
-                .diagnostic("useMemo() callbacks may not accept parameters")
-                .with_help(
-                    "useMemo() callbacks are called by React to cache calculations across re-renders. They should not take parameters. Instead, directly reference the props, state, or local variables needed for the computation",
-                )
-                .with_labels(span.map(|s| s.label("Callbacks with parameters are not supported"))),
-        );
+        errors.push(diagnostics::use_memo_callback_parameters(span));
     }
 
     // Validate not async or generator
     if body_func.is_async || body_func.generator {
-        errors.push(
-            ErrorCategory::UseMemo
-                .diagnostic("useMemo() callbacks may not be async or generator functions")
-                .with_help(
-                    "useMemo() callbacks are called once and must synchronously return a value",
-                )
-                .with_labels(
-                    body_info
-                        .span
-                        .map(|s| s.label("Async and generator functions are not supported")),
-                ),
-        );
+        errors.push(diagnostics::async_or_generator_use_memo(
+            body_func.diagnostic_span().or(body_info.span),
+        ));
     }
 
     // Validate no context variable assignment
-    validate_no_context_variable_assignment(body_func, errors);
+    validate_no_context_variable_assignment(body_func, identifiers, errors);
 
     if validate_no_void_use_memo && !has_non_void_return(body_func) {
-        void_memo_errors.push(
-            ErrorCategory::VoidUseMemo
-                .diagnostic("useMemo() callbacks must return a value")
-                .with_help(
-                    "This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects",
-                )
-                .with_labels(
-                    body_info.span.map(|s| s.label("useMemo() callbacks must return a value")),
-                ),
-        );
+        void_memo_errors
+            .push(diagnostics::use_memo_no_return(body_func.diagnostic_span().or(body_info.span)));
     } else if validate_no_void_use_memo && let Some(callee_span) = callee.span {
         // The callee is always useMemo/React.useMemo since we checked is_use_memo above.
         // The identifierName in Babel's AST Span is "useMemo".
@@ -224,28 +198,27 @@ fn handle_possible_use_memo_call(
     }
 }
 
-fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut Diagnostics) {
-    let context: FxHashSet<IdentifierId> =
-        func.context.iter().map(|place| place.identifier).collect();
+fn validate_no_context_variable_assignment(
+    func: &HirFunction,
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'_>]>,
+    errors: &mut Diagnostics,
+) {
+    let context: FxHashMap<IdentifierId, Option<Span>> = func
+        .context
+        .iter()
+        .map(|place| (place.identifier, identifiers[place.identifier].span.or(place.span)))
+        .collect();
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
             let instr = &func.instructions[instr_id.index()];
             if let InstructionValue::StoreContext { lvalue, .. } = &instr.value
-                && context.contains(&lvalue.place.identifier)
+                && let Some(origin_span) = context.get(&lvalue.place.identifier)
             {
-                errors.push(
-                        ErrorCategory::UseMemo
-                            .diagnostic(
-                                "useMemo() callbacks may not reassign variables declared outside of the callback",
-                            )
-                            .with_help(
-                                "useMemo() callbacks must be pure functions and cannot reassign variables defined outside of the callback function",
-                            )
-                            .with_labels(
-                                lvalue.place.span.map(|s| s.label("Cannot reassign variable")),
-                            ),
-                    );
+                errors.push(diagnostics::use_memo_reassigns_outer_variable(
+                    lvalue.place.span,
+                    *origin_span,
+                ));
             }
         }
     }

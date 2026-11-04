@@ -119,7 +119,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUnderscoreDangle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -244,7 +244,10 @@ fn binding_context(ctx: &LintContext, id: NodeId) -> BindingContext {
                 };
             }
             AstKind::VariableDeclarator(declarator) => {
-                return if variable_declaration_kind(declarator, ctx).is_using() {
+                let Some(kind) = variable_declaration_kind(declarator, ctx.nodes()) else {
+                    return BindingContext::NotInteresting;
+                };
+                return if kind.is_using() {
                     BindingContext::Using
                 } else {
                     destructure_context.unwrap_or(BindingContext::Plain)

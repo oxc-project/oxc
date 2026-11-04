@@ -138,10 +138,8 @@ pub struct PluginOptions {
     pub output_mode: Option<CompilerOutputMode>,
 
     /// ESLint rule names whose `eslint-disable` comments make the compiler skip the
-    /// function they cover. These suppressions are ignored when both hooks usage
-    /// and exhaustive memoization dependency validation are enabled. Otherwise,
-    /// `None` uses the defaults (`react-hooks/exhaustive-deps` and
-    /// `react-hooks/rules-of-hooks`).
+    /// function they cover. `None` uses the defaults (`react-hooks/exhaustive-deps`
+    /// and `react-hooks/rules-of-hooks`); an empty list disables this behavior.
     pub eslint_suppression_rules: Option<Vec<String>>,
 
     /// Whether Flow suppression comments (e.g. `$FlowFixMe`) likewise make the
@@ -155,6 +153,11 @@ pub struct PluginOptions {
     /// Additional directive strings that opt a function or module out of compilation,
     /// on top of the built-in `"use no memo"` / `"use no forget"`.
     pub custom_opt_out_directives: Option<Vec<String>>,
+
+    /// In lint output mode, skip the reactive-scope passes for functions without
+    /// `useMemo`/`useCallback`. Those passes only report `Todo` and `Invariant`
+    /// diagnostics, so set this only when those diagnostics are not needed.
+    pub lint_skip_reactive_scope_passes: bool,
 
     /// Compiler environment: feature flags, validation toggles, and custom hook/type
     /// definitions for the compilation passes. See [`EnvironmentConfig`].
@@ -177,6 +180,7 @@ impl Default for PluginOptions {
             flow_suppressions: true,
             ignore_use_no_forget: false,
             custom_opt_out_directives: None,
+            lint_skip_reactive_scope_passes: false,
             environment: EnvironmentConfig::default(),
         }
     }

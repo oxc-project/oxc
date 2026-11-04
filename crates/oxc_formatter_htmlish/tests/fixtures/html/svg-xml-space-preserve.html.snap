@@ -1,0 +1,54 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<svg><text x="0" y="10" xml:space="preserve">  a  <tspan>b</tspan>  c</text></svg>
+<svg xml:space="preserve"><g><text x="0" y="10">  a
+    b  </text></g></svg>
+<svg><text x="0" y="10">  a  <tspan xml:space="preserve">  b  </tspan>  c</text></svg>
+<svg><text x="0">a<tspan> <tspan xml:space="preserve">b</tspan></tspan> c</text></svg>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<svg>
+  <text x="0" y="10" xml:space="preserve">  a  <tspan>b</tspan>  c</text>
+</svg>
+<svg xml:space="preserve">
+  <g>
+    <text x="0" y="10"
+>  a
+    b  </text>
+  </g>
+</svg>
+<svg>
+  <text x="0" y="10">a <tspan xml:space="preserve">  b  </tspan> c</text>
+</svg>
+<svg>
+  <text x="0">
+    a<tspan> <tspan xml:space="preserve">b</tspan></tspan> c
+  </text>
+</svg>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<svg><text x="0" y="10" xml:space="preserve">  a  <tspan>b</tspan>  c</text></svg>
+<svg xml:space="preserve">
+  <g>
+    <text x="0" y="10"
+>  a
+    b  </text>
+  </g>
+</svg>
+<svg>
+  <text x="0" y="10">a <tspan xml:space="preserve">  b  </tspan> c</text>
+</svg>
+<svg>
+  <text x="0">
+    a<tspan> <tspan xml:space="preserve">b</tspan></tspan> c
+  </text>
+</svg>
+
+===================== End =====================

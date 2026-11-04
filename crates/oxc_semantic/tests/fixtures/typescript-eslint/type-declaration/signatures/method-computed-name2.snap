@@ -51,7 +51,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "id": 0,
             "name": "Foo",
             "node_id": 11,
-            "scope_id": 3
+            "scope_id": 2
           }
         ]
       },

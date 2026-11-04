@@ -1,8 +1,17 @@
 import { join } from "node:path";
-import { stat, writeFile } from "node:fs/promises";
+import { readdir, stat, writeFile } from "node:fs/promises";
+
+// Keep in sync with `OXFMT_CONFIG_FILE_NAMES` in `crates/oxc_config/src/discovery.rs`
+const OXFMT_CONFIG_FILES = [
+  ".oxfmtrc.json",
+  ".oxfmtrc.jsonc",
+  "oxfmt.config.ts",
+  "oxfmt.config.mts",
+];
 
 export async function hasOxfmtrcFile(cwd: string) {
-  return (await isFile(join(cwd, ".oxfmtrc.json"))) || (await isFile(join(cwd, ".oxfmtrc.jsonc")));
+  const names = new Set(await readdir(cwd));
+  return OXFMT_CONFIG_FILES.some((name) => names.has(name));
 }
 
 const SCHEMA_RELATIVE_PATH = "./node_modules/oxfmt/configuration_schema.json";

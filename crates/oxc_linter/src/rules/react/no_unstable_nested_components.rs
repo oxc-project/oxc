@@ -1,9 +1,11 @@
+use std::borrow::Cow;
+
 use fast_glob::glob_match;
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
-        Argument, ArrowFunctionExpression, CallExpression, Class, Function, JSXAttributeName,
-        JSXExpression, JSXExpressionContainer,
+        Argument, ArrowFunctionExpression, CallExpression, Class, Function, JSXExpression,
+        JSXExpressionContainer, MemberExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -118,7 +120,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUnstableNestedComponents {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<NoUnstableNestedComponentsConfig>>(value)
+        DefaultRuleConfig::<NoUnstableNestedComponentsConfig>::from_value(value)
             .map(DefaultRuleConfig::into_inner)
             .map(Self::from)
     }
@@ -386,7 +388,9 @@ fn function_like_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<Strin
         AstKind::VariableDeclarator(decl) => {
             decl.id.get_identifier_name().map(|name| name.to_string())
         }
-        AstKind::ObjectProperty(prop) => prop.key.static_name().map(std::borrow::Cow::into_owned),
+        AstKind::ObjectProperty(prop) => {
+            prop.key.static_name().and_then(StaticPropertyName::into_cow_str).map(Cow::into_owned)
+        }
         AstKind::AssignmentExpression(assign) => {
             assign.left.get_identifier_name().map(ToString::to_string)
         }
@@ -472,11 +476,13 @@ fn is_allowed_render_prop(node: &AstNode<'_>, ctx: &LintContext<'_>, pattern: &s
         return true;
     }
 
-    if let Some(prop_name) = nearest_jsx_attribute_name(node, ctx) {
-        return prop_name == "children" || glob_match(pattern, &prop_name);
+    if let Some(prop_name) = direct_object_property_name(node, ctx)
+        && (prop_name == "children" || glob_match(pattern, &prop_name))
+    {
+        return true;
     }
 
-    if let Some(prop_name) = direct_object_property_name(node, ctx) {
+    if let Some(prop_name) = nearest_jsx_attribute_name(node, ctx) {
         return prop_name == "children" || glob_match(pattern, &prop_name);
     }
 
@@ -491,10 +497,7 @@ fn nearest_jsx_attribute_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Opti
             let AstKind::JSXAttribute(attr) = parent.kind() else {
                 return None;
             };
-            return match &attr.name {
-                JSXAttributeName::Identifier(id) => Some(id.name.to_string()),
-                JSXAttributeName::NamespacedName(_) => None,
-            };
+            return attr.name.as_identifier().map(|id| id.name.to_string());
         }
         if matches!(ancestor.kind(), AstKind::JSXElement(_) | AstKind::JSXFragment(_)) {
             return None;
@@ -508,7 +511,7 @@ fn direct_object_property_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Opt
     let AstKind::ObjectProperty(prop) = parent.kind() else {
         return None;
     };
-    prop.key.static_name().map(std::borrow::Cow::into_owned)
+    prop.key.static_name().and_then(StaticPropertyName::into_cow_str).map(Cow::into_owned)
 }
 
 fn is_direct_jsx_child_render_prop(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
@@ -542,8 +545,8 @@ fn is_map_callback(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     if call
         .callee
         .as_member_expression()
-        .and_then(oxc_ast::ast::MemberExpression::static_property_name)
-        != Some("map")
+        .and_then(MemberExpression::static_property_name)
+        .is_none_or(|name| name != "map")
     {
         return false;
     }
@@ -594,6 +597,14 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        (
+            "function Component() { return <Thing {...{ 0: () => <div /> }} />; }",
+            Some(serde_json::json!([{ "propNamePattern": "*" }])),
+        ),
+        (
+            "function Component() { return <Thing {...{ 0: () => <div /> }} />; }",
+            Some(serde_json::json!([{ "propNamePattern": "0" }])),
+        ),
         (
             "
                     function ParentComponent() {
@@ -1198,9 +1209,28 @@ fn test() {
                   ",
             Some(serde_json::json!([{ "allowAsProps": true, }])),
         ),
+        (
+            "
+                    function ParentComponent() {
+                      return (
+                        <Table
+                          columns={[{
+                            name: 'A',
+                            render: ({ id }) => <div>{id}</div>,
+                          }]}
+                        />
+                      );
+                    }
+                  ",
+            Some(serde_json::json!([{ "propNamePattern": "render*" }])),
+        ),
     ];
 
     let fail = vec![
+        (
+            "function Component() { return <Thing {...{ 0: () => <div /> }} />; }",
+            Some(serde_json::json!([{ "propNamePattern": "render*" }])),
+        ),
         (
             "
                     function ParentComponent() {

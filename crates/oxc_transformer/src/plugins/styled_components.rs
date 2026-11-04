@@ -475,7 +475,7 @@ impl<'a> StyledComponents<'a> {
         for statement in &program.body {
             let Statement::ImportDeclaration(import) = &statement else { continue };
             let Some(specifiers) = &import.specifiers else { continue };
-            if !is_valid_styled_component_source(&import.source.value) {
+            if !import.source.value.as_str().is_some_and(is_valid_styled_component_source) {
                 continue;
             }
 
@@ -874,8 +874,8 @@ fn is_valid_styled_component_source(source: &str) -> bool {
 fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: &AstBuilder<'a>) {
     const NOT_IN_STRING: u8 = 0;
     /// `Span` used as a sentinel indicating quasi should be removed.
-    /// Source text is limited to max `u32::MAX` bytes, so it's impossible for a `TemplateElement`
-    /// to have this span, because it's always followed by (at minimum) a '`'.
+    /// Source text is limited to `MAX_LEN` (defined in `oxc_parser`), which is less than `u32::MAX`,
+    /// so no real `Span` can have `start` or `end` of `u32::MAX`.
     const REMOVE_SENTINEL: Span = Span::new(u32::MAX, u32::MAX);
 
     debug_assert_eq!(lit.quasis.len(), lit.expressions.len() + 1);
@@ -1161,7 +1161,7 @@ mod tests {
                 SPAN,
                 TemplateElementValue {
                     raw: Str::from_str_in(input, &ast),
-                    cooked: Some(Str::from_str_in(input, &ast)),
+                    cooked: Some(Str::from_str_in(input, &ast).into()),
                 },
                 true,
                 &ast,

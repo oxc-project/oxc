@@ -2660,12 +2660,7 @@ pub mod walk {
         visitor.visit_decorators(&it.decorators);
         visitor.visit_property_key(&it.key);
         {
-            let flags = match it.kind {
-                MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
-                MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
-                MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
-                MethodDefinitionKind::Method => ScopeFlags::Function,
-            };
+            let flags = it.kind.scope_flags();
             visitor.visit_function(&it.value, flags);
         }
         visitor.leave_node(kind);
@@ -3825,9 +3820,9 @@ pub mod walk {
     pub fn walk_ts_method_signature<'a, V: Visit<'a>>(visitor: &mut V, it: &TSMethodSignature<'a>) {
         let kind = AstKind::TSMethodSignature(visitor.alloc(it));
         visitor.enter_node(kind);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_span(&it.span);
         visitor.visit_property_key(&it.key);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }

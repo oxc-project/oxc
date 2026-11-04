@@ -1,7 +1,11 @@
 // A comment between a list element and its comma stays BEFORE the comma,
-// across every comma site: include args, paren lists, maps, params, each bindings.
+// across every comma site: function/include args, SassLists, paren lists, maps,
+// params, each bindings.
+$fn: foo($a /* c1 */, $b /* c2 */);
+$list: aa /* c1 */, bb /* c2 */, cc;
 a {
   @include mx($a /* c */, $b);
+  $nested: 1px 2px /* c */, 3px 4px;
 }
 $paren: (a /* c */, b);
 $map: (k1: 1 /* c */, k2: 2);

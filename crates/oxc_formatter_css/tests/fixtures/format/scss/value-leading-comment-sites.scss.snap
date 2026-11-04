@@ -1,0 +1,165 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A comment before a value leads that value wherever the value sits;
+// it never leaks into the following block or past the closing paren.
+// Map keys and values (inline map as a key, hard map in include args)
+$m: ((/* c */ a: /* d */ 1): 2);
+@include m((k: /* c */ v));
+// Mixin parameters: name, default value, arbitrary parameter
+@mixin m($a: /* c */ 1, $b: 2 /* d */) {}
+@mixin n( /* c */ $a, /* d */ $rest...) {}
+// Control directive conditions: operands, operators, parenthesized, `@for` bounds
+@if /* c */ $a == /* d */ 1 {}
+@if ( /* c */ $a) {}
+@if /* c */ $a {}
+@while $i /* c */ > 0 {}
+@while ($i > 0) {}
+@for $i from /* c */ 1 through /* d */ $n {}
+// `@while` shares `@if`'s chain layout when the condition overflows
+@while $i < 10 and $very-long-variable-name-here == $another-long-variable-name and $x {}
+// A comment after `@else if` leads the condition; one before `@else` breaks the join
+@if $a {} @else if /* c */ $b {}
+@if $a {}
+/* own */
+@else if $b {}
+@if $a {}
+/* own */
+@else {}
+@if $a {} /* c */ @else {}
+@if $a {} /* c */ @else if $b {}
+@if $a {} // c
+@else {}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A comment before a value leads that value wherever the value sits;
+// it never leaks into the following block or past the closing paren.
+// Map keys and values (inline map as a key, hard map in include args)
+$m: (
+  (/* c */ a: /* d */ 1): 2,
+);
+@include m(
+  (
+    k: /* c */ v,
+  )
+);
+// Mixin parameters: name, default value, arbitrary parameter
+@mixin m($a: /* c */ 1, $b: 2 /* d */) {
+}
+@mixin n(/* c */ $a, /* d */ $rest...) {
+}
+// Control directive conditions: operands, operators, parenthesized, `@for` bounds
+@if /* c */ $a == /* d */ 1 {
+}
+@if (/* c */ $a) {
+}
+@if /* c */ $a {
+}
+@while $i /* c */ > 0 {
+}
+@while ($i > 0) {
+}
+@for $i from /* c */ 1 through /* d */ $n {
+}
+// `@while` shares `@if`'s chain layout when the condition overflows
+@while $i <
+  10 and
+  $very-long-variable-name-here ==
+  $another-long-variable-name and
+  $x
+{
+}
+// A comment after `@else if` leads the condition; one before `@else` breaks the join
+@if $a {
+} @else if /* c */ $b {
+}
+@if $a {
+}
+/* own */
+@else if $b {
+}
+@if $a {
+}
+/* own */
+@else {
+}
+@if $a {
+} /* c */
+@else {
+}
+@if $a {
+} /* c */
+@else if $b {
+}
+@if $a {
+} // c
+@else {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A comment before a value leads that value wherever the value sits;
+// it never leaks into the following block or past the closing paren.
+// Map keys and values (inline map as a key, hard map in include args)
+$m: (
+  (/* c */ a: /* d */ 1): 2,
+);
+@include m(
+  (
+    k: /* c */ v,
+  )
+);
+// Mixin parameters: name, default value, arbitrary parameter
+@mixin m($a: /* c */ 1, $b: 2 /* d */) {
+}
+@mixin n(/* c */ $a, /* d */ $rest...) {
+}
+// Control directive conditions: operands, operators, parenthesized, `@for` bounds
+@if /* c */ $a == /* d */ 1 {
+}
+@if (/* c */ $a) {
+}
+@if /* c */ $a {
+}
+@while $i /* c */ > 0 {
+}
+@while ($i > 0) {
+}
+@for $i from /* c */ 1 through /* d */ $n {
+}
+// `@while` shares `@if`'s chain layout when the condition overflows
+@while $i < 10 and $very-long-variable-name-here == $another-long-variable-name and $x {
+}
+// A comment after `@else if` leads the condition; one before `@else` breaks the join
+@if $a {
+} @else if /* c */ $b {
+}
+@if $a {
+}
+/* own */
+@else if $b {
+}
+@if $a {
+}
+/* own */
+@else {
+}
+@if $a {
+} /* c */
+@else {
+}
+@if $a {
+} /* c */
+@else if $b {
+}
+@if $a {
+} // c
+@else {
+}
+
+===================== End =====================

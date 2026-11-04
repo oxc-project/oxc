@@ -123,7 +123,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessComputedKey {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -210,9 +210,9 @@ fn check_computed_class_member(
         Expression::StringLiteral(lit) => {
             let key_name = lit.value.as_str();
             let allowed = if is_static {
-                allow_static.contains(&key_name)
+                key_name.is_some_and(|key_name| allow_static.contains(&key_name))
             } else {
-                allow_non_static.contains(&key_name)
+                key_name.is_some_and(|key_name| allow_non_static.contains(&key_name))
             };
             if !allowed {
                 report_useless_computed_key(

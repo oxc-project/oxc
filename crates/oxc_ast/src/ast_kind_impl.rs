@@ -7,9 +7,9 @@ use std::ptr::NonNull;
 
 use oxc_allocator::{Address, GetAddress, UnstableAddress};
 use oxc_span::GetSpan;
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, JSStr};
 
-use super::{AstKind, AstType, ast::*};
+use super::{AstKind, AstType, StaticPropertyName, ast::*};
 
 impl<'a> AstKind<'a> {
     /// Get the [`AstType`] of an [`AstKind`].
@@ -362,14 +362,24 @@ impl<'a> AstKind<'a> {
     }
 }
 
-impl AstKind<'_> {
+impl<'a> AstKind<'a> {
     /// Get the AST kind name with minimal details. Particularly useful for
     /// when debugging an iteration over an AST.
     ///
     /// Note that this method does not exist in release builds. Do not include
     /// usage of this method within your code.
-    pub fn debug_name(&self) -> std::borrow::Cow<'_, str> {
+    pub fn debug_name(&self) -> std::borrow::Cow<'a, str> {
         use std::borrow::Cow;
+
+        fn debug_string(kind: &str, value: JSStr<'_>) -> String {
+            // Preserve the existing unquoted UTF-8 names.
+            // Debug quotes distinguish escaped surrogate text from a literal backslash
+            // in the source value.
+            match value.as_str() {
+                Some(value) => format!("{kind}({value})"),
+                None => format!("{kind}({value:?})"),
+            }
+        }
 
         const COMPUTED: &str = "<computed>";
         const ANONYMOUS: &str = "<anonymous>";
@@ -420,14 +430,14 @@ impl AstKind<'_> {
             Self::PrivateIdentifier(x) => format!("PrivateIdentifier({})", x.name).into(),
 
             Self::NumericLiteral(n) => format!("NumericLiteral({})", n.value).into(),
-            Self::StringLiteral(s) => format!("StringLiteral({})", s.value).into(),
+            Self::StringLiteral(s) => debug_string("StringLiteral", s.value).into(),
             Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
             Self::NullLiteral(_) => "NullLiteral".into(),
             Self::BigIntLiteral(b) => format!("BigIntLiteral({})", b.value).into(),
             Self::RegExpLiteral(r) => format!("RegExpLiteral({})", r.regex).into(),
             Self::TemplateLiteral(t) => format!(
                 "TemplateLiteral({})",
-                t.single_quasi().map_or_else(|| "None".into(), |q| format!("Some({q})"))
+                t.single_quasi().map_or_else(|| "None".into(), |q| debug_string("Some", q))
             )
             .into(),
             Self::TemplateElement(_) => "TemplateElement".into(),
@@ -457,9 +467,11 @@ impl AstKind<'_> {
             Self::NewExpression(n) => {
                 let callee = match &n.callee {
                     Expression::Identifier(id) => Some(id.name.as_str()),
-                    match_member_expression!(Expression) => {
-                        n.callee.to_member_expression().static_property_name()
-                    }
+                    match_member_expression!(Expression) => n
+                        .callee
+                        .to_member_expression()
+                        .static_property_name()
+                        .and_then(JSStr::as_str),
                     _ => None,
                 };
                 format!("NewExpression({})", callee.unwrap_or(COMPUTED)).into()
@@ -477,9 +489,11 @@ impl AstKind<'_> {
             Self::ImportExpression(_) => "ImportExpression".into(),
             Self::PrivateInExpression(_) => "PrivateInExpression".into(),
 
-            Self::ObjectProperty(p) => {
-                format!("ObjectProperty({})", p.key.name().as_deref().unwrap_or(COMPUTED)).into()
-            }
+            Self::ObjectProperty(p) => format!(
+                "ObjectProperty({})",
+                p.key.name().unwrap_or_else(|| StaticPropertyName::from(COMPUTED)).display()
+            )
+            .into(),
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget".into(),
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),
@@ -591,7 +605,7 @@ impl AstKind<'_> {
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration".into(),
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage".into(),
             Self::TSExternalModuleDeclaration(m) => {
-                format!("TSExternalModuleDeclaration({})", m.id).into()
+                debug_string("TSExternalModuleDeclaration", m.id.value).into()
             }
             Self::TSNamespaceDeclaration(m) => format!("TSNamespaceDeclaration({})", m.id).into(),
             Self::TSGlobalDeclaration(_) => "TSGlobalDeclaration".into(),
@@ -631,6 +645,15 @@ impl AstKind<'_> {
     }
 }
 
+/// A regular function or arrow function.
+#[derive(Debug, Clone, Copy)]
+pub enum FunctionKind<'a, 'b> {
+    /// A function declaration, expression, or method.
+    Function(&'b Function<'a>),
+    /// An arrow function expression.
+    Arrow(&'b ArrowFunctionExpression<'a>),
+}
+
 /// This is a subset of [`AstKind`] that represents member expressions.
 ///
 /// Having a separate enum for this allows us to implement helpful methods that are specific to member expressions,
@@ -647,34 +670,13 @@ pub enum MemberExpressionKind<'a> {
 
 impl<'a> MemberExpressionKind<'a> {
     /// Returns the property name of the member expression, otherwise `None`.
+    /// The name may contain lone surrogates.
     ///
     /// Example: returns the `prop` in `obj.prop` or `obj["prop"]`.
-    pub fn static_property_name(&self) -> Option<Str<'a>> {
+    pub fn static_property_name(&self) -> Option<JSStr<'a>> {
         match self {
             Self::Computed(member_expr) => member_expr.static_property_name(),
-            Self::Static(member_expr) => Some(member_expr.property.name.into()),
-            Self::PrivateField(_) => None,
-        }
-    }
-
-    /// Returns the static property name of this member expression, if it has one, along with the source code [`Span`],
-    /// or `None` otherwise.
-    ///
-    /// If you don't need the [`Span`], use [`MemberExpressionKind::static_property_name`] instead.
-    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
-        match self {
-            Self::Computed(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
-                Expression::TemplateLiteral(lit) => {
-                    if lit.quasis.len() == 1 {
-                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            },
-            Self::Static(expr) => Some((expr.property.span, expr.property.name.as_str())),
+            Self::Static(member_expr) => Some(member_expr.property.name.as_js_str()),
             Self::PrivateField(_) => None,
         }
     }
@@ -922,5 +924,69 @@ mod tests {
             BooleanLiteral { span: test_span, node_id: Cell::new(NodeId::DUMMY), value: true };
         let bool_kind = AstKind::BooleanLiteral(&bool_lit);
         assert!(!bool_kind.is_callee_with_span(test_span));
+    }
+
+    #[test]
+    fn static_member_names_preserve_utf16() {
+        use crate::builder::AstBuilder;
+        use oxc_allocator::Allocator;
+        use oxc_str::JSStrBuilder;
+
+        let allocator = Allocator::new();
+        let builder = AstBuilder::new(&allocator);
+        let property_span = Span::new(4, 12);
+        let cases: &[&[u16]] = &[
+            &[],
+            &[0x61, 0x62],
+            &[0xE9],
+            &[0xD800],
+            &[0xDC00],
+            &[0x61, 0xD800, 0x62],
+            &[0xD800, 0xDC00],
+            &[0xDC00, 0xD800],
+        ];
+        for &units in cases {
+            let mut value = JSStrBuilder::new_in(&&allocator);
+            value.push_utf16(units);
+            let value = value.into_js_str();
+            // Test actual decoded values, independently of source escape spelling.
+            let string = Expression::new_string_literal(property_span, value, None, &builder);
+            let template = Expression::new_template_literal(
+                property_span,
+                [TemplateElement::new(
+                    property_span,
+                    TemplateElementValue { raw: "".into(), cooked: Some(value) },
+                    true,
+                    &builder,
+                )],
+                [],
+                &builder,
+            );
+            for property in [string, template] {
+                let member = MemberExpression::new_computed_member_expression(
+                    Span::new(0, 13),
+                    Expression::new_identifier(Span::new(0, 3), "obj", &builder),
+                    property,
+                    false,
+                    &builder,
+                );
+                let MemberExpression::ComputedMemberExpression(computed) = &member else {
+                    unreachable!();
+                };
+                let kind = MemberExpressionKind::Computed(computed);
+                for name in [
+                    member.static_property_name(),
+                    computed.static_property_name(),
+                    kind.static_property_name(),
+                ] {
+                    assert_eq!(name.unwrap().encode_utf16().collect::<Vec<_>>(), units);
+                }
+                for info in [member.static_property_info(), computed.static_property_info()] {
+                    let (span, name) = info.unwrap();
+                    assert_eq!(span, property_span);
+                    assert_eq!(name.encode_utf16().collect::<Vec<_>>(), units);
+                }
+            }
+        }
     }
 }

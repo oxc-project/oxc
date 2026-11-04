@@ -1,6 +1,6 @@
 //! [JSX](https://facebook.github.io/jsx)
 
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
@@ -51,7 +51,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         in_jsx_child: bool,
     ) -> ArenaBox<'a, JSXFragment<'a>> {
-        self.expect_jsx_child(Kind::RAngle);
+        debug_assert!(self.at(Kind::RAngle));
+        self.advance_for_jsx_child();
         let opening_fragment = JSXOpeningFragment::new(self.end_span(start), self);
         let (children, closing) = self.parse_jsx_children_and_closing(in_jsx_child);
         let closing_fragment = match closing {
@@ -160,10 +161,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             );
         }
 
-        if self.fatal_error.is_some() {
-            return JSXElementName::dummy(self.allocator());
-        }
-
         // Determine if this JSX element name is a reference (component) or an intrinsic element.
         // References (components) are:
         // - ASCII names that start with uppercase letter, `_` or `$`: `<Foo>`, `<_foo>`, `<$foo>`
@@ -171,14 +168,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // - Names without hyphens (hyphenated names like `<my-element>` are custom elements)
         // https://babeljs.io/repl#?code_lz=DwMQ9mAED0B8DcAoYAzCMHIPpqnJwAJLhkkA&presets=react
         //
-        // The identifier has already been validated by the parser, so for ASCII characters
-        // we know it can only be `a-z`, `A-Z`, `_` or `$`.
-        // Use a fast path for ASCII to avoid expensive Unicode operations in the common case.
+        // In case of a fatal error in `parse_jsx_identifier`, `name` is an empty string,
+        // so `!contains_dash` check must be first to avoid a panic in `name.as_bytes()[0]`.
+        //
+        // The identifier has already been validated by `parse_jsx_identifier`,
+        // so for ASCII characters we know it can only be `a-z`, `A-Z`, `_` or `$`.
+        // The 3-arm match below compiles down to a single `cmp` instruction.
+        // https://godbolt.org/z/jq3Gd7YrP
         let name = identifier.name.as_str();
         let is_reference = !contains_dash // Exclude hyphenated custom elements
             && match name.as_bytes()[0] {
-                b if b.is_ascii() => !b.is_ascii_lowercase(), // Matches A-Z, _, $
-                _ => true, // Non-ASCII characters are always treated as references
+                // Non-ASCII characters are always treated as references
+                b if !b.is_ascii() => true,
+                // Matches A-Z, _, $
+                b if b < b'a' => true,
+                // Matches a-z
+                _ => false
             };
 
         if is_reference {
@@ -333,9 +338,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.at(Kind::RAngle) {
             // Closing fragment: </>
             if in_jsx_child {
-                self.expect_jsx_child(Kind::RAngle);
+                self.advance_for_jsx_child();
             } else {
-                self.expect(Kind::RAngle);
+                self.advance(Kind::RAngle);
             }
             JSXClosing::Fragment(JSXClosingFragment::new(self.end_span(open_angle_start), self))
         } else {
@@ -362,9 +367,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaBox<'a, JSXExpressionContainer<'a>> {
         let expr = if self.at(Kind::RCurly) {
             if in_jsx_child {
-                self.expect_jsx_child(Kind::RCurly);
+                self.advance_for_jsx_child();
             } else {
-                self.expect(Kind::RCurly);
+                self.advance(Kind::RCurly);
             }
             let span = self.end_span(start);
 
@@ -378,9 +383,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             //                                            ^^^^^^^^^^^^^ span
             JSXExpression::new_empty_expression(Span::new(span.start + 1, span.end - 1), self)
         } else {
+            let expr_start = self.cur_start();
             let expr = JSXExpression::from(self.parse_expr());
-            // JSX expressions may not use the comma operator.
-            if matches!(expr, JSXExpression::SequenceExpression(_)) {
+            // JSX expressions may not use an unparenthesized comma operator.
+            if matches!(&expr, JSXExpression::SequenceExpression(sequence) if sequence.span.start == expr_start)
+            {
                 self.error(diagnostics::jsx_expressions_may_not_use_the_comma_operator(
                     expr.span(),
                 ));
@@ -475,7 +482,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_jsx_attribute_value(&mut self) -> JSXAttributeValue<'a> {
         match self.cur_kind() {
             Kind::Str => {
-                let str_lit = self.parse_literal_string();
+                let str_lit = self.parse_known_literal_string();
                 JSXAttributeValue::StringLiteral(self.alloc(str_lit))
             }
             Kind::LCurly => {
@@ -503,12 +510,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
     ) -> (
         JSXIdentifier<'a>, // JSX identifier
-        bool,              // `true` if contains `-`
+        bool,              // `true` if contains `-`, or if parsing failed (see below)
     ) {
         let start = self.cur_start();
         let kind = self.cur_kind();
         if kind != Kind::Ident && !kind.is_any_keyword() {
-            return (self.unexpected(), false);
+            // Return `contains_dash = true`, so that `parse_jsx_element_name` does not read the first byte
+            // of the dummy identifier's empty name. `parse_jsx_member_expression` treats a dash as an error,
+            // but on this path its `fatal_error` call is a no-op, because a fatal error has already been recorded.
+            return (self.unexpected(), true);
         }
         // Currently at a valid normal Ident or Keyword, keep on lexing for `-` in `<component-name />`
         let contains_dash = self.continue_lex_jsx_identifier();

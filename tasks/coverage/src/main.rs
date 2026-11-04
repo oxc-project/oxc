@@ -23,7 +23,7 @@ fn main() {
         std::thread::available_parallelism().map_or(1, NonZeroUsize::get)
     };
     // Match Linux's default main-thread stack (8 MB) so deeply-nested expressions
-    // (e.g. typescript/tests/cases/compiler/binderBinaryExpressionStressJs.ts)
+    // (e.g. typescript/tsc/testdata/tests/cases/compiler/binderBinaryExpressionStressJs.ts)
     // don't overflow macOS's 2 MB worker default.
     ThreadPoolBuilder::new()
         .num_threads(thread_count)
@@ -39,12 +39,6 @@ fn main() {
     let task = command.as_deref().unwrap_or("default");
     match task {
         "parser" => app_args.run_parser(&load()),
-        #[cfg(all(
-            feature = "lexer",
-            target_arch = "x86_64",
-            target_feature = "avx2",
-            target_feature = "bmi2",
-        ))]
         "lexer" => app_args.run_lexer(&load()),
         "semantic" => app_args.run_semantic(&load()),
         "codegen" => app_args.run_codegen(&load()),
@@ -57,6 +51,7 @@ fn main() {
         "estree_tokens" => app_args.run_estree_tokens(&load()),
         "types" => app_args.run_types(&load()),
         "all" => app_args.run_all_with(&load()),
-        _ => app_args.run_all(),
+        "default" => app_args.run_all(),
+        task => panic!("Unknown coverage task: {task:?}"),
     }
 }

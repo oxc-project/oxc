@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::MethodDefinitionKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -91,6 +91,7 @@ declare_oxc_lint!(
     NoDirectMutationState,
     react,
     correctness,
+    recommended,
     version = "0.2.0",
     short_description = "Disallow direct mutation of `this.state`.",
 );
@@ -142,7 +143,7 @@ fn should_ignore_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'
 
     for parent in ctx.nodes().ancestors(node.id()) {
         if let AstKind::MethodDefinition(method_def) = parent.kind()
-            && method_def.kind == MethodDefinitionKind::Constructor
+            && method_def.kind.is_constructor()
         {
             is_constructor = true;
         }
@@ -358,6 +359,17 @@ fn test() {
             }
           }
         "#,
+        r"
+          class Hello extends React.Component {
+            update(id) {
+              this.state.x[id] = 1;
+              this.state.x[id].y = 1;
+              this.state.items[id].prop = {};
+              this.state.x[id]++;
+              this.state.items[id].prop++;
+            }
+          }
+        ",
     ];
 
     Tester::new(NoDirectMutationState::NAME, NoDirectMutationState::PLUGIN, pass, fail)

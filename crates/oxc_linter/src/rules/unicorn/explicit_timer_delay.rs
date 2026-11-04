@@ -95,6 +95,7 @@ declare_oxc_lint!(
     ExplicitTimerDelay,
     unicorn,
     style,
+    recommended,
     fix,
     config = ExplicitTimerDelayMode,
     version = "1.73.0",
@@ -103,7 +104,7 @@ declare_oxc_lint!(
 
 impl Rule for ExplicitTimerDelay {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -166,7 +167,7 @@ fn timer_name<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) -> Opti
                 return None;
             }
 
-            let name = member_expr.static_property_name()?;
+            let name = member_expr.static_property_name()?.as_str()?;
 
             if !is_timer_function_name(name) {
                 return None;

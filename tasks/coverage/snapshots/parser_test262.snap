@@ -1,9 +1,9 @@
-commit: b363f29d
+commit: d53ebc8b
 
 parser_test262 Summary:
-AST Parsed     : 47435/47435 (100.00%)
-Positive Passed: 47435/47435 (100.00%)
-Negative Passed: 4651/4651 (100.00%)
+AST Parsed     : 47474/47474 (100.00%)
+Positive Passed: 47474/47474 (100.00%)
+Negative Passed: 4653/4653 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -4045,14 +4045,6 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ────
     ╰────
 
-  × A rest parameter or binding pattern may not have a trailing comma.
-    ╭─[test262/test/language/expressions/assignment/dstr/array-rest-elision-invalid.js:24:9]
- 23 │ 
- 24 │ 0, [...x,] = [];
-    ·         ─
-    ╰────
-  help: Remove the trailing comma here
-
   × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-init.js:25:8]
  24 │ 
@@ -4209,6 +4201,15 @@ Negative Passed: 4651/4651 (100.00%)
     ·               ─────
     ╰────
   note: This identifier is reserved in strict mode code
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/assignment/dstr/obj-rest-before-comma-invalid.js:25:12]
+ 24 │ 
+ 25 │ 0, {...rest,} = {}
+    ·            ─
+ 26 │ ;
+    ╰────
+  help: Remove the trailing comma here
 
   × Spread must be last element
     ╭─[test262/test/language/expressions/assignment/dstr/obj-rest-not-last-element-invalid.js:25:5]
@@ -19722,11 +19723,15 @@ Negative Passed: 4651/4651 (100.00%)
  50 │     
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-escaped-async.js:26:5]
+  × Expected `,` or `}` but found `*`
+    ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-escaped-async.js:26:15]
+ 24 │ 
  25 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  26 │     \u0061sync* m(){}
-    ·     ──────────
+    ·               ┬
+    ·               ╰── `,` or `}` expected
  27 │ });
     ╰────
 
@@ -19896,11 +19901,15 @@ Negative Passed: 4651/4651 (100.00%)
  43 │     
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/async-meth-escaped-async.js:26:5]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/async-meth-escaped-async.js:26:16]
+ 24 │ 
  25 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  26 │     \u0061sync m(){}
-    ·     ──────────
+    ·                ┬
+    ·                ╰── `,` or `}` expected
  27 │ });
     ╰────
 
@@ -20041,67 +20050,99 @@ Negative Passed: 4651/4651 (100.00%)
  17 │ })
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-get-e.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-get-e.js:25:12]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   g\u0065t m() {}
-    ·   ────────
+    ·            ┬
+    ·            ╰── `,` or `}` expected
  26 │ });
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-get-g.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-get-g.js:25:12]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   \u0067et m() {}
-    ·   ────────
+    ·            ┬
+    ·            ╰── `,` or `}` expected
  26 │ });
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-get-t.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-get-t.js:25:12]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   ge\u0074 m() {}
-    ·   ────────
+    ·            ┬
+    ·            ╰── `,` or `}` expected
  26 │ });
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-get.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-get.js:25:22]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   \u0067\u0065\u0074 m() {}
-    ·   ──────────────────
+    ·                      ┬
+    ·                      ╰── `,` or `}` expected
  26 │ });
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-set-e.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-set-e.js:25:12]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   s\u0065t m(v) {}
-    ·   ────────
+    ·            ┬
+    ·            ╰── `,` or `}` expected
  26 │ });
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-set-s.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-set-s.js:25:12]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   \u0073et m(v) {}
-    ·   ────────
+    ·            ┬
+    ·            ╰── `,` or `}` expected
  26 │ });
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-set-t.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-set-t.js:25:12]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   se\u0074 m(v) {}
-    ·   ────────
+    ·            ┬
+    ·            ╰── `,` or `}` expected
  26 │ });
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-set.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-set.js:25:22]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   \u0073\u0065\u0074 m(v) {}
-    ·   ──────────────────
+    ·                      ┬
+    ·                      ╰── `,` or `}` expected
  26 │ });
     ╰────
 
@@ -22378,6 +22419,13 @@ Negative Passed: 4651/4651 (100.00%)
     ·           ─────────
     ╰────
 
+  × Cannot use import statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-default-and-defer-namespace.js:34:1]
+ 33 │ 
+ 34 │ import defer x, * as ns from "./dep_FIXTURE.js";
+    · ──────
+    ╰────
+
   × TS(18058): Default imports are not allowed in a deferred import.
     ╭─[test262/test/language/import/import-defer/syntax/invalid-default-and-defer-namespace.js:34:8]
  33 │ 
@@ -22386,9 +22434,9 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
 
   × Cannot use import statement outside a module
-    ╭─[test262/test/language/import/import-defer/syntax/invalid-default-and-defer-namespace.js:34:1]
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-as-with-no-asterisk.js:34:1]
  33 │ 
- 34 │ import defer x, * as ns from "./dep_FIXTURE.js";
+ 34 │ import defer as ns from "./dep_FIXTURE.js";
     · ──────
     ╰────
 
@@ -22400,11 +22448,25 @@ Negative Passed: 4651/4651 (100.00%)
     ·               ╰── `from` expected
     ╰────
 
+  × Cannot use import statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default-and-namespace.js:34:1]
+ 33 │ 
+ 34 │ import x, defer * as ns from "./dep_FIXTURE.js";
+    · ──────
+    ╰────
+
   × Unexpected token
     ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default-and-namespace.js:34:11]
  33 │ 
  34 │ import x, defer * as ns from "./dep_FIXTURE.js";
     ·           ─────
+    ╰────
+
+  × Cannot use import statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default.js:34:1]
+ 33 │ 
+ 34 │ import defer x from "./dep_FIXTURE.js";
+    · ──────
     ╰────
 
   × TS(18058): Default imports are not allowed in a deferred import.
@@ -22415,9 +22477,9 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
 
   × Cannot use import statement outside a module
-    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default.js:34:1]
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-named.js:34:1]
  33 │ 
- 34 │ import defer x from "./dep_FIXTURE.js";
+ 34 │ import defer { default as x } from "./dep_FIXTURE.js";
     · ──────
     ╰────
 
@@ -22428,10 +22490,10 @@ Negative Passed: 4651/4651 (100.00%)
     ·        ─────
     ╰────
 
-  × Cannot use import statement outside a module
-    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-named.js:34:1]
- 33 │ 
- 34 │ import defer { default as x } from "./dep_FIXTURE.js";
+  × Cannot use export statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-export-defer-namespace.js:33:1]
+ 32 │ 
+ 33 │ export defer * as ns from "./dep_FIXTURE.js";
     · ──────
     ╰────
 
@@ -22787,13 +22849,12 @@ Negative Passed: 4651/4651 (100.00%)
     ·   ▲
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
+  × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/exponent-part.js:17:4]
  16 │ 
  17 │ 0e0n;
-    ·    ▲
+    ·    ─
     ╰────
-  help: Try inserting a semicolon here
 
   × Invalid Character `g`
     ╭─[test262/test/language/literals/bigint/hexadecimal-invalid-digit.js:27:3]
@@ -24442,6 +24503,14 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
+  × Invalid regular expression: Numbers out of order in braced quantifier
+    ╭─[test262/test/language/literals/regexp/invalid-quantifier-out-of-order.js:26:3]
+ 25 │ 
+ 26 │ /a{2,1}/;
+    ·   ─────
+    ╰────
+  help: In `{n,m}`, the minimum `n` must be less than or equal to the maximum `m`
+
   × Invalid regular expression: Invalid braced quantifier
     ╭─[test262/test/language/literals/regexp/invalid-range-lookbehind.js:21:9]
  20 │ 
@@ -24586,13 +24655,13 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Add the missing closing delimiter
 
-  × Invalid regular expression: Unterminated capturing group
-    ╭─[test262/test/language/literals/regexp/named-groups/invalid-identity-escape-in-capture-u.js:16:2]
+  × Invalid regular expression: Invalid escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-identity-escape-in-capture-u.js:16:7]
  15 │ 
  16 │ /(?<a>\a)/u;
-    ·  ──────
+    ·       ─
     ╰────
-  help: Add the missing closing delimiter
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-2-u.js:16:11]
@@ -24962,13 +25031,13 @@ Negative Passed: 4651/4651 (100.00%)
  34 │ ╰─▶ */
     ╰────
 
-  × Invalid regular expression: Could not parse the entire pattern
-    ╭─[test262/test/language/literals/regexp/u-invalid-class-escape.js:24:3]
+  × Invalid regular expression: Invalid escape sequence
+    ╭─[test262/test/language/literals/regexp/u-invalid-class-escape.js:24:2]
  23 │ 
  24 │ /\c0/u;
-    ·   ▲
+    ·  ─
     ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[test262/test/language/literals/regexp/u-invalid-extended-pattern-char.js:21:2]
@@ -24978,13 +25047,13 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Check for unbalanced brackets or invalid escape sequences
 
-  × Invalid regular expression: Could not parse the entire pattern
-    ╭─[test262/test/language/literals/regexp/u-invalid-identity-escape.js:23:3]
+  × Invalid regular expression: Invalid escape sequence
+    ╭─[test262/test/language/literals/regexp/u-invalid-identity-escape.js:23:2]
  22 │ 
  23 │ /\M/u;
-    ·   ▲
+    ·  ─
     ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Invalid indexed reference
     ╭─[test262/test/language/literals/regexp/u-invalid-legacy-octal-escape.js:26:2]
@@ -25065,6 +25134,14 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─
     ╰────
   help: Quantifiers must follow an expression. To match literally, escape it with `\`
+
+  × Invalid regular expression: Numbers out of order in braced quantifier
+    ╭─[test262/test/language/literals/regexp/u-invalid-quantifier-out-of-order.js:23:3]
+ 22 │ 
+ 23 │ /a{2,1}/u;
+    ·   ─────
+    ╰────
+  help: In `{n,m}`, the minimum `n` must be less than or equal to the maximum `m`
 
   × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[test262/test/language/literals/regexp/u-invalid-range-lookahead.js:21:8]
@@ -25586,34 +25663,6 @@ Negative Passed: 4651/4651 (100.00%)
  22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
     ╰────
 
-  × An export name cannot include a unicode lone surrogate
-    ╭─[test262/test/language/module-code/early-export-ill-formed-string.js:22:9]
- 21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";
- 22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
-    ·         ────────
- 23 │ import {'\uD83C' as Usagi} from "./early-export-ill-formed-string.js";
-    ╰────
-
-  × An export name cannot include a unicode lone surrogate
-    ╭─[test262/test/language/module-code/early-export-ill-formed-string.js:23:9]
- 22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
- 23 │ import {'\uD83C' as Usagi} from "./early-export-ill-formed-string.js";
-    ·         ────────
- 24 │ 
-    ╰────
-
-  × Duplicated export '�d83c'
-    ╭─[test262/test/language/module-code/early-export-ill-formed-string.js:21:17]
- 20 │ // 🌙 is '\uD83C\uDF19'
- 21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";
-    ·                 ────┬───
-    ·                     ╰── Export has already been declared here
- 22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
-    ·         ────┬───
-    ·             ╰── It cannot be redeclared here
- 23 │ import {'\uD83C' as Usagi} from "./early-export-ill-formed-string.js";
-    ╰────
-
   × Export 'unresolvable' is not defined
     ╭─[test262/test/language/module-code/early-export-unresolvable.js:17:10]
  16 │ 
@@ -25801,41 +25850,44 @@ Negative Passed: 4651/4651 (100.00%)
  22 │ 
     ╰────
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
     ╭─[test262/test/language/module-code/import-attributes/early-dup-attribute-key-export.js:21:3]
  20 │ export * from './import-attribute-3_FIXTURE.js' with {
  21 │   type: 'json',
     ·   ──┬─
-    ·     ╰── `type` has already been declared here
+    ·     ╰── `type` was already specified here
  22 │   'typ\u0065': ''
     ·   ─────┬─────
-    ·        ╰── It can not be redeclared here
+    ·        ╰── This key is repeated
  23 │ };
     ╰────
+  help: Each import attribute key must be unique
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
     ╭─[test262/test/language/module-code/import-attributes/early-dup-attribute-key-import-nobinding.js:22:3]
  21 │ import './import-attribute-2_FIXTURE.js' with {
  22 │   type: 'json',
     ·   ──┬─
-    ·     ╰── `type` has already been declared here
+    ·     ╰── `type` was already specified here
  23 │   'typ\u0065': ''
     ·   ─────┬─────
-    ·        ╰── It can not be redeclared here
+    ·        ╰── This key is repeated
  24 │ };
     ╰────
+  help: Each import attribute key must be unique
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
     ╭─[test262/test/language/module-code/import-attributes/early-dup-attribute-key-import-withbinding.js:22:3]
  21 │ import x from './import-attribute-1_FIXTURE.js' with {
  22 │   type: 'json',
     ·   ──┬─
-    ·     ╰── `type` has already been declared here
+    ·     ╰── `type` was already specified here
  23 │   'typ\u0065': ''
     ·   ─────┬─────
-    ·        ╰── It can not be redeclared here
+    ·        ╰── This key is repeated
  24 │ };
     ╰────
+  help: Each import attribute key must be unique
 
   × Private identifier '#x' is not allowed outside class bodies
     ╭─[test262/test/language/module-code/invalid-private-names-call-expression-bad-reference.js:40:14]
@@ -27683,14 +27735,13 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-objectbindingpattern.js:17:14]
+  × Using declarations may not have binding patterns.
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-objectbindingpattern.js:17:15]
  16 │ async function f() {
  17 │   await using {} = null;
-    ·              ▲
+    ·               ──
  18 │ }
     ╰────
-  help: Try inserting a semicolon here
 
   × 'await using' declaration cannot appear in the bare case statement.
     ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-switchstatement-caseclause.js:22:7]
@@ -27709,6 +27760,14 @@ Negative Passed: 4651/4651 (100.00%)
  23 │       break;
     ╰────
   help: Wrap this declaration in a block statement
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js:23:1]
+ 22 │ $DONOTEVALUATE();
+ 23 │ await using x = null;
+    · ─────
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × 'using' declarations are not allowed at the top level of a script
     ╭─[test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js:23:1]
@@ -28146,11 +28205,12 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: A `break` statement can only be used within an enclosing iteration or switch statement.
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/statements/class/async-gen-meth-escaped-async.js:26:5]
+  × Expected `;` but found `*`
+    ╭─[test262/test/language/statements/class/async-gen-meth-escaped-async.js:26:15]
  25 │ class C {
  26 │     \u0061sync* m(){}
-    ·     ──────────
+    ·               ┬
+    ·               ╰── `;` expected
  27 │ };
     ╰────
 
@@ -28614,11 +28674,12 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   note: Classes are always strict mode code
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/statements/class/async-meth-escaped-async.js:26:5]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/async-meth-escaped-async.js:26:16]
  25 │ class C {
  26 │     \u0061sync m(){}
-    ·     ──────────
+    ·                ┬
+    ·                ╰── `;` expected
  27 │ };
     ╰────
 
@@ -34749,11 +34810,12 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ╰── It can not be redeclared here
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/statements/class/syntax/escaped-static.js:25:3]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/syntax/escaped-static.js:25:15]
  24 │ class C {
  25 │   st\u0061tic m() {}
-    ·   ───────────
+    ·               ┬
+    ·               ╰── `;` expected
  26 │ }
     ╰────
 
@@ -36691,14 +36753,6 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ────
     ╰────
 
-  × A rest parameter or binding pattern may not have a trailing comma.
-    ╭─[test262/test/language/statements/for-in/dstr/array-rest-elision-invalid.js:33:11]
- 32 │ 
- 33 │ for ([...x,] in [[]]) ;
-    ·           ─
-    ╰────
-  help: Remove the trailing comma here
-
   × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-init.js:34:10]
  33 │ 
@@ -36855,6 +36909,15 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
     ╰────
   note: This identifier is reserved in strict mode code
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/for-in/dstr/obj-rest-before-comma-invalid.js:34:14]
+ 33 │ 
+ 34 │ for ({...rest,} in [{}
+    ·              ─
+ 35 │ ]) ;
+    ╰────
+  help: Remove the trailing comma here
 
   × Spread must be last element
     ╭─[test262/test/language/statements/for-in/dstr/obj-rest-not-last-element-invalid.js:34:7]
@@ -37230,14 +37293,6 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ────
     ╰────
 
-  × A rest parameter or binding pattern may not have a trailing comma.
-    ╭─[test262/test/language/statements/for-of/dstr/array-rest-elision-invalid.js:33:11]
- 32 │ 
- 33 │ for ([...x,] of [[]]) ;
-    ·           ─
-    ╰────
-  help: Remove the trailing comma here
-
   × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-init.js:34:10]
  33 │ 
@@ -37518,6 +37573,15 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
     ╰────
   note: This identifier is reserved in strict mode code
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/for-of/dstr/obj-rest-before-comma-invalid.js:34:14]
+ 33 │ 
+ 34 │ for ({...rest,} of [{}
+    ·              ─
+ 35 │ ]) ;
+    ╰────
+  help: Remove the trailing comma here
 
   × Spread must be last element
     ╭─[test262/test/language/statements/for-of/dstr/obj-rest-not-last-element-invalid.js:34:7]

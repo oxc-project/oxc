@@ -15,6 +15,9 @@ use oxc_transformer::{TransformOptions, Transformer};
 use std::alloc::{GlobalAlloc, Layout};
 use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
 
+#[cfg(feature = "linter")]
+mod linter;
+
 #[global_allocator]
 static GLOBAL: TrackedAllocator = TrackedAllocator;
 
@@ -300,6 +303,11 @@ fn test() {
 pub fn run() -> Result<(), io::Error> {
     let files = TestFiles::complicated();
 
+    #[cfg(feature = "linter")]
+    if !cfg!(feature = "is_all_features") {
+        return linter::run(&files);
+    }
+
     let mut parser_entries = Vec::new();
     let mut semantic_entries = Vec::new();
     let mut transformer_entries = Vec::new();
@@ -311,6 +319,7 @@ pub fn run() -> Result<(), io::Error> {
     let parse_options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
     let minifier_options = MinifierOptions {
         mangle: Some(MangleOptions::default()),
+        mangle_properties: None,
         compress: Some(CompressOptions::smallest()),
     };
 
@@ -342,7 +351,7 @@ pub fn run() -> Result<(), io::Error> {
         allocator.reset();
         let parsed = parse_for_format(&allocator, &file.source_text, file.source_type);
         assert!(parsed.diagnostics.is_empty());
-        let _ = format_program(&allocator, &parsed.program, JsFormatOptions::default(), None)
+        let _ = format_program(&allocator, &parsed.program, JsFormatOptions::default())
             .print()
             .unwrap()
             .into_code();
@@ -407,7 +416,7 @@ pub fn run() -> Result<(), io::Error> {
         assert!(parsed.diagnostics.is_empty());
 
         let (_, formatter_stats) = record_stats_in(&allocator, || {
-            format_program(&allocator, &parsed.program, JsFormatOptions::default(), None)
+            format_program(&allocator, &parsed.program, JsFormatOptions::default())
                 .print()
                 .unwrap()
                 .into_code()

@@ -38,7 +38,7 @@ fn test_fold_block() {
     // test("for (x of y) {x}", "for(x of y);");
     test("for (let x = 1; x <10; x++ ) {}", "for (let x = 1; x <10; x++ );");
     test("for (var x = 1; x <10; x++ ) {}", "for (var x = 1; x <10; x++ );");
-    test("do { } while (true)", "do;while(!0)");
+    test("do { } while (true)", "do;while(1)");
     test(
         "function z(a) {
           {
@@ -85,8 +85,47 @@ fn test_fold_useless_for() {
     test("for (var se = [1, 2]; false;);", "var se = [1, 2];");
     test("for (var se = [1, 2]; false;) { var a = 0; }", "var se = [1, 2], a;");
 
-    test("for (foo = bar; false;) {}", "for (foo = bar; !1;);");
+    test("for (foo = bar; false;) {}", "for (foo = bar; 0;);");
     // test("l1:for(;false;) {  }", "");
+}
+
+#[test]
+fn test_fold_dead_for_lexical_initializer() {
+    for kind in ["let", "const"] {
+        test_unused(
+            &format!("function f(){{for({kind} x=console.log('effect');false;){{}}}} f();"),
+            "function f(){console.log('effect')} f();",
+        );
+        test(
+            &format!("for ({kind} x = foo(); false; update()) {{ body(); }}"),
+            "{ let x = foo(); }",
+        );
+        test(
+            &format!("for ({kind} x = foo(), y = bar(x); false;) {{}}"),
+            "{ let x = foo(), y = bar(x); }",
+        );
+        test(
+            &format!("let x = 1; for ({kind} x = foo(); false;) {{}} use(x);"),
+            "let x = 1; { let x = foo(); } use(1);",
+        );
+        test(
+            &format!("for ({kind} x = eval('x'); false;) {{}}"),
+            &format!("{{ {kind} x = eval('x'); }}"),
+        );
+        test(&format!("for ({kind} x = x; false;) {{}}"), "{ let x = x; }");
+        test(&format!("if (a) for ({kind} x = foo(); false;) {{}}"), "if (a) { let x = foo(); }");
+        test(
+            &format!("for ({kind} x = foo(); false;) {{ var y = bar(); }} use(y);"),
+            "{ let x = foo(); var y; } use(y);",
+        );
+        // Destructuring can invoke getters, iterators, and default initializers.
+        for pattern in ["{x}", "[x]", "{x = foo()}", "[x = foo()]"] {
+            test_unused(
+                &format!("for ({kind} {pattern} = source; false;) {{}}"),
+                &format!("{{ let {pattern} = source; }}"),
+            );
+        }
+    }
 }
 
 #[test]
@@ -235,28 +274,25 @@ fn remove_unused_expressions_in_sequence() {
     // already-`0` element re-records a mutation every iteration, spinning
     // the fixed-point loop into the 10-iteration debug_assert.
     test_same("(sideEffect(), 0, foo.bar)();");
-    test_same("delete (sideEffect(), 0, foo.bar);");
+    test("delete (sideEffect(), 0, foo.bar);", "sideEffect(), foo.bar;");
 
     test("typeof (0, foo);", "foo");
     test_same("v = typeof (0, foo);");
     test("var foo; typeof (0, foo);", "var foo;");
-    test("var foo; v = typeof (0, foo);", "var foo; v = typeof foo");
+    test("v = function(foo) { return typeof (0, foo) }", "v = function(foo) { return typeof foo }");
     test("typeof 0", "");
 
-    test_same("delete (0, foo);");
-    test_same("delete (0, foo.#bar);");
-    test_same("delete (0, foo.bar);");
-    test_same("delete (0, foo[bar]);");
-    test_same("delete (0, foo?.bar);");
+    test("delete (0, foo);", "foo");
+    test("delete (0, foo.#bar);", "foo.#bar");
+    test("delete (0, foo.bar);", "foo.bar");
+    test("delete (0, foo[bar]);", "foo[bar]");
+    test("delete (0, foo?.bar);", "foo?.bar");
 }
 
 #[test]
 fn remove_unused_expressions_in_for() {
-    test("var i; for (i = 0, 0; i < 10; i++) foo(i);", "var i; for (i = 0; i < 10; i++) foo(i);");
-    test(
-        "var i; for (i = 0; i < 10; 0, i++, 0) foo(i);",
-        "var i; for (i = 0; i < 10; i++) foo(i);",
-    );
+    test("var i; for (i = 0, 0; i < 10; i++) foo(i);", "for (var i = 0; i < 10; i++) foo(i);");
+    test("var i; for (i = 0; i < 10; 0, i++, 0) foo(i);", "for (var i = 0; i < 10; i++) foo(i);");
 }
 
 #[test]
@@ -296,6 +332,21 @@ fn remove_empty_function() {
 
     test_same_options("function* foo({}) {} foo()", &options);
     test_options("var foo = function*({}) {}; foo()", "(function*({}) {})()", &options);
+}
+
+#[test]
+fn pure_function_preserves_rest_destructuring() {
+    test_same("function foo(...[v = side_effect()]) {} foo(), foo();");
+    test_same("function foo(...[v = side_effect()]) {} use(foo(), foo());");
+    test_same("var foo = function (...[v = side_effect()]) {}; foo(), foo();");
+    test_same("var foo = function (...[v = side_effect()]) {}; use(foo(), foo());");
+    test_same("var foo = (...[v = side_effect()]) => {}; foo(), foo();");
+    test_same("var foo = (...[v = side_effect()]) => {}; use(foo(), foo());");
+    test_same("function foo(...{0: v = side_effect()}) {} foo(), foo();");
+    test_same("function foo(...{0: v = side_effect()}) {} use(foo(), foo());");
+    test_same("function foo(...[[v]]) {} foo(), foo();");
+    test_same("function foo(...[[v]]) {} use(foo(), foo());");
+    test("function foo(...args) {} foo();", "function foo(...args) {}");
 }
 
 #[test]

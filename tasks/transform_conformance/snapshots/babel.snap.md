@@ -1,16 +1,15 @@
-commit: 06b6eae3
+commit: b835f0c6
 
-Passed: 769/1162
+Passed: 741/1168
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-export-namespace-from
-* babel-plugin-transform-optional-chaining
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-display-name
 
 
-# babel-preset-env (38/85)
+# babel-preset-env (36/85)
 * dynamic-import/auto-esm-unsupported-import-unsupported/input.mjs
 x Output mismatch
 
@@ -116,6 +115,12 @@ x Output mismatch
 * preset-options/regexp-modifiers-chrome-121/input.js
 x Output mismatch
 
+* preset-options/removed-loose/input.js
+x Expected transform error, but transformation succeeded: @babel/preset-env: The 'loose' and 'spec' options have been removed, and you should configure granular compiler assumptions instead. See https://babeljs.io/assumptions for more information.
+
+* preset-options/removed-spec/input.js
+x Expected transform error, but transformation succeeded: @babel/preset-env: The 'loose' and 'spec' options have been removed, and you should configure granular compiler assumptions instead. See https://babeljs.io/assumptions for more information.
+
 * preset-options/reserved-keys-ie8/input.mjs
 x Output mismatch
 
@@ -164,8 +169,11 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-unicode-sets-regex (0/4)
+# babel-plugin-transform-unicode-sets-regex (0/5)
 * basic/basic/input.js
+x Output mismatch
+
+* basic/issue-18259/input.js
 x Output mismatch
 
 * basic/string-properties/input.js
@@ -178,7 +186,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (214/269)
+# babel-plugin-transform-class-properties (208/269)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -311,6 +319,9 @@ x Output mismatch
 * private-loose/static-infer-name/input.js
 x Output mismatch
 
+* public/arrow-this-without-transform/input.js
+x Expected transform error, but transformation succeeded: Unable to transform arrow inside class property
+
 * public/class-shadow-builtins/input.mjs
 x Output mismatch
 
@@ -322,6 +333,21 @@ x Output mismatch
 
 * public/static-infer-name/input.js
 x Output mismatch
+
+* public/super-destructuring-array-pattern/input.js
+x Expected transform error, but transformation succeeded: Destructuring to a super field is not supported yet.
+
+* public/super-destructuring-array-pattern-1/input.js
+x Expected transform error, but transformation succeeded: Destructuring to a super field is not supported yet.
+
+* public/super-destructuring-object-pattern/input.js
+x Expected transform error, but transformation succeeded: Destructuring to a super field is not supported yet.
+
+* public/super-destructuring-object-pattern-1/input.js
+x Expected transform error, but transformation succeeded: Destructuring to a super field is not supported yet.
+
+* public-loose/arrow-this-without-transform/input.js
+x Expected transform error, but transformation succeeded: Unable to transform arrow inside class property
 
 * public-loose/class-shadow-builtins/input.mjs
 x Output mismatch
@@ -345,37 +371,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-static-block (11/24)
-* class-static-block/before-static-fields/input.js
-x Output mismatch
-
-* class-static-block/class-binding/input.js
-x Output mismatch
-
-* class-static-block/class-declaration/input.js
-x Output mismatch
-
-* class-static-block/class-inferred-name/input.js
-x Output mismatch
-
-* class-static-block/in-class-heritage/input.js
-x Output mismatch
-
-* class-static-block/multiple-static-initializers/input.js
-x Output mismatch
-
-* class-static-block/name-conflict/input.js
-x Output mismatch
-
-* class-static-block/new-target/input.js
-x Output mismatch
-
-* class-static-block/preserve-comments/input.js
-x Output mismatch
-
-* class-static-block/var-scope/input.js
-x Output mismatch
-
+# babel-plugin-transform-class-static-block (21/24)
 * integration/in-class-heritage/input.js
 x Output mismatch
 
@@ -386,7 +382,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-methods (48/148)
+# babel-plugin-transform-private-methods (41/148)
 * accessors-loose/basic/input.js
 x Output mismatch
 
@@ -446,6 +442,27 @@ x Output mismatch
 
 * assumption-constantSuper/private-method-super/input.js
 x Output mismatch
+
+* duplicated-names/get-get/input.js
+x Expected transform error, but transformation succeeded: Duplicate private name #getSet
+
+* duplicated-names/get-method/input.js
+x Expected transform error, but transformation succeeded: Duplicate private name #foo
+
+* duplicated-names/method-get/input.js
+x Expected transform error, but transformation succeeded: Duplicate private name #foo
+
+* duplicated-names/method-method/input.js
+x Expected transform error, but transformation succeeded: Duplicate private name #dank
+
+* duplicated-names/method-set/input.js
+x Expected transform error, but transformation succeeded: Duplicate private name #foo
+
+* duplicated-names/set-method/input.js
+x Expected transform error, but transformation succeeded: Duplicate private name #foo
+
+* duplicated-names/set-set/input.js
+x Expected transform error, but transformation succeeded: Duplicate private name #getSet
 
 * private-method/super/input.js
 x Output mismatch
@@ -720,7 +737,10 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-property-in-object (24/59)
+# babel-plugin-transform-private-property-in-object (24/60)
+* assumption-noUninitializedPrivateFieldAccess/static-field/input.js
+x Output mismatch
+
 * assumption-privateFieldsAsProperties/accessor/input.js
 x Output mismatch
 
@@ -874,12 +894,17 @@ x Output mismatch
 x Output mismatch
 
 
+# babel-plugin-transform-optional-chaining (45/46)
+* general/iife-rest-param/input.js
+x Output mismatch
+
+
 # babel-plugin-transform-async-generator-functions (19/20)
 * async-generators/class-private-method/input.js
 x Output mismatch
 
 
-# babel-plugin-transform-object-rest-spread (29/39)
+# babel-plugin-transform-object-rest-spread (28/39)
 * object-rest/for-x/input.js
 x Output mismatch
 
@@ -900,6 +925,47 @@ x Output mismatch
 
 * object-rest/object-ref-computed/input.js
 x Output mismatch
+
+* object-rest/parameters-object-rest-used-in-default/input.js
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(0): [ReferenceId(0)]
+rebuilt        : SymbolId(3): []
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(2): [ReferenceId(1)]
+rebuilt        : SymbolId(6): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(6): [ReferenceId(2)]
+rebuilt        : SymbolId(10): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(7): [ReferenceId(3)]
+rebuilt        : SymbolId(16): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(13): [ReferenceId(6)]
+rebuilt        : SymbolId(20): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(15): [ReferenceId(7)]
+rebuilt        : SymbolId(23): []
+Reference symbol mismatch for "R":
+after transform: SymbolId(0) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "Y":
+after transform: SymbolId(2) "Y"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(6) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(7) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(13) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(15) "R"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["b", "babelHelpers", "f", "q"]
+rebuilt        : ["R", "Y", "b", "babelHelpers", "f", "q"]
 
 * object-rest/symbol/input.js
 x Output mismatch
@@ -1018,7 +1084,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-arrow-functions (3/11)
+# babel-plugin-transform-arrow-functions (1/11)
 * arrow-functions/implicit-var-arguments/input.js
 x Output mismatch
 
@@ -1027,6 +1093,14 @@ x Output mismatch
 
 * arrow-functions/spec/input.js
 x Output mismatch
+
+* arrow-functions/super-call/input.js
+x Expected transform error, but transformation succeeded: When using '@babel/plugin-transform-arrow-functions', it's not possible to compile `super()` in an arrow function without compiling classes.
+Please add '@babel/plugin-transform-classes' to your Babel configuration.
+
+* arrow-functions/super-prop/input.js
+x Expected transform error, but transformation succeeded: When using '@babel/plugin-transform-arrow-functions', it's not possible to compile `super.prop` in an arrow function without compiling classes.
+Please add '@babel/plugin-transform-classes' to your Babel configuration.
 
 * assumption-newableArrowFunctions-false/basic/input.js
 x Output mismatch
@@ -1044,9 +1118,15 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-preset-typescript (9/12)
+# babel-preset-typescript (7/12)
 * node-extensions/import-in-cts/input.cts
 x Output mismatch
+
+* node-extensions/with-in-mts/input.mts
+x Expected transform error, but transformation succeeded: 'with' in strict mode. (1:0)
+
+* opts/allowDeclareFields/input.ts
+x Expected transform error, but transformation succeeded: The .allowDeclareFields option has been removed and it's now always enabled. Please remove it from your config.
 
 * opts/rewriteImportExtensions/input.ts
 x Output mismatch
@@ -1055,7 +1135,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (113/155)
+# babel-plugin-transform-typescript (110/158)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1112,6 +1192,13 @@ x Output mismatch
 * class/private-method-override-transform-private/input.ts
 x Output mismatch
 
+* class/transform-properties-declare-wrong-order/input.ts
+x Expected transform error, but transformation succeeded: TypeScript 'declare' fields must first be transformed by @babel/plugin-transform-typescript.
+If you have already enabled that plugin (or '@babel/preset-typescript'), make sure that it runs before any plugin related to additional class features:
+ - @babel/plugin-transform-class-properties
+ - @babel/plugin-transform-private-methods
+ - @babel/plugin-proposal-decorators
+
 * declarations/const-enum/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["E"]
@@ -1131,6 +1218,20 @@ rebuilt        : ScopeId(0): []
 Bindings mismatch:
 after transform: ScopeId(0): ["P"]
 rebuilt        : ScopeId(0): []
+
+* enum/enum-after-const-fail/input.ts
+
+  x Identifier `N` has already been declared
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/enum-after-const-fail/input.ts:1:7]
+ 1 | const N = 1;
+   :       |
+   :       `-- `N` has already been declared here
+ 2 | enum N {
+   :      |
+   :      `-- It can not be redeclared here
+ 3 |   A = 2,
+   `----
+
 
 * enum/enum-merging-inner-references/input.ts
 Symbol redeclarations mismatch for "Animals":
@@ -1215,6 +1316,10 @@ Symbol redeclarations mismatch for "BB":
 after transform: SymbolId(10): [Span { start: 445, end: 447 }, Span { start: 461, end: 463 }]
 rebuilt        : SymbolId(1): []
 
+* exports/export=/input.ts
+x Expected transform error, but transformation succeeded: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+
 * exports/interface/input.ts
 x Output mismatch
 
@@ -1233,6 +1338,10 @@ rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
 Symbol redeclarations mismatch for "f":
 after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
 rebuilt        : SymbolId(0): []
+
+* imports/import=-module/input.ts
+x Expected transform error, but transformation succeeded: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 * imports/type-only-export-specifier-2/input.ts
 x Output mismatch
@@ -1269,6 +1378,11 @@ Bindings mismatch:
 after transform: ScopeId(12): ["D", "_d"]
 rebuilt        : ScopeId(4): ["_d"]
 
+* namespace/enum-after-namespace/input.ts
+Symbol redeclarations mismatch for "N":
+after transform: SymbolId(0): [Span { start: 17, end: 18 }, Span { start: 57, end: 58 }]
+rebuilt        : SymbolId(0): []
+
 * namespace/export-type-only/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["Platform"]
@@ -1297,6 +1411,11 @@ rebuilt        : ScopeId(0): []
    : ^^^^^^^^^^^^^^
    `----
 
+
+* namespace/nested-enum-after-namespace/input.ts
+Symbol redeclarations mismatch for "N":
+after transform: SymbolId(1): [Span { start: 37, end: 38 }, Span { start: 83, end: 84 }]
+rebuilt        : SymbolId(2): []
 
 * namespace/nested-namespace/input.ts
 Bindings mismatch:
@@ -1358,7 +1477,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (137/149)
+# babel-plugin-transform-react-jsx (122/149)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 x Output mismatch
 
@@ -1367,6 +1486,27 @@ x Output mismatch
 
 * pure/false-default-pragma-classic-runtime/input.js
 x Output mismatch
+
+* pure/false-pragma-comment-automatic-runtime/input.js
+x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic
+
+* pure/false-pragma-option-automatic-runtime/input.js
+x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic.
+
+* pure/true-pragma-comment-automatic-runtime/input.js
+x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic
+
+* pure/true-pragma-option-automatic-runtime/input.js
+x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic.
+
+* pure/unset-pragma-comment-automatic-runtime/input.js
+x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic
+
+* pure/unset-pragma-option-automatic-runtime/input.js
+x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic.
+
+* react/should-disallow-spread-children/input.js
+x Expected transform error, but transformation succeeded: Spread children are not supported in React.
 
 * react/should-disallow-valueless-key/input.js
 
@@ -1401,8 +1541,17 @@ x Output mismatch
    `----
 
 
+* react/should-warn-when-importSource-is-set/input.js
+x Expected transform error, but transformation succeeded: importSource cannot be set when runtime is classic.
+
+* react/should-warn-when-importSource-pragma-is-set/input.js
+x Expected transform error, but transformation succeeded: importSource cannot be set when runtime is classic.
+
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* react-automatic/should-disallow-spread-children/input.js
+x Expected transform error, but transformation succeeded: Spread children are not supported in React.
 
 * react-automatic/should-disallow-valueless-key/input.js
 
@@ -1436,6 +1585,21 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
    :  ^^^^^^^
    `----
 
+
+* react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
+x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic.
+
+* removed-options/invalid-use-builtins-false/input.js
+x Expected transform error, but transformation succeeded: @babel/plugin-transform-react-jsx: Since "useBuiltIns" is removed in Babel 8, you can remove it from the config.
+
+* removed-options/invalid-use-builtins-true/input.js
+x Expected transform error, but transformation succeeded: @babel/plugin-transform-react-jsx: Since "useBuiltIns" is removed in Babel 8, you can remove it from the config.
+
+* removed-options/invalid-use-spread-false/input.js
+x Expected transform error, but transformation succeeded: transform-react-jsx: Since Babel 8, an inline object with spread elements is always used, and the "useSpread" option is no longer available. Please remove it from your config.
+
+* removed-options/invalid-use-spread-true/input.js
+x Expected transform error, but transformation succeeded: transform-react-jsx: Since Babel 8, an inline object with spread elements is always used, and the "useSpread" option is no longer available. Please remove it from your config.
 
 * spread-transform/transform-to-babel-extend/input.js
 

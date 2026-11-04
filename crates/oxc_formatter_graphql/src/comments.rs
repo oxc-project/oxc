@@ -1,5 +1,5 @@
 use oxc_formatter_core::{
-    Buffer, LINE_TERMINATORS, SourceText, SpanCursor, arena_cow_str,
+    LINE_TERMINATORS, SourceText, SpanCursor, arena_cow_str,
     builders::{
         empty_line, expand_parent, hard_line_break, line_suffix, line_suffix_boundary, space, text,
     },
@@ -39,6 +39,24 @@ fn write_gap(gap: &[u8], f: &mut GraphqlFormatter<'_, '_>) {
 
 /// Emit comments that precede a node,
 /// preserving the source's vertical spacing (0/1/blank) between each comment and the next position.
+///
+/// NOTE: Known FORMATTER_POLICY violation ("own-line comments stay own-line"):
+/// the line break BEFORE the first comment is never reproduced,
+/// so an own-line comment claimed mid-line (right after `type`, `:`, `=`) inlines onto that line
+/// ```graphql
+/// type
+/// # c
+/// A { f: Int }
+///
+/// # ->
+///
+/// type # c
+/// A {
+///   f: Int
+/// }
+/// ```
+/// Kept for now: Prettier byte-compat outweighs the invariant
+/// (fixable in the existing IR: hardline before flushing at the claim points).
 fn write_leading_comments(comments: &[Span], value_start: u32, f: &mut GraphqlFormatter<'_, '_>) {
     let source = f.context().source_text();
     for (i, &span) in comments.iter().enumerate() {
@@ -199,6 +217,9 @@ fn write_trailing_inside_comments<'a>(
 /// positions no printer claims (e.g. between a type and its `!`, or after the last argument's directives).
 /// Draining them here keeps the positional cursor monotonic,
 /// a later flush point would sit AFTER these comments in the source, making its gap range inverted (start > end).
+///
+/// The cost: the comments land after the node, possibly crossing remaining in-span tokens (e.g. a type's `!`).
+/// Known "never crosses user content" violation, accepted for monotonicity.
 pub fn flush_overlooked_inside_comments(upper_bound: u32, f: &mut GraphqlFormatter<'_, '_>) {
     let leftover = f.context().comments().take_before(upper_bound);
     write_trailing_inside_comments(leftover, None, f);
@@ -224,7 +245,7 @@ fn is_suppression_comment(source: SourceText<'_>, span: Span) -> bool {
 /// Returns `true` if any pending comment up to `before` is a suppression marker.
 pub fn is_suppressed_before(f: &GraphqlFormatter<'_, '_>, before: u32) -> bool {
     let source = f.context().source_text();
-    f.context().comments().iter_before(before).any(|c| is_suppression_comment(source, c))
+    f.context().comments().iter_before(before).copied().any(|c| is_suppression_comment(source, c))
 }
 
 /// Emits a node's leading comments, then the node's source verbatim,

@@ -5,3 +5,10 @@
 .c ^^ .d {
   color: blue;
 }
+.container /shadow/ .content {
+  background: blue;
+}
+// `/DEEP/` stays: vue-loader and Angular match `/deep/` case-sensitively
+.x /DEEP/ .y {
+  color: red;
+}

@@ -41,12 +41,12 @@ export const Counter: React.FC = () => {
     let ParserReturn {
         program,     // AST
         diagnostics, // Syntax errors
-        panicked,    // Parser encountered an error it couldn't recover from
+        fatal_error, // Parser encountered an error it couldn't recover from
         ..
     } = Parser::new(&allocator, source_text, source_type).parse();
 
-    if panicked {
-        return Err("Parser panicked".to_string());
+    if fatal_error {
+        return Err("Parser encountered a fatal error".to_string());
     }
 
     if !diagnostics.is_empty() {

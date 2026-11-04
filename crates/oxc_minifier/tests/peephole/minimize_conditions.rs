@@ -53,16 +53,22 @@ fn test_fold_one_child_blocks() {
     test("if(e1){with(e2){if(e3){foo()}}}else{bar()}", "if(e1)with(e2)e3&&foo();else bar()");
 
     // test("if(a||b){if(c||d){var x;}}", "if(a||b)if(c||d)var x");
-    test("if(x){ if(y){var x;}else{var z;} }", "if(x){if(y)var x;else var z}");
+    test(
+        "v = function(x, y) { if(x) { if(y) { var x } else { var z } } }",
+        "v = function(x, y) { if(x) { if(y) var x; else var z } }",
+    );
 
     // NOTE - technically we can remove the blocks since both the parent
     // and child have elses. But we don't since it causes ambiguities in
     // some cases where not all descendent ifs having elses
     test(
-        "if(x){ if(y){var x;}else{var z;} }else{var w}",
-        "if(x){if(y)var x;else var z;}else var w",
+        "v = function(x, y) { if(x) { if(y) { var x } else { var z } } else { var w } }",
+        "v = function(x, y) { if(x) { if(y) var x; else var z } else var w }",
     );
-    test("if (x) {var x;}else { if (y) { var y;} }", "if(x)var x;else if(y)var y");
+    test(
+        "v = function(x, y) { if(x) { var x } else { if(y) { var y } } }",
+        "v = function(x, y) { if(x) var x; else if(y) var y }",
+    );
 
     // Here's some of the ambiguous cases
     test(
@@ -292,7 +298,6 @@ fn test_minimize_while_condition() {
 }
 
 #[test]
-#[ignore = "TODO: De Morgan's law optimization not yet implemented"]
 fn test_minimize_demorgan_remove_leading_not() {
     test("if(!(!a||!b)&&c) foo()", "((a&&b)&&c)&&foo()");
     test("if(!(x&&y)) foo()", "x&&y||foo()");
@@ -320,7 +325,6 @@ fn test_minimize_demorgan2b() {
 }
 
 #[test]
-#[ignore = "TODO: De Morgan's law optimization not yet implemented"]
 fn test_minimize_demorgan3() {
     test("if((!a||!b)&&(c||d)) foo()", "(a&&b||!c&&!d)||foo()");
 }
@@ -350,9 +354,8 @@ fn test_minimize_demorgan20a() {
 }
 
 #[test]
-#[ignore = "TODO: De Morgan's law optimization not yet implemented"]
 fn test_minimize_demorgan20b() {
-    test("if (0!==c || 2!==a && 1!==a) g(); else f()", "(0!==c || 2!==a && 1!==a) ? g() : f()");
+    test("if (0!==c || 2!==a && 1!==a) g(); else f()", "c!==0 || a!==2 && a!==1 ? g() : f()");
 }
 
 #[test]
@@ -1367,6 +1370,12 @@ fn test_fold_logical_expression_to_assignment_expression() {
     test("x || (a, x = g())", "x ||= (a, g())");
     test("x && (a, x = g())", "x &&= (a, g())");
     test("x ?? (a, x = g())", "x ??= (a, g())");
+    test("x || (a, (b, x = 3))", "x ||= (a, b, 3)");
+    test("x && (a, (b, x = 3))", "x &&= (a, b, 3)");
+    test("x ?? (a, (b, x = 3))", "x ??= (a, b, 3)");
+    test("x || (a, b, (x = 3))", "x ||= (a, b, 3)");
+    test("x && (a, b, (x = 3))", "x &&= (a, b, 3)");
+    test("x ?? (a, b, (x = 3))", "x ??= (a, b, 3)");
     test("var x; x.y || (a, x.y = 3)", "var x; x.y ||= (a, 3)");
     test("var x; x.y && (a, x.y = 3)", "var x; x.y &&= (a, 3)");
     test("var x; x.y ?? (a, x.y = 3)", "var x; x.y ??= (a, 3)");
@@ -1441,6 +1450,10 @@ fn test_compress_is_loose_boolean() {
     test("v = x != !1", "v = x != 0");
     test_same("v = ![f()] == x");
     test_same("v = x == ![f()]");
+    test("v = true == y", "v = y == 1");
+    test("v = false == y", "v = y == 0");
+    test("v = true != y", "v = y != 1");
+    test("v = false != y", "v = y != 0");
 }
 
 #[test]

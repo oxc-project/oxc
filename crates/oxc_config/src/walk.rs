@@ -34,7 +34,7 @@ pub fn configure_walk_builder(
         .require_git(has_vcs_boundary)
 }
 
-/// Check whether walk target paths are gitignored, matching `git check-ignore`.
+/// Check whether walk target paths match the Git-derived ignore rules used by the walker.
 ///
 /// The `ignore` crate walker applies gitignore's "everything under an ignored directory is ignored" rule
 /// only by pruning ignored directories during traversal, and never filters its walk roots.
@@ -42,6 +42,9 @@ pub fn configure_walk_builder(
 /// And a bare directory pattern like `generated` matches the directory itself, not the files below it.
 /// Use an incremental matcher rooted at the VCS (or filesystem) boundary to check targets first.
 /// See also <https://github.com/BurntSushi/ripgrep/issues/2595>.
+///
+/// This is pattern-based and does not inspect Git's index.
+/// A tracked file that matches an ignore pattern therefore still matches here.
 ///
 /// NOTE: Mirrors the [`configure_walk_builder`] settings:
 /// - nested `.gitignore` files,
@@ -91,6 +94,15 @@ impl GitignoreChecker {
             }
         };
         matcher.matched(relative, is_dir).is_ignore()
+    }
+
+    /// Walk-root variant of [`Self::is_gitignored`]: `true` only for gitignored directory targets.
+    /// `.gitignore` scopes discovery, an explicitly named file target is processed even when gitignored.
+    ///
+    /// Dir-ness follows symlinks (= whether the walker would descend into the target);
+    /// pattern matching itself still uses the symlink type via [`Self::is_gitignored`].
+    pub fn is_gitignored_walk_root(&mut self, path: &Path, cwd: &Path) -> bool {
+        resolve_against_cwd(path, cwd).is_dir() && self.is_gitignored(path, cwd)
     }
 }
 
@@ -295,6 +307,25 @@ mod test {
         assert!(checker.is_gitignored(&repo_path.join("sub").join("generated"), &repo_path));
         // Sibling of the ignored directory is not
         assert!(!checker.is_gitignored(&repo_path.join("sub"), &repo_path));
+    }
+
+    #[test]
+    fn walk_root_check_only_filters_directory_targets() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let repo_path = temp_dir.path().join("repo");
+        let target = repo_path.join("sub").join("generated").join("pkg");
+
+        fs::create_dir_all(&target).unwrap();
+        fs::create_dir(repo_path.join(".git")).unwrap();
+        fs::write(repo_path.join("sub").join(".gitignore"), "generated\n").unwrap();
+        fs::write(target.join("index.ts"), "").unwrap();
+
+        let mut checker = GitignoreChecker::new();
+        // Directory targets inside the ignored tree are filtered
+        assert!(checker.is_gitignored_walk_root(&target, &repo_path));
+        // An explicitly named file is not, even though `is_gitignored` matches it
+        assert!(!checker.is_gitignored_walk_root(&target.join("index.ts"), &repo_path));
+        assert!(checker.is_gitignored(&target.join("index.ts"), &repo_path));
     }
 
     #[test]

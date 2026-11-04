@@ -9,13 +9,17 @@
 //! Currently runs BuildHIR (lowering) and PruneMaybeThrows.
 
 use oxc_allocator::GetAllocator;
-use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_diagnostics::Diagnostics;
 
-use crate::diagnostics::ErrorCategory;
-use crate::react_compiler_hir::ReactFunctionType;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
-use crate::react_compiler_hir::environment_config::EnvironmentConfig;
+use crate::react_compiler_hir::environment_config::{EnvironmentConfig, ExhaustiveEffectDepsMode};
+use crate::react_compiler_hir::{
+    HirFunction, InstructionValue, ReactFunctionType, assert_consistent_identifiers,
+    assert_terminal_preds_exist, assert_terminal_successors_exist, assert_valid_block_nesting,
+    is_use_effect_hook_type, is_use_insertion_effect_hook_type, is_use_layout_effect_hook_type,
+};
 use crate::react_compiler_inference::align_method_call_scopes;
 use crate::react_compiler_inference::align_object_method_scopes;
 use crate::react_compiler_inference::align_reactive_scopes_to_block_scopes_hir;
@@ -83,7 +87,6 @@ use crate::react_compiler_validation::validate_use_memo;
 use crate::scope::*;
 
 use super::compile_result::CodegenFunction;
-use super::compile_result::OutlinedFunction;
 use super::imports::ProgramContext;
 use crate::options::CompilerOutputMode;
 
@@ -91,7 +94,7 @@ use crate::options::CompilerOutputMode;
 ///
 /// On failure, returns the diagnostics of the failed compilation attempt.
 #[allow(clippy::too_many_arguments)]
-pub fn compile_fn<'a>(
+pub fn compile_fn<'a, const EMIT: bool>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     func: &FunctionNode<'_, 'a>,
     scope: &ScopeResolver<'_, 'a>,
@@ -100,28 +103,6 @@ pub fn compile_fn<'a>(
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext<'a>,
 ) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
-    match run_pipeline(ast, func, scope, fn_type, mode, env_config, context) {
-        Ok(result) => result,
-        Err(diagnostic) => Err(Diagnostics::from(diagnostic)),
-    }
-}
-
-/// The pass pipeline: creates an Environment, runs BuildHIR (lowering), the
-/// HIR/reactive-scope passes, and codegen.
-///
-/// `Err(OxcDiagnostic)` is a diagnostic that immediately bails out of a pass.
-/// Invariant and end-of-pipeline accumulated errors return as
-/// `Ok(Err(diagnostics))`.
-#[allow(clippy::too_many_arguments)]
-fn run_pipeline<'a>(
-    ast: &oxc_ast::builder::AstBuilder<'a>,
-    func: &FunctionNode<'_, 'a>,
-    scope: &ScopeResolver<'_, 'a>,
-    fn_type: ReactFunctionType,
-    mode: CompilerOutputMode,
-    env_config: &EnvironmentConfig,
-    context: &mut ProgramContext<'a>,
-) -> Result<Result<Option<CodegenFunction<'a>>, Diagnostics>, OxcDiagnostic> {
     let mut env = Environment::with_config(ast.allocator(), env_config.clone());
     env.fn_type = fn_type;
     env.output_mode = match mode {
@@ -142,17 +123,17 @@ fn run_pipeline<'a>(
     // the HIR entry is logged. The thrown error contains ONLY the Invariant error,
     // not other recorded (non-Invariant) errors.
     if env.has_invariant_errors() {
-        return Ok(Err(env.take_invariant_errors()));
+        return Err(env.take_invariant_errors());
     }
 
     // Lowering flags this when the function uses `using`/`await using`, whose disposal
     // semantics aren't preserved yet. Skip compiling it silently — no diagnostic — so
     // other functions in the file still compile.
     if env.skip_compilation {
-        return Ok(Ok(None));
+        return Ok(None);
     }
 
-    prune_maybe_throws(&mut hir, &mut env.functions, env.allocator)?;
+    prune_maybe_throws(&mut hir, &mut env)?;
 
     validate_context_variable_lvalues(&hir, &mut env)?;
 
@@ -161,20 +142,20 @@ fn run_pipeline<'a>(
 
     drop_manual_memoization(&mut hir, &mut env)?;
 
-    inline_immediately_invoked_function_expressions(&mut hir, &mut env);
+    inline_immediately_invoked_function_expressions(&mut hir, &mut env)?;
 
-    merge_consecutive_blocks(&mut hir, &mut env.functions, env.allocator);
+    merge_consecutive_blocks(&mut hir, &mut env.functions, env.allocator)?;
 
-    // TODO: port assertConsistentIdentifiers
-    // TODO: port assertTerminalSuccessorsExist
+    assert_consistent_identifiers(&hir, &env.identifiers)?;
+    assert_terminal_successors_exist(&hir)?;
 
     enter_ssa(&mut hir, &mut env)?;
 
     eliminate_redundant_phi(&mut hir, &mut env);
 
-    // TODO: port assertConsistentIdentifiers
+    assert_consistent_identifiers(&hir, &env.identifiers)?;
 
-    constant_propagation(&mut hir, &mut env);
+    constant_propagation(&mut hir, &mut env)?;
 
     infer_types(&mut hir, &mut env)?;
 
@@ -190,10 +171,20 @@ fn run_pipeline<'a>(
 
     optimize_props_method_calls(&mut hir, &env);
 
+    // Async function components are Server Components: they render once per
+    // request and never re-render, so `Date.now()` / `Math.random()` are not a
+    // purity hazard. Nested functions are analysed with this same config, which
+    // covers callbacks that run during that render. Async hooks are not
+    // components and stay checked. The upstream React Compiler does not
+    // special-case this (facebook/react#34834).
+    if hir.is_async && env.fn_type == ReactFunctionType::Component {
+        env.config.validate_no_impure_functions_in_render = false;
+    }
+
     analyse_functions(&mut hir, &mut env, &mut |_inner_func, _inner_env| {})?;
 
     if env.has_invariant_errors() {
-        return Ok(Err(env.take_invariant_errors()));
+        return Err(env.take_invariant_errors());
     }
 
     infer_mutation_aliasing_effects(&mut hir, &mut env, false)?;
@@ -204,7 +195,7 @@ fn run_pipeline<'a>(
 
     dead_code_elimination(&mut hir, &env);
 
-    prune_maybe_throws(&mut hir, &mut env.functions, env.allocator)?;
+    prune_maybe_throws(&mut hir, &mut env)?;
 
     infer_mutation_aliasing_ranges(&mut hir, &mut env, false)?;
 
@@ -241,9 +232,37 @@ fn run_pipeline<'a>(
         validate_no_freezing_known_mutable_functions(&hir, &mut env);
     }
 
+    // Lint does not emit a rewrite. Without useMemo/useCallback there is no
+    // manual memoization to validate, so callers that do not need `Todo` and
+    // `Invariant` diagnostics can skip the reactive-scope passes below, which
+    // only report those. Reactive places are still inferred when an effect hook
+    // call needs its dependencies checked.
+    if !EMIT
+        && env.output_mode == OutputMode::Lint
+        && context.opts.lint_skip_reactive_scope_passes
+        && !hir_has_start_memoize(&hir)
+    {
+        if env.enable_validations() {
+            if env.config.validate_static_components {
+                let errors = validate_static_components(&hir, &env.functions);
+                log_errors_as_events(&errors, context);
+            }
+            if env.config.validate_exhaustive_effect_dependencies != ExhaustiveEffectDepsMode::Off
+                && calls_effect_hook(&hir, &env)
+            {
+                infer_reactive_places(&mut hir, &mut env)?;
+                validate_exhaustive_dependencies(&mut hir, &mut env)?;
+            }
+        }
+        return finish_lint_fn(&mut env, context);
+    }
+
     infer_reactive_places(&mut hir, &mut env)?;
 
-    if env.enable_validations() {
+    if env.enable_validations()
+        && (env.config.validate_exhaustive_memoization_dependencies
+            || env.config.validate_exhaustive_effect_dependencies != ExhaustiveEffectDepsMode::Off)
+    {
         validate_exhaustive_dependencies(&mut hir, &mut env)?;
     }
 
@@ -253,7 +272,7 @@ fn run_pipeline<'a>(
         && env.config.validate_static_components
         && env.output_mode == OutputMode::Lint
     {
-        let errors = validate_static_components(&hir);
+        let errors = validate_static_components(&hir, &env.functions);
         log_errors_as_events(&errors, context);
     }
 
@@ -285,18 +304,18 @@ fn run_pipeline<'a>(
 
     merge_overlapping_reactive_scopes_hir(&mut hir, &mut env);
 
-    // TODO: port assertValidBlockNesting
+    assert_valid_block_nesting(&hir, &env)?;
 
-    build_reactive_scope_terminals_hir(&mut hir, &mut env);
+    build_reactive_scope_terminals_hir(&mut hir, &mut env)?;
 
-    // TODO: port assertValidBlockNesting
+    assert_valid_block_nesting(&hir, &env)?;
 
     flatten_reactive_loops_hir(&mut hir);
 
     flatten_scopes_with_hooks_or_use_hir(&mut hir, &env)?;
 
-    // TODO: port assertTerminalSuccessorsExist
-    // TODO: port assertTerminalPredsExist
+    assert_terminal_successors_exist(&hir)?;
+    assert_terminal_preds_exist(&hir)?;
 
     propagate_scope_dependencies_hir(&mut hir, &mut env);
 
@@ -342,9 +361,6 @@ fn run_pipeline<'a>(
         validate_preserved_manual_memoization(&reactive_fn, &mut env);
     }
 
-    let codegen_result =
-        codegen_function(ast, &reactive_fn, &mut env, unique_identifiers, fbt_operands)?;
-
     // NOTE: we intentionally do NOT register the memo cache import here.
     // The local name is reserved up front by `ProgramContext::reserve_memo_cache_name`,
     // and the import itself is registered in `ox_transform_program` only when an applied
@@ -357,13 +373,19 @@ fn run_pipeline<'a>(
     // codegen result and is disabled while the oxc emission is stubbed. It will be
     // reinstated (or dropped) once the oxc back-end emits real function bodies.
 
-    // Simulate unexpected exception for testing (matches TS Pipeline.ts)
+    let output = if EMIT {
+        Some(
+            codegen_function(ast, &reactive_fn, &mut env, unique_identifiers, fbt_operands)
+                .map_err(Diagnostics::from)?,
+        )
+    } else {
+        None
+    };
+
     if env.config.throw_unknown_exception_testonly {
-        return Err(ErrorCategory::Invariant.diagnostic("unexpected error"));
+        return Err(Diagnostics::from(diagnostics::invariant_unexpected_error()));
     }
 
-    // Check for accumulated errors at the end of the pipeline
-    // (matches TS Pipeline.ts: env.hasErrors() → Err at the end)
     if env.has_errors() {
         // Merge UIDs even on error: in TS, Babel's scope.generateUid() permanently
         // registers names in the scope's `uids` map regardless of whether the function
@@ -373,79 +395,60 @@ fn run_pipeline<'a>(
         if let Some(uid_names) = env.take_uid_known_names() {
             context.merge_uid_known_names(&uid_names);
         }
-        return Ok(Err(env.take_errors()));
-    }
-
-    // Re-compile outlined functions through the full pipeline.
-    // This mirrors TS behavior where outlined functions from JSX outlining
-    // are pushed back onto the compilation queue and compiled as components.
-    let mut compiled_outlined: Vec<OutlinedFunction<'a>> = Vec::new();
-    for o in codegen_result.outlined {
-        let outlined_codegen = CodegenFunction {
-            span: o.func.span,
-            id: o.func.id,
-            name_hint: o.func.name_hint,
-            params: o.func.params,
-            body: o.func.body,
-            generator: o.func.generator,
-            is_async: o.func.is_async,
-            memo_slots_used: o.func.memo_slots_used,
-            memo_blocks: o.func.memo_blocks,
-            memo_values: o.func.memo_values,
-            pruned_memo_blocks: o.func.pruned_memo_blocks,
-            pruned_memo_values: o.func.pruned_memo_values,
-            outlined: Vec::new(),
-        };
-        if let Some(fn_type) = o.fn_type {
-            match compile_outlined_fn(outlined_codegen) {
-                Ok(compiled) => {
-                    compiled_outlined
-                        .push(OutlinedFunction { func: compiled, fn_type: Some(fn_type) });
-                }
-                Err(_err) => {
-                    // If re-compilation fails, skip the outlined function
-                }
-            }
-        } else {
-            compiled_outlined.push(OutlinedFunction { func: outlined_codegen, fn_type: o.fn_type });
-        }
+        return Err(env.take_errors());
     }
 
     if let Some(uid_names) = env.take_uid_known_names() {
         context.merge_uid_known_names(&uid_names);
     }
 
-    Ok(Ok(Some(CodegenFunction {
-        span: codegen_result.span,
-        id: codegen_result.id,
-        name_hint: codegen_result.name_hint,
-        params: codegen_result.params,
-        body: codegen_result.body,
-        generator: codegen_result.generator,
-        is_async: codegen_result.is_async,
-        memo_slots_used: codegen_result.memo_slots_used,
-        memo_blocks: codegen_result.memo_blocks,
-        memo_values: codegen_result.memo_values,
-        pruned_memo_blocks: codegen_result.pruned_memo_blocks,
-        pruned_memo_values: codegen_result.pruned_memo_values,
-        outlined: compiled_outlined,
-    })))
-}
-
-/// Compile an outlined function's codegen AST through the full pipeline.
-///
-/// Creates a fresh Environment, builds a synthetic ScopeInfo with unique fake
-/// positions for identifier resolution, lowers from AST to HIR, then runs
-/// the full compilation pipeline. This mirrors the TS behavior where outlined
-/// functions are inserted into the program AST and re-compiled from scratch.
-pub fn compile_outlined_fn<'a>(
-    codegen_fn: CodegenFunction<'a>,
-) -> Result<CodegenFunction<'a>, OxcDiagnostic> {
-    Ok(codegen_fn)
+    Ok(output)
 }
 
 /// Push a pass's diagnostics (validation / lint / telemetry path),
 /// matching TS `env.logErrors()`. No enclosing-function fallback label.
 fn log_errors_as_events(errors: &Diagnostics, context: &mut ProgramContext) {
     context.diagnostics.extend(errors.iter().cloned());
+}
+
+fn hir_has_start_memoize(hir: &HirFunction<'_>) -> bool {
+    hir.instructions
+        .iter()
+        .any(|instruction| matches!(instruction.value, InstructionValue::StartMemoize { .. }))
+}
+
+/// Whether `hir` calls an effect hook, by type — the calls
+/// [`validate_exhaustive_dependencies`] checks. Nested functions are not
+/// scanned because the validator does not check effect calls inside them.
+fn calls_effect_hook(hir: &HirFunction<'_>, env: &Environment<'_>) -> bool {
+    hir.instructions.iter().any(|instruction| {
+        let callee = match &instruction.value {
+            InstructionValue::CallExpression { callee, .. } => callee,
+            InstructionValue::MethodCall { property, .. } => property,
+            _ => return false,
+        };
+        let ty = &env.types[env.identifiers[callee.identifier].type_];
+        is_use_effect_hook_type(ty)
+            || is_use_layout_effect_hook_type(ty)
+            || is_use_insertion_effect_hook_type(ty)
+    })
+}
+
+fn finish_lint_fn<'a>(
+    env: &mut Environment<'a>,
+    context: &mut ProgramContext<'a>,
+) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
+    if env.config.throw_unknown_exception_testonly {
+        return Err(Diagnostics::from(diagnostics::invariant_unexpected_error()));
+    }
+    if env.has_errors() {
+        if let Some(uid_names) = env.take_uid_known_names() {
+            context.merge_uid_known_names(&uid_names);
+        }
+        return Err(env.take_errors());
+    }
+    if let Some(uid_names) = env.take_uid_known_names() {
+        context.merge_uid_known_names(&uid_names);
+    }
+    Ok(None)
 }

@@ -1,0 +1,280 @@
+//! Stepping one token: the line-break rules (ASI, restricted productions, the end of a
+//! type), literals, and the dispatch to words, punctuation, types and JSX.
+
+use crate::{
+    cpu::{BASELINE, cpu_version},
+    token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
+};
+
+use crate::pipeline::disambiguate::common::Tokens;
+
+use super::{
+    frame::{Declarator, FrameKind, Member, RegionRule, StmtReg},
+    walker::Walk,
+};
+
+/// Can `tok` (the token starting at `pos`) continue an expression that a value token ended on the
+/// previous line? Used for ASI.
+#[cpu_version(Generic)]
+fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
+    let cpu = BASELINE;
+
+    let k = tokens.base_kind(pos, cpu);
+    if k >= OP_KIND_BASE {
+        let c = tokens.src[pos];
+        let c1 = tokens.src[pos + 1];
+        if (c == b'+' || c == b'-') && c1 == c {
+            return false;
+        }
+        return b"+-*/%&|^<>=?.,([:)]}".contains(&c) || (c == b'!' && c1 == b'=');
+    }
+    // tsc ends the expression before an as or satisfies on a new line.
+    if k == tk!(Ident) {
+        return matches_tk!(tokens.ident_kw(pos, cpu), KwIn | KwInstanceof);
+    }
+    matches_tk!(k, TemplateHead | TemplateNoSub)
+}
+
+impl Walk {
+    #[cpu_version(Generic)]
+    pub(super) fn step(&mut self, tokens: &Tokens, pos: usize) -> usize {
+        let cpu = BASELINE;
+
+        self.last_start = pos;
+        let k = tokens.base_kind(pos, cpu);
+        if is_trivia_byte(k, cpu) {
+            return pos + 1;
+        }
+        let newline = tokens.line_break_between(self.prev_end, pos, cpu);
+        self.stmt_done = false;
+
+        // Skipping the inside of a closing JSX tag.
+        if self.jsx_closing {
+            if k == tk!(JsxTagEnd) {
+                self.jsx_closing = false;
+                self.jsx_element_done();
+            }
+            return pos + 1;
+        }
+        // Inside an opening tag / children: only structure matters.
+        if matches!(self.top_kind(), FrameKind::JsxTag | FrameKind::JsxElem) {
+            return self.step_jsx(tokens, pos, k);
+        }
+
+        // ASI: a value ended the previous line and this token cannot continue it.
+        if newline && !self.operand_allowed() && !continues_expression(tokens, pos) {
+            self.asi(tokens, pos);
+        }
+        // A binding that ended the line goes on with =, a comma or a type annotation only.
+        if newline && !self.operand_allowed() && self.top().declarator == Declarator::Bound {
+            let c = tokens.src[pos];
+            if !(k >= OP_KIND_BASE && matches!(c, b'=' | b',' | b':')) {
+                self.end_statement();
+            }
+        }
+        // A type ended on the previous line and this token cannot continue it: the annotation, and
+        // any statement it belongs to, is over.
+        if newline
+            && self.top_kind() == FrameKind::TypeRegion
+            && self.top().atom
+            && !self.continues_after_type_break(tokens, pos)
+        {
+            self.end_region_by_break();
+        }
+        // Restricted productions: `return` / `throw` / `yield` / `break` / `continue` followed by a
+        // line break end their statement.
+        if newline
+            && matches_tk!(
+                self.prev_kw,
+                KwReturn | KwThrow | KwBreak | KwContinue | KwDebugger | KwYield
+            )
+            && self.top_kind() != FrameKind::TypeRegion
+        {
+            self.end_statement();
+        }
+        // A token that cannot continue a completed type ends it, as in x as T - 1.
+        if self.top_kind() == FrameKind::TypeRegion
+            && self.top().atom
+            && !self.continues_type(tokens, pos, k)
+        {
+            self.end_region_for();
+        }
+        let end = match k {
+            tk!(Ident) => self.step_word(tokens, pos),
+            tk!(Number | BigInt | String | RegExp | TemplateNoSub | PrivateIdent) => {
+                let e = tokens.next_start(pos + 1, cpu);
+                self.literal(tokens, k, e);
+                e
+            }
+            tk!(TemplateHead | TemplateMiddle) => {
+                let e = tokens.next_start(pos + 1, cpu);
+                if k == tk!(TemplateMiddle) && self.pop_to(|k| k == FrameKind::Sub).is_none() {
+                    self.unbalanced();
+                }
+                let in_type = self.in_type();
+                let f = self.push(FrameKind::Sub);
+                f.decl = in_type;
+                self.set_operand();
+                e
+            }
+            tk!(TemplateTail) => {
+                let e = tokens.next_start(pos + 1, cpu);
+                if self.pop_to(|k| k == FrameKind::Sub).is_none() {
+                    self.unbalanced();
+                }
+                if self.in_type() {
+                    self.type_atom(false);
+                } else {
+                    self.value_done();
+                }
+                e
+            }
+            tk!(JsxLt) => self.jsx_lt(tokens, pos),
+            tk!(JsxTagEnd | JsxText) => pos + 1,
+            _ => self.step_op(tokens, pos, newline),
+        };
+        self.prev_end = end;
+        end
+    }
+
+    #[cpu_version(Generic)]
+    #[inline(always)]
+    fn asi(&mut self, tokens: &Tokens, pos: usize) {
+        let cpu = BASELINE;
+
+        // Concise arrow bodies end with the statement.
+        self.pop_concise();
+        // An expression-embedded type region ends too.
+        while self.top_kind() == FrameKind::TypeRegion && self.top().region == RegionRule::Expr {
+            self.pop();
+        }
+        if self.top_kind() == FrameKind::TypeRegion {
+            // A declaration type: handled by the caller's type check.
+            return;
+        }
+        // A head continues onto the next line when its body (or more head) follows; otherwise the
+        // break ends a bodiless signature.
+        if matches!(self.top_kind(), FrameKind::FnHead | FrameKind::ClassHead) {
+            let k = tokens.base_kind(pos, cpu);
+            // Right after `function` / `class`, the name (or a generator's `*`) may follow a
+            // line break: nothing has been declared yet, so there is no signature to end.
+            let unnamed = matches_tk!(self.prev_kw, KwFunction | KwClass);
+            let goes_on = if k == tk!(Ident) {
+                unnamed || matches_tk!(tokens.ident_kw(pos, cpu), KwExtends | KwImplements)
+            } else {
+                k >= OP_KIND_BASE && tokens.src[pos] == b'{'
+            };
+            if !goes_on {
+                self.end_statement();
+            }
+            return;
+        }
+        match self.top_kind() {
+            FrameKind::ClassBody => {
+                // Member initializer ended; a new member starts.
+                self.top_mut().next_member();
+                self.set_operand();
+            }
+            k if k.is_stmt_holder() => self.end_statement(),
+            // Lists, calls, literals and types hold no statements: nothing ends.
+            _ => {}
+        }
+    }
+
+    /// Can the token at pos go on after a type that ended the previous line?
+    #[cpu_version(Generic)]
+    #[inline(always)]
+    fn continues_after_type_break(&self, tokens: &Tokens, pos: usize) -> bool {
+        let cpu = BASELINE;
+
+        if tokens.base_kind(pos, cpu) < OP_KIND_BASE {
+            return false;
+        }
+        let (c, c1) = (tokens.src[pos], tokens.src[pos + 1]);
+        match c {
+            b'.' | b'|' | b'&' => c1 != c,
+            b'?' | b':' | b',' | b')' | b']' | b'}' | b'>' => true,
+            // An initializer, or the arrow of a function type.
+            b'=' => c1 != b'=',
+            // The body after a return type.
+            b'{' => self.frames[self.frames.len() - 2].kind == FrameKind::FnHead,
+            _ => false,
+        }
+    }
+
+    #[cpu_version(Generic)]
+    fn end_region_by_break(&mut self) {
+        let r = self.pop();
+        match r.region {
+            RegionRule::Stmt => self.end_statement(),
+            RegionRule::Inline => {
+                // A declarator / member annotation ended by a line break.
+                match self.top_kind() {
+                    FrameKind::ClassBody => {
+                        self.top_mut().next_member();
+                        self.set_operand();
+                    }
+                    FrameKind::FnHead => {
+                        // Return type of a bodiless signature.
+                        self.pop();
+                        self.end_statement();
+                    }
+                    _ => self.end_statement(),
+                }
+            }
+            RegionRule::Expr => {
+                // `x as T` then a new line: the value is complete.
+                self.set_value();
+                self.no_type_args = true;
+            }
+            RegionRule::ArrowRet => self.set_value(),
+        }
+    }
+
+    #[cpu_version(Generic)]
+    fn literal(&mut self, tokens: &Tokens, k: u8, end: usize) {
+        let cpu = BASELINE;
+
+        if self.in_type() {
+            self.type_atom(false);
+            return;
+        }
+        if k == tk!(String) {
+            // Module specifier: `import "x"`, `... from "x"`.
+            let reg = self.stmt_reg();
+            if (reg == StmtReg::Import && matches_tk!(self.prev_kw, KwImport | KwFrom))
+                || (reg == StmtReg::Export && self.prev_kw == tk!(KwFrom))
+            {
+                self.value_done();
+                let nx = tokens.peek(end, cpu);
+                let attrs = nx.kind == tk!(Ident)
+                    && !tokens.line_break_between(end, nx.pos, cpu)
+                    && (tokens.ident_is(nx.pos, b"with", cpu)
+                        || tokens.ident_is(nx.pos, b"assert", cpu));
+                if attrs {
+                    self.set_stmt_reg(StmtReg::Attrs);
+                    return;
+                }
+                self.stmt_done = true;
+                self.after_statement();
+                return;
+            }
+            if reg == StmtReg::DeclareModule {
+                // `declare module "x"`: bodiless unless `{` follows.
+                self.value_done();
+                self.stmt_done = true;
+                return;
+            }
+        }
+        // Member keys.
+        match self.top_kind() {
+            FrameKind::Object | FrameKind::ClassBody if self.top().member == Member::KeyPos => {
+                self.top_mut().member = Member::KeySeen;
+                self.value_done();
+                return;
+            }
+            _ => {}
+        }
+        self.value_done();
+    }
+}

@@ -514,9 +514,7 @@ impl<C: Config> ParserImpl<'_, C> {
         let is_modifier = match cur_kind {
             Kind::Const => next_kind == Kind::Enum,
             // These modifiers can cross line.
-            Kind::Accessor | Kind::Static | Kind::Get | Kind::Set => {
-                Self::can_follow_modifier(next_kind)
-            }
+            Kind::Accessor | Kind::Static => Self::can_follow_modifier(next_kind),
             // Rest modifiers cannot cross line
             _ => Self::can_follow_modifier(next_kind) && !next.is_on_new_line(),
         };
@@ -556,6 +554,12 @@ impl<C: Config> ParserImpl<'_, C> {
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,
     ) -> Option<Modifier> {
+        // A modifier spelled with a Unicode escape (`st\u0061tic`) cannot act as a modifier.
+        // Leave it for identifier or property name parsing, e.g. a class field named `static`.
+        if self.cur_token().escaped() {
+            return None;
+        }
+
         let start = self.cur_start();
         let kind = self.cur_kind();
 
@@ -594,7 +598,7 @@ impl<C: Config> ParserImpl<'_, C> {
     }
 
     pub(crate) fn parse_contextual_modifier(&mut self, kind: Kind) -> bool {
-        if self.at(kind) && self.next_token_can_follow_modifier() {
+        if self.at(kind) && !self.cur_token().escaped() && self.next_token_can_follow_modifier() {
             self.bump_any();
             true
         } else {
@@ -700,12 +704,14 @@ const fn get_illegal_preceding_modifiers(kind: ModifierKind) -> ModifierKinds {
             ModifierKind::Async,
             ModifierKind::Declare,
         ]),
+        ModifierKind::Async => ModifierKinds::new([ModifierKind::Async, ModifierKind::Abstract]),
         ModifierKind::Abstract => ModifierKinds::new([
             ModifierKind::Abstract,
             ModifierKind::Override,
             ModifierKind::Accessor,
             ModifierKind::Static,
             ModifierKind::Private,
+            ModifierKind::Async,
         ]),
         ModifierKind::Export => ModifierKinds::new([
             ModifierKind::Export,
@@ -748,7 +754,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ModifierKind::Private,
             ModifierKind::Protected,
         ]);
-        use ModifierKind::{Abstract, Declare, Override, Private, Static};
+        use ModifierKind::{Abstract, Async, Declare, Override, Private, Static};
 
         let this_kind = modifier.kind;
         let this_kinds = ModifierKinds::new([this_kind]);
@@ -786,6 +792,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             (Private, Abstract) | (Abstract, Private) => {
                 diagnostics::modifier_cannot_be_used_with_other_modifier(span, Private, Abstract)
+            }
+            (Async, Abstract) | (Abstract, Async) => {
+                diagnostics::modifier_cannot_be_used_with_other_modifier(span, Async, Abstract)
             }
             // `declare override`
             (Override, Declare) => {

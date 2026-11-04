@@ -45,6 +45,7 @@ declare_oxc_lint!(
     NoUnreadableArrayDestructuring,
     unicorn,
     style,
+    recommended,
     pending,
     version = "0.0.19",
     short_description = "Disallows destructuring values from an array in ways that are difficult to read.",

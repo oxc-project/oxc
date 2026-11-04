@@ -60,6 +60,7 @@ declare_oxc_lint!(
     NoSharedComponentData,
     vue,
     correctness,
+    recommended,
     pending,
     version = "1.67.0",
     short_description = "Enforce that the `data` property of a Vue component definition is a function.",

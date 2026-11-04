@@ -225,7 +225,7 @@ fn test_inline_single_use_variable() {
     );
     test(
         "function wrapper() { var i, x = 1; for (i = x; i < 10; i++) console.log(i) }",
-        "function wrapper() { var i; for (i = 1; i < 10; i++) console.log(i) }",
+        "function wrapper() { for (var i = 1; i < 10; i++) console.log(i) }",
     );
     test(
         "function wrapper() { var x = i; for (var i = x; i < 10; i++) console.log(i) }",
@@ -276,12 +276,12 @@ fn test_inline_single_use_variable() {
     // cannot be compressed to `function wrapper() { var foo; globalThis[console.log(foo)] = (() => { foo = 1 })() }`
     test(
         "function wrapper() { var foo; var bar = (() => { foo = 1 })(); globalThis[console.log(foo)] = bar }",
-        "function wrapper() { var foo, bar = (foo = 1, void 0); globalThis[console.log(foo)] = bar }",
+        "function wrapper() { var foo = 1, bar = void 0; globalThis[console.log(foo)] = bar }",
     );
     // cannot be compressed to `function wrapper() { let foo; return foo.bar = (() => { foo = {} })(), foo }`
     test(
         "function wrapper() { let foo; const bar = (() => { foo = {} })(); foo.bar = bar; return foo }",
-        "function wrapper() { let foo, bar = (foo = {}, void 0); return foo.bar = void 0, foo }",
+        "function wrapper() { let foo = {}, bar; return foo.bar = void 0, foo }",
     );
     test(
         "function wrapper() { let foo = {}; const bar = (() => { console.log() })(); foo.bar = bar; return foo }",
@@ -317,6 +317,17 @@ fn test_inline_past_readonly_variable() {
         "function wrapper(foo) { var bar = { get baz() { x = 1 } }, x = foo, y = bar.baz; return [x, y] }",
         "function wrapper(foo) { var bar = { get baz() { x = 1 } }, x = foo, y = bar.baz; return [x, y] }",
     );
+}
+
+#[test]
+fn test_inline_into_tag_keeps_this() {
+    test("function f(a) { let c = a?.b; return c`` }", "function f(a) { return (0, a?.b)`` }");
+    test("function f(a) { let c = a[b]; return c`` }", "function f(a) { return (0, a[b])`` }");
+    test(
+        "function f(a, t) { let c = a.b; return t`${c}` }",
+        "function f(a, t) { return t`${a.b}` }",
+    );
+    test("function f(a) { let c = a; return c.b`` }", "function f(a) { return a.b`` }");
 }
 
 #[test]
@@ -495,6 +506,19 @@ fn keep_exposed_variables() {
 }
 
 #[test]
+fn keep_script_root_var_in_nested_statement() {
+    // A `var` nested in a statement still declares a Script-root binding that
+    // later scripts can read.
+    test_script_same("try { var x = foo(); throw x } catch {}");
+    test_script_same("l: { var x = foo(); if (x) break l; bar() }");
+    // The result does not depend on a function that the same run removes.
+    test_script(
+        "(function (a) {})(1); try { var x = foo(); throw x } catch {}",
+        "try { var x = foo(); throw x } catch {}",
+    );
+}
+
+#[test]
 fn keep_names() {
     test(
         "var x = function() {}; var y = x; console.log(y.name)",
@@ -560,7 +584,7 @@ fn integration() {
         ",
         "
         var bar = foo.bar;
-        (typeof bar != 'object' || !bar) && console.log('foo')
+        typeof bar == 'object' && bar || console.log('foo')
         ",
     );
 }

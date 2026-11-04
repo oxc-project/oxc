@@ -21,5 +21,8 @@
   },
   {
     "args": ["--check", "--config", "NOT_EXISTS.json"]
+  },
+  {
+    "args": ["--check", "!*.{json,jsonc,ts}", "--config", "./fmt.bom.json"]
   }
 ]

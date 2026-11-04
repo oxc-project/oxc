@@ -16,19 +16,20 @@ Formatting is two stages:
 
 Key IR pieces are all exported from the crate root.
 
-The semantics of each building block live in the `builders.rs` rustdocs.
+Every scope `Tag` acts on the line breaks inside it, never on the content (the `indent` rustdoc has the examples and the rationale).
+
+The semantics of each building block live in the `write/builders.rs` rustdocs.
 e.g. the mechanisms for verbatim multi-line content (`exact_line_breaks()` for blank runs exempt from newline collapsing, `literal_line_break()`, multiline `text()`, `text(..).without_expand_parent()`, and `mark_as_root` / `dedent_to_root`), with the non-obvious behaviors pinned by printer tests verified against Prettier's `printDocToString`.
 
-Prettier doc primitives are ported on demand; still missing: the `trim`.
-
-Composite primitives translate rather than port 1:1:
+Every Prettier doc primitive its own language printers emit has a counterpart here; composite ones translate rather than port 1:1:
 
 - `hardlineWithoutBreakParent` is `hard_line_break().without_expand_parent()`
 - `conditionalGroup` is `best_fitting!`: same expansion boundary, same flat-first variant trial.
   Prettier's own doesn't switch variants on inner breaks either ("the user is expected to manually handle what breaks");
   that manual wiring is `ifBreak({groupId})` there and `if_group_breaks(..).with_group_id(..)` here
   See `oxc_formatter_yaml`'s `mapping_item.rs` for the full pattern.
-  Only the Doc→IR mechanical conversion has no mapping (oxfmt's `prettier_compat` rejects `expandedStates`).
+  Oxfmt's Doc→IR mechanical conversion maps `expandedStates` to the same `BestFitting` primitive.
+- A string `align` is `prefix_align()` (a visible token) or `space_align()` (spaces, which stay spaces under `useTabs` where a number `align` becomes a tab)
 
 ### The printer never trims
 
@@ -37,25 +38,27 @@ end-of-line whitespace never appearing in the output is guaranteed by constructi
 Text/Token content is the emitter's responsibility, language crates write their values pre-trimmed.
 
 NOTE: The printer's runtime optimizations (pending-space dedup, consecutive-hardline merging, this no-trim rule, ...) are mirrored downstream by `apps/oxfmt`'s `prettier_compat` (IR ↔ Prettier Doc interop; kept there because core never learns Prettier-as-a-system).
-When changing printer runtime behavior, update that mirror in the same PR; oxfmt's embedded/E2E conformance is the backstop that catches drift.
+When changing printer runtime behavior, update that mirror in the same PR; oxfmt's conformance is the backstop that catches drift.
 
 ### Choosing a staging buffer
 
-The arena is a bump allocator and never reclaims, so a vector grown in it strands every grown-out-of allocation for the rest of the format run.
+Every `Formatter` of a format run writes into one element stack owned by the `FormatState`.
+The stack is in the arena, and the root formatter's elements at its bottom become the document without a copy;
+what nested formatters stage on top of them leaves as exactly-sized copies.
+The arena is a bump allocator and never reclaims, so a vector grown in it strands every grown-out-of allocation for the rest of the format run:
+reserve the root's room up front (`Formatter::with_capacity`).
 Pick by what you're building:
 
-- Root document (feeds `Document::new` / `EmbeddedIr`): `VecBuffer` (arena)
-  - it moves into the `Document` for free, and heap-staging it costs an extra copy for no benefit
-- Unknown-length staging that ends interned/sliced: `HeapVecBuffer`
-  - a watermarked view over one scratch vector owned by the format run
-  - the arena receives one exactly-sized copy (see its rustdoc for the full rationale)
+- Root document (feeds `Document::new` / `EmbeddedIr`): `Formatter::new` / `Formatter::with_capacity`, finished with `Formatter::into_vec`
+- Unknown-length staging that ends interned/sliced: `Formatter::intern` / `Formatter::format_to_vec`
+  - a nested formatter appends past its parent's elements and drains them before the parent writes again (LIFO)
   - for `BestFitting` variants, `best_fitting_variant` already wraps this (entry tags + staging in one place)
-- Accumulating across interleaved `write()` calls (multiple builders open at once), or staging that must release the state between writes and consumption: `ScratchBuffer` (one per accumulator)
-  - write through `ScratchBuffer::writer`, finish via `Formatter::intern_elements` (or re-emit via `ScratchBuffer::drain`, abandon via `ScratchBuffer::discard`)
-  - the shared scratch's LIFO rule and its exclusive state borrow rule out `HeapVecBuffer` there (see the JSX child-list builders and `AssignmentLike` in `oxc_formatter`)
+- Accumulating across interleaved `write()` calls (multiple builders open at once), or staging that must release the formatter between writes and consumption: `ScratchBuffer` (one per accumulator)
+  - write through `ScratchBuffer::write`, finish via `Formatter::intern_elements` (or re-emit via `ScratchBuffer::drain`, abandon via `ScratchBuffer::discard`)
+  - the element stack's LIFO rule rules out a nested formatter there (see the JSX child-list builders and `AssignmentLike` in `oxc_formatter`)
 - Known-length sequences: build exact-sized directly (e.g. `ArenaVec::from_iter_in`)
 
-`Formatter::intern` and `BestFitting` already stage on the heap; consumer crates get this for free.
+`Formatter::intern` and `BestFitting` already stage this way; consumer crates get this for free.
 
 ### Generic context design
 
@@ -69,39 +72,64 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - Core option types: `IndentStyle`, `IndentWidth`, `LineWidth`, `LineEnding` (exactly the `PrinterOptions` inputs; see the boundary section below)
   - `CoreFormatOptions`: the four bundled, for handing them across a host boundary (config resolver → language options) in one piece;
     - `apply_core` is the write half of the trait's read-only getters
-- `Format<'ast, C>` trait + `FormatState<'ast, C>`, `Formatted<'ast, C>`, `Formatter<'buf, 'ast, C>`, `Buffer<'ast, C>`
+- `Format<'ast, C>` trait + `FormatState<'ast, C>`, `Formatted<'ast, C>`, `Formatter<'buf, 'ast, C>`
   - All generic over the context `C`, consumers add a `C` bound only on `impl` blocks
   - Not on struct definitions, and typically define a `type FooFormatter<…> = Formatter<…, FooContext<…>>` alias to keep lifetimes aligned
 
-### Embedded-language infrastructure (`embedded.rs`)
+### Embedded-language infrastructure (`session/`)
 
-`EmbeddedContext` / `FormatDispatcher` / `DispatchResult` / `TailwindCollector` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
+`FormatSession` / `FormatDispatcher` / `DispatchRequest` / `EmbeddedIr` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
 
 - The orchestrator (oxfmt) assembles the dispatcher, mapping language names to formatter implementations (or a Prettier fallback)
-  - Formatter crates only invoke it
-- Parent and child share one arena and one `GroupId` space through `EmbeddedContext`
-- A language crate's `format_to_ir` entry returns `EmbeddedIr` (IR + pre-sort Tailwind classes), one shape for every child language, no per-crate tuples
-- Cross-language contract data is first-class on `DispatchResult` (`tailwind_classes`)
-  - Only truly language-pair specific data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`), core never learns concrete languages
-- Consumers access `DispatchResult.docs` directly (single-doc takes `docs.into_iter().next()`, multi-doc walks `docs`)
-  - Call `DispatchResult::remap_tailwind_into` first when the child may carry classes, the printer's `debug_assert` catches a forgotten merge
+  - Formatter crates only invoke it via `FormatSession::dispatch`
+- Parent and child share one arena, one `GroupId` space, and one Tailwind class scope through the session
+  - A child adds classes straight into the parent's index space, so its doc is written as-is (no remap)
+  - A root formatter opens a fresh scope (`with_new_tailwind_scope`) and sorts it when finalizing its `Document` (`take_sorted_tailwind_classes`)
+- A language crate's `format_to_ir` entry returns `EmbeddedIr`, one shape for every child language, no per-crate tuples
+  - The dispatcher answers with it as-is (`DispatchResponse::Formatted`): data flows parent→child only, a child reports nothing back
+- Only language-pair specific data crosses as `dyn Any`, core never learns concrete languages:
+  - When the parent picks the child language, it passes the pair's own data (css-in-js's `CssInJsTemplate`, html-in-js's `HtmlInJsTemplate`)
+  - When it cannot (a Markdown code block's name resolves in the host), it passes a fact about itself to every child,
+    and the host translates it into the pair's data once the child language is known (`XxxInMarkdownCodeBlock` → `JsEmbeddedIn`)
+- `FormatSession` (`session/mod.rs`) is the execution unit:
+  - One arena, one shared `GroupId` space (`Arc<UniqueGroupIdBuilder>`), one Tailwind class scope (`Rc<RefCell<Vec<String>>>`), the host's `SessionServices`, and the input's envelope semantics (`InputKind`), usable by standalone roots and dispatched children alike
+  - `SessionServices` names the three per-run duties, one field each: `dispatcher` (IR channel), `string_embedder` (string-out channel, `(language, code, print_width)`; temporary, see domain (4)'s exit criterion), `tailwind_sorter` (print-time batch sort). Core only transports them
+  - `FormatSession::dispatch_to_string(request, printer_options)` is the string-out counterpart of `dispatch` (caller supplies the printer options; `Ok(None)` = deliberate keep; see its rustdoc)
+  - `FormatState` holds one (`new_with_session`; plain `new` wraps a service-less `PhysicalFile` session), and `Formatter::session()` exposes it during a write
+- A dispatch states its request as `DispatchRequest` (language, text, `InputKind`, pair-specific context) and yields `Result<DispatchResponse, String>`:
+  - `DispatchResponse::PreserveOriginal` is the DELIBERATE "keep the source as-is" answer (unsupported language, child parse failure, no dispatcher installed); `Err` is reserved for operational failures (transport / internal, recursion limit)
+  - Optional-embed callers degrade the same way for both, but never conflate them at the source
+  - `FormatSession::dispatch` owns the no-dispatcher case and the recursion limit (`MAX_DISPATCH_DEPTH`), and runs the callback on a `derive_child`ed session
 
 ## What belongs in core (the boundary)
 
-Three layers, three admission rules. A type/fn that fits none of them belongs in a consumer crate.
+Five admission domains, five rules; the numbers are reference labels, not a dependency stack (e.g. the engine's `FormatState` holds a domain-(4) `FormatSession`).
+A type/fn that fits none of them belongs in a consumer crate.
 
 - (1) engine: The IR + Printer + the option types the `Printer` actually consumes
   - `PrinterOptions`: `IndentStyle`, `IndentWidth`, `LineWidth`, `LineEnding`
+  - Split by pipeline stage: `write/` (IR construction), `format_element/` (the IR + the `Formatted` artifact), `printer/` (printing; knows only `PrinterOptions`)
+  - `context/` sits beside them as the consumer contract (`FormatContext` / `FormatOptions` + the core option types); its `as_print_options()` produces the printer's inputs
 
 Admission: the printing phase consumes it. "Shared by all languages" is NOT a reason on its own.
 
-- (2) `source/`: Source-side access mechanics (`SourceText`, `SpanCursor`)
+- (2) `source/`: Source-side access mechanics (`SourceText`, `SpanCursor`, `rebase_labels`, `restore_crlf_labels`)
 
 Admission: the structure makes no output decision by itself; language differences arrive as data (offsets, the item type), never as parameters encoding grammar or policy.
 
 - (3) `spec/`: Shared formatter behaviors reused across language formatters
 
-Output targets Prettier compatibility, but the layer is defined by what it is, not by Prettier.
+Output targets Prettier compatibility, but the domain is defined by what it is, not by Prettier.
+
+- (4) `session/`: per-run host services, transported opaquely (`SessionServices`: dispatcher / string embedder / Tailwind sorter)
+
+Admission: core stores the service and hands it back (or applies it mechanically at finalize);
+every value crossing the closure boundary is an opaque string/vec, never a language enum or an option type, and core makes no decision from the result.
+`string_embedder` additionally carries an exit criterion: it is removed when the host's string-out consumers (JSDoc fences) can express their re-embedding in IR (see `apps/oxfmt`'s AGENTS.md for that half; html, the other half, has an IR-capable formatter now); until then it is the string-out channel's transport.
+
+- (5) `envelope/`: IR-composing behavior shared by document-envelope hosts (`write_front_matter`)
+
+Admission: the host opts in by CALLING, and every language difference arrives as a data parameter (`embeddable_languages`); core asserts nothing about what the names mean. Unlike `spec/`, this domain writes IR and drives the dispatcher.
 
 Three gates, all required and note "shared across languages" describes what lives here but is not the admission test.
 The gates are:
@@ -114,6 +142,11 @@ Import discipline (convention): `spec/` only imports `std`, `cow-utils`, etc.
 
 A pure predicate over text shared by design (e.g. `is_suppression_marker`: all formatters honor the same ignore directives) is a desired contract and belongs here.
 Unlike option types like `QuoteStyle`, where sharing would encode a coincidental contract that breaks when languages diverge.
+
+`spec/front_matter.rs` shows the same line from the envelope side:
+core owns pure detection (`parse_front_matter`, a Prettier `front-matter/parse.js` port) and byte-preserving blanking; the IR half is domain (5).
+What the header language MEANS stays host policy: a host opts in by calling and passes its embeddable set as data.
+Astro's leading `---` is a JS component script, not YAML, so its host simply never calls — a central "every `---` is YAML" rule cannot exist in core.
 
 Parameterizing language differences (sharpened gate 2), when a shared helper needs to vary per language:
 
@@ -136,18 +169,11 @@ core owns the span-ordered cursor mechanics; what the items mean (comments) and 
 
 Quote-style options, comment rules, and the like are likewise consumer-owned.
 
-## Cargo features
-
-`test_harness` exposes `test_support/` (fixture test generation) to downstream crates.
-Consumers still need their own `insta` dev-dep so the recorded `source:` header points to the consumer crate.
-
 ## Verification
-
-Feature configs to check:
 
 ```sh
 cargo c -p oxc_formatter_core
-cargo c -p oxc_formatter_core --features test_harness
 ```
 
-This crate has basic tests only of its own, it is exercised through the conformance/snapshot tests of its consumers.
+This crate has basic tests only of its own, it is exercised through its consumers' fixture tests and oxfmt's conformance.
+The fixture-test infrastructure those consumers use lives in `crates/oxc_formatter_tests`.

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
 use serde::Deserialize;
 use serde_json::Value;
@@ -6,19 +6,15 @@ use tracing::{debug, instrument};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::FragmentContext;
-use oxc_formatter_css::CssVariant;
+use oxc_formatter_core::{FormatSession, InputKind};
 use oxc_span::SourceType;
 
 use crate::{
     core::{
-        ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
-        JsSortTailwindClassesCb,
-        options::{
-            inject_filepath, inject_tailwind_plugin_payload, to_oxc_formatter_css,
-            to_oxc_formatter_graphql, to_prettier,
-        },
+        ExternalServices, JsFormatEmbeddedDocCb, JsFormatFileCb, JsSortTailwindClassesCb,
+        embed::{self, dispatcher::ResolvedDispatchConfig},
+        options::{ValidatedOptions, to_oxc_formatter, validate},
         oxfmtrc::FormatConfig,
-        resolve_for_embedded_js,
     },
     prettier_compat::to_prettier_doc,
 };
@@ -53,11 +49,10 @@ pub fn run(
     oxfmt_plugin_options_json: &str,
     parent_context: &str,
     format_file_cb: JsFormatFileCb,
-    format_embedded_cb: JsFormatEmbeddedCb,
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> Option<String> {
-    // Embedded text belongs to the host file (`.vue`, `.md`, ...),
+    // Embedded text belongs to the host file (`.vue`, `.mdx`, ...),
     // so the `SourceType` carries no file extension of its own.
     // `source_ext` selects the parse grammar only,
     // and extension-keyed formatter rules (e.g. the `.mts`/`.cts` trailing comma reservation) must not fire from it.
@@ -79,7 +74,7 @@ pub fn run(
         "vue-for-binding-left" => Some(FragmentKind::VueForBindingLeft),
         "vue-bindings" => Some(FragmentKind::VueBindings),
         "vue-script-generic" => Some(FragmentKind::VueScriptGeneric),
-        // "vue-script" | "svelte-script"
+        // "vue-script" | "svelte-script" | "astro"
         _ => None,
     };
 
@@ -91,7 +86,6 @@ pub fn run(
             source_text,
             oxfmt_plugin_options_json,
             format_file_cb,
-            format_embedded_cb,
             format_embedded_doc_cb,
             sort_tailwind_classes_cb,
         )?
@@ -119,69 +113,46 @@ fn run_full(
     source_text: &str,
     oxfmt_plugin_options_json: &str,
     format_file_cb: JsFormatFileCb,
-    format_embedded_cb: JsFormatEmbeddedCb,
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> Option<Value> {
     // Tailwind paths in the payload are already absolute (resolved by the host before serialization),
     // so no `cwd` is threaded through here.
-    let (config, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
+    let (config, validated, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
 
-    let external_formatter = ExternalFormatter::new(
-        format_file_cb,
-        format_embedded_cb,
-        format_embedded_doc_cb,
-        sort_tailwind_classes_cb,
-    );
+    let external_services =
+        ExternalServices::new(format_file_cb, format_embedded_doc_cb, sort_tailwind_classes_cb);
+    let _cleanup = external_services.cleanup_guard();
 
-    let resolved = resolve_for_embedded_js(config, parent_filepath)
-        .expect("`_oxfmtPluginOptionsJson` should contain valid config");
+    // Per-language options (and the Prettier options JSON with the Tailwind payload)
+    // are mapped lazily at dispatch time.
+    let dispatch_config =
+        ResolvedDispatchConfig::for_root(Arc::new(config), Arc::new(validated), &parent_filepath);
+    let format_options = dispatch_config.js_options();
 
-    // Prettier options for callbacks that `oxc_formatter` may dispatch (e.g., CSS-in-JS).
-    // The embedded JS context is treated as always Tailwind-capable, so the inject is unconditional.
-    // The helper no-ops when user config has Tailwind disabled.
-    let mut external_options = to_prettier(&resolved.config);
-    inject_filepath(&mut external_options, &resolved.parent_filepath);
-    inject_tailwind_plugin_payload(&mut external_options, &resolved.config);
-
-    // Dual mapping of the same resolved config for the dispatcher's Rust branches.
-    // Cannot fail here: `resolve_for_embedded_js()` already built `JsFormatOptions`
-    // from this config, and both share the same `to_core_options()` validation.
-    let graphql_options = to_oxc_formatter_graphql(&resolved.config)
-        .expect("config was already validated by `resolve_for_embedded_js()`");
-    // CSS-in-JS is always parsed as SCSS, mirroring Prettier's embed.
-    let css_options = to_oxc_formatter_css(&resolved.config, CssVariant::Scss)
-        .expect("config was already validated by `resolve_for_embedded_js()`");
-
-    let external_callbacks = external_formatter.to_external_callbacks(
-        &resolved.format_options,
-        external_options,
-        graphql_options,
-        css_options,
-    );
+    let services = embed::services::for_root(&external_services, &dispatch_config);
 
     let allocator = Allocator::default();
+    let session = FormatSession::with_services(
+        &allocator,
+        // A Vue/Svelte/Astro `<script>` (or Astro frontmatter) block is a complete document the host passes as embedded input,
+        // never the owner of file envelopes (BOM / front matter).
+        InputKind::VirtualDocument,
+        services,
+    );
     let formatted = match tokio::task::block_in_place(|| {
-        oxc_formatter::format(
-            &allocator,
-            source_text,
-            source_type,
-            *resolved.format_options,
-            Some(external_callbacks),
-        )
+        oxc_formatter::format_with_session(&session, source_text, source_type, format_options)
     }) {
         Ok(formatted) => formatted,
         Err(err) => {
             debug!("`oxc_formatter::format()` failed for {source_type:?}: {err:?}");
-            external_formatter.cleanup();
             return None;
         }
     };
 
     let (elements, sorted_tailwind_classes) =
-        formatted.into_document().into_elements_and_tailwind_classes();
+        formatted.into_final_document().into_elements_and_tailwind_classes();
 
-    external_formatter.cleanup();
     Some(
         to_prettier_doc::format_elements_to_prettier_doc(elements, &sorted_tailwind_classes)
             .expect("Formatter IR to Prettier Doc conversion should not fail"),
@@ -205,12 +176,10 @@ fn run_fragment(
     oxfmt_plugin_options_json: &str,
     kind: FragmentKind,
 ) -> Option<Value> {
-    let (config, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
-    // Reuses the same config resolver as `run_full()`, but only `format_options` is needed here,
-    // since `run_fragment()` does not dispatch external formatter callbacks.
-    let resolved = resolve_for_embedded_js(config, parent_filepath)
-        .expect("`_oxfmtPluginOptionsJson` should contain valid config");
-    let format_options = resolved.format_options;
+    // Unlike `run_full()`, only the JS options are needed,
+    // since `run_fragment()` does not dispatch external services callbacks.
+    let (config, validated, _) = parse_payload(oxfmt_plugin_options_json);
+    let format_options = to_oxc_formatter(&config, validated.core, validated.sort_imports);
 
     // Map the Prettier-side fragment kind to the formatter's usage context.
     // The parens-vs-no-parens / quote-style decisions live inside `format_fragment`.
@@ -225,7 +194,7 @@ fn run_fragment(
         &allocator,
         source_text,
         source_type,
-        *format_options,
+        format_options,
         context,
     ) {
         Ok(formatted) => formatted,
@@ -236,7 +205,7 @@ fn run_fragment(
     };
 
     let (elements, sorted_tailwind_classes) =
-        formatted.into_document().into_elements_and_tailwind_classes();
+        formatted.into_final_document().into_elements_and_tailwind_classes();
     Some(
         to_prettier_doc::format_elements_to_prettier_doc(elements, &sorted_tailwind_classes)
             .expect("Formatter IR to Prettier Doc conversion should not fail"),
@@ -245,8 +214,8 @@ fn run_fragment(
 
 // ---
 
-/// Deserialize `_oxfmtPluginOptionsJson` into the typed config + parent filepath.
-fn parse_payload(oxfmt_plugin_options_json: &str) -> (FormatConfig, PathBuf) {
+/// Deserialize `_oxfmtPluginOptionsJson` into the validated config + parent filepath.
+fn parse_payload(oxfmt_plugin_options_json: &str) -> (FormatConfig, ValidatedOptions, PathBuf) {
     #[derive(Deserialize)]
     struct Payload {
         config: FormatConfig,
@@ -254,5 +223,7 @@ fn parse_payload(oxfmt_plugin_options_json: &str) -> (FormatConfig, PathBuf) {
     }
     let payload: Payload = serde_json::from_str(oxfmt_plugin_options_json)
         .expect("`_oxfmtPluginOptionsJson` should deserialize");
-    (payload.config, PathBuf::from(payload.filepath))
+    let validated =
+        validate(&payload.config).expect("`_oxfmtPluginOptionsJson` should contain valid config");
+    (payload.config, validated, PathBuf::from(payload.filepath))
 }

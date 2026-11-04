@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 
 /// Source text wrapper providing mechanical byte/offset access for the formatter.
 ///
@@ -12,7 +12,8 @@ use oxc_span::{GetSpan, Span};
 /// This is the only hard prerequisite for any consumer:
 /// - `u32` means byte offsets, not UTF-16 code units or `char` indices
 /// - `u32` is the oxc-wide convention
-///   - `oxc_span::Span` is `u32`-based, and `oxc_parser` rejects sources longer than `u32::MAX` bytes
+///   - `oxc_span::Span` is `u32`-based, and `oxc_parser` rejects sources longer than `MAX_LEN` bytes
+///     (which is less than `u32::MAX`)
 ///   - so casting a `usize` offset down to `u32` never truncates for parsed sources)
 #[derive(Debug, Clone, Copy)]
 pub struct SourceText<'a> {
@@ -65,11 +66,25 @@ impl<'a> SourceText<'a> {
     }
 
     // Byte checking
+    /// First non-whitespace byte at or after position
+    pub fn next_non_whitespace_byte(&self, position: u32) -> Option<u8> {
+        self.next_byte_skipping(position, |byte| byte.is_ascii_whitespace())
+    }
+
+    /// Last non-whitespace byte before position
+    pub fn previous_non_whitespace_byte(&self, position: u32) -> Option<u8> {
+        self.bytes_to(position).find(|byte| !byte.is_ascii_whitespace())
+    }
+
+    /// First byte at or after position that `skip` rejects
+    #[inline]
+    pub fn next_byte_skipping(&self, position: u32, skip: impl Fn(u8) -> bool) -> Option<u8> {
+        self.bytes_from(position).find(|&byte| !skip(byte))
+    }
+
     /// Check if first non-whitespace byte at position matches expected
     pub fn next_non_whitespace_byte_is(&self, position: u32, expected_byte: u8) -> bool {
-        self.bytes_from(position)
-            .find(|byte| !byte.is_ascii_whitespace())
-            .is_some_and(|b| b == expected_byte)
+        self.next_non_whitespace_byte(position) == Some(expected_byte)
     }
 
     // Byte range operations
@@ -92,11 +107,5 @@ impl<'a> SourceText<'a> {
     /// Extract text for an object that has a span
     pub fn text_for<T: GetSpan>(&self, obj: &T) -> &'a str {
         obj.span().source_text(self.text)
-    }
-
-    // Utility methods
-    /// Get character count of span
-    pub fn span_width(&self, span: Span) -> usize {
-        self.text_for(&span).chars().count()
     }
 }

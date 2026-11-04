@@ -68,6 +68,7 @@ declare_oxc_lint!(
     NoCondAssign,
     eslint,
     correctness,
+    recommended,
     config = NoCondAssignConfig,
     version = "0.0.5",
     short_description = "Disallow assignment operators in conditional expressions.",
@@ -75,7 +76,7 @@ declare_oxc_lint!(
 
 impl Rule for NoCondAssign {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

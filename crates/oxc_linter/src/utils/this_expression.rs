@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, Expression, Function, IdentifierReference, PropertyDefinition, StaticBlock,
-        ThisExpression, VariableDeclarationKind,
+        BindingPattern, Expression, Function, FunctionBody, IdentifierReference,
+        PropertyDefinition, StaticBlock, ThisExpression, VariableDeclarationKind,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -10,9 +10,17 @@ use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
 
 use crate::{
-    ast_util::get_declaration_from_reference_id, ast_util::variable_declaration_kind,
+    ast_util::{get_declaration_from_reference_id, variable_declaration_kind},
     context::LintContext,
 };
+
+/// Checks whether a function body contains a `this` expression without traversing into nested
+/// functions.
+pub fn function_body_contains_this(body: &FunctionBody) -> bool {
+    let mut finder = ThisExpressionFinder::new();
+    finder.visit_function_body(body);
+    !finder.spans.is_empty()
+}
 
 /// Finds `this` expressions without traversing into nested functions.
 pub struct ThisExpressionFinder {
@@ -76,7 +84,8 @@ pub fn is_this_alias(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool
             _ => None,
         })
         .filter(|var| {
-            variable_declaration_kind(var, ctx) == VariableDeclarationKind::Const
+            variable_declaration_kind(var, ctx.nodes())
+                .is_some_and(VariableDeclarationKind::is_const)
                 && matches!(&var.id, BindingPattern::BindingIdentifier(_))
         })
         .and_then(|var| var.init.as_ref())

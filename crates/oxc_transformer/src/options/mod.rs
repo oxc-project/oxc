@@ -117,9 +117,10 @@ impl TransformOptions {
         }
     }
 
-    /// Initialize from a comma separated list of `target`s and `environmens`s.
+    /// Initialize from a comma-separated list of targets and environments.
     ///
-    /// e.g. `es2022,chrome58,edge16`.
+    /// For example, `es2022,chrome58,edge16`.
+    /// See [`Self::from_target_list`] for supported target values.
     ///
     /// # Errors
     ///
@@ -130,11 +131,15 @@ impl TransformOptions {
         EnvOptions::from_target(s).map(|env| Self { env, ..Self::default() })
     }
 
-    /// Initialize from a list of `target`s and `environmens`s.
+    /// Initialize from a list of targets and environments.
     ///
-    /// e.g. `["es2020", "chrome58", "edge16", "firefox57", "node12", "safari11"]`.
+    /// For example, `["es2020", "chrome58", "edge16", "firefox57", "node12", "safari11"]`.
     ///
-    /// `target`: `es5`, `es2015` ... `es2024`, `esnext`.
+    /// The minimum supported ECMAScript target is `es2015`. Targets for older runtimes
+    /// may still enable available transforms, but do not guarantee fully compatible
+    /// pre-ES2015 output.
+    ///
+    /// `target`: `es2015` ... `es2024`, `esnext`.
     /// `environment`: `chrome`, `deno`, `edge`, `firefox`, `hermes`, `ie`, `ios`, `node`, `opera`, `rhino`, `safari`
     ///
     /// <https://esbuild.github.io/api/#target>

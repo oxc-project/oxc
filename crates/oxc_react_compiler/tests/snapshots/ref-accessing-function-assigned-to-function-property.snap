@@ -1,0 +1,57 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/ref-accessing-function-assigned-to-function-property.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { useMemo, useRef } from "react";
+// Both functions access the ref at different locations and `cancel` is stored
+// as a property of `debounced`. Ref validation must still converge.
+function useCancellableDebounce(fn, time) {
+	const $ = _c(3);
+	const timeoutRef = useRef(null);
+	let debounced;
+	if ($[0] !== fn || $[1] !== time) {
+		const cancel = () => {
+			if (timeoutRef.current) {
+				clearTimeout(timeoutRef.current);
+			}
+		};
+		debounced = (...t0) => {
+			const args = t0;
+			cancel();
+			timeoutRef.current = setTimeout(() => fn(...args), time);
+		};
+		debounced.cancel = cancel;
+		$[0] = fn;
+		$[1] = time;
+		$[2] = debounced;
+	} else {
+		debounced = $[2];
+	}
+	return debounced;
+}
+function log() {}
+function Component(t0) {
+	const $ = _c(2);
+	const { time } = t0;
+	const debounced = useCancellableDebounce(log, time);
+	const t1 = typeof debounced.cancel;
+	let t2;
+	if ($[0] !== t1) {
+		t2 = <div>{t1}</div>;
+		$[0] = t1;
+		$[1] = t2;
+	} else {
+		t2 = $[1];
+	}
+	return t2;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{ time: 100 }],
+	sequentialRenders: [
+		{ time: 100 },
+		{ time: 100 },
+		{ time: 200 }
+	]
+};

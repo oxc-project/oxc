@@ -131,7 +131,7 @@ fn check_expression(expr: &Expression) -> Option<Span> {
 
             let member_expr = expr.callee.as_member_expression()?;
             let property_name = MemberExpression::static_property_name(member_expr);
-            if property_name == Some("bind") { Some(expr.span) } else { None }
+            if property_name.is_some_and(|name| name == "bind") { Some(expr.span) } else { None }
         }
         Expression::NewExpression(expr) => {
             if is_constructor_matching_name(&expr.callee, "Function") {

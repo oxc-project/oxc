@@ -1,0 +1,26 @@
+// A suppressed range marks its comments as printed without going through the
+// cast machinery, so the last printed comment can be a cast-shaped one that is
+// unrelated to the next node; classification must still find that node's own
+// cast comment, or every cast after the ignored line loses its parentheses
+// (issue #26202).
+
+// prettier-ignore
+const a = /** @type {string} */ (x);
+const b = /** @type {string} */ (y);
+const c = /** @type {number} */ (z);
+
+// The cascade also applied to later statements of any shape.
+function f() {
+  return /** @type {B} */ (y);
+}
+const obj = /** @type {Obj} */ ({ k: 1 });
+
+// Interleaved suppressions reset the state each time.
+// oxfmt-ignore
+const d = /** @type {D} */ (v);
+const e = /** @type {E} */ (w);
+
+// A cast-shaped comment without a following `(` still stays paren-less.
+// oxfmt-ignore
+const g = /** @type {G} */ (p);
+const h = /** @type {G} */ q;

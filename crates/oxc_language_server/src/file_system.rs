@@ -5,13 +5,20 @@ use std::{
     sync::Arc,
 };
 
-use tower_lsp_server::ls_types::Uri;
+use tower_lsp_server::gen_lsp_types::Uri;
 
-use crate::{ConcurrentHashMap, LanguageId, TextDocument};
+use crate::{ConcurrentHashMap, LanguageId, TextDocument, uri_utils::uri_to_file_path};
 
 #[derive(Debug, Default)]
 pub struct LSPFileSystem {
-    files: ConcurrentHashMap<Uri, (LanguageId, Arc<str>)>,
+    files: ConcurrentHashMap<Uri, OpenDocument>,
+}
+
+#[derive(Debug)]
+struct OpenDocument {
+    language_id: LanguageId,
+    version: i32,
+    text: Arc<str>,
 }
 
 /// Represents a resolved file path that can be used for file system operations.
@@ -35,7 +42,7 @@ impl TryFrom<&Uri> for ResolvedPath {
     type Error = String;
 
     fn try_from(uri: &Uri) -> Result<Self, Self::Error> {
-        let path = uri.to_file_path().ok_or_else(|| "Invalid URI".to_string())?;
+        let path = uri_to_file_path(uri).ok_or_else(|| "Invalid URI".to_string())?;
         Ok(Self::canonical(path.to_path_buf()))
     }
 }
@@ -80,31 +87,45 @@ impl LSPFileSystem {
     }
 
     pub fn set(&self, uri: Uri, content: String) {
-        let language_id = self.get_language_id(&uri).unwrap_or_default();
-        self.files.pin().insert(uri, (language_id, Arc::from(content)));
+        let version = self.get_version(&uri).unwrap_or_default();
+        self.set_with_version(uri, version, content);
     }
 
-    pub fn set_with_language(&self, uri: Uri, language_id: LanguageId, content: String) {
-        self.files.pin().insert(uri, (language_id, Arc::from(content)));
+    pub fn set_with_version(&self, uri: Uri, version: i32, content: String) {
+        let language_id = self.get_language_id(&uri).unwrap_or_default();
+        self.set_with_language(uri, language_id, version, content);
+    }
+
+    pub fn set_with_language(
+        &self,
+        uri: Uri,
+        language_id: LanguageId,
+        version: i32,
+        content: String,
+    ) {
+        self.files
+            .pin()
+            .insert(uri, OpenDocument { language_id, version, text: Arc::from(content) });
     }
 
     pub fn get_language_id(&self, uri: &Uri) -> Option<LanguageId> {
-        self.files.pin().get(uri).map(|(lang, _)| lang.clone())
+        self.files.pin().get(uri).map(|doc| doc.language_id.clone())
+    }
+
+    pub fn get_version(&self, uri: &Uri) -> Option<i32> {
+        self.files.pin().get(uri).map(|doc| doc.version)
     }
 
     pub fn get_document<'a>(&self, uri: &'a Uri) -> TextDocument<'a> {
         self.files.pin().get(uri).map_or_else(
-            || TextDocument { uri, language_id: LanguageId::default(), text: None },
-            |(language_id, content)| TextDocument {
+            || TextDocument { uri, language_id: LanguageId::default(), text: None, version: None },
+            |doc| TextDocument {
                 uri,
-                language_id: language_id.clone(),
-                text: Some(Arc::clone(content)),
+                language_id: doc.language_id.clone(),
+                text: Some(Arc::clone(&doc.text)),
+                version: Some(doc.version),
             },
         )
-    }
-
-    pub fn is_open(&self, uri: &Uri) -> bool {
-        self.files.pin().contains_key(uri)
     }
 
     pub fn remove(&self, uri: &Uri) {
@@ -121,10 +142,16 @@ mod tests {
     use cow_utils::CowUtils;
     use std::{borrow::Cow, path::Path};
 
+    use crate::uri_utils::file_path_to_uri;
+
     use super::*;
 
     fn path_from_fixture(fixture: &str) -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures").join(fixture)
+    }
+
+    fn uri_of_fixture(name: &str) -> Uri {
+        file_path_to_uri(path_from_fixture("same_path_different_uri").join(name)).unwrap()
     }
 
     fn path_to_lossy_string(path: &Path) -> Cow<'_, str> {
@@ -136,8 +163,8 @@ mod tests {
         let dir = path_from_fixture("same_path_different_uri");
         let file = dir.join("test.txt");
 
-        let uri = Uri::from_file_path(&file).unwrap();
-        let unresolved_uri = Uri::from_file_path(dir.join("Test.txt")).unwrap();
+        let uri = file_path_to_uri(&file).unwrap();
+        let unresolved_uri = file_path_to_uri(dir.join("Test.txt")).unwrap();
 
         let resolved_path = ResolvedPath::try_from(&uri).unwrap();
         let unresolved_path = ResolvedPath::try_from(&unresolved_uri).unwrap();
@@ -161,8 +188,8 @@ mod tests {
         let unresolved_dir =
             unresolved_dir.cow_replace("same_path_different_uri", "Same_Path_Different_URI");
 
-        let uri = Uri::from_file_path(&dir).unwrap();
-        let unresolved_uri = Uri::from_file_path(unresolved_dir.as_ref()).unwrap();
+        let uri = file_path_to_uri(&dir).unwrap();
+        let unresolved_uri = file_path_to_uri(unresolved_dir.as_ref()).unwrap();
 
         let resolved_path = ResolvedPath::try_from(&uri).unwrap();
         let unresolved_path = ResolvedPath::try_from(&unresolved_uri).unwrap();
@@ -178,5 +205,47 @@ mod tests {
             path_to_lossy_string(&dir)
                 .cow_replace("same_path_different_uri", "Same_Path_Different_URI")
         );
+    }
+
+    #[test]
+    fn test_get_version() {
+        let fs = LSPFileSystem::default();
+        let uri = uri_of_fixture("test.txt");
+
+        assert_eq!(fs.get_version(&uri), None);
+        assert_eq!(fs.get_document(&uri).version, None);
+
+        fs.set_with_language(uri.clone(), LanguageId::new("plaintext".to_string()), 4, "a".into());
+        assert_eq!(fs.get_version(&uri), Some(4));
+        assert_eq!(fs.get_document(&uri).version, Some(4));
+
+        fs.set_with_version(uri.clone(), 5, "b".into());
+        assert_eq!(fs.get_version(&uri), Some(5));
+        assert_eq!(fs.get_document(&uri).text.as_deref(), Some("b"));
+        assert_eq!(fs.get_language_id(&uri), Some(LanguageId::new("plaintext".to_string())));
+    }
+
+    #[test]
+    fn test_set_keeps_the_version() {
+        let fs = LSPFileSystem::default();
+        let uri = uri_of_fixture("test.txt");
+
+        fs.set_with_language(uri.clone(), LanguageId::default(), 7, "a".into());
+        fs.set(uri.clone(), "b".into());
+
+        assert_eq!(fs.get_version(&uri), Some(7));
+        assert_eq!(fs.get_document(&uri).text.as_deref(), Some("b"));
+    }
+
+    #[test]
+    fn test_remove_drops_the_version() {
+        let fs = LSPFileSystem::default();
+        let uri = uri_of_fixture("test.txt");
+
+        fs.set_with_version(uri.clone(), 2, "a".into());
+        fs.remove(&uri);
+
+        assert_eq!(fs.get_version(&uri), None);
+        assert_eq!(fs.get_document(&uri).version, None);
     }
 }

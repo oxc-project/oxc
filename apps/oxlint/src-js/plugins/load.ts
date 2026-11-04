@@ -203,10 +203,10 @@ export function registerPlugin(
         // `true` and `false` aren't valid values for `meta.fixable`, but we accept them for
         // backward compatibility with some ESLint plugins
         if (
-          fixable !== "code" &&
-          fixable !== "whitespace" &&
-          fixable !== true &&
-          fixable !== false
+          fixable !== "code"
+          && fixable !== "whitespace"
+          && fixable !== true
+          && fixable !== false
         ) {
           throw new TypeError("Invalid `rule.meta.fixable`");
         }
@@ -241,9 +241,9 @@ export function registerPlugin(
           // but that's what ESLint does, so it's OK.
           if (schemaValidator === null) {
             throw new Error(
-              `Rule ${fullRuleName}:\n` +
-                "Rules which accept options must provide a schema as `rule.meta.schema`, " +
-                "or disable schema validation with `rule.meta.schema: false` (not recommended).",
+              `Rule ${fullRuleName}:\n`
+                + "Rules which accept options must provide a schema as `rule.meta.schema`, "
+                + "or disable schema validation with `rule.meta.schema: false` (not recommended).",
             );
           }
           // Note: `defaultOptions` is not frozen yet
@@ -368,8 +368,8 @@ function getPluginName(
   if (pluginName !== null) return pluginName;
 
   throw new Error(
-    "Plugin must either define `meta.name`, be loaded from an NPM package with a `name` field in `package.json`, " +
-      "or be given an alias in config",
+    "Plugin must either define `meta.name`, be loaded from an NPM package with a `name` field in `package.json`, "
+      + "or be given an alias in config",
   );
 }
 
@@ -453,8 +453,8 @@ function conformDefaultOptions(defaultOptions: Options): Options {
   if (containsInfinity) {
     const plainJson = JSON.stringify(defaultOptions);
     if (
-      plainJson.includes(POS_INFINITY_PLACEHOLDER) ||
-      plainJson.includes(NEG_INFINITY_PLACEHOLDER)
+      plainJson.includes(POS_INFINITY_PLACEHOLDER)
+      || plainJson.includes(NEG_INFINITY_PLACEHOLDER)
     ) {
       throw new Error(
         `\`rule.meta.defaultOptions\` cannot contain the strings "${POS_INFINITY_PLACEHOLDER}" or "${NEG_INFINITY_PLACEHOLDER}"`,

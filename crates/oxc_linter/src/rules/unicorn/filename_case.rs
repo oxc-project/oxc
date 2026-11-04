@@ -378,8 +378,7 @@ fn build_case_diagnostic(
 
 impl Rule for FilenameCase {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let json = serde_json::from_value::<DefaultRuleConfig<FilenameCaseConfigJson>>(value)?
-            .into_inner();
+        let json = DefaultRuleConfig::<FilenameCaseConfigJson>::from_value(value)?.into_inner();
         let mut config = FilenameCaseConfig {
             ignore: json.ignore,
             multiple_file_extensions: json.multiple_file_extensions,

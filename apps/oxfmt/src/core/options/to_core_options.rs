@@ -5,13 +5,13 @@ use super::super::oxfmtrc::{EndOfLineConfig, FormatConfig};
 /// Convert the language-neutral core options shared by every formatter into a validated [`CoreFormatOptions`].
 ///
 /// This is the single source of truth for core-option parsing, validation, and default fallbacks.
-/// Each downstream converter ([`super::to_oxc_formatter()`], [`super::to_oxc_toml()`], etc) layers
-/// its language-specific options on top of the result,
-/// so none of them depends on another formatter crate just to resolve these shared fields.
+/// Only the gate ([`super::validate::validate()`]) calls it;
+/// downstream converters receive the resulting bundle as a parameter and never re-derive it
+/// (`pub(super)` enforces that).
 ///
 /// # Errors
 /// Returns an error if `tabWidth` or `printWidth` is out of range.
-pub fn to_core_options(config: &FormatConfig) -> Result<CoreFormatOptions, String> {
+pub(super) fn to_core_options(config: &FormatConfig) -> Result<CoreFormatOptions, String> {
     let mut options = CoreFormatOptions::default();
 
     // [Prettier] useTabs: boolean

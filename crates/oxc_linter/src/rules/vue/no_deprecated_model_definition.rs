@@ -1,4 +1,3 @@
-use oxc_str::Str;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -9,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -85,6 +85,7 @@ declare_oxc_lint!(
     NoDeprecatedModelDefinition,
     vue,
     correctness,
+    recommended,
     pending,
     config = NoDeprecatedModelDefinition,
     version = "1.63.0",
@@ -93,7 +94,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDeprecatedModelDefinition {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
@@ -153,8 +154,10 @@ fn find_string_property_value(obj: &ObjectExpression<'_>, key: &str) -> Option<S
 
 fn string_literal_value(expr: &Expression<'_>) -> Option<String> {
     match expr {
-        Expression::StringLiteral(lit) => Some(lit.value.to_string()),
-        Expression::TemplateLiteral(tpl) => tpl.single_quasi().map(Str::into_string),
+        Expression::StringLiteral(lit) => lit.value.as_str().map(str::to_owned),
+        Expression::TemplateLiteral(tpl) => {
+            tpl.single_quasi().and_then(JSStr::as_str).map(str::to_owned)
+        }
         _ => None,
     }
 }

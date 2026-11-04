@@ -1,0 +1,5 @@
+{
+  "associations": [
+    { "files": ["**/*.html"], "language": "angular-html" }
+  ]
+}

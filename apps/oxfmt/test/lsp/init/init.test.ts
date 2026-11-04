@@ -1,6 +1,7 @@
+import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
-import { createLspConnection } from "../utils";
+import { createLspConnection, snapshotShowMessages } from "../utils";
 import { WatchKind } from "vscode-languageserver-protocol/node";
 
 describe("LSP initialization", () => {
@@ -33,6 +34,18 @@ describe("LSP initialization", () => {
     expect(initResult.serverInfo?.version).toContain(`(VP: ${vpVersion})`);
   });
 
+  it("should show a client message when the workspace config is invalid", async () => {
+    const dirUri = pathToFileURL(join(import.meta.dirname, "fixtures", "invalid-config")).href;
+    await using client = createLspConnection();
+
+    const showMessagePromise = client.getShowMessage();
+    await client.initialize([{ uri: dirUri, name: "test" }], {}, [
+      { workspaceUri: dirUri, options: null },
+    ]);
+    const showMessage = await showMessagePromise;
+    expect(snapshotShowMessages([showMessage])).toMatchSnapshot();
+  });
+
   it.each([
     [
       undefined,
@@ -42,6 +55,7 @@ describe("LSP initialization", () => {
         "**/oxfmt.config.ts",
         "**/oxfmt.config.mts",
         ".editorconfig",
+        ".prettierignore",
       ],
     ],
     [
@@ -52,14 +66,33 @@ describe("LSP initialization", () => {
         "**/oxfmt.config.ts",
         "**/oxfmt.config.mts",
         ".editorconfig",
+        ".prettierignore",
       ],
     ],
-    [{ "fmt.configPath": "./custom-config.json" }, ["custom-config.json", ".editorconfig"]],
+    [
+      { "fmt.configPath": "./custom-config.json" },
+      ["custom-config.json", ".editorconfig", ".prettierignore"],
+    ],
+    // Vite+ mode: only `vite.config.*`, and nested configs are never discovered
+    [
+      undefined,
+      [
+        "vite.config.js",
+        "vite.config.mjs",
+        "vite.config.ts",
+        "vite.config.cjs",
+        "vite.config.mts",
+        "vite.config.cts",
+        ".editorconfig",
+        ".prettierignore",
+      ],
+      { VP_VERSION: "1" },
+    ],
   ])(
     "should send correct dynamic watch pattern registration for config: %s",
-    async (lspConfig, expectedPatterns) => {
+    async (lspConfig, expectedPatterns, env?: Record<string, string>) => {
       const dirUri = pathToFileURL(import.meta.dirname).href;
-      await using client = createLspConnection();
+      await using client = createLspConnection(env);
       await client.initialize(
         [{ uri: dirUri, name: "test" }],
         {

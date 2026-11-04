@@ -9,14 +9,13 @@
 //! Uses the Cooper/Harvey/Kennedy algorithm from
 //! https://www.cs.rice.edu/~keith/Embed/dom.pdf
 
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::{IndexSlice, IndexVec};
 
-use crate::diagnostics::ErrorCategory;
-
-use crate::react_compiler_hir::visitors::each_terminal_successor;
+use crate::diagnostics;
+use crate::react_compiler_hir::visitors::{TerminalBlockList, each_terminal_successor};
 use crate::react_compiler_hir::{BlockId, HirFunction, Terminal};
 
 // =============================================================================
@@ -31,12 +30,36 @@ pub struct PostDominator {
     nodes: IndexVec<BlockId, Option<BlockId>>,
 }
 
+/// Stores the post-dominator frontier for each block.
+pub struct PostDominatorFrontiers {
+    frontiers: FxHashMap<BlockId, FxHashSet<BlockId>>,
+}
+
+impl PostDominatorFrontiers {
+    /// Iterates over the blocks in `id`'s post-dominator frontier.
+    pub fn iter(&self, id: BlockId) -> impl Iterator<Item = BlockId> + '_ {
+        self.frontiers.get(&id).into_iter().flatten().copied()
+    }
+
+    /// Adds every block in `other`'s frontiers to the frontiers of `self`.
+    pub fn extend(&mut self, other: Self) {
+        for (id, frontier) in other.frontiers {
+            self.frontiers.entry(id).or_default().extend(frontier);
+        }
+    }
+}
+
 impl PostDominator {
     /// Returns the immediate post-dominator of the given block, or None if
     /// the block post-dominates itself (i.e., it is the exit node).
     pub fn get(&self, id: BlockId) -> Option<BlockId> {
         let dominator = self.nodes[id].expect("Unknown node in post-dominator tree");
         if dominator == id { None } else { Some(dominator) }
+    }
+
+    /// Iterates over `id` and its ancestors in the post-dominator tree.
+    fn ancestors(&self, id: BlockId) -> impl Iterator<Item = BlockId> + '_ {
+        std::iter::successors(Some(id), |&id| self.get(id))
     }
 }
 
@@ -79,7 +102,22 @@ pub fn compute_post_dominator_tree(
     next_block_id_counter: u32,
     include_throws_as_exit_node: bool,
 ) -> Result<PostDominator, OxcDiagnostic> {
-    let graph = build_reverse_graph(func, next_block_id_counter, include_throws_as_exit_node);
+    post_dominator_tree(func, next_block_id_counter, include_throws_as_exit_node, true)
+}
+
+/// Compute the post-dominator tree, optionally ignoring `MaybeThrow` handler edges.
+fn post_dominator_tree(
+    func: &HirFunction,
+    next_block_id_counter: u32,
+    include_throws_as_exit_node: bool,
+    include_exception_edges: bool,
+) -> Result<PostDominator, OxcDiagnostic> {
+    let graph = build_reverse_graph(
+        func,
+        next_block_id_counter,
+        include_throws_as_exit_node,
+        include_exception_edges,
+    );
     let mut nodes = compute_immediate_dominators(&graph)?;
 
     // When include_throws_as_exit_node is false, nodes that flow into a throw
@@ -94,14 +132,27 @@ pub fn compute_post_dominator_tree(
     Ok(PostDominator { exit: graph.entry, nodes })
 }
 
+/// Returns the successors of `terminal`, without a `MaybeThrow`'s edge to its exception
+/// handler unless `include_exception_edges` is set.
+fn terminal_successors(terminal: &Terminal, include_exception_edges: bool) -> TerminalBlockList {
+    match terminal {
+        Terminal::MaybeThrow { continuation, .. } if !include_exception_edges => {
+            TerminalBlockList::from_slice(&[*continuation])
+        }
+        _ => each_terminal_successor(terminal),
+    }
+}
+
 /// Build the reverse graph from the HIR function.
 ///
-/// Reverses all edges and adds a synthetic exit node that receives edges from
-/// return (and optionally throw) terminals. The result is put into RPO order.
+/// Reverses all edges (optionally except `MaybeThrow` handler edges) and adds a
+/// synthetic exit node that receives edges from return (and optionally throw)
+/// terminals. The result is put into RPO order.
 fn build_reverse_graph(
     func: &HirFunction,
     next_block_id_counter: u32,
     include_throws_as_exit_node: bool,
+    include_exception_edges: bool,
 ) -> Graph {
     let exit_id = BlockId::from_usize(next_block_id_counter as usize);
     // All block ids are below `next_block_id_counter`; add one slot for the exit node.
@@ -120,9 +171,20 @@ fn build_reverse_graph(
     });
 
     for (id, block) in &func.body.blocks {
-        let successors = each_terminal_successor(&block.terminal);
+        let successors = terminal_successors(&block.terminal, include_exception_edges);
         let mut preds_set: FxHashSet<BlockId> = successors.into_iter().collect();
-        let succs_set: FxHashSet<BlockId> = block.preds.iter().copied().collect();
+        let succs_set: FxHashSet<BlockId> = block
+            .preds
+            .iter()
+            .copied()
+            .filter(|pred| {
+                include_exception_edges
+                    || !matches!(
+                        func.body.blocks.get(pred).map(|pred| &pred.terminal),
+                        Some(Terminal::MaybeThrow { continuation, .. }) if continuation != id
+                    )
+            })
+            .collect();
 
         let is_return = matches!(&block.terminal, Terminal::Return { .. });
         let is_throw = matches!(&block.terminal, Terminal::Throw { .. });
@@ -202,10 +264,7 @@ fn compute_immediate_dominators(
             let mut new_idom = match new_idom {
                 Some(idom) => idom,
                 None => {
-                    return Err(ErrorCategory::Invariant.diagnostic(format!(
-                        "At least one predecessor must have been visited for block {:?}",
-                        node.id
-                    )));
+                    return Err(diagnostics::unvisited_dominator_predecessor(node.id));
                 }
             };
 
@@ -253,62 +312,63 @@ fn intersect(
 // Post-dominator frontier
 // =============================================================================
 
-/// Computes the post-dominator frontier of `target_id`. These are immediate
-/// predecessors of nodes that post-dominate `target_id` from which execution may
-/// not reach `target_id`. Intuitively, these are the earliest blocks from which
-/// execution branches such that it may or may not reach the target block.
-pub fn post_dominator_frontier(
+/// Computes the post-dominator frontiers of all blocks using the Cytron algorithm.
+///
+/// The frontier of a block contains the earliest blocks from which execution branches
+/// such that it may or may not reach that block. Walking each CFG edge up the immediate
+/// post-dominator chain avoids separately reverse-walking the whole CFG for every block.
+pub fn compute_post_dominator_frontiers(
     func: &HirFunction,
-    post_dominators: &PostDominator,
-    target_id: BlockId,
-) -> FxHashSet<BlockId> {
-    let target_post_dominators = post_dominators_of(func, post_dominators, target_id);
-    let mut visited = FxHashSet::default();
-    let mut frontier = FxHashSet::default();
-
-    let mut to_visit: Vec<BlockId> = target_post_dominators.iter().copied().collect();
-    to_visit.push(target_id);
-
-    for block_id in to_visit {
-        if !visited.insert(block_id) {
-            continue;
-        }
-        if let Some(block) = func.body.blocks.get(&block_id) {
-            for &pred in &block.preds {
-                if !target_post_dominators.contains(&pred) {
-                    frontier.insert(pred);
-                }
-            }
-        }
-    }
-    frontier
+    next_block_id_counter: u32,
+    include_throws_as_exit_node: bool,
+) -> Result<PostDominatorFrontiers, OxcDiagnostic> {
+    post_dominator_frontiers(func, next_block_id_counter, include_throws_as_exit_node, true)
 }
 
-/// Walks up the post-dominator tree to collect all blocks that post-dominate `target_id`.
-fn post_dominators_of(
+/// Like [`compute_post_dominator_frontiers`], but over normal control flow only: the edge
+/// from each `MaybeThrow` terminal to its exception handler is ignored.
+///
+/// Inside `try`, the handler edge of a `MaybeThrow` lets execution bypass everything after
+/// it, so with that edge the frontiers stop at the nearest `MaybeThrow` and never reach a
+/// branch terminal that runs before it. Without it, a block's frontiers name the branches
+/// that pick which path reaches it, as they would outside `try`.
+pub fn compute_normal_flow_post_dominator_frontiers(
     func: &HirFunction,
-    post_dominators: &PostDominator,
-    target_id: BlockId,
-) -> FxHashSet<BlockId> {
-    let mut result = FxHashSet::default();
-    let mut visited = FxHashSet::default();
-    let mut queue = vec![target_id];
+    next_block_id_counter: u32,
+    include_throws_as_exit_node: bool,
+) -> Result<PostDominatorFrontiers, OxcDiagnostic> {
+    post_dominator_frontiers(func, next_block_id_counter, include_throws_as_exit_node, false)
+}
 
-    while let Some(current_id) = queue.pop() {
-        if !visited.insert(current_id) {
-            continue;
-        }
-        if let Some(block) = func.body.blocks.get(&current_id) {
-            for &pred in &block.preds {
-                let pred_post_dom = post_dominators.get(pred).unwrap_or(pred);
-                if pred_post_dom == target_id || result.contains(&pred_post_dom) {
-                    result.insert(pred);
-                }
-                queue.push(pred);
+fn post_dominator_frontiers(
+    func: &HirFunction,
+    next_block_id_counter: u32,
+    include_throws_as_exit_node: bool,
+    include_exception_edges: bool,
+) -> Result<PostDominatorFrontiers, OxcDiagnostic> {
+    let post_dominators = post_dominator_tree(
+        func,
+        next_block_id_counter,
+        include_throws_as_exit_node,
+        include_exception_edges,
+    )?;
+    let mut frontiers: FxHashMap<BlockId, FxHashSet<BlockId>> = FxHashMap::default();
+
+    // Apply Cytron's dominance-frontier algorithm to the reverse CFG. An original
+    // edge `block_id -> successor` is `successor -> block_id` in the reverse CFG,
+    // whose dominator tree is the post-dominator tree computed above.
+    for (&block_id, block) in &func.body.blocks {
+        let stop = post_dominators.get(block_id);
+        for successor in terminal_successors(&block.terminal, include_exception_edges) {
+            for runner in
+                post_dominators.ancestors(successor).take_while(|&runner| Some(runner) != stop)
+            {
+                frontiers.entry(runner).or_default().insert(block_id);
             }
         }
     }
-    result
+
+    Ok(PostDominatorFrontiers { frontiers })
 }
 
 // =============================================================================

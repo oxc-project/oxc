@@ -1,4 +1,7 @@
-use std::fmt::{Display, Write};
+use std::{
+    borrow::Cow,
+    fmt::{Display, Write},
+};
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
@@ -96,25 +99,19 @@ declare_oxc_lint!(
 
 impl Rule for SortImports {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
         let program = ctx.nodes().program();
 
-        let mut import_declarations = vec![];
-
-        for statement in &program.body {
-            if let Statement::ImportDeclaration(decl) = statement {
-                import_declarations.push(decl);
-            } else {
-                break;
-            }
-        }
-
         let mut previous: Option<&ImportDeclaration> = None;
 
-        for current in import_declarations {
+        for statement in &program.body {
+            let Statement::ImportDeclaration(current) = statement else {
+                continue;
+            };
+
             if !self.ignore_declaration_sort {
                 // ```js
                 // import b from 'foo.js'
@@ -286,14 +283,13 @@ impl SortImports {
                     // add a empty string for zip with specifiers
                     paddings.push("");
 
-                    let specifiers = specifiers.iter().sorted_by(|a, b| {
-                        let a = a.local.name.as_str();
-                        let b = b.local.name.as_str();
-
+                    // Compute each sort key once instead of once per comparison.
+                    let specifiers = specifiers.iter().sorted_by_cached_key(|specifier| {
+                        let name = specifier.local.name.as_str();
                         if self.ignore_case {
-                            a.cow_to_ascii_lowercase().cmp(&b.cow_to_ascii_lowercase())
+                            name.cow_to_ascii_lowercase()
                         } else {
-                            a.cmp(b)
+                            Cow::Borrowed(name)
                         }
                     });
 
@@ -612,6 +608,12 @@ import a from 'a';",
             import a from 'a';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
+        ("var x; import a from 'a'; foo(); import b from 'b';", None),
+        ("var x; import {b, a} from 'a';", Some(serde_json::json!([{ "ignoreMemberSort": true }]))),
+        (
+            "var x; import b from 'b'; import a from 'a';",
+            Some(serde_json::json!([{ "ignoreDeclarationSort": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -751,6 +753,27 @@ import a from 'a';",
             import { c, a } from 'c';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
+        (
+            "var _a;
+            import { format } from 'util';
+            import { normalize, resolve } from 'path';
+            export { _a, format, normalize, resolve };",
+            None,
+        ),
+        (
+            "import b from 'b';
+            foo();
+            import a from 'a';",
+            None,
+        ),
+        (
+            "import b from 'b'; foo(); import a from 'a';",
+            Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
+        ),
+        (
+            "var x; import {b, a} from 'a';",
+            Some(serde_json::json!([{ "ignoreDeclarationSort": true }])),
+        ),
     ];
 
     let fix = vec![
@@ -807,6 +830,7 @@ import a from 'a';",
             "import {zzzzz, aaaaa /* comment */} from 'foo.js';",
             None,
         ),
+        ("var x; import {b, a} from 'a';", "var x; import {a, b} from 'a';", None),
     ];
     Tester::new(SortImports::NAME, SortImports::PLUGIN, pass, fail)
         .expect_fix(fix)

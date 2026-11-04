@@ -172,27 +172,17 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
         match kind {
             BindingPattern::BindingIdentifier(_) => None,
             BindingPattern::ObjectPattern(object_pattern) => {
-                for property in &object_pattern.properties {
-                    if let Some(value) = Self::find_assign_binding_pattern_kind_of_specific_symbol(
+                object_pattern.properties.iter().find_map(|property| {
+                    Self::find_assign_binding_pattern_kind_of_specific_symbol(
                         &property.value,
                         symbol_id,
-                    ) {
-                        return Some(value);
-                    }
-                }
-                None
+                    )
+                })
             }
             BindingPattern::ArrayPattern(array_pattern) => {
-                for element in &array_pattern.elements {
-                    let Some(binding) = element else { continue };
-
-                    if let Some(value) = Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                        binding, symbol_id,
-                    ) {
-                        return Some(value);
-                    }
-                }
-                None
+                array_pattern.elements.iter().flatten().find_map(|binding| {
+                    Self::find_assign_binding_pattern_kind_of_specific_symbol(binding, symbol_id)
+                })
             }
             BindingPattern::AssignmentPattern(assign_pattern) => {
                 if Self::is_binding_id_of_specific_symbol(&assign_pattern.left, symbol_id) {
@@ -256,7 +246,7 @@ mod test {
     fn collect(opts: MangleOptionsKeepNames, source_text: &str) -> FxHashSet<String> {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-        assert!(!ret.panicked, "{source_text}");
+        assert!(!ret.fatal_error, "{source_text}");
         assert!(ret.diagnostics.is_empty(), "{source_text}");
         let ret = SemanticBuilder::new().with_build_nodes(true).build(&ret.program);
         assert!(ret.diagnostics.is_empty(), "{source_text}");

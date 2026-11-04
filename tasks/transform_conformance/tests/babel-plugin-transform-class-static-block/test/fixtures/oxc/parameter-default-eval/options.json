@@ -1,0 +1,4 @@
+{
+  "sourceType": "script",
+  "presets": [["env", {"targets": {"node": "16"}}]]
+}

@@ -19,6 +19,7 @@ use crate::{
     context::TraverseCtx,
     utils::ast_builder::{
         create_assignment, create_bind_call, create_call_call, create_member_callee,
+        wrap_expression_in_arrow_function_iife,
     },
 };
 
@@ -470,6 +471,24 @@ impl<'a> ClassProperties<'a> {
     ) {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
         if matches!(&assign_expr.left, AssignmentTarget::PrivateFieldExpression(_)) {
+            if !self.private_fields_as_properties
+                && assign_expr.operator.to_logical_operator().is_some()
+                && ctx
+                    .ancestors()
+                    .take_while(|ancestor| {
+                        !matches!(
+                            ancestor,
+                            Ancestor::FunctionBodyStatements(_)
+                                | Ancestor::ArrowFunctionExpressionBody(_)
+                        )
+                    })
+                    .any(|ancestor| matches!(ancestor, Ancestor::FormalParameterInitializer(_)))
+            {
+                // Keep receiver temporaries local to each parameter evaluation, including
+                // recursive calls from getters. The assignment is transformed in the IIFE.
+                *expr = wrap_expression_in_arrow_function_iife(expr.take_in(ctx), ctx);
+                return;
+            }
             self.transform_assignment_expression_impl(expr, ctx);
         }
     }
@@ -494,7 +513,7 @@ impl<'a> ClassProperties<'a> {
             is_static,
             is_declaration,
             is_method,
-            ..
+            is_accessor,
         } = self.classes_stack.find_get_set_private_prop(&field_expr.field);
 
         if self.private_fields_as_properties {
@@ -565,6 +584,7 @@ impl<'a> ClassProperties<'a> {
                 get_binding.as_ref(),
                 set_binding.as_ref(),
                 class_binding.as_ref(),
+                is_accessor,
                 ctx,
             );
         } else {
@@ -708,6 +728,7 @@ impl<'a> ClassProperties<'a> {
                     let value =
                         Expression::new_binary_expression(SPAN, get_expr, operator, value, ctx);
                     // `_assertClassBrand(Class, object, _assertClassBrand(Class, object, _prop)._ + value)`
+                    assign_expr.operator = AssignmentOperator::Assign;
                     assign_expr.right =
                         self.create_assert_class_brand(class_ident2, object1, value, SPAN, ctx);
                 } else if let Some(operator) = operator.to_logical_operator() {
@@ -752,6 +773,12 @@ impl<'a> ClassProperties<'a> {
     ///   -> `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
     /// * `object.#prop &&= value`
     ///   -> `_classPrivateFieldGet2(_prop, object) && _classPrivateFieldSet2(_prop, object, value)`
+    ///
+    /// A setter's return value is not the value of the assignment. If `#prop` is an accessor and
+    /// the value is used, assign to the setter instead of calling it:
+    ///
+    /// * `object.#prop += value`
+    ///   -> `_toSetter(_set_prop.bind(_assertClassBrand(Class, object)))._ = _get_prop.call(_assertClassBrand(Class, object)) + value`
     //
     // `#[inline]` so that compiler sees `expr` is an `Expression::AssignmentExpression` with
     // `AssignmentTarget::PrivateFieldExpression` on left, and that clones in
@@ -763,8 +790,11 @@ impl<'a> ClassProperties<'a> {
         get_binding: Option<&BoundIdentifier<'a>>,
         set_binding: Option<&BoundIdentifier<'a>>,
         class_binding: Option<&BoundIdentifier<'a>>,
+        is_accessor: bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        let is_value_used = Self::is_value_used(ctx);
+
         expr.replace_with(|expr| {
             let Expression::AssignmentExpression(assign_expr) = expr else {
                 unreachable!();
@@ -787,8 +817,13 @@ impl<'a> ClassProperties<'a> {
                 );
             }
 
-            // Make 2 copies of `object`
-            let (object1, object2) = self.duplicate_object(object.into_inner_expression(), ctx);
+            // Logical assignment reads before preparing the setter. A getter can reassign
+            // the receiver binding, so preserve its original value for the subsequent write.
+            let (object1, object2) = duplicate_expression(
+                object.into_inner_expression(),
+                operator.to_logical_operator().is_some(),
+                ctx,
+            );
 
             if let Some(operator) = operator.to_binary_operator() {
                 // `object.#prop += value`
@@ -799,6 +834,7 @@ impl<'a> ClassProperties<'a> {
                     &field.name,
                     class_binding,
                     get_binding,
+                    is_accessor,
                     object2,
                     SPAN,
                     ctx,
@@ -808,12 +844,13 @@ impl<'a> ClassProperties<'a> {
                 let value = Expression::new_binary_expression(SPAN, get_call, operator, value, ctx);
 
                 // `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
-                self.create_private_setter(
+                self.create_private_setter_with_value(
                     &field.name,
                     class_binding,
                     set_binding,
                     object1,
                     value,
+                    is_value_used,
                     span,
                     ctx,
                 )
@@ -826,18 +863,20 @@ impl<'a> ClassProperties<'a> {
                     &field.name,
                     class_binding,
                     get_binding,
+                    is_accessor,
                     object1,
                     SPAN,
                     ctx,
                 );
 
                 // `_classPrivateFieldSet2(_prop, object, value)`
-                let set_call = self.create_private_setter(
+                let set_call = self.create_private_setter_with_value(
                     &field.name,
                     class_binding,
                     set_binding,
                     object2,
                     value,
+                    is_value_used,
                     SPAN,
                     ctx,
                 );
@@ -965,7 +1004,7 @@ impl<'a> ClassProperties<'a> {
             is_static,
             is_method,
             is_declaration,
-            ..
+            is_accessor,
         } = self.classes_stack.find_get_set_private_prop(&field_expr.field);
 
         let temp_var_name_base = get_var_name_from_node(field_expr);
@@ -1128,6 +1167,7 @@ impl<'a> ClassProperties<'a> {
                 &private_name,
                 class_binding.as_ref(),
                 get_binding.as_ref(),
+                is_accessor,
                 object2,
                 SPAN,
                 ctx,
@@ -1141,6 +1181,7 @@ impl<'a> ClassProperties<'a> {
             let UpdateExpression { span, prefix, .. } = **update_expr;
             update_expr.span = SPAN;
             update_expr.argument = temp_binding.create_read_write_simple_target(ctx);
+            let is_value_used = Self::is_value_used(ctx);
             expr.replace_with(|update_expr| {
                 if prefix {
                     // Source = `++object.#prop` (prefix `++`)
@@ -1148,12 +1189,13 @@ impl<'a> ClassProperties<'a> {
                     let value =
                         Expression::new_sequence_expression(SPAN, [assignment, update_expr], ctx);
                     // `_classPrivateFieldSet(_prop, object, <value>)`
-                    self.create_private_setter(
+                    self.create_private_setter_with_value(
                         &private_name,
                         class_binding.as_ref(),
                         set_binding.as_ref(),
                         object1,
                         value,
+                        is_value_used,
                         span,
                         ctx,
                     )
@@ -1219,8 +1261,9 @@ impl<'a> ClassProperties<'a> {
         if matches!(element, ChainElement::PrivateFieldExpression(_)) {
             // The PrivateFieldExpression must be transformed, so we can convert it to a normal expression here.
             let mut chain_expr = Self::convert_chain_expression_to_expression(expr, ctx);
+            let bind_context = matches!(ctx.ancestor(1), Ancestor::CallExpressionCallee(_));
             let result = self
-                .transform_private_field_expression_of_chain_expression(&mut chain_expr, ctx)
+                .transform_private_field_expression_of_chain_expression(&mut chain_expr, bind_context, ctx)
                 .expect("The ChainExpression must contain at least one optional expression, so it can never be `None` here.");
             Some((result, chain_expr))
         } else if let Some(result) = self.transform_chain_expression_element(element, ctx) {
@@ -1264,7 +1307,7 @@ impl<'a> ClassProperties<'a> {
     ) -> Option<Expression<'a>> {
         match expr {
             Expression::PrivateFieldExpression(_) => {
-                self.transform_private_field_expression_of_chain_expression(expr, ctx)
+                self.transform_private_field_expression_of_chain_expression(expr, false, ctx)
             }
             match_member_expression!(Expression) => self
                 .transform_member_expression_of_chain_expression(
@@ -1356,6 +1399,7 @@ impl<'a> ClassProperties<'a> {
     fn transform_private_field_expression_of_chain_expression(
         &mut self,
         expr: &mut Expression<'a>,
+        bind_context: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let Expression::PrivateFieldExpression(field_expr) = expr else { unreachable!() };
@@ -1369,9 +1413,9 @@ impl<'a> ClassProperties<'a> {
             self.transform_first_optional_expression(object, ctx)
         };
 
-        if matches!(ctx.ancestor(1), Ancestor::CallExpressionCallee(_)) {
+        if bind_context {
             // `(Foo?.#m)();` -> `(Foo === null || Foo === void 0 ? void 0 : _m._.bind(Foo))();`
-            // ^^^^^^^^^^^^ is a call expression, we need to bind the proper context
+            // Only bind when the private field is the chain's result, not an intermediate object.
             *expr = self.transform_bindable_private_field(field_expr, ctx);
         } else {
             self.transform_private_field_expression(expr, ctx);
@@ -2157,27 +2201,34 @@ impl<'a> ClassProperties<'a> {
     }
 
     /// * Getter: `_prop.call(_assertClassBrand(Class, object))`
+    /// * Method: `_assertClassBrand(Class, object, _prop)`
     /// * Prop: `_privateFieldGet(_prop, object)`
-    /// * Prop binding is `None`: `_readOnlyError("#method")`
+    /// * Prop binding is `None`: `_writeOnlyError("#method")`
     fn create_private_getter(
         &self,
         private_name: &str,
         class_binding: Option<&BoundIdentifier<'a>>,
         prop_binding: Option<&BoundIdentifier<'a>>,
+        is_accessor: bool,
         object: Expression<'a>,
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let Some(prop_binding) = prop_binding else {
-            // `_readOnlyError("#method")`
+            // `_writeOnlyError("#method")`
             return self.create_sequence_with_write_only_error(private_name, object, span, ctx);
         };
         let prop_ident = prop_binding.create_read_expression(ctx);
         if let Some(class_binding) = class_binding {
             let class_ident = class_binding.create_read_expression(ctx);
-            let object = self.create_assert_class_brand_without_value(class_ident, object, ctx);
-            // `_prop.call(_assertClassBrand(Class, object))`
-            create_call_call(prop_ident, object, span, ctx)
+            if is_accessor {
+                let object = self.create_assert_class_brand_without_value(class_ident, object, ctx);
+                // `_prop.call(_assertClassBrand(Class, object))`
+                create_call_call(prop_ident, object, span, ctx)
+            } else {
+                // `_assertClassBrand(Class, object, _prop)`
+                self.create_assert_class_brand(class_ident, object, prop_ident, span, ctx)
+            }
         } else {
             // `_privateFieldGet(_prop, object)`
             self.create_private_field_get(prop_ident, object, ctx)
@@ -2197,6 +2248,33 @@ impl<'a> ClassProperties<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
+        self.create_private_setter_with_value(
+            private_name,
+            class_binding,
+            prop_binding,
+            object,
+            value,
+            false,
+            span,
+            ctx,
+        )
+    }
+
+    /// Same as [`Self::create_private_setter`], but if `is_value_used` is `true`, the expression
+    /// evaluates to `value`, not to the return value of a setter:
+    ///
+    /// `_toSetter(_prop.bind(_assertClassBrand(Class, object)))._ = value`
+    fn create_private_setter_with_value(
+        &self,
+        private_name: &str,
+        class_binding: Option<&BoundIdentifier<'a>>,
+        prop_binding: Option<&BoundIdentifier<'a>>,
+        object: Expression<'a>,
+        value: Expression<'a>,
+        is_value_used: bool,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
         let Some(prop_binding) = prop_binding else {
             // `_writeOnlyError("#method")`
             return self.create_sequence_with_read_only_error(
@@ -2211,6 +2289,16 @@ impl<'a> ClassProperties<'a> {
         if let Some(class_binding) = class_binding {
             let class_ident = class_binding.create_read_expression(ctx);
             let object = self.create_assert_class_brand_without_value(class_ident, object, ctx);
+            if is_value_used {
+                let target = self.create_to_setter_for_bind_call(prop_ident, object, SPAN, ctx);
+                return Expression::new_assignment_expression(
+                    span,
+                    AssignmentOperator::Assign,
+                    AssignmentTarget::from(target.into_member_expression()),
+                    value,
+                    ctx,
+                );
+            }
             let arguments =
                 ArenaVec::from_array_in([Argument::from(object), Argument::from(value)], ctx);
             let callee = create_member_callee(prop_ident, static_ident!("call"), span, ctx);
@@ -2220,6 +2308,11 @@ impl<'a> ClassProperties<'a> {
             // `_privateFieldSet(_prop, object, value)`
             self.create_private_field_set(prop_ident, object, value, ctx)
         }
+    }
+
+    /// Whether the value of the current expression is used.
+    fn is_value_used(ctx: &TraverseCtx<'a>) -> bool {
+        !matches!(ctx.parent(), Ancestor::ExpressionStatementExpression(_))
     }
 
     /// * [`Helper::ReadOnlyError`][]: `_readOnlyError("#method")`

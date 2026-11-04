@@ -2,10 +2,11 @@ use std::sync::atomic::{AtomicU32, Ordering};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_index::IndexSlice;
+use smallvec::SmallVec;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors::{
@@ -17,11 +18,6 @@ use crate::react_compiler_hir::{
     ParamPattern, Place, PrimitiveValue, Terminal, Type, TypeId, UnaryOperator, is_use_ref_type,
 };
 use oxc_span::Span;
-
-const ERROR_DESCRIPTION: &str = "React refs are values that are not needed for rendering. \
-    Refs should only be accessed outside of render, such as in event handlers or effects. \
-    Accessing a ref value (the `current` property) during render can cause your component \
-    not to update as expected (https://react.dev/reference/react/useRef)";
 
 // --- RefId ---
 
@@ -40,7 +36,7 @@ fn next_ref_id() -> RefId {
 /// Corresponds to TS `RefAccessType`.
 ///
 /// PartialEq matches the TS `tyEqual` semantics: Ref ignores ref_id,
-/// RefValue compares span but ignores ref_id. This is critical for fixpoint
+/// RefValue compares its access span but ignores ref origin and ref_id. This is critical for fixpoint
 /// convergence — join creates fresh ref_ids, and comparing them would
 /// prevent the environment from stabilizing.
 #[derive(Debug, Clone)]
@@ -49,7 +45,7 @@ enum RefAccessType {
     Nullable,
     Guard { ref_id: RefId },
     Ref { ref_id: RefId },
-    RefValue { span: Option<Span>, ref_id: Option<RefId> },
+    RefValue { span: Option<Span>, ref_span: Option<Span>, ref_id: Option<RefId> },
     Structure { value: Option<Box<RefAccessRefType>>, fn_type: Option<RefFnType> },
 }
 
@@ -75,12 +71,12 @@ impl PartialEq for RefAccessType {
 /// Corresponds to TS `RefAccessRefType` — the subset of `RefAccessType` that can appear
 /// inside `Structure.value` and be joined via `join_ref_access_ref_types`.
 ///
-/// PartialEq mirrors RefAccessType: Ref ignores ref_id, RefValue compares
-/// span only.
+/// PartialEq mirrors RefAccessType: Ref ignores ref_id, while RefValue compares
+/// its access span but ignores ref origin and ref_id.
 #[derive(Debug, Clone)]
 enum RefAccessRefType {
     Ref { ref_id: RefId },
-    RefValue { span: Option<Span>, ref_id: Option<RefId> },
+    RefValue { span: Option<Span>, ref_span: Option<Span>, ref_id: Option<RefId> },
     Structure { value: Option<Box<RefAccessRefType>>, fn_type: Option<RefFnType> },
 }
 
@@ -101,10 +97,20 @@ impl PartialEq for RefAccessRefType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+/// PartialEq matches the TS `tyEqual` semantics and ignores `ref_access_span`, which is only
+/// diagnostic metadata. Comparing it would prevent the environment from stabilizing when joins
+/// alternate between functions that access refs at different locations.
+#[derive(Debug, Clone)]
 struct RefFnType {
     read_ref_effect: bool,
+    ref_access_span: Option<Span>,
     return_type: Box<RefAccessType>,
+}
+
+impl PartialEq for RefFnType {
+    fn eq(&self, other: &Self) -> bool {
+        self.read_ref_effect == other.read_ref_effect && self.return_type == other.return_type
+    }
 }
 
 impl RefAccessType {
@@ -112,8 +118,12 @@ impl RefAccessType {
     fn to_ref_type(&self) -> Option<RefAccessRefType> {
         match self {
             RefAccessType::Ref { ref_id } => Some(RefAccessRefType::Ref { ref_id: *ref_id }),
-            RefAccessType::RefValue { span, ref_id } => {
-                Some(RefAccessRefType::RefValue { span: *span, ref_id: *ref_id })
+            RefAccessType::RefValue { span, ref_span, ref_id } => {
+                Some(RefAccessRefType::RefValue {
+                    span: *span,
+                    ref_span: *ref_span,
+                    ref_id: *ref_id,
+                })
             }
             RefAccessType::Structure { value, fn_type } => {
                 Some(RefAccessRefType::Structure { value: value.clone(), fn_type: fn_type.clone() })
@@ -126,8 +136,8 @@ impl RefAccessType {
     fn from_ref_type(ref_type: &RefAccessRefType) -> Self {
         match ref_type {
             RefAccessRefType::Ref { ref_id } => RefAccessType::Ref { ref_id: *ref_id },
-            RefAccessRefType::RefValue { span, ref_id } => {
-                RefAccessType::RefValue { span: *span, ref_id: *ref_id }
+            RefAccessRefType::RefValue { span, ref_span, ref_id } => {
+                RefAccessType::RefValue { span: *span, ref_span: *ref_span, ref_id: *ref_id }
             }
             RefAccessRefType::Structure { value, fn_type } => {
                 RefAccessType::Structure { value: value.clone(), fn_type: fn_type.clone() }
@@ -147,15 +157,11 @@ fn join_ref_access_ref_types(a: &RefAccessRefType, b: &RefAccessRefType) -> RefA
             if a_id == b_id {
                 a.clone()
             } else {
-                RefAccessRefType::RefValue { span: None, ref_id: None }
+                RefAccessRefType::RefValue { span: None, ref_span: None, ref_id: None }
             }
         }
-        (RefAccessRefType::RefValue { .. }, _) => {
-            RefAccessRefType::RefValue { span: None, ref_id: None }
-        }
-        (_, RefAccessRefType::RefValue { .. }) => {
-            RefAccessRefType::RefValue { span: None, ref_id: None }
-        }
+        (RefAccessRefType::RefValue { .. }, _) => a.clone(),
+        (_, RefAccessRefType::RefValue { .. }) => b.clone(),
         (RefAccessRefType::Ref { ref_id: a_id }, RefAccessRefType::Ref { ref_id: b_id }) => {
             if a_id == b_id { a.clone() } else { RefAccessRefType::Ref { ref_id: next_ref_id() } }
         }
@@ -170,6 +176,7 @@ fn join_ref_access_ref_types(a: &RefAccessRefType, b: &RefAccessRefType) -> RefA
                 (None, other) | (other, None) => other.clone(),
                 (Some(a_fn), Some(b_fn)) => Some(RefFnType {
                     read_ref_effect: a_fn.read_ref_effect || b_fn.read_ref_effect,
+                    ref_access_span: a_fn.ref_access_span.or(b_fn.ref_access_span),
                     return_type: Box::new(join_ref_access_types(
                         &a_fn.return_type,
                         &b_fn.return_type,
@@ -238,13 +245,16 @@ impl Env {
         self.changed
     }
 
+    fn operand_id(&self, key: IdentifierId) -> IdentifierId {
+        self.temporaries.get(&key).map(|p| p.identifier).unwrap_or(key)
+    }
+
     fn get(&self, key: IdentifierId) -> Option<&RefAccessType> {
-        let operand_id = self.temporaries.get(&key).map(|p| p.identifier).unwrap_or(key);
-        self.data.get(&operand_id)
+        self.data.get(&self.operand_id(key))
     }
 
     fn set(&mut self, key: IdentifierId, value: RefAccessType) {
-        let operand_id = self.temporaries.get(&key).map(|p| p.identifier).unwrap_or(key);
+        let operand_id = self.operand_id(key);
         let current = self.data.get(&operand_id);
         let widened_value = join_ref_access_types(&value, current.unwrap_or(&RefAccessType::None));
         if current.is_none() && widened_value == RefAccessType::None {
@@ -266,7 +276,7 @@ fn ref_type_of_type(
     let identifier = &identifiers[id];
     let ty = &types[identifier.type_];
     if crate::react_compiler_hir::is_ref_value_type(ty) {
-        RefAccessType::RefValue { span: None, ref_id: None }
+        RefAccessType::RefValue { span: None, ref_span: None, ref_id: None }
     } else if is_use_ref_type(ty) {
         RefAccessType::Ref { ref_id: next_ref_id() }
     } else {
@@ -311,15 +321,7 @@ fn validate_no_direct_ref_value_access(
     if let Some(ty) = env.get(operand.identifier) {
         let ty = destructure(ty);
         if let RefAccessType::RefValue { span, .. } = &ty {
-            errors.push(
-                ErrorCategory::Refs
-                    .diagnostic("Cannot access refs during render")
-                    .with_help(ERROR_DESCRIPTION)
-                    .with_labels(
-                        span.or(operand.span)
-                            .map(|s| s.label("Cannot access ref value during render")),
-                    ),
-            );
+            errors.push(diagnostics::ref_value_access(span.or(operand.span)));
         }
     }
 }
@@ -329,25 +331,10 @@ fn validate_no_ref_value_access(errors: &mut Vec<OxcDiagnostic>, env: &Env, oper
         let ty = destructure(ty);
         match &ty {
             RefAccessType::RefValue { span, .. } => {
-                errors.push(
-                    ErrorCategory::Refs
-                        .diagnostic("Cannot access refs during render")
-                        .with_help(ERROR_DESCRIPTION)
-                        .with_labels(
-                            span.or(operand.span)
-                                .map(|s| s.label("Cannot access ref value during render")),
-                        ),
-                );
+                errors.push(diagnostics::ref_value_access(span.or(operand.span)));
             }
             RefAccessType::Structure { fn_type: Some(fn_type), .. } if fn_type.read_ref_effect => {
-                errors.push(
-                    ErrorCategory::Refs
-                        .diagnostic("Cannot access refs during render")
-                        .with_help(ERROR_DESCRIPTION)
-                        .with_labels(
-                            operand.span.map(|s| s.label("Cannot access ref value during render")),
-                        ),
-                );
+                errors.push(diagnostics::ref_value_access(operand.span));
             }
             _ => {}
         }
@@ -369,24 +356,10 @@ fn validate_no_ref_passed_to_function(
                 } else {
                     span
                 };
-                errors.push(
-                    ErrorCategory::Refs
-                        .diagnostic("Cannot access refs during render")
-                        .with_help(ERROR_DESCRIPTION)
-                        .with_labels(error_span.map(|s| {
-                            s.label("Passing a ref to a function may read its value during render")
-                        })),
-                );
+                errors.push(diagnostics::ref_passed_to_function(error_span));
             }
             RefAccessType::Structure { fn_type: Some(fn_type), .. } if fn_type.read_ref_effect => {
-                errors.push(
-                    ErrorCategory::Refs
-                        .diagnostic("Cannot access refs during render")
-                        .with_help(ERROR_DESCRIPTION)
-                        .with_labels(span.map(|s| {
-                            s.label("Passing a ref to a function may read its value during render")
-                        })),
-                );
+                errors.push(diagnostics::ref_passed_to_function(span));
             }
             _ => {}
         }
@@ -402,20 +375,12 @@ fn validate_no_ref_update(
     if let Some(ty) = env.get(operand.identifier) {
         let ty = destructure(ty);
         match &ty {
-            RefAccessType::Ref { .. } | RefAccessType::RefValue { .. } => {
-                let error_span = if let RefAccessType::RefValue { span: ref_span, .. } = &ty {
-                    ref_span.or(span)
-                } else {
-                    span
-                };
-                errors.push(
-                    ErrorCategory::Refs
-                        .diagnostic("Cannot access refs during render")
-                        .with_help(ERROR_DESCRIPTION)
-                        .with_labels(
-                            error_span.map(|s| s.label("Cannot update ref during render")),
-                        ),
-                );
+            RefAccessType::Ref { .. } => {
+                errors.push(diagnostics::ref_update(span, operand.span));
+            }
+            RefAccessType::RefValue { span: value_span, ref_span, .. } => {
+                errors
+                    .push(diagnostics::ref_update(value_span.or(span), ref_span.or(operand.span)));
             }
             _ => {}
         }
@@ -424,14 +389,53 @@ fn validate_no_ref_update(
 
 fn guard_check(errors: &mut Vec<OxcDiagnostic>, operand: &Place, env: &Env) {
     if matches!(env.get(operand.identifier), Some(RefAccessType::Guard { .. })) {
-        errors.push(
-            ErrorCategory::Refs
-                .diagnostic("Cannot access refs during render")
-                .with_help(ERROR_DESCRIPTION)
-                .with_labels(
-                    operand.span.map(|s| s.label("Cannot access ref value during render")),
-                ),
-        );
+        errors.push(diagnostics::ref_value_access(operand.span));
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct DiagnosticLabelKey<'a> {
+    label: Option<&'a str>,
+    span: Span,
+    primary: bool,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct DiagnosticKey<'a> {
+    message: &'a str,
+    labels: SmallVec<[DiagnosticLabelKey<'a>; 2]>,
+    help: Option<&'a str>,
+    note: Option<&'a str>,
+    severity: u8,
+    code_scope: Option<&'a str>,
+    code_number: Option<&'a str>,
+    url: Option<&'a str>,
+}
+
+impl<'a> From<&'a OxcDiagnostic> for DiagnosticKey<'a> {
+    fn from(diagnostic: &'a OxcDiagnostic) -> Self {
+        Self {
+            message: &diagnostic.message,
+            labels: diagnostic
+                .labels
+                .iter()
+                .map(|label| DiagnosticLabelKey {
+                    label: label.label(),
+                    span: label.span(),
+                    primary: label.primary(),
+                })
+                .collect(),
+            help: diagnostic.help.as_deref(),
+            note: diagnostic.note.as_deref(),
+            severity: match diagnostic.severity {
+                Severity::Advice => 0,
+                Severity::Warning => 1,
+                Severity::Error => 2,
+            },
+            code_scope: diagnostic.code.scope.as_deref(),
+            code_number: diagnostic.code.number.as_deref(),
+            url: diagnostic.url.as_deref(),
+        }
     }
 }
 
@@ -450,8 +454,16 @@ pub fn validate_no_ref_access_in_render(func: &HirFunction, env: &mut Environmen
         &mut ref_env,
         &mut errors,
     );
-    for diagnostic in errors {
-        env.record_diagnostic(diagnostic);
+    let mut seen = FxHashSet::default();
+    let retain = errors
+        .iter()
+        .map(|diagnostic| seen.insert(DiagnosticKey::from(diagnostic)))
+        .collect::<Vec<_>>();
+    drop(seen);
+    for (diagnostic, retain) in errors.into_iter().zip(retain) {
+        if retain {
+            env.record_diagnostic(diagnostic);
+        }
     }
 }
 
@@ -574,6 +586,7 @@ fn validate_no_ref_access_in_render_impl(
                             }
                             Some(RefAccessType::Ref { ref_id }) => Some(RefAccessType::RefValue {
                                 span: instr.span,
+                                ref_span: object.span,
                                 ref_id: Some(*ref_id),
                             }),
                             _ => None,
@@ -593,6 +606,7 @@ fn validate_no_ref_access_in_render_impl(
                             }
                             Some(RefAccessType::Ref { ref_id }) => Some(RefAccessType::RefValue {
                                 span: instr.span,
+                                ref_span: object.span,
                                 ref_id: Some(*ref_id),
                             }),
                             _ => None,
@@ -672,17 +686,30 @@ fn validate_no_ref_access_in_render_impl(
                             ref_env,
                             &mut inner_errors,
                         );
-                        let (return_type, read_ref_effect) = if inner_errors.is_empty() {
-                            (result, false)
-                        } else {
-                            (RefAccessType::None, true)
-                        };
+                        let (return_type, read_ref_effect, ref_access_span) =
+                            if inner_errors.is_empty() {
+                                (result, false, None)
+                            } else {
+                                let ref_access_span = inner_errors
+                                    .iter()
+                                    .flat_map(|diagnostic| &diagnostic.labels)
+                                    .find(|label| label.primary())
+                                    .or_else(|| {
+                                        inner_errors
+                                            .iter()
+                                            .flat_map(|diagnostic| &diagnostic.labels)
+                                            .next()
+                                    })
+                                    .map(oxc_diagnostics::LabeledSpan::span);
+                                (RefAccessType::None, true, ref_access_span)
+                            };
                         ref_env.set(
                             instr.lvalue.identifier,
                             RefAccessType::Structure {
                                 value: None,
                                 fn_type: Some(RefFnType {
                                     read_ref_effect,
+                                    ref_access_span,
                                     return_type: Box::new(return_type),
                                 }),
                             },
@@ -701,14 +728,10 @@ fn validate_no_ref_access_in_render_impl(
                             return_type = *fn_ty.return_type.clone();
                             if fn_ty.read_ref_effect {
                                 did_error = true;
-                                errors.push(
-                                    ErrorCategory::Refs
-                                        .diagnostic("Cannot access refs during render")
-                                        .with_help(ERROR_DESCRIPTION)
-                                        .with_labels(callee.span.map(|s| {
-                                            s.label("This function accesses a ref value")
-                                        })),
-                                );
+                                errors.push(diagnostics::function_accesses_ref(
+                                    callee.span,
+                                    fn_ty.ref_access_span,
+                                ));
                             }
                         }
 
@@ -751,9 +774,18 @@ fn validate_no_ref_access_in_render_impl(
                                 if let Some(ref effects) = instr.effects {
                                     /*
                                      * For non-hook functions with known aliasing effects,
-                                     * use the effects to determine what validation to apply.
+                                     * use the effects for actual call operands to determine
+                                     * what validation to apply. Oxc effects may also contain
+                                     * transitive captures that flow into a returned function;
+                                     * those values were not passed to the call and are safe to
+                                     * capture for later invocation.
                                      * Track visited id:kind pairs to avoid duplicate errors.
                                      */
+                                    let operand_ids: FxHashSet<IdentifierId> =
+                                        canonical_each_instruction_value_operand(&instr.value, env)
+                                            .iter()
+                                            .map(|place| ref_env.operand_id(place.identifier))
+                                            .collect();
                                     let mut visited_effects: FxHashSet<String> =
                                         FxHashSet::default();
                                     for effect in effects {
@@ -807,6 +839,8 @@ fn validate_no_ref_access_in_render_impl(
                                         };
                                         if let Some(place) = place
                                             && validation != "none"
+                                            && operand_ids
+                                                .contains(&ref_env.operand_id(place.identifier))
                                         {
                                             let key = format!(
                                                 "{}:{}",
@@ -949,14 +983,7 @@ fn validate_no_ref_access_in_render_impl(
                                     instr.lvalue.identifier,
                                     RefAccessType::Guard { ref_id: *ref_id },
                                 );
-                                errors.push(
-                                    ErrorCategory::Refs
-                                        .diagnostic("Cannot access refs during render")
-                                        .with_help(ERROR_DESCRIPTION)
-                                        .with_labels(value.span.map(|s| {
-                                            s.label("Cannot access ref value during render")
-                                        })),
-                                );
+                                errors.push(diagnostics::ref_value_access(value.span));
                             } else {
                                 validate_no_ref_value_access(errors, ref_env, value);
                             }
@@ -1043,7 +1070,11 @@ fn validate_no_ref_access_in_render_impl(
                         instr.lvalue.identifier,
                         join_ref_access_types(
                             &existing,
-                            &RefAccessType::RefValue { span: instr.span, ref_id: None },
+                            &RefAccessType::RefValue {
+                                span: instr.span,
+                                ref_span: None,
+                                ref_id: None,
+                            },
                         ),
                     );
                 }
@@ -1081,7 +1112,7 @@ fn validate_no_ref_access_in_render_impl(
     }
 
     if ref_env.has_changed() {
-        errors.push(ErrorCategory::Invariant.diagnostic("Ref type environment did not converge"));
+        errors.push(diagnostics::invariant_ref_type_environment_did_not_converge());
         return RefAccessType::None;
     }
 

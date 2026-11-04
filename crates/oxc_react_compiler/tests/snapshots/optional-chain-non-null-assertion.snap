@@ -1,0 +1,34 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/optional-chain-non-null-assertion.tsx
+---
+import { c as _c } from "react/compiler-runtime";
+type Props = {
+	users?: {
+		id: string;
+		name: string;
+	}[];
+	userId: string;
+};
+export function UserName(t0) {
+	const $ = _c(5);
+	const { users, userId } = t0;
+	let t1;
+	if ($[0] !== userId || $[1] !== users) {
+		t1 = users?.find((user) => user.id === userId).name;
+		$[0] = userId;
+		$[1] = users;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	let t2;
+	if ($[3] !== t1) {
+		t2 = <span>{t1}</span>;
+		$[3] = t1;
+		$[4] = t2;
+	} else {
+		t2 = $[4];
+	}
+	return t2;
+}

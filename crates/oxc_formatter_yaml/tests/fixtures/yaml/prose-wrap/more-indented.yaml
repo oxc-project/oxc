@@ -1,3 +1,4 @@
+# DIVERGES: the more-indented line is kept intact (Prettier wraps it at the print width); see DIVERGENCES.md#folded-more-indented-reflow
 folded-keeps-more-indented:
   - >
     First Line.

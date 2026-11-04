@@ -208,7 +208,7 @@ pub struct Oxlintrc {
     ///
     /// TypeScript plugin files are supported in the following environments:
     /// - Deno and Bun: TypeScript files are supported natively.
-    /// - Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in
+    /// - Node.js >=22.18.0: TypeScript files are supported natively with built-in
     ///   type-stripping enabled by default.
     ///
     /// For older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.
@@ -324,7 +324,6 @@ impl Oxlintrc {
             ))
         })?;
 
-        // jsonc support
         json_strip_comments::strip(&mut string).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse jsonc file {}: {err:?}", path.display()))
         })?;
@@ -332,7 +331,6 @@ impl Oxlintrc {
         let json = serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
             let ext = path.extension().and_then(OsStr::to_str);
             let err = match ext {
-                // syntax error
                 Some(ext) if is_json_ext(ext) => err.to_string(),
                 Some(_) => "Only JSON configuration files are supported".to_string(),
                 None => {
@@ -354,7 +352,7 @@ impl Oxlintrc {
             )));
         }
 
-        let mut config = Self::deserialize(&json).map_err(|err| {
+        let mut config = Self::from_json_value(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })?;
 
@@ -389,9 +387,26 @@ impl Oxlintrc {
             ));
         }
 
-        Self::deserialize(&json).map_err(|err| {
+        Self::from_json_value(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })
+    }
+
+    /// Deserialize a configuration from an already parsed JSON value.
+    ///
+    /// This is the single entry point for turning JSON into an [`Oxlintrc`]; every caller
+    /// (config files, JS configs in `oxlint`, ...) should go through it rather than calling
+    /// `Oxlintrc::deserialize` with a deserializer of their own. `Deserialize::deserialize` is
+    /// generic, so each crate that calls it compiles its own copy of the whole configuration
+    /// type tree; this non-generic function is compiled once and shared. It is `#[inline(never)]`
+    /// so that it is not inlined across crates, which would re-instantiate the tree in the caller.
+    ///
+    /// # Errors
+    ///
+    /// Returns the deserialization error if `json` does not describe a valid configuration.
+    #[inline(never)]
+    pub fn from_json_value(json: &serde_json::Value) -> Result<Self, serde_json::Error> {
+        Self::deserialize(json)
     }
 
     /// Merges two [Oxlintrc] files together.

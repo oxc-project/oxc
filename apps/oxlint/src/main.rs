@@ -1,12 +1,11 @@
 use std::io::BufWriter;
 
 use oxlint::{
-    cli::{CliRunResult, CliRunner, init_miette, init_tracing, lint_command},
+    cli::{CliRunResult, CliRunner, init_tracing, lint_command},
     lsp::run_lsp,
 };
 
 fn main() -> CliRunResult {
-    // Parse command line arguments from std::env::args()
     let command = lint_command().run();
 
     // Both LSP and CLI use `tracing` for logging
@@ -31,8 +30,6 @@ fn main() -> CliRunResult {
             CliRunResult::LintSucceeded
         });
     }
-
-    init_miette();
 
     command.handle_threads();
 

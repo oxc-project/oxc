@@ -93,13 +93,13 @@ it('baz', async () => {
 ";
 
 pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    match node.kind() {
-        AstKind::IfStatement(_)
-        | AstKind::SwitchStatement(_)
-        | AstKind::ConditionalExpression(_)
-        | AstKind::LogicalExpression(_) => {}
+    let span = match node.kind() {
+        AstKind::IfStatement(stmt) => stmt.span,
+        AstKind::SwitchStatement(stmt) => stmt.span,
+        AstKind::ConditionalExpression(expr) => expr.span,
+        AstKind::LogicalExpression(expr) => expr.span,
         _ => return,
-    }
+    };
 
     let is_if_statement_in_test = ctx.nodes().ancestors(node.id()).any(|node| {
         let AstKind::CallExpression(call_expr) = node.kind() else { return false };
@@ -114,14 +114,6 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     });
 
     if is_if_statement_in_test {
-        let span = match node.kind() {
-            AstKind::IfStatement(stmt) => stmt.span,
-            AstKind::SwitchStatement(stmt) => stmt.span,
-            AstKind::ConditionalExpression(expr) => expr.span,
-            AstKind::LogicalExpression(expr) => expr.span,
-            _ => unreachable!(),
-        };
-
         ctx.diagnostic(no_conditional_in_test(span));
     }
 }

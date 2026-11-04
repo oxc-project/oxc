@@ -70,14 +70,14 @@ declare_oxc_lint!(
 
 impl Rule for NoTopLevelAwait {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let span = match node.kind() {
             AstKind::AwaitExpression(await_expr) => await_expr.span,
             AstKind::ForOfStatement(for_of) if for_of.r#await => for_of.span,
-            AstKind::VariableDeclaration(decl) if decl.kind.is_await() => decl.span,
+            AstKind::VariableDeclaration(decl) if decl.kind.is_await_using() => decl.span,
             _ => return,
         };
 

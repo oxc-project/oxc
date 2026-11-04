@@ -123,7 +123,7 @@ pub trait GetAstBuilder<'a> {
 /// AST builder which assigns dummy [`NodeId`]s to AST nodes.
 ///
 /// For use where no `NodeId`s are required on AST nodes as they are built
-/// e.g. parser, because `NodeId`s are assigned later when building `Semantic`.
+/// e.g. generated nodes whose IDs will be assigned when rebuilding `Semantic`.
 pub struct AstBuilder<'a> {
     /// The memory allocator used to allocate AST nodes in the arena.
     allocator: &'a Allocator,

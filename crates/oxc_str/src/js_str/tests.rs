@@ -1,0 +1,791 @@
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
+
+use oxc_allocator::{Allocator, CloneIn, Dummy};
+use oxc_data_structures::types::implements;
+
+use crate::{Ident, JSChar, JSStr, JSStrBuilder, Str};
+
+fn from_utf16_in<'a>(units: &[u16], allocator: &'a Allocator) -> JSStr<'a> {
+    let mut builder = JSStrBuilder::with_capacity_in(units.len(), &allocator);
+    builder.push_utf16(units);
+    builder.into_js_str()
+}
+
+/// Decode the input independently with Rust's UTF-16 decoder.
+/// Valid scalar values use std's UTF-8 encoder.
+/// Errors supply the exact unpaired code unit.
+fn assert_value(value: JSStr<'_>, units: &[u16]) {
+    let mut expected_points = Vec::new();
+    let mut expected_bytes = Vec::new();
+    let mut has_lone = false;
+    for decoded in char::decode_utf16(units.iter().copied()) {
+        match decoded {
+            Ok(c) => {
+                expected_points.push(c as u32);
+                expected_bytes.extend_from_slice(c.encode_utf8(&mut [0; 4]).as_bytes());
+            }
+            Err(error) => {
+                let unit = error.unpaired_surrogate();
+                expected_points.push(u32::from(unit));
+                // All surrogate encodings have the prefix ED and two
+                // continuation bytes carrying the remaining ten bits.
+                expected_bytes.extend([
+                    0xED,
+                    0x80 | ((unit >> 6) & 0x3F) as u8,
+                    0x80 | (unit & 0x3F) as u8,
+                ]);
+                has_lone = true;
+            }
+        }
+    }
+    assert_eq!(value.encode_utf16().collect::<Vec<_>>(), units);
+    assert_eq!(value.chars().map(JSChar::to_u32).collect::<Vec<_>>(), expected_points);
+    assert_eq!(value.as_bytes(), expected_bytes);
+    assert_eq!(value.len(), expected_bytes.len());
+    assert_eq!(value.len_utf16(), units.len());
+    assert_eq!(value.has_lone_surrogate(), has_lone);
+    let utf8 = String::from_utf16(units).ok();
+    assert_eq!(value.as_str(), utf8.as_deref());
+}
+
+#[test]
+fn layouts_and_traits() {
+    assert_eq!(size_of::<JSChar>(), 4);
+    assert_eq!(size_of::<JSStr<'_>>(), if cfg!(target_pointer_width = "64") { 16 } else { 12 });
+    assert_eq!(size_of::<Option<JSStr<'_>>>(), size_of::<JSStr<'_>>());
+    assert_eq!(align_of::<JSStr<'_>>(), align_of::<usize>());
+
+    assert!(implements!(JSStr: Send));
+    assert!(implements!(JSStr: Sync));
+    assert!(implements!(JSStr: Copy));
+    assert!(implements!(JSStr: !std::fmt::Display));
+    assert!(implements!(JSStr: !AsRef<str>));
+    assert!(implements!(JSStr: !std::ops::Deref));
+    assert!(implements!(JSStr: !Ord));
+
+    assert!(implements!(JSStrBuilder: !Send));
+}
+
+#[test]
+fn concatenate_js_strings_across_arenas() {
+    let allocator = Allocator::new();
+    let value = {
+        let input_allocator = Allocator::new();
+        let units = [0xDC00, 0x61, 0xD800, 0xDC00, 0x62, 0xD800];
+        for split in 0..=units.len() {
+            let left = from_utf16_in(&units[..split], &input_allocator);
+            let right = from_utf16_in(&units[split..], &input_allocator);
+            let value = JSStr::from_js_strs_array_in([left, JSStr::empty(), right], &&allocator);
+            assert_value(value, &units);
+        }
+        let lead = from_utf16_in(&[0xD800], &input_allocator);
+        let trail = from_utf16_in(&[0xDC00], &input_allocator);
+        JSStr::from_js_strs_array_in([lead, trail], &&allocator)
+    };
+    assert_value(value, &[0xD800, 0xDC00]);
+    assert_eq!(value.as_str(), Some("𐀀"));
+    assert_value(JSStr::from_js_strs_array_in([], &&allocator), &[]);
+    assert_eq!(
+        JSStr::from_js_strs_array_in([JSStr::from("hello"), JSStr::from("é")], &&allocator)
+            .as_str(),
+        Some("helloé")
+    );
+}
+
+#[test]
+fn js_char_range_and_encoding() {
+    assert_eq!(JSChar::from_u32(0x11_0000), None);
+    assert_eq!(JSChar::from_u32(u32::MAX), None);
+    let boundaries = [
+        0, 0x7F, 0x80, 0x7FF, 0x800, 0xD7FF, 0xD800, 0xDBFF, 0xDC00, 0xDFFF, 0xE000, 0xFFFF,
+        0x10000, 0x10_FFFF,
+    ];
+    let values: Box<dyn Iterator<Item = u32>> =
+        if cfg!(miri) { Box::new(boundaries.into_iter()) } else { Box::new(0..=0x10_FFFF) };
+    let mut allocator = Allocator::new();
+    for value in values {
+        allocator.reset();
+        let js_char = JSChar::from_u32(value).unwrap();
+        assert_eq!(js_char.to_u32(), value);
+        assert_eq!(js_char.to_char(), char::from_u32(value));
+        let mut builder = JSStrBuilder::new_in(&&allocator);
+        builder.push_js_char(js_char);
+        if let Some(c) = char::from_u32(value) {
+            assert_eq!(builder.into_js_str().as_str(), Some(c.encode_utf8(&mut [0; 4]) as &str));
+        } else {
+            assert_value(builder.into_js_str(), &[u16::try_from(value).unwrap()]);
+        }
+    }
+}
+
+#[test]
+fn borrowing_and_arena_conversions() {
+    const EMPTY: JSStr<'_> = JSStr::empty();
+    assert_value(EMPTY, &[]);
+    assert_value(JSStr::from("a𐀀�"), &[0x61, 0xD800, 0xDC00, 0xFFFD]);
+    let source = String::from("hello\0é😀");
+    let value = JSStr::from(source.as_str());
+    assert_eq!(value.as_str().unwrap().as_ptr(), source.as_ptr());
+    assert_eq!(JSStr::from(Str::from(source.as_str())), value);
+    let ident = JSStr::from(Ident::from(source.as_str()));
+    assert_eq!(ident, value);
+    assert_eq!(ident.as_bytes().as_ptr(), source.as_ptr());
+    assert_eq!(value, source.as_str());
+    assert_eq!(source.as_str(), value);
+    assert_eq!(value, *source.as_str());
+    assert_eq!(*source.as_str(), value);
+    assert_ne!(*"other", value);
+    let allocator = Allocator::new();
+    let copied = JSStr::from_str_in(&source, &&allocator);
+    assert_eq!(copied, value);
+    assert_ne!(copied.as_bytes().as_ptr(), source.as_ptr());
+    assert_eq!(JSStr::dummy(&allocator), JSStr::empty());
+    assert!(JSStr::empty().is_empty());
+}
+
+#[test]
+fn equality_with_ident() {
+    let allocator = Allocator::new();
+    let ident = Ident::from("foo");
+    assert_eq!(JSStr::from("foo"), ident);
+    assert_eq!(ident, JSStr::from("foo"));
+    assert_ne!(JSStr::from("bar"), ident);
+    assert_ne!(ident, JSStr::from("bar"));
+    let lone = from_utf16_in(&[0x66, 0x6F, 0x6F, 0xD800], &allocator);
+    assert_ne!(lone, ident);
+    assert_ne!(ident, lone);
+}
+
+#[test]
+fn clone_survives_original_arena() {
+    let destination = Allocator::new();
+    let units = [0xD800, 0x61, 0xDC00, 0xD83D, 0xDE00];
+    let cloned = {
+        let source = Allocator::new();
+        let value = from_utf16_in(&units, &source);
+        let cloned = value.clone_in(&destination);
+        assert_ne!(value.as_bytes().as_ptr(), cloned.as_bytes().as_ptr());
+        cloned
+    };
+    assert_value(cloned, &units);
+}
+
+#[test]
+fn empty_builders_and_into_js_str_do_not_allocate() {
+    let allocator = Allocator::new();
+    let before = allocator.used_bytes();
+    assert_eq!(JSStrBuilder::new_in(&&allocator).into_js_str(), JSStr::empty());
+    assert_eq!(JSStrBuilder::with_capacity_in(0, &&allocator).into_js_str(), JSStr::empty());
+    assert_eq!(allocator.used_bytes(), before);
+
+    let mut builder = JSStrBuilder::new_in(&&allocator);
+    builder.push_code_unit(0xD800);
+    let before = allocator.used_bytes();
+    assert_value(builder.into_js_str(), &[0xD800]);
+    assert_eq!(allocator.used_bytes(), before);
+
+    let mut builder = JSStrBuilder::with_capacity_in(64, &&allocator);
+    builder.push_str("hello");
+    builder.push_code_unit(0xD800);
+    let before = allocator.used_bytes();
+    assert_value(builder.into_js_str(), &[0x68, 0x65, 0x6C, 0x6C, 0x6F, 0xD800]);
+    assert_eq!(allocator.used_bytes(), before);
+}
+
+#[test]
+fn boundary_pairing_and_empty_appends() {
+    let allocator = Allocator::new();
+    let lead = from_utf16_in(&[0xD800], &allocator);
+    let trail = from_utf16_in(&[0xDC00], &allocator);
+    let mut builder = JSStrBuilder::new_in(&&allocator);
+    builder.push_js_str(lead);
+    builder.push_str("");
+    builder.push_utf16(&[]);
+    builder.push_js_str(JSStr::empty());
+    builder.push_js_str(trail);
+    assert_eq!(builder.into_js_str(), JSStr::from("𐀀"));
+
+    for units in [
+        vec![0xD800, 0xD800],
+        vec![0xDC00, 0xD800],
+        vec![0xD800, 0x61],
+        vec![0xD800, 0xDC00],
+        vec![0xD800, 0xDC00, 0xD800],
+    ] {
+        let mut builder = JSStrBuilder::new_in(&&allocator);
+        for &unit in &units {
+            builder.push_js_str(from_utf16_in(&[unit], &allocator));
+        }
+        assert_value(builder.into_js_str(), &units);
+    }
+}
+
+#[test]
+fn every_short_partition() {
+    let alphabet: &[u16] = if cfg!(miri) {
+        &[0x61, 0xD800, 0xDC00]
+    } else {
+        &[
+            0, 0x7F, 0x80, 0x7FF, 0x800, 0xD7FF, 0xD800, 0xDBFF, 0xDC00, 0xDFFF, 0xE000, 0xFFFD,
+            0xFFFF,
+        ]
+    };
+    let mut allocator = Allocator::new();
+    for &a in alphabet {
+        for &b in alphabet {
+            for &c in alphabet {
+                allocator.reset();
+                let units = [a, b, c];
+                for first in 0..=3 {
+                    for second in first..=3 {
+                        let mut builder = JSStrBuilder::new_in(&&allocator);
+                        for part in [&units[..first], &units[first..second], &units[second..]] {
+                            builder.push_js_str(from_utf16_in(part, &allocator));
+                        }
+                        assert_value(builder.into_js_str(), &units);
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn hash_of<T: Hash + ?Sized>(value: &T) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    value.hash(&mut hasher);
+    hasher.finish()
+}
+
+#[test]
+fn utf8_hashes_like_str() {
+    for text in ["", "foo", "\u{e9}\u{1f600}"] {
+        let value = JSStr::from(text);
+        assert_eq!(hash_of(&value), hash_of(text));
+        assert_eq!(hash_of(&value), hash_of(&Str::from(text)));
+    }
+}
+
+#[test]
+fn equal_lone_surrogate_strings_hash_equal() {
+    let allocator = Allocator::new();
+    let units = [0x61, 0xD800, 0xDFFF];
+    let mut by_unit = JSStrBuilder::new_in(&&allocator);
+    for &unit in &units {
+        by_unit.push_code_unit(unit);
+    }
+    let mut by_js_str = JSStrBuilder::new_in(&&allocator);
+    by_js_str.push_str("a");
+    by_js_str.push_js_str(from_utf16_in(&[0xD800], &allocator));
+    by_js_str.push_js_str(from_utf16_in(&[0xDFFF], &allocator));
+    let (a, b) = (by_unit.into_js_str(), by_js_str.into_js_str());
+    assert_eq!(a, b);
+    assert_eq!(hash_of(&a), hash_of(&b));
+}
+
+fn concat<'a>(allocator: &'a Allocator, a: JSStr<'_>, b: JSStr<'_>) -> JSStr<'a> {
+    let mut builder = JSStrBuilder::new_in(&allocator);
+    builder.push_js_str(a);
+    builder.push_js_str(b);
+    builder.into_js_str()
+}
+
+#[test]
+fn randomized_appends_and_associativity() {
+    let mut seed = 0xA930_154Bu32;
+    let mut next = || {
+        seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+        seed
+    };
+    let mut allocator = Allocator::new();
+    for _ in 0..if cfg!(miri) { 12 } else { 2000 } {
+        allocator.reset();
+        let mut expected = Vec::new();
+        let mut builder = JSStrBuilder::new_in(&&allocator);
+        for _ in 0..if cfg!(miri) { 6 } else { 32 } {
+            let len = next() as usize % 9;
+            let units = std::iter::repeat_with(|| {
+                let value = next();
+                if value.is_multiple_of(4) {
+                    0xD800 | u16::try_from((value >> 8) & 0x7FF).unwrap()
+                } else {
+                    u16::try_from((value >> 8) & 0xFFFF).unwrap()
+                }
+            })
+            .take(len)
+            .collect::<Vec<_>>();
+            match next() % 3 {
+                0 => builder.push_utf16(&units),
+                1 => builder.push_js_str(from_utf16_in(&units, &allocator)),
+                _ => {
+                    for decoded in char::decode_utf16(units.iter().copied()) {
+                        match decoded {
+                            Ok(c) => builder.push(c),
+                            Err(error) => builder.push_code_unit(error.unpaired_surrogate()),
+                        }
+                    }
+                }
+            }
+            expected.extend_from_slice(&units);
+        }
+        let value = builder.into_js_str();
+        assert_value(value, &expected);
+        let n = expected.len();
+        let a = from_utf16_in(&expected[..n / 3], &allocator);
+        let b = from_utf16_in(&expected[n / 3..2 * n / 3], &allocator);
+        let c = from_utf16_in(&expected[2 * n / 3..], &allocator);
+        assert_eq!(concat(&allocator, concat(&allocator, a, b), c), value);
+        assert_eq!(concat(&allocator, a, concat(&allocator, b, c)), value);
+    }
+}
+
+#[test]
+fn growth_with_interleaved_allocations() {
+    let allocator = Allocator::new();
+    let mut builder = JSStrBuilder::with_capacity_in(1, &&allocator);
+    let mut expected = Vec::new();
+    for _ in 0..64 {
+        let units = [0xD800, 0xDC00, 0x61, 0xDFFF, 0xD800];
+        builder.push_utf16(&units);
+        expected.extend(units);
+        allocator.alloc([42u8; 128]);
+    }
+    assert_value(builder.into_js_str(), &expected);
+}
+
+#[test]
+fn equality_hash_and_debug() {
+    let allocator = Allocator::new();
+    let units = [0xD800, 0xDC00, 0xD800, 0x61, 0xFFFD];
+    let a = from_utf16_in(&units, &allocator);
+    let b = concat(
+        &allocator,
+        from_utf16_in(&units[..1], &allocator),
+        from_utf16_in(&units[1..], &allocator),
+    );
+    let hash = |value: JSStr<'_>| {
+        let mut hasher = DefaultHasher::new();
+        value.hash(&mut hasher);
+        hasher.finish()
+    };
+    assert_eq!(a, b);
+    assert_eq!(hash(a), hash(b));
+    assert_ne!(a, JSStr::from("𐀀�d800a�"));
+    assert_ne!(a, "𐀀�d800a�");
+    assert_eq!(format!("{a:?}"), "\"𐀀\\ud800a�\"");
+    assert_eq!(format!("{:?}", JSStr::from("\"\n\\")), "\"\\\"\\n\\\\\"");
+}
+
+#[test]
+fn display_escapes_lone_surrogates() {
+    let allocator = Allocator::new();
+    let display = |units: &[u16]| from_utf16_in(units, &allocator).display().to_string();
+    assert_eq!(JSStr::from("a\u{e9}\u{1f600}\"\n").display().to_string(), "a\u{e9}\u{1f600}\"\n");
+    assert_eq!(display(&[0xD800]), "\\ud800");
+    assert_eq!(display(&[0xDFFF]), "\\udfff");
+    assert_eq!(display(&[0xD800, 0xDC00]), "\u{10000}");
+    assert_eq!(display(&[0x61, 0xDC00, 0xD83D, 0xDE00, 0xDBFF, 0x62]), "a\\udc00\u{1f600}\\udbffb");
+}
+
+#[test]
+fn cloned_iterators_and_fused_end() {
+    let allocator = Allocator::new();
+    let value = from_utf16_in(&[0xD800, 0xDC00, 0xDFFF], &allocator);
+    let mut chars = value.chars();
+    assert_eq!(chars.size_hint(), (2, Some(7)));
+    assert_eq!(chars.next().unwrap().to_u32(), 0x10000);
+    assert_eq!(chars.clone().next().unwrap().to_u32(), 0xDFFF);
+    assert_eq!(chars.next().unwrap().to_u32(), 0xDFFF);
+    assert_eq!(chars.next(), None);
+    assert_eq!(chars.next(), None);
+    let mut units = value.encode_utf16();
+    assert_eq!(units.next(), Some(0xD800));
+    assert_eq!(units.clone().collect::<Vec<_>>(), [0xDC00, 0xDFFF]);
+    assert_eq!(units.next(), Some(0xDC00));
+    assert_eq!(units.next(), Some(0xDFFF));
+    assert_eq!(units.next(), None);
+    assert_eq!(units.next(), None);
+}
+
+#[test]
+fn searches_agree_with_str_for_utf8() {
+    let haystacks = [
+        "",
+        "a",
+        "ab",
+        "abc",
+        "aXbXc",
+        "é漢😀x",
+        "  pad  ",
+        "${a}",
+        "\n",
+        "a\nb",
+        "\0é\u{7f}😀\0",
+        "😀😀",
+        "javascript:x",
+    ];
+    let texts =
+        ["", "a", "b", "ab", "bc", "X", "é", "漢", "😀", "😀x", "${", "}", "\n", "  ", "z", "abcd"];
+    let chars = ['a', 'X', 'é', '漢', '😀', '\n', ' ', 'z', '\0', '\u{7f}'];
+    let predicates: [fn(char) -> bool; 3] =
+        [char::is_whitespace, char::is_alphanumeric, |c| c > '\u{7f}'];
+    for haystack in haystacks {
+        let value = JSStr::from(haystack);
+        for text in texts {
+            assert_eq!(value.contains(text), haystack.contains(text), "{haystack:?} {text:?}");
+            assert_eq!(
+                value.starts_with(text),
+                haystack.starts_with(text),
+                "{haystack:?} {text:?}"
+            );
+            assert_eq!(value.ends_with(text), haystack.ends_with(text), "{haystack:?} {text:?}");
+            assert_eq!(value.find(text), haystack.find(text), "{haystack:?} {text:?}");
+            assert_eq!(value.rfind(text), haystack.rfind(text), "{haystack:?} {text:?}");
+        }
+        for c in chars {
+            assert_eq!(value.contains(c), haystack.contains(c), "{haystack:?} {c:?}");
+            assert_eq!(value.starts_with(c), haystack.starts_with(c), "{haystack:?} {c:?}");
+            assert_eq!(value.ends_with(c), haystack.ends_with(c), "{haystack:?} {c:?}");
+            assert_eq!(value.find(c), haystack.find(c), "{haystack:?} {c:?}");
+            assert_eq!(value.rfind(c), haystack.rfind(c), "{haystack:?} {c:?}");
+        }
+        for predicate in predicates {
+            assert_eq!(value.contains(predicate), haystack.contains(predicate), "{haystack:?}");
+            assert_eq!(
+                value.starts_with(predicate),
+                haystack.starts_with(predicate),
+                "{haystack:?}"
+            );
+            assert_eq!(value.ends_with(predicate), haystack.ends_with(predicate), "{haystack:?}");
+            assert_eq!(value.find(predicate), haystack.find(predicate), "{haystack:?}");
+            assert_eq!(value.rfind(predicate), haystack.rfind(predicate), "{haystack:?}");
+        }
+    }
+}
+
+/// Byte offset of UTF-16 unit index `index` in a value built from `units`.
+fn byte_offset(units: &[u16], index: usize) -> usize {
+    let allocator = Allocator::new();
+    from_utf16_in(&units[..index], &allocator).len()
+}
+
+#[test]
+fn text_searches_around_lone_surrogates_match_utf16_model() {
+    let allocator = Allocator::new();
+    let haystacks: [&[u16]; 10] = [
+        &[],
+        &[0xD800],
+        &[0xDC00],
+        &[0x61, 0xD800, 0x62],
+        &[0xD800, 0x61, 0xDC00],
+        &[0xDC00, 0xD800],
+        &[0x20, 0xD800, 0x20],
+        &[0xD83D, 0xDE00, 0x61],
+        &[0x61, 0xD83D, 0xDE00],
+        &[0xD83D, 0xD83D, 0xDE00, 0xDE00],
+    ];
+    let needles = ["", "a", "b", "ab", " ", "😀", "😀a", "a😀", "aa"];
+    for units in haystacks {
+        let value = from_utf16_in(units, &allocator);
+        for needle in needles {
+            let needle_units: Vec<u16> = needle.encode_utf16().collect();
+            let positions: Vec<usize> =
+                (0..=units.len()).filter(|&i| units[i..].starts_with(&needle_units)).collect();
+            let expected_first = positions.first().map(|&i| byte_offset(units, i));
+            let expected_last = positions.last().map(|&i| byte_offset(units, i));
+            assert_eq!(value.contains(needle), !positions.is_empty(), "{units:x?} {needle:?}");
+            assert_eq!(value.starts_with(needle), units.starts_with(&needle_units), "{units:x?}");
+            assert_eq!(value.ends_with(needle), units.ends_with(&needle_units), "{units:x?}");
+            assert_eq!(value.find(needle), expected_first, "{units:x?} {needle:?}");
+            assert_eq!(value.rfind(needle), expected_last, "{units:x?} {needle:?}");
+        }
+    }
+}
+
+#[test]
+fn char_searches_never_match_lone_surrogates() {
+    let allocator = Allocator::new();
+    let haystacks: [&[u16]; 10] = [
+        &[],
+        &[0xD800],
+        &[0xDC00, 0xD800],
+        &[0x20, 0xD800, 0x20, 0x61, 0xDC00, 0x0A],
+        &[0x61, 0xD800],
+        &[0xD800, 0x61],
+        &[0xD83D, 0xDE00, 0xD800],
+        &[0xD800, 0xD83D, 0xDE00],
+        &[0x00, 0xD800, 0x7F, 0xDC00, 0x00],
+        // U+D7FF shares the 0xED lead byte with lone surrogates.
+        &[0xD7FF, 0xD800, 0xE000, 0xDFFF, 0xD7FF],
+    ];
+    let predicates: [fn(char) -> bool; 4] =
+        [char::is_whitespace, char::is_alphabetic, |_| true, |c| c == '😀'];
+    for units in haystacks {
+        let value = from_utf16_in(units, &allocator);
+        // Decode independently: `Err` marks a lone surrogate, which no `char` predicate can match.
+        // Track WTF-8 byte offsets alongside.
+        let decoded: Vec<(usize, Option<char>)> = {
+            let mut offset = 0;
+            char::decode_utf16(units.iter().copied())
+                .map(|result| {
+                    let start = offset;
+                    let c = result.ok();
+                    offset += c.map_or(3, char::len_utf8);
+                    (start, c)
+                })
+                .collect()
+        };
+        for predicate in predicates {
+            let matches: Vec<usize> = decoded
+                .iter()
+                .filter(|(_, c)| c.is_some_and(predicate))
+                .map(|(offset, _)| *offset)
+                .collect();
+            assert_eq!(value.contains(predicate), !matches.is_empty(), "{units:x?}");
+            assert_eq!(value.find(predicate), matches.first().copied(), "{units:x?}");
+            assert_eq!(value.rfind(predicate), matches.last().copied(), "{units:x?}");
+            assert_eq!(
+                value.starts_with(predicate),
+                decoded.first().is_some_and(|(_, c)| c.is_some_and(predicate)),
+                "{units:x?}"
+            );
+            assert_eq!(
+                value.ends_with(predicate),
+                decoded.last().is_some_and(|(_, c)| c.is_some_and(predicate)),
+                "{units:x?}"
+            );
+        }
+        for c in ['a', ' ', '😀', '\n', '\0', '\u{7f}', '\u{d7ff}', '\u{e000}'] {
+            let expected: Vec<usize> =
+                decoded.iter().filter(|(_, d)| *d == Some(c)).map(|(o, _)| *o).collect();
+            assert_eq!(value.contains(c), !expected.is_empty(), "{units:x?} {c:?}");
+            assert_eq!(value.find(c), expected.first().copied(), "{units:x?} {c:?}");
+            assert_eq!(value.rfind(c), expected.last().copied(), "{units:x?} {c:?}");
+        }
+    }
+
+    // The documented predicate limitation: a value that is only a lone surrogate has no `char`,
+    // so even a negated predicate sees nothing.
+    let lone = from_utf16_in(&[0xD800], &allocator);
+    assert!(!lone.contains(|c: char| !c.is_whitespace()));
+    assert!(lone.chars().any(|c| c.to_char().is_none()));
+    // Text patterns still see the surrounding text.
+    let text = from_utf16_in(&[0x20, 0xD800, 0x20, 0x61, 0xDC00, 0x0A], &allocator);
+    assert_eq!(text.find(' '), Some(0));
+    assert_eq!(text.rfind(' '), Some(4));
+    assert_eq!(text.find('a'), Some(5));
+    assert_eq!(text.rfind('\n'), Some(9));
+    assert!(text.starts_with(char::is_whitespace));
+    assert!(text.ends_with(char::is_whitespace));
+    assert!(!text.contains("a\n"));
+    assert_eq!(text.find(""), Some(0));
+    assert_eq!(text.rfind(""), Some(text.len()));
+    assert_eq!(JSStr::empty().find(""), Some(0));
+    assert_eq!(JSStr::empty().rfind(""), Some(0));
+    assert!(!JSStr::empty().ends_with(char::is_whitespace));
+}
+
+#[test]
+#[should_panic(expected = "capacity overflow")]
+fn reject_capacity_overflow() {
+    let allocator = Allocator::new();
+    let _ = JSStrBuilder::with_capacity_in(usize::MAX, &&allocator);
+}
+
+#[test]
+fn debug_matches_str_for_utf8() {
+    for text in [
+        "",
+        "plain",
+        "Foo's bar",
+        "quote \" tick ' back \\",
+        "tab\t nl\n nul\0",
+        "\u{e9}\u{1f600}\u{2028}",
+    ] {
+        assert_eq!(format!("{:?}", JSStr::from(text)), format!("{text:?}"));
+    }
+}
+
+#[test]
+fn bytes_round_trip_through_owned_storage() {
+    let allocator = Allocator::new();
+    let mut builder = JSStrBuilder::new_in(&&allocator);
+    builder.push_utf16(&[0x61, 0xD800, 0xD83D, 0xDE00]);
+    let value = builder.into_js_str();
+
+    let stored: Box<[u8]> = value.as_bytes().into();
+    let flag = value.has_lone_surrogate();
+    // SAFETY: the bytes and flag come from an existing `JSStr`.
+    let restored = unsafe { JSStr::from_bytes_unchecked(&stored, flag) };
+    assert_eq!(restored, value);
+    assert_eq!(restored.has_lone_surrogate(), flag);
+    assert_eq!(restored.len_utf16(), 4);
+
+    let plain = JSStr::from("plain");
+    // SAFETY: UTF-8 is canonical WTF-8 without lone surrogates.
+    let restored = unsafe { JSStr::from_bytes_unchecked(plain.as_bytes(), false) };
+    assert_eq!(restored.as_str(), Some("plain"));
+}
+
+/// Encode UTF-16 as canonical WTF-8 without `JSStrBuilder`. Pairs become
+/// four-byte supplementary characters and lone surrogates use three bytes.
+fn reference_wtf8(units: &[u16]) -> Vec<u8> {
+    let mut bytes = Vec::new();
+    let mut i = 0;
+    while i < units.len() {
+        let unit = u32::from(units[i]);
+        let trail = units.get(i + 1).map_or(0, |&unit| u32::from(unit));
+        let point = if (0xD800..=0xDBFF).contains(&unit) && (0xDC00..=0xDFFF).contains(&trail) {
+            i += 2;
+            0x10000 + ((unit - 0xD800) << 10) + (trail - 0xDC00)
+        } else {
+            i += 1;
+            unit
+        };
+        if point < 0x80 {
+            bytes.push((point & 0x7F) as u8);
+        } else if point < 0x800 {
+            bytes.extend([0xC0 | ((point >> 6) & 0x1F) as u8, 0x80 | (point & 0x3F) as u8]);
+        } else if point < 0x10000 {
+            bytes.extend([
+                0xE0 | ((point >> 12) & 0x0F) as u8,
+                0x80 | ((point >> 6) & 0x3F) as u8,
+                0x80 | (point & 0x3F) as u8,
+            ]);
+        } else {
+            bytes.extend([
+                0xF0 | ((point >> 18) & 0x07) as u8,
+                0x80 | ((point >> 12) & 0x3F) as u8,
+                0x80 | ((point >> 6) & 0x3F) as u8,
+                0x80 | (point & 0x3F) as u8,
+            ]);
+        }
+    }
+    bytes
+}
+
+/// Check the `JSStr` invariants directly against the bytes.
+fn assert_invariants(value: JSStr<'_>) {
+    let bytes = value.as_bytes();
+    let units = value.encode_utf16().collect::<Vec<_>>();
+    assert_eq!(bytes, reference_wtf8(&units), "bytes are not canonical WTF-8");
+    let paired = bytes.windows(5).any(|window| {
+        window[0] == 0xED
+            && (0xA0..=0xAF).contains(&window[1])
+            && window[3] == 0xED
+            && (0xB0..=0xBF).contains(&window[4])
+    });
+    assert!(!paired, "lead surrogate encoding followed by a trail encoding: {bytes:x?}");
+    let has_lone = bytes.windows(2).any(|window| window[0] == 0xED && window[1] >= 0xA0);
+    assert_eq!(value.has_lone_surrogate(), has_lone);
+    assert_eq!(value.as_str().is_some(), !has_lone);
+}
+
+#[test]
+fn every_piece_sequence_and_push_method() {
+    const PIECES: &[&[u16]] = &[
+        &[],
+        &[0x61],
+        &[0xD800],
+        &[0xDC00],
+        &[0xDBFF],
+        &[0xDFFF],
+        &[0xD83D, 0xDE00],
+        &[0xD800, 0x61],
+        &[0x61, 0xDC00],
+        &[0xDC00, 0xD800],
+        &[0xE9],
+    ];
+    const METHODS: usize = 4;
+    let max_pieces = if cfg!(miri) { 2 } else { 3 };
+    let mut allocator = Allocator::new();
+    let mut sequence = Vec::new();
+    for len in 0..=max_pieces {
+        for index in 0..PIECES.len().pow(len) {
+            sequence.clear();
+            let mut rest = index;
+            for _ in 0..len {
+                sequence.push(PIECES[rest % PIECES.len()]);
+                rest /= PIECES.len();
+            }
+            let expected = sequence.concat();
+            'methods: for methods in 0..METHODS.pow(len) {
+                allocator.reset();
+                let mut builder = JSStrBuilder::new_in(&&allocator);
+                let mut rest = methods;
+                for &piece in &sequence {
+                    match rest % METHODS {
+                        0 => builder.push_utf16(piece),
+                        1 => {
+                            for &unit in piece {
+                                builder.push_code_unit(unit);
+                            }
+                        }
+                        2 => builder.push_js_str(from_utf16_in(piece, &allocator)),
+                        _ => match String::from_utf16(piece) {
+                            Ok(text) => builder.push_str(&text),
+                            Err(_) => continue 'methods,
+                        },
+                    }
+                    rest /= METHODS;
+                }
+                let value = builder.into_js_str();
+                assert_invariants(value);
+                assert_eq!(value.encode_utf16().collect::<Vec<_>>(), expected);
+            }
+        }
+    }
+}
+
+#[test]
+fn chars_decode_the_same_from_both_ends() {
+    let allocator = Allocator::new();
+    let mut builder = JSStrBuilder::new_in(&&allocator);
+    builder.push_utf16(&[0x61, 0xE9, 0xD800, 0x6F22, 0xD83D, 0xDE00, 0xD7FF, 0xDC00, 0xE000]);
+    let value = builder.into_js_str();
+    let chars = || super::JSChars { remaining: value.as_bytes() };
+
+    let forward = chars().map(JSChar::to_u32).collect::<Vec<_>>();
+    assert_eq!(forward, [0x61, 0xE9, 0xD800, 0x6F22, 0x1F600, 0xD7FF, 0xDC00, 0xE000]);
+
+    let mut backward = chars().rev().map(JSChar::to_u32).collect::<Vec<_>>();
+    backward.reverse();
+    assert_eq!(backward, forward);
+
+    // Alternate between the ends until they meet.
+    let mut iter = chars();
+    let (mut front, mut back) = (Vec::new(), Vec::new());
+    while let Some(c) = iter.next() {
+        front.push(c.to_u32());
+        let Some(c) = iter.next_back() else { break };
+        back.push(c.to_u32());
+    }
+    front.extend(back.into_iter().rev());
+    assert_eq!(front, forward);
+}
+
+#[test]
+fn rfind_calls_the_predicate_from_the_end() {
+    let allocator = Allocator::new();
+    let mut builder = JSStrBuilder::new_in(&&allocator);
+    builder.push_utf16(&[0xD800, 0x61, 0x62]);
+    let value = builder.into_js_str();
+
+    let mut calls = Vec::new();
+    assert_eq!(
+        value.rfind(|c: char| {
+            calls.push(c);
+            false
+        }),
+        None
+    );
+    assert_eq!(calls, ['b', 'a']);
+
+    // Like `str::rfind`, a predicate that matches on its first call finds the last code point.
+    let mut first = true;
+    assert_eq!(value.rfind(|_: char| std::mem::take(&mut first)), Some(4));
+    let mut first = true;
+    assert_eq!("ab".rfind(|_: char| std::mem::take(&mut first)), Some(1));
+}

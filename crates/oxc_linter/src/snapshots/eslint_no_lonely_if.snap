@@ -83,3 +83,31 @@ source: crates/oxc_linter/src/tester.rs
  5 │          }
    ╰────
   help: Consider using `else if` instead.
+
+  ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
+   ╭─[no_lonely_if.tsx:1:18]
+ 1 │ if (a) {} else { if (b) {} }
+   ·                  ──
+   ╰────
+  help: Consider using `else if` instead.
+
+  ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
+   ╭─[no_lonely_if.tsx:1:33]
+ 1 │ if (a) {} else if (d) {} else { if (b) {} }
+   ·                                 ──
+   ╰────
+  help: Consider using `else if` instead.
+
+  ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
+   ╭─[no_lonely_if.tsx:1:48]
+ 1 │ if (a) {} else if (c) {} else if (d) {} else { if (b) {} }
+   ·                                                ──
+   ╰────
+  help: Consider using `else if` instead.
+
+  ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
+   ╭─[no_lonely_if.tsx:1:33]
+ 1 │ if (a) {} else if (d) {} else { if (b) {} else {} }
+   ·                                 ──
+   ╰────
+  help: Consider using `else if` instead.

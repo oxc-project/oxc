@@ -1,29 +1,23 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_core::test_support::{
-    FixtureFormatter, OptionSet, apply_core_options, build_fixture_snapshot,
-};
-use oxc_formatter_graphql::{GraphqlFormatOptions, format};
+use oxc_formatter_graphql::{GraphqlFormatOptions, format, parse_for_format};
+use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
 
 struct GraphqlHarness;
 
+/// What formatting must leave unchanged, see `FixtureFormatter::Fingerprint`.
+#[derive(Debug, PartialEq)]
+struct Fingerprint {
+    comments: usize,
+}
+
 impl FixtureFormatter for GraphqlHarness {
     type Options = GraphqlFormatOptions;
+    type Fingerprint = Fingerprint;
 
-    fn parse_options(json: &OptionSet) -> Self::Options {
-        let mut options = GraphqlFormatOptions::default();
-        apply_core_options(&mut options, json);
-
-        for (key, value) in json {
-            if key.as_str() == "bracketSpacing"
-                && let Some(b) = value.as_bool()
-            {
-                options.bracket_spacing = b.into();
-            }
-        }
-
-        options
+    fn apply_option(_options: &mut Self::Options, _key: &str, _value: &OptionValue) -> bool {
+        false
     }
 
     fn format(source: &str, _path: &Path, options: &Self::Options) -> String {
@@ -33,6 +27,12 @@ impl FixtureFormatter for GraphqlHarness {
             .print()
             .expect("print should succeed")
             .into_code()
+    }
+
+    fn fingerprint(source: &str, _path: &Path, _options: &Self::Options) -> Fingerprint {
+        let allocator = Allocator::default();
+        let parsed = parse_for_format(&allocator, source).expect("source should parse");
+        Fingerprint { comments: parsed.comments.len() }
     }
 }
 

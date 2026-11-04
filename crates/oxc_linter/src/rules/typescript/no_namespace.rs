@@ -113,6 +113,7 @@ declare_oxc_lint!(
     NoNamespace,
     typescript,
     restriction,
+    recommended,
     config = NoNamespace,
     version = "0.0.8",
     short_description = "Disallow TypeScript namespaces.",
@@ -120,7 +121,7 @@ declare_oxc_lint!(
 
 impl Rule for NoNamespace {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

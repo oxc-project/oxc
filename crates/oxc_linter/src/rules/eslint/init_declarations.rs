@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         BindingPattern, ForInStatement, ForOfStatement, ForStatement, ForStatementInit,
-        ForStatementLeft, VariableDeclarationKind,
+        ForStatementLeft,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -139,7 +139,7 @@ impl Rule for InitDeclarations {
                     return;
                 }
             }
-            let declaration_is_const = decl.kind == VariableDeclarationKind::Const;
+            let declaration_is_const = decl.kind.is_const();
             for v in &decl.declarations {
                 let BindingPattern::BindingIdentifier(identifier) = &v.id else {
                     continue;

@@ -1,6 +1,7 @@
 # Coding agent guides for `crates/oxc_formatter_yaml`
 
 Follow @../oxc_formatter_core/FORMATTER_POLICY.md , this file holds only the YAML-specific rules and translations.
+Known divergences live in DIVERGENCES.md.
 
 ## Overview
 
@@ -8,8 +9,9 @@ Prettier compatible YAML formatter (`oxfmt`'s Tier 1 backend), using the `oxc_fo
 
 - Built on `oxc_formatter_core` for the language-agnostic IR + Printer + builders + macros
   - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
-- Two entry points (see their docs in `src/format.rs`):
-  - `format()` for standalone files, `format_to_ir()` for embedded use via the dispatcher (e.g. yaml-in-markdown)
+- Entry points (see their docs in `src/format.rs`):
+  - `format()` for standalone files, `format_to_ir()` for embedded use via the dispatcher (e.g. CSS front matter, JSDoc fenced blocks)
+  - `parse_for_format()`: the parse `format()` runs, exposed for callers that inspect the AST (e.g. the fixture harness's fingerprint)
 
 ### Parser
 
@@ -34,39 +36,30 @@ The printer re-emits the configured `end_of_line` at the final stage.
 
 A leading BOM is stripped before parsing and re-emitted by `format()`.
 
+### Line starts
+
+A line the printer starts at column 0 must not read back as stream-level syntax (see the parser's AGENTS.md "Input acceptance"):
+
+- `---`/`...` followed by a blank or the end is a document marker
+- U+FEFF outside a document is a BOM
+
+Column 0 is reached at these sites, each guarded without changing the value:
+
+- The document's first text (`print/document.rs`): content after `---` stays on its line; a document without `---` whose first text is U+FEFF gets one
+  - A plain scalar starting with a marker on a line of its own stays verbatim from its line start (indentation and continuation lines included)
+- A root mapping key (`print/mapping_item.rs`): a key starting with a marker keeps its `?`
+- A flow scalar's continuation line outside block collections (`print/scalar.rs`): a line starting with a marker is indented
+  - This also covers entries of a root flow collection, already indented, where the extra indent is harmless
+
+Elsewhere lines start at column 2 or more and Prettier's layout is matched.
+See DIVERGENCES.md#document-marker-content and DIVERGENCES.md#bom-content.
+
 ### Comments
 
 Positional cursor (`Comments` in `src/comments.rs`), same approach as graphql/json, yaml-unist-parser's attach algorithm is NOT ported.
 
 Placement is decided at print sites; the rules live as doc comments on the placement helpers, all in `src/comments.rs`.
 Stream-tail end comments (`write_end_comments`) are the one document-layer exception, in `src/print/document.rs`.
-
-## Known divergences
-
-Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences". Current divergences:
-
-- anchor/tag order (prettier#19524): source order is preserved, never reordered
-- EOF blank lines: the file always ends with exactly one newline, like every other formatter crate
-  (`|+` keep-chomped verbatim tails excepted); Prettier YAML alone preserves EOF blank lines verbatim
-- `# prettier-ignore` range (prettier#13008): suppresses exactly one node, never every following node
-- anchor next-line comments (prettier#10518 / #9327): structurally avoided, the positional cursor makes them the next node's leading comments
-- blank lines (prettier#15528): one unified rule:
-  a blank line right after a node is preserved (normalized to one) if the source had one, never invented, identical for every node kind and context.
-  Prettier's matrix (block collections only between documents; mappings only before end comments; unconditional insertion after block scalars) is not ported.
-  This also keeps `proseWrap: never` idempotent where Prettier is not (prettier#10776),
-  and covers the blank DOUBLED in front of stream-end comments when the last item carries a trailing comment
-  (the prettier#9130 shape, resurfaced: one source blank comes out as two)
-- folded scalar more-indented lines (prettier#16126): never re-flowed under `proseWrap: always`, their line breaks are literal per YAML folding,
-  so Prettier's wrapping at the print width changes the parsed value and breaks idempotency
-- "broken but not broken" flow collections: Prettier sometimes emits a newline inside flow brackets while keeping them flat (no trailing comma, `]`/`}` on the content line).
-  multiline pairs (spec-example-7-20 / 9-4) and key trailing comments.
-  Here a flow collection either fits on one line or breaks normally.
-- comment position (spec-example-6-1): a comment stays at its syntactic position; Prettier hoists a comment after `[` onto the `key:` line
-- over-indented comments (`key: value` followed by a deeper-indented comment): the value's layout never changes for a comment;
-  Prettier breaks the pair onto two lines (`key:\n  value`) — comment indentation alone must not rewrite the preceding node
-- trailing comment width (`key: | # ...`): a same-line trailing comment never counts toward the `fits` measurement
-  the same treatment Prettier itself gives JS/JSON line comments and yaml flow collections, but not for block scalar header
-  The KEY does count: a long key overflowing on `key: |` alone breaks the pair exactly like Prettier
 
 ## Verification
 

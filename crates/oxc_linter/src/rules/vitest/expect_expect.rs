@@ -1,10 +1,11 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
-    rules::shared::expect_expect::{DOCUMENTATION, ExpectExpectConfig},
-    utils::PossibleJestNode,
+    rules::shared::expect_expect::{DOCUMENTATION, ExpectExpectConfig, SHORT_DESCRIPTION},
 };
 
 #[derive(Debug, Default, Clone)]
@@ -14,9 +15,11 @@ declare_oxc_lint!(
     ExpectExpect,
     vitest,
     correctness,
+    recommended,
     config = ExpectExpectConfig,
     docs = DOCUMENTATION,
     version = "0.0.12",
+    short_description = SHORT_DESCRIPTION,
 );
 
 impl Rule for ExpectExpect {
@@ -24,12 +27,13 @@ impl Rule for ExpectExpect {
         ExpectExpectConfig::from_configuration(&value).map(|config| Self(Box::new(config)))
     }
 
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        self.0.run_on_vitest_node(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        self.0.run_vitest(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
@@ -363,4 +367,10 @@ fn test() {
     )
     .with_jest_plugin(true)
     .test();
+}
+
+#[test]
+fn invalid_assert_function_pattern_errors_in_from_configuration() {
+    let invalid = serde_json::json!([{ "assertFunctionNames": ["["] }]);
+    assert!(ExpectExpect::from_configuration(invalid).is_err());
 }

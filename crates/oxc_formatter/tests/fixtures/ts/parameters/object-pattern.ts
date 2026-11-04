@@ -20,6 +20,12 @@ function callbackUrl(
   }
 ) { }
 
+// Single hugged pattern: a source-inline type literal stays flat (contrast: useCopyToClipboard above)
+export default function useTagsCount({
+  query,
+}: { query?: Record<any, any> } = {}) {
+}
+
 function parseTitle(
   item: PageObjectResponse | DatabaseObjectResponse,
   {

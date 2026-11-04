@@ -100,6 +100,9 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// Get the current cursor pointer for this [`Arena`]'s current chunk.
     ///
     /// If the `Arena` is empty (has no chunks), this returns a dangling pointer aligned to `CHUNK_ALIGN`.
+    ///
+    /// Only used in tests for fixed-sized allocators on Windows.
+    #[cfg(all(test, target_os = "windows"))]
     pub fn cursor_ptr(&self) -> NonNull<u8> {
         self.cursor_ptr.get()
     }

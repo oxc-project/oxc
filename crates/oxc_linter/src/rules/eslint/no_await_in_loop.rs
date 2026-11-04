@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, Statement, VariableDeclarationKind},
+    ast::{Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -68,7 +68,7 @@ impl Rule for NoAwaitInLoop {
             AstKind::AwaitExpression(expr) => Span::sized(expr.span.start, 5),
             // handle `await using` declarations
             AstKind::VariableDeclaration(decl) => {
-                if decl.kind != VariableDeclarationKind::AwaitUsing {
+                if !decl.kind.is_await_using() {
                     return;
                 }
                 // only highlight the 'await' keyword
@@ -173,7 +173,7 @@ impl NoAwaitInLoop {
                 }
                 // Check if this is `await using` in the left position
                 if let AstKind::VariableDeclaration(decl) = node.kind()
-                    && decl.kind == VariableDeclarationKind::AwaitUsing
+                    && decl.kind.is_await_using()
                     && stmt.left.span().contains_inclusive(span)
                 {
                     return true;
@@ -186,7 +186,7 @@ impl NoAwaitInLoop {
                 }
                 // Check if this is `await using` in the left position
                 if let AstKind::VariableDeclaration(decl) = node.kind()
-                    && decl.kind == VariableDeclarationKind::AwaitUsing
+                    && decl.kind.is_await_using()
                     && stmt.left.span().contains_inclusive(span)
                 {
                     return true;

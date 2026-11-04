@@ -11,14 +11,19 @@
 //! 1. Props (component parameters may change between renders)
 //! 2. Hooks (can access state or context)
 //! 3. `use` operator (can access context)
-//! 4. Mutation with reactive operands
-//! 5. Conditional assignment based on reactive control flow
+//! 4. Tagged templates (calls may produce a new result with stable operands)
+//! 5. Mutation with reactive operands
+//! 6. Conditional assignment based on reactive control flow
 
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexVec;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::diagnostics::ErrorCategory;
-use crate::react_compiler_hir::dominator::{compute_post_dominator_tree, post_dominator_frontier};
+use crate::diagnostics;
+use crate::react_compiler_hir::dominator::{
+    PostDominatorFrontiers, compute_normal_flow_post_dominator_frontiers,
+    compute_post_dominator_frontiers,
+};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors;
@@ -43,8 +48,9 @@ pub fn infer_reactive_places(
     env: &mut Environment,
 ) -> Result<(), OxcDiagnostic> {
     let mut aliased_identifiers = find_disjoint_mutable_values(func, env);
-    let mut reactive_map = ReactivityMap::new(&mut aliased_identifiers);
-    let mut stable_sidemap = StableSidemap::new();
+    let identifier_count = env.identifiers.len();
+    let mut reactive_map = ReactivityMap::new(&mut aliased_identifiers, identifier_count);
+    let mut stable_sidemap = StableSidemap::new(identifier_count);
 
     // Mark all function parameters as reactive
     for param in &func.params {
@@ -55,22 +61,25 @@ pub fn infer_reactive_places(
         reactive_map.mark_reactive(place.identifier);
     }
 
-    // Compute control dominators
-    let post_dominators =
-        compute_post_dominator_tree(func, env.next_block_id().index() as u32, false)?;
-
     // Collect block IDs for iteration
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
 
-    // Post-dominator frontiers depend only on the CFG, which is invariant across
-    // the fixpoint below. Compute each block's frontier once here instead of
-    // re-deriving it (a full reverse-CFG walk that allocates several sets) on every
-    // `is_reactive_controlled_block` call — previously once per block plus once per
-    // phi operand, on every fixpoint iteration.
-    let frontiers: FxHashMap<BlockId, FxHashSet<BlockId>> = block_ids
-        .iter()
-        .map(|&block_id| (block_id, post_dominator_frontier(func, &post_dominators, block_id)))
-        .collect();
+    let next_block_id = env.next_block_id().index() as u32;
+    let mut frontiers = compute_post_dominator_frontiers(func, next_block_id, false)?;
+    // Inside `try`, a store ends its block with a `MaybeThrow` whose handler edge skips
+    // the rest of the `try`, so the frontiers above stop at that `MaybeThrow` and miss
+    // the `If`/`Branch`/`Switch` that chose which store ran: a phi over the stores of
+    // a ternary or of `if`/`switch` branches would never become reactive. Also add the
+    // frontiers of normal control flow, keeping those through handler edges.
+    if func
+        .body
+        .blocks
+        .values()
+        .any(|block| matches!(block.terminal, Terminal::MaybeThrow { handler: Some(_), .. }))
+    {
+        frontiers.extend(compute_normal_flow_post_dominator_frontiers(func, next_block_id, false)?);
+    }
+    let mut throwing_blocks = ThrowingBlocks::new(func, env, &frontiers);
 
     // Track phi operand reactive flags during fixpoint.
     // In TS, isReactive() sets place.reactive as a side effect. But when a phi
@@ -81,10 +90,16 @@ pub fn infer_reactive_places(
 
     // Fixpoint iteration — compute reactive set
     loop {
+        throwing_blocks.update(func, &frontiers, &mut reactive_map);
         for block_id in &block_ids {
             let block = func.body.blocks.get(block_id).unwrap();
-            let has_reactive_control =
-                is_reactive_controlled_block(block.id, func, &frontiers, &mut reactive_map);
+            let has_reactive_control = is_reactive_controlled_block(
+                block.id,
+                func,
+                &frontiers,
+                &throwing_blocks,
+                &mut reactive_map,
+            );
 
             // Process phi nodes
             let block = func.body.blocks.get(block_id).unwrap();
@@ -108,8 +123,13 @@ pub fn infer_reactive_places(
                     reactive_map.mark_reactive(phi.place.identifier);
                 } else {
                     for (pred, _operand) in &phi.operands {
-                        if is_reactive_controlled_block(*pred, func, &frontiers, &mut reactive_map)
-                        {
+                        if is_reactive_controlled_block(
+                            *pred,
+                            func,
+                            &frontiers,
+                            &throwing_blocks,
+                            &mut reactive_map,
+                        ) {
                             reactive_map.mark_reactive(phi.place.identifier);
                             break;
                         }
@@ -129,13 +149,9 @@ pub fn infer_reactive_places(
 
                 // Check if any operand is reactive
                 let mut has_reactive_input = false;
-                let operands: Vec<IdentifierId> =
-                    visitors::each_instruction_value_operand(value, env)
-                        .into_iter()
-                        .map(|p| p.identifier)
-                        .collect();
-                for &op_id in &operands {
-                    let reactive = reactive_map.is_reactive(op_id);
+                let operands = visitors::each_instruction_value_operand(value, env);
+                for op in &operands {
+                    let reactive = reactive_map.is_reactive(op.identifier);
                     has_reactive_input = has_reactive_input || reactive;
                 }
 
@@ -148,6 +164,12 @@ pub fn infer_reactive_places(
                         {
                             has_reactive_input = true;
                         }
+                    }
+                    InstructionValue::TaggedTemplateExpression { .. } => {
+                        // A tag may produce a new result even when its explicit operands are
+                        // stable. Proven-pure tags retain the resulting scope; other tags have it
+                        // flattened later so the call remains unconditional.
+                        has_reactive_input = true;
                     }
                     InstructionValue::MethodCall { property, .. } => {
                         let property_ty = &env.types[env.identifiers[property.identifier].type_];
@@ -162,11 +184,8 @@ pub fn infer_reactive_places(
 
                 if has_reactive_input {
                     // Mark lvalues reactive (unless stable)
-                    let lvalue_ids: Vec<IdentifierId> = visitors::each_instruction_lvalue(instr)
-                        .into_iter()
-                        .map(|p| p.identifier)
-                        .collect();
-                    for lvalue_id in lvalue_ids {
+                    for lvalue in visitors::each_instruction_lvalue(instr) {
+                        let lvalue_id = lvalue.identifier;
                         if stable_sidemap.is_stable(lvalue_id) {
                             continue;
                         }
@@ -176,8 +195,7 @@ pub fn infer_reactive_places(
 
                 if has_reactive_input || has_reactive_control {
                     // Mark mutable operands reactive
-                    let operand_places = visitors::each_instruction_value_operand(value, env);
-                    for op_place in &operand_places {
+                    for op_place in &operands {
                         match op_place.effect {
                             Effect::Capture
                             | Effect::Store
@@ -193,10 +211,7 @@ pub fn infer_reactive_places(
                                 // no-op
                             }
                             Effect::Unknown => {
-                                return Err(ErrorCategory::Invariant.diagnostic(format!(
-                                    "Unexpected unknown effect at {:?}",
-                                    op_place.span
-                                )));
+                                return Err(diagnostics::unexpected_unknown_effect(op_place.span));
                             }
                         }
                     }
@@ -235,23 +250,31 @@ pub fn infer_reactive_places(
 
 struct ReactivityMap<'a> {
     has_changes: bool,
-    reactive: FxHashSet<IdentifierId>,
+    reactive: IndexVec<IdentifierId, bool>,
     aliased_identifiers: &'a mut DisjointSet<IdentifierId>,
 }
 
 impl<'a> ReactivityMap<'a> {
-    fn new(aliased_identifiers: &'a mut DisjointSet<IdentifierId>) -> Self {
-        ReactivityMap { has_changes: false, reactive: FxHashSet::default(), aliased_identifiers }
+    fn new(
+        aliased_identifiers: &'a mut DisjointSet<IdentifierId>,
+        identifier_count: usize,
+    ) -> Self {
+        ReactivityMap {
+            has_changes: false,
+            reactive: IndexVec::from_vec(vec![false; identifier_count]),
+            aliased_identifiers,
+        }
     }
 
     fn is_reactive(&mut self, id: IdentifierId) -> bool {
         let canonical = self.aliased_identifiers.find_opt(id).unwrap_or(id);
-        self.reactive.contains(&canonical)
+        self.reactive[canonical]
     }
 
     fn mark_reactive(&mut self, id: IdentifierId) {
         let canonical = self.aliased_identifiers.find_opt(id).unwrap_or(id);
-        if self.reactive.insert(canonical) {
+        if !self.reactive[canonical] {
+            self.reactive[canonical] = true;
             self.has_changes = true;
         }
     }
@@ -269,12 +292,12 @@ impl<'a> ReactivityMap<'a> {
 // =============================================================================
 
 struct StableSidemap {
-    map: FxHashMap<IdentifierId, bool>,
+    map: IndexVec<IdentifierId, Option<bool>>,
 }
 
 impl StableSidemap {
-    fn new() -> Self {
-        StableSidemap { map: FxHashMap::default() }
+    fn new(identifier_count: usize) -> Self {
+        StableSidemap { map: IndexVec::from_vec(vec![None; identifier_count]) }
     }
 
     fn handle_instruction(&mut self, instr: &Instruction, env: &Environment) {
@@ -282,14 +305,15 @@ impl StableSidemap {
         let value = &instr.value;
 
         match value {
-            InstructionValue::CallExpression { callee, .. } => {
+            InstructionValue::CallExpression { callee, .. }
+            | InstructionValue::TaggedTemplateExpression { tag: callee, .. } => {
                 let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                 if evaluates_to_stable_type_or_container(env, callee_ty) {
                     let lvalue_ty = &env.types[env.identifiers[lvalue_id].type_];
                     if is_stable_type(lvalue_ty) {
-                        self.map.insert(lvalue_id, true);
+                        self.map[lvalue_id] = Some(true);
                     } else {
-                        self.map.insert(lvalue_id, false);
+                        self.map[lvalue_id] = Some(false);
                     }
                 }
             }
@@ -298,49 +322,46 @@ impl StableSidemap {
                 if evaluates_to_stable_type_or_container(env, property_ty) {
                     let lvalue_ty = &env.types[env.identifiers[lvalue_id].type_];
                     if is_stable_type(lvalue_ty) {
-                        self.map.insert(lvalue_id, true);
+                        self.map[lvalue_id] = Some(true);
                     } else {
-                        self.map.insert(lvalue_id, false);
+                        self.map[lvalue_id] = Some(false);
                     }
                 }
             }
             InstructionValue::PropertyLoad { object, .. } => {
                 let source_id = object.identifier;
-                if self.map.contains_key(&source_id) {
+                if self.map[source_id].is_some() {
                     let lvalue_ty = &env.types[env.identifiers[lvalue_id].type_];
                     if is_stable_type_container(lvalue_ty) {
-                        self.map.insert(lvalue_id, false);
+                        self.map[lvalue_id] = Some(false);
                     } else if is_stable_type(lvalue_ty) {
-                        self.map.insert(lvalue_id, true);
+                        self.map[lvalue_id] = Some(true);
                     }
                 }
             }
             InstructionValue::Destructure { value: val, .. } => {
                 let source_id = val.identifier;
-                if self.map.contains_key(&source_id) {
-                    let lvalue_ids: Vec<IdentifierId> = visitors::each_instruction_lvalue(instr)
-                        .into_iter()
-                        .map(|p| p.identifier)
-                        .collect();
-                    for lid in lvalue_ids {
+                if self.map[source_id].is_some() {
+                    for lvalue in visitors::each_instruction_lvalue(instr) {
+                        let lid = lvalue.identifier;
                         let lid_ty = &env.types[env.identifiers[lid].type_];
                         if is_stable_type_container(lid_ty) {
-                            self.map.insert(lid, false);
+                            self.map[lid] = Some(false);
                         } else if is_stable_type(lid_ty) {
-                            self.map.insert(lid, true);
+                            self.map[lid] = Some(true);
                         }
                     }
                 }
             }
             InstructionValue::StoreLocal { lvalue, value: val, .. } => {
-                if let Some(&entry) = self.map.get(&val.identifier) {
-                    self.map.insert(lvalue_id, entry);
-                    self.map.insert(lvalue.place.identifier, entry);
+                if let Some(entry) = self.map[val.identifier] {
+                    self.map[lvalue_id] = Some(entry);
+                    self.map[lvalue.place.identifier] = Some(entry);
                 }
             }
             InstructionValue::LoadLocal { place, .. } => {
-                if let Some(&entry) = self.map.get(&place.identifier) {
-                    self.map.insert(lvalue_id, entry);
+                if let Some(entry) = self.map[place.identifier] {
+                    self.map[lvalue_id] = Some(entry);
                 }
             }
             _ => {}
@@ -348,7 +369,7 @@ impl StableSidemap {
     }
 
     fn is_stable(&self, id: IdentifierId) -> bool {
-        self.map.get(&id).copied().unwrap_or(false)
+        self.map[id].unwrap_or(false)
     }
 }
 
@@ -356,37 +377,140 @@ impl StableSidemap {
 // Control dominators (ported from ControlDominators.ts)
 // =============================================================================
 
+/// Returns whether a reactive value decides if `block_id` runs: a block in its
+/// post-dominator frontier ends in an `If`/`Branch`/`Switch` with a reactive test, or may
+/// throw to a `catch` and is decided by a reactive value (see [`ThrowingBlocks`]).
+///
+/// Unlike the TS implementation, this follows the frontiers of the controlling blocks
+/// too: in `if (prop) { x = 1; if (FLAG) return; }`, the store's block is decided by
+/// `FLAG` only directly, but `if (FLAG)` itself runs only when `prop` is truthy.
 fn is_reactive_controlled_block(
     block_id: BlockId,
     func: &HirFunction,
-    frontiers: &FxHashMap<BlockId, FxHashSet<BlockId>>,
+    frontiers: &PostDominatorFrontiers,
+    throwing_blocks: &ThrowingBlocks,
     reactive_map: &mut ReactivityMap,
 ) -> bool {
-    let Some(frontier) = frontiers.get(&block_id) else { return false };
-    for frontier_block_id in frontier {
-        let control_block = func.body.blocks.get(frontier_block_id).unwrap();
-        match &control_block.terminal {
-            Terminal::If { test, .. } | Terminal::Branch { test, .. } => {
-                if reactive_map.is_reactive(test.identifier) {
-                    return true;
-                }
+    let mut visited = FxHashSet::default();
+    let mut worklist = vec![block_id];
+    while let Some(block_id) = worklist.pop() {
+        for control_block_id in frontiers.iter(block_id) {
+            if !visited.insert(control_block_id) {
+                continue;
             }
-            Terminal::Switch { test, cases, .. } => {
-                if reactive_map.is_reactive(test.identifier) {
-                    return true;
-                }
-                for case in cases {
-                    if let Some(ref case_test) = case.test
-                        && reactive_map.is_reactive(case_test.identifier)
-                    {
-                        return true;
-                    }
-                }
+            if has_reactive_test(control_block_id, func, reactive_map)
+                || throwing_blocks.reactive.contains(&control_block_id)
+            {
+                return true;
             }
-            _ => {}
+            worklist.push(control_block_id);
         }
     }
     false
+}
+
+/// Returns whether the block ends in an `If`/`Branch`/`Switch` with a reactive test.
+fn has_reactive_test(
+    block_id: BlockId,
+    func: &HirFunction,
+    reactive_map: &mut ReactivityMap,
+) -> bool {
+    let control_block = func.body.blocks.get(&block_id).unwrap();
+    match &control_block.terminal {
+        Terminal::If { test, .. } | Terminal::Branch { test, .. } => {
+            reactive_map.is_reactive(test.identifier)
+        }
+        Terminal::Switch { test, cases, .. } => {
+            reactive_map.is_reactive(test.identifier)
+                || cases.iter().any(|case| {
+                    case.test.as_ref().is_some_and(|test| reactive_map.is_reactive(test.identifier))
+                })
+        }
+        _ => false,
+    }
+}
+
+/// The blocks that may throw to a `catch` (end in a `MaybeThrow` with a handler), and
+/// which of them a reactive value decides.
+///
+/// Such a block decides whether the rest of the `try` runs or the `catch` does, so it
+/// controls the blocks whose frontier contains it, like a branch. Whether it throws
+/// depends on the values it reads, and on whether it runs at all, which the blocks in
+/// its own frontier decide.
+struct ThrowingBlocks {
+    /// The values each block reads.
+    operands: FxHashMap<BlockId, Vec<IdentifierId>>,
+    /// For each block, the blocks whose frontier contains it.
+    dependents: FxHashMap<BlockId, Vec<BlockId>>,
+    /// The blocks a reactive value decides, as of the last [`Self::update`].
+    reactive: FxHashSet<BlockId>,
+}
+
+impl ThrowingBlocks {
+    fn new(func: &HirFunction, env: &Environment, frontiers: &PostDominatorFrontiers) -> Self {
+        let operands: FxHashMap<BlockId, Vec<IdentifierId>> = func
+            .body
+            .blocks
+            .values()
+            .filter(|block| matches!(block.terminal, Terminal::MaybeThrow { handler: Some(_), .. }))
+            .map(|block| {
+                let operands = block
+                    .instructions
+                    .iter()
+                    .flat_map(|instr_id| {
+                        visitors::each_instruction_value_operand(
+                            &func.instructions[instr_id.index()].value,
+                            env,
+                        )
+                    })
+                    .map(|place| place.identifier)
+                    .collect();
+                (block.id, operands)
+            })
+            .collect();
+        let mut dependents: FxHashMap<BlockId, Vec<BlockId>> = FxHashMap::default();
+        for &block_id in operands.keys() {
+            for control_block_id in frontiers.iter(block_id) {
+                if operands.contains_key(&control_block_id) {
+                    dependents.entry(control_block_id).or_default().push(block_id);
+                }
+            }
+        }
+        Self { operands, dependents, reactive: FxHashSet::default() }
+    }
+
+    /// Adds the blocks that read a reactive value or run under a reactive branch, and
+    /// the blocks they control in turn.
+    ///
+    /// Reactivity only grows, so the set only grows. It can lag behind values marked
+    /// reactive later in the same fixpoint iteration; those marks force another
+    /// iteration, which calls this again.
+    fn update(
+        &mut self,
+        func: &HirFunction,
+        frontiers: &PostDominatorFrontiers,
+        reactive_map: &mut ReactivityMap,
+    ) {
+        let mut worklist = Vec::new();
+        for (&block_id, operands) in &self.operands {
+            if !self.reactive.contains(&block_id)
+                && (operands.iter().any(|&id| reactive_map.is_reactive(id))
+                    || frontiers.iter(block_id).any(|control_block_id| {
+                        has_reactive_test(control_block_id, func, reactive_map)
+                    }))
+            {
+                self.reactive.insert(block_id);
+                worklist.push(block_id);
+            }
+        }
+        while let Some(block_id) = worklist.pop() {
+            for &dependent in self.dependents.get(&block_id).into_iter().flatten() {
+                if self.reactive.insert(dependent) {
+                    worklist.push(dependent);
+                }
+            }
+        }
+    }
 }
 
 // =============================================================================
@@ -548,7 +672,7 @@ fn apply_reactive_flags_replay(
             let block = func.body.blocks.get_mut(block_id).unwrap();
             let phi = &mut block.phis[phi_idx];
 
-            if reactive_ids.contains(&phi.place.identifier) {
+            if reactive_ids[phi.place.identifier] {
                 phi.place.reactive = true;
             }
 
@@ -569,15 +693,11 @@ fn apply_reactive_flags_replay(
             let instr = &func.instructions[instr_id.index()];
 
             // Compute hasReactiveInput by checking value operands
-            let value_operand_ids: Vec<IdentifierId> =
-                visitors::each_instruction_value_operand(&instr.value, env)
-                    .into_iter()
-                    .map(|p| p.identifier)
-                    .collect();
             let mut has_reactive_input = false;
-            for &op_id in &value_operand_ids {
-                if reactive_ids.contains(&op_id) {
+            for operand in visitors::each_instruction_value_operand(&instr.value, env) {
+                if reactive_ids[operand.identifier] {
                     has_reactive_input = true;
+                    break;
                 }
             }
 
@@ -590,6 +710,10 @@ fn apply_reactive_flags_replay(
                     {
                         has_reactive_input = true;
                     }
+                }
+                InstructionValue::TaggedTemplateExpression { .. } => {
+                    // Mirror the fixpoint rule above when writing the final reactive flags.
+                    has_reactive_input = true;
                 }
                 InstructionValue::MethodCall { property, .. } => {
                     let property_ty = &env.types[env.identifiers[property.identifier].type_];
@@ -605,7 +729,7 @@ fn apply_reactive_flags_replay(
             // Value operands: set reactive flag using canonical visitor
             let instr = &mut func.instructions[instr_id.index()];
             visitors::for_each_instruction_value_operand_mut(&mut instr.value, &mut |place| {
-                if reactive_ids.contains(&place.identifier) {
+                if reactive_ids[place.identifier] {
                     place.reactive = true;
                 }
             });
@@ -615,7 +739,7 @@ fn apply_reactive_flags_replay(
             {
                 let inner_func = &mut env.functions[lowered_func.func];
                 for ctx in &mut inner_func.context {
-                    if reactive_ids.contains(&ctx.identifier) {
+                    if reactive_ids[ctx.identifier] {
                         ctx.reactive = true;
                     }
                 }
@@ -624,7 +748,7 @@ fn apply_reactive_flags_replay(
             // Lvalues: markReactive is called only when hasReactiveInput
             if has_reactive_input {
                 let lvalue_id = instr.lvalue.identifier;
-                if !stable_sidemap.is_stable(lvalue_id) && reactive_ids.contains(&lvalue_id) {
+                if !stable_sidemap.is_stable(lvalue_id) && reactive_ids[lvalue_id] {
                     instr.lvalue.reactive = true;
                 }
                 // Handle value lvalues — includes DeclareContext/StoreContext which
@@ -635,23 +759,25 @@ fn apply_reactive_flags_replay(
                     | InstructionValue::StoreLocal { lvalue, .. }
                     | InstructionValue::StoreContext { lvalue, .. } => {
                         let id = lvalue.place.identifier;
-                        if !stable_sidemap.is_stable(id) && reactive_ids.contains(&id) {
+                        if !stable_sidemap.is_stable(id) && reactive_ids[id] {
                             lvalue.place.reactive = true;
                         }
                     }
                     InstructionValue::Destructure { lvalue, .. } => {
                         visitors::for_each_pattern_operand_mut(&mut lvalue.pattern, &mut |place| {
                             if !stable_sidemap.is_stable(place.identifier)
-                                && reactive_ids.contains(&place.identifier)
+                                && reactive_ids[place.identifier]
                             {
                                 place.reactive = true;
                             }
                         });
                     }
-                    InstructionValue::PrefixUpdate { lvalue, .. }
-                    | InstructionValue::PostfixUpdate { lvalue, .. } => {
+                    InstructionValue::PrefixUpdateLocal { lvalue, .. }
+                    | InstructionValue::PrefixUpdateContext { lvalue, .. }
+                    | InstructionValue::PostfixUpdateLocal { lvalue, .. }
+                    | InstructionValue::PostfixUpdateContext { lvalue, .. } => {
                         let id = lvalue.identifier;
-                        if !stable_sidemap.is_stable(id) && reactive_ids.contains(&id) {
+                        if !stable_sidemap.is_stable(id) && reactive_ids[id] {
                             lvalue.reactive = true;
                         }
                     }
@@ -663,7 +789,7 @@ fn apply_reactive_flags_replay(
         // 2c. Terminal operands
         let block = func.body.blocks.get_mut(block_id).unwrap();
         visitors::for_each_terminal_operand_mut(&mut block.terminal, &mut |place| {
-            if reactive_ids.contains(&place.identifier) {
+            if reactive_ids[place.identifier] {
                 place.reactive = true;
             }
         });
@@ -673,15 +799,12 @@ fn apply_reactive_flags_replay(
     apply_reactive_flags_to_inner_functions(func, env, &reactive_ids);
 }
 
-fn build_reactive_id_set(reactive_map: &mut ReactivityMap) -> FxHashSet<IdentifierId> {
-    let mut result = FxHashSet::default();
-    for &id in &reactive_map.reactive {
-        result.insert(id);
-    }
+fn build_reactive_id_set(reactive_map: &mut ReactivityMap) -> IndexVec<IdentifierId, bool> {
+    let mut result = reactive_map.reactive.clone();
     let reactive = &reactive_map.reactive;
     reactive_map.aliased_identifiers.for_each(|id, canonical| {
-        if reactive.contains(&canonical) {
-            result.insert(id);
+        if reactive[canonical] {
+            result[id] = true;
         }
     });
     result
@@ -690,7 +813,7 @@ fn build_reactive_id_set(reactive_map: &mut ReactivityMap) -> FxHashSet<Identifi
 fn apply_reactive_flags_to_inner_functions(
     func: &HirFunction,
     env: &mut Environment,
-    reactive_ids: &FxHashSet<IdentifierId>,
+    reactive_ids: &IndexVec<IdentifierId, bool>,
 ) {
     for (_block_id, block) in &func.body.blocks {
         for instr_id in &block.instructions {
@@ -709,7 +832,7 @@ fn apply_reactive_flags_to_inner_functions(
 fn apply_reactive_flags_to_inner_func(
     func_id: FunctionId,
     env: &mut Environment,
-    reactive_ids: &FxHashSet<IdentifierId>,
+    reactive_ids: &IndexVec<IdentifierId, bool>,
 ) {
     // Collect nested function IDs first to avoid borrow issues
     let nested_func_ids: Vec<FunctionId> = {
@@ -736,13 +859,13 @@ fn apply_reactive_flags_to_inner_func(
         for instr_id in &block.instructions {
             let instr = &mut inner_func.instructions[instr_id.index()];
             visitors::for_each_instruction_value_operand_mut(&mut instr.value, &mut |place| {
-                if reactive_ids.contains(&place.identifier) {
+                if reactive_ids[place.identifier] {
                     place.reactive = true;
                 }
             });
         }
         visitors::for_each_terminal_operand_mut(&mut block.terminal, &mut |place| {
-            if reactive_ids.contains(&place.identifier) {
+            if reactive_ids[place.identifier] {
                 place.reactive = true;
             }
         });
@@ -752,7 +875,7 @@ fn apply_reactive_flags_to_inner_func(
     for nested_id in nested_func_ids {
         let nested_func = &mut env.functions[nested_id];
         for ctx in &mut nested_func.context {
-            if reactive_ids.contains(&ctx.identifier) {
+            if reactive_ids[ctx.identifier] {
                 ctx.reactive = true;
             }
         }

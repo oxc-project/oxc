@@ -116,7 +116,7 @@ declare_oxc_lint!(
 
 impl Rule for NoWarningComments {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let mut rule = serde_json::from_value::<DefaultRuleConfig<Self>>(value)?.into_inner();
+        let mut rule = DefaultRuleConfig::<Self>::from_value(value)?.into_inner();
         rule.0.prepare();
         Ok(rule)
     }

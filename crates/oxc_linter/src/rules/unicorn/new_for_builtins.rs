@@ -2,9 +2,13 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule,
+    utils::call_uses_optional_chain,
+};
 
 fn enforce(span: Span, fn_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `new {fn_name}()` instead of `{fn_name}()`")).with_label(span)
@@ -55,6 +59,7 @@ declare_oxc_lint!(
     NewForBuiltins,
     unicorn,
     pedantic,
+    recommended,
     pending,
     version = "0.0.16",
     short_description = "Enforce the use of `new` for most builtins.",
@@ -73,6 +78,11 @@ impl Rule for NewForBuiltins {
                 }
             }
             AstKind::CallExpression(call_expr) => {
+                // An optional chain can't be rewritten to a `new` expression, which can't be optional.
+                if call_uses_optional_chain(call_expr) {
+                    return;
+                }
+
                 let Some(builtin_name) = is_expr_global_builtin(&call_expr.callee, ctx) else {
                     return;
                 };
@@ -109,12 +119,11 @@ fn is_expr_global_builtin<'a, 'b>(
 ) -> Option<&'b str> {
     let expr = expr.without_parentheses();
     if let Expression::Identifier(ident) = expr {
-        let name = ident.name.as_str();
-        if !ctx.scoping().root_unresolved_references().contains_key(name) {
+        if !ctx.is_reference_to_global_variable(ident) {
             return None;
         }
 
-        Some(name)
+        Some(ident.name.as_str())
     } else {
         let member_expr = expr.as_member_expression()?;
 
@@ -126,7 +135,7 @@ fn is_expr_global_builtin<'a, 'b>(
             return None;
         }
 
-        member_expr.static_property_name()
+        member_expr.static_property_name().and_then(JSStr::as_str)
     }
 }
 
@@ -171,6 +180,10 @@ fn test() {
     let pass = vec![
         "const foo = new Object()",
         "const foo = new Array()",
+        "const foo = Array?.()",
+        "const foo = Map?.()",
+        "const foo = Date?.()",
+        "const foo = globalThis?.Date()",
         "const foo = new ArrayBuffer()",
         "const foo = new BigInt64Array()",
         "const foo = new BigUint64Array()",
@@ -222,6 +235,7 @@ fn test() {
         "(x) !== Object(x)",
         // r#"new Symbol("")"#, // {"globals": {"Symbol": "off"}},
         "const foo = new Date();",
+        "function f(MyString) { const String = MyString; return new String('x') }; String(1)",
     ];
 
     let fail = vec![

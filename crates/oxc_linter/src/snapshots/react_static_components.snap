@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(static-components): Cannot create components during render
+   ╭─[static_components.tsx:4:11]
+ 2 │ function Example(props) {
+ 3 │   const Component = createComponent();
+   ·                     ───────┬───────
+   ·                            ╰── The component is created during render here
+ 4 │   return <Component />;
+   ·           ────┬────
+   ·               ╰── This component is created during render
+ 5 │ }
+   ╰────
+  help: Components created during render will reset their state each time they are created. Declare components outside of render
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/static-components

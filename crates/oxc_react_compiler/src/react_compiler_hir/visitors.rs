@@ -24,6 +24,9 @@ use crate::react_compiler_hir::{
 /// of heap-allocating a `Vec` for every instruction visited.
 pub type PlaceList = SmallVec<[Place; 4]>;
 
+/// Non-switch terminals reference at most five blocks; keep those block IDs inline.
+pub type TerminalBlockList = SmallVec<[BlockId; 5]>;
+
 /// Yields `instr.lvalue` plus the value's lvalues.
 /// Equivalent to TS `eachInstructionLValue`.
 pub fn each_instruction_lvalue(instr: &Instruction) -> PlaceList {
@@ -33,7 +36,7 @@ pub fn each_instruction_lvalue(instr: &Instruction) -> PlaceList {
     result
 }
 
-/// Yields lvalues from DeclareLocal/StoreLocal/DeclareContext/StoreContext/Destructure/PostfixUpdate/PrefixUpdate.
+/// Yields lvalues from declarations, stores, destructuring, and update expressions.
 /// Equivalent to TS `eachInstructionValueLValue`.
 pub fn each_instruction_value_lvalue(value: &InstructionValue) -> PlaceList {
     let mut result = PlaceList::new();
@@ -47,8 +50,10 @@ pub fn each_instruction_value_lvalue(value: &InstructionValue) -> PlaceList {
         InstructionValue::Destructure { lvalue, .. } => {
             result.extend(each_pattern_operand(&lvalue.pattern));
         }
-        InstructionValue::PostfixUpdate { lvalue, .. }
-        | InstructionValue::PrefixUpdate { lvalue, .. } => {
+        InstructionValue::PostfixUpdateLocal { lvalue, .. }
+        | InstructionValue::PostfixUpdateContext { lvalue, .. }
+        | InstructionValue::PrefixUpdateLocal { lvalue, .. }
+        | InstructionValue::PrefixUpdateContext { lvalue, .. } => {
             result.push(*lvalue);
         }
         // All other variants have no lvalues
@@ -85,6 +90,7 @@ pub fn each_instruction_value_lvalue(value: &InstructionValue) -> PlaceList {
         | InstructionValue::IteratorNext { .. }
         | InstructionValue::NextPropertyOf { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::StartMemoize { .. }
         | InstructionValue::FinishMemoize { .. } => {}
     }
@@ -199,7 +205,7 @@ pub fn each_instruction_value_operand_with_functions(
             for property in properties {
                 match property {
                     ObjectPropertyOrSpread::Property(prop) => {
-                        if let ObjectPropertyKey::Computed { name } = &prop.key {
+                        if let ObjectPropertyKey::Computed { name, .. } = &prop.key {
                             result.push(*name);
                         }
                         result.push(prop.place);
@@ -257,8 +263,10 @@ pub fn each_instruction_value_operand_with_functions(
         InstructionValue::NextPropertyOf { value: val, .. } => {
             result.push(*val);
         }
-        InstructionValue::PostfixUpdate { value: val, .. }
-        | InstructionValue::PrefixUpdate { value: val, .. } => {
+        InstructionValue::PostfixUpdateLocal { value: val, .. }
+        | InstructionValue::PostfixUpdateContext { value: val, .. }
+        | InstructionValue::PrefixUpdateLocal { value: val, .. }
+        | InstructionValue::PrefixUpdateContext { value: val, .. } => {
             result.push(*val);
         }
         InstructionValue::StartMemoize { deps, .. } => {
@@ -274,6 +282,7 @@ pub fn each_instruction_value_operand_with_functions(
             result.push(*decl);
         }
         InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }
@@ -360,8 +369,8 @@ pub fn does_pattern_contain_spread_element(pattern: &Pattern) -> bool {
 
 /// Yields successor block IDs (NOT fallthroughs, this is intentional).
 /// Equivalent to TS `eachTerminalSuccessor`.
-pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
-    let mut result = Vec::new();
+pub fn each_terminal_successor(terminal: &Terminal) -> TerminalBlockList {
+    let mut result = TerminalBlockList::new();
     match terminal {
         Terminal::Goto { block, .. } => {
             result.push(*block);
@@ -604,8 +613,8 @@ pub fn map_terminal_successors(terminal: &mut Terminal, f: &mut impl FnMut(Block
 /// Yields ALL block IDs referenced by a terminal (successors + fallthroughs + internal blocks).
 /// Unlike `each_terminal_successor` which yields only standard control flow successors,
 /// this function yields every block ID that `map_terminal_successors` would visit.
-pub fn each_terminal_all_successors(terminal: &Terminal) -> Vec<BlockId> {
-    let mut result = Vec::new();
+pub fn each_terminal_all_successors(terminal: &Terminal) -> TerminalBlockList {
+    let mut result = TerminalBlockList::new();
     match terminal {
         Terminal::Goto { block, .. } => {
             result.push(*block);
@@ -942,7 +951,7 @@ pub fn for_each_instruction_value_operand_mut(
             for property in properties.iter_mut() {
                 match property {
                     ObjectPropertyOrSpread::Property(prop) => {
-                        if let ObjectPropertyKey::Computed { name } = &mut prop.key {
+                        if let ObjectPropertyKey::Computed { name, .. } = &mut prop.key {
                             f(name);
                         }
                         f(&mut prop.place);
@@ -997,8 +1006,10 @@ pub fn for_each_instruction_value_operand_mut(
         InstructionValue::NextPropertyOf { value: val, .. } => {
             f(val);
         }
-        InstructionValue::PostfixUpdate { value: val, .. }
-        | InstructionValue::PrefixUpdate { value: val, .. } => {
+        InstructionValue::PostfixUpdateLocal { value: val, .. }
+        | InstructionValue::PostfixUpdateContext { value: val, .. }
+        | InstructionValue::PrefixUpdateLocal { value: val, .. }
+        | InstructionValue::PrefixUpdateContext { value: val, .. } => {
             f(val);
         }
         InstructionValue::StartMemoize { deps, .. } => {
@@ -1014,6 +1025,7 @@ pub fn for_each_instruction_value_operand_mut(
             f(decl);
         }
         InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }
@@ -1033,7 +1045,7 @@ pub fn for_each_call_argument_mut(args: &mut [PlaceOrSpread], f: &mut dyn FnMut(
 }
 
 /// In-place mutation of an InstructionValue's lvalues (DeclareLocal, StoreLocal, DeclareContext,
-/// StoreContext, Destructure, PostfixUpdate, PrefixUpdate). Does NOT include the instruction's
+/// StoreContext, Destructure, and update expressions). Does NOT include the instruction's
 /// top-level lvalue — use `for_each_instruction_lvalue_mut` for that.
 pub fn for_each_instruction_value_lvalue_mut(
     value: &mut InstructionValue,
@@ -1049,8 +1061,10 @@ pub fn for_each_instruction_value_lvalue_mut(
         InstructionValue::Destructure { lvalue, .. } => {
             for_each_pattern_operand_mut(&mut lvalue.pattern, f);
         }
-        InstructionValue::PostfixUpdate { lvalue, .. }
-        | InstructionValue::PrefixUpdate { lvalue, .. } => {
+        InstructionValue::PostfixUpdateLocal { lvalue, .. }
+        | InstructionValue::PostfixUpdateContext { lvalue, .. }
+        | InstructionValue::PrefixUpdateLocal { lvalue, .. }
+        | InstructionValue::PrefixUpdateContext { lvalue, .. } => {
             f(lvalue);
         }
         _ => {}
@@ -1068,8 +1082,8 @@ pub fn for_each_instruction_lvalue_mut(instr: &mut Instruction, f: &mut dyn FnMu
         InstructionValue::Destructure { lvalue, .. } => {
             for_each_pattern_operand_mut(&mut lvalue.pattern, f);
         }
-        InstructionValue::PostfixUpdate { lvalue, .. }
-        | InstructionValue::PrefixUpdate { lvalue, .. } => {
+        InstructionValue::PostfixUpdateLocal { lvalue, .. }
+        | InstructionValue::PrefixUpdateLocal { lvalue, .. } => {
             f(lvalue);
         }
         _ => {}

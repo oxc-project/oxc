@@ -2,7 +2,7 @@
 // oxlint-disable no-console
 
 // Clone submodules in parallel for faster setup
-// Usage: node clone-parallel.mjs [test262] [babel] [typescript] [prettier] [estree-conformance] [node-compat-table]
+// Usage: node clone-parallel.mjs [test262] [babel] [typescript] [estree-conformance] [node-compat-table]
 // Arguments: "true" or "false" for each submodule
 
 import { spawn } from "node:child_process";
@@ -10,13 +10,11 @@ import { existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 // Submodule commit SHAs - updated automatically by .github/workflows/update_submodules.yml
-const TEST262_SHA = "b363f29d3c43c626dc852744ad64a0b48a003693";
-const BABEL_SHA = "06b6eae39da4ce0689fad64e2c48a6375a464208";
-const TYPESCRIPT_SHA = "b465fdbfe175304d9b977da137b2c178ae1091d3";
-const ESTREE_CONFORMANCE_SHA = "f7a4e0cb471fb62b881cfd5f80b192b2c0385099";
+const TEST262_SHA = "d53ebc8b1931d9f1541e43d59650776e4b766248";
+const BABEL_SHA = "b835f0c6ec43c7134d82045b80cf011cb01fcc29";
+const TYPESCRIPT_SHA = "8a62bbe746909624b69b6e671026b454da2f02cf";
+const ESTREE_CONFORMANCE_SHA = "fdd6f7de64386c5f989bed8406eaa847c2fce29c";
 const NODE_COMPAT_TABLE_SHA = "499beb6f1daa36f10c26b85a7f3ec3b3448ded23";
-// NOTE: Prettier version is now pinned to `v3.9.6` (not updated by workflow above), update manually as needed
-const PRETTIER_SHA = "8f0c95057cc91d5836409466cd9d9af3bb901e84";
 
 const repoRoot = join(import.meta.dirname, "..", "..");
 
@@ -25,9 +23,8 @@ const args = process.argv.slice(2);
 const TEST262 = args[0] !== "false";
 const BABEL = args[1] !== "false";
 const TYPESCRIPT = args[2] !== "false";
-const PRETTIER = args[3] !== "false";
-const ESTREE_CONFORMANCE = args[4] !== "false";
-const NODE_COMPAT_TABLE = args[5] !== "false";
+const ESTREE_CONFORMANCE = args[3] !== "false";
+const NODE_COMPAT_TABLE = args[4] !== "false";
 
 /**
  * Run a git command and return a promise
@@ -129,13 +126,6 @@ async function main() {
       "tasks/coverage/typescript",
       TYPESCRIPT_SHA,
       "typescript",
-    ),
-    cloneRepo(
-      PRETTIER,
-      "prettier/prettier",
-      "tasks/prettier_conformance/prettier",
-      PRETTIER_SHA,
-      "prettier",
     ),
     cloneRepo(
       ESTREE_CONFORMANCE,

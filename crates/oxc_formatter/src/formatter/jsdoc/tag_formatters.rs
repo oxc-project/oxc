@@ -6,17 +6,17 @@ use super::{
     embedded::{
         format_jsdoc_js_snippet, format_type_via_formatter, is_js_ts_lang, update_template_depth,
     },
+    mdast_serialize::{format_description_mdast, normalize_emphasis_markers},
     normalize::{
-        capitalize_first, normalize_markdown_emphasis, normalize_type,
-        normalize_type_preserve_quotes, normalize_type_return, strip_jsdoc_stars_preserve_newlines,
-        strip_optional_type_suffix,
+        capitalize_first, normalize_type, normalize_type_preserve_quotes, normalize_type_return,
+        strip_jsdoc_stars_preserve_newlines, strip_optional_type_suffix,
     },
     serialize::{
         JsdocFormatter, format_default_value, is_known_tag, is_named_generic_tag,
         should_preserve_description_verbatim, should_skip_description_formatting,
         strip_default_is_suffix,
     },
-    wrap::{str_width, wrap_text},
+    wrap::str_width,
 };
 
 /// Replace standalone JSDoc `*` type syntax with `any` in a multiline type string.
@@ -163,7 +163,7 @@ impl JsdocFormatter<'_, '_> {
         // wrap_width minus the code indent width.
         let effective_width = self.wrap_width.saturating_sub(self.code_indent_width());
         if let Some(formatted) =
-            format_jsdoc_js_snippet(code, effective_width, self.format_options, self.allocator)
+            format_jsdoc_js_snippet(code, effective_width, self.format_options, self.session)
                 .filter(|f| {
                     // Reject pseudo-code that parses as valid JS but produces
                     // structurally different output (e.g., `{undefined}('popup', 'options')`
@@ -208,7 +208,7 @@ impl JsdocFormatter<'_, '_> {
                     inner_code,
                     effective_width,
                     self.format_options,
-                    self.allocator,
+                    self.session,
                 ) {
                     self.push_formatted_code_lines(&formatted, indent);
                 } else {
@@ -295,7 +295,7 @@ impl JsdocFormatter<'_, '_> {
                     if let Some(formatted) = format_type_via_formatter(
                         &formatter_input,
                         &self.type_format_options,
-                        self.allocator,
+                        self.session,
                     ) {
                         // If the formatter collapsed a multi-line type to single
                         // line, verify it fits within the available width. The tag
@@ -307,8 +307,8 @@ impl JsdocFormatter<'_, '_> {
                             && !formatted.contains('\n')
                             && formatter_input.contains('\n')
                         {
-                            // Estimate: @kind + space + { + type + } = tag_prefix_len + 3 + type.len()
-                            let estimated_width = tag_prefix_len + 3 + formatted.len();
+                            // Estimate: @kind + space + { + type + } = tag_prefix_len + 3 + type width
+                            let estimated_width = tag_prefix_len + 3 + str_width(&formatted);
                             if estimated_width > self.wrap_width {
                                 // Use the star-stripped multiline version
                                 normalized_type_str = Cow::Owned(formatter_input.into_owned());
@@ -339,17 +339,20 @@ impl JsdocFormatter<'_, '_> {
         if let Some(np) = &name_part {
             let name_raw = np.raw();
             if is_type_optional && !name_raw.starts_with('[') {
-                name_str = self.allocator.alloc_concat_strs_array(["[", name_raw, "]"]);
+                name_str = self.session.allocator().alloc_concat_strs_array(["[", name_raw, "]"]);
             } else if name_raw.starts_with('[') && name_raw.ends_with(']') {
                 if let Some(eq_pos) = name_raw.find('=') {
                     let name_part_inner = &name_raw[1..eq_pos];
                     let val = name_raw[eq_pos + 1..name_raw.len() - 1].trim();
                     if val.is_empty() {
-                        name_str =
-                            self.allocator.alloc_concat_strs_array(["[", name_part_inner, "]"]);
+                        name_str = self.session.allocator().alloc_concat_strs_array([
+                            "[",
+                            name_part_inner,
+                            "]",
+                        ]);
                     } else {
                         default_value = Some(val);
-                        name_str = self.allocator.alloc_concat_strs_array([
+                        name_str = self.session.allocator().alloc_concat_strs_array([
                             "[",
                             name_part_inner,
                             "=",
@@ -395,8 +398,6 @@ impl JsdocFormatter<'_, '_> {
         if tag_line.contains('\n') {
             let desc_raw = comment_part.parsed_preserving_whitespace();
             let desc_raw = desc_raw.trim();
-            let desc_normalized = normalize_markdown_emphasis(desc_raw);
-            let desc_raw = desc_normalized.trim();
 
             let mut lines_iter = tag_line.split('\n');
             if let Some(first) = lines_iter.next() {
@@ -408,14 +409,13 @@ impl JsdocFormatter<'_, '_> {
             if !desc_raw.is_empty() {
                 let indent = self.continuation_indent();
                 let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
-                let desc = wrap_text(
+                let desc = format_description_mdast(
                     desc_raw,
                     indent_width,
                     0,
                     false,
-                    Some(self.format_options),
-                    Some(self.allocator),
-                    self.external_callbacks,
+                    self.format_options,
+                    self.session,
                 );
                 self.push_indented_desc(indent, desc);
             }
@@ -428,9 +428,8 @@ impl JsdocFormatter<'_, '_> {
             let t = desc_ws_raw.trim_start_matches(' ');
             t.starts_with("\n\n") || t.starts_with("\n \n")
         };
-        let desc_raw = desc_ws_raw.trim();
-        let desc_normalized = normalize_markdown_emphasis(desc_raw);
-        let desc_raw = desc_normalized.trim();
+        let desc_normalized = normalize_emphasis_markers(desc_ws_raw.trim());
+        let desc_raw = desc_normalized.as_ref();
 
         // Strip existing "Default is ..." from description when we have an actual default value
         // and `add_default_to_description` is enabled (we'll re-append a normalized version).
@@ -457,24 +456,26 @@ impl JsdocFormatter<'_, '_> {
             self.content_lines.push_empty();
             let indent = self.continuation_indent();
             let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
-            let desc = wrap_text(
+            let desc = format_description_mdast(
                 desc_raw,
                 indent_width,
                 0,
                 false,
-                Some(self.format_options),
-                Some(self.allocator),
-                self.external_callbacks,
+                self.format_options,
+                self.session,
             );
             self.push_indented_desc(indent, desc);
             return;
         }
 
         // Split description into first line and rest (avoids collecting all lines)
-        let (first_text_line, rest_of_desc) = match desc_raw.split_once('\n') {
-            Some((first, rest)) => (first.trim(), Some(rest)),
-            None => (desc_raw.trim(), None),
+        let (first_line, rest_of_desc) = match desc_raw.split_once('\n') {
+            Some((first, rest)) => (first, Some(rest)),
+            None => (desc_raw, None),
         };
+        let first_text_line = first_line.trim();
+        // Keep a Markdown hard line break, which `trim()` drops
+        let first_hard_break = rest_of_desc.is_some() && first_line.ends_with("  ");
 
         // If the description starts with a code fence, output the tag line alone
         // and treat the entire description as structural content with a blank line separator
@@ -483,14 +484,13 @@ impl JsdocFormatter<'_, '_> {
             self.content_lines.push_empty();
             let indent = self.continuation_indent();
             let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
-            let mut desc = wrap_text(
+            let mut desc = format_description_mdast(
                 desc_raw,
                 indent_width,
                 0,
                 false,
-                Some(self.format_options),
-                Some(self.allocator),
-                self.external_callbacks,
+                self.format_options,
+                self.session,
             );
             // Skip leading blank line from wrap_text since we already added one
             if desc.starts_with('\n') {
@@ -607,14 +607,13 @@ impl JsdocFormatter<'_, '_> {
                 let s = self.content_lines.begin_line();
                 s.push_str(&tag_line);
                 s.push_str(" -");
-                let desc = wrap_text(
+                let desc = format_description_mdast(
                     &remaining_desc,
                     indent_width,
                     0,
                     false,
-                    Some(self.format_options),
-                    Some(self.allocator),
-                    self.external_callbacks,
+                    self.format_options,
+                    self.session,
                 );
                 self.push_indented_desc(indent, desc);
                 return;
@@ -626,6 +625,9 @@ impl JsdocFormatter<'_, '_> {
                 let mut s = if has_remaining {
                     let mut s = String::with_capacity(first_text.len() + 1 + remaining_desc.len());
                     s.push_str(&first_text);
+                    if first_hard_break {
+                        s.push_str("  ");
+                    }
                     s.push('\n');
                     s.push_str(&remaining_desc);
                     s
@@ -657,26 +659,24 @@ impl JsdocFormatter<'_, '_> {
                     line.push_str(" -");
                 }
                 self.content_lines.push(line);
-                let desc = wrap_text(
+                let desc = format_description_mdast(
                     &full_desc,
                     indent_width,
                     0,
                     false,
-                    Some(self.format_options),
-                    Some(self.allocator),
-                    self.external_callbacks,
+                    self.format_options,
+                    self.session,
                 );
                 self.push_indented_desc(indent, desc);
             } else {
                 // Append description inline with tag_string_length offset
-                let desc = wrap_text(
+                let desc = format_description_mdast(
                     &full_desc,
                     indent_width,
                     tag_str_len,
                     false,
-                    Some(self.format_options),
-                    Some(self.allocator),
-                    self.external_callbacks,
+                    self.format_options,
+                    self.session,
                 );
                 let mut iter = desc.split('\n');
                 if let Some(first) = iter.next() {
@@ -748,7 +748,7 @@ impl JsdocFormatter<'_, '_> {
                     if let Some(formatted) = format_type_via_formatter(
                         &formatter_input,
                         &self.type_format_options,
-                        self.allocator,
+                        self.session,
                     ) {
                         if was_multiline && !formatted.contains('\n') {
                             normalized_type_str = Cow::Owned(star_stripped.unwrap());
@@ -781,8 +781,8 @@ impl JsdocFormatter<'_, '_> {
         }
 
         let desc_text = comment_part.parsed();
-        let desc_text = normalize_markdown_emphasis(desc_text.trim());
-        let desc_text = desc_text.trim();
+        let desc_text = normalize_emphasis_markers(desc_text.trim());
+        let desc_text = desc_text.as_ref();
 
         if desc_text.is_empty() {
             self.content_lines.push(tag_line);
@@ -807,7 +807,8 @@ impl JsdocFormatter<'_, '_> {
                 // Append single-token description to the last line of the tag
                 let mut lines: Vec<&str> = tag_line.split('\n').collect();
                 if let Some(last) = lines.last_mut() {
-                    let combined = self.allocator.alloc_concat_strs_array([last, " ", &desc_text]);
+                    let combined =
+                        self.session.allocator().alloc_concat_strs_array([last, " ", &desc_text]);
                     for line in &lines[..lines.len() - 1] {
                         self.content_lines.push(*line);
                     }
@@ -823,14 +824,13 @@ impl JsdocFormatter<'_, '_> {
                 for line in lines_iter {
                     self.content_lines.push(line);
                 }
-                let desc = wrap_text(
+                let desc = format_description_mdast(
                     &desc_text,
                     indent_width,
                     0,
                     false,
-                    Some(self.format_options),
-                    Some(self.allocator),
-                    self.external_callbacks,
+                    self.format_options,
+                    self.session,
                 );
                 self.push_indented_desc(indent, desc);
             }
@@ -872,25 +872,23 @@ impl JsdocFormatter<'_, '_> {
             let first_word_w = desc_text_no_dash.split_whitespace().next().map_or(0, str_width);
             if prefix_len + first_word_w > self.wrap_width {
                 self.content_lines.push(tag_line);
-                let desc = wrap_text(
+                let desc = format_description_mdast(
                     &desc_text_no_dash,
                     indent_width,
                     0,
                     false,
-                    Some(self.format_options),
-                    Some(self.allocator),
-                    self.external_callbacks,
+                    self.format_options,
+                    self.session,
                 );
                 self.push_indented_desc(indent, desc);
             } else {
-                let desc = wrap_text(
+                let desc = format_description_mdast(
                     &desc_text_no_dash,
                     indent_width,
                     tag_str_len,
                     false,
-                    Some(self.format_options),
-                    Some(self.allocator),
-                    self.external_callbacks,
+                    self.format_options,
+                    self.session,
                 );
                 let mut iter = desc.split('\n');
                 if let Some(first) = iter.next() {
@@ -940,14 +938,13 @@ impl JsdocFormatter<'_, '_> {
         };
 
         let desc_text = tag.comment().parsed();
-        let desc_text = normalize_markdown_emphasis(desc_text.trim());
-        let desc_text = desc_text.trim();
+        let desc_text = normalize_emphasis_markers(desc_text.trim());
+        let desc_text = desc_text.as_ref();
         // Whitespace-preserving version for skip-formatting tags: preserves blank
         // lines within the description that parsed() strips. Used when
         // skip_wrapping is true and the content has embedded newlines.
-        let raw_ws_trimmed = raw_ws.trim();
-        let raw_ws_normalized = normalize_markdown_emphasis(raw_ws_trimmed);
-        let raw_ws_desc = raw_ws_normalized.trim();
+        let raw_ws_desc = normalize_emphasis_markers(raw_ws.trim());
+        let raw_ws_desc = raw_ws_desc.as_ref();
 
         if desc_text.is_empty() {
             self.content_lines.push(tag_line);
@@ -1020,14 +1017,13 @@ impl JsdocFormatter<'_, '_> {
                 }
             } else if skip_fmt {
                 // Single-line skip-formatting: wrap at full width, no continuation indent.
-                let mut desc = wrap_text(
+                let mut desc = format_description_mdast(
                     raw_ws_desc,
                     self.wrap_width,
                     0,
                     false,
-                    Some(self.format_options),
-                    Some(self.allocator),
-                    self.external_callbacks,
+                    self.format_options,
+                    self.session,
                 );
                 if desc.starts_with('\n') {
                     desc.remove(0);
@@ -1036,14 +1032,13 @@ impl JsdocFormatter<'_, '_> {
             } else {
                 let indent = self.continuation_indent();
                 let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
-                let mut desc = wrap_text(
+                let mut desc = format_description_mdast(
                     &desc_text,
                     indent_width,
                     0,
                     false,
-                    Some(self.format_options),
-                    Some(self.allocator),
-                    self.external_callbacks,
+                    self.format_options,
+                    self.session,
                 );
                 // Skip leading blank line from wrap_text since we already added one
                 if desc.starts_with('\n') {
@@ -1060,14 +1055,13 @@ impl JsdocFormatter<'_, '_> {
             self.content_lines.push(tag_line);
             let indent = self.continuation_indent();
             let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
-            let desc = wrap_text(
+            let desc = format_description_mdast(
                 &desc_text,
                 indent_width,
                 0,
                 false,
-                Some(self.format_options),
-                Some(self.allocator),
-                self.external_callbacks,
+                self.format_options,
+                self.session,
             );
             self.push_indented_desc(indent, desc);
             return;
@@ -1091,14 +1085,13 @@ impl JsdocFormatter<'_, '_> {
                     let indent = self.continuation_indent();
                     let indent_width =
                         self.wrap_width.saturating_sub(self.continuation_indent_width());
-                    let desc = wrap_text(
+                    let desc = format_description_mdast(
                         desc_part,
                         indent_width,
                         0,
                         false,
-                        Some(self.format_options),
-                        Some(self.allocator),
-                        self.external_callbacks,
+                        self.format_options,
+                        self.session,
                     );
                     self.push_indented_desc(indent, desc);
                     return;
@@ -1138,8 +1131,11 @@ impl JsdocFormatter<'_, '_> {
         }
 
         let fits_on_one_line = prefix_len + str_width(&desc_text) <= self.wrap_width;
-        if fits_on_one_line || skip_wrapping {
-            // Fits on one line, or tag skips description formatting (no wrapping).
+        // Other descriptions go through wrapping, which collapses line breaks and spaces
+        let is_plain_one_liner =
+            fits_on_one_line && !desc_text.contains('\n') && !desc_text.contains("  ");
+        if is_plain_one_liner || skip_wrapping {
+            // Fits on one line as is, or tag skips description formatting (no wrapping).
             // Tags in TAGS_PEV_FORMATE_DESCRIPTION (e.g. @see) and unknown tags
             // keep their description on one line regardless of length.
             // When desc has embedded newlines (e.g. @module Name\n\nMore text),
@@ -1179,14 +1175,13 @@ impl JsdocFormatter<'_, '_> {
                     let indent_width =
                         self.wrap_width.saturating_sub(self.continuation_indent_width());
                     let tag_str_len = prefix_len.saturating_sub(self.continuation_indent_width());
-                    let desc = wrap_text(
+                    let desc = format_description_mdast(
                         raw_ws_desc,
                         indent_width,
                         tag_str_len,
                         false,
-                        Some(self.format_options),
-                        Some(self.allocator),
-                        self.external_callbacks,
+                        self.format_options,
+                        self.session,
                     );
                     let mut iter = desc.split('\n');
                     if let Some(first) = iter.next() {
@@ -1220,25 +1215,23 @@ impl JsdocFormatter<'_, '_> {
             let first_word_w = desc_text.split_whitespace().next().map_or(0, str_width);
             if prefix_len + first_word_w > self.wrap_width {
                 self.content_lines.push(tag_line);
-                let desc = wrap_text(
+                let desc = format_description_mdast(
                     &desc_text,
                     indent_width,
                     0,
                     false,
-                    Some(self.format_options),
-                    Some(self.allocator),
-                    self.external_callbacks,
+                    self.format_options,
+                    self.session,
                 );
                 self.push_indented_desc(indent, desc);
             } else {
-                let desc = wrap_text(
+                let desc = format_description_mdast(
                     &desc_text,
                     indent_width,
                     tag_str_len,
                     false,
-                    Some(self.format_options),
-                    Some(self.allocator),
-                    self.external_callbacks,
+                    self.format_options,
+                    self.session,
                 );
                 let mut iter = desc.split('\n');
                 if let Some(first) = iter.next() {

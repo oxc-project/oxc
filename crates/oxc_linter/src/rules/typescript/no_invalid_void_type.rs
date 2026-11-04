@@ -136,7 +136,7 @@ declare_oxc_lint!(
 
 impl Rule for NoInvalidVoidType {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
@@ -411,7 +411,7 @@ fn has_function_overload_signatures(
         AstKind::ExportDefaultDeclaration(_) => FunctionStatementWrapper::ExportDefault,
         _ => FunctionStatementWrapper::Plain,
     };
-    let impl_name = function.id.as_ref().map(|id| id.name.as_str());
+    let impl_name = function.name().map(|name| name.as_str());
 
     for ancestor in ctx.nodes().ancestors(function_node.id()) {
         let has_match = match ancestor.kind() {
@@ -454,9 +454,9 @@ fn has_overload_in_statements(
             return false;
         }
 
-        match (impl_wrapper, impl_name, candidate.id.as_ref()) {
+        match (impl_wrapper, impl_name, candidate.name()) {
             (FunctionStatementWrapper::ExportDefault, None, None) => true,
-            (_, Some(name), Some(candidate_name)) => candidate_name.name == name,
+            (_, Some(name), Some(candidate_name)) => candidate_name == name,
             _ => false,
         }
     })

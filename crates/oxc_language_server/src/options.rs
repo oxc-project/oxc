@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tower_lsp_server::ls_types::Uri;
+use tower_lsp_server::gen_lsp_types::Uri;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -28,7 +28,7 @@ mod test {
         let workspace = serde_json::from_value::<Vec<WorkspaceOption>>(json).unwrap();
 
         assert_eq!(workspace.len(), 1);
-        assert_eq!(workspace[0].workspace_uri.path().as_str(), "/root/");
+        assert_eq!(workspace[0].workspace_uri.to_string(), "file:///root/");
 
         let options = &workspace[0].options;
         assert_eq!(options["run"], true);

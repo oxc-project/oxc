@@ -4,7 +4,7 @@
  */
 
 export type AllowWarnDeny = ("allow" | "off" | "warn" | "error" | "deny") | number;
-export type GlobalValue = ("readonly" | "writable" | "off") | undefined;
+export type GlobalValue = "readonly" | "writable" | "off";
 export type ExternalPluginEntry =
   | string
   | {
@@ -94,7 +94,7 @@ export type ExtensionRule = "always" | "never" | "ignorePackages";
 export type ImportExtensionsObject =
   | ImportExtensionsConfig
   | {
-      [k: string]: ExtensionRule;
+      [k: string]: ExtensionRule | undefined;
     };
 /**
  * Action to take for path group overrides.
@@ -312,25 +312,22 @@ export type ChecksVoidReturn = boolean | ChecksVoidReturnOptions;
  * - An object with `message` and optional `fixWith` and `suggest`
  */
 export type BanConfigValue =
-  | (
-      | True
-      | string
-      | {
-          /**
-           * Replacement type for automatic fixing. Applied directly with `--fix`.
-           */
-          fixWith?: string;
-          /**
-           * Custom message explaining why the type is banned.
-           */
-          message?: string;
-          /**
-           * Suggested replacement types for manual review. Shown as editor suggestions.
-           */
-          suggest?: string[];
-        }
-    )
-  | undefined;
+  | True
+  | string
+  | {
+      /**
+       * Replacement type for automatic fixing. Applied directly with `--fix`.
+       */
+      fixWith?: string;
+      /**
+       * Custom message explaining why the type is banned.
+       */
+      message?: string;
+      /**
+       * Suggested replacement types for manual review. Shown as editor suggestions.
+       */
+      suggest?: string[];
+    };
 export type True = true;
 /**
  * Represents the different ways `allowConstantLoopConditions` can be specified in JSON.
@@ -360,48 +357,45 @@ export type ExplicitTimerDelayMode = "always" | "never";
 export type FilenameCaseJsonOptions =
   "kebabCase" | "camelCase" | "snakeCase" | "pascalCase" | "lowercase" | "screamingSnakeCase";
 export type ModuleStylesOverride =
-  | (
-      | false
-      | {
-          /**
-           * Whether default imports or whole-module `require()` assignments are allowed for this module.
-           *
-           * With `{ "styles": { "chalk": { "default": true } } }`, this is valid:
-           * ```js
-           * import chalk from "chalk";
-           * ```
-           */
-          default?: boolean;
-          /**
-           * Whether named imports or destructured `require()` calls are allowed for this module.
-           *
-           * With `{ "styles": { "node:util": { "named": true } } }`, this is valid:
-           * ```js
-           * import {promisify} from "node:util";
-           * ```
-           */
-          named?: boolean;
-          /**
-           * Whether namespace imports or whole-module `require()` assignments are allowed for this module.
-           *
-           * With `{ "styles": { "node:fs": { "namespace": true } } }`, this is valid:
-           * ```js
-           * import * as fs from "node:fs";
-           * ```
-           */
-          namespace?: boolean;
-          /**
-           * Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.
-           *
-           * With `{ "styles": { "polyfill": { "unassigned": true } } }`, this is valid:
-           * ```js
-           * import "polyfill";
-           * ```
-           */
-          unassigned?: boolean;
-        }
-    )
-  | undefined;
+  | false
+  | {
+      /**
+       * Whether default imports or whole-module `require()` assignments are allowed for this module.
+       *
+       * With `{ "styles": { "chalk": { "default": true } } }`, this is valid:
+       * ```js
+       * import chalk from "chalk";
+       * ```
+       */
+      default?: boolean;
+      /**
+       * Whether named imports or destructured `require()` calls are allowed for this module.
+       *
+       * With `{ "styles": { "node:util": { "named": true } } }`, this is valid:
+       * ```js
+       * import {promisify} from "node:util";
+       * ```
+       */
+      named?: boolean;
+      /**
+       * Whether namespace imports or whole-module `require()` assignments are allowed for this module.
+       *
+       * With `{ "styles": { "node:fs": { "namespace": true } } }`, this is valid:
+       * ```js
+       * import * as fs from "node:fs";
+       * ```
+       */
+      namespace?: boolean;
+      /**
+       * Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.
+       *
+       * With `{ "styles": { "polyfill": { "unassigned": true } } }`, this is valid:
+       * ```js
+       * import "polyfill";
+       * ```
+       */
+      unassigned?: boolean;
+    };
 export type NoInstanceofBuiltinsStrategy = "strict" | "loose";
 export type PreferTernaryOption = "always" | "only-single-line";
 export type RelativeUrlStyleConfig = "never" | "always";
@@ -418,20 +412,17 @@ export type AllowYoda = "never" | "always";
 export type OxlintOverrides = OxlintOverride[];
 export type JestVersionSchema = number | string;
 export type TagNamePreference =
-  | (
-      | string
-      | {
-          message: string;
-          replacement: string;
-          [k: string]: unknown | undefined;
-        }
-      | {
-          message: string;
-          [k: string]: unknown | undefined;
-        }
-      | boolean
-    )
-  | undefined;
+  | string
+  | {
+      message: string;
+      replacement: string;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      message: string;
+      [k: string]: unknown | undefined;
+    }
+  | boolean;
 export type OneOrManyFor_String = string | string[];
 export type CustomComponent =
   | string
@@ -607,7 +598,7 @@ export interface Oxlintrc {
    *
    * TypeScript plugin files are supported in the following environments:
    * - Deno and Bun: TypeScript files are supported natively.
-   * - Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in
+   * - Node.js >=22.18.0: TypeScript files are supported natively with built-in
    * type-stripping enabled by default.
    *
    * For older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.
@@ -927,7 +918,7 @@ export interface DummyRuleMap {
   "grouped-accessor-pairs"?:
     RuleNoConfig | [AllowWarnDeny, PairOrder] | [AllowWarnDeny, PairOrder, GroupedAccessorPairsConfig];
   "guard-for-in"?: RuleNoConfig;
-  "id-denylist"?: RuleNoConfig | [AllowWarnDeny, string, ...string[]];
+  "id-denylist"?: RuleNoConfig | [AllowWarnDeny, ...string[]];
   "id-length"?: RuleNoConfig | [AllowWarnDeny, IdLengthConfig];
   "id-match"?: RuleNoConfig | [AllowWarnDeny, string] | [AllowWarnDeny, string, IdMatchOptions];
   "import/consistent-type-specifier-style"?: RuleNoConfig | [AllowWarnDeny, Mode];
@@ -1205,11 +1196,9 @@ export interface DummyRuleMap {
   "no-redeclare"?: RuleNoConfig | [AllowWarnDeny, NoRedeclare];
   "no-regex-spaces"?: RuleNoConfig;
   "no-restricted-exports"?: RuleNoConfig | [AllowWarnDeny, NoRestrictedExportsConfig];
-  "no-restricted-globals"?:
-    RuleNoConfig | [AllowWarnDeny, NoRestrictedGlobalsConfigEnum, ...NoRestrictedGlobalsConfigEnum[]];
-  "no-restricted-imports"?:
-    RuleNoConfig | [AllowWarnDeny, NoRestrictedImportsConfigEnum, ...NoRestrictedImportsConfigEnum[]];
-  "no-restricted-properties"?: RuleNoConfig | [AllowWarnDeny, PropertyDetails, ...PropertyDetails[]];
+  "no-restricted-globals"?: RuleNoConfig | [AllowWarnDeny, ...NoRestrictedGlobalsConfigEnum[]];
+  "no-restricted-imports"?: RuleNoConfig | [AllowWarnDeny, ...NoRestrictedImportsConfigEnum[]];
+  "no-restricted-properties"?: RuleNoConfig | [AllowWarnDeny, ...PropertyDetails[]];
   "no-return-assign"?: RuleNoConfig | [AllowWarnDeny, NoReturnAssignMode];
   "no-script-url"?: RuleNoConfig;
   "no-self-assign"?: RuleNoConfig | [AllowWarnDeny, NoSelfAssign];
@@ -1228,7 +1217,7 @@ export interface DummyRuleMap {
   "no-undefined"?: RuleNoConfig;
   "no-underscore-dangle"?: RuleNoConfig | [AllowWarnDeny, NoUnderscoreDangleConfig];
   "no-unexpected-multiline"?: RuleNoConfig;
-  "no-unmodified-loop-condition"?: RuleNoConfig;
+  "no-unmodified-loop-condition"?: RuleNoConfig | [AllowWarnDeny, NoUnmodifiedLoopCondition];
   "no-unneeded-ternary"?: RuleNoConfig | [AllowWarnDeny, NoUnneededTernary];
   "no-unreachable"?: RuleNoConfig;
   "no-unreachable-loop"?: RuleNoConfig | [AllowWarnDeny, NoUnreachableLoopConfig];
@@ -1336,16 +1325,24 @@ export interface DummyRuleMap {
   "react-perf/jsx-no-new-function-as-prop"?: RuleNoConfig | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-object-as-prop"?: RuleNoConfig | [AllowWarnDeny, ReactPerfConfig];
   "react/button-has-type"?: RuleNoConfig | [AllowWarnDeny, ButtonHasType];
+  "react/capitalized-calls"?: RuleNoConfig | [AllowWarnDeny, CapitalizedCallsConfig];
   "react/checked-requires-onchange-or-readonly"?: RuleNoConfig | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly];
   "react/display-name"?: RuleNoConfig | [AllowWarnDeny, DisplayNameConfig];
+  "react/error-boundaries"?: RuleNoConfig;
   "react/exhaustive-deps"?: RuleNoConfig | [AllowWarnDeny, ExhaustiveDepsConfig];
+  "react/exhaustive-effect-dependencies"?: RuleNoConfig;
   "react/forbid-component-props"?: RuleNoConfig | [AllowWarnDeny, ForbidComponentPropsConfig];
   "react/forbid-dom-props"?: RuleNoConfig | [AllowWarnDeny, ForbidDomPropsConfig];
   "react/forbid-elements"?: RuleNoConfig | [AllowWarnDeny, ForbidElementsConfig];
   "react/forward-ref-uses-ref"?: RuleNoConfig;
   "react/function-component-definition"?: RuleNoConfig | [AllowWarnDeny, FunctionComponentDefinitionConfig];
+  "react/globals"?: RuleNoConfig;
   "react/hook-use-state"?: RuleNoConfig | [AllowWarnDeny, HookUseStateConfig];
+  "react/hooks"?: RuleNoConfig;
   "react/iframe-missing-sandbox"?: RuleNoConfig;
+  "react/immutability"?: RuleNoConfig;
+  "react/incompatible-library"?: RuleNoConfig;
+  "react/invariant"?: RuleNoConfig;
   "react/jsx-boolean-value"?:
     | RuleNoConfig
     | [AllowWarnDeny, EnforceBooleanAttribute]
@@ -1373,11 +1370,13 @@ export interface DummyRuleMap {
   "react/jsx-pascal-case"?: RuleNoConfig | [AllowWarnDeny, JsxPascalCaseConfig];
   "react/jsx-props-no-spread-multi"?: RuleNoConfig;
   "react/jsx-props-no-spreading"?: RuleNoConfig | [AllowWarnDeny, JsxPropsNoSpreadingConfig];
+  "react/memo-dependencies"?: RuleNoConfig;
   "react/no-array-index-key"?: RuleNoConfig;
   "react/no-children-prop"?: RuleNoConfig;
   "react/no-clone-element"?: RuleNoConfig;
   "react/no-danger"?: RuleNoConfig;
   "react/no-danger-with-children"?: RuleNoConfig;
+  "react/no-deriving-state-in-effects"?: RuleNoConfig;
   "react/no-did-mount-set-state"?: RuleNoConfig | [AllowWarnDeny, AllowedOrDisallowInFunc];
   "react/no-did-update-set-state"?: RuleNoConfig | [AllowWarnDeny, AllowedOrDisallowInFunc];
   "react/no-direct-mutation-state"?: RuleNoConfig;
@@ -1400,14 +1399,25 @@ export interface DummyRuleMap {
   "react/only-export-components"?: RuleNoConfig | [AllowWarnDeny, OnlyExportComponentsConfig];
   "react/prefer-es6-class"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever];
   "react/prefer-function-component"?: RuleNoConfig | [AllowWarnDeny, PreferFunctionComponent];
-  "react/react-compiler"?: RuleNoConfig | [AllowWarnDeny, ReactCompilerConfig];
+  "react/preserve-manual-memoization"?: RuleNoConfig;
+  "react/purity"?: RuleNoConfig;
   "react/react-in-jsx-scope"?: RuleNoConfig;
+  "react/refs"?: RuleNoConfig;
   "react/require-render-return"?: RuleNoConfig;
+  "react/rule-suppression"?: RuleNoConfig;
   "react/rules-of-hooks"?: RuleNoConfig;
   "react/self-closing-comp"?: RuleNoConfig | [AllowWarnDeny, SelfClosingComp];
+  "react/set-state-in-effect"?: RuleNoConfig;
+  "react/set-state-in-render"?: RuleNoConfig;
   "react/state-in-constructor"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever];
+  "react/static-components"?: RuleNoConfig;
   "react/style-prop-object"?: RuleNoConfig | [AllowWarnDeny, StylePropObjectConfig];
+  "react/syntax"?: RuleNoConfig;
+  "react/todo"?: RuleNoConfig;
+  "react/unsupported-syntax"?: RuleNoConfig;
+  "react/use-memo"?: RuleNoConfig;
   "react/void-dom-elements-no-children"?: RuleNoConfig;
+  "react/void-use-memo"?: RuleNoConfig;
   "require-await"?: RuleNoConfig;
   "require-unicode-regexp"?: RuleNoConfig | [AllowWarnDeny, RequireUnicodeRegexpConfig];
   "require-yield"?: RuleNoConfig;
@@ -1417,7 +1427,7 @@ export interface DummyRuleMap {
   "symbol-description"?: RuleNoConfig;
   "typescript/adjacent-overload-signatures"?: RuleNoConfig;
   "typescript/array-type"?: RuleNoConfig | [AllowWarnDeny, ArrayTypeConfig];
-  "typescript/await-thenable"?: RuleNoConfig;
+  "typescript/await-thenable"?: RuleNoConfig | [AllowWarnDeny, AwaitThenableConfig];
   "typescript/ban-ts-comment"?: RuleNoConfig | [AllowWarnDeny, BanTsCommentConfig];
   "typescript/ban-tslint-comment"?: RuleNoConfig;
   "typescript/ban-types"?: RuleNoConfig;
@@ -1449,6 +1459,7 @@ export interface DummyRuleMap {
   "typescript/no-extraneous-class"?: RuleNoConfig | [AllowWarnDeny, NoExtraneousClass];
   "typescript/no-floating-promises"?: RuleNoConfig | [AllowWarnDeny, NoFloatingPromisesConfig];
   "typescript/no-for-in-array"?: RuleNoConfig;
+  "typescript/no-generated-empty-object-type"?: RuleNoConfig;
   "typescript/no-implied-eval"?: RuleNoConfig;
   "typescript/no-import-type-side-effects"?: RuleNoConfig;
   "typescript/no-inferrable-types"?: RuleNoConfig | [AllowWarnDeny, NoInferrableTypes];
@@ -1481,6 +1492,7 @@ export interface DummyRuleMap {
   "typescript/no-unsafe-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-call"?: RuleNoConfig;
   "typescript/no-unsafe-declaration-merging"?: RuleNoConfig;
+  "typescript/no-unsafe-enum-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-enum-comparison"?: RuleNoConfig;
   "typescript/no-unsafe-function-type"?: RuleNoConfig;
   "typescript/no-unsafe-member-access"?: RuleNoConfig | [AllowWarnDeny, NoUnsafeMemberAccessConfig];
@@ -1638,7 +1650,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-object-from-entries"?: RuleNoConfig | [AllowWarnDeny, PreferObjectFromEntriesConfig];
   "unicorn/prefer-optional-catch-binding"?: RuleNoConfig;
   "unicorn/prefer-prototype-methods"?: RuleNoConfig;
-  "unicorn/prefer-query-selector"?: RuleNoConfig;
+  "unicorn/prefer-query-selector"?: RuleNoConfig | [AllowWarnDeny, PreferQuerySelector];
   "unicorn/prefer-reflect-apply"?: RuleNoConfig;
   "unicorn/prefer-regexp-test"?: RuleNoConfig;
   "unicorn/prefer-response-static-json"?: RuleNoConfig;
@@ -1788,7 +1800,356 @@ export interface DummyRuleMap {
   "vue/valid-define-props"?: RuleNoConfig;
   "vue/valid-next-tick"?: RuleNoConfig;
   yoda?: RuleNoConfig | [AllowWarnDeny, AllowYoda] | [AllowWarnDeny, AllowYoda, YodaOptions];
-  [k: string]: DummyRule | undefined;
+  [k: string]:
+    | DummyRule
+    | RuleNoConfig
+    | [AllowWarnDeny, AccessorPairsConfig]
+    | [AllowWarnDeny, ArrayCallbackReturn]
+    | [AllowWarnDeny, Mode2]
+    | [AllowWarnDeny, Mode2, ArrowBodyStyleConfig]
+    | [AllowWarnDeny, AlwaysNever]
+    | [AllowWarnDeny, AlwaysNever, OptionsJsonEnum]
+    | [AllowWarnDeny, ClassMethodsUseThisConfig]
+    | [AllowWarnDeny, ComplexityConfigEnum]
+    | [AllowWarnDeny, CurlyType]
+    | [AllowWarnDeny, CurlyType, CurlyConsistent]
+    | [AllowWarnDeny, DefaultCaseConfig]
+    | [AllowWarnDeny, CompareType]
+    | [AllowWarnDeny, CompareType, EqeqeqOptions]
+    | [AllowWarnDeny, FuncNameMatchingMode]
+    | [AllowWarnDeny, FuncNameMatchingMode, FuncNameMatchingConfig]
+    | [AllowWarnDeny, FuncNameMatchingMode]
+    | [AllowWarnDeny, FuncNameMatchingConfig]
+    | [AllowWarnDeny, FuncNamesConfigType]
+    | [AllowWarnDeny, FuncNamesConfigType, FuncNamesGeneratorsConfig]
+    | [AllowWarnDeny, Style]
+    | [AllowWarnDeny, Style, FuncStyleConfig]
+    | [AllowWarnDeny, GetterReturn]
+    | [AllowWarnDeny, PairOrder]
+    | [AllowWarnDeny, PairOrder, GroupedAccessorPairsConfig]
+    | [AllowWarnDeny, ...string[]]
+    | [AllowWarnDeny, IdLengthConfig]
+    | [AllowWarnDeny, string]
+    | [AllowWarnDeny, string, IdMatchOptions]
+    | [AllowWarnDeny, Mode]
+    | [AllowWarnDeny, ExtensionRule]
+    | [AllowWarnDeny, ExtensionRule, ImportExtensionsObject]
+    | [AllowWarnDeny, ExtensionRule]
+    | [AllowWarnDeny, ImportExtensionsObject]
+    | [AllowWarnDeny, AbsoluteFirst]
+    | [AllowWarnDeny, MaxDependenciesConfigJson]
+    | [AllowWarnDeny, Namespace]
+    | [AllowWarnDeny, NewlineAfterImport]
+    | [AllowWarnDeny, NoAbsolutePath]
+    | [AllowWarnDeny, NoAnonymousDefaultExport]
+    | [AllowWarnDeny, NoCommonjs]
+    | [AllowWarnDeny, NoCycle]
+    | [AllowWarnDeny, NoDuplicates]
+    | [AllowWarnDeny, NoDynamicRequire]
+    | [AllowWarnDeny, NoNamespaceConfig]
+    | [AllowWarnDeny, NoNodejsModulesConfig]
+    | [AllowWarnDeny, NoUnassignedImportConfig]
+    | [AllowWarnDeny, PreferDefaultExport]
+    | [AllowWarnDeny, AlwaysNever]
+    | [AllowWarnDeny, AlwaysNever, InitDeclarationsConfig]
+    | [AllowWarnDeny, ConsistentTestItConfig]
+    | [AllowWarnDeny, ExpectExpectConfig]
+    | [AllowWarnDeny, MaxExpectsConfig]
+    | [AllowWarnDeny, MaxNestedDescribeConfig]
+    | [AllowWarnDeny, NoDeprecatedFunctionsConfig]
+    | [AllowWarnDeny, NoHooksConfig]
+    | [AllowWarnDeny, NoLargeSnapshotsConfig]
+    | [AllowWarnDeny, NoRestrictedTestMethodsConfig]
+    | [AllowWarnDeny, NoRestrictedMatchersConfig]
+    | [AllowWarnDeny, NoStandaloneExpectConfig]
+    | [AllowWarnDeny, PreferEndingWithAnExpectConfig]
+    | [AllowWarnDeny, PreferExpectAssertionsConfig]
+    | [AllowWarnDeny, PreferImportingJestGlobalsConfig]
+    | [AllowWarnDeny, PreferLowercaseTitleConfig]
+    | [AllowWarnDeny, SnapshotHintMode]
+    | [AllowWarnDeny, RequireHookConfig]
+    | [AllowWarnDeny, RequireTopLevelDescribeConfig]
+    | [AllowWarnDeny, ValidExpectConfig]
+    | [AllowWarnDeny, CheckTagNamesConfig]
+    | [AllowWarnDeny, EmptyTagsConfig]
+    | [AllowWarnDeny, NoBlankBlocks]
+    | [AllowWarnDeny, NoDefaultsConfig]
+    | [AllowWarnDeny, RequireParamConfig]
+    | [AllowWarnDeny, RequireParamDescriptionConfig]
+    | [AllowWarnDeny, RequireParamTypeConfig]
+    | [AllowWarnDeny, RequireReturnsConfig]
+    | [AllowWarnDeny, RequireYieldsConfig]
+    | [AllowWarnDeny, AltTextConfigSchema]
+    | [AllowWarnDeny, AnchorAmbiguousTextConfig]
+    | [AllowWarnDeny, AnchorHasContentConfig]
+    | [AllowWarnDeny, AnchorIsValidConfig]
+    | [AllowWarnDeny, AriaRoleConfig]
+    | [AllowWarnDeny, AutocompleteValidConfig]
+    | [AllowWarnDeny, ControlHasAssociatedLabelConfig]
+    | [AllowWarnDeny, HeadingHasContentConfig]
+    | [AllowWarnDeny, ImgRedundantAltConfig]
+    | [AllowWarnDeny, InteractiveSupportsFocusConfig]
+    | [AllowWarnDeny, LabelHasAssociatedControlConfig]
+    | [AllowWarnDeny, MediaHasCaptionConfig]
+    | [AllowWarnDeny, MouseEventsHaveKeyEventsConfig]
+    | [AllowWarnDeny, NoAutofocus]
+    | [AllowWarnDeny, NoDistractingElementsConfig]
+    | [AllowWarnDeny, NoInteractiveElementToNoninteractiveRoleConfig]
+    | [AllowWarnDeny, NoNoninteractiveElementInteractionsConfig]
+    | [AllowWarnDeny, NoNoninteractiveElementToInteractiveRoleConfig]
+    | [AllowWarnDeny, NoNoninteractiveTabindexConfig]
+    | [AllowWarnDeny, NoRedundantRolesConfig]
+    | [AllowWarnDeny, NoStaticElementInteractionsConfig]
+    | [AllowWarnDeny, AlwaysNever]
+    | [AllowWarnDeny, AlwaysNever, LogicalAssignmentOperatorsConfig]
+    | [AllowWarnDeny, MaxClassesPerFileConfigEnum]
+    | [AllowWarnDeny, MaxDepthConfigEnum]
+    | [AllowWarnDeny, MaxLinesConfigEnum]
+    | [AllowWarnDeny, MaxLinesPerFunctionConfigEnum]
+    | [AllowWarnDeny, MaxNestedCallbacksConfigEnum]
+    | [AllowWarnDeny, MaxParamsConfigEnum]
+    | [AllowWarnDeny, MaxStatementsConfigEnum]
+    | [AllowWarnDeny, NewCapConfig]
+    | [AllowWarnDeny, NoBitwiseConfig]
+    | [AllowWarnDeny, NoCondAssignConfig]
+    | [AllowWarnDeny, NoConsoleConfig]
+    | [AllowWarnDeny, NoConstantBinaryExpressionConfig]
+    | [AllowWarnDeny, NoConstantCondition]
+    | [AllowWarnDeny, NoDuplicateImports]
+    | [AllowWarnDeny, NoElseReturn]
+    | [AllowWarnDeny, NoEmpty]
+    | [AllowWarnDeny, NoEmptyFunctionConfig]
+    | [AllowWarnDeny, NoEmptyPattern]
+    | [AllowWarnDeny, NoEval]
+    | [AllowWarnDeny, NoExtendNativeConfig]
+    | [AllowWarnDeny, NoExtraBooleanCast]
+    | [AllowWarnDeny, NoFallthroughConfig]
+    | [AllowWarnDeny, NoGlobalAssignConfig]
+    | [AllowWarnDeny, NoImplicitCoercionConfig]
+    | [AllowWarnDeny, NoImplicitGlobalsConfig]
+    | [AllowWarnDeny, NoInlineCommentsConfig]
+    | [AllowWarnDeny, NoInnerDeclarationsConfig]
+    | [AllowWarnDeny, NoInnerDeclarationsConfig, NoInnerDeclarationsOptions]
+    | [AllowWarnDeny, NoInvalidRegexpConfig]
+    | [AllowWarnDeny, NoIrregularWhitespaceConfig]
+    | [AllowWarnDeny, NoLabels]
+    | [AllowWarnDeny, NoMagicNumbersConfig]
+    | [AllowWarnDeny, NoMisleadingCharacterClass]
+    | [AllowWarnDeny, NoMultiAssign]
+    | [AllowWarnDeny, NoParamReassignConfig]
+    | [AllowWarnDeny, NoPlusplus]
+    | [AllowWarnDeny, NoPromiseExecutorReturnConfig]
+    | [AllowWarnDeny, NoRedeclare]
+    | [AllowWarnDeny, NoRestrictedExportsConfig]
+    | [AllowWarnDeny, ...NoRestrictedGlobalsConfigEnum[]]
+    | [AllowWarnDeny, ...NoRestrictedImportsConfigEnum[]]
+    | [AllowWarnDeny, ...PropertyDetails[]]
+    | [AllowWarnDeny, NoReturnAssignMode]
+    | [AllowWarnDeny, NoSelfAssign]
+    | [AllowWarnDeny, NoSequences]
+    | [AllowWarnDeny, NoShadowConfig]
+    | [AllowWarnDeny, NoShadowRestrictedNamesConfig]
+    | [AllowWarnDeny, NoUndef]
+    | [AllowWarnDeny, NoUnderscoreDangleConfig]
+    | [AllowWarnDeny, NoUnmodifiedLoopCondition]
+    | [AllowWarnDeny, NoUnneededTernary]
+    | [AllowWarnDeny, NoUnreachableLoopConfig]
+    | [AllowWarnDeny, NoUnsafeNegation]
+    | [AllowWarnDeny, NoUnsafeOptionalChaining]
+    | [AllowWarnDeny, NoUnusedExpressionsConfig]
+    | [AllowWarnDeny, NoUnusedVarsConfig]
+    | [AllowWarnDeny, NoUseBeforeDefineConfigJson]
+    | [AllowWarnDeny, NoUselessComputedKey]
+    | [AllowWarnDeny, NoUselessEscapeConfig]
+    | [AllowWarnDeny, NoUselessRenameConfig]
+    | [AllowWarnDeny, NoVoid]
+    | [AllowWarnDeny, NoWarningCommentsConfig]
+    | [AllowWarnDeny, CallbackReturn]
+    | [AllowWarnDeny, ExportsStyleMode]
+    | [AllowWarnDeny, ExportsStyleMode, ExportsStyleOptions]
+    | [AllowWarnDeny, HandleCallbackErrConfig]
+    | [AllowWarnDeny, NoMixedRequiresConfig]
+    | [AllowWarnDeny, NoProcessEnvConfig]
+    | [AllowWarnDeny, NoSyncConfig]
+    | [AllowWarnDeny, NoTopLevelAwaitConfig]
+    | [AllowWarnDeny, ShorthandType]
+    | [AllowWarnDeny, ShorthandType, ObjectShorthandOptions]
+    | [AllowWarnDeny, OneVar]
+    | [AllowWarnDeny, AlwaysNever]
+    | [AllowWarnDeny, NoAsyncEndpointHandlersConfig]
+    | [AllowWarnDeny, NoBarrelFile]
+    | [AllowWarnDeny, NoMapSpreadConfig]
+    | [AllowWarnDeny, NoOptionalChainingConfig]
+    | [AllowWarnDeny, NoRestSpreadPropertiesOptions]
+    | [AllowWarnDeny, PreferArrowCallbackConfig]
+    | [AllowWarnDeny, PreferConstConfig]
+    | [AllowWarnDeny, PreferDestructuringOption]
+    | [AllowWarnDeny, PreferDestructuringOption, PreferDestructuringEnforcementConfig]
+    | [AllowWarnDeny, PreferPromiseRejectErrors]
+    | [AllowWarnDeny, PreferRegexLiteralsConfig]
+    | [AllowWarnDeny, PreserveCaughtErrorOptions]
+    | [AllowWarnDeny, AlwaysReturnConfig]
+    | [AllowWarnDeny, CatchOrReturnConfig]
+    | [AllowWarnDeny, NoCallbackInPromiseConfig]
+    | [AllowWarnDeny, NoPromiseInCallbackConfig]
+    | [AllowWarnDeny, NoReturnWrap]
+    | [AllowWarnDeny, ParamNamesConfig]
+    | [AllowWarnDeny, PreferAwaitToThenConfig]
+    | [AllowWarnDeny, SpecOnlyConfig]
+    | [AllowWarnDeny, RadixType]
+    | [AllowWarnDeny, ReactPerfConfig]
+    | [AllowWarnDeny, ButtonHasType]
+    | [AllowWarnDeny, CapitalizedCallsConfig]
+    | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly]
+    | [AllowWarnDeny, DisplayNameConfig]
+    | [AllowWarnDeny, ExhaustiveDepsConfig]
+    | [AllowWarnDeny, ForbidComponentPropsConfig]
+    | [AllowWarnDeny, ForbidDomPropsConfig]
+    | [AllowWarnDeny, ForbidElementsConfig]
+    | [AllowWarnDeny, FunctionComponentDefinitionConfig]
+    | [AllowWarnDeny, HookUseStateConfig]
+    | [AllowWarnDeny, EnforceBooleanAttribute]
+    | [AllowWarnDeny, EnforceBooleanAttribute, JsxBooleanValueOptions]
+    | [AllowWarnDeny, JsxCurlyBracePresenceConfig]
+    | [AllowWarnDeny, JsxFilenameExtensionConfig]
+    | [AllowWarnDeny, FragmentMode]
+    | [AllowWarnDeny, JsxHandlerNamesConfig]
+    | [AllowWarnDeny, JsxKeyConfig]
+    | [AllowWarnDeny, JsxMaxDepthConfig]
+    | [AllowWarnDeny, JsxNoLiteralsConfig]
+    | [AllowWarnDeny, JsxNoScriptUrlComponent[]]
+    | [AllowWarnDeny, JsxNoScriptUrlComponent[], JsxNoScriptUrlOptions]
+    | [AllowWarnDeny, JsxNoScriptUrlOptions]
+    | [AllowWarnDeny, JsxNoTargetBlank]
+    | [AllowWarnDeny, JsxNoUselessFragment]
+    | [AllowWarnDeny, JsxPascalCaseConfig]
+    | [AllowWarnDeny, JsxPropsNoSpreadingConfig]
+    | [AllowWarnDeny, AllowedOrDisallowInFunc]
+    | [AllowWarnDeny, NoMultiCompConfig]
+    | [AllowWarnDeny, NoStringRefs]
+    | [AllowWarnDeny, NoUnknownPropertyConfig]
+    | [AllowWarnDeny, NoUnsafeConfig]
+    | [AllowWarnDeny, NoUnstableNestedComponentsConfig]
+    | [AllowWarnDeny, OnlyExportComponentsConfig]
+    | [AllowWarnDeny, PreferFunctionComponent]
+    | [AllowWarnDeny, SelfClosingComp]
+    | [AllowWarnDeny, StylePropObjectConfig]
+    | [AllowWarnDeny, RequireUnicodeRegexpConfig]
+    | [AllowWarnDeny, SortImportsOptions]
+    | [AllowWarnDeny, SortOrder]
+    | [AllowWarnDeny, SortOrder, SortKeysOptions]
+    | [AllowWarnDeny, SortVars]
+    | [AllowWarnDeny, ArrayTypeConfig]
+    | [AllowWarnDeny, AwaitThenableConfig]
+    | [AllowWarnDeny, BanTsCommentConfig]
+    | [AllowWarnDeny, ClassLiteralPropertyStyleOption]
+    | [AllowWarnDeny, PreferGenericType]
+    | [AllowWarnDeny, ConsistentIndexedObjectStyleConfig]
+    | [AllowWarnDeny, ConsistentReturnConfig]
+    | [AllowWarnDeny, ConsistentTypeAssertionsConfig]
+    | [AllowWarnDeny, ConsistentTypeDefinitionsConfig]
+    | [AllowWarnDeny, ConsistentTypeExportsConfig]
+    | [AllowWarnDeny, ConsistentTypeImportsConfig]
+    | [AllowWarnDeny, DotNotationConfig]
+    | [AllowWarnDeny, ExplicitFunctionReturnTypeConfig]
+    | [AllowWarnDeny, ExplicitMemberAccessibilityConfig]
+    | [AllowWarnDeny, ExplicitModuleBoundaryTypesConfig]
+    | [AllowWarnDeny, MethodSignatureStyleConfig]
+    | [AllowWarnDeny, NoBaseToStringConfig]
+    | [AllowWarnDeny, NoConfusingVoidExpressionConfig]
+    | [AllowWarnDeny, NoDeprecatedConfig]
+    | [AllowWarnDeny, NoDuplicateTypeConstituentsConfig]
+    | [AllowWarnDeny, NoEmptyInterface]
+    | [AllowWarnDeny, NoEmptyObjectTypeConfig]
+    | [AllowWarnDeny, NoExplicitAny]
+    | [AllowWarnDeny, NoExtraneousClass]
+    | [AllowWarnDeny, NoFloatingPromisesConfig]
+    | [AllowWarnDeny, NoInferrableTypes]
+    | [AllowWarnDeny, NoInvalidVoidTypeConfig]
+    | [AllowWarnDeny, NoMeaninglessVoidOperatorConfig]
+    | [AllowWarnDeny, NoMisusedPromisesConfig]
+    | [AllowWarnDeny, NoMisusedSpreadConfig]
+    | [AllowWarnDeny, NoNamespace]
+    | [AllowWarnDeny, NoRequireImportsConfig]
+    | [AllowWarnDeny, NoRestrictedTypesConfig]
+    | [AllowWarnDeny, NoThisAliasConfig]
+    | [AllowWarnDeny, NoUnnecessaryBooleanLiteralCompareConfig]
+    | [AllowWarnDeny, NoUnnecessaryConditionConfig]
+    | [AllowWarnDeny, NoUnnecessaryTypeAssertionConfig]
+    | [AllowWarnDeny, NoUnsafeMemberAccessConfig]
+    | [AllowWarnDeny, OnlyThrowErrorConfig]
+    | [AllowWarnDeny, ParameterPropertiesConfig]
+    | [AllowWarnDeny, PreferLiteralEnumMember]
+    | [AllowWarnDeny, PreferNullishCoalescingConfig]
+    | [AllowWarnDeny, PreferOptionalChainConfig]
+    | [AllowWarnDeny, PreferPromiseRejectErrorsConfig]
+    | [AllowWarnDeny, PreferReadonlyConfig]
+    | [AllowWarnDeny, PreferReadonlyParameterTypesConfig]
+    | [AllowWarnDeny, PreferStringStartsEndsWithConfig]
+    | [AllowWarnDeny, PromiseFunctionAsyncConfig]
+    | [AllowWarnDeny, RequireArraySortCompareConfig]
+    | [AllowWarnDeny, RestrictPlusOperandsConfig]
+    | [AllowWarnDeny, RestrictTemplateExpressionsConfig]
+    | [AllowWarnDeny, ReturnAwaitOption]
+    | [AllowWarnDeny, StrictBooleanExpressionsConfig]
+    | [AllowWarnDeny, StrictVoidReturnConfig]
+    | [AllowWarnDeny, SwitchExhaustivenessCheckConfig]
+    | [AllowWarnDeny, TripleSlashReferenceConfig]
+    | [AllowWarnDeny, UnboundMethodConfig]
+    | [AllowWarnDeny, UnifiedSignaturesOptions]
+    | [AllowWarnDeny, BomOptionType]
+    | [AllowWarnDeny, CatchErrorNameConfig]
+    | [AllowWarnDeny, ConsistentFunctionScoping]
+    | [AllowWarnDeny, ExplicitLengthCheck]
+    | [AllowWarnDeny, ExplicitTimerDelayMode]
+    | [AllowWarnDeny, ImportStyleConfig]
+    | [AllowWarnDeny, MaxNestedCalls]
+    | [AllowWarnDeny, NoArrayReduce]
+    | [AllowWarnDeny, NoArrayReverse]
+    | [AllowWarnDeny, NoArraySort]
+    | [AllowWarnDeny, NoInstanceofBuiltinsConfig]
+    | [AllowWarnDeny, NoNull]
+    | [AllowWarnDeny, NoTypeofUndefined]
+    | [AllowWarnDeny, NoUselessPromiseResolveRejectOptions]
+    | [AllowWarnDeny, NoUselessUndefined]
+    | [AllowWarnDeny, NumericSeparatorsStyleConfig]
+    | [AllowWarnDeny, PreferAtConfig]
+    | [AllowWarnDeny, PreferExportFrom]
+    | [AllowWarnDeny, PreferNumberPropertiesConfig]
+    | [AllowWarnDeny, PreferObjectFromEntriesConfig]
+    | [AllowWarnDeny, PreferQuerySelector]
+    | [AllowWarnDeny, PreferSingleCallConfig]
+    | [AllowWarnDeny, PreferStructuredCloneConfig]
+    | [AllowWarnDeny, PreferTernaryOption]
+    | [AllowWarnDeny, RelativeUrlStyleConfig]
+    | [AllowWarnDeny, SwitchCaseBracesConfig]
+    | [AllowWarnDeny, TextEncodingIdentifierCase]
+    | [AllowWarnDeny, UseIsnan]
+    | [AllowWarnDeny, ValidTypeof]
+    | [AllowWarnDeny, ConsistentEachForJson]
+    | [AllowWarnDeny, ConsistentTestFilenameConfig]
+    | [AllowWarnDeny, ConsistentVitestConfig]
+    | [AllowWarnDeny, PreferImportInMockConfig]
+    | [AllowWarnDeny, RequireMockTypeParametersConfig]
+    | [AllowWarnDeny, CaseType]
+    | [AllowWarnDeny, DeclarationStyle]
+    | [AllowWarnDeny, DeclarationStyle2]
+    | [AllowWarnDeny, DefinePropsDestructuring]
+    | [AllowWarnDeny, MaxProps]
+    | [AllowWarnDeny, NextTickOption]
+    | [AllowWarnDeny, NoAsyncInComputedPropertiesConfig]
+    | [AllowWarnDeny, NoDeprecatedModelDefinitionConfig]
+    | [AllowWarnDeny, NoDupeKeysConfig]
+    | [AllowWarnDeny, NoReservedComponentNames]
+    | [AllowWarnDeny, NoReservedKeysConfig]
+    | [AllowWarnDeny, NoReservedPropsConfig]
+    | [AllowWarnDeny, CaseType2]
+    | [AllowWarnDeny, CaseType2, Options]
+    | [AllowWarnDeny, RequireDirectExport]
+    | [AllowWarnDeny, ReturnInComputedPropertyConfig]
+    | [AllowWarnDeny, AllowYoda]
+    | [AllowWarnDeny, AllowYoda, YodaOptions]
+    | undefined;
 }
 export interface AccessorPairsConfig {
   /**
@@ -2067,7 +2428,7 @@ export interface ImportExtensionsConfig {
    * Per-extension rules.
    */
   pattern?: {
-    [k: string]: ExtensionRule;
+    [k: string]: ExtensionRule | undefined;
   };
 }
 export interface PathGroupOverrideConfig {
@@ -2386,7 +2747,8 @@ export interface NoHooksConfig {
 export interface NoLargeSnapshotsConfig {
   /**
    * A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.
-   * Snapshot names can be specified as regular expressions.
+   * Each snapshot name is interpreted as a Rust regular expression. If it is not a valid regular
+   * expression, it is matched as an exact literal string instead.
    */
   allowedSnapshots?: {
     [k: string]: string[] | undefined;
@@ -2401,10 +2763,10 @@ export interface NoLargeSnapshotsConfig {
   maxSize?: number;
 }
 export interface NoRestrictedTestMethodsConfig {
-  [k: string]: (string | null) | undefined;
+  [k: string]: string | null | undefined;
 }
 export interface NoRestrictedMatchersConfig {
-  [k: string]: (string | null) | undefined;
+  [k: string]: string | null | undefined;
 }
 export interface NoStandaloneExpectConfig {
   /**
@@ -3509,6 +3871,11 @@ export interface NoRedeclare {
    * When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
    */
   builtinGlobals?: boolean;
+  /**
+   * When `true`, automatically merged declarations like namespace, class, etc. will be
+   * ignored when checking for redeclarations.
+   */
+  ignoreDeclarationMerge?: boolean;
 }
 export interface NoRestrictedExportsConfig {
   /**
@@ -3801,6 +4168,13 @@ export interface NoUnderscoreDangleConfig {
    */
   enforceInMethodNames?: boolean;
 }
+export interface NoUnmodifiedLoopCondition {
+  /**
+   * Whether references in each branch of a conditional expression should be checked
+   * independently instead of checking the result of the entire expression.
+   */
+  checkConditionalExpressions?: boolean;
+}
 export interface NoUnneededTernary {
   /**
    * Whether to allow the default assignment pattern `x ? x : y`.
@@ -3862,10 +4236,10 @@ export interface NoUnusedVarsOptions {
    * Specifies exceptions to this rule for unused arguments. Arguments whose
    * names match this pattern will be ignored.
    *
-   * By default, this pattern is `^_` unless options are configured with an
-   * object. In this case it will default to [`None`]. Note that this
-   * behavior deviates from both ESLint and TypeScript-ESLint, which never
-   * provide a default pattern.
+   * By default, names starting with `_` are ignored, except for the bare `_`
+   * parameter. If options are configured with an object, this will default
+   * to [`None`]. Note that this behavior deviates from both ESLint and
+   * TypeScript-ESLint, which never provide a default pattern.
    *
    * #### Example
    *
@@ -4605,6 +4979,21 @@ export interface ButtonHasType {
    */
   submit?: boolean;
 }
+export interface CapitalizedCallsConfig {
+  /**
+   * Exact names of capitalized functions that may be called directly.
+   * Forwarded to the React Compiler's `validateNoCapitalizedCalls`
+   * environment option.
+   */
+  allow?: string[];
+  /**
+   * A regex pattern; capitalized functions whose name matches may be called
+   * directly, checked alongside `allow`. Useful when a codebase has a
+   * naming convention for capitalized non-component factories, such as
+   * generated event or schema builders (e.g. `"Event$"`).
+   */
+  allowPattern?: string;
+}
 export interface CheckedRequiresOnchangeOrReadonly {
   /**
    * Ignore the restriction that `checked` and `defaultChecked` should not be used together.
@@ -5073,6 +5462,20 @@ export interface NoUnstableNestedComponentsConfig {
 }
 export interface OnlyExportComponentsConfig {
   /**
+   * Allow an exported object when every property is a React component.
+   * This matches Vite's compound component support. The object must be non-empty,
+   * contain no nested objects, spreads, or accessors, and anonymous functions
+   * must use a component name as a static property key.
+   *
+   * ```jsx
+   * // Allowed when allowCompoundComponents: true
+   * const Root = () => <div />;
+   * const Label = () => <span />;
+   * export const Tag = { Root, Label };
+   * ```
+   */
+  allowCompoundComponents?: boolean;
+  /**
    * Allow exporting primitive constants (string/number/boolean/template literal)
    * alongside component exports without triggering a violation. Recommended when your
    * bundler’s Fast Refresh integration supports this (enabled by the plugin’s `vite`
@@ -5116,15 +5519,6 @@ export interface PreferFunctionComponent {
    * `PureComponent` are allowed.
    */
   allowJsxUtilityClass?: boolean;
-}
-export interface ReactCompilerConfig {
-  /**
-   * Also report compiler bail-outs — places where React Compiler skipped a
-   * component or hook (for example because of unsupported syntax) without
-   * finding a rule violation. These do not indicate incorrect code, only
-   * code that the compiler declined to optimize.
-   */
-  reportAllBailouts?: boolean;
 }
 export interface SelfClosingComp {
   /**
@@ -5235,6 +5629,14 @@ export interface ArrayTypeConfig {
    * The array type expected for readonly cases. If omitted, the value for `default` will be used.
    */
   readonly?: ReadonlyArrayOption;
+}
+export interface AwaitThenableConfig {
+  /**
+   * Allow Promise aggregators such as `Promise.all` to receive mixed arrays or
+   * iterables containing at least one potentially Promise-like value.
+   * Inputs containing only synchronous values are still reported.
+   */
+  allowMixedPromiseArrays?: boolean;
 }
 /**
  * This rule allows you to specify how different TypeScript directive comments
@@ -6203,9 +6605,11 @@ export interface SwitchExhaustivenessCheckConfig {
    */
   considerDefaultExhaustiveForUnions?: boolean;
   /**
-   * Regular expression pattern that when matched in a default case comment,
-   * will suppress the exhaustiveness check.
-   * Example: `"@skip-exhaustive-check"` to allow `default: // @skip-exhaustive-check`
+   * Regular expression pattern for a comment that acts as an omitted `default` case.
+   * The comment must appear after the final case and the switch must not have a `default` case.
+   * For union types, it suppresses the exhaustiveness check only when
+   * `considerDefaultExhaustiveForUnions` is enabled.
+   * Example: `"^skip default$"` to allow a switch ending in `// skip default`.
    */
   defaultCaseCommentPattern?: string;
   /**
@@ -6581,12 +6985,48 @@ export interface NumericSeparatorsStyleConfig {
    * Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).
    * Controls how digits are grouped and when separators are applied.
    */
-  binary?: NumericBaseConfig;
+  binary?: {
+    /**
+     * The number of digits per group when inserting numeric separators.
+     * For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
+     */
+    groupLength?: number;
+    /**
+     * The minimum number of digits required before grouping is applied.
+     * Values with fewer digits than this threshold will not be grouped.
+     */
+    minimumDigits?: number;
+    /**
+     * Only enforce the rule when the numeric literal already contains a separator (`_`).
+     *
+     * When `true`, numbers without separators are left as-is; when `false` (default),
+     * grouping will be enforced for eligible numbers even if they don't include separators yet.
+     */
+    onlyIfContainsSeparator?: boolean;
+  };
   /**
    * Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).
    * Controls how digits are grouped and when separators are applied.
    */
-  hexadecimal?: NumericBaseConfig;
+  hexadecimal?: {
+    /**
+     * The number of digits per group when inserting numeric separators.
+     * For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
+     */
+    groupLength?: number;
+    /**
+     * The minimum number of digits required before grouping is applied.
+     * Values with fewer digits than this threshold will not be grouped.
+     */
+    minimumDigits?: number;
+    /**
+     * Only enforce the rule when the numeric literal already contains a separator (`_`).
+     *
+     * When `true`, numbers without separators are left as-is; when `false` (default),
+     * grouping will be enforced for eligible numbers even if they don't include separators yet.
+     */
+    onlyIfContainsSeparator?: boolean;
+  };
   /**
    * Configuration for decimal numbers (integers, fraction parts, and exponents).
    * Controls how digits are grouped and when separators are applied.
@@ -6596,26 +7036,25 @@ export interface NumericSeparatorsStyleConfig {
    * Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).
    * Controls how digits are grouped and when separators are applied.
    */
-  octal?: NumericBaseConfig;
-  /**
-   * Only enforce the rule when the numeric literal already contains a separator (`_`).
-   *
-   * When `true`, numbers without separators are left as-is; when `false` (default),
-   * grouping will be enforced for eligible numbers even if they don't include separators yet.
-   */
-  onlyIfContainsSeparator?: boolean;
-}
-export interface NumericBaseConfig {
-  /**
-   * The number of digits per group when inserting numeric separators.
-   * For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
-   */
-  groupLength?: number;
-  /**
-   * The minimum number of digits required before grouping is applied.
-   * Values with fewer digits than this threshold will not be grouped.
-   */
-  minimumDigits?: number;
+  octal?: {
+    /**
+     * The number of digits per group when inserting numeric separators.
+     * For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
+     */
+    groupLength?: number;
+    /**
+     * The minimum number of digits required before grouping is applied.
+     * Values with fewer digits than this threshold will not be grouped.
+     */
+    minimumDigits?: number;
+    /**
+     * Only enforce the rule when the numeric literal already contains a separator (`_`).
+     *
+     * When `true`, numbers without separators are left as-is; when `false` (default),
+     * grouping will be enforced for eligible numbers even if they don't include separators yet.
+     */
+    onlyIfContainsSeparator?: boolean;
+  };
   /**
    * Only enforce the rule when the numeric literal already contains a separator (`_`).
    *
@@ -6680,6 +7119,13 @@ export interface PreferObjectFromEntriesConfig {
    * Additional functions to treat as equivalents to `Object.fromEntries`.
    */
   functions?: string[];
+}
+export interface PreferQuerySelector {
+  /**
+   * When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.
+   * This avoids the need to manually compose a CSS selector string, which can be less readable.
+   */
+  allowWithVariables?: boolean;
 }
 export interface PreferSingleCallConfig {
   /**

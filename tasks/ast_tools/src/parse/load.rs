@@ -1,5 +1,6 @@
 use std::{fs, path::Path};
 
+use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{
     Attribute, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Token, Visibility,
@@ -78,6 +79,8 @@ fn parse_index_type_macro(
                 quote!(#ty_ident)
             };
             let _ = input.parse::<Token![;]>()?;
+            // Ignore optional macro configuration after the type declaration.
+            let _ = input.parse::<TokenStream>()?;
 
             let Some((name, is_foreign, is_meta)) = get_type_name(&attrs, &ident) else {
                 return Ok(None);

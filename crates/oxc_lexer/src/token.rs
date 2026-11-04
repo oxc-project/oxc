@@ -1,10 +1,17 @@
+use std::{
+    fmt::{self, Display},
+    mem, slice,
+};
+
+use crate::cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version};
+
 macro_rules! define_token_kind {
     ($( $variant:ident = $value:literal => $name:literal ),+ $(,)?) => {
         /// A lexed token kind.
         ///
         /// The discriminants are load-bearing: `[32, 128)` is reserved for
         /// punctuators and `>= 128` for keywords, so the pipeline can classify
-        /// with range checks and SIMD compares. They are *not* dense â€” the
+        /// with range checks and SIMD compares. They are *not* dense - the
         /// pipeline computes kinds arithmetically and blends them in SIMD
         /// registers, so it works on the raw `u8` and only the crate boundary
         /// is typed.
@@ -19,9 +26,10 @@ macro_rules! define_token_kind {
             pub const VARIANTS: &'static [TokenKind] = &[ $( TokenKind::$variant, )+ ];
 
             /// The kind `byte` denotes, or `None` if it is not a declared discriminant.
+            #[cpu_multiversion]
             #[inline]
             #[must_use]
-            pub const fn from_u8(byte: u8) -> Option<Self> {
+            pub(crate) const fn from_u8(byte: u8, _cpu: impl Cpu) -> Option<Self> {
                 match byte {
                     $( $value => Some(Self::$variant), )+
                     _ => None,
@@ -36,6 +44,18 @@ macro_rules! define_token_kind {
                     $( Self::$variant => $name, )+
                 }
             }
+        }
+
+        /// Constants used by `tk!` macro.
+        #[doc(hidden)]
+        #[allow(unused, clippy::allow_attributes)]
+        #[expect(non_upper_case_globals)]
+        pub mod __kind_u8 {
+            use super::TokenKind;
+
+            $(
+                pub const $variant: u8 = TokenKind::$variant as u8;
+            )+
         }
     };
 }
@@ -182,7 +202,7 @@ define_token_kind! {
 
     // TS-mode contextual keywords (`LexOptions::ts`) plus the strict-mode
     // reserved words; JS mode lexes all of these spellings as IDENT.
-    // Contiguous after the JS block so `>= KW_BASE` range checks cover both.
+    // Contiguous after the JS block so `>= KW_KIND_BASE` range checks cover both.
     KwAbstract = 172 => "abstract",
     KwAccessor = 173 => "accessor",
     KwAny = 174 => "any",
@@ -222,9 +242,55 @@ define_token_kind! {
     Invalid = 255 => "INVALID",
 }
 
-/// First keyword kind: every kind `>= KW_BASE` other than [`TokenKind::Invalid`] is a keyword.
-pub const KW_BASE: u8 = TokenKind::KwBreak as u8;
-const KW_MAX: u8 = TokenKind::KwUsing as u8;
+/// Get the numeric (`u8`) value of a [`TokenKind`], or an `|` pattern of several.
+///
+/// # Examples
+///
+/// ```ignore
+/// let ident: u8 = tk!(Ident);
+/// assert_eq!(ident, TokenKind::Ident as u8);
+/// ```
+///
+/// ```ignore
+/// match kind {
+///   tk!(Ident) => do_something(),
+///   tk!(Number | BigInt | String | RegExp) => do_something_else(),
+///   _ => {}
+/// }
+/// ```
+macro_rules! tk {
+    ($($kind:ident)|+) => { $( $crate::token::__kind_u8::$kind )|+ };
+}
+
+pub(crate) use tk;
+
+/// Match a `u8` against the value of multiple [`TokenKind`]s.
+///
+/// [`matches!`] with the kinds as one `|` list:
+///
+/// ```ignore
+/// fn is_ident_or_priv(kind: u8) -> bool {
+///     matches_tk!(kind, Ident | PrivateIdent)
+/// }
+/// ```
+///
+/// Equivalent to `matches!(kind, tk!(Ident | PrivateIdent))`.
+macro_rules! matches_tk {
+    ($value:expr, $($kind:ident)|+) => {
+        matches!($value, $( $crate::token::__kind_u8::$kind )|+)
+    };
+}
+
+pub(crate) use matches_tk;
+
+/// First punctuator kind - the token-kind space reserves [32, 128) for them.
+pub const OP_KIND_BASE: u8 = tk!(LBrace);
+#[cfg_attr(not(test), expect(dead_code, reason = "only used in tests"))]
+pub const OP_KIND_MAX: u8 = tk!(At);
+
+/// First keyword kind: every kind `>= KW_KIND_BASE` other than [`TokenKind::Invalid`] is a keyword.
+pub const KW_KIND_BASE: u8 = tk!(KwBreak);
+pub const KW_KIND_MAX: u8 = tk!(KwUsing);
 
 impl TokenKind {
     #[inline]
@@ -233,28 +299,31 @@ impl TokenKind {
         self as u8
     }
 
-    /// # Safety
+    /// # SAFETY
     ///
     /// `byte` must be a declared discriminant, i.e. `TokenKind::from_u8(byte).is_some()`.
+    #[cpu_multiversion]
     #[inline]
     #[must_use]
-    pub const unsafe fn from_u8_unchecked(byte: u8) -> Self {
-        debug_assert!(Self::from_u8(byte).is_some(), "not a declared TokenKind discriminant");
+    pub(crate) const unsafe fn from_u8_unchecked(byte: u8, cpu: impl Cpu) -> Self {
+        debug_assert!(Self::from_u8(byte, cpu).is_some(), "not a declared TokenKind discriminant");
         // SAFETY: the caller guarantees `byte` is a declared discriminant, and
         // `TokenKind` is `#[repr(u8)]`, so it shares `u8`'s layout.
-        unsafe { core::mem::transmute::<u8, Self>(byte) }
+        unsafe { mem::transmute::<u8, Self>(byte) }
     }
 
     #[inline]
     #[must_use]
     pub const fn is_trivia(self) -> bool {
-        is_trivia_byte(self as u8)
+        let cpu = BASELINE;
+
+        is_trivia_byte(self as u8, cpu)
     }
 
     #[inline]
     #[must_use]
     pub const fn is_keyword(self) -> bool {
-        (self as u8) >= KW_BASE && (self as u8) <= KW_MAX
+        (self as u8) >= KW_KIND_BASE && (self as u8) <= KW_KIND_MAX
     }
 
     #[inline]
@@ -304,50 +373,62 @@ impl TokenKind {
     pub const fn is_numeric(self) -> bool {
         matches!(
             self,
-            Self::Number | Self::Decimal | Self::Float | Self::Binary | Self::Octal | Self::Hex
+            Self::Number
+                | Self::BigInt
+                | Self::Decimal
+                | Self::Float
+                | Self::Binary
+                | Self::Octal
+                | Self::Hex
         )
     }
 }
 
-impl core::fmt::Display for TokenKind {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+impl Display for TokenKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
 
 /// Reinterpret raw kind bytes written by the pipeline as [`TokenKind`]s.
 ///
-/// # Safety
+/// # SAFETY
 ///
 /// Every byte in `bytes` must be a declared [`TokenKind`] discriminant. The
-/// pipeline only ever writes kinds that came from [`crate::opmap`]'s tables or
+/// pipeline only ever writes kinds that came from `opmap`'s tables or
 /// from the named constants in `pipeline`, so this holds for any range the
 /// lexer has written; it does *not* hold for uninitialised arena memory.
+#[cpu_version(Generic)]
 #[inline]
-pub(crate) const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
+pub const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
     // SAFETY: `TokenKind` is `#[repr(u8)]` so it has the same size and
     // alignment as `u8`, and the caller guarantees every byte is a declared
     // discriminant.
-    unsafe { core::slice::from_raw_parts(bytes.as_ptr().cast::<TokenKind>(), bytes.len()) }
+    unsafe { slice::from_raw_parts(bytes.as_ptr().cast::<TokenKind>(), bytes.len()) }
 }
 
+#[cpu_version(Generic)]
 #[inline]
-pub(crate) fn debug_assert_kind_bytes(bytes: &[u8]) {
+pub fn debug_assert_kind_bytes(bytes: &[u8]) {
+    let cpu = BASELINE;
+
     debug_assert!(
-        bytes.iter().all(|&b| TokenKind::from_u8(b).is_some()),
+        bytes.iter().all(|&b| TokenKind::from_u8(b, cpu).is_some()),
         "lexer wrote a byte that is not a declared TokenKind discriminant"
     );
 }
 
 pub const SPAN_SENTINELS: usize = 8;
 
-pub const TRIVIA_MIN: u8 = TokenKind::LineComment as u8;
-pub const TRIVIA_MAX: u8 = TokenKind::LineTerminator as u8;
+pub const TRIVIA_MIN: u8 = tk!(LineComment);
+pub const TRIVIA_MAX: u8 = tk!(LineTerminator);
 
 /// [`TokenKind::is_trivia`] on a raw kind byte, for the pipeline's `u8` lanes.
-#[inline]
+#[cpu_multiversion]
+#[expect(clippy::inline_always)]
+#[inline(always)]
 #[must_use]
-pub(crate) const fn is_trivia_byte(kind: u8) -> bool {
+pub const fn is_trivia_byte(kind: u8, _cpu: impl Cpu) -> bool {
     kind.wrapping_sub(TRIVIA_MIN) <= TRIVIA_MAX - TRIVIA_MIN
 }
 
@@ -365,34 +446,8 @@ pub mod token_flags {
     pub const ASI_RESTRICTED: u16 = 1 << 10;
 }
 
-const _: () = assert!(TokenKind::Hashbang as u8 > TokenKind::LineComment as u8);
-const _: () = assert!((TokenKind::Hashbang as u8) < TokenKind::LineTerminator as u8);
-
-/// Bit 31 of a `starts` entry: reserved "newline before this token" flag.
-/// The lexer does not set it yet, but consumers must still read offsets
-/// through [`offset`].
-pub const NEWLINE_BEFORE_MASK: u32 = 0x8000_0000;
-
-pub const OFFSET_MASK: u32 = 0x7FFF_FFFF;
-
-/// Maximum lexable source length in bytes, imposed by the 31-bit offset field.
-pub const MAX_SOURCE_LEN: u32 = OFFSET_MASK;
-
-#[inline]
-pub const fn offset(s: u32) -> u32 {
-    s & OFFSET_MASK
-}
-
-#[inline]
-pub const fn newline(s: u32) -> bool {
-    (s & NEWLINE_BEFORE_MASK) != 0
-}
-
-#[inline]
-pub const fn pack_start(offset: u32, newline_before: bool) -> u32 {
-    debug_assert!(offset <= OFFSET_MASK);
-    if newline_before { offset | NEWLINE_BEFORE_MASK } else { offset }
-}
+const _: () = assert!(tk!(Hashbang) > tk!(LineComment));
+const _: () = assert!(tk!(Hashbang) < tk!(LineTerminator));
 
 #[repr(C)]
 #[derive(Debug, Default, Clone, Copy)]
@@ -412,17 +467,19 @@ impl StringSpan {
     pub const COOKED_INVALID_MASK: u32 = 0x8000_0000;
     pub const START_MASK: u32 = 0x7FFF_FFFF;
 
+    #[cpu_multiversion]
     #[inline(always)]
     #[must_use]
-    pub const fn new(start: u32, end: u32, lone_surrogates: bool) -> Self {
+    pub(crate) const fn new(start: u32, end: u32, lone_surrogates: bool, _cpu: impl Cpu) -> Self {
         debug_assert!(end <= Self::END_MASK);
         let end_and_flags = if lone_surrogates { end | Self::LONE_SURROGATES_MASK } else { end };
         Self { start, end_and_flags }
     }
 
+    #[cpu_multiversion]
     #[inline(always)]
     #[must_use]
-    pub const fn with_cooked_invalid(self) -> Self {
+    pub(crate) const fn with_cooked_invalid(self, _cpu: impl Cpu) -> Self {
         Self { start: self.start | Self::COOKED_INVALID_MASK, end_and_flags: self.end_and_flags }
     }
 
@@ -453,13 +510,14 @@ impl StringSpan {
 
 #[cfg(test)]
 mod tests {
-    use super::{KW_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
-    use crate::{Lexer, PAD, default_options};
+    use crate::{LexOptions, Lexer, PAD, cpu::BASELINE};
+
+    use super::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
 
     #[test]
     fn from_u8_round_trips_every_variant() {
         for &kind in TokenKind::VARIANTS {
-            assert_eq!(TokenKind::from_u8(kind as u8), Some(kind), "{}", kind.name());
+            assert_eq!(TokenKind::from_u8(kind as u8, BASELINE), Some(kind), "{}", kind.name());
         }
     }
 
@@ -467,7 +525,7 @@ mod tests {
     fn from_u8_agrees_with_the_discriminant_for_all_256_bytes() {
         let declared: Vec<u8> = TokenKind::VARIANTS.iter().map(|k| *k as u8).collect();
         for byte in 0..=u8::MAX {
-            match TokenKind::from_u8(byte) {
+            match TokenKind::from_u8(byte, BASELINE) {
                 Some(kind) => {
                     assert_eq!(kind as u8, byte);
                     assert!(declared.contains(&byte));
@@ -494,19 +552,31 @@ mod tests {
         for &kind in TokenKind::VARIANTS {
             let byte = kind as u8;
             if kind.is_keyword() {
-                assert!(byte >= KW_BASE, "{} below KW_BASE", kind.name());
+                assert!(byte >= KW_KIND_BASE, "{} below KW_KIND_BASE", kind.name());
             }
             if kind.is_trivia() {
                 assert!((TRIVIA_MIN..=TRIVIA_MAX).contains(&byte), "{}", kind.name());
             }
         }
-        assert!(TokenKind::LBrace as u8 >= 32 && (TokenKind::At as u8) < KW_BASE);
+        #[expect(clippy::assertions_on_constants)]
+        {
+            assert!(tk!(LBrace) >= 32 && tk!(At) < KW_KIND_BASE);
+        }
         assert!(!TokenKind::Invalid.is_keyword());
         assert!(TokenKind::Hashbang.is_trivia());
     }
 
-    /// Backs the safety invariant of [`super::kinds_from_bytes`]: the lexer
-    /// never emits a byte outside the declared discriminants.
+    #[test]
+    fn numeric_predicate_covers_both_number_families() {
+        assert!(TokenKind::Number.is_numeric());
+        assert!(TokenKind::BigInt.is_numeric());
+        assert!(!TokenKind::String.is_numeric());
+    }
+
+    /// Backs the safety invariant of [`kinds_from_bytes`] -
+    /// the lexer never emits a byte outside the declared discriminants.
+    ///
+    /// [`kinds_from_bytes`]: super::kinds_from_bytes
     #[test]
     fn every_emitted_kind_is_declared() {
         const SOURCES: [&str; 6] = [
@@ -522,14 +592,12 @@ mod tests {
             let n = bytes.len();
             bytes.extend_from_slice(&[0u8; PAD]);
             for (jsx, ts) in [(false, false), (true, false), (false, true), (true, true)] {
-                let mut opts = default_options();
-                opts.jsx = jsx;
-                opts.ts = ts;
+                let opts = LexOptions { jsx, ts, ..Default::default() };
                 let mut lexer = Lexer::new();
                 lexer.lex(&bytes, n, opts);
                 for kind in lexer.kinds() {
                     assert_eq!(
-                        TokenKind::from_u8(*kind as u8),
+                        TokenKind::from_u8(*kind as u8, BASELINE),
                         Some(*kind),
                         "undeclared kind {} from {src:?}",
                         *kind as u8

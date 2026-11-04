@@ -1,0 +1,94 @@
+//! Deciding what a token is, when that depends on the tokens before or after it.
+//!
+//! Some characters mean different things in different places:
+//!
+//! - `/` can start a regex, or be division.
+//! - `<` can start a JSX element, open a list of type arguments or parameters, or be less-than.
+//! - `>>` can close two type argument lists, or be a shift.
+//!
+//! A parser knows which from its context. The lexer has no parser, so it works the context out
+//! from the surrounding tokens. The token before a site settles most cases; the rest are questions
+//! about the parser's state, which [`context`] computes by walking forward from a nearby point
+//! whose state is certain.
+//!
+//! There are 2 questions:
+//!
+//! - [`operator`]: Is a position directly after a complete value?
+//!   `carve` asks this for every `/` which doesn't start a comment, and for most `<` in JSX files.
+//! - [`type_context`]: Is an angle bracket part of a TypeScript type?
+//!   `coalesce` asks this for runs like `>>` and `<<`, and `carve` for some `<` in `.tsx` files.
+//!
+//! Every question reads the lex through a [`Tokens`] view, which the asking stage builds over its
+//! buffers, and keeps what it learns across the lex in a [`DisambiguateState`] the lexer owns.
+//! [`common`] holds the parts both questions need.
+
+use crate::cpu::{Cpu, cpu_multiversion, cpu_version};
+
+mod common;
+mod context;
+mod operator;
+mod type_context;
+
+#[cfg(test)]
+mod tests;
+
+pub(super) use common::{Brackets, Closers, Tokens, prev_sig};
+pub(super) use context::Walks;
+pub(super) use operator::not_operator_position;
+pub(super) use type_context::{gt_run_split, jsx_over_generic, lt_run_split};
+
+// Every scan is exact past its budget; the budget only bounds the work one site can spend.
+
+/// Step cap for the scan back to an anchor (tokens plus the groups it jumps over);
+/// past it the walk from the start of the source answers.
+const WALK_SCAN_CAP: u32 = 2048;
+
+/// Scan steps bounded walks may take, plus one per 32 bytes, before the full walk answers the rest.
+const LOCAL_WALK_BUDGET: u32 = 16384;
+
+/// Step cap for the rules which answer without a walk: finding the JSX tag around a keyword,
+/// and settling a `>` run from the tokens around it.
+const RULE_SCAN_CAP: u32 = 256;
+
+/// Bracket steps a backward match takes before the per-lex closer-to-opener table answers, so a
+/// group matched again and again (queries after a huge wrapper function) costs a lookup, not a
+/// pass over its brackets each time.
+const BRACKET_STEP_CAP: u32 = 1024;
+
+/// Byte cap on the forward scans. Past it one pass resolves the opener exactly, and records what
+/// it crosses in [`Closers`].
+const FORWARD_SCAN_CAP: usize = 4096;
+
+/// What the questions keep across a lex: the context walks, the bracket bitmap and the closers
+/// the forward scans resolved. Owned by the lexer, begun at each lex, restarted when `coalesce`
+/// starts asking.
+pub(super) struct DisambiguateState {
+    pub walks: Walks,
+    pub brackets: Brackets,
+    pub closers: Closers,
+}
+
+impl Default for DisambiguateState {
+    #[cpu_version(Generic)]
+    fn default() -> Self {
+        Self { walks: Walks::new(), brackets: Brackets::default(), closers: Closers::default() }
+    }
+}
+
+impl DisambiguateState {
+    /// A new lex over `n` bytes of a script or module.
+    #[cpu_multiversion]
+    pub fn begin(&mut self, n: usize, module: bool, cpu: impl Cpu) {
+        self.walks.restart(module, cpu);
+        self.brackets.begin(n, cpu);
+        self.closers.clear(cpu);
+    }
+
+    /// `coalesce` starts asking: it sees keyword kinds `carve` did not, so the walks start over.
+    #[cpu_multiversion]
+    pub fn restart(&mut self, module: bool, cpu: impl Cpu) {
+        self.walks.restart(module, cpu);
+        // carve has hidden the JSX brackets these were computed over.
+        self.closers.clear(cpu);
+    }
+}

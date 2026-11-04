@@ -125,6 +125,7 @@ declare_oxc_lint!(
     NoMisusedPromises(tsgolint),
     typescript,
     pedantic,
+    recommended,
     config = NoMisusedPromisesConfig,
     version = "1.11.0",
     short_description = "Disallow Promises in places not designed to handle them.",
@@ -132,7 +133,7 @@ declare_oxc_lint!(
 
 impl Rule for NoMisusedPromises {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

@@ -2,7 +2,7 @@ use cow_utils::CowUtils;
 use oxc_css_parser::ast::{Placeholder, Stylesheet};
 
 use oxc_formatter_core::{
-    Buffer, Format, FormatElement, Formatter, arena_cow_str,
+    Format, FormatElement, Formatter, arena_cow_str,
     builders::{FormatWith, text, token},
     write,
 };
@@ -54,6 +54,17 @@ fn write_placeholder<'a>(placeholder: &Placeholder<'a>, f: &mut CssFormatter<'_,
     }
 }
 
+/// No source gap between two spans (postcss's `hasEmptyRawBefore`):
+/// the signal for a glued `and(` / `not(`, a `(` that makes a function, and the like.
+pub fn is_glued(left: oxc_css_parser::pos::Span, right: oxc_css_parser::pos::Span) -> bool {
+    left.end == right.start
+}
+
+/// Any still-unclaimed comment in `start..end` (a prelude, a selector, a value)
+pub fn has_comments_between(start: u32, end: u32, f: &CssFormatter<'_, '_>) -> bool {
+    f.context().comments().iter_before(end).any(|c| c.span.start >= start)
+}
+
 /// Collapses any whitespace run in `raw` to a single space.
 pub fn normalize_whitespace(raw: &str) -> String {
     let mut out = String::with_capacity(raw.len());
@@ -71,13 +82,24 @@ pub fn normalize_whitespace(raw: &str) -> String {
 /// Mirrors Prettier's `maybeToLowerCase`.
 /// Lowercase unless the identifier contains variable/interpolation markers.
 pub fn write_maybe_lowercase<'a>(value: &'a str, f: &mut CssFormatter<'_, 'a>) {
-    if value.contains('$')
-        || value.contains('@')
-        || value.contains('#')
+    // One pass over the (short) identifier, rather than a search per marker
+    let (mut open, mut close, mut upper) = (false, false, false);
+    for b in value.bytes() {
+        match b {
+            b'$' | b'@' | b'#' => {
+                write!(f, text(value));
+                return;
+            }
+            b'(' => open = true,
+            b')' => close = true,
+            _ => upper |= b.is_ascii_uppercase(),
+        }
+    }
+    if !upper
+        || (open && close)
         || value.starts_with('%')
         || value.starts_with("--")
         || value.starts_with(":--")
-        || (value.contains('(') && value.contains(')'))
     {
         write!(f, text(value));
         return;

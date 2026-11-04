@@ -1,7 +1,5 @@
 use oxc_diagnostics::Diagnostics;
-
 use oxc_span::Span;
-use oxc_str::Ident;
 
 use crate::react_compiler_hir::ReactFunctionType;
 
@@ -33,16 +31,11 @@ pub enum CompileResult<'a> {
 pub struct CodegenFunction<'a> {
     pub span: Option<Span>,
     pub id: Option<oxc_ast::ast::BindingIdentifier<'a>>,
-    pub name_hint: Option<Ident<'a>>,
     pub params: oxc_allocator::Box<'a, oxc_ast::ast::FormalParameters<'a>>,
     pub body: oxc_allocator::Box<'a, oxc_ast::ast::FunctionBody<'a>>,
     pub generator: bool,
     pub is_async: bool,
     pub memo_slots_used: u32,
-    pub memo_blocks: u32,
-    pub memo_values: u32,
-    pub pruned_memo_blocks: u32,
-    pub pruned_memo_values: u32,
     pub outlined: Vec<OutlinedFunction<'a>>,
 }
 

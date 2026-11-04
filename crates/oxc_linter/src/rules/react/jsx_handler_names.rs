@@ -1,7 +1,13 @@
 use std::borrow::Cow;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use itertools::Itertools;
 use lazy_regex::{Regex, RegexBuilder, regex};
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{Schema, SchemaObject, SubschemaValidation},
+};
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -13,11 +19,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{CompactStr, Ident};
-use schemars::{
-    JsonSchema, SchemaGenerator,
-    schema::{Schema, SchemaObject, SubschemaValidation},
-};
-use serde_json::Value;
+
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn bad_handler_name_diagnostic(
     span: Span,
@@ -152,11 +155,8 @@ fn build_event_handler_regex(handler_prefix: &str, handler_prop_prefix: &str) ->
         return None;
     }
     let prefixes = split_prefixes_string(handler_prefix);
-    let prefix_pattern = prefixes.iter().map(|p| regex::escape(p)).collect::<Vec<_>>().join("|");
-    let prop_prefixes = split_prefixes_string(handler_prop_prefix);
-    let prop_prefix_pattern =
-        prop_prefixes.iter().map(|p| regex::escape(p)).collect::<Vec<_>>().join("|");
-    if prefix_pattern.is_empty() || prop_prefix_pattern.is_empty() {
+    let prefix_pattern = prefixes.map(regex::escape).join("|");
+    if prefix_pattern.is_empty() || split_prefixes_string(handler_prop_prefix).next().is_none() {
         return None;
     }
     let regex = RegexBuilder::new(format!(r"^((.*\.)?({prefix_pattern}))[0-9]*[A-Z].*$").as_str())
@@ -170,8 +170,7 @@ fn build_event_handler_prop_regex(handler_prop_prefix: &str) -> Option<Regex> {
         return None;
     }
     let prop_prefixes = split_prefixes_string(handler_prop_prefix);
-    let prop_prefix_pattern =
-        prop_prefixes.iter().map(|p| regex::escape(p)).collect::<Vec<_>>().join("|");
+    let prop_prefix_pattern = prop_prefixes.map(regex::escape).join("|");
     if prop_prefix_pattern.is_empty() {
         return None;
     }
@@ -181,11 +180,11 @@ fn build_event_handler_prop_regex(handler_prop_prefix: &str) -> Option<Regex> {
     Some(regex)
 }
 
-/// Split the prefixes by `|` and return an array of CompactStr.
+/// Iterate over trimmed prefixes separated by `|`.
 /// Empty prefixes will be removed.
 /// This is used to parse the `eventHandlerPrefix` and `eventHandlerPropPrefix` options.
-fn split_prefixes_string(prefixes: &str) -> Vec<CompactStr> {
-    prefixes.split('|').map(str::trim).filter(|s| !s.is_empty()).map(CompactStr::from).collect()
+fn split_prefixes_string(prefixes: &str) -> impl Iterator<Item = &str> {
+    prefixes.split('|').map(str::trim).filter(|s| !s.is_empty())
 }
 
 static DEFAULT_HANDLER_PROP_PREFIX: &str = "on";
@@ -714,4 +713,16 @@ fn test() {
     ];
 
     Tester::new(JsxHandlerNames::NAME, JsxHandlerNames::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn test_trimmed_literal_prefixes() {
+    assert!(build_event_handler_regex("handle", " | ").is_none());
+    assert!(build_event_handler_prop_regex(" | ").is_none());
+    let handler = build_event_handler_regex(" | handle. | ", " on. ").unwrap();
+    assert!(handler.is_match("handle.Click"));
+    assert!(!handler.is_match("handleXClick"));
+    let prop = build_event_handler_prop_regex(" | on. | ").unwrap();
+    assert!(prop.is_match("on.Click"));
+    assert!(!prop.is_match("onXClick"));
 }

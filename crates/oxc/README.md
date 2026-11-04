@@ -77,7 +77,7 @@ let mut errors = Vec::new();
 
 // Step 1: Parsing
 // Parse the TSX file into an AST. The root AST node is a `Program` struct.
-let ParserReturn { program, errors: parser_errors, panicked, .. } =
+let ParserReturn { program, diagnostics: parser_errors, fatal_error, .. } =
     Parser::new(&allocator, source_text, source_type).parse();
 errors.extend(parser_errors);
 
@@ -85,7 +85,7 @@ errors.extend(parser_errors);
 // parser could recover from errors, `program` will be a valid AST and
 // `errors` will be populated. We can still perform semantic analysis in
 // such cases (if we want).
-if panicked {
+if fatal_error {
     for error in &errors {
         eprintln!("{error:?}");
         panic!("Parsing failed.");

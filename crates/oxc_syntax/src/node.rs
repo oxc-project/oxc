@@ -53,6 +53,16 @@ impl<'alloc> CloneIn<'alloc> for NodeId {
 
 impl SemanticId for NodeId {}
 
+/// Get the [`NodeId`] of given AST node.
+///
+/// Parser-assigned IDs are unique within the parsed AST but may have gaps and
+/// do not follow visitor order. Semantic analysis replaces them with dense IDs
+/// that index its node store. Synthetically-created nodes may have [`NodeId::DUMMY`].
+pub trait GetNodeId {
+    /// Get the [`NodeId`] for an AST node.
+    fn node_id(&self) -> NodeId;
+}
+
 bitflags! {
     /// Contains additional information about an AST node.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

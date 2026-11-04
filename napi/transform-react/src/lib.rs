@@ -23,7 +23,7 @@ use napi_derive::napi;
 use oxc::{
     allocator::Allocator,
     codegen::{Codegen, CodegenOptions},
-    diagnostics::{Diagnostics, Severity},
+    diagnostics::Diagnostics,
     parser::Parser,
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     transformer::Transformer,
@@ -50,7 +50,10 @@ pub struct TransformResult {
     /// Source map, populated when `sourcemap` is `true`.
     pub map: Option<SourceMap>,
 
-    /// Parse, semantic, React Compiler, and downstream transform diagnostics.
+    /// Parse, semantic, downstream transform, and fatal React Compiler diagnostics.
+    ///
+    /// Recoverable React Compiler diagnostics are included when
+    /// `reactCompiler.reportDiagnostics` is `true`.
     pub errors: Vec<OxcError>,
 }
 
@@ -66,17 +69,18 @@ fn transform_impl(
     );
     let sourcemap = options.as_ref().and_then(|options| options.sourcemap).unwrap_or(false);
 
-    let (react_compiler_options, transform_options) =
-        match options.unwrap_or_default().resolve(filename) {
-            Ok(options) => options,
-            Err(error) => {
-                return TransformResult {
-                    fatal: true,
-                    errors: OxcError::from_diagnostics(filename, source_text, [error]),
-                    ..TransformResult::default()
-                };
-            }
-        };
+    let options = options.unwrap_or_default();
+    let report_diagnostics = options.report_react_compiler_diagnostics();
+    let (react_compiler_options, transform_options) = match options.resolve(filename) {
+        Ok(options) => options,
+        Err(error) => {
+            return TransformResult {
+                fatal: true,
+                errors: OxcError::from_diagnostics(filename, source_text, [error]),
+                ..TransformResult::default()
+            };
+        }
+    };
 
     let allocator = Allocator::default();
     let parser_return = Parser::new(&allocator, source_text, source_type).parse();
@@ -98,24 +102,22 @@ fn transform_impl(
         return error_result(filename, source_text, diagnostics);
     }
 
-    let (react_output, mut react_diagnostics, react_fatal) = match react_compiler_options {
-        None => (None, Diagnostics::new(), false),
+    let react_output = match react_compiler_options {
+        None => None,
         Some(options) => match react_compiler_compile(&program, &semantic, &allocator, options) {
-            CompileResult::Success { output, diagnostics } => (output, diagnostics, false),
-            CompileResult::Fatal { diagnostics } => (None, diagnostics, true),
+            // Include recoverable diagnostics only when requested.
+            CompileResult::Success { output, diagnostics: react_diagnostics } => {
+                if report_diagnostics {
+                    diagnostics.extend(react_diagnostics);
+                }
+                output
+            }
+            CompileResult::Fatal { diagnostics: react_diagnostics } => {
+                diagnostics.extend(react_diagnostics);
+                return error_result(filename, source_text, diagnostics);
+            }
         },
     };
-    if !react_fatal {
-        for diagnostic in react_diagnostics.iter_mut() {
-            if diagnostic.severity == Severity::Error {
-                diagnostic.severity = Severity::Warning;
-            }
-        }
-    }
-    diagnostics.extend(react_diagnostics);
-    if react_fatal {
-        return error_result(filename, source_text, diagnostics);
-    }
 
     let mut scoping = semantic.into_scoping();
     if let Some(output) = react_output {

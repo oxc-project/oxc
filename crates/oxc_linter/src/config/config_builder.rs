@@ -743,7 +743,7 @@ impl Debug for ConfigStoreBuilder {
 }
 
 /// An error that can occur while building a [`Config`] from an [`Oxlintrc`].
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Eq, PartialEq, Clone)]
 pub enum ConfigBuilderError {
     /// There were unknown rules that could not be matched to any known plugins/rules.
     UnknownRules {
@@ -784,6 +784,12 @@ pub enum ConfigBuilderError {
         cycle: Vec<PathBuf>,
         referenced_from: Vec<PathBuf>,
     },
+}
+
+impl Debug for ConfigBuilderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Display::fmt(self, f)
+    }
 }
 
 impl Display for ConfigBuilderError {

@@ -2,6 +2,36 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ react-hooks(exhaustive-deps): React hook useCallback depends on `value`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function MyComponent(props) {
+ 2 │           const value = props.flag ? {} : {};
+   ·                 ──┬──
+   ·                   ╰── `value` is declared here
+ 3 │           useCallback(() => {
+ 4 │             return value;
+ 5 │           }, [value]);
+   ·               ──┬──
+   ·                 ╰── it will always cause this hook to re-evaluate
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react-hooks(exhaustive-deps): React hook useCallback depends on `value`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function MyComponent(props) {
+ 2 │           const value = props.cached || {};
+   ·                 ──┬──
+   ·                   ╰── `value` is declared here
+ 3 │           useCallback(() => {
+ 4 │             return value;
+ 5 │           }, [value]);
+   ·               ──┬──
+   ·                 ╰── it will always cause this hook to re-evaluate
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
   ⚠ react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
    ╭─[exhaustive_deps.tsx:4:14]
  2 │           useCallback(() => {
@@ -657,12 +687,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props'
    ╭─[exhaustive_deps.tsx:5:14]
  2 │           useCallback(() => {
  3 │             const { foo } = props;
    ·                             ──┬──
-   ·                               ╰── useCallback uses `props.foo` here
+   ·                               ╰── useCallback uses `props` here
  4 │             console.log(foo);
  5 │           }, [props.bar]);
    ·              ───────────
@@ -670,30 +700,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.bar
-   ╭─[exhaustive_deps.tsx:5:14]
- 4 │             console.log(foo);
- 5 │           }, [props.bar]);
-   ·              ───────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props'
    ╭─[exhaustive_deps.tsx:5:14]
  2 │           useCallback(() => {
  3 │             const { foo: { bar } } = props;
    ·                                      ──┬──
-   ·                                        ╰── useCallback uses `props.foo` here
- 4 │             console.log(bar);
- 5 │           }, [props.foo.bar]);
-   ·              ───────────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar
-   ╭─[exhaustive_deps.tsx:5:14]
+   ·                                        ╰── useCallback uses `props` here
  4 │             console.log(bar);
  5 │           }, [props.foo.bar]);
    ·              ───────────────
@@ -734,24 +746,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ╰── useCallback uses `local` here
  5 │           }, [local.id]);
    ·              ──────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
-   ╭─[exhaustive_deps.tsx:5:14]
- 4 │             console.log(local);
- 5 │           }, [local.id]);
-   ·              ──────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
-   ╭─[exhaustive_deps.tsx:5:14]
- 4 │             console.log(local);
- 5 │           }, [local.id, local]);
-   ·              ─────────────────
  6 │         }
    ╰────
   help: Either include it or remove the dependency array.
@@ -847,15 +841,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
-   ╭─[exhaustive_deps.tsx:4:14]
- 3 │             console.log(props.foo.bar);
- 4 │           }, [props.foo.bar.baz]);
-   ·              ───────────────────
- 5 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
   ⚠ react-hooks(exhaustive-deps): React Hook useCallback has missing dependencies: 'props.hello', and 'props'
    ╭─[exhaustive_deps.tsx:5:14]
  2 │           const fn = useCallback(() => {
@@ -863,15 +848,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─────
  4 │             console.log(props.hello);
    ·                         ─────
- 5 │           }, [props.foo.bar.baz]);
-   ·              ───────────────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
-   ╭─[exhaustive_deps.tsx:5:14]
- 4 │             console.log(props.hello);
  5 │           }, [props.foo.bar.baz]);
    ·              ───────────────────
  6 │         }
@@ -3133,6 +3109,68 @@ source: crates/oxc_linter/src/tester.rs
  6 │           }, []);
    ·              ──
  7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'context'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 3 │           return React.useCallback(() => {
+ 4 │             const { paramsLoader } = context;
+   ·                                      ───┬───
+   ·                                         ╰── useCallback uses `context` here
+ 5 │             paramsLoader();
+ 6 │           }, [context.paramsLoader]);
+   ·              ──────────────────────
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 2 │           useEffect(() => {
+ 3 │             const { foo, bar } = props;
+   ·                                  ──┬──
+   ·                                    ╰── useEffect uses `props` here
+ 4 │             console.log(foo);
+ 5 │             console.log(bar);
+ 6 │           }, [props.foo, props.bar]);
+   ·              ──────────────────────
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.foo'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 2 │           useEffect(() => {
+ 3 │             const { bar } = props.foo;
+   ·                             ──┬──
+   ·                               ╰── useEffect uses `props.foo` here
+ 4 │             console.log(bar);
+ 5 │           }, [props.foo.bar]);
+   ·              ───────────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 2 │           useEffect(() => {
+ 3 │             const { foo: { bar } } = props;
+   ·                                      ──┬──
+   ·                                        ╰── useEffect uses `props` here
+ 4 │             console.log(bar);
+ 5 │           }, [props.foo]);
+   ·              ───────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: setState.foo
+   ╭─[exhaustive_deps.tsx:3:42]
+ 2 │           const [, setState] = useState(0);
+ 3 │           useCallback(() => setState(1), [setState.foo]);
+   ·                                          ──────────────
+ 4 │         }
    ╰────
   help: Either include it or remove the dependency array.
 

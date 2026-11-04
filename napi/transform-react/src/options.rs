@@ -36,6 +36,12 @@ pub struct TransformOptions {
     #[napi(ts_type = "'preserve' | JsxOptions")]
     pub jsx: Option<Either<String, JsxOptions>>,
 
+    /// Configure how Typescript is transformed.
+    ///
+    /// @see <https://oxc.rs/docs/guide/usage/transformer/typescript>
+    #[napi(ts_type = "TypeScriptOptions")]
+    pub typescript: Option<TypeScriptOptions>,
+
     /// Configure React Compiler, or disable it with `false`.
     ///
     /// @default true
@@ -61,6 +67,15 @@ pub struct ReactCompilerOptions {
     #[napi(ts_type = "'none' | 'critical_errors' | 'all_errors'")]
     pub panic_threshold: Option<String>,
 
+    /// Include recoverable React Compiler diagnostics in `errors`.
+    ///
+    /// Enable this to receive recoverable diagnostics (bail-outs, rule suppressions,
+    /// lint findings) while code is still produced. Fatal diagnostics are reported
+    /// regardless of this option.
+    ///
+    /// @default false
+    pub report_diagnostics: Option<bool>,
+
     /// React runtime target. React 17 and 18 use `react-compiler-runtime`;
     /// React 19 uses `react/compiler-runtime`.
     ///
@@ -74,18 +89,21 @@ pub struct ReactCompilerOptions {
     /// Enable `"use memo if(...)"` directive-driven gating.
     pub dynamic_gating: Option<ReactCompilerDynamicGating>,
 
-    /// Analyze and report diagnostics without applying compiler output.
+    /// Analyze without applying compiler output. Pair with `reportDiagnostics`
+    /// to receive the findings.
     ///
     /// @deprecated Prefer `outputMode: "lint"`.
     /// @default false
     pub no_emit: Option<bool>,
 
-    /// Select client, SSR, or lint output.
+    /// Select client, SSR, or lint output. Lint findings are recoverable
+    /// diagnostics, so pair lint output with `reportDiagnostics`.
     #[napi(ts_type = "'client' | 'ssr' | 'lint'")]
     pub output_mode: Option<String>,
 
-    /// ESLint rule names whose suppressions opt a function out of compilation when
-    /// hooks usage or exhaustive memoization dependency validation is disabled.
+    /// ESLint rule names whose suppressions opt a function out of compilation.
+    /// Defaults to `react-hooks/exhaustive-deps` and `react-hooks/rules-of-hooks`;
+    /// pass an empty array to disable this behavior.
     pub eslint_suppression_rules: Option<Vec<String>>,
 
     /// Treat Flow suppression comments as opt-outs.
@@ -102,6 +120,9 @@ pub struct ReactCompilerOptions {
     pub custom_opt_out_directives: Option<Vec<String>>,
 
     /// Only run the React Compiler when the filename contains one of these strings.
+    ///
+    /// By default, files whose filename contains `node_modules` are skipped.
+    /// Providing this option replaces that default filter.
     ///
     /// Function-valued `sources` filters from the Babel plugin are intentionally
     /// unsupported across the native boundary.
@@ -173,6 +194,26 @@ pub struct JsxOptions {
     pub refresh: Option<Either<bool, ReactRefreshOptions>>,
 }
 
+/// Configure how Typescript is transformed.
+///
+/// @see <https://oxc.rs/docs/guide/usage/transformer/typescript>
+#[napi(object)]
+#[derive(Debug)]
+pub struct TypeScriptOptions {
+    /// Inlines const enum values and removes the declaration.
+    ///
+    /// @default false
+    pub optimize_const_enums: Option<bool>,
+
+    /// Inlines regular (non-const) enum member accesses when all members
+    /// satisfy const enum constraints (i.e., their values are statically evaluable).
+    /// Non-exported enum declarations are also removed when all members are
+    /// evaluable and no references to the enum as a runtime value exist.
+    ///
+    /// @default false
+    pub optimize_enums: Option<bool>,
+}
+
 /// React Fast Refresh options.
 #[napi(object)]
 #[derive(Debug)]
@@ -230,7 +271,7 @@ pub struct ReactCompilerEnvironmentOptions {
     pub validate_preserve_existing_memoization_guarantees: Option<bool>,
     /// Enable exhaustive manual memo dependency validation.
     ///
-    /// @default false
+    /// @default true
     pub validate_exhaustive_memoization_dependencies: Option<bool>,
     #[napi(ts_type = "'off' | 'all' | 'missing-only' | 'extra-only'")]
     pub validate_exhaustive_effect_dependencies: Option<String>,
@@ -258,6 +299,9 @@ pub struct ReactCompilerEnvironmentOptions {
     pub enable_custom_type_definition_for_reanimated: Option<bool>,
     pub enable_treat_ref_like_identifiers_as_refs: Option<bool>,
     pub enable_treat_set_identifiers_as_state_setters: Option<bool>,
+    /// Validate that `useMemo` callbacks return a value.
+    ///
+    /// @default false
     pub validate_no_void_use_memo: Option<bool>,
     pub enable_allow_set_state_from_refs_in_effects: Option<bool>,
     pub enable_verbose_no_set_state_in_effect: Option<bool>,
@@ -265,12 +309,23 @@ pub struct ReactCompilerEnvironmentOptions {
 }
 
 impl TransformOptions {
+    /// Whether recoverable React Compiler diagnostics are forwarded to `errors`
+    /// (`reactCompiler.reportDiagnostics`).
+    pub(crate) fn report_react_compiler_diagnostics(&self) -> bool {
+        matches!(
+            &self.react_compiler,
+            Some(Either::B(options)) if options.report_diagnostics == Some(true)
+        )
+    }
+
     pub(crate) fn resolve(
         self,
         filename: &str,
     ) -> Result<(Option<PluginOptions>, oxc::transformer::TransformOptions), OxcDiagnostic> {
         let react_compiler = match self.react_compiler {
-            None | Some(Either::A(true)) => Some(PluginOptions::default()),
+            None | Some(Either::A(true)) => {
+                should_compile_react_source(filename, None).then(PluginOptions::default)
+            }
             Some(Either::A(false)) => None,
             Some(Either::B(options)) => options.resolve(filename)?,
         };
@@ -284,10 +339,16 @@ impl TransformOptions {
             Some(Either::B(options)) => oxc::transformer::JsxOptions::from(options),
         };
 
+        let typescript: oxc::transformer::TypeScriptOptions = match self.typescript {
+            None => oxc::transformer::TypeScriptOptions::default(),
+            Some(options) => oxc::transformer::TypeScriptOptions::from(options),
+        };
+
         Ok((
             react_compiler,
             oxc::transformer::TransformOptions {
                 jsx,
+                typescript,
                 ..oxc::transformer::TransformOptions::default()
             },
         ))
@@ -296,10 +357,7 @@ impl TransformOptions {
 
 impl ReactCompilerOptions {
     fn resolve(self, filename: &str) -> Result<Option<PluginOptions>, OxcDiagnostic> {
-        let enabled = self
-            .sources
-            .as_ref()
-            .is_none_or(|sources| sources.iter().any(|source| filename.contains(source.as_str())));
+        let enabled = should_compile_react_source(filename, self.sources.as_deref());
         enabled.then(|| self.into_plugin_options()).transpose()
     }
 
@@ -368,6 +426,13 @@ impl ReactCompilerOptions {
     }
 }
 
+fn should_compile_react_source(filename: &str, sources: Option<&[String]>) -> bool {
+    sources.map_or_else(
+        || !filename.contains("node_modules"),
+        |sources| sources.iter().any(|source| filename.contains(source)),
+    )
+}
+
 impl From<JsxOptions> for oxc::transformer::JsxOptions {
     fn from(options: JsxOptions) -> Self {
         let defaults = Self::default();
@@ -389,6 +454,19 @@ impl From<JsxOptions> for oxc::transformer::JsxOptions {
                 Either::B(options) => Some(oxc::transformer::ReactRefreshOptions::from(options)),
             }),
             ..Self::default()
+        }
+    }
+}
+
+impl From<TypeScriptOptions> for oxc::transformer::TypeScriptOptions {
+    fn from(options: TypeScriptOptions) -> Self {
+        let defaults = Self::default();
+        Self {
+            optimize_const_enums: options
+                .optimize_const_enums
+                .unwrap_or(defaults.optimize_const_enums),
+            optimize_enums: options.optimize_enums.unwrap_or(defaults.optimize_enums),
+            ..defaults
         }
     }
 }

@@ -1,4 +1,4 @@
-use std::{borrow::Cow, path::Path};
+use std::{borrow::Cow, collections::hash_map::Entry, path::Path};
 
 use oxc_index::{IndexVec, define_nonmax_u32_index_type};
 use oxc_span::Span;
@@ -54,6 +54,7 @@ pub struct SourcemapBuilder<'a> {
     tokens: Vec<oxc_sourcemap::Token>,
     last_generated_update: usize,
     last_position: Option<u32>,
+    last_token_has_name: bool,
     line_offset_tables: LineOffsetTables,
     generated_line: u32,
     generated_column: u32,
@@ -66,14 +67,17 @@ pub struct SourcemapBuilder<'a> {
 impl<'a> SourcemapBuilder<'a> {
     pub fn new(path: &Path, source_text: &'a str) -> Self {
         let line_offset_tables = Self::generate_line_offset_tables(source_text);
+        // Estimate mapping and name counts from source length to reduce reallocations.
+        let source_len = source_text.len();
         Self {
             source_name: path.to_string_lossy().into_owned(),
             original_source: source_text,
-            names: Vec::new(),
+            names: Vec::with_capacity(source_len / 64),
             names_map: FxHashMap::default(),
-            tokens: Vec::new(),
+            tokens: Vec::with_capacity(source_len / 4),
             last_generated_update: 0,
             last_position: None,
+            last_token_has_name: false,
             line_offset_tables,
             generated_line: 0,
             generated_column: 0,
@@ -93,12 +97,36 @@ impl<'a> SourcemapBuilder<'a> {
             source_contents: vec![Some(Cow::Borrowed(self.original_source))],
             tokens: self.tokens.into_boxed_slice(),
             token_chunks: None,
-            x_google_ignore_list: None,
+            ignore_list: None,
             debug_id: None,
         })
     }
 
     pub fn add_source_mapping_for_name(&mut self, output: &[u8], span: Span, name: &str) {
+        let original_name = self.original_name(span, name);
+        // The token name should be original name.
+        // If it hasn't changed, name should be `None` to reduce `SourceMap` size.
+        let token_name = if original_name == Some(name) { None } else { original_name };
+        self.add_source_mapping(output, span.start, token_name);
+    }
+
+    /// Add a mapping for a private identifier, which prints as `#` followed by `name`.
+    ///
+    /// The token is `#name`, so that is what the mapping is compared against and what it records.
+    pub fn add_source_mapping_for_private_name(&mut self, output: &[u8], span: Span, name: &str) {
+        let original_name = self.original_name(span, name);
+        let unchanged = original_name.is_some_and(|original| {
+            original
+                .as_bytes()
+                .split_first()
+                .is_some_and(|(&hash, rest)| hash == b'#' && rest == name.as_bytes())
+        });
+        let token_name = if unchanged { None } else { original_name };
+        self.add_source_mapping(output, span.start, token_name);
+    }
+
+    /// Get the source text `span` covers, which is the name to record unless nothing was renamed.
+    fn original_name(&self, span: Span, name: &str) -> Option<&'a str> {
         debug_assert!(
             (span.end as usize) <= self.original_source.len(),
             "violated {}:{} <= {} for {name}",
@@ -106,15 +134,26 @@ impl<'a> SourcemapBuilder<'a> {
             span.end,
             self.original_source.len()
         );
-        let original_name = self.original_source.get(span.start as usize..span.end as usize);
-        // The token name should be original name.
-        // If it hasn't change, name should be `None` to reduce `SourceMap` size.
-        let token_name = if original_name == Some(name) { None } else { original_name };
-        self.add_source_mapping(output, span.start, token_name);
+        self.original_source.get(span.start as usize..span.end as usize)
     }
 
     pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&'a str>) {
         if self.last_position == Some(position) {
+            if let Some(name) = name
+                && !self.last_token_has_name
+            {
+                let name_id = self.add_name(name);
+                let token = self.tokens.last_mut().unwrap();
+                *token = oxc_sourcemap::Token::new(
+                    token.get_dst_line(),
+                    token.get_dst_col(),
+                    token.get_src_line(),
+                    token.get_src_col(),
+                    token.get_source_id(),
+                    Some(name_id),
+                );
+                self.last_token_has_name = true;
+            }
             return;
         }
         let (original_line, original_column) = self.search_original_line_and_column(position);
@@ -129,16 +168,20 @@ impl<'a> SourcemapBuilder<'a> {
             name_id,
         ));
         self.last_position = Some(position);
+        self.last_token_has_name = name_id.is_some();
     }
 
     fn add_name(&mut self, name: &'a str) -> u32 {
-        if let Some(&id) = self.names_map.get(name) {
-            return id;
+        match self.names_map.entry(name) {
+            Entry::Occupied(entry) => *entry.get(),
+            Entry::Vacant(entry) => {
+                let id = u32::try_from(self.names.len())
+                    .expect("sourcemap names length should fit in u32");
+                entry.insert(id);
+                self.names.push(name);
+                id
+            }
         }
-        let id = u32::try_from(self.names.len()).expect("sourcemap names length should fit in u32");
-        self.names_map.insert(name, id);
-        self.names.push(name);
-        id
     }
 
     #[expect(clippy::cast_possible_truncation)]
@@ -358,7 +401,7 @@ impl<'a> SourcemapBuilder<'a> {
     }
 
     fn generate_line_offset_tables(content: &str) -> LineOffsetTables {
-        let mut lines = vec![];
+        let mut lines = Vec::with_capacity(content.len() / 24 + 1);
         let mut column_offsets = IndexVec::new();
 
         // Used as a buffer to reduce memory reallocations.
@@ -635,6 +678,89 @@ mod test {
                 .as_ref()
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             Some("b")
+        );
+    }
+
+    #[test]
+    fn duplicate_source_mappings_preserve_names_and_coordinates() {
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), "first second");
+        builder.add_source_mapping(b"", 0, None);
+        builder.add_source_mapping(b"(a", 0, Some("first"));
+        builder.add_source_mapping(b"(a", 0, Some("ignored"));
+        builder.add_source_mapping(b"(a\n", 6, None);
+        builder.add_source_mapping(b"(a\nb", 6, Some("second"));
+        builder.add_source_mapping(b"(a\nb", 6, None);
+        builder.add_source_mapping(b"(a\nb", 6, Some("ignored"));
+
+        let sm = builder.into_sourcemap();
+        let tokens = sm
+            .get_source_view_tokens()
+            .map(|token| {
+                (
+                    token.get_dst_line(),
+                    token.get_dst_col(),
+                    token.get_src_line(),
+                    token.get_src_col(),
+                    token.get_name(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(tokens, [(0, 0, 0, 0, Some("first")), (1, 0, 0, 6, Some("second"))]);
+        assert_eq!(sm.get_names().collect::<Vec<_>>(), ["first", "second"]);
+    }
+
+    #[test]
+    fn add_source_mapping_for_name_from_private_identifier() {
+        // A transform can print a plain identifier where the source had a private one.
+        // The `#` is part of the region the mapping describes, so it is part of the name recorded.
+        let output = b"foo";
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), "#foo");
+        builder.add_source_mapping_for_name(output, Span::new(0, 4), "foo");
+        let sm = builder.into_sourcemap();
+        assert_eq!(
+            sm.get_source_view_token(0_u32)
+                .as_ref()
+                .and_then(oxc_sourcemap::SourceViewToken::get_name),
+            Some("#foo")
+        );
+    }
+
+    #[test]
+    fn add_source_mapping_for_private_name() {
+        let output = b"#a#c";
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), "#a#b");
+        builder.add_source_mapping_for_private_name(output, Span::new(0, 2), "a");
+        builder.add_source_mapping_for_private_name(output, Span::new(2, 4), "c");
+        let sm = builder.into_sourcemap();
+        // The name `#a` not change.
+        assert_eq!(
+            sm.get_source_view_token(0_u32)
+                .as_ref()
+                .and_then(oxc_sourcemap::SourceViewToken::get_name),
+            None
+        );
+        // The name `#b` -> `#c`, save `#b` to token, `#` included.
+        assert_eq!(
+            sm.get_source_view_token(1_u32)
+                .as_ref()
+                .and_then(oxc_sourcemap::SourceViewToken::get_name),
+            Some("#b")
+        );
+    }
+
+    #[test]
+    fn add_source_mapping_for_private_name_from_plain_identifier() {
+        // A transform can print a private identifier where the source had a plain one.
+        // The token still differs from the source text, so the original name is recorded.
+        let output = b"#foo";
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), "ffoo");
+        builder.add_source_mapping_for_private_name(output, Span::new(0, 4), "foo");
+        let sm = builder.into_sourcemap();
+        assert_eq!(
+            sm.get_source_view_token(0_u32)
+                .as_ref()
+                .and_then(oxc_sourcemap::SourceViewToken::get_name),
+            Some("ffoo")
         );
     }
 

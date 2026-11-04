@@ -5,12 +5,16 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     utils::{
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, get_node_name, parse_general_jest_fn_call,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, find_test_callback, get_node_name,
+        parse_general_jest_fn_call,
     },
 };
 use oxc_ast::{
     AstKind,
-    ast::{Argument, ArrowFunctionBody, CallExpression, Expression, FunctionBody, Statement},
+    ast::{
+        Argument, ArrowFunctionBody, CallExpression, DoWhileStatement, Expression, ForInStatement,
+        ForOfStatement, ForStatement, FunctionBody, Statement, WhileStatement,
+    },
 };
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
@@ -235,9 +239,14 @@ pub trait PreferExpectAssertionsRuleImpl {
                 );
             }
             JestGeneralFnKind::Test => {
+                let is_parameterized = general
+                    .members
+                    .iter()
+                    .any(|member| member.is_name_equal("each") || member.is_name_equal("for"));
                 self.check_test(
                     call_expr,
                     node.id(),
+                    is_parameterized,
                     file_expect_prefix,
                     covered_describe_ids,
                     ctx,
@@ -293,6 +302,7 @@ pub trait PreferExpectAssertionsRuleImpl {
         &self,
         call_expr: &'a CallExpression<'a>,
         test_node_id: NodeId,
+        is_parameterized: bool,
         file_expect_prefix: &str,
         covered_describe_ids: &[NodeId],
         ctx: &LintContext<'a>,
@@ -313,14 +323,25 @@ pub trait PreferExpectAssertionsRuleImpl {
             return;
         }
 
-        let Some(expected_resolved) = self.resolve_expect(callback, file_expect_prefix, ctx) else {
+        let expected_resolved = if is_parameterized {
+            self.resolve_expect_for_parameterized_test(call_expr, callback, file_expect_prefix, ctx)
+        } else {
+            self.resolve_expect(callback, file_expect_prefix, ctx)
+        };
+        let Some(expected_resolved) = expected_resolved else {
             ctx.diagnostic(expect_shadowed_by_parameter(call_expr.callee.span()));
             return;
         };
 
         let prefix = expected_resolved.as_ref();
 
-        if self.has_options() && !self.should_check_node(body, is_async_callback(callback), prefix)
+        if self.has_options()
+            && !self.should_check_node_with_file_expect(
+                body,
+                is_async_callback(callback),
+                prefix,
+                file_expect_prefix,
+            )
         {
             return;
         }
@@ -388,6 +409,15 @@ pub trait PreferExpectAssertionsRuleImpl {
         file_expect_prefix: &'r str,
         ctx: &LintContext<'a>,
     ) -> Option<Cow<'r, str>>;
+    fn resolve_expect_for_parameterized_test<'a, 'r>(
+        &self,
+        _call_expr: &CallExpression<'a>,
+        callback: &Expression<'a>,
+        file_expect_prefix: &'r str,
+        ctx: &LintContext<'a>,
+    ) -> Option<Cow<'r, str>> {
+        self.resolve_expect(callback, file_expect_prefix, ctx)
+    }
     fn report_have_expect_assertions(
         &self,
         span: Span,
@@ -397,6 +427,15 @@ pub trait PreferExpectAssertionsRuleImpl {
     );
 
     fn should_check_node(&self, body: CallbackBody<'_>, is_async: bool, prefix: &str) -> bool;
+    fn should_check_node_with_file_expect(
+        &self,
+        body: CallbackBody<'_>,
+        is_async: bool,
+        prefix: &str,
+        _file_expect_prefix: &str,
+    ) -> bool {
+        self.should_check_node(body, is_async, prefix)
+    }
 }
 
 fn is_covered_by_hook(
@@ -549,19 +588,19 @@ impl<'a> VisitJs<'a> for BodyScanner {
         }
     }
 
-    fn visit_for_statement(&mut self, it: &oxc_ast::ast::ForStatement<'a>) {
+    fn visit_for_statement(&mut self, it: &ForStatement<'a>) {
         self.visit_loop(|s| oxc_ast_visit::walk_js::walk_for_statement(s, it));
     }
-    fn visit_for_in_statement(&mut self, it: &oxc_ast::ast::ForInStatement<'a>) {
+    fn visit_for_in_statement(&mut self, it: &ForInStatement<'a>) {
         self.visit_loop(|s| oxc_ast_visit::walk_js::walk_for_in_statement(s, it));
     }
-    fn visit_for_of_statement(&mut self, it: &oxc_ast::ast::ForOfStatement<'a>) {
+    fn visit_for_of_statement(&mut self, it: &ForOfStatement<'a>) {
         self.visit_loop(|s| oxc_ast_visit::walk_js::walk_for_of_statement(s, it));
     }
-    fn visit_while_statement(&mut self, it: &oxc_ast::ast::WhileStatement<'a>) {
+    fn visit_while_statement(&mut self, it: &WhileStatement<'a>) {
         self.visit_loop(|s| oxc_ast_visit::walk_js::walk_while_statement(s, it));
     }
-    fn visit_do_while_statement(&mut self, it: &oxc_ast::ast::DoWhileStatement<'a>) {
+    fn visit_do_while_statement(&mut self, it: &DoWhileStatement<'a>) {
         self.visit_loop(|s| oxc_ast_visit::walk_js::walk_do_while_statement(s, it));
     }
 }
@@ -624,12 +663,6 @@ pub fn is_describe_call(call_expr: &CallExpression<'_>) -> bool {
     JestFnKind::from(callee_name)
         .to_general()
         .is_some_and(|jest_kind| matches!(jest_kind, JestGeneralFnKind::Describe))
-}
-
-fn find_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
-    call_expr.arguments.iter().rev().filter_map(|arg| arg.as_expression()).find(|expr| {
-        matches!(expr, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
-    })
 }
 
 fn callback_body<'a>(callback: &'a Expression<'a>) -> Option<CallbackBody<'a>> {

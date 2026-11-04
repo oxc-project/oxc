@@ -4,6 +4,27 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:1]
+ 1 │ console["\uD800"]()
+   · ────────────────
+   ╰────
+  help: Delete this console statement.
+
+  ⚠ eslint(no-console): Unexpected console statement.
+   ╭─[no_console.tsx:1:1]
+ 1 │ console[`\uDC00`]()
+   · ────────────────
+   ╰────
+  help: Delete this console statement.
+
+  ⚠ eslint(no-console): Unexpected console statement.
+   ╭─[no_console.tsx:1:1]
+ 1 │ console["a\uD800b"]()
+   · ──────────────────
+   ╰────
+  help: Supported methods are: ab, log.
+
+  ⚠ eslint(no-console): Unexpected console statement.
+   ╭─[no_console.tsx:1:1]
  1 │ console.log()
    · ───────────
    ╰────

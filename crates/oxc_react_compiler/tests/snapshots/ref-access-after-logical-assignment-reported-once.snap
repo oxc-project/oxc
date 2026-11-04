@@ -1,0 +1,34 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/ref-access-after-logical-assignment-reported-once.ts
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Logical assignment operators (||=, &&=, ??=) are not yet supported", labels: [LabeledSpan { label: None, span: Span { start: 358, end: 394 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot access refs during render", labels: [LabeledSpan { label: Some("Cannot access ref value during render"), span: Span { start: 412, end: 428 }, primary: true }], help: Some("React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Refs") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/refs") } }
+
+// @outputMode:"lint" @panicThreshold:"none"
+import { useEffect, useRef } from "react";
+const clearOwned = (owner: symbol): void => {
+	console.log(owner);
+};
+// The read of `ownerRef.current` during render is reported once.
+export const useOwner = (items: number[], index: number, count: number): void => {
+	const ownerRef = useRef<symbol | null>(null);
+	ownerRef.current ??= Symbol("owner");
+	const owner = ownerRef.current;
+	useEffect(() => {
+		const item = items[index];
+		if (count === 0 || item === undefined) {
+			clearOwned(owner);
+			return;
+		}
+		console.log(item, owner);
+	}, [
+		index,
+		items,
+		count,
+		owner
+	]);
+	useEffect(() => () => clearOwned(owner), [owner]);
+};

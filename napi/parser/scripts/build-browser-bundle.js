@@ -6,6 +6,7 @@ import { rolldown } from "rolldown";
 // Rollup-compatible bundlers reserve `\0`-prefixed IDs for plugin virtual modules,
 // so Rolldown will not try to resolve these generated `?url` asset modules as files.
 const NEW_URL_ASSET_PREFIX = "\0new-url-asset:";
+const WASIP1_BROWSER_BINDING = path.resolve("./src-js/parser.wasip1-browser.js");
 
 async function main() {
   const args = parseArgs({
@@ -23,7 +24,7 @@ async function main() {
     platform: "browser",
     resolve: {
       alias: {
-        "@oxc-parser/binding-wasm32-wasi": path.resolve("./src-js/parser.wasi-browser.js"),
+        "@oxc-parser/binding-wasm32-wasip1": WASIP1_BROWSER_BINDING,
       },
     },
     plugins: [
@@ -53,7 +54,7 @@ async function main() {
   }
 
   if (args.values.npmDir) {
-    const pkgDir = path.resolve(args.values.npmDir, "wasm32-wasi");
+    const pkgDir = path.resolve(args.values.npmDir, "wasm32-wasip1");
 
     // add `browser-bundle.js` to `package.json:files`
     const pkgFile = path.join(pkgDir, "package.json");
@@ -61,7 +62,7 @@ async function main() {
     pkg.files.push("browser-bundle.js");
     fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2));
 
-    // copy `browser-bundle.js` to `<npmDir>/wasm32-wasi`
+    // copy `browser-bundle.js` to `<npmDir>/wasm32-wasip1`
     fs.cpSync("browser-bundle.js", path.join(pkgDir, "browser-bundle.js"));
   }
 }

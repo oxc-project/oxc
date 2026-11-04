@@ -8,7 +8,9 @@
 //! Generates type equations from the HIR, unifies them, and applies the
 //! resolved types back to identifiers. Analogous to TS `InferTypes.ts`.
 
+use std::cell::RefCell;
 use std::mem::replace;
+use std::sync::Arc;
 
 use rustc_hash::FxHashMap;
 
@@ -17,7 +19,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::{IndexSlice, IndexVec};
 use oxc_str::{Ident, format_ident};
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::{Environment, is_hook_name};
 use crate::react_compiler_hir::object_shape::{
     BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_MIXED_READONLY_ID,
@@ -237,7 +239,7 @@ fn is_ref_like_name(object_name: &str, property_name: &PropertyNameKind) -> bool
     object_name == "ref"
         || (object_name.len() > 3
             && object_name.ends_with("Ref")
-            && object_name[..1]
+            && object_name
                 .chars()
                 .next()
                 .is_some_and(|c| c.is_ascii_alphabetic() || c == '$' || c == '_'))
@@ -339,7 +341,7 @@ fn generate<'a>(
             let left = get_type(phi.place.identifier, &env.identifiers);
             let operands: Vec<Type> =
                 phi.operands.values().map(|p| get_type(p.identifier, &env.identifiers)).collect();
-            unifier.unify(left, Type::Phi { operands }, &env.shapes)?;
+            unifier.unify(left, Type::Phi { operands: operands.into() }, &env.shapes)?;
         }
 
         // Instructions — use split borrows: &env.identifiers, &env.shapes
@@ -370,7 +372,7 @@ fn generate<'a>(
     // Unify return types
     let returns_type = get_type(func.returns.identifier, &env.identifiers);
     if return_types.len() > 1 {
-        unifier.unify(returns_type, Type::Phi { operands: return_types }, &env.shapes)?;
+        unifier.unify(returns_type, Type::Phi { operands: return_types.into() }, &env.shapes)?;
     } else if return_types.len() == 1 {
         unifier.unify(returns_type, return_types.into_iter().next().unwrap(), &env.shapes)?;
     }
@@ -414,7 +416,7 @@ fn generate_for_function_id<'a>(
             let left = get_type(phi.place.identifier, identifiers);
             let operands: Vec<Type> =
                 phi.operands.values().map(|p| get_type(p.identifier, identifiers)).collect();
-            unifier.unify(left, Type::Phi { operands }, shapes)?;
+            unifier.unify(left, Type::Phi { operands: operands.into() }, shapes)?;
         }
 
         for &instr_id in &block.instructions {
@@ -441,7 +443,7 @@ fn generate_for_function_id<'a>(
 
     let returns_type = get_type(inner.returns.identifier, identifiers);
     if inner_return_types.len() > 1 {
-        unifier.unify(returns_type, Type::Phi { operands: inner_return_types }, shapes)?;
+        unifier.unify(returns_type, Type::Phi { operands: inner_return_types.into() }, shapes)?;
     } else if inner_return_types.len() == 1 {
         unifier.unify(returns_type, inner_return_types.into_iter().next().unwrap(), shapes)?;
     }
@@ -520,8 +522,10 @@ fn generate_instruction_types<'a>(
             unifier.unify(left, Type::Primitive, shapes)?;
         }
 
-        InstructionValue::PostfixUpdate { value, lvalue, .. }
-        | InstructionValue::PrefixUpdate { value, lvalue, .. } => {
+        InstructionValue::PostfixUpdateLocal { value, lvalue, .. }
+        | InstructionValue::PostfixUpdateContext { value, lvalue, .. }
+        | InstructionValue::PrefixUpdateLocal { value, lvalue, .. }
+        | InstructionValue::PrefixUpdateContext { value, lvalue, .. } => {
             let value_type = get_type(value.identifier, identifiers);
             unifier.unify(value_type, Type::Primitive, shapes)?;
             let lvalue_type = get_type(lvalue.identifier, identifiers);
@@ -575,7 +579,7 @@ fn generate_instruction_types<'a>(
         InstructionValue::ObjectExpression { properties, .. } => {
             for prop in properties {
                 if let ObjectPropertyOrSpread::Property(obj_prop) = prop
-                    && let ObjectPropertyKey::Computed { name } = &obj_prop.key
+                    && let ObjectPropertyKey::Computed { name, .. } = &obj_prop.key
                 {
                     let name_type = get_type(name.identifier, identifiers);
                     unifier.unify(name_type, Type::Primitive, shapes)?;
@@ -671,8 +675,8 @@ fn generate_instruction_types<'a>(
                 for prop in &object_pattern.properties {
                     if let ObjectPropertyOrSpread::Property(obj_prop) = prop {
                         match &obj_prop.key {
-                            ObjectPropertyKey::Identifier { name }
-                            | ObjectPropertyKey::String { name } => {
+                            ObjectPropertyKey::Identifier { name, .. }
+                            | ObjectPropertyKey::String { name, .. } => {
                                 let prop_place_type =
                                     get_type(obj_prop.place.identifier, identifiers);
                                 let value_type = get_type(value.identifier, identifiers);
@@ -757,7 +761,7 @@ fn generate_instruction_types<'a>(
         InstructionValue::JsxExpression { props, .. } => {
             if unifier.enable_treat_ref_like_identifiers_as_refs {
                 for prop in props {
-                    if let JsxAttribute::Attribute { name, place } = prop
+                    if let JsxAttribute::Attribute { name, place, .. } = prop
                         && name == "ref"
                     {
                         let ref_type = get_type(place.identifier, identifiers);
@@ -814,6 +818,7 @@ fn generate_instruction_types<'a>(
         | InstructionValue::GetIterator { .. }
         | InstructionValue::IteratorNext { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::FinishMemoize { .. } => {
             // No type equations for these
         }
@@ -1062,7 +1067,7 @@ fn apply_instruction_operands<'a>(
                 match prop {
                     ObjectPropertyOrSpread::Property(obj_prop) => {
                         resolve_identifier(obj_prop.place.identifier, identifiers, types, unifier);
-                        if let ObjectPropertyKey::Computed { name } = &obj_prop.key {
+                        if let ObjectPropertyKey::Computed { name, .. } = &obj_prop.key {
                             resolve_identifier(name.identifier, identifiers, types, unifier);
                         }
                     }
@@ -1094,7 +1099,7 @@ fn apply_instruction_operands<'a>(
                     JsxAttribute::Attribute { place, .. } => {
                         resolve_identifier(place.identifier, identifiers, types, unifier);
                     }
-                    JsxAttribute::SpreadAttribute { argument } => {
+                    JsxAttribute::SpreadAttribute { argument, .. } => {
                         resolve_identifier(argument.identifier, identifiers, types, unifier);
                     }
                 }
@@ -1118,8 +1123,10 @@ fn apply_instruction_operands<'a>(
                 resolve_identifier(sub.identifier, identifiers, types, unifier);
             }
         }
-        InstructionValue::PrefixUpdate { value: val, lvalue, .. }
-        | InstructionValue::PostfixUpdate { value: val, lvalue, .. } => {
+        InstructionValue::PrefixUpdateLocal { value: val, lvalue, .. }
+        | InstructionValue::PrefixUpdateContext { value: val, lvalue, .. }
+        | InstructionValue::PostfixUpdateLocal { value: val, lvalue, .. }
+        | InstructionValue::PostfixUpdateContext { value: val, lvalue, .. } => {
             resolve_identifier(val.identifier, identifiers, types, unifier);
             resolve_identifier(lvalue.identifier, identifiers, types, unifier);
         }
@@ -1157,6 +1164,7 @@ fn apply_instruction_operands<'a>(
         | InstructionValue::DeclareContext { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::Debugger { .. } => {
             // No operand places
         }
@@ -1169,6 +1177,10 @@ fn apply_instruction_operands<'a>(
 
 struct Unifier<'a> {
     substitutions: FxHashMap<TypeId, Type<'a>>,
+    /// Phi operand lists built while resolving, interned so equal lists share
+    /// one allocation. Path compression stores resolved copies; without
+    /// sharing, copies of copies grow exponentially (#27417).
+    phis: RefCell<PhiInterner<'a>>,
     enable_treat_ref_like_identifiers_as_refs: bool,
     enable_treat_set_identifiers_as_state_setters: bool,
     custom_hook_type: Option<Type<'a>>,
@@ -1182,6 +1194,7 @@ impl<'a> Unifier<'a> {
     ) -> Self {
         Unifier {
             substitutions: FxHashMap::default(),
+            phis: RefCell::default(),
             enable_treat_ref_like_identifiers_as_refs,
             enable_treat_set_identifiers_as_state_setters,
             custom_hook_type,
@@ -1278,13 +1291,11 @@ impl<'a> Unifier<'a> {
 
         if let Type::Phi { ref operands } = ty {
             if operands.is_empty() {
-                return Err(
-                    ErrorCategory::Invariant.diagnostic("there should be at least one operand")
-                );
+                return Err(diagnostics::invariant_there_should_at_least_one_operand());
             }
 
             let mut candidate_type: Option<Type> = None;
-            for operand in operands {
+            for operand in operands.iter() {
                 let resolved = self.get(operand);
                 match &candidate_type {
                     None => {
@@ -1317,7 +1328,7 @@ impl<'a> Unifier<'a> {
                 self.substitutions.insert(v_id, resolved);
                 return Ok(());
             }
-            return Err(ErrorCategory::Invariant.diagnostic("cycle detected"));
+            return Err(diagnostics::invariant_cycle_detected());
         }
 
         self.substitutions.insert(v_id, ty);
@@ -1325,97 +1336,231 @@ impl<'a> Unifier<'a> {
     }
 
     fn try_resolve_type(&mut self, v: &Type<'a>, ty: &Type<'a>) -> Option<Type<'a>> {
-        match ty {
+        self.try_resolve_type_cached(v, ty, &mut TypeCache::default())
+    }
+
+    fn try_resolve_type_cached(
+        &mut self,
+        v: &Type<'a>,
+        ty: &Type<'a>,
+        cache: &mut TypeCache<'a, Type<'a>>,
+    ) -> Option<Type<'a>> {
+        if let Some(resolved) = cache.get(ty) {
+            return Some(resolved);
+        }
+        let resolved = match ty {
             Type::Phi { operands } => {
                 let mut new_operands = Vec::new();
-                for operand in operands {
+                for operand in operands.iter() {
                     if let Type::Var { id } = operand
                         && let Type::Var { id: v_id } = v
                         && id == v_id
                     {
                         continue; // skip self-reference
                     }
-                    let resolved = self.try_resolve_type(v, operand)?;
+                    let resolved = self.try_resolve_type_cached(v, operand, cache)?;
                     new_operands.push(resolved);
                 }
-                Some(Type::Phi { operands: new_operands })
+                self.make_phi(new_operands)
             }
             Type::Var { id } => {
                 let substitution = self.get(ty);
-                if !type_equals(&substitution, ty) {
-                    let resolved = self.try_resolve_type(v, &substitution)?;
-                    self.substitutions.insert(*id, resolved.clone());
-                    Some(resolved)
+                if type_equals(&substitution, ty) {
+                    ty.clone()
                 } else {
-                    Some(ty.clone())
+                    let resolved = self.try_resolve_type_cached(v, &substitution, cache)?;
+                    self.substitutions.insert(*id, resolved.clone());
+                    resolved
                 }
             }
             Type::Property { object_type, object_name, property_name } => {
                 let resolved_obj = self.get(object_type);
-                let object_type = self.try_resolve_type(v, &resolved_obj)?;
-                Some(Type::Property {
+                let object_type = self.try_resolve_type_cached(v, &resolved_obj, cache)?;
+                Type::Property {
                     object_type: Box::new(object_type),
                     object_name: *object_name,
                     property_name: *property_name,
-                })
+                }
             }
             Type::Function { shape_id, return_type, is_constructor } => {
                 let resolved_ret = self.get(return_type);
-                let return_type = self.try_resolve_type(v, &resolved_ret)?;
-                Some(Type::Function {
+                let return_type = self.try_resolve_type_cached(v, &resolved_ret, cache)?;
+                Type::Function {
                     shape_id: *shape_id,
                     return_type: Box::new(return_type),
                     is_constructor: *is_constructor,
-                })
+                }
             }
             Type::ObjectMethod | Type::Object { .. } | Type::Primitive | Type::Poly => {
-                Some(ty.clone())
+                return Some(ty.clone());
             }
-        }
+        };
+        cache.insert(ty, resolved.clone());
+        Some(resolved)
     }
 
     fn occurs_check(&self, v: &Type<'a>, ty: &Type<'a>) -> bool {
+        let mut current = ty;
+        loop {
+            if type_equals(v, current) {
+                return true;
+            }
+            match current {
+                Type::Var { id } => match self.substitutions.get(id) {
+                    Some(substitution) => current = substitution,
+                    None => return false,
+                },
+                Type::Phi { .. } | Type::Function { .. } => {
+                    return self.occurs_check_cached(v, current, &mut TypeCache::default());
+                }
+                _ => return false,
+            }
+        }
+    }
+
+    fn occurs_check_cached(
+        &self,
+        v: &Type<'a>,
+        ty: &Type<'a>,
+        cache: &mut TypeCache<'a, bool>,
+    ) -> bool {
         if type_equals(v, ty) {
             return true;
         }
-
-        if let Type::Var { id } = ty
-            && let Some(sub) = self.substitutions.get(id)
-        {
-            return self.occurs_check(v, sub);
+        if let Some(occurs) = cache.get(ty) {
+            return occurs;
         }
-
-        if let Type::Phi { operands } = ty {
-            return operands.iter().any(|o| self.occurs_check(v, o));
-        }
-
-        if let Type::Function { return_type, .. } = ty {
-            return self.occurs_check(v, return_type);
-        }
-
-        false
+        let occurs = match ty {
+            Type::Var { id } => self
+                .substitutions
+                .get(id)
+                .is_some_and(|substitution| self.occurs_check_cached(v, substitution, cache)),
+            Type::Phi { operands } => {
+                operands.iter().any(|operand| self.occurs_check_cached(v, operand, cache))
+            }
+            Type::Function { return_type, .. } => {
+                return self.occurs_check_cached(v, return_type, cache);
+            }
+            _ => return false,
+        };
+        cache.insert(ty, occurs);
+        occurs
     }
 
     fn get(&self, ty: &Type<'a>) -> Type<'a> {
-        if let Type::Var { id } = ty
-            && let Some(sub) = self.substitutions.get(id)
-        {
-            return self.get(sub);
+        let mut current = ty;
+        while let Type::Var { id } = current {
+            match self.substitutions.get(id) {
+                Some(substitution) => current = substitution,
+                None => return current.clone(),
+            }
         }
-
-        if let Type::Phi { operands } = ty {
-            return Type::Phi { operands: operands.iter().map(|o| self.get(o)).collect() };
+        match current {
+            Type::Phi { .. } | Type::Function { .. } => {
+                self.get_cached(current, &mut TypeCache::default())
+            }
+            _ => current.clone(),
         }
+    }
 
-        if let Type::Function { is_constructor, shape_id, return_type } = ty {
-            return Type::Function {
-                is_constructor: *is_constructor,
-                shape_id: *shape_id,
-                return_type: Box::new(self.get(return_type)),
-            };
+    fn make_phi(&self, operands: Vec<Type<'a>>) -> Type<'a> {
+        let Some(key) = operands.iter().map(OperandKey::new).collect::<Option<Box<[_]>>>() else {
+            return Type::Phi { operands: operands.into() };
+        };
+        let operands =
+            Arc::clone(self.phis.borrow_mut().entry(key).or_insert_with(|| operands.into()));
+        Type::Phi { operands }
+    }
+
+    fn get_cached(&self, ty: &Type<'a>, cache: &mut TypeCache<'a, Type<'a>>) -> Type<'a> {
+        if let Some(resolved) = cache.get(ty) {
+            return resolved;
         }
+        let resolved = match ty {
+            Type::Var { id } => match self.substitutions.get(id) {
+                Some(substitution) => self.get_cached(substitution, cache),
+                None => return ty.clone(),
+            },
+            Type::Phi { operands } => self
+                .make_phi(operands.iter().map(|operand| self.get_cached(operand, cache)).collect()),
+            Type::Function { is_constructor, shape_id, return_type } => {
+                return Type::Function {
+                    is_constructor: *is_constructor,
+                    shape_id: *shape_id,
+                    return_type: Box::new(self.get_cached(return_type, cache)),
+                };
+            }
+            _ => return ty.clone(),
+        };
+        cache.insert(ty, resolved.clone());
+        resolved
+    }
+}
 
-        ty.clone()
+type PhiInterner<'a> = FxHashMap<Box<[OperandKey<'a>]>, Arc<[Type<'a>]>>;
+
+/// Identity of a phi operand for interning. Nested phis are identified by
+/// their interned list. Function and property types are not interned.
+#[derive(PartialEq, Eq, Hash)]
+enum OperandKey<'a> {
+    Var(TypeId),
+    Phi(*const Type<'a>),
+    Object(Option<Ident<'a>>),
+    Primitive,
+    Poly,
+    ObjectMethod,
+}
+
+impl<'a> OperandKey<'a> {
+    fn new(ty: &Type<'a>) -> Option<Self> {
+        Some(match ty {
+            Type::Var { id } => Self::Var(*id),
+            Type::Phi { operands } => Self::Phi(operands.as_ptr()),
+            Type::Object { shape_id } => Self::Object(*shape_id),
+            Type::Primitive => Self::Primitive,
+            Type::Poly => Self::Poly,
+            Type::ObjectMethod => Self::ObjectMethod,
+            Type::Function { .. } | Type::Property { .. } => return None,
+        })
+    }
+}
+
+/// Memoizes one walk of the substitution graph. Phis that share operands make
+/// the graph a DAG, and walking it once per path is exponential. Results are
+/// keyed by type variable and by shared `Phi` operand list; each list entry
+/// keeps its list alive, so its address cannot be reused while the cache lives.
+struct TypeCache<'a, T> {
+    vars: FxHashMap<TypeId, T>,
+    phis: FxHashMap<*const Type<'a>, (Arc<[Type<'a>]>, T)>,
+}
+
+impl<T> Default for TypeCache<'_, T> {
+    fn default() -> Self {
+        Self { vars: FxHashMap::default(), phis: FxHashMap::default() }
+    }
+}
+
+impl<'a, T: Clone> TypeCache<'a, T> {
+    fn get(&self, ty: &Type<'a>) -> Option<T> {
+        match ty {
+            Type::Var { id } => self.vars.get(id).cloned(),
+            Type::Phi { operands } => {
+                self.phis.get(&operands.as_ptr()).map(|(_, value)| value.clone())
+            }
+            _ => None,
+        }
+    }
+
+    fn insert(&mut self, ty: &Type<'a>, value: T) {
+        match ty {
+            Type::Var { id } => {
+                self.vars.insert(*id, value);
+            }
+            Type::Phi { operands } => {
+                self.phis.insert(operands.as_ptr(), (Arc::clone(operands), value));
+            }
+            _ => {}
+        }
     }
 }
 

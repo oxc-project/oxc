@@ -469,30 +469,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
    ╭─[prefer_global_this.tsx:1:8]
- 1 │ typeof window !== "undefined"
-   ·        ──────
-   ╰────
-  help: Replace the alias with `globalThis`.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
-
-  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
-   ╭─[prefer_global_this.tsx:1:8]
- 1 │ typeof self !== "undefined"
-   ·        ────
-   ╰────
-  help: Replace the alias with `globalThis`.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
-
-  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
-   ╭─[prefer_global_this.tsx:1:8]
- 1 │ typeof global !== "undefined"
-   ·        ──────
-   ╰────
-  help: Replace the alias with `globalThis`.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
-
-  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
-   ╭─[prefer_global_this.tsx:1:8]
  1 │ typeof window.something === "function"
    ·        ──────
    ╰────
@@ -534,6 +510,134 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
    ╭─[prefer_global_this.tsx:1:1]
  1 │ self.self_did_not_declare_in_language_options
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.location
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.navigator
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.name
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.postMessage("done")
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.importScripts("a.js")
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.onconnect = function () {}
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.onerror = function () {}
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.onlanguagechange = function () {}
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.onoffline = function () {}
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.ononline = function () {}
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.addEventListener("message", () => {})
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.removeEventListener("message", () => {})
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.dispatchEvent(new Event("message"))
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.self
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.onrejectionhandled = function () {}
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
+
+  ⚠ unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.onunhandledrejection = function () {}
    · ────
    ╰────
   help: Replace the alias with `globalThis`.

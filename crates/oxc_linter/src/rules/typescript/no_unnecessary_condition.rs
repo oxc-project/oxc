@@ -112,7 +112,7 @@ declare_oxc_lint!(
     NoUnnecessaryCondition(tsgolint),
     typescript,
     nursery, // TODO(camc314): move to correctness
-    pending,
+    conditional_suggestion,
     config = NoUnnecessaryConditionConfig,
     version = "1.48.0",
     short_description = "Disallow conditions that are always truthy, always falsy, or always nullish based on TypeScript's type information.",
@@ -120,7 +120,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUnnecessaryCondition {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

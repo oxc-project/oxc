@@ -38,5 +38,9 @@ pub fn print_schema_markdown() {
 
 fn generate_schema_markdown() -> String {
     let root_schema = schema_for!(Oxfmtrc);
-    Renderer::new(root_schema).render()
+    let mut renderer = Renderer::new(root_schema);
+    // `overrides[n].options` accepts the same options as the top-level,
+    // so skip expanding them to avoid duplicating every option (and exceeding h6).
+    renderer.with_property_filters(vec!["overrides[n].options"]);
+    renderer.render()
 }

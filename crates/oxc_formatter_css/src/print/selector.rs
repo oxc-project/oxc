@@ -4,6 +4,7 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
+
 use oxc_css_parser::ast::{
     AttributeSelector, AttributeSelectorMatcherKind, AttributeSelectorValue, Combinator,
     CombinatorKind, ComplexSelector, ComplexSelectorChild, CompoundSelector, CompoundSelectorList,
@@ -11,15 +12,15 @@ use oxc_css_parser::ast::{
     PseudoClassSelector, PseudoClassSelectorArgKind, PseudoElementSelector,
     PseudoElementSelectorArgKind, SelectorList, SimpleSelector, TypeSelector, WqName,
 };
-
 use oxc_formatter_core::{
-    Buffer, FormatElement, arena_cow_str,
+    FormatElement, arena_cow_str,
     builders::{group, hard_line_break, indent, soft_line_break, soft_line_break_or_space, text},
     write,
 };
 
 use crate::{
-    TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX, comments,
+    TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX,
+    comments::{self, BlockCommentAfter, FormatCommentBeforeContent},
     format::to_span,
     print::{CssFormatter, format_with, less, normalize_whitespace, value, write_maybe_lowercase},
 };
@@ -83,19 +84,25 @@ pub(super) fn write_selector_list<'a>(
         for (i, complex) in list.selectors.iter().enumerate() {
             if i > 0 {
                 write!(f, ",");
-                // A comment trailing the comma stays on the same line
-                let next_start = to_span(complex.span()).start;
+                // A comment trailing the comma stays on the same line:
+                // a lone block comment (`a, /* b */ c`), or a run ending in a `//` (`a, /* b */ // c`).
+                // A `//` ends the line itself; the separator below then merges into its break.
+                let next_start = complex.span().start;
                 if let Some(comment) = f.context().comments().peek()
                     && comment.span.end <= next_start
                 {
                     let source = f.context().source_text();
-                    let prev_end = to_span(list.selectors[i - 1].span()).end;
+                    let prev_end = list.selectors[i - 1].span().end;
                     if comments::classify_gap(source.bytes_range(prev_end, comment.span.start))
                         == comments::Gap::None
                     {
-                        f.context().comments().take_before(comment.span.end);
-                        write!(f, " ");
-                        comments::write_single_comment(comment, f);
+                        let run_end = value::line_comment_run_end(
+                            comment.span.start,
+                            f.context().comments().iter_remaining(),
+                            source,
+                        );
+                        let upper_bound = run_end.unwrap_or(comment.span.end);
+                        value::flush_same_line_comments(comment.span.start, upper_bound, f);
                     }
                 }
                 match style {
@@ -104,14 +111,13 @@ pub(super) fn write_selector_list<'a>(
                 }
             }
             // Comments on their own line between selectors
-            let start = to_span(complex.span()).start;
+            let start = complex.span().start;
             for &comment in f.context().comments().take_before(start) {
-                comments::write_single_comment(comment, f);
-                write!(f, hard_line_break());
+                write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
             }
             if placeholder_idx == Some(i) {
                 let source = f.context().source_text();
-                let end = to_span(list.selectors[list.selectors.len() - 1].span()).end;
+                let end = list.selectors[list.selectors.len() - 1].span().end;
                 let raw = source.slice_range(start, end);
                 // Comments inside the chunk are part of the verbatim text
                 let _ = f.context().comments().take_before(end);
@@ -204,9 +210,12 @@ fn write_combinator(
                 CombinatorKind::NextSibling => write!(f, "+"),
                 CombinatorKind::LaterSibling => write!(f, "~"),
                 CombinatorKind::Column => write!(f, "||"),
-                // Deprecated shadow-DOM combinators;
-                // Prettier's `selector-combinator` fallback keeps them spaced like any other combinator.
-                CombinatorKind::Deep => write!(f, "/deep/"),
+                // Deprecated shadow-DOM combinators (`/deep/` and less.js's `/name/` (`/shadow/`));
+                // print as written: the tools give a meaning match it case-sensitively
+                CombinatorKind::Deep | CombinatorKind::Slashed => {
+                    let span = to_span(combinator.span);
+                    write!(f, text(f.context().source_text().text_for(&span)));
+                }
                 CombinatorKind::ShadowChild => write!(f, "^"),
                 CombinatorKind::ShadowDescendant => write!(f, "^^"),
                 CombinatorKind::Descendant => unreachable!(),
@@ -517,10 +526,10 @@ fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
     }
     if let Some(matcher) = &nth.matcher {
         write!(f, " ");
-        let matcher_span = to_span(&matcher.span);
+        let matcher_span = to_span(matcher.span);
         if let Some(selector) = &matcher.selector {
             // The `of` keyword as written, then the selector list
-            let keyword_end = to_span(selector.span()).start;
+            let keyword_end = selector.span().start;
             let keyword = source.slice_range(matcher_span.start, keyword_end).trim_ascii_end();
             write!(f, [text(keyword), " "]);
             write_selector_list_inline(selector, f);

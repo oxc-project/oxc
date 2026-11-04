@@ -9,10 +9,10 @@ use std::borrow::Cow;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{ImportDeclarationSpecifier, ModuleExportName, Program, Statement};
+use oxc_ast::ast::{ImportDeclarationSpecifier, Program, Statement};
 use oxc_str::{Ident, IdentHashSet, format_ident};
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::scope::ScopeResolver;
 
 use oxc_diagnostics::Diagnostics;
@@ -233,13 +233,10 @@ pub fn validate_restricted_imports(
 
     for stmt in &program.body {
         if let Statement::ImportDeclaration(import) = stmt
-            && restricted.contains(import.source.value.as_str())
+            && let Some(source) = import.source.value.as_str()
+            && restricted.contains(source)
         {
-            diagnostics.push(
-                ErrorCategory::Todo
-                    .diagnostic("Bailing out due to blocklisted import")
-                    .with_help(format!("Import from module {}", import.source.value)),
-            );
+            diagnostics.push(diagnostics::blocklisted_import(source, import.source.span));
         }
     }
 
@@ -258,15 +255,9 @@ pub fn has_memo_cache_function_import(program: &Program, module_name: &str) -> b
             for specifier in specifiers {
                 if let ImportDeclarationSpecifier::ImportSpecifier(data) = specifier
                     && data.import_kind.is_value()
+                    && data.imported.name() == "c"
                 {
-                    let imported_name = match &data.imported {
-                        ModuleExportName::IdentifierName(id) => Some(id.name.as_str()),
-                        ModuleExportName::IdentifierReference(id) => Some(id.name.as_str()),
-                        ModuleExportName::StringLiteral(s) => Some(s.value.as_str()),
-                    };
-                    if imported_name == Some("c") {
-                        return true;
-                    }
+                    return true;
                 }
             }
         }

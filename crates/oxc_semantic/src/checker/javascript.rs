@@ -2,12 +2,12 @@ use memchr::memchr_iter;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use oxc_allocator::GetAddress;
-use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
+use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
-use oxc_span::{GetSpan, ModuleKind, Span, best_match};
+use oxc_span::{Span, best_match};
 use oxc_str::Ident;
 use oxc_syntax::{
-    class::ClassId,
+    class::{ClassId, ElementKind},
     number::NumberBase,
     operator::UnaryOperator,
     scope::{ScopeFlags, ScopeId},
@@ -83,23 +83,45 @@ pub fn check_import_value_redeclarations(ctx: &SemanticBuilder<'_>) {
 
 pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     let classes = &ctx.class_table_builder.classes;
+    let is_typescript = ctx.source_type.is_typescript();
     classes.iter_enumerated().for_each(|(class_id, _)| {
         let elements = &classes.elements[class_id];
-        let mut defined_elements =
-            FxHashMap::with_capacity_and_hasher(elements.len(), FxBuildHasher);
+        if elements.len() < 2 {
+            return;
+        }
+        let mut defined_elements = None;
         for (element_id, element) in elements.iter_enumerated() {
-            if let Some(prev_element_id) = defined_elements.insert(&element.name, element_id) {
+            // JavaScript permits duplicate public names. Constructors are checked separately.
+            if !element.is_private && !is_typescript {
+                continue;
+            }
+            // All-public JavaScript classes need no duplicate-name map.
+            let defined_elements = defined_elements.get_or_insert_with(|| {
+                FxHashMap::with_capacity_and_hasher(elements.len(), FxBuildHasher)
+            });
+            // Public and private names belong to separate namespaces.
+            let previous =
+                defined_elements.entry((&element.name, element.is_private)).or_insert([None; 2]);
+            let prev_element_id = if element.is_private {
+                // Keep setters separate so a valid getter/setter pair cannot hide a
+                // repeated accessor.
+                let index = usize::from(element.kind.contains(ElementKind::Setter));
+                let prev_element_id = previous[index].or(previous[1 - index]);
+                previous[index] = Some(element_id);
+                prev_element_id
+            } else {
+                previous[0].replace(element_id)
+            };
+            if let Some(prev_element_id) = prev_element_id {
                 let prev_element = &elements[prev_element_id];
 
-                let mut is_duplicate = element.is_private == prev_element.is_private
-                    && if element.kind.is_setter_or_getter()
-                        && prev_element.kind.is_setter_or_getter()
-                    {
-                        element.kind == prev_element.kind
-                            || element.r#static != prev_element.r#static
-                    } else {
-                        true
-                    };
+                let mut is_duplicate = if element.kind.is_setter_or_getter()
+                    && prev_element.kind.is_setter_or_getter()
+                {
+                    element.kind == prev_element.kind || element.r#static != prev_element.r#static
+                } else {
+                    true
+                };
 
                 // * It is a Syntax Error if PrivateBoundIdentifiers of ClassElementList contains any duplicate entries,
                 // unless the name is used once for a getter and once for a setter and in no other entries,
@@ -107,13 +129,9 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
                 // For TypeScript, public elements with different static status are allowed (overloads, etc.),
                 // but private identifiers follow the same rules as JavaScript - static and instance
                 // elements cannot share the same private name.
-                is_duplicate = if element.is_private {
-                    is_duplicate
-                } else if ctx.source_type.is_typescript() {
-                    element.r#static == prev_element.r#static && is_duplicate
-                } else {
-                    false
-                };
+                if !element.is_private {
+                    is_duplicate &= element.r#static == prev_element.r#static;
+                }
 
                 if is_duplicate {
                     #[cold]
@@ -127,7 +145,7 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
                             && ctx.source_type.is_typescript()
                         {
                             ctx.error(diagnostics::static_and_instance_private_identifier(
-                                &element.name,
+                                element.name.display(),
                                 prev_element.span,
                                 element.span,
                             ));
@@ -263,7 +281,7 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                         }
                         break;
                     }
-                    AstKind::Function(_) => break,
+                    AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => break,
                     _ => {}
                 }
             }
@@ -280,39 +298,17 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
 
     //  Static Semantics: AssignmentTargetType
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
-    if matches!(ident.name.as_str(), "arguments" | "eval") && ctx.strict_mode() {
-        for node_kind in ctx.ancestry().ancestor_kinds() {
-            match node_kind {
-                // Only check for actual assignment contexts, not member expression access
-                AstKind::ObjectAssignmentTarget(_)
-                | AstKind::AssignmentTargetPropertyIdentifier(_)
-                | AstKind::UpdateExpression(_)
-                | AstKind::ArrayAssignmentTarget(_) => {
-                    return ctx.error(diagnostics::unexpected_identifier_assign(
-                        &ident.name,
-                        ident.span,
-                        unexpected_identifier_assign_context(ctx),
-                    ));
-                }
-                AstKind::AssignmentExpression(assign_expr) => {
-                    // only throw error if arguments or eval are being assigned to
-                    if let AssignmentTarget::AssignmentTargetIdentifier(target_ident) =
-                        &assign_expr.left
-                        && target_ident.name == ident.name
-                    {
-                        return ctx.error(diagnostics::unexpected_identifier_assign(
-                            &ident.name,
-                            ident.span,
-                            unexpected_identifier_assign_context(ctx),
-                        ));
-                    }
-                }
-                m if m.is_member_expression_kind() => {
-                    break;
-                }
-                _ => {}
-            }
-        }
+    if matches!(ident.name.as_str(), "arguments" | "eval")
+        && ctx.strict_mode()
+        // Reference flags distinguish assignment targets (including for-in/of) from
+        // reads in computed keys and default initializers within the same pattern.
+        && ctx.scoping.get_reference(ident.reference_id.get().unwrap()).flags().is_write()
+    {
+        return ctx.error(diagnostics::unexpected_identifier_assign(
+            &ident.name,
+            ident.span,
+            unexpected_identifier_assign_context(ctx),
+        ));
     }
 
     // FieldDefinition : ClassElementName Initializeropt
@@ -320,7 +316,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
     // ClassStaticBlockBody : ClassStaticBlockStatementList
     //   It is a Syntax Error if ContainsArguments of ClassStaticBlockStatementList is true.
 
-    if ident.name == "arguments" {
+    if ident.name == "arguments" && ctx.class_table_builder.current_class_id.is_some() {
         let mut previous_node_address = ctx.ancestry().current_address();
         for node_kind in ctx.ancestry().ancestor_kinds() {
             match node_kind {
@@ -362,7 +358,11 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
         let mut available_names: Option<Vec<&str>> = None;
         for reference in ctx.class_table_builder.classes.iter_private_identifiers(class_id) {
-            if !ctx.class_table_builder.classes.ancestors(class_id).any(|class_id| {
+            // Reference creation already searched this class's complete element table.
+            if !reference.element_ids.is_empty() {
+                continue;
+            }
+            if !ctx.class_table_builder.classes.ancestors(class_id).skip(1).any(|class_id| {
                 ctx.class_table_builder.classes.has_private_definition(class_id, reference.name)
             }) {
                 let names = available_names.get_or_insert_with(|| {
@@ -370,8 +370,11 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
                     for ancestor_class_id in ctx.class_table_builder.classes.ancestors(class_id) {
                         for element in &ctx.class_table_builder.classes.elements[ancestor_class_id]
                         {
-                            if element.is_private {
-                                names.push(element.name.as_ref());
+                            // Private names originate from identifiers, which are always UTF-8.
+                            if element.is_private
+                                && let Some(name) = element.name.as_str()
+                            {
+                                names.push(name);
                             }
                         }
                     }
@@ -420,12 +423,14 @@ pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
     //   legacy_octalEscapeSequence
     //   non_octal_decimal_escape_sequence
     // It is a Syntax Error if the source text matched by this production is strict mode code.
-    if !ctx.strict_mode() {
+    if !ctx.strict_mode() || matches!(ctx.ancestry().parent_kind(), AstKind::JSXAttribute(_)) {
         return;
     }
     let raw = lit.span.source_text(ctx.source_text);
     let raw_len = raw.len();
-    if raw_len != lit.value.len() {
+    // Quotes contribute two bytes, and every escape contracts the cooked WTF-8 value.
+    // Equal content lengths therefore prove that there are no escapes to check.
+    if raw_len != lit.value.len() + 2 {
         if raw_len >= MIN_STRING_SIZE_FOR_BATCH_CHECK {
             let raw_bytes = raw.as_bytes();
             // Exclude the last byte (closing quote) from the search haystack.
@@ -509,44 +514,6 @@ pub fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuilder<'_>) {
-    // It is ambiguous between script and module for `TypeScript`, skipping this check for now.
-    // Basically we need to "upgrade" from script to module if we see any module syntax inside the
-    // semantic builder
-    if ctx.source_type.is_typescript() {
-        return;
-    }
-
-    let text = match decl {
-        ModuleDeclarationKind::Import(_) => "import statement",
-        ModuleDeclarationKind::ExportAll(_)
-        | ModuleDeclarationKind::Export(_)
-        | ModuleDeclarationKind::ExportDefault(_)
-        | ModuleDeclarationKind::ExportNamed(_)
-        | ModuleDeclarationKind::ExportFrom(_)
-        | ModuleDeclarationKind::TSExportAssignment(_)
-        | ModuleDeclarationKind::TSNamespaceExport(_) => "export statement",
-    };
-    let start = decl.span().start;
-    let span = Span::sized(start, 6);
-    match ctx.source_type.module_kind() {
-        ModuleKind::Unambiguous => {
-            #[cfg(debug_assertions)]
-            panic!("Technically unreachable, omit to avoid panic.");
-        }
-        // CommonJS uses require/module.exports, not import/export statements
-        ModuleKind::Script | ModuleKind::CommonJS => {
-            ctx.error(diagnostics::module_code(text, span));
-        }
-        ModuleKind::Module => {
-            if matches!(ctx.ancestry().parent_kind(), AstKind::Program(_)) {
-                return;
-            }
-            ctx.error(diagnostics::top_level(text, span));
-        }
-    }
-}
-
 /// Check that `using` declarations are not at the top level in script mode.
 /// `using` is allowed:
 /// - At the top level of ES modules
@@ -561,7 +528,7 @@ pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuil
     {
         ctx.error(diagnostics::using_declaration_not_allowed_in_script(decl.span));
     }
-    if decl.kind.is_await() && is_in_class_static_block(ctx) {
+    if decl.kind.is_await_using() && is_in_class_static_block(ctx) {
         ctx.error(diagnostics::class_static_block_await_using(decl.span));
     }
 }
@@ -797,7 +764,9 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
                     },
                 );
             }
-            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+            AstKind::Function(_)
+            | AstKind::ArrowFunctionExpression(_)
+            | AstKind::StaticBlock(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_break(stmt.span)),
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),
@@ -840,7 +809,9 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
                     },
                 );
             }
-            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+            AstKind::Function(_)
+            | AstKind::ArrowFunctionExpression(_)
+            | AstKind::StaticBlock(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_continue(stmt.span)),
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),
@@ -848,15 +819,11 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
             }
             AstKind::LabeledStatement(labeled_statement) => match &stmt.label {
                 Some(label) if label.name == labeled_statement.label.name => {
-                    if matches!(
-                        labeled_statement.body,
-                        Statement::LabeledStatement(_)
-                            | Statement::DoWhileStatement(_)
-                            | Statement::WhileStatement(_)
-                            | Statement::ForStatement(_)
-                            | Statement::ForInStatement(_)
-                            | Statement::ForOfStatement(_)
-                    ) {
+                    let mut target = &labeled_statement.body;
+                    while let Statement::LabeledStatement(nested) = target {
+                        target = &nested.body;
+                    }
+                    if target.is_iteration_statement() {
                         break;
                     }
                     return ctx.error(diagnostics::invalid_label_non_iteration(
@@ -912,7 +879,8 @@ pub fn check_for_statement_left(
 ) {
     let ForStatementLeft::VariableDeclaration(decl) = left else { return };
 
-    // initializer is not allowed for for-in / for-of
+    // The parser checks initialized lexical declarations and multiple declarations. The
+    // remaining cases depend on strict mode or the binding form.
     if decl.declarations.len() > 1 {
         return;
     }
@@ -920,9 +888,8 @@ pub fn check_for_statement_left(
     let strict_mode = ctx.strict_mode();
     for declarator in &decl.declarations {
         if declarator.init.is_some()
-            && (strict_mode
+            && ((strict_mode && decl.kind.is_var())
                 || !is_for_in
-                || decl.kind.is_lexical()
                 || !matches!(declarator.id, BindingPattern::BindingIdentifier(_)))
         {
             ctx.error(diagnostics::unexpected_initializer_in_for_loop_head(
@@ -1296,9 +1263,16 @@ pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilde
 }
 
 fn is_in_formal_parameters(ctx: &SemanticBuilder<'_>) -> bool {
-    for node_kind in ctx.ancestry().ancestor_kinds() {
+    let mut ancestors = ctx.ancestry().ancestor_kinds().peekable();
+    while let Some(node_kind) = ancestors.next() {
         match node_kind {
             AstKind::FormalParameter(_) => return true,
+            // Only the rest binding belongs to the parameter; decorators use the surrounding context.
+            AstKind::BindingRestElement(_)
+                if matches!(ancestors.peek(), Some(AstKind::FormalParameterRest(_))) =>
+            {
+                return true;
+            }
             AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                 break;
             }

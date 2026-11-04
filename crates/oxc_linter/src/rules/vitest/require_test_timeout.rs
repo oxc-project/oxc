@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, ObjectPropertyKind, UnaryOperator},
+    ast::{Argument, Expression, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -134,11 +134,7 @@ impl RequireTestTimeout {
                 }
 
                 if let Some(Argument::ObjectExpression(test_config)) = call_expr.arguments.first() {
-                    let Some(ObjectPropertyKind::ObjectProperty(property)) = test_config
-                        .properties
-                        .iter()
-                        .find(|property| is_property_name_equals(property, "testTimeout"))
-                    else {
+                    let Some(property) = test_config.find_property("testTimeout") else {
                         return;
                     };
 
@@ -169,11 +165,7 @@ impl RequireTestTimeout {
                 // test() and it() only have two options, a second parameter with options or a last argument with a number
 
                 if let Some(Argument::ObjectExpression(test_config)) = call_expr.arguments.get(1) {
-                    let Some(ObjectPropertyKind::ObjectProperty(property)) = test_config
-                        .properties
-                        .iter()
-                        .find(|property| is_property_name_equals(property, "timeout"))
-                    else {
+                    let Some(property) = test_config.find_property("timeout") else {
                         ctx.diagnostic(test_options_missing_timeout_property(test_config.span()));
                         return;
                     };
@@ -203,18 +195,6 @@ impl RequireTestTimeout {
 
 fn is_todo_or_skipped(member: &KnownMemberExpressionProperty<'_>) -> bool {
     member.is_name_equal("todo") || member.is_name_equal("skip")
-}
-
-fn is_property_name_equals(property: &ObjectPropertyKind<'_>, name: &str) -> bool {
-    let ObjectPropertyKind::ObjectProperty(object_pair) = property else {
-        return false;
-    };
-
-    let Some(object_key_name) = object_pair.key.static_name() else {
-        return false;
-    };
-
-    object_key_name == name
 }
 
 fn parse_timeout_value(expression: &Expression<'_>, span: Span, ctx: &LintContext<'_>) {

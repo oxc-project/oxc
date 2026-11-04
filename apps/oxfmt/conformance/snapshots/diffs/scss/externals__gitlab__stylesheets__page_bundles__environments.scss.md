@@ -1,7 +1,5 @@
 # externals/gitlab/stylesheets/page_bundles/environments.scss
 
-> Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)
-
 ## Option 1
 
 `````json

@@ -40,7 +40,7 @@ fn main() {
     }
 
     let allocator = Allocator::new();
-    match format(&allocator, &source_text, options, None) {
+    match format(&allocator, &source_text, options) {
         Ok(formatted) => {
             if std::env::var("DUMP_IR").is_ok() {
                 for el in formatted.document().elements() {

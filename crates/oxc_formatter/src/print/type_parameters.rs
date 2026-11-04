@@ -1,7 +1,7 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format, GroupId};
-use oxc_span::FileExtension;
+use oxc_formatter_core::{Format, GroupId};
+use oxc_span::{FileExtension, GetSpan};
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -21,7 +21,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameter<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSTypeParameter<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.r#const() {
             write!(f, ["const", space()]);
@@ -67,7 +67,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameter<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSTypeParameter<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, TSTypeParameter<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         // A lone type parameter on an arrow function may need a mandatory trailing comma;
         let trailing_separator = if should_force_trailing_comma_for_arrow_function(self, f) {
@@ -95,7 +95,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSTypePara
 /// This is a deliberate divergence: removal is keyed on the grammar the source is consumed as,
 /// not on the host file's path, so plain-TS sources behave identically wherever they live.
 fn should_force_trailing_comma_for_arrow_function(
-    params: &AstNode<'_, ArenaVec<'_, TSTypeParameter<'_>>>,
+    params: &AstNode<'_, '_, ArenaVec<'_, TSTypeParameter<'_>>>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
     if params.len() != 1 {
@@ -125,13 +125,13 @@ pub struct FormatTSTypeParametersOptions {
 }
 
 pub struct FormatTSTypeParameters<'a, 'b> {
-    decl: &'b AstNode<'a, TSTypeParameterDeclaration<'a>>,
+    decl: &'b AstNode<'b, 'a, TSTypeParameterDeclaration<'a>>,
     options: FormatTSTypeParametersOptions,
 }
 
 impl<'a, 'b> FormatTSTypeParameters<'a, 'b> {
     pub fn new(
-        decl: &'b AstNode<'a, TSTypeParameterDeclaration<'a>>,
+        decl: &'b AstNode<'b, 'a, TSTypeParameterDeclaration<'a>>,
         options: FormatTSTypeParametersOptions,
     ) -> Self {
         Self { decl, options }
@@ -147,9 +147,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSTypeParameters<'a, '_> {
             write!(
                 f,
                 [group(&format_args!("<", format_with(|f| {
-                    if matches!(self.decl.grand_parent(), AstNodes::CallExpression(call) if is_test_call_expression(call))
+                    if matches!(self.decl.grand_parent(), AstNodes::CallExpression(call) if is_test_call_expression(call, f.comments()))
                     {
-                        f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit);
+                        f.join_nodes_with_space().entries_with_trailing_separator(&params, ",", TrailingSeparator::Omit);
                     } else {
                         soft_block_indent(&params).fmt(f);
                     }
@@ -162,14 +162,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSTypeParameters<'a, '_> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSTypeParameterInstantiation<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let params = self.params();
 
         if params.is_empty() {
             // This shouldn't happen in valid TypeScript code, but handle it gracefully
             let comments = f.context().comments().comments_before(self.span.end);
-            let indent = if comments.iter().any(|c| c.is_line()) {
+            let indent = if comments.iter().any(Comment::is_line) {
                 DanglingIndentMode::Soft
             } else {
                 DanglingIndentMode::None
@@ -180,21 +180,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
         // Check if this is in the context of an arrow function variable
         let is_arrow_function_vars = is_arrow_function_variable_type_argument(self);
 
-        // Check if the first (and only) argument can be hugged
-        let first_arg_can_be_hugged = if params.len() == 1 {
-            if let Some(first_type) = params.first() {
-                matches!(first_type.as_ref(), TSType::TSNullKeyword(_))
-                    || should_hug_single_type(first_type.as_ref(), f)
-            } else {
-                false
-            }
-        } else {
-            false
-        };
+        // Check if the first (and only) argument can be hugged.
+        // `f<T // c` + `>()`: a comment before the `>` needs the broken layout to stay in place.
+        let first_arg_can_be_hugged = params.len() == 1
+            && params.first().is_some_and(|first_type| {
+                (matches!(first_type.as_ref(), TSType::TSNullKeyword(_))
+                    || should_hug_single_type(first_type.as_ref(), f))
+                    && !f.comments().has_comment_in_range(first_type.span().end, self.span.end)
+            });
 
         let format_params = format_with(|f| {
             f.join_with(&soft_line_break_or_space()).entries_with_trailing_separator(
-                params,
+                &params,
                 ",",
                 TrailingSeparator::Disallowed,
             );
@@ -229,7 +226,7 @@ fn should_hug_single_type(ty: &TSType, f: &JsFormatter<'_, '_>) -> bool {
 /// const foo: SomeThing<{ [P in "x" | "y"]: number }> = () => {};
 /// ```
 fn is_arrow_function_variable_type_argument<'a>(
-    node: &AstNode<'a, TSTypeParameterInstantiation<'a>>,
+    node: &AstNode<'_, 'a, TSTypeParameterInstantiation<'a>>,
 ) -> bool {
     let Some(first) = node.params().first() else { unreachable!() };
 

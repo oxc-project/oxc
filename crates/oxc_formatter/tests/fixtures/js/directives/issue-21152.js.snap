@@ -1,0 +1,33 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Issue #21152 - the blank line after the LAST directive survives a trailing comment;
+// `end_of_line_comments_after` covers the last directive only, so one file per comment kind.
+"use client"; // browser only
+
+import { Foo } from "foo";
+import { Bar } from "bar";
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Issue #21152 - the blank line after the LAST directive survives a trailing comment;
+// `end_of_line_comments_after` covers the last directive only, so one file per comment kind.
+"use client"; // browser only
+
+import { Foo } from "foo";
+import { Bar } from "bar";
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Issue #21152 - the blank line after the LAST directive survives a trailing comment;
+// `end_of_line_comments_after` covers the last directive only, so one file per comment kind.
+"use client"; // browser only
+
+import { Foo } from "foo";
+import { Bar } from "bar";
+
+===================== End =====================

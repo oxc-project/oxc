@@ -57,6 +57,7 @@ declare_oxc_lint!(
     NoForInArray(tsgolint),
     typescript,
     correctness,
+    recommended,
     version = "1.12.0",
     short_description = "This rule disallows iterating over an array with a for-in loop.",
 );

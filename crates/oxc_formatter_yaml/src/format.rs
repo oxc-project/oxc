@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedContext, EmbeddedIr, Format, FormatState, Formatted, VecBuffer,
+    Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter,
     builders::{hard_line_break, text},
     write,
 };
@@ -24,76 +24,107 @@ pub fn format<'a>(
     source_text: &str,
     options: YamlFormatOptions,
 ) -> Result<Formatted<'a, YamlFormatContext<'a>>, OxcDiagnostic> {
-    // Checked against the original input: `parse_root` strips the BOM
-    let has_bom = source_text.starts_with('\u{feff}');
-    let (root, source, comments) = parse_root(allocator, source_text)?;
+    let parsed = parse_for_format(allocator, source_text)?;
 
-    let context =
-        YamlFormatContext::new(options, source, comments, print::last_descendant_end(root));
+    let context = YamlFormatContext::new(
+        options,
+        parsed.source,
+        parsed.comments,
+        print::last_descendant_end(parsed.root),
+    );
     let mut state = FormatState::new(context, allocator);
     // Pre-allocate: measured on 6,925 real-world files (kubernetes, vscode, saleor, bootstrap),
     // 0.3x source bytes plus a 1024-element floor for tiny-file spikes avoids reallocation for 99.9% of the corpus.
-    let capacity = (source.len() * 3 / 10).max(1024);
-    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
+    let capacity = (parsed.source.len() * 3 / 10).max(1024);
+    let mut buffer = Formatter::with_capacity(capacity, &mut state);
 
-    write!(&mut buffer, FormatYamlRoot { root, has_bom });
+    write!(&mut buffer, FormatYamlRoot { root: parsed.root, has_bom: parsed.has_bom });
 
     let elements = buffer.into_vec();
     let context = state.into_context();
 
     let ir = Document::new(elements, Vec::new());
-    ir.propagate_expand();
 
     Ok(Formatted::new(ir, context))
+}
+
+/// [`parse_for_format`] output: the AST, plus the envelope [`format()`] prints around it.
+pub struct ParsedYaml<'a> {
+    pub root: &'a Root<'a>,
+    /// Sorted comments bridged from the parser's trivia.
+    pub comments: &'a [SourceComment],
+    /// Normalized arena source every span indexes into.
+    source: &'a str,
+    has_bom: bool,
+}
+
+/// Parse `source_text` the way the formatter does, for callers that inspect the AST
+/// (e.g. a harness comparing what the source held against the formatted output).
+///
+/// [`format()`] goes through this too, so what a caller sees is exactly what gets formatted.
+/// Owns the BOM split and `\r` normalization.
+///
+/// # Errors
+/// Same as [`format()`].
+pub fn parse_for_format<'a>(
+    allocator: &'a Allocator,
+    source_text: &str,
+) -> Result<ParsedYaml<'a>, OxcDiagnostic> {
+    let (has_bom, stripped) = oxc_formatter_core::spec::split_bom(source_text);
+    let (root, source, comments) = parse_root(allocator, stripped).map_err(|mut err| {
+        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+        err
+    })?;
+    Ok(ParsedYaml { root, comments, source, has_bom })
 }
 
 /// Parse `source_text` and build the formatter IR for embedding into another
 /// formatter's document (dispatcher path, e.g. a fenced block in markdown).
 ///
 /// Unlike [`format()`], this:
-/// - allocates from the shared arena in `ctx`, so the IR lives as long as the parent's document
+/// - allocates from the session's shared arena and `GroupId` space, so the IR lives as long as the parent's document
 /// - emits neither a BOM nor the trailing newline
-/// - skips `propagate_expand()`, which the parent runs on the merged document
 ///
 /// # Errors
 /// Same as [`format()`]: any parse error bails out.
 pub fn format_to_ir<'a>(
-    ctx: &EmbeddedContext<'a, '_>,
+    session: &FormatSession<'a>,
     source_text: &str,
     options: YamlFormatOptions,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
-    let allocator = ctx.allocator;
+    let allocator = session.allocator();
     let (root, source, comments) = parse_root(allocator, source_text)?;
 
     let context =
         YamlFormatContext::new(options, source, comments, print::last_descendant_end(root));
-    let mut state = FormatState::new(context, allocator);
-    let mut buffer = VecBuffer::new(&mut state);
+    let mut state = FormatState::new_with_session(context, session.clone());
+    let mut buffer = Formatter::new(&mut state);
 
     write!(&mut buffer, FormatYamlEmbedded { root });
 
-    // YAML never collects Tailwind classes.
-    Ok(EmbeddedIr { ir: buffer.into_vec(), tailwind_classes: Vec::new() })
+    Ok(EmbeddedIr { ir: buffer.into_vec() })
 }
 
 /// Parse the source into the yaml-unist-shaped AST and bridge comment trivia,
 /// bailing out on any parse error.
 ///
 /// Copies the source into the arena so every slice taken from it carries `'a`.
+/// Entries own the BOM strip; this layer assumes BOM-free input (see [`oxc_formatter_core::spec::split_bom`]).
 fn parse_root<'a>(
     allocator: &'a Allocator,
     source_text: &str,
 ) -> Result<(&'a Root<'a>, &'a str, &'a [SourceComment]), OxcDiagnostic> {
-    let source_text = source_text.strip_prefix('\u{feff}').unwrap_or(source_text);
     // NOTE: Normalize line endings BEFORE parsing, unlike other `oxc_formatter_xxx`.
     // For YAML formatter, the printer slices verbatim text from the source in many places.
     // YAML is also unusual in that line breaks and whitespace have meaning.
-    let source_text = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
-    let source: &'a str = allocator.alloc_str(&source_text);
+    let normalized = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
+    let source: &'a str = allocator.alloc_str(&normalized);
 
     let root = Parser::new(allocator, source).parse().map_err(|error| {
-        OxcDiagnostic::error(format!("Syntax error: {}", error.kind))
-            .with_label(to_span(error.span))
+        let mut err = OxcDiagnostic::error(format!("Syntax error: {}", error.kind))
+            .with_label(to_span(error.span));
+        oxc_formatter_core::restore_crlf_labels(&mut err.labels, source_text);
+        err
     })?;
 
     let root = allocator.alloc(root);

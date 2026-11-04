@@ -1,0 +1,23 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/no-alias-callback-conditional-use-does-not-return-closure.js
+---
+import { c as _c } from "react/compiler-runtime";
+function Component() {
+	const $ = _c(1);
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		let count = 0;
+		t0 = [0].map(() => {
+			const bad = () => count++;
+			if (bad) {
+				return 1;
+			}
+			return 2;
+		});
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	return t0;
+}

@@ -12,8 +12,9 @@ use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
-use oxc_str::Str;
+use oxc_str::{JSStr, Str};
 use oxc_syntax::{
+    GetNodeId,
     node::NodeId,
     number::{BigintBase, NumberBase},
 };
@@ -24,7 +25,7 @@ use oxc_syntax::{
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(rename = "Literal", add_fields(raw = BooleanLiteralRaw))]
 pub struct BooleanLiteral {
     /// Unique identifier for this AST node.
@@ -41,7 +42,7 @@ pub struct BooleanLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(rename = "Literal", add_fields(value = Null, raw = NullLiteralRaw))]
 pub struct NullLiteral {
     /// Unique identifier for this AST node.
@@ -56,7 +57,7 @@ pub struct NullLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(rename = "Literal")]
 pub struct NumericLiteral<'a> {
     /// Unique identifier for this AST node.
@@ -83,7 +84,7 @@ pub struct NumericLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(rename = "Literal")]
 pub struct StringLiteral<'a> {
     /// Unique identifier for this AST node.
@@ -93,8 +94,7 @@ pub struct StringLiteral<'a> {
     /// The value of the string.
     ///
     /// Any escape sequences in the raw code are unescaped.
-    #[estree(via = StringLiteralValue)]
-    pub value: Str<'a>,
+    pub value: JSStr<'a>,
 
     /// The raw string as it appears in source code.
     ///
@@ -102,22 +102,13 @@ pub struct StringLiteral<'a> {
     #[content_eq(skip)]
     #[estree(from_span)]
     pub raw: Option<Str<'a>>,
-
-    /// The string value contains lone surrogates.
-    ///
-    /// `value` is encoded using `\u{FFFD}` (the lossy replacement character) as an escape character.
-    /// Lone surrogates are encoded as `\u{FFFD}XXXX`, where `XXXX` is the code unit in hex.
-    /// The lossy escape character itself is encoded as `\u{FFFD}fffd`.
-    #[builder(default)]
-    #[estree(skip)]
-    pub lone_surrogates: bool,
 }
 
 /// BigInt literal
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(rename = "Literal", add_fields(bigint = BigIntLiteralBigint))]
 pub struct BigIntLiteral<'a> {
     /// Unique identifier for this AST node.
@@ -143,7 +134,7 @@ pub struct BigIntLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(
     rename = "Literal",
     add_fields(value = RegExpLiteralValue),
@@ -241,7 +232,8 @@ bitflags! {
         const D = 1 << 6;
         /// Unicode sets flag
         ///
-        /// Similar to the `u` flag, but also enables the `\\p{}` and `\\P{}` syntax.
+        /// Enables Unicode set notation in character classes (intersection, subtraction,
+        /// and nested classes) and matching Unicode properties of strings.
         /// Added by the [`v` flag proposal](https://github.com/tc39/proposal-regexp-set-notation).
         const V = 1 << 7;
     }
