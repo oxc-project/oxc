@@ -45,7 +45,7 @@ impl PunctChar {
 
 /// Single-byte punctuators and their [`TokenKind`]s.
 /// `#` maps to `Invalid` - a bare `#` is invalid on its own
-/// (private names and hashbangs are resolved earlier).
+/// (private names and hashbangs are resolved later).
 ///
 /// Does not exist at runtime - used only at compile time and in tests.
 pub(super) const PUNCT_CHARS: [PunctChar; 26] = [
