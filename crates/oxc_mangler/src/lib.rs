@@ -6,7 +6,7 @@ use std::{
 use itertools::Itertools;
 use keep_names::collect_name_symbols;
 use oxc_index::IndexVec;
-use oxc_syntax::{class::ClassId, scope::ScopeId, symbol::SymbolFlags};
+use oxc_syntax::{class::ClassId, scope::ScopeId};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 pub use base54::base54;
@@ -794,9 +794,7 @@ fn mark_live_scopes(
 }
 
 /// Rename constraints for Annex B block functions that were not bound in their var scope (see
-/// [`Scoping::annex_b_block_functions`]). Simple catch parameters skipped while finding the
-/// binding are included because the missing implicit `if` block can attach their references to the
-/// function.
+/// [`Scoping::annex_b_block_functions`]).
 ///
 /// Renaming must keep each pair's names equal, so an inner symbol shares its binding's slot. The
 /// symbol gets that slot when the binding's scope is visited, so that the scopes in between are
@@ -821,25 +819,6 @@ impl<'a> AnnexBBlockFunctions<'a> {
             let binding_scope_id = scoping.symbol_scope_id(binding_id);
             functions.push((binding_scope_id, binding_id, function_id));
             excluded.set_bit(function_id.index());
-
-            // An `if` function has no implicit block in the semantic model. References in its
-            // enclosing block therefore resolve to the function even when they should resolve to
-            // a simple catch parameter. Keep that parameter's name equal to the function's var
-            // binding too, or those references can resolve to the var binding after renaming.
-            let name = scoping.symbol_ident(function_id);
-            for scope_id in scoping.scope_ancestors(scoping.symbol_scope_id(function_id)).skip(1) {
-                if scope_id == binding_scope_id {
-                    break;
-                }
-                if let Some(catch_id) = scoping.get_binding(scope_id, name)
-                    && scoping
-                        .symbol_flags(catch_id)
-                        .contains(SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable)
-                {
-                    functions.push((binding_scope_id, binding_id, catch_id));
-                    excluded.set_bit(catch_id.index());
-                }
-            }
         }
         functions.sort_unstable();
         functions.dedup();
