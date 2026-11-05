@@ -427,14 +427,15 @@ fn is_mock_reset_call_expression(call_expr: &CallExpression<'_>) -> bool {
  */
 #[expect(clippy::cast_possible_truncation)]
 fn get_source_code_line_span(statement_span: Span, ctx: &LintContext<'_>) -> Span {
-    let line_end = std::cmp::min(statement_span.end + 1, ctx.source_text().len() as u32);
+    let source_text = ctx.source_text();
+    let start = statement_span.start as usize;
+    let end = statement_span.end as usize;
 
-    let column_0_span_index = (0..statement_span.start)
-        .rev()
-        .find(|&index| ctx.source_range(Span::new(index, line_end)).starts_with('\n'))
-        .map_or(statement_span.start, |index| index + 1);
+    let line_end = source_text[end..].chars().next().map_or(end, |c| end + c.len_utf8());
 
-    Span::new(column_0_span_index, line_end)
+    let column_0_span_index = source_text[..start].rfind('\n').map_or(start, |index| index + 1);
+
+    Span::new(column_0_span_index as u32, line_end as u32)
 }
 
 fn get_callback_body<'a>(callback: &'a Expression<'a>) -> Option<&'a FunctionBody<'a>> {
@@ -571,6 +572,8 @@ fn test() {
 			      expect(x).toHaveBeenCalledWith<[string]>('hoge');
 			      ",
         "expect(x).toHaveBeenCalledOnce();\nexpect(x).toHaveBeenCalledWith('hoge');",
+        r#"expect(x).toHaveBeenCalledWith("🍣"); expect(x).toHaveBeenCalledOnce();"#,
+        "expect(x).toHaveBeenCalledWith(1);\nexpect(x).toHaveBeenCalledOnce();\u{a0}",
     ];
 
     let fix = vec![
@@ -740,6 +743,16 @@ fn test() {
 			      expect(x).toHaveBeenCalledExactlyOnceWith<[string]>('hoge');
 			      y.mockClear();
 			      ",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\n\u{a0}expect(x).toHaveBeenCalledOnce();",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\n",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\nexpect(x).toHaveBeenCalledOnce();\u{a0}",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\n",
             None,
         ),
     ];
