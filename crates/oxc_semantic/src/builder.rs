@@ -5,7 +5,7 @@ use std::{
     mem,
 };
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 
 use oxc_allocator::{Address, ArenaVec};
@@ -96,8 +96,6 @@ pub struct SemanticBuilder<'a> {
     /// Function declarations in blocks of the var scopes being bound, in source order, whose
     /// Annex B var binding is decided when their var scope has been bound. See [`crate::annex_b`].
     pub(crate) annex_b_functions: Vec<AnnexBFunction>,
-    /// The symbols of `annex_b_functions` that are the body of an `if` statement.
-    pub(crate) annex_b_if_statement_functions: FxHashSet<SymbolId>,
 
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
@@ -165,7 +163,6 @@ impl<'a> SemanticBuilder<'a> {
             node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
             annex_b_functions: Vec::new(),
-            annex_b_if_statement_functions: FxHashSet::default(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unused_labels: UnusedLabels::default(),
@@ -2149,6 +2146,21 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.enter_ambient_context(func.declare);
 
+        // Annex B.3.3: a bare function declaration in an `if` branch has an implicit block scope.
+        // This scope has no AST node; traversal recovers it as the function body scope's parent.
+        let has_annex_b_if_scope = func.is_declaration()
+            && func.id.is_some()
+            && !func.r#async
+            && !func.generator
+            && !self.source_type.is_typescript()
+            && checker::is_function_decl_part_of_if_statement(func, self);
+        if has_annex_b_if_scope {
+            let parent_scope_id = self.current_scope_id;
+            let flags = self.scoping.get_new_scope_flags(ScopeFlags::empty(), parent_scope_id);
+            self.current_scope_id =
+                self.scoping.add_scope(Some(parent_scope_id), NodeId::DUMMY, flags);
+        }
+
         if func.is_declaration() {
             func.bind(self);
         }
@@ -2231,6 +2243,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.leave_scope();
+        if has_annex_b_if_scope {
+            self.leave_scope();
+        }
         self.leave_node(kind);
         self.leave_ambient_context(func.declare);
     }

@@ -251,6 +251,7 @@ fn generate(schema: &Schema) -> TokenStream {
         ///@@line_break
         use oxc_ast::ast::*;
         use oxc_ast_visit::Visit;
+        use oxc_semantic::Scoping;
         use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
         ///@@line_break
@@ -258,24 +259,40 @@ fn generate(schema: &Schema) -> TokenStream {
         ///
         /// Note: Direct child scopes only, not grandchild scopes.
         /// Does not do full traversal - stops each time it hits a node with a scope.
-        pub struct ChildScopeCollector {
+        pub struct ChildScopeCollector<'s> {
+            scoping: &'s Scoping,
+            parent_scope_id: ScopeId,
             pub(crate) scope_ids: Vec<ScopeId>,
         }
 
         ///@@line_break
-        impl ChildScopeCollector {
-            pub(crate) fn new() -> Self {
-                Self { scope_ids: vec![] }
+        impl<'s> ChildScopeCollector<'s> {
+            pub(crate) fn new(scoping: &'s Scoping, parent_scope_id: ScopeId) -> Self {
+                Self { scoping, parent_scope_id, scope_ids: vec![] }
             }
 
             ///@@line_break
             pub(crate) fn add_scope(&mut self, scope_id: &Cell<Option<ScopeId>>) {
                 self.scope_ids.push(scope_id.get().unwrap());
             }
+
+            fn visit_if_branch(&mut self, stmt: &Statement) {
+                if let Statement::FunctionDeclaration(function) = stmt {
+                    let body_scope_id = function.scope_id.get().unwrap();
+                    let parent_scope_id = self.scoping.scope_parent_id(body_scope_id).unwrap();
+                    if parent_scope_id != self.parent_scope_id {
+                        // Annex B.3.3's implicit `if` branch scope has no AST field. Collect it
+                        // instead of skipping directly to the function body scope.
+                        self.scope_ids.push(parent_scope_id);
+                        return;
+                    }
+                }
+                self.visit_statement(stmt);
+            }
         }
 
         ///@@line_break
-        impl<'a> Visit<'a> for ChildScopeCollector {
+        impl<'a> Visit<'a> for ChildScopeCollector<'_> {
             #(#visit_methods)*
         }
     }
@@ -322,6 +339,18 @@ fn generate_visit_method_for_struct(
 ) -> Option<TokenStream> {
     // Get visit method name. Exit if struct is not visited.
     let visit_method_ident = struct_def.visit.visitor_ident()?;
+
+    if struct_def.name() == "IfStatement" {
+        return Some(quote! {
+            fn visit_if_statement(&mut self, it: &IfStatement<'a>) {
+                self.visit_expression(&it.test);
+                self.visit_if_branch(&it.consequent);
+                if let Some(alternate) = &it.alternate {
+                    self.visit_if_branch(alternate);
+                }
+            }
+        });
+    }
 
     let (body, stmt_count) = if let Some(scope) = struct_def.visit.scope.as_ref() {
         // Struct has its own scope.

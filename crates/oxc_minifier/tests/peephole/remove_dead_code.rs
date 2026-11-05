@@ -182,6 +182,29 @@ fn test_fold_if_statement() {
 }
 
 #[test]
+fn preserve_annex_b_if_function_bindings() {
+    let options = CompressOptions::smallest();
+    test_options_source_type(
+        "function t(a) { for (let g = 5; ;) { if (a) function g() {} return g; } } console.log(t(1));",
+        "function t(a){for(let g=5;;){if(a)function g(){}return 5}}console.log(t(1));",
+        SourceType::script(),
+        &options,
+    );
+    test_options_source_type(
+        "(function () { { if (0) function g() { return 1; } g = 2; } function g() { return 3; } console.log(typeof globalThis.g); })();",
+        "(function(){g=2;function g(){return 3}console.log(typeof globalThis.g)})();",
+        SourceType::script(),
+        &options,
+    );
+    test_options_source_type(
+        "function t() { { let g; if (1) function g() { return 1; } } return 3; } console.log(t());",
+        "function t(){{let g;if(1)function g(){return 1}}return 3}console.log(t());",
+        SourceType::script(),
+        &options,
+    );
+}
+
+#[test]
 fn test_fold_conditional() {
     test("true ? foo() : bar()", "foo()");
     test("false ? foo() : bar()", "bar()");

@@ -245,24 +245,56 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
               {
                 "children": [
                   {
-                    "children": [],
-                    "flags": "ScopeFlags(Function)",
+                    "children": [
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(Function)",
+                        "id": 26,
+                        "node": "Function(g)",
+                        "symbols": []
+                      }
+                    ],
+                    "flags": "ScopeFlags(0x0)",
                     "id": 25,
-                    "node": "Function(g)",
+                    "node": "Program",
                     "symbols": []
                   },
                   {
-                    "children": [],
-                    "flags": "ScopeFlags(Function)",
-                    "id": 26,
-                    "node": "Function(g)",
-                    "symbols": []
+                    "children": [
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(Function)",
+                        "id": 28,
+                        "node": "Function(g)",
+                        "symbols": []
+                      }
+                    ],
+                    "flags": "ScopeFlags(0x0)",
+                    "id": 27,
+                    "node": "Program",
+                    "symbols": [
+                      {
+                        "flags": "SymbolFlags(Function)",
+                        "id": 16,
+                        "name": "g",
+                        "node": "Function(g)",
+                        "references": []
+                      }
+                    ]
                   }
                 ],
                 "flags": "ScopeFlags(0x0)",
                 "id": 24,
                 "node": "BlockStatement",
-                "symbols": []
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                    "id": 14,
+                    "name": "g",
+                    "node": "CatchParameter",
+                    "references": []
+                  }
+                ]
               }
             ],
             "flags": "ScopeFlags(CatchClause)",
@@ -298,10 +330,10 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
             ]
           },
           {
-            "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable | Function)",
-            "id": 14,
+            "flags": "SymbolFlags(Function)",
+            "id": 15,
             "name": "g",
-            "node": "CatchParameter",
+            "node": "Function(g)",
             "references": [
               {
                 "flags": "ReferenceFlags(Read)",
@@ -319,7 +351,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
           {
             "children": [],
             "flags": "ScopeFlags(0x0)",
-            "id": 28,
+            "id": 30,
             "node": "BlockStatement",
             "symbols": []
           },
@@ -328,32 +360,48 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
               {
                 "children": [
                   {
-                    "children": [],
-                    "flags": "ScopeFlags(Function)",
-                    "id": 31,
-                    "node": "Function(g)",
-                    "symbols": []
+                    "children": [
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(Function)",
+                        "id": 34,
+                        "node": "Function(g)",
+                        "symbols": []
+                      }
+                    ],
+                    "flags": "ScopeFlags(0x0)",
+                    "id": 33,
+                    "node": "Program",
+                    "symbols": [
+                      {
+                        "flags": "SymbolFlags(Function)",
+                        "id": 20,
+                        "name": "g",
+                        "node": "Function(g)",
+                        "references": []
+                      }
+                    ]
                   }
                 ],
                 "flags": "ScopeFlags(0x0)",
-                "id": 30,
+                "id": 32,
                 "node": "BlockStatement",
                 "symbols": []
               }
             ],
             "flags": "ScopeFlags(CatchClause)",
-            "id": 29,
+            "id": 31,
             "node": "CatchClause",
             "symbols": []
           }
         ],
         "flags": "ScopeFlags(Function)",
-        "id": 27,
+        "id": 29,
         "node": "Function(simpleCatchParameterVarIfStatement)",
         "symbols": [
           {
             "flags": "SymbolFlags(FunctionScopedVariable)",
-            "id": 16,
+            "id": 18,
             "name": "x",
             "node": "FormalParameter(x)",
             "references": [
@@ -362,13 +410,13 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
                 "id": 7,
                 "name": "x",
                 "node_id": 108,
-                "scope_id": 30
+                "scope_id": 32
               }
             ]
           },
           {
-            "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable | Function)",
-            "id": 17,
+            "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+            "id": 19,
             "name": "g",
             "node": "CatchParameter",
             "references": [
@@ -377,7 +425,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
                 "id": 8,
                 "name": "g",
                 "node_id": 114,
-                "scope_id": 27
+                "scope_id": 29
               }
             ]
           }
@@ -388,7 +436,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
           {
             "children": [],
             "flags": "ScopeFlags(0x0)",
-            "id": 33,
+            "id": 36,
             "node": "BlockStatement",
             "symbols": []
           },
@@ -397,20 +445,36 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
               {
                 "children": [
                   {
-                    "children": [],
-                    "flags": "ScopeFlags(Function)",
-                    "id": 36,
-                    "node": "Function(g)",
-                    "symbols": []
+                    "children": [
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(Function)",
+                        "id": 40,
+                        "node": "Function(g)",
+                        "symbols": []
+                      }
+                    ],
+                    "flags": "ScopeFlags(0x0)",
+                    "id": 39,
+                    "node": "Program",
+                    "symbols": [
+                      {
+                        "flags": "SymbolFlags(Function)",
+                        "id": 24,
+                        "name": "g",
+                        "node": "Function(g)",
+                        "references": []
+                      }
+                    ]
                   }
                 ],
                 "flags": "ScopeFlags(0x0)",
-                "id": 35,
+                "id": 38,
                 "node": "BlockStatement",
                 "symbols": [
                   {
-                    "flags": "SymbolFlags(BlockScopedVariable | CatchVariable | Function)",
-                    "id": 20,
+                    "flags": "SymbolFlags(BlockScopedVariable | CatchVariable)",
+                    "id": 23,
                     "name": "g",
                     "node": "CatchParameter",
                     "references": []
@@ -419,18 +483,18 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
               }
             ],
             "flags": "ScopeFlags(CatchClause)",
-            "id": 34,
+            "id": 37,
             "node": "CatchClause",
             "symbols": []
           }
         ],
         "flags": "ScopeFlags(Function)",
-        "id": 32,
+        "id": 35,
         "node": "Function(destructuredCatchParameterIfStatement)",
         "symbols": [
           {
             "flags": "SymbolFlags(FunctionScopedVariable)",
-            "id": 19,
+            "id": 22,
             "name": "x",
             "node": "FormalParameter(x)",
             "references": [
@@ -439,7 +503,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
                 "id": 9,
                 "name": "x",
                 "node_id": 129,
-                "scope_id": 35
+                "scope_id": 38
               }
             ]
           }
@@ -487,14 +551,14 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
       },
       {
         "flags": "SymbolFlags(Function)",
-        "id": 15,
+        "id": 17,
         "name": "simpleCatchParameterVarIfStatement",
         "node": "Function(simpleCatchParameterVarIfStatement)",
         "references": []
       },
       {
         "flags": "SymbolFlags(Function)",
-        "id": 18,
+        "id": 21,
         "name": "destructuredCatchParameterIfStatement",
         "node": "Function(destructuredCatchParameterIfStatement)",
         "references": []

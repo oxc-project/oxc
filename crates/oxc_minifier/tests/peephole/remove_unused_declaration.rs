@@ -851,6 +851,16 @@ fn keep_sloppy_duplicate_block_functions() {
 }
 
 #[test]
+fn keep_annex_b_hoisting_blocker() {
+    test_options_source_type(
+        "function t() { { let g; { function g() { return 1; } } } return typeof g; } console.log(t());",
+        "function t(){{let g;{function g(){return 1}}}return typeof g}console.log(t());",
+        SourceType::script(),
+        &CompressOptions::smallest(),
+    );
+}
+
+#[test]
 fn keep_sloppy_annex_b_alias_member_write_after_cycle_removed() {
     let options = CompressOptions::smallest();
     let source = "function outer() { { function f() {} } { function f() {} f.x = 1; function d1() { consume(f); d2() } function d2() { d1() } } console.log(f.x); } outer();";
