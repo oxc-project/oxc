@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2026-11-02
+
+### 💥 BREAKING CHANGES
+
+- 296623d oxfmt: [**BREAKING**] Format `parser:html` files by `oxc_formatter_htmlish` (#28273) (Yuji Sugiura)
+
+### ⚡ Performance
+
+- 633ee96 formatter_css: Use `u32` spans (#28708) (leaysgur)
+- ff7c203 formatter_css: Avoid repeated scans and allocations in values (#28706) (leaysgur)
+
+### 📚 Documentation
+
+- 01ed68a oxfmt,formatter_htmlish,formatter: Clean up behavior comments (#28384) (Yuji Sugiura)
+- a363c27 formatter_css,formatter_yaml: Point parser citations at AGENTS.md (#28466) (Yuji Sugiura)
+
 ## [0.75.0] - 2026-10-27
 
 ### ⚡ Performance

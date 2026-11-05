@@ -5,12 +5,14 @@
 #![allow(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::needless_range_loop, clippy::manual_range_contains)]
 
+use std::slice;
+
 use oxc_span::Span;
 
 use crate::{
     PAD,
+    cpu::{BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_version},
     options::LexOptions,
-    pipeline::compress::init_pair_luts,
     token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
 };
 
@@ -21,7 +23,6 @@ mod chunk;
 mod classify;
 mod coalesce;
 mod compress;
-mod cpu;
 mod disambiguate;
 mod find;
 mod keywords;
@@ -35,8 +36,8 @@ pub(crate) use lanes::{Lanes, decode_char_at};
 use carve::carve;
 use classify::classify;
 use coalesce::{KWB, coalesce};
-use compress::{STAGE_CAP, compress, write_sentinels};
-use cpu::{Cpu, DynCpu, apply, cpu_versions};
+use compress::{STAGE_CAP, compress, init_pair_luts, write_sentinels};
+use disambiguate::{Brackets, Closers, Tokens};
 use misc::{misc_post, misc_pre};
 
 pub struct Lexer {
@@ -61,6 +62,7 @@ pub struct Lexer {
 }
 
 impl Lexer {
+    #[cpu_version(Generic)]
     pub fn new() -> Lexer {
         let cpu = DynCpu::detect();
 
@@ -97,13 +99,16 @@ impl Lexer {
     /// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `n`.
     ///
     /// [`lex_utf8`]: crate::lex_utf8
+    #[cpu_version(Generic)]
     pub fn lex(&mut self, src: &[u8], n: usize, options: LexOptions) -> usize {
+        let cpu = BASELINE;
+
         assert!(
             src.len() >= n + PAD,
             "lexer: src must have >= {PAD} bytes of padding past len {n} (got {})",
             src.len()
         );
-        self.ensure(n);
+        self.ensure(n, cpu);
         let kinds = self.sig_kinds.as_mut_ptr();
         let spans = self.spans.as_mut_ptr();
         unsafe {
@@ -133,6 +138,7 @@ impl Lexer {
     ///   and `out_spans` for the same number of [`Span`] writes: `build_spans`
     ///   stores full 4-lane groups past the last token, and the sentinels
     ///   follow it.
+    #[cpu_version(Generic)]
     pub unsafe fn lex_raw(
         &mut self,
         src: &[u8],
@@ -147,7 +153,7 @@ impl Lexer {
         self.lex_raw_impl(src, n, out_kinds, out_spans, jsx, ts, module, vutf8, self.cpu)
     }
 
-    #[apply(cpu_versions)]
+    #[cpu_multiversion]
     unsafe fn lex_raw_impl(
         &mut self,
         src: &[u8],
@@ -161,12 +167,12 @@ impl Lexer {
         cpu: impl Cpu,
     ) -> usize {
         debug_assert!(src.len() >= n + PAD, "source must extend PAD zeroed bytes past n");
-        self.ensure(n);
-        self.lanes.clear();
+        self.ensure(n, cpu);
+        self.lanes.clear(cpu);
         self.lanes.module = module;
-        self.lanes.disambiguate.begin(n, module);
+        self.lanes.disambiguate.begin(n, module, cpu);
         if n == 0 {
-            write_sentinels(0, out_spans, out_kinds);
+            write_sentinels(0, out_spans, out_kinds, cpu);
             self.sig_len = 0;
             return 0;
         }
@@ -188,7 +194,7 @@ impl Lexer {
         // byte-identical to a build without it.
         classify(ts, sp, n, nb, word, st, kwinit, opch, digit, dot, misc, kind, cpu);
         let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes, cpu);
-        carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
+        carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes, cpu);
         coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes, cpu);
         misc_post(sp, n, st, word, misc, kind, nesc, cpu);
         let sig_len = compress(
@@ -208,7 +214,9 @@ impl Lexer {
         sig_len
     }
 
-    fn ensure(&mut self, n: usize) {
+    #[cpu_multiversion]
+    #[inline(never)]
+    fn ensure(&mut self, n: usize, _cpu: impl Cpu) {
         let nb = n.div_ceil(64) + 1;
         if self.nb_cap < nb {
             self.word.resize(nb, 0);
@@ -234,6 +242,7 @@ impl Lexer {
 
     /// The kinds written by the last [`Lexer::lex`], including the trailing
     /// [`SPAN_SENTINELS`] EOF entries.
+    #[cpu_version(Generic)]
     #[must_use]
     pub fn kinds(&self) -> &[TokenKind] {
         let bytes = &self.sig_kinds[..self.sig_len + SPAN_SENTINELS];
@@ -245,6 +254,7 @@ impl Lexer {
 }
 
 impl Default for Lexer {
+    #[cpu_version(Generic)]
     fn default() -> Self {
         Self::new()
     }
@@ -260,6 +270,8 @@ impl Default for Lexer {
 ///   before the stage writes again.
 ///
 /// `brackets` is the lex's bracket cache, `lanes.disambiguate.brackets`.
+#[cpu_multiversion]
+#[inline(always)]
 unsafe fn token_view<'a>(
     src: *const u8,
     st: *const u64,
@@ -269,15 +281,16 @@ unsafe fn token_view<'a>(
     ts: bool,
     kw_final: usize,
     module: bool,
-    brackets: &'a disambiguate::Brackets,
-    closers: &'a disambiguate::Closers,
-) -> disambiguate::Tokens<'a> {
+    brackets: &'a Brackets,
+    closers: &'a Closers,
+    _cpu: impl Cpu,
+) -> Tokens<'a> {
     let nb = n.div_ceil(64) + 1;
-    disambiguate::Tokens {
-        src: std::slice::from_raw_parts(src, n + PAD),
-        st: std::slice::from_raw_parts(st, nb),
-        opch: std::slice::from_raw_parts(opch, nb),
-        kind: std::slice::from_raw_parts(kind, nb * 64),
+    Tokens {
+        src: slice::from_raw_parts(src, n + PAD),
+        st: slice::from_raw_parts(st, nb),
+        opch: slice::from_raw_parts(opch, nb),
+        kind: slice::from_raw_parts(kind, nb * 64),
         n,
         ts,
         module,

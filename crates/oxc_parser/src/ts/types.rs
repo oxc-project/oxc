@@ -1,6 +1,6 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::Ident;
 use oxc_syntax::operator::UnaryOperator;
 
@@ -93,6 +93,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::LAngle | Kind::New => true,
             Kind::Abstract => self.lexer.peek_token().kind() == Kind::New,
             Kind::LParen => {
+                // Ordinary parameter names need only token lookahead. Patterns and modifiers
+                // still use the parser below, including its error checks.
+                let checkpoint = self.lexer.checkpoint();
+                let second = self.lexer.next_token().kind();
+                let simple = if matches!(second, Kind::RParen | Kind::Dot3) {
+                    Some(true)
+                } else if (second.is_binding_identifier() && !second.is_modifier_kind())
+                    || second == Kind::This
+                {
+                    let third = self.lexer.next_token().kind();
+                    Some(
+                        matches!(third, Kind::Colon | Kind::Comma | Kind::Question | Kind::Eq)
+                            || (third == Kind::RParen
+                                && self.lexer.next_token().kind() == Kind::Arrow),
+                    )
+                } else {
+                    None
+                };
+                self.lexer.rewind(checkpoint);
+                if let Some(is_function) = simple {
+                    return is_function;
+                }
                 let checkpoint = self.checkpoint();
                 self.bump_any();
 
@@ -498,10 +520,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.parse_type_query()
             }
             Kind::LCurly => {
-                if self.lookahead(Self::is_start_of_mapped_type) {
-                    self.parse_mapped_type()
+                let opening_span = self.cur_token().span();
+                self.bump_any();
+                if self.is_start_of_mapped_type() {
+                    self.parse_mapped_type(opening_span.start)
                 } else {
-                    self.parse_type_literal()
+                    self.parse_type_literal(opening_span)
                 }
             }
             Kind::LBrack => self.parse_tuple_type(),
@@ -622,7 +646,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn is_start_of_mapped_type(&mut self) -> bool {
-        self.bump_any();
+        // The opening brace is shared with type literals. Ordinary named members cannot
+        // begin a mapped type, so only speculate for the remaining forms.
+        if self.cur_kind() != Kind::Readonly && self.cur_kind().is_identifier_name() {
+            return false;
+        }
+        self.lookahead(Self::is_start_of_mapped_type_worker)
+    }
+
+    fn is_start_of_mapped_type_worker(&mut self) -> bool {
         let kind = self.cur_kind();
         if kind == Kind::Plus || kind == Kind::Minus {
             self.bump_any();
@@ -655,10 +687,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             || self.is_start_of_type(!is_js_doc_parameter)
     }
 
-    fn parse_mapped_type(&mut self) -> TSType<'a> {
-        debug_assert!(self.at(Kind::LCurly));
-        let start = self.cur_start();
-        self.advance(Kind::LCurly);
+    fn parse_mapped_type(&mut self, start: u32) -> TSType<'a> {
         let mut readonly = None;
         if self.eat(Kind::Readonly) {
             readonly = Some(TSMappedTypeModifierOperator::True);
@@ -713,11 +742,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    fn parse_type_literal(&mut self) -> TSType<'a> {
-        let start = self.cur_start();
-        let member_list =
-            self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature);
-        TSType::new_ts_type_literal(self.end_span(start), member_list, self)
+    fn parse_type_literal(&mut self, opening_span: Span) -> TSType<'a> {
+        let mut member_list = ArenaVec::new_in(self);
+        self.parse_normal_list_into(&mut member_list, Kind::RCurly, Self::parse_ts_type_signature);
+        self.expect_closing(Kind::RCurly, opening_span);
+        TSType::new_ts_type_literal(self.end_span(opening_span.start), member_list, self)
     }
 
     fn parse_type_query(&mut self) -> TSType<'a> {

@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2026-11-02
+
+### 💥 BREAKING CHANGES
+
+- 296623d oxfmt: [**BREAKING**] Format `parser:html` files by `oxc_formatter_htmlish` (#28273) (Yuji Sugiura)
+
+### 🚀 Features
+
+- 336b2c1 oxfmt: Support html-in-js templates closing a dynamic tag name (#28389) (Yuji Sugiura)
+- 36e5ddb oxfmt: Add debug span for reading files (#28204) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- fef809a formatter_htmlish: Handle XHTML (#28703) (leaysgur)
+- fb3aefa formatter: Keep source parens around html-in-js placeholders past comments (#28381) (Yuji Sugiura)
+- e738dae formatter: Quote keys added in an HTML event handler with single quotes (#28380) (Yuji Sugiura)
+- 2e7a629 oxfmt: Format HTML in a `<script>` body as an embedded part (#28379) (Yuji Sugiura)
+
+### 📚 Documentation
+
+- a82ce83 oxfmt: Update unclassified divergence (#28685) (Yuji Sugiura)
+- 01ed68a oxfmt,formatter_htmlish,formatter: Clean up behavior comments (#28384) (Yuji Sugiura)
+
 ## [0.75.0] - 2026-10-27
 
 ### ⚡ Performance

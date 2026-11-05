@@ -1056,6 +1056,18 @@ fn from_as_a_name_before_a_string() {
 }
 
 #[test]
+fn dots_before_a_slash_or_less_than() {
+    regex("[.../re/];", ScriptJS);
+    regex("f(... /*c*/ /re/);", ScriptJS);
+    division("x = 1./2;", ScriptJS);
+    let jsx_after_spread = kinds_of("[...<a/>];", ScriptTSX);
+    assert!(jsx_after_spread.contains(&TokenKind::JsxLt), "{jsx_after_spread:?}");
+    // No name after a member dot: an operator goes on, as in tsc.
+    division("a./b/2;", ScriptJS);
+    division("a?./b/2;", ScriptJS);
+}
+
+#[test]
 fn keyword_after_a_number_with_a_trailing_dot() {
     regex("x = 1. in /re/;", ScriptJS);
     regex("x = 1. instanceof /re/.constructor;", ScriptJS);

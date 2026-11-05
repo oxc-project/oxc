@@ -387,13 +387,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         });
         self.expect(Kind::RCurly);
 
-        let mut keys = FxHashMap::default();
-        for e in &with_entries {
-            let key = e.key.as_js_str();
-            let span = e.key.span();
-            if let Some(old_span) = keys.insert(key, span) {
-                let name = key.as_str().unwrap_or_else(|| span.source_text(self.source_text));
-                self.error(diagnostics::duplicate_import_attribute_key(name, old_span, span));
+        if with_entries.len() > 1 {
+            let mut keys = FxHashMap::default();
+            for e in &with_entries {
+                let key = e.key.as_js_str();
+                let span = e.key.span();
+                if let Some(old_span) = keys.insert(key, span) {
+                    let name = key.as_str().unwrap_or_else(|| span.source_text(self.source_text));
+                    self.error(diagnostics::duplicate_import_attribute_key(name, old_span, span));
+                }
             }
         }
 
@@ -751,7 +753,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let next = self.lexer.peek_token();
             if !next.is_on_new_line() {
                 // export default abstract class C {}
-                if kind == Kind::Abstract && next.kind() == Kind::Class {
+                if self.is_ts && kind == Kind::Abstract && next.kind() == Kind::Class {
                     self.bump_any();
                     let modifiers = Modifiers::new_single(ModifierKind::Abstract, modifier_start);
                     return ExportDefaultDeclarationKind::ClassDeclaration(
@@ -776,7 +778,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     return ExportDefaultDeclarationKind::FunctionDeclaration(func);
                 }
                 // export default interface I {}
-                if kind == Kind::Interface {
+                if self.is_ts && kind == Kind::Interface {
                     self.bump_any();
                     for decorator in &decorators {
                         self.error(diagnostics::decorators_are_not_valid_here(decorator.span));

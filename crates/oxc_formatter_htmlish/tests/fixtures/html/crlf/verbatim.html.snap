@@ -1,0 +1,174 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div>
+<!-- prettier-ignore -->
+<div   class="a"  >
+  kept   as   written
+</div>
+<pre>
+  line 1
+    line 2
+</pre>
+<!--
+  multi-line
+  comment
+-->
+<script>
+  const   a = 1
+
+  foo( a )
+</script>
+<style>
+  a { color : red }
+</style>
+<p title="first
+second">x</p>
+<textarea>
+  value
+</textarea>
+</div>
+
+==================== Output ====================
+-----------------------------------
+{ endOfLine: "lf", printWidth: 80 }
+-----------------------------------
+<div>
+  <!-- prettier-ignore -->
+  <div   class="a"  >
+  kept   as   written
+</div>
+  <pre>
+  line 1
+    line 2
+</pre>
+  <!--
+  multi-line
+  comment
+-->
+  <script>
+    const   a = 1
+
+    foo( a )
+  </script>
+  <style>
+    a { color : red }
+  </style>
+  <p
+    title="first
+second"
+  >
+    x
+  </p>
+  <textarea>
+  value
+</textarea>
+</div>
+
+------------------------------------
+{ endOfLine: "lf", printWidth: 100 }
+------------------------------------
+<div>
+  <!-- prettier-ignore -->
+  <div   class="a"  >
+  kept   as   written
+</div>
+  <pre>
+  line 1
+    line 2
+</pre>
+  <!--
+  multi-line
+  comment
+-->
+  <script>
+    const   a = 1
+
+    foo( a )
+  </script>
+  <style>
+    a { color : red }
+  </style>
+  <p
+    title="first
+second"
+  >
+    x
+  </p>
+  <textarea>
+  value
+</textarea>
+</div>
+
+-------------------------------------
+{ endOfLine: "crlf", printWidth: 80 }
+-------------------------------------
+<div>
+  <!-- prettier-ignore -->
+  <div   class="a"  >
+  kept   as   written
+</div>
+  <pre>
+  line 1
+    line 2
+</pre>
+  <!--
+  multi-line
+  comment
+-->
+  <script>
+    const   a = 1
+
+    foo( a )
+  </script>
+  <style>
+    a { color : red }
+  </style>
+  <p
+    title="first
+second"
+  >
+    x
+  </p>
+  <textarea>
+  value
+</textarea>
+</div>
+
+--------------------------------------
+{ endOfLine: "crlf", printWidth: 100 }
+--------------------------------------
+<div>
+  <!-- prettier-ignore -->
+  <div   class="a"  >
+  kept   as   written
+</div>
+  <pre>
+  line 1
+    line 2
+</pre>
+  <!--
+  multi-line
+  comment
+-->
+  <script>
+    const   a = 1
+
+    foo( a )
+  </script>
+  <style>
+    a { color : red }
+  </style>
+  <p
+    title="first
+second"
+  >
+    x
+  </p>
+  <textarea>
+  value
+</textarea>
+</div>
+
+===================== End =====================

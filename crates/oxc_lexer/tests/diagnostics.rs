@@ -680,6 +680,13 @@ fn generic_function_types_never_flagged() {
     }
 }
 
+#[test]
+fn optional_call_type_args_never_flagged() {
+    for code in ["a?.<T>(b);", "a?.b?.<T>(c);", "a?.<T[]>(b);", "a?.\n<T>(b);", "f(a?.<T>(b));"] {
+        assert!(codes_tsx(code).is_empty(), "{code:?}");
+    }
+}
+
 fn sorted_codes_tsx(code: &str) -> Vec<DiagCode> {
     let mut v = codes_tsx(code);
     v.sort_unstable();

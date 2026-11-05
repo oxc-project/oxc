@@ -1,10 +1,10 @@
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttribute, JSXAttributeItem, JSXElementName},
+    ast::{JSXAttribute, JSXAttributeItem},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -96,12 +96,13 @@ impl Rule for AriaActivedescendantHasTabindex {
             return;
         }
 
-        let (name, span) = match &jsx_opening_el.name {
-            JSXElementName::Identifier(id) => (id.name.as_str(), id.span),
-            JSXElementName::IdentifierReference(id) => (id.name.as_str(), id.span),
-            _ => return,
+        let Some(name) = jsx_opening_el.name.get_identifier_name() else {
+            return;
         };
-        ctx.diagnostic(aria_activedescendant_has_tabindex_diagnostic(span, name));
+        ctx.diagnostic(aria_activedescendant_has_tabindex_diagnostic(
+            jsx_opening_el.name.span(),
+            name.as_str(),
+        ));
     }
 }
 

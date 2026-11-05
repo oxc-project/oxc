@@ -373,8 +373,8 @@ fn js_parser_test() {
     test("a = 'abc'[NaN]", "a = 'abc'[NaN];");
     test("a = 'abc'[-1e100]", "a = 'abc'[-1e100];");
     test("a = 'abc'[1e100]", "a = 'abc'[1e100];");
-    test("a = 'abc'[-Infinity]", "a = 'abc'[-Infinity];");
-    test("a = 'abc'[Infinity]", "a = 'abc'[Infinity];");
+    test("a = 'abc'[-Infinity]", "a = 'abc'[-1e400];");
+    test("a = 'abc'[Infinity]", "a = 'abc'[1e400];");
     test("a = !(b == c)", "a = b != c;");
     test("a = !(b != c)", "a = b == c;");
     test("a = !(b === c)", "a = b !== c;");
@@ -937,10 +937,10 @@ fn constant_evaluation_test() {
     test("x = 3 % 6", "x = 3;");
     test("x = 3 ** 6", "x = 729;");
     test("x = 0 / 0", "x = NaN;");
-    test("x = 123 / 0", "x = Infinity;");
-    test("x = 123 / -0", "x = -Infinity;");
-    test("x = -123 / 0", "x = -Infinity;");
-    test("x = -123 / -0", "x = Infinity;");
+    test("x = 123 / 0", "x = 1e400;");
+    test("x = 123 / -0", "x = -1e400;");
+    test("x = -123 / 0", "x = -1e400;");
+    test("x = -123 / -0", "x = 1e400;");
     test("x = 3 < 6", "x = !0;");
     test("x = 3 > 6", "x = !1;");
     test("x = 3 <= 6", "x = !0;");

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, ChainElement, Expression},
+    ast::{CallExpression, ChainElement, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -201,14 +201,8 @@ const TIMED_FUNCTIONS: &[&str] =
 fn callee_static_member<'a, 'b>(
     callee: &'b Expression<'a>,
 ) -> Option<(&'b str, &'b Expression<'a>)> {
-    let inner = callee.get_inner_expression();
-    let member = match inner {
-        Expression::StaticMemberExpression(m) => m.as_ref(),
-        Expression::ChainExpression(c) => match &c.expression {
-            ChainElement::StaticMemberExpression(m) => m.as_ref(),
-            _ => return None,
-        },
-        _ => return None,
+    let MemberExpression::StaticMemberExpression(member) = callee.get_member_expr()? else {
+        return None;
     };
     Some((member.property.name.as_str(), &member.object))
 }

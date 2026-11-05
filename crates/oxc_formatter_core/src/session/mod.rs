@@ -228,6 +228,12 @@ impl<'a> FormatSession<'a> {
         self.input_kind
     }
 
+    /// How many dispatches deep this session is (`0` for a root):
+    /// nested embeds tell their own markers apart by it.
+    pub fn dispatch_depth(&self) -> u8 {
+        self.dispatch_depth
+    }
+
     /// The string channel service ([`StringEmbedder`]), when this run installs one.
     /// (A handle rather than an invoking method; see the alias for the `Err`-means-verbatim contract.)
     pub fn string_embedder(&self) -> Option<&StringEmbedder> {

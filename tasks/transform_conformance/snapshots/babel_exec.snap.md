@@ -2,7 +2,7 @@ commit: b835f0c6
 
 node: v26.12.1
 
-Passed: 321 of 419 (76.61%)
+Passed: 322 of 419 (76.85%)
 
 Failures:
 
@@ -18,11 +18,6 @@ SyntaxError: Unexpected eval or arguments in strict mode
     at VitestModuleRunner.directRequest (./node_modules/vite/dist/node/module-runner.js:1288:80)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async VitestModuleRunner.cachedRequest (./node_modules/vite/dist/node/module-runner.js:1195:73)
-
-./fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-async-generators-await-in-finally-exec.test.js
-AssertionError: expected { value: 2, done: true } to deeply equal { value: 4, done: false }
-    at test (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-async-generators-await-in-finally-exec.test.js:28:44)
-    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
 
 ./fixtures/babel/babel-plugin-transform-async-to-generator-test-fixtures-async-to-generator-async-complex-params-exec.test.js
 TypeError: Cannot destructure property 'b' of 'undefined' as it is undefined.

@@ -3,7 +3,7 @@ commit: 8a62bbe7
 parser_typescript Summary:
 AST Parsed     : 9859/9868 (99.91%)
 Positive Passed: 9849/9868 (99.81%)
-Negative Passed: 1712/2807 (60.99%)
+Negative Passed: 1713/2807 (61.03%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -585,8 +585,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementation.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementationFileOrderReversed.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationOptionalClassElementSyntaxOfClass.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFunctionWithPrototypeNoErrorTruncationNoCrash.ts
 
@@ -6544,11 +6542,13 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  1 │ const
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/downlevelLetConst11.ts:2:4]
+  × The keyword 'let' is reserved
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/downlevelLetConst11.ts:2:1]
  1 │ "use strict";
  2 │ let
+   · ───
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Missing initializer in const declaration
    ╭─[typescript/tsc/testdata/tests/cases/compiler/downlevelLetConst2.ts:1:7]
@@ -9099,6 +9099,22 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·  ▲
    ╰────
   help: Try inserting a semicolon here
+
+  × Optional class members can only be used in TypeScript files.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationOptionalClassElementSyntaxOfClass.ts:2:8]
+ 1 │ class C {
+ 2 │     foo?() {
+   ·        ─
+ 3 │     }
+   ╰────
+
+  × Optional class members can only be used in TypeScript files.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationOptionalClassElementSyntaxOfClass.ts:4:8]
+ 3 │     }
+ 4 │     bar? = 1; 
+   ·        ─
+ 5 │ }
+   ╰────
 
   × Expected `,` or `)` but found `?`
    ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationOptionalParameter.ts:1:13]
@@ -12373,14 +12389,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ╰────
   help: Duplicate names must be in different alternatives
 
-  × Invalid regular expression: Could not parse the entire pattern
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionAnnexB.ts:7:5]
+  × Invalid regular expression: Invalid escape sequence
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionAnnexB.ts:7:4]
  6 │   // Compare to
  7 │   /\q\u\i\c\k\_\f\o\x\-\j\u\m\p\s/u,
-   ·     ▲
+   ·    ─
  8 │   /[\q\u\i\c\k\_\f\o\x\-\j\u\m\p\s]/u,
    ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Invalid class atom
    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionAnnexB.ts:8:5]
@@ -21757,11 +21773,13 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·          ────
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/es6/variableDeclarations/VariableDeclaration11_es6.ts:2:4]
+  × The keyword 'let' is reserved
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/es6/variableDeclarations/VariableDeclaration11_es6.ts:2:1]
  1 │ "use strict";
  2 │ let
+   · ───
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Unexpected token
    ╭─[typescript/tsc/testdata/tests/cases/conformance/es6/variableDeclarations/VariableDeclaration13_es6.ts:4:5]

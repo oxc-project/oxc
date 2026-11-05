@@ -136,13 +136,18 @@ pub fn format_to_ir<'a>(
 
     // Special cases for js-in-xxx:
     // - Single JSX in Markdown code block: omit the semicolon
-    let embedding_omits_semicolon = embedded_in == Some(JsEmbeddedIn::MarkdownCodeBlock)
-        && program.directives.is_empty()
-        && matches!(
-            program.body.as_slice(),
-            [Statement::ExpressionStatement(statement)] if statement.expression.is_jsx()
-        );
+    // - Single expression in an HTML event handler attribute: omit the semicolon
+    let embedding_omits_semicolon = program.directives.is_empty()
+        && match program.body.as_slice() {
+            [Statement::ExpressionStatement(statement)] => match embedded_in {
+                Some(JsEmbeddedIn::MarkdownCodeBlock) => statement.expression.is_jsx(),
+                Some(JsEmbeddedIn::HtmlEventHandler) => true,
+                _ => false,
+            },
+            _ => false,
+        };
     context.set_embedding_omits_semicolon(embedding_omits_semicolon);
+    context.set_embedded_in(embedded_in);
 
     let (ir, _) = formatter::build_ir(
         context,
@@ -178,6 +183,9 @@ pub fn format_fragment<'a>(
     // NOTE: Since this options is just the preferred quote (not a forced),
     // this may not be enough for all cases.
     // But it seems fine for almost all cases, so leave it for now.
+    // TODO: When Vue formats natively, share the HTML event handler's rule instead
+    // (`JsFormatContext::string_quote_style`, `'` whatever the string holds):
+    // a string holding more `'` than `"` prints `"` here, which the attribute escapes as `&quot;`.
     let options = JsFormatOptions { quote_style: QuoteStyle::Single, ..options };
 
     // A js-in-xxx fragment never owns file envelopes (BOM / front matter)
