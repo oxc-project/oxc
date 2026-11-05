@@ -59,6 +59,13 @@ assertion_line: 522
    ╰────
   help: Change `on webauthn` to a valid value for `autocomplete`.
 
+  ⚠ jsx-a11y(autocomplete-valid): `webauthn` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='webauthn' />;
+   ·                    ───────────────────────
+   ╰────
+  help: Change `webauthn` to a valid value for `autocomplete`.
+
   ⚠ jsx-a11y(autocomplete-valid): `billing on` is not a valid value for `autocomplete`.
    ╭─[autocomplete_valid.tsx:1:20]
  1 │ <input type='text' autocomplete='billing on' />;

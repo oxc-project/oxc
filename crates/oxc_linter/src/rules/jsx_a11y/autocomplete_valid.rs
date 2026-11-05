@@ -1,5 +1,6 @@
 use std::ops::Deref;
 
+use cow_utils::CowUtils;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -137,7 +138,6 @@ static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf::phf_set![
     "transaction-currency",
     "url",
     "username",
-    "webauthn",
 ];
 
 const BILLING_OR_SHIPPING: [&str; 2] = ["billing", "shipping"];
@@ -159,10 +159,11 @@ const CONTACT_FIELDS: [&str; 10] = [
 ];
 
 fn is_valid_autocomplete_value(value: &str) -> bool {
+    let value = value.cow_to_ascii_lowercase();
     let mut parts: Vec<&str> = value.split_whitespace().collect();
 
-    // `webauthn` is only allowed as the final token.
-    let stripped_webauthn = parts.len() > 1 && parts.last() == Some(&"webauthn");
+    // `webauthn` is only allowed as the final token after a field name.
+    let stripped_webauthn = parts.last() == Some(&"webauthn");
     if stripped_webauthn {
         parts.pop();
     }
@@ -188,13 +189,12 @@ fn is_valid_autocomplete_value(value: &str) -> bool {
         return false;
     }
     if index == 0 {
-        // A lone field token; `on`, `off`, and `webauthn` cannot combine
-        // with a trailing `webauthn`.
+        // A lone field token; `on` and `off` cannot combine with a trailing `webauthn`.
         VALID_AUTOCOMPLETE_VALUES.contains(field)
-            && !(stripped_webauthn && matches!(field, "on" | "off" | "webauthn"))
+            && !(stripped_webauthn && matches!(field, "on" | "off"))
     } else {
         // After a `section-` or billing modifier the token must be a field name.
-        VALID_AUTOCOMPLETE_VALUES.contains(field) && !matches!(field, "on" | "off" | "webauthn")
+        VALID_AUTOCOMPLETE_VALUES.contains(field) && !matches!(field, "on" | "off")
     }
 }
 
@@ -254,8 +254,10 @@ fn test() {
         ("<input type='text' autocomplete='name' />;", None, None),
         // ("<input type='text' autocomplete='' />;", None, None),
         ("<input type='text' autocomplete='off' />;", None, None),
+        ("<input type='text' autocomplete='OFF' />;", None, None),
         ("<input type='text' autocomplete='on' />;", None, None),
         ("<input type='text' autocomplete='billing family-name' />;", None, None),
+        ("<input type='text' autocomplete='Shipping Street-Address' />;", None, None),
         ("<input type='text' autocomplete='section-blue shipping street-address' />;", None, None),
         ("<input type='text' autocomplete='section-somewhere shipping work email' />;", None, None),
         ("<input type='text' autocomplete='given-name' />;", None, None),
@@ -307,6 +309,7 @@ fn test() {
         ("<input type='text' autocomplete='shipping section-a street-address' />;", None, None),
         ("<input type='text' autocomplete='section-a billing' />;", None, None),
         ("<input type='text' autocomplete='on webauthn' />;", None, None),
+        ("<input type='text' autocomplete='webauthn' />;", None, None),
         ("<input type='text' autocomplete='billing on' />;", None, None),
         ("<input type='text' autocomplete='email webauthn webauthn' />;", None, None),
         (
