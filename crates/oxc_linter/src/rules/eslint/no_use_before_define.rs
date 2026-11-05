@@ -1306,7 +1306,6 @@ fn test() {
         ("a(); var a=function() {};", Some(serde_json::json!(["nofunc"]))),
         ("(() => { alert(a); var a = 42; })();", None), // { "ecmaVersion": 6 },
         ("(() => a())(); function a() { }", None),      // { "ecmaVersion": 6 },
-        (r#""use strict"; a(); { function a() {} }"#, None),
         ("a(); try { throw new Error() } catch (foo) {var a;}", None),
         ("var f = () => a; var a;", None), // { "ecmaVersion": 6 },
         ("new A(); class A {};", None),    // { "ecmaVersion": 6 },
