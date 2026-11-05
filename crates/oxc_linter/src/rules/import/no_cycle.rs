@@ -88,6 +88,34 @@ pub struct ImportCycleOptions {
     ignore_types: bool,
 }
 
+/// The enabled import-filter policies, discovered once from the configuration.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct ImportCyclePolicies([bool; 2]);
+
+impl ImportCyclePolicies {
+    pub(crate) fn insert(&mut self, options: ImportCycleOptions) {
+        self.0[options.index()] = true;
+    }
+
+    pub(crate) fn is_empty(self) -> bool {
+        self.0 == [false; 2]
+    }
+
+    pub(crate) fn iter(self) -> impl Iterator<Item = ImportCycleOptions> {
+        [false, true].into_iter().filter_map(move |ignore_types| {
+            self.0[usize::from(ignore_types)].then_some(ImportCycleOptions { ignore_types })
+        })
+    }
+}
+
+impl From<ImportCycleOptions> for ImportCyclePolicies {
+    fn from(options: ImportCycleOptions) -> Self {
+        let mut policies = Self::default();
+        policies.insert(options);
+        policies
+    }
+}
+
 impl Default for NoCycle {
     fn default() -> Self {
         Self {
@@ -158,9 +186,7 @@ impl Rule for NoCycle {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
 
-        let component = module_record
-            .import_cycle_component()
-            .filter(|component| component.supports_rule(self));
+        let component = module_record.import_cycle_component(self.graph_options());
 
         // Reuse shared labels when available; otherwise check reachability for this file.
         // Bounded searches skip the unbounded prefilter to avoid unnecessary work.
@@ -298,7 +324,7 @@ impl NoCycle {
         false
     }
 
-    pub(crate) fn should_traverse_module(
+    fn should_traverse_module(
         &self,
         key: &CompactStr,
         module: &Arc<ModuleRecord>,
@@ -309,6 +335,12 @@ impl NoCycle {
 }
 
 impl ImportCycleOptions {
+    pub(crate) fn index(self) -> usize {
+        // New graph options must also participate in the cache key.
+        let Self { ignore_types } = self;
+        usize::from(ignore_types)
+    }
+
     pub(crate) fn should_traverse_module(
         self,
         key: &CompactStr,

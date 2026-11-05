@@ -32,7 +32,7 @@ use crate::{
     context::{ContextSubHost, ContextSubHostOptions},
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
-    module_graph_scc::{ImportCycleGraph, cyclic_components},
+    module_graph_scc::{ImportCycleGraph, ImportCycleGroup, cyclic_components},
     module_record::ModuleRecord,
     suppression::DiffManager,
     utils::read_to_arena_str,
@@ -83,16 +83,13 @@ impl CycleGraphState {
         true
     }
 
-    fn classify_edges(&mut self, edges: &[Vec<usize>]) -> Option<Vec<(usize, bool)>> {
-        if !self.graph.valid.load(Ordering::Acquire) {
-            return None;
-        }
+    fn classify_edges(&mut self, edges: &[Vec<usize>]) -> Vec<(usize, bool)> {
         let mut components = cyclic_components(edges);
         for (id, _) in &mut components {
             *id += self.next_component;
         }
         self.next_component += components.len();
-        Some(components)
+        components
     }
 }
 
@@ -293,27 +290,38 @@ fn link_modules(
         .collect();
     let indices: FxHashMap<&OsStr, usize> =
         nodes.iter().enumerate().map(|(index, (path, _, _))| ((*path).as_ref(), index)).collect();
-    let mut edges = vec![Vec::new(); nodes.len()];
+    // Build only configured policies. Neither override order nor map order selects a winner.
+    let mut edges: SmallVec<[_; 2]> = cache
+        .graph
+        .policies
+        .iter()
+        .map(|options| (options, vec![Vec::new(); nodes.len()]))
+        .collect();
 
     // 1. Collect cycle edges alongside the existing target lookups.
     link_imports(
         modules_by_path,
         nodes.iter_mut().map(|(_, records, sections)| (records.as_slice(), take(sections))),
         |index, record, request, target| {
-            if let Some(&dependency) = indices.get(request.resolved_requested_path.as_ref())
-                && cache.graph.options.should_traverse_module(&request.specifier, target, record)
-            {
-                edges[index].push(dependency);
+            if let Some(&dependency) = indices.get(request.resolved_requested_path.as_ref()) {
+                for (options, edges) in &mut edges {
+                    if options.should_traverse_module(&request.specifier, target, record) {
+                        edges[index].push(dependency);
+                    }
+                }
             }
         },
     );
 
-    // 2. Publish labels only when there is a valid analysis to share.
-    if let Some(components) = cache.classify_edges(&edges) {
-        for ((_, records, _), component) in nodes.into_iter().zip(components) {
-            for record in records {
-                record.set_import_cycle_component(Arc::clone(&cache.graph), component);
-            }
+    // 2. Share dense labels by policy, rather than copying both labels into every record.
+    let mut components = [None, None];
+    for (options, edges) in edges {
+        components[options.index()] = Some(cache.classify_edges(&edges));
+    }
+    let group = Arc::new(ImportCycleGroup { graph: Arc::clone(&cache.graph), components });
+    for (index, (_, records, _)) in nodes.into_iter().enumerate() {
+        for record in records {
+            record.set_import_cycle_components(Arc::clone(&group), index);
         }
     }
 }
@@ -634,13 +642,15 @@ impl Runtime {
     ///
     /// `on_module_to_lint` is called for each entry modules in `paths` when it's ready for linting,
     /// which means all its dependencies are resolved if import plugin is enabled.
-    fn resolve_modules<'a, const LINT_RULES: bool>(
+    #[expect(clippy::too_many_arguments)]
+    fn resolve_modules<'a>(
         &'a self,
         file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
         paths: &'a IndexSet<Arc<OsStr>, FxBuildHasher>,
         scope: &Scope<'a>,
         check_syntax_errors: bool,
         tx_error: Option<&'a DiagnosticSender>,
+        lint_rules: bool,
         on_module_to_lint: impl Fn(&'a Self, ModuleToLint) + Send + Sync + Clone + 'a,
     ) {
         if !self.is_cross_module() {
@@ -733,7 +743,7 @@ impl Runtime {
         let (tx_process_output, rx_process_output) = mpsc::channel::<ModuleProcessOutput>();
 
         // Parse-diagnostic collection runs no lint rules and needs no cycle analysis.
-        let mut cycle_graph = if LINT_RULES {
+        let mut cycle_graph = if lint_rules {
             self.linter.import_cycle_graph().map(CycleGraphState::new)
         } else {
             None
@@ -944,12 +954,13 @@ impl Runtime {
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
         self.with_module_scope(|scope| {
-            self.resolve_modules::<true>(
+            self.resolve_modules(
                 file_system,
                 &paths_set,
                 scope,
                 true,
                 Some(tx_error),
+                true,
                 move |me, mut module_to_lint| {
                     module_to_lint.content.with_dependent_mut(|allocator_guard, dep| {
                         // If there are fixes, we will accumulate all of them and write to the file at the end.
@@ -1090,12 +1101,13 @@ impl Runtime {
 
         let messages = Mutex::new(Vec::<Message>::new());
         self.with_module_scope(|scope| {
-            self.resolve_modules::<true>(
+            self.resolve_modules(
                 file_system,
                 &paths_set,
                 scope,
                 true,
                 None,
+                true,
                 |me, mut module_to_lint| {
                     module_to_lint.content.with_dependent_mut(
                         |allocator_guard,
@@ -1178,12 +1190,13 @@ impl Runtime {
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
         self.with_module_scope(|scope| {
-            self.resolve_modules::<false>(
+            self.resolve_modules(
                 file_system,
                 &paths_set,
                 scope,
                 true,
                 Some(tx_error),
+                false,
                 |me, mut module_to_lint| {
                     module_to_lint.content.with_dependent_mut(
                         |_allocator_guard,
@@ -1235,12 +1248,13 @@ impl Runtime {
 
         let messages = Mutex::new(Vec::<Message>::new());
         self.with_module_scope(|scope| {
-            self.resolve_modules::<true>(
+            self.resolve_modules(
                 file_system,
                 &paths_set,
                 scope,
                 check_syntax_errors,
                 Some(tx_error),
+                true,
                 |me, mut module| {
                     module.content.with_dependent_mut(|allocator_guard, ModuleContentDependent {
                         source_text: _,
@@ -1665,7 +1679,7 @@ mod cycle_component_tests {
         CycleGraphState, ModuleResolvedRequests, ModulesByPath, ResolvedModuleRequest, link_modules,
     };
     use crate::{
-        module_graph_scc::ImportCycleGraph,
+        module_graph_scc::{ImportCycleGraph, ImportCycleGroup},
         module_record::{ImportEntry, ImportImportName, ModuleRecord, NameSpan},
         rules::import::no_cycle::NoCycle,
     };
@@ -1710,34 +1724,43 @@ mod cycle_component_tests {
 
     #[test]
     fn file_components_follow_the_selected_traversal_policy() {
+        let default = NoCycle::default().graph_options();
+        let include_types: NoCycle =
+            serde_json::from_value(serde_json::json!({"ignoreTypes": false})).unwrap();
+        let include_types = include_types.graph_options();
         for type_only in [false, true] {
             let (modules, mut requests) = graph(type_only);
             let later_group = requests.split_off(2);
-            let mut cache = CycleGraphState::new(Arc::new(ImportCycleGraph::new(
-                NoCycle::default().graph_options(),
-            )));
+            let mut policies = crate::rules::import::no_cycle::ImportCyclePolicies::from(default);
+            // The same file can have different components under each policy.
+            policies.insert(include_types);
+            let mut cache = CycleGraphState::new(Arc::new(ImportCycleGraph::new(policies)));
             link_modules(&modules, requests, Some(&mut cache));
             link_modules(&modules, later_group, Some(&mut cache));
             let records = modules.pin();
             let a = &records.get(OsStr::new("a.vue")).unwrap()[0];
             let b = &records.get(OsStr::new("b.ts")).unwrap()[0];
             let c = &records.get(OsStr::new("c.ts")).unwrap()[0];
-            let component = a.import_cycle_component().unwrap();
-            // The first a.vue section can cycle through b.ts and return to its last section.
-            assert_eq!(component.is_cyclic(), !type_only);
-            assert_eq!(b.import_cycle_component().unwrap().is_cyclic(), !type_only);
-            assert_eq!(component.excludes_module(b), type_only);
-            // Later groups reuse earlier labels and cannot close a cycle back from a.vue.
-            let component = c.import_cycle_component().unwrap();
-            assert!(!component.is_cyclic());
-            assert!(component.excludes_module(a));
+            for (ignore_types, options) in [(true, default), (false, include_types)] {
+                let component = a.import_cycle_component(options).unwrap();
+                let cyclic = !type_only || !ignore_types;
+                assert_eq!(component.is_cyclic(), cyclic);
+                assert_eq!(b.import_cycle_component(options).unwrap().is_cyclic(), cyclic);
+                assert_eq!(component.excludes_module(b), !cyclic);
+                // Later groups reuse earlier labels and cannot close a cycle back from a.vue.
+                let component = c.import_cycle_component(options).unwrap();
+                assert!(!component.is_cyclic());
+                assert!(component.excludes_module(a));
+            }
         }
 
         let (modules, requests) = graph(false);
         link_modules(&modules, requests, None);
         let records = modules.pin();
         for path in ["a.vue", "b.ts", "c.ts"] {
-            assert!(records.get(OsStr::new(path)).unwrap()[0].import_cycle_component().is_none());
+            assert!(
+                records.get(OsStr::new(path)).unwrap()[0].import_cycle_component(default).is_none()
+            );
         }
         assert_eq!(records.get(OsStr::new("a.vue")).unwrap()[0].loaded_modules().len(), 1);
     }
@@ -1745,14 +1768,19 @@ mod cycle_component_tests {
     #[test]
     fn path_equivalent_aliases_invalidate_already_published_components() {
         let mut cache = CycleGraphState::new(Arc::new(ImportCycleGraph::new(
-            NoCycle::default().graph_options(),
+            NoCycle::default().graph_options().into(),
         )));
         assert!(cache.register_path(&Arc::from(OsStr::new("dir/a.ts"))));
         let root = record("root.ts");
-        root.set_import_cycle_component(Arc::clone(&cache.graph), (0, false));
-        assert!(root.import_cycle_component().is_some());
+        let options = NoCycle::default().graph_options();
+        let group = Arc::new(ImportCycleGroup {
+            graph: Arc::clone(&cache.graph),
+            components: [None, Some(vec![(0, false)])],
+        });
+        root.set_import_cycle_components(group, 0);
+        assert!(root.import_cycle_component(options).is_some());
         assert!(!cache.register_path(&Arc::from(OsStr::new("dir/./a.ts"))));
-        assert!(root.import_cycle_component().is_none());
+        assert!(root.import_cycle_component(options).is_none());
         let paths_before = cache.paths.len();
         assert!(!cache.register_path(&Arc::from(OsStr::new("later.ts"))));
         assert_eq!(cache.paths.len(), paths_before);

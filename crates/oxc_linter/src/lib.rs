@@ -12,7 +12,7 @@ use std::{
     ptr::{self, NonNull},
     rc::Rc,
     string::ToString,
-    sync::Arc,
+    sync::{Arc, OnceLock},
     time::Duration,
 };
 
@@ -267,6 +267,7 @@ pub struct Linter {
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
     workspace_uri: Option<Box<str>>,
+    import_cycle_policies: OnceLock<rules::import::no_cycle::ImportCyclePolicies>,
 }
 
 impl Linter {
@@ -275,7 +276,13 @@ impl Linter {
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter, workspace_uri: None }
+        Self {
+            options,
+            config,
+            external_linter,
+            workspace_uri: None,
+            import_cycle_policies: OnceLock::new(),
+        }
     }
 
     #[must_use]
@@ -313,12 +320,20 @@ impl Linter {
     }
 
     pub(crate) fn import_cycle_graph(&self) -> Option<Arc<module_graph_scc::ImportCycleGraph>> {
-        self.config.find_rule(|rule| match rule {
-            RuleEnum::ImportNoCycle(rule) if rule.uses_scc_prefilter() => {
-                Some(Arc::new(module_graph_scc::ImportCycleGraph::new(rule.graph_options())))
-            }
-            _ => None,
-        })
+        // Discover policies only once, and only if an import-graph run needs them.
+        let policies = *self.import_cycle_policies.get_or_init(|| {
+            let mut policies = rules::import::no_cycle::ImportCyclePolicies::default();
+            self.config.visit_rules(|rule| {
+                if let RuleEnum::ImportNoCycle(rule) = rule
+                    && rule.uses_scc_prefilter()
+                {
+                    policies.insert(rule.graph_options());
+                }
+            });
+            policies
+        });
+        // A fresh invalidation token keeps independent runs isolated.
+        (!policies.is_empty()).then(|| Arc::new(module_graph_scc::ImportCycleGraph::new(policies)))
     }
 
     /// Return `true` if `Linter` has an external linter (JS plugins).

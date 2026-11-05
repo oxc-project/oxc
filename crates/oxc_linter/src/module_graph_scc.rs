@@ -1,18 +1,25 @@
-use std::sync::atomic::AtomicBool;
+use std::sync::{Arc, atomic::AtomicBool};
 
-use crate::rules::import::no_cycle::ImportCycleOptions;
+use crate::rules::import::no_cycle::ImportCyclePolicies;
 
-/// One graph build and the import filtering options used to select its edges.
+/// One graph build and the enabled import-filter policies.
 #[derive(Debug)]
 pub struct ImportCycleGraph {
-    pub options: ImportCycleOptions,
+    pub policies: ImportCyclePolicies,
     pub valid: AtomicBool,
 }
 
 impl ImportCycleGraph {
-    pub fn new(options: ImportCycleOptions) -> Self {
-        Self { options, valid: AtomicBool::new(true) }
+    pub fn new(policies: ImportCyclePolicies) -> Self {
+        Self { policies, valid: AtomicBool::new(true) }
     }
+}
+
+/// Dense component labels shared by every record in one completed group.
+#[derive(Debug)]
+pub struct ImportCycleGroup {
+    pub graph: Arc<ImportCycleGraph>,
+    pub components: [Option<Vec<(usize, bool)>>; 2],
 }
 
 /// Returns `(component_id, is_cyclic)` for each node, in input order.

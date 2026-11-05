@@ -14,33 +14,35 @@ use oxc_span::Span;
 use oxc_str::CompactStr;
 pub use oxc_syntax::module_record::RequestedModule;
 
-use crate::{module_graph_scc::ImportCycleGraph, rules::import::no_cycle::NoCycle};
+use crate::{module_graph_scc::ImportCycleGroup, rules::import::no_cycle::ImportCycleOptions};
 
 type SortedLoadedModules = Arc<[(CompactStr, Weak<ModuleRecord>)]>;
 
-/// File-level SCC information for one configured import/no-cycle graph policy.
+/// One node's position in a completed group's shared component tables.
 #[derive(Debug)]
-pub struct ImportCycleComponent {
-    // Shared by all completed groups in one graph build. Mutating any linked record invalidates
-    // the entire build's classifications, including records that can reach the changed record.
-    graph: Arc<ImportCycleGraph>,
+struct ImportCycleComponents {
+    group: Arc<ImportCycleGroup>,
+    index: usize,
+}
+
+/// File-level SCC information for one import-filter policy.
+#[derive(Debug, Clone, Copy)]
+pub struct ImportCycleComponent<'a> {
+    graph: &'a crate::module_graph_scc::ImportCycleGraph,
+    options: ImportCycleOptions,
     id: usize,
     cyclic: bool,
 }
 
-impl ImportCycleComponent {
-    pub(crate) fn supports_rule(&self, rule: &NoCycle) -> bool {
-        self.graph.options == rule.graph_options()
-    }
-
+impl ImportCycleComponent<'_> {
     pub(crate) fn is_cyclic(&self) -> bool {
         self.cyclic
     }
 
     pub(crate) fn excludes_module(&self, module: &ModuleRecord) -> bool {
         module
-            .import_cycle_component()
-            .is_some_and(|other| Arc::ptr_eq(&self.graph, &other.graph) && self.id != other.id)
+            .import_cycle_component(self.options)
+            .is_some_and(|other| std::ptr::eq(self.graph, other.graph) && self.id != other.id)
     }
 }
 
@@ -85,7 +87,7 @@ pub struct ModuleRecord {
     sorted_loaded_modules: RwLock<Option<SortedLoadedModules>>,
 
     // Published after linking; all lint workers read the same labels.
-    import_cycle_component: OnceLock<ImportCycleComponent>,
+    import_cycle_components: OnceLock<ImportCycleComponents>,
 
     /// `[[ImportEntries]]`
     ///
@@ -142,7 +144,10 @@ impl fmt::Debug for ModuleRecord {
             .field("requested_modules", &self.requested_modules)
             .field("loaded_modules", &loaded_modules)
             .field("sorted_loaded_modules", &self.sorted_loaded_modules)
-            .field("import_cycle_component", &self.import_cycle_component)
+            .field(
+                "import_cycle_components",
+                &self.import_cycle_components.get().map(|cache| cache.index),
+            )
             .field("import_entries", &self.import_entries)
             .field("local_export_entries", &self.local_export_entries)
             .field("indirect_export_entries", &self.indirect_export_entries)
@@ -591,32 +596,39 @@ impl ModuleRecord {
         &self,
     ) -> RwLockWriteGuard<'_, FxHashMap<CompactStr, Weak<ModuleRecord>>> {
         let loaded_modules = self.loaded_modules.write().unwrap();
-        if let Some(component) = self.import_cycle_component.get() {
-            component.graph.valid.store(false, Ordering::Release);
+        if let Some(components) = self.import_cycle_components.get() {
+            components.group.graph.valid.store(false, Ordering::Release);
         }
         *self.sorted_loaded_modules.write().unwrap() = None;
         loaded_modules
     }
 
-    pub(crate) fn import_cycle_component(&self) -> Option<&ImportCycleComponent> {
-        // Missing or stale labels require the original graph walk.
-        self.import_cycle_component
-            .get()
-            .filter(|component| component.graph.valid.load(Ordering::Acquire))
+    pub(crate) fn import_cycle_component(
+        &self,
+        options: ImportCycleOptions,
+    ) -> Option<ImportCycleComponent<'_>> {
+        let components = self.import_cycle_components.get()?;
+        let graph = &components.group.graph;
+        if !graph.valid.load(Ordering::Acquire) {
+            return None;
+        }
+        let (id, cyclic) = components.group.components[options.index()].as_ref()?[components.index];
+        Some(ImportCycleComponent { graph, options, id, cyclic })
     }
 
-    pub(crate) fn set_import_cycle_component(
-        &self,
-        graph: Arc<ImportCycleGraph>,
-        (id, cyclic): (usize, bool),
-    ) {
-        if let Err(component) =
-            self.import_cycle_component.set(ImportCycleComponent { graph, id, cyclic })
+    pub(crate) fn set_import_cycle_components(&self, group: Arc<ImportCycleGroup>, index: usize) {
+        if let Err(components) =
+            self.import_cycle_components.set(ImportCycleComponents { group, index })
         {
-            // Records normally belong to one graph build. If reused, neither graph's cached
-            // classifications are safe; retain traversal as the fallback instead of panicking.
-            component.graph.valid.store(false, Ordering::Release);
-            self.import_cycle_component.get().unwrap().graph.valid.store(false, Ordering::Release);
+            // Reused records cannot retain either graph's classifications.
+            components.group.graph.valid.store(false, Ordering::Release);
+            self.import_cycle_components
+                .get()
+                .unwrap()
+                .group
+                .graph
+                .valid
+                .store(false, Ordering::Release);
         }
     }
 
@@ -698,62 +710,67 @@ impl ModuleRecord {
 mod cycle_component_tests {
     use std::sync::Arc;
 
-    use crate::{module_graph_scc::ImportCycleGraph, rules::import::no_cycle::NoCycle};
+    use crate::{
+        module_graph_scc::{ImportCycleGraph, ImportCycleGroup},
+        rules::import::no_cycle::NoCycle,
+    };
 
     use super::ModuleRecord;
 
+    fn group(graph: Arc<ImportCycleGraph>, labels: Vec<(usize, bool)>) -> Arc<ImportCycleGroup> {
+        Arc::new(ImportCycleGroup { graph, components: [None, Some(labels)] })
+    }
+
     #[test]
     fn mutating_a_dependency_invalidates_the_whole_graph() {
-        let graph = Arc::new(ImportCycleGraph::new(NoCycle::default().graph_options()));
+        let options = NoCycle::default().graph_options();
+        let graph = Arc::new(ImportCycleGraph::new(options.into()));
         let root = ModuleRecord::default();
         let dependency = ModuleRecord::default();
-        root.set_import_cycle_component(Arc::clone(&graph), (0, false));
-        // Dependencies from earlier groups share the same invalidation token.
-        dependency.set_import_cycle_component(graph, (1, false));
-        assert!(root.import_cycle_component().is_some());
-        assert!(dependency.import_cycle_component().is_some());
+        root.set_import_cycle_components(group(Arc::clone(&graph), vec![(0, false)]), 0);
+        dependency.set_import_cycle_components(group(graph, vec![(1, false)]), 0);
+        assert!(root.import_cycle_component(options).is_some());
+        assert!(dependency.import_cycle_component(options).is_some());
 
         drop(dependency.write_loaded_modules());
-
-        assert!(root.import_cycle_component().is_none());
+        assert!(root.import_cycle_component(options).is_none());
     }
 
     #[test]
     fn components_are_scoped_to_one_graph_build() {
-        let graph = Arc::new(ImportCycleGraph::new(NoCycle::default().graph_options()));
-        let other_graph_id = Arc::new(ImportCycleGraph::new(NoCycle::default().graph_options()));
+        let options = NoCycle::default().graph_options();
+        let graph = Arc::new(ImportCycleGraph::new(options.into()));
+        let other_graph_id = Arc::new(ImportCycleGraph::new(options.into()));
         let root = ModuleRecord::default();
         let same_component = ModuleRecord::default();
         let other_component = ModuleRecord::default();
         let other_graph = ModuleRecord::default();
-        root.set_import_cycle_component(Arc::clone(&graph), (0, true));
-        same_component.set_import_cycle_component(Arc::clone(&graph), (0, true));
-        other_component.set_import_cycle_component(graph, (1, false));
-        other_graph.set_import_cycle_component(Arc::clone(&other_graph_id), (1, false));
+        let labels = group(graph, vec![(0, true), (0, true), (1, false)]);
+        root.set_import_cycle_components(Arc::clone(&labels), 0);
+        same_component.set_import_cycle_components(Arc::clone(&labels), 1);
+        other_component.set_import_cycle_components(labels, 2);
+        other_graph
+            .set_import_cycle_components(group(Arc::clone(&other_graph_id), vec![(1, false)]), 0);
 
-        let component = root.import_cycle_component().unwrap();
-        assert!(component.supports_rule(&NoCycle::default()));
+        let component = root.import_cycle_component(options).unwrap();
         let other_policy: NoCycle =
             serde_json::from_value(serde_json::json!({"ignoreTypes": false})).unwrap();
-        assert!(!component.supports_rule(&other_policy));
-        for options in [
+        assert!(root.import_cycle_component(other_policy.graph_options()).is_none());
+        for settings in [
             serde_json::json!({"allowUnsafeDynamicCyclicDependency": true}),
             serde_json::json!({"ignoreExternal": true}),
-            serde_json::json!({"allowUnsafeDynamicCyclicDependency": true, "ignoreExternal": true}),
+            serde_json::json!({"maxDepth": 1}),
         ] {
-            assert!(component.supports_rule(&serde_json::from_value(options).unwrap()));
+            let rule: NoCycle = serde_json::from_value(settings).unwrap();
+            assert!(root.import_cycle_component(rule.graph_options()).is_some());
         }
-        let bounded: NoCycle = serde_json::from_value(serde_json::json!({"maxDepth": 1})).unwrap();
-        // Bounded rules may reuse existing labels without triggering an unbounded prepass.
-        assert!(component.supports_rule(&bounded));
         assert!(!component.excludes_module(&same_component));
         assert!(component.excludes_module(&other_component));
         assert!(!component.excludes_module(&other_graph));
 
-        // Reusing a record in another graph must invalidate both sets of shared labels.
-        root.set_import_cycle_component(other_graph_id, (0, false));
+        root.set_import_cycle_components(group(other_graph_id, vec![(0, false)]), 0);
         for record in [&root, &same_component, &other_component, &other_graph] {
-            assert!(record.import_cycle_component().is_none());
+            assert!(record.import_cycle_component(options).is_none());
         }
     }
 }

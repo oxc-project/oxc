@@ -308,24 +308,24 @@ pub struct ConfigStore {
 }
 
 impl ConfigStore {
-    /// Select a potentially enabled rule without resolving globs for every source file.
-    /// Each override is merged with its base, so explicit options replace category defaults.
-    /// Overrides may not match selected files; this inventory remains conservative.
-    pub(crate) fn find_rule<T>(&self, select: impl Fn(&RuleEnum) -> Option<T>) -> Option<T> {
-        std::iter::once(&self.base).chain(self.nested_configs.values()).find_map(|config| {
-            config.base.rules.iter().find_map(|(rule, _)| select(rule)).or_else(|| {
-                config.overrides.iter().find_map(|entry| {
-                    let plugins =
-                        config.plugins() | entry.plugins.unwrap_or_else(LintPlugins::empty);
-                    config
-                        .builtin_rules_for_overrides(plugins, std::iter::once(entry), |_| {})
-                        .iter()
-                        .find_map(|(rule, severity)| {
-                            severity.is_warn_deny().then(|| select(rule)).flatten()
-                        })
-                })
-            })
-        })
+    /// Visit potentially enabled rules for the linter's cached policy inventory.
+    /// Explicit override options replace category defaults; glob matching remains conservative.
+    pub(crate) fn visit_rules(&self, mut visit: impl FnMut(&RuleEnum)) {
+        for config in std::iter::once(&self.base).chain(self.nested_configs.values()) {
+            for (rule, _) in config.base.rules.iter() {
+                visit(rule);
+            }
+            for entry in config.overrides.iter() {
+                let plugins = config.plugins() | entry.plugins.unwrap_or_else(LintPlugins::empty);
+                let rules =
+                    config.builtin_rules_for_overrides(plugins, std::iter::once(entry), |_| {});
+                for (rule, severity) in &rules {
+                    if severity.is_warn_deny() {
+                        visit(rule);
+                    }
+                }
+            }
+        }
     }
 
     pub fn new(
@@ -472,6 +472,7 @@ mod test {
     use std::{
         path::{Path, PathBuf},
         str::FromStr,
+        sync::Arc,
     };
 
     use rustc_hash::FxHashMap;
@@ -501,7 +502,7 @@ mod test {
     }
 
     #[test]
-    fn find_rule_includes_overrides_nested_configs_and_added_plugin_categories() {
+    fn rule_inventory_includes_overrides_nested_configs_and_added_plugin_categories() {
         fn build(value: Value, external: &mut ExternalPluginStore) -> Config {
             ConfigStoreBuilder::from_oxlintrc(
                 true,
@@ -516,6 +517,11 @@ mod test {
         }
         let eligible = |rule: &RuleEnum| {
             matches!(rule, RuleEnum::ImportNoCycle(rule) if rule.uses_scc_prefilter()).then_some(())
+        };
+        let has_eligible_rule = |store: &ConfigStore| {
+            let mut found = false;
+            store.visit_rules(|rule| found |= eligible(rule).is_some());
+            found
         };
         for (value, expected) in [
             (serde_json::json!({"categories": {}, "plugins": ["import"]}), false),
@@ -560,7 +566,7 @@ mod test {
             let description = value.to_string();
             let base = build(value, &mut external);
             let store = ConfigStore::new(base, FxHashMap::default(), external);
-            assert_eq!(store.find_rule(eligible).is_some(), expected, "{description}");
+            assert_eq!(has_eligible_rule(&store), expected, "{description}");
             assert_eq!(
                 store
                     .resolve(Path::new("file.ts"))
@@ -579,7 +585,45 @@ mod test {
         );
         let nested = FxHashMap::from_iter([(PathBuf::from("nested"), nested)]);
         let store = ConfigStore::new(base, nested, external);
-        assert!(store.find_rule(eligible).is_some());
+        assert!(has_eligible_rule(&store));
+
+        // Rare overrides and nested-config insertion order must not select a single policy.
+        for reverse in [false, true] {
+            let mut external = ExternalPluginStore::default();
+            let base = build(serde_json::json!({"categories": {}}), &mut external);
+            let mut configs = vec![
+                (
+                    "a",
+                    serde_json::json!({"plugins": ["import"], "overrides": [
+                        {"files": ["rare.ts"], "rules": {"import/no-cycle": ["error", {"ignoreTypes": false}]}},
+                        {"files": ["*.ts"], "excludeFiles": ["rare.ts"], "rules": {"import/no-cycle": "error"}}
+                    ]}),
+                ),
+                (
+                    "b",
+                    serde_json::json!({"plugins": ["import"], "rules": {"import/no-cycle": "error"}}),
+                ),
+            ];
+            if reverse {
+                configs.reverse();
+            }
+            let nested = configs
+                .into_iter()
+                .map(|(path, value)| (PathBuf::from(path), build(value, &mut external)))
+                .collect();
+            let linter = crate::Linter::new(
+                crate::LintOptions::default(),
+                ConfigStore::new(base, nested, external),
+                None,
+            );
+            let first = linter.import_cycle_graph().unwrap();
+            assert_eq!(first.policies.iter().count(), 2);
+            first.valid.store(false, std::sync::atomic::Ordering::Release);
+            let second = linter.import_cycle_graph().unwrap();
+            assert_eq!(second.policies, first.policies);
+            assert!(!Arc::ptr_eq(&first, &second));
+            assert!(second.valid.load(std::sync::atomic::Ordering::Acquire));
+        }
     }
 
     #[expect(clippy::default_trait_access)]
