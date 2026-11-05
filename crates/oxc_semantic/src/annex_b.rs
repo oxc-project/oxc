@@ -12,6 +12,9 @@
 //!
 //! <https://tc39.es/ecma262/#sec-block-level-function-declarations-web-legacy-compatibility-semantics>
 
+use rustc_hash::FxHashSet;
+
+use oxc_str::Ident;
 use oxc_syntax::{
     scope::ScopeId,
     symbol::{SymbolFlags, SymbolId},
@@ -20,20 +23,27 @@ use oxc_syntax::{
 use crate::{Scoping, SemanticBuilder};
 
 /// A function declaration in a block that may get a var binding.
+#[expect(clippy::struct_field_names)] // The ids of a scope, a scope and a symbol
 pub struct AnnexBFunction {
     var_scope_id: ScopeId,
     block_scope_id: ScopeId,
     symbol_id: SymbolId,
-    /// The function is the body of an `if` statement. Annex B.3.3 places it in its own implicit
-    /// block, so it does not prevent the var binding of a function in a nested block.
-    is_if_statement: bool,
 }
 
 impl SemanticBuilder<'_> {
     /// Must be called after binding a sloppy-mode plain function declaration in a block.
-    pub(crate) fn declare_annex_b_function(&mut self, symbol_id: SymbolId, is_if_statement: bool) {
+    ///
+    /// `redeclares_simple_catch_parameter`: see [`Self::is_first_function_in_simple_catch_parameter`].
+    pub(crate) fn declare_annex_b_function(
+        &mut self,
+        symbol_id: SymbolId,
+        is_if_statement: bool,
+        redeclares_simple_catch_parameter: bool,
+    ) {
         // Only if the declaration created the symbol, rather than redeclaring another declaration.
-        if self.scoping.symbol_declaration(symbol_id) != self.node_store.current_node_id {
+        if !redeclares_simple_catch_parameter
+            && self.scoping.symbol_declaration(symbol_id) != self.node_store.current_node_id
+        {
             return;
         }
         let block_scope_id = self.current_scope_id;
@@ -42,12 +52,25 @@ impl SemanticBuilder<'_> {
             .scope_ancestors(block_scope_id)
             .find(|&scope_id| self.scoping.scope_flags(scope_id).is_var())
             .expect("the root scope is a var scope");
-        self.annex_b_functions.push(AnnexBFunction {
-            var_scope_id,
-            block_scope_id,
-            symbol_id,
-            is_if_statement,
-        });
+        self.annex_b_functions.push(AnnexBFunction { var_scope_id, block_scope_id, symbol_id });
+        if is_if_statement {
+            self.annex_b_if_statement_functions.insert(symbol_id);
+        }
+    }
+
+    /// Must be called before binding an `if` statement function. Whether it will redeclare a
+    /// simple catch parameter of its block that no other function has redeclared:
+    /// `catch (g) { if (x) function g() {} }`.
+    ///
+    /// Annex B.3.3 places the function in its own implicit block, which is not modeled, so it
+    /// shares the catch parameter's symbol. A simple catch parameter does not prevent the var
+    /// binding (Annex B.3.4), so that symbol is an Annex B function.
+    pub(crate) fn is_first_function_in_simple_catch_parameter(&self, name: Ident<'_>) -> bool {
+        self.scoping.get_binding(self.current_scope_id, name).is_some_and(|symbol_id| {
+            let flags = self.scoping.symbol_flags(symbol_id);
+            flags.contains(SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable)
+                && !flags.contains(SymbolFlags::Function)
+        })
     }
 
     /// Whether leaving the current scope finishes binding a var scope with Annex B functions.
@@ -71,7 +94,11 @@ impl SemanticBuilder<'_> {
             .map_or(0, |i| i + 1);
         let functions = &self.annex_b_functions[start..];
         for function in functions {
-            if !is_annex_b_var_binding_prevented(&self.scoping, functions, function) {
+            if !is_annex_b_var_binding_prevented(
+                &self.scoping,
+                &self.annex_b_if_statement_functions,
+                function,
+            ) {
                 debug_assert_eq!(
                     self.scoping.symbol_scope_id(function.symbol_id),
                     function.block_scope_id
@@ -90,13 +117,11 @@ impl SemanticBuilder<'_> {
 /// Whether a binding of the function's name prevents its var binding: any binding in the var
 /// scope, or a declaration in a block between the function and its var scope. A simple catch
 /// parameter (Annex B.3.4) or a function that is the body of an `if` statement is not such a
-/// declaration.
-///
-/// `functions` are the Annex B functions of the var scope, which are sorted by symbol id because
-/// they are in source order.
+/// declaration. Annex B.3.3 places such a function in its own implicit block, which is not
+/// modeled, so it is bound in the block that contains the `if` statement.
 fn is_annex_b_var_binding_prevented(
     scoping: &Scoping,
-    functions: &[AnnexBFunction],
+    if_statement_functions: &FxHashSet<SymbolId>,
     function: &AnnexBFunction,
 ) -> bool {
     let name = scoping.symbol_ident(function.symbol_id);
@@ -109,10 +134,7 @@ fn is_annex_b_var_binding_prevented(
         let is_simple_catch_parameter = scoping
             .symbol_flags(symbol_id)
             .contains(SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable);
-        let is_if_statement_function = functions
-            .binary_search_by_key(&symbol_id, |f| f.symbol_id)
-            .is_ok_and(|i| functions[i].is_if_statement);
-        if !is_simple_catch_parameter && !is_if_statement_function {
+        if !is_simple_catch_parameter && !if_statement_functions.contains(&symbol_id) {
             return true;
         }
     }

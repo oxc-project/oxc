@@ -5,7 +5,7 @@ use std::{
     mem,
 };
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use smallvec::SmallVec;
 
 use oxc_allocator::{Address, ArenaVec};
@@ -96,6 +96,8 @@ pub struct SemanticBuilder<'a> {
     /// Function declarations in blocks of the var scopes being bound, in source order, whose
     /// Annex B var binding is decided when their var scope has been bound. See [`crate::annex_b`].
     pub(crate) annex_b_functions: Vec<AnnexBFunction>,
+    /// The symbols of `annex_b_functions` that are the body of an `if` statement.
+    pub(crate) annex_b_if_statement_functions: FxHashSet<SymbolId>,
 
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
@@ -163,6 +165,7 @@ impl<'a> SemanticBuilder<'a> {
             node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
             annex_b_functions: Vec::new(),
+            annex_b_if_statement_functions: FxHashSet::default(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unused_labels: UnusedLabels::default(),

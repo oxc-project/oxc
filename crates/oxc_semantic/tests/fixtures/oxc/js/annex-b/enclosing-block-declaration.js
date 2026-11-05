@@ -36,3 +36,31 @@ function destructuredCatchParameter() {
   }
   return g;
 }
+
+// The same holds for an `if` statement function, which shares the catch parameter's symbol.
+function simpleCatchParameterIfStatement(x) {
+  try {
+  } catch (g) {
+    if (x) function g() {}
+    if (x) function g() {}
+  }
+  return g;
+}
+
+// The `var` already moved the catch parameter's symbol to the var scope.
+function simpleCatchParameterVarIfStatement(x) {
+  try {
+  } catch (g) {
+    var g;
+    if (x) function g() {}
+  }
+  return g;
+}
+
+function destructuredCatchParameterIfStatement(x) {
+  try {
+  } catch ([g]) {
+    if (x) function g() {}
+  }
+  return g;
+}

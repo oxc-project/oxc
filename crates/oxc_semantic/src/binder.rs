@@ -161,6 +161,8 @@ impl<'a> Binder<'a> for Function<'a> {
 
             let is_if_statement_function =
                 is_declaration && is_function_decl_part_of_if_statement(self, builder);
+            let redeclares_simple_catch_parameter = is_if_statement_function
+                && builder.is_first_function_in_simple_catch_parameter(ident.name);
 
             let excludes = if builder.source_type.is_typescript() {
                 SymbolFlags::FunctionExcludes
@@ -189,7 +191,11 @@ impl<'a> Binder<'a> for Function<'a> {
                 && !scope_flags.is_strict_mode()
             // no Annex B in strict mode / modules
             {
-                builder.declare_annex_b_function(symbol_id, is_if_statement_function);
+                builder.declare_annex_b_function(
+                    symbol_id,
+                    is_if_statement_function,
+                    redeclares_simple_catch_parameter,
+                );
             }
 
             // Save `@__NO_SIDE_EFFECTS__`
