@@ -121,7 +121,8 @@ pub(super) unsafe fn classify_generic(
         }
         let wprev = (mw << 1) | cw;
         let sprev = (ms << 1) | cs;
-        *st.add(b) = (ms & !sprev) | (mw & !wprev) | (!ms & !mw);
+        // A byte starts a token unless it continues a whitespace or word run
+        *st.add(b) = !((ms & sprev) | (mw & wprev));
         cw = mw >> 63;
         cs = ms >> 63;
         *word.add(b) = mw;

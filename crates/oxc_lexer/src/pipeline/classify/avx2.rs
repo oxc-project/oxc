@@ -84,7 +84,8 @@ pub(super) unsafe fn classify_avx2(
         let sprev = (wsm << 1) | cs;
         cw = wordm >> 63;
         cs = wsm >> 63;
-        *st.add(b) = (wsm & !sprev) | (wordm & !wprev) | (!wsm & !wordm);
+        // A byte starts a token unless it continues a whitespace or word run
+        *st.add(b) = !((wsm & sprev) | (wordm & wprev));
         let k0 = punct_kinds(v0, hn0, v_punct_lo, v_punct_hi, v_punct_kinds0, v_punct_kinds1)
             .blend(tk!(Whitespace), !nws0)
             .blend(tk!(Ident), w0)
