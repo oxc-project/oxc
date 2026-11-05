@@ -270,7 +270,7 @@ impl PreferCalledExactlyOnceWith {
                                 let statement_span = GetSpan::span(statement);
 
                                 expect.update_tracking_with_called_once_information(
-                                    get_source_code_line_span(statement_span, ctx),
+                                    get_statement_removal_span(statement_span, ctx),
                                 );
                             } else {
                                 variables_expected.insert(
@@ -306,7 +306,7 @@ impl PreferCalledExactlyOnceWith {
                                 let statement_span = GetSpan::span(statement);
 
                                 expect.update_tracking_with_called_with_information(
-                                    get_source_code_line_span(statement_span, ctx),
+                                    get_statement_removal_span(statement_span, ctx),
                                     variable_expected_name,
                                     to_be_arguments,
                                     type_notation,
@@ -419,23 +419,30 @@ fn is_mock_reset_call_expression(call_expr: &CallExpression<'_>) -> bool {
     call_expr.callee_name().is_some_and(|callee| MOCK_RESET_METHODS.contains(&callee))
 }
 
-/**
- * Eslint fix is based on deleting the complete line of code. Span currently ignores the
- * whitespaces, so the test were failing due the trailing whitespaces not being removed.
- * Currently the method is asumming after the end of the statement, the next span position is the following line.
- * Even doing it safely the end check, this fix will remain dangerous as it removes code.
- */
+/// Returns the range to remove for a redundant expect statement.
+/// Remove the whole line only when it contains no other code.
 #[expect(clippy::cast_possible_truncation)]
-fn get_source_code_line_span(statement_span: Span, ctx: &LintContext<'_>) -> Span {
-    let source_text = ctx.source_text();
+fn get_statement_removal_span(statement_span: Span, ctx: &LintContext<'_>) -> Span {
+    let source = ctx.source_text();
     let start = statement_span.start as usize;
     let end = statement_span.end as usize;
 
-    let line_end = source_text[end..].chars().next().map_or(end, |c| end + c.len_utf8());
+    let line_start = source[..start].rfind('\n').map_or(0, |i| i + 1);
+    let line_end = source[end..].find('\n').map_or(source.len(), |i| end + i);
 
-    let column_0_span_index = source_text[..start].rfind('\n').map_or(start, |index| index + 1);
+    let before = &source[line_start..start];
+    let after = &source[end..line_end];
 
-    Span::new(column_0_span_index as u32, line_end as u32)
+    let (remove_start, remove_end) = if before.trim().is_empty() && after.trim().is_empty() {
+        let end = if line_end < source.len() { line_end + 1 } else { line_end };
+        (line_start, end)
+    } else if !before.trim().is_empty() {
+        (line_start + before.trim_end().len(), end)
+    } else {
+        (start, line_end - after.trim_start().len())
+    };
+
+    Span::new(remove_start as u32, remove_end as u32)
 }
 
 fn get_callback_body<'a>(callback: &'a Expression<'a>) -> Option<&'a FunctionBody<'a>> {
@@ -577,6 +584,46 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            "expect(x).toHaveBeenCalledWith(1);\nf(); expect(x).toHaveBeenCalledOnce(); g();",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\nf(); g();",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\nexpect(x).toHaveBeenCalledOnce(); // keep",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\n// keep",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\nexpect(\n  x\n).toHaveBeenCalledOnce();\nnext();",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\nnext();",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledOnce(); expect(x).toHaveBeenCalledWith(1);",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);",
+            None,
+        ),
+        (
+            "f(); expect(x).toHaveBeenCalledWith(1);\ng(); expect(x).toHaveBeenCalledOnce();",
+            "f(); expect(x).toHaveBeenCalledExactlyOnceWith(1);\ng();",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1); expect(x).toHaveBeenCalledOnce();",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\r\nexpect(x).toHaveBeenCalledOnce();\r\nnext();",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\r\nnext();",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledOnce();\nexpect(x).toHaveBeenCalledWith(1); g();",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\ng();",
+            None,
+        ),
         (
             "
 			      expect(x).toHaveBeenCalledOnce();

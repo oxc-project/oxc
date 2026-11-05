@@ -235,7 +235,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:1:1]
  1 │ expect(x).toHaveBeenCalledWith("🍣"); expect(x).toHaveBeenCalledOnce();
-   · ──────────────────┬─────────────────  ────────────────┬────────────────
+   · ──────────────────┬───────────────── ─────────────────┬────────────────
    ·                   │                                   ╰── Remove this expect
    ·                   ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
    ╰────
