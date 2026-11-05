@@ -728,6 +728,40 @@ const f = clsx({ kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
     expect(second.code).toBe(result.code);
   });
 
+  it("should decide object key quotes from a key collapsing to a single class", async () => {
+    const input = `const a = clsx({ " p ": x, "a  b": y, " 1 ": z, "  ": w });
+const b = clsx({ " p ": x, c: y });
+const c = clsx(\`a\${{ " p ": x }}b\`);
+`;
+    const options = { experimentalTailwindcss: { functions: ["clsx"] } };
+    const consistentOptions = { ...options, quoteProps: "consistent" as const };
+
+    const result = await format("test.js", input, options);
+    const consistent = await format("test.js", input, consistentOptions);
+
+    // A single class is printed without the sorter, so it's quoted like a plain key,
+    // unless a boundary space is kept next to a template quasi
+    expect(result.code).toMatchInlineSnapshot(`
+      "const a = clsx({ p: x, "a b": y, 1: z, " ": w });
+      const b = clsx({ p: x, c: y });
+      const c = clsx(\`a\${{ " p ": x }}b\`);
+      "
+    `);
+    expect(consistent.code).toMatchInlineSnapshot(`
+      "const a = clsx({ "p": x, "a b": y, "1": z, " ": w });
+      const b = clsx({ p: x, c: y });
+      const c = clsx(\`a\${{ " p ": x }}b\`);
+      "
+    `);
+    expect(result.errors).toStrictEqual([]);
+
+    // Formatting the output again should not change it.
+    expect((await format("test.js", result.code, options)).code).toBe(result.code);
+    expect((await format("test.js", consistent.code, consistentOptions)).code).toBe(
+      consistent.code,
+    );
+  });
+
   // Tests for can_collapse_whitespace in template literal expressions
   // These test the whitespace preservation logic based on adjacent quasi whitespace
 

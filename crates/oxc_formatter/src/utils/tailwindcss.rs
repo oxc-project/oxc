@@ -333,11 +333,8 @@ pub fn write_tailwind_string_literal<'a>(
         return 2 + collapsed_class_list_width(content);
     }
 
-    let collapse = can_collapse_whitespace(string_literal.span, string_literal.ancestors(), f);
-    let has_leading_ws = content.starts_with(|c: char| c.is_ascii_whitespace());
-    let has_trailing_ws = content.ends_with(|c: char| c.is_ascii_whitespace());
-    let keeps_leading_space = has_leading_ws && !collapse.start;
-    let keeps_trailing_space = has_trailing_ws && !collapse.end;
+    let (keeps_leading_space, keeps_trailing_space) =
+        kept_boundary_spaces(content, string_literal.span, string_literal.ancestors(), f);
 
     // Leading space
     if keeps_leading_space {
@@ -358,6 +355,47 @@ pub fn write_tailwind_string_literal<'a>(
     2 + usize::from(keeps_leading_space)
         + collapsed_class_list_width(trimmed)
         + usize::from(keeps_trailing_space)
+}
+
+/// Whether a class list keeps its leading and trailing whitespace, as one space each,
+/// where it can't collapse against its surroundings (see [`can_collapse_whitespace`]).
+fn kept_boundary_spaces<'a, 'b>(
+    content: &str,
+    span: Span,
+    ancestors: impl Iterator<Item = &'b AstNodes<'b, 'a>>,
+    f: &JsFormatter<'_, 'a>,
+) -> (bool, bool)
+where
+    'a: 'b,
+{
+    let collapse = can_collapse_whitespace(span, ancestors, f);
+    (
+        content.starts_with(|c: char| c.is_ascii_whitespace()) && !collapse.start,
+        content.ends_with(|c: char| c.is_ascii_whitespace()) && !collapse.end,
+    )
+}
+
+/// Returns the class a string key is printed as when sorted in `ctx`,
+/// if that is a single class with no boundary space kept, e.g. `p` for `" p "`.
+/// - Its output is known without the sorter, so the key is printed as a plain key with it, not sent to the sorter,
+///   and its quotes are decided as Prettier decides them on the plugin's output
+/// - Duplicates of a known class (`"flex flex"`) also print one, but only the sorter knows them
+pub fn tailwind_single_class_key<'a>(
+    key: &StringLiteral<'_>,
+    ctx: TailwindContextEntry,
+    f: &JsFormatter<'_, 'a>,
+) -> Option<&'a str> {
+    if ctx.preserve_whitespace {
+        return None;
+    }
+    let text = f.source_text().text_for(key);
+    let content = &text[1..text.len() - 1];
+    let mut classes = content.trim().split_ascii_whitespace();
+    let class = classes.next().filter(|_| classes.next().is_none())?;
+    // A key is never a `+` operand, so only a template expression context can keep a boundary space
+    let (keeps_leading_space, keeps_trailing_space) =
+        kept_boundary_spaces(content, key.span, std::iter::empty(), f);
+    (!keeps_leading_space && !keeps_trailing_space).then_some(class)
 }
 
 /// Writes a template element (quasi) with Tailwind class sorting.
