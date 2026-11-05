@@ -21,10 +21,7 @@ use crate::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
-        tailwindcss::{
-            collapsed_class_list_width, tailwind_collapses_template_line_breaks,
-            tailwind_context_for_callee,
-        },
+        tailwindcss::{collapsed_class_list_width, tailwind_context_for_callee},
         typecast::is_cast_target,
     },
     write,
@@ -1251,6 +1248,11 @@ fn is_short_argument(
     callee: &Expression,
     f: &JsFormatter,
 ) -> bool {
+    // Decided by `callee` alone: a Tailwind one pushes its context, a non-Tailwind one hides an outer one
+    // (except for a call printed as a `MemberChain`, which pushes none)
+    let collapses_tailwind_whitespace =
+        || tailwind_context_for_callee(callee, f).is_some_and(|ctx| !ctx.preserve_whitespace);
+
     match argument {
         Expression::Identifier(identifier) => identifier.name.width() <= threshold as usize,
         Expression::UnaryExpression(unary_expression) => {
@@ -1265,9 +1267,7 @@ fn is_short_argument(
             );
             let text = formatter.clean_text(f);
 
-            let width = if tailwind_context_for_callee(callee, f)
-                .is_some_and(|ctx| !ctx.preserve_whitespace)
-            {
+            let width = if collapses_tailwind_whitespace() {
                 // Opening and closing quotes, and the classes
                 2 + collapsed_class_list_width(&text[1..text.len() - 1])
             } else {
@@ -1281,7 +1281,7 @@ fn is_short_argument(
             // Prettier: https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L402-L405
             literal.quasis.len() == 1 && {
                 let raw = literal.quasis[0].value.raw;
-                if tailwind_collapses_template_line_breaks(Some(callee), f) {
+                if collapses_tailwind_whitespace() {
                     collapsed_class_list_width(&raw) <= threshold as usize
                 } else {
                     raw.width() <= threshold as usize && !raw.contains('\n')

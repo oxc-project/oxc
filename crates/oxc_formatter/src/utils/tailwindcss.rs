@@ -26,25 +26,19 @@ use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
 // Detection Functions
 // ============================================================================
 
-/// Returns the Tailwind context if we should sort classes in the given string literal.
+/// Returns the Tailwind context if we should sort classes in the given string literal or template element.
 ///
 /// Returns `Some(ctx)` when:
-/// - We're inside a Tailwind function call context
-/// - The context is not disabled (e.g., not inside a nested non-Tailwind call)
-/// - The string contains whitespace (indicating multiple classes to sort)
-pub fn tailwind_context_for_string_literal<'a>(
-    string: &AstNode<'_, 'a, StringLiteral<'a>>,
-    f: &JsFormatter<'_, 'a>,
+/// - We're inside a Tailwind class context (see [`JsFormatContext::tailwind_context`])
+/// - The source contains whitespace (no whitespace means only one class, so no need to sort)
+pub fn tailwind_context_for_class_list(
+    node: &impl GetSpan,
+    f: &JsFormatter<'_, '_>,
 ) -> Option<TailwindContextEntry> {
-    f.context().tailwind_context().copied().filter(|ctx| {
-        let text = f.source_text().text_for(string);
-
-        if ctx.disabled {
-            return false;
-        }
-
-        text.as_bytes().iter().any(|&b| b.is_ascii_whitespace())
-    })
+    f.context()
+        .tailwind_context()
+        .copied()
+        .filter(|_| f.source_text().text_for(node).bytes().any(|b| b.is_ascii_whitespace()))
 }
 
 /// Checks if a JSX attribute is a Tailwind class attribute.
@@ -84,17 +78,16 @@ pub fn tailwind_context_for_jsx_attribute(
         .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace))
 }
 
-/// Whether a template literal printed at this point has its whitespace, including line breaks, collapsed.
-/// - `callee` is the tag of a tagged template, or the callee of the call it's an argument of
-/// - Reads what `TemplateElement` reads: the current Tailwind context, or the one a Tailwind `callee` pushes
+/// Whether a template literal printed at this point (under `tag` when tagged) has its line breaks collapsed.
+/// - Reads what `TemplateElement` reads: the current Tailwind context, or the one a Tailwind `tag` pushes
 pub fn tailwind_collapses_template_line_breaks(
-    callee: Option<&Expression<'_>>,
+    tag: Option<&Expression<'_>>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
     f.context()
         .tailwind_context()
         .copied()
-        .or_else(|| callee.and_then(|callee| tailwind_context_for_callee(callee, f)))
+        .or_else(|| tag.and_then(|tag| tailwind_context_for_callee(tag, f)))
         .is_some_and(|ctx| !ctx.preserve_whitespace)
 }
 
