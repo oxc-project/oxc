@@ -8,6 +8,7 @@ use crate::{
 
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
+    bytes::{unicode_ws_len, unicode_ws_len_at},
     lanes::Lanes,
     scan::{scan_block_comment, scan_line_comment},
 };
@@ -90,6 +91,9 @@ pub(super) unsafe fn lex_block_comment(
             break;
         }
         q += 1;
+    }
+    if !followed_by_newline && q < n && srcs[q] >= 0x80 {
+        followed_by_newline = followed_by_line_terminator(srcs, n, q);
     }
 
     push_comment_record(
@@ -463,7 +467,7 @@ fn push_comment_record(
             break true;
         }
         if !is_lex_ws(b, cpu) {
-            break false;
+            break b >= 0x80 && preceded_by_line_terminator(src, q);
         }
         q -= 1;
     };
@@ -477,6 +481,84 @@ fn push_comment_record(
 #[inline]
 fn is_lex_ws(c: u8, _cpu: impl Cpu) -> bool {
     matches!(c, b' ' | b'\t' | b'\n' | b'\r' | 0x0b | 0x0c)
+}
+
+/// LS (U+2028) or PS (U+2029).
+#[inline]
+fn is_ls_ps(c0: u8, c1: u8, c2: u8) -> bool {
+    c0 == 0xE2 && c1 == 0x80 && (c2 == 0xA8 || c2 == 0xA9)
+}
+
+/// Cold: scan forward from q over WhiteSpace, including non-ASCII. src carries PAD bytes past n.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+fn followed_by_line_terminator(src: &[u8], n: usize, mut q: usize) -> bool {
+    let cpu = BASELINE;
+    while q < n {
+        let b = src[q];
+        if b == b'\n' || b == b'\r' {
+            return true;
+        }
+        if is_lex_ws(b, cpu) {
+            q += 1;
+            continue;
+        }
+        if b < 0x80 {
+            return false;
+        }
+        let len = unicode_ws_len_at(src, q, cpu);
+        if len == 0 {
+            return false;
+        }
+        if is_ls_ps(src[q], src[q + 1], src[q + 2]) {
+            return true;
+        }
+        q += len;
+    }
+    false
+}
+
+/// Cold: scan backward from q over WhiteSpace, including non-ASCII. Start of input is a newline.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+fn preceded_by_line_terminator(src: &[u8], mut q: usize) -> bool {
+    let cpu = BASELINE;
+    loop {
+        if q == 0 {
+            return true;
+        }
+        let b = src[q - 1];
+        if b == b'\n' || b == b'\r' {
+            return true;
+        }
+        if is_lex_ws(b, cpu) {
+            q -= 1;
+            continue;
+        }
+        if b < 0x80 {
+            return false;
+        }
+        if q >= 3 {
+            let (c0, c1, c2) = (src[q - 3], src[q - 2], src[q - 1]);
+            if unicode_ws_len(c0, c1, c2, cpu) == 3 {
+                if is_ls_ps(c0, c1, c2) {
+                    return true;
+                }
+                q -= 3;
+                continue;
+            }
+        }
+        if q >= 2 {
+            let (c0, c1) = (src[q - 2], src[q - 1]);
+            if unicode_ws_len(c0, c1, 0, cpu) == 2 {
+                q -= 2;
+                continue;
+            }
+        }
+        return false;
+    }
 }
 
 #[cfg(test)]
