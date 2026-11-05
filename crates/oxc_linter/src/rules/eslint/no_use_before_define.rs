@@ -485,11 +485,13 @@ fn is_in_initializer(
     reference_node: &AstNode<'_>,
     ctx: &LintContext<'_>,
 ) -> bool {
+    if is_from_separate_execution_context(symbol_id, reference_node, ctx) {
+        return false;
+    }
+
+    let reference_span = reference_node.kind().span();
     if let AstKind::Class(class) = ctx.symbol_declaration(symbol_id).kind() {
-        let reference_span = reference_node.kind().span();
-        if !class.span.contains_inclusive(reference_span)
-            || is_from_separate_execution_context(symbol_id, reference_node, ctx)
-        {
+        if !class.span.contains_inclusive(reference_span) {
             return false;
         }
 
@@ -511,6 +513,15 @@ fn is_in_initializer(
             }
             _ => false,
         });
+    }
+
+    if let AstKind::VariableDeclarator(declarator) = ctx.symbol_declaration(symbol_id).kind()
+        && declarator
+            .init
+            .as_ref()
+            .is_some_and(|init| init.span().contains_inclusive(reference_span))
+    {
+        return true;
     }
 
     let declaration_span = ctx.scoping().symbol_span(symbol_id);
