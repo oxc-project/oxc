@@ -664,9 +664,10 @@ macro_rules! wrapped_tests {
             /// All these calls are safe.
             #[test]
             fn wrapped() {
-                // This module can see the CPU types' private fields. So on aarch64 with Neon,
-                // rustc knows that `Avx2` and `Generic` are uninhabited, and for `Neon` this always
-                // matches. `allow`, not `expect`, because for `Avx2` it doesn't.
+                // This module can see the CPU types' private fields. So where a SIMD feature set
+                // is enabled at compile time (Neon on aarch64, or AVX2 on x86_64), rustc knows that
+                // `Generic` and the other SIMD feature set are uninhabited, and for that SIMD
+                // feature set this always matches. `allow`, not `expect`, because it doesn't always.
                 #[allow(irrefutable_let_patterns, clippy::allow_attributes)]
                 let DynCpu::$cpu(cpu) = DynCpu::detect() else { return };
 
