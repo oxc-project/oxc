@@ -204,7 +204,7 @@ fn is_forbidden(
         return options.functions;
     }
 
-    if is_outer_class(symbol_id, symbol_flags, reference.scope_id(), ctx) {
+    if is_outer_class(symbol_id, symbol_flags, reference_node, ctx) {
         return options.classes;
     }
 
@@ -212,7 +212,7 @@ fn is_forbidden(
         return options.variables;
     }
 
-    if is_outer_enum(symbol_id, symbol_flags, reference.scope_id(), ctx) {
+    if is_outer_enum(symbol_id, symbol_flags, reference_node, ctx) {
         return options.enums;
     }
 
@@ -226,12 +226,10 @@ fn is_forbidden(
 fn is_outer_class(
     symbol_id: SymbolId,
     symbol_flags: SymbolFlags,
-    reference_scope_id: ScopeId,
+    reference_node: &AstNode<'_>,
     ctx: &LintContext<'_>,
 ) -> bool {
-    symbol_flags.is_class()
-        && get_parent_variable_scope(ctx.scoping().symbol_scope_id(symbol_id), ctx)
-            != get_parent_variable_scope(reference_scope_id, ctx)
+    symbol_flags.is_class() && is_from_separate_execution_context(symbol_id, reference_node, ctx)
 }
 
 fn is_outer_variable(
@@ -285,12 +283,10 @@ fn is_from_separate_execution_context(
 fn is_outer_enum(
     symbol_id: SymbolId,
     symbol_flags: SymbolFlags,
-    reference_scope_id: ScopeId,
+    reference_node: &AstNode<'_>,
     ctx: &LintContext<'_>,
 ) -> bool {
-    symbol_flags.is_enum()
-        && get_parent_variable_scope(ctx.scoping().symbol_scope_id(symbol_id), ctx)
-            != get_parent_variable_scope(reference_scope_id, ctx)
+    symbol_flags.is_enum() && is_from_separate_execution_context(symbol_id, reference_node, ctx)
 }
 
 fn is_typedef(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
