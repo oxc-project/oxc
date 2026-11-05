@@ -1,0 +1,16 @@
+$nice-blue: #5B83AD;
+$light-blue: $nice-blue + #111;
+
+// Comment 1
+/*
+ * Comment 2
+ */
+#header {
+    // Comment 3
+    color: $light-blue;
+}
+@media only screen and (max-width: 600px) {
+    body {
+        background-color: lighten($light-blue, 40%);
+    }
+}

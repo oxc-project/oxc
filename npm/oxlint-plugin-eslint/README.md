@@ -20,7 +20,7 @@ Add to your Oxlint config:
 
 ```json
 {
-  "jsPlugins": ["oxlint-plugin-eslint"],
+  "jsPlugins": [{ "name": "eslint-js", "specifier": "oxlint-plugin-eslint" }],
   "rules": {
     "eslint-js/no-restricted-syntax": [
       "error",

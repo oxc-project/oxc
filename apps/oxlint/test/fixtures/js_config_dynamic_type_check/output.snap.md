@@ -7,7 +7,8 @@
    ,-[files/test.ts:2:1]
  1 | const floating = Promise.resolve("ok");
  2 | floating;
-   : ^^^^^^^^^
+   : ^^^^|^^^^
+   :     `-- This unhandled promise-like value has type `Promise<string>`.
  3 | 
    `----
   help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.

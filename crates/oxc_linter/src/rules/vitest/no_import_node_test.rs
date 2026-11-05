@@ -48,8 +48,10 @@ declare_oxc_lint!(
     NoImportNodeTest,
     vitest,
     style,
+    recommended,
     suggestion,
     version = "0.7.0",
+    short_description = "Disallow importing from `node:test`, preferring `vitest` instead.",
 );
 
 impl Rule for NoImportNodeTest {

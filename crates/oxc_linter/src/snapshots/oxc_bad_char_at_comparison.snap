@@ -2,56 +2,164 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ oxc(bad-char-at-comparison): Invalid comparison with `charAt` method
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
    ╭─[bad_char_at_comparison.tsx:1:1]
  1 │ a.charAt(4) === 'aa'
    · ─────┬─────     ──┬─
    ·      │            ╰── And compared with a string of length 2 here
-   ·      ╰── `charAt` called here
+   ·      ╰── A single character is accessed here
    ╰────
-  help: `String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
 
-  ⚠ oxc(bad-char-at-comparison): Invalid comparison with `charAt` method
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
    ╭─[bad_char_at_comparison.tsx:1:1]
  1 │ a.charAt(4) === '/n'
    · ─────┬─────     ──┬─
    ·      │            ╰── And compared with a string of length 2 here
-   ·      ╰── `charAt` called here
+   ·      ╰── A single character is accessed here
    ╰────
-  help: `String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
 
-  ⚠ oxc(bad-char-at-comparison): Invalid comparison with `charAt` method
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
    ╭─[bad_char_at_comparison.tsx:1:1]
  1 │ a.charAt(3) === '/t'
    · ─────┬─────     ──┬─
    ·      │            ╰── And compared with a string of length 2 here
-   ·      ╰── `charAt` called here
+   ·      ╰── A single character is accessed here
    ╰────
-  help: `String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
 
-  ⚠ oxc(bad-char-at-comparison): Invalid comparison with `charAt` method
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
    ╭─[bad_char_at_comparison.tsx:1:1]
  1 │ a.charAt(4) === 'ac'
    · ─────┬─────     ──┬─
    ·      │            ╰── And compared with a string of length 2 here
-   ·      ╰── `charAt` called here
+   ·      ╰── A single character is accessed here
    ╰────
-  help: `String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
 
-  ⚠ oxc(bad-char-at-comparison): Invalid comparison with `charAt` method
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
    ╭─[bad_char_at_comparison.tsx:1:1]
  1 │ a.charAt(822) !== 'foo'
    · ──────┬──────     ──┬──
    ·       │             ╰── And compared with a string of length 3 here
-   ·       ╰── `charAt` called here
+   ·       ╰── A single character is accessed here
    ╰────
-  help: `String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
 
-  ⚠ oxc(bad-char-at-comparison): Invalid comparison with `charAt` method
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
    ╭─[bad_char_at_comparison.tsx:1:1]
  1 │ a.charAt(4) === '\\ukeff'
    · ─────┬─────     ────┬────
    ·      │              ╰── And compared with a string of length 6 here
-   ·      ╰── `charAt` called here
+   ·      ╰── A single character is accessed here
    ╰────
-  help: `String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
+   ╭─[bad_char_at_comparison.tsx:1:1]
+ 1 │ "abc".at(0) === "ab"
+   · ─────┬─────     ──┬─
+   ·      │            ╰── And compared with a string of length 2 here
+   ·      ╰── A single character is accessed here
+   ╰────
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
+   ╭─[bad_char_at_comparison.tsx:1:1]
+ 1 │ "abc".at(-1) !== "ab"
+   · ──────┬─────     ──┬─
+   ·       │            ╰── And compared with a string of length 2 here
+   ·       ╰── A single character is accessed here
+   ╰────
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
+   ╭─[bad_char_at_comparison.tsx:1:1]
+ 1 │ "abc"[0] === "ab"
+   · ────┬───     ──┬─
+   ·     │          ╰── And compared with a string of length 2 here
+   ·     ╰── A single character is accessed here
+   ╰────
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
+   ╭─[bad_char_at_comparison.tsx:1:1]
+ 1 │ "abc"["0"] === "ab"
+   · ─────┬────     ──┬─
+   ·      │           ╰── And compared with a string of length 2 here
+   ·      ╰── A single character is accessed here
+   ╰────
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
+   ╭─[bad_char_at_comparison.tsx:1:30]
+ 1 │ declare const value: string; value[0] === "ab";
+   ·                              ────┬───     ──┬─
+   ·                                  │          ╰── And compared with a string of length 2 here
+   ·                                  ╰── A single character is accessed here
+   ╰────
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
+   ╭─[bad_char_at_comparison.tsx:1:1]
+ 1 │ "abc".charAt(0) === `ab`
+   · ───────┬───────     ──┬─
+   ·        │              ╰── And compared with a string of length 2 here
+   ·        ╰── A single character is accessed here
+   ╰────
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
+   ╭─[bad_char_at_comparison.tsx:1:2]
+ 1 │ ("abc".charAt(0)) === "ab"
+   ·  ───────┬───────      ──┬─
+   ·         │               ╰── And compared with a string of length 2 here
+   ·         ╰── A single character is accessed here
+   ╰────
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
+   ╭─[bad_char_at_comparison.tsx:1:1]
+ 1 │ "abc".charAt(0) === ("ab")
+   · ───────┬───────      ──┬─
+   ·        │               ╰── And compared with a string of length 2 here
+   ·        ╰── A single character is accessed here
+   ╰────
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
+   ╭─[bad_char_at_comparison.tsx:1:1]
+ 1 │ "abc".charAt(0) === "😀"
+   · ───────┬───────     ──┬─
+   ·        │              ╰── And compared with a string of length 2 here
+   ·        ╰── A single character is accessed here
+   ╰────
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
+   ╭─[bad_char_at_comparison.tsx:1:1]
+ 1 │ "abc".charAt(0) === "\u{1F600}"
+   · ───────┬───────     ─────┬─────
+   ·        │                 ╰── And compared with a string of length 2 here
+   ·        ╰── A single character is accessed here
+   ╰────
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
+   ╭─[bad_char_at_comparison.tsx:1:22]
+ 1 │ const value = "abc"; value[0] === "ab"
+   ·                      ────┬───     ──┬─
+   ·                          │          ╰── And compared with a string of length 2 here
+   ·                          ╰── A single character is accessed here
+   ╰────
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
+
+  ⚠ oxc(bad-char-at-comparison): Invalid character comparison
+   ╭─[bad_char_at_comparison.tsx:1:22]
+ 1 │ const value = "abc"; value.at(0) === "ab"
+   ·                      ─────┬─────     ──┬─
+   ·                           │            ╰── And compared with a string of length 2 here
+   ·                           ╰── A single character is accessed here
+   ╰────
+  help: Character access returns a string of length at most 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.

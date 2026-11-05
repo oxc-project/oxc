@@ -1,0 +1,11 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/unknown-hooks-do-not-assert.js
+---
+// Forget currently bails out when it detects a potential mutation (Effect.Mutate)
+// to an immutable value. This should not apply to unknown / untyped hooks.
+function Component(props) {
+	const x = useUnknownHook1(props);
+	const y = useUnknownHook2(x);
+	return y;
+}

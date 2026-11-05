@@ -1,0 +1,89 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/equals-type.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(TsModuleBlock)",
+        "id": 1,
+        "node": "TSNamespaceDeclaration(Bar)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(TsModuleBlock)",
+            "id": 3,
+            "node": "TSNamespaceDeclaration(Baz)",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(TsModuleBlock)",
+        "id": 2,
+        "node": "TSNamespaceDeclaration(Qux)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(NamespaceModule)",
+            "id": 2,
+            "name": "Baz",
+            "node": "TSNamespaceDeclaration(Baz)",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(NamespaceModule)",
+        "id": 0,
+        "name": "Bar",
+        "node": "TSNamespaceDeclaration(Bar)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 0,
+            "name": "Bar",
+            "node_id": 13,
+            "scope_id": 0
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(NamespaceModule)",
+        "id": 1,
+        "name": "Qux",
+        "node": "TSNamespaceDeclaration(Qux)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 1,
+            "name": "Qux",
+            "node_id": 17,
+            "scope_id": 0
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Import)",
+        "id": 3,
+        "name": "Foo",
+        "node": "TSImportEqualsDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Import)",
+        "id": 4,
+        "name": "Qualified",
+        "node": "TSImportEqualsDeclaration",
+        "references": []
+      }
+    ]
+  }
+]

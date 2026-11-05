@@ -83,7 +83,7 @@ declare_oxc_lint!(
 
 impl Rule for NoExtendNative {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -92,19 +92,19 @@ impl Rule for NoExtendNative {
             for reference_id in reference_id_list {
                 let reference = symbols.get_reference(reference_id);
                 let name = ctx.semantic().reference_name(reference);
+                // Lowercase names cannot identify native constructors; skip before other checks.
+                let Some(first_char) = name.chars().next() else {
+                    continue;
+                };
+                if first_char.is_lowercase() {
+                    continue;
+                }
                 // If the referenced name does not appear to be a global object, skip it.
                 if !ctx.is_ecma_script_global(name) {
                     continue;
                 }
                 // If the referenced name is explicitly allowed, skip it.
-                if self.exceptions.iter().any(|exception| name == exception) {
-                    continue;
-                }
-                // If the first letter is capital, like `Object`, we will assume it is a native object
-                let Some(first_char) = name.chars().next() else {
-                    continue;
-                };
-                if first_char.is_lowercase() {
+                if self.exceptions.iter().any(|exception| name == exception.as_str()) {
                     continue;
                 }
                 let node = ctx.nodes().get_node(reference.node_id());
@@ -174,7 +174,8 @@ fn is_define_property_call(call_expr: &CallExpression) -> bool {
             me.object()
                 .get_identifier_reference()
                 .is_some_and(|ident_ref| ident_ref.name == "Object")
-                && (prop_name == Some("defineProperty") || prop_name == Some("defineProperties"))
+                && prop_name
+                    .is_some_and(|name| name == "defineProperty" || name == "defineProperties")
         }
         _ => false,
     }

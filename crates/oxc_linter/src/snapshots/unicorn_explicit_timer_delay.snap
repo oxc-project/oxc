@@ -1,0 +1,177 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should have an explicit delay argument.
+   ╭─[explicit_timer_delay.tsx:1:1]
+ 1 │ setTimeout(() => console.log("Hello"));
+   · ──────────────────────────────────────
+   ╰────
+  help: Add an explicit delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setInterval` should have an explicit delay argument.
+   ╭─[explicit_timer_delay.tsx:1:1]
+ 1 │ setInterval(callback);
+   · ─────────────────────
+   ╰────
+  help: Add an explicit delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should have an explicit delay argument.
+   ╭─[explicit_timer_delay.tsx:1:1]
+ 1 │ window.setTimeout(() => console.log("Hello"));
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Add an explicit delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setInterval` should have an explicit delay argument.
+   ╭─[explicit_timer_delay.tsx:1:1]
+ 1 │ globalThis.setInterval(callback);
+   · ────────────────────────────────
+   ╰────
+  help: Add an explicit delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should have an explicit delay argument.
+   ╭─[explicit_timer_delay.tsx:1:1]
+ 1 │ global.setTimeout(fn);
+   · ─────────────────────
+   ╰────
+  help: Add an explicit delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should have an explicit delay argument.
+   ╭─[explicit_timer_delay.tsx:1:1]
+ 1 │ self.setTimeout(fn);
+   · ───────────────────
+   ╰────
+  help: Add an explicit delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should have an explicit delay argument.
+   ╭─[explicit_timer_delay.tsx:1:1]
+ 1 │ ╭─▶ setTimeout(
+ 2 │ │                   () => console.log("Hello")
+ 3 │ ╰─▶             );
+   ╰────
+  help: Add an explicit delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setInterval` should have an explicit delay argument.
+   ╭─[explicit_timer_delay.tsx:1:1]
+ 1 │ ╭─▶ setInterval(
+ 2 │ │                   callback
+ 3 │ ╰─▶             );
+   ╰────
+  help: Add an explicit delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should have an explicit delay argument.
+   ╭─[explicit_timer_delay.tsx:1:1]
+ 1 │ setTimeout((callback));
+   · ──────────────────────
+   ╰────
+  help: Add an explicit delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:1:40]
+ 1 │ setTimeout(() => console.log("Hello"), 0);
+   ·                                        ─
+   ╰────
+  help: Remove the explicit `0` delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setInterval` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:1:23]
+ 1 │ setInterval(callback, 0);
+   ·                       ─
+   ╰────
+  help: Remove the explicit `0` delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:1:24]
+ 1 │ setTimeout((callback), 0);
+   ·                        ─
+   ╰────
+  help: Remove the explicit `0` delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:1:21]
+ 1 │ self.setTimeout(fn, 0);
+   ·                     ─
+   ╰────
+  help: Remove the explicit `0` delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setInterval` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:1:22]
+ 1 │ self.setInterval(fn, 0);
+   ·                      ─
+   ╰────
+  help: Remove the explicit `0` delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:1:47]
+ 1 │ window.setTimeout(() => console.log("Hello"), 0);
+   ·                                               ─
+   ╰────
+  help: Remove the explicit `0` delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setInterval` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:1:34]
+ 1 │ globalThis.setInterval(callback, 0);
+   ·                                  ─
+   ╰────
+  help: Remove the explicit `0` delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:1:23]
+ 1 │ global.setTimeout(fn, 0);
+   ·                       ─
+   ╰────
+  help: Remove the explicit `0` delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:1:40]
+ 1 │ setTimeout(() => console.log("Hello"), -0);
+   ·                                        ──
+   ╰────
+  help: Remove the explicit `0` delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:1:22]
+ 1 │ setTimeout(callback, +0);
+   ·                      ──
+   ╰────
+  help: Remove the explicit `0` delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setInterval` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:1:23]
+ 1 │ setInterval(callback, +(0));
+   ·                       ────
+   ╰────
+  help: Remove the explicit `0` delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:1:22]
+ 1 │ setTimeout(callback, (-0));
+   ·                      ────
+   ╰────
+  help: Remove the explicit `0` delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:3:17]
+ 2 │                 () => console.log("Hello"),
+ 3 │                 0
+   ·                 ─
+ 4 │             );
+   ╰────
+  help: Remove the explicit `0` delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setInterval` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:3:17]
+ 2 │                 callback,
+ 3 │                 0
+   ·                 ─
+ 4 │             );
+   ╰────
+  help: Remove the explicit `0` delay argument.
+
+  ⚠ unicorn(explicit-timer-delay): `setTimeout` should not have an explicit delay of `0`.
+   ╭─[explicit_timer_delay.tsx:1:22]
+ 1 │ setTimeout(callback, (0));
+   ·                      ───
+   ╰────
+  help: Remove the explicit `0` delay argument.

@@ -65,7 +65,7 @@ impl Def for BoxDef {
     fn ty_with_lifetime(&self, schema: &Schema, anon: bool) -> TokenStream {
         let inner_ty = self.inner_type(schema).ty_with_lifetime(schema, anon);
         let lifetime = if anon { quote!( '_ ) } else { quote!( 'a ) };
-        quote!( Box<#lifetime, #inner_ty> )
+        quote!( ArenaBox<#lifetime, #inner_ty> )
     }
 
     /// Get inner type, if type has one.

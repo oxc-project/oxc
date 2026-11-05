@@ -1,0 +1,10 @@
+// The dominant css-in-js shape: bare root declarations with no enclosing rule.
+// The css-in-js parse mode parses them as statements (oxc-css-parser AGENTS.md
+// "Acceptance"); standalone `format()` rejects them, asserted in `parse_error_is_err`.
+
+display: flex;
+color: red;
+
+&:hover {
+  color: blue;
+}

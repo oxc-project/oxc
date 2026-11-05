@@ -1,7 +1,10 @@
 use napi::Either;
 use napi_derive::napi;
+use rustc_hash::FxHashMap;
 
 use oxc_compat::EngineTargets;
+pub use oxc_napi::JsRegExp;
+use oxc_str::CompactStr;
 
 #[napi(object)]
 pub struct TreeShakeOptions {
@@ -221,6 +224,16 @@ pub struct MangleOptions {
     /// @default false
     pub keep_names: Option<Either<bool, MangleOptionsKeepNames>>,
 
+    /// Names that bindings must not be renamed to, and that bindings already
+    /// carrying them keep. Equivalent to terser's `mangle.reserved`.
+    ///
+    /// Pass `['exports', 'module']` when minifying prebuilt CommonJS / UMD files
+    /// that Node consumers `import` directly, so Node's cjs-module-lexer can still
+    /// detect the mangled module's named exports.
+    ///
+    /// @default []
+    pub reserved: Option<Vec<String>>,
+
     /// Debug mangled names.
     pub debug: Option<bool>,
 }
@@ -236,6 +249,9 @@ impl From<&MangleOptions> for oxc_minifier::MangleOptions {
                 Some(Either::B(o)) => oxc_minifier::MangleOptionsKeepNames::from(o),
                 None => default.keep_names,
             },
+            reserved: o.reserved.as_ref().map_or(default.reserved, |names| {
+                names.iter().map(|name| CompactStr::from(name.as_str())).collect()
+            }),
             debug: o.debug.unwrap_or(default.debug),
         }
     }
@@ -257,6 +273,95 @@ pub struct MangleOptionsKeepNames {
 impl From<&MangleOptionsKeepNames> for oxc_minifier::MangleOptionsKeepNames {
     fn from(o: &MangleOptionsKeepNames) -> Self {
         oxc_minifier::MangleOptionsKeepNames { function: o.function, class: o.class }
+    }
+}
+
+fn compile_js_reg_exp(regex: &JsRegExp, option_name: &str) -> Result<lazy_regex::Regex, String> {
+    let error = |error| format!("Invalid mangleProps.{option_name} regex: {error}");
+    if regex.flags.is_empty() {
+        lazy_regex::Regex::new(&regex.source).map_err(error)
+    } else {
+        lazy_regex::Regex::new(&format!("(?{}){}", regex.flags, regex.source)).map_err(error)
+    }
+}
+
+#[napi(object)]
+pub struct ManglePropertiesOptions {
+    /// JavaScript `RegExp` selecting property names to mangle. The source and flags are compiled
+    /// with Rust's regex engine. Flags `i`, `m`, `s`, and `u` are supported.
+    #[napi(ts_type = "RegExp")]
+    pub include: JsRegExp,
+
+    /// JavaScript `RegExp` excluding property names selected by `include`.
+    #[napi(ts_type = "RegExp")]
+    pub exclude: Option<JsRegExp>,
+
+    /// Exact names that are neither mangled nor emitted as automatic output names.
+    pub reserved: Option<Vec<String>>,
+
+    /// Mangle quoted property occurrences in addition to unquoted occurrences.
+    ///
+    /// @default false
+    pub quoted: Option<bool>,
+
+    /// Generate readable `_$name$_`-style output names.
+    ///
+    /// @default false
+    pub debug: Option<bool>,
+
+    /// Stable mappings from original names to output names. `false` reserves an original name.
+    /// Entries that do not match `include`, or that match `exclude`, remain inert but are
+    /// preserved in the returned `mangleCache`. String targets must be `IdentifierName` values
+    /// other than `__proto__`, `constructor`, or `prototype`. The original name `__proto__` is
+    /// always reserved and cannot be used as a cache key.
+    #[napi(ts_type = "Record<string, string | false>")]
+    pub cache: Option<FxHashMap<String, Either<String, bool>>>,
+}
+
+impl TryFrom<&ManglePropertiesOptions> for oxc_minifier::ManglePropertiesOptions {
+    type Error = String;
+
+    fn try_from(options: &ManglePropertiesOptions) -> Result<Self, Self::Error> {
+        let include = compile_js_reg_exp(&options.include, "include")?;
+        let exclude = options
+            .exclude
+            .as_ref()
+            .map(|regex| compile_js_reg_exp(regex, "exclude"))
+            .transpose()?;
+        let mut cache = oxc_minifier::ManglePropertyCache::default();
+        if let Some(entries) = &options.cache {
+            for (original, value) in entries {
+                if original == "__proto__" {
+                    return Err(
+                        "Invalid mangleProps.cache key '__proto__': this original name cannot be used as a cache key"
+                            .to_string(),
+                    );
+                }
+                let target = match value {
+                    Either::A(target) => Some(CompactStr::from(target.as_str())),
+                    Either::B(false) => None,
+                    Either::B(true) => {
+                        return Err(format!(
+                            "Invalid mangleProps.cache value for '{original}': expected a string or false"
+                        ));
+                    }
+                };
+                cache
+                    .insert(CompactStr::from(original.as_str()), target)
+                    .map_err(|error| format!("Invalid mangleProps.cache: {error}"))?;
+            }
+        }
+
+        Ok(Self {
+            include,
+            exclude,
+            reserved: options.reserved.as_ref().map_or_else(Default::default, |names| {
+                names.iter().map(|name| CompactStr::from(name.as_str())).collect()
+            }),
+            mangle_quoted: options.quoted.unwrap_or(false),
+            debug: options.debug.unwrap_or(false),
+            cache,
+        })
     }
 }
 
@@ -286,6 +391,23 @@ pub struct CodegenOptions {
     /// @default true
     pub remove_whitespace: Option<bool>,
 
+    /// Escape non-ASCII characters in string literals, untagged template literals, regular
+    /// expression literals and identifier names.
+    ///
+    /// Uses `\uXXXX` for characters up to U+FFFF and `\u{...}` for higher code points.
+    /// Regular expressions use escaped UTF-16 surrogate pairs for higher code points instead;
+    /// escaping changes the observable `RegExp.prototype.source` value.
+    ///
+    /// Code point escapes (`\u{...}`) require ES2015 or later; this option does not provide
+    /// ES5-compatible output.
+    ///
+    /// Non-ASCII characters are left unescaped in tagged template quasis (whose raw text is
+    /// observable), JSX names and text, JSX attribute strings, hashbangs and preserved comments.
+    /// JavaScript expressions inside tagged templates and JSX are escaped normally.
+    ///
+    /// @default false
+    pub ascii_only: Option<bool>,
+
     /// How to handle legal comments (comments containing `@license`, `@preserve`, or starting with `//!`/`/*!`).
     ///
     /// * `"none"` - Do not preserve any legal comments.
@@ -301,7 +423,7 @@ pub struct CodegenOptions {
 
 impl Default for CodegenOptions {
     fn default() -> Self {
-        Self { remove_whitespace: Some(true), legal_comments: None }
+        Self { remove_whitespace: Some(true), ascii_only: None, legal_comments: None }
     }
 }
 
@@ -318,6 +440,7 @@ impl CodegenOptions {
             // Need to remove all comments.
             oxc_codegen::CodegenOptions { minify: false, ..oxc_codegen::CodegenOptions::minify() }
         };
+        opts.ascii_only = self.ascii_only.unwrap_or(false);
 
         if let Some(legal) = &self.legal_comments {
             opts.comments.legal = match legal {
@@ -350,6 +473,11 @@ pub struct MinifyOptions {
 
     pub mangle: Option<Either<bool, MangleOptions>>,
 
+    /// Mangle matching property names independently of identifier mangling. Properties owned by
+    /// unminified code, imported module namespaces, globals, or host APIs must be excluded or
+    /// reserved.
+    pub mangle_props: Option<ManglePropertiesOptions>,
+
     pub codegen: Option<Either<bool, CodegenOptions>>,
 
     pub sourcemap: Option<bool>,
@@ -369,6 +497,11 @@ impl TryFrom<&MinifyOptions> for oxc_minifier::MinifierOptions {
             None | Some(Either::A(true)) => Some(oxc_minifier::MangleOptions::default()),
             Some(Either::B(o)) => Some(oxc_minifier::MangleOptions::from(o)),
         };
-        Ok(oxc_minifier::MinifierOptions { compress, mangle })
+        let mangle_properties = o
+            .mangle_props
+            .as_ref()
+            .map(oxc_minifier::ManglePropertiesOptions::try_from)
+            .transpose()?;
+        Ok(oxc_minifier::MinifierOptions { compress, mangle, mangle_properties })
     }
 }

@@ -20,11 +20,12 @@ pub struct NoNestedTernary;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows nested ternary expressions to improve code readability and maintainability.
+    /// Disallow nested ternary expressions.
     ///
     /// ### Why is this bad?
     ///
-    /// Nested ternary expressions make code harder to read and understand. They can lead to complex, difficult-to-debug logic.
+    /// Nested ternary expressions make code harder to read and understand. Nesting of these expressions can lead
+    /// to complex logic that is difficult to understand.
     ///
     /// ### Examples
     ///
@@ -46,7 +47,7 @@ declare_oxc_lint!(
     eslint,
     style,
     version = "0.15.4",
-    short_description = "Disallows nested ternary expressions to improve code readability and maintainability.",
+    short_description = "Disallow nested ternary expressions.",
 );
 
 impl Rule for NoNestedTernary {

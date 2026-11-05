@@ -3,7 +3,7 @@ use std::str;
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Allocator, StringBuilder as ArenaStringBuilder};
+use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_semantic::Scoping;
 use oxc_str::Ident;
 
@@ -272,10 +272,9 @@ impl<'a> UidGenerator<'a> {
             } else {
                 // Identifier `_<base>4294967295` was already used.
                 // Can't increment `postfix` as it would wrap around, so increment `underscore_count` instead.
-                // It shouldn't be possible for `underscore_count` to be `u32::MAX` too, because that
-                // would require an identifier comprising `u32::MAX` x underscores in source text.
-                // That's theoretically possible, but source text is limited to `u32::MAX` bytes,
-                // so it'd be the entirety of the source text. Therefore `postfix` would be 1.
+                // `underscore_count` cannot be `u32::MAX` too, because that would require an identifier
+                // comprising `u32::MAX` underscores. Identifiers are assumed to be no longer than `MAX_LEN`
+                // (defined in `oxc_parser`), which is less than `u32::MAX`. So this addition cannot overflow.
                 uid_name.underscore_count += 1;
                 uid_name.postfix = 2;
             }
@@ -286,7 +285,7 @@ impl<'a> UidGenerator<'a> {
             let digits = buffer.format(uid_name.postfix);
 
             if uid_name.underscore_count == 1 {
-                Ident::from_strs_array_in(["_", base, digits], self.allocator)
+                Ident::from_strs_array_in(["_", base, digits], &self.allocator)
             } else {
                 let mut uid = ArenaStringBuilder::with_capacity_in(
                     uid_name.underscore_count as usize + base.len() + digits.len(),
@@ -298,7 +297,7 @@ impl<'a> UidGenerator<'a> {
                 Ident::from(uid)
             }
         } else {
-            let uid = Ident::from_strs_array_in(["_", base], self.allocator);
+            let uid = Ident::from_strs_array_in(["_", base], &self.allocator);
             // SAFETY: String starts with `_`, so trimming off that byte leaves a valid UTF-8 string
             let base = unsafe { uid.as_str().get_unchecked(1..) };
             self.names.insert(base, UidName { underscore_count: 1, postfix: 1 });

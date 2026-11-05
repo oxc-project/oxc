@@ -24,10 +24,10 @@ impl RuleTimingSource {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct RuleTimingKey {
-    source: RuleTimingSource,
-    plugin_name: Cow<'static, str>,
-    rule_name: Cow<'static, str>,
+pub struct RuleTimingKey {
+    pub source: RuleTimingSource,
+    pub plugin_name: Cow<'static, str>,
+    pub rule_name: Cow<'static, str>,
 }
 
 impl RuleTimingKey {
@@ -37,6 +37,17 @@ impl RuleTimingKey {
             plugin_name: Cow::Borrowed(plugin_name),
             rule_name: Cow::Borrowed(rule_name),
         }
+    }
+
+    fn from_record(record: RuleTimingRecord) -> (Self, RuleTimingStat) {
+        (
+            Self {
+                source: record.source,
+                plugin_name: Cow::Owned(record.plugin_name),
+                rule_name: Cow::Owned(record.rule_name),
+            },
+            RuleTimingStat { duration: record.duration, calls: record.calls },
+        )
     }
 }
 
@@ -97,7 +108,7 @@ impl RuleTimingRecorder {
         self.timings.entry(RuleTimingKey::native(plugin_name, rule_name)).or_default().add(stat);
     }
 
-    fn into_timings(self) -> FxHashMap<RuleTimingKey, RuleTimingStat> {
+    pub(crate) fn into_timings(self) -> FxHashMap<RuleTimingKey, RuleTimingStat> {
         self.timings
     }
 }
@@ -105,6 +116,7 @@ impl RuleTimingRecorder {
 #[derive(Debug, Default)]
 pub struct RuleTimingStore {
     timings: Mutex<FxHashMap<RuleTimingKey, RuleTimingStat>>,
+    js_plugin_runtime: Mutex<Duration>,
 }
 
 impl RuleTimingStore {
@@ -112,17 +124,33 @@ impl RuleTimingStore {
         Self::default()
     }
 
-    pub(crate) fn merge(&self, recorder: RuleTimingRecorder) {
-        let local_timings = recorder.into_timings();
-        if local_timings.is_empty() {
+    pub(crate) fn merge<I>(&self, local_timings: I)
+    where
+        I: IntoIterator<Item = RuleTimingRecord>,
+    {
+        let mut local_timings = local_timings.into_iter().peekable();
+        if local_timings.peek().is_none() {
             return;
         }
 
         let mut timings = self.timings.lock().expect("rule timing store mutex poisoned");
-        timings.reserve(local_timings.len());
-        for (key, stat) in local_timings {
+        timings.reserve(local_timings.size_hint().0);
+        for record in local_timings {
+            let (key, stat) = RuleTimingKey::from_record(record);
             timings.entry(key).or_default().add(stat);
         }
+    }
+
+    pub(crate) fn record_js_plugin_runtime(&self, duration: Duration) {
+        *self.js_plugin_runtime.lock().expect("JS plugin runtime mutex poisoned") += duration;
+    }
+
+    /// Returns the cumulative time spent executing JS plugin linting on the JS thread.
+    ///
+    /// # Panics
+    /// Panics if the JS plugin runtime mutex is poisoned.
+    pub fn js_plugin_runtime(&self) -> Duration {
+        *self.js_plugin_runtime.lock().expect("JS plugin runtime mutex poisoned")
     }
 
     /// Collects all rule timings sorted by descending duration.

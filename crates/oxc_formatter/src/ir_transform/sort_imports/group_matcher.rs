@@ -18,6 +18,13 @@ pub struct GroupMatcher {
     predefined_groups: Vec<(GroupName, usize)>,
     // The index of "unknown" in groups or `groups.len()` if absent
     unknown_group_index: usize,
+    // Whether a catch-all `side_effect(_style)` group is in use:
+    // the explicit opt-in for regrouping side-effect imports even with `sort_side_effects: false`.
+    // Either the predefined group, or a used custom group with the bare selector;
+    // a custom group that merely happens to match (by pattern or modifiers) is NOT an opt-in.
+    // Config-only facts, computed once here and queried per import.
+    regroup_side_effect: bool,
+    regroup_side_effect_style: bool,
 }
 
 impl GroupMatcher {
@@ -52,10 +59,19 @@ impl GroupMatcher {
 
         predefined_groups.sort_by(|a, b| a.0.cmp(&b.0));
 
+        let has_catch_all_group_for = |selector: ImportSelector| {
+            predefined_groups.iter().any(|(group, _)| group.is_plain_selector(selector))
+                || used_custom_groups.iter().any(|(group, _)| group.is_plain_selector(selector))
+        };
+        let regroup_side_effect = has_catch_all_group_for(ImportSelector::SideEffect);
+        let regroup_side_effect_style = has_catch_all_group_for(ImportSelector::SideEffectStyle);
+
         Self {
             custom_groups: used_custom_groups,
             predefined_groups,
             unknown_group_index: unknown_group_index.unwrap_or(groups.len()),
+            regroup_side_effect,
+            regroup_side_effect_style,
         }
     }
 
@@ -93,13 +109,9 @@ impl GroupMatcher {
     }
 
     pub fn should_regroup_side_effect(&self) -> bool {
-        self.predefined_groups
-            .iter()
-            .any(|(group, _)| group.is_plain_selector(ImportSelector::SideEffect))
+        self.regroup_side_effect
     }
     pub fn should_regroup_side_effect_style(&self) -> bool {
-        self.predefined_groups
-            .iter()
-            .any(|(group, _)| group.is_plain_selector(ImportSelector::SideEffectStyle))
+        self.regroup_side_effect_style
     }
 }

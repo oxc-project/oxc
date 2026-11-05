@@ -44,8 +44,6 @@ impl From<&ModuleRecord<'_>> for EcmaScriptModule {
             .chain(record.indirect_export_entries.iter())
             .chain(record.star_export_entries.iter())
             .map(|e| (e.statement_span, StaticExportEntry::from(e)))
-            .collect::<Vec<_>>()
-            .into_iter()
             .fold(FxHashMap::<_, Vec<StaticExportEntry>>::default(), |mut acc, (span, e)| {
                 acc.entry(span).or_default().push(e);
                 acc

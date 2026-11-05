@@ -153,6 +153,40 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in this test.
 
+  ⚠ vitest(prefer-expect-assertions): This test should have either `e.assertions(<number of assertions>)` or `e.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ test.each([[1]])("case", (value, { expect: e }) => {
+ 2 │ │                   consume(() => e(value).toBe(1));
+ 3 │ ╰─▶             });
+   ╰────
+  help: Add `e.hasAssertions()` or `e.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `ctx.expect.assertions(<number of assertions>)` or `ctx.expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ test.each([{ value: 1 }])("case", ({ value }, ctx) => {
+ 2 │ │                   consume(() => expect(value).toBe(1));
+ 3 │ ╰─▶             });
+   ╰────
+  help: Add `ctx.expect.hasAssertions()` or `ctx.expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `ctx.expect.assertions(<number of assertions>)` or `ctx.expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ test.each([{ value: 1 }])("case", ({ value }, ctx) => {
+ 2 │ │                   ctx.expect(value).toBe(1);
+ 3 │ │                   consume(() => expect(value).toBe(1));
+ 4 │ ╰─▶             });
+   ╰────
+  help: Add `ctx.expect.hasAssertions()` or `ctx.expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `e.assertions(<number of assertions>)` or `e.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │     const rows = [[1]];
+ 2 │ ╭─▶             test.each(rows)("case", (value, { expect: e }) => {
+ 3 │ │                   consume(() => e(value).toBe(1));
+ 4 │ ╰─▶             });
+   ╰────
+  help: Add `e.hasAssertions()` or `e.assertions(<number>)` as the first statement in this test.
+
   ⚠ vitest(prefer-expect-assertions): This test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
    ╭─[prefer_expect_assertions.tsx:1:1]
  1 │ ╭─▶ it("it1", () => {
@@ -227,6 +261,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import { expect as e } from 'vite-plus/test';
  2 │             test("re-exported missing", () => { e(true).toBe(true); });
    ·             ──────────────────────────────────────────────────────────
+   ╰────
+  help: Add `e.hasAssertions()` or `e.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `e.assertions(<number of assertions>)` or `e.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │ import { expect as e } from '@effect/vitest';
+ 2 │             test("re-exported effect missing", () => { e(true).toBe(true); });
+   ·             ─────────────────────────────────────────────────────────────────
    ╰────
   help: Add `e.hasAssertions()` or `e.assertions(<number>)` as the first statement in this test.
 

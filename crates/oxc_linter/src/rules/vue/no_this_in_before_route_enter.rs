@@ -2,17 +2,12 @@ use oxc_ast::{
     AstKind,
     ast::{ExportDefaultDeclarationKind, Expression},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{
-    AstNode,
-    context::LintContext,
-    rule::Rule,
-    utils::{ThisExpressionFinder, find_property},
-};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::ThisExpressionFinder};
 
 fn no_this_in_before_route_enter_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`beforeRouteEnter` does NOT have access to `this` component instance.")
@@ -62,6 +57,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     version = "1.37.0",
+    short_description = "Disallow `this` usage in a `beforeRouteEnter` method.",
 );
 
 impl Rule for NoThisInBeforeRouteEnter {
@@ -73,7 +69,7 @@ impl Rule for NoThisInBeforeRouteEnter {
             return;
         };
 
-        if let Some(before_route_enter_prop) = find_property(obj_expr, "beforeRouteEnter") {
+        if let Some(before_route_enter_prop) = obj_expr.find_property("beforeRouteEnter") {
             let function_body = match &before_route_enter_prop.value {
                 Expression::FunctionExpression(func_expr) => func_expr.body.as_ref(),
                 _ => return,

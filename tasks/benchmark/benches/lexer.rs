@@ -17,32 +17,7 @@ use oxc_tasks_common::{TestFile, TestFiles};
 fn bench_lexer(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("lexer");
 
-    // Lexer lacks awareness of JS grammar, so it gets confused by a few things without the parser
-    // driving it. So simplify the input for it, by replacing these syntaxes with plain strings.
-    // This ensures lexing completes without generating any errors, which is more realistic.
-    //
-    // It's unfortunate that this benchmark doesn't exercise the code paths for these syntaxes,
-    // but this is the closest we can get to a realistic benchmark of lexer in isolation.
-    let mut allocator = Allocator::default();
-    let files = TestFiles::minimal()
-        .files()
-        .iter()
-        .map(|file| {
-            let source_type = SourceType::from_path(&file.file_name).unwrap();
-
-            let source_text = clean(&file.source_text, source_type, &allocator);
-            allocator.reset();
-
-            TestFile {
-                url: file.url.clone(),
-                file_name: file.file_name.clone(),
-                source_text,
-                source_type,
-            }
-        })
-        .collect::<Vec<_>>();
-
-    for file in files {
+    for file in cleaned_test_files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_text = file.source_text.as_str();
         let source_type = file.source_type;
@@ -60,8 +35,36 @@ fn bench_lexer(criterion: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(lexer, bench_lexer);
-criterion_main!(lexer);
+/// Get the test files, with source text cleaned.
+///
+/// The lexer lacks awareness of JS grammar, so it gets confused by a few things
+/// without the parser driving it. So simplify the input for it, by replacing these syntaxes
+/// with plain strings. This ensures lexing completes without generating any errors,
+/// which is more realistic.
+///
+/// It's unfortunate that the benchmark doesn't exercise the code paths for these syntaxes,
+/// but this is the closest we can get to a realistic benchmark of the lexer in isolation.
+fn cleaned_test_files() -> Vec<TestFile> {
+    let mut allocator = Allocator::default();
+
+    TestFiles::minimal()
+        .files()
+        .iter()
+        .map(|file| {
+            let source_type = file.source_type;
+            let source_text = clean(&file.source_text, source_type, &allocator);
+
+            allocator.reset();
+
+            TestFile {
+                url: file.url.clone(),
+                file_name: file.file_name.clone(),
+                source_text,
+                source_type,
+            }
+        })
+        .collect()
+}
 
 // `#[inline(always)]` to ensure this is inlined into benchmark.
 // It's also used in `SourceCleaner` below.
@@ -203,3 +206,6 @@ fn convert_to_string(text: &str) -> String {
 
     format!("{quote}{text}{quote}")
 }
+
+criterion_group!(lexer, bench_lexer);
+criterion_main!(lexer);

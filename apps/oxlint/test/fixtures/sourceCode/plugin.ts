@@ -30,8 +30,8 @@ const createRule: Rule = {
       const loc = sourceCode.getLocFromIndex(offset);
       assert(sourceCode.getIndexFromLoc(loc) === offset);
       locs +=
-        `\n  ${offset} => { line: ${loc.line}, column: ${loc.column} }` +
-        `(${JSON.stringify(text[offset] || "<EOF>")})`;
+        `\n  ${offset} => { line: ${loc.line}, column: ${loc.column} }`
+        + `(${JSON.stringify(text[offset] || "<EOF>")})`;
     }
 
     const stmt = ast.body[0];
@@ -44,15 +44,15 @@ const createRule: Rule = {
 
     context.report({
       message:
-        "create:\n" +
-        `text: ${JSON.stringify(text)}\n` +
-        `getText(): ${JSON.stringify(sourceCode.getText())}\n` +
-        `lines: ${JSON.stringify(lines)}\n` +
-        `lineStartIndices: ${JSON.stringify(lineStartIndices)}\n` +
-        `locs:${locs}\n` +
-        `ast: "${id.name}"\n` +
-        `visitorKeys: ${sourceCode.visitorKeys.BinaryExpression.join(", ")}\n` +
-        `isESTree: ${sourceCode.isESTree}`,
+        "create:\n"
+        + `text: ${JSON.stringify(text)}\n`
+        + `getText(): ${JSON.stringify(sourceCode.getText())}\n`
+        + `lines: ${JSON.stringify(lines)}\n`
+        + `lineStartIndices: ${JSON.stringify(lineStartIndices)}\n`
+        + `locs:${locs}\n`
+        + `ast: "${id.name}"\n`
+        + `visitorKeys: ${sourceCode.visitorKeys.BinaryExpression.join(", ")}\n`
+        + `isESTree: ${sourceCode.isESTree}`,
       node: SPAN,
     });
 
@@ -83,15 +83,15 @@ const createRule: Rule = {
 
         context.report({
           message:
-            `ident "${node.name}":\n` +
-            `source: "${sourceCode.getText(node)}"\n` +
-            `source with before: "${sourceCode.getText(node, 2)}"\n` +
-            `source with after: "${sourceCode.getText(node, null, 1)}"\n` +
-            `source with both: "${sourceCode.getText(node, 2, 1)}"\n` +
-            `range: ${JSON.stringify(range)}\n` +
-            `loc: ${JSON.stringify(loc)}\n` +
-            `start loc: ${JSON.stringify(startLoc)}\n` +
-            `end loc: ${JSON.stringify(endLoc)}`,
+            `ident "${node.name}":\n`
+            + `source: "${sourceCode.getText(node)}"\n`
+            + `source with before: "${sourceCode.getText(node, 2)}"\n`
+            + `source with after: "${sourceCode.getText(node, null, 1)}"\n`
+            + `source with both: "${sourceCode.getText(node, 2, 1)}"\n`
+            + `range: ${JSON.stringify(range)}\n`
+            + `loc: ${JSON.stringify(loc)}\n`
+            + `start loc: ${JSON.stringify(startLoc)}\n`
+            + `end loc: ${JSON.stringify(endLoc)}`,
           node,
         });
       },
@@ -117,8 +117,8 @@ const createOnceRule: Rule = {
           const loc = sourceCode.getLocFromIndex(offset);
           assert(sourceCode.getIndexFromLoc(loc) === offset);
           locs +=
-            `\n  ${offset} => { line: ${loc.line}, column: ${loc.column} }` +
-            `(${JSON.stringify(text[offset] || "<EOF>")})`;
+            `\n  ${offset} => { line: ${loc.line}, column: ${loc.column} }`
+            + `(${JSON.stringify(text[offset] || "<EOF>")})`;
         }
 
         const stmt = ast.body[0];
@@ -128,15 +128,15 @@ const createOnceRule: Rule = {
 
         context.report({
           message:
-            "before:\n" +
-            `text: ${JSON.stringify(text)}\n` +
-            `getText(): ${JSON.stringify(sourceCode.getText())}\n` +
-            `lines: ${JSON.stringify(lines)}\n` +
-            `lineStartIndices: ${JSON.stringify(lineStartIndices)}\n` +
-            `locs:${locs}\n` +
-            `ast: "${id.name}"\n` +
-            `visitorKeys: ${sourceCode.visitorKeys.BinaryExpression.join(", ")}\n` +
-            `isESTree: ${sourceCode.isESTree}`,
+            "before:\n"
+            + `text: ${JSON.stringify(text)}\n`
+            + `getText(): ${JSON.stringify(sourceCode.getText())}\n`
+            + `lines: ${JSON.stringify(lines)}\n`
+            + `lineStartIndices: ${JSON.stringify(lineStartIndices)}\n`
+            + `locs:${locs}\n`
+            + `ast: "${id.name}"\n`
+            + `visitorKeys: ${sourceCode.visitorKeys.BinaryExpression.join(", ")}\n`
+            + `isESTree: ${sourceCode.isESTree}`,
           node: SPAN,
         });
       },
@@ -159,13 +159,13 @@ const createOnceRule: Rule = {
 
         context.report({
           message:
-            `ident "${node.name}":\n` +
-            `source: "${sourceCode.getText(node)}"\n` +
-            `source with before: "${sourceCode.getText(node, 2)}"\n` +
-            `source with after: "${sourceCode.getText(node, null, 1)}"\n` +
-            `source with both: "${sourceCode.getText(node, 2, 1)}"\n` +
-            `start loc: ${JSON.stringify(startLoc)}\n` +
-            `end loc: ${JSON.stringify(endLoc)}`,
+            `ident "${node.name}":\n`
+            + `source: "${sourceCode.getText(node)}"\n`
+            + `source with before: "${sourceCode.getText(node, 2)}"\n`
+            + `source with after: "${sourceCode.getText(node, null, 1)}"\n`
+            + `source with both: "${sourceCode.getText(node, 2, 1)}"\n`
+            + `start loc: ${JSON.stringify(startLoc)}\n`
+            + `end loc: ${JSON.stringify(endLoc)}`,
           node,
         });
       },

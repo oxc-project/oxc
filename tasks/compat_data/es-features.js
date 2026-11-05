@@ -134,6 +134,11 @@ const es2015 = [
     ],
   },
   {
+    name: "RegExpConstructorCanAlterFlags",
+    babel: null,
+    features: ["miscellaneous / RegExp constructor can alter flags"],
+  },
+  {
     name: "Spread",
     babel: "transform-spread",
     features: ["spread syntax for iterable objects", "class", "super"],

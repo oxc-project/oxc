@@ -25,12 +25,12 @@ const plugin: Plugin = {
 
         context.report({
           message:
-            "languageOptions:\n" +
-            `sourceType: ${languageOptions.sourceType}\n` +
-            `ecmaVersion: ${languageOptions.ecmaVersion}\n` +
-            `parserOptions: ${JSON.stringify(languageOptions.parserOptions)}\n` +
-            `globals: ${JSON.stringify(languageOptions.globals)}\n` +
-            `env: ${JSON.stringify(languageOptions.env)}`,
+            "languageOptions:\n"
+            + `sourceType: ${languageOptions.sourceType}\n`
+            + `ecmaVersion: ${languageOptions.ecmaVersion}\n`
+            + `parserOptions: ${JSON.stringify(languageOptions.parserOptions)}\n`
+            + `globals: ${JSON.stringify(languageOptions.globals)}\n`
+            + `env: ${JSON.stringify(languageOptions.env)}`,
           node: SPAN,
         });
 
@@ -40,18 +40,18 @@ const plugin: Plugin = {
 
           context.report({
             message:
-              "parser:\n" +
+              "parser:\n"
               // oxlint-disable-next-line typescript/restrict-template-expressions
-              `object keys: ${Reflect.ownKeys(parser)}\n` +
-              `name: ${parser.name}\n` +
+              + `object keys: ${Reflect.ownKeys(parser)}\n`
+              + `name: ${parser.name}\n`
               // Don't include `version` in the message, as it'll change each time we do a release
-              `typeof version: ${typeof parser.version}\n` +
-              `typeof parse: ${typeof parser.parse}\n` +
-              `latestEcmaVersion: ${parser.latestEcmaVersion}\n` +
+              + `typeof version: ${typeof parser.version}\n`
+              + `typeof parse: ${typeof parser.parse}\n`
+              + `latestEcmaVersion: ${parser.latestEcmaVersion}\n`
               // oxlint-disable-next-line typescript/restrict-template-expressions
-              `supportedEcmaVersions: ${parser.supportedEcmaVersions}\n` +
-              `Syntax: ${JSON.stringify(parser.Syntax, null, 2)}\n` +
-              `VisitorKeys: ${JSON.stringify(parser.VisitorKeys, null, 2)}`,
+              + `supportedEcmaVersions: ${parser.supportedEcmaVersions}\n`
+              + `Syntax: ${JSON.stringify(parser.Syntax, null, 2)}\n`
+              + `VisitorKeys: ${JSON.stringify(parser.VisitorKeys, null, 2)}`,
             node: SPAN,
           });
         }

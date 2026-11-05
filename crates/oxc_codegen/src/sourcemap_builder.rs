@@ -1,8 +1,9 @@
-use std::path::Path;
+use std::{borrow::Cow, collections::hash_map::Entry, path::Path};
 
 use oxc_index::{IndexVec, define_nonmax_u32_index_type};
 use oxc_span::Span;
 use oxc_syntax::line_terminator::{LS, LS_LAST_2_BYTES, LS_OR_PS_FIRST_BYTE, PS, PS_LAST_2_BYTES};
+use rustc_hash::FxHashMap;
 
 /// Number of lines to check with linear search when translating byte position to line index
 const LINE_SEARCH_LINEAR_ITERATIONS: usize = 16;
@@ -45,14 +46,16 @@ pub struct ColumnOffsets {
     columns: Box<[u32]>,
 }
 
-#[expect(clippy::struct_field_names)]
 pub struct SourcemapBuilder<'a> {
-    source_id: u32,
+    source_name: String,
     original_source: &'a str,
+    names: Vec<&'a str>,
+    names_map: FxHashMap<&'a str, u32>,
+    tokens: Vec<oxc_sourcemap::Token>,
     last_generated_update: usize,
     last_position: Option<u32>,
+    last_token_has_name: bool,
     line_offset_tables: LineOffsetTables,
-    sourcemap_builder: oxc_sourcemap::SourceMapBuilder,
     generated_line: u32,
     generated_column: u32,
     /// Tracks the last accessed line index to optimize sequential lookups in `search_original_line_and_column`.
@@ -63,28 +66,67 @@ pub struct SourcemapBuilder<'a> {
 
 impl<'a> SourcemapBuilder<'a> {
     pub fn new(path: &Path, source_text: &'a str) -> Self {
-        let mut sourcemap_builder = oxc_sourcemap::SourceMapBuilder::default();
         let line_offset_tables = Self::generate_line_offset_tables(source_text);
-        let source_id =
-            sourcemap_builder.set_source_and_content(path.to_string_lossy().as_ref(), source_text);
+        // Estimate mapping and name counts from source length to reduce reallocations.
+        let source_len = source_text.len();
         Self {
-            source_id,
+            source_name: path.to_string_lossy().into_owned(),
             original_source: source_text,
+            names: Vec::with_capacity(source_len / 64),
+            names_map: FxHashMap::default(),
+            tokens: Vec::with_capacity(source_len / 4),
             last_generated_update: 0,
             last_position: None,
+            last_token_has_name: false,
             line_offset_tables,
-            sourcemap_builder,
             generated_line: 0,
             generated_column: 0,
             last_line_lookup: 0,
         }
     }
 
-    pub fn into_sourcemap(self) -> oxc_sourcemap::OwnedSourceMap {
-        self.sourcemap_builder.into_owned_sourcemap()
+    pub fn into_sourcemap(mut self) -> oxc_sourcemap::SourceMap<'a> {
+        self.names.shrink_to_fit();
+        self.tokens.shrink_to_fit();
+
+        oxc_sourcemap::SourceMap::from_parts(oxc_sourcemap::SourceMapParts {
+            file: None,
+            names: self.names.into_iter().map(Cow::Borrowed).collect(),
+            source_root: None,
+            sources: vec![Cow::Owned(self.source_name)],
+            source_contents: vec![Some(Cow::Borrowed(self.original_source))],
+            tokens: self.tokens.into_boxed_slice(),
+            token_chunks: None,
+            ignore_list: None,
+            debug_id: None,
+        })
     }
 
     pub fn add_source_mapping_for_name(&mut self, output: &[u8], span: Span, name: &str) {
+        let original_name = self.original_name(span, name);
+        // The token name should be original name.
+        // If it hasn't changed, name should be `None` to reduce `SourceMap` size.
+        let token_name = if original_name == Some(name) { None } else { original_name };
+        self.add_source_mapping(output, span.start, token_name);
+    }
+
+    /// Add a mapping for a private identifier, which prints as `#` followed by `name`.
+    ///
+    /// The token is `#name`, so that is what the mapping is compared against and what it records.
+    pub fn add_source_mapping_for_private_name(&mut self, output: &[u8], span: Span, name: &str) {
+        let original_name = self.original_name(span, name);
+        let unchanged = original_name.is_some_and(|original| {
+            original
+                .as_bytes()
+                .split_first()
+                .is_some_and(|(&hash, rest)| hash == b'#' && rest == name.as_bytes())
+        });
+        let token_name = if unchanged { None } else { original_name };
+        self.add_source_mapping(output, span.start, token_name);
+    }
+
+    /// Get the source text `span` covers, which is the name to record unless nothing was renamed.
+    fn original_name(&self, span: Span, name: &str) -> Option<&'a str> {
         debug_assert!(
             (span.end as usize) <= self.original_source.len(),
             "violated {}:{} <= {} for {name}",
@@ -92,29 +134,54 @@ impl<'a> SourcemapBuilder<'a> {
             span.end,
             self.original_source.len()
         );
-        let original_name = self.original_source.get(span.start as usize..span.end as usize);
-        // The token name should be original name.
-        // If it hasn't change, name should be `None` to reduce `SourceMap` size.
-        let token_name = if original_name == Some(name) { None } else { original_name };
-        self.add_source_mapping(output, span.start, token_name);
+        self.original_source.get(span.start as usize..span.end as usize)
     }
 
-    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&str>) {
+    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&'a str>) {
         if self.last_position == Some(position) {
+            if let Some(name) = name
+                && !self.last_token_has_name
+            {
+                let name_id = self.add_name(name);
+                let token = self.tokens.last_mut().unwrap();
+                *token = oxc_sourcemap::Token::new(
+                    token.get_dst_line(),
+                    token.get_dst_col(),
+                    token.get_src_line(),
+                    token.get_src_col(),
+                    token.get_source_id(),
+                    Some(name_id),
+                );
+                self.last_token_has_name = true;
+            }
             return;
         }
         let (original_line, original_column) = self.search_original_line_and_column(position);
         self.update_generated_line_and_column(output);
-        let name_id = name.map(|s| self.sourcemap_builder.add_name(s));
-        self.sourcemap_builder.add_token(
+        let name_id = name.map(|s| self.add_name(s));
+        self.tokens.push(oxc_sourcemap::Token::new(
             self.generated_line,
             self.generated_column,
             original_line,
             original_column,
-            Some(self.source_id),
+            Some(0),
             name_id,
-        );
+        ));
         self.last_position = Some(position);
+        self.last_token_has_name = name_id.is_some();
+    }
+
+    fn add_name(&mut self, name: &'a str) -> u32 {
+        match self.names_map.entry(name) {
+            Entry::Occupied(entry) => *entry.get(),
+            Entry::Vacant(entry) => {
+                let id = u32::try_from(self.names.len())
+                    .expect("sourcemap names length should fit in u32");
+                entry.insert(id);
+                self.names.push(name);
+                id
+            }
+        }
     }
 
     #[expect(clippy::cast_possible_truncation)]
@@ -230,86 +297,99 @@ impl<'a> SourcemapBuilder<'a> {
 
     #[expect(clippy::cast_possible_truncation)]
     fn update_generated_line_and_column(&mut self, output: &[u8]) {
-        const BATCH_SIZE: usize = 32;
+        // Bytes processed per iteration when fast-forwarding over "boring" bytes
+        // (ASCII that is neither a line break nor part of a Unicode char).
+        const STRIDE: usize = 8;
+        const LO: u64 = 0x0101_0101_0101_0101;
+        const HI: u64 = 0x8080_8080_8080_8080;
 
+        let len = output.len();
         let start_index = self.last_generated_update;
 
         // Find last line break
         let mut line_start_index = start_index;
-        let mut idx = line_start_index;
+        let mut idx = start_index;
         let mut last_line_is_ascii = true;
 
-        macro_rules! handle_byte {
-            ($byte:ident) => {
-                match $byte {
-                    b'\n' => {}
-                    b'\r' => {
-                        // Handle Windows-specific "\r\n" newlines
-                        if output.get(idx + 1) == Some(&b'\n') {
-                            idx += 1;
-                        }
-                    }
-                    _ if $byte.is_ascii() => {
+        while idx < len {
+            // Fast-forward over runs of "boring" bytes `STRIDE` at a time. The vast
+            // majority of output is ASCII that is neither a line break nor part of a
+            // Unicode char; such bytes don't change the line count or the last-line
+            // ASCII flag, so a run of them can be skipped in bulk instead of matched
+            // byte-by-byte. SWAR (SIMD-within-a-register) detects, branchlessly, whether
+            // any byte of an 8-byte word is `\n` (0x0A), `\r` (0x0D), or non-ASCII
+            // (>= 0x80) using the classic "zero byte in a word" bit trick; if none are,
+            // the whole word is skipped.
+            while idx + STRIDE <= len {
+                let word = u64::from_ne_bytes(output[idx..idx + STRIDE].try_into().unwrap());
+                let lf = word ^ (LO * u64::from(b'\n'));
+                let cr = word ^ (LO * u64::from(b'\r'));
+                let has_lf = lf.wrapping_sub(LO) & !lf & HI;
+                let has_cr = cr.wrapping_sub(LO) & !cr & HI;
+                let non_ascii = word & HI;
+                if (has_lf | has_cr | non_ascii) != 0 {
+                    break;
+                }
+                idx += STRIDE;
+            }
+            if idx >= len {
+                break;
+            }
+
+            let byte = output[idx];
+            match byte {
+                b'\n' => {}
+                b'\r' => {
+                    // Handle Windows-specific "\r\n" newlines
+                    if output.get(idx + 1) == Some(&b'\n') {
                         idx += 1;
-                        continue;
                     }
-                    LS_OR_PS_FIRST_BYTE => {
-                        let next_two_bytes = output.get(idx + 1..idx + 3);
-                        if next_two_bytes != Some(&LS_LAST_2_BYTES[..])
-                            && next_two_bytes != Some(&PS_LAST_2_BYTES[..])
-                        {
-                            last_line_is_ascii = false;
-                            // 3-byte Unicode char that isn't a line break.
-                            // We know it's 3 bytes, so we could do `idx += 3`, but that's more instruction bytes
-                            // than `idx += 1` (`inc` instruction). This branch is extremely rarely taken, and this
-                            // is in a hot loop, so it's better to optimize for the common case.
-                            // The remaining 2 bytes will hit the "Unicode char" branch below on next turns of the loop,
-                            // and they'll be skipped too.
-                            idx += 1;
-                            continue;
-                        }
-                        // 3-byte line break. Add 2 to `idx` here, as 1 more is added below.
-                        idx += 2;
-                    }
-                    _ => {
-                        // Unicode char
+                }
+                _ if byte.is_ascii() => {
+                    idx += 1;
+                    continue;
+                }
+                LS_OR_PS_FIRST_BYTE => {
+                    let next_two_bytes = output.get(idx + 1..idx + 3);
+                    if next_two_bytes != Some(&LS_LAST_2_BYTES[..])
+                        && next_two_bytes != Some(&PS_LAST_2_BYTES[..])
+                    {
                         last_line_is_ascii = false;
-                        // Note: Only increment `idx` by 1. We don't know how many bytes the char is, and non-ASCII
-                        // chars are rare, so it's not worthwhile adding more instructions to this hot loop to find out.
-                        // The remaining bytes of the char will hit this branch again on next turns of the loop,
+                        // 3-byte Unicode char that isn't a line break.
+                        // We know it's 3 bytes, so we could do `idx += 3`, but that's more instruction bytes
+                        // than `idx += 1` (`inc` instruction). This branch is extremely rarely taken, and this
+                        // is in a hot loop, so it's better to optimize for the common case.
+                        // The remaining 2 bytes will hit the "Unicode char" branch below on next turns of the loop,
                         // and they'll be skipped too.
                         idx += 1;
                         continue;
                     }
+                    // 3-byte line break. Add 2 to `idx` here, as 1 more is added below.
+                    idx += 2;
                 }
-
-                // Line break found.
-                // `iter` is now positioned after line break.
-                line_start_index = idx + 1;
-                self.generated_line += 1;
-                self.generated_column = 0;
-                last_line_is_ascii = true;
-                idx += 1;
-            };
-        }
-
-        while let (end, overflow) = idx.overflowing_add(BATCH_SIZE)
-            && !overflow
-            && end < output.len()
-        {
-            while idx < end {
-                let b = output[idx];
-                handle_byte!(b);
+                _ => {
+                    // Unicode char
+                    last_line_is_ascii = false;
+                    // Note: Only increment `idx` by 1. We don't know how many bytes the char is, and non-ASCII
+                    // chars are rare, so it's not worthwhile adding more instructions to this hot loop to find out.
+                    // The remaining bytes of the char will hit this branch again on next turns of the loop,
+                    // and they'll be skipped too.
+                    idx += 1;
+                    continue;
+                }
             }
-        }
-        while idx < output.len() {
-            let b = output[idx];
-            handle_byte!(b);
+
+            // Line break found.
+            line_start_index = idx + 1;
+            self.generated_line += 1;
+            self.generated_column = 0;
+            last_line_is_ascii = true;
+            idx += 1;
         }
 
         // Calculate column
         self.generated_column += if last_line_is_ascii {
-            (output.len() - line_start_index) as u32
+            (len - line_start_index) as u32
         } else {
             // TODO: It'd be better if could use `from_utf8_unchecked` here, but we'd need to make this
             // function unsafe and caller guarantees `output` contains a valid UTF-8 string
@@ -317,11 +397,11 @@ impl<'a> SourcemapBuilder<'a> {
             // Mozilla's "source-map" library counts columns using UTF-16 code units
             last_line.encode_utf16().count() as u32
         };
-        self.last_generated_update = output.len();
+        self.last_generated_update = len;
     }
 
     fn generate_line_offset_tables(content: &str) -> LineOffsetTables {
-        let mut lines = vec![];
+        let mut lines = Vec::with_capacity(content.len() / 24 + 1);
         let mut column_offsets = IndexVec::new();
 
         // Used as a buffer to reduce memory reallocations.
@@ -561,6 +641,21 @@ mod test {
         create_mappings("a\u{2029}b", 1, 1);
         create_mappings("`\u{2028}`", 1, 1);
         create_mappings("`\u{2029}`", 1, 1);
+
+        // Long lines (>= 8 bytes) to exercise the SWAR boring-byte fast-forward in
+        // `update_generated_line_and_column`, with line breaks / unicode at various offsets.
+        create_mappings("abcdefghijklmnop", 0, 16);
+        create_mappings("abcdefgh\nijklmnop", 1, 8);
+        create_mappings("abcdefghijklmnop\n", 1, 0);
+        create_mappings("\nabcdefghijklmnop", 1, 16);
+        create_mappings("aaaaaaaaaa\r\nbbbbbbbbbb", 1, 10);
+        create_mappings("aaaaaaaaaa\rbbbbbbbbbb", 1, 10);
+        create_mappings("aaaaaaaaÖbbbbbbbb", 0, 17);
+        create_mappings("aaaaaaaaaaaaaaaa\u{2028}bbbbbbbbbbbbbbbb", 1, 16);
+        create_mappings("abcdefghijklmnopqrstuvwxyz0123456789", 0, 36);
+        // Line breaks straddling the 8-byte SWAR word boundary (`\r` at index 7).
+        create_mappings("aaaaaaa\r\nbbbbbbbb", 1, 8);
+        create_mappings("aaaaaaa\rbbbbbbbb", 1, 8);
     }
 
     #[test]
@@ -583,6 +678,89 @@ mod test {
                 .as_ref()
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             Some("b")
+        );
+    }
+
+    #[test]
+    fn duplicate_source_mappings_preserve_names_and_coordinates() {
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), "first second");
+        builder.add_source_mapping(b"", 0, None);
+        builder.add_source_mapping(b"(a", 0, Some("first"));
+        builder.add_source_mapping(b"(a", 0, Some("ignored"));
+        builder.add_source_mapping(b"(a\n", 6, None);
+        builder.add_source_mapping(b"(a\nb", 6, Some("second"));
+        builder.add_source_mapping(b"(a\nb", 6, None);
+        builder.add_source_mapping(b"(a\nb", 6, Some("ignored"));
+
+        let sm = builder.into_sourcemap();
+        let tokens = sm
+            .get_source_view_tokens()
+            .map(|token| {
+                (
+                    token.get_dst_line(),
+                    token.get_dst_col(),
+                    token.get_src_line(),
+                    token.get_src_col(),
+                    token.get_name(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(tokens, [(0, 0, 0, 0, Some("first")), (1, 0, 0, 6, Some("second"))]);
+        assert_eq!(sm.get_names().collect::<Vec<_>>(), ["first", "second"]);
+    }
+
+    #[test]
+    fn add_source_mapping_for_name_from_private_identifier() {
+        // A transform can print a plain identifier where the source had a private one.
+        // The `#` is part of the region the mapping describes, so it is part of the name recorded.
+        let output = b"foo";
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), "#foo");
+        builder.add_source_mapping_for_name(output, Span::new(0, 4), "foo");
+        let sm = builder.into_sourcemap();
+        assert_eq!(
+            sm.get_source_view_token(0_u32)
+                .as_ref()
+                .and_then(oxc_sourcemap::SourceViewToken::get_name),
+            Some("#foo")
+        );
+    }
+
+    #[test]
+    fn add_source_mapping_for_private_name() {
+        let output = b"#a#c";
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), "#a#b");
+        builder.add_source_mapping_for_private_name(output, Span::new(0, 2), "a");
+        builder.add_source_mapping_for_private_name(output, Span::new(2, 4), "c");
+        let sm = builder.into_sourcemap();
+        // The name `#a` not change.
+        assert_eq!(
+            sm.get_source_view_token(0_u32)
+                .as_ref()
+                .and_then(oxc_sourcemap::SourceViewToken::get_name),
+            None
+        );
+        // The name `#b` -> `#c`, save `#b` to token, `#` included.
+        assert_eq!(
+            sm.get_source_view_token(1_u32)
+                .as_ref()
+                .and_then(oxc_sourcemap::SourceViewToken::get_name),
+            Some("#b")
+        );
+    }
+
+    #[test]
+    fn add_source_mapping_for_private_name_from_plain_identifier() {
+        // A transform can print a private identifier where the source had a plain one.
+        // The token still differs from the source text, so the original name is recorded.
+        let output = b"#foo";
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), "ffoo");
+        builder.add_source_mapping_for_private_name(output, Span::new(0, 4), "foo");
+        let sm = builder.into_sourcemap();
+        assert_eq!(
+            sm.get_source_view_token(0_u32)
+                .as_ref()
+                .and_then(oxc_sourcemap::SourceViewToken::get_name),
+            Some("ffoo")
         );
     }
 

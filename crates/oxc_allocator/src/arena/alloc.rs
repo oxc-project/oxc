@@ -4,6 +4,7 @@
 
 use std::{
     alloc::Layout,
+    mem::MaybeUninit,
     ptr::{self, NonNull},
     str,
 };
@@ -78,7 +79,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         F: FnOnce() -> T,
     {
         #[inline(always)]
-        unsafe fn inner_writer<T, F>(ptr: NonNull<T>, f: F)
+        fn inner_writer<T, F>(slot: &mut MaybeUninit<T>, f: F) -> &mut T
         where
             F: FnOnce() -> T,
         {
@@ -91,16 +92,18 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             // the code so it writes directly into the heap instead. It seems we get it to realize this most
             // consistently if we put this critical line into it's own function instead of inlining it into the
             // surrounding code.
-            unsafe { ptr.write(f()) };
+            slot.write(f())
         }
 
         let layout = Layout::new::<T>();
-        let mut ptr = self.alloc_layout(layout).cast::<T>();
+        let ptr = self.alloc_layout(layout);
 
-        unsafe {
-            inner_writer(ptr, f);
-            ptr.as_mut()
-        }
+        // SAFETY: `ptr` was allocated with `T`'s layout, so it's correctly aligned and sized for `MaybeUninit<T>`
+        // (same layout as `T`). The memory was just allocated, so no other reference aliases it,
+        // and it lives for as long as the returned reference (tied to `&self`).
+        // `MaybeUninit<T>` has no validity invariant, so `&mut` to this uninitialized memory is sound.
+        let slot = unsafe { ptr.cast::<MaybeUninit<T>>().as_mut() };
+        inner_writer(slot, f)
     }
 
     /// Try to pre-allocate space for an object in this `Arena`, and initialize it using the closure.
@@ -130,7 +133,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         F: FnOnce() -> T,
     {
         #[inline(always)]
-        unsafe fn inner_writer<T, F>(ptr: NonNull<T>, f: F)
+        fn inner_writer<T, F>(slot: &mut MaybeUninit<T>, f: F) -> &mut T
         where
             F: FnOnce() -> T,
         {
@@ -143,17 +146,18 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             // the code so it writes directly into the heap instead. It seems we get it to realize this most
             // consistently if we put this critical line into it's own function instead of inlining it into the
             // surrounding code.
-            unsafe { ptr.write(f()) };
+            slot.write(f())
         }
 
-        // Self-contained: `ptr` is allocated for `T` and then a `T` is written.
         let layout = Layout::new::<T>();
-        let mut ptr = self.try_alloc_layout(layout)?.cast::<T>();
+        let ptr = self.try_alloc_layout(layout)?;
 
-        unsafe {
-            inner_writer(ptr, f);
-            Ok(ptr.as_mut())
-        }
+        // SAFETY: `ptr` was allocated with `T`'s layout, so it's correctly aligned and sized for `MaybeUninit<T>`
+        // (same layout as `T`). The memory was just allocated, so no other reference aliases it,
+        // and it lives for as long as the returned reference (tied to `&self`).
+        // `MaybeUninit<T>` has no validity invariant, so `&mut` to this uninitialized memory is sound.
+        let slot = unsafe { ptr.cast::<MaybeUninit<T>>().as_mut() };
+        Ok(inner_writer(slot, f))
     }
 
     /// `Copy` a slice into this `Arena` and return an exclusive reference to the copy.

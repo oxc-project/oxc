@@ -8,6 +8,7 @@ pub fn print_schema_json() {
 }
 
 #[test]
+#[expect(clippy::disallowed_methods)]
 fn test_schema_json() {
     use project_root::get_project_root;
     use std::fs;
@@ -16,8 +17,8 @@ fn test_schema_json() {
     let json = generate_schema_json::<Oxfmtrc>();
     let existing_json = fs::read_to_string(&path).unwrap_or_default();
     assert_eq!(
-        existing_json.trim(),
-        json.trim(),
+        existing_json.trim().replace("\r\n", "\n"),
+        json.trim().replace("\r\n", "\n"),
         "The generated schema JSON does not match the existing one. Run `just formatter-schema-json` to update it.",
     );
 }
@@ -37,5 +38,9 @@ pub fn print_schema_markdown() {
 
 fn generate_schema_markdown() -> String {
     let root_schema = schema_for!(Oxfmtrc);
-    Renderer::new(root_schema).render()
+    let mut renderer = Renderer::new(root_schema);
+    // `overrides[n].options` accepts the same options as the top-level,
+    // so skip expanding them to avoid duplicating every option (and exceeding h6).
+    renderer.with_property_filters(vec!["overrides[n].options"]);
+    renderer.render()
 }

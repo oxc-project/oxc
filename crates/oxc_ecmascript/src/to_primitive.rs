@@ -1,9 +1,6 @@
 use oxc_ast::ast::*;
 
-use crate::{
-    GlobalContext,
-    constant_evaluation::{DetermineValueType, ValueType},
-};
+use crate::{DetermineValueType, GlobalContext, ValueType};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ToPrimitiveResult {
@@ -64,6 +61,10 @@ impl<'a> ToPrimitive<'a> for Expression<'a> {
                     Expression::RegExpLiteral(_) | Expression::ArrayExpression(_) => {
                         ToPrimitiveResult::String
                     }
+                    Expression::SequenceExpression(e) => e
+                        .expressions
+                        .last()
+                        .map_or(ToPrimitiveResult::Undetermined, |e| e.to_primitive(ctx)),
                     // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
                     // ToPrimitive for an object returns `"[object Object]"`
                     Expression::ObjectExpression(obj) => {
@@ -89,12 +90,10 @@ pub fn maybe_object_with_to_primitive_related_properties_overridden(
                 matches!(id.name.as_str(), "toString" | "valueOf")
             }
             PropertyKey::PrivateIdentifier(_) => false,
-            PropertyKey::StringLiteral(str) => {
-                matches!(str.value.as_str(), "toString" | "valueOf")
+            PropertyKey::StringLiteral(str) => str.value == "toString" || str.value == "valueOf",
+            PropertyKey::TemplateLiteral(temp) => {
+                temp.single_quasi().is_some_and(|val| val == "toString" || val == "valueOf")
             }
-            PropertyKey::TemplateLiteral(temp) => temp
-                .single_quasi()
-                .is_some_and(|val| matches!(val.as_str(), "toString" | "valueOf")),
             _ => true,
         },
         ObjectPropertyKind::SpreadProperty(e) => match &e.argument {

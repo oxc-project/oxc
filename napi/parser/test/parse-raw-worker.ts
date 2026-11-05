@@ -240,10 +240,10 @@ async function runTsCase(
         });
 
         if (
-          errors.length > 0 &&
-          program.start === 0 &&
-          program.end === 0 &&
-          program.body.length === 0
+          errors.length > 0
+          && program.start === 0
+          && program.end === 0
+          && program.body.length === 0
         ) {
           // Fatal error
           continue;
@@ -337,8 +337,8 @@ function testRangeParent(
     experimentalParent: true,
   });
 
-  let parent: any = null;
-  function walk(node: null | Node[] | Node): void {
+  let parent: Node | null = null;
+  function walk(node: null | Node | Node[]): void {
     if (node === null || typeof node !== "object") return;
 
     if (Array.isArray(node)) {
@@ -369,15 +369,15 @@ function testRangeParent(
     for (const key in node) {
       if (!Object.hasOwn(node, key)) continue;
       if (
-        key === "type" ||
-        key === "start" ||
-        key === "end" ||
-        key === "range" ||
-        key === "parent"
+        key === "type"
+        || key === "start"
+        || key === "end"
+        || key === "range"
+        || key === "parent"
       ) {
         continue;
       }
-      walk(node[key]);
+      walk(node[key as keyof Node] as Node | Node[]);
     }
 
     if (isNode) parent = previousParent;

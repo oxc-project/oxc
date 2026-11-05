@@ -1,0 +1,116 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+single-paragraph:
+  aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb
+  ccccccccccccccccccccccccccc ddddddddddddddddddddddddddd
+paragraphs:
+  aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb
+  ccccccccccccccccccccccccccc ddddddddddddddddddddddddddd
+
+  second paragraph
+? a
+  true
+: null d
+? keep
+
+  paragraph key
+: explicit stays
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+single-paragraph: aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb
+  ccccccccccccccccccccccccccc ddddddddddddddddddddddddddd
+paragraphs: aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb
+  ccccccccccccccccccccccccccc ddddddddddddddddddddddddddd
+
+  second paragraph
+? a
+  true
+: null d
+? keep
+
+  paragraph key
+: explicit stays
+
+-------------------
+{ printWidth: 100 }
+-------------------
+single-paragraph: aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb
+  ccccccccccccccccccccccccccc ddddddddddddddddddddddddddd
+paragraphs: aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb
+  ccccccccccccccccccccccccccc ddddddddddddddddddddddddddd
+
+  second paragraph
+? a
+  true
+: null d
+? keep
+
+  paragraph key
+: explicit stays
+
+---------------------------------------
+{ printWidth: 80, proseWrap: "always" }
+---------------------------------------
+single-paragraph:
+  aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb
+  ccccccccccccccccccccccccccc ddddddddddddddddddddddddddd
+paragraphs: aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb
+  ccccccccccccccccccccccccccc ddddddddddddddddddddddddddd
+
+  second paragraph
+a true: null d
+? keep
+
+  paragraph key
+: explicit stays
+
+----------------------------------------
+{ printWidth: 100, proseWrap: "always" }
+----------------------------------------
+single-paragraph:
+  aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb ccccccccccccccccccccccccccc
+  ddddddddddddddddddddddddddd
+paragraphs: aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb ccccccccccccccccccccccccccc
+  ddddddddddddddddddddddddddd
+
+  second paragraph
+a true: null d
+? keep
+
+  paragraph key
+: explicit stays
+
+--------------------------------------
+{ printWidth: 80, proseWrap: "never" }
+--------------------------------------
+single-paragraph: aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb ccccccccccccccccccccccccccc ddddddddddddddddddddddddddd
+paragraphs:
+  aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb ccccccccccccccccccccccccccc ddddddddddddddddddddddddddd
+
+  second paragraph
+a true: null d
+? keep
+
+  paragraph key
+: explicit stays
+
+---------------------------------------
+{ printWidth: 100, proseWrap: "never" }
+---------------------------------------
+single-paragraph: aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb ccccccccccccccccccccccccccc ddddddddddddddddddddddddddd
+paragraphs:
+  aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb ccccccccccccccccccccccccccc ddddddddddddddddddddddddddd
+
+  second paragraph
+a true: null d
+? keep
+
+  paragraph key
+: explicit stays
+
+===================== End =====================

@@ -6,12 +6,14 @@ use std::{
     sync::{Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak},
 };
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_semantic::Semantic;
 use oxc_span::Span;
 use oxc_str::CompactStr;
 pub use oxc_syntax::module_record::RequestedModule;
+
+type SortedLoadedModules = Arc<[(CompactStr, Weak<ModuleRecord>)]>;
 
 /// ESM Module Record
 ///
@@ -50,6 +52,8 @@ pub struct ModuleRecord {
     ///
     /// Use [ModuleRecord::get_loaded_module] to get a `ModuleRecord`.
     loaded_modules: RwLock<FxHashMap<CompactStr, Weak<ModuleRecord>>>,
+
+    sorted_loaded_modules: RwLock<Option<SortedLoadedModules>>,
 
     /// `[[ImportEntries]]`
     ///
@@ -105,6 +109,7 @@ impl fmt::Debug for ModuleRecord {
             .field("resolved_absolute_path", &self.resolved_absolute_path)
             .field("requested_modules", &self.requested_modules)
             .field("loaded_modules", &loaded_modules)
+            .field("sorted_loaded_modules", &self.sorted_loaded_modules)
             .field("import_entries", &self.import_entries)
             .field("local_export_entries", &self.local_export_entries)
             .field("indirect_export_entries", &self.indirect_export_entries)
@@ -518,13 +523,43 @@ impl ModuleRecord {
         self.loaded_modules.read().unwrap()
     }
 
+    /// Returns a cached snapshot of loaded modules sorted by specifier.
+    ///
+    /// Stable ordering makes graph walks deterministic despite parallel insertion into the map.
+    /// Existing snapshots remain valid after changes through [`Self::write_loaded_modules`].
+    ///
     /// # Panics
     ///
-    /// * If the RwLock is poisoned (which only happens if a thread panicked while holding the lock).
+    /// * If either RwLock is poisoned.
+    pub(crate) fn sorted_loaded_modules(&self) -> SortedLoadedModules {
+        if let Some(sorted) = self.sorted_loaded_modules.read().unwrap().as_ref() {
+            return Arc::clone(sorted);
+        }
+
+        // Keep the map locked until publication, using the same lock order as the writer.
+        let loaded_modules = self.loaded_modules();
+        let mut sorted = self.sorted_loaded_modules.write().unwrap();
+        Arc::clone(sorted.get_or_insert_with(|| {
+            let mut entries: Vec<_> = loaded_modules
+                .iter()
+                .map(|(key, module)| (key.clone(), Weak::clone(module)))
+                .collect();
+            entries.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+            entries.into()
+        }))
+    }
+
+    /// Invalidates the sorted snapshot before granting write access.
+    ///
+    /// # Panics
+    ///
+    /// * If either RwLock is poisoned.
     pub fn write_loaded_modules(
         &self,
     ) -> RwLockWriteGuard<'_, FxHashMap<CompactStr, Weak<ModuleRecord>>> {
-        self.loaded_modules.write().unwrap()
+        let loaded_modules = self.loaded_modules.write().unwrap();
+        *self.sorted_loaded_modules.write().unwrap() = None;
+        loaded_modules
     }
 
     /// Get a loaded module by upgrading the weak reference to an Arc.
@@ -545,6 +580,15 @@ impl ModuleRecord {
         self.exported_bindings_from_star_export.get_or_init(|| {
             let mut exported_bindings_from_star_export: FxHashMap<PathBuf, Vec<CompactStr>> =
                 FxHashMap::default();
+            // Walk the `export *` graph with an explicit visited set instead of recursing through
+            // each remote module's own memoized `exported_bindings_from_star_export()`. The
+            // loaded-module graph can be cyclic (e.g. `a` does `export * from './b'` and `b` does
+            // `export * from './a'`), and recursing through the memoized accessor would re-enter
+            // *this* `OnceLock` while it is still initializing — which `std`'s `OnceLock` forbids
+            // (it panics, or deadlocks). Seed `visited` with our own path so a back edge to this
+            // module is skipped.
+            let mut visited = FxHashSet::default();
+            visited.insert(self.resolved_absolute_path.clone());
             for export_entry in &self.star_export_entries {
                 let Some(module_request) = &export_entry.module_request else {
                     continue;
@@ -553,16 +597,11 @@ impl ModuleRecord {
                 else {
                     continue;
                 };
-                // Append both remote `bindings` and `exported_bindings_from_star_export`
-                let remote_exported_bindings_from_star_export = remote_module_record
-                    .exported_bindings_from_star_export()
-                    .values()
-                    .flat_map(Clone::clone);
-                let remote_bindings = remote_module_record
-                    .exported_bindings
-                    .keys()
-                    .cloned()
-                    .chain(remote_exported_bindings_from_star_export);
+                // Append the remote's own `bindings` plus its transitive star re-exports.
+                let mut remote_bindings: Vec<CompactStr> =
+                    remote_module_record.exported_bindings.keys().cloned().collect();
+                remote_module_record
+                    .collect_star_exported_bindings(&mut visited, &mut remote_bindings);
                 exported_bindings_from_star_export
                     .entry(remote_module_record.resolved_absolute_path.clone())
                     .or_default()
@@ -570,5 +609,29 @@ impl ModuleRecord {
             }
             exported_bindings_from_star_export
         })
+    }
+
+    /// Collect into `out` every binding name reachable through `self`'s `export *` chain, reading
+    /// each module's entries directly (not via the memoized accessor) so the walk stays safe on a
+    /// cyclic module graph. `visited` is keyed by resolved absolute path; a module already in it
+    /// is skipped, breaking cycles.
+    fn collect_star_exported_bindings(
+        &self,
+        visited: &mut FxHashSet<PathBuf>,
+        out: &mut Vec<CompactStr>,
+    ) {
+        for export_entry in &self.star_export_entries {
+            let Some(module_request) = &export_entry.module_request else {
+                continue;
+            };
+            let Some(remote_module_record) = self.get_loaded_module(module_request.name()) else {
+                continue;
+            };
+            if !visited.insert(remote_module_record.resolved_absolute_path.clone()) {
+                continue;
+            }
+            out.extend(remote_module_record.exported_bindings.keys().cloned());
+            remote_module_record.collect_star_exported_bindings(visited, out);
+        }
     }
 }

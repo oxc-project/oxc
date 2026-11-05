@@ -186,6 +186,12 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────
    ╰────
 
+  ⚠ unicorn(new-for-builtins): Use `new Float16Array()` instead of `Float16Array()`
+   ╭─[new_for_builtins.tsx:1:13]
+ 1 │ const foo = Float16Array()
+   ·             ──────────────
+   ╰────
+
   ⚠ unicorn(new-for-builtins): Use `new Float32Array()` instead of `Float32Array()`
    ╭─[new_for_builtins.tsx:1:13]
  1 │ const foo = Float32Array()
@@ -340,31 +346,47 @@ source: crates/oxc_linter/src/tester.rs
  19 │             }
     ╰────
 
-  ⚠ unicorn(new-for-builtins): Use `new Date()` instead of `Date()`
+  ⚠ unicorn(new-for-builtins): Use `new Map()` instead of `Map()`
+   ╭─[new_for_builtins.tsx:2:23]
+ 1 │ function foo() {
+ 2 │                 return(globalThis).Map()
+   ·                       ──────────────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(new-for-builtins): Use `String(new Date())` instead of `Date()`
    ╭─[new_for_builtins.tsx:1:13]
  1 │ const foo = Date();
    ·             ──────
    ╰────
 
-  ⚠ unicorn(new-for-builtins): Use `new Date()` instead of `Date()`
+  ⚠ unicorn(new-for-builtins): Use `String(new Date())` instead of `Date()`
    ╭─[new_for_builtins.tsx:1:13]
  1 │ const foo = globalThis.Date();
    ·             ─────────────────
    ╰────
 
-  ⚠ unicorn(new-for-builtins): Use `new Date()` instead of `Date()`
+  ⚠ unicorn(new-for-builtins): Use `String(new Date())` instead of `Date()`
+   ╭─[new_for_builtins.tsx:2:23]
+ 1 │ function foo() {
+ 2 │                 return(globalThis).Date();
+   ·                       ───────────────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(new-for-builtins): Use `String(new Date())` instead of `Date()`
    ╭─[new_for_builtins.tsx:1:13]
  1 │ const foo = Date(/*comment*/);
    ·             ─────────────────
    ╰────
 
-  ⚠ unicorn(new-for-builtins): Use `new Date()` instead of `Date()`
+  ⚠ unicorn(new-for-builtins): Use `String(new Date())` instead of `Date()`
    ╭─[new_for_builtins.tsx:1:13]
  1 │ const foo = globalThis/*comment*/.Date();
    ·             ────────────────────────────
    ╰────
 
-  ⚠ unicorn(new-for-builtins): Use `new Date()` instead of `Date()`
+  ⚠ unicorn(new-for-builtins): Use `String(new Date())` instead of `Date()`
    ╭─[new_for_builtins.tsx:1:13]
  1 │ const foo = Date(bar);
    ·             ─────────

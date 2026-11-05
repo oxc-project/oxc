@@ -5,7 +5,10 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{TSMappedType, TSSignature, TSType, TSTypeName},
+    ast::{
+        TSMappedType, TSMappedTypeModifierOperator, TSSignature, TSType, TSTypeName,
+        TSTypeOperatorOperator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -115,7 +118,7 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentIndexedObjectStyle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -178,9 +181,8 @@ impl Rule for ConsistentIndexedObjectStyle {
                                 return fixer.noop();
                             }
 
-                            let key_type = sig.parameters.first().map_or("string", |p| {
-                                fixer.source_range(p.type_annotation.type_annotation.span())
-                            });
+                            let key_type = fixer
+                                .source_range(sig.parameter.type_annotation.type_annotation.span());
                             let value_type =
                                 fixer.source_range(sig.type_annotation.type_annotation.span());
                             let type_params = inf
@@ -294,9 +296,8 @@ impl Rule for ConsistentIndexedObjectStyle {
                             sig.span,
                         ),
                         |fixer| {
-                            let key_type = sig.parameters.first().map_or("string", |p| {
-                                fixer.source_range(p.type_annotation.type_annotation.span())
-                            });
+                            let key_type = fixer
+                                .source_range(sig.parameter.type_annotation.type_annotation.span());
                             let value_type =
                                 fixer.source_range(sig.type_annotation.type_annotation.span());
 
@@ -350,13 +351,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                         mapped.span,
                     ),
                     |fixer| {
-                        let unwrapped_constraint = {
-                            let mut current = constraint;
-                            while let TSType::TSParenthesizedType(p) = current {
-                                current = &p.type_annotation;
-                            }
-                            current
-                        };
+                        let unwrapped_constraint = constraint.without_parenthesized();
                         let key_type = fixer.source_range(unwrapped_constraint.span());
                         let value_type = mapped
                             .type_annotation
@@ -367,13 +362,13 @@ impl Rule for ConsistentIndexedObjectStyle {
                         let is_optional = mapped.optional.is_some_and(|o| {
                             matches!(
                                 o,
-                                oxc_ast::ast::TSMappedTypeModifierOperator::True
-                                    | oxc_ast::ast::TSMappedTypeModifierOperator::Plus
+                                TSMappedTypeModifierOperator::True
+                                    | TSMappedTypeModifierOperator::Plus
                             )
                         });
-                        let is_required = mapped.optional.is_some_and(|o| {
-                            matches!(o, oxc_ast::ast::TSMappedTypeModifierOperator::Minus)
-                        });
+                        let is_required = mapped
+                            .optional
+                            .is_some_and(|o| matches!(o, TSMappedTypeModifierOperator::Minus));
 
                         let mut record = format!("Record<{key_type}, {value_type}>");
                         if is_required {
@@ -418,10 +413,44 @@ impl Rule for ConsistentIndexedObjectStyle {
                             tref.span,
                         ),
                         |fixer| {
-                            let key = fixer.source_range(key_span);
-                            let params_span = Span::new(key_span.end + 1, tref.span.end - 1);
-                            let params = fixer.source_range(params_span).trim();
-                            let content = format!("{{ [key: {key}]: {params} }}");
+                            // ```ts
+                            // type t = Record</* leading */ string /* trailing */, /* leading */ V /* trailing */>;
+                            // //             ┬                                   ┬                               ┬
+                            // //             │                                   │                               ╰ params.span().end
+                            // //             │                                   ╰ first_type_arg_comma_start
+                            // //             ╰ opening_angle_bracket_start
+                            // ```
+                            let opening_angle_bracket_start = {
+                                let type_name_end = tref.type_name.span().end;
+                                let first_param_start = key_span.start;
+                                ctx.find_next_token_within(type_name_end, first_param_start, "<")
+                                    .map(|offset| type_name_end + offset)
+                            };
+                            let first_type_arg_comma_start = {
+                                let first_param_end = key_span.end;
+                                let second_param_start = params.params[1].span().start;
+                                ctx.find_next_token_within(first_param_end, second_param_start, ",")
+                                    .map(|offset| first_param_end + offset)
+                            };
+
+                            let (
+                                Some(opening_angle_bracket_start),
+                                Some(first_type_arg_comma_start),
+                            ) = (opening_angle_bracket_start, first_type_arg_comma_start)
+                            else {
+                                return fixer.noop();
+                            };
+
+                            let key_span = Span::new(
+                                opening_angle_bracket_start + 1,
+                                first_type_arg_comma_start,
+                            );
+                            let value_span =
+                                Span::new(first_type_arg_comma_start + 1, params.span().end - 1);
+
+                            let key = fixer.source_range(key_span).trim();
+                            let value = fixer.source_range(value_span).trim();
+                            let content = format!("{{ [key: {key}]: {value} }}");
                             fixer.replace(tref.span, content)
                         },
                     );
@@ -448,7 +477,7 @@ fn contains_convertible_index_signature(r#type: &TSType) -> bool {
 
 fn is_bare_keyof(r#type: &TSType) -> bool {
     matches!(r#type, TSType::TSTypeOperatorType(op)
-        if matches!(op.operator, oxc_ast::ast::TSTypeOperatorOperator::Keyof))
+        if matches!(op.operator, TSTypeOperatorOperator::Keyof))
 }
 
 fn mapped_type_value_references_key(
@@ -968,6 +997,9 @@ fn test() {
         ("function foo(): { readonly [key: string]: any } {}", None),
         ("type Foo = Record<string, any>;", Some(serde_json::json!(["index-signature"]))),
         ("type Foo<T> = Record<string, T>;", Some(serde_json::json!(["index-signature"]))),
+        ("type Foo = Record<string /* c */, Bar>;", Some(serde_json::json!(["index-signature"]))),
+        ("type Foo = Record<string, /* c */ Bar>;", Some(serde_json::json!(["index-signature"]))),
+        ("type Foo = Record<string, Bar /* c */>;", Some(serde_json::json!(["index-signature"]))),
         ("type Foo = { [k: string]: A.Foo };", None),
         ("type Foo = { [key: string]: AnotherFoo };", None),
         ("type Foo = { [key: string]: { [key: string]: Foo } };", None),
@@ -1261,6 +1293,14 @@ fn test() {
 ("function foo(): { readonly [key: string]: any } {}", "function foo(): Readonly<Record<string, any>> {}", None),
 ("type Foo = Record<string, any>;", "type Foo = { [key: string]: any };", Some(serde_json::json!(["index-signature"]))),
 ("type Foo<T> = Record<string, T>;", "type Foo<T> = { [key: string]: T };", Some(serde_json::json!(["index-signature"]))),
+// trivia before the comma must not leak a stray `,` into the value type
+("type Foo = Record<string , any>;", "type Foo = { [key: string]: any };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<number , () => void>;", "type Foo = { [key: number]: () => void };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<string /* c */, Bar>;", "type Foo = { [key: string /* c */]: Bar };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<string, /* c */ Bar>;", "type Foo = { [key: string]: /* c */ Bar };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<string, Bar /* c */>;", "type Foo = { [key: string]: Bar /* c */ };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<\n// line comment\nstring, Bar /* c */>;", "type Foo = { [key: // line comment\nstring]: Bar /* c */ };", Some(serde_json::json!(["index-signature"]))),
+("type Foo = Record<string, Map<string, number>>;", "type Foo = { [key: string]: Map<string, number> };", Some(serde_json::json!(["index-signature"]))),
 ("type Foo = { [k: string]: A.Foo };", "type Foo = Record<string, A.Foo>;", None),
 ("type Foo = { [key: string]: AnotherFoo };", "type Foo = Record<string, AnotherFoo>;", None),
 ("type Foo = { [key: string]: { [key: string]: Foo } };", "type Foo = { [key: string]: Record<string, Foo> };", None),

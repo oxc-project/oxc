@@ -1,0 +1,75 @@
+use oxc_ast::AstKind;
+use oxc_semantic::AstNode;
+
+use crate::{
+    context::LintContext,
+    utils::{
+        JestGeneralFnKind, ParsedGeneralJestFnCall, PossibleJestNode, parse_general_jest_fn_call,
+        report_missing_padding_before_jest_block,
+    },
+};
+
+pub const DOCUMENTATION: &str = r"### What it does
+
+This rule enforces a line of padding before and after 1 or more
+`test`/`it` statements.
+
+### Why is this bad?
+
+Inconsistent formatting of code can make the code more difficult to read
+and follow. This rule helps ensure that test blocks are visually
+separated from the rest of the code, making them easier to identify while
+looking through test files.
+
+### Examples
+
+Examples of **incorrect** code for this rule:
+```js
+const thing = 123;
+test('foo', () => {});
+test('bar', () => {});
+```
+
+```js
+const thing = 123;
+it('foo', () => {});
+it('bar', () => {});
+```
+
+Examples of **correct** code for this rule:
+```js
+const thing = 123;
+
+test('foo', () => {});
+
+test('bar', () => {});
+```
+
+```js
+const thing = 123;
+
+it('foo', () => {});
+
+it('bar', () => {});
+```
+";
+
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return;
+    };
+    let Some(jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx) else {
+        return;
+    };
+    let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, &jest_node, ctx) else {
+        return;
+    };
+    let ParsedGeneralJestFnCall { kind, name, .. } = &jest_fn_call;
+    let Some(kind) = kind.to_general() else {
+        return;
+    };
+    if kind != JestGeneralFnKind::Test {
+        return;
+    }
+    report_missing_padding_before_jest_block(node, ctx, name);
+}

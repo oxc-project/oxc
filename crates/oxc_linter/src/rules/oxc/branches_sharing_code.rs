@@ -1,14 +1,16 @@
 // Inspired by https://github.com/rust-lang/rust-clippy/blob/95f5a00d8628fba223c802251af3c42547927c5a/clippy_lints/src/ifs/branches_sharing_code.rs
 use oxc_ast::{
     AstKind,
-    ast::{Expression, IdentifierReference, IfStatement, Statement},
+    ast::{IdentifierReference, IfStatement, Statement},
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, SymbolId};
 use oxc_span::{ContentEq, GetSpan, Span};
 use rustc_hash::FxHashSet;
+use smallvec::SmallVec;
 
 use crate::{AstNode, ast_util::get_preceding_indent_str, context::LintContext, rule::Rule};
 
@@ -100,11 +102,19 @@ impl Rule for BranchesSharingCode {
             return;
         };
 
-        let (conditions, bodies) = extract_if_sequence(if_stmt);
-
-        if bodies.len() < 2 || bodies.len() == conditions.len() {
+        // Analyze the entire chain from its root instead of reporting on an `else if` suffix.
+        if let AstKind::IfStatement(parent_if) = ctx.nodes().parent_kind(node.id())
+            && parent_if
+                .alternate
+                .as_ref()
+                .is_some_and(|alternate| alternate.span() == if_stmt.span)
+        {
             return;
         }
+
+        let Some(bodies) = extract_if_sequence(if_stmt) else {
+            return;
+        };
 
         let (start_eq, end_eq) = scan_blocks_for_eq(&bodies);
 
@@ -123,11 +133,9 @@ impl Rule for BranchesSharingCode {
             if start == 1
                 && let Some(indent) = get_preceding_indent_str(ctx.source_text(), if_stmt.span)
             {
-                let delete_spans = bodies
-                    .iter()
-                    .map(|body| get_duplicated_delete_span(start, body, false))
-                    .collect::<Vec<_>>();
-                let moved_code = ctx.source_range(spans[0]).to_string();
+                let delete_spans =
+                    bodies.iter().map(|body| get_duplicated_delete_span(start, body, false));
+                let moved_code = ctx.source_range(spans[0]);
                 ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                     let fixer = fixer.for_multifix();
                     let mut fix = fixer.new_fix_with_capacity(spans.len() + 1);
@@ -152,11 +160,9 @@ impl Rule for BranchesSharingCode {
                 && let Some(indent) = get_preceding_indent_str(ctx.source_text(), if_stmt.span)
                 && !duplicated_end_references_branch_locals(end, &bodies, ctx)
             {
-                let delete_spans = bodies
-                    .iter()
-                    .map(|body| get_duplicated_delete_span(end, body, true))
-                    .collect::<Vec<_>>();
-                let moved_code = ctx.source_range(spans[0]).to_string();
+                let delete_spans =
+                    bodies.iter().map(|body| get_duplicated_delete_span(end, body, true));
+                let moved_code = ctx.source_range(spans[0]);
                 ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                     let fixer = fixer.for_multifix();
                     let mut fix = fixer.new_fix_with_capacity(spans.len() + 1);
@@ -253,7 +259,9 @@ fn collect_lexical_declaration_symbols(stmt: &Statement, symbols: &mut FxHashSet
     if let Statement::VariableDeclaration(decl) = stmt
         && decl.kind.is_lexical()
     {
-        symbols.extend(decl.declarations.iter().flat_map(|decl| decl.id.get_symbol_ids()));
+        decl.bound_names(&mut |ident| {
+            symbols.insert(ident.symbol_id());
+        });
     }
 }
 
@@ -332,30 +340,23 @@ fn scan_blocks_for_eq<'a>(bodies: &[&'a Statement<'a>]) -> (Option<usize>, Optio
 
 fn extract_if_sequence<'a>(
     if_stmt: &'a IfStatement<'a>,
-) -> (Vec<&'a Expression<'a>>, Vec<&'a Statement<'a>>) {
-    let mut conditions = Vec::new();
-    let mut bodies = Vec::new();
+) -> Option<SmallVec<[&'a Statement<'a>; 2]>> {
+    let mut bodies = SmallVec::new();
 
-    let mut current_if = Some(if_stmt);
-    while let Some(if_node) = current_if {
-        conditions.push(&if_node.test);
-        bodies.push(&if_node.consequent);
+    let mut current_if = if_stmt;
+    loop {
+        bodies.push(&current_if.consequent);
 
-        match &if_node.alternate {
-            Some(Statement::IfStatement(else_if)) => {
-                current_if = Some(else_if);
+        match current_if.alternate.as_ref()? {
+            Statement::IfStatement(else_if) => {
+                current_if = else_if;
             }
-            Some(else_stmt) => {
+            else_stmt => {
                 bodies.push(else_stmt);
-                current_if = None;
-            }
-            None => {
-                current_if = None;
+                return Some(bodies);
             }
         }
     }
-
-    (conditions, bodies)
 }
 
 #[test]
@@ -404,6 +405,18 @@ fn test() {
             if (maybe2) { console.log("not maybe and maybe2"); }
         }
         "#,
+        r"
+        if (someCondition) {
+            y = somethingElse;
+            x = '1';
+        } else if (someOtherCondition) {
+            y = somethingElse;
+            x = 'b';
+        } else {
+            viewId = accountId;
+            x = 'b';
+        }
+        ",
     ];
 
     let fail = vec![

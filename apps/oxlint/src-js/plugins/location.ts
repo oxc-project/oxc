@@ -195,10 +195,10 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
   if (loc !== null && typeof loc === "object") {
     const { line, column } = loc;
     if (
-      typeof line === "number" &&
-      typeof column === "number" &&
-      (line | 0) === line &&
-      (column | 0) === column
+      typeof line === "number"
+      && typeof column === "number"
+      && (line | 0) === line
+      && (column | 0) === column
     ) {
       // Build `lines` and `lineStartIndices` tables if they haven't been already.
       // This also decodes `sourceText` if it wasn't already.
@@ -209,8 +209,8 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
       const linesCount = lineStartIndices.length;
       if (line <= 0 || line > linesCount) {
         throw new RangeError(
-          `Line number out of range (line ${line} requested). ` +
-            `Line numbers should be 1-based, and less than or equal to number of lines in file (${linesCount}).`,
+          `Line number out of range (line ${line} requested). `
+            + `Line numbers should be 1-based, and less than or equal to number of lines in file (${linesCount}).`,
         );
       }
       if (column < 0) throw new RangeError(`Invalid column number (column ${column} requested).`);
@@ -238,8 +238,8 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
       }
 
       throw new RangeError(
-        `Column number out of range (column ${column} requested, ` +
-          `but the length of line ${line} is ${nextLineOffset - lineOffset}).`,
+        `Column number out of range (column ${column} requested, `
+          + `but the length of line ${line} is ${nextLineOffset - lineOffset}).`,
       );
     }
   }
@@ -323,8 +323,7 @@ const LOC_DESCRIPTOR: PropertyDescriptor = {
  */
 export function computeLoc(start: number, end: number): Location {
   // All AST nodes, tokens and comments have `start < end`, with only one exception:
-  // `Program` node can have `start === end` if it has no directives or statements - either 0-length file,
-  // or purely comments and/or whitespace and/or hashbang. But `start > end` is impossible.
+  // `Program` node has `start === end` for a 0-length file. But `start > end` is impossible.
   debugAssert(start <= end, "`start` must be <= `end`");
 
   if (lines.length === 0) initLines();
@@ -418,8 +417,6 @@ export function getNodeByRangeIndex(offset: number): ESTreeNode | null {
   debugAssertIsNonNull(ast);
 
   // If index is outside of `Program`, return `null`
-  // TODO: Once `Program`'s span covers the entire file (as per ESLint v10), `index < ast.start` check can be removed
-  // (or changed to `index < 0` if we want to check for negative indices)
   if (offset < ast.start || offset >= ast.end) return null;
 
   // Search for the node containing the index

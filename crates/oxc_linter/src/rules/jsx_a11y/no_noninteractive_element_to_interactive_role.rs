@@ -75,7 +75,6 @@ pub struct NoNoninteractiveElementToInteractiveRole(
 );
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 struct NoNoninteractiveElementToInteractiveRoleConfig {
     /// A mapping of HTML element names to arrays of ARIA role strings that are
     /// allowed overrides for that element. For example, `{ "ul": ["menu", "tablist"] }`
@@ -141,13 +140,15 @@ declare_oxc_lint!(
     NoNoninteractiveElementToInteractiveRole,
     jsx_a11y,
     correctness,
+    recommended,
     config = NoNoninteractiveElementToInteractiveRoleConfig,
-    version = "1.64.0"
+    version = "1.64.0",
+    short_description = "Disallow using an interactive WAI-ARIA role on a non-interactive HTML element.",
 );
 
 impl Rule for NoNoninteractiveElementToInteractiveRole {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -169,7 +170,9 @@ impl Rule for NoNoninteractiveElementToInteractiveRole {
             return;
         };
 
-        let role = role_value.value.as_str().trim();
+        let Some(role) = role_value.value.as_str().map(str::trim) else {
+            return;
+        };
 
         // Take only the first role token (whitespace-separated).
         let Some(first_role) = role.split_whitespace().next() else {
@@ -183,14 +186,12 @@ impl Rule for NoNoninteractiveElementToInteractiveRole {
             return;
         }
 
-        // Skip if this element-role combination is allowed by config.
         if let Some(allowed) = self.0.allowed_roles.get(element_type.as_ref())
             && allowed.iter().any(|r: &CompactStr| r.as_str() == first_role)
         {
             return;
         }
 
-        // Report if the element is non-interactive AND the role is interactive.
         if is_non_interactive_element(&element_type, jsx_el) && is_interactive_role(first_role) {
             ctx.diagnostic(no_noninteractive_element_to_interactive_role_diagnostic(
                 role_attr.span,
@@ -212,6 +213,12 @@ fn test() {
                 }
             } }
         })
+    }
+
+    fn custom_allowed_roles_config() -> serde_json::Value {
+        serde_json::json!([{
+            "table": ["grid"],
+        }])
     }
 
     // Default config uses recommended allowed roles.
@@ -333,6 +340,7 @@ fn test() {
         (r#"<li role="treeitem" />"#, None, None),
         (r#"<fieldset role="radiogroup" />"#, None, None),
         (r#"<fieldset role="presentation" />"#, None, None),
+        (r#"<table role="grid" />"#, Some(custom_allowed_roles_config()), None),
     ];
 
     let fail = vec![
@@ -419,6 +427,7 @@ fn test() {
         (r#"<thead role="menuitem" />"#, None, None),
         // Custom component mapped via settings to non-interactive element
         (r#"<Article role="button" />"#, None, Some(components_settings())),
+        (r#"<table role="button" />"#, Some(custom_allowed_roles_config()), None),
     ];
 
     // Strict mode tests: recommended allowed overrides become invalid.

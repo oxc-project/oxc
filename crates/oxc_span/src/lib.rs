@@ -4,6 +4,7 @@
 
 mod cmp;
 mod edit_distance;
+mod labeled_span;
 #[cfg(feature = "serialize")]
 mod serialize;
 mod source_type;
@@ -11,7 +12,8 @@ mod span;
 
 pub use cmp::ContentEq;
 pub use edit_distance::{best_match, min_edit_distance};
-use oxc_str::{CompactStr, Ident, Str};
+pub use labeled_span::LabeledSpan;
+use oxc_str::{CompactStr, Ident, JSStr, Str};
 pub use source_type::{
     FileExtension, Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension,
     VALID_EXTENSIONS,
@@ -35,13 +37,20 @@ pub mod __internal {
     // Used by `format_compact_str!` macro defined in `oxc_str`
     pub use compact_str::format_compact;
     // Used by `format_str!` and `format_ident!` macros defined in `oxc_str`
-    pub use oxc_allocator::StringBuilder as ArenaStringBuilder;
+    pub use oxc_allocator::ArenaStringBuilder;
 }
 
 // Additional trait implementations for types re-exported from oxc_str
 use std::ops::Index;
 
 impl ContentEq for Str<'_> {
+    #[inline]
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl ContentEq for JSStr<'_> {
     #[inline]
     fn content_eq(&self, other: &Self) -> bool {
         self == other

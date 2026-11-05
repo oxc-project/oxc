@@ -44,8 +44,32 @@ pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str
 }
 
 pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
-    let s = if has_sep { s.cow_replace('_', "") } else { Cow::Borrowed(s) };
+    if has_sep {
+        return parse_float_with_underscores(s);
+    }
     debug_assert!(!s.contains('_'));
+    s.parse::<f64>().map_err(|_| "invalid float")
+}
+
+#[cold]
+fn parse_float_with_underscores(s: &str) -> Result<f64, &'static str> {
+    // Common numeric literals fit in a small scratch buffer. Keep the heap fallback
+    // for arbitrarily long literals without allocating for every separated literal.
+    const CAPACITY: usize = 64;
+    if s.len() > CAPACITY {
+        return s.cow_replace('_', "").parse::<f64>().map_err(|_| "invalid float");
+    }
+
+    let mut buffer = [0; CAPACITY];
+    let mut len = 0;
+    for byte in s.bytes() {
+        if byte != b'_' {
+            buffer[len] = byte;
+            len += 1;
+        }
+    }
+    // Removing an ASCII character preserves UTF-8.
+    let s = std::str::from_utf8(&buffer[..len]).unwrap();
     s.parse::<f64>().map_err(|_| "invalid float")
 }
 
@@ -69,7 +93,7 @@ fn parse_decimal(s: &str) -> f64 {
     /// `u64::MAX + 1` in decimal is 18446744073709551616 (20 chars).
     const MAX_FAST_DECIMAL_LEN: usize = 19;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     if s.len() > MAX_FAST_DECIMAL_LEN {
         return parse_decimal_slow(s);
     }
@@ -95,7 +119,7 @@ fn parse_decimal_with_underscores(s: &str) -> f64 {
     /// `u64::MAX + 1` in decimal is 18446744073709551616 (20 chars).
     const MAX_FAST_DECIMAL_LEN: usize = 19;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     if s.len() > MAX_FAST_DECIMAL_LEN {
         return parse_decimal_slow(&s.cow_replace('_', ""));
     }
@@ -114,10 +138,6 @@ fn parse_decimal_with_underscores(s: &str) -> f64 {
 #[cold]
 #[inline(never)]
 fn parse_decimal_slow(s: &str) -> f64 {
-    // NB: Cannot use the `mul_add` loop method that `parse_binary_slow` etc use here,
-    // as it produces an imprecise result.
-    // For the others it's fine, presumably because multiply by a power of 2
-    // just increments f64's exponent. But multiplying by 10 is more complex.
     s.parse::<f64>().unwrap()
 }
 
@@ -145,17 +165,16 @@ const fn binary_byte_to_value(b: u8) -> u8 {
 /// single instruction, but many others do not.
 ///
 /// Unfortunately, this approach has the chance to overflow for excessively
-/// large numbers. In such cases, we fall back to mul_add. Note that right now
-/// we consider leading zeros as part of that length. Right now it doesn't seem
-/// worth it performance-wise to check and strip them. Further experimentation
-/// could be useful.
+/// large numbers. In such cases, we fall back to `parse_nondecimal_slow`.
+/// Leading zeros count toward this length; checking and stripping them may not
+/// be worth the performance cost. Further experimentation could be useful.
 #[expect(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_binary(s: &str) -> f64 {
     /// binary literals longer than this many characters have the chance to
     /// overflow a u64, forcing us to take the slow path.
     const MAX_FAST_BINARY_LEN: usize = 64;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0b") && !s.starts_with("0B"));
 
     if s.len() > MAX_FAST_BINARY_LEN {
@@ -173,12 +192,7 @@ fn parse_binary(s: &str) -> f64 {
 #[cold]
 #[inline(never)]
 fn parse_binary_slow(s: &str) -> f64 {
-    let mut result = 0_f64;
-    for &b in s.as_bytes() {
-        let value = f64::from(binary_byte_to_value(b));
-        result = result.mul_add(2.0, value);
-    }
-    result
+    parse_nondecimal_slow::<1>(s.bytes().map(binary_byte_to_value))
 }
 
 #[expect(clippy::cast_precision_loss, clippy::cast_lossless)]
@@ -187,7 +201,7 @@ fn parse_binary_with_underscores(s: &str) -> f64 {
     /// overflow a u64, forcing us to take the slow path.
     const MAX_FAST_BINARY_LEN: usize = 64;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0b") && !s.starts_with("0B"));
 
     if s.len() > MAX_FAST_BINARY_LEN {
@@ -207,14 +221,7 @@ fn parse_binary_with_underscores(s: &str) -> f64 {
 #[cold]
 #[inline(never)]
 fn parse_binary_with_underscores_slow(s: &str) -> f64 {
-    let mut result = 0_f64;
-    for &b in s.as_bytes() {
-        if b != b'_' {
-            let value = f64::from(binary_byte_to_value(b));
-            result = result.mul_add(2.0, value);
-        }
-    }
-    result
+    parse_nondecimal_slow::<1>(s.bytes().filter(|&b| b != b'_').map(binary_byte_to_value))
 }
 
 // ==================================== OCTAL ====================================
@@ -236,7 +243,7 @@ fn parse_octal(s: &str) -> f64 {
     /// Numeric strings longer than this have the chance to overflow u64.
     const MAX_FAST_OCTAL_LEN: usize = 21;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0o") && !s.starts_with("0O"));
     if s.len() > MAX_FAST_OCTAL_LEN {
         return parse_octal_slow(s);
@@ -254,12 +261,7 @@ fn parse_octal(s: &str) -> f64 {
 #[cold]
 #[inline(never)]
 fn parse_octal_slow(s: &str) -> f64 {
-    let mut result = 0_f64;
-    for &b in s.as_bytes() {
-        let value = f64::from(octal_byte_to_value(b));
-        result = result.mul_add(8.0, value);
-    }
-    result
+    parse_nondecimal_slow::<3>(s.bytes().map(octal_byte_to_value))
 }
 
 #[expect(clippy::cast_precision_loss, clippy::cast_lossless)]
@@ -267,7 +269,7 @@ fn parse_octal_with_underscores(s: &str) -> f64 {
     /// Numeric strings longer than this have the chance to overflow u64.
     const MAX_FAST_OCTAL_LEN: usize = 21;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0o") && !s.starts_with("0O"));
     if s.len() > MAX_FAST_OCTAL_LEN {
         return parse_octal_with_underscores_slow(s);
@@ -287,14 +289,7 @@ fn parse_octal_with_underscores(s: &str) -> f64 {
 #[cold]
 #[inline(never)]
 fn parse_octal_with_underscores_slow(s: &str) -> f64 {
-    let mut result = 0_f64;
-    for &b in s.as_bytes() {
-        if b != b'_' {
-            let value = f64::from(octal_byte_to_value(b));
-            result = result.mul_add(8.0, value);
-        }
-    }
-    result
+    parse_nondecimal_slow::<3>(s.bytes().filter(|&b| b != b'_').map(octal_byte_to_value))
 }
 
 // ==================================== HEX ====================================
@@ -327,7 +322,7 @@ fn parse_hex(s: &str) -> f64 {
     /// Hex strings longer than this have the chance to overflow u64.
     const MAX_FAST_HEX_LEN: usize = 16;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0x"));
 
     if s.len() > MAX_FAST_HEX_LEN {
@@ -346,12 +341,7 @@ fn parse_hex(s: &str) -> f64 {
 #[cold]
 #[inline(never)]
 fn parse_hex_slow(s: &str) -> f64 {
-    let mut result = 0_f64;
-    for &b in s.as_bytes() {
-        let value = f64::from(hex_byte_to_value(b));
-        result = result.mul_add(16.0, value);
-    }
-    result
+    parse_nondecimal_slow::<4>(s.bytes().map(hex_byte_to_value))
 }
 
 #[expect(clippy::cast_precision_loss, clippy::cast_lossless)]
@@ -359,7 +349,7 @@ fn parse_hex_with_underscores(s: &str) -> f64 {
     /// Hex strings longer than this have the chance to overflow u64.
     const MAX_FAST_HEX_LEN: usize = 16;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0x"));
 
     if s.len() > MAX_FAST_HEX_LEN {
@@ -380,14 +370,35 @@ fn parse_hex_with_underscores(s: &str) -> f64 {
 #[cold]
 #[inline(never)]
 fn parse_hex_with_underscores_slow(s: &str) -> f64 {
-    let mut result = 0_f64;
-    for &b in s.as_bytes() {
-        if b != b'_' {
-            let value = f64::from(hex_byte_to_value(b));
-            result = result.mul_add(16.0, value);
+    parse_nondecimal_slow::<4>(s.bytes().filter(|&b| b != b'_').map(hex_byte_to_value))
+}
+
+/// Convert power-of-two radix digits with a single rounding to nearest, ties to even.
+#[cold]
+#[expect(clippy::cast_precision_loss)]
+fn parse_nondecimal_slow<const BITS: u32>(digits: impl Iterator<Item = u8>) -> f64 {
+    let mut significand = 0_u64;
+    let mut exponent = 0_u32;
+    let mut sticky = 0_u8;
+    for digit in digits {
+        if significand < (1 << 54) {
+            significand = (significand << BITS) | u64::from(digit);
+        } else {
+            exponent += BITS;
+            if exponent > 1023 {
+                return f64::INFINITY;
+            }
+            sticky |= digit;
         }
     }
-    result
+
+    // Retain at least 55 significant bits: the 53 f64 bits, a rounding bit,
+    // and a sticky bit. Any nonzero discarded digit makes the lowest retained
+    // bit sticky, distinguishing an exact halfway value from one just above it.
+    // The integer cast rounds once; scaling by a power of two is exact unless
+    // the result overflows to infinity.
+    significand |= u64::from(sticky != 0);
+    (significand as f64) * f64::from_bits(u64::from(exponent + 1023) << 52)
 }
 
 // ==================================== BIGINT ====================================
@@ -403,7 +414,7 @@ pub fn parse_big_int<'a>(
 
     let radix = match kind {
         // Skip parsing with `BigInt` - it's already in decimal form, and underscores are removed
-        Kind::Decimal => return Str::from_cow_in(&s, allocator),
+        Kind::Decimal => return Str::from_cow_in(&s, &allocator),
         Kind::Binary => 2,
         Kind::Octal => 8,
         Kind::Hex => 16,
@@ -509,6 +520,104 @@ mod test {
     }
 
     #[test]
+    #[expect(clippy::cast_precision_loss)]
+    fn test_nondecimal_rounding() {
+        let expected = 0x10000000000000801_i128 as f64;
+        assert_eq!(parse_int("0x10000000000000801", Kind::Hex, false), Ok(expected));
+        assert_eq!(parse_int("0x1_0000_0000_0000_0801", Kind::Hex, true), Ok(expected));
+        assert_eq!(
+            parse_int(
+                "0b10000000000000000000000000000000000000000000000000000100000000001",
+                Kind::Binary,
+                false
+            ),
+            Ok(expected)
+        );
+        assert_eq!(
+            parse_int(
+                "0b1_00000000_00000000_00000000_00000000_00000000_00000000_00001000_00000001",
+                Kind::Binary,
+                true
+            ),
+            Ok(expected)
+        );
+        assert_eq!(parse_int("0o2000000000000000004001", Kind::Octal, false), Ok(expected));
+        assert_eq!(parse_int("0o2_000_000_000_000_000_004_001", Kind::Octal, true), Ok(expected));
+    }
+
+    #[test]
+    #[expect(clippy::cast_precision_loss)]
+    fn test_nondecimal_rounding_boundaries() {
+        for bits in 54..128 {
+            let base = 1_u128 << bits;
+            let half_ulp = 1_u128 << (bits - 53);
+            // Both even and odd significands, immediately below, at, and above halfway.
+            for offset in [
+                half_ulp - 1,
+                half_ulp,
+                half_ulp + 1,
+                3 * half_ulp - 1,
+                3 * half_ulp,
+                3 * half_ulp + 1,
+            ] {
+                let value = base + offset;
+                for (digits, prefix, kind) in [
+                    (format!("{value:b}"), "0b", Kind::Binary),
+                    (format!("{value:o}"), "0o", Kind::Octal),
+                    (format!("{value:x}"), "0x", Kind::Hex),
+                    (format!("{value:o}"), "0", Kind::Octal),
+                ] {
+                    for leading in ["", "00000000000000000000"] {
+                        let literal = format!("{prefix}{leading}{digits}");
+                        assert_eq!(parse_int(&literal, kind, false), Ok(value as f64), "{literal}");
+                        if prefix != "0" {
+                            let separated =
+                                digits.chars().map(|c| c.to_string()).collect::<Vec<_>>().join("_");
+                            let literal = format!("{prefix}{leading}{separated}");
+                            assert_eq!(
+                                parse_int(&literal, kind, true),
+                                Ok(value as f64),
+                                "{literal}"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_nondecimal_rounding_extremes() {
+        for (digits, expected) in [
+            // A sticky bit hundreds of digits after the rounding bit.
+            (
+                format!("1{}1{}1", "0".repeat(52), "0".repeat(969)),
+                f64::from_bits(0x7fe0000000000001),
+            ),
+            // Largest finite f64, then immediately below and at the overflow midpoint.
+            (format!("{}{}", "1".repeat(53), "0".repeat(971)), f64::MAX),
+            (format!("{}0{}", "1".repeat(53), "1".repeat(970)), f64::MAX),
+            (format!("{}{}", "1".repeat(54), "0".repeat(970)), f64::INFINITY),
+            (format!("1{}", "0".repeat(1100)), f64::INFINITY),
+            ("0".repeat(1100), 0.0),
+            (format!("{}1", "0".repeat(1100)), 1.0),
+        ] {
+            // Convert the same exact integer to every radix, including separators.
+            let value = BigInt::from_str_radix(&digits, 2).unwrap();
+            for (radix, prefix, kind) in
+                [(2, "0b", Kind::Binary), (8, "0o", Kind::Octal), (16, "0x", Kind::Hex)]
+            {
+                let digits = if radix == 2 { digits.clone() } else { value.to_str_radix(radix) };
+                let literal = format!("{prefix}{}{digits}", "0".repeat(65));
+                assert_eq!(parse_int(&literal, kind, false), Ok(expected), "{literal}");
+                let separated = digits.chars().map(|c| c.to_string()).collect::<Vec<_>>().join("_");
+                let literal = format!("{prefix}{separated}");
+                assert_eq!(parse_int(&literal, kind, true), Ok(expected), "{literal}");
+            }
+        }
+    }
+
+    #[test]
     fn test_large_number_of_leading_zeros() {
         assert_all_ints_eq(
             vec![("000000000000000000000000000000000000000000000000000000001", 1)],
@@ -524,6 +633,26 @@ mod test {
             ("0.000000001", 0.000_000_001),
         ];
         assert_all_floats_eq(cases, false);
+    }
+
+    #[test]
+    fn test_decimal_separators_rounding_and_buffer_boundary() {
+        for (literal, bits) in [
+            ("1.0000000000000001110223024625156540423631668090820312_5", 0x3ff0_0000_0000_0000),
+            ("1.0000000000000001110223024625156540423631668090820312_6", 0x3ff0_0000_0000_0001),
+            ("1.797_693_134_862_315_7e308", 0x7fef_ffff_ffff_ffff),
+            ("1.797_693_134_862_315_9e308", 0x7ff0_0000_0000_0000),
+            ("4.940_656_458_412_465_4e-324", 1),
+            ("2.470_328_229_206_232_7e-324", 0),
+            ("2.470_328_229_206_232_8e-324", 1),
+        ] {
+            assert_eq!(parse_float(literal, true).unwrap().to_bits(), bits, "{literal}");
+        }
+        for len in [63, 64, 65, 128] {
+            let literal = format!("1.5_{}", "0".repeat(len - 4));
+            assert_eq!(parse_float(&literal, true), Ok(1.5), "{literal}");
+        }
+        assert_eq!(parse_float("1_µ.5", true), Err("invalid float"));
     }
 
     #[test]

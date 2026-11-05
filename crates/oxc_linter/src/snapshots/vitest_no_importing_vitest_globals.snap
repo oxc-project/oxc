@@ -12,6 +12,14 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:10]
+ 1 │ import { describe } from '@effect/vitest';
+   ·          ────┬───
+   ·              ╰── Remove this global vitest import
+   ╰────
+  help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
+
+  ⚠ vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
+   ╭─[no_importing_vitest_globals.tsx:1:10]
  1 │ import { describe, it } from 'vitest';
    ·          ────┬───  ─┬
    ·              │      ╰── Remove this global vitest import
@@ -22,6 +30,14 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:10]
  1 │ import { describe, BenchFactory } from 'vitest';
+   ·          ────┬───
+   ·              ╰── Remove this global vitest import
+   ╰────
+  help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
+
+  ⚠ vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
+   ╭─[no_importing_vitest_globals.tsx:1:10]
+ 1 │ import { describe, BenchFactory } from 'vite-plus/test';
    ·          ────┬───
    ·              ╰── Remove this global vitest import
    ╰────
@@ -99,7 +115,23 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:9]
+ 1 │ const { describe } = require('@effect/vitest');
+   ·         ────┬───
+   ·             ╰── Remove this global vitest import
+   ╰────
+  help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
+
+  ⚠ vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
+   ╭─[no_importing_vitest_globals.tsx:1:9]
  1 │ const { describe, BenchFactory } = require('vitest');
+   ·         ────┬───
+   ·             ╰── Remove this global vitest import
+   ╰────
+  help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
+
+  ⚠ vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
+   ╭─[no_importing_vitest_globals.tsx:1:9]
+ 1 │ const { describe, BenchFactory } = require('vite-plus/test');
    ·         ────┬───
    ·             ╰── Remove this global vitest import
    ╰────

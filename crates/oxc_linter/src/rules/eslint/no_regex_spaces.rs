@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression, NewExpression, RegExpLiteral},
@@ -52,6 +52,7 @@ declare_oxc_lint!(
     NoRegexSpaces,
     eslint,
     restriction,
+    recommended,
     fix,
     version = "0.0.18",
     short_description = "Disallow 2+ consecutive spaces in regular expressions.",
@@ -104,7 +105,7 @@ impl NoRegexSpaces {
         find_consecutive_spaces(pattern)
     }
 
-    fn find_expr_to_report(args: &Vec<'_, Argument<'_>>, ctx: &LintContext) -> Option<Span> {
+    fn find_expr_to_report(args: &ArenaVec<'_, Argument<'_>>, ctx: &LintContext) -> Option<Span> {
         if let Some(expr) = args.get(1).and_then(Argument::as_expression)
             && !expr.is_string_literal()
         {
@@ -114,7 +115,7 @@ impl NoRegexSpaces {
         let Some(Argument::StringLiteral(pattern)) = args.first() else {
             return None;
         };
-        if !Self::has_double_space(&pattern.value) {
+        if !pattern.value.contains("  ") {
             return None;
         }
 
@@ -275,6 +276,8 @@ fn test() {
         "var foo = /[[    ]    ]    /v;",
         "var foo = new RegExp('[   ]  ');",
         "var foo = new RegExp('[[    ]    ]    ', 'v');",
+        r"var foo = RegExp('\uD800  bar');",
+        r"var foo = new RegExp('bar  \uDC00');",
     ];
 
     let fix = vec![
@@ -308,6 +311,8 @@ fn test() {
             "var foo = new RegExp('[[    ] {4}]    ', 'v');",
             None,
         ),
+        (r"var foo = RegExp('\uD800  bar');", r"var foo = RegExp('\uD800 {2}bar');", None),
+        (r"var foo = new RegExp('bar  \uDC00');", r"var foo = new RegExp('bar {2}\uDC00');", None),
     ];
 
     Tester::new(NoRegexSpaces::NAME, NoRegexSpaces::PLUGIN, pass, fail)

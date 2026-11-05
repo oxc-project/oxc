@@ -56,6 +56,16 @@ where
         .map_err(D::Error::custom)
 }
 
+pub fn deserialize_regex<'de, D>(deserializer: D) -> Result<Regex, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    let pattern = String::deserialize(deserializer)?;
+    RegexBuilder::new(&pattern).build().map_err(D::Error::custom)
+}
+
 pub fn deserialize_regex_vec<'de, D>(deserializer: D) -> Result<Vec<Regex>, D::Error>
 where
     D: serde::Deserializer<'de>,

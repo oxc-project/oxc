@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(max-nested-calls): Call is nested too deeply. Maximum allowed is 3.
+   ╭─[max_nested_calls.tsx:1:13]
+ 1 │ foo(bar(baz(qux())));
+   ·             ─────
+   ╰────
+  help: Extract intermediate results into named variables to reduce nesting.
+
+  ⚠ unicorn(max-nested-calls): Call is nested too deeply. Maximum allowed is 2.
+   ╭─[max_nested_calls.tsx:1:9]
+ 1 │ foo(bar(baz()));
+   ·         ─────
+   ╰────
+  help: Extract intermediate results into named variables to reduce nesting.
+
+  ⚠ unicorn(max-nested-calls): Call is nested too deeply. Maximum allowed is 3.
+   ╭─[max_nested_calls.tsx:1:25]
+ 1 │ new Foo(new Bar(new Baz(new Qux())));
+   ·                         ─────────
+   ╰────
+  help: Extract intermediate results into named variables to reduce nesting.
+
+  ⚠ unicorn(max-nested-calls): Call is nested too deeply. Maximum allowed is 3.
+   ╭─[max_nested_calls.tsx:1:37]
+ 1 │ await foo(await bar(await baz(await qux())));
+   ·                                     ─────
+   ╰────
+  help: Extract intermediate results into named variables to reduce nesting.
+
+  ⚠ unicorn(max-nested-calls): Call is nested too deeply. Maximum allowed is 3.
+   ╭─[max_nested_calls.tsx:1:19]
+ 1 │ foo?.(bar?.(baz?.(qux?.())));
+   ·                   ───────
+   ╰────
+  help: Extract intermediate results into named variables to reduce nesting.
+
+  ⚠ unicorn(max-nested-calls): Call is nested too deeply. Maximum allowed is 3.
+   ╭─[max_nested_calls.tsx:1:16]
+ 1 │ foo(...bar(baz(qux())));
+   ·                ─────
+   ╰────
+  help: Extract intermediate results into named variables to reduce nesting.
+
+  ⚠ unicorn(max-nested-calls): Call is nested too deeply. Maximum allowed is 3.
+   ╭─[max_nested_calls.tsx:1:25]
+ 1 │ foo(condition ? bar(baz(qux())) : zed());
+   ·                         ─────
+   ╰────
+  help: Extract intermediate results into named variables to reduce nesting.
+
+  ⚠ unicorn(max-nested-calls): Call is nested too deeply. Maximum allowed is 3.
+   ╭─[max_nested_calls.tsx:1:32]
+ 1 │ foo(class {field = bar(baz(qux(zed())));});
+   ·                                ─────
+   ╰────
+  help: Extract intermediate results into named variables to reduce nesting.
+
+  ⚠ unicorn(max-nested-calls): Call is nested too deeply. Maximum allowed is 3.
+   ╭─[max_nested_calls.tsx:1:31]
+ 1 │ <Component value={foo(bar(baz(qux())))} />;
+   ·                               ─────
+   ╰────
+  help: Extract intermediate results into named variables to reduce nesting.
+
+  ⚠ unicorn(max-nested-calls): Call is nested too deeply. Maximum allowed is 3.
+   ╭─[max_nested_calls.tsx:2:44]
+ 1 │ mergeReports(await pMap(
+ 2 │                 await mergeWithFileConfigs(uniq(paths), inputOptions, configFiles),
+   ·                                            ───────────
+ 3 │                 async ({files, options, prettierOptions}) => runEslint(files, buildConfig(options, prettierOptions), {isQuiet: options.quiet}),
+   ╰────
+  help: Extract intermediate results into named variables to reduce nesting.

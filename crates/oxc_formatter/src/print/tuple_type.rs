@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 
 use crate::{
@@ -10,7 +10,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, TSTupleElement<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, TSTupleElement<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_nodes_with_soft_line().entries_with_trailing_separator(
@@ -21,13 +21,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, TSTupleElement<
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTupleType<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSTupleType<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, "[");
 
         let element_types = self.element_types();
         if element_types.is_empty() {
-            write!(f, [format_dangling_comments(self.span).with_block_indent()]);
+            write!(f, [format_dangling_comments(self.span).with_soft_block_indent()]);
         } else {
             write!(f, [group(&soft_block_indent(&element_types))]);
         }

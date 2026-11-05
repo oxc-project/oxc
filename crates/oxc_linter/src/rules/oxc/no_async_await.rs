@@ -42,6 +42,7 @@ declare_oxc_lint!(
     oxc,
     restriction,
     version = "0.4.2",
+    short_description = "Disallows the use of `async`/`await`.",
 );
 
 impl Rule for NoAsyncAwait {
@@ -91,7 +92,9 @@ const ASYNC_LEN: u32 = 5;
 
 fn report_on_async_span(async_span: Span, ctx: &LintContext<'_>) {
     // find the `async` keyword within the span and report on it
-    let Some(async_keyword_offset) = ctx.find_next_token_from(async_span.start, "async") else {
+    let Some(async_keyword_offset) =
+        ctx.find_next_token_within(async_span.start, async_span.end, "async")
+    else {
         return;
     };
     let async_keyword_span = Span::sized(async_span.start + async_keyword_offset, ASYNC_LEN);

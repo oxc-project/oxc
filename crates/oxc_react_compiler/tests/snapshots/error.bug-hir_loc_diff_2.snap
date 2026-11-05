@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.bug-hir_loc_diff_2.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[InferMutationAliasingEffects] Expected value kind to be initialized", labels: [LabeledSpan { label: Some("this is uninitialized"), span: Span { start: 1358, end: 1368 }, primary: true }], help: Some("<unknown> AdHocStore$15:TFunction"), note: Some("This is an internal React Compiler error; the component or hook was not optimized"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Invariant") }, url: Some("https://github.com/oxc-project/oxc/issues/new/choose") } }
+
+No changes.

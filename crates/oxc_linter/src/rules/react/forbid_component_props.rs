@@ -5,7 +5,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
+use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
 use serde::Deserialize;
 
 use crate::utils::{get_jsx_element_name, is_react_component_name};
@@ -84,37 +84,56 @@ pub enum ForbidItem {
     Object(ForbidItemObject),
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[derive(Debug, Clone)]
 pub struct ForbidItemObject {
+    matcher: PropMatcher,
+    allowed_for: Vec<CompactStr>,
+    allowed_for_patterns: Vec<CompactStr>,
+    disallowed_for: Vec<CompactStr>,
+    disallowed_for_patterns: Vec<CompactStr>,
+    message: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+enum PropMatcher {
+    Name(CompactStr),
+    Pattern(CompactStr),
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct RawForbidItemObject {
     /// Exact prop name to forbid.
     prop_name: Option<CompactStr>,
     /// Glob pattern to match prop names against.
     prop_name_pattern: Option<CompactStr>,
     /// Component names for which this prop is **allowed** (all others are
     /// forbidden).
+    #[serde(default)]
     allowed_for: Vec<CompactStr>,
     /// Glob patterns for component names where the prop is **allowed**.
+    #[serde(default)]
     allowed_for_patterns: Vec<CompactStr>,
     /// Component names for which this prop is **disallowed** (all others are
     /// allowed).
+    #[serde(default)]
     disallowed_for: Vec<CompactStr>,
     /// Glob patterns for component names where the prop is **disallowed**.
+    #[serde(default)]
     disallowed_for_patterns: Vec<CompactStr>,
     /// Custom message to display.
     message: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
-struct RawForbidItemObject {
-    prop_name: Option<CompactStr>,
-    prop_name_pattern: Option<CompactStr>,
-    allowed_for: Vec<CompactStr>,
-    allowed_for_patterns: Vec<CompactStr>,
-    disallowed_for: Vec<CompactStr>,
-    disallowed_for_patterns: Vec<CompactStr>,
-    message: Option<String>,
+// Describe the input format rather than the validated matcher.
+impl JsonSchema for ForbidItemObject {
+    fn schema_name() -> String {
+        "ForbidItemObject".to_string()
+    }
+
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        RawForbidItemObject::json_schema(r#gen)
+    }
 }
 
 impl<'de> Deserialize<'de> for ForbidItemObject {
@@ -124,18 +143,18 @@ impl<'de> Deserialize<'de> for ForbidItemObject {
     {
         let raw = RawForbidItemObject::deserialize(deserializer)?;
 
-        let has_prop_name = raw.prop_name.is_some();
-        let has_prop_name_pattern = raw.prop_name_pattern.is_some();
-
-        if has_prop_name == has_prop_name_pattern {
-            return Err(serde::de::Error::custom(
-                "forbid item object must include exactly one of `propName` or `propNamePattern`",
-            ));
-        }
+        let matcher = match (raw.prop_name, raw.prop_name_pattern) {
+            (Some(name), None) => PropMatcher::Name(name),
+            (None, Some(pattern)) => PropMatcher::Pattern(pattern),
+            _ => {
+                return Err(serde::de::Error::custom(
+                    "forbid item object must include exactly one of `propName` or `propNamePattern`",
+                ));
+            }
+        };
 
         Ok(Self {
-            prop_name: raw.prop_name,
-            prop_name_pattern: raw.prop_name_pattern,
+            matcher,
             allowed_for: raw.allowed_for,
             allowed_for_patterns: raw.allowed_for_patterns,
             disallowed_for: raw.disallowed_for,
@@ -204,12 +223,9 @@ impl From<ForbidComponentPropsConfig> for ForbidComponentProps {
             .map(|item| match item {
                 ForbidItem::PropName(name) => (name, ForbidOption::default()),
                 ForbidItem::Object(obj) => {
-                    let (key, is_pattern) = match (obj.prop_name, obj.prop_name_pattern) {
-                        (Some(prop_name), None) => (prop_name, false),
-                        (None, Some(prop_name_pattern)) => (prop_name_pattern, true),
-                        _ => unreachable!(
-                            "ForbidItemObject deserialization enforces exactly one matcher key"
-                        ),
+                    let (key, is_pattern) = match obj.matcher {
+                        PropMatcher::Name(name) => (name, false),
+                        PropMatcher::Pattern(pattern) => (pattern, true),
                     };
                     (
                         key,
@@ -275,12 +291,13 @@ declare_oxc_lint!(
     react,
     restriction,
     config = ForbidComponentPropsConfig,
-    version = "1.62.0"
+    version = "1.62.0",
+    short_description = "Disallow specific props on components.",
 );
 
 impl Rule for ForbidComponentProps {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -797,4 +814,35 @@ fn invalid_configs_error_in_from_configuration() {
         }]
     }]);
     assert!(ForbidComponentProps::from_configuration(has_both).is_err());
+
+    let unknown_field = serde_json::json!([{
+        "forbid": [{
+            "propName": "className",
+            "unknown": true
+        }]
+    }]);
+    assert!(ForbidComponentProps::from_configuration(unknown_field).is_err());
+}
+
+#[test]
+fn schema_preserves_input_fields() {
+    use std::collections::BTreeSet;
+
+    let schema = schemars::schema_for!(ForbidItemObject);
+    assert_eq!(schema.schema.metadata.unwrap().title.as_deref(), Some("ForbidItemObject"));
+    let object = schema.schema.object.unwrap();
+    assert_eq!(
+        object.properties.keys().map(String::as_str).collect::<BTreeSet<_>>(),
+        BTreeSet::from([
+            "allowedFor",
+            "allowedForPatterns",
+            "disallowedFor",
+            "disallowedForPatterns",
+            "message",
+            "propName",
+            "propNamePattern",
+        ])
+    );
+    assert_eq!(object.required, BTreeSet::new());
+    assert_eq!(object.additional_properties, Some(Box::new(Schema::Bool(false))));
 }

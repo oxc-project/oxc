@@ -1,5 +1,5 @@
-use oxc_allocator::{Box as ArenaBox, CloneIn};
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator};
+use oxc_ast::ast::*;
 use oxc_span::{SPAN, Span};
 
 use crate::{
@@ -22,18 +22,19 @@ impl<'a> IsolatedDeclarations<'a> {
             self.error(function_must_have_explicit_return_type(get_function_span(func)));
         }
         let params = self.transform_formal_parameters(&func.params, false);
-        self.ast.alloc_function(
+        Function::boxed(
             func.span,
             func.r#type,
-            func.id.clone_in(self.ast.allocator),
+            func.id.clone_in(self.allocator()),
             false,
             false,
             declare.unwrap_or_else(|| self.is_declare()),
-            func.type_parameters.clone_in(self.ast.allocator),
-            func.this_param.clone_in(self.ast.allocator),
+            func.type_parameters.clone_in(self.allocator()),
+            func.this_param.clone_in(self.allocator()),
             params,
             return_type,
-            NONE,
+            None,
+            self,
         )
     }
 
@@ -54,12 +55,12 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let is_assignment_pattern = param.initializer.is_some();
         let mut pattern = if let BindingPattern::AssignmentPattern(pattern) = &param.pattern {
-            pattern.left.clone_in(self.ast.allocator)
+            pattern.left.clone_in(self.allocator())
         } else {
-            param.pattern.clone_in(self.ast.allocator)
+            param.pattern.clone_in(self.allocator())
         };
 
-        FormalParameterBindingPattern::remove_assignments_from_kind(self.ast, &mut pattern);
+        FormalParameterBindingPattern::remove_assignments_from_kind(&mut pattern);
 
         if is_assignment_pattern
             || param.type_annotation.is_none()
@@ -68,7 +69,7 @@ impl<'a> IsolatedDeclarations<'a> {
             let type_annotation = param
                 .type_annotation
                 .as_ref()
-                .map(|type_annotation| type_annotation.type_annotation.clone_in(self.ast.allocator))
+                .map(|type_annotation| type_annotation.type_annotation.clone_in(self.allocator()))
                 .or_else(|| {
                     let new_type = self.infer_type_from_formal_parameter(param);
                     // A private parameter property on a private constructor needs no
@@ -83,68 +84,83 @@ impl<'a> IsolatedDeclarations<'a> {
                     new_type
                 })
                 .map(|ts_type| {
-                    // jf next param is not optional and current param is assignment pattern
-                    // we need to add undefined to it's type
-                    if is_remaining_params_have_required || (param.optional && param.has_modifier())
+                    // If a defaulted parameter is followed by a required parameter, declaration
+                    // emit may need to add `undefined` to its type because the parameter cannot be
+                    // marked optional. Preserve annotations whose resolved type is unknown: unlike
+                    // TypeScript, isolated declaration emit does not have a type checker available
+                    // to determine whether they already include `undefined`.
+                    if (is_remaining_params_have_required
+                        || (param.optional && param.has_modifier()))
+                        && !has_explicit_undefined_union_member(&ts_type)
                     {
-                        if matches!(ts_type, TSType::TSTypeReference(_)) {
-                            self.error(implicitly_adding_undefined_to_type(param.span));
-                        } else if !ts_type.is_maybe_undefined() {
-                            // union with `undefined`
-                            return self.ast.ts_type_annotation(
-                                SPAN,
-                                self.ast.ts_type_union_type(
-                                    SPAN,
-                                    self.ast.vec_from_array([
-                                        ts_type,
-                                        self.ast.ts_type_undefined_keyword(SPAN),
-                                    ]),
-                                ),
-                            );
+                        let presence = undefined_presence(&ts_type);
+                        let can_add = can_add_undefined(&ts_type);
+                        match (presence, can_add) {
+                            (UndefinedPresence::Present, _)
+                            | (UndefinedPresence::Unresolved, false) => {}
+                            (_, true) => {
+                                // Adding `undefined` is either required or redundant after
+                                // TypeScript resolves the type.
+                                let undefined = TSType::new_ts_undefined_keyword(SPAN, self);
+                                let ts_type = if let TSType::TSUnionType(mut union) = ts_type {
+                                    union.types.push(undefined);
+                                    TSType::TSUnionType(union)
+                                } else {
+                                    TSType::new_ts_union_type(SPAN, [ts_type, undefined], self)
+                                };
+                                return TSTypeAnnotation::boxed(SPAN, ts_type, self);
+                            }
+                            (_, false) => {
+                                self.error(implicitly_adding_undefined_to_type(param.span));
+                            }
                         }
                     }
 
-                    self.ast.ts_type_annotation(SPAN, ts_type)
+                    TSTypeAnnotation::boxed(SPAN, ts_type, self)
                 });
 
             let optional =
                 param.optional || (!is_remaining_params_have_required && is_assignment_pattern);
-            return Some(self.ast.formal_parameter(
+            return Some(FormalParameter::new(
                 param.span,
-                self.ast.vec(),
-                pattern.clone_in(self.ast.allocator),
+                [],
+                // `pattern` is already an owned, freshly-cloned binding (see above) and is
+                // not used afterwards, so move it in directly instead of cloning again.
+                pattern,
                 type_annotation,
-                NONE,
+                None,
                 optional,
                 None,
                 false,
                 false,
+                self,
             ));
         }
 
-        Some(self.ast.formal_parameter(
+        Some(FormalParameter::new(
             param.span,
-            self.ast.vec(),
+            [],
             pattern,
-            param.type_annotation.clone_in(self.ast.allocator),
-            NONE,
+            param.type_annotation.clone_in(self.allocator()),
+            None,
             param.optional,
             None,
             false,
             false,
+            self,
         ))
     }
 
     pub(crate) fn transform_formal_parameters(
         &self,
-        params: &FormalParameters<'a>,
+        params: &ArenaBox<'a, FormalParameters<'a>>,
         in_private_constructor: bool,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
         if params.kind.is_signature() || (params.rest.is_none() && params.items.is_empty()) {
-            return self.ast.alloc(params.clone_in(self.ast.allocator));
+            return params.clone_in(self.allocator());
         }
 
-        let items = self.ast.vec_from_iter(
+        let items = ArenaVec::from_iter_in(
             params
                 .items
                 .iter()
@@ -162,6 +178,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         in_private_constructor,
                     )
                 }),
+            self,
         );
 
         if let Some(rest) = &params.rest
@@ -171,18 +188,154 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         let rest = params.rest.as_ref().map(|rest| {
-            let mut rest = rest.clone_in(self.ast.allocator);
-            FormalParameterBindingPattern::remove_assignments_from_kind(
-                self.ast,
-                &mut rest.rest.argument,
-            );
+            let mut rest = rest.clone_in(self.allocator());
+            FormalParameterBindingPattern::remove_assignments_from_kind(&mut rest.rest.argument);
             rest
         });
 
-        self.ast.alloc_formal_parameters(params.span, FormalParameterKind::Signature, items, rest)
+        FormalParameters::boxed(params.span, FormalParameterKind::Signature, items, rest, self)
     }
 }
 
 pub fn get_function_span(func: &Function<'_>) -> Span {
     func.id.as_ref().map_or_else(|| Span::empty(func.params.span.start), |id| id.span)
+}
+
+/// Syntax-only categories that remain distinct while folding unions and intersections.
+#[derive(Clone, Copy)]
+enum UndefinedPresence {
+    Present,
+    Absent,
+    /// `any` accepts `undefined` on its own but makes an intersection checker-dependent.
+    Any,
+    /// `never` excludes `undefined` and absorbs every other intersection operand.
+    Never,
+    /// `unknown` behaves like `Absent` for declaration emit but is the identity element of an
+    /// intersection.
+    UnknownKeyword,
+    /// `void` excludes `undefined` on its own but retains it when intersected with `undefined`.
+    Void,
+    /// Resolving this annotation requires checker information.
+    Unresolved,
+}
+
+impl UndefinedPresence {
+    /// Combine the classifications of two union members.
+    fn union(self, other: Self) -> Self {
+        use UndefinedPresence::{Absent, Any, Never, Present, UnknownKeyword, Unresolved, Void};
+        match (self, other) {
+            (Unresolved, _) | (_, Unresolved) => Unresolved,
+            (Any, _) | (_, Any) => Any,
+            (UnknownKeyword, _) | (_, UnknownKeyword) => UnknownKeyword,
+            (Present, _) | (_, Present) => Present,
+            (Void, _) | (_, Void) => Void,
+            (Absent, _) | (_, Absent) => Absent,
+            (Never, Never) => Never,
+        }
+    }
+
+    /// Combine the classifications of two intersection members.
+    fn intersection(self, other: Self) -> Self {
+        use UndefinedPresence::{Absent, Any, Never, Present, UnknownKeyword, Unresolved, Void};
+        match (self, other) {
+            (Never, _) | (_, Never) => Never,
+            (Unresolved | Any, _) | (_, Unresolved | Any) => Unresolved,
+            (Absent, _) | (_, Absent) => Absent,
+            (Present, _) | (_, Present) => Present,
+            (Void, _) | (_, Void) => Void,
+            (UnknownKeyword, UnknownKeyword) => UnknownKeyword,
+        }
+    }
+}
+
+/// Classify whether annotation syntax proves that the parameter type includes `undefined`.
+fn undefined_presence(ts_type: &TSType<'_>) -> UndefinedPresence {
+    match ts_type.without_parenthesized() {
+        TSType::TSUndefinedKeyword(_) => UndefinedPresence::Present,
+        TSType::TSAnyKeyword(_) => UndefinedPresence::Any,
+        TSType::TSUnknownKeyword(_) => UndefinedPresence::UnknownKeyword,
+        TSType::TSBigIntKeyword(_)
+        | TSType::TSBooleanKeyword(_)
+        | TSType::TSIntrinsicKeyword(_)
+        | TSType::TSNullKeyword(_)
+        | TSType::TSNumberKeyword(_)
+        | TSType::TSObjectKeyword(_)
+        | TSType::TSStringKeyword(_)
+        | TSType::TSSymbolKeyword(_)
+        | TSType::TSLiteralType(_)
+        | TSType::TSFunctionType(_)
+        | TSType::TSConstructorType(_)
+        | TSType::TSArrayType(_)
+        | TSType::TSTupleType(_)
+        | TSType::TSMappedType(_)
+        | TSType::TSTypeLiteral(_)
+        | TSType::TSTypeOperatorType(_)
+        | TSType::TSTemplateLiteralType(_)
+        | TSType::TSThisType(_) => UndefinedPresence::Absent,
+        TSType::TSNeverKeyword(_) => UndefinedPresence::Never,
+        TSType::TSVoidKeyword(_) => UndefinedPresence::Void,
+        TSType::TSParenthesizedType(_) => unreachable!("Type is already unwrapped"),
+        TSType::TSUnionType(union) => union
+            .types
+            .iter()
+            .map(undefined_presence)
+            .fold(UndefinedPresence::Never, UndefinedPresence::union),
+        // Resolving these types requires type information. Treat them as unknown so declaration
+        // emit does not report a false-positive TS9025 for a type that already contains
+        // `undefined`. Some variants cannot occur directly as a parameter annotation, but listing
+        // them keeps this classification exhaustive as new `TSType` variants are added.
+        TSType::TSConditionalType(_)
+        | TSType::TSImportType(_)
+        | TSType::TSIndexedAccessType(_)
+        | TSType::TSInferType(_)
+        | TSType::TSNamedTupleMember(_)
+        | TSType::TSTypePredicate(_)
+        | TSType::TSTypeQuery(_)
+        | TSType::TSTypeReference(_)
+        | TSType::JSDocNullableType(_)
+        | TSType::JSDocNonNullableType(_)
+        | TSType::JSDocUnknownType(_) => UndefinedPresence::Unresolved,
+        TSType::TSIntersectionType(intersection) => intersection
+            .types
+            .iter()
+            .map(undefined_presence)
+            .fold(UndefinedPresence::UnknownKeyword, UndefinedPresence::intersection),
+    }
+}
+
+/// Whether the annotation itself already has an explicit `undefined` union member.
+///
+/// Do not descend through intersections: `undefined & string` excludes `undefined`, whereas a
+/// parenthesized or nested union member still spells it explicitly.
+fn has_explicit_undefined_union_member(ts_type: &TSType<'_>) -> bool {
+    match ts_type.without_parenthesized() {
+        TSType::TSUndefinedKeyword(_) => true,
+        TSType::TSUnionType(union) => union.types.iter().any(has_explicit_undefined_union_member),
+        _ => false,
+    }
+}
+
+/// Whether TypeScript can syntactically add `undefined` without using type information.
+fn can_add_undefined(ts_type: &TSType<'_>) -> bool {
+    let ts_type = ts_type.without_parenthesized();
+    if ts_type.is_keyword() {
+        return true;
+    }
+
+    match ts_type {
+        TSType::TSLiteralType(_)
+        | TSType::TSFunctionType(_)
+        | TSType::TSConstructorType(_)
+        | TSType::TSArrayType(_)
+        | TSType::TSTupleType(_)
+        | TSType::TSTypeLiteral(_)
+        | TSType::TSTemplateLiteralType(_)
+        | TSType::TSThisType(_)
+        | TSType::TSTypeOperatorType(_) => true,
+        TSType::TSUnionType(union) => union.types.iter().all(can_add_undefined),
+        TSType::TSIntersectionType(intersection) => {
+            intersection.types.iter().all(can_add_undefined)
+        }
+        _ => false,
+    }
 }

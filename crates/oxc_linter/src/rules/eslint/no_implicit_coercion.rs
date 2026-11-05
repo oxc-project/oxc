@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{ChainElement, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -183,7 +186,7 @@ declare_oxc_lint!(
 
 impl Rule for NoImplicitCoercion {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -315,25 +318,20 @@ impl Rule for NoImplicitCoercion {
                     let first_quasi = &template.quasis[0];
                     let last_quasi = &template.quasis[1];
 
-                    // Check if both quasi parts contain no meaningful content.
-                    // We use the cooked value to handle escape sequences properly.
-                    // ESLint considers templates like `\n${foo}` as coercion because
-                    // escape sequences that become whitespace don't add meaningful content.
-                    // We also allow backslash characters in the cooked value because they
-                    // typically come from line continuations (e.g., `\\\n${foo}`) which
-                    // ESLint also treats as implicit coercion.
-                    let first_is_empty_or_whitespace = first_quasi
+                    // Only an empty cooked value is shorthand coercion. Whitespace is part of the
+                    // resulting string and must not be discarded by the fixer.
+                    let first_is_empty = first_quasi
                         .value
                         .cooked
                         .as_ref()
-                        .is_some_and(|s| s.chars().all(|c| c.is_whitespace() || c == '\\'));
-                    let last_is_empty_or_whitespace = last_quasi
+                        .is_some_and(|s| s.is_empty());
+                    let last_is_empty = last_quasi
                         .value
                         .cooked
                         .as_ref()
-                        .is_some_and(|s| s.chars().all(|c| c.is_whitespace() || c == '\\'));
+                        .is_some_and(|s| s.is_empty());
 
-                    if first_is_empty_or_whitespace && last_is_empty_or_whitespace {
+                    if first_is_empty && last_is_empty {
                         let expr = &template.expressions[0];
                         // Don't warn if the expression is already a string literal or String() call
                         if !is_string_literal_or_string_call(expr) {
@@ -358,19 +356,14 @@ fn get_operand_text<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> &'a str
 }
 
 fn is_numeric_literal(expr: &Expression) -> bool {
-    matches!(
-        expr.without_parentheses(),
-        Expression::NumericLiteral(_) | Expression::BigIntLiteral(_)
-    )
+    expr.without_parentheses().is_number_literal()
 }
 
 fn is_empty_string(expr: &Expression) -> bool {
     match expr.without_parentheses() {
         Expression::StringLiteral(lit) => lit.value.is_empty(),
         Expression::TemplateLiteral(template) => {
-            template.expressions.is_empty()
-                && template.quasis.len() == 1
-                && template.quasis[0].value.raw.is_empty()
+            template.is_no_substitution_template() && template.quasis[0].value.raw.is_empty()
         }
         _ => false,
     }
@@ -421,15 +414,14 @@ fn is_indexof_call(expr: &Expression) -> bool {
                 return matches!(member.property.name.as_str(), "indexOf" | "lastIndexOf");
             }
             if let Expression::ChainExpression(chain) = callee
-                && let oxc_ast::ast::ChainElement::StaticMemberExpression(member) =
-                    &chain.expression
+                && let ChainElement::StaticMemberExpression(member) = &chain.expression
             {
                 return matches!(member.property.name.as_str(), "indexOf" | "lastIndexOf");
             }
             false
         }
         Expression::ChainExpression(chain) => {
-            if let oxc_ast::ast::ChainElement::CallExpression(call) = &chain.expression
+            if let ChainElement::CallExpression(call) = &chain.expression
                 && let Expression::StaticMemberExpression(member) =
                     call.callee.without_parentheses()
             {
@@ -557,6 +549,20 @@ fn test() {
         ("foo += `${bar}`", None),
         ("`a${foo}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
         ("`${foo}b`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
+        ("` ${foo}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
+        ("`${foo} `", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
+        (r"`\n${foo}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
+        (r"`${foo}\t`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
+        (
+            r"`\\
+			${foo}`",
+            Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
+        ),
+        (
+            r"`${foo}\\
+			`",
+            Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
+        ),
         ("`${foo}${bar}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
         ("tag`${foo}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
         ("`${foo}`", None),
@@ -600,16 +606,7 @@ fn test() {
         (r#"foo.bar+"""#, None),
         ("foo.bar+``", None),
         ("`${foo}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
-        (
-            r"`\\
-			${foo}`",
-            Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
-        ),
-        (
-            r"`${foo}\\
-			`",
-            Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
-        ),
+        ("`\\\n${foo}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
         (r#"foo += """#, None),
         ("foo += ``", None),
         ("var a = !!foo", Some(serde_json::json!([{ "boolean": true, "allow": ["~"] }]))),
@@ -639,6 +636,11 @@ fn test() {
             "var a = !!foo",
             "var a = Boolean(foo)",
             Some(serde_json::json!([{ "boolean": true, "allow": ["~"] }])),
+        ),
+        (
+            "`${foo}`",
+            "String(foo)",
+            Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
         ),
     ];
     Tester::new(NoImplicitCoercion::NAME, NoImplicitCoercion::PLUGIN, pass, fail)

@@ -17,6 +17,62 @@ source: crates/oxc_linter/src/tester.rs
   help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
 
   ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:6]
+ 1 │ eval(eval)
+   ·      ────
+   ╰────
+  help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ eval(eval)
+   · ────
+   ╰────
+  help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:8]
+ 1 │ eval?.(eval)
+   ·        ────
+   ╰────
+  help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ eval?.(eval)
+   · ────
+   ╰────
+  help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ eval!('foo')
+   · ─────
+   ╰────
+  help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ (eval as any)('foo')
+   · ─────────────
+   ╰────
+  help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ eval.toString()
+   · ────
+   ╰────
+  help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:8]
+ 1 │ window.eval('foo')
+   ·        ────
+   ╰────
+  help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
+
+  ⚠ eslint(no-eval): eval can be harmful.
    ╭─[no_eval.tsx:1:22]
  1 │ function foo(eval) { eval('foo') }
    ·                      ────
@@ -279,5 +335,47 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_eval.tsx:1:44]
  1 │ ['1'].reduce(function (a, b) { return this.eval(a) ? a : b; }, '0');
    ·                                            ────
+   ╰────
+  help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:62]
+ 1 │ Array.fromAsync(values, async function (value) { return this.eval(await value); });
+   ·                                                              ────
+   ╰────
+  help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:62]
+ 1 │ Array.fromAsync(values, async function (value) { return this.eval(await value); }, null);
+   ·                                                              ────
+   ╰────
+  help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:62]
+ 1 │ Array.fromAsync(values, async function (value) { return this.eval(await value); }, undefined);
+   ·                                                              ────
+   ╰────
+  help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:56]
+ 1 │ Uint8Array.from(values, function (value) { return this.eval(value); });
+   ·                                                        ────
+   ╰────
+  help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:56]
+ 1 │ Uint8Array.from(values, function (value) { return this.eval(value); }, null);
+   ·                                                        ────
+   ╰────
+  help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:56]
+ 1 │ Uint8Array.from(values, function (value) { return this.eval(value); }, undefined);
+   ·                                                        ────
    ╰────
   help: Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.

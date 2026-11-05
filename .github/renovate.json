@@ -2,7 +2,13 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["github>Boshen/renovate", "helpers:pinGitHubActionDigestsToSemver"],
   "ignorePaths": ["apps/oxfmt/test/**/fixtures/**", "crates/oxc_linter/fixtures/**", "tasks/e2e"],
-  "ignoreDeps": ["@types/vscode", "allocator-api2", "ajv", "prettier-plugin-tailwindcss"],
+  "ignoreDeps": [
+    "@types/vscode",
+    "allocator-api2",
+    "ajv",
+    "prettier",
+    "prettier-plugin-tailwindcss"
+  ],
   "packageRules": [
     {
       "groupName": "oxlint",
@@ -16,6 +22,13 @@
       "groupName": "emnapi",
       "matchManagers": ["npm"],
       "matchPackageNames": ["emnapi", "/^@emnapi\\//"]
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchFileNames": ["tasks/lint_rules/package.json"],
+      "matchPackageNames": ["eslint"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ]
 }

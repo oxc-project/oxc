@@ -130,7 +130,7 @@ declare_oxc_lint!(
 
 impl Rule for ForbidElements {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -157,10 +157,13 @@ impl Rule for ForbidElements {
                         self.add_diagnostic_if_invalid_element(ctx, it.name.as_str(), it.span);
                     }
                     Argument::StringLiteral(str) => {
-                        if !is_valid_literal(&str.value) {
+                        let Some(value) = str.value.as_str() else {
+                            return;
+                        };
+                        if !is_valid_literal(value) {
                             return;
                         }
-                        self.add_diagnostic_if_invalid_element(ctx, str.value.as_str(), str.span);
+                        self.add_diagnostic_if_invalid_element(ctx, value, str.span);
                     }
                     Argument::StaticMemberExpression(member_expression) => {
                         let Some(it) = member_expression.object.get_identifier_reference() else {

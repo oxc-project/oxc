@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression, Statement},
@@ -77,15 +79,16 @@ declare_oxc_lint!(
     PreferSingleCall,
     unicorn,
     pedantic,
-    pending,
-    fix,
+    recommended,
+    conditional_fix,
     config = PreferSingleCallConfig,
-    version = "next"
+    version = "1.70.0",
+    short_description = "Enforce combining multiple `Array#push()`, `Element#classList.{add,remove}()`, and `importScripts()` into one call.",
 );
 
 impl Rule for PreferSingleCall {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -181,11 +184,7 @@ impl Rule for PreferSingleCall {
 
             // Insert the source call's arguments into the target call.
             if !source_args.is_empty() {
-                let args_text = source_args
-                    .iter()
-                    .map(|a| a.span().source_text(src))
-                    .collect::<Vec<_>>()
-                    .join(", ");
+                let args_text = source_args.iter().map(|a| a.span().source_text(src)).join(", ");
 
                 // Determine separator. Check whether the target call ends with a
                 // trailing comma (like `push(a,)`) to avoid generating `push(a,, b)`.

@@ -2,6 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::identifier::is_identifier_part;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -48,6 +49,7 @@ declare_oxc_lint!(
     NoZeroFractions,
     unicorn,
     style,
+    recommended,
     fix,
     version = "0.0.18",
     short_description = "Prevents the use of zero fractions.",
@@ -75,7 +77,7 @@ impl Rule for NoZeroFractions {
             },
             |fixer| {
                 let mut fixed = fmt.clone();
-                let is_decimal_integer = fmt.parse::<i64>().is_ok();
+                let is_decimal_integer = fmt.bytes().all(|b| b.is_ascii_digit() || b == b'_');
                 let is_member_expression =
                     ctx.nodes().parent_kind(node.id()).is_member_expression_kind();
 
@@ -88,15 +90,11 @@ impl Rule for NoZeroFractions {
                     // https://github.com/sindresorhus/eslint-plugin-unicorn/blob/77f32e5a6b2df542cf50dfbd371054f2cd8ce2d6/rules/no-zero-fractions.js#L56
                 }
 
-                // Handle special cases where a space is needed after certain keywords
-                // to prevent the number from being interpreted as a property access
-                let end = number_literal.span.start;
-                let token = ctx.source_range(oxc_span::Span::new(0, end));
-                if token.ends_with("return")
-                    || token.ends_with("throw")
-                    || token.ends_with("typeof")
-                    || token.ends_with("void")
-                {
+                // Insert a leading space when the fixed number would directly abut a preceding
+                // identifier or keyword, e.g. `case.0` -> `case 0` (without it `case0` is a single
+                // token) or `return.0.x` -> `return (0).x`.
+                let before = ctx.source_range(Span::new(0, number_literal.span.start));
+                if before.chars().next_back().is_some_and(is_identifier_part) {
                     fixed = format!(" {fixed}");
                 }
 
@@ -107,17 +105,11 @@ impl Rule for NoZeroFractions {
 }
 
 fn format_raw(raw: &str) -> Option<(String, bool)> {
-    // Check if the string contains 'e' or 'E' (scientific notation)
-    if let Some((base, exp)) = raw.split_once(['e', 'E']) {
-        // Process the base part
-        let (formatted_base, has_fraction) = format_raw(base)?;
-        // Recombine the scientific notation
-        return Some((format!("{formatted_base}e{exp}"), has_fraction));
-    }
     let (before, after_and_dot) = raw.split_once('.')?;
-    let mut after_parts = after_and_dot.splitn(2, |c: char| !c.is_ascii_digit() && c != '_');
-    let dot_and_fractions = after_parts.next()?;
-    let after = after_parts.next().unwrap_or("");
+    let fraction_end = after_and_dot
+        .find(|c: char| !c.is_ascii_digit() && c != '_')
+        .unwrap_or(after_and_dot.len());
+    let (dot_and_fractions, after) = after_and_dot.split_at(fraction_end);
 
     let fixed_dot_and_fractions = dot_and_fractions.trim_end_matches(['0', '.', '_']);
     let formatted = format!(
@@ -147,6 +139,10 @@ fn test() {
         "const foo = 123123123.4",
         "const foo = 1e3",
         "1 .toString()",
+        "export const a = -4.6566128731E+100;",
+        "export const b = -4.6566128731e+100;",
+        "export const c = 4.6566128731E+100;",
+        "export const d = 4.6566128731E+10;",
     ];
 
     let fail = vec![
@@ -206,6 +202,8 @@ fn test() {
         (r"1.00 .toFixed(2)", r"(1) .toFixed(2)"),
         (r"(1.00).toFixed(2)", r"(1).toFixed(2)"),
         (r"1.00?.toFixed(2)", r"(1)?.toFixed(2)"),
+        (r"1_000.0.toFixed(2)", r"(1_000).toFixed(2)"),
+        (r"10000000000000000000.0.toFixed(2)", r"(10000000000000000000).toFixed(2)"),
         (r"a = .0;", r"a = 0;"),
         (r"a = .0.toString()", r"a = (0).toString()"),
         (r"function foo(){return.0}", r"function foo(){return 0}"),
@@ -220,6 +218,18 @@ fn test() {
         (r"function foo(){void.0.toString()}", r"function foo(){void (0).toString()}"),
         (r"function foo(){void.0+.1;}", r"function foo(){void 0+.1;}"),
         ("ôTest(0.)", "ôTest(0)"),
+        (r"switch (x) { case.0: break; }", r"switch (x) { case 0: break; }"),
+        (r"function foo(){do.0;while(x)}", r"function foo(){do 0;while(x)}"),
+        (r"for (const x of.0);", r"for (const x of 0);"),
+        (r"if (x in.0) {}", r"if (x in 0) {}"),
+        (r"x instanceof.0", r"x instanceof 0"),
+        (r"async function foo(){await.0}", r"async function foo(){await 0}"),
+        (r"function* foo(){yield.0}", r"function* foo(){yield 0}"),
+        (r"delete.0", r"delete 0"),
+        (r"const foo = 1.0E+10", r"const foo = 1E+10"),
+        (r"const foo = 1.2300E-10", r"const foo = 1.23E-10"),
+        (r"const foo = 1.E10", r"const foo = 1E10"),
+        (r"const foo = -.0E+10", r"const foo = -0E+10"),
     ];
 
     Tester::new(NoZeroFractions::NAME, NoZeroFractions::PLUGIN, pass, fail)

@@ -837,6 +837,31 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Example: React is not allowed to be imported
 
+  ⚠ eslint(no-restricted-imports): 'fs' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import('fs');
+   · ────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import('foo/bar');
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): '@anthropic-ai/sdk' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import('@anthropic-ai/sdk');
+   · ───────────────────────────
+   ╰────
+  help: Use the shared LLM abstraction instead.
+
+  ⚠ eslint(no-restricted-imports): 'openai/resources' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import('openai/resources');
+   · ──────────────────────────
+   ╰────
+
   ⚠ eslint(no-restricted-imports): 'import1' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import foo from 'import1';
@@ -1000,3 +1025,15 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───
    ╰────
   help: Please use Bar and Baz from /import-bar/baz/ instead.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:32]
+ 1 │ import { allowed } from 'foo'; import 'foo'; import {} from 'foo';
+   ·                                ─────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import 'foo'; import { allowed } from 'foo'; import {} from 'foo';
+   · ─────────────
+   ╰────

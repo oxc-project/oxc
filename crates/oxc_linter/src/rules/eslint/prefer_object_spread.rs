@@ -1,6 +1,6 @@
 use std::cmp::max;
 
-use oxc_allocator::Box;
+use oxc_allocator::ArenaBox;
 use oxc_ast::AstKind;
 use oxc_ast::ast::{Expression, ObjectExpression, ObjectPropertyKind, PropertyKind};
 use oxc_diagnostics::OxcDiagnostic;
@@ -89,19 +89,15 @@ impl Rule for PreferObjectSpread {
             return;
         };
 
-        let unresolved_references = ctx.scoping().root_unresolved_references();
-
         match callee.object().get_inner_expression() {
             Expression::Identifier(ident) => {
-                if ident.name != "Object" || !unresolved_references.contains_key(&ident.name) {
+                if ident.name != "Object" || !ctx.is_reference_to_global_variable(ident) {
                     return;
                 }
             }
             Expression::StaticMemberExpression(member_expr) => {
                 if let Expression::Identifier(ident) = member_expr.object.get_inner_expression() {
-                    if ident.name != "globalThis"
-                        || !unresolved_references.contains_key(&ident.name)
-                    {
+                    if ident.name != "globalThis" || !ctx.is_reference_to_global_variable(ident) {
                         return;
                     }
                 } else {
@@ -154,9 +150,15 @@ impl Rule for PreferObjectSpread {
                         | AstKind::AssignmentExpression(_)
                 );
 
-                let Some(callee_left_paren_span) = find_char_span(ctx, call_expr, b'(') else {
+                let Some(paren_offset) = ctx.find_next_token_within(
+                    call_expr.callee.span().end,
+                    call_expr.span.end,
+                    "(",
+                ) else {
                     return fixer.noop();
                 };
+                let callee_left_paren_span =
+                    Span::sized(call_expr.callee.span().end + paren_offset, 1);
 
                 let (left, right) = if needs_paren { ("({", "})") } else { ("{", "}") };
 
@@ -226,26 +228,6 @@ fn has_get_or_set_property(obj_expr: &ObjectExpression) -> bool {
 
         p.kind == PropertyKind::Get || p.kind == PropertyKind::Set
     })
-}
-
-/**
- * Find the span of the first character matches with target_char in the expression
- */
-fn find_char_span(ctx: &LintContext, expr: &dyn GetSpan, target_char: u8) -> Option<Span> {
-    let span = expr.span();
-    for idx in memchr::memchr_iter(target_char, ctx.source_range(span).as_bytes()) {
-        let idx = u32::try_from(idx).unwrap();
-
-        let current_span = Span::sized(span.start + idx, 1);
-
-        if ctx.comments().iter().any(|comment| comment.span.contains_inclusive(current_span)) {
-            continue;
-        }
-
-        return Some(current_span);
-    }
-
-    None
 }
 
 /**
@@ -325,7 +307,10 @@ fn get_char_span_after(expr: &Expression, ctx: &LintContext) -> Option<Span> {
     None
 }
 
-fn get_delete_span_of_left(obj_expr: &Box<'_, ObjectExpression<'_>>, ctx: &LintContext) -> Span {
+fn get_delete_span_of_left(
+    obj_expr: &ArenaBox<'_, ObjectExpression<'_>>,
+    ctx: &LintContext,
+) -> Span {
     let mut span_end = obj_expr.span.start;
     for (i, c) in ctx.source_range(obj_expr.span).char_indices() {
         if i != 0 && !c.is_whitespace() {
@@ -340,7 +325,7 @@ fn get_delete_span_of_left(obj_expr: &Box<'_, ObjectExpression<'_>>, ctx: &LintC
 }
 
 fn get_delete_span_start_of_right(
-    obj_expr: &Box<'_, ObjectExpression<'_>>,
+    obj_expr: &ArenaBox<'_, ObjectExpression<'_>>,
     ctx: &LintContext,
 ) -> u32 {
     let obj_expr_last_char_span = Span::new(obj_expr.span.end - 1, obj_expr.span.end);
@@ -435,6 +420,7 @@ fn test() {
         "Object.assign({}, { set a(val) {} })",
         "Object.assign({}, { foo: 'bar', get a() {} }, {})",
         "Object.assign({ foo }, bar, {}, { baz: 'quux', set a(val) {}, quuux }, {})",
+        "function f(MyObject, a) { const Object = MyObject; return Object.assign({}, a) }; Object.keys(x)",
     ];
 
     let fail = vec![

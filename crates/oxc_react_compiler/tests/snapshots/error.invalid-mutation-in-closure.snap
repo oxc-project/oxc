@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.invalid-mutation-in-closure.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "This value cannot be modified", labels: [LabeledSpan { label: Some("`options` cannot be modified"), span: Span { start: 124, end: 131 }, primary: true }, LabeledSpan { label: Some("`options` originates here"), span: Span { start: 28, end: 35 }, primary: false }], help: Some("Do not mutate component props or hook arguments. If the value should change, update it where it is owned and pass an update callback, or use local state"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Immutability") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot modify local variables after render completes", labels: [LabeledSpan { label: Some("This modifies `options`"), span: Span { start: 124, end: 131 }, primary: true }, LabeledSpan { label: Some("This function may (indirectly) reassign or modify `options` after render"), span: Span { start: 41, end: 58 }, primary: false }], help: Some("This argument is a function which may reassign or mutate `options` after render, which can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Immutability") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability") } }
+
+No changes.

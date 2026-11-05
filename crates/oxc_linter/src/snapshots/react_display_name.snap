@@ -3,6 +3,13 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:1]
+ 1 │ export default () => { const view = <div/>; return view; };
+   · ───────────────────────────────────────────────────────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
    ╭─[display_name.tsx:2:25]
  1 │ 
  2 │                     var Hello = createReactClass({
@@ -290,11 +297,19 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a `displayName` property to the component.
 
   ⚠ react(display-name): Component definition is missing display name.
-   ╭─[display_name.tsx:2:27]
- 1 │ 
- 2 │                     const renderer = a => listItem => (
-   ·                           ────────
- 3 │                       <div>{a} {listItem}</div>
+   ╭─[display_name.tsx:9:23]
+ 8 │                       ({ label }: HOCProps) =>
+ 9 │                       ({ onSubmit }: Props): JSX.Element => <button onClick={onSubmit}>{label}</button>;
+   ·                       ─────────────────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:3:23]
+ 2 │                     const HOC = () =>
+ 3 │                       (props) => {
+   ·                       ───────
+ 4 │                         /* eslint-disable react/display-name */
    ╰────
   help: Add a `displayName` property to the component.
 

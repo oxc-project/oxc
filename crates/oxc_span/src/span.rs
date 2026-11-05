@@ -4,11 +4,11 @@ use std::{
     ops::{Index, IndexMut, Range},
 };
 
-use miette::{LabeledSpan, SourceOffset, SourceSpan};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer, ser::SerializeMap};
 
-use oxc_allocator::{Allocator, CloneIn, Dummy};
+use crate::LabeledSpan;
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 
@@ -561,12 +561,6 @@ impl From<Range<u32>> for Span {
     }
 }
 
-impl From<Span> for SourceSpan {
-    fn from(val: Span) -> Self {
-        Self::new(SourceOffset::from(val.start), val.size())
-    }
-}
-
 impl From<Span> for LabeledSpan {
     fn from(val: Span) -> Self {
         LabeledSpan::underline(val)
@@ -635,7 +629,7 @@ impl<'a> CloneIn<'a> for Span {
     type Cloned = Self;
 
     #[inline]
-    fn clone_in(&self, _: &'a Allocator) -> Self {
+    fn clone_in_impl(&self, _with_semantic_ids: CloneInSemanticIds, _: &'a Allocator) -> Self {
         *self
     }
 }

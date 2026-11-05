@@ -1,24 +1,25 @@
 #![expect(rustdoc::private_intra_doc_links)] // useful for intellisense
 
-use std::{borrow::Cow, ffi::OsStr, ops::Deref, path::Path, rc::Rc};
+use std::{ffi::OsStr, ops::Deref, path::Path, rc::Rc};
 
 use javascript_globals::{GLOBALS, GLOBALS_BUILTIN, GLOBALS_ES2026};
 
+use oxc_allocator::Allocator;
 use oxc_ast::ast::IdentifierReference;
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
-use oxc_semantic::Semantic;
+use oxc_semantic::{IsGlobalReference, Semantic};
 use oxc_span::Span;
 
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
 use crate::{
-    AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
-    WEBSITE_BASE_RULES_URL,
+    FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings, WEBSITE_BASE_RULES_URL,
     config::GlobalValue,
     disable_directives::DisableDirectives,
-    fixer::{Fix, FixKind, Message, MessageRule, PossibleFixes, RuleFix, RuleFixer},
+    fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
+    utils::{ReactCompilerResults, build_react_compiler_results},
 };
 
 mod host;
@@ -71,34 +72,6 @@ impl<'a> Deref for LintContext<'a> {
 }
 
 impl<'a> LintContext<'a> {
-    /// Set the plugin name for the current rule.
-    pub fn with_plugin_name(mut self, plugin: &'static str) -> Self {
-        self.current_plugin_name = plugin;
-        self.current_plugin_display_name = plugin_display_name(plugin);
-        self
-    }
-
-    /// Set the current rule name. Name should be kebab-cased like: `no-unused-vars` or `no-undef`.
-    pub fn with_rule_name(mut self, name: &'static str) -> Self {
-        self.current_rule_name = name;
-        self
-    }
-
-    /// Set the current rule fix capabilities. See [`RuleFixMeta`] for more information.
-    #[cfg(debug_assertions)]
-    pub fn with_rule_fix_capabilities(mut self, capabilities: RuleFixMeta) -> Self {
-        self.current_rule_fix_capabilities = capabilities;
-        self
-    }
-
-    /// Update the severity of diagnostics reported by the rule this context is
-    /// associated with.
-    #[inline]
-    pub fn with_severity(mut self, severity: AllowWarnDeny) -> Self {
-        self.severity = Severity::from(severity);
-        self
-    }
-
     /// Get information such as the control flow graph, bound symbols, AST, etc.
     /// for the file being linted.
     ///
@@ -106,6 +79,21 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn semantic(&self) -> &Semantic<'a> {
         self.parent.semantic()
+    }
+
+    /// Allocator that owns the parsed AST and semantic data.
+    #[inline]
+    pub fn allocator(&self) -> &'a Allocator {
+        self.parent.allocator()
+    }
+
+    /// Shared per-file result of the React Compiler lint run, for the React
+    /// Compiler family of rules. The compiler runs at most once per file, on
+    /// first access; it never runs when no rule in the family is enabled.
+    pub fn react_compiler_results(&self) -> &ReactCompilerResults {
+        self.parent
+            .react_compiler_results
+            .get_or_init(|| build_react_compiler_results(&self.parent))
     }
 
     #[inline]
@@ -131,31 +119,6 @@ impl<'a> LintContext<'a> {
     /// see [`Span::source_text`].
     pub fn source_range(&self, span: Span) -> &'a str {
         span.source_text(self.parent.semantic().source_text())
-    }
-
-    /// Finds the next occurrence of the given token in the source code,
-    /// starting from the specified position, skipping over comments.
-    #[expect(clippy::cast_possible_truncation)]
-    pub fn find_next_token_from(&self, start: u32, token: &str) -> Option<u32> {
-        let source =
-            self.source_range(Span::new(start, self.parent.semantic().source_text().len() as u32));
-
-        source
-            .match_indices(token)
-            .find(|(a, _)| !self.is_inside_comment(start + *a as u32))
-            .map(|(a, _)| a as u32)
-    }
-
-    /// Finds the previous occurrence of the given token in the source code,
-    /// starting from the specified position, skipping over comments.
-    #[expect(clippy::cast_possible_truncation)]
-    pub fn find_prev_token_from(&self, start: u32, token: &str) -> Option<u32> {
-        let source = self.source_range(Span::from(0..start));
-
-        source
-            .rmatch_indices(token)
-            .find(|(a, _)| !self.is_inside_comment(*a as u32))
-            .map(|(a, _)| a as u32)
     }
 
     /// Finds the next occurrence of the given token within a bounded span,
@@ -215,7 +178,7 @@ impl<'a> LintContext<'a> {
     /// Checks if the provided identifier is a reference to a global variable.
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
         let name = ident.name.as_str();
-        self.scoping().root_unresolved_references().contains_key(name)
+        ident.is_global_reference(self.scoping())
             && !self.globals().get(name).is_some_and(|value| *value == GlobalValue::Off)
     }
 
@@ -314,10 +277,6 @@ impl<'a> LintContext<'a> {
         if message.error.severity != self.severity {
             message.error = message.error.with_severity(self.severity);
         }
-        message.rule = Some(MessageRule {
-            plugin_name: Cow::Borrowed(self.current_plugin_name),
-            rule_name: Cow::Borrowed(self.current_rule_name),
-        });
 
         self.parent.push_diagnostic(message);
     }
@@ -325,12 +284,10 @@ impl<'a> LintContext<'a> {
     /// Report a lint rule violation.
     ///
     /// Use [`LintContext::diagnostic_with_fix`] to provide an automatic fix.
-    #[inline]
+    #[cold]
+    #[inline(never)]
     pub fn diagnostic(&self, diagnostic: OxcDiagnostic) {
-        self.add_diagnostic(
-            Message::new(diagnostic, PossibleFixes::None)
-                .with_section_offset(self.parent.current_sub_host().source_text_offset),
-        );
+        self.add_diagnostic(Message::new(diagnostic, PossibleFixes::None));
     }
 
     /// Report a lint rule violation and provide an automatic fix.
@@ -440,11 +397,15 @@ impl<'a> LintContext<'a> {
         F: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
         let (diagnostic, fix) = self.create_fix(fix_kind, fix, diagnostic);
+        self.emit_single_fix(diagnostic, fix);
+    }
+
+    /// Non-generic emit tail shared by the `diagnostic_with_fix*` family, kept
+    /// out of the generic methods so it is compiled once rather than
+    /// monomorphized at every rule call site.
+    fn emit_single_fix(&self, diagnostic: OxcDiagnostic, fix: Option<Fix>) {
         if let Some(fix) = fix {
-            self.add_diagnostic(
-                Message::new(diagnostic, PossibleFixes::Single(fix))
-                    .with_section_offset(self.parent.current_sub_host().source_text_offset),
-            );
+            self.add_diagnostic(Message::new(diagnostic, PossibleFixes::Single(fix)));
         } else {
             self.diagnostic(diagnostic);
         }
@@ -473,10 +434,7 @@ impl<'a> LintContext<'a> {
         if fixes_result.is_empty() {
             self.diagnostic(diagnostic);
         } else {
-            self.add_diagnostic(
-                Message::new(diagnostic, PossibleFixes::Multiple(fixes_result))
-                    .with_section_offset(self.parent.current_sub_host().source_text_offset),
-            );
+            self.add_diagnostic(Message::new(diagnostic, PossibleFixes::Multiple(fixes_result)));
         }
     }
 
@@ -514,10 +472,7 @@ impl<'a> LintContext<'a> {
         if fixes_result.is_empty() {
             self.diagnostic(diagnostic);
         } else {
-            self.add_diagnostic(
-                Message::new(diagnostic, PossibleFixes::Multiple(fixes_result))
-                    .with_section_offset(self.parent.current_sub_host().source_text_offset),
-            );
+            self.add_diagnostic(Message::new(diagnostic, PossibleFixes::Multiple(fixes_result)));
         }
     }
 
@@ -541,7 +496,21 @@ impl<'a> LintContext<'a> {
             FixKind::from(self.current_rule_fix_capabilities),
             rule_fix.kind()
         );
+        self.finish_create_fix(rule_fix, diagnostic)
+    }
 
+    /// Non-generic tail of [`LintContext::create_fix`].
+    ///
+    /// `create_fix` is generic over the fixer closure and its return type, so it
+    /// is monomorphized at every rule call site (hundreds of them). Keeping only
+    /// the closure evaluation in the generic shim and routing the rest of the
+    /// body through this non-generic function lets the bulk of the logic be
+    /// compiled once instead of duplicated per instantiation.
+    fn finish_create_fix(
+        &self,
+        rule_fix: RuleFix,
+        diagnostic: OxcDiagnostic,
+    ) -> (OxcDiagnostic, Option<Fix>) {
         let diagnostic = match (rule_fix.message(), &diagnostic.help) {
             (Some(message), None) => diagnostic.with_help(message.to_owned()),
             _ => diagnostic,
@@ -582,29 +551,5 @@ impl<'a> LintContext<'a> {
 
     pub fn other_file_hosts(&self) -> Vec<&ContextSubHost<'a>> {
         self.parent.other_file_hosts()
-    }
-}
-
-/// Gets the canonical display name for a plugin, given its internal short plugin name.
-///
-/// This is what is shown to users in diagnostic output (e.g. `unicorn(prefer-date-now)`).
-/// Most plugin names are returned unchanged; the exceptions are plugins whose internal
-/// name differs from the canonical name (`jsx_a11y` → `jsx-a11y`, `react_perf` →
-/// `react-perf`, `nextjs` → `next`).
-///
-/// Example:
-///
-/// ```ignore
-/// assert_eq!(plugin_display_name("react"), "react");
-/// assert_eq!(plugin_display_name("jsx_a11y"), "jsx-a11y");
-/// assert_eq!(plugin_display_name("nextjs"), "next");
-/// ```
-#[inline]
-fn plugin_display_name(plugin_name: &'static str) -> &'static str {
-    match plugin_name {
-        "jsx_a11y" => "jsx-a11y",
-        "react_perf" => "react-perf",
-        "nextjs" => "next",
-        _ => plugin_name,
     }
 }

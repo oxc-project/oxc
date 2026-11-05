@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.invalid-derived-computation-in-effect.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Values derived from props and state should be calculated during render, not in an effect", labels: [LabeledSpan { label: Some("This state update stores a value that can be calculated during render"), span: Span { start: 349, end: 360 }, primary: true }, LabeledSpan { label: Some("These reactive values contribute to the derived state"), span: Span { start: 396, end: 405 }, primary: false }, LabeledSpan { label: None, span: Span { start: 407, end: 415 }, primary: false }], help: Some("This effect derives state from the reactive values `firstName`, `lastName`, causing an extra render and potentially showing a stale value. Calculate the derived value during render, then remove the redundant state and effect."), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("EffectDerivationsOfState") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect") } }
+
+No changes.

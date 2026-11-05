@@ -81,7 +81,7 @@ impl<'a> BoundIdentifier<'a> {
         span: Span,
         ctx: &TraverseCtx<'a, State>,
     ) -> BindingIdentifier<'a> {
-        ctx.ast.binding_identifier_with_symbol_id(span, self.name, self.symbol_id)
+        BindingIdentifier::new_with_symbol_id(span, self.name, self.symbol_id, ctx)
     }
 
     /// Create `BindingPattern` for this binding, with specified `Span`

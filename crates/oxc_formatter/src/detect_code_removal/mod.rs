@@ -213,6 +213,8 @@ impl StatsCollector {
                 | AstKind::PropertyDefinition(_)
                 | AstKind::ImportAttribute(_)
                 | AstKind::TSPropertySignature(_)
+                | AstKind::TSMethodSignature(_)
+                | AstKind::TSEnumMember(_)
                 | AstKind::TSLiteralType(_),
         ) && matches!(
             kind,
@@ -291,8 +293,8 @@ impl StatsCollector {
             // However, the formatter does not reorder arbitrary string content,
             // and Tailwind options (custom attributes/functions) are not available here,
             // so this broad approach is acceptable for detecting code removal.
-            AstKind::StringLiteral(s) => {
-                let parts: Vec<_> = s.value.split_whitespace().collect();
+            AstKind::StringLiteral(s) if let Some(value) = s.value.as_str() => {
+                let parts: Vec<_> = value.split_whitespace().collect();
                 if parts.len() > 1 {
                     // Deduplicate and sort
                     let unique: FxHashSet<_> = parts.into_iter().collect();
@@ -338,6 +340,14 @@ mod tests {
             ("for ((let.a) in foo);", "for (let.a in foo);"),
             (r#"const { index, "0": code } = match;"#, r"const { index, 0: code } = match;"),
             (r#"({ "0": code } = match);"#, r"({ 0: code } = match);"),
+            (
+                r#"interface C { "assert"(condition?: boolean): void; }"#,
+                r"interface C { assert(condition?: boolean): void; }",
+            ),
+            (
+                r#"enum E { "_5" = 5, FULL_AUTO = "full_auto" }"#,
+                r#"enum E { _5 = 5, FULL_AUTO = "full_auto" }"#,
+            ),
             ("<div>{' '}</div>", "<div> </div>"),
             ("type T = | A;", "type T = A;"),
             ("type T = & A;", "type T = A;"),

@@ -14,7 +14,7 @@ use std::ops::Deref;
 use allowed::FunctionParameterKind;
 use ignored::IgnoreReason;
 use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
-use oxc_ast::{AstKind, ast::CatchParameter};
+use oxc_ast::{AstKind, AstType, ast::CatchParameter};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
@@ -202,6 +202,7 @@ declare_oxc_lint!(
     NoUnusedVars,
     eslint,
     correctness,
+    recommended,
     fix = conditional_dangerous_fix_or_suggestion,
     config = NoUnusedVarsConfig,
     version = "0.7.0",
@@ -218,17 +219,21 @@ impl Deref for NoUnusedVars {
 
 impl Rule for NoUnusedVars {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self(Box::new(NoUnusedVarsOptions::try_from(value).unwrap_or_default())))
+        NoUnusedVarsOptions::try_from(value)
+            .map(|options| Self(Box::new(options)))
+            .map_err(|error| <serde_json::Error as serde::de::Error>::custom(error.to_string()))
     }
 
     fn run_once(&self, ctx: &LintContext) {
+        let precomputed_exported_names = Symbol::collect_exported_local_names(ctx.module_record());
+
         for symbol in ctx.scoping().symbol_ids() {
             let symbol = Symbol::new(ctx, ctx.module_record(), symbol);
             if Self::should_skip_symbol(&symbol) {
                 continue;
             }
 
-            self.run_on_symbol_internal(&symbol, ctx);
+            self.run_on_symbol_internal(&symbol, ctx, &precomputed_exported_names);
         }
     }
 
@@ -245,15 +250,19 @@ impl Rule for NoUnusedVars {
 }
 
 impl NoUnusedVars {
-    fn run_on_symbol_internal<'a>(&self, symbol: &Symbol<'_, 'a>, ctx: &LintContext<'a>) {
+    fn run_on_symbol_internal<'a>(
+        &self,
+        symbol: &Symbol<'_, 'a>,
+        ctx: &LintContext<'a>,
+        exported_names: &rustc_hash::FxHashSet<&str>,
+    ) {
         let is_ignored = self.is_ignored(symbol);
 
         if is_ignored.is_some() && !self.report_used_ignore_pattern {
             return;
         }
 
-        // Order matters. We want to call cheap/high "yield" functions first.
-        let is_used = symbol.is_exported() || symbol.has_usages(self);
+        let is_used = symbol.is_exported(exported_names) || symbol.has_usages(self);
 
         match (is_used, *is_ignored) {
             // used, ignored because variable name matches one of several
@@ -287,14 +296,14 @@ impl NoUnusedVars {
 
                 if let Some(declaration) = declaration {
                     Self::report_with_fix_mode(self.fix.imports, ctx, diagnostic, |fixer| {
-                        self.remove_unused_import_declaration(fixer, symbol, declaration)
+                        self.remove_unused_import_declaration(fixer, ctx, symbol, declaration)
                     });
                 } else {
                     ctx.diagnostic(diagnostic);
                 }
             }
             AstKind::VariableDeclarator(decl) => {
-                if self.is_allowed_variable_declaration(symbol, decl) {
+                if self.is_allowed_variable_declaration(symbol, decl, ctx) {
                     return;
                 }
                 let report = match symbol.references().rev().find(|r| r.is_write()) {
@@ -358,7 +367,7 @@ impl NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
             }
-            AstKind::TSModuleDeclaration(namespace) => {
+            AstKind::TSNamespaceDeclaration(namespace) => {
                 if self.is_allowed_ts_namespace(symbol, namespace) {
                     return;
                 }
@@ -457,13 +466,18 @@ fn remove_unused_catch_parameter<'a>(
     catch: &CatchParameter<'a>,
 ) -> crate::fixer::RuleFix {
     let Span { start, end, .. } = catch.span();
-
-    let (Some(paren_start), Some(paren_end_offset)) =
-        (ctx.find_prev_token_from(start, "("), ctx.find_next_token_from(end, ")"))
-    else {
+    let AstKind::CatchClause(catch_clause) = ctx.nodes().parent_node(catch.node_id()).kind() else {
         return fixer.noop();
     };
 
+    let (Some(paren_start_offset), Some(paren_end_offset)) = (
+        ctx.find_prev_token_within(catch_clause.span.start, start, "("),
+        ctx.find_next_token_within(end, catch_clause.span.end, ")"),
+    ) else {
+        return fixer.noop();
+    };
+
+    let paren_start = catch_clause.span.start + paren_start_offset;
     let paren_end = end + paren_end_offset;
     let delete_span = Span::new(paren_start, paren_end + 1);
     fixer.delete_range(delete_span)
@@ -477,6 +491,10 @@ impl Symbol<'_, '_> {
     }
 
     fn is_in_declare_global(&self) -> bool {
+        if !self.nodes().contains(AstType::TSGlobalDeclaration) {
+            return false;
+        }
+
         self.scoping()
             .scope_ancestors(self.scope_id())
             .filter(|&scope_id| {
@@ -485,9 +503,7 @@ impl Symbol<'_, '_> {
             })
             .any(|ambient_module_scope_id| {
                 matches!(
-                    self.nodes()
-                        .get_node(self.scoping().get_node_id(ambient_module_scope_id))
-                        .kind(),
+                    self.nodes().kind(self.scoping().get_node_id(ambient_module_scope_id)),
                     AstKind::TSGlobalDeclaration(_)
                 )
             })

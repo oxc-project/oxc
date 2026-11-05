@@ -1,0 +1,39 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Redundant parens inside math functions survive (the parser keeps every pair)
+.a {
+  height: calc(50% + ((@var - 20px)));
+  min-height: calc(((10vh)) + calc((5vh)));
+  one: calc(100% - ((min(@a + @b))));
+  two: calc(100% - (((@a + @b))));
+  three: max(((@a - @b) / 2), 0);
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Redundant parens inside math functions survive (the parser keeps every pair)
+.a {
+  height: calc(50% + ((@var - 20px)));
+  min-height: calc(((10vh)) + calc((5vh)));
+  one: calc(100% - ((min(@a + @b))));
+  two: calc(100% - (((@a + @b))));
+  three: max(((@a - @b) / 2), 0);
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Redundant parens inside math functions survive (the parser keeps every pair)
+.a {
+  height: calc(50% + ((@var - 20px)));
+  min-height: calc(((10vh)) + calc((5vh)));
+  one: calc(100% - ((min(@a + @b))));
+  two: calc(100% - (((@a + @b))));
+  three: max(((@a - @b) / 2), 0);
+}
+
+===================== End =====================

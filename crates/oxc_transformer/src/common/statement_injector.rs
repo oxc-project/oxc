@@ -17,8 +17,8 @@ use std::collections::hash_map::Entry;
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Address, GetAddress, Vec as ArenaVec};
-use oxc_ast::{AstBuilder, ast::*};
+use oxc_allocator::{Address, ArenaVec, GetAddress};
+use oxc_ast::{ast::*, builder::AstBuilder};
 
 /// Store for statements to be added to the statements.
 pub struct StatementInjectorStore<'a> {
@@ -155,7 +155,7 @@ impl<'a> StatementInjectorStore<'a> {
     pub(crate) fn insert_into_statements(
         &mut self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
     ) {
         if self.insertions.is_empty() {
             return;
@@ -169,7 +169,8 @@ impl<'a> StatementInjectorStore<'a> {
             return;
         }
 
-        let mut new_statements = ast.vec_with_capacity(statements.len() + new_statement_count);
+        let mut new_statements =
+            ArenaVec::with_capacity_in(statements.len() + new_statement_count, ast);
 
         for stmt in statements.drain(..) {
             match self.insertions.remove(&stmt.address()) {

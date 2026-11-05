@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// The dominant css-in-js shape: bare root declarations with no enclosing rule.
+// The css-in-js parse mode parses them as statements (oxc-css-parser AGENTS.md
+// "Acceptance"); standalone `format()` rejects them, asserted in `parse_error_is_err`.
+
+display: flex;
+color: red;
+
+&:hover {
+  color: blue;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// The dominant css-in-js shape: bare root declarations with no enclosing rule.
+// The css-in-js parse mode parses them as statements (oxc-css-parser AGENTS.md
+// "Acceptance"); standalone `format()` rejects them, asserted in `parse_error_is_err`.
+
+display: flex;
+color: red;
+
+&:hover {
+  color: blue;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// The dominant css-in-js shape: bare root declarations with no enclosing rule.
+// The css-in-js parse mode parses them as statements (oxc-css-parser AGENTS.md
+// "Acceptance"); standalone `format()` rejects them, asserted in `parse_error_is_err`.
+
+display: flex;
+color: red;
+
+&:hover {
+  color: blue;
+}
+
+===================== End =====================

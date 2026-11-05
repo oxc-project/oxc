@@ -1,0 +1,8 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/rules-of-hooks-23dc7fffde57.js
+---
+// Valid because hooks can call hooks.
+function useHook() {
+	return useHook1() + useHook2();
+}

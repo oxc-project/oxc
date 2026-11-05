@@ -1,4 +1,4 @@
-use oxc_ast::ast::{Expression, FunctionBody};
+use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
@@ -12,7 +12,7 @@ use crate::{
     fixer::RuleFix,
     rule::{DefaultRuleConfig, Rule},
     rules::shared::prefer_expect_assertions::{
-        DOCUMENTATION, PreferExpectAssertionsConfig, PreferExpectAssertionsRuleImpl,
+        CallbackBody, DOCUMENTATION, PreferExpectAssertionsConfig, PreferExpectAssertionsRuleImpl,
         resolve_expect_local_name, should_check,
     },
     utils::collect_possible_jest_call_node,
@@ -49,7 +49,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferExpectAssertions {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<PreferExpectAssertionsConfig>>(value)
+        DefaultRuleConfig::<PreferExpectAssertionsConfig>::from_value(value)
             .map(|c| Self(Box::new(c.into_inner())))
     }
 
@@ -98,7 +98,7 @@ impl PreferExpectAssertionsRuleImpl for PreferExpectAssertions {
         ctx.diagnostic_with_suggestions(have_expect_assertions(span, prefix), suggestions);
     }
 
-    fn should_check_node(&self, body: &FunctionBody<'_>, is_async: bool, prefix: &str) -> bool {
+    fn should_check_node(&self, body: CallbackBody<'_>, is_async: bool, prefix: &str) -> bool {
         should_check(self.0.as_ref(), body, is_async, prefix)
     }
 }
@@ -110,8 +110,8 @@ fn is_expect_shadowed_in(callback: &Expression<'_>, ctx: &LintContext<'_>) -> bo
 
 fn callback_scope_id(callback: &Expression<'_>) -> Option<ScopeId> {
     match callback {
-        Expression::FunctionExpression(func) => func.scope_id.get(),
-        Expression::ArrowFunctionExpression(func) => func.scope_id.get(),
+        Expression::FunctionExpression(func) => Some(func.scope_id()),
+        Expression::ArrowFunctionExpression(func) => Some(func.scope_id()),
         _ => None,
     }
 }
@@ -1043,6 +1043,10 @@ fn test() {
                 expect(data).toBe(expect.any(String));
               });
             });",
+            Some(serde_json::json!([{ "onlyFunctionsWithExpectInCallback": true }])),
+        ),
+        (
+            r#"test("x", () => promise.then(() => expect(x).toBe(y)))"#,
             Some(serde_json::json!([{ "onlyFunctionsWithExpectInCallback": true }])),
         ),
         (

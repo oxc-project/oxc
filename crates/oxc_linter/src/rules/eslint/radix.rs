@@ -116,7 +116,7 @@ impl Rule for Radix {
             Expression::ChainExpression(chain_expr) => {
                 if let Some(member_expr) = chain_expr.expression.as_member_expression()
                     && let Expression::Identifier(ident) = member_expr.object()
-                    && member_expr.static_property_name() == Some("parseInt")
+                    && member_expr.static_property_name().is_some_and(|name| name == "parseInt")
                     && Self::is_global_number_ident(ident, ctx)
                 {
                     Self::check_arguments(call_expr, ctx);
@@ -143,12 +143,9 @@ impl Radix {
                 ctx.diagnostic_with_dangerous_fix(missing_radix(call_expr.span), |fixer| {
                     let first_arg = &call_expr.arguments[0];
                     let end = call_expr.span.end;
-                    let check_span = Span::new(first_arg.span().start, end);
-                    let insert_param = ctx
-                        .source_range(check_span)
-                        .chars()
-                        .find_map(|c| if c == ',' { Some(" 10,") } else { None })
-                        .unwrap_or(", 10");
+                    let has_trailing_comma =
+                        ctx.find_next_token_within(first_arg.span().end, end, ",").is_some();
+                    let insert_param = if has_trailing_comma { " 10," } else { ", 10" };
                     fixer.insert_text_before_range(Span::empty(end - 1), insert_param)
                 });
             }
@@ -163,7 +160,9 @@ impl Radix {
 }
 
 fn is_valid_radix(node: &Argument) -> bool {
-    let expr = node.to_expression();
+    let Some(expr) = node.as_expression() else {
+        return false;
+    };
 
     if let Expression::NumericLiteral(lit) = expr {
         return lit.value.fract() == 0.0 && lit.value >= 2.0 && lit.value <= 36.0;
@@ -221,6 +220,8 @@ fn test() {
         (r#"parseInt("10", 1);"#, None, None),
         (r#"parseInt("10", 37);"#, None, None),
         (r#"parseInt("10", 10.5);"#, None, None),
+        (r#"parseInt("10", ...bar);"#, None, None),
+        ("parseInt(foo, ...bar);", None, None),
         ("Number.parseInt();", None, None),
         (r#"Number.parseInt("10");"#, None, None),
         (r#"Number.parseInt("10", 1);"#, None, None),
@@ -272,6 +273,28 @@ fn test() {
         (
             "parseInt(10, /** 213123 */)",
             "parseInt(10, /** 213123 */ 10,)",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            r#"parseInt((0, "10"))"#,
+            r#"parseInt((0, "10"), 10)"#,
+            Some(serde_json::json!(["always"])),
+        ),
+        ("parseInt(f(a, b))", "parseInt(f(a, b), 10)", Some(serde_json::json!(["always"]))),
+        ("parseInt([1, 2][0])", "parseInt([1, 2][0], 10)", Some(serde_json::json!(["always"]))),
+        (
+            r#"parseInt("10" /* , */)"#,
+            r#"parseInt("10" /* , */, 10)"#,
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            r#"parseInt((0 /* , */, "10"))"#,
+            r#"parseInt((0 /* , */, "10"), 10)"#,
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            r#"parseInt("10" /* x */,)"#,
+            r#"parseInt("10" /* x */, 10,)"#,
             Some(serde_json::json!(["always"])),
         ),
     ];

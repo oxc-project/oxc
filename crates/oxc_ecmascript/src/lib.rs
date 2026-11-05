@@ -1,4 +1,9 @@
 //! Methods defined in the [ECMAScript Language Specification](https://tc39.es/ecma262).
+//!
+//! # Cargo features
+//!
+//! - `side_effects`: Enables side-effect analysis.
+//! - `constant_evaluation`: Enables constant evaluation and implies `side_effects`.
 
 // [Syntax-Directed Operations](https://tc39.es/ecma262/#sec-syntax-directed-operations)
 mod bound_names;
@@ -8,12 +13,13 @@ mod prop_name;
 
 // Abstract Operations
 mod array_join;
+#[cfg(feature = "constant_evaluation")]
 mod is_less_than;
 mod string_char_at;
 mod string_char_code_at;
 mod string_index_of;
 mod string_last_index_of;
-mod string_substring;
+mod string_search;
 mod string_to_big_int;
 mod string_to_number;
 mod to_big_int;
@@ -24,12 +30,17 @@ mod to_number;
 mod to_numeric;
 mod to_primitive;
 mod to_string;
+mod value;
+mod value_type;
 
 // other
 mod to_integer_index;
 
+#[cfg(feature = "constant_evaluation")]
 pub mod constant_evaluation;
 mod global_context;
+mod number_literal;
+#[cfg(feature = "side_effects")]
 pub mod side_effects;
 
 pub use self::{
@@ -37,13 +48,13 @@ pub use self::{
     bound_names::BoundNames,
     global_context::{GlobalContext, WithoutGlobalReferenceInformation},
     is_simple_parameter_list::IsSimpleParameterList,
+    number_literal::with_number_literal,
     private_bound_identifiers::PrivateBoundIdentifiers,
     prop_name::PropName,
     string_char_at::{StringCharAt, StringCharAtResult},
     string_char_code_at::StringCharCodeAt,
     string_index_of::StringIndexOf,
     string_last_index_of::StringLastIndexOf,
-    string_substring::StringSubstring,
     string_to_big_int::StringToBigInt,
     string_to_number::StringToNumber,
     to_big_int::ToBigInt,
@@ -53,4 +64,6 @@ pub use self::{
     to_number::ToNumber,
     to_primitive::ToPrimitive,
     to_string::ToJsString,
+    value::ConstantValue,
+    value_type::{DetermineValueType, ValueType},
 };

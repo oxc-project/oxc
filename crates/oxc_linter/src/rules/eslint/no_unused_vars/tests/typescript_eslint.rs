@@ -2191,6 +2191,18 @@ fn test_autofixer_imports() {
         ),
         (
             "
+            import React, { useEffect } from 'react';
+            const OrderDetails = () => <div>OrderDetails</div>;
+            export default OrderDetails;
+                    ",
+            "
+            import React from 'react';
+            const OrderDetails = () => <div>OrderDetails</div>;
+            export default OrderDetails;
+                    ",
+        ),
+        (
+            "
             import Unused, { Unused2, Used } from 'module';
             export { Used };
                     ",

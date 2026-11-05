@@ -135,7 +135,7 @@ fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
     }
 
     let radix_arg = &call_expr.arguments[1];
-    let Expression::NumericLiteral(numeric_lit) = &radix_arg.to_expression() else {
+    let Some(Expression::NumericLiteral(numeric_lit)) = radix_arg.as_expression() else {
         return;
     };
 
@@ -181,7 +181,7 @@ fn is_fixable(
 
 fn get_string_argument(call_expr: &CallExpression) -> Option<String> {
     if let Argument::StringLiteral(ident) = &call_expr.arguments[0] {
-        return Some(ident.value.to_string());
+        return ident.value.as_str().map(str::to_owned);
     } else if let Argument::TemplateLiteral(temp) = &call_expr.arguments[0] {
         if temp.quasis.is_empty() {
             return None;
@@ -222,6 +222,8 @@ fn test() {
         "parseInt(`11`, 16n);",       // { "ecmaVersion": 2020 },
         "parseInt(1n, 2);",           // { "ecmaVersion": 2020 },
         r#"class C { #parseInt; foo() { Number.#parseInt("111110111", 2); } }"#, // { "ecmaVersion": 2022 }
+        "parseInt('ff', ...x);",
+        "Number.parseInt('ff', ...x);",
     ];
 
     let fail = vec![

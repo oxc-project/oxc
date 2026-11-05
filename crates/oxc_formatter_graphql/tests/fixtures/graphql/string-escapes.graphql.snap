@@ -1,0 +1,39 @@
+---
+source: crates/oxc_formatter_graphql/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  field(
+    bmp: "A and é"
+    controls: "tab\there bs\bhere ff\fhere cr\rhere nl\nhere"
+    quotes: "say \"hi\" back\\slash slash\/"
+    raw: "plain unicode é 😀 stays"
+  )
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+{
+  field(
+    bmp: "A and é"
+    controls: "tab	here bshere ffhere cr\rhere nl\nhere"
+    quotes: "say \"hi\" back\\slash slash/"
+    raw: "plain unicode é 😀 stays"
+  )
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+{
+  field(
+    bmp: "A and é"
+    controls: "tab	here bshere ffhere cr\rhere nl\nhere"
+    quotes: "say \"hi\" back\\slash slash/"
+    raw: "plain unicode é 😀 stays"
+  )
+}
+
+===================== End =====================

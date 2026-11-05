@@ -1,0 +1,32 @@
+@value colors: './colors.css';
+@value first, second, third from colors;
+.className {
+  color: green;
+}
+.otherClassName {
+  composes: className;
+  color: yellow;
+}
+.otherClassName {
+  composes: className from "./style.css";
+}
+.otherClassName {
+  composes: globalClassName from global;
+}
+:global {
+  .global-class-name {
+    color: green;
+  }
+}
+.root :global .text {
+  color: brown;
+}
+:local(.bar) {
+  color: red;
+}
+:import("path/to/dep.css") {
+  localAlias: keyFromDep;
+}
+:export {
+  exportedKey: exportedValue;
+}

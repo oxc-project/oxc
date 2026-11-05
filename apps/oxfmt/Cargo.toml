@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.54.0"
+version = "0.76.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -32,7 +32,13 @@ oxc_config = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_formatter_core = { workspace = true }
+oxc_formatter_css = { workspace = true }
+oxc_formatter_graphql = { workspace = true }
+oxc_formatter_htmlish = { workspace = true }
 oxc_formatter_json = { workspace = true }
+oxc_formatter_markdown = { workspace = true }
+oxc_formatter_toml = { workspace = true }
+oxc_formatter_yaml = { workspace = true }
 oxc_language_server = { workspace = true }
 oxc_napi = { workspace = true }
 oxc_span = { workspace = true }
@@ -43,7 +49,6 @@ editorconfig-parser = { workspace = true }
 fast-glob = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 json-strip-comments = { workspace = true }
-miette = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
@@ -52,11 +57,10 @@ serde = { workspace = true }
 serde_json = { workspace = true, features = ["unbounded_depth"] }
 simdutf8 = { workspace = true }
 sort-package-json = { workspace = true }
-oxc-toml = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
-tower-lsp-server = { workspace = true, features = ["proposed"] }
+tower-lsp-server = { workspace = true, features = ["url-fluent-uri"] }
 
 # NAPI dependencies (conditional on napi feature)
 napi = { workspace = true, features = ["async", "serde-json"], optional = true }

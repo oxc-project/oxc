@@ -49,7 +49,7 @@ pub struct ValidDefineProps;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule checks whether `defineProps` compiler macro is valid.
+    /// Enforce valid usage of the `defineProps` compiler macro in Vue.
     ///
     /// This rule reports `defineProps` compiler macros in the following cases:
     ///
@@ -132,8 +132,10 @@ declare_oxc_lint!(
     ValidDefineProps,
     vue,
     correctness,
+    recommended,
     pending,  // TODO: removing empty `defineProps` and merging multiple `defineProps` calls
     version = "1.15.0",
+    short_description = "Enforce valid usage of the `defineProps` compiler macro in Vue.",
 );
 
 impl Rule for ValidDefineProps {

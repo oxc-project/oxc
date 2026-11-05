@@ -1,0 +1,272 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/enclosing-bindings.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(StrictMode | Function | Constructor)",
+                "id": 3,
+                "node": "Function(<anonymous>)",
+                "symbols": []
+              },
+              {
+                "children": [],
+                "flags": "ScopeFlags(StrictMode | Function | GetAccessor)",
+                "id": 4,
+                "node": "Function(<anonymous>)",
+                "symbols": []
+              },
+              {
+                "children": [],
+                "flags": "ScopeFlags(StrictMode | Function)",
+                "id": 5,
+                "node": "Function(<anonymous>)",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 2,
+            "node": "Class(<anonymous>)",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 1,
+        "node": "Function(classMembers)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 1,
+            "name": "arguments",
+            "node": "FormalParameter(arguments)",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 7,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(Function)",
+                    "id": 10,
+                    "node": "Function(inner)",
+                    "symbols": [
+                      {
+                        "flags": "SymbolFlags(Function | FunctionExpression)",
+                        "id": 4,
+                        "name": "inner",
+                        "node": "Function(inner)",
+                        "references": []
+                      }
+                    ]
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 9,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                    "id": 3,
+                    "name": "arguments",
+                    "node": "CatchParameter",
+                    "references": [
+                      {
+                        "flags": "ReferenceFlags(Read)",
+                        "id": 3,
+                        "name": "arguments",
+                        "node_id": 42,
+                        "scope_id": 9
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 8,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 6,
+        "node": "Function(catchParameter)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function)",
+            "id": 12,
+            "node": "Function(inner)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(Function | FunctionExpression)",
+                "id": 7,
+                "name": "inner",
+                "node": "Function(inner)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 11,
+        "node": "Function(defaultFunction)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 6,
+            "name": "value",
+            "node": "FormalParameter(value)",
+            "references": []
+          },
+          {
+            "flags": "SymbolFlags(BlockScopedVariable)",
+            "id": 8,
+            "name": "arguments",
+            "node": "VariableDeclarator(arguments)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 6,
+                "name": "arguments",
+                "node_id": 66,
+                "scope_id": 11
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function)",
+            "id": 14,
+            "node": "Function(inner)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(Function | FunctionExpression)",
+                "id": 11,
+                "name": "inner",
+                "node": "Function(inner)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 13,
+        "node": "Function(writes)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 10,
+            "name": "arguments",
+            "node": "FormalParameter(arguments)",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function | Arrow)",
+            "id": 16,
+            "node": "ArrowFunctionExpression",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 15,
+        "node": "Function(sloppyVar)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 13,
+            "name": "arguments",
+            "node": "VariableDeclarator(arguments)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 9,
+                "name": "arguments",
+                "node_id": 93,
+                "scope_id": 15
+              },
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 10,
+                "name": "arguments",
+                "node_id": 97,
+                "scope_id": 16
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 0,
+        "name": "classMembers",
+        "node": "Function(classMembers)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 2,
+        "name": "catchParameter",
+        "node": "Function(catchParameter)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 5,
+        "name": "defaultFunction",
+        "node": "Function(defaultFunction)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 9,
+        "name": "writes",
+        "node": "Function(writes)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 12,
+        "name": "sloppyVar",
+        "node": "Function(sloppyVar)",
+        "references": []
+      }
+    ]
+  }
+]

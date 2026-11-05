@@ -21,19 +21,19 @@ impl<'a> JSDocFinder<'a> {
         &'b self,
         nodes: &AstNodes<'a>,
         node: &AstNode<'a>,
-    ) -> Option<JSDoc<'a>> {
+    ) -> Option<&'b JSDoc<'a>> {
         let jsdocs = self.get_all_by_node(nodes, node)?;
 
         // If flagged, at least 1 JSDoc is attached
         // If multiple JSDocs are attached, return the last = nearest
-        jsdocs.last().cloned()
+        jsdocs.last()
     }
 
     pub fn get_all_by_node<'b>(
         &'b self,
         nodes: &AstNodes<'a>,
         node: &AstNode<'a>,
-    ) -> Option<Vec<JSDoc<'a>>> {
+    ) -> Option<&'b [JSDoc<'a>]> {
         if !nodes.flags(node.id()).has_jsdoc() {
             return None;
         }
@@ -42,8 +42,8 @@ impl<'a> JSDocFinder<'a> {
         self.get_all_by_span(span)
     }
 
-    pub fn get_all_by_span<'b>(&'b self, span: Span) -> Option<Vec<JSDoc<'a>>> {
-        self.attached.get(&span.start).cloned()
+    pub fn get_all_by_span<'b>(&'b self, span: Span) -> Option<&'b [JSDoc<'a>]> {
+        self.attached.get(&span.start).map(Vec::as_slice)
     }
 
     pub fn iter_all<'b>(&'b self) -> impl Iterator<Item = &'b JSDoc<'a>> + 'b {
@@ -83,7 +83,7 @@ mod test {
         let semantic = build_semantic(allocator, source_text, source_type);
         let start = u32::try_from(source_text.find(symbol).unwrap_or(0)).unwrap();
         let span = Span::sized(start, u32::try_from(symbol.len()).unwrap());
-        semantic.jsdoc().get_all_by_span(span)
+        semantic.jsdoc().get_all_by_span(span).map(<[JSDoc]>::to_vec)
     }
 
     fn test_jsdoc_found(source_text: &str, symbol: &str, source_type: Option<SourceType>) {
@@ -200,6 +200,7 @@ mod test {
             ("let v2a = 1, /** for v2b */ v2b = 2", "v2b = 2"),
             ("/** for v3a */ const v3a = 1, v3b = 2;", "const v3a = 1, v3b = 2;"),
             ("/** test */ export const e1 = 1;", "export const e1 = 1;"),
+            ("/** test */ export { x } from \"m\";", "export { x } from \"m\";"),
             ("/** test */ export default {};", "export default {};"),
             ("/** test */ import 'i1'", "import 'i1'"),
             ("/** test */ import I from 'i2'", "import I from 'i2'"),
@@ -224,6 +225,28 @@ mod test {
         for (source_text, target) in source_texts {
             test_jsdoc_found(source_text, target, Some(source_type));
         }
+    }
+
+    // Lookups must borrow, not clone: a clone parses into the temporary and leaves the cached
+    // `OnceCell` in the map uninitialized, so every lookup reparses.
+    #[test]
+    fn parse_cache_is_shared_across_lookups() {
+        let allocator = Allocator::default();
+        let source_text = "/** @param {number} a */ function f(a) {}";
+        let symbol = "function f(a) {}";
+        let semantic = build_semantic(&allocator, source_text, None);
+        let start = u32::try_from(source_text.find(symbol).unwrap()).unwrap();
+        let span = Span::sized(start, u32::try_from(symbol.len()).unwrap());
+
+        let first = semantic.jsdoc().get_all_by_span(span).unwrap()[0].tags();
+        assert_eq!(first.len(), 1);
+        let second = semantic.jsdoc().get_all_by_span(span).unwrap()[0].tags();
+
+        assert_eq!(
+            first.as_ptr(),
+            second.as_ptr(),
+            "second lookup reparsed instead of reusing the cache"
+        );
     }
 
     #[test]

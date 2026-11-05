@@ -7,11 +7,14 @@ use crate::{
 };
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
+
+use crate::rule::DefaultRuleConfig;
 
 fn restricted_jest_method(method_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use of `{method_name}` is not allowed")).with_label(span)
@@ -56,7 +59,7 @@ test('plays video', () => {
 ";
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoRestrictedTestMethodsConfig {
     /// A mapping of restricted Jest method names to custom messages - or
     /// `null`, for a generic message.
@@ -66,25 +69,22 @@ pub struct NoRestrictedTestMethodsConfig {
 }
 
 impl NoRestrictedTestMethodsConfig {
-    #[expect(clippy::unnecessary_wraps)]
     pub fn from_configuration(value: &serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let restricted_methods = value
-            .get(0)
-            .and_then(serde_json::Value::as_object)
-            .map(Self::compile_restricted_methods)
-            .unwrap_or_default();
-
-        Ok(NoRestrictedTestMethodsConfig { restricted_methods })
+        DefaultRuleConfig::<Self>::from_value(value.clone()).map(DefaultRuleConfig::into_inner)
     }
-    pub fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
+
+    pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
         if !is_type_of_jest_fn_call(
             call_expr,
-            possible_jest_node,
+            &possible_jest_node,
             ctx,
             &[
                 JestFnKind::General(JestGeneralFnKind::Jest),
@@ -97,7 +97,7 @@ impl NoRestrictedTestMethodsConfig {
         let Some(mem_expr) = call_expr.callee.as_member_expression() else {
             return;
         };
-        let Some(property_name) = mem_expr.static_property_name() else {
+        let Some(property_name) = mem_expr.static_property_name().and_then(JSStr::as_str) else {
             return;
         };
         let Some((span, _)) = mem_expr.static_property_info() else {
@@ -122,14 +122,5 @@ impl NoRestrictedTestMethodsConfig {
 
     fn get_message(&self, name: &str) -> Option<CompactStr> {
         self.restricted_methods.get(name).cloned().flatten()
-    }
-
-    pub fn compile_restricted_methods(
-        matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> FxHashMap<String, Option<CompactStr>> {
-        matchers
-            .iter()
-            .map(|(key, value)| (String::from(key), value.as_str().map(CompactStr::from)))
-            .collect()
     }
 }

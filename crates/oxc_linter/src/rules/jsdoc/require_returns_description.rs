@@ -45,7 +45,9 @@ declare_oxc_lint!(
     RequireReturnsDescription,
     jsdoc,
     pedantic,
+    recommended,
     version = "0.4.0",
+    short_description = "Requires that the `@returns` tag has a description value.",
 );
 
 impl Rule for RequireReturnsDescription {

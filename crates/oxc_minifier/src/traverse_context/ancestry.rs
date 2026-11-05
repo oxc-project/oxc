@@ -112,7 +112,7 @@ impl<'a> TraverseAncestry<'a> {
     /// Get iterator over ancestors, starting with parent and working up.
     ///
     /// Last `Ancestor` returned will be `Program`. `Ancestor::None` is not included in iteration.
-    pub fn ancestors<'t>(&'t self) -> impl Iterator<Item = Ancestor<'a, 't>> {
+    pub fn ancestors<'t>(&'t self) -> impl ExactSizeIterator<Item = Ancestor<'a, 't>> {
         // SAFETY: Stack always has at least 1 entry
         let stack_without_first = unsafe { self.stack.get_unchecked(1..) };
         stack_without_first.iter().rev().map(|&ancestor| {

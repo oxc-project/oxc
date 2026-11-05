@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, fixer::Fix, rule::Rule, utils::is_same_expression};
 
@@ -54,6 +55,7 @@ declare_oxc_lint!(
     PreferNegativeIndex,
     unicorn,
     style,
+    recommended,
     fix,
     version = "0.13.2",
     short_description = "Prefer using a negative index over `.length - index` when possible.",
@@ -78,7 +80,7 @@ impl Rule for PreferNegativeIndex {
             callee_object_expr.is_member_expression() && (is_prototype_call || is_prototype_apply);
 
         let Some(callee_name) = (if is_prototype {
-            callee_object_expr.to_member_expression().static_property_name()
+            callee_object_expr.to_member_expression().static_property_name().and_then(JSStr::as_str)
         } else {
             Some(name)
         }) else {
@@ -93,12 +95,9 @@ impl Rule for PreferNegativeIndex {
 
         let identifier_expr = match (callee_type, callee_name) {
             (TypeOptions::String, "slice" | "at")
-            | (TypeOptions::TypedArray, "slice" | "at" | "with" | "subarray")
-            | (TypeOptions::Array, "slice" | "at" | "splice" | "with" | "toSpliced")
-            | (
-                TypeOptions::Literal,
-                "slice" | "at" | "splice" | "subarray" | "with" | "toSpliced",
-            ) => {
+            | (TypeOptions::TypedArray, "slice" | "at" | "subarray")
+            | (TypeOptions::Array, "slice" | "at" | "splice" | "toSpliced")
+            | (TypeOptions::Literal, "slice" | "at" | "splice" | "subarray" | "toSpliced") => {
                 if is_prototype {
                     let Some(first_arg) =
                         call_expr.arguments.first().and_then(Argument::as_expression)
@@ -196,10 +195,10 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
             Expression::ComputedMemberExpression(right_computed_expr),
         ) => is_same_node(&left_computed_expr.expression, &right_computed_expr.expression, ctx),
         (Expression::StringLiteral(left_lit), Expression::NumericLiteral(right_lit)) => {
-            left_lit.to_string() == right_lit.to_string()
+            left_lit.value == right_lit.to_string().as_str()
         }
         (Expression::NumericLiteral(left_lit), Expression::StringLiteral(right_lit)) => {
-            left_lit.to_string() == right_lit.to_string()
+            right_lit.value == left_lit.to_string().as_str()
         }
         (
             Expression::TemplateLiteral(left_template_lit),
@@ -209,7 +208,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
                 return false;
             };
 
-            template_str.as_str() == right_string_lit.to_string()
+            template_str == right_string_lit.value
         }
         (
             Expression::StringLiteral(left_string_lit),
@@ -219,7 +218,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
                 return false;
             };
 
-            left_string_lit.to_string() == template_str.as_str()
+            left_string_lit.value == template_str
         }
         _ => false,
     }
@@ -313,6 +312,13 @@ fn test() {
         "String.prototype.with.call(foo, foo.length - 1)",
         "Uint8Array.prototype.toSpliced.call(foo, foo.length - 1)",
         "Array.prototype.subarray.call(foo, foo.length - 1)",
+        // `Array#with`/`%TypedArray%#with` are intentionally unsupported: unlike `slice`/`at`/
+        // `splice`, `with` throws a `RangeError` for out-of-range indices instead of clamping, so
+        // rewriting `length - n` to `-n` can change behavior on short arrays (matches
+        // eslint-plugin-unicorn, which excludes `with`).
+        "foo.with(foo.length - 3, foo.length - 6)",
+        "Array.prototype.with.call(foo, foo.length - 3, foo.length - 6)",
+        "Uint8Array.prototype.with.call(foo, foo.length - 3, foo.length - 6)",
     ];
 
     let fail = vec![
@@ -437,8 +443,6 @@ fn test() {
         "foo.toSpliced(foo.length - 3, foo.length - 6)",
         "Array.prototype.toSpliced.call(foo, foo.length - 3, foo.length - 6)",
         "[].toSpliced.call(foo, foo.length - 3, foo.length - 6)",
-        "foo.with(foo.length - 3, foo.length - 6)",
-        "Array.prototype.with.call(foo, foo.length - 3, foo.length - 6)",
         "foo.subarray(foo.length - 3, foo.length - 6)",
         "Uint8Array.prototype.subarray.call(foo, foo.length - 3, foo.length - 6)",
         "Uint8Array.prototype.subarray.apply(foo, [foo.length - 3, foo.length - 6])",

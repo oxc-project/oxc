@@ -1,21 +1,26 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_ast::ast::AssignmentExpression;
+use oxc_ast::ast::Expression;
 use oxc_span::Span;
 
 use crate::cursor::ParserCheckpoint;
+
+/// The initializer and diagnostic span of a shorthand property awaiting cover validation.
+pub struct CoverInitializedName<'a> {
+    pub span: Span,
+    pub initializer: Expression<'a>,
+}
 
 pub struct ParserState<'a> {
     pub not_parenthesized_arrow: FxHashSet<u32>,
 
     /// Temporary storage for `CoverInitializedName` `({ foo = bar })`.
     /// Keyed by `ObjectProperty`'s span.start.
-    pub cover_initialized_name: FxHashMap<u32, AssignmentExpression<'a>>,
+    pub cover_initialized_name: FxHashMap<u32, CoverInitializedName<'a>>,
 
-    /// Trailing comma spans for `ArrayExpression` and `ObjectExpression`.
-    /// Used for error reporting.
-    /// Keyed by start span of `ArrayExpression` / `ObjectExpression`.
-    /// Valued by position of the trailing_comma.
+    /// Trailing comma spans for `ArrayExpression` and `ObjectExpression` ending in a spread.
+    /// Used for error reporting when covering a rest assignment target.
+    /// Keyed by the expression start and consumed when checked.
     pub trailing_commas: FxHashMap<u32, Span>,
 
     /// Statements that may need reparsing when `sourceType` is `unambiguous`.

@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.handle-unexpected-exception-pipeline.ts
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unexpected pipeline error", labels: [LabeledSpan { label: Some("The compiler pipeline failed here"), span: Span { start: 51, end: 60 }, primary: true }], help: Some("Please report this internal React Compiler error to Oxc with a minimal reproduction"), note: Some("The compiler pipeline stopped before this component or hook could be optimized"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Invariant") }, url: Some("https://github.com/oxc-project/oxc/issues/new/choose") } }
+
+No changes.

@@ -1,0 +1,8 @@
+{
+  "single_quote": true,
+  "comment_line_strategy": "multiline",
+  "description_tag": true,
+  "description_with_dot": true,
+  "prefer_code_fences": true,
+  "separate_tag_groups": false
+}

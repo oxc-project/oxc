@@ -1,3 +1,4 @@
+// jsonc allows comments and (per option) trailing commas
 {
   "matrix": [
     [1, 2, 3],

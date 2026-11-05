@@ -2,6 +2,7 @@ use std::path::Path;
 
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
@@ -10,6 +11,7 @@ use serde::Deserialize;
 
 use crate::{
     context::LintContext,
+    rule::DefaultRuleConfig,
     utils::{
         JestFnKind, KnownMemberExpressionProperty, PossibleJestNode, is_type_of_jest_fn_call,
         object_with_nullable_string_schema, parse_expect_jest_fn_call,
@@ -87,7 +89,7 @@ describe('when an error happens', () => {
 "#;
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoRestrictedMatchersConfig {
     /// A map of restricted matchers/modifiers to custom messages.
     /// The key is the matcher/modifier name (e.g., "toBeFalsy", "resolves", "not.toHaveBeenCalledWith").
@@ -100,28 +102,24 @@ pub struct NoRestrictedMatchersConfig {
 const MODIFIER_NAME: [&str; 3] = ["not", "rejects", "resolves"];
 
 impl NoRestrictedMatchersConfig {
-    #[expect(clippy::unnecessary_wraps)]
     pub fn from_configuration(value: &serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let restricted_matchers = value
-            .get(0)
-            .and_then(serde_json::Value::as_object)
-            .map(Self::compile_restricted_matchers)
-            .unwrap_or_default();
-
-        Ok(NoRestrictedMatchersConfig { restricted_matchers })
+        DefaultRuleConfig::<Self>::from_value(value.clone()).map(DefaultRuleConfig::into_inner)
     }
 
-    pub fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
+    pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
-        if !is_type_of_jest_fn_call(call_expr, possible_jest_node, ctx, &[JestFnKind::Expect]) {
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
+        if !is_type_of_jest_fn_call(call_expr, &possible_jest_node, ctx, &[JestFnKind::Expect]) {
             return;
         }
 
-        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, &possible_jest_node, ctx)
         else {
             return;
         };
@@ -159,14 +157,5 @@ impl NoRestrictedMatchersConfig {
         } else {
             chain_call == restriction
         }
-    }
-
-    pub fn compile_restricted_matchers(
-        matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> FxHashMap<String, Option<CompactStr>> {
-        matchers
-            .iter()
-            .map(|(key, value)| (String::from(key), value.as_str().map(CompactStr::from)))
-            .collect()
     }
 }

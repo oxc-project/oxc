@@ -1,0 +1,87 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* A trailing same-line block comment counts toward the print width,
+   so it alone can break the preceding value (matching Prettier). */
+.a {
+  border-radius: min(calc(var(--wa-form-control-toggle-size) * 0.375), var(--wa-border-radius-s)); /* min prevents entirely circular checkbox */
+}
+/* Consecutive same-line trailing block comments are one inline run:
+   each counts toward the print width (so the second alone can break the value),
+   and a following statement keeps them on the previous line. */
+a {
+  color: red; /* x */ /* y */
+  color: blue;
+}
+b {
+  font-family: Arial, serif; /* x */ /* 0123456789012345678901234567890123456789012 */
+}
+/* Comment width is measured in characters, not bytes: the multibyte `º` must
+   not shift the fit decision for the following declaration. */
+:host {
+  /* The diamond corners are mitred at 22.5º to merge any arrow border. */
+  --arrow-size-diagonal: calc((var(--arrow-size) + var(--arrow-base-offset)) * 0.7071);
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* A trailing same-line block comment counts toward the print width,
+   so it alone can break the preceding value (matching Prettier). */
+.a {
+  border-radius: min(
+    calc(var(--wa-form-control-toggle-size) * 0.375),
+    var(--wa-border-radius-s)
+  ); /* min prevents entirely circular checkbox */
+}
+/* Consecutive same-line trailing block comments are one inline run:
+   each counts toward the print width (so the second alone can break the value),
+   and a following statement keeps them on the previous line. */
+a {
+  color: red; /* x */ /* y */
+  color: blue;
+}
+b {
+  font-family:
+    Arial, serif; /* x */ /* 0123456789012345678901234567890123456789012 */
+}
+/* Comment width is measured in characters, not bytes: the multibyte `º` must
+   not shift the fit decision for the following declaration. */
+:host {
+  /* The diamond corners are mitred at 22.5º to merge any arrow border. */
+  --arrow-size-diagonal: calc(
+    (var(--arrow-size) + var(--arrow-base-offset)) * 0.7071
+  );
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* A trailing same-line block comment counts toward the print width,
+   so it alone can break the preceding value (matching Prettier). */
+.a {
+  border-radius: min(
+    calc(var(--wa-form-control-toggle-size) * 0.375),
+    var(--wa-border-radius-s)
+  ); /* min prevents entirely circular checkbox */
+}
+/* Consecutive same-line trailing block comments are one inline run:
+   each counts toward the print width (so the second alone can break the value),
+   and a following statement keeps them on the previous line. */
+a {
+  color: red; /* x */ /* y */
+  color: blue;
+}
+b {
+  font-family: Arial, serif; /* x */ /* 0123456789012345678901234567890123456789012 */
+}
+/* Comment width is measured in characters, not bytes: the multibyte `º` must
+   not shift the fit decision for the following declaration. */
+:host {
+  /* The diamond corners are mitred at 22.5º to merge any arrow border. */
+  --arrow-size-diagonal: calc((var(--arrow-size) + var(--arrow-base-offset)) * 0.7071);
+}
+
+===================== End =====================

@@ -6,7 +6,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use napi::{Either, Task, bindgen_prelude::AsyncTask};
+use napi::{
+    Either, Task,
+    bindgen_prelude::{AsyncTask, Utf16String},
+};
 use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
@@ -18,9 +21,9 @@ use oxc::{
     parser::Parser,
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
+    str::JSStr,
     transformer::{
-        EnvOptions, HelperLoaderMode, HelperLoaderOptions, JsxRuntime, ProposalOptions,
-        RewriteExtensionsMode,
+        EnvOptions, HelperLoaderMode, HelperLoaderOptions, JsxRuntime, RewriteExtensionsMode,
     },
     transformer_plugins::{
         InjectGlobalVariablesConfig, InjectImport, ModuleRunnerTransform,
@@ -30,7 +33,7 @@ use oxc::{
 use oxc_napi::{OxcError, get_source_type};
 use oxc_sourcemap::napi::SourceMap;
 
-use crate::{IsolatedDeclarationsOptions, react_compiler::ReactCompilerOptions};
+use crate::IsolatedDeclarationsOptions;
 
 #[derive(Default)]
 #[napi(object)]
@@ -84,7 +87,7 @@ pub struct TransformResult {
 ///
 /// Options are listed in evaluation order: the source is parsed (`lang`,
 /// `sourceType`), declarations are emitted (`typescript.declaration`), then
-/// transforms run (`reactCompiler`, `typescript`, `decorator`, `plugins`,
+/// transforms run (`typescript`, `decorator`, `plugins`,
 /// `jsx`, `target`), followed by the `inject` and `define` plugins, and
 /// finally codegen (`sourcemap`). `helpers` configures the runtime helpers
 /// the transforms emit.
@@ -107,14 +110,6 @@ pub struct TransformOptions {
 
     /// Set assumptions in order to produce smaller output.
     pub assumptions: Option<CompilerAssumptions>,
-
-    /// Enable the experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
-    ///
-    /// `true` enables it with default options; an object enables it with the
-    /// given options; `false` or omitted disables it. When enabled, the compiler
-    /// runs as the first transform and memoizes React components and hooks.
-    #[napi(ts_type = "boolean | ReactCompilerOptions")]
-    pub react_compiler: Option<Either<bool, ReactCompilerOptions>>,
 
     /// Configure how TypeScript is transformed.
     ///
@@ -190,7 +185,6 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
         Ok(Self {
             cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
             assumptions: options.assumptions.map(Into::into).unwrap_or_default(),
-            react_compiler: crate::react_compiler::resolve(options.react_compiler),
             typescript: options
                 .typescript
                 .map(oxc::transformer::TypeScriptOptions::from)
@@ -215,10 +209,15 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 None => oxc::transformer::JsxOptions::enable(),
             },
             env,
-            proposals: ProposalOptions::default(),
             helper_loader: options
                 .helpers
                 .map_or_else(HelperLoaderOptions::default, HelperLoaderOptions::from),
+            // `..Default` supplies `proposals` (TC39, none implemented) and, when a
+            // workspace build enables it via Cargo feature unification, the gated
+            // `oxc_transformer` `react_compiler` field this binding no longer exposes.
+            // Keeps the literal valid in every feature config (and avoids
+            // `clippy::needless_update`).
+            ..Default::default()
         })
     }
 }
@@ -871,12 +870,12 @@ impl CompilerInterface for Compiler {
         self.inject.clone()
     }
 
-    fn after_codegen(&mut self, ret: CodegenReturn) {
+    fn after_codegen(&mut self, ret: CodegenReturn<'_>) {
         self.printed = ret.code;
         self.printed_sourcemap = ret.map.map(SourceMap::from);
     }
 
-    fn after_isolated_declarations(&mut self, ret: CodegenReturn) {
+    fn after_isolated_declarations(&mut self, ret: CodegenReturn<'_>) {
         self.declaration.replace(ret.code);
         self.declaration_map = ret.map.map(SourceMap::from);
     }
@@ -1038,10 +1037,12 @@ pub struct ModuleRunnerTransformResult {
     pub map: Option<SourceMap>,
 
     // Import sources collected during transformation.
-    pub deps: Vec<String>,
+    #[napi(ts_type = "string[]")]
+    pub deps: Vec<Either<String, Utf16String>>,
 
     // Dynamic import sources collected during transformation.
-    pub dynamic_deps: Vec<String>,
+    #[napi(ts_type = "string[]")]
+    pub dynamic_deps: Vec<Either<String, Utf16String>>,
 
     /// Parse and transformation errors.
     ///
@@ -1102,11 +1103,17 @@ fn module_runner_transform_impl(
         })
         .build(&program);
 
+    let to_napi_string = |value: JSStr<'_>| {
+        value.as_str().map_or_else(
+            || Either::B(value.encode_utf16().collect::<Vec<_>>().into()),
+            |value| Either::A(value.to_owned()),
+        )
+    };
     ModuleRunnerTransformResult {
         code,
         map: map.map(Into::into),
-        deps: deps.into_iter().collect::<Vec<String>>(),
-        dynamic_deps: dynamic_deps.into_iter().collect::<Vec<String>>(),
+        deps: deps.into_iter().map(to_napi_string).collect(),
+        dynamic_deps: dynamic_deps.into_iter().map(to_napi_string).collect(),
         errors: OxcError::from_diagnostics(filename, source_text, parser_ret.diagnostics),
     }
 }

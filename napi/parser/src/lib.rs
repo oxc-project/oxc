@@ -84,6 +84,9 @@ fn parse_impl<'a>(
 ) -> ParserReturn<'a> {
     let parser = Parser::new(allocator, source_text, source_type).with_options(ParseOptions {
         preserve_parens: options.preserve_parens.unwrap_or(true),
+        // Ident hashes are only consumed by semantic analysis, which this crate runs solely when
+        // semantic errors are requested. Skip hashing otherwise to speed up parse-and-serialize.
+        enable_ident_hashes: options.show_semantic_errors == Some(true),
         ..ParseOptions::default()
     });
 
@@ -118,31 +121,26 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
     let mut comments =
         convert_utf8_to_utf16(source_text, &mut program, &mut module_record, &mut errors);
 
-    let program_and_fixes = match ast_type {
-        AstType::JavaScript => {
-            // Add hashbang to start of comments
-            if let Some(hashbang) = &program.hashbang {
-                comments.insert(
-                    0,
-                    Comment {
-                        r#type: "Line".to_string(),
-                        value: hashbang.value.to_string(),
-                        start: hashbang.span.start,
-                        end: hashbang.span.end,
-                    },
-                );
-            }
+    if ast_type == AstType::JavaScript {
+        // Add hashbang to start of comments.
+        // Note: `@typescript-eslint/parser` ignores hashbangs, despite appearances to the contrary in AST explorers.
+        // So we ignore them too for TS.
+        // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
+        if let Some(hashbang) = &program.hashbang {
+            comments.insert(
+                0,
+                Comment {
+                    r#type: "Line".to_string(),
+                    value: hashbang.value.to_string(),
+                    start: hashbang.span.start,
+                    end: hashbang.span.end,
+                },
+            );
+        }
+    }
 
-            program.to_estree_js_json_with_fixes(ranges)
-        }
-        AstType::TypeScript => {
-            // Note: `@typescript-eslint/parser` ignores hashbangs,
-            // despite appearances to the contrary in AST explorers.
-            // So we ignore them too.
-            // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
-            program.to_estree_ts_json_with_fixes(ranges)
-        }
-    };
+    let include_ts_fields = ast_type == AstType::TypeScript;
+    let program_and_fixes = program.to_estree_json_with_fixes(include_ts_fields, ranges);
 
     let module = EcmaScriptModule::from(&module_record);
 

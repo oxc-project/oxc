@@ -1,18 +1,16 @@
-use oxc_allocator::Box as ArenaBox;
-use oxc_ast::{AstBuilder, NONE, ast::*};
-use oxc_ast_visit::Visit;
+use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_ast::{ast::*, builder::GetAstBuilder};
+use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};
-use oxc_str::Str;
+use oxc_str::Ident;
 use oxc_syntax::symbol::SymbolId;
 
 pub struct KeepVar<'a> {
-    ast: AstBuilder<'a>,
-    vars: std::vec::Vec<(Str<'a>, Span, Option<SymbolId>)>,
-    all_hoisted: bool,
+    vars: Vec<(Ident<'a>, Span, Option<SymbolId>)>,
 }
 
-impl<'a> Visit<'a> for KeepVar<'a> {
+impl<'a> VisitJs<'a> for KeepVar<'a> {
     fn visit_statement(&mut self, it: &Statement<'a>) {
         // Only visit blocks where vars could be hoisted
         match it {
@@ -46,41 +44,50 @@ impl<'a> Visit<'a> for KeepVar<'a> {
     fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
         if it.kind.is_var() {
             it.bound_names(&mut |ident| {
-                self.vars.push((ident.name.into(), ident.span, ident.symbol_id.get()));
+                self.vars.push((ident.name, ident.span, ident.symbol_id.get()));
             });
-            if it.has_init() {
-                self.all_hoisted = false;
-            }
         }
     }
 }
 
 impl<'a> KeepVar<'a> {
-    pub fn new(ast: AstBuilder<'a>) -> Self {
-        Self { ast, vars: std::vec![], all_hoisted: true }
+    pub fn new() -> Self {
+        Self { vars: std::vec![] }
     }
 
-    pub fn get_variable_declaration(self) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
+    pub fn get_variable_declaration(
+        self,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
         if self.vars.is_empty() {
             return None;
         }
 
-        let kind = VariableDeclarationKind::Var;
-        let decls = self.ast.vec_from_iter(self.vars.into_iter().map(|(name, span, symbol_id)| {
-            let id = symbol_id.map_or_else(
-                || self.ast.binding_pattern_binding_identifier(span, name),
-                |symbol_id| {
-                    self.ast
-                        .binding_pattern_binding_identifier_with_symbol_id(span, name, symbol_id)
-                },
-            );
-            self.ast.variable_declarator(span, kind, id, NONE, None, false)
-        }));
+        let builder = builder.builder();
 
-        Some(self.ast.alloc_variable_declaration(SPAN, kind, decls, false))
+        let kind = VariableDeclarationKind::Var;
+        let decls = ArenaVec::from_iter_in(
+            self.vars.into_iter().map(|(name, span, symbol_id)| {
+                let id = symbol_id.map_or_else(
+                    || BindingPattern::new_binding_identifier(span, name, builder),
+                    |symbol_id| {
+                        BindingPattern::new_binding_identifier_with_symbol_id(
+                            span, name, symbol_id, builder,
+                        )
+                    },
+                );
+                VariableDeclarator::new(span, id, None, None, false, builder)
+            }),
+            builder,
+        );
+
+        Some(VariableDeclaration::boxed(SPAN, kind, decls, false, builder))
     }
 
-    pub fn get_variable_declaration_statement(self) -> Option<Statement<'a>> {
-        self.get_variable_declaration().map(Statement::VariableDeclaration)
+    pub fn get_variable_declaration_statement(
+        self,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Option<Statement<'a>> {
+        self.get_variable_declaration(builder).map(Statement::VariableDeclaration)
     }
 }

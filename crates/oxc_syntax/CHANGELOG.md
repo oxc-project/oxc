@@ -4,6 +4,66 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.157.0] - 2026-11-02
+
+### ⚡ Performance
+
+- 8239dac parser: Replace dragonbox_ecma with zmij_ecma (#28282) (Boshen)
+
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- c7d229b transformer: [**BREAKING**] Decode JSX entities to lone surrogates (#26712) (Dunqing)
+
+### ⚡ Performance
+
+- a6456b7 codegen: Remove branch from `print_space_before_identifier` (#27842) (overlookmotel)
+
+## [0.154.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- b5e8eff parser: [**BREAKING**] Assign node IDs during parsing (#27411) (camc314)
+
+## [0.149.0] - 2026-09-07
+
+### 🚀 Features
+
+- 1d9b9d3 ast: Add `GetNodeId` trait (#26145) (camc314)
+
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 2cde1f6 rust: Address nightly deprecations (#25998) (Boshen)
+
+## [0.141.0] - 2026-07-20
+
+### 🚀 Features
+
+- 7aa4739 syntax,transformer: Move JSX entity decoder to `oxc_syntax` (#24617) (camc314)
+
+### ⚡ Performance
+
+- ba65790 semantic, allocator: Branchless `clone_in` for semantic IDs (#24564) (overlookmotel)
+
+## [0.140.0] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- 058a62f semantic: Track ambient contexts in `SemanticBuilder` (#24327) (camc314)
+
+## [0.138.0] - 2026-06-29
+
+### 🐛 Bug Fixes
+
+- da0e5bf minifier: Don't reorder a closed-over TDZ read when inlining a var (#23771) (Dunqing)
+
+### 📚 Documentation
+
+- 419ec80 syntax: Fix typo in doc comment (#23674) (overlookmotel)
+
 ## [0.128.0] - 2026-04-27
 
 ### 💥 BREAKING CHANGES

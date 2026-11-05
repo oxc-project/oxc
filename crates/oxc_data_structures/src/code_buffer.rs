@@ -295,9 +295,9 @@ impl CodeBuffer {
     /// The caller must ensure that, after 1 or more sequential calls, the buffer represents
     /// a valid UTF-8 string.
     ///
-    /// It is OK for a single call to temporarily result in the buffer containsing invalid UTF-8, as long
-    /// as UTF-8 integrity is restored before calls to any other `print_*` method or [`into_string`].
-    /// This lets you, for example, print an 4-byte Unicode character using 4 separate calls to this method.
+    /// It is OK for a single call to temporarily result in the buffer containing invalid UTF-8, as long
+    /// as UTF-8 integrity is restored before calls to any other `print_*` method, [`as_str`], or [`into_string`].
+    /// This lets you, for example, print a 4-byte Unicode character using 4 separate calls to this method.
     /// However, consider using [`print_bytes_unchecked`] instead for that use case.
     ///
     /// # Example
@@ -321,6 +321,7 @@ impl CodeBuffer {
     ///
     /// [`print_ascii_byte`]: CodeBuffer::print_ascii_byte
     /// [`print_char`]: CodeBuffer::print_char
+    /// [`as_str`]: CodeBuffer::as_str
     /// [`into_string`]: CodeBuffer::into_string
     /// [`print_bytes_unchecked`]: CodeBuffer::print_bytes_unchecked
     #[inline]
@@ -394,6 +395,100 @@ impl CodeBuffer {
         self.buf.extend_from_slice(s.as_ref().as_bytes());
     }
 
+    /// Push a string into the buffer, like [`print_str`],
+    /// with a fast path for a string of at most 16 bytes (most tokens and identifiers).
+    ///
+    /// The fast path copies with at most two overlapping loads and stores of the same width,
+    /// instead of a `memcpy` call.
+    ///
+    /// # Example
+    /// ```
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
+    /// let mut code = CodeBuffer::with_capacity(16);
+    /// code.print_str_short("let");
+    /// code.print_str_short(" identifier");
+    /// assert_eq!(code.as_str(), "let identifier");
+    /// ```
+    ///
+    /// [`print_str`]: CodeBuffer::print_str
+    #[inline]
+    pub fn print_str_short(&mut self, s: &str) {
+        // SAFETY: `s` is a `str`, so its bytes are valid UTF-8
+        unsafe { self.print_bytes_short_unchecked(s.as_bytes()) };
+    }
+
+    /// Push a slice of bytes into the buffer, like [`print_bytes_unchecked`],
+    /// with the fast path of [`print_str_short`].
+    ///
+    /// # SAFETY
+    /// Same as [`print_bytes_unchecked`]: the buffer must stay valid UTF-8
+    /// when it is read with [`as_str`] or converted with [`into_string`].
+    ///
+    /// # Example
+    /// ```
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
+    /// let mut code = CodeBuffer::new();
+    ///
+    /// // SAFETY: All bytes in this slice are ASCII
+    /// unsafe {
+    ///     code.print_bytes_short_unchecked("abcd".as_bytes());
+    /// }
+    /// ```
+    ///
+    /// [`print_bytes_unchecked`]: CodeBuffer::print_bytes_unchecked
+    /// [`print_str_short`]: CodeBuffer::print_str_short
+    /// [`as_str`]: CodeBuffer::as_str
+    /// [`into_string`]: CodeBuffer::into_string
+    #[inline]
+    pub unsafe fn print_bytes_short_unchecked(&mut self, bytes: &[u8]) {
+        #[cold]
+        #[inline(never)]
+        fn write_slow(code_buffer: &mut CodeBuffer, bytes: &[u8]) {
+            code_buffer.buf.extend_from_slice(bytes);
+        }
+
+        /// Copies `size_of::<T>()` bytes at `0` and at `n - size_of::<T>()`, which covers all `n` bytes.
+        ///
+        /// # SAFETY
+        /// `size_of::<T>() <= n`, `src` is readable and `dst` is writable for `n` bytes.
+        #[inline]
+        unsafe fn copy_overlapping<T: Copy>(src: *const u8, dst: *mut u8, n: usize) {
+            let tail = n - size_of::<T>();
+            // SAFETY: Both copies are within the first `n` bytes of `src` and `dst`
+            unsafe {
+                dst.cast::<T>().write_unaligned(src.cast::<T>().read_unaligned());
+                dst.add(tail)
+                    .cast::<T>()
+                    .write_unaligned(src.add(tail).cast::<T>().read_unaligned());
+            }
+        }
+
+        let n = bytes.len();
+        let len = self.len();
+        if n > 16 || self.capacity() - len < n {
+            write_slow(self, bytes);
+            return;
+        }
+
+        let src = bytes.as_ptr();
+        // SAFETY: There are at least `n` bytes spare capacity after `len`,
+        // and each copy is no wider than `n`.
+        // The caller guarantees that the buffer stays valid UTF-8.
+        unsafe {
+            let dst = self.buf.as_mut_ptr().add(len);
+            if n >= 8 {
+                copy_overlapping::<u64>(src, dst, n);
+            } else if n >= 4 {
+                copy_overlapping::<u32>(src, dst, n);
+            } else if n >= 2 {
+                copy_overlapping::<u16>(src, dst, n);
+            } else if n == 1 {
+                *dst = *src;
+            }
+            self.buf.set_len(len + n);
+        }
+    }
+
     /// Push a sequence of ASCII characters into the buffer.
     ///
     /// # Panics
@@ -427,7 +522,7 @@ impl CodeBuffer {
     /// a valid UTF-8 string.
     ///
     /// It is OK for a single call to temporarily result in the buffer containing invalid UTF-8, as long
-    /// as UTF-8 integrity is restored before calls to any other `print_*` method or [`into_string`].
+    /// as UTF-8 integrity is restored before calls to any other `print_*` method, [`as_str`], or [`into_string`].
     ///
     /// This requirement is easily satisfied if buffer contained valid UTF-8, and the `bytes` slice
     /// also contains a valid UTF-8 string.
@@ -443,6 +538,7 @@ impl CodeBuffer {
     /// }
     /// ```
     ///
+    /// [`as_str`]: CodeBuffer::as_str
     /// [`into_string`]: CodeBuffer::into_string
     #[inline]
     pub unsafe fn print_bytes_unchecked(&mut self, bytes: &[u8]) {
@@ -589,7 +685,7 @@ impl CodeBuffer {
     /// a valid UTF-8 string.
     ///
     /// It is OK for a single call to temporarily result in the buffer containing invalid UTF-8, as long
-    /// as UTF-8 integrity is restored before calls to any other `print_*` method or [`into_string`].
+    /// as UTF-8 integrity is restored before calls to any other `print_*` method, [`as_str`], or [`into_string`].
     ///
     /// This requirement is easily satisfied if buffer contained valid UTF-8, and the `bytes` iterator
     /// also yields a valid UTF-8 string.
@@ -605,6 +701,7 @@ impl CodeBuffer {
     /// }
     /// ```
     ///
+    /// [`as_str`]: CodeBuffer::as_str
     /// [`into_string`]: CodeBuffer::into_string
     #[inline]
     pub unsafe fn print_bytes_iter_unchecked<I: IntoIterator<Item = u8>>(&mut self, bytes: I) {
@@ -670,17 +767,6 @@ impl CodeBuffer {
         unsafe { self.buf.set_len(len + bytes) };
     }
 
-    /// Remove trailing whitespace (spaces and tabs) from the buffer.
-    ///
-    /// This trims trailing whitespace before line breaks, matching Prettier's `trimEnd(out)` behavior.
-    /// <https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/document/printer/printer.js#L535>
-    #[inline]
-    pub fn trim_trailing_ascii_whitespace(&mut self) {
-        while self.buf.last().is_some_and(|&b| b == b' ' || b == b'\t') {
-            self.buf.pop();
-        }
-    }
-
     /// Get contents of buffer as a byte slice.
     ///
     /// # Example
@@ -693,6 +779,28 @@ impl CodeBuffer {
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
         &self.buf
+    }
+
+    /// Get contents of buffer as a `&str`.
+    ///
+    /// # Example
+    /// ```
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
+    /// let mut code = CodeBuffer::new();
+    /// code.print_str("foo");
+    /// code.print_str("bar");
+    /// assert_eq!(code.as_str(), "foobar");
+    /// ```
+    #[expect(clippy::missing_panics_doc)]
+    #[inline]
+    pub fn as_str(&self) -> &str {
+        if cfg!(debug_assertions) {
+            str::from_utf8(&self.buf).unwrap()
+        } else {
+            // SAFETY: All safe methods of `CodeBuffer` ensure `buf` is valid UTF-8, and all unsafe methods
+            // specify the buffer must be made into a valid UTF-8 string before calling this method
+            unsafe { str::from_utf8_unchecked(&self.buf) }
+        }
     }
 
     /// Consume buffer and return source code as a `String`.
@@ -713,7 +821,8 @@ impl CodeBuffer {
         if cfg!(debug_assertions) {
             String::from_utf8(self.buf).unwrap()
         } else {
-            // SAFETY: All methods of `CodeBuffer` ensure `buf` is valid UTF-8
+            // SAFETY: All safe methods of `CodeBuffer` ensure `buf` is valid UTF-8, and all unsafe methods
+            // specify the buffer must be made into a valid UTF-8 string before calling this method
             unsafe { String::from_utf8_unchecked(self.buf) }
         }
     }
@@ -723,6 +832,13 @@ impl AsRef<[u8]> for CodeBuffer {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         self.as_bytes()
+    }
+}
+
+impl AsRef<str> for CodeBuffer {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        self.as_str()
     }
 }
 
@@ -746,12 +862,13 @@ mod test {
     }
 
     #[test]
-    fn string_isomorphism() {
+    fn as_str() {
         let s = "Hello, world!";
         let mut code = CodeBuffer::with_capacity(s.len());
         code.print_str(s);
-        assert_eq!(code.len(), s.len());
-        assert_eq!(String::from(code), s.to_string());
+
+        let source = code.as_str();
+        assert_eq!(source, s);
     }
 
     #[test]
@@ -803,6 +920,21 @@ mod test {
         assert_eq!(code.len(), 3);
         assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
         assert_eq!(String::from(code), "foo");
+    }
+
+    #[test]
+    fn print_str_short() {
+        let text = "abcdefghijklmnopqrstu";
+        for n in 0..=text.len() {
+            // Enough spare capacity, and none
+            for capacity in [32, 1] {
+                let mut code = CodeBuffer::with_capacity(capacity);
+                code.print_str("x");
+                code.print_str_short(&text[..n]);
+                code.print_str_short("é");
+                assert_eq!(code.as_str(), format!("x{}é", &text[..n]));
+            }
+        }
     }
 
     #[test]

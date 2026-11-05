@@ -155,16 +155,16 @@ function wrapSchemaValidator(validate: Ajv.ValidateFunction): SchemaValidator {
     // The code doesn't match AJV's types, but we use the same version of AJV as ESLint, so assuming it's OK.
     // We cast `error` to `any` to avoid TS errors.
     throw new Error(
-      `Options validation failed for rule '${ruleName}':\n` +
-        `Options:\n${JSON.stringify(options, null, 2)}\n` +
-        `Errors:\n` +
-        validate.errors
+      `Options validation failed for rule '${ruleName}':\n`
+        + `Options:\n${JSON.stringify(options, null, 2)}\n`
+        + `Errors:\n`
+        + validate.errors
           .map((error: any) => {
             if (
-              error.keyword === "additionalProperties" &&
-              error.schema === false &&
-              typeof error.parentSchema?.properties === "object" &&
-              typeof error.params?.additionalProperty === "string"
+              error.keyword === "additionalProperties"
+              && error.schema === false
+              && typeof error.parentSchema?.properties === "object"
+              && typeof error.params?.additionalProperty === "string"
             ) {
               const expectedProperties = Object.keys(error.parentSchema.properties).map(
                 (property) => `"${property}"`,

@@ -1,0 +1,609 @@
+use std::{
+    fmt::{self, Display},
+    mem, slice,
+};
+
+use crate::cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version};
+
+macro_rules! define_token_kind {
+    ($( $variant:ident = $value:literal => $name:literal ),+ $(,)?) => {
+        /// A lexed token kind.
+        ///
+        /// The discriminants are load-bearing: `[32, 128)` is reserved for
+        /// punctuators and `>= 128` for keywords, so the pipeline can classify
+        /// with range checks and SIMD compares. They are *not* dense - the
+        /// pipeline computes kinds arithmetically and blends them in SIMD
+        /// registers, so it works on the raw `u8` and only the crate boundary
+        /// is typed.
+        #[repr(u8)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        pub enum TokenKind {
+            $( $variant = $value, )+
+        }
+
+        impl TokenKind {
+            /// Every declared kind, in discriminant order.
+            pub const VARIANTS: &'static [TokenKind] = &[ $( TokenKind::$variant, )+ ];
+
+            /// The kind `byte` denotes, or `None` if it is not a declared discriminant.
+            #[cpu_multiversion]
+            #[inline]
+            #[must_use]
+            pub(crate) const fn from_u8(byte: u8, _cpu: impl Cpu) -> Option<Self> {
+                match byte {
+                    $( $value => Some(Self::$variant), )+
+                    _ => None,
+                }
+            }
+
+            /// The token's spelling for punctuators and keywords, else the kind's name.
+            #[inline]
+            #[must_use]
+            pub const fn name(self) -> &'static str {
+                match self {
+                    $( Self::$variant => $name, )+
+                }
+            }
+        }
+
+        /// Constants used by `tk!` macro.
+        #[doc(hidden)]
+        #[allow(unused, clippy::allow_attributes)]
+        #[expect(non_upper_case_globals)]
+        pub mod __kind_u8 {
+            use super::TokenKind;
+
+            $(
+                pub const $variant: u8 = TokenKind::$variant as u8;
+            )+
+        }
+    };
+}
+
+define_token_kind! {
+    Eof = 0 => "EOF",
+
+    Ident = 1 => "IDENT",
+    PrivateIdent = 2 => "PRIVATE_IDENT",
+    Number = 3 => "NUMBER",
+    BigInt = 4 => "BIGINT",
+    String = 5 => "STRING",
+    RegExp = 6 => "REGEXP",
+    TemplateNoSub = 7 => "TEMPLATE_NO_SUB",
+    TemplateHead = 8 => "TEMPLATE_HEAD",
+    TemplateMiddle = 9 => "TEMPLATE_MIDDLE",
+    TemplateTail = 10 => "TEMPLATE_TAIL",
+
+    LineComment = 11 => "LINE_COMMENT",
+    BlockComment = 12 => "BLOCK_COMMENT",
+    Hashbang = 13 => "HASHBANG",
+    Whitespace = 14 => "WHITESPACE",
+    LineTerminator = 15 => "LINE_TERMINATOR",
+
+    StringCooked = 16 => "STRING_COOKED",
+    IdentEscaped = 17 => "IDENT_ESCAPED",
+    PrivateIdentEscaped = 18 => "PRIVATE_IDENT_ESCAPED",
+    TemplateNoSubCooked = 19 => "TEMPLATE_NO_SUB_COOKED",
+    TemplateHeadCooked = 20 => "TEMPLATE_HEAD_COOKED",
+    TemplateMiddleCooked = 21 => "TEMPLATE_MIDDLE_COOKED",
+    TemplateTailCooked = 22 => "TEMPLATE_TAIL_COOKED",
+    Decimal = 23 => "DECIMAL",
+    Float = 24 => "FLOAT",
+    Binary = 25 => "BINARY",
+    Octal = 26 => "OCTAL",
+    Hex = 27 => "HEX",
+    JsxText = 28 => "JSX_TEXT",
+    JsxTagEnd = 29 => "JSX_TAG_END",
+    JsxLt = 30 => "JSX_LT",
+
+    LBrace = 32 => "{",
+    RBrace = 33 => "}",
+    LParen = 34 => "(",
+    RParen = 35 => ")",
+    LBracket = 36 => "[",
+    RBracket = 37 => "]",
+    Dot = 38 => ".",
+    Ellipsis = 39 => "...",
+    Semi = 40 => ";",
+    Comma = 41 => ",",
+    Colon = 42 => ":",
+    Question = 43 => "?",
+    OptionalChain = 44 => "?.",
+    Nullish = 45 => "??",
+    NullishEq = 46 => "??=",
+    Arrow = 47 => "=>",
+    Lt = 48 => "<",
+    Le = 49 => "<=",
+    Gt = 50 => ">",
+    Ge = 51 => ">=",
+    Eq = 52 => "=",
+    EqEq = 53 => "==",
+    EqEqEq = 54 => "===",
+    Bang = 55 => "!",
+    BangEq = 56 => "!=",
+    BangEqEq = 57 => "!==",
+    Plus = 58 => "+",
+    PlusPlus = 59 => "++",
+    PlusEq = 60 => "+=",
+    Minus = 61 => "-",
+    MinusMinus = 62 => "--",
+    MinusEq = 63 => "-=",
+    Star = 64 => "*",
+    StarStar = 65 => "**",
+    StarEq = 66 => "*=",
+    StarStarEq = 67 => "**=",
+    Slash = 68 => "/",
+    SlashEq = 69 => "/=",
+    Percent = 70 => "%",
+    PercentEq = 71 => "%=",
+    Amp = 72 => "&",
+    AmpAmp = 73 => "&&",
+    AmpEq = 74 => "&=",
+    AmpAmpEq = 75 => "&&=",
+    Pipe = 76 => "|",
+    PipePipe = 77 => "||",
+    PipeEq = 78 => "|=",
+    PipePipeEq = 79 => "||=",
+    Caret = 80 => "^",
+    CaretEq = 81 => "^=",
+    Tilde = 82 => "~",
+    LShift = 83 => "<<",
+    LShiftEq = 84 => "<<=",
+    RShift = 85 => ">>",
+    RShiftEq = 86 => ">>=",
+    URShift = 87 => ">>>",
+    URShiftEq = 88 => ">>>=",
+    At = 89 => "@",
+
+    KwBreak = 128 => "break",
+    KwCase = 129 => "case",
+    KwCatch = 130 => "catch",
+    KwClass = 131 => "class",
+    KwConst = 132 => "const",
+    KwContinue = 133 => "continue",
+    KwDebugger = 134 => "debugger",
+    KwDefault = 135 => "default",
+    KwDelete = 136 => "delete",
+    KwDo = 137 => "do",
+    KwElse = 138 => "else",
+    KwEnum = 139 => "enum",
+    KwExport = 140 => "export",
+    KwExtends = 141 => "extends",
+    KwFalse = 142 => "false",
+    KwFinally = 143 => "finally",
+    KwFor = 144 => "for",
+    KwFunction = 145 => "function",
+    KwIf = 146 => "if",
+    KwImport = 147 => "import",
+    KwIn = 148 => "in",
+    KwInstanceof = 149 => "instanceof",
+    KwNew = 150 => "new",
+    KwNull = 151 => "null",
+    KwReturn = 152 => "return",
+    KwSuper = 153 => "super",
+    KwSwitch = 154 => "switch",
+    KwThis = 155 => "this",
+    KwThrow = 156 => "throw",
+    KwTrue = 157 => "true",
+    KwTry = 158 => "try",
+    KwTypeof = 159 => "typeof",
+    KwVar = 160 => "var",
+    KwVoid = 161 => "void",
+    KwWhile = 162 => "while",
+    KwWith = 163 => "with",
+    KwYield = 164 => "yield",
+    KwLet = 165 => "let",
+    KwStatic = 166 => "static",
+    KwAsync = 167 => "async",
+    KwAwait = 168 => "await",
+    KwOf = 169 => "of",
+    KwFrom = 170 => "from",
+    KwAs = 171 => "as",
+
+    // TS-mode contextual keywords (`LexOptions::ts`) plus the strict-mode
+    // reserved words; JS mode lexes all of these spellings as IDENT.
+    // Contiguous after the JS block so `>= KW_KIND_BASE` range checks cover both.
+    KwAbstract = 172 => "abstract",
+    KwAccessor = 173 => "accessor",
+    KwAny = 174 => "any",
+    KwAsserts = 175 => "asserts",
+    KwBigInt = 176 => "bigint",
+    KwBoolean = 177 => "boolean",
+    KwDeclare = 178 => "declare",
+    KwGlobal = 179 => "global",
+    KwImplements = 180 => "implements",
+    KwInfer = 181 => "infer",
+    KwInterface = 182 => "interface",
+    KwIntrinsic = 183 => "intrinsic",
+    KwIs = 184 => "is",
+    KwKeyof = 185 => "keyof",
+    KwModule = 186 => "module",
+    KwNamespace = 187 => "namespace",
+    KwNever = 188 => "never",
+    KwNumber = 189 => "number",
+    KwObject = 190 => "object",
+    KwOut = 191 => "out",
+    KwOverride = 192 => "override",
+    KwPackage = 193 => "package",
+    KwPrivate = 194 => "private",
+    KwProtected = 195 => "protected",
+    KwPublic = 196 => "public",
+    KwReadonly = 197 => "readonly",
+    KwRequire = 198 => "require",
+    KwSatisfies = 199 => "satisfies",
+    KwString = 200 => "string",
+    KwSymbol = 201 => "symbol",
+    KwType = 202 => "type",
+    KwUndefined = 203 => "undefined",
+    KwUnique = 204 => "unique",
+    KwUnknown = 205 => "unknown",
+    KwUsing = 206 => "using",
+
+    Invalid = 255 => "INVALID",
+}
+
+/// Get the numeric (`u8`) value of a [`TokenKind`], or an `|` pattern of several.
+///
+/// # Examples
+///
+/// ```ignore
+/// let ident: u8 = tk!(Ident);
+/// assert_eq!(ident, TokenKind::Ident as u8);
+/// ```
+///
+/// ```ignore
+/// match kind {
+///   tk!(Ident) => do_something(),
+///   tk!(Number | BigInt | String | RegExp) => do_something_else(),
+///   _ => {}
+/// }
+/// ```
+macro_rules! tk {
+    ($($kind:ident)|+) => { $( $crate::token::__kind_u8::$kind )|+ };
+}
+
+pub(crate) use tk;
+
+/// Match a `u8` against the value of multiple [`TokenKind`]s.
+///
+/// [`matches!`] with the kinds as one `|` list:
+///
+/// ```ignore
+/// fn is_ident_or_priv(kind: u8) -> bool {
+///     matches_tk!(kind, Ident | PrivateIdent)
+/// }
+/// ```
+///
+/// Equivalent to `matches!(kind, tk!(Ident | PrivateIdent))`.
+macro_rules! matches_tk {
+    ($value:expr, $($kind:ident)|+) => {
+        matches!($value, $( $crate::token::__kind_u8::$kind )|+)
+    };
+}
+
+pub(crate) use matches_tk;
+
+/// First punctuator kind - the token-kind space reserves [32, 128) for them.
+pub const OP_KIND_BASE: u8 = tk!(LBrace);
+#[cfg_attr(not(test), expect(dead_code, reason = "only used in tests"))]
+pub const OP_KIND_MAX: u8 = tk!(At);
+
+/// First keyword kind: every kind `>= KW_KIND_BASE` other than [`TokenKind::Invalid`] is a keyword.
+pub const KW_KIND_BASE: u8 = tk!(KwBreak);
+pub const KW_KIND_MAX: u8 = tk!(KwUsing);
+
+impl TokenKind {
+    #[inline]
+    #[must_use]
+    pub const fn as_u8(self) -> u8 {
+        self as u8
+    }
+
+    /// # SAFETY
+    ///
+    /// `byte` must be a declared discriminant, i.e. `TokenKind::from_u8(byte).is_some()`.
+    #[cpu_multiversion]
+    #[inline]
+    #[must_use]
+    pub(crate) const unsafe fn from_u8_unchecked(byte: u8, cpu: impl Cpu) -> Self {
+        debug_assert!(Self::from_u8(byte, cpu).is_some(), "not a declared TokenKind discriminant");
+        // SAFETY: the caller guarantees `byte` is a declared discriminant, and
+        // `TokenKind` is `#[repr(u8)]`, so it shares `u8`'s layout.
+        unsafe { mem::transmute::<u8, Self>(byte) }
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_trivia(self) -> bool {
+        let cpu = BASELINE;
+
+        is_trivia_byte(self as u8, cpu)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_keyword(self) -> bool {
+        (self as u8) >= KW_KIND_BASE && (self as u8) <= KW_KIND_MAX
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_string(self) -> bool {
+        matches!(self, Self::String | Self::StringCooked)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_template_no_sub(self) -> bool {
+        matches!(self, Self::TemplateNoSub | Self::TemplateNoSubCooked)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_template_head(self) -> bool {
+        matches!(self, Self::TemplateHead | Self::TemplateHeadCooked)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_template_middle(self) -> bool {
+        matches!(self, Self::TemplateMiddle | Self::TemplateMiddleCooked)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_template_tail(self) -> bool {
+        matches!(self, Self::TemplateTail | Self::TemplateTailCooked)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_ident(self) -> bool {
+        matches!(self, Self::Ident | Self::IdentEscaped)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_private_ident(self) -> bool {
+        matches!(self, Self::PrivateIdent | Self::PrivateIdentEscaped)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_numeric(self) -> bool {
+        matches!(
+            self,
+            Self::Number
+                | Self::BigInt
+                | Self::Decimal
+                | Self::Float
+                | Self::Binary
+                | Self::Octal
+                | Self::Hex
+        )
+    }
+}
+
+impl Display for TokenKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+/// Reinterpret raw kind bytes written by the pipeline as [`TokenKind`]s.
+///
+/// # SAFETY
+///
+/// Every byte in `bytes` must be a declared [`TokenKind`] discriminant. The
+/// pipeline only ever writes kinds that came from `opmap`'s tables or
+/// from the named constants in `pipeline`, so this holds for any range the
+/// lexer has written; it does *not* hold for uninitialised arena memory.
+#[cpu_version(Generic)]
+#[inline]
+pub const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
+    // SAFETY: `TokenKind` is `#[repr(u8)]` so it has the same size and
+    // alignment as `u8`, and the caller guarantees every byte is a declared
+    // discriminant.
+    unsafe { slice::from_raw_parts(bytes.as_ptr().cast::<TokenKind>(), bytes.len()) }
+}
+
+#[cpu_version(Generic)]
+#[inline]
+pub fn debug_assert_kind_bytes(bytes: &[u8]) {
+    let cpu = BASELINE;
+
+    debug_assert!(
+        bytes.iter().all(|&b| TokenKind::from_u8(b, cpu).is_some()),
+        "lexer wrote a byte that is not a declared TokenKind discriminant"
+    );
+}
+
+pub const SPAN_SENTINELS: usize = 8;
+
+pub const TRIVIA_MIN: u8 = tk!(LineComment);
+pub const TRIVIA_MAX: u8 = tk!(LineTerminator);
+
+/// [`TokenKind::is_trivia`] on a raw kind byte, for the pipeline's `u8` lanes.
+#[cpu_multiversion]
+#[expect(clippy::inline_always)]
+#[inline(always)]
+#[must_use]
+pub const fn is_trivia_byte(kind: u8, _cpu: impl Cpu) -> bool {
+    kind.wrapping_sub(TRIVIA_MIN) <= TRIVIA_MAX - TRIVIA_MIN
+}
+
+pub mod token_flags {
+    pub const LINE_BEFORE: u16 = 1 << 0;
+    pub const COMMENT_BEFORE: u16 = 1 << 1;
+    pub const HAS_ESCAPE: u16 = 1 << 2;
+    pub const HAS_NON_ASCII: u16 = 1 << 3;
+    pub const CONTAINS_NEWLINE: u16 = 1 << 4;
+    pub const UNTERMINATED: u16 = 1 << 5;
+    pub const INVALID: u16 = 1 << 6;
+    pub const LEGACY_OCTAL: u16 = 1 << 7;
+    pub const ESCAPED_KEYWORD: u16 = 1 << 8;
+    pub const REGEXP_VALIDATED: u16 = 1 << 9;
+    pub const ASI_RESTRICTED: u16 = 1 << 10;
+}
+
+const _: () = assert!(tk!(Hashbang) > tk!(LineComment));
+const _: () = assert!(tk!(Hashbang) < tk!(LineTerminator));
+
+#[repr(C)]
+#[derive(Debug, Default, Clone, Copy)]
+pub struct StringSpan {
+    pub start: u32,
+    pub end_and_flags: u32,
+}
+
+#[expect(clippy::inline_always, reason = "cook-path hot: spans are packed per string/template")]
+impl StringSpan {
+    pub const LONE_SURROGATES_MASK: u32 = 0x8000_0000;
+    pub const END_MASK: u32 = 0x7FFF_FFFF;
+    /// On `start`, template spans only: the body contained a
+    /// `NotEscapeSequence` (bad `\u`/`\x`, octal, `\8`/`\9`). The equivalent
+    /// of oxc_parser's `cooked: None`, from which a parser raises the
+    /// untagged-template error. Raw `start` reads must mask.
+    pub const COOKED_INVALID_MASK: u32 = 0x8000_0000;
+    pub const START_MASK: u32 = 0x7FFF_FFFF;
+
+    #[cpu_multiversion]
+    #[inline(always)]
+    #[must_use]
+    pub(crate) const fn new(start: u32, end: u32, lone_surrogates: bool, _cpu: impl Cpu) -> Self {
+        debug_assert!(end <= Self::END_MASK);
+        let end_and_flags = if lone_surrogates { end | Self::LONE_SURROGATES_MASK } else { end };
+        Self { start, end_and_flags }
+    }
+
+    #[cpu_multiversion]
+    #[inline(always)]
+    #[must_use]
+    pub(crate) const fn with_cooked_invalid(self, _cpu: impl Cpu) -> Self {
+        Self { start: self.start | Self::COOKED_INVALID_MASK, end_and_flags: self.end_and_flags }
+    }
+
+    #[inline(always)]
+    #[must_use]
+    pub const fn start(self) -> u32 {
+        self.start & Self::START_MASK
+    }
+
+    #[inline(always)]
+    #[must_use]
+    pub const fn cooked_invalid(self) -> bool {
+        (self.start & Self::COOKED_INVALID_MASK) != 0
+    }
+
+    #[inline(always)]
+    #[must_use]
+    pub const fn end(self) -> u32 {
+        self.end_and_flags & Self::END_MASK
+    }
+
+    #[inline(always)]
+    #[must_use]
+    pub const fn lone_surrogates(self) -> bool {
+        (self.end_and_flags & Self::LONE_SURROGATES_MASK) != 0
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{LexOptions, Lexer, PAD, cpu::BASELINE};
+
+    use super::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
+
+    #[test]
+    fn from_u8_round_trips_every_variant() {
+        for &kind in TokenKind::VARIANTS {
+            assert_eq!(TokenKind::from_u8(kind as u8, BASELINE), Some(kind), "{}", kind.name());
+        }
+    }
+
+    #[test]
+    fn from_u8_agrees_with_the_discriminant_for_all_256_bytes() {
+        let declared: Vec<u8> = TokenKind::VARIANTS.iter().map(|k| *k as u8).collect();
+        for byte in 0..=u8::MAX {
+            match TokenKind::from_u8(byte, BASELINE) {
+                Some(kind) => {
+                    assert_eq!(kind as u8, byte);
+                    assert!(declared.contains(&byte));
+                }
+                None => assert!(!declared.contains(&byte), "byte {byte} is declared but unmapped"),
+            }
+        }
+    }
+
+    #[test]
+    fn discriminants_are_unique() {
+        let mut seen = [false; 256];
+        for &kind in TokenKind::VARIANTS {
+            let byte = kind as usize;
+            assert!(!seen[byte], "duplicate discriminant {byte}");
+            seen[byte] = true;
+        }
+    }
+
+    /// The pipeline classifies by range, so the punctuator and keyword blocks
+    /// must stay where `compress` and `opmap` expect them.
+    #[test]
+    fn kind_space_layout_holds() {
+        for &kind in TokenKind::VARIANTS {
+            let byte = kind as u8;
+            if kind.is_keyword() {
+                assert!(byte >= KW_KIND_BASE, "{} below KW_KIND_BASE", kind.name());
+            }
+            if kind.is_trivia() {
+                assert!((TRIVIA_MIN..=TRIVIA_MAX).contains(&byte), "{}", kind.name());
+            }
+        }
+        #[expect(clippy::assertions_on_constants)]
+        {
+            assert!(tk!(LBrace) >= 32 && tk!(At) < KW_KIND_BASE);
+        }
+        assert!(!TokenKind::Invalid.is_keyword());
+        assert!(TokenKind::Hashbang.is_trivia());
+    }
+
+    #[test]
+    fn numeric_predicate_covers_both_number_families() {
+        assert!(TokenKind::Number.is_numeric());
+        assert!(TokenKind::BigInt.is_numeric());
+        assert!(!TokenKind::String.is_numeric());
+    }
+
+    /// Backs the safety invariant of [`kinds_from_bytes`] -
+    /// the lexer never emits a byte outside the declared discriminants.
+    ///
+    /// [`kinds_from_bytes`]: super::kinds_from_bytes
+    #[test]
+    fn every_emitted_kind_is_declared() {
+        const SOURCES: [&str; 6] = [
+            "#!/usr/bin/env node\nlet x = 0b1_0 + 0o7 + 0xFF + 1.5e3 + 9n;",
+            "class A { #p = 1; static { this.#p ??= 2; } get x() { return `a${1}b${2}c`; } }",
+            "a?.b?.[c] ?? d ||= e &&= f >>>= g; /re/gu.test('s\\u00e9'); // line\n/* block */",
+            "export default async function* f(...a) { yield* await import('m'); }",
+            "type T = { readonly [K in keyof U]?: U[K] extends infer V ? V : never };",
+            "const el = <div a='1' {...r}>text {x} <br/></div>;",
+        ];
+        for src in SOURCES {
+            let mut bytes = src.as_bytes().to_vec();
+            let n = bytes.len();
+            bytes.extend_from_slice(&[0u8; PAD]);
+            for (jsx, ts) in [(false, false), (true, false), (false, true), (true, true)] {
+                let opts = LexOptions { jsx, ts, ..Default::default() };
+                let mut lexer = Lexer::new();
+                lexer.lex(&bytes, n, opts);
+                for kind in lexer.kinds() {
+                    assert_eq!(
+                        TokenKind::from_u8(*kind as u8, BASELINE),
+                        Some(*kind),
+                        "undeclared kind {} from {src:?}",
+                        *kind as u8
+                    );
+                }
+            }
+        }
+    }
+}

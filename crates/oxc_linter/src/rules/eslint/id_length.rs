@@ -1,14 +1,15 @@
 use std::ops::Deref;
 
-use icu_segmenter::GraphemeClusterSegmenter;
 use lazy_regex::Regex;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
+use unicode_segmentation::UnicodeSegmentation;
 
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    BindingIdentifier, BindingPattern, BindingProperty, IdentifierName, PrivateIdentifier,
+    BindingIdentifier, BindingPattern, BindingProperty, Expression, IdentifierName,
+    IdentifierReference, PrivateIdentifier, PropertyKey,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -18,7 +19,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::AlwaysNever,
+    utils::{AlwaysNever, deserialize_regex_vec},
 };
 
 fn id_length_is_too_short_diagnostic(span: Span, config_min: u64) -> OxcDiagnostic {
@@ -48,7 +49,7 @@ impl Deref for IdLength {
 pub struct IdLengthConfig {
     /// An array of regex patterns for identifiers to exclude from the rule.
     /// For example, `["^x.*"]` would exclude all identifiers starting with "x".
-    #[serde(deserialize_with = "deserialize_exception_patterns")]
+    #[serde(deserialize_with = "deserialize_regex_vec")]
     exception_patterns: Vec<Regex>,
     /// An array of identifier names that are excluded from the rule.
     /// For example, `["x", "y", "z"]` would allow single-letter identifiers "x", "y", and "z".
@@ -76,18 +77,6 @@ impl Default for IdLengthConfig {
             properties: AlwaysNever::default(),
         }
     }
-}
-
-fn deserialize_exception_patterns<'de, D>(deserializer: D) -> Result<Vec<Regex>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    use serde::de::Error;
-
-    Vec::<String>::deserialize(deserializer)?
-        .into_iter()
-        .map(|pattern| Regex::new(&pattern).map_err(D::Error::custom))
-        .collect()
 }
 
 declare_oxc_lint!(
@@ -177,7 +166,7 @@ declare_oxc_lint!(
 
 impl Rule for IdLength {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -190,6 +179,9 @@ impl Rule for IdLength {
             }
             AstKind::PrivateIdentifier(ident) => {
                 self.handle_private_identifier(ident, node, ctx);
+            }
+            AstKind::IdentifierReference(ident) => {
+                self.handle_assignment_target(ident, node, ctx);
             }
             _ => {}
         }
@@ -214,8 +206,7 @@ impl IdLength {
             let ident_length = ident_name.len();
             (self.is_too_long(ident_length), self.is_too_short(ident_length))
         } else {
-            let segmenter = GraphemeClusterSegmenter::new();
-            let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
+            let graphemes_length = ident_name.graphemes(true).count();
             (self.is_too_long(graphemes_length), self.is_too_short(graphemes_length))
         };
 
@@ -224,7 +215,9 @@ impl IdLength {
         }
 
         let parent_node = ctx.nodes().parent_node(node.id());
-        if !self.check_generic && matches!(parent_node.kind(), AstKind::TSTypeParameter(_)) {
+        if !self.check_generic
+            && matches!(parent_node.kind(), AstKind::TSTypeParameter(_) | AstKind::TSMappedType(_))
+        {
             return;
         }
 
@@ -275,8 +268,7 @@ impl IdLength {
             let ident_length = ident_name.len();
             (self.is_too_long(ident_length), self.is_too_short(ident_length))
         } else {
-            let segmenter = GraphemeClusterSegmenter::new();
-            let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
+            let graphemes_length = ident_name.graphemes(true).count();
             (self.is_too_long(graphemes_length), self.is_too_short(graphemes_length))
         };
 
@@ -344,6 +336,8 @@ impl IdLength {
                 }
             }
             AstKind::ObjectProperty(_)
+            | AstKind::TSPropertySignature(_)
+            | AstKind::TSMethodSignature(_)
                 if self.properties == AlwaysNever::Never => {
                     return;
                 }
@@ -366,6 +360,66 @@ impl IdLength {
         }
     }
 
+    /// A variable assigned in a destructuring assignment, like `q` in `[q] = a`,
+    /// `({ a: q } = o)` or `for ([k, v] of e)`. A plain `q = 1` is not checked.
+    fn handle_assignment_target(
+        &self,
+        ident: &IdentifierReference,
+        node: &AstNode,
+        ctx: &LintContext,
+    ) {
+        let span = match ctx.nodes().parent_kind(node.id()) {
+            AstKind::ArrayAssignmentTarget(_) | AstKind::AssignmentTargetRest(_) => ident.span,
+            AstKind::AssignmentTargetWithDefault(target) if target.binding.span() == ident.span => {
+                ident.span
+            }
+            AstKind::AssignmentTargetPropertyProperty(property)
+                if property.binding.span() == ident.span =>
+            {
+                let key = match &property.name {
+                    PropertyKey::StaticIdentifier(key) => Some((key.name, key.span)),
+                    key => key.as_expression().and_then(|expr| match expr.without_parentheses() {
+                        Expression::Identifier(key) => Some((key.name, key.span)),
+                        _ => None,
+                    }),
+                };
+                if let Some((key_name, key_span)) = key
+                    && key_name == ident.name
+                {
+                    if self.properties == AlwaysNever::Never {
+                        return;
+                    }
+                    key_span
+                } else {
+                    ident.span
+                }
+            }
+            // `({ q } = o)` is a property name too, unless it has a default.
+            AstKind::AssignmentTargetPropertyIdentifier(property)
+                if property.binding.span == ident.span
+                    && (property.init.is_some() || self.properties == AlwaysNever::Always) =>
+            {
+                ident.span
+            }
+            _ => return,
+        };
+        if self.is_exception(&ident.name) {
+            return;
+        }
+
+        let length = if ident.name.is_ascii() {
+            ident.name.len()
+        } else {
+            ident.name.graphemes(true).count()
+        };
+        if self.is_too_long(length) {
+            ctx.diagnostic(id_length_is_too_long_diagnostic(span, self.max));
+        }
+        if self.is_too_short(length) {
+            ctx.diagnostic(id_length_is_too_short_diagnostic(span, self.min));
+        }
+    }
+
     fn handle_private_identifier(
         &self,
         ident: &PrivateIdentifier,
@@ -382,8 +436,7 @@ impl IdLength {
             let ident_length = ident_name.len();
             (self.is_too_long(ident_length), self.is_too_short(ident_length))
         } else {
-            let segmenter = GraphemeClusterSegmenter::new();
-            let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
+            let graphemes_length = ident_name.graphemes(true).count();
             (self.is_too_long(graphemes_length), self.is_too_short(graphemes_length))
         };
 
@@ -578,6 +631,10 @@ fn test() {
             "export type Example<T> = T extends Array<infer U> ? U : never;",
             Some(serde_json::json!([{ "min": 2, "checkGeneric": false }])),
         ),
+        (
+            "type Foo<T> = { [K in keyof T]: unknown };",
+            Some(serde_json::json!([{ "min": 2, "checkGeneric": false }])),
+        ),
         ("var 𠮟 = 2", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6 },
         ("var 葛󠄀 = 2", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6 },
         ("var a = { 𐌘: 1 };", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
@@ -607,19 +664,31 @@ fn test() {
             "export { default } from 'foo.json' with { type: 'json' }",
             Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
         ), // { "ecmaVersion": 2025 },
-                                                                                      // TODO:
-                                                                                      // (
-                                                                                      //     "import('foo.json', { with: { type: 'json' } })",
-                                                                                      //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
-                                                                                      // ), // { "ecmaVersion": 2025 },
-                                                                                      // (
-                                                                                      //     "import('foo.json', { 'with': { type: 'json' } })",
-                                                                                      //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
-                                                                                      // ), // { "ecmaVersion": 2025 },
-                                                                                      // (
-                                                                                      //     "import('foo.json', { with: { type } })",
-                                                                                      //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
-                                                                                      // ), // { "ecmaVersion": 2025 }
+        ("interface Foo { a: string; }", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("interface Foo { a(): void; }", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("type Foo = { a: string };", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("type Foo = { a(): void };", Some(serde_json::json!([{ "properties": "never" }]))),
+        // TODO:
+        // (
+        //     "import('foo.json', { with: { type: 'json' } })",
+        //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
+        // ), // { "ecmaVersion": 2025 },
+        // (
+        //     "import('foo.json', { 'with': { type: 'json' } })",
+        //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
+        // ), // { "ecmaVersion": 2025 },
+        // (
+        //     "import('foo.json', { with: { type } })",
+        //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
+        // ), // { "ecmaVersion": 2025 }
+        ("q = 3;", None),
+        ("[obj = r] = foo;", None),
+        ("({ obj = r } = foo);", None),
+        ("({ [k]: obj } = foo);", None),
+        ("({ q } = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("({q: q} = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("({[q]: q} = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("({[((q))]: q} = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
     ];
 
     let fail = vec![
@@ -700,6 +769,10 @@ fn test() {
             "export type Example<T> = T extends Array<infer U> ? U : never;",
             Some(serde_json::json!([{ "min": 2, "checkGeneric": true }])),
         ),
+        (
+            "type Foo<T> = { [K in keyof T]: unknown };",
+            Some(serde_json::json!([{ "min": 2, "checkGeneric": true }])),
+        ),
         ("var 𠮟 = 2", None),              // { "ecmaVersion": 6 },
         ("var 葛󠄀 = 2", None),              // { "ecmaVersion": 6 },
         ("var myObj = { 𐌘: 1 };", None),   // { "ecmaVersion": 6, },
@@ -717,6 +790,25 @@ fn test() {
         ("var { 𐌘 } = {};", None),         // { "ecmaVersion": 6, },
         ("var { prop: 𐌘} = {};", None),    // { "ecmaVersion": 6, },
         ("({ prop: obj.𐌘 } = {});", None), // { "ecmaVersion": 6, }
+        ("interface Foo { a: string; }", None),
+        ("interface Foo { a(): void; }", None),
+        ("type Foo = { a: string };", None),
+        ("type Foo = { a(): void };", None),
+        ("[q] = foo;", None),
+        ("for ([ix, s] of foo) {}", None),
+        ("({ a: q } = foo);", None),
+        ("({ q } = foo);", None),
+        ("({ q = rr } = foo);", None),
+        ("({ q = rr } = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("[...q] = foo;", None),
+        ("[q = rr] = foo;", None),
+        ("({ k: [q] } = foo);", None),
+        ("({q: q} = foo);", None),
+        ("({[q]: q} = foo);", None),
+        ("({[((q))]: q} = foo);", None),
+        ("({q: q = q} = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("for ([q] in foo) {}", None),
+        ("({...q} = foo);", None),
     ];
 
     Tester::new(IdLength::NAME, IdLength::PLUGIN, pass, fail).test_and_snapshot();

@@ -1,10 +1,10 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::CloneIn;
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_span::{GetSpan, SPAN};
-use oxc_str::Str;
+use oxc_str::{JSStr, JSStrBuilder};
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{BinaryOperator, UnaryOperator},
@@ -13,15 +13,15 @@ use oxc_syntax::{
 use crate::{IsolatedDeclarations, diagnostics::const_enum_member_initializers};
 
 #[derive(Debug, Clone)]
-enum ConstantValue {
+enum ConstantValue<'a> {
     Number(f64),
-    String(String),
+    String(JSStr<'a>),
 }
 
 impl<'a> IsolatedDeclarations<'a> {
     /// Transform a TypeScript enum declaration into its declaration output form.
     pub fn transform_ts_enum_declaration(&self, decl: &TSEnumDeclaration<'a>) -> Declaration<'a> {
-        let mut members = self.ast.vec();
+        let mut members = ArenaVec::new_in(self);
         let mut prev_initializer_value = Some(ConstantValue::Number(-1.0));
         let mut prev_members = FxHashMap::default();
         for member in &decl.body.members {
@@ -47,47 +47,53 @@ impl<'a> IsolatedDeclarations<'a> {
                 prev_members.insert(member_name, value.clone());
             }
 
-            let member = self.ast.ts_enum_member(
+            let member = TSEnumMember::new(
                 member.span,
-                member.id.clone_in(self.ast.allocator),
+                member.id.clone_in(self.allocator()),
                 value.map(|v| match v {
                     ConstantValue::Number(v) => {
                         let is_negative = v < 0.0;
 
                         // Infinity
                         let expr = if v.is_infinite() {
-                            self.ast.expression_identifier(SPAN, "Infinity")
+                            Expression::new_identifier(SPAN, "Infinity", self)
                         } else {
                             let value = if is_negative { -v } else { v };
-                            self.ast.expression_numeric_literal(
+                            Expression::new_numeric_literal(
                                 SPAN,
                                 value,
                                 None,
                                 NumberBase::Decimal,
+                                self,
                             )
                         };
 
                         if is_negative {
-                            self.ast.expression_unary(SPAN, UnaryOperator::UnaryNegation, expr)
+                            Expression::new_unary_expression(
+                                SPAN,
+                                UnaryOperator::UnaryNegation,
+                                expr,
+                                self,
+                            )
                         } else {
                             expr
                         }
                     }
-                    ConstantValue::String(v) => {
-                        self.ast.expression_string_literal(SPAN, self.ast.str(&v), None)
-                    }
+                    ConstantValue::String(v) => Expression::new_string_literal(SPAN, v, None, self),
                 }),
+                self,
             );
 
             members.push(member);
         }
 
-        self.ast.declaration_ts_enum(
+        Declaration::new_ts_enum_declaration(
             decl.span,
-            decl.id.clone_in(self.ast.allocator),
-            self.ast.ts_enum_body(decl.body.span, members),
+            decl.id.clone_in(self.allocator()),
+            TSEnumBody::new(decl.body.span, members, self),
             decl.r#const,
             self.is_declare(),
+            self,
         )
     }
 
@@ -97,23 +103,23 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         expr: &Expression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Str<'a>, ConstantValue>,
-    ) -> Option<ConstantValue> {
+        prev_members: &FxHashMap<JSStr<'a>, ConstantValue<'a>>,
+    ) -> Option<ConstantValue<'a>> {
         self.evaluate(expr, enum_name, prev_members)
     }
 
     fn evaluate_ref(
         expr: &Expression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Str<'a>, ConstantValue>,
-    ) -> Option<ConstantValue> {
+        prev_members: &FxHashMap<JSStr<'a>, ConstantValue<'a>>,
+    ) -> Option<ConstantValue<'a>> {
         match expr {
             match_member_expression!(Expression) => {
                 let expr = expr.to_member_expression();
                 let Expression::Identifier(ident) = expr.object() else { return None };
                 if ident.name == enum_name {
                     let property = expr.static_property_name()?;
-                    prev_members.get(property).cloned()
+                    prev_members.get(&property).cloned()
                 } else {
                     None
                 }
@@ -125,7 +131,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     return Some(ConstantValue::Number(f64::NAN));
                 }
 
-                if let Some(value) = prev_members.get(ident.name.as_str()) {
+                if let Some(value) = prev_members.get(&JSStr::from(ident.name)) {
                     return Some(value.clone());
                 }
 
@@ -139,8 +145,8 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         expr: &Expression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Str<'a>, ConstantValue>,
-    ) -> Option<ConstantValue> {
+        prev_members: &FxHashMap<JSStr<'a>, ConstantValue<'a>>,
+    ) -> Option<ConstantValue<'a>> {
         match expr {
             Expression::Identifier(_)
             | Expression::ComputedMemberExpression(_)
@@ -155,13 +161,13 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.eval_unary_expression(expr, enum_name, prev_members)
             }
             Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
-            Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value.to_string())),
+            Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value)),
             Expression::TemplateLiteral(lit) => {
-                let mut value = String::new();
+                let mut value = JSStrBuilder::new_in(self);
                 for part in &lit.quasis {
                     value.push_str(&part.value.raw);
                 }
-                Some(ConstantValue::String(value))
+                Some(ConstantValue::String(value.into_js_str()))
             }
             Expression::ParenthesizedExpression(expr) => {
                 self.evaluate(&expr.expression, enum_name, prev_members)
@@ -174,8 +180,8 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         expr: &BinaryExpression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Str<'a>, ConstantValue>,
-    ) -> Option<ConstantValue> {
+        prev_members: &FxHashMap<JSStr<'a>, ConstantValue<'a>>,
+    ) -> Option<ConstantValue<'a>> {
         let left = self.evaluate(&expr.left, enum_name, prev_members)?;
         let right = self.evaluate(&expr.right, enum_name, prev_members)?;
 
@@ -183,17 +189,14 @@ impl<'a> IsolatedDeclarations<'a> {
             && (matches!(left, ConstantValue::String(_))
                 || matches!(right, ConstantValue::String(_)))
         {
-            let left_string = match left {
-                ConstantValue::String(str) => str,
-                ConstantValue::Number(v) => v.to_js_string(),
-            };
-
-            let right_string = match right {
-                ConstantValue::String(str) => str,
-                ConstantValue::Number(v) => v.to_js_string(),
-            };
-
-            return Some(ConstantValue::String(format!("{left_string}{right_string}")));
+            let mut value = JSStrBuilder::new_in(self);
+            for part in [left, right] {
+                match part {
+                    ConstantValue::String(part) => value.push_js_str(part),
+                    ConstantValue::Number(number) => value.push_str(&number.to_js_string()),
+                }
+            }
+            return Some(ConstantValue::String(value.into_js_str()));
         }
 
         let left = match left {
@@ -239,8 +242,8 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         expr: &UnaryExpression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Str<'a>, ConstantValue>,
-    ) -> Option<ConstantValue> {
+        prev_members: &FxHashMap<JSStr<'a>, ConstantValue<'a>>,
+    ) -> Option<ConstantValue<'a>> {
         let value = self.evaluate(&expr.argument, enum_name, prev_members)?;
 
         let value = match value {

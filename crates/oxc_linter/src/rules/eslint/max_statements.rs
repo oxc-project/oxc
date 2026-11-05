@@ -1,8 +1,8 @@
 use oxc_ast::ast::{
     ArrowFunctionExpression, BlockStatement, Class, Function, FunctionBody, StaticBlock,
 };
-use oxc_ast_visit::Visit;
-use oxc_ast_visit::walk::{
+use oxc_ast_visit::VisitJs;
+use oxc_ast_visit::walk_js::{
     walk_arrow_function_expression, walk_class, walk_function, walk_function_body,
     walk_static_block,
 };
@@ -61,16 +61,12 @@ impl std::ops::Deref for MaxStatements {
     }
 }
 
-#[cfg(feature = "ruledocs")]
-impl MaxStatements {
-    #[expect(clippy::unnecessary_wraps)]
-    pub fn config_schema(
-        r#gen: &mut schemars::r#gen::SchemaGenerator,
-    ) -> Option<schemars::schema::Schema> {
-        let mut schema = r#gen.subschema_for::<MaxStatementsConfig>();
-        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
-        Some(schema)
-    }
+#[derive(Debug, JsonSchema, Deserialize)]
+#[serde(untagged)]
+#[expect(unused)]
+enum MaxStatementsConfigEnum {
+    Number(u32),
+    Object(MaxStatementsConfig),
 }
 
 declare_oxc_lint!(
@@ -208,8 +204,9 @@ declare_oxc_lint!(
     MaxStatements,
     eslint,
     style,
-    config = MaxStatementsConfig,
+    config = MaxStatementsConfigEnum,
     version = "1.35.0",
+    short_description = "Enforce a maximum number of statements in a function.",
 );
 
 impl Rule for MaxStatements {
@@ -301,11 +298,11 @@ impl<'a> StatementCounter<'a> {
     }
 }
 
-impl<'a> Visit<'a> for StatementCounter<'a> {
+impl<'a> VisitJs<'a> for StatementCounter<'a> {
     fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         self.start_function();
         walk_function(self, func, flags);
-        self.end_function(func.id.as_ref().map(|id| id.name.as_str()), func.span(), false);
+        self.end_function(func.name().map(|name| name.as_str()), func.span(), false);
     }
 
     fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {

@@ -38,7 +38,7 @@ pub struct DefinePropsDeclaration(DeclarationStyle);
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces `defineProps` typing style which you should use `type-based` or `runtime` declaration.
+    /// Enforce consistent declaration style for `defineProps` in Vue.
     /// This rule only works in `<script setup>` with `lang="ts"`.
     ///
     /// ### Why is this bad?
@@ -86,11 +86,12 @@ declare_oxc_lint!(
     style,
     config = DeclarationStyle,
     version = "1.15.0",
+    short_description = "Enforce consistent declaration style for `defineProps` in Vue.",
 );
 
 impl Rule for DefinePropsDeclaration {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

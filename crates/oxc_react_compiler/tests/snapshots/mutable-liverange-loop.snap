@@ -1,0 +1,23 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/mutable-liverange-loop.js
+---
+function mutate() {}
+function cond() {}
+function Component(props) {
+	const a = {};
+	const b = {};
+	const c = {};
+	const d = {};
+	while (true) {
+		mutate(a, b);
+		if (cond(a)) {
+			break;
+		}
+	}
+	if (a) {}
+	if (b) {}
+	if (c) {}
+	if (d) {}
+	mutate(d, null);
+}

@@ -2,7 +2,7 @@
 //! [`Symbol`] are considered a usage.
 
 use itertools::Itertools;
-use oxc_ast::{AstKind, ast::*};
+use oxc_ast::{AstKind, AstType, ast::*};
 use oxc_semantic::{AstNode, NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, Span};
 
@@ -29,7 +29,7 @@ impl<'a> Symbol<'_, 'a> {
         // occur within its own declaration since it's declared in another
         // module.
         const IMPORT: SymbolFlags = SymbolFlags::Import.union(SymbolFlags::TypeImport);
-        // note: intetionally do not use `SymbolFlags::is_type` here, since that
+        // note: intentionally do not use `SymbolFlags::is_type` here, since that
         // can return `true` for values
         const TYPE: SymbolFlags =
             SymbolFlags::TypeAlias.union(SymbolFlags::TypeParameter).union(SymbolFlags::Interface);
@@ -314,11 +314,14 @@ impl<'a> Symbol<'_, 'a> {
                 // e.g.:
                 // - `type Foo = { bar(): Foo }`
                 // - `class Foo { static factory(): Foo { return new Foo() } }`
-                AstKind::TSModuleDeclaration(_)
+                AstKind::TSExternalModuleDeclaration(_)
+                | AstKind::TSNamespaceDeclaration(_)
                 | AstKind::TSGlobalDeclaration(_)
                 | AstKind::VariableDeclaration(_)
                 | AstKind::VariableDeclarator(_)
+                | AstKind::ExportDeclaration(_)
                 | AstKind::ExportNamedDeclaration(_)
+                | AstKind::ExportFromDeclaration(_)
                 | AstKind::ExportDefaultDeclaration(_)
                 | AstKind::ExportAllDeclaration(_)
                 | AstKind::Program(_)
@@ -451,6 +454,7 @@ impl<'a> Symbol<'_, 'a> {
         // Have we seen this reference be used to update the value of another
         // symbol, or for some other logically-relevant purpose?
         let mut is_used_by_others = true;
+        let mut saw_self_update = false;
         let ref_span = self.get_ref_span(reference);
 
         for node in self.nodes().ancestors(reference.node_id()) {
@@ -463,12 +467,28 @@ impl<'a> Symbol<'_, 'a> {
                     // definitely used, short-circuit
                     return false;
                 }
+                AstKind::FormalParameter(_) if saw_self_update => {
+                    return self.is_discarded_read(reference);
+                }
                 AstKind::CallExpression(call_expr)
                     if call_expr.arguments_span().is_some_and(|span| {
                         span.contains_inclusive(self.nodes().get_node(reference.node_id()).span())
                     }) =>
                 {
                     return false;
+                }
+                AstKind::NewExpression(new_expr)
+                    if new_expr.callee.span().contains_inclusive(ref_span)
+                        || new_expr
+                            .arguments_span()
+                            .is_some_and(|span| span.contains_inclusive(ref_span)) =>
+                {
+                    return false;
+                }
+                AstKind::ComputedMemberExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::PrivateFieldExpression(_) => {
+                    is_used_by_others = true;
                 }
                 // When symbol is being assigned a new value, we flag the reference
                 // as only affecting itself until proven otherwise.
@@ -482,6 +502,7 @@ impl<'a> Symbol<'_, 'a> {
                                 .is_some_and(|e| e.get_inner_expression().is_member_expression());
                         if !is_member_expr {
                             is_used_by_others = false;
+                            saw_self_update = true;
                         }
                     }
                 // RHS usage when LHS != reference's symbol is definitely used by
@@ -555,6 +576,30 @@ impl<'a> Symbol<'_, 'a> {
                 {
                     return false;
                 }
+                AstKind::ConditionalExpression(expr)
+                    if expr.test.span().contains_inclusive(ref_span) =>
+                {
+                    is_used_by_others = true;
+                }
+                AstKind::LogicalExpression(expr)
+                    if expr.left.span().contains_inclusive(ref_span) =>
+                {
+                    is_used_by_others = true;
+                }
+                AstKind::SwitchStatement(stmt)
+                    if stmt.discriminant.span().contains_inclusive(ref_span) =>
+                {
+                    return false;
+                }
+
+                AstKind::SwitchCase(case)
+                    if case
+                        .test
+                        .as_ref()
+                        .is_some_and(|test| test.span().contains_inclusive(ref_span)) =>
+                {
+                    return false;
+                }
 
                 // expression is over, save cycles by breaking
                 // todo: do we need to check if variable is used as iterator in
@@ -574,10 +619,7 @@ impl<'a> Symbol<'_, 'a> {
                 }
                 AstKind::Function(f) if f.is_declaration() => break,
                 // implicit return in an arrow function
-                AstKind::ArrowFunctionExpression(f)
-                    if f.body.statements.len() == 1
-                        && !self.get_snippet(f.body.span).starts_with('{') =>
-                {
+                AstKind::ArrowFunctionExpression(f) if f.is_expression() => {
                     return false;
                 }
                 AstKind::ReturnStatement(_) => {
@@ -661,15 +703,7 @@ impl<'a> Symbol<'_, 'a> {
                 AstKind::ReturnStatement(_) => return true,
                 AstKind::ExpressionStatement(_) => {}
                 AstKind::Function(f) if f.is_expression() => {}
-                // note: intentionally not using
-                // ArrowFunctionExpression::get_expression since it returns
-                // `Some` even if
-                // 1. there are more than one statements
-                // 2. the expression is surrounded by braces
-                AstKind::ArrowFunctionExpression(f)
-                    if f.body.statements.len() == 1
-                        && !self.get_snippet(f.body.span).starts_with('{') =>
-                {
+                AstKind::ArrowFunctionExpression(f) if f.is_expression() => {
                     return true;
                 }
                 x if x.is_statement() => return false,
@@ -710,10 +744,36 @@ impl<'a> Symbol<'_, 'a> {
     /// foo.bar;
     /// ```
     fn is_discarded_read(&self, reference: &Reference) -> bool {
+        if !self.nodes().contains(AstType::SequenceExpression) {
+            return false;
+        }
+
+        let mut is_call_result = false;
         for (parent, grandparent) in
             self.iter_relevant_parent_and_grandparent_kinds(reference.node_id())
         {
             let ref_span = || self.get_ref_span(reference);
+
+            if match parent {
+                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => true,
+                AstKind::PropertyDefinition(property) => {
+                    !property.r#static
+                        && property
+                            .value
+                            .as_ref()
+                            .is_some_and(|value| value.span().contains_inclusive(ref_span()))
+                }
+                AstKind::AccessorProperty(property) => {
+                    !property.r#static
+                        && property
+                            .value
+                            .as_ref()
+                            .is_some_and(|value| value.span().contains_inclusive(ref_span()))
+                }
+                _ => false,
+            } {
+                is_call_result = false;
+            }
 
             match (parent, grandparent) {
                 // (foo.bar = new Foo(a), f(b))
@@ -726,6 +786,7 @@ impl<'a> Symbol<'_, 'a> {
                     AstKind::CallExpression(_) | AstKind::NewExpression(_),
                 ) => {
                     if id.span == ref_span() {
+                        is_call_result = true;
                         continue;
                     }
                     break;
@@ -752,13 +813,21 @@ impl<'a> Symbol<'_, 'a> {
                 {
                     return false;
                 }
-                // x && (a = x)
+                // The left operand controls whether the right operand is evaluated,
+                // even if the logical expression's result is discarded.
                 (AstKind::LogicalExpression(expr), _)
-                    if expr.left.span().contains_inclusive(ref_span())
-                        && expr.right.get_inner_expression().is_assignment() =>
+                    if expr.left.span().contains_inclusive(ref_span()) =>
                 {
                     return false;
                 }
+                // Reading a property consumes its object and key, even if the
+                // member expression's result is discarded.
+                (
+                    AstKind::ComputedMemberExpression(_)
+                    | AstKind::StaticMemberExpression(_)
+                    | AstKind::PrivateFieldExpression(_),
+                    _,
+                ) => return false,
                 // x instanceof Foo && (a = x)
                 (AstKind::BinaryExpression(expr), _)
                     if expr.operator.is_relational()
@@ -768,13 +837,14 @@ impl<'a> Symbol<'_, 'a> {
                     return false;
                 }
                 (parent, AstKind::SequenceExpression(seq)) => {
-                    if matches!(
-                        parent,
-                        AstKind::CallExpression(_)
-                            | AstKind::AwaitExpression(_)
-                            | AstKind::YieldExpression(_)
-                            | AstKind::ChainExpression(_)
-                    ) {
+                    if is_call_result
+                        || matches!(
+                            parent,
+                            AstKind::AwaitExpression(_)
+                                | AstKind::YieldExpression(_)
+                                | AstKind::ChainExpression(_)
+                        )
+                    {
                         continue;
                     }
 
@@ -832,39 +902,61 @@ impl<'a> Symbol<'_, 'a> {
     }
 
     fn is_self_function_expr_assignment(&self, ref_node: &AstNode<'a>) -> bool {
+        let mut is_self_assignment = false;
+
         for (parent, grandparent) in self.iter_relevant_parent_and_grandparent_kinds(ref_node.id())
         {
+            if is_self_assignment {
+                match grandparent {
+                    AstKind::CallExpression(call)
+                        if !call.callee.span().contains_inclusive(parent.span()) =>
+                    {
+                        return false;
+                    }
+                    AstKind::NewExpression(new)
+                        if !new.callee.span().contains_inclusive(parent.span()) =>
+                    {
+                        return false;
+                    }
+                    AstKind::VariableDeclarator(decl) if self != &decl.id => return false,
+                    AstKind::AssignmentExpression(assignment) if self != &assignment.left => {
+                        return false;
+                    }
+                    _ => {}
+                }
+            }
+
             match (parent, grandparent) {
                 // const a = function() {}
                 (AstKind::Function(f), AstKind::VariableDeclarator(decl))
                     if f.is_expression() && self == &decl.id =>
                 {
-                    return true;
+                    is_self_assignment = true;
                 }
                 // const a = () => {}
                 (AstKind::ArrowFunctionExpression(_), AstKind::VariableDeclarator(decl))
                     if self == &decl.id =>
                 {
-                    return true;
+                    is_self_assignment = true;
                 }
                 // let a; a = function() {}
                 (AstKind::Function(f), AstKind::AssignmentExpression(assignment))
                     if f.is_expression() && self == &assignment.left =>
                 {
-                    return true;
+                    is_self_assignment = true;
                 }
                 // let a; a = () => {}
                 (
                     AstKind::ArrowFunctionExpression(_),
                     AstKind::AssignmentExpression(assignment),
                 ) if self == &assignment.left => {
-                    return true;
+                    is_self_assignment = true;
                 }
                 _ => {}
             }
         }
 
-        false
+        is_self_assignment
     }
 
     /// Checks if a reference is within a function or class declaration
@@ -931,6 +1023,8 @@ impl<'a> Symbol<'_, 'a> {
         // set to `true` when we find an arrow function and we want to get its
         // name from the variable its assigned to.
         let mut needs_variable_identifier = false;
+        let mut child_span = self.nodes().get_node(node_id).span();
+        let mut assigned_symbol_id = None;
 
         for parent in self.iter_relevant_parents_of(node_id) {
             match parent.kind() {
@@ -943,17 +1037,51 @@ impl<'a> Symbol<'_, 'a> {
                 AstKind::VariableDeclarator(decl) if needs_variable_identifier => {
                     return decl.id.get_binding_identifier().map(BindingIdentifier::symbol_id);
                 }
+                // An arrow assigned to a property belongs to that property, not to an enclosing
+                // variable declarator. Keep scanning after a direct self-assignment because the
+                // assignment expression itself may escape.
+                AstKind::AssignmentExpression(assignment) if needs_variable_identifier => {
+                    let symbol_id = match &assignment.left {
+                        AssignmentTarget::AssignmentTargetIdentifier(id) => {
+                            self.scoping().get_reference(id.reference_id()).symbol_id()
+                        }
+                        _ => None,
+                    };
+                    if symbol_id != Some(self.id()) {
+                        return symbol_id;
+                    }
+                    assigned_symbol_id = symbol_id;
+                }
+                // An arrow passed to a function or constructor can be called later. An arrow used
+                // as the callee is an IIFE, so continue looking for the variable storing its result.
+                AstKind::CallExpression(call)
+                    if needs_variable_identifier
+                        && !call.callee.span().contains_inclusive(child_span) =>
+                {
+                    return None;
+                }
+                AstKind::NewExpression(new)
+                    if needs_variable_identifier
+                        && !new.callee.span().contains_inclusive(child_span) =>
+                {
+                    return None;
+                }
                 AstKind::IdentifierReference(id) if needs_variable_identifier => {
-                    return self.scoping().get_reference(id.reference_id()).symbol_id();
+                    let symbol_id = self.scoping().get_reference(id.reference_id()).symbol_id();
+                    if symbol_id != Some(self.id()) {
+                        return symbol_id;
+                    }
+                    assigned_symbol_id = symbol_id;
                 }
                 AstKind::Program(_) => {
-                    return None;
+                    return assigned_symbol_id;
                 }
                 _ => {}
             }
+            child_span = parent.span();
         }
 
-        None
+        assigned_symbol_id
     }
 
     pub fn has_reference_used_as_type_query(&self) -> bool {

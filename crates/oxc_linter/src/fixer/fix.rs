@@ -35,6 +35,11 @@ bitflags! {
         ///   rule category.
         const Dangerous = 1 << 2;
 
+        /// Mark a fix or suggestion as an "ignore this section / line" fix. These are
+        /// used to automatically add `// oxc-disable` comments to the source code.
+        /// Only used by `--lsp`.
+        const IgnoreFix = 1 << 3;
+
         const SafeFix = Self::Fix.bits();
         const SafeFixOrSuggestion = Self::Fix.bits() | Self::Suggestion.bits();
         const DangerousFix = Self::Dangerous.bits() | Self::Fix.bits();
@@ -384,6 +389,51 @@ impl PossibleFixes {
             PossibleFixes::Single(fix) => fix.span,
             PossibleFixes::Multiple(fixes) => {
                 fixes.iter().map(|fix| fix.span).reduce(Span::merge).unwrap_or(SPAN)
+            }
+        }
+    }
+
+    pub(crate) fn extend_fix(&mut self, fix: Vec<Fix>) {
+        match self {
+            PossibleFixes::None => {
+                *self = PossibleFixes::Multiple(fix);
+            }
+            PossibleFixes::Single(fix1) => {
+                let mut fixes = vec![std::mem::take(fix1)];
+                fixes.extend(fix);
+                *self = PossibleFixes::Multiple(fixes);
+            }
+            PossibleFixes::Multiple(fixes1) => {
+                fixes1.extend(fix);
+            }
+        }
+    }
+
+    #[cfg(debug_assertions)]
+    pub(crate) fn cmp_fix_sequence(&self, other: &Self) -> std::cmp::Ordering {
+        fn fix_sort_key(fix: &Fix) -> (&str, Option<&str>, FixKind, Span) {
+            (fix.content.as_ref(), fix.message.as_deref(), fix.kind, fix.span)
+        }
+
+        let cmp_fix_iter = |left: &[Fix], right: &[Fix]| {
+            left.iter().map(fix_sort_key).cmp(right.iter().map(fix_sort_key))
+        };
+
+        match (self, other) {
+            (PossibleFixes::None, PossibleFixes::None) => std::cmp::Ordering::Equal,
+            (PossibleFixes::None, _) => std::cmp::Ordering::Less,
+            (_, PossibleFixes::None) => std::cmp::Ordering::Greater,
+            (PossibleFixes::Single(left), PossibleFixes::Single(right)) => {
+                fix_sort_key(left).cmp(&fix_sort_key(right))
+            }
+            (PossibleFixes::Single(left), PossibleFixes::Multiple(right)) => {
+                cmp_fix_iter(std::slice::from_ref(left), right)
+            }
+            (PossibleFixes::Multiple(left), PossibleFixes::Single(right)) => {
+                cmp_fix_iter(left, std::slice::from_ref(right))
+            }
+            (PossibleFixes::Multiple(left), PossibleFixes::Multiple(right)) => {
+                cmp_fix_iter(left, right)
             }
         }
     }

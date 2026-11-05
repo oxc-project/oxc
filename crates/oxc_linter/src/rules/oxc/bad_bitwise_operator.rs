@@ -80,15 +80,21 @@ impl Rule for BadBitwiseOperator {
             AstKind::BinaryExpression(bin_expr) => {
                 if is_mistype_short_circuit(node) {
                     let start = bin_expr.left.span().end;
+                    let right_start = bin_expr.right.span().start;
                     ctx.diagnostic_with_suggestion(
                         bad_bitwise_operator_diagnostic("&", "&&", bin_expr.span),
-                        |fixer| Self::fix_binary_operator(fixer, start, "&", "&&", ctx),
+                        |fixer| {
+                            Self::fix_binary_operator(fixer, start, right_start, "&", "&&", ctx)
+                        },
                     );
                 } else if is_mistype_option_fallback(node) {
                     let start = bin_expr.left.span().end;
+                    let right_start = bin_expr.right.span().start;
                     ctx.diagnostic_with_suggestion(
                         bad_bitwise_operator_diagnostic("|", "||", bin_expr.span),
-                        |fixer| Self::fix_binary_operator(fixer, start, "|", "||", ctx),
+                        |fixer| {
+                            Self::fix_binary_operator(fixer, start, right_start, "|", "||", ctx)
+                        },
                     );
                 }
             }
@@ -97,9 +103,10 @@ impl Rule for BadBitwiseOperator {
                     && !is_numeric_expr(&assign_expr.right, true) =>
             {
                 let start = assign_expr.left.span().end;
+                let right_start = assign_expr.right.span().start;
                 ctx.diagnostic_with_suggestion(
                     bad_bitwise_or_operator_diagnostic(assign_expr.span),
-                    |fixer| Self::fix_assignment_operator(fixer, start, ctx),
+                    |fixer| Self::fix_assignment_operator(fixer, start, right_start, ctx),
                 );
             }
             _ => {}
@@ -112,11 +119,13 @@ impl BadBitwiseOperator {
     fn fix_binary_operator(
         fixer: RuleFixer<'_, '_>,
         start: u32,
+        end: u32,
         bad: &str,
         good: &'static str,
         ctx: &LintContext<'_>,
     ) -> crate::fixer::RuleFix {
-        let Some(offset) = ctx.find_next_token_from(start, bad) else {
+        // The operator precedes the right operand; its start bounds out nested operators.
+        let Some(offset) = ctx.find_next_token_within(start, end, bad) else {
             return fixer.noop();
         };
         let op_start = start + offset;
@@ -127,9 +136,10 @@ impl BadBitwiseOperator {
     fn fix_assignment_operator(
         fixer: RuleFixer<'_, '_>,
         start: u32,
+        end: u32,
         ctx: &LintContext<'_>,
     ) -> crate::fixer::RuleFix {
-        let Some(offset) = ctx.find_next_token_from(start, "|=") else {
+        let Some(offset) = ctx.find_next_token_within(start, end, "|=") else {
             return fixer.noop();
         };
         let op_start = start + offset;

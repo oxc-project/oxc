@@ -1,3 +1,5 @@
+use std::cell::LazyCell;
+
 use lazy_regex::{Regex, RegexBuilder};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -72,7 +74,8 @@ impl std::ops::Deref for CapitalizedComments {
 #[expect(clippy::struct_field_names)]
 struct CommentConfigJson {
     /// A regex pattern. Comments that match the pattern will not cause violations.
-    ignore_pattern: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_ignore_pattern")]
+    ignore_pattern: Option<Regex>,
     /// If true, inline comments (comments in the middle of code) will be ignored.
     ignore_inline_comments: Option<bool>,
     /// If true, consecutive comments will be ignored after the first comment.
@@ -81,10 +84,8 @@ struct CommentConfigJson {
 
 impl CommentConfigJson {
     fn into_comment_config(self, base: &CommentConfigJson) -> CommentConfig {
-        let pattern = self.ignore_pattern.as_ref().or(base.ignore_pattern.as_ref());
         CommentConfig {
-            ignore_pattern: pattern
-                .and_then(|p| RegexBuilder::new(&format!(r"^\s*(?:{p})")).build().ok()),
+            ignore_pattern: self.ignore_pattern.or_else(|| base.ignore_pattern.clone()),
             ignore_inline_comments: self
                 .ignore_inline_comments
                 .or(base.ignore_inline_comments)
@@ -95,6 +96,18 @@ impl CommentConfigJson {
                 .unwrap_or(false),
         }
     }
+}
+
+fn deserialize_ignore_pattern<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    Option::<String>::deserialize(deserializer)?
+        .map(|pattern| RegexBuilder::new(&format!(r"^\s*(?:{pattern})")).build())
+        .transpose()
+        .map_err(D::Error::custom)
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
@@ -167,8 +180,9 @@ impl Rule for CapitalizedComments {
         let capitalize =
             arr.first().and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default();
 
-        let options: OptionsJson =
-            arr.get(1).and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default();
+        let options: OptionsJson = arr
+            .get(1)
+            .map_or_else(|| Ok(OptionsJson::default()), |v| serde_json::from_value(v.clone()))?;
 
         let line_config = options.line.unwrap_or_default().into_comment_config(&options.base);
         let block_config = options.block.unwrap_or_default().into_comment_config(&options.base);
@@ -195,7 +209,7 @@ impl Rule for CapitalizedComments {
 
             // Normalize the content: remove leading whitespace and JSDoc-style * markers
             // This is what ESLint calls "getTextWithoutAsterisks"
-            let normalized = normalize_comment_text(content);
+            let normalized = LazyCell::new(|| normalize_comment_text(content));
 
             // Find the first letter position in original content
             let Some((first_letter_offset, first_letter)) = find_first_letter(content) else {
@@ -238,18 +252,22 @@ impl Rule for CapitalizedComments {
             // - A letter is "uppercase" if it differs from its lowercase form
             // - A letter is "lowercase" if it differs from its uppercase form
             // - Letters with no case distinction (CJK, Hebrew, Arabic, etc.) are skipped
-            let lower = first_letter.to_lowercase().collect::<String>();
-            let upper = first_letter.to_uppercase().collect::<String>();
+            let lower = first_letter.to_lowercase();
+            let upper = first_letter.to_uppercase();
 
             // Skip letters with no case distinction (e.g., CJK characters)
-            if lower == upper {
+            if lower.clone().eq(upper.clone()) {
                 continue;
             }
 
             let is_uppercase = first_letter.is_uppercase();
             let (wrong_case, correct_case, fixed_letter) = match self.capitalize {
-                AlwaysNever::Always if !is_uppercase => ("lowercase", "uppercase", upper),
-                AlwaysNever::Never if is_uppercase => ("uppercase", "lowercase", lower),
+                AlwaysNever::Always if !is_uppercase => {
+                    ("lowercase", "uppercase", upper.collect::<String>())
+                }
+                AlwaysNever::Never if is_uppercase => {
+                    ("uppercase", "lowercase", lower.collect::<String>())
+                }
                 _ => continue,
             };
 
@@ -262,7 +280,7 @@ impl Rule for CapitalizedComments {
 
             ctx.diagnostic_with_fix(
                 capitalized_comments_diagnostic(comment.span, wrong_case, correct_case),
-                |fixer| fixer.replace(letter_span, fixed_letter.clone()),
+                |fixer| fixer.replace(letter_span, fixed_letter),
             );
         }
     }
@@ -1122,6 +1140,8 @@ fn test() {
             "// should fail. https://github.com",
             Some(serde_json::json!(["never"])),
         ),
+        ("// ßeta", "// SSeta", Some(serde_json::json!(["always"]))),
+        ("// İtem", "// i\u{307}tem", Some(serde_json::json!(["never"]))),
     ];
 
     Tester::new(CapitalizedComments::NAME, CapitalizedComments::PLUGIN, pass, fail)

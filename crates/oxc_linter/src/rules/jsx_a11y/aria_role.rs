@@ -98,13 +98,15 @@ declare_oxc_lint!(
     AriaRole,
     jsx_a11y,
     correctness,
+    recommended,
     config = AriaRoleConfig,
     version = "0.1.1",
+    short_description = "Enforce that elements with ARIA roles use a valid, non-abstract ARIA role.",
 );
 
 impl Rule for AriaRole {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -124,12 +126,15 @@ impl Rule for AriaRole {
             match get_prop_value(aria_role) {
                 Some(JSXAttributeValue::ExpressionContainer(container)) => {
                     let jsexp = &container.expression;
-                    if matches!(jsexp, JSXExpression::NullLiteral(_)) || jsexp.is_undefined() {
+                    if matches!(jsexp, JSXExpression::NullLiteral(_)) {
                         ctx.diagnostic(aria_role_diagnostic(attr.span, ""));
                     }
                 }
                 Some(JSXAttributeValue::StringLiteral(str)) => {
-                    let value = str.value.as_str();
+                    let Some(value) = str.value.as_str() else {
+                        ctx.diagnostic(aria_role_diagnostic(str.span, ctx.source_range(str.span)));
+                        return;
+                    };
                     if value.trim().is_empty() {
                         ctx.diagnostic(aria_role_diagnostic(str.span, ""));
                     } else if let Some(error_prop) = value.split_whitespace().find(|word| {
@@ -181,6 +186,8 @@ fn test() {
         ("<div />", None, None),
         ("<div></div>", None, None),
         ("<div role={role} />", None, None),
+        ("<div role={undefined} />", None, None),
+        ("<Foo role={undefined} />", None, None),
         ("<div role={role || 'button'} />", None, None),
         ("<div role={role || 'foobar'} />", None, None),
         ("<div role='tabpanel row' />", None, None),

@@ -1,0 +1,254 @@
+use oxc_span::Span;
+
+use crate::{
+    cpu::{Avx2, cpu_version},
+    simd::{Vec128, Vec256, VecData128, VecData256},
+    token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk},
+};
+
+use crate::pipeline::lanes::Lanes;
+
+use super::common::{emit_value, invalid_diags};
+
+mod pair_luts;
+
+use pair_luts::get_pair_luts;
+pub(super) use pair_luts::init_pair_luts_avx2;
+
+#[cfg(test)]
+mod tests;
+
+static QCOMPACT: [VecData256; 16] = {
+    let mut t = [VecData256::from_u32s([0; 8]); 16];
+    let mut mask = 0usize;
+    while mask < 16 {
+        let (mut q, mut k) = (0usize, 0usize);
+        while q < 4 {
+            if mask & (1 << q) != 0 {
+                t[mask].as_u32s_mut()[2 * k] = (2 * q) as u32;
+                t[mask].as_u32s_mut()[2 * k + 1] = (2 * q + 1) as u32;
+                k += 1;
+            }
+            q += 1;
+        }
+        mask += 1;
+    }
+    t
+};
+
+static BCOMPACT: [VecData128; 256] = {
+    let mut t = [VecData128::from_bytes([0x80; 16]); 256];
+    let mut mask = 0usize;
+    while mask < 256 {
+        let (mut b, mut k) = (0usize, 0usize);
+        while b < 8 {
+            if mask & (1 << b) != 0 {
+                t[mask].as_bytes_mut()[k] = b as u8;
+                k += 1;
+            }
+            b += 1;
+        }
+        mask += 1;
+    }
+    t
+};
+
+#[cpu_version(Avx2)]
+#[inline(never)]
+pub(super) unsafe fn compress_blocks_avx2(
+    st: *const u64,
+    kind: *const u8,
+    b0: usize,
+    b1: usize,
+    starts: *mut u32,
+    kinds: *mut u8,
+    cpu: Avx2,
+) -> usize {
+    // SAFETY: `Lexer::new` calls `init_pair_luts`, which initializes `PairLuts` if the CPU supports AVX2
+    let pair_luts = unsafe { get_pair_luts(cpu) };
+    let lut0z = &pair_luts.lut0z;
+    let lutpad = pair_luts.lutpad.as_ptr().cast::<u8>();
+
+    let mut m = 0usize;
+    for b in b0..b1 {
+        let mword = *st.add(b);
+        if mword == 0 {
+            continue;
+        }
+
+        let o0 = 0;
+        let o1 = o0 + (mword & 0xffff).count_ones();
+        let o2 = o1 + ((mword >> 16) & 0xffff).count_ones();
+        let o3 = o2 + ((mword >> 32) & 0xffff).count_ones();
+        let o4 = o3 + (mword >> 48).count_ones();
+
+        let base = b * 64;
+        let mut basev = Vec256::splat_u32(base as u32, cpu);
+
+        let ka = compress_pair(0, mword, o0, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
+        let kb = compress_pair(1, mword, o1, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
+        ka.store_unaligned(kinds.add(m + o0 as usize));
+        kb.store_unaligned(kinds.add(m + o1 as usize));
+        let kc = compress_pair(2, mword, o2, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
+        let kd = compress_pair(3, mword, o3, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
+        kc.store_unaligned(kinds.add(m + o2 as usize));
+        kd.store_unaligned(kinds.add(m + o3 as usize));
+
+        m += o4 as usize;
+    }
+    m
+}
+
+/// Compress 16 bits of a block's token-start mask `mword`: bits `16 * p` to `16 * p + 15`.
+///
+/// Writes the positions of the tokens which start at those bits to `starts`,
+/// from index `m + off`, and returns their kinds, gathered into the low bytes of a [`Vec128`].
+///
+/// Each lane of `basev` holds the position of bit `16 * p`.
+/// Adds 16 to it, ready for the next 16 bits.
+///
+/// # SAFETY
+///
+/// - `kind` must be valid for reading 16 bytes at `base + 16 * p`.
+/// - `starts` must be valid for writing 16 `u32`s at `m + off`.
+/// - `lutpad` must point to the `lutpad` table of `PairLuts`.
+#[cpu_version(Avx2)]
+#[inline(always)]
+unsafe fn compress_pair(
+    p: usize,
+    mword: u64,
+    off: u32,
+    lut0z: &[[u8; 8]; 256],
+    lutpad: *const u8,
+    kind: *const u8,
+    base: usize,
+    starts: *mut u32,
+    m: usize,
+    basev: &mut Vec256<Avx2>,
+    cpu: Avx2,
+) -> Vec128<Avx2> {
+    let sub0 = ((mword >> (16 * p)) & 0xff) as usize;
+    let sub1 = ((mword >> (16 * p + 8)) & 0xff) as usize;
+    let pc0 = sub0.count_ones() as usize;
+    let row0 = Vec128::read_low_unaligned(&lut0z[sub0], cpu);
+    let row1 = Vec128::load_unaligned(lutpad.add(sub1 * 32 + 8 - pc0), cpu);
+    let ctrl = row0 | row1;
+    let kw = Vec128::load_unaligned(kind.add(base + 16 * p), cpu);
+    let lo = basev.add_u32(Vec256::widen_u8_to_u32(ctrl));
+    lo.store_unaligned(starts.add(m + off as usize).cast::<u8>());
+    let hi = basev.add_u32(Vec256::widen_u8_to_u32(ctrl.shr_bytes::<8>()));
+    hi.store_unaligned(starts.add(m + off as usize + 8).cast::<u8>());
+    *basev = basev.add_u32(16);
+    kw.shuffle_u8s(ctrl)
+}
+
+#[cpu_version(Avx2)]
+pub(super) unsafe fn build_spans_avx2(
+    stage_kind: *const u8,
+    stage_pos: *const u32,
+    m: usize,
+    spans: *mut Span,
+    sig_kinds: *mut u8,
+    cpu: Avx2,
+) -> usize {
+    let sp = spans.cast::<u64>();
+    let mut w = 0usize;
+    let mut j = 0usize;
+
+    // AVX2-specific code
+    while j + 8 <= m {
+        let k8 = Vec128::load_low_unaligned(stage_kind.add(j), cpu);
+        let triv = k8.sub_u8(TRIVIA_MIN).saturating_sub_u8(TRIVIA_MAX - TRIVIA_MIN).eq_u8(0);
+        let drop = triv & !k8.eq_u8(tk!(Hashbang));
+        let sig = !drop.movemask() & 0xff;
+
+        let v0 = Vec256::load_unaligned(stage_pos.add(j).cast::<u8>(), cpu);
+        let v1 = Vec256::load_unaligned(stage_pos.add(j + 1).cast::<u8>(), cpu);
+        let lo = v0.unpack_lo_u32(v1);
+        let hi = v0.unpack_hi_u32(v1);
+        let a = lo.join_lo_halves(hi);
+        let b = lo.join_hi_halves(hi);
+
+        let ma = (sig & 0xf) as usize;
+        let mb = (sig >> 4) as usize;
+        let ca = a.shuffle_u32s(QCOMPACT[ma].read(cpu));
+        ca.store_unaligned(sp.add(w).cast::<u8>());
+        let cb = b.shuffle_u32s(QCOMPACT[mb].read(cpu));
+        cb.store_unaligned(sp.add(w + ma.count_ones() as usize).cast::<u8>());
+
+        let kc = k8.shuffle_u8s(BCOMPACT[sig as usize].read(cpu));
+        kc.store_low_unaligned(sig_kinds.add(w));
+        w += sig.count_ones() as usize;
+        j += 8;
+    }
+
+    // Same code as generic implementation
+    while j < m {
+        let k = *stage_kind.add(j);
+        *sp.add(w) = stage_pos.add(j).cast::<u64>().read_unaligned();
+        *sig_kinds.add(w) = k;
+        w += usize::from(!is_trivia_byte(k, cpu) || k == tk!(Hashbang));
+        j += 1;
+    }
+
+    w
+}
+
+#[cpu_version(Avx2)]
+pub(super) unsafe fn lanes_post_avx2(
+    src: &[u8],
+    out_kinds: *const u8,
+    out_spans: *const Span,
+    m: usize,
+    nn: u32,
+    lanes: &mut Lanes,
+    cpu: Avx2,
+) {
+    // `tk!(Invalid)` is the byte-class default for stray/control bytes and
+    // reaches the output as a 1-byte token. Track "any seen" alongside the
+    // value sweep; localize cold.
+    let mut inv = Vec256::zero(cpu);
+    let mut i = 0usize;
+    while i + 64 <= m {
+        let v0 = Vec256::load_unaligned(out_kinds.add(i), cpu);
+        let v1 = Vec256::load_unaligned(out_kinds.add(i + 32), cpu);
+        let h0 = hits(v0);
+        let h1 = hits(v1);
+        inv |= v0.eq_u8(tk!(Invalid)) | v1.eq_u8(tk!(Invalid));
+        let mut mask = (h0.movemask() as u64) | ((h1.movemask() as u64) << 32);
+        while mask != 0 {
+            emit_value(src, out_kinds, out_spans, i + mask.trailing_zeros() as usize, lanes, cpu);
+            mask &= mask - 1;
+        }
+        i += 64;
+    }
+    let mut inv_dirty = inv.movemask() != 0;
+    while i < m {
+        let v = Vec256::load_unaligned(out_kinds.add(i), cpu);
+        let hit = hits(v);
+        let mut mask = hit.movemask();
+        let mut invm = v.eq_u8(tk!(Invalid)).movemask();
+        let rem = m - i;
+        if rem < 32 {
+            mask &= (1u32 << rem) - 1;
+            invm &= (1u32 << rem) - 1;
+        }
+        inv_dirty |= invm != 0;
+        while mask != 0 {
+            emit_value(src, out_kinds, out_spans, i + mask.trailing_zeros() as usize, lanes, cpu);
+            mask &= mask - 1;
+        }
+        i += 32;
+    }
+    if inv_dirty {
+        invalid_diags(src, out_kinds, out_spans, m, nn, lanes);
+    }
+}
+
+/// Get a mask of the bytes of `v` which are token kinds that [`emit_value`] handles.
+#[cpu_version(Avx2)]
+#[inline(always)]
+fn hits(v: Vec256<Avx2>) -> Vec256<Avx2> {
+    (v.eq_u8(tk!(Number)) | v.eq_u8(tk!(BigInt)))
+        | (v.eq_u8(tk!(IdentEscaped)) | v.eq_u8(tk!(PrivateIdentEscaped)))
+}

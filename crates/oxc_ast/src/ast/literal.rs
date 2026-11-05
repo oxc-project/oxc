@@ -7,13 +7,14 @@
 use std::{cell::Cell, hash::Hash};
 
 use bitflags::bitflags;
-use oxc_allocator::{Box, CloneIn, Dummy, TakeIn, UnstableAddress};
+use oxc_allocator::{Box, CloneIn, Dummy, ReplaceWith, TakeIn, UnstableAddress};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
-use oxc_str::Str;
+use oxc_str::{JSStr, Str};
 use oxc_syntax::{
+    GetNodeId,
     node::NodeId,
     number::{BigintBase, NumberBase},
 };
@@ -23,7 +24,8 @@ use oxc_syntax::{
 /// <https://tc39.es/ecma262/#prod-BooleanLiteral>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(rename = "Literal", add_fields(raw = BooleanLiteralRaw))]
 pub struct BooleanLiteral {
     /// Unique identifier for this AST node.
@@ -39,7 +41,8 @@ pub struct BooleanLiteral {
 /// <https://tc39.es/ecma262/#sec-null-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(rename = "Literal", add_fields(value = Null, raw = NullLiteralRaw))]
 pub struct NullLiteral {
     /// Unique identifier for this AST node.
@@ -53,7 +56,8 @@ pub struct NullLiteral {
 /// <https://tc39.es/ecma262/#sec-literals-numeric-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(rename = "Literal")]
 pub struct NumericLiteral<'a> {
     /// Unique identifier for this AST node.
@@ -79,7 +83,8 @@ pub struct NumericLiteral<'a> {
 /// <https://tc39.es/ecma262/#sec-literals-string-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(rename = "Literal")]
 pub struct StringLiteral<'a> {
     /// Unique identifier for this AST node.
@@ -89,8 +94,7 @@ pub struct StringLiteral<'a> {
     /// The value of the string.
     ///
     /// Any escape sequences in the raw code are unescaped.
-    #[estree(via = StringLiteralValue)]
-    pub value: Str<'a>,
+    pub value: JSStr<'a>,
 
     /// The raw string as it appears in source code.
     ///
@@ -98,21 +102,13 @@ pub struct StringLiteral<'a> {
     #[content_eq(skip)]
     #[estree(from_span)]
     pub raw: Option<Str<'a>>,
-
-    /// The string value contains lone surrogates.
-    ///
-    /// `value` is encoded using `\u{FFFD}` (the lossy replacement character) as an escape character.
-    /// Lone surrogates are encoded as `\u{FFFD}XXXX`, where `XXXX` is the code unit in hex.
-    /// The lossy escape character itself is encoded as `\u{FFFD}fffd`.
-    #[builder(default)]
-    #[estree(skip)]
-    pub lone_surrogates: bool,
 }
 
 /// BigInt literal
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(rename = "Literal", add_fields(bigint = BigIntLiteralBigint))]
 pub struct BigIntLiteral<'a> {
     /// Unique identifier for this AST node.
@@ -137,7 +133,8 @@ pub struct BigIntLiteral<'a> {
 /// <https://tc39.es/ecma262/#sec-literals-regular-expression-literals>
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(
     rename = "Literal",
     add_fields(value = RegExpLiteralValue),
@@ -164,7 +161,7 @@ pub struct RegExpLiteral<'a> {
 /// <https://tc39.es/ecma262/multipage/text-processing.html#sec-regexp-regular-expression-objects>
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn, ContentEq, ESTree)]
 #[estree(no_type, ts_alias = "{ pattern: string; flags: string; }")]
 pub struct RegExp<'a> {
     /// The regex pattern between the slashes
@@ -178,7 +175,7 @@ pub struct RegExp<'a> {
 /// This pattern may or may not be parsed.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn, ContentEq, ESTree)]
 #[estree(no_type, flatten)]
 pub struct RegExpPattern<'a> {
     /// The regexp's pattern as a string.
@@ -235,7 +232,8 @@ bitflags! {
         const D = 1 << 6;
         /// Unicode sets flag
         ///
-        /// Similar to the `u` flag, but also enables the `\\p{}` and `\\P{}` syntax.
+        /// Enables Unicode set notation in character classes (intersection, subtraction,
+        /// and nested classes) and matching Unicode properties of strings.
         /// Added by the [`v` flag proposal](https://github.com/tc39/proposal-regexp-set-notation).
         const V = 1 << 7;
     }

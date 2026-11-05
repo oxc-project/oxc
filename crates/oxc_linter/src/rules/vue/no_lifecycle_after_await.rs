@@ -1,11 +1,11 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, FunctionKind,
     ast::{
-        AwaitExpression, CallExpression, ExportDefaultDeclarationKind, Expression, Function,
-        ObjectExpression,
+        ArrowFunctionExpression, AwaitExpression, CallExpression, ExportDefaultDeclarationKind,
+        Expression, Function, ObjectExpression,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
@@ -13,9 +13,7 @@ use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
 use crate::module_record::{ImportEntry, ImportImportName};
-use crate::{
-    AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule, utils::find_property,
-};
+use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
 
 fn no_lifecycle_after_await_diagnostic(span: Span, hook_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -69,6 +67,7 @@ declare_oxc_lint!(
     NoLifecycleAfterAwait,
     vue,
     correctness,
+    recommended,
     version = "1.39.0",
     short_description = "Disallow asynchronously registered lifecycle hooks.",
 );
@@ -119,17 +118,14 @@ impl Rule for NoLifecycleAfterAwait {
 }
 
 fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-    let Some(setup_prop) = find_property(obj_expr, "setup") else {
+    let Some(setup_prop) = obj_expr.find_property("setup") else {
         return;
     };
 
-    let function_body_opt = match &setup_prop.value {
-        Expression::FunctionExpression(func_expr) => func_expr.body.as_ref(),
-        Expression::ArrowFunctionExpression(arrow_func_expr) => Some(&arrow_func_expr.body),
-        _ => None,
-    };
-    let Some(function_body) = function_body_opt else {
-        return;
+    let function = match &setup_prop.value {
+        Expression::FunctionExpression(func) => FunctionKind::Function(func),
+        Expression::ArrowFunctionExpression(arrow) => FunctionKind::Arrow(arrow),
+        _ => return,
     };
 
     let module_record = ctx.module_record();
@@ -158,7 +154,13 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
     }
 
     let mut visitor = LifecycleAfterAwaitVisitor::new(scoping, symbol_to_import_entry);
-    visitor.visit_function_body(function_body);
+    match function {
+        FunctionKind::Function(func) => {
+            let Some(body) = func.body.as_deref() else { return };
+            visitor.visit_function_body(body);
+        }
+        FunctionKind::Arrow(arrow) => visitor.visit_arrow_function_body(&arrow.body),
+    }
 
     visitor.errors.iter().for_each(|(span, hook_name)| {
         ctx.diagnostic(no_lifecycle_after_await_diagnostic(*span, hook_name));
@@ -181,7 +183,7 @@ impl<'a> LifecycleAfterAwaitVisitor<'a> {
     }
 }
 
-impl<'a> Visit<'a> for LifecycleAfterAwaitVisitor<'a> {
+impl<'a> VisitJs<'a> for LifecycleAfterAwaitVisitor<'a> {
     fn visit_await_expression(&mut self, _expr: &AwaitExpression) {
         if !self.found {
             self.found = true;
@@ -190,23 +192,23 @@ impl<'a> Visit<'a> for LifecycleAfterAwaitVisitor<'a> {
 
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         if !self.found {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         }
 
         if call_expr.arguments.len() >= 2 {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         }
 
         let Some(ident) = call_expr.callee.get_inner_expression().get_identifier_reference() else {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         };
 
         let reference = self.scoping.get_reference(ident.reference_id());
         let Some(symbol_id) = reference.symbol_id() else {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         };
 
@@ -215,16 +217,12 @@ impl<'a> Visit<'a> for LifecycleAfterAwaitVisitor<'a> {
         {
             self.errors.push((call_expr.span, name_span.name().to_string()));
         }
-        walk::walk_call_expression(self, call_expr);
+        walk_js::walk_call_expression(self, call_expr);
     }
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
 
-    fn visit_arrow_function_expression(
-        &mut self,
-        _func: &oxc_ast::ast::ArrowFunctionExpression<'a>,
-    ) {
-    }
+    fn visit_arrow_function_expression(&mut self, _func: &ArrowFunctionExpression<'a>) {}
 }
 
 #[test]

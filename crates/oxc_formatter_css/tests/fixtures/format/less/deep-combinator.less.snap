@@ -1,0 +1,57 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+.parent /deep/ .child {
+  color: red;
+}
+.a ^ .b,
+.c ^^ .d {
+  color: blue;
+}
+.container /shadow/ .content {
+  background: blue;
+}
+// `/DEEP/` stays: vue-loader and Angular match `/deep/` case-sensitively
+.x /DEEP/ .y {
+  color: red;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+.parent /deep/ .child {
+  color: red;
+}
+.a ^ .b,
+.c ^^ .d {
+  color: blue;
+}
+.container /shadow/ .content {
+  background: blue;
+}
+// `/DEEP/` stays: vue-loader and Angular match `/deep/` case-sensitively
+.x /DEEP/ .y {
+  color: red;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+.parent /deep/ .child {
+  color: red;
+}
+.a ^ .b,
+.c ^^ .d {
+  color: blue;
+}
+.container /shadow/ .content {
+  background: blue;
+}
+// `/DEEP/` stays: vue-loader and Angular match `/deep/` case-sensitively
+.x /DEEP/ .y {
+  color: red;
+}
+
+===================== End =====================

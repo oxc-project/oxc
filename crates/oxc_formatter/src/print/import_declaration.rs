@@ -1,17 +1,19 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use oxc_syntax::identifier::is_identifier_name_patched;
 
 use crate::{
     Format, FormatTrailingCommas, JsLabels, TrailingSeparator,
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind},
     format_args,
     formatter::{
         JsFormatter, prelude::*, separated::FormatSeparatedIter, trivia::FormatLeadingComments,
     },
-    print::semicolon::OptionalSemicolon,
-    utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
+    print::semicolon::{FormatContentWithSemicolon, OptionalSemicolon},
+    utils::{
+        object::should_preserve_string_quote,
+        string::{FormatLiteralStringToken, StringLiteralParentKind},
+    },
     write,
 };
 
@@ -31,25 +33,39 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ImportPhase {
     }
 }
 
-pub fn format_import_and_export_source_with_clause<'a>(
-    source: &AstNode<'a, StringLiteral>,
-    with_clause: Option<&AstNode<'a, WithClause>>,
+/// Formats `prefix` followed by the module source and its optional with-clause,
+/// then the semicolon, moving a same-line trailing comment behind it.
+pub fn format_source_with_clause_and_semicolon<'a>(
+    prefix: &impl Format<'a, JsFormatContext<'a>>,
+    source: &AstNode<'_, 'a, StringLiteral>,
+    with_clause: Option<AstNode<'_, 'a, WithClause>>,
+    span_end: u32,
     f: &mut JsFormatter<'_, 'a>,
 ) {
-    source.fmt(f);
+    let content = format_with(|f| {
+        prefix.fmt(f);
+        source.fmt(f);
 
-    if let Some(with_clause) = with_clause {
-        if f.comments().has_comment_before(with_clause.span.start) {
-            write!(f, [space()]);
+        if let Some(with_clause) = with_clause {
+            if f.comments().has_comment_before(with_clause.span.start) {
+                write!(f, [space()]);
+            }
+
+            write!(f, [with_clause]);
         }
-
-        write!(f, [with_clause]);
-    }
+    });
+    let content_end = module_source_end(source, with_clause.as_ref().map(AsRef::as_ref));
+    write!(f, FormatContentWithSemicolon::new(&content, content_end, span_end));
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
+/// Where an import/export's content ends: its with-clause, else its source.
+pub fn module_source_end(source: &StringLiteral, with_clause: Option<&WithClause>) -> u32 {
+    with_clause.map_or(source.span.end, |with| with.span.end)
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ImportDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let decl = &format_with(|f| {
+        let prefix = format_with(|f| {
             write!(f, ["import", space()]);
             if let Some(phase) = self.phase() {
                 write!(f, phase);
@@ -60,21 +76,28 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
             if let Some(specifiers) = self.specifiers() {
                 write!(f, [specifiers, space(), "from", space()]);
             }
-
-            format_import_and_export_source_with_clause(self.source(), self.with_clause(), f);
-
-            write!(f, [OptionalSemicolon]);
+        });
+        let decl = format_with(|f| {
+            format_source_with_clause_and_semicolon(
+                &prefix,
+                &self.source(),
+                self.with_clause(),
+                self.span.end,
+                f,
+            );
         });
 
         if f.options().sort_imports.is_some() {
-            write!(f, [labelled(LabelId::of(JsLabels::ImportDeclaration), decl)]);
+            write!(f, [labelled(LabelId::of(JsLabels::ImportDeclaration), &decl)]);
         } else {
             write!(f, decl);
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>>
+    for AstNode<'_, 'a, ArenaVec<'a, ImportDeclarationSpecifier<'a>>>
+{
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let mut specifiers_iter = self.iter().peekable();
 
@@ -153,7 +176,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, ImportDeclarati
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ImportSpecifier<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ImportSpecifier<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let comments = f.context().comments().line_comments_before(self.local.span.end);
         write!(f, [FormatLeadingComments::Comments(comments), self.import_kind()]);
@@ -165,26 +188,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportSpecifier<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ImportDefaultSpecifier<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ImportDefaultSpecifier<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, [self.local()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ImportNamespaceSpecifier<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ImportNamespaceSpecifier<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["*", space(), "as", space(), self.local()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, WithClause<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
             let quote_needed = self.with_entries.iter().any(|attribute| {
-                matches!(&attribute.key, ImportAttributeKey::StringLiteral(string) if {
-                    let quote_less_content = f.source_text().text_for(&string.span.shrink(1));
-                    !is_identifier_name_patched(quote_less_content)
-                })
+                matches!(&attribute.key, ImportAttributeKey::StringLiteral(string)
+                    if should_preserve_string_quote(string, f))
             });
 
             f.context_mut().push_quote_needed(quote_needed);
@@ -204,7 +225,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, ImportAttribute<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.is_empty() {
             return write!(f, "{}");
@@ -216,9 +237,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, ImportAttribute
             write!(f, "{");
 
             if self.len() > 1
-                || self
-                    .first()
-                    .is_some_and(|attribute| attribute.key.as_arena_str().as_str() != "type")
+                || self.first().is_some_and(|attribute| attribute.key.as_js_str() != "type")
                 || f.comments().has_comment_before(self.parent().span().end)
             {
                 write!(
@@ -269,9 +288,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, ImportAttribute
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ImportAttribute<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ImportAttribute<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        if let AstNodes::StringLiteral(string) = self.key().as_ast_nodes() {
+        if let AstNodeKind::StringLiteral(string) = &self.key().as_kind() {
             let format = FormatLiteralStringToken::new(
                 f.source_text().text_for(string),
                 false,
@@ -298,7 +317,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportAttribute<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSImportEqualsDeclaration<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSImportEqualsDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(
             f,
@@ -317,12 +336,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSImportEqualsDeclaration<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleReference<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSExternalModuleReference<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["require("]);
 
         if f.comments().has_comment_in_span(self.span) {
-            write!(f, [block_indent(self.expression())]);
+            write!(f, [block_indent(&self.expression())]);
         } else {
             write!(f, [self.expression()]);
         }

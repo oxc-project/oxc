@@ -1,0 +1,23 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<span><pre />
+</span>
+<span>a<pre />
+</span>
+
+==================== Output ====================
+-------------------------------------------------------
+{ htmlWhitespaceSensitivity: "strict", printWidth: 80 }
+-------------------------------------------------------
+<span><pre /></span>
+<span>a<pre /></span>
+
+--------------------------------------------------------
+{ htmlWhitespaceSensitivity: "strict", printWidth: 100 }
+--------------------------------------------------------
+<span><pre /></span>
+<span>a<pre /></span>
+
+===================== End =====================

@@ -18,7 +18,6 @@
 [![MIT licensed][license-badge]][license-url]
 [![Build Status][ci-badge]][ci-url]
 [![Code Coverage][code-coverage-badge]][code-coverage-url]
-[![Sponsors][sponsors-badge]][sponsors-url]
 
 [![Discord chat][discord-badge]][discord-url]
 [![Playground][playground-badge]][playground-url]
@@ -35,8 +34,6 @@
 [code-size-url]: https://github.com/oxc-project/oxc
 [code-coverage-badge]: https://codecov.io/github/oxc-project/oxc/branch/main/graph/badge.svg
 [code-coverage-url]: https://codecov.io/gh/oxc-project/oxc
-[sponsors-badge]: https://img.shields.io/github/sponsors/Boshen
-[sponsors-url]: https://github.com/sponsors/Boshen
 [playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0
 [playground-url]: https://playground.oxc.rs/
 

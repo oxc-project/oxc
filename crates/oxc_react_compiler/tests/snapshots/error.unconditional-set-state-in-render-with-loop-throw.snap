@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.unconditional-set-state-in-render-with-loop-throw.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot call setState during render", labels: [LabeledSpan { label: Some("Found setState() in render"), span: Span { start: 222, end: 230 }, primary: true }], help: Some("Calling setState during render may trigger an infinite loop.\n* To reset state when other state/props change, store the previous value in state and update conditionally.\n* To derive data from other state/props, compute the derived data during render without using state"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("RenderSetState") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-render") } }
+
+No changes.

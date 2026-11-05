@@ -52,7 +52,7 @@ impl CompilerInterface for Driver {
         self.errors.extend(errors);
     }
 
-    fn after_codegen(&mut self, ret: CodegenReturn) {
+    fn after_codegen(&mut self, ret: CodegenReturn<'_>) {
         self.printed = ret.code;
     }
 

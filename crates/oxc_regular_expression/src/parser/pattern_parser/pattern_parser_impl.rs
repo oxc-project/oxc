@@ -1,11 +1,16 @@
-use oxc_allocator::{Allocator, Box, Vec};
+use oxc_allocator::{Allocator, ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator};
 use oxc_diagnostics::Result;
 use oxc_str::Str;
 
 use crate::{
     ast, diagnostics,
     parser::{
-        pattern_parser::{character, state::State, unicode_property},
+        pattern_parser::{
+            character,
+            state::State,
+            unicode_escape::{UnicodeEscape, decode},
+            unicode_property,
+        },
         reader::{EscapeKind, Reader},
         span_factory::SpanFactory,
     },
@@ -51,27 +56,30 @@ impl<'a> PatternParser<'a> {
         // - names of named capturing groups
         //   - For `\k<a>`, `\k<a>(?<b>)` to be handled as early error in `+NamedCaptureGroups`
         //
-        // NOTE: It means that this perform 2 loops for every cases.
+        // NOTE: It means that this performs 2 loops for every case.
         // - Pros: Code is simple enough and easy to understand
         // - Cons: 1st pass is completely useless if the pattern does not contain any capturing groups
         // We may re-consider this if we need more performance rather than simplicity.
-        let checkpoint = self.reader.checkpoint();
 
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
-        self.state.initialize_with_parsing(&mut self.reader).map_err(|offsets| {
-            diagnostics::duplicated_capturing_group_names(
-                offsets.iter().map(|&(start, end)| self.span_factory.create(start, end)).collect(),
-            )
-        })?;
-        self.reader.rewind(checkpoint);
+        self.state.initialize_with_parsing(&mut self.reader, self.allocator).map_err(
+            |offsets| {
+                diagnostics::duplicated_capturing_group_names(
+                    offsets
+                        .iter()
+                        .map(|&(start, end)| self.span_factory.create(start, end))
+                        .collect(),
+                )
+            },
+        )?;
 
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if CountLeftCapturingParensWithin(Pattern) ≥ 2**32 - 1.
         //
         // If this is greater than `u32::MAX`, it is memory overflow, though.
         // But I never seen such a gigantic pattern with 4,294,967,295 parens!
-        if u32::MAX == self.state.num_of_capturing_groups {
+        if self.state.num_of_capturing_groups == u32::MAX {
             return Err(diagnostics::too_may_capturing_groups(self.span_factory.create(0, 0)));
         }
 
@@ -100,7 +108,7 @@ impl<'a> PatternParser<'a> {
     fn parse_disjunction(&mut self) -> Result<ast::Disjunction<'a>> {
         let span_start = self.reader.offset();
 
-        let mut body = Vec::new_in(self.allocator);
+        let mut body = ArenaVec::new_in(self);
         loop {
             body.push(self.parse_alternative()?);
 
@@ -123,7 +131,7 @@ impl<'a> PatternParser<'a> {
     fn parse_alternative(&mut self) -> Result<ast::Alternative<'a>> {
         let span_start = self.reader.offset();
 
-        let mut body = Vec::new_in(self.allocator);
+        let mut body = ArenaVec::new_in(self);
         while let Some(term) = self.parse_term()? {
             body.push(term);
         }
@@ -157,7 +165,7 @@ impl<'a> PatternParser<'a> {
             let span_start = self.reader.offset();
             return match (self.parse_atom()?, self.consume_quantifier()?) {
                 (Some(atom), Some(((min, max), greedy))) => {
-                    Ok(Some(ast::Term::Quantifier(Box::new_in(
+                    Ok(Some(ast::Term::Quantifier(ArenaBox::new_in(
                         ast::Quantifier {
                             span: self.span_factory.create(span_start, self.reader.offset()),
                             greedy,
@@ -165,7 +173,7 @@ impl<'a> PatternParser<'a> {
                             max,
                             body: atom,
                         },
-                        self.allocator,
+                        self,
                     ))))
                 }
                 (Some(atom), None) => Ok(Some(atom)),
@@ -192,7 +200,7 @@ impl<'a> PatternParser<'a> {
                 )
                 && let Some(((min, max), greedy)) = self.consume_quantifier()?
             {
-                return Ok(Some(ast::Term::Quantifier(Box::new_in(
+                return Ok(Some(ast::Term::Quantifier(ArenaBox::new_in(
                     ast::Quantifier {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         greedy,
@@ -200,7 +208,7 @@ impl<'a> PatternParser<'a> {
                         max,
                         body: assertion,
                     },
-                    self.allocator,
+                    self,
                 ))));
             }
 
@@ -209,7 +217,7 @@ impl<'a> PatternParser<'a> {
 
         match (self.parse_extended_atom()?, self.consume_quantifier()?) {
             (Some(extended_atom), Some(((min, max), greedy))) => {
-                Ok(Some(ast::Term::Quantifier(Box::new_in(
+                Ok(Some(ast::Term::Quantifier(ArenaBox::new_in(
                     ast::Quantifier {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         min,
@@ -217,7 +225,7 @@ impl<'a> PatternParser<'a> {
                         greedy,
                         body: extended_atom,
                     },
-                    self.allocator,
+                    self,
                 ))))
             }
             (Some(extended_atom), None) => Ok(Some(extended_atom)),
@@ -233,6 +241,9 @@ impl<'a> PatternParser<'a> {
     // Assertion[UnicodeMode, UnicodeSetsMode, NamedCaptureGroups] ::
     //   ^
     //   $
+    //   [+UnicodeMode] \A
+    //   [+UnicodeMode] \z
+    //   [+UnicodeMode] \Z
     //   \b
     //   \B
     //   [+UnicodeMode] (?= Disjunction[+UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
@@ -257,17 +268,23 @@ impl<'a> PatternParser<'a> {
             Some(ast::BoundaryAssertionKind::Boundary)
         } else if self.reader.eat2('\\', 'B') {
             Some(ast::BoundaryAssertionKind::NegativeBoundary)
+        } else if self.state.unicode_mode && self.reader.eat2('\\', 'A') {
+            Some(ast::BoundaryAssertionKind::StartBuffer)
+        } else if self.state.unicode_mode && self.reader.eat2('\\', 'z') {
+            Some(ast::BoundaryAssertionKind::EndBuffer)
+        } else if self.state.unicode_mode && self.reader.eat2('\\', 'Z') {
+            Some(ast::BoundaryAssertionKind::EndBufferOptionalNewline)
         } else {
             None
         };
 
         if let Some(kind) = kind {
-            return Ok(Some(ast::Term::BoundaryAssertion(Box::new_in(
+            return Ok(Some(ast::Term::BoundaryAssertion(ArenaBox::new_in(
                 ast::BoundaryAssertion {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
@@ -293,13 +310,13 @@ impl<'a> PatternParser<'a> {
                 ));
             }
 
-            return Ok(Some(ast::Term::LookAroundAssertion(Box::new_in(
+            return Ok(Some(ast::Term::LookAroundAssertion(ArenaBox::new_in(
                 ast::LookAroundAssertion {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind,
                     body: disjunction,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
@@ -324,13 +341,13 @@ impl<'a> PatternParser<'a> {
             let kind = Self::escape_kind_to_character_kind(self.reader.peek_escape_kind());
             self.reader.advance();
 
-            return Ok(Some(ast::Term::Character(Box::new_in(
+            return Ok(Some(ast::Term::Character(ArenaBox::new_in(
                 ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind,
                     value: cp,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
@@ -342,34 +359,30 @@ impl<'a> PatternParser<'a> {
         }
 
         // \ AtomEscape[?UnicodeMode, ?NamedCaptureGroups]
-        if self.reader.eat('\\')
-            && let Some(atom_escape) = self.parse_atom_escape(span_start)?
-        {
-            return Ok(Some(atom_escape));
+        if self.reader.eat('\\') {
+            return self.parse_atom_escape(span_start)?.map(Some).ok_or_else(|| {
+                diagnostics::invalid_atom_escape(
+                    self.span_factory.create(span_start, self.reader.offset()),
+                )
+            });
         }
 
         // CharacterClass[?UnicodeMode, ?UnicodeSetsMode]
         if let Some(character_class) = self.parse_character_class()? {
-            return Ok(Some(ast::Term::CharacterClass(Box::new_in(
-                character_class,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::CharacterClass(ArenaBox::new_in(character_class, self))));
         }
 
         // ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // ( Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
-            return Ok(Some(ast::Term::CapturingGroup(Box::new_in(
-                capturing_group,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::CapturingGroup(ArenaBox::new_in(capturing_group, self))));
         }
 
         // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // (? RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         // (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(ignore_group) = self.parse_ignore_group()? {
-            return Ok(Some(ast::Term::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
+            return Ok(Some(ast::Term::IgnoreGroup(ArenaBox::new_in(ignore_group, self))));
         }
 
         Ok(None)
@@ -405,13 +418,13 @@ impl<'a> PatternParser<'a> {
 
             // \ [lookahead = c]
             if self.reader.peek().as_ref().is_some_and(|&cp| cp == 'c' as u32) {
-                return Ok(Some(ast::Term::Character(Box::new_in(
+                return Ok(Some(ast::Term::Character(ArenaBox::new_in(
                     ast::Character {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         kind: ast::CharacterKind::Symbol,
                         value: '\\' as u32,
                     },
-                    self.allocator,
+                    self,
                 ))));
             }
 
@@ -422,26 +435,20 @@ impl<'a> PatternParser<'a> {
 
         // CharacterClass[~UnicodeMode, ~UnicodeSetsMode]
         if let Some(character_class) = self.parse_character_class()? {
-            return Ok(Some(ast::Term::CharacterClass(Box::new_in(
-                character_class,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::CharacterClass(ArenaBox::new_in(character_class, self))));
         }
 
         // ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // ( Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
-            return Ok(Some(ast::Term::CapturingGroup(Box::new_in(
-                capturing_group,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::CapturingGroup(ArenaBox::new_in(capturing_group, self))));
         }
 
         // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // (? RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         // (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(ignore_group) = self.parse_ignore_group()? {
-            return Ok(Some(ast::Term::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
+            return Ok(Some(ast::Term::IgnoreGroup(ArenaBox::new_in(ignore_group, self))));
         }
 
         // InvalidBracedQuantifier
@@ -458,13 +465,13 @@ impl<'a> PatternParser<'a> {
         // ExtendedPatternCharacter
         let escape_kind = self.reader.peek_escape_kind();
         if let Some(cp) = self.consume_extended_pattern_character() {
-            return Ok(Some(ast::Term::Character(Box::new_in(
+            return Ok(Some(ast::Term::Character(ArenaBox::new_in(
                 ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: Self::escape_kind_to_character_kind(escape_kind),
                     value: cp,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
@@ -484,33 +491,35 @@ impl<'a> PatternParser<'a> {
         let checkpoint = self.reader.checkpoint();
 
         // DecimalEscape: \1 means indexed reference
-        if let Some(index) = self.consume_decimal_escape()? {
+        if let Some(index) = self.consume_decimal_escape() {
             if self.state.unicode_mode {
                 // [SS:EE] AtomEscape :: DecimalEscape
                 // It is a Syntax Error if the CapturingGroupNumber of DecimalEscape is strictly greater than CountLeftCapturingParensWithin(the Pattern containing AtomEscape).
-                if self.state.num_of_capturing_groups < index {
+                if u64::from(self.state.num_of_capturing_groups) < index {
                     return Err(diagnostics::invalid_indexed_reference(
                         self.span_factory.create(span_start, self.reader.offset()),
                         self.state.num_of_capturing_groups as usize,
                     ));
                 }
 
-                return Ok(Some(ast::Term::IndexedReference(Box::new_in(
+                let index = u32::try_from(index).expect("validated capture index must fit in u32");
+                return Ok(Some(ast::Term::IndexedReference(ArenaBox::new_in(
                     ast::IndexedReference {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         index,
                     },
-                    self.allocator,
+                    self,
                 ))));
             }
 
-            if index <= self.state.num_of_capturing_groups {
-                return Ok(Some(ast::Term::IndexedReference(Box::new_in(
+            if index <= u64::from(self.state.num_of_capturing_groups) {
+                let index = u32::try_from(index).expect("validated capture index must fit in u32");
+                return Ok(Some(ast::Term::IndexedReference(ArenaBox::new_in(
                     ast::IndexedReference {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         index,
                     },
-                    self.allocator,
+                    self,
                 ))));
             }
 
@@ -519,23 +528,23 @@ impl<'a> PatternParser<'a> {
 
         // CharacterClassEscape: \d, \p{...}
         if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
-            return Ok(Some(ast::Term::CharacterClassEscape(Box::new_in(
+            return Ok(Some(ast::Term::CharacterClassEscape(ArenaBox::new_in(
                 character_class_escape,
-                self.allocator,
+                self,
             ))));
         }
         if let Some(unicode_property_escape) =
             self.parse_character_class_escape_unicode(span_start)?
         {
-            return Ok(Some(ast::Term::UnicodePropertyEscape(Box::new_in(
+            return Ok(Some(ast::Term::UnicodePropertyEscape(ArenaBox::new_in(
                 unicode_property_escape,
-                self.allocator,
+                self,
             ))));
         }
 
         // CharacterEscape: \n, \cM, \0, etc...
         if let Some(character_escape) = self.parse_character_escape(span_start)? {
-            return Ok(Some(ast::Term::Character(Box::new_in(character_escape, self.allocator))));
+            return Ok(Some(ast::Term::Character(ArenaBox::new_in(character_escape, self))));
         }
 
         // k GroupName: \k<name> means named reference
@@ -543,8 +552,9 @@ impl<'a> PatternParser<'a> {
             if let Some(name) = self.consume_group_name()? {
                 // [SS:EE] AtomEscape :: k GroupName
                 // It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
+                // https://tc39.es/ecma262/multipage/text-processing.html#sec-static-semantics-groupspecifiersthatmatch
                 if !self.state.capturing_group_names.contains(name.as_str()) {
-                    let names: std::vec::Vec<&str> =
+                    let names: Vec<&str> =
                         self.state.capturing_group_names.iter().map(Str::as_str).collect();
                     return Err(diagnostics::invalid_named_reference(
                         self.span_factory.create(span_start, self.reader.offset()),
@@ -552,12 +562,12 @@ impl<'a> PatternParser<'a> {
                     ));
                 }
 
-                return Ok(Some(ast::Term::NamedReference(Box::new_in(
+                return Ok(Some(ast::Term::NamedReference(ArenaBox::new_in(
                     ast::NamedReference {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         name,
                     },
-                    self.allocator,
+                    self,
                 ))));
             }
 
@@ -774,7 +784,10 @@ impl<'a> PatternParser<'a> {
             let (kind, body) = self.parse_class_contents()?;
 
             if self.reader.eat(']') {
-                let strings = PatternParser::may_contain_strings_in_class_contents(kind, &body);
+                // Without UnicodeSetsMode, ClassContents is empty or NonemptyClassRanges,
+                // whose MayContainStrings is always false.
+                let strings = self.state.unicode_sets_mode
+                    && PatternParser::may_contain_strings_in_class_contents(kind, &body);
 
                 // [SS:EE] CharacterClass :: [^ ClassContents ]
                 // It is a Syntax Error if MayContainStrings of the ClassContents is true.
@@ -810,13 +823,14 @@ impl<'a> PatternParser<'a> {
     // ```
     fn parse_class_contents(
         &mut self,
-    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
+    ) -> Result<(ast::CharacterClassContentsKind, ArenaVec<'a, ast::CharacterClassContents<'a>>)>
+    {
         // [empty]
         if self.reader.peek().as_ref().is_some_and(|&cp| cp == ']' as u32)
             // Unterminated
             || self.reader.peek().is_none()
         {
-            return Ok((ast::CharacterClassContentsKind::Union, Vec::new_in(self.allocator)));
+            return Ok((ast::CharacterClassContentsKind::Union, ArenaVec::new_in(self)));
         }
 
         // [+UnicodeSetsMode] ClassSetExpression
@@ -841,8 +855,9 @@ impl<'a> PatternParser<'a> {
     // ```
     fn parse_nonempty_class_ranges(
         &mut self,
-    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
-        let mut body = Vec::new_in(self.allocator);
+    ) -> Result<(ast::CharacterClassContentsKind, ArenaVec<'a, ast::CharacterClassContents<'a>>)>
+    {
+        let mut body = ArenaVec::new_in(self);
 
         loop {
             let range_span_start = self.reader.offset();
@@ -858,21 +873,21 @@ impl<'a> PatternParser<'a> {
                 continue;
             }
 
-            let dash = ast::CharacterClassContents::Character(Box::new_in(
-                ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.offset()),
-                    kind: ast::CharacterKind::Symbol,
-                    value: '-' as u32,
-                },
-                self.allocator,
-            ));
+            let dash_span = self.span_factory.create(span_start, self.reader.offset());
 
             let Some(class_atom_to) = self.parse_class_atom()? else {
                 // ClassAtom[?UnicodeMode] NonemptyClassRangesNoDash[?UnicodeMode]
                 // => ClassAtom[?UnicodeMode] ClassAtom[?UnicodeMode]
                 // => ClassAtom[?UnicodeMode] -
                 body.push(class_atom);
-                body.push(dash);
+                body.push(ast::CharacterClassContents::Character(ArenaBox::new_in(
+                    ast::Character {
+                        span: dash_span,
+                        kind: ast::CharacterKind::Symbol,
+                        value: '-' as u32,
+                    },
+                    self,
+                )));
                 continue;
             };
 
@@ -898,13 +913,13 @@ impl<'a> PatternParser<'a> {
                     ));
                 }
 
-                body.push(ast::CharacterClassContents::CharacterClassRange(Box::new_in(
+                body.push(ast::CharacterClassContents::CharacterClassRange(ArenaBox::new_in(
                     ast::CharacterClassRange {
                         span: from.span.merge(to.span),
                         min: **from,
                         max: **to,
                     },
-                    self.allocator,
+                    self,
                 )));
                 continue;
             }
@@ -922,7 +937,14 @@ impl<'a> PatternParser<'a> {
             }
 
             body.push(class_atom);
-            body.push(dash);
+            body.push(ast::CharacterClassContents::Character(ArenaBox::new_in(
+                ast::Character {
+                    span: dash_span,
+                    kind: ast::CharacterKind::Symbol,
+                    value: '-' as u32,
+                },
+                self,
+            )));
             body.push(class_atom_to);
         }
 
@@ -941,13 +963,13 @@ impl<'a> PatternParser<'a> {
         let span_start = self.reader.offset();
 
         if self.reader.eat('-') {
-            return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
+            return Ok(Some(ast::CharacterClassContents::Character(ArenaBox::new_in(
                 ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::Symbol,
                     value: '-' as u32,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
@@ -972,30 +994,33 @@ impl<'a> PatternParser<'a> {
             let kind = Self::escape_kind_to_character_kind(self.reader.peek_escape_kind());
             self.reader.advance();
 
-            return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
+            return Ok(Some(ast::CharacterClassContents::Character(ArenaBox::new_in(
                 ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind,
                     value: cp,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
         if self.reader.eat('\\') {
-            if self.reader.peek().as_ref().is_some_and(|&cp| cp == 'c' as u32) {
-                return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
+            if let Some(class_escape) = self.parse_class_escape(span_start)? {
+                return Ok(Some(class_escape));
+            }
+
+            // Annex B alternatives are tried in order, and do not extend Unicode patterns.
+            if !self.state.unicode_mode
+                && self.reader.peek().as_ref().is_some_and(|&cp| cp == 'c' as u32)
+            {
+                return Ok(Some(ast::CharacterClassContents::Character(ArenaBox::new_in(
                     ast::Character {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         kind: ast::CharacterKind::Symbol,
                         value: '\\' as u32,
                     },
-                    self.allocator,
+                    self,
                 ))));
-            }
-
-            if let Some(class_escape) = self.parse_class_escape(span_start)? {
-                return Ok(Some(class_escape));
             }
 
             return Err(diagnostics::invalid_class_atom(
@@ -1025,25 +1050,25 @@ impl<'a> PatternParser<'a> {
     ) -> Result<Option<ast::CharacterClassContents<'a>>> {
         // b
         if self.reader.eat('b') {
-            return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
+            return Ok(Some(ast::CharacterClassContents::Character(ArenaBox::new_in(
                 ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::SingleEscape,
                     value: 0x08,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
         // [+UnicodeMode] -
         if self.state.unicode_mode && self.reader.eat('-') {
-            return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
+            return Ok(Some(ast::CharacterClassContents::Character(ArenaBox::new_in(
                 ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::SingleEscape,
                     value: '-' as u32,
                 },
-                self.allocator,
+                self,
             ))));
         }
 
@@ -1055,17 +1080,17 @@ impl<'a> PatternParser<'a> {
                 if let Some(cp) = self
                     .reader
                     .peek()
-                    .filter(|&cp| character::is_decimal_digit(cp) || cp == '-' as u32)
+                    .filter(|&cp| character::is_decimal_digit(cp) || cp == '_' as u32)
                 {
                     self.reader.advance();
 
-                    return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
+                    return Ok(Some(ast::CharacterClassContents::Character(ArenaBox::new_in(
                         ast::Character {
                             span: self.span_factory.create(span_start, self.reader.offset()),
                             kind: ast::CharacterKind::ControlLetter,
-                            value: cp,
+                            value: cp % 0x20,
                         },
-                        self.allocator,
+                        self,
                     ))));
                 }
 
@@ -1075,25 +1100,25 @@ impl<'a> PatternParser<'a> {
 
         // CharacterClassEscape[?UnicodeMode]
         if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
-            return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(Box::new_in(
+            return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(ArenaBox::new_in(
                 character_class_escape,
-                self.allocator,
+                self,
             ))));
         }
         if let Some(unicode_property_escape) =
             self.parse_character_class_escape_unicode(span_start)?
         {
-            return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(Box::new_in(
+            return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(ArenaBox::new_in(
                 unicode_property_escape,
-                self.allocator,
+                self,
             ))));
         }
 
         // CharacterEscape[?UnicodeMode, ?NamedCaptureGroups]
         if let Some(character_escape) = self.parse_character_escape(span_start)? {
-            return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
+            return Ok(Some(ast::CharacterClassContents::Character(ArenaBox::new_in(
                 character_escape,
-                self.allocator,
+                self,
             ))));
         }
 
@@ -1108,13 +1133,13 @@ impl<'a> PatternParser<'a> {
     // ```
     fn parse_class_set_expression(
         &mut self,
-    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
-        // ClassUnion :: ClassSetRange ClassUnion[opt]
-        if let Some(class_set_range) = self.parse_class_set_range()? {
-            return self.parse_class_set_union(class_set_range);
-        }
-
-        if let Some(class_set_operand) = self.parse_class_set_operand()? {
+    ) -> Result<(ast::CharacterClassContentsKind, ArenaVec<'a, ast::CharacterClassContents<'a>>)>
+    {
+        if let Some(class_set_operand) = self.parse_class_set_range_or_operand()? {
+            // A range can only start a union, not an intersection or subtraction.
+            if matches!(class_set_operand, ast::CharacterClassContents::CharacterClassRange(_)) {
+                return self.parse_class_set_union(class_set_operand);
+            }
             // ClassIntersection
             if self.reader.peek().as_ref().is_some_and(|&cp| cp == '&' as u32)
                 && self.reader.peek2().as_ref().is_some_and(|&cp| cp == '&' as u32)
@@ -1146,16 +1171,13 @@ impl<'a> PatternParser<'a> {
     fn parse_class_set_union(
         &mut self,
         class_set_range_or_class_set_operand: ast::CharacterClassContents<'a>,
-    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
-        let mut body = Vec::new_in(self.allocator);
+    ) -> Result<(ast::CharacterClassContentsKind, ArenaVec<'a, ast::CharacterClassContents<'a>>)>
+    {
+        let mut body = ArenaVec::new_in(self);
         body.push(class_set_range_or_class_set_operand);
 
         loop {
-            if let Some(class_set_range) = self.parse_class_set_range()? {
-                body.push(class_set_range);
-                continue;
-            }
-            if let Some(class_set_operand) = self.parse_class_set_operand()? {
+            if let Some(class_set_operand) = self.parse_class_set_range_or_operand()? {
                 body.push(class_set_operand);
                 continue;
             }
@@ -1174,8 +1196,9 @@ impl<'a> PatternParser<'a> {
     fn parse_class_set_intersection(
         &mut self,
         class_set_operand: ast::CharacterClassContents<'a>,
-    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
-        let mut body = Vec::new_in(self.allocator);
+    ) -> Result<(ast::CharacterClassContentsKind, ArenaVec<'a, ast::CharacterClassContents<'a>>)>
+    {
+        let mut body = ArenaVec::new_in(self);
         body.push(class_set_operand);
 
         loop {
@@ -1215,8 +1238,9 @@ impl<'a> PatternParser<'a> {
     fn parse_class_set_subtraction(
         &mut self,
         class_set_operand: ast::CharacterClassContents<'a>,
-    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
-        let mut body = Vec::new_in(self.allocator);
+    ) -> Result<(ast::CharacterClassContentsKind, ArenaVec<'a, ast::CharacterClassContents<'a>>)>
+    {
+        let mut body = ArenaVec::new_in(self);
         body.push(class_set_operand);
 
         loop {
@@ -1245,34 +1269,45 @@ impl<'a> PatternParser<'a> {
     // ClassSetRange ::
     //   ClassSetCharacter - ClassSetCharacter
     // ```
-    fn parse_class_set_range(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+    fn parse_class_set_range_or_operand(
+        &mut self,
+    ) -> Result<Option<ast::CharacterClassContents<'a>>> {
         let checkpoint = self.reader.checkpoint();
 
-        if let Some(class_set_character) = self.parse_class_set_character()?
-            && self.reader.eat('-')
-            && let Some(class_set_character_to) = self.parse_class_set_character()?
-        {
-            // [SS:EE] ClassSetRange :: ClassSetCharacter - ClassSetCharacter
-            // It is a Syntax Error if the CharacterValue of the first ClassSetCharacter is strictly greater than the CharacterValue of the second ClassSetCharacter.
-            if class_set_character_to.value < class_set_character.value {
-                return Err(diagnostics::character_class_range_out_of_order(
-                    class_set_character.span.merge(class_set_character_to.span),
-                    "class set",
-                ));
+        if let Some(class_set_character) = self.parse_class_set_character()? {
+            if !self.reader.eat('-') {
+                return Ok(Some(ast::CharacterClassContents::Character(ArenaBox::new_in(
+                    class_set_character,
+                    self,
+                ))));
             }
 
-            return Ok(Some(ast::CharacterClassContents::CharacterClassRange(Box::new_in(
-                ast::CharacterClassRange {
-                    span: class_set_character.span.merge(class_set_character_to.span),
-                    min: class_set_character,
-                    max: class_set_character_to,
-                },
-                self.allocator,
-            ))));
+            if let Some(class_set_character_to) = self.parse_class_set_character()? {
+                // [SS:EE] ClassSetRange :: ClassSetCharacter - ClassSetCharacter
+                // It is a Syntax Error if the CharacterValue of the first ClassSetCharacter is strictly greater than the CharacterValue of the second ClassSetCharacter.
+                if class_set_character_to.value < class_set_character.value {
+                    return Err(diagnostics::character_class_range_out_of_order(
+                        class_set_character.span.merge(class_set_character_to.span),
+                        "class set",
+                    ));
+                }
+
+                return Ok(Some(ast::CharacterClassContents::CharacterClassRange(
+                    ArenaBox::new_in(
+                        ast::CharacterClassRange {
+                            span: class_set_character.span.merge(class_set_character_to.span),
+                            min: class_set_character,
+                            max: class_set_character_to,
+                        },
+                        self,
+                    ),
+                )));
+            }
         }
+        // Failed ranges retain the original operand parse and diagnostic order.
         self.reader.rewind(checkpoint);
 
-        Ok(None)
+        self.parse_class_set_operand()
     }
 
     // ```
@@ -1295,14 +1330,16 @@ impl<'a> PatternParser<'a> {
                 self.parse_class_string_disjunction_contents()?;
 
             if self.reader.eat('}') {
-                return Ok(Some(ast::CharacterClassContents::ClassStringDisjunction(Box::new_in(
-                    ast::ClassStringDisjunction {
-                        span: self.span_factory.create(span_start, self.reader.offset()),
-                        strings,
-                        body: class_string_disjunction_contents,
-                    },
-                    self.allocator,
-                ))));
+                return Ok(Some(ast::CharacterClassContents::ClassStringDisjunction(
+                    ArenaBox::new_in(
+                        ast::ClassStringDisjunction {
+                            span: self.span_factory.create(span_start, self.reader.offset()),
+                            strings,
+                            body: class_string_disjunction_contents,
+                        },
+                        self,
+                    ),
+                )));
             }
 
             return Err(diagnostics::unterminated_pattern(
@@ -1312,9 +1349,9 @@ impl<'a> PatternParser<'a> {
         }
 
         if let Some(class_set_character) = self.parse_class_set_character()? {
-            return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
+            return Ok(Some(ast::CharacterClassContents::Character(ArenaBox::new_in(
                 class_set_character,
-                self.allocator,
+                self,
             ))));
         }
 
@@ -1347,16 +1384,18 @@ impl<'a> PatternParser<'a> {
                     ));
                 }
 
-                return Ok(Some(ast::CharacterClassContents::NestedCharacterClass(Box::new_in(
-                    ast::CharacterClass {
-                        span: self.span_factory.create(span_start, self.reader.offset()),
-                        negative,
-                        kind,
-                        strings,
-                        body,
-                    },
-                    self.allocator,
-                ))));
+                return Ok(Some(ast::CharacterClassContents::NestedCharacterClass(
+                    ArenaBox::new_in(
+                        ast::CharacterClass {
+                            span: self.span_factory.create(span_start, self.reader.offset()),
+                            negative,
+                            kind,
+                            strings,
+                            body,
+                        },
+                        self,
+                    ),
+                )));
             }
 
             return Err(diagnostics::unterminated_pattern(
@@ -1370,18 +1409,16 @@ impl<'a> PatternParser<'a> {
         let checkpoint = self.reader.checkpoint();
         if self.reader.eat('\\') {
             if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
-                return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(Box::new_in(
-                    character_class_escape,
-                    self.allocator,
-                ))));
+                return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(
+                    ArenaBox::new_in(character_class_escape, self),
+                )));
             }
             if let Some(unicode_property_escape) =
                 self.parse_character_class_escape_unicode(span_start)?
             {
-                return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(Box::new_in(
-                    unicode_property_escape,
-                    self.allocator,
-                ))));
+                return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(
+                    ArenaBox::new_in(unicode_property_escape, self),
+                )));
             }
 
             self.reader.rewind(checkpoint);
@@ -1398,8 +1435,8 @@ impl<'a> PatternParser<'a> {
     // Returns: (ClassStringDisjunctionContents, contain_strings)
     fn parse_class_string_disjunction_contents(
         &mut self,
-    ) -> Result<(Vec<'a, ast::ClassString<'a>>, bool)> {
-        let mut body = Vec::new_in(self.allocator);
+    ) -> Result<(ArenaVec<'a, ast::ClassString<'a>>, bool)> {
+        let mut body = ArenaVec::new_in(self);
         let mut strings = false;
 
         loop {
@@ -1414,10 +1451,6 @@ impl<'a> PatternParser<'a> {
             if !self.reader.eat('|') {
                 break;
             }
-        }
-
-        if body.is_empty() {
-            strings = true;
         }
 
         Ok((body, strings))
@@ -1435,7 +1468,7 @@ impl<'a> PatternParser<'a> {
     fn parse_class_string(&mut self) -> Result<ast::ClassString<'a>> {
         let span_start = self.reader.offset();
 
-        let mut body = Vec::new_in(self.allocator);
+        let mut body = ArenaVec::new_in(self);
         while let Some(class_set_character) = self.parse_class_set_character()? {
             body.push(class_set_character);
         }
@@ -1679,10 +1712,7 @@ impl<'a> PatternParser<'a> {
                 self.span_factory.create(span_start, self.reader.offset()),
             ));
         }
-        if [ast::Modifier::I, ast::Modifier::M, ast::Modifier::S]
-            .iter()
-            .any(|&modifier| enabling.contains(modifier) && disabling.contains(modifier))
-        {
+        if enabling.intersects(disabling) {
             return Err(diagnostics::invalid_modifiers(
                 self.span_factory.create(span_start, self.reader.offset()),
             ));
@@ -1729,7 +1759,7 @@ impl<'a> PatternParser<'a> {
         let span_start = self.reader.offset();
         let checkpoint = self.reader.checkpoint();
         if self.reader.eat('{') {
-            if let Some(min) = self.consume_decimal_digits()? {
+            if let Some(min) = self.consume_decimal_digits() {
                 if self.reader.eat('}') {
                     if MAX_QUANTIFIER < min {
                         return Err(diagnostics::too_large_number_in_braced_quantifier(
@@ -1751,7 +1781,7 @@ impl<'a> PatternParser<'a> {
                         return Ok(Some(((min, None), is_greedy(&mut self.reader))));
                     }
 
-                    if let Some(max) = self.consume_decimal_digits()?
+                    if let Some(max) = self.consume_decimal_digits()
                         && self.reader.eat('}')
                     {
                         if max < min {
@@ -1761,7 +1791,7 @@ impl<'a> PatternParser<'a> {
                                 self.span_factory.create(span_start, self.reader.offset()),
                             ));
                         }
-                        if MAX_QUANTIFIER < min || MAX_QUANTIFIER < max {
+                        if MAX_QUANTIFIER < max {
                             return Err(diagnostics::too_large_number_in_braced_quantifier(
                                 self.span_factory.create(span_start, self.reader.offset()),
                             ));
@@ -1782,20 +1812,26 @@ impl<'a> PatternParser<'a> {
     // DecimalEscape ::
     //   NonZeroDigit DecimalDigits[~Sep][opt] [lookahead ∉ DecimalDigit]
     // ```
-    fn consume_decimal_escape(&mut self) -> Result<Option<u32>> {
-        let checkpoint = self.reader.checkpoint();
-
-        if let Some(index) = self.consume_decimal_digits()? {
-            // \0 is CharacterEscape, not DecimalEscape
-            if index != 0 {
-                #[expect(clippy::cast_possible_truncation)]
-                return Ok(Some(index as u32));
-            }
-
-            self.reader.rewind(checkpoint);
+    fn consume_decimal_escape(&mut self) -> Option<u64> {
+        // DecimalEscape starts with NonZeroDigit; leading zero belongs to CharacterEscape.
+        if !self.reader.peek().is_some_and(|cp| character::is_decimal_digit(cp) && cp != '0' as u32)
+        {
+            return None;
         }
 
-        Ok(None)
+        let mut index = 0_u64;
+        while let Some(cp) = self.reader.peek().filter(|&cp| character::is_decimal_digit(cp)) {
+            // `- '0' as u32`: convert code point to digit
+            #[expect(clippy::cast_lossless)]
+            let digit = (cp - '0' as u32) as u64;
+
+            // The exact value is irrelevant once it exceeds the capture count.
+            // Saturate instead of erroring so Annex B can rewind and reinterpret the entire escape.
+            index = index.saturating_mul(10).saturating_add(digit);
+            self.reader.advance();
+        }
+
+        Some(index)
     }
 
     // ```
@@ -1805,8 +1841,7 @@ impl<'a> PatternParser<'a> {
     //   [+Sep] DecimalDigits[+Sep] NumericLiteralSeparator DecimalDigit
     // ```
     // ([Sep] is disabled for `QuantifierPrefix` and `DecimalEscape`, skip it)
-    fn consume_decimal_digits(&mut self) -> Result<Option<u64>> {
-        let span_start = self.reader.offset();
+    fn consume_decimal_digits(&mut self) -> Option<u64> {
         let checkpoint = self.reader.checkpoint();
 
         let mut value: u64 = 0;
@@ -1815,23 +1850,18 @@ impl<'a> PatternParser<'a> {
             #[expect(clippy::cast_lossless)]
             let d = (cp - '0' as u32) as u64;
 
-            // To prevent panic on overflow cases like `\999999999999999999999`, `a{999999999999999999999}`
-            if let Some(v) = value.checked_mul(10).and_then(|v| v.checked_add(d)) {
-                value = v;
-                self.reader.advance();
-            } else {
-                return Err(diagnostics::too_large_number_digits(
-                    self.span_factory.create(span_start, self.reader.offset()),
-                    "decimal",
-                ));
-            }
+            // A large digit sequence may be literal text in Annex B when no complete
+            // quantifier follows. Defer the size diagnostic until its syntax is known.
+            // Saturation preserves the comparison against MAX_QUANTIFIER.
+            value = value.saturating_mul(10).saturating_add(d);
+            self.reader.advance();
         }
 
         if self.reader.checkpoint() != checkpoint {
-            return Ok(Some(value));
+            return Some(value);
         }
 
-        Ok(None)
+        None
     }
 
     // ```
@@ -1845,13 +1875,26 @@ impl<'a> PatternParser<'a> {
     ) -> Result<Option<(Str<'a>, Option<Str<'a>>, bool)>> {
         let checkpoint = self.reader.checkpoint();
 
+        // Both alternatives share this prefix. Delay materializing it until
+        // `=` selects a property name, or the whole lone value is consumed.
+        while let Some(cp) = self.reader.peek() {
+            if !character::is_unicode_property_name_character(cp) {
+                break;
+            }
+            self.reader.advance();
+        }
+        // Preserve the property scanners' EOF behavior, including partial names.
+        if self.reader.peek().is_none() {
+            return Ok(None);
+        }
+
         // UnicodePropertyName=UnicodePropertyValue
-        if let Some(name) = self.consume_unicode_property_name()
-            && self.reader.eat('=')
-        {
+        if self.reader.checkpoint() != checkpoint && self.reader.peek() == Some('=' as u32) {
+            let name = self.unicode_property_text(checkpoint);
+            self.reader.advance();
             let span_start = self.reader.offset();
 
-            if let Some(value) = self.consume_unicode_property_value() {
+            if let Some(value) = self.consume_unicode_property_value(self.reader.checkpoint()) {
                 // [SS:EE] UnicodePropertyValueExpression :: UnicodePropertyName = UnicodePropertyValue
                 // It is a Syntax Error if the source text matched by UnicodePropertyName is not a Unicode property name or property alias listed in the “Property name and aliases” column of Table 65.
                 // [SS:EE] UnicodePropertyValueExpression :: UnicodePropertyName = UnicodePropertyValue
@@ -1865,12 +1908,13 @@ impl<'a> PatternParser<'a> {
 
                 return Ok(Some((name, Some(value), false)));
             }
+            // Keep malformed name=value inputs on the original lone-value fallback.
+            self.reader.rewind(checkpoint);
         }
-        self.reader.rewind(checkpoint);
 
-        let span_start = self.reader.offset();
+        let span_start = checkpoint.1;
         // LoneUnicodePropertyNameOrValue
-        if let Some(name_or_value) = self.consume_unicode_property_value() {
+        if let Some(name_or_value) = self.consume_unicode_property_value(checkpoint) {
             // [SS:EE] UnicodePropertyValueExpression :: LoneUnicodePropertyNameOrValue
             // It is a Syntax Error if the source text matched by LoneUnicodePropertyNameOrValue is not a Unicode property value or property value alias for the General_Category (gc) property listed in PropertyValueAliases.txt, nor a binary property or binary property alias listed in the “Property name and aliases” column of Table 66, nor a binary property of strings listed in the “Property name” column of Table 67.
             if unicode_property::is_valid_unicode_property("General_Category", &name_or_value) {
@@ -1901,25 +1945,7 @@ impl<'a> PatternParser<'a> {
         Ok(None)
     }
 
-    fn consume_unicode_property_name(&mut self) -> Option<Str<'a>> {
-        let span_start = self.reader.offset();
-
-        let checkpoint = self.reader.checkpoint();
-        while character::is_unicode_property_name_character(self.reader.peek()?) {
-            self.reader.advance();
-        }
-
-        if checkpoint == self.reader.checkpoint() {
-            return None;
-        }
-
-        Some(self.reader.str(span_start, self.reader.offset()))
-    }
-
-    fn consume_unicode_property_value(&mut self) -> Option<Str<'a>> {
-        let span_start = self.reader.offset();
-
-        let checkpoint = self.reader.checkpoint();
+    fn consume_unicode_property_value(&mut self, checkpoint: (usize, u32)) -> Option<Str<'a>> {
         while character::is_unicode_property_value_character(self.reader.peek()?) {
             self.reader.advance();
         }
@@ -1928,7 +1954,23 @@ impl<'a> PatternParser<'a> {
             return None;
         }
 
-        Some(self.reader.str(span_start, self.reader.offset()))
+        Some(self.unicode_property_text(checkpoint))
+    }
+
+    fn unicode_property_text(&self, checkpoint: (usize, u32)) -> Str<'a> {
+        let raw = self.reader.str(checkpoint.1, self.reader.offset());
+        let units = self.reader.code_points_since(checkpoint);
+        // Property names and values are ASCII. Equal lengths mean no string-source
+        // escapes or line continuations need decoding, so keep borrowing the source.
+        if raw.as_str().len() == units.len() {
+            return raw;
+        }
+
+        let mut decoded = ArenaStringBuilder::with_capacity_in(units.len(), self.allocator);
+        for unit in units {
+            decoded.push(char::from_u32(unit.value).expect("validated Unicode property character"));
+        }
+        Str::from(decoded.into_str())
     }
 
     // ```
@@ -1962,12 +2004,36 @@ impl<'a> PatternParser<'a> {
     fn consume_reg_exp_idenfigier_name(&mut self) -> Result<Option<Str<'a>>> {
         let span_start = self.reader.offset();
 
-        if self.consume_reg_exp_idenfigier_start()?.is_some() {
-            while self.consume_reg_exp_idenfigier_part()?.is_some() {}
-            return Ok(Some(self.reader.str(span_start, self.reader.offset())));
+        let Some(mut cp) = self.consume_reg_exp_idenfigier_start()? else {
+            return Ok(None);
+        };
+
+        let mut decoded = None;
+        let mut copied_until = span_start;
+        let mut part_start = span_start;
+        loop {
+            let part_end = self.reader.offset();
+            if self.reader.str(part_start, part_end).as_str().starts_with('\\') {
+                let name =
+                    decoded.get_or_insert_with(|| ArenaStringBuilder::new_in(self.allocator));
+                name.push_str(self.reader.str(copied_until, part_start).as_str());
+                name.push(char::from_u32(cp).expect("validated group-name code point"));
+                copied_until = part_end;
+            }
+
+            part_start = part_end;
+            let Some(next_cp) = self.consume_reg_exp_idenfigier_part()? else {
+                break;
+            };
+            cp = next_cp;
         }
 
-        Ok(None)
+        if let Some(mut name) = decoded {
+            name.push_str(self.reader.str(copied_until, self.reader.offset()).as_str());
+            Ok(Some(Str::from(name.into_str())))
+        } else {
+            Ok(Some(self.reader.str(span_start, self.reader.offset())))
+        }
     }
 
     // ```
@@ -2100,76 +2166,30 @@ impl<'a> PatternParser<'a> {
         unicode_mode: bool,
     ) -> Result<Option<u32>> {
         let span_start = self.reader.offset();
-        let checkpoint = self.reader.checkpoint();
-
-        if self.reader.eat('u') {
-            if unicode_mode {
-                let checkpoint = self.reader.checkpoint();
-
-                // HexLeadSurrogate + HexTrailSurrogate
-                if let Some(lead_surrogate) = self
-                    .consume_fixed_hex_digits(4)
-                    .filter(|&cp| surrogate_pair::is_lead_surrogate(cp))
-                    && self.reader.eat2('\\', 'u')
-                    && let Some(trail_surrogate) = self
-                        .consume_fixed_hex_digits(4)
-                        .filter(|&cp| surrogate_pair::is_trail_surrogate(cp))
-                {
-                    return Ok(Some(surrogate_pair::combine_surrogate_pair(
-                        lead_surrogate,
-                        trail_surrogate,
-                    )));
-                }
-                self.reader.rewind(checkpoint);
-
-                // HexLeadSurrogate
-                if let Some(lead_surrogate) = self
-                    .consume_fixed_hex_digits(4)
-                    .filter(|&cp| surrogate_pair::is_lead_surrogate(cp))
-                {
-                    return Ok(Some(lead_surrogate));
-                }
-                self.reader.rewind(checkpoint);
-
-                // HexTrailSurrogate
-                if let Some(trail_surrogate) = self
-                    .consume_fixed_hex_digits(4)
-                    .filter(|&cp| surrogate_pair::is_trail_surrogate(cp))
-                {
-                    return Ok(Some(trail_surrogate));
-                }
-                self.reader.rewind(checkpoint);
+        match decode(self.reader.remaining_code_points(), unicode_mode) {
+            UnicodeEscape::Value { code_point, length } => {
+                self.reader.advance_by(length);
+                Ok(Some(code_point))
             }
-
-            // HexNonSurrogate and Hex4Digits are the same
-            if let Some(hex_digits) = self.consume_fixed_hex_digits(4) {
-                return Ok(Some(hex_digits));
+            UnicodeEscape::Overflow { digits } => {
+                self.reader.advance_by(2); // u{
+                let digits_start = self.reader.offset();
+                self.reader.advance_by(digits);
+                Err(diagnostics::too_large_number_digits(
+                    self.span_factory.create(digits_start, self.reader.offset()),
+                    "hex",
+                ))
             }
-
-            // {CodePoint}
-            if unicode_mode {
-                let checkpoint = self.reader.checkpoint();
-
-                if self.reader.eat('{')
-                    && let Some(hex_digits) =
-                        self.consume_hex_digits()?.filter(|&cp| character::is_valid_unicode(cp))
-                    && self.reader.eat('}')
-                {
-                    return Ok(Some(hex_digits));
+            UnicodeEscape::Invalid => {
+                if self.state.unicode_mode && self.reader.eat('u') {
+                    Err(diagnostics::invalid_unicode_escape_sequence(
+                        self.span_factory.create(span_start, self.reader.offset()),
+                    ))
+                } else {
+                    Ok(None)
                 }
-                self.reader.rewind(checkpoint);
             }
-
-            if self.state.unicode_mode {
-                return Err(diagnostics::invalid_unicode_escape_sequence(
-                    self.span_factory.create(span_start, self.reader.offset()),
-                ));
-            }
-
-            self.reader.rewind(checkpoint);
         }
-
-        Ok(None)
     }
 
     // ```
@@ -2194,11 +2214,11 @@ impl<'a> PatternParser<'a> {
             }
 
             if let Some(second) = self.consume_octal_digit() {
-                if let Some(third) = self.consume_octal_digit() {
-                    // ZeroToThree OctalDigit OctalDigit
-                    if first <= 3 {
-                        return Some(first * 64 + second * 8 + third);
-                    }
+                // Only ZeroToThree permits a third digit; FourToSeven consumes two.
+                if first <= 3
+                    && let Some(third) = self.consume_octal_digit()
+                {
+                    return Some(first * 64 + second * 8 + third);
                 }
 
                 // ZeroToThree OctalDigit [lookahead ∉ OctalDigit]
@@ -2289,31 +2309,6 @@ impl<'a> PatternParser<'a> {
         Some(cp)
     }
 
-    fn consume_hex_digits(&mut self) -> Result<Option<u32>> {
-        let span_start = self.reader.offset();
-        let checkpoint = self.reader.checkpoint();
-
-        let mut value: u32 = 0;
-        while let Some(hex) = self.reader.peek().and_then(character::map_hex_digit) {
-            // To prevent panic on overflow cases like `\u{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}`
-            if let Some(v) = value.checked_mul(16).and_then(|v| v.checked_add(hex)) {
-                value = v;
-                self.reader.advance();
-            } else {
-                return Err(diagnostics::too_large_number_digits(
-                    self.span_factory.create(span_start, self.reader.offset()),
-                    "hex",
-                ));
-            }
-        }
-
-        if self.reader.checkpoint() != checkpoint {
-            return Ok(Some(value));
-        }
-
-        Ok(None)
-    }
-
     fn consume_fixed_hex_digits(&mut self, len: usize) -> Option<u32> {
         let checkpoint = self.reader.checkpoint();
 
@@ -2335,7 +2330,7 @@ impl<'a> PatternParser<'a> {
 
     fn may_contain_strings_in_class_contents(
         kind: ast::CharacterClassContentsKind,
-        body: &Vec<'a, ast::CharacterClassContents<'a>>,
+        body: &ArenaVec<'a, ast::CharacterClassContents<'a>>,
     ) -> bool {
         let may_contain_strings = |item: &ast::CharacterClassContents<'a>| match item {
             // MayContainStrings is true
@@ -2374,5 +2369,12 @@ impl<'a> PatternParser<'a> {
                 body.iter().next().is_some_and(may_contain_strings)
             }
         }
+    }
+}
+
+impl<'a> GetAllocator<'a> for PatternParser<'a> {
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.allocator
     }
 }

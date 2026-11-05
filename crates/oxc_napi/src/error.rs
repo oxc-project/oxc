@@ -42,8 +42,7 @@ impl OxcError {
         diagnostic: OxcDiagnostic,
     ) -> Self {
         let mut error = Self::from(&diagnostic);
-        let codeframe = diagnostic.with_source_code(Arc::clone(named_source));
-        error.codeframe = Some(format!("{codeframe:?}"));
+        error.codeframe = Some(diagnostic.render_with_source_code(Arc::clone(named_source)));
         error
     }
 }

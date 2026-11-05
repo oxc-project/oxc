@@ -2,7 +2,11 @@
 use std::borrow::Cow;
 use std::{fmt, hash::Hash};
 
-use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
+use bitflags::bitflags;
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{InstanceType, Schema, SchemaObject},
+};
 use serde::{Deserialize, Serialize};
 
 use oxc_semantic::AstTypesBitset;
@@ -10,7 +14,6 @@ use oxc_semantic::AstTypesBitset;
 use crate::{
     AstNode, FixKind,
     context::{ContextHost, LintContext},
-    utils::PossibleJestNode,
 };
 
 pub trait Rule: Sized + Default + fmt::Debug {
@@ -46,18 +49,6 @@ pub trait Rule: Sized + Default + fmt::Debug {
     #[inline]
     fn run_once(&self, ctx: &LintContext) {}
 
-    /// Run on each Jest node (e.g. `it`, `describe`, `test`, `expect`, etc.).
-    /// This is only called if the Jest plugin is enabled and the file is a test file.
-    /// It should be used to run rules that are specific to Jest or Vitest.
-    #[expect(unused_variables)]
-    #[inline]
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-    }
-
     /// Check if a rule should be run at all.
     ///
     /// You usually do not need to implement this function. If you do, use it to
@@ -69,6 +60,51 @@ pub trait Rule: Sized + Default + fmt::Debug {
     #[inline]
     fn should_run(&self, ctx: &ContextHost) -> bool {
         true
+    }
+}
+
+/// Pretty-print a JSON value and collapse all whitespace runs to single spaces,
+/// for embedding a "received config" snippet in a rule-config deserialization error.
+///
+/// Kept non-generic (and out of the generic `Deserialize` impls below) so the heavy
+/// `serde_json::to_string_pretty` machinery is compiled once instead of being
+/// monomorphized into every rule-config `deserialize` instantiation. Returns `None`
+/// when serialization fails, so callers fall back to the bare error.
+fn compact_json_for_error(value: &serde_json::Value) -> Option<String> {
+    serde_json::to_string_pretty(value)
+        .ok()
+        .map(|value_str| value_str.split_whitespace().collect::<Vec<_>>().join(" "))
+}
+
+/// Extract the first item from an ESLint-style rule configuration.
+///
+/// `None` represents a missing configuration (`null` or an empty array). Keeping this helper
+/// non-generic avoids duplicating the array and error handling for every rule configuration type.
+#[inline(never)]
+fn normalize_default_rule_config(
+    value: serde_json::Value,
+) -> Result<Option<serde_json::Value>, serde_json::Error> {
+    match value {
+        serde_json::Value::Array(arr) => Ok(arr.into_iter().next()),
+        serde_json::Value::Null => Ok(None),
+        _ => Err(<serde_json::Error as serde::de::Error>::custom(
+            "Expected array for rule configuration",
+        )),
+    }
+}
+
+/// Add the received configuration to a deserialization error.
+#[cold]
+#[inline(never)]
+fn default_rule_config_error(
+    error: serde_json::Error,
+    value: &serde_json::Value,
+) -> serde_json::Error {
+    match compact_json_for_error(value) {
+        Some(compact) => <serde_json::Error as serde::de::Error>::custom(format!(
+            "{error}\n  received config: `{compact}`"
+        )),
+        None => error,
     }
 }
 
@@ -87,7 +123,7 @@ pub trait Rule: Sized + Default + fmt::Debug {
 /// ```ignore
 /// impl Rule for MyRule {
 ///     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-///         serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+///         DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
 ///     }
 /// }
 /// ```
@@ -101,6 +137,21 @@ impl<T> DefaultRuleConfig<T> {
     /// Unwraps the inner configuration value.
     pub fn into_inner(self) -> T {
         self.0
+    }
+
+    /// Deserialize an ESLint-style rule configuration from a JSON value.
+    pub(crate) fn from_value(value: serde_json::Value) -> Result<Self, serde_json::Error>
+    where
+        T: serde::de::DeserializeOwned + Default,
+    {
+        let config = match normalize_default_rule_config(value)? {
+            Some(value) => {
+                T::deserialize(&value).map_err(|error| default_rule_config_error(error, &value))?
+            }
+            None => T::default(),
+        };
+
+        Ok(Self(config))
     }
 }
 
@@ -118,32 +169,8 @@ where
     where
         D: serde::Deserializer<'de>,
     {
-        use serde::de::Error;
-
         let value = serde_json::Value::deserialize(deserializer)?;
-
-        if let serde_json::Value::Array(arr) = value {
-            let config = match arr.into_iter().next() {
-                Some(v) => T::deserialize(&v).map_err(|e| {
-                    // Try to include the config object in the error message if we can.
-                    // Collapse any whitespace so we emit a single-line message.
-                    if let Ok(value_str) = serde_json::to_string_pretty(&v) {
-                        let compact = value_str.split_whitespace().collect::<Vec<_>>().join(" ");
-                        D::Error::custom(format!("{e}\n  received config: `{compact}`"))
-                    } else {
-                        D::Error::custom(e)
-                    }
-                })?,
-                None => T::default(),
-            };
-
-            Ok(DefaultRuleConfig(config))
-        } else if value == serde_json::Value::Null {
-            // Missing configuration (null) is treated as default (no rule options provided)
-            Ok(DefaultRuleConfig(T::default()))
-        } else {
-            Err(D::Error::custom("Expected array for rule configuration"))
-        }
+        Self::from_value(value).map_err(serde::de::Error::custom)
     }
 }
 
@@ -205,13 +232,9 @@ where
                 // Parse the entire array as the tuple configuration.
                 let arr_value = serde_json::Value::Array(arr);
                 T::deserialize(&arr_value).map_err(|e| {
-                    // Try to include the config array in the error message if we can.
-                    // Collapse any whitespace so we emit a single-line message.
-                    if let Ok(value_str) = serde_json::to_string_pretty(&arr_value) {
-                        let compact = value_str.split_whitespace().collect::<Vec<_>>().join(" ");
-                        D::Error::custom(format!("{e}, received `{compact}`"))
-                    } else {
-                        D::Error::custom(e)
+                    match compact_json_for_error(&arr_value) {
+                        Some(compact) => D::Error::custom(format!("{e}, received `{compact}`")),
+                        None => D::Error::custom(e),
                     }
                 })?
             };
@@ -223,6 +246,116 @@ where
         } else {
             Err(D::Error::custom("Expected array for rule configuration"))
         }
+    }
+}
+
+/// A wrapper type for deserializing ESLint-style mixed tuple rule configurations, where the first configuration object can be skipped.
+///
+/// Some ESLint rules take configurations in tuple form, e.g. `["foo", "qux", { "bar": "baz" }]`
+/// where the first argument is optional and the second argument is the actual configuration object.
+/// This type deserializes the array as a tuple `(Option<T1>, Option<T2>) | (Option<T2>)`.
+#[derive(Debug, Clone)]
+pub struct MixedTupleRuleConfig<T1, T2>(pub T1, pub T2);
+
+impl<T1: Default, T2: Default> Default for MixedTupleRuleConfig<T1, T2> {
+    fn default() -> Self {
+        Self(T1::default(), T2::default())
+    }
+}
+
+impl<'de, T1, T2> serde::Deserialize<'de> for MixedTupleRuleConfig<T1, T2>
+where
+    T1: serde::de::DeserializeOwned + Default,
+    T2: serde::de::DeserializeOwned + Default,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+        let value = serde_json::Value::deserialize(deserializer)?;
+
+        if let serde_json::Value::Array(arr) = value {
+            let config = match arr.len() {
+                0 => Self(T1::default(), T2::default()),
+                1 => {
+                    // If there's only one element, we need to determine whether it's T1 or T2.
+                    // We can try deserializing it as T2 first, and if that fails, try T1.
+                    let first_value = &arr[0];
+                    if let Ok(t2) = T2::deserialize(first_value) {
+                        Self(T1::default(), t2)
+                    } else if let Ok(t1) = T1::deserialize(first_value) {
+                        Self(t1, T2::default())
+                    } else {
+                        return Err(D::Error::custom(
+                            "Expected configuration to match either the first or second tuple type",
+                        ));
+                    }
+                }
+                2 => {
+                    let t1 = T1::deserialize(&arr[0]).map_err(|e| {
+                        D::Error::custom(format!("Error deserializing first tuple element: {e}"))
+                    })?;
+                    let t2 = T2::deserialize(&arr[1]).map_err(|e| {
+                        D::Error::custom(format!("Error deserializing second tuple element: {e}"))
+                    })?;
+                    Self(t1, t2)
+                }
+                _ => {
+                    return Err(D::Error::custom(
+                        "Expected at most 2 elements in the configuration array",
+                    ));
+                }
+            };
+
+            Ok(config)
+        } else if value == serde_json::Value::Null {
+            // Missing configuration (null) is treated as default (no rule options provided)
+            Ok(Self(T1::default(), T2::default()))
+        } else {
+            Err(D::Error::custom("Expected array for rule configuration"))
+        }
+    }
+}
+
+impl<T1, T2> JsonSchema for MixedTupleRuleConfig<T1, T2>
+where
+    T1: JsonSchema,
+    T2: JsonSchema,
+{
+    fn schema_name() -> String {
+        "MixedTupleRuleConfig".to_string()
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        Schema::Object(SchemaObject {
+            subschemas: Some(Box::new(schemars::schema::SubschemaValidation {
+                any_of: Some(vec![
+                    SchemaObject {
+                        instance_type: Some(InstanceType::Array.into()),
+                        array: Some(Box::new(schemars::schema::ArrayValidation {
+                            items: Some(schemars::schema::SingleOrVec::Vec(vec![
+                                r#gen.subschema_for::<T1>(),
+                                r#gen.subschema_for::<T2>(),
+                            ])),
+                            min_items: Some(2),
+                            max_items: Some(2),
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    }
+                    .into(),
+                    r#gen.subschema_for::<T1>(),
+                    r#gen.subschema_for::<T2>(),
+                ]),
+                ..Default::default()
+            })),
+            ..Default::default()
+        })
     }
 }
 
@@ -254,8 +387,6 @@ pub enum RuleRunFunctionsImplemented {
     Run,
     /// Only `run_once` is implemented
     RunOnce,
-    /// Only `run_on_jest_node` is implemented
-    RunOnJestNode,
 }
 
 impl RuleRunFunctionsImplemented {
@@ -266,10 +397,6 @@ impl RuleRunFunctionsImplemented {
     pub fn is_run_once_implemented(self) -> bool {
         matches!(self, Self::RunOnce | Self::Unknown)
     }
-
-    pub fn is_run_on_jest_node_implemented(self) -> bool {
-        matches!(self, Self::RunOnJestNode | Self::Unknown)
-    }
 }
 
 pub trait RuleMeta {
@@ -279,7 +406,10 @@ pub trait RuleMeta {
 
     const CATEGORY: RuleCategory;
 
-    const IS_TSGOLINT_RULE: bool = false;
+    /// Flags describing this rule's capabilities.
+    ///
+    /// Set by `declare_oxc_lint!` based on the rule's declaration.
+    const FLAGS: RuleFlags = RuleFlags::empty();
 
     /// What kind of auto-fixing can this rule do?
     const FIX: RuleFixMeta = RuleFixMeta::None;
@@ -293,12 +423,6 @@ pub trait RuleMeta {
         None
     }
 
-    /// Whether this rule declares a configuration struct in `declare_oxc_lint!`.
-    ///
-    /// Defaults to `false`. Rules that accept configuration options will have
-    /// this set to `true` by the macro-generated impl.
-    const HAS_CONFIG: bool = false;
-
     /// The version of oxlint in which this rule was first available.
     ///
     /// Set via `version = "x.y.z"` or `version = "next"` in `declare_oxc_lint!`.
@@ -308,6 +432,19 @@ pub trait RuleMeta {
     ///
     /// Set via `short_description = "..."` in `declare_oxc_lint!`.
     const INFO: RuleInfo = RuleInfo { short_description: "" };
+}
+
+bitflags! {
+    /// Flags describing a lint rule's capabilities.
+    #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct RuleFlags: u8 {
+        /// Whether this rule is exposed to the tsgolint integration.
+        const IS_TSGOLINT_RULE = 1 << 0;
+        /// Whether this rule declares a configuration type in `declare_oxc_lint!`.
+        const HAS_CONFIG = 1 << 1;
+        /// Whether this rule is recommended.
+        const IS_RECOMMENDED = 1 << 2;
+    }
 }
 
 /// Additional information describing a lint rule.
@@ -445,11 +582,6 @@ impl RuleFixMeta {
         matches!(self, Self::Fixable(_) | Self::Conditional(_))
     }
 
-    #[inline]
-    pub fn is_pending(self) -> bool {
-        matches!(self, Self::FixPending)
-    }
-
     pub fn supports_fix(self, kind: FixKind) -> bool {
         matches!(self, Self::Fixable(fix_kind) | Self::Conditional(fix_kind) if fix_kind.can_apply(kind))
     }
@@ -521,10 +653,12 @@ impl From<RuleFixMeta> for FixKind {
 
 #[cfg(test)]
 mod test {
+
     use crate::{
         RuleMeta, RuleRunner,
         rule::{DefaultRuleConfig, TupleRuleConfig},
     };
+    use oxc_ast::AstType;
 
     use super::RuleCategory;
     use rustc_hash::FxHashMap;
@@ -546,7 +680,7 @@ mod test {
             );
             // will panic if provided invalid markdown
             let html = to_html_with_options(rule.documentation().unwrap(), &options).unwrap();
-            assert!(!html.is_empty());
+            assert_ne!(html, "");
         }
     }
 
@@ -621,6 +755,22 @@ mod test {
         assert_rule_runs_on_node_types(
             &unicorn::consistent_assert::ConsistentAssert,
             &[ImportDeclaration],
+        );
+        assert_rule_runs_on_node_types(
+            &unicorn::prefer_string_replace_all::PreferStringReplaceAll,
+            &[CallExpression, VariableDeclarator],
+        );
+        assert_rule_runs_on_node_types(
+            &promise::always_return::AlwaysReturn::default(),
+            &[Function, ArrowFunctionExpression],
+        );
+        assert_rule_runs_on_node_types(
+            &vue::max_props::MaxProps::default(),
+            &[CallExpression, ExportDefaultDeclaration],
+        );
+        assert_rule_runs_on_node_types(
+            &eslint::prefer_named_capture_group::PreferNamedCaptureGroup,
+            &[RegExpLiteral, CallExpression, NewExpression],
         );
     }
 
@@ -795,10 +945,7 @@ mod test {
         assert_eq!(de.into_inner(), *expected);
     }
 
-    fn assert_rule_runs_on_node_types<R: RuleMeta + RuleRunner>(
-        rule: &R,
-        node_types: &[oxc_ast::AstType],
-    ) {
+    fn assert_rule_runs_on_node_types<R: RuleMeta + RuleRunner>(rule: &R, node_types: &[AstType]) {
         let types = rule.types_info();
         assert!(types.is_some(), "{}: NODE_TYPES is None", R::NAME);
         let types = types.unwrap();

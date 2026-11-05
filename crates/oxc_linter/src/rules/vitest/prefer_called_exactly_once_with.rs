@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use oxc_allocator::Vec as OxcVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression, FunctionBody, MemberExpression, Statement},
@@ -16,7 +16,7 @@ use crate::{
     rule::Rule,
     utils::{
         KnownMemberExpressionProperty, ParsedExpectFnCall, ParsedJestFnCallNew, PossibleJestNode,
-        parse_jest_fn_call,
+        find_test_callback, parse_jest_fn_call,
     },
 };
 
@@ -187,6 +187,7 @@ declare_oxc_lint!(
     PreferCalledExactlyOnceWith,
     vitest,
     style,
+    recommended,
     dangerous_fix,
     version = "1.58.0",
     short_description = "It checks when a target is asserted with both `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` instead of `toHaveBeenCalledExactlyOnceWith`.",
@@ -211,7 +212,7 @@ const MOCK_RESET_METHODS: [&str; 3] = ["mockClear", "mockReset", "mockRestore"];
 
 impl PreferCalledExactlyOnceWith {
     fn check_block_body<'a>(
-        statements: &'a OxcVec<'a, Statement<'_>>,
+        statements: &'a ArenaVec<'a, Statement<'_>>,
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
@@ -353,7 +354,7 @@ impl PreferCalledExactlyOnceWith {
 }
 
 enum TestCallExpression<'a> {
-    TestBlock(&'a oxc_allocator::Vec<'a, Statement<'a>>),
+    TestBlock(&'a ArenaVec<'a, Statement<'a>>),
     MockReset,
     ExpectFnCall(ParsedExpectFnCall<'a>),
 }
@@ -369,7 +370,7 @@ fn parse_call_expression_statement<'a>(
 
     match parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx) {
         Some(ParsedJestFnCallNew::GeneralJest(_)) => {
-            let callback = get_test_callback(call_expr)?;
+            let callback = find_test_callback(call_expr)?;
 
             let body = get_callback_body(callback)?;
 
@@ -424,31 +425,23 @@ fn is_mock_reset_call_expression(call_expr: &CallExpression<'_>) -> bool {
  * Currently the method is asumming after the end of the statement, the next span position is the following line.
  * Even doing it safely the end check, this fix will remain dangerous as it removes code.
  */
+#[expect(clippy::cast_possible_truncation)]
 fn get_source_code_line_span(statement_span: Span, ctx: &LintContext<'_>) -> Span {
-    let mut column_0_span_index = statement_span.start;
+    let source_text = ctx.source_text();
+    let start = statement_span.start as usize;
+    let end = statement_span.end as usize;
 
-    // Guard against underflow when statement is at the beginning of the file
-    while column_0_span_index > 0
-        && !ctx
-            .source_range(Span::new(column_0_span_index - 1, statement_span.end + 1))
-            .starts_with('\n')
-    {
-        column_0_span_index -= 1;
-    }
+    let line_end = source_text[end..].chars().next().map_or(end, |c| end + c.len_utf8());
 
-    Span::new(column_0_span_index, statement_span.end + 1)
-}
+    let column_0_span_index = source_text[..start].rfind('\n').map_or(start, |index| index + 1);
 
-fn get_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
-    call_expr.arguments.iter().rev().filter_map(|arg| arg.as_expression()).find(|expr| {
-        matches!(expr, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
-    })
+    Span::new(column_0_span_index as u32, line_end as u32)
 }
 
 fn get_callback_body<'a>(callback: &'a Expression<'a>) -> Option<&'a FunctionBody<'a>> {
     match callback {
         Expression::FunctionExpression(func) => func.body.as_ref().map(AsRef::as_ref),
-        Expression::ArrowFunctionExpression(func) => Some(&func.body),
+        Expression::ArrowFunctionExpression(func) => func.get_function_body(),
         _ => None,
     }
 }
@@ -578,6 +571,9 @@ fn test() {
 			      y.mockClear();
 			      expect(x).toHaveBeenCalledWith<[string]>('hoge');
 			      ",
+        "expect(x).toHaveBeenCalledOnce();\nexpect(x).toHaveBeenCalledWith('hoge');",
+        r#"expect(x).toHaveBeenCalledWith("🍣"); expect(x).toHaveBeenCalledOnce();"#,
+        "expect(x).toHaveBeenCalledWith(1);\nexpect(x).toHaveBeenCalledOnce();\u{a0}",
     ];
 
     let fix = vec![
@@ -747,6 +743,16 @@ fn test() {
 			      expect(x).toHaveBeenCalledExactlyOnceWith<[string]>('hoge');
 			      y.mockClear();
 			      ",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\n\u{a0}expect(x).toHaveBeenCalledOnce();",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\n",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\nexpect(x).toHaveBeenCalledOnce();\u{a0}",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\n",
             None,
         ),
     ];

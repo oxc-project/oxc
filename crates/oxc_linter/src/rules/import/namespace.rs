@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{fmt::Debug, sync::Arc};
 
 use oxc_ast::{
     AstKind,
@@ -17,7 +17,7 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_export(span: Span, specifier_name: &str, namespace_name: &str) -> OxcDiagnostic {
+fn no_export(span: Span, specifier_name: impl Debug, namespace_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "{specifier_name:?} not found in imported namespace {namespace_name:?}."
     ))
@@ -26,7 +26,7 @@ fn no_export(span: Span, specifier_name: &str, namespace_name: &str) -> OxcDiagn
 
 fn no_export_in_deeply_imported_namespace(
     span: Span,
-    specifier_name: &str,
+    specifier_name: impl Debug,
     namespace_name: &str,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -110,13 +110,15 @@ declare_oxc_lint!(
     Namespace,
     import,
     correctness,
+    recommended,
     config = Namespace,
     version = "0.2.11",
+    short_description = "Ensure imported namespaces contain dereferenced properties as they are dereferenced.",
 );
 
 impl Rule for Namespace {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -131,7 +133,7 @@ impl Rule for Namespace {
                 ImportImportName::NamespaceObject => {
                     let source = entry.module_request.name();
                     let Some(module) = module_record.get_loaded_module(source) else {
-                        return;
+                        continue;
                     };
                     (source.to_string(), module)
                 }
@@ -139,31 +141,31 @@ impl Rule for Namespace {
                     let Some(loaded_module) =
                         module_record.get_loaded_module(entry.module_request.name())
                     else {
-                        return;
+                        continue;
                     };
                     let Some(source) = get_module_request_name(name.name(), &loaded_module) else {
-                        return;
+                        continue;
                     };
                     let Some(loaded_module_for_source) =
                         loaded_module.get_loaded_module(source.as_str())
                     else {
-                        return;
+                        continue;
                     };
                     (source, loaded_module_for_source)
                 }
                 ImportImportName::Default(_) => {
                     // TODO: Hard to confirm if it's a namespace object
-                    return;
+                    continue;
                 }
             };
 
             if !module.has_module_syntax {
-                return;
+                continue;
             }
 
             let Some(symbol_id) = ctx.scoping().get_root_binding(entry.local_name.name().into())
             else {
-                return;
+                continue;
             };
 
             ctx.scoping().get_resolved_references(symbol_id).for_each(|reference| {
@@ -200,7 +202,7 @@ impl Rule for Namespace {
                     AstKind::JSXMemberExpression(expr) => {
                         check_binding_exported(
                             &expr.property.name,
-                            || no_export(expr.property.span, &expr.property.name, &source),
+                            || no_export(expr.property.span, expr.property.name.as_str(), &source),
                             &module,
                             ctx,
                         );
@@ -279,6 +281,15 @@ fn check_deep_namespace_for_node(
         _ => return None,
     };
 
+    let Some(name) = name.as_str() else {
+        // A module export name cannot contain a lone surrogate, so this key is never exported.
+        ctx.diagnostic(if namespaces.len() > 1 {
+            no_export_in_deeply_imported_namespace(span, name, &namespaces.join("."))
+        } else {
+            no_export(span, name, source)
+        });
+        return None;
+    };
     if let Some(module_source) = get_module_request_name(name, module) {
         let parent_node = ctx.nodes().parent_node(node.id());
         let module_record = module.get_loaded_module(module_source.as_str())?;
@@ -311,13 +322,33 @@ fn check_deep_namespace_for_object_pattern(
     ctx: &LintContext<'_>,
 ) {
     for property in &pattern.properties {
-        let Some(name) = property.key.name() else {
+        let Some(key_name) = property.key.name() else {
+            continue;
+        };
+        let missing_export = |name: &dyn Debug| {
+            if namespaces.len() > 1 {
+                no_export_in_deeply_imported_namespace(
+                    property.key.span(),
+                    name,
+                    &namespaces.join("."),
+                )
+            } else {
+                no_export(property.key.span(), name, source)
+            }
+        };
+        let Some(name) = key_name.as_str() else {
+            // An export name can't contain a lone surrogate, so the namespace has no such member.
+            ctx.diagnostic(missing_export(&key_name));
             continue;
         };
 
         if let BindingPattern::ObjectPattern(pattern) = &property.value
-            && let Some(module_source) = get_module_request_name(&name, module)
+            && let Some(module_source) = get_module_request_name(name, module)
         {
+            let Some(next_module) = module.get_loaded_module(module_source.as_str()) else {
+                continue;
+            };
+
             let mut next_namespaces = namespaces.to_owned();
             next_namespaces.push(name.to_string());
 
@@ -325,28 +356,13 @@ fn check_deep_namespace_for_object_pattern(
                 pattern,
                 source,
                 next_namespaces.as_slice(),
-                &module.get_loaded_module(module_source.as_str()).unwrap(),
+                &next_module,
                 ctx,
             );
             continue;
         }
 
-        check_binding_exported(
-            &name,
-            || {
-                if namespaces.len() > 1 {
-                    no_export_in_deeply_imported_namespace(
-                        property.key.span(),
-                        &name,
-                        &namespaces.join("."),
-                    )
-                } else {
-                    no_export(property.key.span(), &name, source)
-                }
-            },
-            module,
-            ctx,
-        );
+        check_binding_exported(name, || missing_export(&name), module, ctx);
     }
 }
 
@@ -478,6 +494,7 @@ fn test() {
         (r#"import * as a from "./deep/a"; console.log(a.b.c.d.e.f)"#, None),
         (r#"import * as a from "./deep/a"; var {b:{c:{d:{e}}}} = a"#, None),
         (r#"import { b } from "./deep/a"; var {c:{d:{e}}} = b"#, None),
+        (r#"import * as a from "./unresolvable-namespace"; var {missing:{x}} = a"#, None),
         (r#"import * as a from "./deep-es7/a"; console.log(a.b.c.d.e)"#, None),
         (r#"import { b } from "./deep-es7/a"; console.log(b.c.d.e)"#, None),
         (r#"import * as a from "./deep-es7/a"; console.log(a.b.c.d.e.f)"#, None),
@@ -495,6 +512,10 @@ fn test() {
 
     let fail = vec![
         (r"import * as names from './named-exports'; console.log(names.c)", None),
+        (
+            r"import * as names from './named-exports'; console.log(names['\uD800']);",
+            Some(json!([{ "allowComputed": true }])),
+        ),
         (r"import * as names from './named-exports'; console.log(names['a']);", None),
         (r"import * as foo from './bar'; foo.foo = 'y';", None),
         (r"import * as foo from './bar'; foo.x = 'y';", None),
@@ -502,6 +523,7 @@ fn test() {
         (r#"import * as names from "./named-exports"; function b() { const { c } = names }"#, None),
         (r#"import * as names from "./named-exports"; const { c: d } = names"#, None),
         (r#"import * as names from "./named-exports"; const { c: { d } } = names"#, None),
+        (r#"import * as names from "./named-exports"; const { "\uD800": d } = names"#, None),
         // r#"import * as Endpoints from "./issue-195/Endpoints"; console.log(Endpoints.Foo)"#,
         // r#"import * as namespace from './malformed.js';"#,
         // TODO: Hard to confirm if it's a namespace object
@@ -522,6 +544,16 @@ fn test() {
         (r#"import { b } from "./deep-es7/a"; console.log(b.c.e)"#, None),
         (r#"import * as a from "./deep-es7/a"; var {b:{ e }} = a"#, None),
         (r#"import * as a from "./deep-es7/a"; var {b:{c:{ e }, e: { c }}} = a"#, None),
+        // Issue: <https://github.com/oxc-project/oxc/issues/24073>
+        (r#"import { lib } from "./issue-24073/module"; console.log(lib["~unstable"]);"#, None),
+        (
+            concat!(
+                r#"import { otherExport } from "./issue-24073/module"; console.log(otherExport);"#,
+                "\n",
+                r#"import { lib } from "./issue-24073/module"; console.log(lib["~unstable"]);"#,
+            ),
+            None,
+        ),
     ];
 
     Tester::new(Namespace::NAME, Namespace::PLUGIN, pass, fail)

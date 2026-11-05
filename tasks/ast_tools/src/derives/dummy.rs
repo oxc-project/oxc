@@ -259,7 +259,7 @@ fn generate_impl(
     quote! {
         impl<'a> Dummy<'a> for #ty {
             #[doc = #comment1]
-            #[doc = ""]
+            ///
             #[doc = #comment2]
             #inline
             fn dummy(allocator: &'a Allocator) -> Self {

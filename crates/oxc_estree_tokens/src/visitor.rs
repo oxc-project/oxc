@@ -133,12 +133,6 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
         walk::walk_ts_this_parameter(self, parameter);
     }
 
-    fn visit_meta_property(&mut self, _meta_property: &MetaProperty<'a>) {
-        // Don't walk.
-        // * `meta` (either `import` or `new`) has a `Keyword` token already, which is correct.
-        // * `property` (either `meta` or `target`) has an `Identifier` token, which is correct.
-    }
-
     fn visit_object_property(&mut self, property: &ObjectProperty<'a>) {
         // For shorthand `{ x }`, key and value share the same span.
         // Skip the key to avoid emitting the same token twice.

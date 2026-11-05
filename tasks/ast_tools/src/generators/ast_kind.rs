@@ -8,7 +8,7 @@
 //! * `GetSpan` impl for `AstKind`.
 //! * `GetAddress` impl for `AstKind`.
 //!
-//! Variants of `AstKind` and `AstType` are created for all structs which have a `NodeId` field.
+//! Variants of `AstKind` and `AstType` are created for visited structs with a `NodeId` field.
 
 use quote::{format_ident, quote};
 
@@ -29,18 +29,19 @@ define_generator!(AstKindGenerator);
 impl Generator for AstKindGenerator {
     /// Set `has_kind` for structs and enums.
     ///
-    /// All structs with a `NodeId` have an `AstKind`.
+    /// Visited structs with a `NodeId` have an `AstKind`.
     /// Enums do not have an `AstKind`.
     fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
-        // Set `has_kind = true` for structs with a `NodeId`
+        // Set `has_kind = true` for visited structs with a `NodeId`
         let node_id_cell_type_id =
             schema.type_by_name("NodeId").as_struct().unwrap().containers.cell_id.unwrap();
 
         for struct_def in schema.structs_mut() {
-            if struct_def
-                .fields
-                .iter()
-                .any(|field| field.type_id == node_id_cell_type_id && field.name == "node_id")
+            if struct_def.visit.has_visitor()
+                && struct_def
+                    .fields
+                    .iter()
+                    .any(|field| field.type_id == node_id_cell_type_id && field.name == "node_id")
             {
                 struct_def.kind.has_kind = true;
             }
@@ -99,9 +100,6 @@ impl Generator for AstKindGenerator {
 
         let output = quote! {
             ///@@line_break
-            use std::ptr;
-
-            ///@@line_break
             use oxc_allocator::{Address, GetAddress, UnstableAddress};
             use oxc_span::{GetSpan, Span};
             use oxc_syntax::node::NodeId;
@@ -130,16 +128,6 @@ impl Generator for AstKindGenerator {
 
             ///@@line_break
             impl AstKind<'_> {
-                /// Get the [`AstType`] of an [`AstKind`].
-                #[inline]
-                pub fn ty(&self) -> AstType {
-                    ///@ SAFETY: `AstKind` is `#[repr(C, u8)]`, so discriminant is stored in first byte,
-                    ///@ and it's valid to read it.
-                    ///@ `AstType` is also `#[repr(u8)]` and `AstKind` and `AstType` both have the same
-                    ///@ discriminants, so it's valid to read `AstKind`'s discriminant as `AstType`.
-                    unsafe { *ptr::from_ref(self).cast::<AstType>().as_ref().unwrap_unchecked() }
-                }
-
                 ///@@line_break
                 /// Get [`NodeId`] of an [`AstKind`].
                 ///@ `node_id` field is in consistent position in all AST structs, so this boils down to 1 instruction.

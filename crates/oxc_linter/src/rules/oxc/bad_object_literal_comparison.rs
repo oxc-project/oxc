@@ -1,10 +1,15 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::Rule,
+    utils::{is_empty_array_expression, is_empty_object_expression},
+};
 
 fn object_comparison(span: Span, const_result: bool) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected object literal comparison.")
@@ -56,59 +61,33 @@ declare_oxc_lint!(
 
 impl Rule for BadObjectLiteralComparison {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(binary_expression) = node.kind() else {
-            return;
-        };
-
-        if !matches!(
-            binary_expression.operator,
-            BinaryOperator::StrictEquality
-                | BinaryOperator::StrictInequality
-                | BinaryOperator::Equality
-                | BinaryOperator::Inequality,
-        ) {
-            return;
-        }
-
-        if is_empty_object_expression(&binary_expression.left)
-            || is_empty_object_expression(&binary_expression.right)
+        if let AstKind::BinaryExpression(binary_expression) = node.kind()
+            && binary_expression.operator.is_equality()
         {
-            ctx.diagnostic(object_comparison(
-                binary_expression.span,
-                matches!(
-                    binary_expression.operator,
-                    BinaryOperator::StrictInequality | BinaryOperator::Inequality
-                ),
-            ));
+            if is_empty_object_expression(&binary_expression.left)
+                || is_empty_object_expression(&binary_expression.right)
+            {
+                ctx.diagnostic(object_comparison(
+                    binary_expression.span,
+                    matches!(
+                        binary_expression.operator,
+                        BinaryOperator::StrictInequality | BinaryOperator::Inequality
+                    ),
+                ));
+            }
+
+            if is_empty_array_expression(&binary_expression.left)
+                || is_empty_array_expression(&binary_expression.right)
+            {
+                ctx.diagnostic(array_comparison(
+                    binary_expression.span,
+                    matches!(
+                        binary_expression.operator,
+                        BinaryOperator::StrictInequality | BinaryOperator::Inequality
+                    ),
+                ));
+            }
         }
-
-        if is_empty_array_expression(&binary_expression.left)
-            || is_empty_array_expression(&binary_expression.right)
-        {
-            ctx.diagnostic(array_comparison(
-                binary_expression.span,
-                matches!(
-                    binary_expression.operator,
-                    BinaryOperator::StrictInequality | BinaryOperator::Inequality
-                ),
-            ));
-        }
-    }
-}
-
-fn is_empty_object_expression(maybe_empty_obj_expr: &Expression) -> bool {
-    if let Expression::ObjectExpression(object_expression) = maybe_empty_obj_expr {
-        object_expression.properties.is_empty()
-    } else {
-        false
-    }
-}
-
-fn is_empty_array_expression(maybe_empty_array_expr: &Expression) -> bool {
-    if let Expression::ArrayExpression(array_expression) = maybe_empty_array_expr {
-        array_expression.elements.is_empty()
-    } else {
-        false
     }
 }
 

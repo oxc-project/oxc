@@ -1,3 +1,4 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
 
 use crate::{
@@ -21,6 +22,9 @@ declare_oxc_lint!(
 
 impl Rule for PreferMockReturnShorthand {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else {
+            return;
+        };
         run(node, ctx);
     }
 }
@@ -319,6 +323,23 @@ fn test() {
                 return 0;
               }
             });",
+        "jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(
+              function (this: HTMLElement) {
+                return this.dataset.testId === 'ai-assistant-messages' ? 400 : 68;
+              },
+            );",
+        "aVariable.mockImplementation(function () {
+              return () => this.value;
+            });",
+        "aVariable.mockImplementation(function () {
+              return class { [this.key] = 1; };
+            });",
+        "aVariable.mockImplementation(function () {
+              return class { @this.decorator field = 1; };
+            });",
+        "aVariable.mockImplementation(function () {
+              return class { method(@this.decorator x) {} };
+            });",
     ];
 
     let fail = vec![
@@ -540,6 +561,12 @@ fn test() {
             aVariable.mockImplementation(() => true ? true : true ? value : false);
             aVariable.mockImplementation(() => true ? true : true ? x : false);
             aVariable.mockImplementation(() => true ? true : true ? true : false);",
+        "aVariable.mockImplementationOnce(() => this.value);",
+        "aVariable.mockImplementation(() => ({ get value() { return this.x; } }));",
+        "aVariable.mockImplementation(function () { return class { field = this.x; } });",
+        "aVariable.mockImplementation(function () { return class { accessor field = this.x; } });",
+        "aVariable.mockImplementation(function () { return class { static { this.x; } } });",
+        "aVariable.mockImplementation(function () { return class { method(x = this.x) {} } });",
     ];
 
     let fix = vec![
@@ -909,6 +936,30 @@ fn test() {
             aVariable.mockImplementation(() => true ? true : true ? value : false);
             aVariable.mockReturnValue(true ? true : true ? x : false);
             aVariable.mockReturnValue(true ? true : true ? true : false);",
+        ),
+        (
+            "aVariable.mockImplementationOnce(() => this.value);",
+            "aVariable.mockReturnValueOnce(this.value);",
+        ),
+        (
+            "aVariable.mockImplementation(() => ({ get value() { return this.x; } }));",
+            "aVariable.mockReturnValue({ get value() { return this.x; } });",
+        ),
+        (
+            "aVariable.mockImplementation(function () { return class { field = this.x; } });",
+            "aVariable.mockReturnValue(class { field = this.x; });",
+        ),
+        (
+            "aVariable.mockImplementation(function () { return class { accessor field = this.x; } });",
+            "aVariable.mockReturnValue(class { accessor field = this.x; });",
+        ),
+        (
+            "aVariable.mockImplementation(function () { return class { static { this.x; } } });",
+            "aVariable.mockReturnValue(class { static { this.x; } });",
+        ),
+        (
+            "aVariable.mockImplementation(function () { return class { method(x = this.x) {} } });",
+            "aVariable.mockReturnValue(class { method(x = this.x) {} });",
         ),
     ];
 

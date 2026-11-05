@@ -1,0 +1,5 @@
+@mixin between($from, $to) {
+  @media ($from-breakpoint <= width < $to-breakpoint) {
+    @content;
+  }
+}

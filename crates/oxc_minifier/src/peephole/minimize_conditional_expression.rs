@@ -1,12 +1,13 @@
 use crate::TraverseCtx;
 use oxc_allocator::TakeIn;
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::{ContentEq, GetSpan};
+use oxc_syntax::precedence::Precedence;
 
 use super::PeepholeOptimizations;
 
@@ -18,9 +19,30 @@ impl<'a> PeepholeOptimizations {
         alternate: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut cond_expr = ctx.ast.conditional_expression(span, test, consequent, alternate);
-        Self::minimize_conditional_expression(&mut cond_expr, ctx)
-            .unwrap_or_else(|| Expression::ConditionalExpression(ctx.ast.alloc(cond_expr)))
+        // "(a, b) ? c : d" => "a, b ? c : d"
+        if let Expression::SequenceExpression(mut sequence_expr) = test {
+            if let Some(test) = sequence_expr.expressions.pop() {
+                sequence_expr
+                    .expressions
+                    .push(Self::minimize_conditional(span, test, consequent, alternate, ctx));
+            }
+            return Expression::SequenceExpression(sequence_expr);
+        }
+
+        // Wrap the fresh conditional in an `Expression` slot so that, if the
+        // fold returns a replacement, `ctx.replace_expression` can walk the
+        // mutated transient conditional and mark its leaked refs dead. Without
+        // the slot wrapping, refs left in untouched slots of the discarded
+        // transient `ConditionalExpression` (e.g. the leftover `b` in
+        // `b == null ? c : b` -> `b ?? c`) would never reach `PassChanges`.
+        let mut as_expr =
+            Expression::new_conditional_expression(span, test, consequent, alternate, ctx);
+        let Expression::ConditionalExpression(cond_box) = &mut as_expr else { unreachable!() };
+        let folded = Self::minimize_conditional_expression(cond_box, ctx);
+        if let Some(new_expr) = folded {
+            ctx.replace_expression(&mut as_expr, new_expr);
+        }
+        as_expr
     }
 
     /// `MangleIfExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
@@ -29,33 +51,19 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         match &mut expr.test {
-            // "(a, b) ? c : d" => "a, b ? c : d"
+            // `(a, b) ? c : d` => `a, b ? c : d`
             Expression::SequenceExpression(sequence_expr)
                 if sequence_expr.expressions.len() > 1 =>
             {
-                let span = expr.span();
-                let mut sequence = expr.test.take_in(ctx.ast);
-                let Expression::SequenceExpression(sequence_expr) = &mut sequence else {
-                    unreachable!()
-                };
-                let expr = Self::minimize_conditional(
-                    span,
-                    sequence_expr.expressions.pop().unwrap(),
-                    expr.consequent.take_in(ctx.ast),
-                    expr.alternate.take_in(ctx.ast),
-                    ctx,
-                );
-                sequence_expr.expressions.push(expr);
-                return Some(sequence);
+                let ConditionalExpression { test, consequent, alternate, span, .. } =
+                    expr.take_in(ctx);
+                return Some(Self::minimize_conditional(span, test, consequent, alternate, ctx));
             }
             // "!a ? b : c" => "a ? c : b"
             Expression::UnaryExpression(test_expr) if test_expr.operator.is_not() => {
-                let test = test_expr.argument.take_in(ctx.ast);
-                let consequent = expr.alternate.take_in(ctx.ast);
-                let alternate = expr.consequent.take_in(ctx.ast);
-                return Some(Self::minimize_conditional(
-                    expr.span, test, consequent, alternate, ctx,
-                ));
+                std::mem::swap(&mut expr.consequent, &mut expr.alternate);
+                ctx.replace_expression_with(&mut expr.test, Self::unwrap_unary);
+                return Self::minimize_conditional_expression(expr, ctx);
             }
             Expression::Identifier(id) => {
                 // "a ? a : b" => "a || b"
@@ -65,8 +73,8 @@ impl<'a> PeepholeOptimizations {
                     return Some(Self::join_with_left_associative_op(
                         expr.span,
                         LogicalOperator::Or,
-                        expr.test.take_in(ctx.ast),
-                        expr.alternate.take_in(ctx.ast),
+                        expr.test.take_in(ctx),
+                        expr.alternate.take_in(ctx),
                         ctx,
                     ));
                 }
@@ -77,142 +85,155 @@ impl<'a> PeepholeOptimizations {
                     return Some(Self::join_with_left_associative_op(
                         expr.span,
                         LogicalOperator::And,
-                        expr.test.take_in(ctx.ast),
-                        expr.consequent.take_in(ctx.ast),
+                        expr.test.take_in(ctx),
+                        expr.consequent.take_in(ctx),
                         ctx,
                     ));
                 }
             }
             // `x != y ? b : c` -> `x == y ? c : b`
-            Expression::BinaryExpression(test_expr) => {
+            Expression::BinaryExpression(test_expr)
                 if matches!(
                     test_expr.operator,
                     BinaryOperator::Inequality | BinaryOperator::StrictInequality
-                ) {
-                    test_expr.operator = test_expr.operator.equality_inverse_operator().unwrap();
-                    let test = expr.test.take_in(ctx.ast);
-                    let consequent = expr.consequent.take_in(ctx.ast);
-                    let alternate = expr.alternate.take_in(ctx.ast);
-                    return Some(Self::minimize_conditional(
-                        expr.span, test, alternate, consequent, ctx,
-                    ));
-                }
+                ) =>
+            {
+                test_expr.operator = test_expr.operator.equality_inverse_operator().unwrap();
+                std::mem::swap(&mut expr.consequent, &mut expr.alternate);
+                return Self::minimize_conditional_expression(expr, ctx);
             }
             _ => {}
         }
 
-        // "a ? b ? c : d : d" => "a && b ? c : d"
+        // `a ? b ? c : d : d` => `a && b ? c : d`
         if let Expression::ConditionalExpression(consequent) = &mut expr.consequent
             && ctx.expr_eq(&consequent.alternate, &expr.alternate)
         {
-            return Some(ctx.ast.expression_conditional(
-                expr.span,
+            let cons_expr = consequent.take_in(ctx);
+            ctx.replace_expression_with(&mut expr.test, |expr_0, ctx| {
                 Self::join_with_left_associative_op(
-                    expr.test.span(),
+                    expr_0.span(),
                     LogicalOperator::And,
-                    expr.test.take_in(ctx.ast),
-                    consequent.test.take_in(ctx.ast),
+                    expr_0,
+                    cons_expr.test,
                     ctx,
-                ),
-                consequent.consequent.take_in(ctx.ast),
-                consequent.alternate.take_in(ctx.ast),
-            ));
+                )
+            });
+            ctx.replace_expression(&mut expr.consequent, cons_expr.consequent);
+            ctx.drop_expression(&cons_expr.alternate);
+            return Self::minimize_conditional_expression(expr, ctx);
         }
 
-        // "a ? b : c ? b : d" => "a || c ? b : d"
+        // `a ? b : c ? b : d` => `a || c ? b : d`
         if let Expression::ConditionalExpression(alternate) = &mut expr.alternate
             && ctx.expr_eq(&alternate.consequent, &expr.consequent)
         {
-            return Some(ctx.ast.expression_conditional(
+            let alt_expr = alternate.take_in(ctx);
+            ctx.replace_expression_with(&mut expr.test, |expr_0, ctx| {
+                Self::join_with_left_associative_op(
+                    expr_0.span(),
+                    LogicalOperator::Or,
+                    expr_0,
+                    alt_expr.test,
+                    ctx,
+                )
+            });
+            ctx.replace_expression(&mut expr.alternate, alt_expr.alternate);
+            ctx.drop_expression(&alt_expr.consequent);
+            return Self::minimize_conditional_expression(expr, ctx);
+        }
+
+        // `a ? c : (b, c)` => `(a || b), c`
+        // `a ? d : (b, c, d)` => `(a || (b, c)), d`
+        if let Expression::SequenceExpression(alternate) = &mut expr.alternate
+            && alternate.expressions.len() > 1
+            && let Some(last) = Self::last_expression_in_sequence(alternate)
+            && ctx.expr_eq(last, &expr.consequent)
+        {
+            let last_expr = Self::pop_expression_from_sequence(alternate).unwrap();
+            let seq_prefix = if alternate.expressions.len() == 1 {
+                alternate.expressions.pop().unwrap()
+            } else {
+                expr.alternate.take_in(ctx)
+            };
+            return Some(Self::join_sequence(
                 expr.span,
                 Self::join_with_left_associative_op(
                     expr.test.span(),
                     LogicalOperator::Or,
-                    expr.test.take_in(ctx.ast),
-                    alternate.test.take_in(ctx.ast),
+                    expr.test.take_in(ctx),
+                    seq_prefix,
                     ctx,
                 ),
-                expr.consequent.take_in(ctx.ast),
-                alternate.alternate.take_in(ctx.ast),
+                last_expr,
+                ctx,
             ));
         }
 
-        // "a ? c : (b, c)" => "(a || b), c"
-        if let Expression::SequenceExpression(alternate) = &mut expr.alternate
-            && alternate.expressions.len() == 2
-            && ctx.expr_eq(&alternate.expressions[1], &expr.consequent)
-        {
-            return Some(ctx.ast.expression_sequence(
-                expr.span,
-                ctx.ast.vec_from_array([
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::Or,
-                        expr.test.take_in(ctx.ast),
-                        alternate.expressions[0].take_in(ctx.ast),
-                        ctx,
-                    ),
-                    expr.consequent.take_in(ctx.ast),
-                ]),
-            ));
-        }
-
-        // "a ? (b, c) : c" => "(a && b), c"
+        // `a ? (b, c) : c` => `(a && b), c`
+        // `a ? (b, c, d) : d` => `(a && (b, c)), d`
         if let Expression::SequenceExpression(consequent) = &mut expr.consequent
-            && consequent.expressions.len() == 2
-            && ctx.expr_eq(&consequent.expressions[1], &expr.alternate)
+            && consequent.expressions.len() > 1
+            && let Some(last) = Self::last_expression_in_sequence(consequent)
+            && ctx.expr_eq(last, &expr.alternate)
         {
-            return Some(ctx.ast.expression_sequence(
+            let last_expr = Self::pop_expression_from_sequence(consequent).unwrap();
+            let seq_prefix = if consequent.expressions.len() == 1 {
+                consequent.expressions.pop().unwrap()
+            } else {
+                expr.consequent.take_in(ctx)
+            };
+
+            return Some(Self::join_sequence(
                 expr.span,
-                ctx.ast.vec_from_array([
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::And,
-                        expr.test.take_in(ctx.ast),
-                        consequent.expressions[0].take_in(ctx.ast),
-                        ctx,
-                    ),
-                    expr.alternate.take_in(ctx.ast),
-                ]),
+                Self::join_with_left_associative_op(
+                    expr.test.span(),
+                    LogicalOperator::And,
+                    expr.test.take_in(ctx),
+                    seq_prefix,
+                    ctx,
+                ),
+                last_expr,
+                ctx,
             ));
         }
 
-        // "a ? b || c : c" => "(a && b) || c"
+        // `a ? b || c : c` => `(a && b) || c`
         if let Expression::LogicalExpression(logical_expr) = &mut expr.consequent
             && logical_expr.operator.is_or()
             && ctx.expr_eq(&logical_expr.right, &expr.alternate)
         {
-            return Some(ctx.ast.expression_logical(
-                expr.span,
+            let mut new_logical = logical_expr.take_in_box(ctx);
+            new_logical.span = expr.span();
+            ctx.replace_expression_with(&mut new_logical.left, |left, ctx| {
                 Self::join_with_left_associative_op(
                     expr.test.span(),
                     LogicalOperator::And,
-                    expr.test.take_in(ctx.ast),
-                    logical_expr.left.take_in(ctx.ast),
+                    expr.test.take_in(ctx),
+                    left,
                     ctx,
-                ),
-                LogicalOperator::Or,
-                expr.alternate.take_in(ctx.ast),
-            ));
+                )
+            });
+            return Some(Expression::LogicalExpression(new_logical));
         }
 
-        // "a ? c : b && c" => "(a || b) && c"
+        // `a ? c : b && c` => `(a || b) && c`
         if let Expression::LogicalExpression(logical_expr) = &mut expr.alternate
-            && logical_expr.operator == LogicalOperator::And
+            && logical_expr.operator.is_and()
             && ctx.expr_eq(&logical_expr.right, &expr.consequent)
         {
-            return Some(ctx.ast.expression_logical(
-                expr.span,
+            let mut new_logical = logical_expr.take_in_box(ctx);
+            new_logical.span = expr.span();
+            ctx.replace_expression_with(&mut new_logical.left, |left, ctx| {
                 Self::join_with_left_associative_op(
                     expr.test.span(),
                     LogicalOperator::Or,
-                    expr.test.take_in(ctx.ast),
-                    logical_expr.left.take_in(ctx.ast),
+                    expr.test.take_in(ctx),
+                    left,
                     ctx,
-                ),
-                LogicalOperator::And,
-                expr.consequent.take_in(ctx.ast),
-            ));
+                )
+            });
+            return Some(Expression::LogicalExpression(new_logical));
         }
 
         // `a ? b(c, d) : b(e, d)` -> `b(a ? c : e, d)`
@@ -239,51 +260,57 @@ impl<'a> PeepholeOptimizations {
                 if matches!(consequent.arguments[0], Argument::SpreadElement(_))
                     && matches!(alternate.arguments[0], Argument::SpreadElement(_))
                 {
-                    let callee = consequent.callee.take_in(ctx.ast);
+                    let callee = consequent.callee.take_in(ctx);
                     let consequent_first_arg = {
                         let Argument::SpreadElement(el) = &mut consequent.arguments[0] else {
                             unreachable!()
                         };
-                        el.argument.take_in(ctx.ast)
+                        el.argument.take_in(ctx)
                     };
                     let alternate_first_arg = {
                         let Argument::SpreadElement(el) = &mut alternate.arguments[0] else {
                             unreachable!()
                         };
-                        el.argument.take_in(ctx.ast)
+                        el.argument.take_in(ctx)
                     };
-                    let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
-                    args[0] = ctx.ast.argument_spread_element(
+                    let mut args = consequent.arguments.take_in(ctx);
+                    args[0] = Argument::new_spread_element(
                         expr.span,
-                        ctx.ast.expression_conditional(
+                        Expression::new_conditional_expression(
                             expr.test.span(),
-                            expr.test.take_in(ctx.ast),
+                            expr.test.take_in(ctx),
                             consequent_first_arg,
                             alternate_first_arg,
+                            ctx,
                         ),
+                        ctx,
                     );
-                    return Some(ctx.ast.expression_call(expr.span, callee, NONE, args, false));
+                    return Some(Expression::new_call_expression(
+                        expr.span, callee, None, args, false, ctx,
+                    ));
                 }
                 // `a ? b(c) : b(e)` -> `b(a ? c : e)`
                 if !matches!(consequent.arguments[0], Argument::SpreadElement(_))
                     && !matches!(alternate.arguments[0], Argument::SpreadElement(_))
                 {
-                    let callee = consequent.callee.take_in(ctx.ast);
+                    let callee = consequent.callee.take_in(ctx);
 
                     let consequent_first_arg =
-                        consequent.arguments[0].to_expression_mut().take_in(ctx.ast);
+                        consequent.arguments[0].to_expression_mut().take_in(ctx);
                     let alternate_first_arg =
-                        alternate.arguments[0].to_expression_mut().take_in(ctx.ast);
-                    let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
+                        alternate.arguments[0].to_expression_mut().take_in(ctx);
+                    let mut args = consequent.arguments.take_in(ctx);
                     let cond_expr = Self::minimize_conditional(
                         expr.test.span(),
-                        expr.test.take_in(ctx.ast),
+                        expr.test.take_in(ctx),
                         consequent_first_arg,
                         alternate_first_arg,
                         ctx,
                     );
                     args[0] = Argument::from(cond_expr);
-                    return Some(ctx.ast.expression_call(expr.span, callee, NONE, args, false));
+                    return Some(Expression::new_call_expression(
+                        expr.span, callee, None, args, false, ctx,
+                    ));
                 }
             }
         }
@@ -331,16 +358,17 @@ impl<'a> PeepholeOptimizations {
                     // `(a = foo) != null ? a : b` -> `(a = foo) ?? b`
                     let maybe_same_id_expr =
                         if is_negate { &mut expr.consequent } else { &mut expr.alternate };
-                    if maybe_same_id_expr.is_specific_id(&target_id_name) {
-                        return Some(ctx.ast.expression_logical(
+                    if maybe_same_id_expr.is_specific_id(target_id_name) {
+                        return Some(Expression::new_logical_expression(
                             expr.span,
-                            value_expr.take_in(ctx.ast),
+                            value_expr.take_in(ctx),
                             LogicalOperator::Coalesce,
                             if is_negate {
-                                expr.alternate.take_in(ctx.ast)
+                                expr.alternate.take_in(ctx)
                             } else {
-                                expr.consequent.take_in(ctx.ast)
+                                expr.consequent.take_in(ctx)
                             },
+                            ctx,
                         ));
                     }
                 }
@@ -355,40 +383,139 @@ impl<'a> PeepholeOptimizations {
                         let expr_to_inject_optional_chaining =
                             if is_negate { &mut expr.consequent } else { &mut expr.alternate };
                         if Self::inject_optional_chaining_if_matched(
-                            &target_id_name,
+                            target_id_name,
                             value_expr,
                             expr_to_inject_optional_chaining,
                             ctx,
                         ) {
-                            return Some(expr_to_inject_optional_chaining.take_in(ctx.ast));
+                            return Some(expr_to_inject_optional_chaining.take_in(ctx));
                         }
                     }
                 }
             }
         }
 
+        let consequent_value = expr.consequent.evaluate_value(ctx);
+        let alternate_value = expr.alternate.evaluate_value(ctx);
+
         // "a ? true : false" => "!!a"
         // "a ? false : true" => "!a"
         match (
-            expr.consequent
-                .evaluate_value(ctx)
-                .and_then(ConstantValue::into_boolean)
+            consequent_value
+                .as_ref()
+                .and_then(|v| match v {
+                    ConstantValue::Boolean(b) => Some(*b),
+                    _ => None,
+                })
                 .filter(|_| !expr.consequent.may_have_side_effects(ctx)),
-            expr.alternate
-                .evaluate_value(ctx)
-                .and_then(ConstantValue::into_boolean)
+            alternate_value
+                .as_ref()
+                .and_then(|v| match v {
+                    ConstantValue::Boolean(b) => Some(*b),
+                    _ => None,
+                })
                 .filter(|_| !expr.alternate.may_have_side_effects(ctx)),
         ) {
             (Some(true), Some(false)) => {
-                let test = expr.test.take_in(ctx.ast);
-                let test = Self::minimize_not(expr.span, test, ctx);
-                let test = Self::minimize_not(expr.span, test, ctx);
+                let test = expr.test.take_in(ctx);
+                let test = Self::minimize_not(expr.span, test, ctx, false);
+                let test = Self::minimize_not(expr.span, test, ctx, false);
                 return Some(test);
             }
             (Some(false), Some(true)) => {
-                let test = expr.test.take_in(ctx.ast);
-                let test = Self::minimize_not(expr.span, test, ctx);
+                let test = expr.test.take_in(ctx);
+                let test = Self::minimize_not(expr.span, test, ctx, false);
                 return Some(test);
+            }
+            // "c ? false : x" => "!c && x" (exact for any `c`)
+            (Some(false), None)
+                if Self::can_fold_negated_test(&expr.test)
+                    && !Self::logical_operand_adds_parens(
+                        &expr.alternate,
+                        LogicalOperator::And,
+                        Precedence::Yield,
+                    ) =>
+            {
+                let test = expr.test.take_in(ctx);
+                let test = Self::minimize_not(expr.span, test, ctx, false);
+                let right = expr.alternate.take_in(ctx);
+                return Some(Self::join_with_left_associative_op(
+                    expr.span,
+                    LogicalOperator::And,
+                    test,
+                    right,
+                    ctx,
+                ));
+            }
+            // "c ? x : true" => "!c || x" (exact for any `c`)
+            (None, Some(true))
+                if Self::can_fold_negated_test(&expr.test)
+                    && !Self::logical_operand_adds_parens(
+                        &expr.consequent,
+                        LogicalOperator::Or,
+                        Precedence::Yield,
+                    ) =>
+            {
+                let test = expr.test.take_in(ctx);
+                let test = Self::minimize_not(expr.span, test, ctx, false);
+                let right = expr.consequent.take_in(ctx);
+                return Some(Self::join_with_left_associative_op(
+                    expr.span,
+                    LogicalOperator::Or,
+                    test,
+                    right,
+                    ctx,
+                ));
+            }
+            // "c ? true : x" => "c || x" (only when `c` is boolean-typed; a
+            // non-boolean truthy `c` would be returned instead of `true`)
+            (Some(true), None)
+                if expr.test.value_type(ctx).is_boolean()
+                    && !Self::logical_operand_adds_parens(
+                        &expr.test,
+                        LogicalOperator::Or,
+                        Precedence::Conditional,
+                    )
+                    && !Self::logical_operand_adds_parens(
+                        &expr.alternate,
+                        LogicalOperator::Or,
+                        Precedence::Yield,
+                    ) =>
+            {
+                let test = expr.test.take_in(ctx);
+                let right = expr.alternate.take_in(ctx);
+                return Some(Self::join_with_left_associative_op(
+                    expr.span,
+                    LogicalOperator::Or,
+                    test,
+                    right,
+                    ctx,
+                ));
+            }
+            // "c ? x : false" => "c && x" (only when `c` is boolean-typed; a
+            // non-boolean falsy `c` would be returned instead of `false`)
+            (None, Some(false))
+                if expr.test.value_type(ctx).is_boolean()
+                    && !Self::logical_operand_adds_parens(
+                        &expr.test,
+                        LogicalOperator::And,
+                        Precedence::Conditional,
+                    )
+                    && !Self::logical_operand_adds_parens(
+                        &expr.consequent,
+                        LogicalOperator::And,
+                        Precedence::Yield,
+                    ) =>
+            {
+                let test = expr.test.take_in(ctx);
+                let right = expr.consequent.take_in(ctx);
+                return Some(Self::join_with_left_associative_op(
+                    expr.span,
+                    LogicalOperator::And,
+                    test,
+                    right,
+                    ctx,
+                ));
             }
             _ => {}
         }
@@ -396,52 +523,47 @@ impl<'a> PeepholeOptimizations {
         // "a ? 1 : 0" => "+a" (if a is boolean) or "+!!a" (if no parens needed)
         // "a ? 0 : 1" => "+!a" (if no parens needed)
         match (
-            expr.consequent
-                .evaluate_value(ctx)
+            consequent_value
                 .and_then(ConstantValue::into_number)
                 .filter(|_| !expr.consequent.may_have_side_effects(ctx)),
-            expr.alternate
-                .evaluate_value(ctx)
+            alternate_value
                 .and_then(ConstantValue::into_number)
                 .filter(|_| !expr.alternate.may_have_side_effects(ctx)),
         ) {
-            (Some(1.0), Some(0.0)) => {
+            // The `0` must be `+0`: `a ? 1 : -0` would become `+a`, which yields `+0` (not `-0`)
+            // when the test is falsy. `-0.0` matches the `0.0` pattern (`-0.0 == 0.0`), so guard it.
+            (Some(1.0), Some(alternate @ 0.0)) if !alternate.is_sign_negative() => {
                 // "a ? 1 : 0"
                 let is_boolean = expr.test.value_type(ctx).is_boolean();
                 let needs_parens = Self::test_needs_parens(&expr.test);
                 if is_boolean {
                     // Known boolean: +a (saves 3 chars: "a?1:0" => "+a")
-                    let test = expr.test.take_in(ctx.ast);
-                    return Some(ctx.ast.expression_unary(
-                        expr.span,
-                        UnaryOperator::UnaryPlus,
-                        test,
-                    ));
+                    let test = expr.test.take_in(ctx);
+                    return Some(Expression::new_unary_expression(expr.span,
+                    UnaryOperator::UnaryPlus,
+                    test, ctx));
                 }
                 // Unknown type: +!!a (saves 1 char: "a?1:0" => "+!!a")
                 // But skip if parens would be needed (e.g., "a+b?1:0" => "+!!(a+b)" is longer)
                 if !needs_parens {
-                    let test = expr.test.take_in(ctx.ast);
-                    let test = Self::minimize_not(expr.span, test, ctx);
-                    let test = Self::minimize_not(expr.span, test, ctx);
-                    return Some(ctx.ast.expression_unary(
-                        expr.span,
-                        UnaryOperator::UnaryPlus,
-                        test,
-                    ));
+                    let test = expr.test.take_in(ctx);
+                    let test = Self::minimize_not(expr.span, test, ctx, false);
+                    let test = Self::minimize_not(expr.span, test, ctx, false);
+                    return Some(Expression::new_unary_expression(expr.span,
+                    UnaryOperator::UnaryPlus,
+                    test, ctx));
                 }
             }
-            (Some(0.0), Some(1.0))
+            (Some(consequent @ 0.0), Some(1.0))
                 // "a ? 0 : 1" => "+!a"
-                // Skip if parens would be needed (e.g., "a+b?0:1" => "+!(a+b)" is same length)
-                if !Self::test_needs_parens(&expr.test) => {
-                    let test = expr.test.take_in(ctx.ast);
-                    let test = Self::minimize_not(expr.span, test, ctx);
-                    return Some(ctx.ast.expression_unary(
-                        expr.span,
-                        UnaryOperator::UnaryPlus,
-                        test,
-                    ));
+                // Skip if parens would be needed (e.g., "a+b?0:1" => "+!(a+b)" is same length).
+                // The `0` must be `+0`: `a ? -0 : 1` would become `+!a`, yielding `+0`, not `-0`.
+                if !consequent.is_sign_negative() && !Self::test_needs_parens(&expr.test) => {
+                    let test = expr.test.take_in(ctx);
+                    let test = Self::minimize_not(expr.span, test, ctx, false);
+                    return Some(Expression::new_unary_expression(expr.span,
+                    UnaryOperator::UnaryPlus,
+                    test, ctx));
                 }
             _ => {}
         }
@@ -449,14 +571,16 @@ impl<'a> PeepholeOptimizations {
         if ctx.expr_eq(&expr.alternate, &expr.consequent) {
             // "/* @__PURE__ */ a() ? b : b" => "b"
             if !expr.test.may_have_side_effects(ctx) {
-                return Some(expr.consequent.take_in(ctx.ast));
+                let result_expr = expr.consequent.take_in(ctx);
+                // "(a ? eval : eval)(x)" => "(0, eval)(x)" — the bare branch
+                // would form a direct eval call / rebind a member call's `this`.
+                return Some(Self::preserve_indirect_access_if_needed(expr.span, result_expr, ctx));
             }
 
             // "a ? b : b" => "a, b"
-            let expressions = ctx
-                .ast
-                .vec_from_array([expr.test.take_in(ctx.ast), expr.consequent.take_in(ctx.ast)]);
-            return Some(ctx.ast.expression_sequence(expr.span, expressions));
+            let test = expr.test.take_in(ctx);
+            let consequent = expr.consequent.take_in(ctx);
+            return Some(Self::join_sequence(expr.span, test, consequent, ctx));
         }
 
         None
@@ -465,6 +589,8 @@ impl<'a> PeepholeOptimizations {
     /// Merge `consequent` and `alternate` of `ConditionalExpression` inside.
     ///
     /// - `x ? a = 0 : a = 1` -> `a = x ? 0 : 1`
+    /// - `x ? a.b = 0 : a.b = 1` -> `a.b = x ? 0 : 1`
+    /// - `x ? a += 0 : a += 1` -> `a += x ? 0 : 1`
     fn try_merge_conditional_expression_inside(
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -476,32 +602,80 @@ impl<'a> PeepholeOptimizations {
         else {
             return None;
         };
-        if !matches!(consequent.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
-            return None;
-        }
+
         // NOTE: if the right hand side is an anonymous function, applying this compression will
         // set the `name` property of that function.
         // Since codes relying on the fact that function's name is undefined should be rare,
         // we do this compression even if `keep_names` is enabled.
 
-        if consequent.operator != AssignmentOperator::Assign
-            || consequent.operator != alternate.operator
-            || consequent.left.content_ne(&alternate.left)
+        if consequent.operator != alternate.operator || consequent.left.content_ne(&alternate.left)
         {
+            return None;
+        }
+
+        let is_safe = if consequent.operator == AssignmentOperator::Assign {
+            match &consequent.left {
+                AssignmentTarget::AssignmentTargetIdentifier(_) => true,
+                // For member expression targets, this transform moves the evaluation of the
+                // object (and the computed key) before `x`. That reordering is unobservable
+                // only when neither side can affect the other:
+                // - the object/key evaluation must be side-effect-free (`a` may mutate `x`)
+                //   and must not hit a TDZ that `x`'s evaluation would have resolved
+                //   (e.g. `(await p) ? a.b = 0 : a.b = 1` where a closed-over `let a`
+                //   is initialized during the suspension)
+                // - `x` must not be able to change the object/key values
+                //   (e.g. `f() ? a.b = 0 : a.b = 1` where `f` reassigns `a`)
+                // All hold when the object/key are `this`, literals, or identifiers that
+                // are never reassigned and cannot be read in their TDZ.
+                match_member_expression!(AssignmentTarget) => {
+                    let member = consequent.left.to_member_expression();
+                    !Self::member_part_blocks_reorder(member.object(), ctx)
+                        && match member {
+                            MemberExpression::ComputedMemberExpression(member) => {
+                                !Self::computed_key_blocks_reorder(&member.expression, ctx)
+                            }
+                            _ => true,
+                        }
+                }
+                _ => false,
+            }
+        } else {
+            // For the other operators, this transform additionally moves the read of the
+            // target's current value before `x` (`x ? a += 1 : a += 2` -> `a += x ? 1 : 2`
+            // reads `a` before evaluating `x`), and for logical operators (`a &&= b` etc.)
+            // the merged form skips evaluating `x` entirely when the assignment
+            // short-circuits. Both are unobservable only when evaluating `x` has no side
+            // effects (it then cannot change the target's value, throw, or suspend at an
+            // `await` that would alter TDZ state) and reading the target's value has none
+            // either (no globalThis getter for the identifier, no property getter and no
+            // side effects from the object/key evaluation for a member expression).
+            !expr.test.may_have_side_effects(ctx)
+                && match &consequent.left {
+                    AssignmentTarget::AssignmentTargetIdentifier(id) => {
+                        !id.may_have_side_effects(ctx)
+                    }
+                    match_member_expression!(AssignmentTarget) => {
+                        !consequent.left.to_member_expression().may_have_side_effects(ctx)
+                    }
+                    _ => false,
+                }
+        };
+        if !is_safe {
             return None;
         }
         let cond_expr = Self::minimize_conditional(
             expr.span,
-            expr.test.take_in(ctx.ast),
-            consequent.right.take_in(ctx.ast),
-            alternate.right.take_in(ctx.ast),
+            expr.test.take_in(ctx),
+            consequent.right.take_in(ctx),
+            alternate.right.take_in(ctx),
             ctx,
         );
-        Some(ctx.ast.expression_assignment(
+        Some(Expression::new_assignment_expression(
             expr.span,
             consequent.operator,
-            alternate.left.take_in(ctx.ast),
+            alternate.left.take_in(ctx),
             cond_expr,
+            ctx,
         ))
     }
 
@@ -509,7 +683,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// For `target_expr` = `a`, `expr` = `a.b`, this function changes `expr` to `a?.b` and returns true.
     pub fn inject_optional_chaining_if_matched(
-        target_id_name: &str,
+        target_id_name: Ident<'a>,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -521,10 +695,9 @@ impl<'a> PeepholeOptimizations {
             ctx,
         ) {
             if !matches!(expr, Expression::ChainExpression(_)) {
-                *expr = ctx.ast.expression_chain(
-                    expr.span(),
-                    expr.take_in(ctx.ast).into_chain_element().unwrap(),
-                );
+                ctx.replace_expression_with(expr, |e, ctx| {
+                    Expression::new_chain_expression(e.span(), e.into_chain_element().unwrap(), ctx)
+                });
             }
             true
         } else {
@@ -534,7 +707,7 @@ impl<'a> PeepholeOptimizations {
 
     /// See [`Self::inject_optional_chaining_if_matched`]
     fn inject_optional_chaining_if_matched_inner(
-        target_id_name: &str,
+        target_id_name: Ident<'a>,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -543,7 +716,8 @@ impl<'a> PeepholeOptimizations {
             Expression::StaticMemberExpression(e) => {
                 if e.object.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.object = expr_to_inject.take_in(ctx.ast);
+                    let new_object = expr_to_inject.take_in(ctx);
+                    ctx.replace_expression(&mut e.object, new_object);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -558,7 +732,8 @@ impl<'a> PeepholeOptimizations {
             Expression::ComputedMemberExpression(e) => {
                 if e.object.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.object = expr_to_inject.take_in(ctx.ast);
+                    let new_object = expr_to_inject.take_in(ctx);
+                    ctx.replace_expression(&mut e.object, new_object);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -573,7 +748,8 @@ impl<'a> PeepholeOptimizations {
             Expression::CallExpression(e) => {
                 if e.callee.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.callee = expr_to_inject.take_in(ctx.ast);
+                    let new_callee = expr_to_inject.take_in(ctx);
+                    ctx.replace_expression(&mut e.callee, new_callee);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -589,7 +765,8 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::StaticMemberExpression(e) => {
                     if e.object.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.object = expr_to_inject.take_in(ctx.ast);
+                        let new_object = expr_to_inject.take_in(ctx);
+                        ctx.replace_expression(&mut e.object, new_object);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(
@@ -604,7 +781,8 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::ComputedMemberExpression(e) => {
                     if e.object.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.object = expr_to_inject.take_in(ctx.ast);
+                        let new_object = expr_to_inject.take_in(ctx);
+                        ctx.replace_expression(&mut e.object, new_object);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(
@@ -619,7 +797,8 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::CallExpression(e) => {
                     if e.callee.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.callee = expr_to_inject.take_in(ctx.ast);
+                        let new_callee = expr_to_inject.take_in(ctx);
+                        ctx.replace_expression(&mut e.callee, new_callee);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(
@@ -636,6 +815,44 @@ impl<'a> PeepholeOptimizations {
             _ => {}
         }
         false
+    }
+
+    /// Returns `true` when negating `test` does not add parentheses compared to
+    /// its original position as a conditional test. Equality comparisons invert
+    /// their operator in place (`a === b` -> `a !== b`); low-precedence tests
+    /// already need parentheses in a conditional, and other accepted expressions
+    /// negate to a bare `!test`.
+    fn can_fold_negated_test(test: &Expression<'_>) -> bool {
+        match test {
+            Expression::BinaryExpression(e) => e.operator.is_equality(),
+            Expression::LogicalExpression(_) => false,
+            _ => true,
+        }
+    }
+
+    /// Returns `true` if using `expr` as an operand of the logical operator `op`
+    /// (`&&` or `||`) adds parentheses compared to its original conditional position.
+    /// Sequences return `false` because both conditional tests and branches already
+    /// require parentheses around them.
+    fn logical_operand_adds_parens(
+        expr: &Expression<'_>,
+        op: LogicalOperator,
+        old_parent_precedence: Precedence,
+    ) -> bool {
+        match expr {
+            Expression::AssignmentExpression(_)
+            | Expression::YieldExpression(_)
+            | Expression::ArrowFunctionExpression(_) => old_parent_precedence < Precedence::Assign,
+            Expression::ConditionalExpression(_) => old_parent_precedence < Precedence::Conditional,
+            // `??` cannot be mixed with `&&`/`||` without parens, and `||` needs
+            // parens as an operand of `&&`. `&&` under `||`, and same-operator
+            // nesting (flattened by `join_with_left_associative_op`), do not.
+            Expression::LogicalExpression(e) => {
+                matches!(e.operator, LogicalOperator::Coalesce)
+                    || matches!((e.operator, op), (LogicalOperator::Or, LogicalOperator::And))
+            }
+            _ => false,
+        }
     }
 
     /// Returns `true` if the expression would need parentheses when used as a unary operand.

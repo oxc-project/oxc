@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.invalid-mutate-props-in-effect-fixpoint.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "This value cannot be modified", labels: [LabeledSpan { label: Some("`y` cannot be modified"), span: Span { start: 170, end: 171 }, primary: true }, LabeledSpan { label: Some("`y` originates here"), span: Span { start: 131, end: 132 }, primary: false }], help: Some("Do not mutate component props or hook arguments. If the value should change, update it where it is owned and pass an update callback, or use local state"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Immutability") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability") } }
+
+No changes.

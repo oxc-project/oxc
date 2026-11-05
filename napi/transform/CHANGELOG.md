@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.152.0] - 2026-09-28
+
+### 🚀 Features
+
+- f585cb4 napi: Add threadless WASI builds (#26898) (Boshen)
+
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- db44651 napi: Disable reuseWorker in browser bindings (#25640) (leaysgur)
+
+## [0.136.0] - 2026-06-15
+
+### 💥 BREAKING CHANGES
+
+- 7a24911 codegen: [**BREAKING**] Borrow sourcemaps from codegen (#23422) (Boshen)
+- bb0ed44 transformer: [**BREAKING**] Disable styled-components transpileTemplateLiterals by default (#23171) (Boshen)
+
+### 🚀 Features
+
+- ec266bb transformer: Run React Compiler as a feature-gated transform pass (#23201) (Boshen)
+
 ## [0.135.0] - 2026-06-08
 
 ### 🚀 Features

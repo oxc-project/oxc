@@ -149,6 +149,12 @@ unsafe fn dealloc_chunk(footer_ptr: NonNull<ChunkFooter>) {
         }
     }
 
+    // Mark the upcoming deallocation as a chunk operation, so the allocation-tracking
+    // task can exclude it from its heap metrics. Must be set immediately before the
+    // `dealloc` call, with no allocations in between.
+    #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+    crate::tracking::start_chunk_operation();
+
     // SAFETY: Each `ChunkFooter`'s `backing_alloc_ptr` and `layout` describe its backing allocation.
     // `is_fixed_size` is `false`, so backing allocation was made via global allocator.
     unsafe { alloc::dealloc(backing_alloc_ptr, layout) };

@@ -52,6 +52,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove empty braces
 
   ⚠ unicorn(require-module-specifiers): Empty import specifier is not allowed
+   ╭─[require_module_specifiers.tsx:1:21]
+ 1 │ import foo, /* { */ {} from "foo";
+   ·                     ──
+   ╰────
+  help: Remove empty braces
+
+  ⚠ unicorn(require-module-specifiers): Empty import specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:13]
  1 │ import type {} from "foo"
    ·             ──

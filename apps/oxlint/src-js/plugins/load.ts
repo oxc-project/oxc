@@ -84,12 +84,24 @@ interface CreateOnceRuleDetails extends RuleDetailsBase {
 // May be changed when switching workspaces.
 export let registeredRules: RuleDetails[] = [];
 
+// Names of loaded plugins.
+// May be changed when switching workspaces.
+export let registeredPluginNames = new Set<string>();
+
 /**
  * Set `registeredRules`. Used when switching workspaces.
  * @param rules - Array of `RuleDetails` objects
  */
 export function setRegisteredRules(rules: RuleDetails[]) {
   registeredRules = rules;
+}
+
+/**
+ * Set `registeredPluginNames`. Used when switching workspaces.
+ * @param pluginNames - Set of registered plugin names
+ */
+export function setRegisteredPluginNames(pluginNames: Set<string>) {
+  registeredPluginNames = pluginNames;
 }
 
 // `before` hook which makes rule never run.
@@ -140,6 +152,7 @@ export async function loadPlugin(
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @returns - Plugin details
  * @throws {Error} If `plugin.meta.name` is `null` / `undefined` and `packageName` not provided
+ * @throws {Error} If another plugin with the same name is already registered
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
  * @throws {TypeError} If `plugin.meta.name` is not a string
  */
@@ -157,6 +170,12 @@ export function registerPlugin(
   // In CLI, `workspaceUri` is `null`, and there's only 1 workspace, so no need to switch.
   // In LSP, there can be multiple workspaces, so we need to switch if we're not already in the right one.
   if (workspaceUri !== null) switchWorkspace(workspaceUri);
+
+  if (registeredPluginNames.has(pluginName)) {
+    throw new Error(
+      `Plugin name '${pluginName}' is already registered. Use a different name or an alias in \`jsPlugins\`.`,
+    );
+  }
 
   const offset = registeredRules.length;
   const { rules } = plugin;
@@ -184,10 +203,10 @@ export function registerPlugin(
         // `true` and `false` aren't valid values for `meta.fixable`, but we accept them for
         // backward compatibility with some ESLint plugins
         if (
-          fixable !== "code" &&
-          fixable !== "whitespace" &&
-          fixable !== true &&
-          fixable !== false
+          fixable !== "code"
+          && fixable !== "whitespace"
+          && fixable !== true
+          && fixable !== false
         ) {
           throw new TypeError("Invalid `rule.meta.fixable`");
         }
@@ -222,9 +241,9 @@ export function registerPlugin(
           // but that's what ESLint does, so it's OK.
           if (schemaValidator === null) {
             throw new Error(
-              `Rule ${fullRuleName}:\n` +
-                "Rules which accept options must provide a schema as `rule.meta.schema`, " +
-                "or disable schema validation with `rule.meta.schema: false` (not recommended).",
+              `Rule ${fullRuleName}:\n`
+                + "Rules which accept options must provide a schema as `rule.meta.schema`, "
+                + "or disable schema validation with `rule.meta.schema: false` (not recommended).",
             );
           }
           // Note: `defaultOptions` is not frozen yet
@@ -304,6 +323,8 @@ export function registerPlugin(
     registeredRules.push(ruleDetails);
   }
 
+  registeredPluginNames.add(pluginName);
+
   return { name: pluginName, offset, ruleNames };
 }
 
@@ -347,18 +368,21 @@ function getPluginName(
   if (pluginName !== null) return pluginName;
 
   throw new Error(
-    "Plugin must either define `meta.name`, be loaded from an NPM package with a `name` field in `package.json`, " +
-      "or be given an alias in config",
+    "Plugin must either define `meta.name`, be loaded from an NPM package with a `name` field in `package.json`, "
+      + "or be given an alias in config",
   );
 }
 
 /**
- * Normalize plugin name by stripping common ESLint plugin prefixes and suffixes.
+ * Normalize plugin name by stripping common plugin prefixes and suffixes.
  *
- * This handles the various naming conventions used in the ESLint ecosystem:
+ * This handles the various naming conventions used in the ESLint and Oxlint plugin ecosystems:
  * - `eslint-plugin-foo` -> `foo`
+ * - `oxlint-plugin-foo` -> `foo`
  * - `@scope/eslint-plugin` -> `@scope`
  * - `@scope/eslint-plugin-foo` -> `@scope/foo`
+ * - `@scope/oxlint-plugin` -> `@scope`
+ * - `@scope/oxlint-plugin-foo` -> `@scope/foo`
  *
  * This logic is replicated on Rust side in `normalize_plugin_name` in `crates/oxc_linter/src/config/plugins.rs`.
  * The 2 implementations must be kept in sync.
@@ -367,20 +391,30 @@ function getPluginName(
  * @returns Normalized plugin name
  */
 function normalizePluginName(name: string): string {
+  const pluginPrefixes = ["eslint-plugin", "oxlint-plugin"] as const;
   const slashIndex = name.indexOf("/");
 
-  // If no slash, it's a non-scoped package. Trim off `eslint-plugin-` prefix.
+  // If no slash, it's a non-scoped package. Trim off a known plugin prefix.
   if (slashIndex === -1) {
-    return name.startsWith("eslint-plugin-") ? name.slice("eslint-plugin-".length) : name;
+    for (const prefix of pluginPrefixes) {
+      const prefixWithDash = `${prefix}-`;
+      if (name.startsWith(prefixWithDash)) return name.slice(prefixWithDash.length);
+    }
+    return name;
   }
 
   const scope = name.slice(0, slashIndex),
     rest = name.slice(slashIndex + 1);
 
-  // `@scope/eslint-plugin` -> `@scope`
-  if (rest === "eslint-plugin") return scope;
-  // `@scope/eslint-plugin-foo` -> `@scope/foo`
-  if (rest.startsWith("eslint-plugin-")) return `${scope}/${rest.slice("eslint-plugin-".length)}`;
+  for (const prefix of pluginPrefixes) {
+    // `@scope/eslint-plugin` -> `@scope`
+    // `@scope/oxlint-plugin` -> `@scope`
+    if (rest === prefix) return scope;
+    // `@scope/eslint-plugin-foo` -> `@scope/foo`
+    // `@scope/oxlint-plugin-foo` -> `@scope/foo`
+    const prefixWithDash = `${prefix}-`;
+    if (rest.startsWith(prefixWithDash)) return `${scope}/${rest.slice(prefixWithDash.length)}`;
+  }
 
   // No normalization needed
   return name;
@@ -419,8 +453,8 @@ function conformDefaultOptions(defaultOptions: Options): Options {
   if (containsInfinity) {
     const plainJson = JSON.stringify(defaultOptions);
     if (
-      plainJson.includes(POS_INFINITY_PLACEHOLDER) ||
-      plainJson.includes(NEG_INFINITY_PLACEHOLDER)
+      plainJson.includes(POS_INFINITY_PLACEHOLDER)
+      || plainJson.includes(NEG_INFINITY_PLACEHOLDER)
     ) {
       throw new Error(
         `\`rule.meta.defaultOptions\` cannot contain the strings "${POS_INFINITY_PLACEHOLDER}" or "${NEG_INFINITY_PLACEHOLDER}"`,

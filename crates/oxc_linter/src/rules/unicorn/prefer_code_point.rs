@@ -17,8 +17,8 @@ pub struct PreferCodePoint;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefers usage of `String.prototype.codePointAt` over `String.prototype.charCodeAt`.
-    /// Prefers usage of `String.fromCodePoint` over `String.fromCharCode`.
+    /// Prefer usage of `String#codePointAt` over `String#charCodeAt`.
+    /// Prefer usage of `String.fromCodePoint` over `String.fromCharCode`.
     ///
     /// ### Why is this bad?
     ///
@@ -42,8 +42,10 @@ declare_oxc_lint!(
     PreferCodePoint,
     unicorn,
     pedantic,
-    fix,
+    recommended,
+    fix_dangerous,
     version = "0.0.16",
+    short_description = "Prefer `String#codePointAt` over `String#charCodeAt` and `String.fromCodePoint` over `String.fromCharCode`.",
 );
 
 impl Rule for PreferCodePoint {
@@ -53,20 +55,22 @@ impl Rule for PreferCodePoint {
         };
 
         let (span, property_name) = member_expr.static_property_info();
-        let (current, replacement) = match property_name {
-            "fromCharCode" => {
+        let (current, replacement) = match property_name.as_str() {
+            Some("fromCharCode") => {
                 if !member_expr.object.is_specific_id("String") {
                     return;
                 }
                 ("fromCharCode", "fromCodePoint")
             }
-            "charCodeAt" => {
+            Some("charCodeAt") => {
                 let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(node.id()) else {
                     return;
                 };
                 if call_expr.optional
                     || call_expr.callee.as_member_expression().and_then(|callee| {
-                        callee.static_property_info().map(|(_, property_name)| property_name)
+                        callee
+                            .static_property_info()
+                            .and_then(|(_, property_name)| property_name.as_str())
                     }) != Some("charCodeAt")
                 {
                     return;
@@ -76,7 +80,7 @@ impl Rule for PreferCodePoint {
             _ => return,
         };
 
-        ctx.diagnostic_with_fix(
+        ctx.diagnostic_with_dangerous_fix(
             prefer_code_point_diagnostic(span, replacement, current),
             |fixer| fixer.replace(span, replacement),
         );
@@ -85,6 +89,7 @@ impl Rule for PreferCodePoint {
 
 #[test]
 fn test() {
+    use crate::fixer::FixKind;
     use crate::tester::Tester;
 
     let pass = vec![
@@ -121,15 +126,40 @@ fn test() {
     ];
 
     let fix = vec![
-        ("string.charCodeAt(index)", "string.codePointAt(index)"),
+        ("string.charCodeAt(index)", "string.codePointAt(index)", None, FixKind::DangerousFix),
         (
             "(( (( String )).fromCharCode( ((code)), ) ))",
             "(( (( String )).fromCodePoint( ((code)), ) ))",
+            None,
+            FixKind::DangerousFix,
         ),
-        ("String.fromCharCode.bind(String)", "String.fromCodePoint.bind(String)"),
-        ("const x = String.fromCharCode", "const x = String.fromCodePoint"),
-        (r#""🦄".charCodeAt(0)"#, r#""🦄".codePointAt(0)"#),
-        ("String.fromCharCode(0x1f984);", "String.fromCodePoint(0x1f984);"),
+        (
+            "String.fromCharCode.bind(String)",
+            "String.fromCodePoint.bind(String)",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (
+            "const x = String.fromCharCode",
+            "const x = String.fromCodePoint",
+            None,
+            FixKind::DangerousFix,
+        ),
+        (r#""🦄".charCodeAt(0)"#, r#""🦄".codePointAt(0)"#, None, FixKind::DangerousFix),
+        (
+            "String.fromCharCode(0x1f984);",
+            "String.fromCodePoint(0x1f984);",
+            None,
+            FixKind::DangerousFix,
+        ),
+        // `--fix` alone must not rewrite this. The result feeds a bitwise operator, so
+        // the rename changes the value for astral input. Only `--fix-dangerously` applies it.
+        (
+            "hash ^= string.charCodeAt(index)",
+            "hash ^= string.charCodeAt(index)",
+            None,
+            FixKind::SafeFix,
+        ),
     ];
 
     Tester::new(PreferCodePoint::NAME, PreferCodePoint::PLUGIN, pass, fail)

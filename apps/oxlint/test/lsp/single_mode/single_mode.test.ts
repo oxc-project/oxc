@@ -9,7 +9,7 @@ describe("LSP single file mode linting", () => {
     it.each([
       { path: "basic/test.ts", languageId: "typescript" },
       { path: "with-config-same-level/test.ts", languageId: "typescript" },
-    ])("should handle %s", async ({ path, languageId }) => {
+    ])("should handle $path", async ({ path, languageId }) => {
       expect(await lintSingleFileFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
     });
   });

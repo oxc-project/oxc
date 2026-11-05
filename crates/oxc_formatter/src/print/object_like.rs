@@ -1,11 +1,12 @@
 use oxc_ast::ast::*;
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::source_text::SourceTextExt as _;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, Format, JsFormatContext, JsFormatter, JsFormatterExt as _,
+        JsFormatContext, JsFormatter, JsFormatterExt as _,
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
         trivia::format_dangling_comments,
     },
@@ -16,8 +17,8 @@ use crate::{
 
 #[derive(Clone, Copy)]
 pub enum ObjectLike<'a, 'b> {
-    ObjectExpression(&'b AstNode<'a, ObjectExpression<'a>>),
-    TSTypeLiteral(&'b AstNode<'a, TSTypeLiteral<'a>>),
+    ObjectExpression(&'b AstNode<'b, 'a, ObjectExpression<'a>>),
+    TSTypeLiteral(&'b AstNode<'b, 'a, TSTypeLiteral<'a>>),
 }
 
 impl<'a> ObjectLike<'a, '_> {
@@ -46,7 +47,7 @@ impl<'a> ObjectLike<'a, '_> {
                     }
                     AstNodes::TSThisParameter(param) => {
                         matches!(param.parent(), AstNodes::Function(func) if {
-                            should_hug_function_parameters(func.params(), Some(param), false, f)
+                            should_hug_function_parameters(&func.params(), Some(**param), false, f)
                         })
                     },
                     _ => false,
@@ -73,18 +74,6 @@ impl<'a> ObjectLike<'a, '_> {
         }
     }
 
-    /// Check if the object is inside a JSX spread attribute or JSX spread child.
-    /// In these contexts, empty objects with comments should use soft line breaks
-    /// so they can stay on one line if they fit.
-    fn is_inside_jsx_spread(&self) -> bool {
-        match self {
-            Self::ObjectExpression(o) => {
-                matches!(o.parent(), AstNodes::JSXSpreadAttribute(_) | AstNodes::JSXSpreadChild(_))
-            }
-            Self::TSTypeLiteral(_) => false,
-        }
-    }
-
     fn write_members(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::ObjectExpression(o) => o.properties().fmt(f),
@@ -100,15 +89,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectLike<'a, '_> {
         write!(f, "{");
 
         if self.members_are_empty() {
-            // In JSX spread attributes/children, use soft indent so the object
-            // can stay on one line if it fits (e.g., `<div {...{/* comment */}} />`).
-            // In other contexts like variable declarations, use block indent to
-            // expand the object (e.g., `var a = {\n  /* comment */\n};`).
-            if self.is_inside_jsx_spread() {
-                write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
-            } else {
-                write!(f, format_dangling_comments(self.span()).with_block_indent());
-            }
+            // Soft indent so the object can stay on one line if it fits:
+            // a single one-line block comment stays inline without bracket spacing
+            // line comments and multiple comments still expand.
+            write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
         } else {
             let should_insert_space_around_brackets = f.options().bracket_spacing.value();
             let should_expand =

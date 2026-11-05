@@ -1,0 +1,26 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# A root block scalar with indentation indicator 1 puts its content in column 0:
+# the printer asks for a zero-width `align`, which used to panic.
+--- |1-
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# A root block scalar with indentation indicator 1 puts its content in column 0:
+# the printer asks for a zero-width `align`, which used to panic.
+---
+|1-
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# A root block scalar with indentation indicator 1 puts its content in column 0:
+# the printer asks for a zero-width `align`, which used to panic.
+---
+|1-
+
+===================== End =====================

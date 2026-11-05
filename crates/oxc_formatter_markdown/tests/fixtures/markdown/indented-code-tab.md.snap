@@ -1,0 +1,24 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<!-- Indented code stays indented: two spaces and a tab are a 4-column indent too -->
+
+  	foo	baz		bim
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<!-- Indented code stays indented: two spaces and a tab are a 4-column indent too -->
+
+    foo	baz		bim
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<!-- Indented code stays indented: two spaces and a tab are a 4-column indent too -->
+
+    foo	baz		bim
+
+===================== End =====================

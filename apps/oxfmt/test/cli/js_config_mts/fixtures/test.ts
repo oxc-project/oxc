@@ -1,0 +1,1 @@
+const answer = 42;

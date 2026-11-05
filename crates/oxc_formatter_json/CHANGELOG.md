@@ -4,6 +4,98 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2026-11-02
+
+### ⚡ Performance
+
+- 8239dac parser: Replace dragonbox_ecma with zmij_ecma (#28282) (Boshen)
+
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 8b02e90 formatter_json: Reject invalid JSON instead of dropping them (#27785) (leaysgur)
+- 6fe4c1b formatter: Treat lone CR in JSX text and argument blank lines (#27780) (leaysgur)
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+- 99077ef formatter_json: Reject unary expressions other than signed numbers (#27728) (leaysgur)
+- 22cd4cd formatter_json: Handle holey array and comments (#27727) (leaysgur)
+
+### ⚡ Performance
+
+- e5fdc9c formatter_core: Write into one element stack through a concrete `Formatter` (#27559) (leaysgur)
+
+## [0.72.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- fd4ddce formatter_json: Flatten block comment only array|object (#27274) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- dc45cc3 formatter_test: Test Prettier dynamic snippet tests (#26469) (leaysgur)
+
+## [0.63.0] - 2026-08-10
+
+### 🐛 Bug Fixes
+
+- 2eaede9 formatter_core: Unify leading-BOM handlings (#25340) (leaysgur)
+
+## [0.62.0] - 2026-08-03
+
+### 🐛 Bug Fixes
+
+- f56009a oxfmt: Correct prose about comment width in fits measurement (#25054) (leaysgur)
+
+### ⚡ Performance
+
+- b91d5a8 formatter_css,formatter_graphql,formatter_yaml,formatter_json: Pre alloc IR buffers (#25234) (leaysgur)
+
+### 📚 Documentation
+
+- eaa7c69 formatter_core: Extract FORMATTER_POLICY (#25233) (leaysgur)
+- a1842e2 formatter_json: Fix outdated separeted.rs comments (#25144) (leaysgur)
+
+## [0.60.0] - 2026-07-20
+
+### 🚀 Features
+
+- 3d22307 parser: Add `ParseOptions::enable_ident_hashes` (#24491) (Boshen)
+
+## [0.58.0] - 2026-07-06
+
+### 🐛 Bug Fixes
+
+- 0a6b16c formatter_json: Preserve key and literal value for json-stringify (#23996) (leaysgur)
+
+## [0.57.0] - 2026-06-29
+
+### 🐛 Bug Fixes
+
+- 8c07cad all: Enable `disable_old_builder` Cargo feature for `oxc_ast` crate in tests (#23888) (overlookmotel)
+
+## [0.56.0] - 2026-06-22
+
+### 🐛 Bug Fixes
+
+- f21ed2c formatter_json: Normalize CRLF for suppressed text (#23702) (leaysgur)
+- 8fa7394 formatter_json: Handle wrapped error span (#23472) (leaysgur)
+
+## [0.55.0] - 2026-06-15
+
+### 🚀 Features
+
+- 8cc82c4 formatter_json: Implement json-stringify variant (#23192) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- b0b5d39 formatter_json: Support JSON5/JSON6 value in json/jsonc/json5 (#23193) (leaysgur)
+
+### 📚 Documentation
+
+- 4986613 formatter_json: Update AGENTS.md (#23199) (leaysgur)
+
 ## [0.54.0] - 2026-06-08
 
 ### 🚀 Features

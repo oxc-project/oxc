@@ -49,7 +49,7 @@ describe("visit", () => {
     const code = "const x = { y: 123 }";
     const { program } = parseSync("test.js", code);
 
-    const visited = [];
+    const visited: string[] = [];
     const visitor = new Visitor({
       Program(node) {
         visited.push(`enter: ${node.type}`);
@@ -133,7 +133,7 @@ describe("visit", () => {
     const code = "type T = string | Q;";
     const { program } = parseSync("test.ts", code);
 
-    const visited = [];
+    const visited: string[] = [];
     const visitor = new Visitor({
       Program(node) {
         visited.push(`enter: ${node.type}`);
@@ -206,7 +206,7 @@ describe("visit", () => {
   });
 
   it("reuse visitor", () => {
-    const visited = [];
+    const visited: string[] = [];
     const visitor = new Visitor({
       Program(node) {
         visited.push(`enter: ${node.type}`);
@@ -261,4 +261,29 @@ it("visitor keys", () => {
   expect(visitorKeys.ObjectPattern).toEqual(["decorators", "properties", "typeAnnotation"]);
   expect(visitorKeys.ParenthesizedExpression).toEqual(["expression"]);
   expect(visitorKeys.V8IntrinsicExpression).toEqual(["name", "arguments"]);
+});
+
+it("emits node keys in a stable order", () => {
+  const { program } = parseSync(
+    "test.ts",
+    "const fn = async <T>(arg: T): Promise<T> => await arg;",
+  );
+  const [declaration] = program.body;
+  if (declaration.type !== "VariableDeclaration") throw new Error("Expected variable declaration");
+  const [{ init }] = declaration.declarations;
+  if (init?.type !== "ArrowFunctionExpression") throw new Error("Expected arrow function");
+
+  expect(Object.keys(init)).toStrictEqual([
+    "type",
+    "expression",
+    "async",
+    "typeParameters",
+    "params",
+    "returnType",
+    "body",
+    "id",
+    "generator",
+    "start",
+    "end",
+  ]);
 });

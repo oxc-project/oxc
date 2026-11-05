@@ -1,0 +1,114 @@
+---
+source: crates/oxc_formatter_graphql/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  base(list: [], obj: {}, nested: { a: [], b: {} }, mixed: [[], {}])
+  a(x: {
+    # only
+  })
+  b(x: [
+    # only
+  ])
+  c(x: {
+    # leading
+    foo: 1
+  })
+  d(x: {
+    foo: 1
+    # trailing
+  })
+  e(x: [
+    # leading
+    1
+  ])
+  f(x: [
+    1
+    # trailing
+  ])
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+{
+  base(list: [], obj: {}, nested: { a: [], b: {} }, mixed: [[], {}])
+  a(
+    x: {
+      # only
+    }
+  )
+  b(
+    x: [
+      # only
+    ]
+  )
+  c(
+    x: {
+      # leading
+      foo: 1
+    }
+  )
+  d(
+    x: {
+      foo: 1
+      # trailing
+    }
+  )
+  e(
+    x: [
+      # leading
+      1
+    ]
+  )
+  f(
+    x: [
+      1
+      # trailing
+    ]
+  )
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+{
+  base(list: [], obj: {}, nested: { a: [], b: {} }, mixed: [[], {}])
+  a(
+    x: {
+      # only
+    }
+  )
+  b(
+    x: [
+      # only
+    ]
+  )
+  c(
+    x: {
+      # leading
+      foo: 1
+    }
+  )
+  d(
+    x: {
+      foo: 1
+      # trailing
+    }
+  )
+  e(
+    x: [
+      # leading
+      1
+    ]
+  )
+  f(
+    x: [
+      1
+      # trailing
+    ]
+  )
+}
+
+===================== End =====================

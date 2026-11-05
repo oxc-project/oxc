@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, BindingPattern, Expression, match_simple_assignment_target},
+    ast::{AssignmentTarget, BindingPattern, match_simple_assignment_target},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -96,6 +96,7 @@ declare_oxc_lint!(
     NoThisAlias,
     typescript,
     correctness,
+    recommended,
     config = NoThisAliasConfig,
     version = "0.0.7",
     short_description = "Disallow aliasing of `this`.",
@@ -103,15 +104,16 @@ declare_oxc_lint!(
 
 impl Rule for NoThisAlias {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+        let AstKind::ThisExpression(this) = node.kind() else { return };
+        match ctx.nodes().parent_kind(node.id()) {
             AstKind::VariableDeclarator(decl) => {
                 let Some(init) = &decl.init else { return };
 
-                if !rhs_is_this_reference(init) {
+                if init.span() != this.span {
                     return;
                 }
 
@@ -131,7 +133,7 @@ impl Rule for NoThisAlias {
                 ctx.diagnostic(no_this_destructure_diagnostic(decl.id.span()));
             }
             AstKind::AssignmentExpression(assignment) => {
-                if !rhs_is_this_reference(&assignment.right) {
+                if assignment.right.span() != this.span {
                     return;
                 }
                 match &assignment.left {
@@ -170,16 +172,18 @@ impl Rule for NoThisAlias {
     }
 }
 
-#[inline]
-fn rhs_is_this_reference(rhs_expression: &Expression) -> bool {
-    matches!(rhs_expression, Expression::ThisExpression(_))
-}
-
 #[test]
 fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("const self = (this);", None),
+        ("const self = this as Foo;", None),
+        ("this.value = other;", None),
+        ("this.self = this;", None),
+        ("const self = [this];", None),
+        ("function f(value = this) {}", None),
+        ("({value} = this);", None),
         // allow destructuring
         (
             "const { props, state } = this;",
@@ -200,6 +204,7 @@ fn test() {
 
     let fail = vec![
         ("const self = this;", None),
+        ("let self; self ||= this;", None),
         (
             "const { props, state } = this;",
             Some(serde_json::json!([{ "allowDestructuring": false }])),

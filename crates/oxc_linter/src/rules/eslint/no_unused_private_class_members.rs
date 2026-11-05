@@ -8,7 +8,10 @@ use oxc_syntax::class::ElementKind;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_unused_private_class_members_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
+fn no_unused_private_class_members_diagnostic(
+    name: impl std::fmt::Display,
+    span: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is defined but never used."))
         .with_help("Remove the declaration or use it in the code.")
         .with_label(span)
@@ -88,6 +91,8 @@ declare_oxc_lint!(
     NoUnusedPrivateClassMembers,
     eslint,
     correctness,
+    recommended,
+    pending,
     version = "0.1.1",
     short_description = "Disallow unused private class members.",
 );
@@ -108,7 +113,7 @@ impl Rule for NoUnusedPrivateClassMembers {
                     })
                 {
                     ctx.diagnostic(no_unused_private_class_members_diagnostic(
-                        &element.name,
+                        element.name.display(),
                         element.span,
                     ));
                 }
@@ -249,17 +254,7 @@ fn is_value_context(parent: &AstNode, child: &AstNode, semantic: &Semantic<'_>) 
             // The right-hand side of an assignment is always in a value context (being read for assignment)
             assign_expr.right.span().contains_inclusive(child.span())
         }
-        AstKind::ExpressionStatement(_) => {
-            let grandparent = semantic.nodes().parent_node(parent.id());
-            if let AstKind::FunctionBody(_) = grandparent.kind()
-                && let AstKind::ArrowFunctionExpression(arrow) =
-                    semantic.nodes().parent_kind(grandparent.id())
-                && arrow.expression
-            {
-                return true;
-            }
-            false
-        }
+        AstKind::ArrowFunctionExpression(arrow) => arrow.is_expression(),
         AstKind::ParenthesizedExpression(_)
         | AstKind::TSAsExpression(_)
         | AstKind::TSSatisfiesExpression(_)

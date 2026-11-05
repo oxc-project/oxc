@@ -78,15 +78,16 @@ declare_oxc_lint!(
     NoNamespace,
     import,
     style,
-    pending,  // TODO: fixer
+    pending, // TODO: fixer
     config = NoNamespaceConfig,
     version = "0.12.0",
+    short_description = "Forbid namespace (also known as wildcard `*`) imports.",
 );
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-namespace.md>
 impl Rule for NoNamespace {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

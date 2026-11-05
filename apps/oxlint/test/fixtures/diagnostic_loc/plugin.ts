@@ -10,6 +10,37 @@ const plugin: Plugin = {
         let debuggerCount = 0;
         return {
           Program(_node) {
+            if (context.filename.endsWith("negative-loc.js")) {
+              context.report({
+                message: "Negative location",
+                loc: { start: { line: 1, column: -1 } },
+              });
+              return;
+            }
+
+            if (context.filename.endsWith("negative-node.js")) {
+              context.report({
+                message: "Negative node",
+                node: { range: [-1, 0] } as never,
+              });
+              return;
+            }
+
+            if (context.filename.endsWith("out-of-range-node.js")) {
+              context.report({
+                message: "Out-of-range node",
+                node: { range: [999, 1000] } as never,
+              });
+              return;
+            }
+
+            context.report({
+              message: "Misaligned location",
+              loc: {
+                start: { line: 1, column: 3 },
+                end: { line: 1, column: 1 },
+              },
+            });
             context.report({
               message: "Bugger debugger debug!",
               loc: {
@@ -19,6 +50,8 @@ const plugin: Plugin = {
             });
           },
           DebuggerStatement(_node) {
+            if (context.filename.endsWith("out-of-range-node.js")) return;
+
             debuggerCount++;
             context.report({
               message: "Bugger!",

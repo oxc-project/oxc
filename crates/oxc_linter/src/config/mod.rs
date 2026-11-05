@@ -20,7 +20,7 @@ pub use ignore_matcher::LintIgnoreMatcher;
 pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
 pub use plugins::LintPlugins;
-pub use rules::{ESLintRule, OxlintRules};
+pub use rules::{ESLintRule, OxlintRules, normalize_rule_name};
 pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
 
 pub use oxc_config::GlobSet;

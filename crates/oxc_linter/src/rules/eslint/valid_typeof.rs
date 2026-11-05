@@ -1,9 +1,10 @@
+use schemars::JsonSchema;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span, best_match};
 use oxc_syntax::operator::UnaryOperator;
-use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
@@ -88,6 +89,7 @@ declare_oxc_lint!(
     ValidTypeof,
     eslint,
     correctness,
+    recommended,
     conditional_fix,
     config = ValidTypeof,
     version = "0.0.3",
@@ -96,7 +98,7 @@ declare_oxc_lint!(
 
 impl Rule for ValidTypeof {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -124,8 +126,11 @@ impl Rule for ValidTypeof {
         };
 
         if let Expression::StringLiteral(lit) = sibling {
-            if !VALID_TYPES.contains(&lit.value.as_str()) {
-                let help = get_typo_suggestion(lit.value.as_str())
+            if lit.value.as_str().is_none_or(|value| !VALID_TYPES.contains(&value)) {
+                let help = lit
+                    .value
+                    .as_str()
+                    .and_then(get_typo_suggestion)
                     .map(|suggestion| format!("Did you mean `\"{suggestion}\"`?"));
                 ctx.diagnostic(invalid_value(help, sibling.span()));
             }
@@ -135,8 +140,10 @@ impl Rule for ValidTypeof {
         if let Expression::TemplateLiteral(template) = sibling
             && let Some(quasi) = template.single_quasi()
         {
-            if !VALID_TYPES.contains(&quasi.as_str()) {
-                let help = get_typo_suggestion(quasi.as_str())
+            if quasi.as_str().is_none_or(|value| !VALID_TYPES.contains(&value)) {
+                let help = quasi
+                    .as_str()
+                    .and_then(get_typo_suggestion)
                     .map(|suggestion| format!("Did you mean `\"{suggestion}\"`?"));
                 ctx.diagnostic(invalid_value(help, sibling.span()));
             }
@@ -144,8 +151,8 @@ impl Rule for ValidTypeof {
         }
 
         if let Expression::Identifier(ident) = sibling
-            && ident.name == "undefined"
-            && ctx.scoping().root_unresolved_references().contains_key(&ident.name)
+            && ident.is_undefined()
+            && ctx.is_reference_to_global_variable(ident)
         {
             ctx.diagnostic_with_fix(
                 if self.require_string_literals {
@@ -219,6 +226,10 @@ fn test() {
         ("typeof foo === `string`", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
         ("`object` === typeof foo", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
         ("typeof foo === `str${somethingElse}`", None), // { "ecmaVersion": 6 }
+        (
+            "function f(x, u) { const undefined = u; return typeof x === undefined; }; var y = undefined;",
+            None,
+        ),
     ];
 
     let fail = vec![

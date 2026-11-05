@@ -3,7 +3,6 @@ use std::ops::Deref;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::Semantic;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -11,7 +10,7 @@ use serde_json::Value;
 
 use crate::{
     AstNode,
-    ast_util::{get_function_name_with_kind, iter_outer_expressions},
+    ast_util::{get_function_name_with_kind, is_iife},
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::count_comment_lines,
@@ -70,16 +69,12 @@ impl Deref for MaxLinesPerFunction {
     }
 }
 
-#[cfg(feature = "ruledocs")]
-impl MaxLinesPerFunction {
-    #[expect(clippy::unnecessary_wraps)]
-    pub fn config_schema(
-        r#gen: &mut schemars::r#gen::SchemaGenerator,
-    ) -> Option<schemars::schema::Schema> {
-        let mut schema = r#gen.subschema_for::<MaxLinesPerFunctionConfig>();
-        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
-        Some(schema)
-    }
+#[derive(Debug, JsonSchema, Deserialize)]
+#[serde(untagged)]
+#[expect(unused)]
+enum MaxLinesPerFunctionConfigEnum {
+    Number(u32),
+    Object(MaxLinesPerFunctionConfig),
 }
 
 declare_oxc_lint!(
@@ -130,8 +125,9 @@ declare_oxc_lint!(
     MaxLinesPerFunction,
     eslint,
     pedantic,
-    config = MaxLinesPerFunctionConfig,
+    config = MaxLinesPerFunctionConfigEnum,
     version = "0.15.12",
+    short_description = "Enforce a maximum number of lines of code in a function.",
 );
 
 impl Rule for MaxLinesPerFunction {
@@ -149,8 +145,7 @@ impl Rule for MaxLinesPerFunction {
                 iifes: false,
             })))
         } else {
-            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .map(DefaultRuleConfig::into_inner)
+            DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
         }
     }
 
@@ -191,15 +186,6 @@ impl Rule for MaxLinesPerFunction {
             ctx.diagnostic(max_lines_per_function_diagnostic(&name, final_lines, self.max, span));
         }
     }
-}
-
-fn is_iife<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
-    let Some(AstKind::CallExpression(call)) =
-        iter_outer_expressions(semantic.nodes(), node.id()).next()
-    else {
-        return false;
-    };
-    call.callee.span().contains_inclusive(node.span())
 }
 
 #[test]
@@ -403,7 +389,7 @@ fn test() {
         ),
     ];
 
-    let repeat_60 = format!("() => {{{}}}", &"foo\n".repeat(60));
+    let repeat_60 = format!("() => {{{}}}", "foo\n".repeat(60));
 
     let fail = vec![
         (

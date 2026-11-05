@@ -1,14 +1,15 @@
-use std::mem;
-
 use oxc_ast::Comment;
+use oxc_formatter_core::{FormatElement, SourceText};
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    external_formatter::ExternalCallbacks, formatter::FormatElement, options::JsFormatOptions,
+    JsEmbeddedIn,
+    options::{JsFormatOptions, QuoteStyle},
+    utils::assignment_like::AssignmentLikeLayout,
 };
 
-use super::{Comments, SourceText};
+use super::Comments;
 
 /// Entry in the Tailwind context stack, tracking whether we're inside a Tailwind class context.
 #[derive(Clone, Copy, Debug)]
@@ -30,11 +31,6 @@ pub struct TailwindContextEntry {
     /// Whether this is the last quasi in a template literal.
     /// Used for template element boundary detection.
     pub is_last_quasi: bool,
-    /// Whether Tailwind sorting is disabled in this context.
-    /// Used to prevent sorting strings inside nested non-Tailwind call expressions.
-    /// For example, in `classNames("a", x.includes("\n") ? "b" : "c")`, the `"\n"`
-    /// inside `includes()` should NOT be sorted as a Tailwind class.
-    pub disabled: bool,
 }
 
 impl TailwindContextEntry {
@@ -47,7 +43,6 @@ impl TailwindContextEntry {
             quasi_after_has_leading_ws: true,   // Default: can collapse
             is_first_quasi: true,
             is_last_quasi: true,
-            disabled: false,
         }
     }
 
@@ -65,7 +60,6 @@ impl TailwindContextEntry {
             quasi_after_has_leading_ws,
             is_first_quasi: true,
             is_last_quasi: true,
-            disabled: false,
         }
     }
 
@@ -82,14 +76,15 @@ impl TailwindContextEntry {
 /// Context object storing data relevant when formatting an object.
 pub struct JsFormatContext<'ast> {
     options: JsFormatOptions,
-
     source_text: SourceText<'ast>,
-
     source_type: SourceType,
-
     comments: Comments<'ast>,
 
     cached_elements: FxHashMap<Span, FormatElement<'ast>>,
+    /// One-shot handoff of the assignment layout to the arrow expression on the RHS of an assignment-like,
+    /// keyed by the arrow's span so no other node can consume it.
+    /// Set (and cleared) by `WithAssignmentLayout` around formatting the arrow, taken by the arrow's `write`.
+    arrow_assignment_layout: Option<(Span, AssignmentLikeLayout)>,
 
     /// Tracks whether quotes are needed for properties in the current object-like node.
     ///
@@ -98,15 +93,15 @@ pub struct JsFormatContext<'ast> {
     /// structures (e.g., `{ a: { "b-c": 1 } }` where only the inner object needs quoted keys).
     quote_needed_stack: Vec<bool>,
 
-    /// Collected Tailwind CSS class strings from JSX attributes.
-    /// These will be sorted by an external callback and replaced during printing.
-    tailwind_classes: Vec<String>,
+    /// Stack tracking whether we're inside a Tailwind class context, read by [`Self::tailwind_context`].
+    /// - `None` hides the context below it, inside a nested non-Tailwind call
+    tailwind_context_stack: Vec<Option<TailwindContextEntry>>,
 
-    /// Stack tracking whether we're inside a Tailwind class context.
-    /// When non-empty, StringLiterals should be sorted as Tailwind classes.
-    tailwind_context_stack: Vec<TailwindContextEntry>,
-
-    external_callbacks: ExternalCallbacks,
+    /// Set only for an embedded program (see [`crate::format_to_ir`]):
+    /// its sole statement prints without its semicolon.
+    embedding_omits_semicolon: bool,
+    /// What an embedded program is embedded in (see [`crate::format_to_ir`]).
+    embedded_in: Option<JsEmbeddedIn>,
 }
 
 impl std::fmt::Debug for JsFormatContext<'_> {
@@ -118,7 +113,6 @@ impl std::fmt::Debug for JsFormatContext<'_> {
             .field("comments", &self.comments)
             .field("cached_elements", &self.cached_elements)
             .field("quote_needed_stack", &self.quote_needed_stack)
-            .field("tailwind_classes", &self.tailwind_classes)
             .finish()
     }
 }
@@ -133,10 +127,6 @@ impl oxc_formatter_core::FormatContext for JsFormatContext<'_> {
     fn source_code(&self) -> &str {
         &self.source_text
     }
-
-    fn get_tailwind_class(&self, idx: usize) -> Option<&str> {
-        self.tailwind_classes.get(idx).map(String::as_str)
-    }
 }
 
 impl<'ast> JsFormatContext<'ast> {
@@ -145,7 +135,6 @@ impl<'ast> JsFormatContext<'ast> {
         source_type: SourceType,
         comments: &'ast [Comment],
         options: JsFormatOptions,
-        external_callbacks: Option<ExternalCallbacks>,
     ) -> Self {
         let source_text = SourceText::new(source_text);
         Self {
@@ -154,10 +143,11 @@ impl<'ast> JsFormatContext<'ast> {
             source_type,
             comments: Comments::new(source_text, comments),
             cached_elements: FxHashMap::default(),
+            arrow_assignment_layout: None,
             quote_needed_stack: Vec::new(),
-            tailwind_classes: Vec::new(),
             tailwind_context_stack: Vec::new(),
-            external_callbacks: external_callbacks.unwrap_or_default(),
+            embedding_omits_semicolon: false,
+            embedded_in: None,
         }
     }
 
@@ -191,6 +181,36 @@ impl<'ast> JsFormatContext<'ast> {
         self.cached_elements.insert(key.span(), formatted);
     }
 
+    /// See the [`Self::arrow_assignment_layout`] field.
+    pub(crate) fn set_arrow_assignment_layout(&mut self, span: Span, layout: AssignmentLikeLayout) {
+        debug_assert!(
+            self.arrow_assignment_layout.is_none(),
+            "a previous arrow assignment layout was neither taken nor cleared"
+        );
+        self.arrow_assignment_layout = Some((span, layout));
+    }
+
+    /// See the [`Self::arrow_assignment_layout`] field.
+    pub(crate) fn take_arrow_assignment_layout(
+        &mut self,
+        span: Span,
+    ) -> Option<AssignmentLikeLayout> {
+        match self.arrow_assignment_layout {
+            Some((key, layout)) if key == span => {
+                self.arrow_assignment_layout = None;
+                Some(layout)
+            }
+            _ => None,
+        }
+    }
+
+    /// See the [`Self::arrow_assignment_layout`] field.
+    /// Clears a layout left behind when the arrow was printed without running
+    /// `write` (a suppressed arrow prints its source verbatim instead).
+    pub(crate) fn clear_arrow_assignment_layout(&mut self) {
+        self.arrow_assignment_layout = None;
+    }
+
     /// Pushes a new quote needed state onto the stack.
     pub fn push_quote_needed(&mut self, needed: bool) {
         debug_assert!(
@@ -213,28 +233,41 @@ impl<'ast> JsFormatContext<'ast> {
         *self.quote_needed_stack.last().unwrap_or(&false)
     }
 
-    /// Add a Tailwind CSS class string found in JSX attributes.
-    /// Returns the index where the class was stored.
-    pub fn add_tailwind_class(&mut self, class: String) -> usize {
-        let index = self.tailwind_classes.len();
-        self.tailwind_classes.push(class);
-        index
+    pub(crate) fn set_embedding_omits_semicolon(&mut self, omit: bool) {
+        self.embedding_omits_semicolon = omit;
     }
 
-    /// Take all collected Tailwind classes, clearing the internal storage.
-    pub fn take_tailwind_classes(&mut self) -> Vec<String> {
-        mem::take(&mut self.tailwind_classes)
+    pub(crate) fn embedding_omits_semicolon(&self) -> bool {
+        self.embedding_omits_semicolon
     }
 
-    /// Set the collected Tailwind CSS classes.
-    pub fn set_tailwind_classes(&mut self, classes: Vec<String>) {
-        self.tailwind_classes = classes;
+    pub(crate) fn set_embedded_in(&mut self, embedded_in: Option<JsEmbeddedIn>) {
+        self.embedded_in = embedded_in;
+    }
+
+    /// An HTML attribute's value (see [`JsEmbeddedIn::HtmlEventHandler`]):
+    /// strings print in `'`, whatever they hold, as the attribute's quote is `"`.
+    pub(crate) fn in_html_attribute(&self) -> bool {
+        self.embedded_in == Some(JsEmbeddedIn::HtmlEventHandler)
+    }
+
+    /// The quote a string prints in, the formatter's own too (a quoted property key):
+    /// the configured one, but `'` in an HTML attribute.
+    /// A JSX attribute and a directive have their own (`FormatLiteralStringToken`).
+    pub(crate) fn string_quote_style(&self) -> QuoteStyle {
+        if self.in_html_attribute() { QuoteStyle::Single } else { self.options.quote_style }
     }
 
     /// Push a Tailwind context entry onto the stack.
     /// Call this when entering a JSXAttribute or CallExpression with Tailwind class context.
     pub fn push_tailwind_context(&mut self, entry: TailwindContextEntry) {
-        self.tailwind_context_stack.push(entry);
+        self.tailwind_context_stack.push(Some(entry));
+    }
+
+    /// Hide the current Tailwind context until the matching [`Self::pop_tailwind_context`].
+    /// Call this when entering a nested non-Tailwind CallExpression.
+    pub fn hide_tailwind_context(&mut self) {
+        self.tailwind_context_stack.push(None);
     }
 
     /// Pop a Tailwind context entry from the stack.
@@ -244,18 +277,9 @@ impl<'ast> JsFormatContext<'ast> {
     }
 
     /// Get the current Tailwind context, if any.
-    /// Returns `Some` if we're inside a Tailwind class context (JSXAttribute or CallExpression).
+    /// Returns `Some` if we're inside a Tailwind class context (JSXAttribute or CallExpression),
+    /// and not inside a nested non-Tailwind call (see [`Self::hide_tailwind_context`]).
     pub fn tailwind_context(&self) -> Option<&TailwindContextEntry> {
-        self.tailwind_context_stack.last()
-    }
-
-    /// Get a mutable reference to the current Tailwind context, if any.
-    pub fn tailwind_context_mut(&mut self) -> Option<&mut TailwindContextEntry> {
-        self.tailwind_context_stack.last_mut()
-    }
-
-    /// Get the external callbacks if set
-    pub fn external_callbacks(&self) -> &ExternalCallbacks {
-        &self.external_callbacks
+        self.tailwind_context_stack.last().and_then(Option::as_ref)
     }
 }

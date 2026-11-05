@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/minifier_traverse/mod.rs`.
 
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 
 use crate::TraverseCtx;
@@ -248,9 +248,14 @@ pub trait Traverse<'a> {
     fn exit_new_expression(&mut self, node: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
-    fn enter_meta_property(&mut self, node: &mut MetaProperty<'a>, ctx: &mut TraverseCtx<'a>) {}
+    fn enter_import_meta(&mut self, node: &mut ImportMeta, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
-    fn exit_meta_property(&mut self, node: &mut MetaProperty<'a>, ctx: &mut TraverseCtx<'a>) {}
+    fn exit_import_meta(&mut self, node: &mut ImportMeta, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_new_target(&mut self, node: &mut NewTarget, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_new_target(&mut self, node: &mut NewTarget, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
     fn enter_spread_element(&mut self, node: &mut SpreadElement<'a>, ctx: &mut TraverseCtx<'a>) {}
@@ -943,6 +948,21 @@ pub trait Traverse<'a> {
     fn exit_function_body(&mut self, node: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
+    fn enter_arrow_function_body(
+        &mut self,
+        node: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_arrow_function_body(
+        &mut self,
+        node: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_arrow_function_expression(
         &mut self,
         node: &mut ArrowFunctionExpression<'a>,
@@ -972,6 +992,11 @@ pub trait Traverse<'a> {
     fn enter_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
     fn exit_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_class_heritage(&mut self, node: &mut ClassHeritage<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_class_heritage(&mut self, node: &mut ClassHeritage<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
     fn enter_class_body(&mut self, node: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {}
@@ -1181,6 +1206,21 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_export_declaration(
+        &mut self,
+        node: &mut ExportDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_export_declaration(
+        &mut self,
+        node: &mut ExportDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_export_named_declaration(
         &mut self,
         node: &mut ExportNamedDeclaration<'a>,
@@ -1191,6 +1231,21 @@ pub trait Traverse<'a> {
     fn exit_export_named_declaration(
         &mut self,
         node: &mut ExportNamedDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_export_from_declaration(
+        &mut self,
+        node: &mut ExportFromDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_export_from_declaration(
+        &mut self,
+        node: &mut ExportFromDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
     }
@@ -2124,46 +2179,46 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
-    fn enter_ts_module_declaration(
+    fn enter_ts_external_module_declaration(
         &mut self,
-        node: &mut TSModuleDeclaration<'a>,
+        node: &mut TSExternalModuleDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
     }
     #[inline]
-    fn exit_ts_module_declaration(
+    fn exit_ts_external_module_declaration(
         &mut self,
-        node: &mut TSModuleDeclaration<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-
-    #[inline]
-    fn enter_ts_module_declaration_name(
-        &mut self,
-        node: &mut TSModuleDeclarationName<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-    #[inline]
-    fn exit_ts_module_declaration_name(
-        &mut self,
-        node: &mut TSModuleDeclarationName<'a>,
+        node: &mut TSExternalModuleDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
     }
 
     #[inline]
-    fn enter_ts_module_declaration_body(
+    fn enter_ts_namespace_declaration(
         &mut self,
-        node: &mut TSModuleDeclarationBody<'a>,
+        node: &mut TSNamespaceDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
     }
     #[inline]
-    fn exit_ts_module_declaration_body(
+    fn exit_ts_namespace_declaration(
         &mut self,
-        node: &mut TSModuleDeclarationBody<'a>,
+        node: &mut TSNamespaceDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_namespace_declaration_body(
+        &mut self,
+        node: &mut TSNamespaceDeclarationBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_namespace_declaration_body(
+        &mut self,
+        node: &mut TSNamespaceDeclarationBody<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
     }
@@ -2482,7 +2537,17 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
-    fn enter_statements(&mut self, node: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {}
+    fn enter_statements(
+        &mut self,
+        node: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
     #[inline]
-    fn exit_statements(&mut self, node: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {}
+    fn exit_statements(
+        &mut self,
+        node: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
 }

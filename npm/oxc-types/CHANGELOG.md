@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- 0c68b7f estree: Emit `decorators` on `FormalParameterRest` (#25582) (camc314)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+## [0.139.0] - 2026-07-06
+
+### 🐛 Bug Fixes
+
+- 0b25582 ast: Type binding node `typeAnnotation` as `TSTypeAnnotation | null` (#23113) (Boshen)
+
 ## [0.111.0] - 2026-01-26
 
 ### 🐛 Bug Fixes

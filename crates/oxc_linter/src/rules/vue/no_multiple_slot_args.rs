@@ -1,15 +1,15 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        AssignmentTarget, Expression, IdentifierReference, MemberExpression,
-        VariableDeclarationKind,
-    },
+    ast::{AssignmentTarget, Expression, IdentifierReference, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{
+    AstNode, ast_util::variable_declaration_kind, context::LintContext,
+    frameworks::FrameworkOptions, rule::Rule,
+};
 
 fn multiple_arguments_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected multiple arguments.")
@@ -68,6 +68,7 @@ declare_oxc_lint!(
     NoMultipleSlotArgs,
     vue,
     restriction,
+    recommended,
     pending,  // TODO: Remove second argument, Spread argument is possible not supported
     version = "1.15.0",
     short_description = "Disallow passing multiple arguments to scoped slots.",
@@ -107,18 +108,10 @@ impl Rule for NoMultipleSlotArgs {
             _ => return,
         };
 
-        let inner = match member_expr.object.get_inner_expression() {
-            Expression::StaticMemberExpression(inner) => inner.as_ref(),
-            Expression::ChainExpression(chain_expr) => {
-                if let Some(MemberExpression::StaticMemberExpression(inner)) =
-                    chain_expr.expression.as_member_expression()
-                {
-                    inner.as_ref()
-                } else {
-                    return;
-                }
-            }
-            _ => return,
+        let Some(MemberExpression::StaticMemberExpression(inner)) =
+            member_expr.object.get_member_expr()
+        else {
+            return;
         };
 
         match inner.object.get_inner_expression() {
@@ -165,7 +158,7 @@ fn get_identifier_resolved_reference<'a>(
     };
 
     // `const` variable can not be overridden
-    if declarator.kind == VariableDeclarationKind::Const {
+    if variable_declaration_kind(declarator, ctx.nodes())?.is_const() {
         return declarator.init.as_ref();
     }
 

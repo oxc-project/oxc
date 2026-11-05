@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.capitalized-function-call-aliased.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Capitalized function called without JSX", labels: [LabeledSpan { label: Some("`Bar` may be a component"), span: Span { start: 65, end: 66 }, primary: true }], help: Some("Render `Bar` with JSX if it is a component; otherwise rename it to start with a lowercase letter or allowlist it in the compiler configuration"), note: Some("`Bar` is treated as a component because it begins with an uppercase letter; React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("CapitalizedCalls") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/static-components") } }
+
+No changes.

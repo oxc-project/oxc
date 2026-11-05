@@ -1,6 +1,6 @@
 use std::{
     ffi::OsStr,
-    path::{Component, Path, PathBuf},
+    path::{Component, Path},
     sync::Arc,
 };
 
@@ -9,6 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
+use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -19,7 +20,11 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_cycle_diagnostic(span: Span, stack: &[(CompactStr, PathBuf)], cwd: &Path) -> OxcDiagnostic {
+fn no_cycle_diagnostic(
+    span: Span,
+    stack: &[(CompactStr, Arc<ModuleRecord>)],
+    cwd: &Path,
+) -> OxcDiagnostic {
     let cycle_description = format_cycle(stack, cwd);
     OxcDiagnostic::warn("Dependency cycle detected")
         .with_help("Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.")
@@ -37,10 +42,11 @@ fn self_referencing_cycle_diagnostic(span: Span, is_import: bool) -> OxcDiagnost
         .with_label(span.primary_label("this module references itself"))
 }
 
-fn format_cycle(stack: &[(CompactStr, PathBuf)], cwd: &Path) -> String {
+fn format_cycle(stack: &[(CompactStr, Arc<ModuleRecord>)], cwd: &Path) -> String {
     let mut lines = Vec::with_capacity(stack.len() * 2 + 1);
 
-    for (i, (specifier, path)) in stack.iter().enumerate() {
+    for (i, (specifier, module_record)) in stack.iter().enumerate() {
+        let path = &module_record.resolved_absolute_path;
         let relative_path = path
             .strip_prefix(cwd)
             .unwrap_or(path)
@@ -90,10 +96,11 @@ impl Default for NoCycle {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Ensures that there is no resolvable path back to this module via its dependencies.
+    /// Disallow cyclic dependencies. The rule ensures that there is no resolvable path back
+    /// to this module via its dependencies.
     ///
-    /// This includes cycles of depth 1 (imported module imports me) to an effectively
-    /// infinite value, if the `maxDepth` option is not set.
+    /// This includes cycles of depth 1 (imported module imports me), up to an effectively
+    /// infinite value when the `maxDepth` option is not set.
     ///
     /// ### Why is this bad?
     ///
@@ -134,33 +141,39 @@ declare_oxc_lint!(
     restriction,
     config = NoCycle,
     version = "0.0.13",
+    short_description = "Disallow cyclic dependencies that import the current module in its own dependency graph.",
 );
 
 impl Rule for NoCycle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
 
-        let needle = &module_record.resolved_absolute_path;
-        let mut direct_imports = module_record
-            .loaded_modules()
-            .iter()
-            .map(|(key, weak_module_record)| (key.clone(), weak_module_record.upgrade().unwrap()))
-            .collect::<Vec<_>>();
-        direct_imports.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+        // Gated on unbounded `max_depth` (the default), where the walks below explore the whole
+        // reachable subgraph anyway so the prefilter replaces their work. Under a shallow depth cap
+        // they are cheap and an unbounded prefilter could cost more than it saves.
+        if self.max_depth == u32::MAX && !self.can_be_in_cycle(module_record) {
+            return;
+        }
 
-        for (key, loaded_module_record) in direct_imports {
-            if !self.should_traverse_module(&key, &loaded_module_record, module_record) {
+        let needle = &module_record.resolved_absolute_path;
+        let direct_imports = module_record.sorted_loaded_modules();
+
+        let mut stack = Vec::new();
+        let mut traversed = FxHashSet::default();
+        for (key, weak_module_record) in direct_imports.iter() {
+            let loaded_module_record = weak_module_record.upgrade().unwrap();
+            if !self.should_traverse_module(key, &loaded_module_record, module_record) {
                 continue;
             }
 
-            let requested_module = module_record.requested_modules[&key][0];
+            let requested_module = module_record.requested_modules[key][0];
             let span = requested_module.span;
-            let mut stack =
-                vec![(key.clone(), loaded_module_record.resolved_absolute_path.clone())];
+            stack.clear();
+            stack.push((key.clone(), Arc::clone(&loaded_module_record)));
 
             if loaded_module_record.resolved_absolute_path == *needle {
                 ctx.diagnostic(self_referencing_cycle_diagnostic(span, requested_module.is_import));
@@ -169,10 +182,11 @@ impl Rule for NoCycle {
 
             let visitor_result = ModuleGraphVisitorBuilder::default()
                 .max_depth(self.max_depth.saturating_sub(1))
+                .reuse_traversed(traversed)
                 .filter(|(key, val), parent| self.should_traverse_module(key, val, parent))
                 .event(|event, (key, val), _| match event {
                     ModuleGraphVisitorEvent::Enter => {
-                        stack.push((key.clone(), val.resolved_absolute_path.clone()));
+                        stack.push((key.clone(), Arc::clone(val)));
                     }
                     ModuleGraphVisitorEvent::Leave => {
                         stack.pop();
@@ -186,6 +200,7 @@ impl Rule for NoCycle {
                     }
                 });
 
+            traversed = visitor_result.traversed;
             if visitor_result.result {
                 ctx.diagnostic(no_cycle_diagnostic(
                     span,
@@ -198,6 +213,55 @@ impl Rule for NoCycle {
 }
 
 impl NoCycle {
+    /// Is `root` in a cycle at all? True iff some module reachable from it imports it back — one
+    /// traversal answering for every direct import at once, instead of one walk per import.
+    ///
+    /// This only gates those walks, which still decide what is reported, so it must never miss a
+    /// cycle they would find: it follows the same edges under the same filter, and is unbounded
+    /// where they stop at `max_depth`.
+    fn can_be_in_cycle(&self, root: &ModuleRecord) -> bool {
+        // Pointer identity, to avoid cloning a `PathBuf` per node. `root` is never inserted: an
+        // edge back to it is the answer, not a node to expand.
+        let mut visited = FxHashSet::<usize>::default();
+        let mut stack = Vec::<Arc<ModuleRecord>>::new();
+
+        if self.visit_dependencies(root, root, &mut visited, &mut stack) {
+            return true;
+        }
+        while let Some(module_record) = stack.pop() {
+            if self.visit_dependencies(&module_record, root, &mut visited, &mut stack) {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Pushes `module_record`'s unvisited traversable dependencies onto `stack`; `true` if one of
+    /// them is `root`, closing a cycle.
+    fn visit_dependencies(
+        &self,
+        module_record: &ModuleRecord,
+        root: &ModuleRecord,
+        visited: &mut FxHashSet<usize>,
+        stack: &mut Vec<Arc<ModuleRecord>>,
+    ) -> bool {
+        for (specifier, weak_module_record) in module_record.loaded_modules().iter() {
+            let loaded_module_record = weak_module_record.upgrade().unwrap();
+            if !self.should_traverse_module(specifier, &loaded_module_record, module_record) {
+                continue;
+            }
+            // By path, not pointer: that is what the walks report on, and one file can have
+            // several records (one per section).
+            if loaded_module_record.resolved_absolute_path == root.resolved_absolute_path {
+                return true;
+            }
+            if visited.insert(Arc::as_ptr(&loaded_module_record) as usize) {
+                stack.push(loaded_module_record);
+            }
+        }
+        false
+    }
+
     fn should_traverse_module(
         &self,
         key: &CompactStr,
@@ -215,27 +279,28 @@ impl NoCycle {
         }
 
         if self.ignore_types {
-            let import_entries = parent
+            // Equivalent to collecting both entry lists and testing `!is_empty() && all(is_type)`,
+            // without materializing either `Vec`. This runs once per graph edge considered.
+            let mut types = parent
                 .import_entries
                 .iter()
                 .filter(|entry| entry.module_request.name() == key)
-                .collect::<Vec<_>>();
+                .map(|entry| entry.is_type)
+                .chain(
+                    parent
+                        .indirect_export_entries
+                        .iter()
+                        .filter(|entry| {
+                            entry
+                                .module_request
+                                .as_ref()
+                                .is_some_and(|module_request| module_request.name() == key)
+                        })
+                        .map(|entry| entry.is_type),
+                )
+                .peekable();
 
-            let indirect_export_entries = parent
-                .indirect_export_entries
-                .iter()
-                .filter(|entry| {
-                    entry
-                        .module_request
-                        .as_ref()
-                        .is_some_and(|module_request| module_request.name() == key)
-                })
-                .collect::<Vec<_>>();
-
-            if (!import_entries.is_empty() || !indirect_export_entries.is_empty())
-                && import_entries.iter().all(|entry| entry.is_type)
-                && indirect_export_entries.iter().all(|entry| entry.is_type)
-            {
+            if types.peek().is_some() && types.all(|is_type| is_type) {
                 return false;
             }
         }

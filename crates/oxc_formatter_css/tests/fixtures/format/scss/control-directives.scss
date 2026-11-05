@@ -1,0 +1,26 @@
+@for $i from 1 through 8 {}
+@for  $i  from  1  through  8  {}
+@for $i from 1 to 5 {}
+@for
+$i
+from
+1
+through
+8
+{}
+@if $media == phonePortrait {
+    $k: .15625;
+} @else if $media == phoneLandscape {
+    $k: .08803;
+} @else {
+    $k: .065106;
+}
+p {
+    @if $type == ocean {
+        color: blue;
+    } @else if $type == matador {
+        color: red;
+    } @else {
+        color: green;
+    }
+}

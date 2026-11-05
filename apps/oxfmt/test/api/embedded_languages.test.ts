@@ -257,9 +257,51 @@ describe("Embedded languages", () => {
       expect(result.code).toMatchSnapshot();
     });
 
+    it("should not format multiple embedded languages in one file (off)", async () => {
+      const result = await format("mixed.js", mixedSource, { embeddedLanguageFormatting: "off" });
+      expect(result.errors).toStrictEqual([]);
+      expect(result.code).toMatchSnapshot();
+    });
+
     it("should not format regular templates, prettier-ignore, unsupported tags, and invalid syntax", async () => {
       const result = await format("misc.js", miscSource);
       expect(result.errors).toStrictEqual([]);
+      expect(result.code).toMatchSnapshot();
+    });
+
+    // js-in-html: a quote the formatter adds (a key under `quoteProps: consistent`) is `'`, as every string there,
+    // so the attribute's `"` needs no `&quot;`
+    it("should add single quotes to keys in an event handler attribute", async () => {
+      const input = `\
+<button onclick="f({a: 1, 'b-c': 2})">x</button>
+<button onclick="f({1: 1, 'b-c': 2})">x</button>
+`;
+      const result = await format("index.html", input, { quoteProps: "consistent" });
+      expect(result.errors).toStrictEqual([]);
+      expect(result.code).toBe(`\
+<button onclick="f({ 'a': 1, 'b-c': 2 })">x</button>
+<button onclick="f({ '1': 1, 'b-c': 2 })">x</button>
+`);
+    });
+
+    // (css-in-html)-in-js: the space after `prop:` belongs to a value that fits on the line,
+    // so a value that breaks must not leave it at the end of the line.
+    it("should not leak a trailing space when a css-in-html declaration value breaks", async () => {
+      const input = `\
+export const BaseStyles = html\`
+  <style>
+    :root {
+      --ln-font-fallback:
+        -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif,
+        Apple Color Emoji, Segoe UI Emoji;
+      --ln-font-body: "Geist", var(--ln-font-fallback);
+    }
+  </style>
+\`;
+`;
+      const result = await format("styles.ts", input);
+      expect(result.errors).toStrictEqual([]);
+      expect(result.code).not.toMatch(/[ \t]+$/m);
       expect(result.code).toMatchSnapshot();
     });
   });

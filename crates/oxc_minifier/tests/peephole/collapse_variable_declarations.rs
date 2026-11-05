@@ -46,7 +46,7 @@ mod join_vars {
     fn test_aggressive_redeclaration_in_for() {
         test_same("for(var x = 1; x = 2; x = 3) x = 4");
         test("for(var x = 1; y = 2; z = 3) {var a = 4}", "for(var x = 1; y = 2; z = 3) var a = 4");
-        test_same("var x; for(x = 1; x = 2; z = 3) x = 4");
+        test("var x; for(x = 1; x = 2; z = 3) x = 4", "for(var x = 1; x = 2; z = 3) x = 4");
     }
 
     #[test]
@@ -96,7 +96,7 @@ mod join_vars {
     fn test_aggressive_redeclaration_of_let_in_for() {
         test_same("for(let x = 1; x = 2; x = 3) x = 4");
         test_same("for(let x = 1; y = 2; z = 3) {let a = 4}");
-        test_same("let x; for(x = 1; x = 2; z = 3) x = 4");
+        test("let x; for(x = 1; x = 2; z = 3) x = 4", "let x = 1; for(; x = 2; z = 3) x = 4");
     }
 
     #[test]
@@ -122,7 +122,12 @@ mod join_vars {
 
     #[test]
     fn test_arrow_function() {
-        test("(() => { let x = 1; let y = 2; x + y; })()", "(() => { let x = 1, y = 2; })()");
+        // Assigned to a binding so the side-effect-free arrow isn't dropped as
+        // dead code; the join still applies to the arrow body.
+        test(
+            "var f = () => { let x = 1; let y = 2; x + y; }",
+            "var f = () => { let x = 1, y = 2; }",
+        );
 
         // do not redeclare function parameters
         // incompatible with strict mode

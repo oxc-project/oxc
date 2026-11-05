@@ -50,3 +50,27 @@ fn xml_escape_impl<F: Fn(u8) -> bool>(raw: &str, escape_chars: F) -> Cow<'_, str
         Cow::Borrowed(raw)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::borrow::Cow;
+
+    use super::xml_escape;
+
+    #[test]
+    fn borrows_when_there_is_nothing_to_escape() {
+        assert!(matches!(xml_escape("nothing to escape here"), Cow::Borrowed(_)));
+    }
+
+    #[test]
+    fn escapes_every_special_character() {
+        assert_eq!(xml_escape("<>&'\""), "&lt;&gt;&amp;&apos;&quot;");
+    }
+
+    // Only single-byte characters are matched, so multibyte sequences must survive the
+    // `from_utf8_unchecked` in one piece.
+    #[test]
+    fn keeps_surrounding_text_and_multibyte_characters() {
+        assert_eq!(xml_escape("café <b> & 🎉"), "café &lt;b&gt; &amp; 🎉");
+    }
+}

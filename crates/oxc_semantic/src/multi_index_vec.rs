@@ -96,7 +96,7 @@ macro_rules! multi_index_vec {
                 $(
                     let align = ::core::mem::align_of::<$fty>();
                     _offset = (_offset + align - 1) & !(align - 1);
-                    #[expect(clippy::cast_ptr_alignment)]
+                    #[allow(clippy::cast_ptr_alignment)]
                     {
                         // SAFETY: `_offset` is within the allocation, and properly aligned
                         // for `$fty` because `compute_layout` aligns each field's offset,
@@ -220,7 +220,7 @@ macro_rules! multi_index_vec {
             }
 
             /// Iterate over all valid indices.
-            $vis fn iter_ids(&self) -> impl Iterator<Item = $idx> {
+            $vis fn iter_ids(&self) -> impl ExactSizeIterator<Item = $idx> {
                 let len = self.len as usize;
                 // SAFETY: Valid indices are `0..len`, and by invariant `len <= Idx::MAX + 1`.
                 (0..len).map(|i| unsafe { <$idx as ::oxc_index::Idx>::from_usize_unchecked(i) })
@@ -326,6 +326,7 @@ pub(crate) use multi_index_vec;
 mod tests {
     oxc_index::define_index_type! {
         struct TestId = usize;
+        MAX_INDEX = usize::MAX;
     }
 
     multi_index_vec! {
@@ -347,6 +348,7 @@ mod tests {
 
     oxc_index::define_index_type! {
         struct StringId = usize;
+        MAX_INDEX = usize::MAX;
     }
 
     multi_index_vec! {

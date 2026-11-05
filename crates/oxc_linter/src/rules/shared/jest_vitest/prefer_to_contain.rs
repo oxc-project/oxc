@@ -4,6 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{
@@ -46,12 +47,15 @@ expect(a).not.toContain(b);
 ```
 ";
 
-pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-    let node = possible_jest_node.node;
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     let AstKind::CallExpression(call_expr) = node.kind() else {
         return;
     };
-    let Some(jest_expect_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+    let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+    else {
+        return;
+    };
+    let Some(jest_expect_fn_call) = parse_expect_jest_fn_call(call_expr, &possible_jest_node, ctx)
     else {
         return;
     };
@@ -111,10 +115,8 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
                 .get_inner_expression()
                 .to_boolean(&WithoutGlobalReferenceInformation {})
                 .unwrap_or(false);
-            let has_not = jest_expect_fn_call
-                .modifiers()
-                .iter()
-                .any(|modifier| modifier.is_name_equal("not"));
+            let has_not =
+                jest_expect_fn_call.modifiers().any(|modifier| modifier.is_name_equal("not"));
 
             match (boolean_value, has_not) {
                 (false, true) | (true, false) => "",
@@ -140,7 +142,7 @@ fn is_fixable_includes_call_expression(call_expr: &CallExpression) -> bool {
         return false;
     };
 
-    mem_expr.static_property_name() == Some("includes")
+    mem_expr.static_property_name().is_some_and(|name| name == "includes")
         // handle "expect(a.includes())"
         && !call_expr.arguments.is_empty()
         // handle "expect(a.includes(b,c))"

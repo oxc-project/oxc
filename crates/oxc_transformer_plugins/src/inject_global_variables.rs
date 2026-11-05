@@ -2,13 +2,17 @@ use std::{borrow::Cow, sync::Arc};
 
 use cow_utils::CowUtils;
 
-use oxc_allocator::Allocator;
-use oxc_ast::{AstBuilder, NONE, ast::*};
+use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
+use oxc_ast::{
+    ast::*,
+    builder::{AstBuilder, GetAstBuilder},
+};
 use oxc_semantic::Scoping;
 use oxc_span::SPAN;
 use oxc_str::{CompactStr, format_compact_str};
-use oxc_syntax::identifier;
+use oxc_syntax::{identifier, reference::ReferenceId};
 use oxc_traverse::{Traverse, traverse_mut};
+use rustc_hash::FxHashSet;
 
 use super::{
     DotDefineMemberExpression, TraverseCtx,
@@ -128,9 +132,12 @@ pub struct InjectGlobalVariables<'a> {
     /// Dot defines derived from the config.
     dot_defines: Vec<DotDefineState<'a>>,
 
-    /// Identifiers for which dot define replaced a member expression.
-    replaced_dot_defines:
-        Vec<(/* identifier of member expression */ CompactStr, /* local */ CompactStr)>,
+    /// Locals of the dot defines which replaced a member expression.
+    replaced_dot_defines: Vec</* local */ CompactStr>,
+
+    /// References to the object of every member expression a dot define replaced,
+    /// e.g. the `Buffer` of `Buffer.isBuffer`. These no longer exist in the AST.
+    replaced_object_references: FxHashSet<ReferenceId>,
 
     changed: bool,
 }
@@ -148,6 +155,7 @@ impl<'a> InjectGlobalVariables<'a> {
             config,
             dot_defines: vec![],
             replaced_dot_defines: vec![],
+            replaced_object_references: FxHashSet::default(),
             changed: false,
         }
     }
@@ -162,6 +170,12 @@ impl<'a> InjectGlobalVariables<'a> {
         program: &mut Program<'a>,
     ) -> InjectGlobalVariablesReturn {
         let mut scoping = scoping;
+        // `ReferenceId`s are only meaningful within one `Scoping`, so nothing recorded for an
+        // earlier program may survive into this one.
+        self.replaced_dot_defines.clear();
+        self.replaced_object_references.clear();
+        self.changed = false;
+
         // Step 1: slow path where visiting the AST is required to replace dot defines.
         let dot_defines = self
             .config
@@ -173,7 +187,7 @@ impl<'a> InjectGlobalVariables<'a> {
 
         if !dot_defines.is_empty() {
             self.dot_defines = dot_defines;
-            scoping = traverse_mut(self, self.ast.allocator, program, scoping, ());
+            scoping = traverse_mut(self, self.allocator(), program, scoping, ());
         }
 
         // Step 2: find all the injects that are referenced.
@@ -182,20 +196,20 @@ impl<'a> InjectGlobalVariables<'a> {
             .injects
             .iter()
             .filter(|i| {
-                // remove replaced `Buffer` for `Buffer` + Buffer.isBuffer` combo.
                 match &i.replace_value {
                     Some(replace_value) => {
-                        self.replaced_dot_defines.iter().any(|d| d.1 == replace_value)
+                        self.replaced_dot_defines.iter().any(|local| local == replace_value)
                     }
-                    _ => {
-                        if self.replaced_dot_defines.iter().any(|d| d.0 == i.specifier.local()) {
-                            false
-                        } else {
-                            scoping
-                                .root_unresolved_references()
-                                .contains_key(i.specifier.local().as_str())
-                        }
-                    }
+                    // Drop `Buffer` for the `Buffer` + `Buffer.isBuffer` combo, but only when the
+                    // member expressions were the module's sole references to it.
+                    _ => scoping
+                        .root_unresolved_references()
+                        .get(i.specifier.local().as_str())
+                        .is_some_and(|reference_ids| {
+                            reference_ids
+                                .iter()
+                                .any(|id| !self.replaced_object_references.contains(id))
+                        }),
                 }
             })
             .cloned()
@@ -212,12 +226,14 @@ impl<'a> InjectGlobalVariables<'a> {
 
     fn inject_imports(&mut self, injects: &[InjectImport], program: &mut Program<'a>) {
         let imports = injects.iter().map(|inject| {
-            let specifiers = Some(self.ast.vec1(self.inject_import_to_specifier(inject)));
-            let source = self.ast.string_literal(SPAN, self.ast.str(&inject.source), None);
+            let specifiers =
+                Some(ArenaVec::from_value_in(self.inject_import_to_specifier(inject), self));
+            let source =
+                StringLiteral::new(SPAN, Str::from_str_in(&inject.source, self), None, self);
             let kind = ImportOrExportKind::Value;
-            let import_decl = self
-                .ast
-                .module_declaration_import_declaration(SPAN, specifiers, source, None, NONE, kind);
+            let import_decl = ModuleDeclaration::new_import_declaration(
+                SPAN, specifiers, source, None, None, kind, self,
+            );
             Statement::from(import_decl)
         });
         program.body.splice(0..0, imports);
@@ -229,34 +245,35 @@ impl<'a> InjectGlobalVariables<'a> {
             InjectImportSpecifier::Specifier { imported, local } => {
                 let imported = match imported {
                     Some(imported_name) => {
-                        let imported_name = self.ast.str(imported_name);
+                        let imported_name = Str::from_str_in(imported_name, self);
                         if identifier::is_identifier_name(&imported_name) {
-                            self.ast.module_export_name_identifier_name(SPAN, imported_name)
+                            ModuleExportName::new_identifier_name(SPAN, imported_name, self)
                         } else {
-                            self.ast.module_export_name_string_literal(SPAN, imported_name, None)
+                            ModuleExportName::new_string_literal(SPAN, imported_name, None, self)
                         }
                     }
-                    None => self.ast.module_export_name_identifier_name(SPAN, "default"),
+                    None => ModuleExportName::new_identifier_name(SPAN, "default", self),
                 };
 
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
 
-                self.ast.import_declaration_specifier_import_specifier(
+                ImportDeclarationSpecifier::new_import_specifier(
                     SPAN,
                     imported,
-                    self.ast.binding_identifier(SPAN, self.ast.str(local)),
+                    BindingIdentifier::new(SPAN, Str::from_str_in(local, self), self),
                     ImportOrExportKind::Value,
+                    self,
                 )
             }
             InjectImportSpecifier::DefaultSpecifier { local } => {
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
-                let local = self.ast.binding_identifier(SPAN, self.ast.str(local));
-                self.ast.import_declaration_specifier_import_default_specifier(SPAN, local)
+                let local = BindingIdentifier::new(SPAN, Str::from_str_in(local, self), self);
+                ImportDeclarationSpecifier::new_import_default_specifier(SPAN, local, self)
             }
             InjectImportSpecifier::NamespaceSpecifier { local } => {
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
-                let local = self.ast.binding_identifier(SPAN, self.ast.str(local));
-                self.ast.import_declaration_specifier_import_namespace_specifier(SPAN, local)
+                let local = BindingIdentifier::new(SPAN, Str::from_str_in(local, self), self);
+                ImportDeclarationSpecifier::new_import_namespace_specifier(SPAN, local, self)
             }
         }
     }
@@ -271,46 +288,76 @@ impl<'a> InjectGlobalVariables<'a> {
                         dot_define,
                         DotDefineMemberExpression::StaticMemberExpression(member),
                     ) {
+                        if let Some(reference_id) = object_reference_id(&member.object) {
+                            self.replaced_object_references.insert(reference_id);
+                        }
+
                         // If this is first replacement made for this dot define,
                         // create `Str` for replacement, and record in `replaced_dot_defines`
                         let value_str = *value_str.get_or_insert_with(|| {
-                            self.replaced_dot_defines
-                                .push((dot_define.parts[0].clone(), dot_define.value.clone()));
-                            self.ast.str(dot_define.value.as_str())
+                            self.replaced_dot_defines.push(dot_define.value.clone());
+                            Str::from_str_in(dot_define.value.as_str(), &self.ast)
                         });
 
-                        let value = self.ast.expression_identifier(SPAN, value_str);
+                        let value = Expression::new_identifier(SPAN, value_str, self);
                         *expr = value;
                         self.mark_as_changed();
                         break;
                     }
                 }
             }
-            Expression::MetaProperty(meta_property)
-                // Check if this is import.meta and if it should be replaced
-                if meta_property.meta.name == "import" && meta_property.property.name == "meta" => {
-                    for DotDefineState { dot_define, value_str } in &mut self.dot_defines {
-                        // Check if dot_define is exactly ["import", "meta"]
-                        if dot_define.parts.len() == 2
-                            && dot_define.parts[0].as_str() == "import"
-                            && dot_define.parts[1].as_str() == "meta"
-                        {
-                            // If this is first replacement made for this dot define,
-                            // create `Str` for replacement, and record in `replaced_dot_defines`
-                            let value_str = *value_str.get_or_insert_with(|| {
-                                self.replaced_dot_defines
-                                    .push((dot_define.parts[0].clone(), dot_define.value.clone()));
-                                self.ast.str(dot_define.value.as_str())
-                            });
+            Expression::ImportMeta(_) => {
+                for DotDefineState { dot_define, value_str } in &mut self.dot_defines {
+                    // Check if dot_define is exactly ["import", "meta"]
+                    if dot_define.parts.len() == 2
+                        && dot_define.parts[0].as_str() == "import"
+                        && dot_define.parts[1].as_str() == "meta"
+                    {
+                        // If this is first replacement made for this dot define,
+                        // create `Str` for replacement, and record in `replaced_dot_defines`
+                        let value_str = *value_str.get_or_insert_with(|| {
+                            self.replaced_dot_defines.push(dot_define.value.clone());
+                            Str::from_str_in(dot_define.value.as_str(), &self.ast)
+                        });
 
-                            let value = self.ast.expression_identifier(SPAN, value_str);
-                            *expr = value;
-                            self.mark_as_changed();
-                            break;
-                        }
+                        let value = Expression::new_identifier(SPAN, value_str, self);
+                        *expr = value;
+                        self.mark_as_changed();
+                        break;
                     }
                 }
+            }
             _ => {}
         }
+    }
+}
+
+impl<'a> GetAllocator<'a> for InjectGlobalVariables<'a> {
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.ast.allocator()
+    }
+}
+
+impl<'a> GetAstBuilder<'a> for InjectGlobalVariables<'a> {
+    type Builder = AstBuilder<'a>;
+
+    #[inline]
+    fn builder(&self) -> &AstBuilder<'a> {
+        &self.ast
+    }
+}
+
+/// Reference to the identifier a dot define's member expression is rooted at,
+/// e.g. `Buffer` in `Buffer.isBuffer`. `None` when it is rooted at `this` or `import.meta`.
+fn object_reference_id(object: &Expression<'_>) -> Option<ReferenceId> {
+    let mut object = object.without_parentheses();
+    loop {
+        object = match object {
+            Expression::Identifier(ident) => return Some(ident.reference_id()),
+            Expression::StaticMemberExpression(member) => member.object.without_parentheses(),
+            Expression::ComputedMemberExpression(member) => member.object.without_parentheses(),
+            _ => return None,
+        };
     }
 }

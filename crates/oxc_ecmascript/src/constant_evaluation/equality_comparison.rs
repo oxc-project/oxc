@@ -25,11 +25,12 @@ pub(super) fn abstract_equality_comparison<'a>(
             || matches!(right, ValueType::Boolean)
         {
             if let Some(num) = right_expr.evaluate_value_to_number(ctx) {
-                let number_literal_expr = ctx.ast().expression_numeric_literal(
+                let number_literal_expr = Expression::new_numeric_literal(
                     oxc_span::SPAN,
                     num,
                     None,
                     if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
+                    ctx,
                 );
                 return abstract_equality_comparison(ctx, left_expr, &number_literal_expr);
             }
@@ -40,11 +41,12 @@ pub(super) fn abstract_equality_comparison<'a>(
             || matches!(left, ValueType::Boolean)
         {
             if let Some(num) = left_expr.evaluate_value_to_number(ctx) {
-                let number_literal_expr = ctx.ast().expression_numeric_literal(
+                let number_literal_expr = Expression::new_numeric_literal(
                     oxc_span::SPAN,
                     num,
                     None,
                     if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
+                    ctx,
                 );
                 return abstract_equality_comparison(ctx, &number_literal_expr, right_expr);
             }
@@ -56,6 +58,13 @@ pub(super) fn abstract_equality_comparison<'a>(
             let right_bigint = right_expr.evaluate_value_to_bigint(ctx);
             if let (Some(l_big), Some(r_big)) = (left_bigint, right_bigint) {
                 return Some(l_big.eq(&r_big));
+            }
+            // A BigInt can be loosely equal to a String or a Number with the same mathematical
+            // value. If one side could not be converted to a BigInt, the result is unknown.
+            if matches!(left, ValueType::String | ValueType::Number)
+                || matches!(right, ValueType::String | ValueType::Number)
+            {
+                return None;
             }
         }
 

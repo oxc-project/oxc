@@ -1,0 +1,84 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ node(no-top-level-await): Top-level `await` prevents this module from being loaded with `require(esm)`.
+   ╭─[no_top_level_await.mts:1:13]
+ 1 │ const foo = await import('foo')
+   ·             ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+  note: This rule is intended for published packages. Consider disabling it if this package is private.
+
+  ⚠ node(no-top-level-await): Top-level `await` prevents this module from being loaded with `require(esm)`.
+   ╭─[no_top_level_await.mts:1:1]
+ 1 │ await import('foo')
+   · ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+  note: This rule is intended for published packages. Consider disabling it if this package is private.
+
+  ⚠ node(no-top-level-await): Top-level `await` prevents this module from being loaded with `require(esm)`.
+   ╭─[no_top_level_await.mts:1:1]
+ 1 │ for await (const e of asyncIterate()) { /* ... */ }
+   · ───────────────────────────────────────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+  note: This rule is intended for published packages. Consider disabling it if this package is private.
+
+  ⚠ node(no-top-level-await): Top-level `await` prevents this module from being loaded with `require(esm)`.
+   ╭─[no_top_level_await.mts:1:1]
+ 1 │ await using foo = x
+   · ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+  note: This rule is intended for published packages. Consider disabling it if this package is private.
+
+  ⚠ node(no-top-level-await): Top-level `await` prevents this module from being loaded with `require(esm)`.
+   ╭─[no_top_level_await.mts:1:3]
+ 1 │ { await import('foo') }
+   ·   ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+  note: This rule is intended for published packages. Consider disabling it if this package is private.
+
+  ⚠ node(no-top-level-await): Top-level `await` prevents this module from being loaded with `require(esm)`.
+   ╭─[no_top_level_await.mts:1:13]
+ 1 │ if (cond) { await import('foo') }
+   ·             ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+  note: This rule is intended for published packages. Consider disabling it if this package is private.
+
+  ⚠ node(no-top-level-await): Top-level `await` prevents this module from being loaded with `require(esm)`.
+   ╭─[no_top_level_await.mts:1:30]
+ 1 │ for (const e of iterate()) { await handle(e) }
+   ·                              ───────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+  note: This rule is intended for published packages. Consider disabling it if this package is private.
+
+  ⚠ node(no-top-level-await): Top-level `await` prevents this module from being loaded with `require(esm)`.
+   ╭─[no_top_level_await.mts:1:3]
+ 1 │ { await using foo = x }
+   ·   ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+  note: This rule is intended for published packages. Consider disabling it if this package is private.
+
+  ⚠ node(no-top-level-await): Top-level `await` prevents this module from being loaded with `require(esm)`.
+   ╭─[no_top_level_await.mts:1:13]
+ 1 │ const foo = await import('foo')
+   ·             ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+  note: This rule is intended for published packages. Consider disabling it if this package is private.
+
+  ⚠ node(no-top-level-await): Top-level `await` prevents this module from being loaded with `require(esm)`.
+   ╭─[no_top_level_await.mts:2:13]
+ 1 │ #!/usr/bin/env node
+ 2 │ const foo = await import('foo')
+   ·             ───────────────────
+   ╰────
+  help: Move the `await` inside an `async` function, as ES modules with top-level `await` cannot be loaded with `require(esm)`.
+  note: This rule is intended for published packages. Consider disabling it if this package is private.

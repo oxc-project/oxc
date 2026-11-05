@@ -84,6 +84,15 @@ export function createLspConnection(env: Record<string, string> = {}) {
       return result;
     },
 
+    getShowMessage(): Promise<{ type: number; message: string }> {
+      return new Promise((resolve) => {
+        const disposer = connection.onNotification("window/showMessage", (params) => {
+          resolve(params);
+          disposer.dispose();
+        });
+      });
+    },
+
     async didChangeConfiguration(settings: unknown) {
       await connection.sendNotification(DidChangeConfigurationNotification.type, { settings });
     },
@@ -168,6 +177,25 @@ export async function lintFixture(
     [{ path: fixturePath, languageId }],
     initializationOptions ? [initializationOptions] : undefined,
   );
+}
+
+export async function initializationMessagesFixture(
+  fixturesDir: string,
+  fixturePath: string,
+  initializationOptions?: OxlintLSPConfig,
+): Promise<string> {
+  const workspaceUri = pathToFileURL(dirname(join(fixturesDir, fixturePath))).href;
+  await using client = createLspConnection();
+  const messagePromise = client.getShowMessage();
+  await client.initialize(
+    [{ uri: workspaceUri, name: "workspace-0" }],
+    PULL_DIAGNOSTICS_CAPABILITY,
+    [{ workspaceUri, options: initializationOptions ?? null }],
+  );
+
+  const message = await messagePromise;
+
+  return snapshotShowMessages([message]);
 }
 
 export async function lintSingleFileFixture(
@@ -430,6 +458,29 @@ type OxlintLSPConfig = {
   >;
 };
 
+function snapshotShowMessages(messages: { type: number; message: string }[]): string {
+  if (messages.length === 0) {
+    return "--- Show Messages ---------\n(none)";
+  }
+
+  return [
+    "--- Show Messages ---------",
+    ...messages.map(
+      ({ type, message }, index) => `[${index}] type=${type}\n${sanitizeSnapshotText(message)}`,
+    ),
+  ].join("\n");
+}
+
+function sanitizeSnapshotText(text: string): string {
+  return text.replaceAll(
+    process
+      .cwd()
+      // replace current cwd with forward slashes, the `oxlint` backend output in test-mode uses forward slashes.
+      .replaceAll("\\", "/"),
+    "<cwd>",
+  );
+}
+
 async function getDiagnosticSnapshot(
   fixturePath: string,
   filePath: string,
@@ -529,11 +580,11 @@ function lspRangeToBabelLocation(range: Range) {
   return {
     start: {
       line: range.start.line + 1,
-      column: range.start.character + 1,
+      column: range.start.character,
     },
     end: {
       line: range.end.line + 1,
-      column: range.end.character + 1,
+      column: range.end.character,
     },
   };
 }

@@ -70,7 +70,7 @@ impl Def for VecDef {
     fn ty_with_lifetime(&self, schema: &Schema, anon: bool) -> TokenStream {
         let inner_ty = self.inner_type(schema).ty_with_lifetime(schema, anon);
         let lifetime = if anon { quote!( '_ ) } else { quote!( 'a ) };
-        quote!( Vec<#lifetime, #inner_ty> )
+        quote!( ArenaVec<#lifetime, #inner_ty> )
     }
 
     /// Get inner type, if type has one.

@@ -1,8 +1,8 @@
-use std::borrow::Cow;
+use oxc_ast::StaticPropertyName;
+use oxc_str::JSStr;
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize, de};
-use serde_json::Value;
+use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
@@ -19,11 +19,11 @@ use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword};
 use crate::{
     AstNode,
     context::LintContext,
-    rule::{Rule, TupleRuleConfig},
+    rule::{MixedTupleRuleConfig, Rule},
 };
 
 fn func_name_matching_diagnostic(
-    name: &str,
+    name: impl std::fmt::Display,
     func_name: &str,
     is_property: bool,
     mode: FuncNameMatchingMode,
@@ -68,41 +68,9 @@ struct FuncNameMatchingConfig {
     include_common_js_module_exports: bool,
 }
 
-#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 /// This rule takes an optional string of `"always"` or `"never"` (when omitted, it defaults to `"always"`), and an optional options object with two properties `considerPropertyDescriptor` and `includeCommonJSModuleExports`.
-pub struct FuncNameMatching(FuncNameMatchingMode, FuncNameMatchingConfig);
-
-impl<'de> Deserialize<'de> for FuncNameMatching {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let values = Vec::<Value>::deserialize(deserializer)?;
-        let mut mode = FuncNameMatchingMode::Always;
-        let mut options = FuncNameMatchingConfig::default();
-
-        match values.as_slice() {
-            [] => {}
-            [first] if first.is_string() => {
-                mode = serde_json::from_value(first.clone()).map_err(de::Error::custom)?;
-            }
-            [first] if first.is_object() => {
-                options = serde_json::from_value(first.clone()).map_err(de::Error::custom)?;
-            }
-            [first, second] if first.is_string() && second.is_object() => {
-                mode = serde_json::from_value(first.clone()).map_err(de::Error::custom)?;
-                options = serde_json::from_value(second.clone()).map_err(de::Error::custom)?;
-            }
-            _ => {
-                return Err(de::Error::custom(
-                    r#"expected [], ["always"|"never"], [options], or ["always"|"never", options]"#,
-                ));
-            }
-        }
-
-        Ok(Self(mode, options))
-    }
-}
+pub struct FuncNameMatching(MixedTupleRuleConfig<FuncNameMatchingMode, FuncNameMatchingConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -221,14 +189,16 @@ declare_oxc_lint!(
     eslint,
     style,
     none,
-    config = FuncNameMatching,
+    config = MixedTupleRuleConfig<FuncNameMatchingMode, FuncNameMatchingConfig>,
     version = "1.62.0",
     short_description = "Requires function expression names to match the variable or property names they are assigned to, or disallows such matches with `\"never\"`.",
 );
 
 impl Rule for FuncNameMatching {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
+        serde_json::from_value::<MixedTupleRuleConfig<FuncNameMatchingMode, FuncNameMatchingConfig>>(
+            value,
+        ).map(Self)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -242,7 +212,7 @@ impl Rule for FuncNameMatching {
                 };
                 let Some(func_name) = function_expression_name(init) else { return };
 
-                self.report_if_should_warn(name, &func_name, false, ctx);
+                self.report_if_should_warn(&StaticPropertyName::from(name), &func_name, false, ctx);
             }
             AstKind::AssignmentExpression(assign_expr) => {
                 let Some(func_name) = function_expression_name(&assign_expr.right) else { return };
@@ -250,7 +220,8 @@ impl Rule for FuncNameMatching {
                     return;
                 };
 
-                if !self.1.include_common_js_module_exports && is_module_exports(&assign_expr.left)
+                if !self.0.1.include_common_js_module_exports
+                    && is_module_exports(&assign_expr.left)
                 {
                     return;
                 }
@@ -259,7 +230,12 @@ impl Rule for FuncNameMatching {
                     return;
                 }
 
-                self.report_if_should_warn(name, &func_name, is_property, ctx);
+                self.report_if_should_warn(
+                    &StaticPropertyName::from(name),
+                    &func_name,
+                    is_property,
+                    ctx,
+                );
             }
             AstKind::ObjectProperty(property) => {
                 self.check_object_property(property, node, ctx);
@@ -273,8 +249,8 @@ impl Rule for FuncNameMatching {
 }
 
 impl FuncNameMatching {
-    fn should_warn(&self, name: &str, func_name: &str) -> bool {
-        match self.0 {
+    fn should_warn(&self, name: &StaticPropertyName<'_>, func_name: &str) -> bool {
+        match self.0.0 {
             FuncNameMatchingMode::Always => name != func_name,
             FuncNameMatchingMode::Never => name == func_name,
         }
@@ -282,17 +258,17 @@ impl FuncNameMatching {
 
     fn report_if_should_warn(
         &self,
-        name: &str,
+        name: &StaticPropertyName<'_>,
         func_name: &FunctionName<'_>,
         is_property: bool,
         ctx: &LintContext,
     ) {
         if self.should_warn(name, func_name.name) {
             ctx.diagnostic(func_name_matching_diagnostic(
-                name,
+                name.display(),
                 func_name.name,
                 is_property,
-                self.0,
+                self.0.0,
                 func_name.span,
             ));
         }
@@ -310,23 +286,23 @@ impl FuncNameMatching {
         if property_key_is_identifier(&property.key) && !property.computed {
             let Some(property_name) = property.key.static_name() else { return };
 
-            if self.1.consider_property_descriptor && property_name == "value" {
+            if self.0.1.consider_property_descriptor && property_name == "value" {
                 match property_descriptor_name(node, ctx) {
                     DescriptorName::Name(descriptor_name) => {
+                        self.report_if_should_warn(&descriptor_name, &function_name, true, ctx);
+                    }
+                    DescriptorName::Unresolved => {}
+                    DescriptorName::NotDescriptor => {
                         self.report_if_should_warn(
-                            descriptor_name.as_ref(),
+                            &StaticPropertyName::from("value"),
                             &function_name,
                             true,
                             ctx,
                         );
                     }
-                    DescriptorName::Unresolved => {}
-                    DescriptorName::NotDescriptor => {
-                        self.report_if_should_warn("value", &function_name, true, ctx);
-                    }
                 }
             } else {
-                self.report_if_should_warn(property_name.as_ref(), &function_name, true, ctx);
+                self.report_if_should_warn(&property_name, &function_name, true, ctx);
             }
 
             return;
@@ -335,7 +311,12 @@ impl FuncNameMatching {
         if let Some(property_name) = string_literal_key_name(&property.key)
             && is_valid_identifier(property_name)
         {
-            self.report_if_should_warn(property_name, &function_name, true, ctx);
+            self.report_if_should_warn(
+                &StaticPropertyName::from(property_name),
+                &function_name,
+                true,
+                ctx,
+            );
         }
     }
 
@@ -350,14 +331,19 @@ impl FuncNameMatching {
         if property_key_is_identifier(&property.key) && !property.computed {
             let Some(property_name) = property.key.static_name() else { return };
 
-            self.report_if_should_warn(property_name.as_ref(), &function_name, true, ctx);
+            self.report_if_should_warn(&property_name, &function_name, true, ctx);
             return;
         }
 
         if let Some(property_name) = string_literal_key_name(&property.key)
             && is_valid_identifier(property_name)
         {
-            self.report_if_should_warn(property_name, &function_name, true, ctx);
+            self.report_if_should_warn(
+                &StaticPropertyName::from(property_name),
+                &function_name,
+                true,
+                ctx,
+            );
         }
     }
 }
@@ -384,7 +370,9 @@ fn property_descriptor_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> De
                 .arguments
                 .get(1)
                 .and_then(string_literal_argument)
-                .map_or(DescriptorName::Unresolved, |name| DescriptorName::Name(name.into()))
+                .map_or(DescriptorName::Unresolved, |name| {
+                    DescriptorName::Name(StaticPropertyName::from(name))
+                })
         }
         AstKind::ObjectProperty(descriptor_property) => {
             if descriptor_property.computed || !property_key_is_identifier(&descriptor_property.key)
@@ -421,7 +409,7 @@ fn property_descriptor_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> De
 }
 
 enum DescriptorName<'a> {
-    Name(Cow<'a, str>),
+    Name(StaticPropertyName<'a>),
     Unresolved,
     NotDescriptor,
 }
@@ -453,7 +441,11 @@ fn assignment_target_name<'a>(target: &'a AssignmentTarget<'a>) -> Option<(&'a s
         AssignmentTarget::AssignmentTargetIdentifier(identifier) => {
             Some((identifier.name.as_str(), false))
         }
-        target => target.as_member_expression()?.static_property_name().map(|name| (name, true)),
+        target => target
+            .as_member_expression()?
+            .static_property_name()
+            .and_then(JSStr::as_str)
+            .map(|name| (name, true)),
     }
 }
 
@@ -465,7 +457,8 @@ fn is_module_exports(target: &AssignmentTarget) -> bool {
         return false;
     };
 
-    object.name == "module" && member_expr.static_property_name() == Some("exports")
+    object.name == "module"
+        && member_expr.static_property_name().is_some_and(|name| name == "exports")
 }
 
 fn property_key_is_identifier(key: &PropertyKey) -> bool {
@@ -474,14 +467,14 @@ fn property_key_is_identifier(key: &PropertyKey) -> bool {
 
 fn string_literal_key_name<'a>(key: &'a PropertyKey<'a>) -> Option<&'a str> {
     match key {
-        PropertyKey::StringLiteral(lit) => Some(lit.value.as_str()),
+        PropertyKey::StringLiteral(lit) => lit.value.as_str(),
         _ => None,
     }
 }
 
-fn string_literal_argument<'a>(argument: &'a Argument<'a>) -> Option<&'a str> {
+fn string_literal_argument<'a>(argument: &'a Argument<'a>) -> Option<JSStr<'a>> {
     match argument.as_expression()?.without_parentheses() {
-        Expression::StringLiteral(lit) => Some(lit.value.as_str()),
+        Expression::StringLiteral(lit) => Some(lit.value),
         _ => None,
     }
 }
@@ -848,6 +841,10 @@ fn test() {
             "(Object?.defineProperties)(foo, { bar: { value: function bar() {} } })",
             Some(serde_json::json!(["never", { "considerPropertyDescriptor": true }])),
         ), // { "ecmaVersion": 2020 },
+        (
+            r#"Object.defineProperty(o, "\uD800", { value: function foo() {} })"#,
+            Some(serde_json::json!(["always", { "considerPropertyDescriptor": true }])),
+        ),
         ("class C { x = function y() {}; }", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2022 },
         ("class C { x = function x() {}; }", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 2022 },
         ("class C { 'x' = function y() {}; }", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2022 },

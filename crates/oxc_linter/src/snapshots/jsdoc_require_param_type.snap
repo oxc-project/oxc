@@ -30,13 +30,55 @@ source: crates/oxc_linter/src/tester.rs
   help: Add {type} to `@param` tag.
 
   ⚠ jsdoc(require-param-type): Missing JSDoc `@param` type.
+   ╭─[require_param_type.tsx:1:5]
+ 1 │ /** @param input.userId - The ID of the user to update. */
+   ·     ──────
+ 2 │ function quux (input) {}
+   ╰────
+  help: Add {type} to `@param` tag.
+
+  ⚠ jsdoc(require-param-type): Missing JSDoc `@param` type.
+   ╭─[require_param_type.tsx:1:5]
+ 1 │ /** @param input.userId - The ID of the user to update.
+   ·     ──────
+ 2 │  * @param options */
+   ╰────
+  help: Add {type} to `@param` tag.
+
+  ⚠ jsdoc(require-param-type): Missing root type for @param.
+   ╭─[require_param_type.tsx:2:4]
+ 1 │ /** @param input.userId - The ID of the user to update.
+ 2 │  * @param options */
+   ·    ──────
+ 3 │ function quux (input, {flag}) {}
+   ╰────
+  help: Add {object} to `@param` tag.
+
+  ⚠ jsdoc(require-param-type): Missing root type for @param.
+   ╭─[require_param_type.tsx:3:4]
+ 2 │  * @param {string} employees[].name
+ 3 │  * @param options */
+   ·    ──────
+ 4 │ function quux (employees, {flag}) {}
+   ╰────
+  help: Add {object} to `@param` tag.
+
+  ⚠ jsdoc(require-param-type): Missing JSDoc `@param` type.
+   ╭─[require_param_type.tsx:1:5]
+ 1 │ /** @param root.foo */
+   ·     ──────
+ 2 │ function quux ({foo}) {}
+   ╰────
+  help: Add {type} to `@param` tag.
+
+  ⚠ jsdoc(require-param-type): Missing root type for @param.
    ╭─[require_param_type.tsx:4:17]
  3 │                        * @param {number} foo
  4 │                        * @param root
    ·                          ──────
  5 │                        * @param {boolean} baz
    ╰────
-  help: Add {type} to `@param` tag.
+  help: Add {object} to `@param` tag.
 
   ⚠ jsdoc(require-param-type): Missing JSDoc `@param` type.
    ╭─[require_param_type.tsx:4:17]

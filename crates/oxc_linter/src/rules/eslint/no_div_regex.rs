@@ -53,7 +53,7 @@ impl Rule for NoDivRegex {
                 .body
                 .first()
                 .and_then(|it| it.body.first())
-                .is_some_and(|it| matches!(it, Term::Character(ch) if ch.kind == CharacterKind::Symbol && ch.value == '=' as u32))
+                .is_some_and(is_leading_equals)
             {
                 ctx.diagnostic_with_fix(no_div_regex_diagnostic(lit.span), |fixer| {
                     let span = Span::sized(lit.span.start + 1, 1);
@@ -64,6 +64,16 @@ impl Rule for NoDivRegex {
     }
 }
 
+/// Whether `term` starts the pattern with a literal `=`, also when it is
+/// quantified (`/=+/`, `/=*x/`, `/={2}/`).
+fn is_leading_equals(term: &Term) -> bool {
+    match term {
+        Term::Character(ch) => ch.kind == CharacterKind::Symbol && ch.value == '=' as u32,
+        Term::Quantifier(quantifier) => is_leading_equals(&quantifier.body),
+        _ => false,
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -71,14 +81,22 @@ fn test() {
     let pass = vec![
         "var f = function() { return /foo/ig.test('bar'); };",
         "var f = function() { return /\\=foo/; };",
+        "var f = function() { return /[=]+$/; };",
+        "var f = function() { return /a=+/; };",
     ];
 
-    let fail = vec!["var f = function() { return /=foo/; };"];
-
-    let fix = vec![(
+    let fail = vec![
         "var f = function() { return /=foo/; };",
-        "var f = function() { return /[=]foo/; };",
-    )];
+        "var f = function() { return /=+$/; };",
+        "var f = function() { return /=*x/; };",
+        "var f = function() { return /={2}/; };",
+    ];
+
+    let fix = vec![
+        ("var f = function() { return /=foo/; };", "var f = function() { return /[=]foo/; };"),
+        ("var f = function() { return /=+$/; };", "var f = function() { return /[=]+$/; };"),
+        ("var f = function() { return /={2}/; };", "var f = function() { return /[=]{2}/; };"),
+    ];
 
     Tester::new(NoDivRegex::NAME, NoDivRegex::PLUGIN, pass, fail)
         .expect_fix(fix)

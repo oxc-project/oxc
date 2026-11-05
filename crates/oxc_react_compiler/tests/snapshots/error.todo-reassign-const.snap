@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-reassign-const.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot reassign variable after render completes", labels: [LabeledSpan { label: Some("Cannot reassign `foo` after render completes"), span: Span { start: 149, end: 152 }, primary: true }, LabeledSpan { label: Some("`foo` is declared here"), span: Span { start: 63, end: 66 }, primary: false }], help: Some("Reassigning `foo` after render has completed can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Immutability") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot modify local variables after render completes", labels: [LabeledSpan { label: Some("This modifies `foo`"), span: Span { start: 149, end: 152 }, primary: true }, LabeledSpan { label: Some("This function may (indirectly) reassign or modify `foo` after render"), span: Span { start: 133, end: 140 }, primary: false }], help: Some("This argument is a function which may reassign or mutate `foo` after render, which can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Immutability") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability") } }
+
+No changes.

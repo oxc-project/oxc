@@ -1,0 +1,65 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Prettier value-parses the prelude: a fill of words, one indent in,
+// so a long prelude breaks wherever the width runs out
+@import (reference) url(https://cdn.jsdelivr.net/npm/@less/test-data/tests-unit/selectors/selectors.less);
+@import (less, multiple) "import/import-test-d.css" screen and (max-width: 601px);
+@import url("/import/layer-import-3.css") layer(responsive) supports(display: flex) screen and (max-width: 768px);
+@import url("/import/layer-import-4.css") layer(print) print, (max-width: 600px);
+@import url("very-very-very-very-very-very-very-very-very-very-long-name.css") projection,tv;
+@import url("a.css") screen, print, (max-width: 600px), (min-width: 100px) and (orientation: landscape);
+// a wrap inside a comma group sits one indent deeper than a wrap between comma groups,
+// except after a lone url(...) (Prettier's `insideURLFunctionInImportAtRuleNode`)
+@import "a.css" layer(foo) supports(display: flex) screen and (max-width: 1px), print, tv;
+@import url("very-very-very-very-very-very-very-very-very-very-long-name.css") projection and (color), tv;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Prettier value-parses the prelude: a fill of words, one indent in,
+// so a long prelude breaks wherever the width runs out
+@import (reference)
+  url(https://cdn.jsdelivr.net/npm/@less/test-data/tests-unit/selectors/selectors.less);
+@import (less, multiple) "import/import-test-d.css" screen and
+  (max-width: 601px);
+@import url("/import/layer-import-3.css") layer(responsive)
+  supports(display: flex) screen and (max-width: 768px);
+@import url("/import/layer-import-4.css") layer(print) print, (max-width: 600px);
+@import url("very-very-very-very-very-very-very-very-very-very-long-name.css")
+  projection,
+  tv;
+@import url("a.css") screen, print, (max-width: 600px),
+  (min-width: 100px) and (orientation: landscape);
+// a wrap inside a comma group sits one indent deeper than a wrap between comma groups,
+// except after a lone url(...) (Prettier's `insideURLFunctionInImportAtRuleNode`)
+@import "a.css" layer(foo) supports(display: flex) screen and (max-width: 1px),
+  print, tv;
+@import url("very-very-very-very-very-very-very-very-very-very-long-name.css")
+    projection and (color),
+  tv;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Prettier value-parses the prelude: a fill of words, one indent in,
+// so a long prelude breaks wherever the width runs out
+@import (reference)
+  url(https://cdn.jsdelivr.net/npm/@less/test-data/tests-unit/selectors/selectors.less);
+@import (less, multiple) "import/import-test-d.css" screen and (max-width: 601px);
+@import url("/import/layer-import-3.css") layer(responsive) supports(display: flex) screen and
+  (max-width: 768px);
+@import url("/import/layer-import-4.css") layer(print) print, (max-width: 600px);
+@import url("very-very-very-very-very-very-very-very-very-very-long-name.css") projection, tv;
+@import url("a.css") screen, print, (max-width: 600px),
+  (min-width: 100px) and (orientation: landscape);
+// a wrap inside a comma group sits one indent deeper than a wrap between comma groups,
+// except after a lone url(...) (Prettier's `insideURLFunctionInImportAtRuleNode`)
+@import "a.css" layer(foo) supports(display: flex) screen and (max-width: 1px), print, tv;
+@import url("very-very-very-very-very-very-very-very-very-very-long-name.css") projection and
+    (color),
+  tv;
+
+===================== End =====================

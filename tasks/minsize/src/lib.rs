@@ -15,7 +15,9 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
+use oxc_minifier::{
+    CompressOptions, MangleOptions, ManglePropertiesOptions, Minifier, MinifierOptions,
+};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -79,28 +81,27 @@ pub fn run() -> Result<(), io::Error> {
 
     let mut out = String::new();
 
-    let width = 10;
+    let width = 11;
     writeln!(
         out,
         "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} |",
         "",
-        "Oxc",
+        "Oxc props",
         "ESBuild",
-        "Oxc",
+        "Oxc props",
         "ESBuild",
         width = width,
     )
     .unwrap();
     writeln!(
         out,
-        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {:width$}",
+        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {:width$} | File",
         "Original",
         "minified",
         "minified",
         "gzip",
         "gzip",
         "Iterations",
-        "File",
         width = width,
     )
     .unwrap();
@@ -124,14 +125,14 @@ pub fn run() -> Result<(), io::Error> {
         fs::write(save_path.join(&file.file_name), &minified).unwrap();
 
         let s = format!(
-            "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {:width$} \n\n",
+            "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {}\n\n",
             format_size(file.source_text.len(), DECIMAL),
-            format_size(minified.len(), DECIMAL),
+            format_bytes(minified.len()),
             targets[file.file_name.as_str()],
-            format_size(gzip_size(&minified), DECIMAL),
+            format_bytes(gzip_size(&minified)),
             gzip_targets[file.file_name.as_str()],
             iterations,
-            &file.file_name,
+            file.file_name,
             width = width
         );
         out.push_str(&s);
@@ -149,13 +150,19 @@ pub fn run() -> Result<(), io::Error> {
 
 fn minify_twice(file: &TestFile, options: Options) -> (String, u8) {
     let source_type = SourceType::cjs().with_script(true);
-    let (code1, iterations) = minify(&file.source_text, source_type, options);
-    let (code2, _) = minify(&code1, source_type, options);
+    let (code1, iterations) = minify(&file.source_text, source_type, options, true);
+    // Property mangling runs once. Compression may expose new matching keys on the second pass.
+    let (code2, _) = minify(&code1, source_type, options, false);
     assert_eq_minified_code(&code1, &code2, &file.file_name);
     (code2, iterations)
 }
 
-fn minify(source_text: &str, source_type: SourceType, options: Options) -> (String, u8) {
+fn minify(
+    source_text: &str,
+    source_type: SourceType,
+    options: Options,
+    mangle_properties: bool,
+) -> (String, u8) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.diagnostics.is_empty());
@@ -168,6 +175,8 @@ fn minify(source_text: &str, source_type: SourceType, options: Options) -> (Stri
     .build(scoping, &mut program);
     let ret = Minifier::new(MinifierOptions {
         mangle: (!options.compress_only).then(MangleOptions::default),
+        mangle_properties: (mangle_properties && !options.compress_only)
+            .then(property_mangle_options),
         compress: Some(CompressOptions::default()),
     })
     .minify(&allocator, &mut program);
@@ -177,6 +186,26 @@ fn minify(source_text: &str, source_type: SourceType, options: Options) -> (Stri
         .build(&program)
         .code;
     (code, ret.iterations)
+}
+
+fn property_mangle_options() -> ManglePropertiesOptions {
+    let mut options = ManglePropertiesOptions::from_pattern("^_").expect("valid property regex");
+    options.mangle_quoted = true;
+    options
+}
+
+/// Exact byte count, e.g. `3,311,949 B`, so that every byte of change shows in the snapshot.
+fn format_bytes(bytes: usize) -> String {
+    let digits = bytes.to_string();
+    let mut out = String::with_capacity(digits.len() + digits.len() / 3 + 2);
+    for (i, digit) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i).is_multiple_of(3) {
+            out.push(',');
+        }
+        out.push(digit);
+    }
+    out.push_str(" B");
+    out
 }
 
 fn gzip_size(s: &str) -> usize {

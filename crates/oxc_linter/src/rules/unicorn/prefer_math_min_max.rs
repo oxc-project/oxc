@@ -1,12 +1,10 @@
-use std::borrow::Cow;
-
 use oxc_ast::{
     AstKind,
     ast::{BinaryExpression, BinaryOperator, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_expression};
 
@@ -24,7 +22,6 @@ pub struct PreferMathMinMax;
 enum TypeOptions {
     Min,
     Max,
-    Unknown,
 }
 
 declare_oxc_lint!(
@@ -56,7 +53,8 @@ declare_oxc_lint!(
     PreferMathMinMax,
     unicorn,
     pedantic,
-    fix,
+    recommended,
+    suggestion,
     version = "0.10.1",
     short_description = "Prefers use of `Math.min()` and `Math.max()` instead of ternary expressions when performing simple comparisons.",
 );
@@ -71,52 +69,27 @@ impl Rule for PreferMathMinMax {
             return;
         };
 
-        let condition_type =
-            is_min_max(test_expr, &conditional_expr.consequent, &conditional_expr.alternate, ctx);
-
-        if matches!(condition_type, TypeOptions::Unknown) {
+        let Some(condition_type) =
+            is_min_max(test_expr, &conditional_expr.consequent, &conditional_expr.alternate, ctx)
+        else {
             return;
-        }
+        };
 
-        ctx.diagnostic_with_fix(prefer_math_min_max_diagnostic(conditional_expr.span), |fixer| {
-            let Some(consequent) = get_expr_value(&conditional_expr.consequent) else {
-                return fixer.noop();
-            };
-            let Some(alternate) = get_expr_value(&conditional_expr.alternate) else {
-                return fixer.noop();
-            };
-
-            match condition_type {
-                TypeOptions::Max => fixer.replace(
+        ctx.diagnostic_with_suggestion(
+            prefer_math_min_max_diagnostic(conditional_expr.span),
+            |fixer| {
+                let consequent = ctx.source_range(conditional_expr.consequent.span());
+                let alternate = ctx.source_range(conditional_expr.alternate.span());
+                let method = match condition_type {
+                    TypeOptions::Max => "max",
+                    TypeOptions::Min => "min",
+                };
+                fixer.replace(
                     conditional_expr.span,
-                    Cow::Owned(format!("Math.max({consequent}, {alternate})")),
-                ),
-                TypeOptions::Min => fixer.replace(
-                    conditional_expr.span,
-                    Cow::Owned(format!("Math.min({consequent}, {alternate})")),
-                ),
-                TypeOptions::Unknown => unreachable!(),
-            }
-        });
-    }
-}
-
-fn get_expr_value(expr: &Expression) -> Option<String> {
-    match expr {
-        Expression::NumericLiteral(lit) => Some(lit.to_string()),
-        Expression::UnaryExpression(lit) => {
-            let mut unary_str: String = String::from(lit.operator.as_str());
-
-            let Some(unary_lit) = get_expr_value(&lit.argument) else {
-                return Some(unary_str.clone());
-            };
-
-            unary_str.push_str(unary_lit.as_str());
-
-            Some(unary_str.clone())
-        }
-        Expression::Identifier(identifier) => Some(identifier.name.to_string()),
-        _ => None,
+                    format!("Math.{method}({consequent}, {alternate})"),
+                )
+            },
+        );
     }
 }
 
@@ -125,7 +98,7 @@ fn is_min_max(
     consequent: &Expression,
     alternate: &Expression,
     ctx: &LintContext,
-) -> TypeOptions {
+) -> Option<TypeOptions> {
     let is_matched = matches!(
         (condition.left.get_inner_expression(), condition.right.get_inner_expression()),
         (Expression::NumericLiteral(_) | Expression::UnaryExpression(_), Expression::Identifier(_))
@@ -136,26 +109,26 @@ fn is_min_max(
     );
 
     if !condition.operator.is_compare() || !is_matched {
-        return TypeOptions::Unknown;
+        return None;
     }
 
     if is_same_expression(&condition.left, consequent, ctx)
         && is_same_expression(&condition.right, alternate, ctx)
     {
         if matches!(condition.operator, BinaryOperator::LessThan | BinaryOperator::LessEqualThan) {
-            return TypeOptions::Min;
+            return Some(TypeOptions::Min);
         }
-        return TypeOptions::Max;
+        return Some(TypeOptions::Max);
     } else if is_same_expression(&condition.left, alternate, ctx)
         && is_same_expression(&condition.right, consequent, ctx)
     {
         if matches!(condition.operator, BinaryOperator::LessThan | BinaryOperator::LessEqualThan) {
-            return TypeOptions::Max;
+            return Some(TypeOptions::Max);
         }
-        return TypeOptions::Min;
+        return Some(TypeOptions::Min);
     }
 
-    TypeOptions::Unknown
+    None
 }
 
 #[test]
@@ -223,6 +196,12 @@ fn test() {
         ),
         ("return 10e6 < height ? height : 10e6;", "return Math.max(height, 10e6);"),
         ("return -10e4 <= height ? height : -10e4;", "return Math.max(height, -10e4);"),
+        ("const foo = typeof x < bar ? typeof x : bar;", "const foo = Math.min(typeof x, bar);"),
+        ("const foo = void x < bar ? void x : bar;", "const foo = Math.min(void x, bar);"),
+        (
+            "const foo = delete obj.p < bar ? delete obj.p : bar;",
+            "const foo = Math.min(delete obj.p, bar);",
+        ),
     ];
 
     Tester::new(PreferMathMinMax::NAME, PreferMathMinMax::PLUGIN, pass, fail)

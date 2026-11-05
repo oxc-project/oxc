@@ -10,6 +10,8 @@ use super::{ClassBindings, ClassProperties, IdentIndexMap};
 pub(super) struct ClassDetails<'a> {
     /// `true` for class declaration, `false` for class expression
     pub is_declaration: bool,
+    /// `true` if private method helpers must be emitted in the class expression sequence.
+    pub private_method_helpers_in_class_sequence: bool,
     /// `true` if class requires no transformation
     pub is_transform_required: bool,
     /// Private properties.
@@ -28,6 +30,7 @@ impl ClassDetails<'_> {
     pub fn dummy(is_declaration: bool) -> Self {
         Self {
             is_declaration,
+            private_method_helpers_in_class_sequence: false,
             is_transform_required: false,
             private_props: None,
             bindings: ClassBindings::dummy(),
@@ -261,7 +264,6 @@ pub(super) struct ResolvedGetSetPrivateProp<'a, 'b> {
     pub is_method: bool,
     /// `true` if is a private accessor property or [`PrivateProp::method_kind`] is
     /// `Some(MethodDefinitionKind::Get)` or `Some(MethodDefinitionKind::Set)`
-    #[expect(unused)]
     pub is_accessor: bool,
     /// `true` if class which defines this property is a class declaration
     pub is_declaration: bool,

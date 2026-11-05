@@ -1,10 +1,11 @@
 # Optimization Catalog
 
-Complete list of optimizations for maximum size reduction.
+Overview of implemented optimization families. Examples illustrate individual
+transforms; other passes may further simplify or remove the shown output.
 
 Many optimizations rely on [`oxc_ecmascript`](../../oxc_ecmascript) for ECMAScript operations like constant evaluation, type conversion, and side effect analysis.
 
-## Current Optimizations (18)
+## Current Optimizations
 
 ### Constant Folding
 
@@ -72,7 +73,7 @@ a && b();
 !(!x || !y);
 
 // After
-x && y;
+!!(x && y);
 
 // Before
 !!true;
@@ -115,7 +116,7 @@ obj.property;
 
 ### Template Literal Optimization
 
-**Module**: `inline.rs`
+**Module**: `fold_constants.rs`, `substitute_alternate_syntax.rs`
 **Size Impact**: Medium
 **Description**: Simplifies template literals
 
@@ -137,11 +138,9 @@ obj.property;
 
 ```javascript
 // Before
-"test".indexOf("e");
 Math.pow(2, 3);
 
 // After
-"test".indexOf("e"); // or optimized form
 2 ** 3;
 ```
 
@@ -234,19 +233,21 @@ x ? true : false;
 
 ```javascript
 // Before
-if (x === true) {
+if (!!x) {
+  run();
 }
 
 // After
 if (x) {
+  run();
 }
 ```
 
 ### Variable Inlining
 
-**Module**: `inline.rs`
+**Module**: `inline.rs`, `minimize_statements.rs`
 **Size Impact**: Medium
-**Description**: Inlines single-use variables
+**Description**: Propagates known constants and inlines eligible single-use variables
 
 ```javascript
 // Before
@@ -257,7 +258,27 @@ console.log(x);
 console.log(5);
 ```
 
-## Planned Optimizations
+### Switch Statement Optimization
+
+**Module**: `minimize_switch_statements.rs`
+**Description**: Removes unreachable cases for known discriminants; related switch
+folding is dispatched from `peephole/mod.rs`.
+
+### Unused Private Member Removal
+
+**Module**: `remove_unused_private_members.rs`
+**Description**: Removes eligible unused private class members.
+
+### IIFE Simplification
+
+**Module**: `substitute_alternate_syntax.rs`
+**Description**: Simplifies eligible immediately invoked function expressions,
+including empty bodies and parameterless single-expression arrow functions.
+
+## Ideas for Further Optimization
+
+These are possible future directions, not implemented features or commitments.
+The minifier accepts JavaScript; TypeScript enum lowering belongs in the transformer.
 
 ### From Closure Compiler
 
@@ -269,7 +290,6 @@ console.log(5);
 
 ### From Terser
 
-- **Switch statement optimization**: Simplify switch statements
 - **Advanced array/object patterns**: Recognize and optimize patterns
 - **String optimizations**: Join strings, optimize concatenation
 - **RegExp optimizations**: Simplify regular expressions
@@ -278,11 +298,11 @@ console.log(5);
 
 - **CSS-in-JS optimization**: Optimize styled components
 - **Import optimization**: Remove unused imports
-- **Enum inlining**: Replace enum access with values
+- **Enum-like object inlining**: Replace JavaScript object property access with values
 
 ## Size Optimization Techniques
 
-1. **Multiple passes**: Run optimizations until fixed-point
+1. **Multiple passes**: Run optimizations until fixed-point or the iteration limit
 2. **Optimization ordering**: Some optimizations enable others
 3. **Pattern matching**: Recognize common code patterns
 4. **Syntactic substitution**: Always prefer shorter forms
@@ -297,4 +317,5 @@ Some optimizations enable others:
 - **Inlining** → enables further constant folding
 - **Dead code removal** → enables more inlining
 
-The fixed-point iteration ensures all optimization opportunities are found.
+Repeated passes let implemented optimizations expose further opportunities, subject
+to safety checks, options, and the iteration limit.

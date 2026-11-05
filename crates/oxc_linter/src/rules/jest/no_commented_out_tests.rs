@@ -9,7 +9,14 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct NoCommentedOutTests;
 
-declare_oxc_lint!(NoCommentedOutTests, jest, suspicious, docs = DOCUMENTATION, version = "0.0.8",);
+declare_oxc_lint!(
+    NoCommentedOutTests,
+    jest,
+    suspicious,
+    recommended,
+    docs = DOCUMENTATION,
+    version = "0.0.8",
+);
 
 impl Rule for NoCommentedOutTests {
     fn run_once(&self, ctx: &LintContext) {
@@ -39,6 +46,7 @@ fn test() {
         ("testSomething()", None),
         ("// latest(dates)", None),
         ("// TODO: unify with Git implementation from Shipit (?)", None),
+        ("// test['not a method?']()", None),
         ("#!/usr/bin/env node", None),
         (
             r#"
@@ -108,6 +116,7 @@ fn test() {
         ("// it('has title but no callback')", None),
         ("// it()", None),
         ("// test.someNewMethodThatMightBeAddedInTheFuture()", None),
+        ("// test.123()", None),
         ("// test['someNewMethodThatMightBeAddedInTheFuture']()", None),
         ("// test('has title but no callback')", None),
         (

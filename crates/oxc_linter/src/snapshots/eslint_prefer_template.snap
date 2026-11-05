@@ -478,3 +478,94 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────
    ╰────
   help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:46]
+ 1 │ export function f(a, b, c) { return a + (b ? "|" + c : ""); }
+   ·                                              ───────
+   ╰────
+  help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:59]
+ 1 │ export const g = (x) => x + [1].map(function (y) { return "v" + y; }).length;
+   ·                                                           ───────
+   ╰────
+  help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:13]
+ 1 │ a + ((b ? (("|" + c)) : ""))
+   ·             ───────
+   ╰────
+  help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:7]
+ 1 │ a + (("|" + c) * d)
+   ·       ───────
+   ╰────
+  help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:8]
+ 1 │ a + fn("|" + c)
+   ·        ───────
+   ╰────
+  help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:12]
+ 1 │ a + (() => "|" + c)()
+   ·            ───────
+   ╰────
+  help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ a + `${"|" + c}`
+   · ────────────────
+   ╰────
+  help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:8]
+ 1 │ a + `${"|" + c}`
+   ·        ───────
+   ╰────
+  help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:2]
+ 1 │ (a + "x" as string) + c
+   ·  ───────
+   ╰────
+  help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:2]
+ 1 │ (a + "x" satisfies string) + c
+   ·  ───────
+   ╰────
+  help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:2]
+ 1 │ (a + "x")! + c
+   ·  ───────
+   ╰────
+  help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ ((a + "x") as string) + "y"
+   · ───────────────────────────
+   ╰────
+  help: Use template literals instead of string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:3]
+ 1 │ ((a + "x") as string) + "y"
+   ·   ───────
+   ╰────
+  help: Use template literals instead of string concatenation.

@@ -1,0 +1,28 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* DIVERGENCES.md#missed-semicolon-accepted */
+a {
+  left: 0
+  top: 0;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* DIVERGENCES.md#missed-semicolon-accepted */
+a {
+  left: 0 top: 0;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* DIVERGENCES.md#missed-semicolon-accepted */
+a {
+  left: 0 top: 0;
+}
+
+===================== End =====================

@@ -1,0 +1,266 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+assertion_line: 142
+---
+==================== Input ====================
+// TS rejects computed enum member names, but oxc parses them;
+// `['baz']` must format the same as `'baz'` so a second pass is stable (oxc-4449)
+enum A { ['baz'] }
+enum B { [`baz`] }
+enum C { ['baz'] = 2 }
+enum D { [`baz`] = 2 }
+enum E { 'baz' }
+enum F { baz }
+enum G { 'b-az' = 2 }
+enum H { 'baz' = 2, 'b-az' = 3 }
+
+==================== Output ====================
+-------------------------------------------
+{ printWidth: 80, quoteProps: "as-needed" }
+-------------------------------------------
+// TS rejects computed enum member names, but oxc parses them;
+// `['baz']` must format the same as `'baz'` so a second pass is stable (oxc-4449)
+enum A {
+  baz,
+}
+enum B {
+  [`baz`],
+}
+enum C {
+  baz = 2,
+}
+enum D {
+  [`baz`] = 2,
+}
+enum E {
+  baz,
+}
+enum F {
+  baz,
+}
+enum G {
+  "b-az" = 2,
+}
+enum H {
+  baz = 2,
+  "b-az" = 3,
+}
+
+--------------------------------------------
+{ printWidth: 100, quoteProps: "as-needed" }
+--------------------------------------------
+// TS rejects computed enum member names, but oxc parses them;
+// `['baz']` must format the same as `'baz'` so a second pass is stable (oxc-4449)
+enum A {
+  baz,
+}
+enum B {
+  [`baz`],
+}
+enum C {
+  baz = 2,
+}
+enum D {
+  [`baz`] = 2,
+}
+enum E {
+  baz,
+}
+enum F {
+  baz,
+}
+enum G {
+  "b-az" = 2,
+}
+enum H {
+  baz = 2,
+  "b-az" = 3,
+}
+
+------------------------------------------
+{ printWidth: 80, quoteProps: "preserve" }
+------------------------------------------
+// TS rejects computed enum member names, but oxc parses them;
+// `['baz']` must format the same as `'baz'` so a second pass is stable (oxc-4449)
+enum A {
+  "baz",
+}
+enum B {
+  [`baz`],
+}
+enum C {
+  "baz" = 2,
+}
+enum D {
+  [`baz`] = 2,
+}
+enum E {
+  "baz",
+}
+enum F {
+  baz,
+}
+enum G {
+  "b-az" = 2,
+}
+enum H {
+  "baz" = 2,
+  "b-az" = 3,
+}
+
+-------------------------------------------
+{ printWidth: 100, quoteProps: "preserve" }
+-------------------------------------------
+// TS rejects computed enum member names, but oxc parses them;
+// `['baz']` must format the same as `'baz'` so a second pass is stable (oxc-4449)
+enum A {
+  "baz",
+}
+enum B {
+  [`baz`],
+}
+enum C {
+  "baz" = 2,
+}
+enum D {
+  [`baz`] = 2,
+}
+enum E {
+  "baz",
+}
+enum F {
+  baz,
+}
+enum G {
+  "b-az" = 2,
+}
+enum H {
+  "baz" = 2,
+  "b-az" = 3,
+}
+
+--------------------------------------------
+{ printWidth: 80, quoteProps: "consistent" }
+--------------------------------------------
+// TS rejects computed enum member names, but oxc parses them;
+// `['baz']` must format the same as `'baz'` so a second pass is stable (oxc-4449)
+enum A {
+  baz,
+}
+enum B {
+  [`baz`],
+}
+enum C {
+  baz = 2,
+}
+enum D {
+  [`baz`] = 2,
+}
+enum E {
+  baz,
+}
+enum F {
+  baz,
+}
+enum G {
+  "b-az" = 2,
+}
+enum H {
+  "baz" = 2,
+  "b-az" = 3,
+}
+
+---------------------------------------------
+{ printWidth: 100, quoteProps: "consistent" }
+---------------------------------------------
+// TS rejects computed enum member names, but oxc parses them;
+// `['baz']` must format the same as `'baz'` so a second pass is stable (oxc-4449)
+enum A {
+  baz,
+}
+enum B {
+  [`baz`],
+}
+enum C {
+  baz = 2,
+}
+enum D {
+  [`baz`] = 2,
+}
+enum E {
+  baz,
+}
+enum F {
+  baz,
+}
+enum G {
+  "b-az" = 2,
+}
+enum H {
+  "baz" = 2,
+  "b-az" = 3,
+}
+
+---------------------------------------------------------------
+{ printWidth: 80, quoteProps: "consistent", singleQuote: true }
+---------------------------------------------------------------
+// TS rejects computed enum member names, but oxc parses them;
+// `['baz']` must format the same as `'baz'` so a second pass is stable (oxc-4449)
+enum A {
+  baz,
+}
+enum B {
+  [`baz`],
+}
+enum C {
+  baz = 2,
+}
+enum D {
+  [`baz`] = 2,
+}
+enum E {
+  baz,
+}
+enum F {
+  baz,
+}
+enum G {
+  'b-az' = 2,
+}
+enum H {
+  'baz' = 2,
+  'b-az' = 3,
+}
+
+----------------------------------------------------------------
+{ printWidth: 100, quoteProps: "consistent", singleQuote: true }
+----------------------------------------------------------------
+// TS rejects computed enum member names, but oxc parses them;
+// `['baz']` must format the same as `'baz'` so a second pass is stable (oxc-4449)
+enum A {
+  baz,
+}
+enum B {
+  [`baz`],
+}
+enum C {
+  baz = 2,
+}
+enum D {
+  [`baz`] = 2,
+}
+enum E {
+  baz,
+}
+enum F {
+  baz,
+}
+enum G {
+  'b-az' = 2,
+}
+enum H {
+  'baz' = 2,
+  'b-az' = 3,
+}
+
+===================== End =====================

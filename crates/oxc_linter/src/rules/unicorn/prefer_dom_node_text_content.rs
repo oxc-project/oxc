@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -21,10 +21,10 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// There are some disadvantages of using .innerText.
-    /// - `.innerText` is much more performance-heavy as it requires layout information to return the result.
+    /// There are some disadvantages of using `.innerText`.
+    /// - `.innerText` returns rendered text and ignores hidden content, while `.textContent` returns the node's full text content.
+    /// - `.innerText` can trigger reflow because it takes CSS styles into account.
     /// - `.innerText` is defined only for HTMLElement objects, while `.textContent` is defined for all Node objects.
-    /// - `.innerText` is not standard, for example, it is not present in Firefox.
     ///
     /// ### Examples
     ///
@@ -40,6 +40,7 @@ declare_oxc_lint!(
     PreferDomNodeTextContent,
     unicorn,
     style,
+    recommended,
     conditional_fix,
     version = "0.0.21",
     short_description = "Enforces the use of `.textContent` over `.innerText` for DOM nodes.",
@@ -57,57 +58,38 @@ impl Rule for PreferDomNodeTextContent {
                     );
                 }
             }
-            // `const {innerText} = node` or `({innerText: text} = node)`
-            AstKind::IdentifierName(identifier) => {
-                if identifier.name != "innerText" {
-                    return;
-                }
-
-                let parent_node = ctx.nodes().parent_node(node.id());
-                let grand_parent_node = ctx.nodes().parent_node(parent_node.id());
-
-                if matches!(
-                    parent_node.kind(),
-                    AstKind::BindingProperty(_) | AstKind::AssignmentTargetPropertyProperty(_)
-                ) && (matches!(grand_parent_node.kind(), AstKind::ObjectPattern(_))
-                    || matches!(
-                        grand_parent_node.kind(),
-                        AstKind::IdentifierReference(_)
-                            | AstKind::ObjectAssignmentTarget(_)
-                            | AstKind::AssignmentTargetPropertyIdentifier(_)
-                            | AstKind::ArrayAssignmentTarget(_)
-                            | AstKind::ComputedMemberExpression(_)
-                            | AstKind::StaticMemberExpression(_)
-                            | AstKind::PrivateFieldExpression(_)
-                    ))
-                {
-                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier.span));
+            // `const {innerText} = node`, `const {innerText: text} = node`,
+            // function params `function foo({innerText}) {}`, etc.
+            AstKind::BindingProperty(prop) => {
+                if prop.key.is_specific_id("innerText") {
+                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(prop.key.span()));
                 }
             }
-            // `({innerText} = node)`
-            AstKind::IdentifierReference(identifier_ref) => {
-                if identifier_ref.name != "innerText" {
+            // `({innerText: text} = node)`
+            AstKind::AssignmentTargetPropertyProperty(prop) => {
+                if prop.name.is_specific_id("innerText") {
+                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(prop.name.span()));
+                }
+            }
+            // `({innerText} = node)` (shorthand)
+            AstKind::AssignmentTargetPropertyIdentifier(prop) => {
+                if prop.binding.name != "innerText" {
                     return;
                 }
 
-                let mut ancestor_kinds = ctx.nodes().ancestor_kinds(node.id());
+                // The parent is always an `ObjectAssignmentTarget`; only report when that
+                // target is directly part of an assignment (or nested in another object
+                // assignment target), matching the previous `IdentifierReference` logic.
+                let object_target = ctx.nodes().parent_node(node.id());
+                let grand_parent_node = ctx.nodes().parent_node(object_target.id());
 
-                let Some(mut parent_node_kind) = ancestor_kinds.next() else { return };
-                if matches!(parent_node_kind, AstKind::AssignmentTargetPropertyIdentifier(_)) {
-                    let Some(next) = ancestor_kinds.next() else { return };
-                    parent_node_kind = next;
-                }
-                let Some(grand_parent_node_kind) = ancestor_kinds.next() else { return };
-
-                if matches!(parent_node_kind, AstKind::ObjectAssignmentTarget(_))
-                    && matches!(
-                        grand_parent_node_kind,
-                        AstKind::ExpressionStatement(_)
-                            | AstKind::AssignmentExpression(_)
-                            | AstKind::ObjectAssignmentTarget(_)
-                    )
-                {
-                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier_ref.span));
+                if matches!(
+                    grand_parent_node.kind(),
+                    AstKind::ExpressionStatement(_)
+                        | AstKind::AssignmentExpression(_)
+                        | AstKind::ObjectAssignmentTarget(_)
+                ) {
+                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(prop.binding.span));
                 }
             }
             _ => {}

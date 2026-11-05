@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use oxc_ast::StaticPropertyName;
 
 use rustc_hash::FxHashMap;
 
@@ -12,7 +12,7 @@ use oxc_syntax::{
 
 #[derive(Debug)]
 pub struct Element<'a> {
-    pub name: Cow<'a, str>,
+    pub name: StaticPropertyName<'a>,
     pub span: Span,
     pub is_private: bool,
     pub r#static: bool,
@@ -21,7 +21,7 @@ pub struct Element<'a> {
 
 impl<'a> Element<'a> {
     pub fn new(
-        name: Cow<'a, str>,
+        name: StaticPropertyName<'a>,
         span: Span,
         r#static: bool,
         is_private: bool,
@@ -65,14 +65,14 @@ impl<'a> ClassTable<'a> {
         self.declarations.raw.len()
     }
 
-    pub fn iter_enumerated(&self) -> impl Iterator<Item = (ClassId, &NodeId)> + '_ {
+    pub fn iter_enumerated(&self) -> impl ExactSizeIterator<Item = (ClassId, &NodeId)> + '_ {
         self.declarations.iter_enumerated()
     }
 
     pub fn iter_private_identifiers(
         &self,
         class_id: ClassId,
-    ) -> impl Iterator<Item = &PrivateIdentifierReference<'_>> + '_ {
+    ) -> impl ExactSizeIterator<Item = &PrivateIdentifierReference<'_>> + '_ {
         self.private_identifier_references[class_id].iter()
     }
 

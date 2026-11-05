@@ -1,0 +1,14 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/switch-global-propertyload-case-test.js
+---
+function Component(props) {
+	switch (props.value) {
+		case Global.Property: {
+			return true;
+		}
+		default: {
+			return false;
+		}
+	}
+}

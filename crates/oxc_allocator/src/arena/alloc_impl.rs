@@ -309,7 +309,8 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         Some(new_ptr)
     }
 
-    /// Slow path for `alloc_layout`.
+    /// Slow path for [`Arena::alloc_layout`].
+    ///
     /// Called when there isn't enough room in our current chunk, so need to allocate a new chunk.
     #[inline(never)]
     #[cold]
@@ -317,7 +318,8 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         self.try_alloc_layout_slow_impl(layout).unwrap_or_else(|| oom())
     }
 
-    /// Slow path for `try_alloc_layout`.
+    /// Slow path for [`Arena::try_alloc_layout`].
+    ///
     /// Called when there isn't enough room in our current chunk, so need to allocate a new chunk.
     #[inline(never)]
     #[cold]

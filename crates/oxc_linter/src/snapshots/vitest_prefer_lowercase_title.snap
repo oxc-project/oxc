@@ -24,6 +24,13 @@ source: crates/oxc_linter/src/tester.rs
   help: `"SFC Compile"`s should begin with lowercase
 
   ⚠ vitest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:6]
+ 1 │ test(`sfc Compile`, function () {})
+   ·      ─────────────
+   ╰────
+  help: `"sfc Compile"`s should begin with lowercase
+
+  ⚠ vitest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:7]
  1 │ bench(`Foo MM mm`, function () {})
    ·       ───────────
@@ -208,15 +215,6 @@ source: crates/oxc_linter/src/tester.rs
   help: `"Works!"`s should begin with lowercase
 
   ⚠ vitest(prefer-lowercase-title): Enforce lowercase test names
-   ╭─[prefer_lowercase_title.tsx:4:28]
- 3 │                     describe('MyMethod', () => {
- 4 │                         it('Does things', () => {
-   ·                            ─────────────
- 5 │                             //
-   ╰────
-  help: `"Does things"`s should begin with lowercase
-
-  ⚠ vitest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:3:30]
  2 │                 describe('MyClass', () => {
  3 │                     describe('MyMethod', () => {
@@ -224,6 +222,15 @@ source: crates/oxc_linter/src/tester.rs
  4 │                         it('Does things', () => {
    ╰────
   help: `"MyMethod"`s should begin with lowercase
+
+  ⚠ vitest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:4:28]
+ 3 │                     describe('MyMethod', () => {
+ 4 │                         it('Does things', () => {
+   ·                            ─────────────
+ 5 │                             //
+   ╰────
+  help: `"Does things"`s should begin with lowercase
 
   ⚠ vitest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:4:29]
@@ -244,15 +251,6 @@ source: crates/oxc_linter/src/tester.rs
   help: `"Does things"`s should begin with lowercase
 
   ⚠ vitest(prefer-lowercase-title): Enforce lowercase test names
-   ╭─[prefer_lowercase_title.tsx:4:28]
- 3 │                     describe('MyMethod', () => {
- 4 │                         it('Does things', () => {
-   ·                            ─────────────
- 5 │                             //
-   ╰────
-  help: `"Does things"`s should begin with lowercase
-
-  ⚠ vitest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:2:26]
  1 │ 
  2 │                 describe('MyClass', () => {
@@ -269,3 +267,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │                         it('Does things', () => {
    ╰────
   help: `"MyMethod"`s should begin with lowercase
+
+  ⚠ vitest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:4:28]
+ 3 │                     describe('MyMethod', () => {
+ 4 │                         it('Does things', () => {
+   ·                            ─────────────
+ 5 │                             //
+   ╰────
+  help: `"Does things"`s should begin with lowercase

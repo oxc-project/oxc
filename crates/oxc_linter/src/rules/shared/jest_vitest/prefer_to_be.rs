@@ -3,6 +3,7 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{
@@ -87,20 +88,23 @@ enum PreferToBeKind {
     Undefined,
 }
 
-pub fn run_on_jest_node<'a, 'c>(jest_node: &PossibleJestNode<'a, 'c>, ctx: &'c LintContext<'a>) {
-    PreferToBe::run(jest_node, ctx);
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    PreferToBe::run(node, ctx);
 }
 
 struct PreferToBe;
 
 impl PreferToBe {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
+    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
         let Some(jest_expect_fn_call) =
-            parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+            parse_expect_jest_fn_call(call_expr, &possible_jest_node, ctx)
         else {
             return;
         };
@@ -109,7 +113,7 @@ impl PreferToBe {
         };
 
         let has_not_modifier =
-            jest_expect_fn_call.modifiers().iter().any(|modifier| modifier.is_name_equal("not"));
+            jest_expect_fn_call.modifiers().any(|modifier| modifier.is_name_equal("not"));
 
         if has_not_modifier {
             if matcher.is_name_equal("toBeUndefined") {
@@ -223,11 +227,11 @@ impl PreferToBe {
     /// Returns (source_start, suggestion_string).
     fn build_suggestion_with_not_modifier(
         matcher_name: &str,
-        not_modifier: Option<&&KnownMemberExpressionProperty>,
+        not_modifier: Option<&KnownMemberExpressionProperty>,
         is_cmp_mem_expr: bool,
         span_start: u32,
     ) -> (u32, String) {
-        if let Some(&not_modifier) = not_modifier {
+        if let Some(not_modifier) = not_modifier {
             let not_is_computed =
                 matches!(not_modifier.parent, Some(Expression::ComputedMemberExpression(_)));
 
@@ -277,8 +281,8 @@ impl PreferToBe {
             _ => return,
         };
 
-        let modifiers = jest_expect_fn_call.modifiers();
-        let maybe_not_modifier = modifiers.iter().find(|modifier| modifier.is_name_equal("not"));
+        let maybe_not_modifier =
+            jest_expect_fn_call.modifiers().find(|modifier| modifier.is_name_equal("not"));
 
         if kind == &PreferToBeKind::Undefined {
             let replacement_span = if let Some(not_modifier) = maybe_not_modifier {
@@ -296,7 +300,7 @@ impl PreferToBe {
             );
         } else if kind == &PreferToBeKind::Defined {
             let start = if is_cmp_mem_expr {
-                modifiers.first().unwrap().span.end
+                jest_expect_fn_call.modifiers().next().unwrap().span.end
             } else {
                 maybe_not_modifier.unwrap().span.start
             };

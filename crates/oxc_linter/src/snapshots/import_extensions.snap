@@ -602,6 +602,20 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a file extension to this import.
 
   ⚠ import(extensions): Missing file extension in import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import x from './foo.bar/baz';
+   · ──────────────────────────────
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ import(extensions): Missing file extension in import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import x from './foo.bar/';
+   · ───────────────────────────
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import a from '@/utils.js';
  3 │                 import b from '~/config';
@@ -712,5 +726,33 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[extensions.tsx:1:1]
  1 │ import utils from './utils.spec.js';
    · ────────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import def from "./typescript.js";
+   · ──────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import x from "./typescript.js";
+   · ────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import x from "./typescript.js";
+   · ────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import x from "./typescript.js";
+   · ────────────────────────────────
    ╰────
   help: Remove the file extension from this import.

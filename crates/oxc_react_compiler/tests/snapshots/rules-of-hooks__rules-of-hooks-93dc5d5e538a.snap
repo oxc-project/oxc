@@ -1,0 +1,13 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/rules-of-hooks-93dc5d5e538a.js
+---
+// Valid because the loop doesn't change the order of hooks calls.
+function RegressionTest() {
+	const res = [];
+	for (let i = 0; i !== 10 && true; ++i) {
+		res.push(i);
+	}
+	React.useLayoutEffect(_temp);
+}
+function _temp() {}

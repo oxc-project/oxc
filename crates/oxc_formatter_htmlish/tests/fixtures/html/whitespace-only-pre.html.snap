@@ -1,0 +1,21 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<pre> </pre>
+<textarea>  </textarea>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<pre> </pre>
+<textarea>  </textarea>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<pre> </pre>
+<textarea>  </textarea>
+
+===================== End =====================

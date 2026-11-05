@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.invalid-type-provider-hooklike-module-default-not-hook.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Invalid type configuration for module", labels: [LabeledSpan { label: Some("Invalid type configuration for `useDefaultExportNotTypedAsHook`"), span: Span { start: 89, end: 92 }, primary: true }], help: Some("Expected type for `import ... from 'useDefaultExportNotTypedAsHook'` to be a hook based on the module name"), note: Some("React Compiler could not continue with this configuration"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Config") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/config") } }
+
+No changes.

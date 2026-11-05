@@ -25,7 +25,7 @@ fn bench_formatter(criterion: &mut Criterion) {
                     ..Default::default()
                 };
                 runner.run(|| {
-                    format_program(&allocator, &program, format_options.clone(), None)
+                    format_program(&allocator, &program, format_options.clone())
                         .print()
                         .unwrap()
                         .into_code();

@@ -1,0 +1,18 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/gating/dynamic-gating-invalid-multiple.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Multiple dynamic gating directives found", labels: [LabeledSpan { label: Some("First gating directive"), span: Span { start: 105, end: 127 }, primary: true }, LabeledSpan { label: Some("Additional gating directive"), span: Span { start: 131, end: 154 }, primary: false }], help: Some("Expected a single directive but found [use memo if(getTrue), use memo if(getFalse)]"), note: Some("React Compiler could not continue with this configuration"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Gating") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/gating") } }
+
+// @dynamicGating:{"source":"shared-runtime"} @panicThreshold:"none" @loggerTestOnly
+function Foo() {
+	"use memo if(getTrue)";
+	"use memo if(getFalse)";
+	return <div>hello world</div>;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Foo,
+	params: [{}]
+};

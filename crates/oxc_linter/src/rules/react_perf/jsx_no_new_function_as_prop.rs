@@ -8,7 +8,15 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
-use crate::utils::{NativeAllowList, ReactPerfConfig, ReactPerfRule, is_constructor_matching_name};
+use crate::{
+    AstNode, LintContext,
+    context::ContextHost,
+    rule::Rule,
+    utils::{
+        NativeAllowList, ReactPerfConfig, is_constructor_matching_name,
+        react_perf_from_configuration, run_react_perf_rule, should_run_react_perf,
+    },
+};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct JsxNoNewFunctionAsProp(Box<ReactPerfConfig>);
@@ -55,7 +63,7 @@ declare_oxc_lint!(
     short_description = "Prevent functions that are local to the current method from being used as values of JSX props.",
 );
 
-impl ReactPerfRule for JsxNoNewFunctionAsProp {
+impl JsxNoNewFunctionAsProp {
     const MESSAGE: &'static str =
         "JSX attribute values should not contain functions created in the same scope.";
 
@@ -63,12 +71,11 @@ impl ReactPerfRule for JsxNoNewFunctionAsProp {
         self.0.native_allow_list()
     }
 
-    fn check_for_violation_on_expr(&self, expr: &Expression<'_>) -> Option<Span> {
+    fn check_for_violation_on_expr(expr: &Expression<'_>) -> Option<Span> {
         check_expression(expr)
     }
 
     fn check_for_violation_on_ast_kind(
-        &self,
         kind: &AstKind<'_>,
         _symbol_id: SymbolId,
     ) -> Option<(/* decl */ Span, /* init */ Option<Span>)> {
@@ -87,6 +94,32 @@ impl ReactPerfRule for JsxNoNewFunctionAsProp {
     }
 }
 
+impl Rule for JsxNoNewFunctionAsProp {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::Error> {
+        react_perf_from_configuration(value)
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXAttribute(attr) = node.kind() else {
+            return;
+        };
+
+        run_react_perf_rule(
+            attr,
+            node.scope_id(),
+            ctx,
+            Self::MESSAGE,
+            self.native_allow_list(),
+            Self::check_for_violation_on_expr,
+            Self::check_for_violation_on_ast_kind,
+        );
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        should_run_react_perf(ctx)
+    }
+}
+
 fn check_expression(expr: &Expression) -> Option<Span> {
     match expr.without_parentheses() {
         Expression::ArrowFunctionExpression(expr) => Some(expr.span),
@@ -98,7 +131,7 @@ fn check_expression(expr: &Expression) -> Option<Span> {
 
             let member_expr = expr.callee.as_member_expression()?;
             let property_name = MemberExpression::static_property_name(member_expr);
-            if property_name == Some("bind") { Some(expr.span) } else { None }
+            if property_name.is_some_and(|name| name == "bind") { Some(expr.span) } else { None }
         }
         Expression::NewExpression(expr) => {
             if is_constructor_matching_name(&expr.callee, "Function") {

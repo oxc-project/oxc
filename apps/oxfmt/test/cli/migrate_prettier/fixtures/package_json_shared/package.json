@@ -1,0 +1,4 @@
+{
+  "name": "package-json-shared",
+  "prettier": "./shared.json"
+}

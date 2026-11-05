@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, Expression, Function, ReturnStatement, Statement},
+    ast::{ArrowFunctionExpression, Expression, Function, ReturnStatement},
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
@@ -71,6 +71,7 @@ declare_oxc_lint!(
     ReturnInEmitsValidator,
     vue,
     correctness,
+    recommended,
     version = "1.67.0",
     short_description = "Enforce that a `return` statement is present in `emits` validators (in Vue.js 3.0.0+).",
 );
@@ -127,7 +128,7 @@ fn get_emit_validator_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<
         }
         let component_obj = nodes.parent_node(outer.id());
         if is_vue_component_options_object(component_obj, ctx) {
-            return Some(emit_name.into_owned());
+            return Some(emit_name.display().to_string());
         }
         return None;
     }
@@ -138,7 +139,7 @@ fn get_emit_validator_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<
         && let AstKind::CallExpression(call) = outer.kind()
         && call.callee.get_identifier_reference().is_some_and(|ident| ident.name == "defineEmits")
     {
-        return Some(emit_name.into_owned());
+        return Some(emit_name.display().to_string());
     }
 
     None
@@ -158,30 +159,22 @@ fn analyze_return_value(kind: AstKind<'_>) -> (bool, bool) {
             }
         }
         AstKind::ArrowFunctionExpression(arrow) => {
-            if arrow.expression {
+            if arrow.is_expression() {
                 // Concise body `() => expr`: implicit return of `expr`.
                 visitor.has_return_value = true;
-                if let Some(expr) = arrow_expression_body(arrow)
+                if let Some(expr) = arrow.get_expression()
                     && !is_falsy(expr)
                 {
                     visitor.possible_of_return_true = true;
                 }
             } else {
-                visitor.visit_function_body(&arrow.body);
+                visitor.visit_function_body(arrow.get_function_body().unwrap());
             }
         }
         _ => {}
     }
 
     (visitor.has_return_value, visitor.possible_of_return_true)
-}
-
-fn arrow_expression_body<'a>(arrow: &'a ArrowFunctionExpression<'a>) -> Option<&'a Expression<'a>> {
-    let stmt = arrow.body.statements.first()?;
-    match stmt {
-        Statement::ExpressionStatement(expr_stmt) => Some(&expr_stmt.expression),
-        _ => None,
-    }
 }
 
 #[derive(Default)]
@@ -191,16 +184,16 @@ struct ReturnVisitor {
     possible_of_return_true: bool,
 }
 
-impl<'a> Visit<'a> for ReturnVisitor {
+impl<'a> VisitJs<'a> for ReturnVisitor {
     fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         self.nested_depth += 1;
-        walk::walk_function(self, func, flags);
+        walk_js::walk_function(self, func, flags);
         self.nested_depth -= 1;
     }
 
     fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
         self.nested_depth += 1;
-        walk::walk_arrow_function_expression(self, arrow);
+        walk_js::walk_arrow_function_expression(self, arrow);
         self.nested_depth -= 1;
     }
 
@@ -213,7 +206,7 @@ impl<'a> Visit<'a> for ReturnVisitor {
                 self.possible_of_return_true = true;
             }
         }
-        walk::walk_return_statement(self, stmt);
+        walk_js::walk_return_statement(self, stmt);
     }
 }
 
@@ -224,7 +217,7 @@ fn is_falsy(expr: &Expression<'_>) -> bool {
         Expression::NullLiteral(_) => true,
         Expression::StringLiteral(s) => s.value.is_empty(),
         Expression::BigIntLiteral(big) => big.is_zero(),
-        Expression::Identifier(ident) => matches!(ident.name.as_str(), "undefined" | "NaN"),
+        Expression::Identifier(ident) => ident.is_undefined() || ident.name == "NaN",
         _ => false,
     }
 }
@@ -553,6 +546,22 @@ fn test() {
                 })
                 </script>
             ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // An emit name with a lone surrogate still reports.
+        (
+            r#"
+                <script>
+                export default {
+                  emits: {
+                    "\uD800" () {
+                    }
+                  }
+                }
+                </script>
+            "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),

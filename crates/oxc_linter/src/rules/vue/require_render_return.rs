@@ -59,6 +59,7 @@ declare_oxc_lint!(
     RequireRenderReturn,
     vue,
     correctness,
+    recommended,
     version = "1.67.0",
     short_description = "Enforce that a `render` function always returns a value.",
 );
@@ -69,7 +70,7 @@ impl Rule for RequireRenderReturn {
             AstKind::Function(_) => {}
             AstKind::ArrowFunctionExpression(arrow) => {
                 // Expression-body arrow (`render: () => x`) implicitly returns.
-                if arrow.expression {
+                if arrow.is_expression() {
                     return;
                 }
             }

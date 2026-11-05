@@ -3,7 +3,7 @@
 
 use std::cell::Cell;
 
-use oxc_allocator::TakeIn;
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_semantic::{ScopeFlags, ScopeId};
@@ -52,7 +52,7 @@ impl<'a> ClassProperties<'a> {
             return None;
         };
 
-        let mut function = value.take_in_box(ctx.ast);
+        let mut function = value.take_in_box(ctx);
 
         let resolved_private_prop = if *kind == MethodDefinitionKind::Set {
             self.classes_stack.find_writable_private_prop(ident)
@@ -64,16 +64,26 @@ impl<'a> ClassProperties<'a> {
         function.span = *span;
         function.id = Some(temp_binding.create_binding_identifier(ctx));
         function.r#type = FunctionType::FunctionDeclaration;
-        sync_function_symbol_flags(&function, ctx);
+        let helper_in_class_sequence =
+            self.current_class().private_method_helpers_in_class_sequence;
+        if !helper_in_class_sequence {
+            sync_function_symbol_flags(&function, ctx);
+        }
 
-        // Change parent scope of function to current scope id and remove
-        // strict mode flag if parent scope is not strict mode.
+        // Change parent scope of function to the scope where it will be emitted, and remove
+        // strict mode flag if that parent scope is not strict mode.
+        //
+        // Class expressions in concise arrows emit the helper as a function-expression assignment
+        // at the class expression's lexical location. Other classes emit a function declaration
+        // after the containing statement. A static property initializer is moved into the hoist
+        // scope later.
         let scope_id = function.scope_id();
-        let new_parent_id = if Self::is_inside_static_property_initializer(ctx) {
-            ctx.current_hoist_scope_id()
-        } else {
-            ctx.current_scope_id()
-        };
+        let new_parent_id =
+            if !helper_in_class_sequence && Self::is_inside_static_property_initializer(ctx) {
+                ctx.current_hoist_scope_id()
+            } else {
+                ctx.current_scope_id()
+            };
         ctx.scoping_mut().change_scope_parent_id(scope_id, Some(new_parent_id));
         let make_sloppy_mode = !ctx.scoping().scope_flags(new_parent_id).is_strict_mode();
         let flags = ctx.scoping_mut().scope_flags_mut(scope_id);
@@ -83,6 +93,19 @@ impl<'a> ClassProperties<'a> {
             .visit_function(&mut function, ScopeFlags::Function);
 
         Some(Statement::FunctionDeclaration(function))
+    }
+
+    /// Whether private method helpers need to be part of the class expression itself.
+    ///
+    /// A concise arrow body has no statement list where a function declaration can be injected.
+    /// Stop at the first statement boundary so ordinary class expressions keep block-local
+    /// function declarations, which provide a fresh closure when a block runs repeatedly.
+    pub(super) fn should_emit_private_method_helpers_in_class_sequence(
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        ctx.ancestors()
+            .take_while(|ancestor| !ancestor.is_parent_of_statement())
+            .any(|ancestor| matches!(ancestor, Ancestor::ArrowFunctionExpressionBody(_)))
     }
 
     fn is_inside_static_property_initializer(ctx: &TraverseCtx<'a>) -> bool {
@@ -97,10 +120,13 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let brand = self.classes_stack.last().bindings.brand.as_ref().unwrap();
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.ast.expression_this(SPAN)),
-            Argument::from(brand.create_read_expression(ctx)),
-        ]);
+        let arguments = ArenaVec::from_array_in(
+            [
+                Argument::new_this_expression(SPAN, ctx),
+                Argument::from(brand.create_read_expression(ctx)),
+            ],
+            ctx,
+        );
         helper_call_expr(Helper::ClassPrivateMethodInitSpec, arguments, ctx)
     }
 }

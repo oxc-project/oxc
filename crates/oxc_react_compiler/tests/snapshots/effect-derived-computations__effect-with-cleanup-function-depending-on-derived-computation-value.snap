@@ -1,0 +1,21 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/effect-derived-computations/effect-with-cleanup-function-depending-on-derived-computation-value.js
+---
+// @validateNoDerivedComputationsInEffects_exp @loggerTestOnly @outputMode:"lint"
+import { useEffect, useState } from "react";
+function Component(file: File) {
+	const [imageUrl, setImageUrl] = useState(null);
+	/*
+	* Cleaning up the variable or a source of the variable used to setState
+	* inside the effect communicates that we always need to clean up something
+	* which is a valid use case for useEffect. In which case we want to
+	* avoid an throwing
+	*/
+	useEffect(() => {
+		const imageUrlPrepared = URL.createObjectURL(file);
+		setImageUrl(imageUrlPrepared);
+		return () => URL.revokeObjectURL(imageUrlPrepared);
+	}, [file]);
+	return <Image src={imageUrl} xstyle={styles.imageSizeLimits} />;
+}

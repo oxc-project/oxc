@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Disallow the use of barrel files where the file contains `export *` statements,
-    /// and the total number of modules exceed a threshold.
+    /// and the total number of modules exceeds a threshold.
     ///
     /// The default threshold is 100.
     ///
@@ -73,11 +73,12 @@ declare_oxc_lint!(
     restriction,
     config = NoBarrelFile,
     version = "0.3.0",
+    short_description = "Disallow barrel files containing `export *` statements when the total number of modules exceeds a threshold.",
 );
 
 impl Rule for NoBarrelFile {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -99,8 +100,7 @@ impl Rule for NoBarrelFile {
                     }
                 }
                 None
-            })
-            .collect::<Vec<_>>();
+            });
 
         let mut labels = vec![];
         let mut total: u32 = 0;

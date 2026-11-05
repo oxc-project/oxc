@@ -18,7 +18,9 @@ impl LintIgnoreMatcher {
         base_root: &Path,
         mut nested: Vec<(Vec<String>, PathBuf)>,
     ) -> Self {
-        let base_gi = {
+        let base_gi = if base_patterns.is_empty() {
+            None
+        } else {
             let mut builder = GitignoreBuilder::new(base_root);
             for pat in base_patterns {
                 let _ = builder.add_line(None, pat);
@@ -27,11 +29,7 @@ impl LintIgnoreMatcher {
         };
 
         // Sort nested configs deepest-to-shallowest for correct precedence
-        nested.sort_unstable_by(|a, b| {
-            let a_len = a.1.components().count();
-            let b_len = b.1.components().count();
-            b_len.cmp(&a_len)
-        });
+        nested.sort_by_cached_key(|(_, root)| std::cmp::Reverse(root.components().count()));
         let nested = nested
             .into_iter()
             .map(|(patterns, root)| {

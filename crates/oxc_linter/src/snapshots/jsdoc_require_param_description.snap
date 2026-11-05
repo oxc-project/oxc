@@ -21,11 +21,36 @@ source: crates/oxc_linter/src/tester.rs
   help: Add description to `@param` tag.
 
   ⚠ jsdoc(require-param-description): Missing JSDoc `@param` description.
-   ╭─[require_param_description.tsx:4:17]
- 3 │                        * @param {number} foo Foo description
- 4 │                        * @param {object} root
-   ·                          ──────
- 5 │                        * @param {boolean} baz Baz description
+   ╭─[require_param_description.tsx:1:5]
+ 1 │ /** @param input.userId */
+   ·     ──────
+ 2 │ function quux (input) {}
+   ╰────
+  help: Add description to `@param` tag.
+
+  ⚠ jsdoc(require-param-description): Missing root description for @param.
+   ╭─[require_param_description.tsx:2:4]
+ 1 │ /** @param input.userId User ID.
+ 2 │  * @param options */
+   ·    ──────
+ 3 │ function quux (input, {flag}) {}
+   ╰────
+  help: Add root description to `@param`.
+
+  ⚠ jsdoc(require-param-description): Missing root description for @param.
+   ╭─[require_param_description.tsx:3:4]
+ 2 │  * @param employees[].name Employee name.
+ 3 │  * @param options */
+   ·    ──────
+ 4 │ function quux (employees, {flag}) {}
+   ╰────
+  help: Add root description to `@param`.
+
+  ⚠ jsdoc(require-param-description): Missing JSDoc `@param` description.
+   ╭─[require_param_description.tsx:1:5]
+ 1 │ /** @param root.foo */
+   ·     ──────
+ 2 │ function quux ({foo}) {}
    ╰────
   help: Add description to `@param` tag.
 
@@ -38,11 +63,11 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add description to `@param` tag.
 
-  ⚠ jsdoc(require-param-description): Missing JSDoc `@param` description.
-   ╭─[require_param_description.tsx:4:17]
- 3 │                        * @param {number} foo Foo description
- 4 │                        * @param {object} root
-   ·                          ──────
- 5 │                        * @param {boolean} baz Baz description
+  ⚠ jsdoc(require-param-description): Missing root description for @param.
+   ╭─[require_param_description.tsx:4:30]
+ 3 │                            * @param {number} foo Foo description
+ 4 │                            * @param {object} root
+   ·                              ──────
+ 5 │                            * @param {boolean} baz Baz description
    ╰────
-  help: Add description to `@param` tag.
+  help: Add root description to `@param`.

@@ -72,6 +72,7 @@ declare_oxc_lint!(
     AutocompleteValid,
     jsx_a11y,
     correctness,
+    recommended,
     config = AutocompleteValidConfig,
     version = "0.2.0",
     short_description = "Enforces that an element's autocomplete attribute must be a valid value.",
@@ -157,7 +158,7 @@ fn is_valid_autocomplete_value(value: &str) -> bool {
 
 impl Rule for AutocompleteValid {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -178,7 +179,13 @@ impl Rule for AutocompleteValid {
             let Some(JSXAttributeValue::StringLiteral(autocomplete_values)) = &attr.value else {
                 return;
             };
-            let value = &autocomplete_values.value;
+            let Some(value) = autocomplete_values.value.as_str() else {
+                ctx.diagnostic(autocomplete_valid_diagnostic(
+                    attr.span,
+                    ctx.source_range(autocomplete_values.span),
+                ));
+                return;
+            };
             if !is_valid_autocomplete_value(value) {
                 ctx.diagnostic(autocomplete_valid_diagnostic(attr.span, value));
             }

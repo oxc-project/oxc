@@ -1,6 +1,8 @@
 use std::{borrow::Cow, cmp::Ordering};
 
 use cow_utils::CowUtils;
+
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -30,6 +32,40 @@ pub fn parse_jest_fn_call<'a>(
     // If bailed out, we're not jest function
 
     let resolved = resolve_to_jest_fn(call_expr, original)?;
+    let name = resolved.original.unwrap_or(resolved.local);
+
+    // Avoid building a node chain for unknown bare calls in non-test files.
+    // The slow path would return:
+    //   `setTimeout(...)` -> `Some(GeneralJest { kind: Unknown, members: [] })`
+    //   `setTimeout(...).foo` -> `None`
+    //
+    // Test files still need the slow path because unknown roots are rejected by
+    // `is_valid_jest_call` / `is_valid_vitest_call`. For example, `setTimeout`
+    // should not be treated as a Vitest call just because it wraps an `expect`.
+    // Leave `each` on the slow path so its special outer-call handling stays
+    // centralized.
+    if !ctx.frameworks().is_jest()
+        && !ctx.frameworks().is_vitest()
+        && matches!(callee, Expression::Identifier(_))
+        && name != "each"
+        && JestFnKind::from(name) == JestFnKind::Unknown
+        && !super::JEST_METHOD_NAMES.contains(&name)
+    {
+        if matches!(
+            ctx.nodes().parent_kind(node.id()),
+            AstKind::CallExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::ComputedMemberExpression(_)
+        ) {
+            return None;
+        }
+        return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
+            kind: JestFnKind::Unknown,
+            members: Vec::new(),
+            name: Cow::Borrowed(name),
+            local: Cow::Borrowed(resolved.local),
+        }));
+    }
 
     let params = NodeChainParams {
         expr: callee,
@@ -59,16 +95,11 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        let name = resolved.original.unwrap_or(resolved.local);
         let kind = JestFnKind::from(name);
 
-        // every member node must have a member expression as their parent
-        // in order to be part of the call chain we're parsing
-        let (head, members) = {
-            let rest = chain.split_off(1);
-            let head = chain.into_iter().next().unwrap();
-            (head, rest)
-        };
+        // Reuse the chain allocation for the remaining members.
+        let head = chain.remove(0);
+        let members = chain;
 
         if matches!(kind, JestFnKind::Expect | JestFnKind::ExpectTypeOf) {
             let options = ExpectFnCallOptions {
@@ -105,35 +136,32 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        let mut call_chains = Vec::from([Cow::Borrowed(name)]);
-        call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
+        // Only test files need the string chain:
+        //   `test.only(...)` validates as Jest/Vitest.
+        //   `setTimeout(...)` is rejected as an unknown test-file root.
+        // Non-test files do not consult the chain after this point.
+        let is_jest = ctx.frameworks().is_jest();
+        let is_vitest = ctx.frameworks().is_vitest();
+        if is_jest || is_vitest {
+            let mut call_chains = Vec::from([Cow::Borrowed(name)]);
+            for member in &members {
+                call_chains.push(member.name()?);
+            }
 
-        match (ctx.frameworks().is_jest(), ctx.frameworks().is_vitest()) {
-            (true, true) => {
-                if !is_valid_jest_call(&call_chains) && !is_valid_vitest_call(&call_chains) {
-                    return None;
-                }
+            if !((is_jest && is_valid_jest_call(&call_chains))
+                || (is_vitest && is_valid_vitest_call(&call_chains)))
+            {
+                return None;
             }
-            (true, false) => {
-                if !is_valid_jest_call(&call_chains) {
-                    return None;
-                }
-            }
-            (false, true) => {
-                if !is_valid_vitest_call(&call_chains) {
-                    return None;
-                }
-            }
-            (false, false) => {}
-        }
 
-        if ctx.frameworks().is_vitest() && is_extend_fixture(&call_chains[1..]) {
-            return Some(ParsedJestFnCall::Fixture(ParsedGeneralJestFnCall {
-                kind: JestFnKind::VitestFixture,
-                members,
-                name: Cow::Borrowed(name),
-                local: Cow::Borrowed(resolved.local),
-            }));
+            if is_vitest && is_extend_fixture(&call_chains[1..]) {
+                return Some(ParsedJestFnCall::Fixture(ParsedGeneralJestFnCall {
+                    kind: JestFnKind::VitestFixture,
+                    members,
+                    name: Cow::Borrowed(name),
+                    local: Cow::Borrowed(resolved.local),
+                }));
+            }
         }
         return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
             kind,
@@ -402,7 +430,7 @@ pub struct ParsedExpectFnCall<'a> {
     /// this args changed bases on condition
     /// In `expect(fn).toBeCalledTimes(2)`, it will be `[2]`
     /// In `expect(fn)`, it will be `fn`
-    pub args: &'a oxc_allocator::Vec<'a, Argument<'a>>,
+    pub args: &'a ArenaVec<'a, Argument<'a>>,
     // In `expect(1).not.resolved.toBe()`, "not", "resolved" will be modifier
     // it save a group of modifier index from members
     pub modifier_indices: Vec<usize>,
@@ -413,11 +441,11 @@ pub struct ParsedExpectFnCall<'a> {
 
     /// the arguments passed to the expect function
     /// In `expect(1).toBe(2)`, it will be `[1]`
-    pub expect_arguments: Option<&'a oxc_allocator::Vec<'a, Argument<'a>>>,
+    pub expect_arguments: Option<&'a ArenaVec<'a, Argument<'a>>>,
     /// the arguments passed to the matcher function
     /// In `expect(1).toBe(2)`, it will be `[2]
     /// In `expect(1)`, it will be `None`
-    pub matcher_arguments: Option<&'a oxc_allocator::Vec<'a, Argument<'a>>>,
+    pub matcher_arguments: Option<&'a ArenaVec<'a, Argument<'a>>>,
 }
 
 impl<'a> ParsedExpectFnCall<'a> {
@@ -426,8 +454,9 @@ impl<'a> ParsedExpectFnCall<'a> {
         self.members.get(matcher_index)
     }
 
-    pub fn modifiers(&self) -> Vec<&KnownMemberExpressionProperty<'a>> {
-        self.modifier_indices.iter().filter_map(|i| self.members.get(*i)).collect::<Vec<_>>()
+    /// The modifiers (`.not`, `.resolves`, `.rejects`) in the chain, in source order.
+    pub fn modifiers(&self) -> impl Iterator<Item = &KnownMemberExpressionProperty<'a>> {
+        self.modifier_indices.iter().filter_map(|i| self.members.get(*i))
     }
 }
 
@@ -458,11 +487,11 @@ impl<'a> KnownMemberExpressionProperty<'a> {
             MemberExpressionElement::Expression(expr) => match expr {
                 Expression::Identifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
                 Expression::StringLiteral(string_literal) => {
-                    Some(Cow::Borrowed(string_literal.value.as_str()))
+                    Some(Cow::Borrowed(string_literal.value.as_str()?))
                 }
-                Expression::TemplateLiteral(template_literal) => Some(Cow::Borrowed(
-                    template_literal.single_quasi().expect("get string content").as_str(),
-                )),
+                Expression::TemplateLiteral(template_literal) => {
+                    Some(Cow::Borrowed(template_literal.single_quasi()?.as_str()?))
+                }
                 _ => None,
             },
             MemberExpressionElement::IdentName(ident_name) => {
@@ -499,13 +528,17 @@ impl<'a> MemberExpressionElement<'a> {
     pub fn from_member_expr(
         member_expr: &'a MemberExpression<'a>,
     ) -> Option<(Span, MemberExpressionElement<'a>)> {
-        let (span, _) = member_expr.static_property_info()?;
         match member_expr {
             MemberExpression::ComputedMemberExpression(expr) => {
+                let span = match &expr.expression {
+                    Expression::StringLiteral(lit) => lit.span,
+                    Expression::TemplateLiteral(lit) if lit.single_quasi().is_some() => lit.span,
+                    _ => return None,
+                };
                 Some((span, Self::Expression(&expr.expression)))
             }
             MemberExpression::StaticMemberExpression(expr) => {
-                Some((span, Self::IdentName(&expr.property)))
+                Some((expr.property.span, Self::IdentName(&expr.property)))
             }
             // Jest fn chains don't have private fields, just ignore it.
             MemberExpression::PrivateFieldExpression(_) => None,

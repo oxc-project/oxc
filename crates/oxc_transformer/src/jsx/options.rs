@@ -203,6 +203,9 @@ pub struct ReactRefreshOptions {
     pub emit_full_signatures: bool,
 }
 
+pub(super) const DEFAULT_REFRESH_REG: &str = "$RefreshReg$";
+pub(super) const DEFAULT_REFRESH_SIG: &str = "$RefreshSig$";
+
 impl Default for ReactRefreshOptions {
     fn default() -> Self {
         Self {
@@ -214,9 +217,9 @@ impl Default for ReactRefreshOptions {
 }
 
 fn default_refresh_reg() -> String {
-    String::from("$RefreshReg$")
+    String::from(DEFAULT_REFRESH_REG)
 }
 
 fn default_refresh_sig() -> String {
-    String::from("$RefreshSig$")
+    String::from(DEFAULT_REFRESH_SIG)
 }

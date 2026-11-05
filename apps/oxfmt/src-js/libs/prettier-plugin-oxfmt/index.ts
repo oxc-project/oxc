@@ -1,7 +1,7 @@
 /**
  * Prettier plugin that uses `oxc_formatter` for (j|t)s-in-xxx part.
  *
- * When Prettier formats Vue/HTML (which can embed JS/TS code inside) files,
+ * When Prettier formats Vue/Angular (which can embed JS/TS code inside) files,
  * it calls the `embed()` function for each block.
  *
  * By default, it uses the `babel` or `typescript` parser and `estree` printer.
@@ -12,12 +12,21 @@
 import { textToDoc } from "./text-to-doc";
 import type { Parser, Printer, Doc, SupportOptions } from "prettier";
 
+// NOTE: Custom options must be declared here,
+// or Prettier's normalization drops them before they reach `textToDoc()`.
 export const options: SupportOptions = {
   _oxfmtPluginOptionsJson: {
     category: "JavaScript",
     type: "string",
     default: "{}",
     description: "Bundled JSON string for oxfmt-plugin options",
+  },
+  _oxfmtVueScriptLang: {
+    category: "JavaScript",
+    type: "string",
+    default: "",
+    description:
+      'Effective `lang` of Vue SFC `<script>` blocks when it needs disambiguation (currently only "tsx"), scanned by the host',
   },
 };
 

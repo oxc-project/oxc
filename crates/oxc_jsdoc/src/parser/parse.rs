@@ -44,6 +44,7 @@ pub fn parse_jsdoc(
     // This includes package names when doing a @import
     let mut in_double_quotes = false;
     let mut in_single_quotes = false;
+    let mut in_import_tag = false;
 
     // Tracks whether we're at the logical start of a line.
     // Only `@` at the start of a line (after optional whitespace and `*` markers)
@@ -85,7 +86,12 @@ pub fn parse_jsdoc(
             // - 2 backticks: inline code (used to escape backticks inside)
             // - 3+ backticks: code fence (for nested code blocks)
             // Opening and closing sequences must have the same number of backticks.
-            '`' if !in_single_quotes && !in_double_quotes => {
+            '`' if (!in_single_quotes && !in_double_quotes)
+                || (curly_brace_depth == 0
+                    && square_brace_depth == 0
+                    && brace_depth == 0
+                    && !in_import_tag) =>
+            {
                 // Count consecutive backticks
                 let mut count: u32 = 1;
                 while chars.peek() == Some(&'`') {
@@ -144,7 +150,8 @@ pub fn parse_jsdoc(
 
             '@' if can_parse
                 && at_line_start
-                && !is_indented_code_block(line_seen_star, spaces_after_star) =>
+                && !is_indented_code_block(line_seen_star, spaces_after_star)
+                && starts_block_tag(&source_text[end..]) =>
             {
                 let part = &source_text[start..end];
                 let span = Span::new(
@@ -162,6 +169,9 @@ pub fn parse_jsdoc(
                 }
 
                 start = end;
+                in_import_tag = source_text[start..]
+                    .strip_prefix("@import")
+                    .is_some_and(|rest| rest.starts_with(char::is_whitespace));
             }
             _ => {}
         }
@@ -219,6 +229,17 @@ fn is_indented_code_block(line_seen_star: bool, spaces_after_star: u32) -> bool 
     line_seen_star && spaces_after_star >= 5
 }
 
+/// Whether `text`, placed at a line start, opens a block tag.
+/// A `/` in the tag name (e.g. an npm scope `@scope/pkg`) means prose,
+/// as comment-parser's `reTag` (`/^@[^\s/]+(?=\s|$)/`) used by eslint-plugin-jsdoc.
+///
+/// Unlike `reTag`, the name ends at `{` too (same as `parse_jsdoc_tag`),
+/// so `@param{import('./a').B} x` stays a tag, as TypeScript reads it.
+pub fn starts_block_tag(text: &str) -> bool {
+    text.starts_with('@')
+        && utils::find_token_range(text).is_some_and(|(_, end)| !text[..end].contains('/'))
+}
+
 /// tag_content: Starts with `@`, may be multiline
 fn parse_jsdoc_tag(tag_content: &str, jsdoc_tag_span: Span) -> JSDocTag<'_> {
     debug_assert!(tag_content.starts_with('@'));
@@ -273,6 +294,55 @@ mod tests {
         let src = " \n * @param {\"'\" | '\"' | '`'} string_start_char desc\n * @returns {number} The index";
         let kinds = tag_kinds(src);
         assert_eq!(kinds, vec!["param", "returns"]);
+    }
+
+    #[test]
+    fn quotes_before_code_spans_do_not_prevent_tag_split() {
+        for description in [
+            "A row's. `a,\n * b`.",
+            "A row\"s. `a,\n * b`.",
+            "A row's. `{ a,\n * b }`.",
+            "A row\"s. `{ a,\n * b }`.",
+            "A row's. ``a,\n * b``.",
+            "A 'row'. `a,\n * b`.",
+            "A row's. `a, b`.",
+            "A `a,\n * b`. row's.",
+            "A rows. `a,\n * b`.",
+        ] {
+            let source = format!(
+                "\n * @remarks\n * {description}\n * @example\n * ```ts\n * const a = 1;\n * ```\n * @see {{@link Foo}}"
+            );
+            assert_eq!(tag_kinds(&source), vec!["remarks", "example", "see"], "{description}");
+        }
+    }
+
+    #[test]
+    fn backticks_inside_import_specifiers_do_not_prevent_tag_split() {
+        for import in [
+            "@import { Foo } from './`foo'",
+            "@import { Foo } from \"./`foo\"",
+            "@import\n * { Foo } from './`foo'",
+        ] {
+            let source =
+                format!("\n * {import}\n * @remarks A row's. `a,\n * b`.\n * @see {{@link Foo}}");
+            assert_eq!(tag_kinds(&source), vec!["import", "remarks", "see"], "{import}");
+        }
+    }
+
+    #[test]
+    fn backticks_inside_optional_param_defaults_do_not_prevent_tag_split() {
+        for parameter in ["[name='`']", "[name=\"`\"]"] {
+            let source = format!("\n * @param {{string}} {parameter}\n * @returns {{string}}");
+            assert_eq!(tag_kinds(&source), vec!["param", "returns"], "{parameter}");
+        }
+    }
+
+    #[test]
+    fn backticks_inside_function_arguments_do_not_prevent_tag_split() {
+        for example in ["console.log('`');", "console.log(\"`\");"] {
+            let source = format!("\n * @example\n * {example}\n * @returns {{void}}");
+            assert_eq!(tag_kinds(&source), vec!["example", "returns"], "{example}");
+        }
     }
 
     #[test]
@@ -342,5 +412,14 @@ mod tests {
         let kinds = tag_kinds(src);
         // 4 spaces after `*` = 1 conventional + 3 indent → NOT an indented code block
         assert_eq!(kinds, vec!["deprecated", "type"]);
+    }
+
+    #[test]
+    fn slash_in_tag_name_is_not_a_tag() {
+        // An npm scope wrapped to a line start stays prose, as in comment-parser
+        let src = " The cues in\n * @scope/pkg).\n * @foo bar\n * @param{import('./a').B} x";
+        let (comment, tags) = parse_jsdoc(src, 0);
+        assert!(comment.parsed().contains("@scope/pkg)."));
+        assert_eq!(tags.iter().map(|t| t.kind.parsed()).collect::<Vec<_>>(), vec!["foo", "param"]);
     }
 }

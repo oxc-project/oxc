@@ -1,4 +1,5 @@
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -50,14 +51,16 @@ expect(method.mock.calls[0][0]).toStrictEqual(value);
 ```
 ";
 
-pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-    let node = possible_jest_node.node;
-
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     let AstKind::CallExpression(call_expr) = node.kind() else {
         return;
     };
 
-    let Some(parsed_expect_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+    let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+    else {
+        return;
+    };
+    let Some(parsed_expect_call) = parse_expect_jest_fn_call(call_expr, &possible_jest_node, ctx)
     else {
         return;
     };
@@ -93,12 +96,13 @@ fn check_and_fix<'a>(
         });
 
     let is_expect_argument_mock_calls = expect_argument_mem_expr.is_some_and(|mem_expr| {
-        let is_last_member_calls = mem_expr.static_property_name() == Some("calls");
+        let is_last_member_calls =
+            mem_expr.static_property_name().is_some_and(|name| name == "calls");
 
         let is_reversed_second_member_mock = match mem_expr.object() {
             expr_inner @ match_member_expression!(Expression) => {
                 let inner_mem_expr = expr_inner.to_member_expression();
-                inner_mem_expr.static_property_name() == Some("mock")
+                inner_mem_expr.static_property_name().is_some_and(|name| name == "mock")
             }
             _ => false,
         };
@@ -123,7 +127,7 @@ fn check_and_fix<'a>(
         let param_text = build_expect_argument(expect_argument_mem_expr, fixer);
 
         let modifier_text =
-            parsed_expect_call.modifiers().iter().fold(String::new(), |mut acc, modifier| {
+            parsed_expect_call.modifiers().fold(String::new(), |mut acc, modifier| {
                 use std::fmt::Write;
                 write!(&mut acc, ".{}", fixer.source_range(modifier.span)).unwrap();
                 acc
@@ -144,7 +148,7 @@ fn build_expect_argument<'a>(
     if let Some(mem_expr) = expect_argument_mem_expr
         && mem_expr.static_property_name().unwrap().eq("calls")
         && let Some(expr) = mem_expr.object().as_member_expression()
-        && expr.static_property_name() == Some("mock")
+        && expr.static_property_name().is_some_and(|name| name == "mock")
     {
         return fixer.source_range(expr.object().span());
     }

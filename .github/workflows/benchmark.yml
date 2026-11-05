@@ -12,8 +12,6 @@ on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize]
-    branches-ignore:
-      - "**/graphite-base/**"
     paths: &paths
       - "crates/**/*.rs"
       - "tasks/benchmark/**/*.rs"
@@ -34,7 +32,12 @@ jobs:
   determine-matrix:
     name: Determine Benchmark
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, '0-merge') }}
+    if: >
+      github.repository == 'oxc-project/oxc' &&
+      (
+        github.event_name != 'pull_request' ||
+        !contains(github.event.pull_request.labels.*.name, '0-merge')
+      )
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -75,6 +78,8 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           tools: cargo-codspeed
 
+      # Memory mode reuses these binaries: cargo-codspeed maps both simulation and
+      # memory modes to the same `analysis` build (`--cfg codspeed`) and directory.
       - name: Build benchmark
         env:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
@@ -92,8 +97,8 @@ jobs:
           rm target/codspeed/analysis/oxc_benchmark/*.d
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@9d332c4d90b43981c3e55ae8e38e68709996240f # v4.17.0
+        uses: CodSpeedHQ/action@c4fd08a3a159bd0cc208da1e0edf32b8c47d75e5 # v5.4.0
         timeout-minutes: 30
         with:
-          mode: simulation
+          mode: ${{ matrix.mode }}
           run: cargo codspeed run ${{ matrix.component }}

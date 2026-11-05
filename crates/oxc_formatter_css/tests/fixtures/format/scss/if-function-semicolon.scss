@@ -1,0 +1,7 @@
+// The `;` separating SCSS `if(...)` branches hugs the value on its left:
+// any source space before it is dropped (Prettier#19384, fixed on main;
+// 3.8.4 keeps `1 ;`). A space still follows the `;`.
+$a: if(sass($x): 1 ; else: 2);
+$b: if($cond: 1 ; else: 2 ; foo: 3);
+// Regression guard: an already-tight `;` is unchanged.
+$c: if(sass($x): 1; else: 2);

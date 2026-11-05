@@ -20,7 +20,8 @@ pub fn report_missing_padding_before_jest_block<'a>(
     let prev_statement_span = match scope_node.kind() {
         AstKind::Program(program) => get_statement_span_before_node(node, program.body.as_slice()),
         AstKind::ArrowFunctionExpression(arrow_func_expr) => {
-            get_statement_span_before_node(node, arrow_func_expr.body.statements.as_slice())
+            let Some(body) = arrow_func_expr.get_function_body() else { return };
+            get_statement_span_before_node(node, body.statements.as_slice())
         }
         AstKind::Function(function) => {
             let Some(body) = &function.body else {

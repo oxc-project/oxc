@@ -12,10 +12,10 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_return_assign_diagnostic(span: Span, message: &'static str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(message)
+fn no_return_assign_diagnostic(span: Span, help: &'static str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Returned expression contains an assignment.")
         .with_label(span)
-        .with_help("Did you mean to use `==` instead of `=`?")
+        .with_help(help)
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -75,11 +75,11 @@ fn is_sentinel_node(ast_kind: AstKind) -> bool {
 
 impl Rule for NoReturnAssign {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::AssignmentExpression(assign) = node.kind() else {
+        let AstKind::AssignmentExpression(_) = node.kind() else {
             return;
         };
 
@@ -98,20 +98,24 @@ impl Rule for NoReturnAssign {
             parent_node = ctx.nodes().parent_node(parent_node.id());
         }
 
-        match parent_node.kind() {
-            AstKind::ReturnStatement(_) => {
-                ctx.diagnostic(no_return_assign_diagnostic(
-                    assign.span(),
-                    "Return statements should not contain an assignment.",
-                ));
+        let return_span = match parent_node.kind() {
+            AstKind::ReturnStatement(stmt) => stmt.span(),
+            AstKind::ArrowFunctionExpression(arrow) if arrow.is_expression() => arrow.span(),
+            _ => return,
+        };
+        ctx.diagnostic(no_return_assign_diagnostic(return_span, self.help_message()));
+    }
+}
+
+impl NoReturnAssign {
+    fn help_message(&self) -> &'static str {
+        match self.0 {
+            NoReturnAssignMode::Always => {
+                "Compute the value in a separate statement before returning it."
             }
-            AstKind::ArrowFunctionExpression(arrow) if arrow.expression => {
-                ctx.diagnostic(no_return_assign_diagnostic(
-                    assign.span(),
-                    "Arrow functions should not return an assignment.",
-                ));
+            NoReturnAssignMode::ExceptParens => {
+                "Compute the value before returning it, or wrap the assignment in parentheses to make the intent explicit."
             }
-            _ => (),
         }
     }
 }
@@ -157,6 +161,27 @@ fn test() {
             None,
         ),
         ("const foo = (a) => (b) => (a = b)", None), // { "ecmaVersion": 6 }
+        (
+            r"const cache = {};
+const o = {
+    get x() {
+        // eslint-disable-next-line no-return-assign
+        return (
+            cache.x ??
+            (cache.x = build())
+        );
+    },
+};",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            r"// eslint-disable-next-line no-return-assign
+const get = () => (
+    cache.x ??
+    (cache.x = build())
+);",
+            Some(serde_json::json!(["always"])),
+        ),
     ];
 
     let fail = vec![
@@ -216,6 +241,25 @@ fn test() {
             None,
         ),
         ("const foo = (a) => (b) => a = b", None), // { "ecmaVersion": 6 }
+        (
+            r"const cache = {};
+const o = {
+    get x() {
+        return (
+            cache.x ??
+            (cache.x = build())
+        );
+    },
+};",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            r"const get = () => (
+    cache.x ??
+    (cache.x = build())
+);",
+            Some(serde_json::json!(["always"])),
+        ),
     ];
 
     Tester::new(NoReturnAssign::NAME, NoReturnAssign::PLUGIN, pass, fail).test_and_snapshot();

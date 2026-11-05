@@ -1,10 +1,10 @@
 //! ES2022: Class Properties
 //! Transform of class itself.
 
-use oxc_allocator::{Address, GetAddress, TakeIn, UnstableAddress};
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{Address, ArenaVec, GetAddress, TakeIn, UnstableAddress};
+use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_str::Ident;
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
     node::NodeId,
     reference::ReferenceFlags,
@@ -72,7 +72,9 @@ impl<'a> ClassProperties<'a> {
         let is_declaration = *class.r#type() == ClassType::ClassDeclaration;
         let mut class_name_binding = class.id().as_ref().map(BoundIdentifier::from_binding_ident);
         let class_scope_id = class.scope_id().get().unwrap();
-        let has_super_class = class.super_class().is_some();
+        let has_super_class = class.heritage().is_some();
+        let private_method_helpers_in_class_sequence =
+            !is_declaration && Self::should_emit_private_method_helpers_in_class_sequence(ctx);
 
         // Check if class has any properties, private methods, or static blocks
         let mut instance_prop_count = 0;
@@ -93,13 +95,11 @@ impl<'a> ClassProperties<'a> {
                     }
 
                     // Create binding for private property key
-                    if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
+                    if let Some(name) = prop.key.private_name() {
                         // Note: Current scope is outside class.
-                        let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
-                        private_props.insert(
-                            ident.name,
-                            PrivateProp::new(binding, prop.r#static, None, false),
-                        );
+                        let binding = ctx.generate_uid_in_current_hoist_scope(&name);
+                        private_props
+                            .insert(name, PrivateProp::new(binding, prop.r#static, None, false));
                     }
 
                     if prop.r#static {
@@ -115,7 +115,7 @@ impl<'a> ClassProperties<'a> {
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
-                    if let PropertyKey::PrivateIdentifier(ident) = &method.key {
+                    if let Some(private_name) = method.key.private_name() {
                         if method.r#static {
                             has_static_private_method_or_static_block = true;
                         } else {
@@ -123,24 +123,25 @@ impl<'a> ClassProperties<'a> {
                         }
 
                         let name = match method.kind {
-                            MethodDefinitionKind::Method => ident.name.as_str(),
-                            MethodDefinitionKind::Get => &format!("get_{}", ident.name),
-                            MethodDefinitionKind::Set => &format!("set_{}", ident.name),
+                            MethodDefinitionKind::Method => private_name.as_str(),
+                            MethodDefinitionKind::Get => &format!("get_{private_name}"),
+                            MethodDefinitionKind::Set => &format!("set_{private_name}"),
                             MethodDefinitionKind::Constructor => unreachable!(),
                         };
-                        let binding = ctx.generate_uid(
-                            name,
-                            ctx.current_block_scope_id(),
-                            SymbolFlags::Function,
-                        );
+                        let (scope_id, flags) = if private_method_helpers_in_class_sequence {
+                            (ctx.current_hoist_scope_id(), SymbolFlags::FunctionScopedVariable)
+                        } else {
+                            (ctx.current_block_scope_id(), SymbolFlags::Function)
+                        };
+                        let binding = ctx.generate_uid(name, scope_id, flags);
 
-                        if let Some(prop) = private_props.get_mut(&ident.name) {
+                        if let Some(prop) = private_props.get_mut(&private_name) {
                             // If there's already a binding for this private property,
                             // it's a setter or getter, so store the binding in `binding2`.
                             prop.set_binding2(binding);
                         } else {
                             private_props.insert(
-                                ident.name,
+                                private_name,
                                 PrivateProp::new(
                                     binding,
                                     method.r#static,
@@ -154,10 +155,10 @@ impl<'a> ClassProperties<'a> {
                 ClassElement::AccessorProperty(prop) => {
                     // TODO: Not sure what we should do here.
                     // Only added this to prevent panics in TS conformance tests.
-                    if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
+                    if let Some(name) = prop.key.private_name() {
                         let dummy_binding = BoundIdentifier::new(Ident::empty(), SymbolId::new(0));
                         private_props.insert(
-                            ident.name,
+                            name,
                             PrivateProp::new(dummy_binding, prop.r#static, None, true),
                         );
                     }
@@ -178,6 +179,7 @@ impl<'a> ClassProperties<'a> {
         {
             self.classes_stack.push(ClassDetails {
                 is_declaration,
+                private_method_helpers_in_class_sequence,
                 is_transform_required: false,
                 private_props: if private_props.is_empty() { None } else { Some(private_props) },
                 bindings: ClassBindings::dummy(),
@@ -206,7 +208,7 @@ impl<'a> ClassProperties<'a> {
                 // TODO(improve-on-babel): Inserting the temp var `var _Class` statement here is only
                 // to match Babel's output. It'd be simpler just to insert it at the end and get rid of
                 // `temp_var_is_created` that tracks whether it's done already or not.
-                ctx.state.var_declarations.insert_var(&temp_binding, ctx.ast);
+                ctx.state.var_declarations.insert_var(&temp_binding, &ctx.ast);
             }
             Some(temp_binding)
         } else {
@@ -233,6 +235,7 @@ impl<'a> ClassProperties<'a> {
         // Add entry to `classes_stack`
         self.classes_stack.push(ClassDetails {
             is_declaration,
+            private_method_helpers_in_class_sequence,
             is_transform_required: true,
             private_props: if private_props.is_empty() { None } else { Some(private_props) },
             bindings: class_bindings,
@@ -452,18 +455,31 @@ impl<'a> ClassProperties<'a> {
         if let Some(temp_binding) = &class_details.bindings.temp {
             // Binding for class name is required
             if let Some(ident) = &class.id {
-                // Insert `var _Class` statement, if it wasn't already in entry phase
-                if !class_details.bindings.temp_var_is_created {
-                    ctx.state.var_declarations.insert_var(temp_binding, ctx.ast);
+                // For an anonymous class, `temp_var_is_created` assumes the class itself will bind
+                // the temp. If another transform changed the class ID, declare the temp separately.
+                if !class_details.bindings.temp_var_is_created
+                    || ident.symbol_id() != temp_binding.symbol_id
+                {
+                    ctx.state.var_declarations.insert_var(temp_binding, &ctx.ast);
                 }
 
                 // Insert `_Class = Class` after class.
                 // TODO(improve-on-babel): Could just insert `var _Class = Class;` after class,
                 // rather than separate `var _Class` declaration.
-                let class_name =
-                    BoundIdentifier::from_binding_ident(ident).create_read_expression(ctx);
+                let class_name_binding = class_details
+                    .bindings
+                    .name
+                    .as_ref()
+                    .expect("class declaration with a temp always has a name binding");
+                // Preserve a later name assigned to an anonymous class. Named classes use the
+                // outer binding captured on entry, rather than a rewritten inner class binding.
+                let class_name = if class_name_binding.symbol_id == temp_binding.symbol_id {
+                    BoundIdentifier::from_binding_ident(ident).create_read_expression(ctx)
+                } else {
+                    class_name_binding.create_read_expression(ctx)
+                };
                 let expr = create_assignment(temp_binding, class_name, SPAN, ctx);
-                let stmt = ctx.ast.statement_expression(SPAN, expr);
+                let stmt = Statement::new_expression_statement(SPAN, expr, ctx);
                 self.insert_after_stmts.insert(0, stmt);
             } else {
                 // Class must be default export `export default class {}`, as all other class declarations
@@ -476,7 +492,7 @@ impl<'a> ClassProperties<'a> {
         // Insert statements before/after class
         let stmt_address = match ctx.parent() {
             parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
-            | Ancestor::ExportNamedDeclarationDeclaration(_)) => parent.address(),
+            | Ancestor::ExportDeclarationDeclaration(_)) => parent.address(),
             // `Class` is always stored in a `Box`, so has a stable memory location
             _ => class.unstable_address(),
         };
@@ -484,7 +500,7 @@ impl<'a> ClassProperties<'a> {
         if !self.insert_before.is_empty() {
             ctx.state.statement_injector.insert_many_before(
                 &stmt_address,
-                exprs_into_stmts(self.insert_before.drain(..), ctx.ast),
+                exprs_into_stmts(self.insert_before.drain(..), &ctx.ast),
             );
         }
 
@@ -620,7 +636,13 @@ impl<'a> ClassProperties<'a> {
         // They're probably pretty rare, so it'll be rarely used.
         let class_details = self.classes_stack.last();
 
+        let private_method_helpers_in_class_sequence =
+            class_details.private_method_helpers_in_class_sequence;
         let mut expr_count = self.insert_before.len() + self.insert_after_exprs.len();
+        if private_method_helpers_in_class_sequence {
+            // Private method helpers are emitted into the class-expression sequence (see below).
+            expr_count += self.insert_after_stmts.len();
+        }
         if let Some(private_props) = &class_details.private_props {
             expr_count += private_props.len();
         }
@@ -632,7 +654,7 @@ impl<'a> ClassProperties<'a> {
 
         expr_count += 1 + usize::from(class_details.bindings.temp.is_some());
 
-        let mut exprs = ctx.ast.vec_with_capacity(expr_count);
+        let mut exprs = ArenaVec::with_capacity_in(expr_count, ctx);
 
         // Insert `_prop = new WeakMap()` expressions for private instance props
         // (or `_prop = _classPrivateFieldLooseKey("prop")` if loose mode).
@@ -651,7 +673,7 @@ impl<'a> ClassProperties<'a> {
                     }
 
                     // Insert `var _prop;` declaration
-                    ctx.state.var_declarations.insert_var(&prop.binding, ctx.ast);
+                    ctx.state.var_declarations.insert_var(&prop.binding, &ctx.ast);
 
                     // `_prop = _classPrivateFieldLooseKey("prop")`
                     let value = Self::create_private_prop_key_loose(name, ctx);
@@ -672,13 +694,13 @@ impl<'a> ClassProperties<'a> {
                         has_method = true;
                         // `_C_brand = new WeakSet()`
                         let binding = class_details.bindings.brand();
-                        ctx.state.var_declarations.insert_var(binding, ctx.ast);
+                        ctx.state.var_declarations.insert_var(binding, &ctx.ast);
                         let value = create_new_weakset(ctx);
                         return Some(create_assignment(binding, value, SPAN, ctx));
                     }
 
                     // Insert `var _prop;` declaration
-                    ctx.state.var_declarations.insert_var(&prop.binding, ctx.ast);
+                    ctx.state.var_declarations.insert_var(&prop.binding, &ctx.ast);
 
                     if prop.is_static {
                         return None;
@@ -691,9 +713,27 @@ impl<'a> ClassProperties<'a> {
             }
         }
 
-        // Insert private methods
-        if !self.insert_after_stmts.is_empty() {
-            // Find `Address` of statement containing class expression
+        // Insert private methods.
+        if private_method_helpers_in_class_sequence {
+            // A concise arrow has no statement list to inject a function declaration into.
+            // Emit `_m = function () {}` into the class sequence instead. Adding `var _m`
+            // expands the concise arrow to a block, so the binding is fresh for every call.
+            for stmt in self.insert_after_stmts.drain(..) {
+                let Statement::FunctionDeclaration(mut func) = stmt else {
+                    unreachable!(
+                        "class expression private methods are always function declarations"
+                    );
+                };
+                let id = func.id.take().expect("private method binding always has an id");
+                let binding = BoundIdentifier::from_binding_ident(&id);
+                ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
+                func.r#type = FunctionType::FunctionExpression;
+                let assignment =
+                    create_assignment(&binding, Expression::FunctionExpression(func), SPAN, ctx);
+                exprs.push(assignment);
+            }
+        } else if !self.insert_after_stmts.is_empty() {
+            // Find `Address` of statement containing class expression.
             let mut stmt_address = Address::DUMMY;
             for ancestor in ctx.ancestors() {
                 if ancestor.is_parent_of_statement() {
@@ -714,11 +754,11 @@ impl<'a> ClassProperties<'a> {
         if let Some(binding) = &class_details.bindings.temp {
             // Insert `var _Class` statement, if it wasn't already in entry phase
             if !class_details.bindings.temp_var_is_created {
-                ctx.state.var_declarations.insert_var(binding, ctx.ast);
+                ctx.state.var_declarations.insert_var(binding, &ctx.ast);
             }
 
             // `_Class = class {}`
-            let class_expr = expr.take_in(ctx.ast);
+            let class_expr = expr.take_in(ctx);
             let assignment = create_assignment(binding, class_expr, SPAN, ctx);
 
             if exprs.is_empty() && self.insert_after_exprs.is_empty() {
@@ -747,14 +787,14 @@ impl<'a> ClassProperties<'a> {
                 return;
             }
 
-            let class_expr = expr.take_in(ctx.ast);
+            let class_expr = expr.take_in(ctx);
             exprs.push(class_expr);
         }
 
         debug_assert!(exprs.len() > 1);
         debug_assert!(exprs.len() <= expr_count);
 
-        *expr = ctx.ast.expression_sequence(SPAN, exprs);
+        *expr = Expression::new_sequence_expression(SPAN, exprs, ctx);
     }
 
     /// Transform class elements.
@@ -854,7 +894,7 @@ impl<'a> ClassProperties<'a> {
     fn create_private_prop_key_loose(name: Ident<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         helper_call_expr(
             Helper::ClassPrivateFieldLooseKey,
-            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(SPAN, name, None))),
+            ArenaVec::from_value_in(Argument::new_string_literal(SPAN, name, None, ctx), ctx),
             ctx,
         )
     }
@@ -862,7 +902,7 @@ impl<'a> ClassProperties<'a> {
     /// Insert an expression after the class.
     pub(super) fn insert_expr_after_class(&mut self, expr: Expression<'a>, ctx: &TraverseCtx<'a>) {
         if self.current_class().is_declaration {
-            self.insert_after_stmts.push(ctx.ast.statement_expression(SPAN, expr));
+            self.insert_after_stmts.push(Statement::new_expression_statement(SPAN, expr, ctx));
         } else {
             self.insert_after_exprs.push(expr);
         }
@@ -884,17 +924,17 @@ fn create_new_weakmap<'a>(
     symbol_id: &mut Option<Option<SymbolId>>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let weak_map = ctx.ast.ident("WeakMap");
+    let weak_map = static_ident!("WeakMap");
     let symbol_id = *symbol_id
         .get_or_insert_with(|| ctx.scoping().find_binding(ctx.current_scope_id(), weak_map));
     let ident = ctx.create_ident_expr(SPAN, weak_map, symbol_id, ReferenceFlags::Read);
-    ctx.ast.expression_new_with_pure(SPAN, ident, NONE, ctx.ast.vec(), true)
+    Expression::new_new_expression_with_pure(SPAN, ident, None, [], true, ctx)
 }
 
 /// Create `new WeakSet()` expression.
 fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-    let weak_set = ctx.ast.ident("WeakSet");
+    let weak_set = static_ident!("WeakSet");
     let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), weak_set);
     let ident = ctx.create_ident_expr(SPAN, weak_set, symbol_id, ReferenceFlags::Read);
-    ctx.ast.expression_new_with_pure(SPAN, ident, NONE, ctx.ast.vec(), true)
+    Expression::new_new_expression_with_pure(SPAN, ident, None, [], true, ctx)
 }

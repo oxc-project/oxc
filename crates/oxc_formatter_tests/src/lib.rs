@@ -1,0 +1,14 @@
+//! Test infrastructure shared across formatter crates.
+//!
+//! - `harness`: runtime that walks fixtures, drives format passes, and assembles snapshots.
+//! - `codegen`: build-script helper that emits `#[test]` functions for each fixture.
+//!
+//! Consumer crates use `codegen` from `build.rs` (via `[build-dependencies]`) and `harness`
+//! from `tests/fixtures/mod.rs` (via `[dev-dependencies]`). This crate depends only on
+//! `oxc_formatter_core`, never on language crates, so both directions stay cycle-free.
+
+mod codegen;
+mod harness;
+
+pub use codegen::{GenerateConfig, generate_tests};
+pub use harness::{FixtureFormatter, FixtureSnapshot, OptionValue, build_fixture_snapshot};

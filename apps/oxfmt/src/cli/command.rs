@@ -4,6 +4,8 @@ use bpaf::{Bpaf, Parser};
 #[cfg(feature = "napi")]
 use cow_utils::CowUtils;
 
+use crate::core::config_discovery;
+
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[expect(clippy::ptr_arg)]
@@ -149,6 +151,13 @@ pub struct ConfigOptions {
     /// Do not search for configuration files in subdirectories
     #[bpaf(switch, hide_usage)]
     pub disable_nested_config: bool,
+}
+
+impl ConfigOptions {
+    /// Nested config search: off with `--disable-nested-config`, off with an explicit `--config`, off in Vite+ mode.
+    pub fn use_nested_configs(&self) -> bool {
+        !self.disable_nested_config && self.config.is_none() && config_discovery().nested_configs()
+    }
 }
 
 /// Ignore Options

@@ -1,0 +1,138 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-missing-source-locations.js
+---
+import { c as _c } from "react/compiler-runtime";
+// @validateSourceLocations
+import { useEffect, useCallback } from "react";
+function Component(t0) {
+	const $ = _c(32);
+	const { prop1, prop2 } = t0;
+	const x = prop1 + prop2;
+	const y = x * 2;
+	let t1;
+	if ($[0] !== x || $[1] !== y) {
+		t1 = [x, y];
+		$[0] = x;
+		$[1] = y;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	const arr = t1;
+	let t2;
+	if ($[3] !== x || $[4] !== y) {
+		t2 = {
+			x,
+			y
+		};
+		$[3] = x;
+		$[4] = y;
+		$[5] = t2;
+	} else {
+		t2 = $[5];
+	}
+	const obj = t2;
+	let destA;
+	let destB;
+	if ($[6] !== arr || $[7] !== y) {
+		if (y > 5) {
+			const [t3, t4] = arr;
+			destA = t3;
+			destB = t4;
+		}
+		$[6] = arr;
+		$[7] = y;
+		$[8] = destA;
+		$[9] = destB;
+	} else {
+		destA = $[8];
+		destB = $[9];
+	}
+	const [a, b] = arr;
+	const { x: c, y: d } = obj;
+	let sound;
+	if ($[10] !== y) {
+		if (y > 10) {
+			sound = "woof";
+		} else {
+			sound = "meow";
+		}
+		$[10] = y;
+		$[11] = sound;
+	} else {
+		sound = $[11];
+	}
+	let t3;
+	if ($[12] !== a || $[13] !== destA || $[14] !== destB || $[15] !== sound) {
+		t3 = () => {
+			if (a > 10) {
+				console.log(a);
+				console.log(sound);
+				console.log(destA, destB);
+			}
+		};
+		$[12] = a;
+		$[13] = destA;
+		$[14] = destB;
+		$[15] = sound;
+		$[16] = t3;
+	} else {
+		t3 = $[16];
+	}
+	let t4;
+	if ($[17] !== a || $[18] !== destA || $[19] !== destB || $[20] !== sound) {
+		t4 = [
+			a,
+			sound,
+			destA,
+			destB
+		];
+		$[17] = a;
+		$[18] = destA;
+		$[19] = destB;
+		$[20] = sound;
+		$[21] = t4;
+	} else {
+		t4 = $[21];
+	}
+	useEffect(t3, t4);
+	let t5;
+	if ($[22] !== a || $[23] !== b) {
+		t5 = () => a + b;
+		$[22] = a;
+		$[23] = b;
+		$[24] = t5;
+	} else {
+		t5 = $[24];
+	}
+	const foo = t5;
+	let t6;
+	if ($[25] !== c || $[26] !== d) {
+		t6 = function bar() {
+			return (c + d) * 2;
+		};
+		$[25] = c;
+		$[26] = d;
+		$[27] = t6;
+	} else {
+		t6 = $[27];
+	}
+	const bar = t6;
+	console.log("Hello, world!");
+	let t7;
+	if ($[28] !== bar || $[29] !== foo || $[30] !== y) {
+		t7 = [
+			y,
+			foo,
+			bar
+		];
+		$[28] = bar;
+		$[29] = foo;
+		$[30] = y;
+		$[31] = t7;
+	} else {
+		t7 = $[31];
+	}
+	return t7;
+}

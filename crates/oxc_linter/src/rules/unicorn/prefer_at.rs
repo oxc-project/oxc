@@ -8,7 +8,7 @@ use oxc_ast::{
     ast::{
         Argument, AssignmentTarget, BinaryOperator, CallExpression, ChainElement,
         ComputedMemberExpression, Expression, MemberExpression, StaticMemberExpression,
-        UnaryOperator,
+        UnaryOperator, VariableDeclarationKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -17,6 +17,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
+    ast_util::variable_declaration_kind,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
@@ -28,6 +29,14 @@ fn prefer_at_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
         .with_help("Use `.at()` for index access.")
         .with_note("https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at")
         .with_label(span)
+}
+
+fn prefer_at_over_substring_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "Prefer `String#at()` over `String#substring()` when getting one character.",
+    )
+    .with_help("Use `.at()` for index access.")
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -60,6 +69,7 @@ declare_oxc_lint!(
     /// methods for index access.
     ///
     /// This rule also discourages using [`String#charAt()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charAt).
+    /// It also checks `String#substring()` calls that extract a single character.
     ///
     /// ### Why is this bad?
     ///
@@ -84,9 +94,11 @@ declare_oxc_lint!(
     PreferAt,
     unicorn,
     pedantic,
-    dangerous_fix,
+    recommended,
+    dangerous_fix_suggestion,
     config = PreferAtConfig,
     version = "1.20.0",
+    short_description = "Prefer the `Array#at()` and `String#at()` methods for index access.",
 );
 
 impl Rule for PreferAt {
@@ -116,10 +128,10 @@ impl Rule for PreferAt {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ComputedMemberExpression(computed) if !is_assignment_target(node, ctx) => {
-                self.handle_computed_member(computed, node, ctx);
+                self.handle_computed_member(computed, ctx);
             }
             AstKind::CallExpression(call) if !is_assignment_target(node, ctx) => {
-                self.check_call_expression(call, node, ctx);
+                self.check_call_expression(call, ctx);
             }
             _ => {}
         }
@@ -130,12 +142,13 @@ impl PreferAt {
     fn handle_computed_member<'a>(
         &self,
         computed: &ComputedMemberExpression<'a>,
-        node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
         // Check if this is accessing [0] on various expression types
-        if computed.expression.get_inner_expression().is_number_0() {
-            Self::check_slice_with_zero_index(computed, node.id(), ctx);
+        if computed.expression.get_inner_expression().is_number_0()
+            && Self::check_slice_with_zero_index(computed, ctx)
+        {
+            return;
         }
 
         // Check for object.length - N pattern
@@ -158,7 +171,7 @@ impl PreferAt {
             }
         } else if self.check_all_index_access
             && let Some(index) = get_positive_index(&computed.expression)
-            && index != 0
+            && !is_obviously_non_array_receiver(&computed.object, ctx)
         {
             ctx.diagnostic_with_fix(prefer_at_diagnostic(computed.span(), "[index]"), |fixer| {
                 if is_arguments_object(&computed.object) {
@@ -167,27 +180,49 @@ impl PreferAt {
 
                 create_at_fix(&fixer, computed.object.span(), computed.span(), index)
             });
+        } else if self.check_all_index_access
+            && is_addition_index_expression(&computed.expression)
+            && !is_obviously_non_array_receiver(&computed.object, ctx)
+        {
+            if is_static_positive_index_expression(&computed.expression) {
+                ctx.diagnostic_with_fix(
+                    prefer_at_diagnostic(computed.span(), "[index]"),
+                    |fixer| {
+                        if is_arguments_object(&computed.object) {
+                            return fixer.noop();
+                        }
+
+                        create_at_fix_with_arg(
+                            &fixer,
+                            computed.object.span(),
+                            computed.span(),
+                            fixer.source_range(computed.expression.span()),
+                        )
+                    },
+                );
+            } else {
+                ctx.diagnostic(prefer_at_diagnostic(computed.span(), "[index]"));
+            }
         }
     }
 
     fn check_slice_with_zero_index<'a>(
         computed: &ComputedMemberExpression<'a>,
-        node_id: oxc_syntax::node::NodeId,
         ctx: &LintContext<'a>,
-    ) {
+    ) -> bool {
         let call_expr = match &computed.object {
             Expression::ChainExpression(chain) => {
                 if let ChainElement::CallExpression(call) = &chain.expression {
                     call
                 } else {
-                    return;
+                    return false;
                 }
             }
             expr => {
                 if let Expression::CallExpression(call) = expr.get_inner_expression() {
                     call
                 } else {
-                    return;
+                    return false;
                 }
             }
         };
@@ -196,16 +231,13 @@ impl PreferAt {
             call_expr.callee.get_member_expr()
             && static_member.property.name == "slice"
         {
-            Self::check_slice_index_access(call_expr, computed, node_id, ctx);
+            return Self::check_slice_index_access(call_expr, computed, ctx);
         }
+
+        false
     }
 
-    fn check_call_expression<'a>(
-        &self,
-        call_expr: &CallExpression<'a>,
-        node: &AstNode<'a>,
-        ctx: &LintContext<'a>,
-    ) {
+    fn check_call_expression<'a>(&self, call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
         let Some(MemberExpression::StaticMemberExpression(static_member)) =
             call_expr.callee.get_member_expr()
         else {
@@ -216,21 +248,43 @@ impl PreferAt {
             "charAt" => {
                 Self::check_char_at(call_expr, static_member, ctx, self.check_all_index_access);
             }
+            "substring" => Self::check_substring(call_expr, static_member, ctx),
             "pop" | "shift" => Self::check_slice_pop_shift(call_expr, static_member, ctx),
             "last" => {
                 check_lodash_last(&self.get_last_element_functions, call_expr, static_member, ctx);
             }
             _ => {}
         }
+    }
 
-        // Check for array.slice(-N)[0]
-        let parent_kind = ctx.nodes().parent_kind(node.id());
-        if let AstKind::ComputedMemberExpression(computed) = parent_kind
-            && computed.expression.get_inner_expression().is_number_0()
-        {
-            let parent_id = ctx.nodes().parent_id(node.id());
-            Self::check_slice_index_access(call_expr, computed, parent_id, ctx);
+    fn check_substring<'a>(
+        call_expr: &CallExpression<'a>,
+        static_member: &StaticMemberExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        let [first, second] = call_expr.arguments.as_slice() else { return };
+        let (Some(first), Some(second)) = (first.as_expression(), second.as_expression()) else {
+            return;
+        };
+        let Some(index) = substring_single_character_index(first, second, ctx) else { return };
+
+        let diagnostic = prefer_at_over_substring_diagnostic(call_expr.span);
+        let arguments_span = Span::new(first.span().start, second.span().end);
+        if ctx.has_comments_between(arguments_span) {
+            ctx.diagnostic(diagnostic);
+            return;
         }
+
+        // `substring` clamps negative indices and returns an empty string out of bounds,
+        // whereas `at` accepts negative indices and can return `undefined`.
+        ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+            let between = fixer
+                .source_range(Span::new(static_member.property.span.end, arguments_span.start));
+            fixer.replace(
+                Span::new(static_member.property.span.start, arguments_span.end),
+                format!("at{between}{}", fixer.source_range(index.span())),
+            )
+        });
     }
 
     fn check_char_at<'a>(
@@ -245,25 +299,23 @@ impl PreferAt {
 
         let Some(arg) = call_expr.arguments[0].as_expression() else { return };
 
-        // Check for string.length - N pattern
-        if let Some((object, negative_value)) = extract_length_minus_pattern(arg) {
-            if is_same_expression(static_member.object.get_inner_expression(), object, ctx) {
+        if let Some((object, negative_value)) = extract_length_minus_pattern(arg)
+            && is_same_expression(static_member.object.get_inner_expression(), object, ctx)
+        {
+            ctx.diagnostic_with_fix(prefer_at_diagnostic(call_expr.span, "charAt()"), |fixer| {
+                create_at_fix(&fixer, static_member.object.span(), call_expr.span, negative_value)
+            });
+        } else if check_all_index_access {
+            if let Some(index) = get_positive_index(arg) {
                 ctx.diagnostic_with_fix(
                     prefer_at_diagnostic(call_expr.span, "charAt()"),
                     |fixer| {
-                        create_at_fix(
-                            &fixer,
-                            static_member.object.span(),
-                            call_expr.span,
-                            negative_value,
-                        )
+                        create_at_fix(&fixer, static_member.object.span(), call_expr.span, index)
                     },
                 );
+            } else {
+                ctx.diagnostic(prefer_at_diagnostic(call_expr.span, "charAt()"));
             }
-        } else if check_all_index_access && let Some(index) = get_positive_index(arg) {
-            ctx.diagnostic_with_fix(prefer_at_diagnostic(call_expr.span, "charAt()"), |fixer| {
-                create_at_fix(&fixer, static_member.object.span(), call_expr.span, index)
-            });
         }
     }
 
@@ -371,78 +423,66 @@ impl PreferAt {
                 },
             );
         } else if let Some(second_negative) = get_negative_integer(second_arg, None) {
-            ctx.diagnostic_with_fix(
-                prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
-                |fixer| {
-                    if is_arguments_object(&slice_static.object) {
-                        return fixer.noop();
-                    }
-                    create_at_fix(
-                        &fixer,
-                        slice_static.object.span(),
-                        Span::new(slice_static.object.span().start, call_expr.span.end),
-                        second_negative,
-                    )
-                },
-            );
+            // `slice(start, end).pop()` returns the slice's LAST element. `.at()` can only
+            // express that when the slice is exactly one element (`end == start + 1`), in which
+            // case the element is at `start`. For a multi-element slice `.at()` cannot replicate
+            // `.pop()` (which takes the last element), so skip reporting in this case.
+            if second_negative == first_negative + 1 {
+                ctx.diagnostic_with_fix(
+                    prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
+                    |fixer| {
+                        if is_arguments_object(&slice_static.object) {
+                            return fixer.noop();
+                        }
+                        create_at_fix(
+                            &fixer,
+                            slice_static.object.span(),
+                            Span::new(slice_static.object.span().start, call_expr.span.end),
+                            first_negative,
+                        )
+                    },
+                );
+            }
         }
     }
 
     fn check_slice_index_access<'a>(
         call_expr: &CallExpression<'a>,
         computed: &ComputedMemberExpression<'a>,
-        computed_node_id: oxc_syntax::node::NodeId,
         ctx: &LintContext<'a>,
-    ) {
+    ) -> bool {
         if computed.optional {
-            return;
-        }
-
-        // Skip if this computed member is being assigned to or deleted
-        let computed_parent_kind = ctx.nodes().parent_kind(computed_node_id);
-        if matches!(
-            computed_parent_kind,
-            AstKind::AssignmentExpression(_)
-                | AstKind::UpdateExpression(_)
-                | AstKind::ArrayPattern(_)
-        ) {
-            return;
-        }
-
-        if let AstKind::UnaryExpression(unary) = computed_parent_kind
-            && unary.operator == UnaryOperator::Delete
-        {
-            return;
+            return false;
         }
 
         let Some(MemberExpression::StaticMemberExpression(static_member)) =
             call_expr.callee.get_member_expr()
         else {
-            return;
+            return false;
         };
 
         if call_expr.optional
             || static_member.property.name != "slice"
             || call_expr.arguments.is_empty()
         {
-            return;
+            return false;
         }
 
         if call_expr.arguments.iter().any(Argument::is_spread) {
-            return;
+            return false;
         }
 
-        let Some(first_arg) = call_expr.arguments[0].as_expression() else { return };
+        let Some(first_arg) = call_expr.arguments[0].as_expression() else { return false };
 
         let negative_value = match call_expr.arguments.len() {
             1 => get_negative_integer(first_arg, Some(5)),
             2 => {
                 // Check if second argument is 0, which means slice returns empty array
-                let Some(second_arg) = call_expr.arguments[1].as_expression() else { return };
-                if is_zero_index(second_arg) {
+                let Some(second_arg) = call_expr.arguments[1].as_expression() else { return false };
+                if second_arg.get_inner_expression().is_number_value(0.0) {
                     // slice(-N, 0) returns empty array, so [0] would be undefined
                     // This is not equivalent to .at(-N)
-                    return;
+                    return false;
                 }
                 get_negative_integer(first_arg, None)
             }
@@ -454,14 +494,12 @@ impl PreferAt {
                 if is_arguments_object(&static_member.object) {
                     return fixer.noop();
                 }
-                create_at_fix(
-                    &fixer,
-                    static_member.object.span(),
-                    Span::new(static_member.object.span().start, computed.span().end),
-                    value,
-                )
+                create_at_fix(&fixer, static_member.object.span(), computed.span(), value)
             });
+            return true;
         }
+
+        false
     }
 }
 
@@ -476,12 +514,10 @@ fn is_assignment_target<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 
     matches!(
         parent_kind,
-        AstKind::UpdateExpression(_)
-            | AstKind::ArrayPattern(_)
-            | AstKind::AssignmentTargetWithDefault(_)
-            | AstKind::ArrayAssignmentTarget(_)
+        AstKind::UpdateExpression(_) | AstKind::ArrayPattern(_) | AstKind::ArrayAssignmentTarget(_)
     ) || matches!(parent_kind, AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::Delete)
-        || matches!(parent_kind, AstKind::AssignmentExpression(assign_expr) if matches!(&assign_expr.left, AssignmentTarget::ComputedMemberExpression(_)))
+        || matches!(parent_kind, AstKind::AssignmentTargetWithDefault(target) if target.binding.span() == node.span())
+        || matches!(parent_kind, AstKind::AssignmentExpression(assign_expr) if matches!(&assign_expr.left, AssignmentTarget::ComputedMemberExpression(target) if target.span == node.span()))
 }
 
 fn is_positive_number(expr: &Expression) -> bool {
@@ -503,6 +539,128 @@ fn get_positive_index(expr: &Expression) -> Option<i64> {
         }
         _ => None,
     }
+}
+
+/// Returns `true` for an (already unwrapped) expression that cannot be an
+/// `Array`, `String`, or `TypedArray`, so calling `.at()` on it would be
+/// invalid. Object literals, non-string literals, and function/class
+/// expressions have no `.at()` method. String literals are intentionally
+/// excluded — strings do have `.at()`.
+fn is_unsupported_at_receiver(expr: &Expression) -> bool {
+    matches!(
+        expr,
+        Expression::ObjectExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ClassExpression(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::BooleanLiteral(_)
+            | Expression::NullLiteral(_)
+            | Expression::RegExpLiteral(_)
+    )
+}
+
+/// Returns `true` if `expr` is obviously not an array-like receiver, so
+/// `prefer-at` must not rewrite `expr[index]` into `expr.at(index)` (e.g.
+/// numeric-key access on a plain object, which has no `.at()` method).
+///
+/// Mirrors `isObviouslyNonArrayReceiver` from `eslint-plugin-unicorn`
+/// (sindresorhus/eslint-plugin-unicorn#2999): the receiver itself is an
+/// unsupported `.at()` target, or it is an identifier bound to a `const`
+/// whose initializer is one.
+fn is_obviously_non_array_receiver(expr: &Expression, ctx: &LintContext) -> bool {
+    let inner = expr.get_inner_expression();
+    if is_unsupported_at_receiver(inner) {
+        return true;
+    }
+
+    let Expression::Identifier(ident) = inner else {
+        return false;
+    };
+    let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    let AstKind::VariableDeclarator(declarator) = ctx.symbol_declaration(symbol_id).kind() else {
+        return false;
+    };
+    if !variable_declaration_kind(declarator, ctx.nodes())
+        .is_some_and(VariableDeclarationKind::is_const)
+    {
+        return false;
+    }
+    declarator
+        .init
+        .as_ref()
+        .is_some_and(|init| is_unsupported_at_receiver(init.get_inner_expression()))
+}
+
+#[expect(clippy::float_cmp, reason = "Both endpoints are validated as non-negative safe integers")]
+fn substring_single_character_index<'a, 'b>(
+    first: &'b Expression<'a>,
+    second: &'b Expression<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<&'b Expression<'a>> {
+    if let (Expression::NumericLiteral(start), Expression::NumericLiteral(end)) =
+        (first.get_inner_expression(), second.get_inner_expression())
+        && [start.value, end.value]
+            .iter()
+            .all(|value| *value >= 0.0 && *value <= 9_007_199_254_740_991.0 && value.fract() == 0.0)
+        && (start.value - end.value).abs() == 1.0
+    {
+        return Some(if start.value < end.value { first } else { second });
+    }
+
+    let is_plus_one = |expression: &Expression, index: &Expression| {
+        let Expression::BinaryExpression(binary) = expression.get_inner_expression() else {
+            return false;
+        };
+        binary.operator == BinaryOperator::Addition
+            && ((binary.right.get_inner_expression().is_number_value(1.0)
+                && is_same_expression(
+                    binary.left.get_inner_expression(),
+                    index.get_inner_expression(),
+                    ctx,
+                ))
+                || (binary.left.get_inner_expression().is_number_value(1.0)
+                    && is_same_expression(
+                        binary.right.get_inner_expression(),
+                        index.get_inner_expression(),
+                        ctx,
+                    )))
+    };
+    if is_plus_one(second, first) {
+        return Some(first);
+    }
+    if is_plus_one(first, second) {
+        return Some(second);
+    }
+    if let Expression::BinaryExpression(binary) = first.get_inner_expression()
+        && binary.operator == BinaryOperator::Subtraction
+        && binary.right.get_inner_expression().is_number_value(1.0)
+        && is_same_expression(
+            binary.left.get_inner_expression(),
+            second.get_inner_expression(),
+            ctx,
+        )
+    {
+        return Some(first);
+    }
+    None
+}
+
+fn is_addition_index_expression(expr: &Expression) -> bool {
+    let Expression::BinaryExpression(binary) = expr.get_inner_expression() else { return false };
+    binary.operator == BinaryOperator::Addition
+        && (get_positive_index(&binary.left).is_some()
+            || get_positive_index(&binary.right).is_some())
+}
+
+fn is_static_positive_index_expression(expr: &Expression) -> bool {
+    let Expression::BinaryExpression(binary) = expr.get_inner_expression() else { return false };
+    binary.operator == BinaryOperator::Addition
+        && get_positive_index(&binary.left).is_some()
+        && get_positive_index(&binary.right).is_some()
 }
 
 fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option<i64> {
@@ -545,13 +703,6 @@ fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option
     Some(value)
 }
 
-fn is_zero_index(expr: &Expression) -> bool {
-    match expr.get_inner_expression() {
-        Expression::NumericLiteral(num) => num.value.abs() < f64::EPSILON,
-        _ => false,
-    }
-}
-
 // Extract pattern: expression.length - N
 fn extract_length_minus_pattern<'a>(expr: &'a Expression<'a>) -> Option<(&'a Expression<'a>, i64)> {
     let binary = match expr.get_inner_expression() {
@@ -587,7 +738,16 @@ fn create_at_fix(
     full_span: Span,
     index: i64,
 ) -> RuleFix {
-    let new_code = format!("{}.at({})", fixer.source_range(object_span), index);
+    create_at_fix_with_arg(fixer, object_span, full_span, &index.to_string())
+}
+
+fn create_at_fix_with_arg(
+    fixer: &RuleFixer<'_, '_>,
+    object_span: Span,
+    full_span: Span,
+    argument: &str,
+) -> RuleFix {
+    let new_code = format!("{}.at({})", fixer.source_range(object_span), argument);
     fixer.replace(full_span, new_code)
 }
 
@@ -683,6 +843,8 @@ fn test() {
         ("array.slice(-9, 0)[0]", None),
         ("array.slice(-5, 0).pop()", None),
         ("array.slice(-3, 0).shift()", None),
+        ("array.slice(-5, -3).pop()", None),
+        ("array.slice(-9, -2).pop()", None),
         ("++array[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         (
             "const offset = 5;const extraArgument = 6;string.charAt(offset + 9, extraArgument)",
@@ -692,6 +854,60 @@ fn test() {
         ("array[-1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         ("array[1.5]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         ("array[1n]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // https://github.com/oxc-project/oxc/issues/23870
+        // Numeric-key access on a plain object must not be reported/fixed:
+        // objects have no `.at()` method, so the autofix produces broken code.
+        (
+            "const tokens = { 60: '#666666', 10: '#F8F8F8' }; tokens[60]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("({ 1: 1 })[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        (
+            "const object = { 1: 1, a: 2 }; object[1]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        (
+            "const object = { 1: 1 } as const; object[1]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        (
+            "const object = { 1: 1 }; (object as Record<number, number>)[1]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        (
+            "const object = { 1: 1 }; object![1]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        (
+            "const object = { 1: 1 }; object[0 + 1]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("(5)[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("(() => {})[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("(class {})[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("string.substring()", None),
+        ("string.substring(0)", None),
+        ("string.substring(index)", None),
+        ("string.substring(0, 2)", None),
+        ("string.substring(-1, 0)", None),
+        ("string.substring(1.5, 2.5)", None),
+        ("string.substring(index, index + 2)", None),
+        ("string.substring(index, other + 1)", None),
+        ("string.substring(other, index + 1)", None),
+        ("string.substring(index, index + length)", None),
+        ("string.substring(index, length + index)", None),
+        ("string.substring(...arguments)", None),
+        ("string.substring(index, index + 1, extraArgument)", None),
+        ("string.substring(index, ...[index + 1])", None),
+        ("string.substring(getIndex(), getIndex() + 1)", None),
+        ("string.substring(index++, index++ + 1)", None),
+        ("string['substring'](index, index + 1)", None),
+        ("new string.substring(index, index + 1)", None),
+        ("string.substring(9007199254740991, 9007199254740992)", None),
+        ("array.slice(-1)[0] = value", None),
+        ("([array.slice(-1)[0]] = values)", None),
+        ("([array.slice(-1)[0] = value] = [])", None),
+        ("({a: array.slice(-1)[0] = value} = {})", None),
     ];
 
     let fail = vec![
@@ -727,6 +943,7 @@ fn test() {
         ("(( string.charAt ))(string.length - 1);", None),
         ("(( string.charAt(string.length - 1) ));", None),
         ("array.slice(-1)[0]", None),
+        ("array.slice(-1)[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         ("array?.slice(-1)[0]", None),
         ("array.slice(-1).pop()", None),
         ("array.slice(-1.0).shift()", None),
@@ -780,32 +997,64 @@ fn test() {
         ),
         ("function foo() {return _.last(arguments)}", None),
         // checkAllIndexAccess: true, generated dynamically so not picked up by rulegen.
-        // TODO: Fix these.
-        // ("array[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         ("array[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
-        // ("array[5 + 9]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
-        // (
-        //     "const offset = 5;array[offset + 9]",
-        //     Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
-        // ),
+        ("array[5 + 9]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        (
+            "const offset = 5;array[offset + 9]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        (
+            "const offset = -10;array[offset + 9]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
         ("array[array.length - 1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
-        // `charAt` doesn't care about value
-        // TODO: Implement charAt behavior with checkAllIndexAccess enabled.
-        // ("string.charAt(9)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
-        // ("string.charAt(5 + 9)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
-        // (
-        //     "const offset = 5;string.charAt(offset + 9)",
-        //     Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
-        // ),
-        // ("string.charAt(unknown)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
-        // ("string.charAt(-1)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
-        // ("string.charAt(1.5)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
-        // ("string.charAt(1n)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
-        // (
-        //     "string.charAt(string.length - 1)",
-        //     Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
-        // ),
-        // ("foo.charAt(bar.length - 1)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // `charAt` doesn't care about value.
+        ("string.charAt(9)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("string.charAt(5 + 9)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        (
+            "const offset = 5;string.charAt(offset + 9)",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("string.charAt(unknown)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("string.charAt(-1)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("string.charAt(1.5)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("string.charAt(1n)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        (
+            "string.charAt(string.length - 1)",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("foo.charAt(bar.length - 1)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // Strings have `.at()`, so a string-literal receiver is still reported (#23870).
+        ("\"abc\"[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("value.substring(index, index + 1);", None),
+        ("string.substring(0, 1)", None),
+        ("string.substring(1, 2)", None),
+        ("string.substring(2, 1)", None),
+        ("string.substring(index, 1 + index)", None),
+        ("string.substring(index - 1, index)", None),
+        ("string.substring(index + 1, index)", None),
+        ("string.substring(1 + index, index)", None),
+        ("string.substring(index, /* comment */ index + 1)", None),
+        ("string.substring(index, index + /* comment */ 1)", None),
+        ("string.substring(0, /* between */ 1)", None),
+        ("string.substring((( index )), (( index )) + 1)", None),
+        ("string.substring((( index )) - 1, (( index )))", None),
+        ("(( string )).substring(index, index + 1)", None),
+        ("string?.substring(index, index + 1)", None),
+        ("string.substring?.(index, index + 1)", None),
+        ("string?.substring?.(index, index + 1)", None),
+        ("string.substring(object.index, object.index + 1)", None),
+        ("result[0] = value.substring(index, index + 1);", None),
+        ("result[0] = array[array.length - 1];", None),
+        ("export function f(arr) { return arr.slice(-1)[0]; }", None),
+        ("export function f(arr) { let k; k = arr.slice(-1)[0]; return k; }", None),
+        ("result = array?.slice(-1)[0]", None),
+        ("result += array.slice(-1)[0]", None),
+        ("result = (array.slice(-1))[0]", None),
+        ("result = array.slice(-2, -1)[0]", None),
+        ("([a = array.slice(-1)[0]] = [])", None),
+        ("({a: b = array.slice(-1)[0]} = {})", None),
     ];
 
     let fix = vec![
@@ -818,19 +1067,37 @@ fn test() {
         // array.slice(-N)[0] patterns
         ("array.slice(-1)[0]", "array.at(-1)", None),
         ("array.slice(-2)[0]", "array.at(-2)", None),
+        (
+            "array.slice(-1)[0]",
+            "array.at(-1)",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
         // array.slice(-N).pop/shift patterns
         ("array.slice(-1).pop()", "array.at(-1)", None),
         ("array.slice(-1).shift()", "array.at(-1)", None),
         // Two-arg slice patterns
         ("array.slice(-9, -8)[0]", "array.at(-9)", None),
         ("array.slice(-3, -2).shift()", "array.at(-3)", None),
-        ("array.slice(-9, -8).pop()", "array.at(-8)", None),
-        ("array.slice(-5, -3).pop()", "array.at(-3)", None),
+        ("array.slice(-9, -8).pop()", "array.at(-9)", None),
+        ("array.slice(-2, -1).pop()", "array.at(-2)", None),
         // Lodash patterns
         ("_.last(array)", "array.at(-1)", None),
         ("lodash.last(array)", "array.at(-1)", None),
         // Edge cases with very large numbers
         ("array[array.length - 9007199254740992]", "array.at(-9007199254740992)", None),
+        ("array[0]", "array.at(0)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        (
+            "array[5 + 9]",
+            "array.at(5 + 9)",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        (
+            "string.charAt(9)",
+            "string.at(9)",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        // Strings have `.at()`, so a string-literal receiver is still fixed (#23870).
+        ("\"abc\"[1]", "\"abc\".at(1)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         ("_.last([] as [])", "([] as []).at(-1)", None),
         ("_.last([1, 2, 3] as const)", "([1, 2, 3] as const).at(-1)", None),
         // `arguments` is not an Array, so `.at()` is not guaranteed to exist.
@@ -844,6 +1111,53 @@ fn test() {
         ("arguments.slice(-1)[0]", "arguments.slice(-1)[0]", None),
         ("arguments.slice(-1).pop()", "arguments.slice(-1).pop()", None),
         ("arguments.slice(-1).shift()", "arguments.slice(-1).shift()", None),
+        ("value.substring(index, index + 1);", "value.at(index);", None),
+        ("string.substring(0, 1)", "string.at(0)", None),
+        ("string.substring(2, 1)", "string.at(1)", None),
+        ("string.substring(index, 1 + index)", "string.at(index)", None),
+        ("string.substring(index + 1, index)", "string.at(index)", None),
+        ("string.substring(1 + index, index)", "string.at(index)", None),
+        ("string.substring(index - 1, index)", "string.at(index - 1)", None),
+        ("string.substring((( index )), (( index )) + 1)", "string.at((( index )))", None),
+        ("string.substring((( index )) - 1, (( index )))", "string.at((( index )) - 1)", None),
+        ("(( string )).substring(index, index + 1)", "(( string )).at(index)", None),
+        ("string?.substring(index, index + 1)", "string?.at(index)", None),
+        ("string.substring?.(index, index + 1)", "string.at?.(index)", None),
+        ("string?.substring?.(index, index + 1)", "string?.at?.(index)", None),
+        ("(string.substring)(index, index + 1,)", "(string.at)(index,)", None),
+        (
+            "string.substring(/* before */ index, index + 1 /* after */)",
+            "string.at(/* before */ index /* after */)",
+            None,
+        ),
+        (
+            "string.substring(index, /* comment */ index + 1)",
+            "string.substring(index, /* comment */ index + 1)",
+            None,
+        ),
+        (
+            "string.substring((/* comment */ index), index + 1)",
+            "string.substring((/* comment */ index), index + 1)",
+            None,
+        ),
+        ("result[0] = value.substring(index, index + 1);", "result[0] = value.at(index);", None),
+        ("result[0] = array[array.length - 1];", "result[0] = array.at(-1);", None),
+        (
+            "export function f(arr) { return arr.slice(-1)[0]; }",
+            "export function f(arr) { return arr.at(-1); }",
+            None,
+        ),
+        (
+            "export function f(arr) { let k; k = arr.slice(-1)[0]; return k; }",
+            "export function f(arr) { let k; k = arr.at(-1); return k; }",
+            None,
+        ),
+        ("result += array.slice(-1)[0]", "result += array.at(-1)", None),
+        ("result = array.slice(-2, -1)[0]", "result = array.at(-2)", None),
+        ("result = (array.slice(-1))[0]", "result = array.at(-1)", None),
+        ("result = ((array.slice(-1)))[0]", "result = array.at(-1)", None),
+        ("([a = array.slice(-1)[0]] = [])", "([a = array.at(-1)] = [])", None),
+        ("({a: b = array.slice(-1)[0]} = {})", "({a: b = array.at(-1)} = {})", None),
     ];
 
     Tester::new(PreferAt::NAME, PreferAt::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

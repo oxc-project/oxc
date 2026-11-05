@@ -11,7 +11,7 @@ fn no_control_regex_diagnostic(control_chars: &[Character]) -> OxcDiagnostic {
     let count = control_chars.len();
     debug_assert!(count > 0);
 
-    let labels: Vec<_> = control_chars
+    let labels = control_chars
         .iter()
         .map(|ch| {
             let label = match ch.kind {
@@ -20,26 +20,21 @@ fn no_control_regex_diagnostic(control_chars: &[Character]) -> OxcDiagnostic {
                         "'{ch}' is a control character. It looks like a backreference, but there is no corresponding capture group."
                     )
                 }
-                CharacterKind::Null => {
-                    "'\\0' matches the null character (U+0000), which is a control character."
-                        .to_string()
-                }
                 _ => {
-                    // Show the code point since the character itself is not printable
-                    let ch = format!("U+{:04X}", ch.value);
-                    format!("'{ch}' is a control character.")
+                    format!("'U+{:04X}' is a control character.", ch.value)
                 }
             };
             ch.span.label(label)
-        })
-        .collect();
+        });
 
     OxcDiagnostic::warn(if count > 1 {
         "Unexpected control characters"
     } else {
         "Unexpected control character"
     })
-    .with_help("Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.")
+    .with_help(
+        "Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.",
+    )
     .with_labels(labels)
 }
 #[derive(Debug, Default, Clone)]
@@ -81,10 +76,12 @@ declare_oxc_lint!(
     /// var pattern6 = new RegExp("\x20");
     /// var pattern7 = new RegExp("\\t");
     /// var pattern8 = new RegExp("\\n");
+    /// var pattern9 = /\0/;
     /// ```
     NoControlRegex,
     eslint,
     correctness,
+    recommended,
     version = "0.0.7",
     short_description = "Disallows control characters and some escape sequences that match control characters in regular expressions.",
 );
@@ -120,37 +117,27 @@ struct ControlCharacterFinder<'a> {
 impl<'a> Visit<'a> for ControlCharacterFinder<'a> {
     fn visit_pattern(&mut self, it: &Pattern<'a>) {
         walk::walk_pattern(self, it);
-        // \1, \2, etc. are sometimes valid "control" characters as they can be
-        // used to reference values from capturing groups. Note in this case
-        // they're not actually control characters. However, if there's no
-        // corresponding capturing group, they _are_ invalid control characters.
-        //
-        // Some important notes:
-        // 1. Capture groups are 1-indexed.
-        // 2. Capture groups can be nested.
-        // 3. Capture groups may be referenced before they are defined. This is
-        //    why we need to do this check here, instead of filtering inside of
-        //    visit_character.
         if self.num_capture_groups > 0 && !self.control_chars.is_empty() {
-            let control_chars = std::mem::take(&mut self.control_chars);
-            let control_chars = control_chars
-                .into_iter()
-                .filter(|c| !(c.value > 0x01 && c.value <= self.num_capture_groups))
-                .collect::<Vec<_>>();
-            self.control_chars = control_chars;
+            self.control_chars.retain(|c| {
+                !(matches!(
+                    c.kind,
+                    CharacterKind::Octal1 | CharacterKind::Octal2 | CharacterKind::Octal3
+                ) && c.value > 0x01
+                    && c.value <= self.num_capture_groups)
+            });
         }
     }
 
     fn visit_character(&mut self, ch: &Character) {
-        // Control characters are in the range 0x00 to 0x1F
-        if ch.value <= 0x1F {
+        if ch.value <= 0x1F && ch.kind != CharacterKind::Null {
             let text: &str = ch.span.source_text(self.source_text);
             let is_code_point_match = text
                 .trim_start_matches('\\')
                 .chars()
                 .nth(0)
                 .is_some_and(|c| c.to_digit(16) == Some(ch.value));
-            if is_code_point_match
+            if text.chars().next().is_some_and(|c| u32::from(c) == ch.value)
+                || is_code_point_match
                 || text.starts_with("\\x")
                 || text.starts_with("\\\\x")
                 || text.starts_with("\\u")
@@ -171,6 +158,57 @@ impl<'a> Visit<'a> for ControlCharacterFinder<'a> {
 mod tests {
     use super::*;
     use crate::tester::Tester;
+
+    #[test]
+    fn test_raw_control_characters() {
+        let pass = vec![
+            "/ /",
+            "new RegExp(' ')",
+            r"/\t\n\r\f\v\0/",
+            r"new RegExp('\\t\\n\\r\\f\\v\\0')",
+            "/\\\x08/",
+        ];
+        let fail = vec![
+            "/\x00/",
+            "/a\x01b/",
+            "/\x08import/",
+            "/\t/",
+            "/\x0b/",
+            "/\x0c/",
+            "/a\x1fb/",
+            "/[\x08]/u",
+            "new RegExp('\x08import')",
+            "RegExp('\x08import')",
+            "new RegExp('\x00')",
+            "new RegExp('\t')",
+            "new RegExp('a\x1fb')",
+            "/(a)(b)\x02/",
+            "new RegExp('(a)(b)\x02')",
+        ];
+
+        Tester::new(NoControlRegex::NAME, NoControlRegex::PLUGIN, pass, fail).test();
+    }
+
+    #[test]
+    fn test_octal_escape_behavior() {
+        let pass = vec![
+            r"/\01/",
+            r"/\10/",
+            r"/(a)(b)[\2]/",
+            r"new RegExp('\\01')",
+            r"new RegExp('(a)(b)[\\2]')",
+        ];
+        let fail = vec![
+            r"/\1/",
+            r"/\2/",
+            r"/\00/",
+            r"/\000/",
+            r"new RegExp('\\1')",
+            r"new RegExp('\\00')",
+        ];
+
+        Tester::new(NoControlRegex::NAME, NoControlRegex::PLUGIN, pass, fail).test();
+    }
 
     #[test]
     fn test_hex_literals() {
@@ -242,14 +280,11 @@ mod tests {
             r#"const filename = /filename[^;=\n]=((['"]).?\2|[^;\n]*)/;"#,
             r"const r = /([a-z])\1/;",
             r"const r = /\1([a-z])/;",
-        ];
-
-        let fail = vec![
             r"const r = /\0/;",
-            r"const r = /[a-z]\1/;",
-            r"const r = /([a-z])\2/;",
             r"const r = /([a-z])\0/;",
         ];
+
+        let fail = vec![r"const r = /[a-z]\1/;", r"const r = /([a-z])\2/;"];
 
         Tester::new(NoControlRegex::NAME, NoControlRegex::PLUGIN, pass, fail)
             .with_snapshot_suffix("capture-group-indexing")
@@ -286,6 +321,9 @@ mod tests {
             r"/^expected `string`\.\n {2}in Foo \(at (.*)[/\\]debug[/\\]test[/\\]browser[/\\]debug\.test\.js:[0-9]+\)$/",
             r"/\f/",
             r"/\v/",
+            // https://github.com/oxc-project/oxc/issues/25024
+            r"/\0\t\n\r/;",
+            r"new RegExp('\\0')", // the pattern contains a `\0` escape
         ];
 
         let fail = vec![
@@ -296,6 +334,7 @@ mod tests {
             "var regex = new RegExp('\\x1f\\x1e')",
             "var regex = new RegExp('\\x1fFOO\\x00')",
             "var regex = new RegExp('FOO\\x1fFOO\\x1f')",
+            "new RegExp('\\0')", // the pattern contains a literal U+0000 character
             "var regex = RegExp('\\x1f')",
             "var regex = /(?<a>\\x1f)/",
             r"var regex = /(?<\u{1d49c}>.)\x1f/",

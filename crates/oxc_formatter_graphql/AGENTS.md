@@ -1,0 +1,89 @@
+# Coding agent guides for `crates/oxc_formatter_graphql`
+
+Follow @../oxc_formatter_core/FORMATTER_POLICY.md , this file holds only the GraphQL-specific rules and translations.
+Known divergences live in DIVERGENCES.md.
+
+## Overview
+
+Prettier compatible GraphQL formatter (`oxfmt`'s Tier 1 backend), using the `oxc_formatter_core` APIs.
+
+- Built on `oxc_formatter_core` for the language-agnostic IR + Printer + builders + macros
+  - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
+- Entry points:
+  - `format()`: standalone files (returns a printable `Formatted`)
+  - `format_to_ir()`: embedded use via the dispatcher (e.g. graphql-in-js)
+  - `parse_for_format()`: the parse `format()` runs, exposed for callers that inspect the AST (e.g. the fixture harness's fingerprint)
+
+### Forked parser
+
+Prettier uses `graphql-js`, which is also the reference implementation of the GraphQL specification.
+This means it is not locked to a specific GraphQL version and can parse a wide range of syntaxes, including draft syntax.
+
+On the other hand, `apollo-parser`, the upstream we selected, strictly follows its versioning and currently only supports syntax up to Oct2021.
+Therefore, we forked it as [`oxc-graphql-parser`](https://crates.io/crates/oxc-graphql-parser) and added some support ourselves, pinned via the workspace `Cargo.toml`.
+
+The fork aligns with graphql-js v17.x, which Prettier 3.9 targets:
+
+- executable descriptions (Sep2025 spec) and directive extensions (`extend directive`) are always-on
+- fragment arguments (`...F(size: $size)`) are behind the `experimental_fragment_arguments` flag
+  - which also covers the legacy `fragment F($x: Int) on T` definition-side syntax
+
+### Error semantics
+
+The shared policy applies; GraphQL specifics:
+
+- `oxc-graphql-parser` is error-tolerant (returns an AST even for invalid input), but any parse error still bails out
+  - Several printer shortcuts (e.g. `close_delim_start`) are sound only under this guarantee
+
+### Comments
+
+`graphql-js` does not attach comments to the AST;
+Prettier collects them from the token stream and attaches leading/trailing/dangling per node.
+
+This crate instead collects comment spans into a positional cursor, drained in source order by claim points spread through the printers, like the other `oxc_formatter_*` crates.
+
+- The policy's opener exception needs no code: nothing claims a comment right after `{` / `(` / `[`, so `write_sequence`'s leading flush takes it
+  - Prettier's attachment differs for some openers, see DIVERGENCES.md
+- Two known invariant violations, kept deliberately (details live on the helpers' doc comments):
+  - an own-line comment claimed right after a printed literal inlines on that literal's line (`write_leading_comments`)
+  - positions no printer claims fall back to a trailing comment after the node, which may cross remaining in-span tokens (`flush_overlooked_inside_comments`)
+- Two constraints the code cannot show:
+  - the cursor is monotonic: every claim point must drain everything inside the span it just printed, or a later flush point's gap range inverts and panics (issue #24927)
+  - trailing claims are bounded at the literal's SOURCE position, or re-formatting is not idempotent (`g: # c` must not become `g # c` + `:`)
+
+### Strings
+
+Prettier prints `StringValue` from `graphql-js`'s _cooked_ value and re-encodes it.
+`oxc-graphql-parser`'s `StringValue.value` is cooked but not to spec (no block-string dedent / blank-line trimming, no surrogate pairing), so `src/print/string.rs` cooks it itself,
+a regular string from `raw` and a block string from `value` (only its line endings normalized):
+
+- the GraphQL spec `BlockStringValue` algorithm (dedent + blank-line trimming)
+- escape decoding for regular strings (incl. surrogate pairs)
+- Prettier's re-encoding (`"`/`\` escaped, newline as `\n`, `"""` as `\"""`)
+
+Blank-line runs inside block strings are part of the string VALUE and are emitted with `exact_line_breaks()`. Values are written pre-trimmed, the core printer never trims.
+
+### Notable layout rules
+
+- Blank-line preservation classifies the inter-token gap (`classify_gap`):
+  a blank line is a whitespace-only line strictly inside the gap.
+  Counting raw newlines would over-report when tokens (e.g. the `&` between two `implements` comments, or an insignificant comma) sit on their own line.
+- A cooked `\r` escape in a string value is re-emitted as `\r`
+  (Prettier emits a raw CR byte, which the core `text()` builder forbids; the string VALUE is identical).
+
+## Verification
+
+Manual checks:
+
+```sh
+cargo run -p oxc_formatter_graphql --example graphql_formatter [filename]
+```
+
+A good large real-world stress input is GitHub's public GraphQL schema (~72k lines).
+It is too large and third-party to commit as a fixture, bug-catching shapes are distilled into `tests/fixtures/graphql/implements-width.graphql`):
+
+```sh
+curl -sL https://docs.github.com/public/fpt/schema.docs.graphql -o /tmp/github-schema.graphql
+diff <(node apps/oxfmt/node_modules/prettier/bin/prettier.cjs --parser=graphql /tmp/github-schema.graphql) \
+  <(cargo run -q -p oxc_formatter_graphql --example graphql_formatter /tmp/github-schema.graphql)
+```

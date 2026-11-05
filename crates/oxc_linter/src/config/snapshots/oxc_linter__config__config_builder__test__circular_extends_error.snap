@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter/src/config/config_builder.rs
+expression: message
+---
+Circular oxlint config extends detected:
+<cwd>/fixtures/extends_config/circular/a.json
+ -> <cwd>/fixtures/extends_config/circular/b.json
+ -> <cwd>/fixtures/extends_config/circular/a.json
+
+Referenced from:
+<cwd>/fixtures/extends_config/circular/root.json
+ -> <cwd>/fixtures/extends_config/circular/a.json

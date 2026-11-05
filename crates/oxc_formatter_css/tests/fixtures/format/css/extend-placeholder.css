@@ -1,0 +1,14 @@
+/* postcss-extend-rule: Sass-style placeholders in plain CSS
+   (postcss parses `%x` as an ordinary selector) */
+%thick-border {
+  border: thick dotted red;
+}
+%a,
+.b %c:hover {
+  x: y;
+}
+.modal {
+  @extend %thick-border;
+
+  color: red;
+}

@@ -10,6 +10,11 @@ mod typescript;
 
 mod tools;
 
+// Gated by `lexer` Cargo feature, because `oxc_lexer` is still incubating.
+// `oxc_lexer` only supports little endian at present.
+#[cfg(all(feature = "lexer", target_endian = "little"))]
+mod lexer_diff;
+
 use std::{
     fmt::Write,
     path::{Path, PathBuf},
@@ -117,8 +122,8 @@ impl CoverageResult {
 
     fn parsed(&self) -> bool {
         match &self.result {
-            TestResult::ParseError(_, panicked) | TestResult::CorrectError(_, panicked) => {
-                !panicked
+            TestResult::ParseError(_, is_fatal) | TestResult::CorrectError(_, is_fatal) => {
+                !is_fatal
             }
             _ => true,
         }
@@ -256,8 +261,8 @@ pub fn snapshot_results(name: &str, test_root: &Path, results: &[CoverageResult]
     for r in &failed_positives {
         let path = normalize_path(Path::new("tasks/coverage").join(&r.path));
         match &r.result {
-            TestResult::ParseError(error, panicked) => {
-                let label = if *panicked { "Panicked" } else { "Expect to Parse" };
+            TestResult::ParseError(error, is_fatal) => {
+                let label = if *is_fatal { "Fatal error" } else { "Expect to Parse" };
                 writeln!(out, "{label}: {path}").unwrap();
                 out.push_str(error);
                 out.push('\n'); // Blank line after error content
@@ -303,22 +308,33 @@ pub struct AppArgs {
 
 const TEST262_PATH: &str = "test262/test";
 const BABEL_PATH: &str = "babel/packages/babel-parser/test/fixtures";
-const TYPESCRIPT_PATH: &str = "typescript/tests/cases";
+const TYPESCRIPT_PATH: &str = typescript::CASES_PATH;
 const MISC_PATH: &str = "misc";
 const ESTREE_ACORN_JSX_PATH: &str = "estree-conformance/tests/acorn-jsx";
 
 impl AppArgs {
     pub fn run_all(&self) {
         let data = TestData::load(self.filter.as_deref());
+        self.run_conformance_suites(&data);
+    }
 
-        self.run_parser(&data);
-        self.run_semantic(&data);
-        self.run_codegen(&data);
-        self.run_formatter(&data);
-        self.run_transformer(&data);
-        self.run_minifier(&data);
-        self.run_estree(&data);
-        self.run_estree_tokens(&data);
+    /// Like [`run_all`](Self::run_all) but also runs the runtime suite, reusing the
+    /// already-loaded `data` so test262 is not read twice (once by the suites, once
+    /// by runtime).
+    pub fn run_all_with(&self, data: &TestData) {
+        self.run_conformance_suites(data);
+        self.run_tool("runtime", TEST262_PATH, &data.test262, runtime::run);
+    }
+
+    fn run_conformance_suites(&self, data: &TestData) {
+        self.run_parser(data);
+        self.run_semantic(data);
+        self.run_codegen(data);
+        self.run_formatter(data);
+        self.run_transformer(data);
+        self.run_minifier(data);
+        self.run_estree(data);
+        self.run_estree_tokens(data);
     }
 
     fn run_tool<T>(
@@ -348,6 +364,45 @@ impl AppArgs {
 
         if self.filter.is_none() {
             typescript::save_reviewed_tsc_diagnostics_codes();
+        }
+    }
+
+    /// Differential lexer conformance.
+    ///
+    /// Compare `oxc_lexer`'s token spans and comments against the parser's over the corpora.
+    /// Opt-in (kept out of `run_all`) — requires `lexer` Cargo feature.
+    /// Runs against whichever of the lexer's implementations the build selects (see `oxc_lexer::IMPLEMENTATION`).
+    /// `oxc_lexer` only supports little endian at present.
+    ///
+    /// # Panics
+    /// Panics if `lexer` Cargo feature is not enabled, or on a big endian machine.
+    pub fn run_lexer(&self, data: &TestData) {
+        #[cfg(all(feature = "lexer", target_endian = "little"))]
+        {
+            // Report which implementation was built.
+            // CI checks this line to make sure the build it expected is the build it got.
+            println!("Lexer implementation: {}", oxc_lexer::IMPLEMENTATION);
+
+            self.run_tool(
+                "lexer_test262",
+                TEST262_PATH,
+                &data.test262,
+                lexer_diff::run_lexer_test262,
+            );
+            self.run_tool("lexer_babel", BABEL_PATH, &data.babel, lexer_diff::run_lexer_babel);
+            self.run_tool(
+                "lexer_typescript",
+                TYPESCRIPT_PATH,
+                &data.typescript,
+                lexer_diff::run_lexer_typescript,
+            );
+            self.run_tool("lexer_misc", MISC_PATH, &data.misc, lexer_diff::run_lexer_misc);
+        }
+
+        #[cfg(not(all(feature = "lexer", target_endian = "little")))]
+        {
+            let _ = (self, data);
+            panic!("`lexer` conformance requires `lexer` Cargo feature and a little-endian system");
         }
     }
 
@@ -456,9 +511,40 @@ impl AppArgs {
         typescript::transpile_runner::run(self.filter.as_deref(), self.detail);
     }
 
-    /// Run runtime tests (requires Node.js subprocess)
+    /// Run runtime tests (requires Node.js subprocess).
+    ///
+    /// Loads only test262 (not the other fixture suites), so it works in a checkout
+    /// that has only the test262 submodule — load-bearing for monitor-oxc CI.
     pub fn run_runtime(&self) {
-        runtime::run(self.filter.as_deref(), self.detail);
+        let filter = self.filter.as_deref();
+        if filter.is_none() {
+            load::ensure_submodules(&[TEST262_PATH]);
+        }
+        let files = load::load_test262(filter);
+        self.run_tool("runtime", TEST262_PATH, &files, runtime::run);
+    }
+
+    /// Run the TypeScript baseline conformance suites against the `.symbols`, `.errors.txt`,
+    /// and `.types` baselines. `.types` is a scaffold (reports ~0%) until oxc has a type checker.
+    pub fn run_types(&self, data: &TestData) {
+        self.run_tool(
+            "symbols_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            typescript::type_symbol_baseline::run_symbols_typescript,
+        );
+        self.run_tool(
+            "errors_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            typescript::error_baseline::run_errors_typescript,
+        );
+        self.run_tool(
+            "types_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            typescript::type_symbol_baseline::run_types_typescript,
+        );
     }
 }
 

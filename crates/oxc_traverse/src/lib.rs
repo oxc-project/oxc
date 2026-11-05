@@ -174,7 +174,7 @@ pub fn traverse_mut_with_ctx<'a, State, Tr: Traverse<'a, State>>(
     let ctx = ctx.get_mut();
 
     // Check that `TraverseAncestry`'s stack is in correct state
-    debug_assert!(ctx.ancestors_depth() == 1);
+    debug_assert_eq!(ctx.ancestors_depth(), 1);
     debug_assert!(matches!(ctx.parent(), Ancestor::None));
 
     // SAFETY:
@@ -196,6 +196,6 @@ pub fn traverse_mut_with_ctx<'a, State, Tr: Traverse<'a, State>>(
     unsafe { walk_ast(traverser, program, ctx) };
 
     // Check that `TraverseAncestry`'s stack is in correct state
-    debug_assert!(ctx.ancestors_depth() == 1);
+    debug_assert_eq!(ctx.ancestors_depth(), 1);
     debug_assert!(matches!(ctx.parent(), Ancestor::None));
 }

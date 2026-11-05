@@ -1,0 +1,104 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+assertion_line: 50
+---
+==================== Input ====================
+- list
+
+  <details><summary></summary>
+
+  1. item
+
+  2. item
+
+  </details>
+
+- list
+
+  <div>
+
+  - item
+  - item
+
+  </div>
+
+- list
+
+  <custom-tag>
+
+  - item
+
+- list
+
+  <!-- closed by its end marker -->
+
+  - item
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+- list
+
+  <details><summary></summary>
+
+  1. item
+
+  2. item
+
+  </details>
+
+- list
+
+  <div>
+
+  - item
+  - item
+
+  </div>
+
+- list
+
+  <custom-tag>
+
+  - item
+
+- list
+
+  <!-- closed by its end marker -->
+  - item
+
+-------------------
+{ printWidth: 100 }
+-------------------
+- list
+
+  <details><summary></summary>
+
+  1. item
+
+  2. item
+
+  </details>
+
+- list
+
+  <div>
+
+  - item
+  - item
+
+  </div>
+
+- list
+
+  <custom-tag>
+
+  - item
+
+- list
+
+  <!-- closed by its end marker -->
+  - item
+
+===================== End =====================

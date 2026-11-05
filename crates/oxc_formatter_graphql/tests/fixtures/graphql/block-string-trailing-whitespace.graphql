@@ -1,0 +1,24 @@
+type A {
+  """
+  Trailing spaces after this sentence.   
+
+  Trailing tab after this sentence.	
+  Last line before closing quotes also has them.  
+  """
+  a: String
+
+  """
+  The line below is whitespace-only, deeper than the common indent:
+      
+  It must become a blank line, not indented whitespace.
+  """
+  b: String
+
+  """
+  Multiple blank lines below keep their run length:
+     
+      
+  even when they are whitespace-only in the source.
+  """
+  c: String
+}

@@ -179,3 +179,11 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives
+
+  ⚠ react(no-react-children): `React.Children` should not be used.
+   ╭─[no_react_children.tsx:1:40]
+ 1 │ import { Children as C } from 'react'; C.toArray(x)
+   ·                                        ─────────
+   ╰────
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives

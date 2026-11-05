@@ -1,13 +1,15 @@
+use itertools::Itertools;
 use javascript_globals::GLOBALS_BUILTIN;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::symbol::SymbolFlags;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    context::{ContextHost, LintContext},
+    context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -31,11 +33,14 @@ fn no_redeclare_as_builtin_in_diagnostic(name: &str, span: Span) -> OxcDiagnosti
 pub struct NoRedeclare {
     /// When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
     builtin_globals: bool,
+    /// When `true`, automatically merged declarations like namespace, class, etc. will be
+    /// ignored when checking for redeclarations.
+    ignore_declaration_merge: bool,
 }
 
 impl Default for NoRedeclare {
     fn default() -> Self {
-        Self { builtin_globals: true }
+        Self { builtin_globals: true, ignore_declaration_merge: true }
     }
 }
 
@@ -66,17 +71,26 @@ declare_oxc_lint!(
     NoRedeclare,
     eslint,
     pedantic,
+    recommended,
     config = NoRedeclare,
     version = "0.0.13",
+    short_description = "Disallow variable redeclaration.",
 );
 
 impl Rule for NoRedeclare {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let builtin_globals = if self.builtin_globals { Some(&GLOBALS_BUILTIN) } else { None };
+        // ES modules run in their own scope, so a top-level `Object` or `self` shadows nothing.
+        // Only the globals half of the rule is skipped for them -- redeclaring a local binding is
+        // still a redeclaration.
+        let builtin_globals = if self.builtin_globals && !ctx.source_type().is_module() {
+            Some(&GLOBALS_BUILTIN)
+        } else {
+            None
+        };
 
         for symbol_id in ctx.scoping().symbol_ids() {
             let name = ctx.scoping().symbol_name(symbol_id);
@@ -90,13 +104,17 @@ impl Rule for NoRedeclare {
             }
 
             if ctx.source_type().is_typescript() {
-                let mut iter = ctx.scoping().symbol_redeclarations(symbol_id).iter().filter(|rd| {
-                    if is_builtin {
+                let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
+                if is_builtin {
+                    for rd in redeclarations {
                         if rd.span != decl_span {
                             ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, rd.span));
                         }
-                        return false;
                     }
+                    continue;
+                }
+
+                let iter = redeclarations.iter().filter(|rd| {
                     if rd.flags.is_function() {
                         let node = ctx.nodes().get_node(rd.declaration);
                         if let Some(func) = node.kind().as_function() {
@@ -106,11 +124,30 @@ impl Rule for NoRedeclare {
                     true
                 });
 
-                if let Some(first) = iter.next() {
-                    iter.fold(first, |prev, next| {
-                        ctx.diagnostic(no_redeclare_diagnostic(name, prev.span, next.span));
-                        next
-                    });
+                let report_flags = if self.ignore_declaration_merge {
+                    const IGNORED_MERGE_FLAGS: SymbolFlags = SymbolFlags::Ambient
+                        .union(SymbolFlags::AsyncOrGeneratorFunction)
+                        .union(SymbolFlags::NamespaceModule)
+                        .union(SymbolFlags::ValueModule);
+                    let flags = iter.clone().map(|rd| rd.flags).collect::<SymbolFlags>()
+                        - IGNORED_MERGE_FLAGS;
+                    if (SymbolFlags::Class | SymbolFlags::Interface).contains(flags) {
+                        Some(SymbolFlags::Class)
+                    } else if SymbolFlags::Function.contains(flags) {
+                        Some(SymbolFlags::Function)
+                    } else if SymbolFlags::Enum.contains(flags) {
+                        Some(SymbolFlags::Enum)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+                for (prev, next) in iter
+                    .filter(|rd| report_flags.is_none_or(|flags| rd.flags.intersects(flags)))
+                    .tuple_windows::<(_, _)>()
+                {
+                    ctx.diagnostic(no_redeclare_diagnostic(name, prev.span, next.span));
                 }
 
                 continue;
@@ -125,19 +162,16 @@ impl Rule for NoRedeclare {
             }
         }
     }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        // ES modules run in their own scope, and don't conflict with existing globals
-        !ctx.source_type().is_module()
-    }
 }
 
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use serde_json::json;
 
     let defaults = NoRedeclare::default();
     assert!(defaults.builtin_globals);
+    assert!(defaults.ignore_declaration_merge);
 
     let pass = vec![
         ("var a = 3; var b = function() { var a = 10; };", None),
@@ -166,6 +200,53 @@ fn test() {
         // Issue: <https://github.com/oxc-project/oxc/issues/10396>
         ("export function foo(): void; export function foo() { }", None),
         ("function foo(arg: string): void; function foo(arg: number): any {}", None),
+        ("function a(): string; function a(): number; function a() {}", None),
+        (
+            "function a(): string; function a(): number; function a() {}",
+            Some(json!([{ "ignoreDeclarationMerge": false }])),
+        ),
+        ("interface A {} interface A {}", None),
+        ("interface A {} interface A {}", Some(json!([{ "ignoreDeclarationMerge": true }]))),
+        ("interface A {} class A {}", None),
+        ("interface A {} class A {}", Some(json!([{ "ignoreDeclarationMerge": true }]))),
+        ("class A {} namespace A {}", None),
+        ("class A {} namespace A {}", Some(json!([{ "ignoreDeclarationMerge": true }]))),
+        ("interface A {} class A {} namespace A {}", None),
+        (
+            "interface A {} class A {} namespace A {}",
+            Some(json!([{ "ignoreDeclarationMerge": true }])),
+        ),
+        ("enum A {} namespace A {}", None),
+        ("enum A {} namespace A {}", Some(json!([{ "ignoreDeclarationMerge": true }]))),
+        ("function A() {} namespace A {}", None),
+        ("function A() {} namespace A {}", Some(json!([{ "ignoreDeclarationMerge": true }]))),
+        ("namespace A {} namespace A {}", None),
+        ("namespace A {} namespace A {}", Some(json!([{ "ignoreDeclarationMerge": true }]))),
+        ("interface A {} namespace A {}", None),
+        ("interface A {} namespace A {}", Some(json!([{ "ignoreDeclarationMerge": true }]))),
+        ("namespace A { export const a = 1; } namespace A { export const b = 2; }", None),
+        (
+            "namespace A { export const a = 1; } namespace A { export const b = 2; }",
+            Some(json!([{ "ignoreDeclarationMerge": true }])),
+        ),
+        ("namespace A {} class A {} interface A {}", None),
+        (
+            "namespace A {} class A {} interface A {}",
+            Some(json!([{ "ignoreDeclarationMerge": true }])),
+        ),
+        ("namespace A {} function A() {}", None),
+        ("namespace A {} function A() {}", Some(json!([{ "ignoreDeclarationMerge": true }]))),
+        ("namespace A {} enum A {}", None),
+        ("namespace A {} enum A {}", Some(json!([{ "ignoreDeclarationMerge": true }]))),
+        ("declare class A {} interface A {}", None),
+        ("declare class A {} interface A {}", Some(json!([{ "ignoreDeclarationMerge": true }]))),
+        ("async function A() {} namespace A {}", None),
+        ("async function A() {} namespace A {}", Some(json!([{ "ignoreDeclarationMerge": true }]))),
+        ("function A(): string; function A(): number; function A() {} namespace A {}", None),
+        (
+            "function A(): string; function A(): number; function A() {} namespace A {}",
+            Some(json!([{ "ignoreDeclarationMerge": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -193,6 +274,55 @@ fn test() {
         // Issue: <https://github.com/oxc-project/oxc/issues/10396>
         ("export function undefined(): void; export function undefined() { }", None),
         ("type foo = 1; export function foo(): void; export function foo() { }", None),
+        ("class A {} class A {} namespace A {}", Some(json!([{ "ignoreDeclarationMerge": true }]))),
+        (
+            "function A() {} function A() {} namespace A {}",
+            Some(json!([{ "ignoreDeclarationMerge": true }])),
+        ),
+        ("enum A {} namespace A {} enum A {}", Some(json!([{ "ignoreDeclarationMerge": true }]))),
+        ("function A() {} class A {}", Some(json!([{ "ignoreDeclarationMerge": false }]))),
+        (
+            "function A() {} class A {} namespace A {}",
+            Some(json!([{ "ignoreDeclarationMerge": false }])),
+        ),
+        ("type something = string; const something = 2;", None),
+        ("interface A {} const A = 2;", None),
+        ("interface A {} class A {} const A = 2;", None),
+        ("function A() {} class A {} namespace A {}", None),
+        ("enum A {} interface A {} namespace A {}", None),
+        ("var Object; namespace Object {}", None),
+        ("class A {} interface A {} class A {} namespace A {}", None),
+        ("function A(): void; function A() {} namespace A {} function A() {}", None),
+        ("interface A {} interface A {}", Some(json!([{ "ignoreDeclarationMerge": false }]))),
+        ("interface A {} class A {}", Some(json!([{ "ignoreDeclarationMerge": false }]))),
+        ("class A {} namespace A {}", Some(json!([{ "ignoreDeclarationMerge": false }]))),
+        (
+            "interface A {} class A {} namespace A {}",
+            Some(json!([{ "ignoreDeclarationMerge": false }])),
+        ),
+        ("enum A {} namespace A {}", Some(json!([{ "ignoreDeclarationMerge": false }]))),
+        ("function A() {} namespace A {}", Some(json!([{ "ignoreDeclarationMerge": false }]))),
+        ("namespace A {} namespace A {}", Some(json!([{ "ignoreDeclarationMerge": false }]))),
+        ("interface A {} namespace A {}", Some(json!([{ "ignoreDeclarationMerge": false }]))),
+        (
+            "namespace A { export const a = 1; } namespace A { export const b = 2; }",
+            Some(json!([{ "ignoreDeclarationMerge": false }])),
+        ),
+        (
+            "namespace A {} class A {} interface A {}",
+            Some(json!([{ "ignoreDeclarationMerge": false }])),
+        ),
+        ("namespace A {} function A() {}", Some(json!([{ "ignoreDeclarationMerge": false }]))),
+        ("namespace A {} enum A {}", Some(json!([{ "ignoreDeclarationMerge": false }]))),
+        ("declare class A {} interface A {}", Some(json!([{ "ignoreDeclarationMerge": false }]))),
+        (
+            "async function A() {} namespace A {}",
+            Some(json!([{ "ignoreDeclarationMerge": false }])),
+        ),
+        (
+            "function A(): string; function A(): number; function A() {} namespace A {}",
+            Some(json!([{ "ignoreDeclarationMerge": false }])),
+        ),
     ];
 
     Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, fail)
@@ -214,4 +344,27 @@ fn test() {
     Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, vec![])
         .change_rule_path_extension(".ts")
         .test();
+
+    // ES modules have their own scope, so shadowing a global is fine there -- but a redeclaration
+    // inside one is still a redeclaration. `.ts` is parsed as `ModuleKind::Unambiguous`, so these
+    // cases carry ESM syntax to actually resolve as modules.
+    // Issue: <https://github.com/oxc-project/oxc/issues/25339>
+    let pass = vec![
+        ("export {}; var Object = 0;", None),
+        ("export {}; var globalThis = 0;", None),
+        ("export {}; var a = 3; a = 10;", None),
+        ("export {}; function foo(arg: string): void; function foo(arg: number): any {}", None),
+    ];
+
+    let fail = vec![
+        ("export {}; var a = 3; var a = 10;", None),
+        ("export {}; function f() { var a; var a; }", None),
+        ("type foo = 1; export function foo(): void; export function foo() { }", None),
+        ("export {}; var Object = 0; var Object = 0;", None),
+    ];
+
+    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, fail)
+        .change_rule_path_extension(".ts")
+        .with_snapshot_suffix("es-modules")
+        .test_and_snapshot();
 }

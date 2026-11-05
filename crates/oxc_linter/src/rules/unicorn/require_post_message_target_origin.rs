@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -52,6 +53,7 @@ declare_oxc_lint!(
     suspicious,
     suggestion,
     version = "0.15.15",
+    short_description = "Enforce using the `targetOrigin` argument with `window.postMessage()`.",
 );
 
 impl Rule for RequirePostMessageTargetOrigin {
@@ -80,7 +82,7 @@ impl Rule for RequirePostMessageTargetOrigin {
             }
             _ => return,
         };
-        if matches!(member_expr.static_property_name(), Some(name) if name == "postMessage") {
+        if member_expr.static_property_name().is_some_and(|name| name == "postMessage") {
             if is_message_port_expression(member_expr.object()) {
                 return;
             }
@@ -114,7 +116,10 @@ fn is_message_port_expression(expr: &Expression<'_>) -> bool {
             return false;
         };
 
-        if member_expr.static_property_name().is_some_and(|name| matches!(name, "port1" | "port2"))
+        if member_expr
+            .static_property_name()
+            .and_then(JSStr::as_str)
+            .is_some_and(|name| matches!(name, "port1" | "port2"))
         {
             return true;
         }

@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
@@ -11,8 +11,11 @@ pub struct ModuleRecordBuilder<'a> {
     allocator: &'a Allocator,
     source_type: SourceType,
     module_record: ModuleRecord<'a>,
-    export_entries: Vec<'a, ExportEntry<'a>>,
-    exported_bindings_duplicated: Vec<'a, NameSpan<'a>>,
+    export_entries: ArenaVec<'a, ExportEntry<'a>>,
+    exported_bindings_duplicated: ArenaVec<'a, NameSpan<'a>>,
+    /// `default` exports of declarations skipped because their module request is not UTF-8.
+    /// They still count towards the duplicate default export check.
+    skipped_default_exports: ArenaVec<'a, Span>,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
@@ -21,12 +24,13 @@ impl<'a> ModuleRecordBuilder<'a> {
             allocator,
             source_type,
             module_record: ModuleRecord::new(allocator),
-            export_entries: Vec::new_in(allocator),
-            exported_bindings_duplicated: Vec::new_in(allocator),
+            export_entries: ArenaVec::new_in(&allocator),
+            exported_bindings_duplicated: ArenaVec::new_in(&allocator),
+            skipped_default_exports: ArenaVec::new_in(&allocator),
         }
     }
 
-    pub fn build(mut self) -> (ModuleRecord<'a>, std::vec::Vec<OxcDiagnostic>) {
+    pub fn build(mut self) -> (ModuleRecord<'a>, Vec<OxcDiagnostic>) {
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
         // resolved before resolving export entries.
         self.resolve_export_entries();
@@ -39,7 +43,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record.has_module_syntax
     }
 
-    pub fn errors(&self) -> std::vec::Vec<OxcDiagnostic> {
+    pub fn errors(&self) -> Vec<OxcDiagnostic> {
         let mut errors = vec![];
 
         let module_record = &self.module_record;
@@ -68,9 +72,10 @@ impl<'a> ModuleRecordBuilder<'a> {
                         .indirect_export_entries
                         .iter()
                         .filter_map(|export_entry| export_entry.export_name.default_export_span()),
-                );
+                )
+                .chain(self.skipped_default_exports.iter().copied());
             if default_exports.clone().count() > 1 {
-                errors.push(diagnostics::duplicate_default_export(default_exports));
+                errors.push(diagnostics::duplicate_default_export(default_exports.collect()));
             }
         }
 
@@ -81,7 +86,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record
             .requested_modules
             .entry(name)
-            .or_insert_with(|| oxc_allocator::Vec::new_in(self.allocator))
+            .or_insert_with(|| ArenaVec::new_in(&self.allocator))
             .push(requested_module);
     }
 
@@ -116,7 +121,7 @@ impl<'a> ModuleRecordBuilder<'a> {
     fn resolve_export_entries(&mut self) {
         // let export_entries = self.export_entries.drain(..).collect::<Vec<_>>();
         let export_entries =
-            std::mem::replace(&mut self.export_entries, Vec::new_in(self.allocator));
+            std::mem::replace(&mut self.export_entries, ArenaVec::new_in(&self.allocator));
         // 10. For each ExportEntry Record ee of exportEntries, do
         for ee in export_entries {
             // a. If ee.[[ModuleRequest]] is null, then
@@ -158,12 +163,9 @@ impl<'a> ModuleRecordBuilder<'a> {
                                         ImportImportName::Name(name) => {
                                             ExportImportName::Name(name.clone())
                                         }
-                                        // `import d from "mod"`
-                                        // `export { d }`
-                                        //           ^ this is local_name of ie
-                                        ImportImportName::Default(_) => {
-                                            ExportImportName::Name(ie.local_name.clone())
-                                        }
+                                        ImportImportName::Default(span) => ExportImportName::Name(
+                                            NameSpan::new("default".into(), *span),
+                                        ),
                                         ImportImportName::NamespaceObject => unreachable!(),
                                     },
                                     export_name: ee.export_name.clone(),
@@ -200,29 +202,29 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value, decl.source.span);
+        self.module_record.has_module_syntax = true;
+        // Module records still require UTF-8 module specifiers. Keep other values in the AST only.
+        let Some(source) = decl.source.value.as_str() else { return };
+        let module_request = NameSpan::new(source.into(), decl.source.span);
 
         if let Some(specifiers) = &decl.specifiers {
             for specifier in specifiers {
-                let (import_name, local_name, is_type) = match specifier {
+                let local = specifier.local();
+                let local_name = NameSpan::new(local.name.into(), local.span);
+                let (import_name, is_type) = match specifier {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => (
                         ImportImportName::Name(NameSpan::new(
                             specifier.imported.name(),
                             specifier.imported.span(),
                         )),
-                        NameSpan::new(specifier.local.name.into(), specifier.local.span),
                         decl.import_kind.is_type() || specifier.import_kind.is_type(),
                     ),
-                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => (
-                        ImportImportName::NamespaceObject,
-                        NameSpan::new(specifier.local.name.into(), specifier.local.span),
-                        decl.import_kind.is_type(),
-                    ),
-                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => (
-                        ImportImportName::Default(specifier.span),
-                        NameSpan::new(specifier.local.name.into(), specifier.local.span),
-                        decl.import_kind.is_type(),
-                    ),
+                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
+                        (ImportImportName::NamespaceObject, decl.import_kind.is_type())
+                    }
+                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                        (ImportImportName::Default(specifier.span), decl.import_kind.is_type())
+                    }
                 };
                 self.add_import_entry(ImportEntry {
                     statement_span: decl.span,
@@ -242,29 +244,37 @@ impl<'a> ModuleRecordBuilder<'a> {
                 is_import: true,
             },
         );
-        self.module_record.has_module_syntax = true;
     }
 
     pub fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value, decl.source.span);
-        let export_entry = ExportEntry {
+        self.module_record.has_module_syntax = true;
+        let exported = decl.exported.as_ref().map(|name| NameSpan::new(name.name(), name.span()));
+        // The duplicate-export check does not depend on the module request,
+        // so the exported name is registered before the request is examined.
+        if let Some(exported) = &exported {
+            self.add_export_binding(exported.name, exported.span);
+        }
+        // Module records still require UTF-8 module specifiers. Keep other values in the AST only.
+        let Some(source) = decl.source.value.as_str() else {
+            if let Some(exported) = exported.filter(|exported| exported.name == "default") {
+                self.skipped_default_exports.push(exported.span);
+            }
+            return;
+        };
+        let module_request = NameSpan::new(source.into(), decl.source.span);
+        self.add_export_entry(ExportEntry {
             statement_span: decl.span,
             span: decl.span,
             module_request: Some(module_request.clone()),
-            import_name: decl
-                .exported
-                .as_ref()
-                .map_or(ExportImportName::AllButDefault, |_| ExportImportName::All),
-            export_name: decl.exported.as_ref().map_or(ExportExportName::Null, |exported_name| {
-                ExportExportName::Name(NameSpan::new(exported_name.name(), exported_name.span()))
-            }),
+            import_name: if exported.is_some() {
+                ExportImportName::All
+            } else {
+                ExportImportName::AllButDefault
+            },
+            export_name: exported.map_or(ExportExportName::Null, ExportExportName::Name),
             local_name: ExportLocalName::default(),
             is_type: decl.export_kind.is_type(),
-        };
-        self.add_export_entry(export_entry);
-        if let Some(exported_name) = &decl.exported {
-            self.add_export_binding(exported_name.name(), exported_name.span());
-        }
+        });
         self.add_module_request(
             module_request.name,
             RequestedModule {
@@ -274,7 +284,6 @@ impl<'a> ModuleRecordBuilder<'a> {
                 is_import: false,
             },
         );
-        self.module_record.has_module_syntax = true;
     }
 
     pub fn visit_export_default_declaration(
@@ -314,74 +323,99 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record.has_module_syntax = true;
     }
 
+    pub fn visit_export_declaration(&mut self, decl: &ExportDeclaration<'a>) {
+        let export_kind = decl.export_kind();
+        let declaration = &decl.declaration;
+        iter_binding_identifiers_of_declaration(declaration, &mut |ident| {
+            let export_name = ExportExportName::Name(NameSpan::new(ident.name.into(), ident.span));
+            let local_name = ExportLocalName::Name(NameSpan::new(ident.name.into(), ident.span));
+            let export_entry = ExportEntry {
+                statement_span: decl.span,
+                span: declaration.span(),
+                module_request: None,
+                import_name: ExportImportName::Null,
+                export_name,
+                local_name,
+                is_type: export_kind.is_type(),
+            };
+            self.add_export_entry(export_entry);
+            self.add_export_binding(ident.name.into(), ident.span);
+        });
+        self.module_record.has_module_syntax = true;
+    }
+
     pub fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
-        let module_request =
-            decl.source.as_ref().map(|source| NameSpan::new(source.value, source.span));
+        for specifier in &decl.specifiers {
+            let export_name = ExportExportName::Name(NameSpan::new(
+                specifier.exported.name(),
+                specifier.exported.span(),
+            ));
+            let export_entry = ExportEntry {
+                statement_span: decl.span,
+                span: specifier.span,
+                module_request: None,
+                import_name: ExportImportName::Null,
+                export_name,
+                local_name: ExportLocalName::Name(NameSpan::new(
+                    specifier.local.name(),
+                    specifier.local.span(),
+                )),
+                is_type: specifier.export_kind.is_type() || decl.export_kind.is_type(),
+            };
+            self.add_export_entry(export_entry);
+            self.add_export_binding(specifier.exported.name(), specifier.exported.span());
+        }
+        self.module_record.has_module_syntax = true;
+    }
 
-        if let Some(module_request) = &module_request {
-            self.add_module_request(
-                module_request.name,
-                RequestedModule {
-                    statement_span: decl.span,
-                    span: module_request.span,
-                    is_type: decl.export_kind.is_type(),
-                    is_import: false,
-                },
+    pub fn visit_export_from_declaration(&mut self, decl: &ExportFromDeclaration<'a>) {
+        self.module_record.has_module_syntax = true;
+        // The duplicate-export check does not depend on the module request,
+        // so exported names are registered before the request is examined.
+        for specifier in &decl.specifiers {
+            self.add_export_binding(specifier.exported.name(), specifier.exported.span());
+        }
+        // Module records still require UTF-8 module specifiers. Keep other values in the AST only.
+        let Some(source) = decl.source.value.as_str() else {
+            self.skipped_default_exports.extend(
+                decl.specifiers
+                    .iter()
+                    .filter(|specifier| specifier.exported.name() == "default")
+                    .map(|specifier| specifier.exported.span()),
             );
-        }
-
-        if let Some(d) = &decl.declaration {
-            iter_binding_identifiers_of_declaration(d, &mut |ident| {
-                let export_name =
-                    ExportExportName::Name(NameSpan::new(ident.name.into(), ident.span));
-                let local_name =
-                    ExportLocalName::Name(NameSpan::new(ident.name.into(), ident.span));
-                let export_entry = ExportEntry {
-                    statement_span: decl.span,
-                    span: d.span(),
-                    module_request: module_request.clone(),
-                    import_name: ExportImportName::Null,
-                    export_name,
-                    local_name,
-                    is_type: decl.export_kind.is_type(),
-                };
-                self.add_export_entry(export_entry);
-                self.add_export_binding(ident.name.into(), ident.span);
-            });
-        }
+            return;
+        };
+        let module_request = NameSpan::new(source.into(), decl.source.span);
+        self.add_module_request(
+            module_request.name,
+            RequestedModule {
+                statement_span: decl.span,
+                span: module_request.span,
+                is_type: decl.export_kind.is_type(),
+                is_import: false,
+            },
+        );
 
         for specifier in &decl.specifiers {
             let export_name = ExportExportName::Name(NameSpan::new(
                 specifier.exported.name(),
                 specifier.exported.span(),
             ));
-            let import_name = if module_request.is_some() {
-                ExportImportName::Name(NameSpan::new(
-                    specifier.local.name(),
-                    specifier.local.span(),
-                ))
-            } else {
-                ExportImportName::Null
-            };
-            let local_name = if module_request.is_some() {
-                ExportLocalName::Null
-            } else {
-                ExportLocalName::Name(NameSpan::new(specifier.local.name(), specifier.local.span()))
-            };
+            let import_name = ExportImportName::Name(NameSpan::new(
+                specifier.local.name(),
+                specifier.local.span(),
+            ));
             let export_entry = ExportEntry {
                 statement_span: decl.span,
                 span: specifier.span,
-                module_request: module_request.clone(),
+                module_request: Some(module_request.clone()),
                 import_name,
                 export_name,
-                local_name,
+                local_name: ExportLocalName::Null,
                 is_type: specifier.export_kind.is_type() || decl.export_kind.is_type(),
             };
             self.add_export_entry(export_entry);
-            self.add_export_binding(specifier.exported.name(), specifier.exported.span());
         }
-
-        self.module_record.has_module_syntax = true;
     }
 
     pub fn set_module_syntax(&mut self) {
@@ -672,6 +706,34 @@ mod module_record_tests {
         };
         assert_eq!(module_record.indirect_export_entries.len(), 1);
         assert_eq!(module_record.indirect_export_entries[0], export_entry);
+    }
+
+    #[test]
+    fn reexport_imported_default() {
+        for (source, exported) in [
+            ("import d from 'mod'; export { d };", "d"),
+            ("export { d as renamed }; import d from 'mod';", "renamed"),
+            ("import d from 'mod'; export { d as default };", "default"),
+        ] {
+            let allocator = Allocator::default();
+            let ret = Parser::new(&allocator, source, SourceType::mjs()).parse();
+            assert!(ret.diagnostics.is_empty());
+            assert!(ret.module_record.local_export_entries.is_empty());
+            assert_eq!(ret.module_record.indirect_export_entries.len(), 1);
+            let entry = &ret.module_record.indirect_export_entries[0];
+            let import_start = u32::try_from(source.find("import d").unwrap()).unwrap() + 7;
+            assert_eq!(
+                entry.import_name,
+                ExportImportName::Name(NameSpan::new(
+                    "default".into(),
+                    Span::sized(import_start, 1),
+                ))
+            );
+            let ExportExportName::Name(name) = &entry.export_name else { panic!() };
+            assert_eq!(name.name, exported);
+            assert_eq!(entry.module_request.as_ref().unwrap().name, "mod");
+            assert!(matches!(entry.local_name, ExportLocalName::Null));
+        }
     }
 
     #[test]

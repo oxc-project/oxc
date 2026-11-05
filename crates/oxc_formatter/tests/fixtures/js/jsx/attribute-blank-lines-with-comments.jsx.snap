@@ -1,0 +1,99 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Blank line, then comment, then next attribute
+const a = (
+  <Component
+    first={1}
+
+    // comment
+    second={2}
+  />
+);
+
+// Comment, then blank line, then next attribute
+const b = (
+  <Component
+    first={1}
+    // comment
+
+    second={2}
+  />
+);
+
+// Same-line trailing comment, then blank line, then next attribute
+const c = (
+  <Component
+    first={1} // trailing
+
+    second={2}
+  />
+);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Blank line, then comment, then next attribute
+const a = (
+  <Component
+    first={1}
+
+    // comment
+    second={2}
+  />
+);
+
+// Comment, then blank line, then next attribute
+const b = (
+  <Component
+    first={1}
+    // comment
+
+    second={2}
+  />
+);
+
+// Same-line trailing comment, then blank line, then next attribute
+const c = (
+  <Component
+    first={1} // trailing
+
+    second={2}
+  />
+);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Blank line, then comment, then next attribute
+const a = (
+  <Component
+    first={1}
+
+    // comment
+    second={2}
+  />
+);
+
+// Comment, then blank line, then next attribute
+const b = (
+  <Component
+    first={1}
+    // comment
+
+    second={2}
+  />
+);
+
+// Same-line trailing comment, then blank line, then next attribute
+const c = (
+  <Component
+    first={1} // trailing
+
+    second={2}
+  />
+);
+
+===================== End =====================

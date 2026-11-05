@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "no-debugger": "error"
+  },
+  "overrides": [
+    {
+      // Invalid glob (unclosed brace expansion) must be reported at config load,
+      // not silently change whether the override applies.
+      // https://github.com/oxc-project/oxc/issues/24612
+      "files": ["src/**/*.{js,ts"],
+      "rules": {
+        "no-debugger": "off"
+      }
+    }
+  ]
+}

@@ -100,22 +100,35 @@ impl Niche {
         max(self.count_start, self.count_end)
     }
 
-    /// Get value of the [`Niche`].
+    /// Get the value rustc reserves when consuming one value from the [`Niche`].
     pub fn value(&self) -> u128 {
-        // Prefer to consume niches at start of range over end of range
-        if self.count_start > 0 {
-            u128::from(self.count_start - 1)
-        } else {
-            let max_value = match self.size {
-                1 => u128::from(u8::MAX),
-                2 => u128::from(u16::MAX),
-                4 => u128::from(u32::MAX),
-                8 => u128::from(u64::MAX),
-                16 => u128::MAX,
-                size => panic!("Invalid niche size: {size}"),
-            };
-            max_value - u128::from(self.count_end) + 1
+        let max_value = match self.size {
+            1 => u128::from(u8::MAX),
+            2 => u128::from(u16::MAX),
+            4 => u128::from(u32::MAX),
+            8 => u128::from(u64::MAX),
+            16 => u128::MAX,
+            size => panic!("Invalid niche size: {size}"),
+        };
+        let valid_start = u128::from(self.count_start);
+        let valid_end = max_value - u128::from(self.count_end);
+        let next_up = valid_end.wrapping_add(1) & max_value;
+
+        // rust-lang/rust#155473 changed `Niche::reserve(1)` to select the invalid endpoint
+        // whose sign-extended integer has the smallest absolute value, preferring the value
+        // below `valid_start` on a tie. rustc deliberately excludes the `0..=1` valid range as
+        // a workaround for an `Option<bool>` miscompilation, so that range still uses `2`.
+        if valid_start == 0 && valid_end == 1 {
+            return next_up;
         }
+
+        let next_down = valid_start.wrapping_sub(1) & max_value;
+        let sign_bit = (max_value >> 1) + 1;
+        let signed_abs = |value: u128| {
+            if value < sign_bit { value } else { ((!value) & max_value) + 1 }
+        };
+
+        if signed_abs(next_down) <= signed_abs(next_up) { next_down } else { next_up }
     }
 }
 

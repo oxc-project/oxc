@@ -1,5 +1,5 @@
 use oxc_formatter_core::{
-    FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth, PrinterOptions,
+    CoreFormatOptions, FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth,
 };
 
 /// JSON parser variant.
@@ -204,11 +204,10 @@ impl FormatOptions for JsonFormatOptions {
         self.line_ending
     }
 
-    fn as_print_options(&self) -> PrinterOptions {
-        PrinterOptions::default()
-            .with_indent_style(self.indent_style)
-            .with_indent_width(self.indent_width)
-            .with_line_ending(self.line_ending)
-            .with_print_width(self.line_width.into())
+    fn apply_core(&mut self, core: CoreFormatOptions) {
+        self.indent_style = core.indent_style;
+        self.indent_width = core.indent_width;
+        self.line_width = core.line_width;
+        self.line_ending = core.line_ending;
     }
 }

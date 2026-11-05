@@ -1,8 +1,6 @@
 // Methods which are trivial or just delegate to other methods are marked `#[inline(always)]`
 #![expect(clippy::inline_always)]
 
-use std::mem;
-
 use itoa::Buffer as ItoaBuffer;
 
 use oxc_data_structures::{
@@ -22,7 +20,7 @@ use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
 pub use concat::{Concat2, Concat3, ConcatElement};
-pub use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
+pub use config::{Config, ConfigFixes, ConfigNoFixes};
 pub use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 pub use sequences::SequenceSerializer;
 pub use strings::{JsonSafeString, LoneSurrogatesString};
@@ -35,9 +33,6 @@ pub trait ESTree {
 
 /// Trait for serializers.
 pub trait Serializer {
-    /// `true` if output should contain TS fields.
-    const INCLUDE_TS_FIELDS: bool;
-
     /// `true` if serializer's formatter produces compact JSON (not pretty-printed JSON).
     const IS_COMPACT: bool = Self::Formatter::IS_COMPACT;
 
@@ -48,6 +43,9 @@ pub trait Serializer {
     type StructSerializer: StructSerializer;
     /// Type of sequence serializer this serializer uses.
     type SequenceSerializer: SequenceSerializer;
+
+    /// Get whether output should contain TS fields.
+    fn include_ts_fields(&self) -> bool;
 
     /// Get whether output should contain `range` fields.
     fn ranges(&self) -> bool;
@@ -72,29 +70,17 @@ pub trait Serializer {
     fn buffer_and_formatter_mut(&mut self) -> (&mut CodeBuffer, &mut Self::Formatter);
 }
 
-/// ESTree serializer which produces compact JSON, including TypeScript fields.
-pub type CompactTSSerializer = ESTreeSerializer<ConfigTS, CompactFormatter>;
+/// ESTree serializer which produces compact JSON.
+pub type CompactSerializer = ESTreeSerializer<ConfigNoFixes, CompactFormatter>;
 
-/// ESTree serializer which produces compact JSON, excluding TypeScript fields.
-pub type CompactJSSerializer = ESTreeSerializer<ConfigJS, CompactFormatter>;
+/// ESTree serializer which produces pretty JSON.
+pub type PrettySerializer = ESTreeSerializer<ConfigNoFixes, PrettyFormatter>;
 
-/// ESTree serializer which produces pretty JSON, including TypeScript fields.
-pub type PrettyTSSerializer = ESTreeSerializer<ConfigTS, PrettyFormatter>;
+/// ESTree serializer which produces compact JSON.
+pub type CompactFixesSerializer = ESTreeSerializer<ConfigFixes, CompactFormatter>;
 
-/// ESTree serializer which produces pretty JSON, excluding TypeScript fields.
-pub type PrettyJSSerializer = ESTreeSerializer<ConfigJS, PrettyFormatter>;
-
-/// ESTree serializer which produces compact JSON, including TypeScript fields.
-pub type CompactFixesTSSerializer = ESTreeSerializer<ConfigFixesTS, CompactFormatter>;
-
-/// ESTree serializer which produces compact JSON, excluding TypeScript fields.
-pub type CompactFixesJSSerializer = ESTreeSerializer<ConfigFixesJS, CompactFormatter>;
-
-/// ESTree serializer which produces pretty JSON, including TypeScript fields.
-pub type PrettyFixesTSSerializer = ESTreeSerializer<ConfigFixesTS, PrettyFormatter>;
-
-/// ESTree serializer which produces pretty JSON, excluding TypeScript fields.
-pub type PrettyFixesJSSerializer = ESTreeSerializer<ConfigFixesJS, PrettyFormatter>;
+/// ESTree serializer which produces pretty JSON.
+pub type PrettyFixesSerializer = ESTreeSerializer<ConfigFixes, PrettyFormatter>;
 
 /// ESTree serializer.
 pub struct ESTreeSerializer<C: Config, F: Formatter> {
@@ -107,24 +93,24 @@ pub struct ESTreeSerializer<C: Config, F: Formatter> {
 
 impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     /// Create new [`ESTreeSerializer`].
-    pub fn new(ranges: bool) -> Self {
+    pub fn new(include_ts_fields: bool, ranges: bool) -> Self {
         Self {
             buffer: CodeBuffer::with_indent(IndentChar::Space, 2),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            config: C::new(ranges),
+            config: C::new(include_ts_fields, ranges),
         }
     }
 
     /// Create new [`ESTreeSerializer`] with specified buffer capacity.
-    pub fn with_capacity(capacity: usize, ranges: bool) -> Self {
+    pub fn with_capacity(capacity: usize, include_ts_fields: bool, ranges: bool) -> Self {
         Self {
             buffer: CodeBuffer::with_capacity_and_indent(capacity, IndentChar::Space, 2),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            config: C::new(ranges),
+            config: C::new(include_ts_fields, ranges),
         }
     }
 
@@ -135,13 +121,17 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     /// The `value` field of these nodes cannot be serialized to JSON, because JSON doesn't support
     /// `BigInt`s or `RegExp`s. The `fixes` paths can be used on JS side to locate these nodes
     /// and set their `value` fields correctly.
+    ///
+    /// # Panics
+    ///
+    /// Panics if serializer's config does not enable fixes.
     pub fn serialize_with_fixes<T: ESTree>(mut self, node: &T) -> String {
-        const {
-            assert!(
-                C::FIXES,
-                "Cannot call `serialize_with_fixes` on a serializer without fixes enabled"
-            );
-        }
+        // For the built-in configs in this crate, `fixes()` is `#[inline(always)]` and returns a constant,
+        // so compiler will remove this assertion when fixes are enabled
+        assert!(
+            self.config.fixes(),
+            "Cannot call `serialize_with_fixes` on a serializer without fixes enabled"
+        );
 
         self.buffer.print_str("{\"node\":\n");
 
@@ -152,8 +142,9 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
 
         self.buffer.print_str("\n,\"fixes\":[");
         if !self.fixes_buffer.is_empty() {
-            let traces_buffer = mem::take(&mut self.fixes_buffer).into_string();
-            self.buffer.print_str(&traces_buffer[1..]);
+            let fixes_buffer = self.fixes_buffer.as_str();
+            // Omit leading `,`
+            self.buffer.print_str(&fixes_buffer[1..]);
         }
         self.buffer.print_str("]}");
 
@@ -169,17 +160,20 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
 impl<C: Config, F: Formatter> Default for ESTreeSerializer<C, F> {
     #[inline(always)]
     fn default() -> Self {
-        Self::new(false)
+        Self::new(true, false)
     }
 }
 
 impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> {
-    /// `true` if output should contain TS fields
-    const INCLUDE_TS_FIELDS: bool = C::INCLUDE_TS_FIELDS;
-
     type Formatter = F;
     type StructSerializer = ESTreeStructSerializer<'s, C, F>;
     type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
+
+    /// Get whether output should contain TS fields.
+    #[inline(always)]
+    fn include_ts_fields(&self) -> bool {
+        self.config.include_ts_fields()
+    }
 
     /// Get whether output should contain `range` fields.
     #[inline(always)]
@@ -205,7 +199,7 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
     /// These nodes cannot be serialized to JSON, because JSON doesn't support `BigInt`s or `RegExp`s.
     /// "Fix paths" can be used on JS side to locate these nodes and set their `value` fields correctly.
     fn record_fix_path(&mut self) {
-        if !C::FIXES {
+        if !self.config.fixes() {
             return;
         }
 

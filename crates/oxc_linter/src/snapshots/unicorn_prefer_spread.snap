@@ -833,13 +833,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
    ╭─[prefer_spread.tsx:1:1]
- 1 │ "".slice()
-   · ──────────
-   ╰────
-  help: The spread operator (`...`) is more concise and readable.
-
-  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
-   ╭─[prefer_spread.tsx:1:1]
  1 │ array.slice(0)
    · ──────────────
    ╰────
@@ -920,69 +913,5 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_spread.tsx:1:1]
  1 │ new Uint8Array([10, 20, 30, 40, 50]).toSpliced()
    · ────────────────────────────────────────────────
-   ╰────
-  help: The spread operator (`...`) is more concise and readable.
-
-  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
-   ╭─[prefer_spread.tsx:1:1]
- 1 │ "string".split("")
-   · ──────────────────
-   ╰────
-  help: The spread operator (`...`) is more concise and readable.
-
-  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
-   ╭─[prefer_spread.tsx:1:1]
- 1 │ "string".split('')
-   · ──────────────────
-   ╰────
-  help: The spread operator (`...`) is more concise and readable.
-
-  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
-   ╭─[prefer_spread.tsx:1:1]
- 1 │ unknown.split("")
-   · ─────────────────
-   ╰────
-  help: The spread operator (`...`) is more concise and readable.
-
-  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
-   ╭─[prefer_spread.tsx:1:20]
- 1 │ const characters = "string".split("")
-   ·                    ──────────────────
-   ╰────
-  help: The spread operator (`...`) is more concise and readable.
-
-  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
-   ╭─[prefer_spread.tsx:1:4]
- 1 │ (( (( (( "string" )).split ))( (("")) ) ))
-   ·    ────────────────────────────────────
-   ╰────
-  help: The spread operator (`...`) is more concise and readable.
-
-  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
-   ╭─[prefer_spread.tsx:2:13]
- 1 │ bar()
- 2 │             foo.split("")
-   ·             ─────────────
-   ╰────
-  help: The spread operator (`...`) is more concise and readable.
-
-  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
-   ╭─[prefer_spread.tsx:1:1]
- 1 │ unknown.split("")
-   · ─────────────────
-   ╰────
-  help: The spread operator (`...`) is more concise and readable.
-
-  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
-   ╭─[prefer_spread.tsx:1:1]
- 1 │ "🦄".split("")
-   · ──────────────
-   ╰────
-  help: The spread operator (`...`) is more concise and readable.
-
-  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
-   ╭─[prefer_spread.tsx:1:18]
- 1 │ const {length} = "🦄".split("")
-   ·                  ──────────────
    ╰────
   help: The spread operator (`...`) is more concise and readable.

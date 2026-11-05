@@ -86,7 +86,9 @@ declare_oxc_lint!(
     NoBeforeInteractiveScriptOutsideDocument,
     nextjs,
     correctness,
+    recommended,
     version = "0.2.7",
+    short_description = "Prevent the usage of `next/script`'s `beforeInteractive` strategy outside of `pages/_document.js`.",
 );
 
 impl Rule for NoBeforeInteractiveScriptOutsideDocument {
@@ -121,7 +123,7 @@ impl Rule for NoBeforeInteractiveScriptOutsideDocument {
             };
 
             if let Some(JSXAttributeValue::StringLiteral(strategy_value)) = &strategy.value
-                && strategy_value.value.as_str() == "beforeInteractive"
+                && strategy_value.value == "beforeInteractive"
             {
                 if is_document_page(file_path) {
                     return;

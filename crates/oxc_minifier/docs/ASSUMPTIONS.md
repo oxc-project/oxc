@@ -2,7 +2,7 @@
 
 The Oxc minifier makes certain assumptions about JavaScript code to achieve optimal compression. These assumptions are standard for typical JavaScript but may not hold for unusual code patterns.
 
-These assumptions are validated using ECMAScript operations from [`oxc_ecmascript`](../oxc_ecmascript), which implements spec-compliant behavior for type conversions, side effect analysis, and constant evaluation.
+These assumptions are validated using ECMAScript operations from [`oxc_ecmascript`](../../oxc_ecmascript), which implements spec-compliant behavior for type conversions, side effect analysis, and constant evaluation.
 
 ## Core Assumptions
 
@@ -66,9 +66,9 @@ console.log(x); // TDZ violation
 let x = 1;
 ```
 
-### No errors from Array/String Maximum Length
+### No errors from Array/String/TypedArray Maximum Length
 
-Creating strings or arrays that exceed maximum length can be moved or removed.
+Creating strings, arrays, or typed arrays that exceed maximum length can be moved or removed.
 
 ```javascript
 // The minifier may change when this error occurs:
@@ -78,6 +78,23 @@ try {
   console.log("caught");
 }
 ```
+
+This also lets an unused `new Int8Array(n)` (or any TypedArray) with a numeric-literal `n` be dropped: a valid length allocates a zeroed buffer with no observable effect, and a too-large literal only throws a maximum-length `RangeError`. A non-literal, negative (`new Int8Array(-1)`), `BigInt` (`new Int8Array(0n)`), or object argument is kept.
+
+### Coercion to a primitive does not throw for non-Symbol arguments
+
+Pure global functions and methods that coerce their arguments (`parseInt`, `isNaN`, `Math.*`, `Date.UTC`, `String.fromCharCode`, …) are treated as side-effect-free, so an unused call is dropped. A Symbol argument would make `ToString` / `ToNumber` throw a `TypeError`, but the minifier assumes a non-Symbol argument when it cannot prove the type — so `Math.abs(x)` / `parseInt(x)` stay droppable.
+
+```javascript
+// The minifier assumes this never happens:
+Math.abs(Symbol.iterator); // TypeError: Cannot convert a Symbol value to a number
+```
+
+A call is still kept when an argument _provably_ throws:
+
+- `ToNumber` on a `BigInt` (`Math.abs(10n)`, `isNaN(10n)`, `Date.UTC(10n)`).
+- `String.fromCodePoint(cp)` with a code point outside `[0, 0x10FFFF]` (`String.fromCodePoint(-1)`) — an "invalid code point" `RangeError`, distinct from the droppable maximum-length errors above.
+- A missing or invalid required argument (`String.raw()`, `Symbol.keyFor()`, `URL.canParse()`).
 
 ### No side effects from extending a class
 
@@ -118,6 +135,45 @@ Accessing a global variable named `arguments` does not have a side effect. We in
 console.log(arguments); // ReferenceError: arguments is not defined
 ```
 
+### Property writes to provably-unused local bindings are effect-free
+
+In full-minify mode, a plain `=` write to a property of a local binding is
+dropped when the binding is provably unused: it holds a fresh value (object /
+array / function / class literal with no getters, setters, or `__proto__`), is
+not exported, and every reference to it is itself a property-write target
+(terser parity — `function A() {} A.from = () => {};` is removed entirely).
+
+This assumes `Object.prototype` / `Function.prototype` / `Array.prototype`
+properties are not setters with side effects that such writes would trigger (the
+same class of assumption as the `property_write_side_effects: false` tree-shaking
+option, but applied only to this narrow provably-unused case). This is the only
+unsoundness in this optimization.
+
+Writes that would themselves throw a strict-mode `TypeError` or have an
+observable value-domain effect are kept via a kind-aware key denylist: the
+non-writable own `name` / `length` and the `caller` / `arguments` poison of a
+function or class, a class's non-writable `prototype`, an instance-private
+brand-check write (`o.#x = 1`), and an `Array` `length` write (which can throw a
+`RangeError` or run a `valueOf` coercion). A plain function's `prototype` is
+writable, so `f.prototype = {...}` still drops.
+
+Writes are NOT dropped when any other operation on the binding could observe
+them: compound / logical assignments and updates (`o.x += 1` reads the
+property), chained writes (`a.b.c = 1` reads `a.b`), `delete` of a nested
+member, or writes through `__proto__` / non-literal computed keys (which may
+install setters).
+
+```javascript
+// The minifier assumes this never happens:
+Object.defineProperty(Object.prototype, "x", {
+  set() {
+    console.log("side effect!");
+  },
+});
+var o = {};
+o.x = 1; // dropped — would have logged
+```
+
 ### `Function.prototype.toString` is not relied on
 
 Code does not depend on [`Function.prototype.toString()`](https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-function.prototype.tostring) returning specific source text. Minification renames variables and parameters, simplifies expressions (`true` → `!0`), restructures statements (fusing with the comma operator, converting `while` to `for`), removes whitespace, and may eliminate function bodies entirely (e.g. IIFE inlining). All of these change the string returned by `.toString()`.
@@ -131,9 +187,55 @@ serialize((x) => {
 
 ## Optional Assumptions
 
-### No Reliance on Function.prototype.name
+### Property names selected for mangling are not accessed dynamically
 
-Code doesn't depend on function names being preserved. This assumption is held by default. This can be changed by settings `keepNames` option.
+When property-name mangling is enabled, code does not access selected properties through an
+arbitrary runtime string. Quoted syntax is handled per occurrence: it remains unchanged unless
+`mangle_quoted` is enabled, while an unquoted occurrence of the same spelling may be renamed.
+No-substitution template keys follow the same quoted rule; interpolated templates are not
+rewritten.
+
+```javascript
+obj._field; // eligible when `include` matches
+obj["_field"]; // kept unless quoted mangling is enabled
+obj[`_field`]; // also kept unless quoted mangling is enabled
+obj[keyFromNetwork]; // cannot be updated safely
+```
+
+Use `exclude`, `reserved`, or a `false` cache entry for public/reflected names. Properties owned by
+unminified code, imported module namespaces, globals, DOM objects, or other host APIs must also be
+excluded or reserved. A leading `/* @__KEY__ */` or `/* #__KEY__ */` annotation marks a string or
+no-substitution template as a property name. Numeric spellings, `__proto__`, `constructor`, and
+`prototype` are never mangled.
+
+Property mangling does not inspect source strings evaluated by direct `eval` or the `Function`
+constructor, and it does not bail out inside a `with` statement. Matching names reached through
+these dynamic mechanisms must be excluded or reserved explicitly.
+
+Property rewriting runs before compression. Computed keys that compression later materializes,
+such as `['f' + 'oo_']`, are not revisited and can diverge from an eligible `obj.foo_` occurrence.
+Exclude or reserve property names that are constructed this way.
+
+### No Reliance on Function or Class Names
+
+Code does not depend on function or class names being preserved by default.
+In the Rust API, set `CompressOptions::keep_names` and, when identifier mangling
+is enabled, `MangleOptions::keep_names` for the names you need to preserve.
+When both stages are enabled in the Node.js API, configure both options:
+
+- `compress.keepNames` takes an object with Boolean `function` and `class` fields.
+- `mangle.keepNames` takes a Boolean (for both kinds of names) or an object with
+  Boolean `function` and `class` fields.
+
+For example, to preserve both function and class names during compression and
+identifier mangling:
+
+```javascript
+const options = {
+  compress: { keepNames: { function: true, class: true } },
+  mangle: { keepNames: true },
+};
+```
 
 ```javascript
 // The minifier assumes this never happens:
@@ -146,6 +248,7 @@ if (myFunc.name !== "myFunc") throw Error();
 Optional assumptions can be configured in the minifier options if your code requires different behavior.
 
 ```rust
+// Selected fields; see src/options.rs for the complete definitions.
 pub struct CompressOptions {
     // Control optimization behavior
     pub drop_console: bool,
@@ -176,14 +279,10 @@ pub struct TreeShakeOptions {
 To ensure your code works with these assumptions:
 
 1. **Test thoroughly**: Run your test suite on minified code
-2. **Use conformance tests**: `cargo coverage` runs test262, Babel, TypeScript tests
-3. **Node.js compatibility**: The minifier is validated against Node.js compatibility tables
+2. **Check idempotency**: `cargo coverage minifier` checks selected test262 and Babel cases
+3. **Check runtime behavior**: `cargo coverage runtime` executes eligible test262 cases with Node.js
 4. **Try real-world code**: Test with your actual application
 5. **Report issues**: If valid code breaks, file an issue
-
-### Node.js Compatibility Testing
-
-The minifier includes comprehensive validation against Node.js compatibility tables to ensure optimizations work correctly across different Node.js versions and environments.
 
 ## When Assumptions Don't Hold
 

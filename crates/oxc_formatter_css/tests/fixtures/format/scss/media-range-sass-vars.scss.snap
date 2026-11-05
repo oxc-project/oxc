@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+@mixin between($from, $to) {
+  @media ($from-breakpoint <= width < $to-breakpoint) {
+    @content;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+@mixin between($from, $to) {
+  @media ($from-breakpoint <= width < $to-breakpoint) {
+    @content;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+@mixin between($from, $to) {
+  @media ($from-breakpoint <= width < $to-breakpoint) {
+    @content;
+  }
+}
+
+===================== End =====================

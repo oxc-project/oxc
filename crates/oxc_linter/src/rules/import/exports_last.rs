@@ -48,6 +48,7 @@ declare_oxc_lint!(
     import,
     style,
     version = "0.15.14",
+    short_description = "Enforce that all exports are declared at the bottom of the file.",
 );
 
 impl Rule for ExportsLast {
@@ -73,8 +74,10 @@ fn is_exports_declaration(statement: &Statement) -> bool {
         matches!(
             declaration,
             ModuleDeclaration::ExportAllDeclaration(_)
+                | ModuleDeclaration::ExportDeclaration(_)
                 | ModuleDeclaration::ExportDefaultDeclaration(_)
                 | ModuleDeclaration::ExportNamedDeclaration(_)
+                | ModuleDeclaration::ExportFromDeclaration(_)
         )
     })
 }

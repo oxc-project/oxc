@@ -1,19 +1,19 @@
 use std::ops::Deref;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, Class, ClassBody,
-        ClassElement, Expression, Function, MethodDefinitionKind, PropertyDefinition, PropertyKey,
-        Statement,
+        ClassElement, Expression, Function, MethodDefinition, PropertyDefinition, PropertyKey,
+        Statement, TSAccessibility,
     },
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::{GetSpan, Span};
-use oxc_str::Str;
+use oxc_str::JSStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -125,7 +125,7 @@ declare_oxc_lint!(
     ClassLiteralPropertyStyle,
     typescript,
     style,
-    pending,
+    conditional_suggestion,
     config = ClassLiteralPropertyStyleOption,
     version = "1.47.0",
     short_description = "Enforces a consistent style for exposing literal values on classes.",
@@ -133,7 +133,7 @@ declare_oxc_lint!(
 
 impl Rule for ClassLiteralPropertyStyle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
@@ -155,7 +155,7 @@ impl Rule for ClassLiteralPropertyStyle {
 fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
     for element in &class_body.body {
         if let ClassElement::MethodDefinition(method) = element
-            && method.kind == MethodDefinitionKind::Get
+            && method.kind.is_get()
             && !method.r#override
             && let Some(body) = &method.value.body
             && let Some(Statement::ReturnStatement(return_statement)) = body.statements.first()
@@ -163,16 +163,42 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
             && is_supported_literal(argument)
             && !has_duplicate_setter(class_body, method)
         {
-            ctx.diagnostic(prefer_field_style_diagnostic(method.key.span()));
+            if !method.decorators.is_empty() {
+                ctx.diagnostic(prefer_field_style_diagnostic(method.key.span()));
+                continue;
+            }
+
+            ctx.diagnostic_with_suggestion(
+                prefer_field_style_diagnostic(method.key.span()),
+                |fixer| {
+                    let mut replacement =
+                        print_member_modifiers(method.accessibility, method.r#static, "readonly");
+                    push_member_key(
+                        &mut replacement,
+                        fixer.source_range(method.key.span()),
+                        method.computed,
+                    );
+                    if let Some(return_type) = &method.value.return_type {
+                        replacement.push_str(fixer.source_range(return_type.span));
+                    }
+                    replacement.push_str(" = ");
+                    replacement.push_str(fixer.source_range(argument.span()));
+                    replacement.push(';');
+
+                    fixer
+                        .replace(method.span, replacement)
+                        .with_message("Replace the literals with readonly fields.")
+                },
+            );
         }
     }
 }
 
 fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
-    let mut excluded_properties: FxHashSet<Str<'a>> = FxHashSet::default();
+    let mut excluded_properties: FxHashSet<StaticPropertyName<'a>> = FxHashSet::default();
     for element in &class_body.body {
         if let ClassElement::MethodDefinition(method) = element
-            && method.kind == MethodDefinitionKind::Constructor
+            && method.kind.is_constructor()
             && let Some(body) = &method.value.body
         {
             let mut collector =
@@ -183,39 +209,94 @@ fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
 
     for element in &class_body.body {
         if let ClassElement::PropertyDefinition(property) = element
-            && is_literal_readonly_property(property)
+            && let Some(value) = literal_readonly_property_value(property)
         {
             if let Some(name) = property.key.name()
-                && excluded_properties.contains(&*name)
+                && excluded_properties.contains(&name)
             {
                 continue;
             }
 
-            ctx.diagnostic(prefer_getter_style_diagnostic(property.key.span()));
+            if !property.decorators.is_empty() {
+                ctx.diagnostic(prefer_getter_style_diagnostic(property.key.span()));
+                continue;
+            }
+
+            ctx.diagnostic_with_suggestion(
+                prefer_getter_style_diagnostic(property.key.span()),
+                |fixer| {
+                    let mut replacement =
+                        print_member_modifiers(property.accessibility, property.r#static, "get");
+                    push_member_key(
+                        &mut replacement,
+                        fixer.source_range(property.key.span()),
+                        property.computed,
+                    );
+                    replacement.push_str("()");
+                    if let Some(type_annotation) = &property.type_annotation {
+                        replacement.push_str(fixer.source_range(type_annotation.span));
+                    }
+                    replacement.push_str(" { return ");
+                    replacement.push_str(fixer.source_range(value.span()));
+                    replacement.push_str("; }");
+
+                    fixer
+                        .replace(property.span, replacement)
+                        .with_message("Replace the literals with getters.")
+                },
+            );
         }
     }
 }
 
-fn has_duplicate_setter<'a>(
-    class_body: &ClassBody<'a>,
-    getter: &oxc_ast::ast::MethodDefinition<'a>,
-) -> bool {
+fn print_member_modifiers(
+    accessibility: Option<TSAccessibility>,
+    is_static: bool,
+    final_modifier: &str,
+) -> String {
+    let mut text = String::new();
+    if let Some(accessibility) = accessibility {
+        text.push_str(accessibility.as_str());
+        text.push(' ');
+    }
+    if is_static {
+        text.push_str("static ");
+    }
+    text.push_str(final_modifier);
+    text.push(' ');
+    text
+}
+
+fn push_member_key(text: &mut String, key: &str, computed: bool) {
+    if computed {
+        text.push('[');
+    }
+    text.push_str(key);
+    if computed {
+        text.push(']');
+    }
+}
+
+fn has_duplicate_setter<'a>(class_body: &ClassBody<'a>, getter: &MethodDefinition<'a>) -> bool {
     class_body.body.iter().any(|element| {
         let ClassElement::MethodDefinition(method) = element else {
             return false;
         };
-        if method.kind != MethodDefinitionKind::Set || method.r#static != getter.r#static {
+        if !method.kind.is_set() || method.r#static != getter.r#static {
             return false;
         }
         property_keys_match(&method.key, &getter.key)
     })
 }
 
-fn is_literal_readonly_property(property: &PropertyDefinition<'_>) -> bool {
-    property.readonly
-        && !property.declare
-        && !property.r#override
-        && property.value.as_ref().is_some_and(is_supported_literal)
+fn literal_readonly_property_value<'a, 'b>(
+    property: &'a PropertyDefinition<'b>,
+) -> Option<&'a Expression<'b>> {
+    if !property.readonly || property.declare || property.r#override {
+        return None;
+    }
+
+    property.value.as_ref().filter(|value| is_supported_literal(value))
 }
 
 fn is_supported_literal(expression: &Expression<'_>) -> bool {
@@ -246,32 +327,32 @@ fn property_keys_match(a: &PropertyKey<'_>, b: &PropertyKey<'_>) -> bool {
     }
 }
 
-fn assigned_this_property_name<'a>(left: &AssignmentTarget<'a>) -> Option<Str<'a>> {
+fn assigned_this_property_name<'a>(left: &AssignmentTarget<'a>) -> Option<JSStr<'a>> {
     let is_this_object =
         |expr: &Expression<'_>| matches!(expr.without_parentheses(), Expression::ThisExpression(_));
 
     match left {
         AssignmentTarget::StaticMemberExpression(expr) if is_this_object(&expr.object) => {
-            Some(expr.property.name.as_arena_str())
+            Some(expr.property.name.as_js_str())
         }
         AssignmentTarget::ComputedMemberExpression(expr) if is_this_object(&expr.object) => {
             expr.static_property_name()
         }
         AssignmentTarget::PrivateFieldExpression(expr) if is_this_object(&expr.object) => {
-            Some(expr.field.name.as_arena_str())
+            Some(expr.field.name.as_js_str())
         }
         _ => None,
     }
 }
 
 struct ConstructorAssignmentCollector<'set, 'a> {
-    excluded_properties: &'set mut FxHashSet<Str<'a>>,
+    excluded_properties: &'set mut FxHashSet<StaticPropertyName<'a>>,
 }
 
-impl<'a> Visit<'a> for ConstructorAssignmentCollector<'_, 'a> {
+impl<'a> VisitJs<'a> for ConstructorAssignmentCollector<'_, 'a> {
     fn visit_assignment_expression(&mut self, assignment: &AssignmentExpression<'a>) {
         if let Some(name) = assigned_this_property_name(&assignment.left) {
-            self.excluded_properties.insert(name);
+            self.excluded_properties.insert(StaticPropertyName::from(name));
         }
     }
 
@@ -467,6 +548,11 @@ fn test() {
                   ",
             Some(serde_json::json!(["fields"])),
         ),
+        // The constructor writes the field, so a getter would throw.
+        (
+            r#"class C { readonly "\uD800": number = 1; constructor() { this["\uD800"] = 2; } }"#,
+            Some(serde_json::json!(["getters"])),
+        ),
         (
             "
             class Mx {
@@ -660,6 +746,16 @@ fn test() {
         (
             "
             class Mx {
+              get foo(): string {
+                return 'x';
+              }
+            }
+                  ",
+            None,
+        ),
+        (
+            "
+            class Mx {
               public get [myValue]() {
                 return 'a literal value';
               }
@@ -689,6 +785,14 @@ fn test() {
             "
             class Mx {
               readonly p1 = 'hello world';
+            }
+                  ",
+            Some(serde_json::json!(["getters"])),
+        ),
+        (
+            "
+            class Mx {
+              readonly n: 1 | 2 = 1;
             }
                   ",
             Some(serde_json::json!(["getters"])),
@@ -826,6 +930,377 @@ fn test() {
         ),
     ];
 
+    let fix = vec![
+        (
+            "
+            class Mx {
+              get p1() {
+                return 'hello world';
+              }
+            }
+                  ",
+            "
+            class Mx {
+              readonly p1 = 'hello world';
+            }
+                  ",
+            None,
+        ),
+        (
+            "
+            class Mx {
+              get p1() {
+                return `hello world`;
+              }
+            }
+                  ",
+            "
+            class Mx {
+              readonly p1 = `hello world`;
+            }
+                  ",
+            None,
+        ),
+        (
+            "
+            class Mx {
+              static get p1() {
+                return 'hello world';
+              }
+            }
+                  ",
+            "
+            class Mx {
+              static readonly p1 = 'hello world';
+            }
+                  ",
+            None,
+        ),
+        (
+            "
+            class Mx {
+              public static get foo() {
+                return 1;
+              }
+            }
+                  ",
+            "
+            class Mx {
+              public static readonly foo = 1;
+            }
+                  ",
+            None,
+        ),
+        (
+            "
+            class Mx {
+              get foo(): string {
+                return 'x';
+              }
+            }
+                  ",
+            "
+            class Mx {
+              readonly foo: string = 'x';
+            }
+                  ",
+            None,
+        ),
+        (
+            "
+            class Mx {
+              public get [myValue]() {
+                return 'a literal value';
+              }
+            }
+                  ",
+            "
+            class Mx {
+              public readonly [myValue] = 'a literal value';
+            }
+                  ",
+            None,
+        ),
+        (
+            "
+            class Mx {
+              public get [myValue]() {
+                return 12345n;
+              }
+            }
+                  ",
+            "
+            class Mx {
+              public readonly [myValue] = 12345n;
+            }
+                  ",
+            None,
+        ),
+        (
+            "
+            class Mx {
+              public readonly [myValue] = 'a literal value';
+            }
+                  ",
+            "
+            class Mx {
+              public get [myValue]() { return 'a literal value'; }
+            }
+                  ",
+            Some(serde_json::json!(["getters"])),
+        ),
+        (
+            "
+            class Mx {
+              readonly p1 = 'hello world';
+            }
+                  ",
+            "
+            class Mx {
+              get p1() { return 'hello world'; }
+            }
+                  ",
+            Some(serde_json::json!(["getters"])),
+        ),
+        (
+            "
+            class Mx {
+              readonly n: 1 | 2 = 1;
+            }
+                  ",
+            "
+            class Mx {
+              get n(): 1 | 2 { return 1; }
+            }
+                  ",
+            Some(serde_json::json!(["getters"])),
+        ),
+        (
+            "
+            class Mx {
+              readonly p1 = `hello world`;
+            }
+                  ",
+            "
+            class Mx {
+              get p1() { return `hello world`; }
+            }
+                  ",
+            Some(serde_json::json!(["getters"])),
+        ),
+        (
+            "
+            class Mx {
+              static readonly p1 = 'hello world';
+            }
+                  ",
+            "
+            class Mx {
+              static get p1() { return 'hello world'; }
+            }
+                  ",
+            Some(serde_json::json!(["getters"])),
+        ),
+        (
+            "
+            class Mx {
+              protected get p1() {
+                return 'hello world';
+              }
+            }
+                  ",
+            "
+            class Mx {
+              protected readonly p1 = 'hello world';
+            }
+                  ",
+            Some(serde_json::json!(["fields"])),
+        ),
+        (
+            "
+            class Mx {
+              protected readonly p1 = 'hello world';
+            }
+                  ",
+            "
+            class Mx {
+              protected get p1() { return 'hello world'; }
+            }
+                  ",
+            Some(serde_json::json!(["getters"])),
+        ),
+        (
+            "
+            class Mx {
+              public static get p1() {
+                return 'hello world';
+              }
+            }
+                  ",
+            "
+            class Mx {
+              public static readonly p1 = 'hello world';
+            }
+                  ",
+            None,
+        ),
+        (
+            "
+            class Mx {
+              public static readonly p1 = 'hello world';
+            }
+                  ",
+            "
+            class Mx {
+              public static get p1() { return 'hello world'; }
+            }
+                  ",
+            Some(serde_json::json!(["getters"])),
+        ),
+        (
+            "
+            class Mx {
+              public get myValue() {
+                return gql`
+                  {
+                    user(id: 5) {
+                      firstName
+                      lastName
+                    }
+                  }
+                `;
+              }
+            }
+                  ",
+            "
+            class Mx {
+              public readonly myValue = gql`
+                  {
+                    user(id: 5) {
+                      firstName
+                      lastName
+                    }
+                  }
+                `;
+            }
+                  ",
+            None,
+        ),
+        (
+            "
+            class Mx {
+              public readonly myValue = gql`
+                {
+                  user(id: 5) {
+                    firstName
+                    lastName
+                  }
+                }
+              `;
+            }
+                  ",
+            "
+            class Mx {
+              public get myValue() { return gql`
+                {
+                  user(id: 5) {
+                    firstName
+                    lastName
+                  }
+                }
+              `; }
+            }
+                  ",
+            Some(serde_json::json!(["getters"])),
+        ),
+        (
+            "
+            class A {
+              private readonly foo: string = 'bar';
+              constructor(foo: string) {
+                const bar = new (class {
+                  private readonly foo: string = 'baz';
+                  constructor() {
+                    this.foo = 'qux';
+                  }
+                })();
+              }
+            }
+                  ",
+            "
+            class A {
+              private get foo(): string { return 'bar'; }
+              constructor(foo: string) {
+                const bar = new (class {
+                  private readonly foo: string = 'baz';
+                  constructor() {
+                    this.foo = 'qux';
+                  }
+                })();
+              }
+            }
+                  ",
+            Some(serde_json::json!(["getters"])),
+        ),
+        (
+            "
+            class A {
+              private readonly ['foo']: string = 'bar';
+              constructor(foo: string) {
+                const bar = new (class {
+                  private readonly foo: string = 'baz';
+                  constructor() {}
+                })();
+
+                if (bar) {
+                  this.foo = 'baz';
+                }
+              }
+            }
+                  ",
+            "
+            class A {
+              private readonly ['foo']: string = 'bar';
+              constructor(foo: string) {
+                const bar = new (class {
+                  private get foo(): string { return 'baz'; }
+                  constructor() {}
+                })();
+
+                if (bar) {
+                  this.foo = 'baz';
+                }
+              }
+            }
+                  ",
+            Some(serde_json::json!(["getters"])),
+        ),
+        (
+            "
+            class A {
+              private readonly foo: string = 'bar';
+              constructor(foo: string) {
+                function func() {
+                  this.foo = 'aa';
+                }
+              }
+            }
+                  ",
+            "
+            class A {
+              private get foo(): string { return 'bar'; }
+              constructor(foo: string) {
+                function func() {
+                  this.foo = 'aa';
+                }
+              }
+            }
+                  ",
+            Some(serde_json::json!(["getters"])),
+        ),
+    ];
+
     Tester::new(ClassLiteralPropertyStyle::NAME, ClassLiteralPropertyStyle::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

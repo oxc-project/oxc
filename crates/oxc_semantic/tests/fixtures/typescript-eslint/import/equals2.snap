@@ -14,15 +14,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/equals2.
         "id": 0,
         "name": "x",
         "node": "VariableDeclarator(x)",
-        "references": [
-          {
-            "flags": "ReferenceFlags(Read)",
-            "id": 0,
-            "name": "x",
-            "node_id": 7,
-            "scope_id": 0
-          }
-        ]
+        "references": []
       },
       {
         "flags": "SymbolFlags(Import)",

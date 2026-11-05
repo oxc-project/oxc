@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de};
 
 use oxc_ast::{
     AstKind,
@@ -59,7 +59,8 @@ const DEFAULT_IGNORE_ROLES: [&str; 10] = [
 pub struct ControlHasAssociatedLabelConfig {
     /// Maximum depth to search for an accessible label within the element.
     /// Defaults to `2`.
-    #[serde(deserialize_with = "cap_to_25")]
+    #[serde(deserialize_with = "validate_depth")]
+    #[schemars(range(max = 25))]
     depth: u8,
     /// Additional attributes to check for accessible label text.
     label_attributes: Vec<CompactStr>,
@@ -73,12 +74,15 @@ pub struct ControlHasAssociatedLabelConfig {
     ignore_roles: Vec<CompactStr>,
 }
 
-fn cap_to_25<'de, D>(deserializer: D) -> Result<u8, D::Error>
+fn validate_depth<'de, D>(deserializer: D) -> Result<u8, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let val = u8::deserialize(deserializer)?;
-    Ok(val.min(25)) // Clamps the value to a maximum of 25
+    let depth = u8::deserialize(deserializer)?;
+    if depth > 25 {
+        return Err(de::Error::custom("depth must be less than or equal to 25"));
+    }
+    Ok(depth)
 }
 
 impl Deref for ControlHasAssociatedLabel {
@@ -143,7 +147,7 @@ declare_oxc_lint!(
 
 impl Rule for ControlHasAssociatedLabel {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -223,7 +227,7 @@ impl ControlHasAssociatedLabel {
                 match &attr.value {
                     None => false,
                     Some(JSXAttributeValue::StringLiteral(s)) => {
-                        !s.value.as_str().trim().is_empty()
+                        s.value.as_str().is_none_or(|value| !value.trim().is_empty())
                     }
                     Some(_) => true,
                 }

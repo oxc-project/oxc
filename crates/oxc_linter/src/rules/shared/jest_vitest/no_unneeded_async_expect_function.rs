@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, Statement},
+    ast::{Argument, ArrowFunctionExpression, Expression, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{
@@ -43,14 +44,16 @@ await expect(doSomethingAsync()).rejects.toThrow();
 ```
 ";
 
-pub fn run_on_jest_node<'a, 'c>(jest_node: &PossibleJestNode<'a, 'c>, ctx: &'c LintContext<'a>) {
-    let node = jest_node.node;
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     let AstKind::CallExpression(call_expr) = node.kind() else {
         return;
     };
 
+    let Some(jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx) else {
+        return;
+    };
     let Some(ParsedJestFnCallNew::Expect(parsed_expect_call)) =
-        parse_jest_fn_call(call_expr, jest_node, ctx)
+        parse_jest_fn_call(call_expr, &jest_node, ctx)
     else {
         return;
     };
@@ -103,12 +106,10 @@ pub fn run_on_jest_node<'a, 'c>(jest_node: &PossibleJestNode<'a, 'c>, ctx: &'c L
 
 /// Gets the span of the awaited call expression from an async arrow function.
 /// Returns `None` if the function body doesn't contain exactly one await of a call expression.
-fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpression) -> Option<Span> {
+fn get_awaited_call_span_from_arrow(arrow: &ArrowFunctionExpression) -> Option<Span> {
     // Case 1: Arrow function with expression body (async () => await doSomething())
-    if arrow.expression {
-        if let Some(first) = arrow.body.statements.first()
-            && let Statement::ExpressionStatement(expr_stmt) = first
-            && let Expression::AwaitExpression(await_expr) = &expr_stmt.expression
+    if arrow.is_expression() {
+        if let Some(Expression::AwaitExpression(await_expr)) = arrow.get_expression()
             && let Expression::CallExpression(call) = &await_expr.argument
         {
             return Some(call.span);
@@ -117,10 +118,10 @@ fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpressio
     }
 
     // Case 2: Arrow function with block body
-    get_awaited_call_span_from_block(&arrow.body)
+    get_awaited_call_span_from_block(arrow.get_function_body().unwrap())
 }
 
-fn get_awaited_call_span_from_block(body: &oxc_ast::ast::FunctionBody) -> Option<Span> {
+fn get_awaited_call_span_from_block(body: &FunctionBody) -> Option<Span> {
     if body.statements.len() == 1
         && let Some(stmt) = body.statements.first()
         && let Statement::ExpressionStatement(expr_stmt) = stmt

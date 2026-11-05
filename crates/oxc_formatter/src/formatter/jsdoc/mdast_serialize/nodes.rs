@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use markdown::mdast::Node;
 
-use super::super::embedded::{format_embedded_js, is_js_ts_lang};
+use super::super::embedded::{format_jsdoc_js_snippet, is_js_ts_lang};
 use super::super::line_buffer::LineBuffer;
 use super::super::wrap::{format_table_block, wrap_paragraph};
 use super::SerializeOptions;
@@ -63,7 +63,8 @@ pub(super) fn serialize_children(
                 for child in children.iter().take(run_end).skip(run_start) {
                     match child {
                         Node::Paragraph(para) => {
-                            let text = collect_inline_text_from_children(&para.children);
+                            let text =
+                                collect_inline_text_from_children(&para.children, opts.source);
                             if !merged_text.is_empty() && !merged_text.ends_with(' ') {
                                 merged_text.push(' ');
                             }
@@ -228,7 +229,7 @@ fn serialize_node(
             serialize_paragraph(para, indent, first_para_offset, opts, lines);
         }
         Node::Heading(heading) => {
-            let text = collect_inline_text(node);
+            let text = collect_inline_text(node, opts.source);
             let prefix = "#".repeat(heading.depth as usize);
             if !lines.is_empty() && !lines.last_is_empty() {
                 lines.push_empty();
@@ -269,7 +270,7 @@ fn serialize_node(
         // Inline nodes are normally collected by collect_inline_text,
         // but handle them here for any edge case where they appear at block level
         _ => {
-            let text = collect_inline_text(node);
+            let text = collect_inline_text(node, opts.source);
             if !text.is_empty() {
                 lines.push(text);
             }
@@ -329,7 +330,7 @@ fn serialize_paragraph(
                 }
                 current_segment.clear();
             } else {
-                collect_inline_recursive(child, &mut current_segment);
+                collect_inline_recursive(child, opts.source, &mut current_segment);
             }
         }
 
@@ -350,7 +351,7 @@ fn serialize_paragraph(
     }
 
     // Normal paragraph: collect all inline text, then wrap (placeholders restored at the end)
-    let inline_text = collect_inline_text_from_children(&para.children);
+    let inline_text = collect_inline_text_from_children(&para.children, opts.source);
     let effective_width = opts.max_width.saturating_sub(indent);
     let ind = super::super::wrap::indent_str(indent);
 
@@ -665,7 +666,7 @@ fn serialize_node_for_list_item(
     opts: &SerializeOptions<'_>,
 ) -> String {
     if let Node::Paragraph(para) = node {
-        let inline_text = collect_inline_text_from_children(&para.children);
+        let inline_text = collect_inline_text_from_children(&para.children, opts.source);
         let mut buf = LineBuffer::new();
         if is_first_child {
             wrap_paragraph(&inline_text, opts.max_width, 0, marker_width, &mut buf);
@@ -743,38 +744,45 @@ fn serialize_code(
     }
 }
 
-/// Format code block content in JSDoc descriptions.
-/// For JS/TS code (fenced with a JS/TS lang tag, fenced with no lang tag, or
-/// indented code blocks), the code is formatted through Prettier's parser via
-/// `format_embedded_js`. For non-JS/TS fenced code (css, html, etc.), the code
-/// is preserved verbatim.
+/// Non-JS/TS fence languages a description embeds: the `prettier-plugin-jsdoc` set (its `parserSynonyms`),
+/// matched case-insensitively as there.
+/// Any other stays verbatim; add one on demand, as long as the host's dispatcher routes it.
+const EMBEDDED_FENCE_LANGUAGES: [&str; 6] = ["css", "less", "scss", "json", "yaml", "html"];
+
+/// Format code block content in a JSDoc Markdown description.
+///
+/// Routing:
+/// - JS/TS code (fenced with a JS/TS lang tag, fenced with no lang tag, or indented blocks):
+///   formatted in-process via [`format_jsdoc_js_snippet`] (`oxc_formatter`'s own parser/formatter).
+/// - Non-JS/TS fenced code of [`EMBEDDED_FENCE_LANGUAGES`]:
+///   when the session carries a string embedder, routed through it (the string channel);
+///   absent one (e.g. the crate's own fixture tests) or on its failure, preserved verbatim.
+///
+/// NOTE: `@example` fences diverge here, see `tag_formatters::format_example_fenced_block`.
 fn format_code_value<'a>(
     code: &'a str,
     lang: Option<&str>,
     width: usize,
     opts: &SerializeOptions<'_>,
 ) -> Cow<'a, str> {
-    if let (Some(format_options), Some(allocator)) = (opts.format_options, opts.allocator) {
-        // For fenced code with an explicit non-JS/TS lang, try external formatter (CSS, HTML, etc.)
-        if let Some(l) = lang
-            && !is_js_ts_lang(l)
+    // Fenced code with an explicit non-JS/TS lang: route through the session's string embedder
+    // (the host decides who serves the language); verbatim when absent or it fails.
+    if let Some(l) = lang
+        && !is_js_ts_lang(l)
+    {
+        if let Some(language) =
+            EMBEDDED_FENCE_LANGUAGES.into_iter().find(|name| l.eq_ignore_ascii_case(name))
+            && let Some(embed) = opts.session.string_embedder()
+            && let Ok(formatted) = embed(language, code, width)
         {
-            if let Some(external) = opts.external_callbacks
-                && let Some(Ok(formatted)) = external.format_embedded(l, code)
-            {
-                let mut result = formatted;
-                // Trim trailing newline that Prettier adds
-                if result.ends_with('\n') {
-                    result.pop();
-                }
-                return Cow::Owned(result);
-            }
-            return Cow::Borrowed(code);
-        }
-        // Fenced JS/TS, fenced with no lang, or indented code: try formatting
-        if let Some(formatted) = format_embedded_js(code, width, format_options, allocator) {
             return Cow::Owned(formatted);
         }
+        return Cow::Borrowed(code);
+    }
+    // Fenced JS/TS, fenced with no lang, or indented code: try formatting
+    if let Some(formatted) = format_jsdoc_js_snippet(code, width, opts.format_options, opts.session)
+    {
+        return Cow::Owned(formatted);
     }
     Cow::Borrowed(code)
 }

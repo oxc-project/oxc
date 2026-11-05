@@ -9,8 +9,7 @@ on:
       - edited
       - synchronize
       - reopened
-    branches-ignore:
-      - "**/graphite-base/**"
+  merge_group:
 
 jobs:
   pr:
@@ -18,6 +17,7 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - name: Validate PR title
+        if: ${{ github.event_name == 'pull_request' }}
         env:
           TITLE: ${{ github.event.pull_request.title }}
         run: |
@@ -35,3 +35,7 @@ jobs:
             } >&2
             exit 1
           fi
+
+      - name: Accept merge group
+        if: ${{ github.event_name == 'merge_group' }}
+        run: "true"

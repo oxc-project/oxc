@@ -1,11 +1,14 @@
+use std::borrow::Cow;
+
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::{FxBuildHasher, FxHashMap};
+use smallvec::SmallVec;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -64,8 +67,12 @@ declare_oxc_lint!(
     NoDupeKeys,
     eslint,
     correctness,
+    recommended,
     version = "0.0.3",
+    short_description = "Disallow duplicate keys in object literals.",
 );
+
+const INLINE_CAPACITY: usize = 8;
 
 impl Rule for NoDupeKeys {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -76,7 +83,14 @@ impl Rule for NoDupeKeys {
         if len <= 1 {
             return;
         }
-        let mut map = FxHashMap::with_capacity_and_hasher(len, FxBuildHasher);
+        let mut inline: SmallVec<
+            [(StaticPropertyName<'_>, (PropertyKind, Span)); INLINE_CAPACITY],
+        > = SmallVec::new();
+        // Bound linear searches to small objects; retain hashing for larger ones.
+        let mut map = FxHashMap::with_capacity_and_hasher(
+            if len > INLINE_CAPACITY { len } else { 0 },
+            FxBuildHasher,
+        );
         for prop in &obj_expr.properties {
             let ObjectPropertyKind::ObjectProperty(prop) = prop else {
                 continue;
@@ -87,19 +101,30 @@ impl Rule for NoDupeKeys {
             if is_proto_setter_property(prop, &name) {
                 continue;
             }
-            if let Some((prev_kind, prev_span)) = map.insert(name, (prop.kind, prop.key.span()))
+            let value = (prop.kind, prop.key.span());
+            let previous = if len <= INLINE_CAPACITY {
+                if let Some((_, previous)) = inline.iter_mut().find(|(key, _)| *key == name) {
+                    Some(std::mem::replace(previous, value))
+                } else {
+                    inline.push((name, value));
+                    None
+                }
+            } else {
+                map.insert(name, value)
+            };
+            if let Some((prev_kind, prev_span)) = previous
                 && (prev_kind == PropertyKind::Init
                     || prop.kind == PropertyKind::Init
                     || prev_kind == prop.kind)
             {
                 let name = prop_key_name(&prop.key, ctx);
-                ctx.diagnostic(no_dupe_keys_diagnostic(prev_span, prop.key.span(), name));
+                ctx.diagnostic(no_dupe_keys_diagnostic(prev_span, prop.key.span(), &name));
             }
         }
     }
 }
 
-fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: &str) -> bool {
+fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: &StaticPropertyName<'_>) -> bool {
     name == "__proto__"
         && prop.kind == PropertyKind::Init
         && !prop.computed
@@ -107,14 +132,20 @@ fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: &str) -> bool {
         && !prop.method
 }
 
-fn prop_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> &'a str {
+/// Display spelling for the diagnostic.
+/// Key identity uses `StaticPropertyName`; never compare these values.
+fn prop_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> Cow<'a, str> {
     match key {
-        PropertyKey::Identifier(ident) => ident.name.as_str(),
-        PropertyKey::StaticIdentifier(ident) => ident.name.as_str(),
-        PropertyKey::PrivateIdentifier(ident) => ident.name.as_str(),
-        PropertyKey::StringLiteral(lit) => lit.value.as_str(),
-        PropertyKey::NumericLiteral(lit) => lit.raw.as_ref().unwrap().as_str(),
-        _ => ctx.source_range(key.span()),
+        PropertyKey::Identifier(ident) => Cow::Borrowed(ident.name.as_str()),
+        PropertyKey::StaticIdentifier(ident) => Cow::Borrowed(ident.name.as_str()),
+        PropertyKey::PrivateIdentifier(ident) => Cow::Borrowed(ident.name.as_str()),
+        PropertyKey::StringLiteral(lit) => match lit.value.as_str() {
+            Some(name) => Cow::Borrowed(name),
+            // Escape lone surrogates for display.
+            None => Cow::Owned(lit.value.display().to_string()),
+        },
+        PropertyKey::NumericLiteral(lit) => Cow::Borrowed(lit.raw.as_ref().unwrap().as_str()),
+        _ => Cow::Borrowed(ctx.source_range(key.span())),
     }
 }
 #[test]
@@ -122,6 +153,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        r#"const c = { [/a/ig]: 1, "/a/ig": 2 };"#,
         "var foo = { __proto__: 1, two: 2};",
         "var x = { foo: 1, bar: 2 };",
         "var x = { '': 1, bar: 2 };",
@@ -150,9 +182,16 @@ fn test() {
         "var x = { get __proto__() {}, __proto__: null };", // { "ecmaVersion": 6 },
         "var x = { __proto__: null, set __proto__(value) {} };", // { "ecmaVersion": 6 },
         "var x = { set __proto__(value) {}, __proto__: null };", // { "ecmaVersion": 6 }
+        // Lone surrogates are distinct property names.
+        r#"var x = { "\uD800": 1, "\uDC00": 2 };"#,
+        r#"var x = { "\uD800": 1, "\uD800\uDC00": 2 };"#,
+        r#"var x = { "\uD800": 1, "\\uD800": 2 };"#,
+        r#"var x = { "\uDC00\uD800": 1, "𐀀": 2 };"#,
     ];
 
     let fail = vec![
+        "const a = { [/a/ig]: 1, [/a/gi]: 2 };",
+        r#"const b = { [/a/ig]: 1, "/a/gi": 2 };"#,
         "var x = { a: b, ['a']: b };", // { "ecmaVersion": 6 },
         "var x = { y: 1, y: 2 };",
         "var x = { '': 1, '': 2 };",
@@ -178,6 +217,11 @@ fn test() {
         "var x = { ['__proto__']: null, get __proto__() {} };", // { "ecmaVersion": 6 },
         "var x = { ['__proto__']: null, set __proto__(value) {} };", // { "ecmaVersion": 6 },
         "var x = { __proto__: null, a: 5, a: 6 };", // { "ecmaVersion": 6 }
+        // Lone surrogates keep their identity across key syntaxes.
+        r#"var x = { "\uD800": 1, "\uD800": 2 };"#,
+        r#"var x = { "\uDC00": 1, ["\uDC00"]: 2 };"#,
+        r#"var x = { "a\uD800b": 1, [`a\uD800b`]: 2 };"#,
+        r#"var x = { "\uD800\uDC00": 1, "𐀀": 2 };"#,
     ];
 
     Tester::new(NoDupeKeys::NAME, NoDupeKeys::PLUGIN, pass, fail).test_and_snapshot();

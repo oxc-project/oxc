@@ -1,5 +1,5 @@
 import { setCwd } from "./context.ts";
-import { setRegisteredRules } from "./load.ts";
+import { setRegisteredPluginNames, setRegisteredRules } from "./load.ts";
 import { setAllOptions } from "./options.ts";
 import {
   workspaces,
@@ -26,6 +26,7 @@ export function switchWorkspace(workspaceUri: string): void {
   // Change global state to that of the workspace
   setCwd(workspace.cwd);
   setRegisteredRules(workspace.rules);
+  setRegisteredPluginNames(workspace.pluginNames);
   setAllOptions(workspace.allOptions);
 
   // Set this workspace as the current one

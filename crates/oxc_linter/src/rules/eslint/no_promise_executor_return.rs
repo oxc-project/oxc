@@ -1,11 +1,11 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, FunctionBody},
+    ast::{Argument, ArrowFunctionExpression, Expression, Function, FunctionBody, ReturnStatement},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -123,7 +123,7 @@ declare_oxc_lint!(
 
 impl Rule for NoPromiseExecutorReturn {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -155,10 +155,10 @@ impl Rule for NoPromiseExecutorReturn {
                     if self.allow_void && expr.get_inner_expression().is_void() {
                         return;
                     }
-                    ctx.diagnostic(no_promise_executor_return_diagnostic(arrow.body.span));
+                    ctx.diagnostic(no_promise_executor_return_diagnostic(arrow.body.span()));
                 } else {
                     // Arrow function with block body: check for return statements
-                    self.check_function_body(&arrow.body, ctx);
+                    self.check_function_body(arrow.get_function_body().unwrap(), ctx);
                 }
             }
             Expression::FunctionExpression(func) => {
@@ -193,8 +193,8 @@ impl ReturnStatementFinder {
     }
 }
 
-impl Visit<'_> for ReturnStatementFinder {
-    fn visit_return_statement(&mut self, it: &oxc_ast::ast::ReturnStatement<'_>) {
+impl VisitJs<'_> for ReturnStatementFinder {
+    fn visit_return_statement(&mut self, it: &ReturnStatement<'_>) {
         // Empty return is allowed
         let Some(argument) = &it.argument else {
             return;
@@ -208,15 +208,11 @@ impl Visit<'_> for ReturnStatementFinder {
         self.return_spans.push(it.span);
     }
 
-    fn visit_function(
-        &mut self,
-        _it: &oxc_ast::ast::Function<'_>,
-        _flags: oxc_semantic::ScopeFlags,
-    ) {
+    fn visit_function(&mut self, _it: &Function<'_>, _flags: oxc_semantic::ScopeFlags) {
         // Skip visiting nested functions - they have their own scope
     }
 
-    fn visit_arrow_function_expression(&mut self, _it: &oxc_ast::ast::ArrowFunctionExpression<'_>) {
+    fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'_>) {
         // Skip visiting nested arrow functions - they have their own scope
     }
 }
@@ -261,6 +257,7 @@ fn test() {
         // globals are not supported in tests.
         // ("/* globals Promise:off */ new Promise(function (resolve, reject) { return 1; });", None)
         // ("new Promise((resolve, reject) => { return 1; });", None), // { "globals": { "Promise": "off" } }
+        ("Promise.resolve(); function f(Promise) { new Promise((resolve, reject) => 1); }", None),
         ("let Promise; new Promise(function (resolve, reject) { return 1; });", None),
         ("function f() { new Promise((resolve, reject) => { return 1; }); var Promise; }", None),
         ("function f(Promise) { new Promise((resolve, reject) => 1); }", None),

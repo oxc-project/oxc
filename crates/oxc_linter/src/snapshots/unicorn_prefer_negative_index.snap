@@ -566,20 +566,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
- 1 │ foo.with(foo.length - 3, foo.length - 6)
-   · ────────────────────────────────────────
-   ╰────
-  help: Replace length expression with negative index
-
-  ⚠ unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
-   ╭─[prefer_negative_index.tsx:1:1]
- 1 │ Array.prototype.with.call(foo, foo.length - 3, foo.length - 6)
-   · ──────────────────────────────────────────────────────────────
-   ╰────
-  help: Replace length expression with negative index
-
-  ⚠ unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
-   ╭─[prefer_negative_index.tsx:1:1]
  1 │ foo.subarray(foo.length - 3, foo.length - 6)
    · ────────────────────────────────────────────
    ╰────

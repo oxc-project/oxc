@@ -1,0 +1,82 @@
+use oxc_span::Span;
+
+use crate::{
+    cpu::{Cpu, cpu_multiversion, cpu_version},
+    error::DiagCode,
+    token::tk,
+};
+
+use crate::pipeline::lanes::Lanes;
+
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) unsafe fn emit_value(
+    src: &[u8],
+    out_kinds: *const u8,
+    out_spans: *const Span,
+    j: usize,
+    lanes: &mut Lanes,
+    cpu: impl Cpu,
+) {
+    let sp = *out_spans.add(j);
+    let s = sp.start as usize;
+    let e = sp.end as usize;
+    let k = *out_kinds.add(j);
+    if k < tk!(IdentEscaped) {
+        lanes.push_number(src, s, e, cpu);
+    } else if k == tk!(IdentEscaped) {
+        lanes.push_atom(src, s, e, cpu);
+    } else {
+        lanes.push_atom(src, s + 1, e, cpu);
+    }
+}
+
+/// Push a diagnostic for each `Invalid` token.
+///
+/// As it's cold code, it's compiled only once, not separately for each CPU feature set,
+/// which keeps the binary smaller. `#[inline(never)]` stops it being inlined into
+/// the separate copies of its callers.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+pub(super) unsafe fn invalid_diags(
+    src: &[u8],
+    out_kinds: *const u8,
+    out_spans: *const Span,
+    m: usize,
+    nn: u32,
+    lanes: &mut Lanes,
+) {
+    let char_after = |cs: u32| -> u32 {
+        if cs >= nn {
+            return 0;
+        }
+        let b = src[cs as usize];
+        let l: u32 = if b < 0x80 {
+            1
+        } else if b >= 0xF0 {
+            4
+        } else if b >= 0xE0 {
+            3
+        } else if b >= 0xC0 {
+            2
+        } else {
+            1
+        };
+        l.min(nn - cs)
+    };
+    for j in 0..m {
+        if *out_kinds.add(j) == tk!(Invalid) {
+            let sp = *out_spans.add(j);
+            let (s, e) = (sp.start, sp.end);
+            let b0 = src[s as usize];
+            if b0 == b'\\' {
+                lanes.push_diag(s + 1, char_after(s + 1), DiagCode::InvalidIdentifierEscape);
+            } else if b0 == b'#' {
+                lanes.push_diag(s + 1, char_after(s + 1), DiagCode::UnexpectedCharacter);
+            } else {
+                lanes.push_diag(s, e - s, DiagCode::UnexpectedCharacter);
+            }
+        }
+    }
+}

@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use oxc_ast::{
     AstKind,
     ast::{ChainElement, Expression},
@@ -37,7 +39,7 @@ enum ComparisonKind {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+    /// Prefer `includes()` over `indexOf()` when checking for existence/non-existence.
     /// All built-ins have `.includes()` in addition to `.indexOf()`.
     ///
     /// ### Why is this bad?
@@ -58,8 +60,10 @@ declare_oxc_lint!(
     PreferIncludes,
     unicorn,
     style,
+    recommended,
     suggestion,
     version = "0.0.18",
+    short_description = "Prefer `includes()` over `indexOf()` when checking for existence/non-existence.",
 );
 
 impl Rule for PreferIncludes {
@@ -108,19 +112,13 @@ impl Rule for PreferIncludes {
                 None
             }
         } else if bin_expr.operator == BinaryOperator::GreaterEqualThan {
-            let Expression::NumericLiteral(num_lit) = bin_expr.right.without_parentheses() else {
-                return;
-            };
-            if num_lit.raw.as_ref().unwrap() == "0" {
+            if bin_expr.right.without_parentheses().is_specific_raw_number_literal("0") {
                 Some(ComparisonKind::ExistsOnly)
             } else {
                 None
             }
         } else if bin_expr.operator == BinaryOperator::LessThan {
-            let Expression::NumericLiteral(num_lit) = bin_expr.right.without_parentheses() else {
-                return;
-            };
-            if num_lit.raw.as_ref().unwrap() == "0" {
+            if bin_expr.right.without_parentheses().is_specific_raw_number_literal("0") {
                 Some(ComparisonKind::NotExistsOnly)
             } else {
                 None
@@ -142,21 +140,16 @@ impl Rule for PreferIncludes {
             return;
         };
 
-        let object_text = ctx.source_range(member_expr.object().span()).to_string();
+        let object_text = ctx.source_range(member_expr.object().span());
         let member_operator = if member_expr.optional() { "?." } else { "." };
         let call_operator = if left_call_expr.optional { "?.(" } else { "(" };
         let has_optional_chain = left_call_expr.optional || member_expr.optional();
 
-        // Get arguments text
-        let args_text = left_call_expr
-            .arguments
-            .iter()
-            .map(|arg| ctx.source_range(arg.span()))
-            .collect::<Vec<_>>()
-            .join(", ");
-
         let fix_span = bin_expr.span;
         ctx.diagnostic_with_suggestion(prefer_includes_diagnostic(callee_span), |fixer| {
+            let args_text =
+                left_call_expr.arguments.iter().map(|arg| ctx.source_range(arg.span())).join(", ");
+
             let includes_call =
                 format!("{object_text}{member_operator}includes{call_operator}{args_text})");
 
@@ -186,11 +179,7 @@ fn is_negative_one(expr: &Expression) -> bool {
         return false;
     }
 
-    let Expression::NumericLiteral(num_lit) = unary_expr.argument.without_parentheses() else {
-        return false;
-    };
-
-    num_lit.raw.as_ref().unwrap() == "1"
+    unary_expr.argument.without_parentheses().is_specific_raw_number_literal("1")
 }
 
 #[test]

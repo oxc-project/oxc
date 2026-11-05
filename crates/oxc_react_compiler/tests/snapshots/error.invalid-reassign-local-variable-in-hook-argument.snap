@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.invalid-reassign-local-variable-in-hook-argument.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot reassign variable after render completes", labels: [LabeledSpan { label: Some("Cannot reassign `local` after render completes"), span: Span { start: 157, end: 162 }, primary: true }, LabeledSpan { label: Some("`local` is declared here"), span: Span { start: 107, end: 112 }, primary: false }], help: Some("Reassigning `local` after render has completed can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Immutability") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot modify local variables after render completes", labels: [LabeledSpan { label: Some("This modifies `local`"), span: Span { start: 157, end: 162 }, primary: true }, LabeledSpan { label: Some("This function may (indirectly) reassign or modify `local` after render"), span: Span { start: 1114, end: 1121 }, primary: false }], help: Some("This argument is a function which may reassign or mutate `local` after render, which can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Immutability") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability") } }
+
+No changes.

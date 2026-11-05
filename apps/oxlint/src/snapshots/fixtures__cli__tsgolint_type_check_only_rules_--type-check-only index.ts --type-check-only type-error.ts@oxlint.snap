@@ -1,0 +1,30 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-check-only index.ts
+working directory: fixtures/cli/tsgolint_type_check_only_rules
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
+
+########## 
+arguments: --type-check-only type-error.ts
+working directory: fixtures/cli/tsgolint_type_check_only_rules
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[type-error.ts:1:7]
+ 1 | const n: number = "x";
+   :       ^
+ 2 | Promise.resolve();
+   `----
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

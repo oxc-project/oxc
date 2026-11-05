@@ -1,9 +1,8 @@
 use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, AstType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::static_ident;
 
 fn prefer_rest_params_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use the rest parameters instead of `arguments`.")
@@ -70,35 +69,37 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferRestParams {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::IdentifierReference(identifier) = node.kind() {
-            if identifier.name != "arguments"
-                || !is_inside_of_function(node, ctx)
-                || is_not_normal_member_access(node, ctx)
+    fn run_once(&self, ctx: &LintContext) {
+        let Some(references) = ctx.scoping().root_unresolved_references().get("arguments") else {
+            return;
+        };
+
+        for &reference_id in references {
+            let reference = ctx.scoping().get_reference(reference_id);
+            let reference_node = ctx.nodes().get_node(reference.node_id());
+
+            // Only references to the implicit `arguments` object are relevant, i.e.
+            // those inside a (non-arrow) function.
+            if !ctx
+                .nodes()
+                .ancestors(reference_node.id())
+                .any(|ancestor| matches!(ancestor.kind(), AstKind::Function(_)))
             {
-                return;
+                continue;
             }
-            let binding = ctx.scoping().find_binding(node.scope_id(), static_ident!("arguments"));
-            if binding.is_none() {
-                ctx.diagnostic(prefer_rest_params_diagnostic(node.span()));
+
+            if !is_normal_member_access(reference_node, ctx) {
+                ctx.diagnostic(prefer_rest_params_diagnostic(reference_node.span()));
             }
         }
     }
-}
 
-fn is_inside_of_function(node: &AstNode, ctx: &LintContext) -> bool {
-    let mut current = node;
-    while !matches!(current.kind(), AstKind::Program(_)) {
-        let parent = ctx.nodes().parent_node(current.id());
-        if matches!(parent.kind(), AstKind::Function(_)) {
-            return true;
-        }
-        current = parent;
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(AstType::Function)
     }
-    false
 }
 
-fn is_not_normal_member_access(identifier: &AstNode, ctx: &LintContext) -> bool {
+fn is_normal_member_access(identifier: &AstNode, ctx: &LintContext) -> bool {
     if let AstKind::StaticMemberExpression(member) = ctx.nodes().parent_kind(identifier.id()) {
         return member.object.span() == identifier.span();
     }
@@ -124,6 +125,8 @@ fn test() {
         "function foo() { arguments[0]; }",
         "function foo() { arguments[1]; }",
         "function foo() { arguments[Symbol.iterator]; }",
+        "function foo() { function bar() { arguments; } }",
+        "function foo() { var bar = () => arguments; }",
     ];
 
     Tester::new(PreferRestParams::NAME, PreferRestParams::PLUGIN, pass, fail).test_and_snapshot();
