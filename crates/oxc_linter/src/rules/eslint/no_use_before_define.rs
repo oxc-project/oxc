@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, ForStatementLeft, IdentifierReference, ModuleExportName},
+    ast::{BindingPattern, ClassElement, ForStatementLeft, IdentifierReference, ModuleExportName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -485,6 +485,34 @@ fn is_in_initializer(
     reference_node: &AstNode<'_>,
     ctx: &LintContext<'_>,
 ) -> bool {
+    if let AstKind::Class(class) = ctx.symbol_declaration(symbol_id).kind() {
+        let reference_span = reference_node.kind().span();
+        if !class.span.contains_inclusive(reference_span)
+            || is_from_separate_execution_context(symbol_id, reference_node, ctx)
+        {
+            return false;
+        }
+
+        return !class.body.body.iter().any(|element| match element {
+            ClassElement::StaticBlock(block) => block.span.contains_inclusive(reference_span),
+            ClassElement::PropertyDefinition(property) => {
+                property.r#static
+                    && property
+                        .value
+                        .as_ref()
+                        .is_some_and(|value| value.span().contains_inclusive(reference_span))
+            }
+            ClassElement::AccessorProperty(property) => {
+                property.r#static
+                    && property
+                        .value
+                        .as_ref()
+                        .is_some_and(|value| value.span().contains_inclusive(reference_span))
+            }
+            _ => false,
+        });
+    }
+
     let declaration_span = ctx.scoping().symbol_span(symbol_id);
     initializer_reference_declaration_span(reference_node, ctx, |pattern| {
         pattern.span().contains_inclusive(declaration_span).then_some(declaration_span)
