@@ -114,7 +114,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             (None, None)
         };
-        let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
+        let init = self
+            .eat(Kind::Eq)
+            .then(|| self.parse_after_delimiter(Self::parse_assignment_expression_or_higher));
         let decl = VariableDeclarator::new(
             self.end_span(start),
             id,

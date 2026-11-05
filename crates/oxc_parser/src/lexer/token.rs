@@ -13,7 +13,8 @@ use super::kind::Kind;
 // - Bits 72-79 (8 bits): `is_on_new_line` (`bool`)
 // - Bits 80-87 (8 bits): `escaped` (`bool`)
 // - Bits 88-95 (8 bits): `has_separator` (`bool`)
-// - Bits 96-127 (32 bits): unused
+// - Bits 96-103 (8 bits): `follows_comment` (`bool`)
+// - Bits 104-127 (24 bits): unused
 
 const START_SHIFT: usize = 0;
 const END_SHIFT: usize = 32;
@@ -21,6 +22,7 @@ const KIND_SHIFT: usize = 64;
 const IS_ON_NEW_LINE_SHIFT: usize = 72;
 const ESCAPED_SHIFT: usize = 80;
 const HAS_SEPARATOR_SHIFT: usize = 88;
+const FOLLOWS_COMMENT_SHIFT: usize = 96;
 
 const START_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const END_MASK: u128 = 0xFFFF_FFFF; // 32 bits
@@ -47,6 +49,7 @@ const _: () = {
     assert!(is_valid_shift::<bool>(IS_ON_NEW_LINE_SHIFT));
     assert!(is_valid_shift::<bool>(ESCAPED_SHIFT));
     assert!(is_valid_shift::<bool>(HAS_SEPARATOR_SHIFT));
+    assert!(is_valid_shift::<bool>(FOLLOWS_COMMENT_SHIFT));
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -77,6 +80,7 @@ impl fmt::Debug for Token {
             .field("is_on_new_line", &self.is_on_new_line())
             .field("escaped", &self.escaped())
             .field("has_separator", &self.has_separator())
+            .field("follows_comment", &self.follows_comment())
             .finish()
     }
 }
@@ -277,6 +281,22 @@ impl Token {
 
         // SAFETY: `HAS_SEPARATOR_SHIFT` is a valid `bool` field position in `Token`
         unsafe { self.write_bool(HAS_SEPARATOR_SHIFT, value) };
+    }
+
+    /// Whether a comment was lexed between the previous token and this token.
+    ///
+    /// Re-lexed tokens may not preserve this flag.
+    #[inline]
+    pub fn follows_comment(&self) -> bool {
+        // SAFETY: 8 bits starting at `FOLLOWS_COMMENT_SHIFT` are only set in `Token::default` and
+        // `Token::set_follows_comment`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
+        unsafe { self.read_bool(FOLLOWS_COMMENT_SHIFT) }
+    }
+
+    #[inline]
+    pub(super) fn set_follows_comment(&mut self, value: bool) {
+        // SAFETY: `FOLLOWS_COMMENT_SHIFT` is a valid `bool` field position in `Token`
+        unsafe { self.write_bool(FOLLOWS_COMMENT_SHIFT, value) };
     }
 
     /// Read `bool` from 8 bits starting at bit position `shift`.
