@@ -69,14 +69,13 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut init = None;
         if decl.type_annotation.is_none() {
             if let Some(init_expr) = &decl.init {
-                // if kind is const and it doesn't need to infer type from expression
-                if kind.is_const() && !Self::is_need_to_infer_type_from_expression(init_expr) {
-                    if let Expression::TemplateLiteral(lit) = init_expr {
-                        init =
-                            self.transform_template_to_string(lit).map(Expression::StringLiteral);
-                    } else {
-                        init = Some(init_expr.clone_in(self.allocator()));
-                    }
+                // If kind is const and the initializer is a primitive literal, keep it
+                // (`declare const a = true;`). Otherwise, infer the type from the expression.
+                if kind.is_const()
+                    && let Some(literal) =
+                        self.get_literal_initializer_without_const_assertion(init_expr)
+                {
+                    init = Some(literal);
                 } else if !kind.is_const() || !matches!(init_expr, Expression::TemplateLiteral(_)) {
                     // otherwise, we need to infer type from expression
                     binding_type = self.infer_type_from_expression(init_expr);

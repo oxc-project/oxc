@@ -130,14 +130,28 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    pub(crate) fn is_need_to_infer_type_from_expression(expr: &Expression<'a>) -> bool {
+    /// Returns the initializer to keep in the declaration if `expr` is a primitive
+    /// literal, such as `true`, `1`, `-1`, `"x"`, `` `x` ``, or `1n`.
+    /// The returned initializer has no parentheses, like the tsc output.
+    pub(crate) fn get_literal_initializer_without_const_assertion(
+        &self,
+        expr: &Expression<'a>,
+    ) -> Option<Expression<'a>> {
         match expr {
-            Expression::NumericLiteral(_)
+            Expression::BooleanLiteral(_)
+            | Expression::NumericLiteral(_)
             | Expression::BigIntLiteral(_)
-            | Expression::StringLiteral(_) => false,
-            Expression::TemplateLiteral(lit) => !lit.expressions.is_empty(),
-            Expression::UnaryExpression(expr) => !Self::can_infer_unary_expression(expr),
-            _ => true,
+            | Expression::StringLiteral(_) => Some(expr.clone_in(self.allocator())),
+            Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
+                self.transform_template_to_string(lit).map(Expression::StringLiteral)
+            }
+            Expression::UnaryExpression(expr) if Self::can_infer_unary_expression(expr) => {
+                Some(Expression::UnaryExpression(expr.clone_in(self.allocator())))
+            }
+            Expression::ParenthesizedExpression(expr) => {
+                self.get_literal_initializer_without_const_assertion(&expr.expression)
+            }
+            _ => None,
         }
     }
 }

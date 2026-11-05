@@ -1,0 +1,25 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/const-literal-initializer.ts
+---
+```
+==================== .D.TS ====================
+
+export declare const directTrue = true;
+export declare const directFalse = false;
+export declare const parenTrue = true;
+export declare const parenNumber = 1;
+export declare const negativeNumber = -1;
+export declare const directString = "x";
+export declare const templateNoExpr = "x";
+export declare const directBigInt = 1n;
+export declare const negativeBigInt = -1n;
+export declare namespace ns {
+	const nested = true;
+}
+declare const local = false;
+export { local };
+export declare let letTrue: boolean;
+export declare var varTrue: boolean;
+export declare let letNumber: number;
+export declare const annotated: boolean;
