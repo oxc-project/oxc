@@ -230,6 +230,220 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
         "id": 15,
         "node": "Function(destructuredCatchParameter)",
         "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 22,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(Function)",
+                    "id": 25,
+                    "node": "Function(g)",
+                    "symbols": []
+                  },
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(Function)",
+                    "id": 26,
+                    "node": "Function(g)",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 24,
+                "node": "BlockStatement",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 23,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 21,
+        "node": "Function(simpleCatchParameterIfStatement)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 13,
+            "name": "x",
+            "node": "FormalParameter(x)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 4,
+                "name": "x",
+                "node_id": 79,
+                "scope_id": 24
+              },
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 5,
+                "name": "x",
+                "node_id": 85,
+                "scope_id": 24
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable | Function)",
+            "id": 14,
+            "name": "g",
+            "node": "CatchParameter",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 6,
+                "name": "g",
+                "node_id": 91,
+                "scope_id": 21
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 28,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(Function)",
+                    "id": 31,
+                    "node": "Function(g)",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 30,
+                "node": "BlockStatement",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 29,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 27,
+        "node": "Function(simpleCatchParameterVarIfStatement)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 16,
+            "name": "x",
+            "node": "FormalParameter(x)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 7,
+                "name": "x",
+                "node_id": 108,
+                "scope_id": 30
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable | Function)",
+            "id": 17,
+            "name": "g",
+            "node": "CatchParameter",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 8,
+                "name": "g",
+                "node_id": 114,
+                "scope_id": 27
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 33,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(Function)",
+                    "id": 36,
+                    "node": "Function(g)",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 35,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(BlockScopedVariable | CatchVariable | Function)",
+                    "id": 20,
+                    "name": "g",
+                    "node": "CatchParameter",
+                    "references": []
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 34,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 32,
+        "node": "Function(destructuredCatchParameterIfStatement)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 19,
+            "name": "x",
+            "node": "FormalParameter(x)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 9,
+                "name": "x",
+                "node_id": 129,
+                "scope_id": 35
+              }
+            ]
+          }
+        ]
       }
     ],
     "flags": "ScopeFlags(Top)",
@@ -262,6 +476,27 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
         "id": 9,
         "name": "destructuredCatchParameter",
         "node": "Function(destructuredCatchParameter)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 12,
+        "name": "simpleCatchParameterIfStatement",
+        "node": "Function(simpleCatchParameterIfStatement)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 15,
+        "name": "simpleCatchParameterVarIfStatement",
+        "node": "Function(simpleCatchParameterVarIfStatement)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 18,
+        "name": "destructuredCatchParameterIfStatement",
+        "node": "Function(destructuredCatchParameterIfStatement)",
         "references": []
       }
     ]
