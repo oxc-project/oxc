@@ -431,7 +431,6 @@ fn get_source_code_line_span(statement_span: Span, ctx: &LintContext<'_>) -> Spa
     let start = statement_span.start as usize;
     let end = statement_span.end as usize;
 
-    // Use char boundaries, because the source text can contain non-ASCII characters.
     let line_end = source_text[end..].chars().next().map_or(end, |c| end + c.len_utf8());
 
     let column_0_span_index = source_text[..start].rfind('\n').map_or(start, |index| index + 1);
@@ -573,7 +572,6 @@ fn test() {
 			      expect(x).toHaveBeenCalledWith<[string]>('hoge');
 			      ",
         "expect(x).toHaveBeenCalledOnce();\nexpect(x).toHaveBeenCalledWith('hoge');",
-        // Non-ASCII characters near the statement must not cause a panic.
         r#"expect(x).toHaveBeenCalledWith("🍣"); expect(x).toHaveBeenCalledOnce();"#,
         "expect(x).toHaveBeenCalledWith(1);\nexpect(x).toHaveBeenCalledOnce();\u{a0}",
     ];
@@ -747,7 +745,6 @@ fn test() {
 			      ",
             None,
         ),
-        // Non-ASCII characters near the statement must not cause a panic.
         (
             "expect(x).toHaveBeenCalledWith(1);\n\u{a0}expect(x).toHaveBeenCalledOnce();",
             "expect(x).toHaveBeenCalledExactlyOnceWith(1);\n",
