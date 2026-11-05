@@ -492,12 +492,10 @@ fn write_pseudo_class_arg<'a>(kind: &PseudoClassSelectorArgKind<'a>, f: &mut Css
         PseudoClassSelectorArgKind::LessExtendList(list) => {
             less::write_less_extend_list(list, f);
         }
-        // Number, LanguageRangeList, TokenSeq:
-        // print the source verbatim (normalized below where needed).
-        // They are kept verbatim because `postcss-selector-parser` tokenizes them as opaque strings
-        // and Prettier emits them raw (matching that keeps `:lang(...)` etc.)
-        // byte-identical to Prettier output.
-        // Real-world usage is rare enough that the consistency cost is negligible.
+        // Number, LanguageRangeList, TokenSeq: print the source verbatim.
+        // An unknown name's arg is `<any-value>` per spec, so it is raw (AGENTS.md "Printing raw vs typed").
+        // NOTE: Prettier differs, `postcss-selector-parser` reparses every pseudo arg as selectors
+        // and normalizes them (`:lang('de')` -> `:lang("de")`, `:foo(.a [x='y'])` -> `[x="y"]`).
         _ => {
             let span = to_span(kind.span());
             write!(f, text(source.text_for(&span)));
