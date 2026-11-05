@@ -69,7 +69,7 @@ fn format_cycle(stack: &[(CompactStr, Arc<ModuleRecord>)], cwd: &Path) -> String
 }
 
 // <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-cycle.md>
-#[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoCycle {
     /// Maximum dependency depth to traverse
@@ -80,6 +80,12 @@ pub struct NoCycle {
     ignore_external: bool,
     /// Allow cyclic dependency if there is at least one dynamic import in the chain
     allow_unsafe_dynamic_cyclic_dependency: bool,
+}
+
+/// Only options that change the edges followed by no-cycle's graph walks.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ImportCycleOptions {
+    ignore_types: bool,
 }
 
 impl Default for NoCycle {
@@ -162,7 +168,7 @@ impl Rule for NoCycle {
             if !component.is_cyclic() {
                 return;
             }
-        } else if self.max_depth == u32::MAX && !self.can_be_in_cycle(module_record) {
+        } else if self.uses_scc_prefilter() && !self.can_be_in_cycle(module_record) {
             return;
         }
 
@@ -227,6 +233,17 @@ impl Rule for NoCycle {
 }
 
 impl NoCycle {
+    pub(crate) fn graph_options(&self) -> ImportCycleOptions {
+        // Keep this exhaustive: new options must be classified as graph or diagnostic options.
+        let Self {
+            ignore_types,
+            max_depth: _,
+            ignore_external: _,
+            allow_unsafe_dynamic_cyclic_dependency: _,
+        } = *self;
+        ImportCycleOptions { ignore_types }
+    }
+
     // Avoid a full prepass for bounded searches. Cached edge policies must match exactly.
     pub(crate) fn uses_scc_prefilter(&self) -> bool {
         self.max_depth == u32::MAX
@@ -283,6 +300,17 @@ impl NoCycle {
 
     pub(crate) fn should_traverse_module(
         &self,
+        key: &CompactStr,
+        module: &Arc<ModuleRecord>,
+        parent: &ModuleRecord,
+    ) -> bool {
+        self.graph_options().should_traverse_module(key, module, parent)
+    }
+}
+
+impl ImportCycleOptions {
+    pub(crate) fn should_traverse_module(
+        self,
         key: &CompactStr,
         module: &Arc<ModuleRecord>,
         parent: &ModuleRecord,

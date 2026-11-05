@@ -30,7 +30,7 @@ pub struct ImportCycleComponent {
 
 impl ImportCycleComponent {
     pub(crate) fn supports_rule(&self, rule: &NoCycle) -> bool {
-        self.graph.rule == *rule
+        self.graph.options == rule.graph_options()
     }
 
     pub(crate) fn is_cyclic(&self) -> bool {
@@ -704,7 +704,7 @@ mod cycle_component_tests {
 
     #[test]
     fn mutating_a_dependency_invalidates_the_whole_graph() {
-        let graph = Arc::new(ImportCycleGraph::new(NoCycle::default()));
+        let graph = Arc::new(ImportCycleGraph::new(NoCycle::default().graph_options()));
         let root = ModuleRecord::default();
         let dependency = ModuleRecord::default();
         root.set_import_cycle_component(Arc::clone(&graph), (0, false));
@@ -720,8 +720,8 @@ mod cycle_component_tests {
 
     #[test]
     fn components_are_scoped_to_one_graph_build() {
-        let graph = Arc::new(ImportCycleGraph::new(NoCycle::default()));
-        let other_graph_id = Arc::new(ImportCycleGraph::new(NoCycle::default()));
+        let graph = Arc::new(ImportCycleGraph::new(NoCycle::default().graph_options()));
+        let other_graph_id = Arc::new(ImportCycleGraph::new(NoCycle::default().graph_options()));
         let root = ModuleRecord::default();
         let same_component = ModuleRecord::default();
         let other_component = ModuleRecord::default();
@@ -736,6 +736,16 @@ mod cycle_component_tests {
         let other_policy: NoCycle =
             serde_json::from_value(serde_json::json!({"ignoreTypes": false})).unwrap();
         assert!(!component.supports_rule(&other_policy));
+        for options in [
+            serde_json::json!({"allowUnsafeDynamicCyclicDependency": true}),
+            serde_json::json!({"ignoreExternal": true}),
+            serde_json::json!({"allowUnsafeDynamicCyclicDependency": true, "ignoreExternal": true}),
+        ] {
+            assert!(component.supports_rule(&serde_json::from_value(options).unwrap()));
+        }
+        let bounded: NoCycle = serde_json::from_value(serde_json::json!({"maxDepth": 1})).unwrap();
+        // Bounded rules may reuse existing labels without triggering an unbounded prepass.
+        assert!(component.supports_rule(&bounded));
         assert!(!component.excludes_module(&same_component));
         assert!(component.excludes_module(&other_component));
         assert!(!component.excludes_module(&other_graph));

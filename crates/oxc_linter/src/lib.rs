@@ -313,11 +313,12 @@ impl Linter {
     }
 
     pub(crate) fn import_cycle_graph(&self) -> Option<Arc<module_graph_scc::ImportCycleGraph>> {
-        let rule = self.config.find_rule(
-            |rule| matches!(rule, RuleEnum::ImportNoCycle(rule) if rule.uses_scc_prefilter()),
-        )?;
-        let RuleEnum::ImportNoCycle(rule) = rule else { unreachable!() };
-        Some(Arc::new(module_graph_scc::ImportCycleGraph::new(rule.clone())))
+        self.config.find_rule(|rule| match rule {
+            RuleEnum::ImportNoCycle(rule) if rule.uses_scc_prefilter() => {
+                Some(Arc::new(module_graph_scc::ImportCycleGraph::new(rule.graph_options())))
+            }
+            _ => None,
+        })
     }
 
     /// Return `true` if `Linter` has an external linter (JS plugins).

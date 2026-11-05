@@ -123,45 +123,13 @@ impl Config {
         self.base.rules.len()
     }
 
-    pub fn apply_overrides(&self, path: &Path) -> ResolvedLinterState {
-        if self.overrides.is_empty() {
-            return self.base.clone();
-        }
-
-        let relative_path = self
-            .base
-            .config
-            .path
-            .as_ref()
-            .and_then(|config_path| {
-                config_path.parent().map(|parent| path.strip_prefix(parent).unwrap_or(path))
-            })
-            .unwrap_or(path);
-
-        let path = relative_path.to_string_lossy();
-        let path = path.as_ref();
-        let overrides_to_apply = self
-            .overrides
-            .iter()
-            .filter(|config| config.files.is_match(path) && !config.exclude_files.is_match(path));
-
-        let mut overrides_to_apply = overrides_to_apply.peekable();
-
-        if overrides_to_apply.peek().is_none() {
-            return self.base.clone();
-        }
-
-        let mut env = self.base.config.env.clone();
-        let mut globals = self.base.config.globals.clone();
-        let mut plugins = self.base.config.plugins;
-        let settings = self.base.config.settings.clone();
-
-        for override_config in overrides_to_apply.clone() {
-            if let Some(override_plugins) = override_config.plugins {
-                plugins |= override_plugins;
-            }
-        }
-
+    /// Merge builtin rules and visit each override in one pass, sharing category precedence.
+    fn builtin_rules_for_overrides<'a>(
+        &self,
+        plugins: LintPlugins,
+        overrides: impl Iterator<Item = &'a ResolvedOxlintOverride>,
+        mut on_override: impl FnMut(&ResolvedOxlintOverride),
+    ) -> FxHashMap<RuleEnum, AllowWarnDeny> {
         let builtin_rule_plugins = Self::builtin_rule_plugins(plugins);
         let mut rules = self
             .base_rules
@@ -176,18 +144,11 @@ impl Config {
         // Build this only if an override adds a plugin whose category rules need applying.
         let mut all_rules: Option<Vec<RuleEnum>> = None;
 
-        let mut external_rules = self
-            .base
-            .external_rules
-            .iter()
-            .map(|&(rule_id, options_id, severity)| (rule_id, (options_id, severity)))
-            .collect::<FxHashMap<_, _>>();
-
         // Track which plugins have already had their category rules applied.
         // Start with the root plugins since they already have categories applied in base_rules.
         let mut configured_plugins = self.base.config.plugins;
 
-        for override_config in overrides_to_apply {
+        for override_config in overrides {
             if let Some(override_plugins) = override_config.plugins
                 && override_plugins != plugins
             {
@@ -233,19 +194,73 @@ impl Config {
                     rules.insert(rule.clone(), *severity);
                 }
             }
+            on_override(override_config);
+        }
+        rules
+    }
 
-            for (external_rule_id, options_id, severity) in &override_config.rules.external_rules {
-                external_rules.insert(*external_rule_id, (*options_id, *severity));
-            }
+    pub fn apply_overrides(&self, path: &Path) -> ResolvedLinterState {
+        if self.overrides.is_empty() {
+            return self.base.clone();
+        }
 
-            if let Some(override_env) = &override_config.env {
-                override_env.override_envs(&mut env);
-            }
+        let relative_path = self
+            .base
+            .config
+            .path
+            .as_ref()
+            .and_then(|config_path| {
+                config_path.parent().map(|parent| path.strip_prefix(parent).unwrap_or(path))
+            })
+            .unwrap_or(path);
 
-            if let Some(override_globals) = &override_config.globals {
-                override_globals.override_globals(&mut globals);
+        let path = relative_path.to_string_lossy();
+        let path = path.as_ref();
+        let overrides_to_apply = self
+            .overrides
+            .iter()
+            .filter(|config| config.files.is_match(path) && !config.exclude_files.is_match(path));
+
+        let mut overrides_to_apply = overrides_to_apply.peekable();
+
+        if overrides_to_apply.peek().is_none() {
+            return self.base.clone();
+        }
+
+        let mut env = self.base.config.env.clone();
+        let mut globals = self.base.config.globals.clone();
+        let mut plugins = self.base.config.plugins;
+        let settings = self.base.config.settings.clone();
+
+        for override_config in overrides_to_apply.clone() {
+            if let Some(override_plugins) = override_config.plugins {
+                plugins |= override_plugins;
             }
         }
+
+        let mut external_rules = self
+            .base
+            .external_rules
+            .iter()
+            .map(|&(rule_id, options_id, severity)| (rule_id, (options_id, severity)))
+            .collect::<FxHashMap<_, _>>();
+
+        let rules =
+            self.builtin_rules_for_overrides(plugins, overrides_to_apply, |override_config| {
+                for (external_rule_id, options_id, severity) in
+                    &override_config.rules.external_rules
+                {
+                    external_rules.insert(*external_rule_id, (*options_id, *severity));
+                }
+
+                if let Some(override_env) = &override_config.env {
+                    override_env.override_envs(&mut env);
+                }
+
+                if let Some(override_globals) = &override_config.globals {
+                    override_globals.override_globals(&mut globals);
+                }
+            });
 
         let config: Arc<LintConfig> = if plugins == self.base.config.plugins
             && env == self.base.config.env
@@ -293,36 +308,23 @@ pub struct ConfigStore {
 }
 
 impl ConfigStore {
-    /// Find a potentially enabled rule without resolving globs for every source file.
-    /// Overrides may not match any selected file, so this inventory is conservative.
-    pub(crate) fn find_rule(&self, predicate: impl Fn(&RuleEnum) -> bool) -> Option<&RuleEnum> {
+    /// Select a potentially enabled rule without resolving globs for every source file.
+    /// Each override is merged with its base, so explicit options replace category defaults.
+    /// Overrides may not match selected files; this inventory remains conservative.
+    pub(crate) fn find_rule<T>(&self, select: impl Fn(&RuleEnum) -> Option<T>) -> Option<T> {
         std::iter::once(&self.base).chain(self.nested_configs.values()).find_map(|config| {
-            config
-                .base_rules
-                .iter()
-                .chain(config.overrides.iter().flat_map(|entry| &entry.rules.builtin_rules))
-                .find_map(|(rule, severity)| {
-                    (severity.is_warn_deny() && predicate(rule)).then_some(rule)
+            config.base.rules.iter().find_map(|(rule, _)| select(rule)).or_else(|| {
+                config.overrides.iter().find_map(|entry| {
+                    let plugins =
+                        config.plugins() | entry.plugins.unwrap_or_else(LintPlugins::empty);
+                    config
+                        .builtin_rules_for_overrides(plugins, std::iter::once(entry), |_| {})
+                        .iter()
+                        .find_map(|(rule, severity)| {
+                            severity.is_warn_deny().then(|| select(rule)).flatten()
+                        })
                 })
-                .or_else(|| {
-                    // Adding a plugin in an override can also enable its category rules.
-                    crate::rules::RULES.iter().find(|rule| {
-                        predicate(rule)
-                            && !config.base_rules.iter().any(|(configured, _)| configured == *rule)
-                            && config
-                                .categories
-                                .get(&rule.category())
-                                .is_some_and(|severity| severity.is_warn_deny())
-                            && LintPlugins::try_from(rule.plugin_name()).is_ok_and(|plugin| {
-                                !config.plugins().contains(plugin)
-                                    && config.overrides.iter().any(|entry| {
-                                        entry
-                                            .plugins
-                                            .is_some_and(|plugins| plugins.contains(plugin))
-                                    })
-                            })
-                    })
-                })
+            })
         })
     }
 
@@ -512,7 +514,9 @@ mod test {
             .build(external)
             .unwrap()
         }
-        let eligible = |rule: &RuleEnum| matches!(rule, RuleEnum::ImportNoCycle(rule) if rule.uses_scc_prefilter());
+        let eligible = |rule: &RuleEnum| {
+            matches!(rule, RuleEnum::ImportNoCycle(rule) if rule.uses_scc_prefilter()).then_some(())
+        };
         for (value, expected) in [
             (serde_json::json!({"categories": {}, "plugins": ["import"]}), false),
             (
@@ -532,11 +536,23 @@ mod test {
                 true,
             ),
             (
-                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [{"files": ["*.ts"], "plugins": ["import"]}]}),
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": ["typescript"], "overrides": [{"files": ["*.ts"], "plugins": ["import"]}]}),
                 true,
             ),
             (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [{"files": ["*.ts"], "plugins": ["import"]}]}),
+                false,
+            ),
+            (
                 serde_json::json!({"categories": {"restriction": "warn"}, "plugins": ["import"], "rules": {"import/no-cycle": "off"}, "overrides": [{"files": ["*.ts"], "plugins": ["import"]}]}),
+                false,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": ["typescript"], "overrides": [{"files": ["*.ts"], "plugins": ["import"], "rules": {"import/no-cycle": ["error", {"maxDepth": 1}]}}]}),
+                false,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": ["typescript"], "overrides": [{"files": ["*.ts"], "plugins": ["import"], "rules": {"import/no-cycle": "off"}}]}),
                 false,
             ),
         ] {
@@ -545,6 +561,15 @@ mod test {
             let base = build(value, &mut external);
             let store = ConfigStore::new(base, FxHashMap::default(), external);
             assert_eq!(store.find_rule(eligible).is_some(), expected, "{description}");
+            assert_eq!(
+                store
+                    .resolve(Path::new("file.ts"))
+                    .rules
+                    .iter()
+                    .any(|(rule, _)| eligible(rule).is_some()),
+                expected,
+                "resolved config: {description}",
+            );
         }
         let mut external = ExternalPluginStore::default();
         let base = build(serde_json::json!({"categories": {}}), &mut external);

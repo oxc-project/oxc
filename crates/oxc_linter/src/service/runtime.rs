@@ -271,51 +271,66 @@ fn link_modules(
     requests_by_path: Vec<(Arc<OsStr>, ModuleResolvedRequests)>,
     cycle_graph: Option<&mut CycleGraphState>,
 ) {
+    let modules = modules_by_path.pin();
     let Some(cache) = cycle_graph.filter(|cache| cache.graph.valid.load(Ordering::Acquire)) else {
-        link_imports(modules_by_path, requests_by_path, |_, _, _, _| {});
+        link_imports(
+            modules_by_path,
+            requests_by_path
+                .into_iter()
+                .map(|(path, sections)| (modules.get(&path).unwrap().as_slice(), sections)),
+            |_, _, _, _| {},
+        );
         return;
     };
-    let modules = modules_by_path.pin();
-    // Borrow keys from the graph map so the requests can still move into loaded_modules.
-    let indices: FxHashMap<&OsStr, usize> = requests_by_path
-        .iter()
-        .enumerate()
-        .map(|(index, (path, _))| {
-            let (path, _) = modules.get_key_value(path).unwrap();
-            (path.as_ref(), index)
+    // Look up each group's records once, reusing them for linking and label publication.
+    // Borrow graph keys so request specifiers can still move into loaded_modules.
+    let mut nodes: Vec<_> = requests_by_path
+        .into_iter()
+        .map(|(path, sections)| {
+            let (path, records) = modules.get_key_value(&path).unwrap();
+            (path, records, sections)
         })
         .collect();
-    let mut edges = vec![Vec::new(); indices.len()];
+    let indices: FxHashMap<&OsStr, usize> =
+        nodes.iter().enumerate().map(|(index, (path, _, _))| ((*path).as_ref(), index)).collect();
+    let mut edges = vec![Vec::new(); nodes.len()];
 
     // 1. Collect cycle edges alongside the existing target lookups.
-    link_imports(modules_by_path, requests_by_path, |index, record, request, target| {
-        if let Some(&dependency) = indices.get(request.resolved_requested_path.as_ref())
-            && cache.graph.rule.should_traverse_module(&request.specifier, target, record)
-        {
-            edges[index].push(dependency);
-        }
-    });
+    link_imports(
+        modules_by_path,
+        nodes.iter_mut().map(|(_, records, sections)| (records.as_slice(), take(sections))),
+        |index, record, request, target| {
+            if let Some(&dependency) = indices.get(request.resolved_requested_path.as_ref())
+                && cache.graph.options.should_traverse_module(&request.specifier, target, record)
+            {
+                edges[index].push(dependency);
+            }
+        },
+    );
 
     // 2. Publish labels only when there is a valid analysis to share.
     if let Some(components) = cache.classify_edges(&edges) {
-        for (path, index) in indices {
-            for record in modules.get(path).unwrap() {
-                record.set_import_cycle_component(Arc::clone(&cache.graph), components[index]);
+        for ((_, records, _), component) in nodes.into_iter().zip(components) {
+            for record in records {
+                record.set_import_cycle_component(Arc::clone(&cache.graph), component);
             }
         }
     }
 }
 
 /// A generic linking pass. The empty callback compiles away when SCC analysis is disabled.
-fn link_imports(
+fn link_imports<'a>(
     modules_by_path: &ModulesByPath,
-    requests_by_path: Vec<(Arc<OsStr>, ModuleResolvedRequests)>,
+    nodes: impl Iterator<Item = (&'a [Arc<ModuleRecord>], ModuleResolvedRequests)>,
     mut on_import: impl FnMut(usize, &ModuleRecord, &ResolvedModuleRequest, &Arc<ModuleRecord>),
 ) {
     let modules = modules_by_path.pin();
-    for (index, (path, sections)) in requests_by_path.into_iter().enumerate() {
-        let records = modules.get(&path).unwrap();
-        assert_eq!(records.len(), sections.len(), "Module records and requests must align");
+    for (index, (records, sections)) in nodes.enumerate() {
+        assert_eq!(
+            records.len(),
+            sections.len(),
+            "Module records and requests must align. Please file an issue at https://github.com/oxc-project/oxc/issues",
+        );
         for (record, requests) in records.iter().zip(sections) {
             let mut loaded_modules = record.write_loaded_modules();
             for request in requests {
@@ -619,7 +634,7 @@ impl Runtime {
     ///
     /// `on_module_to_lint` is called for each entry modules in `paths` when it's ready for linting,
     /// which means all its dependencies are resolved if import plugin is enabled.
-    fn resolve_modules<'a>(
+    fn resolve_modules<'a, const LINT_RULES: bool>(
         &'a self,
         file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
         paths: &'a IndexSet<Arc<OsStr>, FxBuildHasher>,
@@ -717,7 +732,12 @@ impl Runtime {
         // This channel is for posting `ModuleProcessOutput` from module threads to the graph thread.
         let (tx_process_output, rx_process_output) = mpsc::channel::<ModuleProcessOutput>();
 
-        let mut cycle_graph = self.linter.import_cycle_graph().map(CycleGraphState::new);
+        // Parse-diagnostic collection runs no lint rules and needs no cycle analysis.
+        let mut cycle_graph = if LINT_RULES {
+            self.linter.import_cycle_graph().map(CycleGraphState::new)
+        } else {
+            None
+        };
 
         // Whether the graph thread is one of rayon's worker threads. It's not when `scope` was created by
         // `rayon::in_place_scope` outside of the thread pool.
@@ -790,6 +810,7 @@ impl Runtime {
             };
 
             if cycle_graph.as_mut().is_some_and(|cache| !cache.register_path(&path)) {
+                // Release path tracking; earlier labels retain the shared invalidation flag.
                 cycle_graph = None;
             }
             let mut group_id = groups.find(encountered_paths[&path]);
@@ -923,7 +944,7 @@ impl Runtime {
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
         self.with_module_scope(|scope| {
-            self.resolve_modules(
+            self.resolve_modules::<true>(
                 file_system,
                 &paths_set,
                 scope,
@@ -1069,7 +1090,7 @@ impl Runtime {
 
         let messages = Mutex::new(Vec::<Message>::new());
         self.with_module_scope(|scope| {
-            self.resolve_modules(
+            self.resolve_modules::<true>(
                 file_system,
                 &paths_set,
                 scope,
@@ -1157,7 +1178,7 @@ impl Runtime {
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
         self.with_module_scope(|scope| {
-            self.resolve_modules(
+            self.resolve_modules::<false>(
                 file_system,
                 &paths_set,
                 scope,
@@ -1214,7 +1235,7 @@ impl Runtime {
 
         let messages = Mutex::new(Vec::<Message>::new());
         self.with_module_scope(|scope| {
-            self.resolve_modules(
+            self.resolve_modules::<true>(
                 file_system,
                 &paths_set,
                 scope,
@@ -1692,8 +1713,9 @@ mod cycle_component_tests {
         for type_only in [false, true] {
             let (modules, mut requests) = graph(type_only);
             let later_group = requests.split_off(2);
-            let mut cache =
-                CycleGraphState::new(Arc::new(ImportCycleGraph::new(NoCycle::default())));
+            let mut cache = CycleGraphState::new(Arc::new(ImportCycleGraph::new(
+                NoCycle::default().graph_options(),
+            )));
             link_modules(&modules, requests, Some(&mut cache));
             link_modules(&modules, later_group, Some(&mut cache));
             let records = modules.pin();
@@ -1722,7 +1744,9 @@ mod cycle_component_tests {
 
     #[test]
     fn path_equivalent_aliases_invalidate_already_published_components() {
-        let mut cache = CycleGraphState::new(Arc::new(ImportCycleGraph::new(NoCycle::default())));
+        let mut cache = CycleGraphState::new(Arc::new(ImportCycleGraph::new(
+            NoCycle::default().graph_options(),
+        )));
         assert!(cache.register_path(&Arc::from(OsStr::new("dir/a.ts"))));
         let root = record("root.ts");
         root.set_import_cycle_component(Arc::clone(&cache.graph), (0, false));

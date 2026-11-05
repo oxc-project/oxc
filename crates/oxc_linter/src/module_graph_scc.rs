@@ -1,17 +1,17 @@
 use std::sync::atomic::AtomicBool;
 
-use crate::rules::import::no_cycle::NoCycle;
+use crate::rules::import::no_cycle::ImportCycleOptions;
 
-/// One graph build and the exact rule options used to select its edges.
+/// One graph build and the import filtering options used to select its edges.
 #[derive(Debug)]
 pub struct ImportCycleGraph {
-    pub rule: NoCycle,
+    pub options: ImportCycleOptions,
     pub valid: AtomicBool,
 }
 
 impl ImportCycleGraph {
-    pub fn new(rule: NoCycle) -> Self {
-        Self { rule, valid: AtomicBool::new(true) }
+    pub fn new(options: ImportCycleOptions) -> Self {
+        Self { options, valid: AtomicBool::new(true) }
     }
 }
 
