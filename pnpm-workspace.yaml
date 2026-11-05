@@ -24,16 +24,11 @@ catalog:
   publint: 0.3.25
   rolldown: 1.2.14
   tsdown: 0.23.1
-  vite: 8.3.4
   vite-plus: 1.5.0
   vitest: 5.0.3
 
 overrides:
   rolldown: "catalog:"
-  vite: "catalog:"
-  # `vite-plus` needs its own Vite core (e.g. the internal options of `resolveConfigFromFile`).
-  # Keep the version in sync with `vite-plus` in the catalog.
-  vite-plus>vite: npm:@voidzero-dev/vite-plus-core@1.5.0
   emnapi: "catalog:"
 
 allowBuilds:
