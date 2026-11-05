@@ -739,7 +739,7 @@ const c = clsx(\`a\${{ " p ": x }}b\`);
     const result = await format("test.js", input, options);
     const consistent = await format("test.js", input, consistentOptions);
 
-    // Sorting leaves a single class as is, so it's quoted like a plain key,
+    // A single class is printed without the sorter, so it's quoted like a plain key,
     // unless a boundary space is kept next to a template quasi
     expect(result.code).toMatchInlineSnapshot(`
       "const a = clsx({ p: x, "a b": y, 1: z, " ": w });

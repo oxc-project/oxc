@@ -377,8 +377,8 @@ where
 
 /// Returns the class a string key is printed as when sorted in `ctx`,
 /// if that is a single class with no boundary space kept, e.g. `p` for `" p "`.
-/// - Sorting leaves a single class as is, so the key can be printed as a plain key with it,
-///   as Prettier quotes the plugin's output
+/// - Its output is known without the sorter, so the key is printed as a plain key with it, not sent to the sorter,
+///   and its quotes are decided as Prettier decides them on the plugin's output
 /// - Duplicates of a known class (`"flex flex"`) also print one, but only the sorter knows them
 pub fn tailwind_single_class_key<'a>(
     key: &StringLiteral<'_>,
