@@ -160,91 +160,6 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/if-statement-impli
             ]
           }
         ]
-      },
-      {
-        "children": [
-          {
-            "children": [],
-            "flags": "ScopeFlags(0x0)",
-            "id": 12,
-            "node": "BlockStatement",
-            "symbols": []
-          },
-          {
-            "children": [
-              {
-                "children": [
-                  {
-                    "children": [
-                      {
-                        "children": [],
-                        "flags": "ScopeFlags(Function)",
-                        "id": 16,
-                        "node": "Function(g)",
-                        "symbols": []
-                      }
-                    ],
-                    "flags": "ScopeFlags(0x0)",
-                    "id": 15,
-                    "node": "Program",
-                    "symbols": []
-                  }
-                ],
-                "flags": "ScopeFlags(0x0)",
-                "id": 14,
-                "node": "BlockStatement",
-                "symbols": [
-                  {
-                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-                    "id": 10,
-                    "name": "g",
-                    "node": "CatchParameter",
-                    "references": [
-                      {
-                        "flags": "ReferenceFlags(Read)",
-                        "id": 5,
-                        "name": "g",
-                        "node_id": 64,
-                        "scope_id": 14
-                      }
-                    ]
-                  }
-                ]
-              }
-            ],
-            "flags": "ScopeFlags(CatchClause)",
-            "id": 13,
-            "node": "CatchClause",
-            "symbols": []
-          }
-        ],
-        "flags": "ScopeFlags(Function)",
-        "id": 11,
-        "node": "Function(branchDoesNotShareCatchParameter)",
-        "symbols": [
-          {
-            "flags": "SymbolFlags(FunctionScopedVariable)",
-            "id": 9,
-            "name": "a",
-            "node": "FormalParameter(a)",
-            "references": [
-              {
-                "flags": "ReferenceFlags(Read)",
-                "id": 4,
-                "name": "a",
-                "node_id": 58,
-                "scope_id": 14
-              }
-            ]
-          },
-          {
-            "flags": "SymbolFlags(Function)",
-            "id": 11,
-            "name": "g",
-            "node": "Function(g)",
-            "references": []
-          }
-        ]
       }
     ],
     "flags": "ScopeFlags(Top)",
@@ -263,13 +178,6 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/if-statement-impli
         "id": 4,
         "name": "branchesHaveDistinctBindings",
         "node": "Function(branchesHaveDistinctBindings)",
-        "references": []
-      },
-      {
-        "flags": "SymbolFlags(Function)",
-        "id": 8,
-        "name": "branchDoesNotShareCatchParameter",
-        "node": "Function(branchDoesNotShareCatchParameter)",
         "references": []
       }
     ]

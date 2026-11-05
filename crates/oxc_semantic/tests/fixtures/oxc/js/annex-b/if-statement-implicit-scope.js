@@ -14,13 +14,3 @@ function branchesHaveDistinctBindings(a) {
   else function g() { return 2; }
   return g;
 }
-
-// The function is separate from a simple catch parameter, which still permits the var binding.
-function branchDoesNotShareCatchParameter(a) {
-  try {
-    throw 1;
-  } catch (g) {
-    if (a) function g() {}
-    return g;
-  }
-}

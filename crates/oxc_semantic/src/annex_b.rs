@@ -65,7 +65,11 @@ impl SemanticBuilder<'_> {
         let functions = &self.annex_b_functions[start..];
         for function in functions {
             if let Some(blocker_id) = annex_b_var_binding_blocker(&self.scoping, function) {
-                self.scoping.annex_b_blockers.insert(blocker_id);
+                // Invalid `{ function f() {} var f; }` can merge and move the function's symbol
+                // before this deferred pass. Its redeclaration diagnostic is already recorded.
+                if blocker_id != function.symbol_id {
+                    self.scoping.add_annex_b_block_function(function.symbol_id, blocker_id);
+                }
             } else {
                 debug_assert_eq!(
                     self.scoping.symbol_scope_id(function.symbol_id),

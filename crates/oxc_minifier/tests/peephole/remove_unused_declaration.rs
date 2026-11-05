@@ -852,9 +852,41 @@ fn keep_sloppy_duplicate_block_functions() {
 
 #[test]
 fn keep_annex_b_hoisting_blocker() {
+    test_same_options_source_type(
+        "function t() { { class g {} { function g() {} } } return typeof g; } console.log(t());",
+        SourceType::script(),
+        &CompressOptions::smallest(),
+    );
     test_options_source_type(
         "function t() { { let g; { function g() { return 1; } } } return typeof g; } console.log(t());",
         "function t(){{let g;{function g(){return 1}}}return typeof g}console.log(t());",
+        SourceType::script(),
+        &CompressOptions::smallest(),
+    );
+}
+
+#[test]
+fn keep_annex_b_blocker_write_in_uninitialized_switch_case() {
+    test_options_source_type(
+        "function t(p) { switch (p) { case 0: let g; default: g = 1; if (p) function g() {} } console.log(typeof g); } t(1);",
+        "function t(p){switch(p){case 0:let g;default:if(g=1,p)function g(){}}console.log(typeof g)}t(1);",
+        SourceType::script(),
+        &CompressOptions::smallest(),
+    );
+}
+
+#[test]
+fn remove_annex_b_blocker_after_function_dropped() {
+    test_options_source_type(
+        "function t() { { let g; if (0) function g() {} } return 3; } console.log(t());",
+        "function t(){return 3}console.log(t());",
+        SourceType::script(),
+        &CompressOptions::smallest(),
+    );
+    // One removed function must not unprotect a blocker still needed by another function.
+    test_options_source_type(
+        "function t() { { let g; if (0) function g() {} if (p) function g() {} } return typeof g; } console.log(t());",
+        "function t(){{let g;if(p)function g(){}}return typeof g}console.log(t());",
         SourceType::script(),
         &CompressOptions::smallest(),
     );

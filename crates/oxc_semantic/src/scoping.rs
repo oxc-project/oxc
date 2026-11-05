@@ -101,8 +101,11 @@ pub struct Scoping {
     /// Function or Variable Symbol IDs that are marked with `@__NO_SIDE_EFFECTS__`.
     pub(crate) no_side_effects: FxHashSet<SymbolId>,
 
-    /// Bindings whose declarations prevent an Annex B function from acquiring a var binding.
-    pub(crate) annex_b_blockers: FxHashSet<SymbolId>,
+    /// See [`Scoping::annex_b_block_functions`].
+    annex_b_block_functions: FxHashMap<SymbolId, SymbolId>,
+
+    /// Number of surviving block functions that need each binding to keep its declaration.
+    annex_b_blockers: FxHashMap<SymbolId, u32>,
 
     /// Pre-computed enum member values and scope mappings.
     pub(crate) enum_data: EnumData,
@@ -125,7 +128,8 @@ impl Default for Scoping {
             symbol_table: SymbolTable::new(),
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
-            annex_b_blockers: FxHashSet::default(),
+            annex_b_block_functions: FxHashMap::default(),
+            annex_b_blockers: FxHashMap::default(),
             enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
@@ -407,7 +411,29 @@ impl Scoping {
     /// Removing such a declaration can change reference resolution and runtime hoisting.
     #[inline]
     pub fn is_annex_b_blocker(&self, symbol_id: SymbolId) -> bool {
-        self.annex_b_blockers.contains(&symbol_id)
+        self.annex_b_blockers.contains_key(&symbol_id)
+    }
+
+    pub(crate) fn add_annex_b_block_function(
+        &mut self,
+        function_id: SymbolId,
+        blocker_id: SymbolId,
+    ) {
+        self.annex_b_block_functions.insert(function_id, blocker_id);
+        *self.annex_b_blockers.entry(blocker_id).or_default() += 1;
+    }
+
+    /// Remove the blocker relation for a function declaration being dropped.
+    ///
+    /// # Panics
+    /// Panics if the internal Annex B dependent counts are inconsistent.
+    pub fn remove_annex_b_blocker_for_function(&mut self, function_id: SymbolId) {
+        let Some(blocker_id) = self.annex_b_block_functions.remove(&function_id) else { return };
+        let count = self.annex_b_blockers.get_mut(&blocker_id).unwrap();
+        *count -= 1;
+        if *count == 0 {
+            self.annex_b_blockers.remove(&blocker_id);
+        }
     }
 
     /// Get a mutable reference to a symbol's [flags](SymbolFlags).
@@ -717,6 +743,16 @@ impl Scoping {
     /// Symbols marked with `@__NO_SIDE_EFFECTS__`.
     pub fn no_side_effects(&self) -> &FxHashSet<SymbolId> {
         &self.no_side_effects
+    }
+
+    /// Sloppy-mode function declarations in blocks that Annex B.3.2 did not bind in their var
+    /// scope, each paired with the binding of the same name that kept them in their block.
+    ///
+    /// That binding is in the var scope, or in a scope between the block and the var scope. The
+    /// function either writes it when evaluated, or it prevents the function's var binding.
+    /// Giving the function and that binding different names changes the meaning of the program.
+    pub fn annex_b_block_functions(&self) -> &FxHashMap<SymbolId, SymbolId> {
+        &self.annex_b_block_functions
     }
 
     /// Get the computed constant value for an enum member symbol.
@@ -1149,6 +1185,7 @@ impl Scoping {
             symbol_table: self.symbol_table.clone(),
             references: self.references.clone(),
             no_side_effects: self.no_side_effects.clone(),
+            annex_b_block_functions: self.annex_b_block_functions.clone(),
             annex_b_blockers: self.annex_b_blockers.clone(),
             enum_data: self.enum_data.clone(),
             scope_table: self.scope_table.clone(),

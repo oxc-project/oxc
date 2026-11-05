@@ -292,7 +292,15 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
                     "id": 14,
                     "name": "g",
                     "node": "CatchParameter",
-                    "references": []
+                    "references": [
+                      {
+                        "flags": "ReferenceFlags(Read)",
+                        "id": 6,
+                        "name": "g",
+                        "node_id": 91,
+                        "scope_id": 24
+                      }
+                    ]
                   }
                 ]
               }
@@ -337,9 +345,9 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
             "references": [
               {
                 "flags": "ReferenceFlags(Read)",
-                "id": 6,
+                "id": 7,
                 "name": "g",
-                "node_id": 91,
+                "node_id": 93,
                 "scope_id": 21
               }
             ]
@@ -407,9 +415,9 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
             "references": [
               {
                 "flags": "ReferenceFlags(Read)",
-                "id": 7,
+                "id": 8,
                 "name": "x",
-                "node_id": 108,
+                "node_id": 110,
                 "scope_id": 32
               }
             ]
@@ -422,9 +430,9 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
             "references": [
               {
                 "flags": "ReferenceFlags(Read)",
-                "id": 8,
+                "id": 9,
                 "name": "g",
-                "node_id": 114,
+                "node_id": 116,
                 "scope_id": 29
               }
             ]
@@ -500,9 +508,9 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
             "references": [
               {
                 "flags": "ReferenceFlags(Read)",
-                "id": 9,
+                "id": 10,
                 "name": "x",
-                "node_id": 129,
+                "node_id": 131,
                 "scope_id": 38
               }
             ]

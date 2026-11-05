@@ -37,12 +37,13 @@ function destructuredCatchParameter() {
   return g;
 }
 
-// The same holds for an `if` statement function in its implicit branch scope.
+// Each branch function has its own scope; reads in the catch still bind to its parameter.
 function simpleCatchParameterIfStatement(x) {
   try {
   } catch (g) {
     if (x) function g() {}
     if (x) function g() {}
+    g;
   }
   return g;
 }
