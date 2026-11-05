@@ -15,9 +15,7 @@ fn comment_flags(source: &str) -> Vec<(bool, bool)> {
         .collect()
 }
 
-/// `preceded_by_newline` / `followed_by_newline` for LS, PS and non-ASCII WhiteSpace.
-///
-/// Table from https://github.com/oxc-project/oxc/issues/28318
+// Cases from https://github.com/oxc-project/oxc/issues/28318, plus a leading BOM.
 #[test]
 fn comment_newline_flags_ls_ps_and_unicode_ws() {
     let cases: &[(&str, bool, bool)] = &[
@@ -26,6 +24,7 @@ fn comment_newline_flags_ls_ps_and_unicode_ws() {
         ("x;\n\u{FEFF}/* a */ y;", true, false),
         ("x; /* a */\u{2028}y;", false, true),
         ("x; /* a */\u{00A0}\ny;", false, true),
+        ("\u{FEFF}/* a */ y;", true, false),
     ];
     let mut mismatches = Vec::new();
     for &(source, preceded, followed) in cases {

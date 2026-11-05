@@ -83,7 +83,18 @@ pub(super) unsafe fn lex_block_comment(
     let comment_kind =
         if saw_nl { CommentKind::MultiLineBlock } else { CommentKind::SingleLineBlock };
 
-    let followed_by_newline = followed_by_line_terminator(srcs, n, end, cpu);
+    let mut q = end;
+    let mut followed_by_newline = false;
+    while q < n && is_lex_ws(srcs[q], cpu) {
+        if srcs[q] == b'\n' || srcs[q] == b'\r' {
+            followed_by_newline = true;
+            break;
+        }
+        q += 1;
+    }
+    if !followed_by_newline && q < n && srcs[q] >= 0x80 {
+        followed_by_newline = followed_by_line_terminator(srcs, n, q);
+    }
 
     push_comment_record(
         srcs,
@@ -437,7 +448,21 @@ fn push_comment_record(
     let mut c = Comment::new(start, end.min(sl as u32), kind);
     c.content = content;
 
-    c.set_preceded_by_newline(preceded_by_line_terminator(src, (start as usize).min(sl), cpu));
+    let mut q = (start as usize).min(sl);
+    let preceded_by_newline = loop {
+        if q == 0 {
+            break true;
+        }
+        let b = src[q - 1];
+        if b == b'\n' || b == b'\r' {
+            break true;
+        }
+        if !is_lex_ws(b, cpu) {
+            break b >= 0x80 && preceded_by_line_terminator(src, q);
+        }
+        q -= 1;
+    };
+    c.set_preceded_by_newline(preceded_by_newline);
     c.set_followed_by_newline(followed_by_newline);
 
     lanes.comments.push(c);
@@ -455,10 +480,12 @@ fn is_ls_ps(c0: u8, c1: u8, c2: u8) -> bool {
     c0 == 0xE2 && c1 == 0x80 && (c2 == 0xA8 || c2 == 0xA9)
 }
 
-/// Scan forward from `q` over WhiteSpace. `src` carries PAD bytes past `n`.
-#[cpu_multiversion]
-#[inline]
-fn followed_by_line_terminator(src: &[u8], n: usize, mut q: usize, cpu: impl Cpu) -> bool {
+/// Cold: scan forward from q over WhiteSpace, including non-ASCII. src carries PAD bytes past n.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+fn followed_by_line_terminator(src: &[u8], n: usize, mut q: usize) -> bool {
+    let cpu = BASELINE;
     while q < n {
         let b = src[q];
         if b == b'\n' || b == b'\r' {
@@ -483,10 +510,12 @@ fn followed_by_line_terminator(src: &[u8], n: usize, mut q: usize, cpu: impl Cpu
     false
 }
 
-/// Scan backward from `q` over WhiteSpace. Start of input counts as a newline.
-#[cpu_multiversion]
-#[inline]
-fn preceded_by_line_terminator(src: &[u8], mut q: usize, cpu: impl Cpu) -> bool {
+/// Cold: scan backward from q over WhiteSpace, including non-ASCII. Start of input is a newline.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+fn preceded_by_line_terminator(src: &[u8], mut q: usize) -> bool {
+    let cpu = BASELINE;
     loop {
         if q == 0 {
             return true;
