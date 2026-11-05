@@ -413,7 +413,36 @@ impl<'a> SourcemapBuilder<'a> {
         self.last_generated_update = len;
     }
 
+    /// Find the first CR, LF, or non-ASCII byte, or return the input length.
+    fn find_ascii_line_end(bytes: &[u8]) -> usize {
+        let mut offset = 0;
+        // Bound each search so LS/PS cannot cause repeated scans of the rest of the file
+        // when the Unicode fallback consumes only one logical line.
+        for chunk in bytes.chunks(256) {
+            let line_end = memchr::memchr2(b'\n', b'\r', chunk).unwrap_or(chunk.len());
+            let prefix = &chunk[..line_end];
+            if !prefix.is_ascii() {
+                return offset + prefix.iter().position(|b| !b.is_ascii()).unwrap();
+            }
+            offset += line_end;
+            if line_end < chunk.len() {
+                break;
+            }
+        }
+        offset
+    }
+
     fn generate_line_offset_tables(content: &str) -> LineOffsetTables {
+        // Select once per file so ASCII input keeps the direct memchr2 fast path
+        // without per-line Unicode checks or chunk-loop overhead.
+        if content.is_ascii() {
+            Self::generate_line_offset_tables_impl::<true>(content)
+        } else {
+            Self::generate_line_offset_tables_impl::<false>(content)
+        }
+    }
+
+    fn generate_line_offset_tables_impl<const ASCII: bool>(content: &str) -> LineOffsetTables {
         let mut lines = Vec::with_capacity(content.len() / 24 + 1);
         let mut column_offsets = IndexVec::new();
 
@@ -425,7 +454,7 @@ impl<'a> SourcemapBuilder<'a> {
         let mut columns = Vec::with_capacity(16);
 
         // Process content line-by-line.
-        // For each line, start by assuming line will be entirely ASCII, and read byte-by-byte.
+        // For each line, start by assuming line will be entirely ASCII, and scan in chunks.
         // If line is all ASCII, UTF-8 columns and UTF-16 columns are the same,
         // so no need to create a `columns` Vec. This is the fast path for common case.
         // If a Unicode character found, read rest of line char-by-char, populating `columns` Vec.
@@ -438,99 +467,26 @@ impl<'a> SourcemapBuilder<'a> {
             });
 
             let remaining = &content.as_bytes()[line_byte_offset as usize..];
-            for (byte_offset_from_line_start, b) in remaining.iter().enumerate() {
+
+            let ascii_end = if ASCII {
+                memchr::memchr2(b'\n', b'\r', remaining).unwrap_or(remaining.len())
+            } else {
+                Self::find_ascii_line_end(remaining)
+            };
+            let Some(&byte) = remaining.get(ascii_end) else {
+                // EOF reached, and remainder of file is plain ASCII.
+                break;
+            };
+
+            // ASCII line: UTF-8 and UTF-16 columns are identical, so no column table is needed.
+            if ASCII || byte.is_ascii() {
                 #[expect(clippy::cast_possible_truncation)]
-                let mut byte_offset_from_line_start = byte_offset_from_line_start as u32;
-                match b {
-                    b'\n' => {
-                        byte_offset_from_line_start += 1;
-                    }
-                    b'\r' => {
-                        byte_offset_from_line_start += 1;
-                        // Handle Windows-specific "\r\n" newlines
-                        if remaining.get(byte_offset_from_line_start as usize) == Some(&b'\n') {
-                            byte_offset_from_line_start += 1;
-                        }
-                    }
-                    _ if b.is_ascii() => {
-                        continue;
-                    }
-                    _ => {
-                        // Unicode char found.
-                        // Set `column_offsets_id` for line and create `columns` Vec.
-                        let line = lines.iter_mut().last().unwrap();
-                        line.column_offsets_id =
-                            Some(ColumnOffsetsId::from_usize(column_offsets.len()));
-
-                        // Loop through rest of line char-by-char.
-                        // `chunk_byte_offset` in this loop is byte offset from start of this 1st
-                        // Unicode char.
-                        let mut column = byte_offset_from_line_start;
-                        line_byte_offset += byte_offset_from_line_start;
-                        let remaining = &content[line_byte_offset as usize..];
-                        for (chunk_byte_offset, ch) in remaining.char_indices() {
-                            #[expect(clippy::cast_possible_truncation)]
-                            let mut chunk_byte_offset = chunk_byte_offset as u32;
-                            columns.extend(std::iter::repeat_n(column, ch.len_utf8()));
-
-                            match ch {
-                                '\r' => {
-                                    // Handle Windows-specific "\r\n" newlines
-                                    chunk_byte_offset += 1;
-                                    if remaining.as_bytes().get(chunk_byte_offset as usize)
-                                        == Some(&b'\n')
-                                    {
-                                        chunk_byte_offset += 1;
-                                        columns.push(column + 1);
-                                    }
-                                }
-                                '\n' => {
-                                    chunk_byte_offset += 1;
-                                }
-                                LS | PS => {
-                                    chunk_byte_offset += 3;
-                                }
-                                #[expect(clippy::cast_possible_truncation)]
-                                _ => {
-                                    // Mozilla's "source-map" library counts columns using UTF-16 code units
-                                    column += ch.len_utf16() as u32;
-                                    continue;
-                                }
-                            }
-
-                            // Line break found.
-                            // `chunk_byte_offset` is now the offset of *end* of the line break.
-                            line_byte_offset += chunk_byte_offset;
-
-                            // Record column offsets.
-                            // `columns.clone().into_boxed_slice()` does perform an allocation,
-                            // but only one - `Vec::clone` produces a `Vec` with `capacity == len`,
-                            // so `Vec::into_boxed_slice` just drops the `capacity` field,
-                            // and does not need to reallocate again.
-                            // `columns` is reused for next line, and will grow adaptively depending on
-                            // how heavily the file uses unicode chars.
-                            column_offsets.push(ColumnOffsets {
-                                byte_offset_to_first: byte_offset_from_line_start,
-                                columns: columns.clone().into_boxed_slice(),
-                            });
-                            columns.clear();
-
-                            // Revert back to outer loop for next line
-                            continue 'lines;
-                        }
-
-                        // EOF.
-                        // One last column entry for EOF position.
-                        columns.push(column);
-
-                        // Record column offsets
-                        column_offsets.push(ColumnOffsets {
-                            byte_offset_to_first: byte_offset_from_line_start,
-                            columns: columns.into_boxed_slice(),
-                        });
-
-                        break 'lines;
-                    }
+                let mut byte_offset_from_line_start = ascii_end as u32 + 1;
+                // Handle Windows-specific "\r\n" newlines, including across chunk boundaries.
+                if byte == b'\r'
+                    && remaining.get(byte_offset_from_line_start as usize) == Some(&b'\n')
+                {
+                    byte_offset_from_line_start += 1;
                 }
 
                 // Line break found.
@@ -539,8 +495,81 @@ impl<'a> SourcemapBuilder<'a> {
                 continue 'lines;
             }
 
-            // EOF
-            break;
+            // Slow path: process the rest of the line char-by-char, starting at the first
+            // non-ASCII byte (which may itself start a Unicode line break such as LS/PS).
+            #[expect(clippy::cast_possible_truncation)]
+            let byte_offset_from_line_start = ascii_end as u32;
+
+            // Set `column_offsets_id` for line and create `columns` Vec.
+            let line = lines.iter_mut().last().unwrap();
+            line.column_offsets_id = Some(ColumnOffsetsId::from_usize(column_offsets.len()));
+
+            // Loop through rest of line char-by-char.
+            // `chunk_byte_offset` in this loop is byte offset from start of this 1st
+            // Unicode char.
+            let mut column = byte_offset_from_line_start;
+            line_byte_offset += byte_offset_from_line_start;
+            let remaining = &content[line_byte_offset as usize..];
+            for (chunk_byte_offset, ch) in remaining.char_indices() {
+                #[expect(clippy::cast_possible_truncation)]
+                let mut chunk_byte_offset = chunk_byte_offset as u32;
+                columns.extend(std::iter::repeat_n(column, ch.len_utf8()));
+
+                match ch {
+                    '\r' => {
+                        // Handle Windows-specific "\r\n" newlines
+                        chunk_byte_offset += 1;
+                        if remaining.as_bytes().get(chunk_byte_offset as usize) == Some(&b'\n') {
+                            chunk_byte_offset += 1;
+                            columns.push(column + 1);
+                        }
+                    }
+                    '\n' => {
+                        chunk_byte_offset += 1;
+                    }
+                    LS | PS => {
+                        chunk_byte_offset += 3;
+                    }
+                    #[expect(clippy::cast_possible_truncation)]
+                    _ => {
+                        // Mozilla's "source-map" library counts columns using UTF-16 code units
+                        column += ch.len_utf16() as u32;
+                        continue;
+                    }
+                }
+
+                // Line break found.
+                // `chunk_byte_offset` is now the offset of *end* of the line break.
+                line_byte_offset += chunk_byte_offset;
+
+                // Record column offsets.
+                // `columns.clone().into_boxed_slice()` does perform an allocation,
+                // but only one - `Vec::clone` produces a `Vec` with `capacity == len`,
+                // so `Vec::into_boxed_slice` just drops the `capacity` field,
+                // and does not need to reallocate again.
+                // `columns` is reused for next line, and will grow adaptively depending on
+                // how heavily the file uses unicode chars.
+                column_offsets.push(ColumnOffsets {
+                    byte_offset_to_first: byte_offset_from_line_start,
+                    columns: columns.clone().into_boxed_slice(),
+                });
+                columns.clear();
+
+                // Revert back to outer loop for next line
+                continue 'lines;
+            }
+
+            // EOF.
+            // One last column entry for EOF position.
+            columns.push(column);
+
+            // Record column offsets
+            column_offsets.push(ColumnOffsets {
+                byte_offset_to_first: byte_offset_from_line_start,
+                columns: columns.into_boxed_slice(),
+            });
+
+            break 'lines;
         }
 
         LineOffsetTables { lines, column_offsets }
@@ -584,6 +613,25 @@ mod test {
     }
 
     #[test]
+    fn builder_ascii_line_break_boundaries() {
+        for prefix_len in [0_u32, 7, 8, 15, 16, 255, 256, 257, 1023] {
+            for terminator in ["\n", "\r", "\r\n"] {
+                let source = format!("{}{terminator}x", "a".repeat(prefix_len as usize));
+                let next_line = prefix_len + u32::try_from(terminator.len()).unwrap();
+                assert_mapping(
+                    &source,
+                    &[(prefix_len, 0, prefix_len), (next_line, 1, 0), (next_line + 1, 1, 1)],
+                );
+                assert!(
+                    SourcemapBuilder::generate_line_offset_tables(&source)
+                        .column_offsets
+                        .is_empty()
+                );
+            }
+        }
+    }
+
+    #[test]
     fn builder_unicode() {
         assert_mapping("Ö", &[(0, 0, 0), (2, 0, 1)]);
         assert_mapping("ÖÖ", &[(0, 0, 0), (2, 0, 1), (4, 0, 2)]);
@@ -595,6 +643,62 @@ mod test {
         assert_mapping("\nÖÖ\n", &[(0, 0, 0), (1, 1, 0), (3, 1, 1), (5, 1, 2), (6, 2, 0)]);
         assert_mapping("Ö\ra", &[(0, 0, 0), (2, 0, 1), (3, 1, 0), (4, 1, 1)]);
         assert_mapping("Ö\r\na", &[(0, 0, 0), (2, 0, 1), (3, 0, 2), (4, 1, 0), (5, 1, 1)]);
+    }
+
+    #[test]
+    fn builder_mixed_unicode_line_terminators() {
+        assert_mapping(
+            "a\u{2028}😀\r\né\u{2029}中\rb\n",
+            &[
+                (0, 0, 0),
+                (1, 0, 1),
+                (4, 1, 0),
+                (8, 1, 2),
+                (9, 1, 3),
+                (10, 2, 0),
+                (12, 2, 1),
+                (15, 3, 0),
+                (18, 3, 1),
+                (19, 4, 0),
+                (20, 4, 1),
+                (21, 5, 0),
+            ],
+        );
+    }
+
+    #[test]
+    fn ascii_scan_stops_at_unicode() {
+        for prefix_len in [0, 7, 8, 15, 16, 255, 256, 257, 1023] {
+            let prefix = "x".repeat(prefix_len);
+            assert_eq!(SourcemapBuilder::find_ascii_line_end(prefix.as_bytes()), prefix_len);
+            for terminator in ["\n", "\r", "\r\n", "\u{2028}", "\u{2029}", "Ö", "𝄞"] {
+                // A distant CR/LF must not make the scan skip over a Unicode separator.
+                let source = format!("{prefix}{terminator}{}\n", "x".repeat(4096));
+                assert_eq!(SourcemapBuilder::find_ascii_line_end(source.as_bytes()), prefix_len);
+            }
+        }
+    }
+
+    #[test]
+    fn builder_many_unicode_line_separators() {
+        // Without bounding the ASCII scan, each LS/PS rescans the remaining suffix: O(n²).
+        const LINE_COUNT: usize = 256_000;
+        for separator in [LS, PS] {
+            let source = format!("x;{separator}").repeat(LINE_COUNT);
+            let tables = SourcemapBuilder::generate_line_offset_tables(&source);
+            assert_eq!(tables.lines.len(), LINE_COUNT + 1);
+            assert_eq!(tables.column_offsets.len(), LINE_COUNT);
+            for (index, line) in tables.lines.iter().enumerate() {
+                assert_eq!(line.byte_offset_to_start_of_line as usize, index * 5);
+                if index == LINE_COUNT {
+                    assert!(line.column_offsets_id.is_none());
+                } else {
+                    let columns = &tables.column_offsets[line.column_offsets_id.unwrap()];
+                    assert_eq!(columns.byte_offset_to_first, 2);
+                    assert_eq!(&*columns.columns, &[2, 2, 2]);
+                }
+            }
+        }
     }
 
     #[test]
