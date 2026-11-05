@@ -149,23 +149,29 @@ ast:
 
 # ==================== LEXER ====================
 
-# `oxc_lexer` compiles to one of 3 implementations, chosen at build time:
+# `oxc_lexer` has 3 implementations:
 #
-# * AVX2, on x86_64 with `avx2` + `bmi2` + `popcnt` enabled
+# * AVX2, on x86_64 with `avx2` + `bmi2` + `popcnt`
 # * Neon, on aarch64 (every aarch64 target with `std` enables `neon`)
 # * Generic, everywhere else
 #
 # Parts of the pipeline which have no AVX2 or Neon implementation use the generic one.
 # All 3 need testing, and they should produce identical results.
 #
-# Each task has 3 recipes:
+# On x86_64, a build contains both AVX2 and generic, and picks one at runtime, depending on what the CPU supports.
+# A build with `avx2`, `bmi2` and `popcnt` enabled at compile time contains only AVX2.
 #
-# * `*-lexer` builds for the host - Neon on an ARM host, generic on an x86_64 host.
-# * `*-lexer-avx2` builds the AVX2 implementation for x86_64.
-# * `*-lexer-generic` builds the generic implementation for x86_64.
-#   On an x86_64 host, that's the same as `*-lexer`.
+# Lint and test each have 3 recipes:
 #
-# None of `avx2`, `bmi2` and `popcnt` is in the x86_64 baseline on any platform, so reaching the AVX2 implementation
+# * `*-lexer` builds for the host.
+# * `*-lexer-avx2` builds for x86_64 with `avx2`, `bmi2` and `popcnt` enabled.
+# * `*-lexer-generic` builds for x86_64 without them. On an x86_64 host, that's the same as `*-lexer`.
+#
+# Conformance lexes every fixture with each implementation the CPU supports, and checks they all agree.
+# It's part of `just coverage`. `conformance-lexer` runs only the lexer suites, built for the host,
+# and `conformance-lexer-x86` runs them built for x86_64 without `avx2`, `bmi2` and `popcnt`.
+#
+# None of `avx2`, `bmi2` and `popcnt` is in the x86_64 baseline on any platform, so enabling them at compile time
 # always means asking for them explicitly - even on an x86_64 host.
 # The flags live in `.cargo/lexer-avx2.toml`, passed with `cargo --config`, which avoids shell quoting entirely
 # (this justfile runs PowerShell on Windows).
@@ -173,6 +179,7 @@ ast:
 # `--target` is always passed for the x86_64 builds, so that the flags land on the triple the config file names.
 #
 # On an ARM host the x86_64 builds are cross-compiled and run under emulation - macOS provides that via Rosetta 2.
+# Rosetta only reports AVX2 support when `ROSETTA_ADVERTISE_AVX=1`, so `conformance-lexer-x86` sets it on Mac.
 # On Mac, ensure x86_64 target is installed: `rustup target add x86_64-apple-darwin`.
 # If it's not, you'll get a "can't find crate for std" error.
 #
@@ -195,15 +202,11 @@ test-lexer-generic *args='':
 
 # Run lexer conformance, built for the host
 conformance-lexer *args='':
-  cargo run -p oxc_coverage --profile coverage --features lexer -- lexer {{args}}
+  cargo run -p oxc_coverage --profile coverage -- lexer {{args}}
 
-# Run lexer conformance against the AVX2 implementation
-conformance-lexer-avx2 *args='':
-  cargo run -p oxc_coverage --profile coverage {{_lexer-avx2}} --features lexer -- lexer {{args}}
-
-# Run lexer conformance against the generic implementation, on x86_64
-conformance-lexer-generic *args='':
-  cargo run -p oxc_coverage --profile coverage {{_lexer-generic}} --features lexer -- lexer {{args}}
+# Run lexer conformance, built for x86_64 without `avx2`, `bmi2` and `popcnt` (runs generic, and AVX2 if the CPU supports it)
+conformance-lexer-x86 *args='':
+  {{ if os() == "macos" { "ROSETTA_ADVERTISE_AVX=1 " } else { "" } }}cargo run -p oxc_coverage --profile coverage {{_lexer-generic}} -- lexer {{args}}
 
 # Lint `oxc_lexer` and the conformance harness, built for the host
 [unix]
@@ -226,8 +229,8 @@ lint-lexer-generic *args='':
 # Only the lexer snapshots are checked for changes, so it can be run with other uncommitted changes.
 # Snapshots are checked after each conformance run, because each run overwrites the snapshots from the one before.
 #
-# The generic implementation on x86_64 is only run on hosts which aren't x86_64.
-# On an x86_64 host, it's the same as the host build, which `ready-lexer` runs anyway.
+# The `*-lexer-generic` and `conformance-lexer-x86` recipes are only run on hosts which aren't x86_64.
+# On an x86_64 host, they're the same as the host recipes, which `ready-lexer` runs anyway.
 _lexer-snapshots := "tasks/coverage/snapshots/lexer_*"
 
 # Lint, test, and run conformance for `oxc_lexer` against each implementation, and check snapshots are unchanged
@@ -240,9 +243,7 @@ ready-lexer:
   {{ if arch() == "x86_64" { "" } else { "just test-lexer-generic" } }}
   just conformance-lexer
   git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
-  just conformance-lexer-avx2
-  git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
-  {{ if arch() == "x86_64" { "" } else { "just conformance-lexer-generic" } }}
+  {{ if arch() == "x86_64" { "" } else { "just conformance-lexer-x86" } }}
   git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
   just doc -p oxc_lexer
 

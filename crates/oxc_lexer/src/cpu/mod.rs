@@ -450,4 +450,16 @@ impl DynCpu {
         // - any other platform
         BASELINE.to_dyn()
     }
+
+    /// Name of the CPU feature set, for test failure messages.
+    ///
+    /// Only used in conformance testing.
+    #[cfg(feature = "testing")]
+    pub fn name(self) -> &'static str {
+        match self {
+            DynCpu::Generic(_) => "generic",
+            DynCpu::Avx2(_) => "AVX2",
+            DynCpu::Neon(_) => "neon",
+        }
+    }
 }
