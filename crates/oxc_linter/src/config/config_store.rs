@@ -123,6 +123,27 @@ impl Config {
         self.base.rules.len()
     }
 
+    fn combined_plugins<'a>(
+        &self,
+        overrides: impl Iterator<Item = &'a ResolvedOxlintOverride>,
+    ) -> LintPlugins {
+        overrides.fold(self.plugins(), |plugins, entry| {
+            plugins | entry.plugins.unwrap_or_else(LintPlugins::empty)
+        })
+    }
+
+    fn override_category_plugins(
+        plugins: LintPlugins,
+        configured_plugins: LintPlugins,
+        override_plugins: Option<LintPlugins>,
+    ) -> LintPlugins {
+        if override_plugins.is_some_and(|entry_plugins| entry_plugins != plugins) {
+            plugins & !configured_plugins
+        } else {
+            LintPlugins::empty()
+        }
+    }
+
     /// Merge builtin rules and visit each override in one pass, sharing category precedence.
     fn builtin_rules_for_overrides<'a>(
         &self,
@@ -149,41 +170,37 @@ impl Config {
         let mut configured_plugins = self.base.config.plugins;
 
         for override_config in overrides {
-            if let Some(override_plugins) = override_config.plugins
-                && override_plugins != plugins
-            {
-                // Only apply categories to plugins that:
-                // 1. Are in the current accumulated plugin set
-                // 2. Have NOT been configured yet (not in root or previous overrides)
-                let unconfigured_plugins = plugins & !configured_plugins;
-
-                if !unconfigured_plugins.is_empty() {
-                    let all_rules = all_rules.get_or_insert_with(|| {
-                        RULES
-                            .iter()
-                            .filter(|rule| {
-                                LintPlugins::try_from(rule.plugin_name())
-                                    .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
-                            })
-                            .cloned()
-                            .collect::<Vec<_>>()
-                    });
-                    for (rule, severity) in all_rules.iter().filter_map(|rule| {
-                        let rule_plugin = LintPlugins::try_from(rule.plugin_name())
-                            .unwrap_or(LintPlugins::empty());
-                        // Only apply categories to rules from unconfigured plugins
-                        if !rule_plugin.is_empty() && unconfigured_plugins.contains(rule_plugin) {
-                            self.categories
-                                .get(&rule.category())
-                                .map(|severity| (rule.clone(), severity))
-                        } else {
-                            None
-                        }
-                    }) {
-                        rules.entry(rule).or_insert(*severity);
+            let unconfigured_plugins = Self::override_category_plugins(
+                plugins,
+                configured_plugins,
+                override_config.plugins,
+            );
+            if !unconfigured_plugins.is_empty() {
+                let all_rules = all_rules.get_or_insert_with(|| {
+                    RULES
+                        .iter()
+                        .filter(|rule| {
+                            LintPlugins::try_from(rule.plugin_name())
+                                .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
+                        })
+                        .cloned()
+                        .collect::<Vec<_>>()
+                });
+                for (rule, severity) in all_rules.iter().filter_map(|rule| {
+                    let rule_plugin =
+                        LintPlugins::try_from(rule.plugin_name()).unwrap_or(LintPlugins::empty());
+                    // Only apply categories to rules from unconfigured plugins
+                    if !rule_plugin.is_empty() && unconfigured_plugins.contains(rule_plugin) {
+                        self.categories
+                            .get(&rule.category())
+                            .map(|severity| (rule.clone(), severity))
+                    } else {
+                        None
                     }
-                    configured_plugins |= unconfigured_plugins;
+                }) {
+                    rules.entry(rule).or_insert(*severity);
                 }
+                configured_plugins |= unconfigured_plugins;
             }
 
             for (rule, severity) in &override_config.rules.builtin_rules {
@@ -229,14 +246,8 @@ impl Config {
 
         let mut env = self.base.config.env.clone();
         let mut globals = self.base.config.globals.clone();
-        let mut plugins = self.base.config.plugins;
+        let plugins = self.combined_plugins(overrides_to_apply.clone());
         let settings = self.base.config.settings.clone();
-
-        for override_config in overrides_to_apply.clone() {
-            if let Some(override_plugins) = override_config.plugins {
-                plugins |= override_plugins;
-            }
-        }
 
         let mut external_rules = self
             .base
@@ -309,20 +320,70 @@ pub struct ConfigStore {
 
 impl ConfigStore {
     /// Visit potentially enabled rules for the linter's cached policy inventory.
-    /// Explicit override options replace category defaults; glob matching remains conservative.
+    /// Override matching is conservative; discovery must include every possible rule policy.
     pub(crate) fn visit_rules(&self, mut visit: impl FnMut(&RuleEnum)) {
         for config in std::iter::once(&self.base).chain(self.nested_configs.values()) {
             for (rule, _) in config.base.rules.iter() {
                 visit(rule);
             }
             for entry in config.overrides.iter() {
-                let plugins = config.plugins() | entry.plugins.unwrap_or_else(LintPlugins::empty);
-                let rules =
-                    config.builtin_rules_for_overrides(plugins, std::iter::once(entry), |_| {});
-                for (rule, severity) in &rules {
+                for (rule, severity) in &entry.rules.builtin_rules {
                     if severity.is_warn_deny() {
                         visit(rule);
                     }
+                }
+            }
+
+            // Overlapping overrides can enable categories through their combined plugins.
+            let plugins = config.combined_plugins(config.overrides.iter());
+            let category_plugins =
+                config.overrides.iter().fold(LintPlugins::empty(), |enabled, entry| {
+                    enabled
+                        | Config::override_category_plugins(
+                            plugins,
+                            config.plugins(),
+                            entry.plugins,
+                        )
+                });
+            if category_plugins.is_empty() {
+                continue;
+            }
+            let builtin_plugins = Config::builtin_rule_plugins(plugins);
+            for rule in RULES.iter() {
+                let Ok(plugin) = LintPlugins::try_from(rule.plugin_name()) else {
+                    continue;
+                };
+                if plugin.is_empty()
+                    || !category_plugins.contains(plugin)
+                    || !builtin_plugins.contains(plugin)
+                    || !config
+                        .categories
+                        .get(&rule.category())
+                        .is_some_and(|severity| severity.is_warn_deny())
+                {
+                    continue;
+                }
+
+                // Categories only fill absent bindings. An earlier "off" override can remove
+                // a base binding, but this override's explicit options always win.
+                let mut may_be_missing = !config.base_rules.iter().any(|(base, _)| base == rule);
+                for entry in config.overrides.iter() {
+                    let explicit =
+                        entry.rules.builtin_rules.iter().find(|(entry_rule, _)| entry_rule == rule);
+                    if may_be_missing
+                        && explicit.is_none()
+                        && Config::override_category_plugins(
+                            plugins,
+                            config.plugins(),
+                            entry.plugins,
+                        )
+                        .contains(plugin)
+                    {
+                        visit(rule);
+                        break;
+                    }
+                    may_be_missing |=
+                        explicit.is_some_and(|(_, severity)| *severity == AllowWarnDeny::Allow);
                 }
             }
         }
@@ -550,6 +611,35 @@ mod test {
                 false,
             ),
             (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [
+                    {"files": ["*.ts"], "plugins": ["import"]},
+                    {"files": ["*.ts"], "plugins": ["jest"]}
+                ]}),
+                true,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [
+                    {"files": ["*.ts"], "plugins": ["jest"]},
+                    {"files": ["*.ts"], "plugins": ["import"]}
+                ]}),
+                true,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [
+                    {"files": ["*.ts"], "plugins": ["import"]},
+                    {"files": ["*.ts"], "plugins": ["jest"]},
+                    {"files": ["*.js"], "plugins": ["import"], "rules": {"import/no-cycle": "off"}}
+                ]}),
+                true,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [
+                    {"files": ["*.ts"], "plugins": ["import"], "rules": {"import/no-cycle": ["error", {"maxDepth": 1}]}},
+                    {"files": ["*.ts"], "plugins": ["import", "jest"], "rules": {"import/no-cycle": ["error", {"maxDepth": 1}]}}
+                ]}),
+                false,
+            ),
+            (
                 serde_json::json!({"categories": {"restriction": "warn"}, "plugins": ["import"], "rules": {"import/no-cycle": "off"}, "overrides": [{"files": ["*.ts"], "plugins": ["import"]}]}),
                 false,
             ),
@@ -575,6 +665,12 @@ mod test {
                     .any(|(rule, _)| eligible(rule).is_some()),
                 expected,
                 "resolved config: {description}",
+            );
+            let linter = crate::Linter::new(crate::LintOptions::default(), store, None);
+            assert_eq!(
+                linter.import_cycle_graph().is_some(),
+                expected,
+                "SCC discovery: {description}"
             );
         }
         let mut external = ExternalPluginStore::default();
