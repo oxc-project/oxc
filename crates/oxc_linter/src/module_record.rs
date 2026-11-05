@@ -28,7 +28,7 @@ struct ImportCycleComponents {
 /// File-level SCC information for one import-filter policy.
 #[derive(Debug, Clone, Copy)]
 pub struct ImportCycleComponent<'a> {
-    graph: &'a crate::module_graph_scc::ImportCycleGraph,
+    group: &'a ImportCycleGroup,
     options: ImportCycleOptions,
     id: usize,
     cyclic: bool,
@@ -40,9 +40,14 @@ impl ImportCycleComponent<'_> {
     }
 
     pub(crate) fn excludes_module(&self, module: &ModuleRecord) -> bool {
-        module
-            .import_cycle_component(self.options)
-            .is_some_and(|other| std::ptr::eq(self.graph, other.graph) && self.id != other.id)
+        module.import_cycle_component(self.options).is_some_and(|other| {
+            if std::ptr::eq(self.group, other.group) {
+                self.id != other.id
+            } else {
+                // A different completed group in this build cannot lead back to this one.
+                Arc::ptr_eq(&self.group.graph, &other.group.graph)
+            }
+        })
     }
 }
 
@@ -608,12 +613,12 @@ impl ModuleRecord {
         options: ImportCycleOptions,
     ) -> Option<ImportCycleComponent<'_>> {
         let components = self.import_cycle_components.get()?;
-        let graph = &components.group.graph;
-        if !graph.valid.load(Ordering::Acquire) {
+        let group = &components.group;
+        if !group.graph.valid.load(Ordering::Acquire) {
             return None;
         }
-        let (id, cyclic) = components.group.components[options.index()].as_ref()?[components.index];
-        Some(ImportCycleComponent { graph, options, id, cyclic })
+        let (id, cyclic) = group.components[options.index()].as_ref()?[components.index];
+        Some(ImportCycleComponent { group, options, id, cyclic })
     }
 
     pub(crate) fn set_import_cycle_components(&self, group: Arc<ImportCycleGroup>, index: usize) {
@@ -622,13 +627,8 @@ impl ModuleRecord {
         {
             // Reused records cannot retain either graph's classifications.
             components.group.graph.valid.store(false, Ordering::Release);
-            self.import_cycle_components
-                .get()
-                .unwrap()
-                .group
-                .graph
-                .valid
-                .store(false, Ordering::Release);
+            let existing = self.import_cycle_components.get().unwrap();
+            existing.group.graph.valid.store(false, Ordering::Release);
         }
     }
 

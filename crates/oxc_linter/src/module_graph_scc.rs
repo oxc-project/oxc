@@ -16,6 +16,7 @@ impl ImportCycleGraph {
 }
 
 /// Dense component labels shared by every record in one completed group.
+/// Component IDs are local to the group.
 #[derive(Debug)]
 pub struct ImportCycleGroup {
     pub graph: Arc<ImportCycleGraph>,

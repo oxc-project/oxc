@@ -186,7 +186,8 @@ impl Rule for NoCycle {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
 
-        let component = module_record.import_cycle_component(self.graph_options());
+        let graph_options = self.graph_options();
+        let component = module_record.import_cycle_component(graph_options);
 
         // Reuse shared labels when available; otherwise check reachability for this file.
         // Bounded searches skip the unbounded prefilter to avoid unnecessary work.
@@ -209,7 +210,7 @@ impl Rule for NoCycle {
             if component.is_some_and(|component| component.excludes_module(&loaded_module_record)) {
                 continue;
             }
-            if !self.should_traverse_module(key, &loaded_module_record, module_record) {
+            if !graph_options.should_traverse_module(key, &loaded_module_record, module_record) {
                 continue;
             }
 
@@ -228,7 +229,7 @@ impl Rule for NoCycle {
                 .reuse_traversed(traversed)
                 .filter(|(key, val), parent| {
                     !component.is_some_and(|component| component.excludes_module(val))
-                        && self.should_traverse_module(key, val, parent)
+                        && graph_options.should_traverse_module(key, val, parent)
                 })
                 .event(|event, (key, val), _| match event {
                     ModuleGraphVisitorEvent::Enter => {
@@ -307,9 +308,14 @@ impl NoCycle {
         visited: &mut FxHashSet<usize>,
         stack: &mut Vec<Arc<ModuleRecord>>,
     ) -> bool {
+        let graph_options = self.graph_options();
         for (specifier, weak_module_record) in module_record.loaded_modules().iter() {
             let loaded_module_record = weak_module_record.upgrade().unwrap();
-            if !self.should_traverse_module(specifier, &loaded_module_record, module_record) {
+            if !graph_options.should_traverse_module(
+                specifier,
+                &loaded_module_record,
+                module_record,
+            ) {
                 continue;
             }
             // By path, not pointer: that is what the walks report on, and one file can have
@@ -322,15 +328,6 @@ impl NoCycle {
             }
         }
         false
-    }
-
-    fn should_traverse_module(
-        &self,
-        key: &CompactStr,
-        module: &Arc<ModuleRecord>,
-        parent: &ModuleRecord,
-    ) -> bool {
-        self.graph_options().should_traverse_module(key, module, parent)
     }
 }
 

@@ -63,12 +63,11 @@ impl Hash for CyclePath {
 struct CycleGraphState {
     graph: Arc<ImportCycleGraph>,
     paths: FxHashSet<CyclePath>,
-    next_component: usize,
 }
 
 impl CycleGraphState {
     fn new(graph: Arc<ImportCycleGraph>) -> Self {
-        Self { graph, paths: FxHashSet::default(), next_component: 0 }
+        Self { graph, paths: FxHashSet::default() }
     }
 
     // False disables the cache for the remaining run, including all earlier labels.
@@ -81,15 +80,6 @@ impl CycleGraphState {
             return false;
         }
         true
-    }
-
-    fn classify_edges(&mut self, edges: &[Vec<usize>]) -> Vec<(usize, bool)> {
-        let mut components = cyclic_components(edges);
-        for (id, _) in &mut components {
-            *id += self.next_component;
-        }
-        self.next_component += components.len();
-        components
     }
 }
 
@@ -316,7 +306,7 @@ fn link_modules(
     // 2. Share dense labels by policy, rather than copying both labels into every record.
     let mut components = [None, None];
     for (options, edges) in edges {
-        components[options.index()] = Some(cache.classify_edges(&edges));
+        components[options.index()] = Some(cyclic_components(&edges));
     }
     let group = Arc::new(ImportCycleGroup { graph: Arc::clone(&cache.graph), components });
     for (index, (_, records, _)) in nodes.into_iter().enumerate() {
@@ -1747,7 +1737,7 @@ mod cycle_component_tests {
                 assert_eq!(component.is_cyclic(), cyclic);
                 assert_eq!(b.import_cycle_component(options).unwrap().is_cyclic(), cyclic);
                 assert_eq!(component.excludes_module(b), !cyclic);
-                // Later groups reuse earlier labels and cannot close a cycle back from a.vue.
+                // Different groups may share local IDs, but earlier groups cannot lead back here.
                 let component = c.import_cycle_component(options).unwrap();
                 assert!(!component.is_cyclic());
                 assert!(component.excludes_module(a));

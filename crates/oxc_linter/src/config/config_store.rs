@@ -8,7 +8,11 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{
     AllowWarnDeny,
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
-    rules::{RULES, RuleEnum},
+    rule::RuleMeta,
+    rules::{
+        RULES, RuleEnum,
+        import::no_cycle::{ImportCyclePolicies, NoCycle},
+    },
 };
 
 use super::{
@@ -144,13 +148,39 @@ impl Config {
         }
     }
 
-    /// Merge builtin rules and visit each override in one pass, sharing category precedence.
-    fn builtin_rules_for_overrides<'a>(
-        &self,
-        plugins: LintPlugins,
-        overrides: impl Iterator<Item = &'a ResolvedOxlintOverride>,
-        mut on_override: impl FnMut(&ResolvedOxlintOverride),
-    ) -> FxHashMap<RuleEnum, AllowWarnDeny> {
+    pub fn apply_overrides(&self, path: &Path) -> ResolvedLinterState {
+        if self.overrides.is_empty() {
+            return self.base.clone();
+        }
+
+        let relative_path = self
+            .base
+            .config
+            .path
+            .as_ref()
+            .and_then(|config_path| {
+                config_path.parent().map(|parent| path.strip_prefix(parent).unwrap_or(path))
+            })
+            .unwrap_or(path);
+
+        let path = relative_path.to_string_lossy();
+        let path = path.as_ref();
+        let overrides_to_apply = self
+            .overrides
+            .iter()
+            .filter(|config| config.files.is_match(path) && !config.exclude_files.is_match(path));
+
+        let mut overrides_to_apply = overrides_to_apply.peekable();
+
+        if overrides_to_apply.peek().is_none() {
+            return self.base.clone();
+        }
+
+        let mut env = self.base.config.env.clone();
+        let mut globals = self.base.config.globals.clone();
+        let plugins = self.combined_plugins(overrides_to_apply.clone());
+        let settings = self.base.config.settings.clone();
+
         let builtin_rule_plugins = Self::builtin_rule_plugins(plugins);
         let mut rules = self
             .base_rules
@@ -165,11 +195,18 @@ impl Config {
         // Build this only if an override adds a plugin whose category rules need applying.
         let mut all_rules: Option<Vec<RuleEnum>> = None;
 
+        let mut external_rules = self
+            .base
+            .external_rules
+            .iter()
+            .map(|&(rule_id, options_id, severity)| (rule_id, (options_id, severity)))
+            .collect::<FxHashMap<_, _>>();
+
         // Track which plugins have already had their category rules applied.
         // Start with the root plugins since they already have categories applied in base_rules.
         let mut configured_plugins = self.base.config.plugins;
 
-        for override_config in overrides {
+        for override_config in overrides_to_apply {
             let unconfigured_plugins = Self::override_category_plugins(
                 plugins,
                 configured_plugins,
@@ -211,67 +248,19 @@ impl Config {
                     rules.insert(rule.clone(), *severity);
                 }
             }
-            on_override(override_config);
+
+            for (external_rule_id, options_id, severity) in &override_config.rules.external_rules {
+                external_rules.insert(*external_rule_id, (*options_id, *severity));
+            }
+
+            if let Some(override_env) = &override_config.env {
+                override_env.override_envs(&mut env);
+            }
+
+            if let Some(override_globals) = &override_config.globals {
+                override_globals.override_globals(&mut globals);
+            }
         }
-        rules
-    }
-
-    pub fn apply_overrides(&self, path: &Path) -> ResolvedLinterState {
-        if self.overrides.is_empty() {
-            return self.base.clone();
-        }
-
-        let relative_path = self
-            .base
-            .config
-            .path
-            .as_ref()
-            .and_then(|config_path| {
-                config_path.parent().map(|parent| path.strip_prefix(parent).unwrap_or(path))
-            })
-            .unwrap_or(path);
-
-        let path = relative_path.to_string_lossy();
-        let path = path.as_ref();
-        let overrides_to_apply = self
-            .overrides
-            .iter()
-            .filter(|config| config.files.is_match(path) && !config.exclude_files.is_match(path));
-
-        let mut overrides_to_apply = overrides_to_apply.peekable();
-
-        if overrides_to_apply.peek().is_none() {
-            return self.base.clone();
-        }
-
-        let mut env = self.base.config.env.clone();
-        let mut globals = self.base.config.globals.clone();
-        let plugins = self.combined_plugins(overrides_to_apply.clone());
-        let settings = self.base.config.settings.clone();
-
-        let mut external_rules = self
-            .base
-            .external_rules
-            .iter()
-            .map(|&(rule_id, options_id, severity)| (rule_id, (options_id, severity)))
-            .collect::<FxHashMap<_, _>>();
-
-        let rules =
-            self.builtin_rules_for_overrides(plugins, overrides_to_apply, |override_config| {
-                for (external_rule_id, options_id, severity) in
-                    &override_config.rules.external_rules
-                {
-                    external_rules.insert(*external_rule_id, (*options_id, *severity));
-                }
-
-                if let Some(override_env) = &override_config.env {
-                    override_env.override_envs(&mut env);
-                }
-
-                if let Some(override_globals) = &override_config.globals {
-                    override_globals.override_globals(&mut globals);
-                }
-            });
 
         let config: Arc<LintConfig> = if plugins == self.base.config.plugins
             && env == self.base.config.env
@@ -319,74 +308,61 @@ pub struct ConfigStore {
 }
 
 impl ConfigStore {
-    /// Visit potentially enabled rules for the linter's cached policy inventory.
-    /// Override matching is conservative; discovery must include every possible rule policy.
-    pub(crate) fn visit_rules(&self, mut visit: impl FnMut(&RuleEnum)) {
+    /// Discover every potentially enabled no-cycle filter, conservatively ignoring glob overlap.
+    pub(crate) fn import_cycle_policies(&self) -> ImportCyclePolicies {
+        let mut policies = ImportCyclePolicies::default();
         for config in std::iter::once(&self.base).chain(self.nested_configs.values()) {
-            for (rule, _) in config.base.rules.iter() {
-                visit(rule);
-            }
-            for entry in config.overrides.iter() {
-                for (rule, severity) in &entry.rules.builtin_rules {
-                    if severity.is_warn_deny() {
-                        visit(rule);
-                    }
+            let rules = config
+                .base
+                .rules
+                .iter()
+                .chain(config.overrides.iter().flat_map(|entry| &entry.rules.builtin_rules));
+            for (rule, severity) in rules {
+                if let RuleEnum::ImportNoCycle(rule) = rule
+                    && severity.is_warn_deny()
+                    && rule.uses_scc_prefilter()
+                {
+                    policies.insert(rule.graph_options());
                 }
             }
 
-            // Overlapping overrides can enable categories through their combined plugins.
+            // Overlapping overrides can enable the category's default no-cycle rule.
             let plugins = config.combined_plugins(config.overrides.iter());
-            let category_plugins =
-                config.overrides.iter().fold(LintPlugins::empty(), |enabled, entry| {
-                    enabled
-                        | Config::override_category_plugins(
-                            plugins,
-                            config.plugins(),
-                            entry.plugins,
-                        )
-                });
-            if category_plugins.is_empty() {
+            if config.plugins().has_import()
+                || !Config::builtin_rule_plugins(plugins).has_import()
+                || !config
+                    .categories
+                    .get(&NoCycle::CATEGORY)
+                    .is_some_and(|severity| severity.is_warn_deny())
+            {
                 continue;
             }
-            let builtin_plugins = Config::builtin_rule_plugins(plugins);
-            for rule in RULES.iter() {
-                let Ok(plugin) = LintPlugins::try_from(rule.plugin_name()) else {
-                    continue;
-                };
-                if plugin.is_empty()
-                    || !category_plugins.contains(plugin)
-                    || !builtin_plugins.contains(plugin)
-                    || !config
-                        .categories
-                        .get(&rule.category())
-                        .is_some_and(|severity| severity.is_warn_deny())
-                {
-                    continue;
-                }
 
-                // Categories only fill absent bindings. An earlier "off" override can remove
-                // a base binding, but this override's explicit options always win.
-                let mut may_be_missing = !config.base_rules.iter().any(|(base, _)| base == rule);
-                for entry in config.overrides.iter() {
-                    let explicit =
-                        entry.rules.builtin_rules.iter().find(|(entry_rule, _)| entry_rule == rule);
-                    if may_be_missing
-                        && explicit.is_none()
-                        && Config::override_category_plugins(
-                            plugins,
-                            config.plugins(),
-                            entry.plugins,
-                        )
-                        .contains(plugin)
-                    {
-                        visit(rule);
-                        break;
-                    }
-                    may_be_missing |=
-                        explicit.is_some_and(|(_, severity)| *severity == AllowWarnDeny::Allow);
+            // Categories only fill absent bindings. Earlier "off" overrides can remove a
+            // base binding; explicit settings in this same override still take precedence.
+            let mut may_be_missing = !config
+                .base_rules
+                .iter()
+                .any(|(rule, _)| matches!(rule, RuleEnum::ImportNoCycle(_)));
+            for entry in config.overrides.iter() {
+                let explicit = entry
+                    .rules
+                    .builtin_rules
+                    .iter()
+                    .find(|(rule, _)| matches!(rule, RuleEnum::ImportNoCycle(_)));
+                if may_be_missing
+                    && explicit.is_none()
+                    && Config::override_category_plugins(plugins, config.plugins(), entry.plugins)
+                        .has_import()
+                {
+                    policies.insert(NoCycle::default().graph_options());
+                    break;
                 }
+                may_be_missing |=
+                    explicit.is_some_and(|(_, severity)| *severity == AllowWarnDeny::Allow);
             }
         }
+        policies
     }
 
     pub fn new(
@@ -563,7 +539,7 @@ mod test {
     }
 
     #[test]
-    fn rule_inventory_includes_overrides_nested_configs_and_added_plugin_categories() {
+    fn import_cycle_policies_include_overrides_nested_configs_and_added_plugin_categories() {
         fn build(value: Value, external: &mut ExternalPluginStore) -> Config {
             ConfigStoreBuilder::from_oxlintrc(
                 true,
@@ -576,14 +552,7 @@ mod test {
             .build(external)
             .unwrap()
         }
-        let eligible = |rule: &RuleEnum| {
-            matches!(rule, RuleEnum::ImportNoCycle(rule) if rule.uses_scc_prefilter()).then_some(())
-        };
-        let has_eligible_rule = |store: &ConfigStore| {
-            let mut found = false;
-            store.visit_rules(|rule| found |= eligible(rule).is_some());
-            found
-        };
+        let eligible = |rule: &RuleEnum| matches!(rule, RuleEnum::ImportNoCycle(rule) if rule.uses_scc_prefilter());
         for (value, expected) in [
             (serde_json::json!({"categories": {}, "plugins": ["import"]}), false),
             (
@@ -626,6 +595,14 @@ mod test {
             ),
             (
                 serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [
+                    {"files": ["*.js"], "plugins": ["import"], "rules": {"import/no-cycle": "off"}},
+                    {"files": ["*.ts"], "plugins": ["jest"]},
+                    {"files": ["*.ts"], "plugins": ["import"]}
+                ]}),
+                true,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [
                     {"files": ["*.ts"], "plugins": ["import"]},
                     {"files": ["*.ts"], "plugins": ["jest"]},
                     {"files": ["*.js"], "plugins": ["import"], "rules": {"import/no-cycle": "off"}}
@@ -656,13 +633,8 @@ mod test {
             let description = value.to_string();
             let base = build(value, &mut external);
             let store = ConfigStore::new(base, FxHashMap::default(), external);
-            assert_eq!(has_eligible_rule(&store), expected, "{description}");
             assert_eq!(
-                store
-                    .resolve(Path::new("file.ts"))
-                    .rules
-                    .iter()
-                    .any(|(rule, _)| eligible(rule).is_some()),
+                store.resolve(Path::new("file.ts")).rules.iter().any(|(rule, _)| eligible(rule)),
                 expected,
                 "resolved config: {description}",
             );
@@ -681,7 +653,8 @@ mod test {
         );
         let nested = FxHashMap::from_iter([(PathBuf::from("nested"), nested)]);
         let store = ConfigStore::new(base, nested, external);
-        assert!(has_eligible_rule(&store));
+        let linter = crate::Linter::new(crate::LintOptions::default(), store, None);
+        assert!(linter.import_cycle_graph().is_some());
 
         // Rare overrides and nested-config insertion order must not select a single policy.
         for reverse in [false, true] {

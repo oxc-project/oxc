@@ -321,17 +321,8 @@ impl Linter {
 
     pub(crate) fn import_cycle_graph(&self) -> Option<Arc<module_graph_scc::ImportCycleGraph>> {
         // Discover policies only once, and only if an import-graph run needs them.
-        let policies = *self.import_cycle_policies.get_or_init(|| {
-            let mut policies = rules::import::no_cycle::ImportCyclePolicies::default();
-            self.config.visit_rules(|rule| {
-                if let RuleEnum::ImportNoCycle(rule) = rule
-                    && rule.uses_scc_prefilter()
-                {
-                    policies.insert(rule.graph_options());
-                }
-            });
-            policies
-        });
+        let policies =
+            *self.import_cycle_policies.get_or_init(|| self.config.import_cycle_policies());
         // A fresh invalidation token keeps independent runs isolated.
         (!policies.is_empty()).then(|| Arc::new(module_graph_scc::ImportCycleGraph::new(policies)))
     }
