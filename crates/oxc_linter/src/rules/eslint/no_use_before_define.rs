@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
+    ast_util::is_iife,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
@@ -207,7 +208,7 @@ fn is_forbidden(
         return options.classes;
     }
 
-    if is_outer_variable(symbol_id, reference.scope_id(), ctx) {
+    if is_outer_variable(symbol_id, reference_node, ctx) {
         return options.variables;
     }
 
@@ -235,12 +236,50 @@ fn is_outer_class(
 
 fn is_outer_variable(
     symbol_id: SymbolId,
-    reference_scope_id: ScopeId,
+    reference_node: &AstNode<'_>,
     ctx: &LintContext<'_>,
 ) -> bool {
     matches!(ctx.symbol_declaration(symbol_id).kind(), AstKind::VariableDeclarator(_))
-        && get_parent_variable_scope(ctx.scoping().symbol_scope_id(symbol_id), ctx)
-            != get_parent_variable_scope(reference_scope_id, ctx)
+        && is_from_separate_execution_context(symbol_id, reference_node, ctx)
+}
+
+fn is_from_separate_execution_context(
+    symbol_id: SymbolId,
+    reference_node: &AstNode<'_>,
+    ctx: &LintContext<'_>,
+) -> bool {
+    let declaration_scope =
+        get_parent_variable_scope(ctx.scoping().symbol_scope_id(symbol_id), ctx);
+    let declaration_scope_node = ctx.scoping().get_node_id(declaration_scope);
+    let reference_span = reference_node.kind().span();
+
+    ctx.nodes()
+        .ancestors(reference_node.id())
+        .take_while(|ancestor| ancestor.id() != declaration_scope_node)
+        .any(|ancestor| match ancestor.kind() {
+            AstKind::Function(function) => {
+                function.r#async || function.generator || !is_iife(ancestor, ctx.semantic())
+            }
+            AstKind::ArrowFunctionExpression(function) => {
+                function.r#async || !is_iife(ancestor, ctx.semantic())
+            }
+            AstKind::PropertyDefinition(property) => {
+                !property.r#static
+                    && property
+                        .value
+                        .as_ref()
+                        .is_some_and(|value| value.span().contains_inclusive(reference_span))
+            }
+            AstKind::AccessorProperty(property) => {
+                !property.r#static
+                    && property
+                        .value
+                        .as_ref()
+                        .is_some_and(|value| value.span().contains_inclusive(reference_span))
+            }
+            AstKind::TSModuleBlock(_) => true,
+            _ => false,
+        })
 }
 
 fn is_outer_enum(
@@ -498,7 +537,6 @@ fn get_parent_variable_scope(scope_id: ScopeId, ctx: &LintContext<'_>) -> ScopeI
 }
 
 #[test]
-#[ignore = "eslint test cases are failing"]
 fn test() {
     use crate::tester::Tester;
 
