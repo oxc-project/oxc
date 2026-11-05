@@ -1,0 +1,23 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/nested_type_check_without_type_aware
+----------
+
+  ! packages/app/.oxlintrc.json sets `options.typeCheck`, but does not set `options.typeAware`, so no TypeScript diagnostics are reported for its files.
+  help: Set `options.typeAware` to `true` in this config, or `extends` a config which does. It is not inherited from the root config.
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[packages/app/index.ts:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

@@ -1,0 +1,129 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=sarif
+working directory: fixtures/cli/nested_root_only_option
+----------
+{
+  "version": "2.1.0",
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "oxlint",
+          "version": "<variable>",
+          "semanticVersion": "<variable>",
+          "informationUri": "https://oxc.rs/docs/guide/usage/linter.html",
+          "rules": [
+            {
+              "id": "eslint(no-debugger)",
+              "name": "no-debugger",
+              "helpUri": "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html",
+              "properties": {
+                "category": "correctness",
+                "plugin": "eslint",
+                "fix": "fixable_suggestion"
+              }
+            }
+          ],
+          "notifications": [
+            {
+              "id": "OXL0999",
+              "name": "oxlint-configuration",
+              "shortDescription": {
+                "text": "Oxlint configuration or execution diagnostic"
+              },
+              "fullDescription": {
+                "text": "An oxlint diagnostic that is not associated with a specific artifact."
+              }
+            }
+          ]
+        }
+      },
+      "artifacts": [
+        {
+          "location": {
+            "uri": "index.js"
+          }
+        },
+        {
+          "location": {
+            "uri": "nested/index.js"
+          }
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "eslint(no-debugger)",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "`debugger` statement is not allowed"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "index.js",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 1,
+                  "endColumn": 10
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "eslint(no-debugger)",
+          "ruleIndex": 0,
+          "level": "warning",
+          "message": {
+            "text": "`debugger` statement is not allowed"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "nested/index.js",
+                  "index": 1
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 1,
+                  "endColumn": 10
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "toolConfigurationNotifications": [
+            {
+              "descriptor": {
+                "id": "OXL0999",
+                "index": 0
+              },
+              "level": "warning",
+              "message": {
+                "text": "The `options.denyWarnings` option is only supported in the root config. It was found in nested/.oxlintrc.json and is ignored."
+              }
+            }
+          ]
+        }
+      ],
+      "columnKind": "unicodeCodePoints"
+    }
+  ]
+}----------
+CLI result: LintFoundErrors
+----------

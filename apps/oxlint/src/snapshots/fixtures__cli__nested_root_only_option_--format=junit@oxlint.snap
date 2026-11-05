@@ -1,0 +1,23 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=junit
+working directory: fixtures/cli/nested_root_only_option
+----------
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Oxlint" tests="2" failures="1" errors="1">
+    <testsuite name="index.js" tests="1" disabled="0" errors="1" failures="0">
+        <testcase name="eslint(no-debugger)">
+            <error message="`debugger` statement is not allowed">line 1, column 1, `debugger` statement is not allowed</error>
+        </testcase>
+    </testsuite>
+    <testsuite name="nested/index.js" tests="1" disabled="0" errors="0" failures="1">
+        <testcase name="eslint(no-debugger)">
+            <failure message="`debugger` statement is not allowed">line 1, column 1, `debugger` statement is not allowed</failure>
+        </testcase>
+    </testsuite>
+</testsuites>
+----------
+CLI result: LintFoundErrors
+----------

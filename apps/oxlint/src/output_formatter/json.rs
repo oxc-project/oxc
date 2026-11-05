@@ -18,6 +18,8 @@ pub struct JsonOutputFormatter {
     reporter: JsonReporterWrapper,
 }
 
+// Keeps the default `reports_config_warnings`: `diagnostics` holds what was found in the linted
+// files, and consumers count its entries as problems.
 impl InternalFormatter for JsonOutputFormatter {
     fn all_rules(&self, _enabled_rules: FxHashSet<(&str, &str)>) -> Option<String> {
         #[derive(Debug, Serialize)]

@@ -1,0 +1,11 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=checkstyle
+working directory: fixtures/cli/nested_root_only_option
+----------
+<?xml version="1.0" encoding="utf-8"?><checkstyle version="4.3"><file name="index.js"><error line="1" column="1" severity="error" message="`debugger` statement is not allowed" source="eslint(no-debugger)" /></file> <file name="nested/index.js"><error line="1" column="1" severity="warning" message="`debugger` statement is not allowed" source="eslint(no-debugger)" /></file></checkstyle>
+----------
+CLI result: LintFoundErrors
+----------

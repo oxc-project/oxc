@@ -12,6 +12,8 @@ use crate::output_formatter::{InternalFormatter, xml_utils::xml_escape};
 #[derive(Debug, Default)]
 pub struct CheckStyleOutputFormatter;
 
+// Keeps the default `reports_config_warnings`: every checkstyle `<error>` belongs to a
+// `<file>`.
 impl InternalFormatter for CheckStyleOutputFormatter {
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(CheckstyleReporter::default())
