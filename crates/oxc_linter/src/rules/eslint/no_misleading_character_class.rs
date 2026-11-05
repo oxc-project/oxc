@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_allocator::Allocator;
 use oxc_ast::{
     AstKind,
@@ -249,93 +250,18 @@ fn regional_indicator_symbol_sequences(chars: &[&Character], ctx: &LintContext<'
     }
 }
 
-// Returns true if the code point is a combining mark (Unicode category Mn, Mc, or Me)
-//
-// Unicode Combining Character Ranges
-// A. General Combining Characters (Mn, Mc, Me)
-// Combining characters are those whose General Category falls under:
-// - Mn — Nonspacing Mark
-// - Mc — Spacing Mark
-// - Me — Enclosing Mark
-//
-// Some Unicode blocks dedicated (entirely or in part) to combining marks include :
-// - Combining Diacritical Marks: U+0300–U+036F
-// - Combining Diacritical Marks Extended: U+1AB0–U+1AFF
-// - Combining Diacritical Marks Supplement: U+1DC0–U+1DFF
-// - Combining Diacritical Marks for Symbols: U+20D0–U+20FF
-// - Combining Half Marks: U+FE20–U+FE2F
-//
-// Additional combining characters exist within script-specific blocks and are not
-// confined to a dedicated block, but share the Mn/Mc/Me categories. These are listed
-// per script in the `matches!` below, e.g.:
-// - Hebrew, Arabic, Syriac, Thaana
-// - Devanagari, Bengali, Gurmukhi, Gujarati, Oriya, Tamil, Telugu, Kannada, Malayalam, Sinhala
-// - Thai, Lao, Tibetan, Myanmar, Khmer, Mongolian
-// - Balinese, Javanese, Cham, Meetei Mayek, Hiragana/Katakana marks, and others
-//
-// Supplementary-plane scripts are only partially covered (Brahmi, Kharoshthi, Grantha).
-//
-// B. Variation Selectors (also Combining)
-//
-// Variation selectors are also combining characters. There are two blocks:
-// - Variation Selectors (Basic): U+FE00–U+FE0F
-// - Variation Selectors Supplement: U+E0100–U+E01EF (256 total)
+static COMBINING_MARK_REGEX: Lazy<Regex> = lazy_regex!(r"^\p{M}$");
+
 fn is_combining_character(value: u32) -> bool {
-    // Covers Mn (Nonspacing_Mark), Mc (Spacing_Mark), Me (Enclosing_Mark), and variation selectors
-    matches!(
-        value,
-        0x0300..=0x036F | // Combining Diacritical Marks
-        0x1AB0..=0x1AFF | // Combining Diacritical Marks Extended
-        0x1DC0..=0x1DFF | // Combining Diacritical Marks Supplement
-        0x20D0..=0x20FF | // Combining Diacritical Marks for Symbols
-        0xFE20..=0xFE2F | // Combining Half Marks
-        0x0483..=0x0489 | // Cyrillic
-        0x0591..=0x05BD | 0x05BF | 0x05C1..=0x05C2 | 0x05C4..=0x05C5 | 0x05C7 | // Hebrew
-        0x0610..=0x061A | 0x064B..=0x065F | 0x0670 | 0x06D6..=0x06DC | 0x06DF..=0x06E4 | 0x06E7..=0x06E8 | 0x06EA..=0x06ED | // Arabic
-        0x0711 | 0x0730..=0x074A | // Syriac
-        0x07A6..=0x07B0 | // Thaana
-        0x07EB..=0x07F3 | 0x07FD | // NKo
-        0x0816..=0x0819 | 0x081B..=0x0823 | 0x0825..=0x0827 | 0x0829..=0x082D | // Samaritan
-        0x0859..=0x085B | // Mandaic
-        0x0898..=0x089F | 0x08CA..=0x08E1 | // Arabic Extended
-        0x08E3..=0x0903 | 0x093A..=0x093C | 0x093E..=0x094F | 0x0951..=0x0957 | 0x0962..=0x0963 | // Devanagari
-        0x0981..=0x0983 | 0x09BC | 0x09BE..=0x09C4 | 0x09C7..=0x09C8 | 0x09CB..=0x09CD | 0x09D7 | 0x09E2..=0x09E3 | 0x09FE | // Bengali
-        0x0A01..=0x0A03 | 0x0A3C | 0x0A3E..=0x0A42 | 0x0A47..=0x0A48 | 0x0A4B..=0x0A4D | 0x0A51 | 0x0A70..=0x0A71 | 0x0A75 | // Gurmukhi
-        0x0A81..=0x0A83 | 0x0ABC | 0x0ABE..=0x0AC5 | 0x0AC7..=0x0AC9 | 0x0ACB..=0x0ACD | 0x0AE2..=0x0AE3 | 0x0AFA..=0x0AFF | // Gujarati
-        0x0B01..=0x0B03 | 0x0B3C | 0x0B3E..=0x0B44 | 0x0B47..=0x0B48 | 0x0B4B..=0x0B4D | 0x0B55..=0x0B57 | 0x0B62..=0x0B63 | // Oriya
-        0x0B82 | 0x0BBE..=0x0BC2 | 0x0BC6..=0x0BC8 | 0x0BCA..=0x0BCD | 0x0BD7 | // Tamil
-        0x0C00..=0x0C04 | 0x0C3C | 0x0C3E..=0x0C44 | 0x0C46..=0x0C48 | 0x0C4A..=0x0C4D | 0x0C55..=0x0C56 | 0x0C62..=0x0C63 | // Telugu
-        0x0C81..=0x0C83 | 0x0CBC | 0x0CBE..=0x0CC4 | 0x0CC6..=0x0CC8 | 0x0CCA..=0x0CCD | 0x0CD5..=0x0CD6 | 0x0CE2..=0x0CE3 | 0x0CF3 | // Kannada
-        0x0D00..=0x0D03 | 0x0D3B..=0x0D3C | 0x0D3E..=0x0D44 | 0x0D46..=0x0D48 | 0x0D4A..=0x0D4D | 0x0D57 | 0x0D62..=0x0D63 | // Malayalam
-        0x0D81..=0x0D83 | 0x0DCA | 0x0DCF..=0x0DD4 | 0x0DD6 | 0x0DD8..=0x0DDF | 0x0DF2..=0x0DF3 | // Sinhala
-        0x0E31 | 0x0E34..=0x0E3A | 0x0E47..=0x0E4E | // Thai
-        0x0EB1 | 0x0EB4..=0x0EBC | 0x0EC8..=0x0ECE | // Lao
-        0x0F18..=0x0F19 | 0x0F35 | 0x0F37 | 0x0F39 | 0x0F3E..=0x0F3F | 0x0F71..=0x0F84 | 0x0F86..=0x0F87 | 0x0F8D..=0x0FBC | 0x0FC6 | // Tibetan
-        0x102B..=0x103E | 0x1056..=0x1059 | 0x105E..=0x1060 | 0x1062..=0x1064 | 0x1067..=0x106D | 0x1071..=0x1074 | 0x1082..=0x108D | 0x108F | 0x109A..=0x109D | // Myanmar
-        0x135D..=0x135F | // Ethiopic
-        0x1712..=0x1715 | 0x1732..=0x1734 | 0x1752..=0x1753 | 0x1772..=0x1773 | // Tagalog, Hanunoo, Buhid, Tagbanwa
-        0x17B4..=0x17D3 | 0x17DD | // Khmer
-        0x180B..=0x180D | 0x180F | 0x1885..=0x1886 | 0x18A9 | // Mongolian
-        0x1920..=0x192B | 0x1930..=0x193B | // Limbu
-        // spellchecker:disable-next-line
-        0x1A17..=0x1A1B | 0x1A55..=0x1A7F | // Buginese, Tai Tham
-        0x1B00..=0x1B04 | 0x1B34..=0x1B44 | 0x1B6B..=0x1B73 | // Balinese
-        0x1B80..=0x1B82 | 0x1BA1..=0x1BAD | 0x1BE6..=0x1BF3 | // Sundanese, Batak
-        0x1C24..=0x1C37 | // Lepcha
-        0x1CD0..=0x1CD2 | 0x1CD4..=0x1CE8 | 0x1CED | 0x1CF4 | 0x1CF7..=0x1CF9 | // Vedic Extensions
-        0x302A..=0x302F | 0x3099..=0x309A | // CJK / Kana combining marks
-        0xA66F..=0xA672 | 0xA674..=0xA67D | 0xA69E..=0xA69F | 0xA6F0..=0xA6F1 | // Cyrillic Extended-B, Bamum
-        0xA802 | 0xA806 | 0xA80B | 0xA823..=0xA827 | // Syloti Nagri
-        0xA880..=0xA881 | 0xA8B4..=0xA8C5 | 0xA8E0..=0xA8F1 | // Saurashtra, Devanagari Extended
-        0xA926..=0xA92D | 0xA947..=0xA953 | 0xA980..=0xA983 | 0xA9B3..=0xA9C0 | // Kayah Li, Rejang, Javanese
-        0xAA29..=0xAA36 | 0xAAEB..=0xAAEF | 0xABE3..=0xABEA | 0xABEC..=0xABED | // Cham, Meetei Mayek
-        0xFB1E | // Hebrew point judeo-spanish varika
-        0x10A01..=0x10A0F | 0x10A38..=0x10A3F | // Kharoshthi
-        0x11000..=0x11002 | 0x11038..=0x11046 | 0x11070 | 0x11073..=0x11074 | 0x1107F..=0x11082 | // Brahmi
-        0x11300..=0x11303 | 0x1133B..=0x1133C | 0x1133E..=0x11344 | 0x11347..=0x11348 | 0x1134B..=0x1134D | 0x11357 | 0x11362..=0x11363 | 0x11366..=0x1136C | 0x11370..=0x11374 | // Grantha
-        0xFE00..=0xFE0F | // Variation Selectors (Basic)
-        0xE0100..=0xE01EF  // Variation Selectors (Supplement)
-    )
+    if value < 0x80 {
+        return false;
+    }
+
+    let Some(character) = char::from_u32(value) else {
+        return false;
+    };
+    let mut buffer = [0; 4];
+    COMBINING_MARK_REGEX.is_match(character.encode_utf8(&mut buffer))
 }
 
 // Find combining mark sequences: previous is not combining, current is combining
