@@ -405,7 +405,6 @@ fn try_fold_string_replace<'a>(
         return None;
     }
     let Expression::StringLiteral(s) = object else { return None };
-    // The replace machinery is UTF-8.
     // A receiver, search value, or replacement containing a lone surrogate stays unfolded.
     let value = s.value.as_str()?;
     let search_value = args.first().unwrap();
@@ -429,32 +428,48 @@ fn try_fold_string_replace<'a>(
     if replace_value.contains('$') {
         return None;
     }
-    if name == "replaceAll" && search_value.is_empty() {
-        if replace_value.is_empty() {
-            return Some(ConstantValue::String(s.value));
-        }
-        let capacity = value.encode_utf16().try_fold(replace_value.len(), |capacity, unit| {
-            capacity
-                .checked_add(JSChar::from_u32(u32::from(unit))?.len_bytes())?
-                .checked_add(replace_value.len())
-        })?;
-        if capacity > u32::MAX as usize || capacity > isize::MAX as usize {
-            return None;
-        }
-        let mut result = JSStrBuilder::with_capacity_in(capacity, ctx);
-        result.push_str(replace_value);
-        for unit in value.encode_utf16() {
-            result.push_code_unit(unit);
-            result.push_str(replace_value);
-        }
-        return Some(ConstantValue::String(result.into_js_str()));
-    }
     let result = match name {
         "replace" => value.cow_replacen(search_value, replace_value, 1),
+        // An empty search is matched between code units, which the byte-level path cannot do.
+        "replaceAll" if search_value.is_empty() => {
+            return try_fold_empty_search_replace_all(s.value, replace_value, ctx);
+        }
         "replaceAll" => value.cow_replace(search_value, replace_value),
         _ => unreachable!(),
     };
     Some(ConstantValue::String(JSStr::from_cow_in(&result, ctx)))
+}
+
+/// Fold `receiver.replaceAll("", replacement)`.
+///
+/// An empty search matches before every UTF-16 code unit and after the last one, including the
+/// position between the two halves of a surrogate pair, so the replacement goes between code
+/// units and not between code points.
+fn try_fold_empty_search_replace_all<'a>(
+    receiver: JSStr<'a>,
+    replace_value: &str,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if replace_value.is_empty() {
+        return Some(ConstantValue::String(receiver));
+    }
+    let value = receiver.as_str()?;
+    // A code unit encodes to at most three bytes, including either half of a surrogate pair.
+    let capacity = value.encode_utf16().try_fold(replace_value.len(), |capacity, unit| {
+        capacity
+            .checked_add(JSChar::from_u32(u32::from(unit))?.len_bytes())?
+            .checked_add(replace_value.len())
+    })?;
+    if capacity > u32::MAX as usize || capacity > isize::MAX as usize {
+        return None;
+    }
+    let mut result = JSStrBuilder::with_capacity_in(capacity, ctx);
+    result.push_str(replace_value);
+    for unit in value.encode_utf16() {
+        result.push_code_unit(unit);
+        result.push_str(replace_value);
+    }
+    Some(ConstantValue::String(result.into_js_str()))
 }
 
 fn try_fold_string_from_char_code<'a>(
