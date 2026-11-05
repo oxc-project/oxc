@@ -59,7 +59,7 @@ function _() {
 function _() { var g; try {} catch (g) { { function g() {} } } return g; }
 function _() {
 	var e;
-	try {} catch (t) {
+	try {} catch (e) {
 		{
 			function e() {}
 		}
@@ -195,6 +195,36 @@ function _() {
 	return e;
 });
 
+function _(x) { var a = x + 1; for (let k of [8]) { if (x > 9) function e() {} var e = k; let y = a; use(k, y, x); } return [x, a, e]; }
+function _(e) {
+	var t = e + 1;
+	for (let r of [8]) {
+		if (e > 9) function n() {}
+		var n = r;
+		let i = t;
+		use(r, i, e);
+	}
+	return [
+		e,
+		t,
+		n
+	];
+}
+
+function _() { var g = 'var'; try { throw 1; } catch (g) { { if (false) function g() {} use(g); } } return g; }
+function _() {
+	var e = "var";
+	try {
+		throw 1;
+	} catch (e) {
+		{
+			if (false) function e() {}
+			use(e);
+		}
+	}
+	return e;
+}
+
 function _() { eval(''); { let e; { function e() {} let x = 1; use(x); } } } function f() { var g; { function g() {} } return g; }
 function _() {
 	eval("");
@@ -236,6 +266,23 @@ function _() {
 		use(t);
 	}
 	return e;
+}
+
+function _() { var g = class {}; { let g; { { function g() { g = class {} } } function g() {} } } return g; }
+function _() {
+	var g = class {};
+	{
+		let g;
+		{
+			{
+				function g() {
+					g = class {};
+				}
+			}
+			function g() {}
+		}
+	}
+	return g;
 }
 
 function _() { var g; { function g() {} } let x = 1; return [g, x]; }

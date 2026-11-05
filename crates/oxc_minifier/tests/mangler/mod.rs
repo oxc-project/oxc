@@ -495,6 +495,10 @@ fn annex_b_block_function_without_var_binding() {
         "function _() { let x; { function g() { return x; } function h() {} } let g, h; return [x, g, h]; }",
         // The parameter that shadows the function expression's name keeps the function in its block.
         "(function g(g) { { function g() {} } return g; })",
+        // An `if` function and a following `var` share a symbol, not an Annex B binding pair.
+        "function _(x) { var a = x + 1; for (let k of [8]) { if (x > 9) function e() {} var e = k; let y = a; use(k, y, x); } return [x, a, e]; }",
+        // Reads in the enclosing block must keep resolving to the simple catch parameter.
+        "function _() { var g = 'var'; try { throw 1; } catch (g) { { if (false) function g() {} use(g); } } return g; }",
         // Bindings visible to direct `eval` keep their names, without affecting other functions.
         "function _() { eval(''); { let e; { function e() {} let x = 1; use(x); } } } function f() { var g; { function g() {} } return g; }",
         "function _() { { function g() {} eval(''); let x = 1; } let g; var y = 1; return y; }",
@@ -512,6 +516,11 @@ fn annex_b_block_function_without_var_binding() {
         // The class keeps its name, so the function it keeps in its block keeps its name too.
         (
             "function _() { class e {} { function e() {} let x = 1; use(x); } return e; }",
+            keep_class_names.clone(),
+        ),
+        // The kept class name propagates through both functions in this three-binding chain.
+        (
+            "function _() { var g = class {}; { let g; { { function g() { g = class {} } } function g() {} } } return g; }",
             keep_class_names,
         ),
         // The function keeps its name, so the `var` it writes keeps its name too.
