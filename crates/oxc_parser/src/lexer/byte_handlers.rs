@@ -20,9 +20,25 @@ impl<C: Config> Lexer<'_, C> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub(super) unsafe fn handle_byte(&mut self, byte: u8) -> Kind {
-        let byte_handlers = self.config.byte_handlers();
-        // SAFETY: Caller guarantees to uphold safety invariants
-        unsafe { byte_handlers[byte as usize](self) }
+        // Bypass indirect dispatch for these common one-byte tokens.
+        // Keep this match small: adding other handlers regressed ARM64 parser benchmarks
+        // through extra dispatch work and reduced inlining into parser callers.
+        // Re-benchmark before extending this set.
+        let kind = match byte {
+            b'(' => Kind::LParen,
+            b')' => Kind::RParen,
+            b';' => Kind::Semicolon,
+            _ => {
+                let byte_handlers = self.config.byte_handlers();
+                // SAFETY: Caller guarantees to uphold safety invariants.
+                return unsafe { byte_handlers[byte as usize](self) };
+            }
+        };
+
+        // SAFETY: Caller guarantees `byte` is the current source byte, and these are single-byte ASCII characters.
+        let next = unsafe { self.source.position().add(1) };
+        self.source.set_position(next);
+        kind
     }
 }
 
@@ -38,8 +54,8 @@ macro_rules! byte_handlers {
         //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F    //
             ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, ISP, ISP, LIN, ERR, ERR, // 0
             ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, // 1
-            SPS, EXL, QOD, HAS, IDT, PRC, AMP, QOS, PNO, PNC, ATR, PLS, COM, MIN, PRD, SLH, // 2
-            ZER, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, COL, SEM, LSS, EQL, GTR, QST, // 3
+            SPS, EXL, QOD, HAS, IDT, PRC, AMP, QOS, UER, UER, ATR, PLS, COM, MIN, PRD, SLH, // 2
+            ZER, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, COL, UER, LSS, EQL, GTR, QST, // 3
             AT_, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, // 4
             IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, BTO, ESC, BTC, CRT, IDT, // 5
             TPL, L_A, L_B, L_C, L_D, L_E, L_F, L_G, IDT, L_I, IDT, L_K, L_L, L_M, L_N, L_O, // 6
@@ -256,18 +272,6 @@ ascii_byte_handler!(AMP(lexer) {
     }
 });
 
-// (
-ascii_byte_handler!(PNO(lexer) {
-    lexer.consume_char();
-    Kind::LParen
-});
-
-// )
-ascii_byte_handler!(PNC(lexer) {
-    lexer.consume_char();
-    Kind::RParen
-});
-
 // *
 ascii_byte_handler!(ATR(lexer) {
     lexer.consume_char();
@@ -353,12 +357,6 @@ ascii_byte_handler!(DIG(lexer) {
 ascii_byte_handler!(COL(lexer) {
     lexer.consume_char();
     Kind::Colon
-});
-
-// ;
-ascii_byte_handler!(SEM(lexer) {
-    lexer.consume_char();
-    Kind::Semicolon
 });
 
 // <
@@ -677,13 +675,15 @@ fn UNI<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
     lexer.unicode_char_handler()
 }
 
+// Punctuation dispatched directly in `handle_byte`, and invalid UTF-8 start bytes.
+//
 // UTF-8 continuation bytes (0x80 - 0xBF) (i.e. middle of a multi-byte UTF-8 sequence)
 // + and byte values which are not legal in UTF-8 strings (0xC0, 0xC1, 0xF5 - 0xFF).
 // `handle_byte()` should only be called with 1st byte of a valid UTF-8 character,
 // so something has gone wrong if we get here.
 // https://datatracker.ietf.org/doc/html/rfc3629
 //
-// Note: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII bytes.
+// Note: Must not use `ascii_byte_handler!` macro, as this handler also covers non-ASCII bytes.
 #[expect(non_snake_case)]
 fn UER<C: Config>(_lexer: &mut Lexer<'_, C>) -> Kind {
     unreachable!();
