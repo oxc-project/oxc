@@ -30,13 +30,33 @@ use crate::{
     utils::{
         call_expression::is_test_call_expression,
         expression::as_call_expression_without_chain_wrappers, is_long_curried_call,
-        member_chain::simple_argument::SimpleArgument, typecast::is_cast_target,
+        member_chain::simple_argument::SimpleArgument, tailwindcss::tailwind_context_for_callee,
+        typecast::is_cast_target,
     },
     write,
 };
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        // Pushed here, so this call's context covers only its arguments, not its callee (e.g. `cn.foo["a  b"](...)`),
+        // for both a call and the calls a `MemberChain` prints
+        // (an outer context still covers the callee, as the plugin does)
+        let tailwind_ctx = match self.parent() {
+            AstNodes::CallExpression(call) => tailwind_context_for_callee(&call.callee, f),
+            _ => None,
+        };
+        if let Some(ctx) = tailwind_ctx {
+            f.context_mut().push_tailwind_context(ctx);
+        }
+        self.write_arguments(f);
+        if tailwind_ctx.is_some() {
+            f.context_mut().pop_tailwind_context();
+        }
+    }
+}
+
+impl<'a> AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>> {
+    fn write_arguments(&self, f: &mut JsFormatter<'_, 'a>) {
         let l_paren_token = "(";
         let r_paren_token = ")";
 
