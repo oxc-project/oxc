@@ -72,25 +72,33 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/var-and-if-stateme
                 "symbols": []
               },
               {
-                "children": [],
-                "flags": "ScopeFlags(Function)",
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(Function)",
+                    "id": 9,
+                    "node": "Function(g)",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
                 "id": 8,
-                "node": "Function(g)",
-                "symbols": []
+                "node": "Program",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(Function)",
+                    "id": 5,
+                    "name": "g",
+                    "node": "Function(g)",
+                    "references": []
+                  }
+                ]
               }
             ],
             "flags": "ScopeFlags(0x0)",
             "id": 5,
             "node": "BlockStatement",
-            "symbols": [
-              {
-                "flags": "SymbolFlags(Function)",
-                "id": 5,
-                "name": "g",
-                "node": "Function(g)",
-                "references": []
-              }
-            ]
+            "symbols": []
           }
         ],
         "flags": "ScopeFlags(Function)",
@@ -119,19 +127,35 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/var-and-if-stateme
           {
             "children": [
               {
-                "children": [],
-                "flags": "ScopeFlags(Function)",
-                "id": 11,
-                "node": "Function(g)",
-                "symbols": []
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(Function)",
+                    "id": 13,
+                    "node": "Function(g)",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 12,
+                "node": "Program",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(Function)",
+                    "id": 8,
+                    "name": "g",
+                    "node": "Function(g)",
+                    "references": []
+                  }
+                ]
               }
             ],
             "flags": "ScopeFlags(0x0)",
-            "id": 10,
+            "id": 11,
             "node": "BlockStatement",
             "symbols": [
               {
-                "flags": "SymbolFlags(BlockScopedVariable | Function)",
+                "flags": "SymbolFlags(BlockScopedVariable)",
                 "id": 7,
                 "name": "g",
                 "node": "VariableDeclarator(g)",
@@ -141,7 +165,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/var-and-if-stateme
           }
         ],
         "flags": "ScopeFlags(Function)",
-        "id": 9,
+        "id": 10,
         "node": "Function(ifStatementFunctionAfterLet)",
         "symbols": []
       }

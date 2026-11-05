@@ -101,6 +101,9 @@ pub struct Scoping {
     /// Function or Variable Symbol IDs that are marked with `@__NO_SIDE_EFFECTS__`.
     pub(crate) no_side_effects: FxHashSet<SymbolId>,
 
+    /// Bindings whose declarations prevent an Annex B function from acquiring a var binding.
+    pub(crate) annex_b_blockers: FxHashSet<SymbolId>,
+
     /// Pre-computed enum member values and scope mappings.
     pub(crate) enum_data: EnumData,
 
@@ -122,6 +125,7 @@ impl Default for Scoping {
             symbol_table: SymbolTable::new(),
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
+            annex_b_blockers: FxHashSet::default(),
             enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
@@ -396,6 +400,14 @@ impl Scoping {
     #[inline]
     pub fn symbol_flags(&self, symbol_id: SymbolId) -> SymbolFlags {
         *self.symbol_table.symbol_flags(symbol_id)
+    }
+
+    /// Whether this binding prevents an Annex B function from acquiring a var binding.
+    ///
+    /// Removing such a declaration can change reference resolution and runtime hoisting.
+    #[inline]
+    pub fn is_annex_b_blocker(&self, symbol_id: SymbolId) -> bool {
+        self.annex_b_blockers.contains(&symbol_id)
     }
 
     /// Get a mutable reference to a symbol's [flags](SymbolFlags).
@@ -1137,6 +1149,7 @@ impl Scoping {
             symbol_table: self.symbol_table.clone(),
             references: self.references.clone(),
             no_side_effects: self.no_side_effects.clone(),
+            annex_b_blockers: self.annex_b_blockers.clone(),
             enum_data: self.enum_data.clone(),
             scope_table: self.scope_table.clone(),
             cell: {

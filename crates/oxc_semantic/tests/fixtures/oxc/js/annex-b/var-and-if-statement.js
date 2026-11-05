@@ -24,8 +24,8 @@ function ifStatementFunction() {
   return g();
 }
 
-// An `if` branch function that redeclares a `let` in the same block is that `let`'s symbol.
-// It does not get a var binding, and neither does the `let`.
+// A `let` in the block containing an `if` prevents the branch function's Annex B var binding.
+// The function has a separate symbol in its implicit branch scope.
 function ifStatementFunctionAfterLet() {
   {
     let g;

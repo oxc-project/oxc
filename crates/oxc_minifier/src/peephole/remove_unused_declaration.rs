@@ -119,6 +119,11 @@ impl<'a> PeepholeOptimizations {
         match &decl.id {
             BindingPattern::BindingIdentifier(ident) => {
                 if let Some(symbol_id) = ident.symbol_id.get() {
+                    // Dropping this declaration would enable an Annex B var binding that was
+                    // previously blocked, changing both resolution and runtime initialization.
+                    if ctx.scoping().is_annex_b_blocker(symbol_id) {
+                        return false;
+                    }
                     let is_unused = Self::symbol_is_unused_by_count(symbol_id, ctx)
                         || Self::self_recursive_function_declarator_is_unused(decl, symbol_id, ctx);
                     return is_unused && !Self::class_initializer_name_needs_to_be_kept(decl, ctx);

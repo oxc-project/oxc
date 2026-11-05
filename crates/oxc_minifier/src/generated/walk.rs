@@ -2270,6 +2270,20 @@ unsafe fn walk_function<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_function(&mut *node, ctx);
+    let annex_b_if_scope = if matches!(
+        ctx.parent(),
+        Ancestor::IfStatementConsequent(_) | Ancestor::IfStatementAlternate(_)
+    ) {
+        let body_scope_id = (*node).scope_id.get().unwrap();
+        let scope_id = ctx.scoping().scope_parent_id(body_scope_id).unwrap();
+        let previous_scope_id = ctx.current_scope_id();
+        let previous_block_scope_id = ctx.current_block_scope_id();
+        ctx.set_current_scope_id(scope_id);
+        ctx.set_current_block_scope_id(scope_id);
+        Some((previous_scope_id, previous_block_scope_id))
+    } else {
+        None
+    };
     let previous_scope_id = ctx.current_scope_id();
     let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_FUNCTION_SCOPE_ID)
         as *mut Cell<Option<ScopeId>>))
@@ -2322,6 +2336,10 @@ unsafe fn walk_function<'a, Tr: Traverse<'a>>(
     ctx.set_current_scope_id(previous_scope_id);
     ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
     ctx.set_current_block_scope_id(previous_block_scope_id);
+    if let Some((previous_scope_id, previous_block_scope_id)) = annex_b_if_scope {
+        ctx.set_current_scope_id(previous_scope_id);
+        ctx.set_current_block_scope_id(previous_block_scope_id);
+    }
     traverser.exit_function(&mut *node, ctx);
 }
 

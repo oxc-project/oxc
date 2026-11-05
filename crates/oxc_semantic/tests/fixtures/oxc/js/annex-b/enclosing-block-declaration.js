@@ -37,7 +37,7 @@ function destructuredCatchParameter() {
   return g;
 }
 
-// The same holds for an `if` statement function, which shares the catch parameter's symbol.
+// The same holds for an `if` statement function in its implicit branch scope.
 function simpleCatchParameterIfStatement(x) {
   try {
   } catch (g) {
