@@ -1,13 +1,17 @@
 //! Differential test of the incubating `oxc_lexer` crate against the parser's own lexer.
 //!
-//! Each fixture is lexed twice. The parser is the oracle: its token stream and comments are what
-//! `oxc_lexer` must reproduce. Trivia and `Eof` are dropped from `oxc_lexer`'s tokens first,
-//! because the parser never surfaces them as tokens.
+//! Each fixture is lexed by the parser, and by `oxc_lexer` with each CPU feature set
+//! this CPU supports, one straight after the other (e.g. AVX2 then generic on x86_64).
+//! `oxc_lexer`'s output must be identical with every CPU feature set.
+//!
+//! The parser is the oracle. Its token stream and comments are what `oxc_lexer` must reproduce.
+//! Trivia and `Eof` are dropped from `oxc_lexer`'s tokens first, because the parser
+//! never surfaces them as tokens.
 //!
 //! Sources that both sides reject identically still count as a pass - see [`lex_diff`].
 
 use std::{
-    fmt::Write,
+    fmt::{Debug, Write},
     iter,
     panic::{AssertUnwindSafe, catch_unwind},
 };
@@ -19,7 +23,11 @@ use oxc::{
     parser::{Parser, Token, config::TokensParserConfig},
     span::{SourceType, Span},
 };
-use oxc_lexer::{LexOptions, PAD, TokenKind, diagnostics::to_oxc_diagnostic};
+use oxc_lexer::{
+    Arena, LexOptions, LexResult, PAD, TokenKind,
+    diagnostics::to_oxc_diagnostic,
+    testing::{for_each_cpu, lex_utf8_with_cpu},
+};
 use rayon::prelude::*;
 
 use crate::{
@@ -104,11 +112,11 @@ fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
         return TestResult::Passed;
     };
 
-    let Ok((new_spans, mut new_comments, new_error)) =
-        catch_unwind(AssertUnwindSafe(|| lexer_stream(code, source_type)))
-    else {
-        return TestResult::ParseError("`oxc_lexer` panicked".to_string(), true);
+    let (result, arena) = match lex_with_each_cpu(code, source_type) {
+        Ok(output) => output,
+        Err(failure) => return failure,
     };
+    let (new_spans, mut new_comments, new_error) = lexer_stream(code, &result, &arena);
 
     // Only compare comments which start before the parser's last error.
     //
@@ -151,15 +159,48 @@ fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
     token_mismatch(code, &new_spans, &old_spans, new_error.as_ref(), old_error.as_ref())
 }
 
-/// Get token stream and comments from `oxc_lexer`, plus the first error (if any).
+/// Get token stream and comments from `oxc_lexer`'s output, plus the first error (if any).
 fn lexer_stream(
     code: &str,
-    source_type: SourceType,
+    result: &LexResult,
+    arena: &Arena,
 ) -> (Vec<Span>, Vec<Comment>, Option<OxcDiagnostic>) {
+    let kinds = result.tok_kinds(arena);
+    let token_spans = result.tok_spans(arena);
+    assert_eq!(kinds.len(), token_spans.len());
+
+    let spans = iter::zip(kinds, token_spans)
+        .filter_map(|(&kind, &span)| match kind {
+            TokenKind::Eof => None,
+            _ if kind.is_trivia() => None,
+            _ => Some(span),
+        })
+        .collect();
+
+    let comments = result.comments(arena).to_vec();
+
+    let error = result
+        .diagnostics()
+        .iter()
+        .min_by_key(|error| error.off)
+        .map(|error| to_oxc_diagnostic(error, code));
+
+    (spans, comments, error)
+}
+
+/// Lex `code` with `oxc_lexer`, with each CPU feature set this CPU supports,
+/// one straight after the other.
+///
+/// Returns the output from the first CPU feature set.
+/// Returns `Err` if lexing panicked, or the outputs from each CPU feature set differ.
+fn lex_with_each_cpu(
+    code: &str,
+    source_type: SourceType,
+) -> Result<(LexResult, Arena), TestResult> {
     let len = code.len();
     let len_u32 = u32::try_from(len).expect("source longer than `u32::MAX`");
 
-    // `lex_utf8` requires at least `PAD` bytes of zeroed padding past the end of the source
+    // `lex_utf8_with_cpu` requires at least `PAD` bytes of zeroed padding past the end of the source
     let mut buf = Vec::with_capacity(len + PAD);
     buf.extend_from_slice(code.as_bytes());
     buf.resize(len + PAD, 0);
@@ -171,28 +212,82 @@ fn lexer_stream(
         ..Default::default()
     };
 
-    let (result, arena) = oxc_lexer::lex_utf8(&buf, len_u32, options);
-    let kinds = result.tok_kinds(&arena);
-    let token_spans = result.tok_spans(&arena);
-    assert_eq!(kinds.len(), token_spans.len());
+    let mut outputs = vec![];
+    let mut panicked = vec![];
+    for_each_cpu(|cpu| {
+        match catch_unwind(AssertUnwindSafe(|| lex_utf8_with_cpu(&buf, len_u32, options, cpu))) {
+            Ok(output) => outputs.push((cpu, output)),
+            Err(_) => panicked.push(cpu.name()),
+        }
+    });
 
-    let spans = iter::zip(kinds, token_spans)
-        .filter_map(|(&kind, &span)| match kind {
-            TokenKind::Eof => None,
-            _ if kind.is_trivia() => None,
-            _ => Some(span),
+    if !panicked.is_empty() {
+        let message = if outputs.is_empty() {
+            "`oxc_lexer` panicked".to_string()
+        } else {
+            let lexed = outputs.iter().map(|(cpu, _)| cpu.name()).collect::<Vec<_>>();
+            format!(
+                "`oxc_lexer` panicked with {}, but not with {}",
+                panicked.join(", "),
+                lexed.join(", ")
+            )
+        };
+        return Err(TestResult::ParseError(message, true));
+    }
+
+    let mut outputs = outputs.into_iter();
+    let (first_cpu, first) =
+        outputs.next().expect("`for_each_cpu` calls its closure at least once");
+    for (cpu, output) in outputs {
+        if let Some((expected, actual)) = first_difference(&first, &output) {
+            return Err(TestResult::Mismatch(
+                "CPU feature sets",
+                format!("{}: {actual}", cpu.name()),
+                format!("{}: {expected}", first_cpu.name()),
+            ));
+        }
+    }
+
+    Ok(first)
+}
+
+/// Find the first difference between 2 outputs from `oxc_lexer`.
+///
+/// Returns a description of the first entry which differs, from each output.
+fn first_difference(a: &(LexResult, Arena), b: &(LexResult, Arena)) -> Option<(String, String)> {
+    let ((a, a_arena), (b, b_arena)) = (a, b);
+    // Compare bits, so `NaN`s compare equal, and `0.0` and `-0.0` don't
+    let numbers = |result: &LexResult, arena: &Arena| {
+        result.numbers(arena).iter().map(|number| number.to_bits()).collect::<Vec<_>>()
+    };
+
+    lane_difference("tokens", a.tok_kinds(a_arena), b.tok_kinds(b_arena))
+        .or_else(|| lane_difference("spans", a.tok_spans(a_arena), b.tok_spans(b_arena)))
+        .or_else(|| lane_difference("diagnostics", a.diagnostics(), b.diagnostics()))
+        .or_else(|| lane_difference("numbers", &numbers(a, a_arena), &numbers(b, b_arena)))
+        .or_else(|| lane_difference("strings", a.strings(a_arena), b.strings(b_arena)))
+        .or_else(|| lane_difference("templates", a.templates(a_arena), b.templates(b_arena)))
+        .or_else(|| lane_difference("atoms", a.atoms(a_arena), b.atoms(b_arena)))
+        .or_else(|| {
+            lane_difference("cooked bytes", a.cooked_bytes(a_arena), b.cooked_bytes(b_arena))
         })
-        .collect();
+        .or_else(|| lane_difference("regex flags", a.regex_flags(a_arena), b.regex_flags(b_arena)))
+        .or_else(|| lane_difference("comments", a.comments(a_arena), b.comments(b_arena)))
+        .or_else(|| {
+            lane_difference("hit resource limit", &[a.hit_resource_limit], &[b.hit_resource_limit])
+        })
+}
 
-    let comments = result.comments(&arena).to_vec();
+/// If lanes `a` and `b` differ, describe the first entry which differs, from each lane.
+fn lane_difference<T: PartialEq + Debug>(name: &str, a: &[T], b: &[T]) -> Option<(String, String)> {
+    if a == b {
+        return None;
+    }
 
-    let error = result
-        .diagnostics()
-        .iter()
-        .min_by_key(|error| error.off)
-        .map(|error| to_oxc_diagnostic(error, code));
-
-    (spans, comments, error)
+    let index = iter::zip(a, b).position(|(a, b)| a != b).unwrap_or(a.len().min(b.len()));
+    let describe =
+        |lane: &[T]| format!("{name}[{index}] = {:?} ({} entries)\n", lane.get(index), lane.len());
+    Some((describe(a), describe(b)))
 }
 
 /// Get token stream and comments from `oxc_parser`,
