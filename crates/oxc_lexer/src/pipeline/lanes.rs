@@ -160,12 +160,12 @@ impl Lanes {
         self.push_diag(e2 as u32, (end - e2) as u32, DiagCode::InvalidNumericLiteral);
     }
 
-    #[cpu_multiversion]
-    #[inline]
     /// `EMIT`: report malformed escapes while cooking - strings only, since
     /// template escapes are legal when tagged (the parser owns that error).
     /// `CRLF`: normalize raw CRLF/CR to LF per the template TV rule
     /// (ECMA-262 12.9.6.1). Monomorphized out of copies that don't need them.
+    #[cpu_multiversion]
+    #[inline]
     fn cook<const EMIT: bool, const CRLF: bool>(
         &mut self,
         src: &[u8],

@@ -15,8 +15,8 @@ macro_rules! define_token_kind {
         /// pipeline computes kinds arithmetically and blends them in SIMD
         /// registers, so it works on the raw `u8` and only the crate boundary
         /// is typed.
+        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
         #[repr(u8)]
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub enum TokenKind {
             $( $variant = $value, )+
         }
@@ -47,9 +47,9 @@ macro_rules! define_token_kind {
         }
 
         /// Constants used by `tk!` macro.
-        #[doc(hidden)]
-        #[allow(unused, clippy::allow_attributes)]
         #[expect(non_upper_case_globals)]
+        #[allow(unused, clippy::allow_attributes)]
+        #[doc(hidden)]
         pub mod __kind_u8 {
             use super::TokenKind;
 
@@ -449,8 +449,8 @@ pub mod token_flags {
 const _: () = assert!(tk!(Hashbang) > tk!(LineComment));
 const _: () = assert!(tk!(Hashbang) < tk!(LineTerminator));
 
+#[derive(Clone, Copy, Default, Debug)]
 #[repr(C)]
-#[derive(Debug, Default, Clone, Copy)]
 pub struct StringSpan {
     pub start: u32,
     pub end_and_flags: u32,

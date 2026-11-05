@@ -103,8 +103,8 @@ fn with_proof(func: &Func, proof: &Proof) -> TokenStream {
 /// /// Do some stuff (AVX2 version).
 /// #[inline(always)]
 /// fn foo<'a, const N: usize, T>(arr: &'a [T; N], cpu: Avx2) -> bool {
-///     #[inline(never)]
 ///     #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
+///     #[inline(never)]
 ///     fn __impl<'a, const N: usize, T>(mut arr: &'a [T; N], cpu: Avx2) -> bool {
 ///         // ... original function body ...
 ///     }
@@ -132,9 +132,9 @@ fn wrap(func: &Func, cpu: Cpu, proof: &Proof) -> TokenStream {
     let impl_name = func.generated_name("impl");
     let params_with_mut = func.params_with_mut();
     let impl_fn = quote! {
+        #target_feature_attr
         #(#impl_attrs)*
         #(#entry_attrs)*
-        #target_feature_attr
         #constness fn #impl_name #generics (#params_with_mut) #return_type
         #where_clause
         #body

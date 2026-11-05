@@ -176,9 +176,9 @@ mod version;
 ///         // ...
 ///     }
 ///
-///     #[inline(never)]
 ///     #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
 ///     #[allow(unreachable_code)]
+///     #[inline(never)]
 ///     unsafe fn __avx2(src: &[u8], n: usize, cpu: Avx2) -> usize {
 ///         // `Avx2` is uninhabited on other platforms. See above.
 ///         #[cfg(not(target_arch = "x86_64"))]
@@ -186,9 +186,9 @@ mod version;
 ///         __impl(src, n, cpu)
 ///     }
 ///
-///     #[inline(never)]
 ///     #[cfg_attr(target_arch = "aarch64", target_feature(enable = "neon"))]
 ///     #[allow(unreachable_code)]
+///     #[inline(never)]
 ///     unsafe fn __neon(src: &[u8], n: usize, cpu: Neon) -> usize {
 ///         // `Neon` is uninhabited on other platforms. See above.
 ///         #[cfg(not(target_arch = "aarch64"))]
@@ -196,10 +196,10 @@ mod version;
 ///         __impl(src, n, cpu)
 ///     }
 ///
-///     #[inline(never)]
 ///     // Stops the MIR inliner inlining `__generic` into this function. See the docs above.
 ///     #[cfg_attr(target_feature = "sse2", target_feature(enable = "sse2"))]
 ///     #[allow(unreachable_code)]
+///     #[inline(never)]
 ///     unsafe fn __generic(src: &[u8], n: usize, cpu: Generic) -> usize {
 ///         // `Generic` is uninhabited on aarch64 with Neon enabled. See above.
 ///         #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
@@ -301,8 +301,8 @@ pub fn cpu_multiversion(args: TokenStream, item: TokenStream) -> TokenStream {
 /// ```ignore
 /// #[inline(always)]
 /// fn foo<const N: usize>(arr: [u64; N], cpu: Avx2) -> bool {
-///     #[inline(never)]
 ///     #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
+///     #[inline(never)]
 ///     fn __impl<const N: usize>(mut arr: [u64; N], cpu: Avx2) -> bool {
 ///         // ...
 ///     }

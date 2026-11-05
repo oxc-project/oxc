@@ -70,27 +70,27 @@ impl Walks {
         }
     }
 
-    #[cpu_version(Generic)]
     #[cfg(test)]
+    #[cpu_version(Generic)]
     fn shortcuts(&self) -> bool {
         !self.full_walk_only
     }
 
-    #[cpu_version(Generic)]
     #[cfg(not(test))]
+    #[cpu_version(Generic)]
     fn shortcuts(&self) -> bool {
         true
     }
 
-    #[cpu_multiversion]
     #[cfg(test)]
+    #[cpu_multiversion]
     #[inline(always)]
     pub(super) fn run_rules(&self, _cpu: impl Cpu) -> bool {
         !self.full_walk_only && !self.no_run_rules
     }
 
-    #[cpu_multiversion]
     #[cfg(not(test))]
+    #[cpu_multiversion]
     #[inline(always)]
     pub(super) fn run_rules(&self, _cpu: impl Cpu) -> bool {
         true
