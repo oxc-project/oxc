@@ -6,3 +6,4 @@ mod utils;
 
 pub use jsdoc::JSDoc;
 pub use jsdoc_tag::JSDocTag;
+pub use parse::starts_block_tag;
