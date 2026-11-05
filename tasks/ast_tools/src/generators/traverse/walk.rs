@@ -243,37 +243,6 @@ fn generate_walk_for_struct(
         quote!()
     };
 
-    // Annex B.3.3 gives a bare function declaration in an `if` branch an implicit block scope.
-    // Semantic creates that scope without an AST field, as the parent of the function body scope.
-    let (enter_annex_b_scope, exit_annex_b_scope) = if struct_def.name() == "Function" {
-        (
-            quote! {
-                let annex_b_if_scope = if matches!(
-                    ctx.parent(),
-                    Ancestor::IfStatementConsequent(_) | Ancestor::IfStatementAlternate(_)
-                ) {
-                    let body_scope_id = (*node).scope_id.get().unwrap();
-                    let scope_id = ctx.scoping().scope_parent_id(body_scope_id).unwrap();
-                    let previous_scope_id = ctx.current_scope_id();
-                    let previous_block_scope_id = ctx.current_block_scope_id();
-                    ctx.set_current_scope_id(scope_id);
-                    ctx.set_current_block_scope_id(scope_id);
-                    Some((previous_scope_id, previous_block_scope_id))
-                } else {
-                    None
-                };
-            },
-            quote! {
-                if let Some((previous_scope_id, previous_block_scope_id)) = annex_b_if_scope {
-                    ctx.set_current_scope_id(previous_scope_id);
-                    ctx.set_current_block_scope_id(previous_block_scope_id);
-                }
-            },
-        )
-    } else {
-        (quote!(), quote!())
-    };
-
     quote! {
         ///@@line_break
         unsafe fn #walk_fn_name<#walk_generics>(
@@ -282,10 +251,8 @@ fn generate_walk_for_struct(
             ctx: &mut #ctx_ty,
         ) {
             traverser.#enter_fn_name(&mut *node, ctx);
-            #enter_annex_b_scope
             #fields_code
             #exit_scope_after
-            #exit_annex_b_scope
             traverser.#exit_fn_name(&mut *node, ctx);
         }
     }
@@ -611,6 +578,37 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConf
         });
     }
 
+    // Enter the implicit Annex B.3.3 block before statement callbacks, which may replace
+    // the branch. The block remains its parent scope throughout traversal of that branch.
+    let (enter_annex_b_scope, exit_annex_b_scope) = if enum_def.name() == "Statement" {
+        (
+            quote! {
+                let annex_b_if_scope = if matches!(
+                    ctx.parent(),
+                    Ancestor::IfStatementConsequent(_) | Ancestor::IfStatementAlternate(_)
+                ) && let Statement::FunctionDeclaration(function) = &*node {
+                    let body_scope_id = function.scope_id.get().unwrap();
+                    let scope_id = ctx.scoping().scope_parent_id(body_scope_id).unwrap();
+                    let previous_scope_id = ctx.current_scope_id();
+                    let previous_block_scope_id = ctx.current_block_scope_id();
+                    ctx.set_current_scope_id(scope_id);
+                    ctx.set_current_block_scope_id(scope_id);
+                    Some((previous_scope_id, previous_block_scope_id))
+                } else {
+                    None
+                };
+            },
+            quote! {
+                if let Some((previous_scope_id, previous_block_scope_id)) = annex_b_if_scope {
+                    ctx.set_current_scope_id(previous_scope_id);
+                    ctx.set_current_block_scope_id(previous_block_scope_id);
+                }
+            },
+        )
+    } else {
+        (quote!(), quote!())
+    };
+
     quote! {
         ///@@line_break
         unsafe fn #walk_fn_name<#walk_generics>(
@@ -618,11 +616,13 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConf
             node: *mut #enum_ty,
             ctx: &mut #ctx_ty,
         ) {
+            #enter_annex_b_scope
             traverser.#enter_fn_name(&mut *node, ctx);
             match &mut *node {
                 #match_arms
             }
             traverser.#exit_fn_name(&mut *node, ctx);
+            #exit_annex_b_scope
         }
     }
 }

@@ -61,6 +61,24 @@ Negative Passed: 275/275 (100.00%)
    ╰────
 
   × Identifier `g` has already been declared
+   ╭─[misc/fail/annex-b-function-then-var.cjs:1:12]
+ 1 │ { function g() {} var g; }
+   ·            ┬          ┬
+   ·            │          ╰── It can not be redeclared here
+   ·            ╰── `g` has already been declared here
+ 2 │ switch (0) { case 0: function h() {} default: var h; }
+   ╰────
+
+  × Identifier `h` has already been declared
+   ╭─[misc/fail/annex-b-function-then-var.cjs:2:31]
+ 1 │ { function g() {} var g; }
+ 2 │ switch (0) { case 0: function h() {} default: var h; }
+   ·                               ┬                   ┬
+   ·                               │                   ╰── It can not be redeclared here
+   ·                               ╰── `h` has already been declared here
+   ╰────
+
+  × Identifier `g` has already been declared
    ╭─[misc/fail/annex-b-function-var-then-lexical-declaration.js:1:40]
  1 │ function f() { { function g() {} } var g; let g; }
    ·                                        ┬      ┬

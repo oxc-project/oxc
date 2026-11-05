@@ -2906,6 +2906,7 @@ dependencies = [
  "oxc_ast_visit",
  "oxc_data_structures",
  "oxc_ecmascript",
+ "oxc_parser",
  "oxc_semantic",
  "oxc_span",
  "oxc_str",

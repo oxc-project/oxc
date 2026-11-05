@@ -126,7 +126,7 @@ pub fn check_semantic_after_transform(
         symbol_ids_after_transform,
         reference_ids_after_transform,
         reference_names,
-    ) = SemanticIdsCollector::new(&mut errors).collect(program);
+    ) = SemanticIdsCollector::new(&mut errors, Some(scoping_after_transform)).collect(program);
 
     // Clone the post-transform AST, re-run semantic analysis on it, and collect `ScopeId`s,
     // `SymbolId`s and `ReferenceId`s from AST.
@@ -137,7 +137,7 @@ pub fn check_semantic_after_transform(
     let scoping_rebuilt = SemanticBuilder::new().build(&program).semantic.into_scoping();
 
     let (scope_ids_rebuilt, symbol_ids_rebuilt, reference_ids_rebuilt, _) =
-        SemanticIdsCollector::new(&mut errors).collect(&program);
+        SemanticIdsCollector::new(&mut errors, Some(&scoping_rebuilt)).collect(&program);
 
     // Create mappings from after transform IDs to rebuilt IDs
     let scope_ids_map = IdMapping::new(scope_ids_after_transform, scope_ids_rebuilt);
@@ -165,7 +165,7 @@ pub fn check_semantic_after_transform(
 /// Check all AST nodes have scope, symbol and reference IDs
 pub fn check_semantic_ids(program: &Program) -> Option<Vec<OxcDiagnostic>> {
     let mut errors = Errors::default();
-    SemanticIdsCollector::new(&mut errors).collect(program);
+    SemanticIdsCollector::new(&mut errors, None).collect(program);
     errors.get()
 }
 
@@ -562,23 +562,46 @@ impl PostTransformChecker<'_, '_> {
 /// Collector of `ScopeId`s, `SymbolId`s and `ReferenceId`s from an AST.
 ///
 /// `scope_ids`, `symbol_ids` and `reference_ids` lists are filled in visitation order.
-struct SemanticIdsCollector<'a, 'e> {
+struct SemanticIdsCollector<'a, 'e, 's> {
     scope_ids: Vec<Option<ScopeId>>,
     symbol_ids: Vec<Option<SymbolId>>,
     reference_ids: Vec<Option<ReferenceId>>,
     reference_names: Vec<Str<'a>>,
     errors: &'e mut Errors,
+    scoping: Option<&'s Scoping>,
+    current_scope_id: Option<ScopeId>,
 }
 
-impl<'a, 'e> SemanticIdsCollector<'a, 'e> {
-    fn new(errors: &'e mut Errors) -> Self {
+impl<'a, 'e, 's> SemanticIdsCollector<'a, 'e, 's> {
+    fn new(errors: &'e mut Errors, scoping: Option<&'s Scoping>) -> Self {
         Self {
             scope_ids: vec![],
             symbol_ids: vec![],
             reference_ids: vec![],
             reference_names: vec![],
             errors,
+            scoping,
+            current_scope_id: None,
         }
+    }
+
+    fn visit_if_branch(&mut self, stmt: &Statement<'a>) {
+        let previous_scope_id = self.current_scope_id;
+        if let Some(scoping) = self.scoping
+            && let Statement::FunctionDeclaration(function) = stmt
+            && let Some(body_scope_id) = function.scope_id.get()
+        {
+            let parent_scope_id = scoping.scope_parent_id(body_scope_id);
+            if parent_scope_id != previous_scope_id {
+                self.scope_ids.push(parent_scope_id);
+                self.current_scope_id = parent_scope_id;
+                if parent_scope_id.is_none() {
+                    self.errors.push("Missing implicit if branch ScopeId");
+                }
+            }
+        }
+        self.visit_statement(stmt);
+        self.current_scope_id = previous_scope_id;
     }
 
     /// Collect IDs and check for errors
@@ -594,12 +617,28 @@ impl<'a, 'e> SemanticIdsCollector<'a, 'e> {
     }
 }
 
-impl<'a> Visit<'a> for SemanticIdsCollector<'a, '_> {
+impl<'a> Visit<'a> for SemanticIdsCollector<'a, '_, '_> {
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         let scope_id = scope_id.get();
         self.scope_ids.push(scope_id);
+        self.current_scope_id = scope_id;
         if scope_id.is_none() {
             self.errors.push("Missing ScopeId");
+        }
+    }
+
+    fn leave_scope(&mut self) {
+        self.current_scope_id = self
+            .scoping
+            .zip(self.current_scope_id)
+            .and_then(|(scoping, scope_id)| scoping.scope_parent_id(scope_id));
+    }
+
+    fn visit_if_statement(&mut self, stmt: &IfStatement<'a>) {
+        self.visit_expression(&stmt.test);
+        self.visit_if_branch(&stmt.consequent);
+        if let Some(alternate) = &stmt.alternate {
+            self.visit_if_branch(alternate);
         }
     }
 
@@ -625,7 +664,9 @@ impl<'a> Visit<'a> for SemanticIdsCollector<'a, '_> {
         if func.is_ts_declare_function() {
             return;
         }
+        let previous_scope_id = self.current_scope_id;
         walk::walk_function(self, func, flags);
+        self.current_scope_id = previous_scope_id;
     }
 
     fn visit_declaration(&mut self, it: &Declaration<'a>) {

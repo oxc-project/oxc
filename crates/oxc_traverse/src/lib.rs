@@ -82,6 +82,8 @@ pub use generated::{ancestor, ancestor::Ancestor, traverse::Traverse};
 use generated::{scopes_collector, walk::walk_ast};
 
 mod compile_fail_tests;
+#[cfg(test)]
+mod tests;
 
 /// Traverse AST with a [`Traverse`] impl.
 ///

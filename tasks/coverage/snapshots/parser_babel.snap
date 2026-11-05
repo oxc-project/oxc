@@ -2,7 +2,7 @@ commit: 0372f7f1
 
 parser_babel Summary:
 AST Parsed     : 2328/2329 (99.96%)
-Positive Passed: 2307/2329 (99.06%)
+Positive Passed: 2308/2329 (99.10%)
 Negative Passed: 1872/1888 (99.15%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
@@ -43,26 +43,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-
  1 │ export default from <!-- c
    · ──────
  2 │ "x";
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body-lexical-redeclaration/input.js
-
-  × Identifier `f` has already been declared
-   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body-lexical-redeclaration/input.js:1:17]
- 1 │ if (0) function f() {} let f;
-   ·                 ┬          ┬
-   ·                 │          ╰── It can not be redeclared here
-   ·                 ╰── `f` has already been declared here
- 2 │ { if (0) function g() {} let g; }
-   ╰────
-
-  × Identifier `g` has already been declared
-   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body-lexical-redeclaration/input.js:2:19]
- 1 │ if (0) function f() {} let f;
- 2 │ { if (0) function g() {} let g; }
-   ·                   ┬          ┬
-   ·                   │          ╰── It can not be redeclared here
-   ·                   ╰── `g` has already been declared here
    ╰────
 
 Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.5-for-in-initializer-yield-before-in/input.js

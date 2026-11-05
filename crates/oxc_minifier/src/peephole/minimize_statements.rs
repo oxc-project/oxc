@@ -1242,7 +1242,8 @@ impl<'a> PeepholeOptimizations {
             // An `export { foo }` specifier also contributes a reference, but
             // consult the shared metadata explicitly for consistency with the
             // other count-based consumers.
-            if ctx.state.symbols.is_implicitly_observable(prev_decl_id.symbol_id())
+            if ctx.scoping().is_annex_b_blocker(prev_decl_id.symbol_id())
+                || ctx.state.symbols.is_implicitly_observable(prev_decl_id.symbol_id())
                 || symbol_value.references.has_multiple_reads()
                 || symbol_value.references.has_writes()
             {
