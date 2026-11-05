@@ -1,5 +1,7 @@
 use std::ptr;
 
+use unicode_width::UnicodeWidthStr;
+
 use oxc_ast::ast::*;
 use oxc_formatter_core::{Format, ScratchBuffer};
 use oxc_span::GetSpan;
@@ -19,6 +21,7 @@ use crate::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
+        tailwindcss::{collapsed_class_list_width, tailwind_context_for_callee},
         typecast::is_cast_target,
     },
     write,
@@ -198,7 +201,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                 // Handle computed properties
                 if property.computed {
                     write!(f, ["[", property.key(), "]"]);
-                    f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
+                    f.source_text().text_for(&property.key).width() + 2 < text_width_for_break
                 } else if property.shorthand {
                     let PropertyKey::StaticIdentifier(ident) = &property.key else {
                         unreachable!("Expected static identifier for shorthand property");
@@ -228,7 +231,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                 // Handle computed properties
                 if property.computed {
                     write!(f, ["[", property.key(), "]"]);
-                    f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
+                    f.source_text().text_for(&property.key).width() + 2 < text_width_for_break
                 } else {
                     let width = write_member_name(&property.key(), f);
 
@@ -241,7 +244,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
 
                 if property.computed {
                     write!(f, ["[", property.name(), "]"]);
-                    f.source_text().span_width(property.name.span()) + 2 < text_width_for_break
+                    f.source_text().text_for(&property.name).width() + 2 < text_width_for_break
                 } else {
                     let width = write_member_name(&property.name(), f);
 
@@ -1209,7 +1212,7 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
                 // An embedded template is formatted, so its source length says nothing
                 Some(first_argument) => first_argument.as_expression().is_none_or(|e| {
                     embed_hug(e, Some(call_expression), f).is_some()
-                        || !is_short_argument(e, threshold, f)
+                        || !is_short_argument(e, threshold, &call_expression.callee, f)
                 }),
                 None => false,
             },
@@ -1236,21 +1239,40 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
 /// We need it to decide if [`CallExpression`] with the argument is breakable or not
 /// If the argument is short the function call isn't breakable
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/utils/index.js#L433-L484>
-fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> bool {
+///
+/// A string or template whose whitespace is collapsed by Tailwind sorting under `callee`
+/// is measured as printed, as Prettier measures the plugin's output.
+fn is_short_argument(
+    argument: &Expression,
+    threshold: u16,
+    callee: &Expression,
+    f: &JsFormatter,
+) -> bool {
+    // Decided by `callee` alone: a Tailwind one pushes its context, a non-Tailwind one hides an outer one
+    let collapses_tailwind_whitespace =
+        || tailwind_context_for_callee(callee, f).is_some_and(|ctx| !ctx.preserve_whitespace);
+
     match argument {
-        Expression::Identifier(identifier) => identifier.name.len() <= threshold as usize,
+        Expression::Identifier(identifier) => identifier.name.width() <= threshold as usize,
         Expression::UnaryExpression(unary_expression) => {
-            is_short_argument(&unary_expression.argument, threshold, f)
+            is_short_argument(&unary_expression.argument, threshold, callee, f)
         }
-        Expression::RegExpLiteral(regex) => regex.regex.pattern.text.len() <= threshold as usize,
+        Expression::RegExpLiteral(regex) => regex.regex.pattern.text.width() <= threshold as usize,
         Expression::StringLiteral(literal) => {
             let formatter = FormatLiteralStringToken::new(
                 f.source_text().text_for(literal.as_ref()),
                 false,
                 StringLiteralParentKind::Expression,
             );
+            let text = formatter.clean_text(f);
 
-            formatter.clean_text(f).width() <= threshold as usize
+            let width = if collapses_tailwind_whitespace() {
+                // Opening and closing quotes, and the classes
+                2 + collapsed_class_list_width(&text[1..text.len() - 1])
+            } else {
+                text.width()
+            };
+            width <= threshold as usize
         }
         Expression::TemplateLiteral(literal) => {
             // Besides checking length exceed we also need to check that the template doesn't have any expressions.
@@ -1258,12 +1280,16 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> 
             // Prettier: https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L402-L405
             literal.quasis.len() == 1 && {
                 let raw = literal.quasis[0].value.raw;
-                raw.len() <= threshold as usize && !raw.contains('\n')
+                if collapses_tailwind_whitespace() {
+                    collapsed_class_list_width(&raw) <= threshold as usize
+                } else {
+                    raw.width() <= threshold as usize && !raw.contains('\n')
+                }
             }
         }
         Expression::CallExpression(call) => {
             call.arguments.is_empty()
-                && matches!(&call.callee, Expression::Identifier(ident) if ident.name.len() <= (threshold as usize).saturating_sub(2))
+                && matches!(&call.callee, Expression::Identifier(ident) if ident.name.width() <= (threshold as usize).saturating_sub(2))
         }
         Expression::ThisExpression(_)
         | Expression::NullLiteral(_)

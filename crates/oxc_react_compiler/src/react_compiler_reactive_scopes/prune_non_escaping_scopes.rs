@@ -37,6 +37,7 @@ use crate::react_compiler_hir::ReactiveTerminalStatement;
 use crate::react_compiler_hir::ReactiveValue;
 use crate::react_compiler_hir::ScopeId;
 use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::is_set_state_type;
 use crate::react_compiler_hir::visitors::each_instruction_value_operand;
 use crate::react_compiler_utils::FxIndexSet;
 
@@ -576,8 +577,18 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
                 }
                 (lvalues, vec![])
             }
-            InstructionValue::PrefixUpdate { lvalue: upd_lvalue, value: upd_value, .. }
-            | InstructionValue::PostfixUpdate { lvalue: upd_lvalue, value: upd_value, .. } => {
+            InstructionValue::PrefixUpdateLocal {
+                lvalue: upd_lvalue, value: upd_value, ..
+            }
+            | InstructionValue::PrefixUpdateContext {
+                lvalue: upd_lvalue, value: upd_value, ..
+            }
+            | InstructionValue::PostfixUpdateLocal {
+                lvalue: upd_lvalue, value: upd_value, ..
+            }
+            | InstructionValue::PostfixUpdateContext {
+                lvalue: upd_lvalue, value: upd_value, ..
+            } => {
                 let mut lvalues = vec![LValueMemoization {
                     place_identifier: upd_lvalue.identifier,
                     level: MemoizationLevel::Conditional,
@@ -864,7 +875,19 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
                     state.definitions.insert(lv_decl, place_decl);
                 }
             } else if let InstructionValue::CallExpression { callee, args, .. } = instr_value {
-                if env.get_hook_kind_for_id(callee.identifier).ok().flatten().is_some() {
+                if is_set_state_type(&env.types[env.identifiers[callee.identifier].type_]) {
+                    // A value passed to a state setter comes back from `useState` on the
+                    // next render, where code such as `if (next !== state)` compares it
+                    // by identity, so it escapes.
+                    for arg in args {
+                        let place = match arg {
+                            PlaceOrSpread::Spread(spread) => &spread.place,
+                            PlaceOrSpread::Place(place) => place,
+                        };
+                        let decl = env.identifiers[place.identifier].declaration_id;
+                        state.escaping_values.insert(decl);
+                    }
+                } else if env.get_hook_kind_for_id(callee.identifier).ok().flatten().is_some() {
                     let no_alias = env.has_no_alias_signature(callee.identifier);
                     if !no_alias {
                         for arg in args {

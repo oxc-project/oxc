@@ -1,6 +1,6 @@
 [package]
 name = "oxc_codegen"
-version = "0.155.0"
+version = "0.157.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -37,11 +37,13 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
+memchr = { workspace = true }
 rustc-hash = { workspace = true }
 smallvec = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
+oxc_mangler = { workspace = true }
 oxc_parser = { workspace = true }
 pico-args = { workspace = true }
 

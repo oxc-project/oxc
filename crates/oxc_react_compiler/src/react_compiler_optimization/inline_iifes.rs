@@ -42,6 +42,7 @@
 
 use crate::react_compiler_utils::ordered_map::ArenaOrderedSet;
 use oxc_allocator::{CloneIn, Vec as ArenaVec};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_str::format_ident;
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -63,7 +64,7 @@ use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecut
 pub fn inline_immediately_invoked_function_expressions<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
-) {
+) -> Result<(), OxcDiagnostic> {
     // Track all function expressions that are assigned to a temporary
     let mut functions: FxHashMap<IdentifierId, FunctionId> = FxHashMap::default();
     // Functions that are inlined (by identifier id of the callee)
@@ -300,8 +301,9 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
         func.body.blocks = get_reverse_postordered_blocks(&func.body, env.allocator);
         mark_instruction_ids(&mut func.body, &mut func.instructions);
         mark_predecessors(&mut func.body);
-        merge_consecutive_blocks(func, &mut env.functions, env.allocator);
+        merge_consecutive_blocks(func, &mut env.functions, env.allocator)?;
     }
+    Ok(())
 }
 
 /// Returns true for "block" and "catch" block kinds which correspond to statements

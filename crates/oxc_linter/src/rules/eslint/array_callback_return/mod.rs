@@ -390,7 +390,7 @@ pub fn get_array_method_info<'a>(
 
                 // Array.from
                 if callee.is_specific_member_access("Array", "from")
-                    && call.arguments.len() == 2
+                    && call.arguments.len() >= 2
                     && let Some(call_arg) = call.arguments[1].as_expression()
                     && call_arg.span() == current_node.kind().span()
                 {
@@ -399,7 +399,7 @@ pub fn get_array_method_info<'a>(
 
                 // Array.fromAsync
                 if callee.is_specific_member_access("Array", "fromAsync")
-                    && call.arguments.len() == 2
+                    && call.arguments.len() >= 2
                     && let Some(call_arg) = call.arguments[1].as_expression()
                     && call_arg.span() == current_node.kind().span()
                 {
@@ -410,8 +410,9 @@ pub fn get_array_method_info<'a>(
                 let (array_method_span, array_method) = callee.static_property_info()?;
                 let array_method = array_method.as_str()?;
 
+                // The callback is the first argument; any further arguments (an initial
+                // value for `reduce`/`reduceRight`, or a `thisArg`) don't change that.
                 if TARGET_METHODS.contains(&array_method)
-                    && call.arguments.len() == 1
                     && let Some(call_arg) = call.arguments.first()
                     && call_arg
                         .as_expression()
@@ -686,6 +687,11 @@ fn test() {
   });"#,
             Some(serde_json::json!([{"allowImplicit": true}])),
         ),
+        ("[1, 2].reduce((total, x) => total + x, 0)", None),
+        ("[1, 2].reduceRight((total, x) => { return total + x; }, 0)", None),
+        ("foo.map(function() { return 1; }, thisArg)", None),
+        ("Array.from(x, function() { return 1; }, thisArg)", None),
+        ("foo.reduce(bar, function() {})", None),
     ];
 
     let fail = vec![
@@ -976,6 +982,11 @@ const _test = fruits.map((fruit) => {
             "foo.forEach(x => { if (a === b) { return (x + a); } });",
             Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
         ),
+        ("[1, 2].reduce((total, x) => { if (x > 1) { return total + x; } }, 0)", None),
+        ("[1, 2].reduceRight((total, x) => { if (x > 1) { return total + x; } }, 0)", None),
+        ("foo.reduce(function() {}, 0)", None),
+        ("foo.map(function() {}, thisArg)", None),
+        ("Array.from(x, function() {}, thisArg)", None),
     ];
 
     Tester::new(ArrayCallbackReturn::NAME, ArrayCallbackReturn::PLUGIN, pass, fail)

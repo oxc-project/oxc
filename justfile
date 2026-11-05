@@ -222,37 +222,6 @@ lint-lexer-avx2 *args='':
 lint-lexer-generic *args='':
   just lint-lexer {{_lexer-generic}} {{args}}
 
-# The lexer benchmarks measure wallclock time. Unlike the other benchmarks, they don't run on CodSpeed.
-#
-# `oxc_parser`'s lexer is always built without the AVX2 flags, so it's benchmarked in a separate build
-# from `oxc_lexer`. Its results are saved as criterion baseline `lexer_old`, and then `oxc_lexer`
-# is compared against that baseline.
-# The "change" which criterion reports for `oxc_lexer` is its time relative to `oxc_parser`'s.
-# The "change" reported for `oxc_parser` (if any) is relative to its previous run.
-#
-# Both benchmarks are built before either is run, so the 2 runs happen back-to-back,
-# without a build between them.
-#
-# `args` are passed to criterion, e.g. `just bench-lexer App.tsx` to run only that file.
-# The recipes set the baseline options themselves, so don't pass those.
-#
-# On an ARM host, `bench-lexer-avx2` compares `oxc_parser` running natively against `oxc_lexer`
-# running under emulation, so the comparison is meaningless.
-_bench-lexer := "cargo bench -p oxc_benchmark --no-default-features --features lexer_wallclock --bench"
-
-# Benchmark `oxc_lexer`, built for the host, against `oxc_parser`'s lexer
-bench-lexer *args='':
-  {{_bench-lexer}} lexer_wallclock_old --bench lexer_wallclock_new --no-run
-  {{_bench-lexer}} lexer_wallclock_old -- --save-baseline lexer_old {{args}}
-  {{_bench-lexer}} lexer_wallclock_new -- --baseline lexer_old {{args}}
-
-# Benchmark `oxc_lexer`'s AVX2 implementation against `oxc_parser`'s lexer
-bench-lexer-avx2 *args='':
-  {{_bench-lexer}} lexer_wallclock_old --no-run
-  {{_bench-lexer}} lexer_wallclock_new {{_lexer-avx2}} --no-run
-  {{_bench-lexer}} lexer_wallclock_old -- --save-baseline lexer_old {{args}}
-  {{_bench-lexer}} lexer_wallclock_new {{_lexer-avx2}} -- --baseline lexer_old {{args}}
-
 # `ready-lexer` fails if any step fails, or if conformance changes the lexer snapshots.
 # Only the lexer snapshots are checked for changes, so it can be run with other uncommitted changes.
 # Snapshots are checked after each conformance run, because each run overwrites the snapshots from the one before.

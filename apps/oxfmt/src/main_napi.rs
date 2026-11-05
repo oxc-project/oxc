@@ -10,9 +10,8 @@ use crate::{
     api::{format_api, text_to_doc_api},
     cli::{MigrateSource, Mode, StdinRunner, WalkRunner, format_command, init_rayon},
     core::{
-        ExternalServices, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
-        JsInitExternalServicesCb, JsLoadJsConfigCb, JsSortTailwindClassesCb,
-        create_js_config_loader, utils,
+        ExternalServices, JsFormatEmbeddedDocCb, JsFormatFileCb, JsInitExternalServicesCb,
+        JsLoadJsConfigCb, JsSortTailwindClassesCb, create_js_config_loader, utils,
     },
     lsp::run_lsp,
 };
@@ -25,7 +24,7 @@ use crate::{
 /// 2. `load_js_config_cb`: Callback to load JS/TS config files
 /// 3. `init_external_services_cb`: Callback to initialize external services (JS worker pool)
 /// 4. `format_file_cb`: Callback to format files
-/// 5. `format_embedded_cb`: Callback to format embedded code in templates
+/// 5. `format_embedded_doc_cb`: Callback to format embedded code in templates as a Prettier Doc
 /// 6. `sort_tailwindcss_classes_cb`: Callback to sort Tailwind classes
 ///
 /// Returns a tuple of `[mode, exitCode]`:
@@ -43,8 +42,6 @@ pub async fn run_cli(
         ts_arg_type = "(options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>"
     )]
     format_file_cb: JsFormatFileCb,
-    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
-    format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     #[napi(
@@ -83,13 +80,9 @@ pub async fn run_cli(
 
     // Otherwise, handle modes that require Rust side processing
 
-    let external_services = ExternalServices::new(
-        format_file_cb,
-        format_embedded_cb,
-        format_embedded_doc_cb,
-        sort_tailwindcss_classes_cb,
-    )
-    .with_init_cb(init_external_services_cb);
+    let external_services =
+        ExternalServices::new(format_file_cb, format_embedded_doc_cb, sort_tailwindcss_classes_cb)
+            .with_init_cb(init_external_services_cb);
     let _cleanup = external_services.cleanup_guard();
     let js_config_loader = create_js_config_loader(load_js_config_cb);
 
@@ -149,8 +142,6 @@ pub async fn format(
     )]
     format_file_cb: JsFormatFileCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
-    format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     #[napi(
         ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[] | null>"
@@ -162,7 +153,6 @@ pub async fn format(
         source_text,
         options,
         format_file_cb,
-        format_embedded_cb,
         format_embedded_doc_cb,
         sort_tailwind_classes_cb,
     );
@@ -189,8 +179,6 @@ pub async fn js_text_to_doc(
     )]
     format_file_cb: JsFormatFileCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
-    format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     #[napi(
         ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[] | null>"
@@ -205,7 +193,6 @@ pub async fn js_text_to_doc(
         &oxfmt_plugin_options_json,
         &parent_context,
         format_file_cb,
-        format_embedded_cb,
         format_embedded_doc_cb,
         sort_tailwind_classes_cb,
     )

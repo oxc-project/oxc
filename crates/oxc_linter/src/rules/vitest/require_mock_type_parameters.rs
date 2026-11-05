@@ -7,6 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 use oxc_str::CompactStr;
 
@@ -117,31 +118,31 @@ impl Rule for RequireMockTypeParameters {
         DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &crate::rules::PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        self.run_rule(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        self.run_rule(node, ctx);
     }
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
-        ctx.file_extension().is_some_and(|extension| {
-            let extension_str = extension.to_string_lossy();
-            extension_str.ends_with("ts") || extension_str.ends_with("tsx")
-        })
+        ctx.frameworks().is_test()
+            && ctx.file_extension().is_some_and(|extension| {
+                let extension_str = extension.to_string_lossy();
+                extension_str.ends_with("ts") || extension_str.ends_with("tsx")
+            })
     }
 }
 
 impl RequireMockTypeParameters {
-    fn run_rule<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
-
+    fn run_rule<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
-        let Some(vi_fn) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
+        let Some(vi_fn) = parse_general_jest_fn_call(call_expr, &possible_jest_node, ctx) else {
             return;
         };
 

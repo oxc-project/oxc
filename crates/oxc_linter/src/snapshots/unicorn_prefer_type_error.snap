@@ -162,3 +162,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ─────
    ╰────
   help: Change to `throw new TypeError(...)`
+
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+   ╭─[prefer_type_error.tsx:2:15]
+ 1 │ if (typeof value !== 'string')
+ 2 │     throw new Error(`FormData entry value is not a string, but ${typeof value}`);
+   ·               ─────
+   ╰────
+  help: Change to `throw new TypeError(...)`

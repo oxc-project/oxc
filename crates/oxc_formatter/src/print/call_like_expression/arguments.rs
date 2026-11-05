@@ -30,13 +30,33 @@ use crate::{
     utils::{
         call_expression::is_test_call_expression,
         expression::as_call_expression_without_chain_wrappers, is_long_curried_call,
-        member_chain::simple_argument::SimpleArgument, typecast::is_cast_target,
+        member_chain::simple_argument::SimpleArgument, tailwindcss::tailwind_context_for_callee,
+        typecast::is_cast_target,
     },
     write,
 };
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        // Pushed here, so this call's context covers only its arguments, not its callee (e.g. `cn.foo["a  b"](...)`),
+        // for both a call and the calls a `MemberChain` prints
+        // (an outer context still covers the callee, as the plugin does)
+        let tailwind_ctx = match self.parent() {
+            AstNodes::CallExpression(call) => tailwind_context_for_callee(&call.callee, f),
+            _ => None,
+        };
+        if let Some(ctx) = tailwind_ctx {
+            f.context_mut().push_tailwind_context(ctx);
+        }
+        self.write_arguments(f);
+        if tailwind_ctx.is_some() {
+            f.context_mut().pop_tailwind_context();
+        }
+    }
+}
+
+impl<'a> AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>> {
+    fn write_arguments(&self, f: &mut JsFormatter<'_, 'a>) {
         let l_paren_token = "(";
         let r_paren_token = ")";
 
@@ -1031,7 +1051,7 @@ pub fn is_verbatim_multiline_template_sole_arg(
 ) -> bool {
     matches!(arguments, [argument] if argument.as_expression().is_some_and(|expr| {
         embed_hug(expr, call, f).is_none()
-            && is_multiline_template_starting_on_same_line(expr, f.source_text())
+            && is_multiline_template_starting_on_same_line(expr, f)
     }))
 }
 
@@ -1122,12 +1142,16 @@ fn is_decorated_function(argument: &AstNode<'_, '_, Argument<'_>>) -> bool {
 
     // Check if the decorator (callee.callee) is a simple identifier or member expression
     let decorator = &callee_call.callee;
-    let is_valid_decorator = matches!(decorator, Expression::Identifier(_))
-        || matches!(
-            decorator,
-            Expression::StaticMemberExpression(member)
-            if matches!(&member.object, Expression::Identifier(_))
-        );
+    let is_valid_decorator = match decorator {
+        Expression::Identifier(_) => true,
+        Expression::StaticMemberExpression(member) => {
+            matches!(&member.object, Expression::Identifier(_))
+        }
+        Expression::PrivateFieldExpression(member) => {
+            matches!(&member.object, Expression::Identifier(_))
+        }
+        _ => false,
+    };
 
     if !is_valid_decorator {
         return false;

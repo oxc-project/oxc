@@ -352,6 +352,54 @@ working directory: fixtures/cli/tsgolint
  3 | 
    `----
 
+  x typescript(no-unsafe-enum-assignment): The value assigned here does not have a shared enum type with the expected enum 'Fruit'.
+   ,-[no-unsafe-enum-assignment.ts:6:7]
+ 5 | 
+ 6 | const fruit: Fruit = 1;
+   :       ^^^^^^^^^^^^^^^^
+ 7 | function takesFruit(value: Fruit): void {}
+   `----
+
+  x typescript(no-unsafe-enum-assignment): The argument passed here does not have a shared enum type with the expected enum 'Fruit'.
+   ,-[no-unsafe-enum-assignment.ts:8:12]
+ 7 | function takesFruit(value: Fruit): void {}
+ 8 | takesFruit(1);
+   :            ^
+ 9 | function getFruit(): Fruit {
+   `----
+
+  x typescript(no-unsafe-enum-assignment): The value returned here does not have a shared enum type with the expected enum 'Fruit'.
+    ,-[no-unsafe-enum-assignment.ts:10:3]
+  9 | function getFruit(): Fruit {
+ 10 |   return 0;
+    :   ^^^^^^^^^
+ 11 | }
+    `----
+
+  x typescript(no-unsafe-enum-assignment): The value asserted here does not have a shared enum type with the expected enum 'Fruit'.
+    ,-[no-unsafe-enum-assignment.ts:12:18]
+ 11 | }
+ 12 | const asserted = 1 as Fruit;
+    :                  ^^^^^^^^^^
+ 13 | let mutable = Fruit.Apple;
+    `----
+
+  x typescript(no-unsafe-enum-assignment): This mutation can produce a value outside of the expected enum 'Fruit'.
+    ,-[no-unsafe-enum-assignment.ts:14:1]
+ 13 | let mutable = Fruit.Apple;
+ 14 | mutable++;
+    : ^^^^^^^^^
+ 15 | declare const names: { [key in Fruit]: string };
+    `----
+
+  x typescript(no-unsafe-enum-assignment): The computed key used here does not have a shared enum type with the expected enum 'Fruit'.
+    ,-[no-unsafe-enum-assignment.ts:16:7]
+ 15 | declare const names: { [key in Fruit]: string };
+ 16 | names[0];
+    :       ^
+ 17 | 
+    `----
+
   x typescript(no-unsafe-enum-comparison): The two values in this comparison do not have a shared enum type.
     ,-[no-unsafe-enum-comparison.ts:9:20]
   8 | }
@@ -720,8 +768,8 @@ working directory: fixtures/cli/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 86 errors.
-Finished in <variable>ms on 61 files with 60 rules using 1 threads.
+Found 0 warnings and 92 errors.
+Finished in <variable>ms on 62 files with 61 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

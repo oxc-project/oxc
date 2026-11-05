@@ -1,0 +1,19 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/capitalized-calls-all-caps-method.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Capitalized function called without JSX", labels: [LabeledSpan { label: Some("`Child` may be a component"), span: Span { start: 437, end: 442 }, primary: true }], help: Some("Render `Child` with JSX if it is a component; otherwise rename it to start with a lowercase letter or allowlist it in the compiler configuration"), note: Some("`Child` is treated as a component because it begins with an uppercase letter; React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("CapitalizedCalls") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/static-components") } }
+
+// @validateNoCapitalizedCalls @outputMode:"lint" @panicThreshold:"none"
+// ALL-CAPS methods are constants, not components.
+export function AllCapsMethod() {
+	const now = new Date();
+	const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+	return <div>{startDate.toString()}</div>;
+}
+// A capitalized method is still called like a component.
+export function CapitalizedMethod({ obj }) {
+	return <div>{obj.Child()}</div>;
+}

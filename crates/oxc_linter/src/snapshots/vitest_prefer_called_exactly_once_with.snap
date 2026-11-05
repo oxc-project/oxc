@@ -231,3 +231,23 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ╰── Remove this expect
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ expect(x).toHaveBeenCalledWith("🍣"); expect(x).toHaveBeenCalledOnce();
+   · ──────────────────┬─────────────────  ────────────────┬────────────────
+   ·                   │                                   ╰── Remove this expect
+   ·                   ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
+
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+   ╭─[prefer_called_exactly_once_with.tsx:1:1]
+ 1 │ expect(x).toHaveBeenCalledWith(1);
+   · ────────────────┬────────────────
+   ·                 ╰── Replace with `toHaveBeenCalledExactlyOnceWith`
+ 2 │ expect(x).toHaveBeenCalledOnce(); 
+   · ─────────────────┬────────────────
+   ·                  ╰── Remove this expect
+   ╰────
+  help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect

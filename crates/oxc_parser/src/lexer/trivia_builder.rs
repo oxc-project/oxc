@@ -32,19 +32,19 @@ pub struct TriviaBuilder<'a> {
     /// Previous token, used to attach trailing comments to its end.
     previous_token: Token,
 
-    /// Range of comments preceding the current token that contains pure comments.
-    ///
-    /// `(start, end)` indexes into `comments`, with `end` exclusive.
-    /// `end` is always at least `start + 1`, so it is a `NonZeroU32`.
-    /// That gives the `Option` a niche, so the field is 8 bytes.
-    pure_comments: Option<(u32, NonZeroU32)>,
-
-    /// Range of comments preceding the current token that contains no-side-effects comments.
-    /// Same representation as `pure_comments`.
-    no_side_effects_comments: Option<(u32, NonZeroU32)>,
+    /// Annotation ranges preceding the current token, also saved by lexer checkpoints.
+    pub(super) annotation_comments: AnnotationComments,
 }
 
-const _: () = assert!(size_of::<Option<(u32, NonZeroU32)>>() == 8);
+#[derive(Clone, Copy, Debug, Default)]
+pub(super) struct AnnotationComments {
+    // Pure and no-side-effects comment ranges, respectively.
+    starts: [u32; 2],
+    // Exclusive ends, or `None` when no annotation is present. Keeping the ends
+    // together allows both ranges to be reset with one store for each token.
+    // Starts are read only when an end is present, so they need not be cleared.
+    ends: [Option<NonZeroU32>; 2],
+}
 
 impl<'a> TriviaBuilder<'a> {
     pub fn new_in(allocator: &'a Allocator) -> Self {
@@ -57,33 +57,20 @@ impl<'a> TriviaBuilder<'a> {
             saw_newline: true,
             saw_newline_for_comment: true,
             previous_token,
-            pure_comments: None,
-            no_side_effects_comments: None,
+            annotation_comments: AnnotationComments::default(),
         }
     }
 
     pub fn previous_token_pure_comments(&self) -> Option<(u32, NonZeroU32)> {
-        self.pure_comments
+        self.annotation_comments.ends[0].map(|end| (self.annotation_comments.starts[0], end))
     }
 
     pub fn previous_token_no_side_effects_comments(&self) -> Option<(u32, NonZeroU32)> {
-        self.no_side_effects_comments
+        self.annotation_comments.ends[1].map(|end| (self.annotation_comments.starts[1], end))
     }
 
-    pub(super) fn set_pure_comments(&mut self, pure_comments: Option<(u32, NonZeroU32)>) {
-        self.pure_comments = pure_comments;
-    }
-
-    pub(super) fn clear_pure_comments(&mut self) {
-        self.pure_comments = None;
-    }
-
-    pub(super) fn set_no_side_effects_comments(&mut self, comments: Option<(u32, NonZeroU32)>) {
-        self.no_side_effects_comments = comments;
-    }
-
-    pub(super) fn clear_no_side_effects_comments(&mut self) {
-        self.no_side_effects_comments = None;
+    pub(super) fn clear_annotation_comments(&mut self) {
+        self.annotation_comments.ends = [None; 2];
     }
 
     pub fn mark_pure_comments_applied(&mut self, (start, end): (u32, NonZeroU32)) {
@@ -282,10 +269,10 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     /// Update annotation state for the comment at `index`.
-    fn set_annotation_flags(&mut self, comment: &Comment, index: usize) {
-        let range = match comment.content {
-            CommentContent::PureNotApplied => &mut self.pure_comments,
-            CommentContent::NoSideEffectsNotApplied => &mut self.no_side_effects_comments,
+    fn set_annotation_flags(&mut self, content: CommentContent, index: usize) {
+        let range = match content {
+            CommentContent::Pure | CommentContent::PureNotApplied => 0,
+            CommentContent::NoSideEffects | CommentContent::NoSideEffectsNotApplied => 1,
             _ => return,
         };
 
@@ -294,31 +281,36 @@ impl<'a> TriviaBuilder<'a> {
         #[expect(clippy::cast_possible_truncation)]
         let index = index as u32;
         let end = NonZeroU32::new(index + 1).unwrap();
-        if let Some((_, range_end)) = range {
-            *range_end = end;
-        } else {
-            *range = Some((index, end));
+        if self.annotation_comments.ends[range].is_none() {
+            self.annotation_comments.starts[range] = index;
         }
+        self.annotation_comments.ends[range] = Some(end);
     }
 
     fn add_comment(&mut self, mut comment: Comment, source_text: &str) {
-        Self::parse_annotation(&mut comment, source_text);
         // The comments array is an ordered vec, only add the comment if its not added before,
         // to avoid situations where the parser needs to rewind and tries to reinsert the comment.
         if let Some(last_comment) = self.comments.last()
             && comment.span.start <= last_comment.span.start
         {
-            // Duplicate from parser lookahead/rewind — update annotation flags
-            // to point to the existing comment.
-            if let Ok(index) = self
-                .comments
-                .binary_search_by_key(&comment.span.start, |existing| existing.span.start)
+            // Reuse the classification from before lookahead/rewind, including annotations
+            // that have already been applied. Usually this is the most recent comment.
+            let index = if comment.span.start == last_comment.span.start {
+                Some(self.comments.len() - 1)
+            } else {
+                self.comments
+                    .binary_search_by_key(&comment.span.start, |existing| existing.span.start)
+                    .ok()
+            };
+            if let Some(index) = index
                 && self.comments[index].span == comment.span
             {
-                self.set_annotation_flags(&comment, index);
+                self.set_annotation_flags(self.comments[index].content, index);
             }
             return;
         }
+
+        Self::parse_annotation(&mut comment, source_text);
 
         // This newly added comment may be preceded by a newline.
         // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
@@ -341,7 +333,7 @@ impl<'a> TriviaBuilder<'a> {
 
         // Set annotation flags here (not in `parse_annotation`) so the index is correct
         // even when the dedup check above skips a duplicate from parser lookahead/rewind.
-        self.set_annotation_flags(&comment, self.comments.len());
+        self.set_annotation_flags(comment.content, self.comments.len());
         self.comments.push(comment);
         if becomes_trailing {
             self.attach_pending_comments(
@@ -561,6 +553,63 @@ mod test {
     use oxc_syntax::node::NodeId;
 
     use crate::Parser;
+
+    use super::TriviaBuilder;
+
+    #[test]
+    fn annotation_flags_restored_when_replaying_comments() {
+        for annotation in ["/* @__PURE__ */", "/* @__NO_SIDE_EFFECTS__ */"] {
+            for applied in [false, true] {
+                for suffix in ["", "/* later comment */"] {
+                    let source = format!("{annotation}{suffix}");
+                    let annotation_end = u32::try_from(annotation.len()).unwrap();
+                    let source_end = u32::try_from(source.len()).unwrap();
+                    let allocator = Allocator::default();
+                    let mut builder = TriviaBuilder::new_in(&allocator);
+                    builder.add_block_comment(
+                        0,
+                        annotation_end,
+                        CommentKind::SingleLineBlock,
+                        &source,
+                    );
+                    if !suffix.is_empty() {
+                        builder.add_block_comment(
+                            annotation_end,
+                            source_end,
+                            CommentKind::SingleLineBlock,
+                            &source,
+                        );
+                    }
+
+                    let pure = builder.previous_token_pure_comments();
+                    let no_side_effects = builder.previous_token_no_side_effects_comments();
+                    if applied {
+                        if let Some(range) = pure {
+                            builder.mark_pure_comments_applied(range);
+                        }
+                        if let Some(range) = no_side_effects {
+                            builder.mark_no_side_effects_comments_applied(range);
+                        }
+                    }
+                    let content = builder.comments[0].content;
+                    builder.clear_annotation_comments();
+
+                    // Replaying the annotation must restore its range without changing
+                    // whether it was already applied, even when a later comment exists.
+                    builder.add_block_comment(
+                        0,
+                        annotation_end,
+                        CommentKind::SingleLineBlock,
+                        &source,
+                    );
+                    assert_eq!(builder.previous_token_pure_comments(), pure);
+                    assert_eq!(builder.previous_token_no_side_effects_comments(), no_side_effects);
+                    assert_eq!(builder.comments[0].content, content);
+                    assert_eq!(builder.comments.len(), 1 + usize::from(!suffix.is_empty()));
+                }
+            }
+        }
+    }
 
     fn get_comments(source_text: &str) -> Vec<Comment> {
         let allocator = Allocator::default();

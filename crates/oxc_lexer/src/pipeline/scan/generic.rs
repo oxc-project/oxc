@@ -1,12 +1,17 @@
+use crate::cpu::{BASELINE, cpu_version};
+
 use crate::pipeline::chunk::{eqm, load64};
 
 use super::common::lic_verify_at;
 
+#[cpu_version(Generic)]
 pub unsafe fn scan_block_comment_generic(
     src: *const u8,
     n: usize,
     mut i: usize,
 ) -> (usize, bool, i64) {
+    let cpu = BASELINE;
+
     let mut saw_nl = false;
     let mut lic_q: i64 = -1;
     while i + 8 <= n {
@@ -41,7 +46,7 @@ pub unsafe fn scan_block_comment_generic(
         if c == b'\n' || c == b'\r' {
             saw_nl = true;
         }
-        if c == b'@' && lic_q < 0 && lic_verify_at(src, i) {
+        if c == b'@' && lic_q < 0 && lic_verify_at(src, i, cpu) {
             lic_q = i as i64;
         }
         i += 1;
@@ -54,7 +59,10 @@ pub unsafe fn scan_block_comment_generic(
 /// metadata. A 0xE2 that isn't LS/PS (typographic punctuation in prose) is
 /// cleared from the mask and the scan continues; the LS/PS confirm can read
 /// the pad, which never matches 0x80.
+#[cpu_version(Generic)]
 pub unsafe fn scan_line_comment_generic(src: *const u8, n: usize, mut i: usize) -> (usize, i64) {
+    let cpu = BASELINE;
+
     let mut lic_q: i64 = -1;
     while i + 8 <= n {
         let x = load64(src, i);
@@ -94,7 +102,7 @@ pub unsafe fn scan_line_comment_generic(src: *const u8, n: usize, mut i: usize) 
         {
             return (i, lic_q);
         }
-        if c == b'@' && lic_q < 0 && lic_verify_at(src, i) {
+        if c == b'@' && lic_q < 0 && lic_verify_at(src, i, cpu) {
             lic_q = i as i64;
         }
         i += 1;
@@ -102,12 +110,15 @@ pub unsafe fn scan_line_comment_generic(src: *const u8, n: usize, mut i: usize) 
     (n, lic_q)
 }
 
+#[cpu_version(Generic)]
 #[inline(always)]
 unsafe fn lic_first8(src: *const u8, base: usize, mut am: u64) -> i64 {
+    let cpu = BASELINE;
+
     while am != 0 {
         let q = base + (am.trailing_zeros() >> 3) as usize;
         am &= am - 1;
-        if lic_verify_at(src, q) {
+        if lic_verify_at(src, q, cpu) {
             return q as i64;
         }
     }

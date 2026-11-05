@@ -340,6 +340,9 @@ pub fn collect_inlines<'a>(
                     parts.push_str("\\");
                 }
                 let autolink_stretch = autolink_stretch(children, i, raw);
+                // A text never spans a line, so only `always` breaks its whitespace
+                // and reads the words a break would put at a line start
+                let always = f.options().prose_wrap == ProseWrap::Always;
                 let cx = words::TextContext {
                     autolink_stretch,
                     first_of_delimiter: parent.delimiter.filter(|_| i == 0),
@@ -352,8 +355,20 @@ pub fn collect_inlines<'a>(
                     ),
                     after_liquid: follows_liquid(children, i),
                     before_soft_break: matches!(children.get(i + 1), Some(Inline::SoftBreak(_))),
-                    next_word: next_word_of(children, i, parent.delimiter, f),
-                    glued_last_word: glued_last_word(children, i, raw, f),
+                    last_on_line: matches!(
+                        children.get(i + 1),
+                        None | Some(Inline::SoftBreak(_) | Inline::HardBreak(_))
+                    ),
+                    next_word: if always {
+                        next_word_of(children, i, parent.delimiter, f)
+                    } else {
+                        None
+                    },
+                    glued_last_word: if always {
+                        glued_last_word(children, i, raw, f)
+                    } else {
+                        None
+                    },
                     has_cjk,
                     ..words::TextContext::default()
                 };

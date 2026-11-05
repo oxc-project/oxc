@@ -932,6 +932,55 @@ fn test() {
             ),
             None,
         ),
+        (
+            "
+            /** @param base - Base value. */
+            function outer(base: number): number {
+                function inner(value: number): number {
+                    return value + base;
+                }
+                return inner(base);
+            }
+            /** @param base - Base value. */
+            export function exportedOuter(base: number): number {
+                function inner(value: number): number {
+                    return value + base;
+                }
+                return inner(base);
+            }
+            export const use = outer;
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            /** @param type the type */
+            function register(type: string): void {
+                const listeners: Record<string, unknown> = {};
+                listeners[type] = function callback(e: Event): void {
+                    void e;
+                };
+            }
+            export { register };
+            ",
+            None,
+            Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
+        ),
+        (
+            "
+            /** @param type the type */
+            function register(type: string): void {
+                const listeners: Record<string, unknown> = {};
+                listeners[type] = (e: Event): void => {
+                    void e;
+                };
+            }
+            export { register };
+            ",
+            None,
+            Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
+        ),
     ];
 
     let fail = vec![

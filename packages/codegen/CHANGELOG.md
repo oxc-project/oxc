@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.156.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- 0e2934f codegen: Preserve default import names in source maps (#28058) (camc314)
+
 ## [0.155.0] - 2026-10-19
 
 ### ⚡ Performance

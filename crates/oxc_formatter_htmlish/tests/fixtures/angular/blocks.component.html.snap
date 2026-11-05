@@ -1,0 +1,107 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<ul>
+  @for (item of items; track item.id) {
+    <li>{{ item.name }}</li>
+  } @empty {
+    <li>none</li>
+  }
+</ul>
+@if (a) { <p>x</p> }
+@else { <p>y</p> }
+@if (a) {}
+@if (isDev) {} @else if (test) {}
+<p>text @if (x) { more } end</p>
+@switch (mode) {
+  @case ("a")
+  @case ("b") {
+    <p>ab</p>
+  }
+  @default never;
+}
+@defer (on viewport) {
+  <x-chart />
+} @placeholder (minimum 500ms) {
+  <p>loading</p>
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<ul>
+  @for (item of items; track item.id) {
+    <li>{{ item.name }}</li>
+  } @empty {
+    <li>none</li>
+  }
+</ul>
+@if (a) {
+  <p>x</p>
+} @else {
+  <p>y</p>
+}
+@if (a) {}
+@if (isDev) {
+} @else if (test) {}
+<p>
+  text
+  @if (x) {
+    more
+  }
+  end
+</p>
+@switch (mode) {
+  @case ("a")
+  @case ("b") {
+    <p>ab</p>
+  }
+  @default never;
+}
+@defer (on viewport) {
+  <x-chart />
+} @placeholder (minimum 500ms) {
+  <p>loading</p>
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<ul>
+  @for (item of items; track item.id) {
+    <li>{{ item.name }}</li>
+  } @empty {
+    <li>none</li>
+  }
+</ul>
+@if (a) {
+  <p>x</p>
+} @else {
+  <p>y</p>
+}
+@if (a) {}
+@if (isDev) {
+} @else if (test) {}
+<p>
+  text
+  @if (x) {
+    more
+  }
+  end
+</p>
+@switch (mode) {
+  @case ("a")
+  @case ("b") {
+    <p>ab</p>
+  }
+  @default never;
+}
+@defer (on viewport) {
+  <x-chart />
+} @placeholder (minimum 500ms) {
+  <p>loading</p>
+}
+
+===================== End =====================

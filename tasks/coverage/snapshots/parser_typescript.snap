@@ -1,9 +1,9 @@
-commit: 5237fd46
+commit: 6161772c
 
 parser_typescript Summary:
-AST Parsed     : 9852/9862 (99.90%)
-Positive Passed: 9842/9862 (99.80%)
-Negative Passed: 1712/2806 (61.01%)
+AST Parsed     : 9888/9900 (99.88%)
+Positive Passed: 9876/9900 (99.76%)
+Negative Passed: 1716/2818 (60.89%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -15,6 +15,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/accessorInferredReturnTypeErrorInReturnStatement.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/allowSyntheticDefaultImports10.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/ambientConstInitializerNonEnumReference.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/ambientEnum1.ts
 
@@ -119,6 +121,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/classExtendsNull.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/classExtendsNull2.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/classExtendsNullValuedIdentifier.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/classFieldSuperNotAccessibleJs.ts
 
@@ -586,8 +590,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementationFileOrderReversed.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationOptionalClassElementSyntaxOfClass.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFunctionWithPrototypeNoErrorTruncationNoCrash.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsTypedefMergedWithModuleExportProperty.ts
@@ -736,6 +738,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleDeclarationsInNonScopeBlock.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleExportsSelfReferenceCircularity.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleKeywordDeprecated.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleKeywordInstantiatedNamespace.ts
@@ -760,6 +764,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/namespaceFunctionReservedDefaultParameter.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/namespaceMembersResolutionOrderExportStar.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/namespaceMergedWithImportAliasNoCrash.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/namespaceNotMergedWithFunctionDefaultExport.ts
@@ -769,6 +775,12 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/narrowByClauseExpressionInSwitchTrue6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/networkPathReferences.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noFlakyDiagnosticsBindingPatternInFunctionType2.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noFlakyDiagnosticsNamespaceMembersResolutionOrder.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noFlakyDiagnosticsNamespaceMembersResolutionOrderReexportedTypes.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noImplicitAnyForIn.ts
 
@@ -787,6 +799,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/nonExportedElementsOfMergedModules.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/nonIdenticalTypeConstraints.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/nonexistentPropertyOnThenable.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/nonexistentPropertyOnUnion.ts
 
@@ -911,6 +925,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/selfReferencesInFunctionParameters.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/setterWithReturn.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/sharedMemberLayoutThisIntersectionBase.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/shorthandPropertyUndefined.ts
 
@@ -2355,6 +2371,61 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/malform
  15 │         [super.x, 1 + 2, this.#x] = value;
     ╰────
 
+Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noFlakyDeclarationEmitExportEqualsQualifiedNameOrder.ts
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/noFlakyDeclarationEmitExportEqualsQualifiedNameOrder.ts:49:5]
+ 48 │     import t = require("mt");
+ 49 │     export = t;
+    ·     ───────────
+ 50 │     export const C: unique symbol;
+    ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noFlakyExportEqualsWithOtherExportsImportOrder.ts
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/noFlakyExportEqualsWithOtherExportsImportOrder.ts:35:5]
+ 34 │     const o: { x: 1 };
+ 35 │     export = o;
+    ·     ───────────
+ 36 │     export { v as a } from "ia";
+    ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/patternAmbientModuleResolvedEmptyModule.ts
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/patternAmbientModuleResolvedEmptyModule.ts:5:26]
+ 4 │ }
+ 5 │ declare module "*.svelte" with { type: "text" } {
+   ·                          ▲
+ 6 │     const value: string;
+   ╰────
+  help: Try inserting a semicolon here
+
+Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/patternAmbientModuleResolvedScript.ts
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/patternAmbientModuleResolvedScript.ts:5:26]
+ 4 │ }
+ 5 │ declare module "*.svelte" with { type: "text" } {
+   ·                          ▲
+ 6 │     const value: string;
+   ╰────
+  help: Try inserting a semicolon here
+
+Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/patternAmbientModuleResolvedScriptWithoutPaths.ts
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/patternAmbientModuleResolvedScriptWithoutPaths.ts:5:26]
+ 4 │ }
+ 5 │ declare module "*.svelte" with { type: "text" } {
+   ·                          ▲
+ 6 │     const value: string;
+   ╰────
+  help: Try inserting a semicolon here
+
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/regexInvalidUtf8WithUnicodeFlag.ts
 
   × Invalid Character `⼯`
@@ -2382,15 +2453,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    · ──────────────────
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
-
-Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importSource/importSource3.ts
-
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/importSource/importSource3.ts:1:20]
- 1 │ import source type from "./f.wasm";
-   ·                    ────
- 2 │ const a: AbstractModuleSource = type;
-   ╰────
 
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
@@ -3944,6 +4006,78 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/impo
    ·          ╰── It can not be redeclared here
  4 │     constructor() {
    ╰────
+
+  × Invalid class declaration
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:5:11]
+ 4 │ 
+ 5 │ if (cond) class C1 {}
+   ·           ─────────
+ 6 │ if (cond) {} else class C2 {}
+   ╰────
+  help: Classes can only be declared at top level or inside a block
+
+  × Invalid class declaration
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:6:19]
+ 5 │ if (cond) class C1 {}
+ 6 │ if (cond) {} else class C2 {}
+   ·                   ─────────
+ 7 │ while (cond) class C3 {}
+   ╰────
+  help: Classes can only be declared at top level or inside a block
+
+  × Invalid class declaration
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:7:14]
+ 6 │ if (cond) {} else class C2 {}
+ 7 │ while (cond) class C3 {}
+   ·              ─────────
+ 8 │ do class C4 {} while (cond);
+   ╰────
+  help: Classes can only be declared at top level or inside a block
+
+  × Invalid class declaration
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:8:4]
+ 7 │ while (cond) class C3 {}
+ 8 │ do class C4 {} while (cond);
+   ·    ─────────
+ 9 │ for (;;) class C5 {}
+   ╰────
+  help: Classes can only be declared at top level or inside a block
+
+  × Invalid class declaration
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:9:10]
+  8 │ do class C4 {} while (cond);
+  9 │ for (;;) class C5 {}
+    ·          ─────────
+ 10 │ for (const k in {}) class C6 {}
+    ╰────
+  help: Classes can only be declared at top level or inside a block
+
+  × Invalid class declaration
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:10:21]
+  9 │ for (;;) class C5 {}
+ 10 │ for (const k in {}) class C6 {}
+    ·                     ─────────
+ 11 │ for (const v of []) class C7 {}
+    ╰────
+  help: Classes can only be declared at top level or inside a block
+
+  × Invalid class declaration
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:11:21]
+ 10 │ for (const k in {}) class C6 {}
+ 11 │ for (const v of []) class C7 {}
+    ·                     ─────────
+ 12 │ if (cond) label: class C8 {}
+    ╰────
+  help: Classes can only be declared at top level or inside a block
+
+  × Invalid class declaration
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:12:18]
+ 11 │ for (const v of []) class C7 {}
+ 12 │ if (cond) label: class C8 {}
+    ·                  ─────────
+ 13 │ 
+    ╰────
+  help: Classes can only be declared at top level or inside a block
 
   × TS(1039): Initializers are not allowed in ambient contexts.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/classExpressionPropertyModifiers.ts:2:36]
@@ -6551,11 +6685,13 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/impo
  1 │ const
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/downlevelLetConst11.ts:2:4]
+  × The keyword 'let' is reserved
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/downlevelLetConst11.ts:2:1]
  1 │ "use strict";
  2 │ let
+   · ───
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Missing initializer in const declaration
    ╭─[typescript/tsc/testdata/tests/cases/compiler/downlevelLetConst2.ts:1:7]
@@ -9107,6 +9243,22 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/impo
    ╰────
   help: Try inserting a semicolon here
 
+  × Optional class members can only be used in TypeScript files.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationOptionalClassElementSyntaxOfClass.ts:2:8]
+ 1 │ class C {
+ 2 │     foo?() {
+   ·        ─
+ 3 │     }
+   ╰────
+
+  × Optional class members can only be used in TypeScript files.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationOptionalClassElementSyntaxOfClass.ts:4:8]
+ 3 │     }
+ 4 │     bar? = 1; 
+   ·        ─
+ 5 │ }
+   ╰────
+
   × Expected `,` or `)` but found `?`
    ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationOptionalParameter.ts:1:13]
  1 │ function F(p?) { }
@@ -10464,6 +10616,22 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/impo
  1 │ 3333%!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    ╰────
 
+  × TS(1268): An index signature parameter type must be 'string', 'number', 'symbol', or a template literal type.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/neverIndexSignatureNotDuplicate.ts:3:6]
+ 2 │ interface I {
+ 3 │     [k: never]: string;
+   ·      ────────
+ 4 │     [k: never]: number;
+   ╰────
+
+  × TS(1268): An index signature parameter type must be 'string', 'number', 'symbol', or a template literal type.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/neverIndexSignatureNotDuplicate.ts:4:6]
+ 3 │     [k: never]: string;
+ 4 │     [k: never]: number;
+   ·      ────────
+ 5 │ }
+   ╰────
+
   × Unexpected token
    ╭─[typescript/tsc/testdata/tests/cases/compiler/newExpressionWithCast.ts:7:17]
  6 │ // parse error
@@ -10503,6 +10671,15 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/impo
  12 │ 
     ╰────
   help: Remove this `?`. The default value is an empty array
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/noFlakyExportEqualsWithOtherExportsCheckOrder.ts:5:1]
+ 4 │ declare const o: { x: 1 };
+ 5 │ export = o;
+   · ───────────
+ 6 │ export { v as a } from "ia";
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
   × Missing initializer in destructuring declaration
    ╭─[typescript/tsc/testdata/tests/cases/compiler/noImplicitAnyDestructuringVarDeclaration.ts:1:5]
@@ -12380,14 +12557,14 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/impo
     ╰────
   help: Duplicate names must be in different alternatives
 
-  × Invalid regular expression: Could not parse the entire pattern
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionAnnexB.ts:7:5]
+  × Invalid regular expression: Invalid escape sequence
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionAnnexB.ts:7:4]
  6 │   // Compare to
  7 │   /\q\u\i\c\k\_\f\o\x\-\j\u\m\p\s/u,
-   ·     ▲
+   ·    ─
  8 │   /[\q\u\i\c\k\_\f\o\x\-\j\u\m\p\s]/u,
    ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Invalid class atom
    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionAnnexB.ts:8:5]
@@ -21764,11 +21941,13 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/impo
    ·          ────
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/es6/variableDeclarations/VariableDeclaration11_es6.ts:2:4]
+  × The keyword 'let' is reserved
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/es6/variableDeclarations/VariableDeclaration11_es6.ts:2:1]
  1 │ "use strict";
  2 │ let
+   · ───
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Unexpected token
    ╭─[typescript/tsc/testdata/tests/cases/conformance/es6/variableDeclarations/VariableDeclaration13_es6.ts:4:5]
@@ -25205,10 +25384,11 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/impo
    ·        ─────
    ╰────
 
-  × Unexpected token
+  × Expected `from` but found `*`
    ╭─[typescript/tsc/testdata/tests/cases/conformance/importDefer/importDeferTypeConflict2.ts:1:19]
  1 │ import defer type * as ns1 from "./a";
-   ·                   ─
+   ·                   ┬
+   ·                   ╰── `from` expected
    ╰────
 
   × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`

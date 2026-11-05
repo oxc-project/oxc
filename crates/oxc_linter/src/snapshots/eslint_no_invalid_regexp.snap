@@ -145,19 +145,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Check for unbalanced brackets or invalid escape sequences
 
-  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Could not parse the entire pattern
-   ╭─[no_invalid_regexp.tsx:1:15]
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid escape sequence
+   ╭─[no_invalid_regexp.tsx:1:13]
  1 │ new RegExp('\\a', 'u');
-   ·               ▲
+   ·             ──
    ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
-  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Could not parse the entire pattern
-   ╭─[no_invalid_regexp.tsx:1:15]
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid escape sequence
+   ╭─[no_invalid_regexp.tsx:1:13]
  1 │ new RegExp('\\a', 'u');
-   ·               ▲
+   ·             ──
    ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid braced quantifier
    ╭─[no_invalid_regexp.tsx:1:15]

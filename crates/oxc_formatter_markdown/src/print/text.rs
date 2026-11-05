@@ -68,6 +68,8 @@ pub struct TextContext<'a> {
     pub after_liquid: bool,
     /// The next sibling is a soft break (the text ends a source line).
     pub before_soft_break: bool,
+    /// Nothing follows the text on its source line (the next sibling is a line break, or there is none).
+    pub last_on_line: bool,
     /// The first word the next sibling starts, for the whitespace that ends this text.
     pub next_word: Option<NextWord<'a>>,
     /// The text's last word with the nodes glued after it on the source line (`:-:` + `[[w]]`),
@@ -153,7 +155,7 @@ pub fn push_text<'a>(
             && !leading_ws
             && cx.after_soft_break
             // Alone on its line: a node after it (`== `x``) makes the line text
-            && cx.next_word.is_none()
+            && cx.last_on_line
             && is_fake_setext_underline(word)
         {
             Cow::Owned(format!("\\{word}"))

@@ -1,5 +1,6 @@
-use oxc_ast::{AstKind, ast::Argument};
+use oxc_ast::{AstKind, ast::TemplateLiteral};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{
@@ -47,12 +48,19 @@ expect(errorThrowingFunction).toThrowErrorMatchingInlineSnapshot(
 ```
 ";
 
-pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-    let node = possible_jest_node.node;
-    let AstKind::CallExpression(call_expr) = node.kind() else {
+pub fn run<'a>(node: &AstNode<'a>, template: &TemplateLiteral<'a>, ctx: &LintContext<'a>) {
+    if template.expressions.is_empty() {
+        return;
+    }
+
+    let call_node = ctx.nodes().parent_node(node.id());
+    let AstKind::CallExpression(call_expr) = call_node.kind() else { return };
+    let Some(possible_jest_node) =
+        PossibleJestNode::from_call_expression(call_node, call_expr, ctx)
+    else {
         return;
     };
-    let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx) else {
+    let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, &possible_jest_node, ctx) else {
         return;
     };
     let Some(matcher) = jest_fn_call.matcher() else {
@@ -65,13 +73,5 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
         return;
     }
 
-    // Check all since the optional 'propertyMatchers' argument might be present
-    // `.toMatchInlineSnapshot(propertyMatchers?, inlineSnapshot)`
-    for arg in jest_fn_call.args {
-        if let Argument::TemplateLiteral(template_lit) = arg
-            && !template_lit.expressions.is_empty()
-        {
-            ctx.diagnostic(no_interpolation_in_snapshots_diagnostic(template_lit.span));
-        }
-    }
+    ctx.diagnostic(no_interpolation_in_snapshots_diagnostic(template.span));
 }

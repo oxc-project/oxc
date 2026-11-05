@@ -391,14 +391,14 @@ fn is_inline(node: Option<&Node<'_>>) -> bool {
 
 /// The raw source of a flow scalar (plain/quoted); `None` for aliases,
 /// collections and block scalars.
-fn scalar_raw<'a>(node: &Node<'_>, f: &YamlFormatter<'_, 'a>) -> Option<&'a str> {
-    let span = match &node.content {
-        Content::Plain(p) => p.span,
-        Content::QuoteSingle(s) => s.span,
-        Content::QuoteDouble(d) => d.span,
+fn scalar_raw<'a>(node: &Node<'_>, f: &YamlFormatter<'_, 'a>) -> Option<(&'a str, bool)> {
+    let (span, multiline) = match &node.content {
+        Content::Plain(p) => (p.span, p.multiline),
+        Content::QuoteSingle(s) => (s.span, s.multiline),
+        Content::QuoteDouble(d) => (d.span, d.multiline),
         _ => return None,
     };
-    Some(f.context().source_text().text_for(&to_span(span)))
+    Some((f.context().source_text().text_for(&to_span(span)), multiline))
 }
 
 /// `isSingleLineNode`: the node occupies one source line.
@@ -406,7 +406,7 @@ fn is_single_line(node: Option<&Node<'_>>, f: &YamlFormatter<'_, '_>) -> bool {
     match node {
         None => true,
         Some(node) if matches!(node.content, Content::Alias(_)) => true,
-        Some(node) => scalar_raw(node, f).is_some_and(|raw| !raw.contains('\n')),
+        Some(node) => scalar_raw(node, f).is_some_and(|(_, multiline)| !multiline),
     }
 }
 
@@ -417,11 +417,11 @@ fn is_absolutely_single_line(node: Option<&Node<'_>>, f: &YamlFormatter<'_, '_>)
     if matches!(node.content, Content::Alias(_)) {
         return true;
     }
-    let Some(raw) = scalar_raw(node, f) else { return false };
+    let Some((raw, multiline)) = scalar_raw(node, f) else { return false };
 
     let prose_wrap = f.options().prose_wrap;
     if prose_wrap == ProseWrap::Preserve {
-        return !raw.contains('\n');
+        return !multiline;
     }
     if has_backslash_continuation(raw) {
         return false;
@@ -432,7 +432,7 @@ fn is_absolutely_single_line(node: Option<&Node<'_>>, f: &YamlFormatter<'_, '_>)
         !has_blank_line(raw)
     } else {
         // `always` may wrap at any space
-        !raw.contains('\n') && !raw.contains(' ')
+        !multiline && !raw.contains(' ')
     }
 }
 
@@ -453,7 +453,7 @@ fn has_backslash_continuation(raw: &str) -> bool {
 fn has_forced_break_when_folded(node: Option<&Node<'_>>, f: &YamlFormatter<'_, '_>) -> bool {
     let Some(node) = node else { return false };
     // Defensive: non-scalars never re-fold
-    let Some(raw) = scalar_raw(node, f) else { return true };
+    let Some((raw, _)) = scalar_raw(node, f) else { return true };
     has_blank_line(raw) || has_backslash_continuation(raw)
 }
 
