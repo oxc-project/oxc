@@ -8,13 +8,14 @@ use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 pub mod arena;
 mod cpu;
-#[cfg(feature = "oxc_diagnostics")]
-pub mod diagnostics;
 pub mod error;
 pub mod options;
 mod pipeline;
 mod simd;
 mod token;
+
+#[cfg(feature = "oxc_diagnostics")]
+pub mod diagnostics;
 
 pub use arena::{Arena, LexResult, LineEntry};
 pub use error::{DiagCode, DiagSeverity, Diagnostic};
