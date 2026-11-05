@@ -354,6 +354,18 @@ fn tagged_template_after_call_resolves_to_source() {
     assert!(has_mapping(&tokens, pos(0, 3), pos(0, 3)), "backtick after `f()`");
 }
 
+// Codegen prints `(c).pos;` in a block as `c.pos;`. The statement starts at the `(`, but the
+// printed `c` must map to the source `c`. Source map consumers use the first mapping at a
+// generated position, so there must be only one mapping at the start of `c.pos;`.
+#[test]
+fn removed_paren_maps_to_inner_token() {
+    let tokens = sourcemap_tokens("function g(c) { (c).pos; }", SourceType::mjs());
+    let at_start: Vec<_> =
+        tokens.iter().filter(|token| token.dst.line == 1 && token.dst.col == 1).collect();
+    assert_eq!(at_start.len(), 1, "only one mapping at the start of `c.pos;`");
+    assert_eq!((at_start[0].src.line, at_start[0].src.col), (0, 17), "`c` maps to the source `c`");
+}
+
 #[test]
 #[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))] // we run big endian tests on docker that does not have node installed; skip 32-bit as well
 fn stacktrace_is_correct() {

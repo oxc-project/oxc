@@ -159,14 +159,27 @@ impl<'a> SourcemapBuilder<'a> {
         let (original_line, original_column) = self.search_original_line_and_column(position);
         self.update_generated_line_and_column(output);
         let name_id = name.map(|s| self.add_name(s));
-        self.tokens.push(oxc_sourcemap::Token::new(
+        let token = oxc_sourcemap::Token::new(
             self.generated_line,
             self.generated_column,
             original_line,
             original_column,
             Some(0),
             name_id,
-        ));
+        );
+        // Nothing was printed since the last mapping, so the last mapping is for an outer node
+        // (for example a class member that starts at a removed `public` modifier, or a removed `(`).
+        // Source map consumers use the first mapping at a generated position,
+        // so replace it with this mapping, which is for the token that is printed here.
+        match self.tokens.last_mut() {
+            Some(last)
+                if last.get_dst_line() == self.generated_line
+                    && last.get_dst_col() == self.generated_column =>
+            {
+                *last = token;
+            }
+            _ => self.tokens.push(token),
+        }
         self.last_position = Some(position);
         self.last_token_has_name = name_id.is_some();
     }
@@ -660,10 +673,9 @@ mod test {
 
     #[test]
     fn add_source_mapping_for_name() {
-        let output = b"ac";
         let mut builder = SourcemapBuilder::new(Path::new("x.js"), "ab");
-        builder.add_source_mapping_for_name(output, Span::new(0, 1), "a");
-        builder.add_source_mapping_for_name(output, Span::new(1, 2), "c");
+        builder.add_source_mapping_for_name(b"", Span::new(0, 1), "a");
+        builder.add_source_mapping_for_name(b"a", Span::new(1, 2), "c");
         let sm = builder.into_sourcemap();
         // The name `a` not change.
         assert_eq!(
@@ -727,10 +739,9 @@ mod test {
 
     #[test]
     fn add_source_mapping_for_private_name() {
-        let output = b"#a#c";
         let mut builder = SourcemapBuilder::new(Path::new("x.js"), "#a#b");
-        builder.add_source_mapping_for_private_name(output, Span::new(0, 2), "a");
-        builder.add_source_mapping_for_private_name(output, Span::new(2, 4), "c");
+        builder.add_source_mapping_for_private_name(b"", Span::new(0, 2), "a");
+        builder.add_source_mapping_for_private_name(b"#a", Span::new(2, 4), "c");
         let sm = builder.into_sourcemap();
         // The name `#a` not change.
         assert_eq!(
@@ -765,11 +776,35 @@ mod test {
     }
 
     #[test]
+    fn same_generated_position_keeps_last_mapping() {
+        // Nothing is printed between the first two mappings, or between the last two,
+        // so the later mapping replaces the earlier one. The name of the later mapping is kept.
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), "(c).d (e).f");
+        builder.add_source_mapping(b"", 0, None);
+        builder.add_source_mapping(b"", 1, None);
+        builder.add_source_mapping(b"c.d ", 6, None);
+        builder.add_source_mapping(b"c.d ", 7, Some("e"));
+        let sm = builder.into_sourcemap();
+        let tokens = sm
+            .get_source_view_tokens()
+            .map(|token| {
+                (
+                    token.get_dst_line(),
+                    token.get_dst_col(),
+                    token.get_src_line(),
+                    token.get_src_col(),
+                    token.get_name(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(tokens, [(0, 0, 0, 1, None), (0, 4, 0, 7, Some("e"))]);
+    }
+
+    #[test]
     fn add_source_mapping_for_unordered_position() {
-        let output = b"";
         let mut builder = SourcemapBuilder::new(Path::new("x.js"), "ab");
-        builder.add_source_mapping(output, 1, None);
-        builder.add_source_mapping(output, 0, None);
+        builder.add_source_mapping(b"", 1, None);
+        builder.add_source_mapping(b"b", 0, None);
         let sm = builder.into_sourcemap();
         assert_eq!(sm.get_tokens().count(), 2);
     }
