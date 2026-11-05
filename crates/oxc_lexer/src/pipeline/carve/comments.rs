@@ -538,14 +538,14 @@ mod tests {
             (b"\tturbopackIgnore: true\n".as_slice(), true),
             (b" turbopackIgnore: true".as_slice(), false),
         ] {
-            assert_eq!(classify(source, is_block, false), CommentContent::Turbopack);
+            assert_eq!(classify(source, is_block, false, BASELINE), CommentContent::Turbopack);
         }
 
         for source in [b" turbopack ".as_slice(), b" turbopack", b" turbopackignore: true"] {
-            assert_eq!(classify(source, true, false), CommentContent::None);
+            assert_eq!(classify(source, true, false, BASELINE), CommentContent::None);
         }
 
-        // Without a magic comment, `@license` or `@preserve` still makes it legal
-        assert_eq!(classify(b" turbopack @license ", true, true), CommentContent::Legal);
+        // Without a magic comment, @license or @preserve still makes it legal
+        assert_eq!(classify(b" turbopack @license ", true, true, BASELINE), CommentContent::Legal);
     }
 }
