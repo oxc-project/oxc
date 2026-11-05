@@ -38,8 +38,9 @@ use crate::{
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        // Pushed here, so only the arguments are sorted, not the callee (e.g. `cn.foo["a  b"](...)`),
+        // Pushed here, so this call's context covers only its arguments, not its callee (e.g. `cn.foo["a  b"](...)`),
         // for both a call and the calls a `MemberChain` prints
+        // (an outer context still covers the callee, as the plugin does)
         let tailwind_ctx = match self.parent() {
             AstNodes::CallExpression(call) => tailwind_context_for_callee(&call.callee, f),
             _ => None,
