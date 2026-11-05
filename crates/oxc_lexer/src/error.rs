@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, Default, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 #[repr(C)]
 pub struct Diagnostic {
     pub off: u32,

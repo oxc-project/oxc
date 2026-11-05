@@ -449,7 +449,7 @@ pub mod token_flags {
 const _: () = assert!(tk!(Hashbang) > tk!(LineComment));
 const _: () = assert!(tk!(Hashbang) < tk!(LineTerminator));
 
-#[derive(Clone, Copy, Default, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 #[repr(C)]
 pub struct StringSpan {
     pub start: u32,
