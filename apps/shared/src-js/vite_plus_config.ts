@@ -10,13 +10,12 @@ let vitePlusCache: Promise<typeof import("vite-plus")> | null = null;
  * Resolve a Vite+ config via `vite-plus` and extract the given field.
  *
  * `vite-plus` is loaded lazily and memoized for the process.
- * Consumers declare it as an optional peer dependency; tsdown leaves the specifier external
- * so the user-installed copy is used at runtime.
+ * Consumers declare it as an optional peer dependency;
+ * tsdown leaves the specifier external, so the user-installed copy is used at runtime.
  *
- * `resolveConfigFromFile` (`vite-plus` >= 1.5.0) resolves an unset or relative `root`
- * from the config file's directory, so plugins see the same `root` regardless of `process.cwd()`.
- * e.g. The LSP's cwd can be another folder of a multi-root workspace.
- * Older `vite-plus` versions only have `resolveConfig`, which resolves `root` from `process.cwd()`.
+ * `resolveConfigFromFile` resolves an unset or relative `root` from the config file's directory,
+ * so plugins see the same `root` regardless of `process.cwd()`.
+ * (e.g. The LSP's cwd can be another folder of a multi-root workspace.)
  *
  * @param path - Absolute path to the Vite config file
  * @param fieldName - Field name to extract from the resolved config (e.g. `"fmt"`, `"lint"`)
@@ -28,14 +27,9 @@ export async function loadViteConfigField(
   fieldName: "lint" | "fmt",
 ): Promise<object | null> {
   vitePlusCache ??= import("vite-plus");
-  const vitePlus = await vitePlusCache;
+  const { resolveConfigFromFile } = await vitePlusCache;
 
-  // Fall back only when the function is absent, so config errors still propagate
-  const resolved =
-    typeof vitePlus.resolveConfigFromFile === "function"
-      ? await vitePlus.resolveConfigFromFile(path)
-      : await vitePlus.resolveConfig({ configFile: path }, "build");
-  const config = resolved as unknown as Record<string, unknown>;
+  const config = (await resolveConfigFromFile(path)) as unknown as Record<string, unknown>;
 
   // Signal "skip" when the field is missing
   if (!(fieldName in config)) return null;
