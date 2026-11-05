@@ -161,11 +161,15 @@ ast:
 # On x86_64, a build contains both AVX2 and generic, and picks one at runtime, depending on what the CPU supports.
 # A build with `avx2`, `bmi2` and `popcnt` enabled at compile time contains only AVX2.
 #
-# Lint and test each have 3 recipes:
+# `lint-lexer` lints for the host. Every platform compiles the AVX2, Neon and generic code,
+# so that lints nearly all of it. Only the SIMD intrinsics for other platforms
+# (`#[cpu_impl]` method bodies) and some `#[cfg]`s in `cpu` and `simd` modules are left out.
 #
-# * `*-lexer` builds for the host.
-# * `*-lexer-avx2` builds for x86_64 with `avx2`, `bmi2` and `popcnt` enabled.
-# * `*-lexer-generic` builds for x86_64 without them. On an x86_64 host, that's the same as `*-lexer`.
+# Test has 3 recipes:
+#
+# * `test-lexer` builds for the host.
+# * `test-lexer-avx2` builds for x86_64 with `avx2`, `bmi2` and `popcnt` enabled.
+# * `test-lexer-generic` builds for x86_64 without them. On an x86_64 host, that's the same as `test-lexer`.
 #
 # Conformance lexes every fixture with each implementation the CPU supports, and checks they all agree.
 # It's part of `just coverage`. `conformance-lexer` runs only the lexer suites, built for the host,
@@ -208,36 +212,21 @@ conformance-lexer *args='':
 conformance-lexer-x86 *args='':
   {{ if os() == "macos" { "ROSETTA_ADVERTISE_AVX=1 " } else { "" } }}cargo run -p oxc_coverage --profile coverage {{_lexer-generic}} -- lexer {{args}}
 
-# Lint `oxc_lexer` and the conformance harness, built for the host
-[unix]
+# Lint `oxc_lexer` and `oxc_lexer_macros`
 lint-lexer *args='':
-  CARGO_BUILD_WARNINGS=deny cargo clippy -p oxc_lexer -p oxc_coverage --all-targets --all-features {{args}}
-
-[windows]
-lint-lexer *args='':
-  $Env:CARGO_BUILD_WARNINGS='deny'; cargo clippy -p oxc_lexer -p oxc_coverage --all-targets --all-features {{args}}
-
-# Lint `oxc_lexer` and the conformance harness against the AVX2 implementation
-lint-lexer-avx2 *args='':
-  just lint-lexer {{_lexer-avx2}} {{args}}
-
-# Lint `oxc_lexer` and the conformance harness against the generic implementation, on x86_64
-lint-lexer-generic *args='':
-  just lint-lexer {{_lexer-generic}} {{args}}
+  just lint -p oxc_lexer -p oxc_lexer_macros {{args}}
 
 # `ready-lexer` fails if any step fails, or if conformance changes the lexer snapshots.
 # Only the lexer snapshots are checked for changes, so it can be run with other uncommitted changes.
 # Snapshots are checked after each conformance run, because each run overwrites the snapshots from the one before.
 #
-# The `*-lexer-generic` and `conformance-lexer-x86` recipes are only run on hosts which aren't x86_64.
+# The `test-lexer-generic` and `conformance-lexer-x86` recipes are only run on hosts which aren't x86_64.
 # On an x86_64 host, they're the same as the host recipes, which `ready-lexer` runs anyway.
 _lexer-snapshots := "tasks/coverage/snapshots/lexer_*"
 
 # Lint, test, and run conformance for `oxc_lexer` against each implementation, and check snapshots are unchanged
 ready-lexer:
   just lint-lexer
-  just lint-lexer-avx2
-  {{ if arch() == "x86_64" { "" } else { "just lint-lexer-generic" } }}
   just test-lexer
   just test-lexer-avx2
   {{ if arch() == "x86_64" { "" } else { "just test-lexer-generic" } }}
