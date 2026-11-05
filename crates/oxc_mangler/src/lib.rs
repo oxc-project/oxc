@@ -815,13 +815,12 @@ impl<'a> AnnexBBlockFunctions<'a> {
             return Self { functions, excluded: None };
         }
         let mut excluded = BitSet::new_in(scoping.symbols_len(), allocator);
-        for &(function_id, binding_id) in block_functions {
+        for (&function_id, &binding_id) in block_functions {
             let binding_scope_id = scoping.symbol_scope_id(binding_id);
             functions.push((binding_scope_id, binding_id, function_id));
             excluded.set_bit(function_id.index());
         }
         functions.sort_unstable();
-        functions.dedup();
 
         // Exclusion propagates through chains such as a block function kept by another block
         // function, which is itself kept by a class whose name is preserved. Pairs are oriented

@@ -1,5 +1,7 @@
 use std::fmt::Write;
 
+use rustc_hash::FxHashMap;
+
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
@@ -443,7 +445,7 @@ fn annex_b_block_scoped_function() {
 struct BindingStructure {
     references: Vec<Option<SymbolId>>,
     root_bindings: Vec<SymbolId>,
-    annex_b_block_functions: Vec<(SymbolId, SymbolId)>,
+    annex_b_block_functions: FxHashMap<SymbolId, SymbolId>,
 }
 
 fn binding_structure(source_text: &str) -> BindingStructure {
@@ -458,8 +460,7 @@ fn binding_structure(source_text: &str) -> BindingStructure {
     let mut root_bindings =
         scoping.get_bindings(scoping.root_scope_id()).values().copied().collect::<Vec<_>>();
     root_bindings.sort_unstable();
-    let mut annex_b_block_functions = scoping.annex_b_block_functions().to_vec();
-    annex_b_block_functions.sort_unstable();
+    let annex_b_block_functions = scoping.annex_b_block_functions().clone();
     BindingStructure { references, root_bindings, annex_b_block_functions }
 }
 
@@ -495,8 +496,8 @@ fn annex_b_block_function_without_var_binding() {
         "function _() { let x; { function g() { return x; } function h() {} } let g, h; return [x, g, h]; }",
         // The parameter that shadows the function expression's name keeps the function in its block.
         "(function g(g) { { function g() {} } return g; })",
-        // An `if` function and a following `var` share a symbol, not an Annex B binding pair.
-        "function _(x) { var a = x + 1; for (let k of [8]) { if (x > 9) function e() {} var e = k; let y = a; use(k, y, x); } return [x, a, e]; }",
+        // A later `var` keeps the branch function in its implicit scope.
+        "function _(p) { if (p) function g() {} var g; return g; }",
         // Reads in the enclosing block must keep resolving to the simple catch parameter.
         "function _() { var g = 'var'; try { throw 1; } catch (g) { { if (false) function g() {} use(g); } } return g; }",
         // Bindings visible to direct `eval` keep their names, without affecting other functions.
