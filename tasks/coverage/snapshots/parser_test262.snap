@@ -1,9 +1,9 @@
-commit: d53ebc8b
+commit: 91c70759
 
 parser_test262 Summary:
-AST Parsed     : 47474/47474 (100.00%)
-Positive Passed: 47474/47474 (100.00%)
-Negative Passed: 4653/4653 (100.00%)
+AST Parsed     : 47589/47589 (100.00%)
+Positive Passed: 47589/47589 (100.00%)
+Negative Passed: 4669/4669 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -10837,6 +10837,78 @@ Negative Passed: 4653/4653 (100.00%)
  27 │   x = {} == super();
     ·             ───────
  28 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-async-field-no-asi-before-method.js:18:14]
+ 17 │ var C = class {
+ 18 │   a\u0073ync value() {}
+    ·              ──┬──
+    ·                ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-async-static-field-no-asi-before-method.js:18:21]
+ 17 │ var C = class {
+ 18 │   static a\u0073ync value() {}
+    ·                     ──┬──
+    ·                       ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-get-field-no-asi-before-method.js:18:12]
+ 17 │ var C = class {
+ 18 │   g\u0065t value() {}
+    ·            ──┬──
+    ·              ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-get-static-field-no-asi-before-method.js:18:19]
+ 17 │ var C = class {
+ 18 │   static g\u0065t value() {}
+    ·                   ──┬──
+    ·                     ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-set-field-no-asi-before-method.js:18:12]
+ 17 │ var C = class {
+ 18 │   s\u0065t value(v) {}
+    ·            ──┬──
+    ·              ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-set-static-field-no-asi-before-method.js:18:19]
+ 17 │ var C = class {
+ 18 │   static s\u0065t value(v) {}
+    ·                   ──┬──
+    ·                     ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-static-field-no-asi-before-method.js:18:15]
+ 17 │ var C = class {
+ 18 │   st\u0061tic value() {}
+    ·               ──┬──
+    ·                 ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-static-static-field-no-asi-before-method.js:18:22]
+ 17 │ var C = class {
+ 18 │   static st\u0061tic value() {}
+    ·                      ──┬──
+    ·                        ╰── `;` expected
+ 19 │ }
     ╰────
 
   × Expected `;` but found `{`
@@ -30835,6 +30907,78 @@ Negative Passed: 4653/4653 (100.00%)
  27 │   x = {} == super();
     ·             ───────
  28 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-async-field-no-asi-before-method.js:18:14]
+ 17 │ class C {
+ 18 │   a\u0073ync value() {}
+    ·              ──┬──
+    ·                ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-async-static-field-no-asi-before-method.js:18:21]
+ 17 │ class C {
+ 18 │   static a\u0073ync value() {}
+    ·                     ──┬──
+    ·                       ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-get-field-no-asi-before-method.js:18:12]
+ 17 │ class C {
+ 18 │   g\u0065t value() {}
+    ·            ──┬──
+    ·              ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-get-static-field-no-asi-before-method.js:18:19]
+ 17 │ class C {
+ 18 │   static g\u0065t value() {}
+    ·                   ──┬──
+    ·                     ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-set-field-no-asi-before-method.js:18:12]
+ 17 │ class C {
+ 18 │   s\u0065t value(v) {}
+    ·            ──┬──
+    ·              ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-set-static-field-no-asi-before-method.js:18:19]
+ 17 │ class C {
+ 18 │   static s\u0065t value(v) {}
+    ·                   ──┬──
+    ·                     ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-static-field-no-asi-before-method.js:18:15]
+ 17 │ class C {
+ 18 │   st\u0061tic value() {}
+    ·               ──┬──
+    ·                 ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-static-static-field-no-asi-before-method.js:18:22]
+ 17 │ class C {
+ 18 │   static st\u0061tic value() {}
+    ·                      ──┬──
+    ·                        ╰── `;` expected
+ 19 │ }
     ╰────
 
   × Expected `;` but found `{`

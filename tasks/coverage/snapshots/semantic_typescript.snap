@@ -1,8 +1,8 @@
-commit: 8a62bbe7
+commit: 6161772c
 
 semantic_typescript Summary:
-AST Parsed     : 5726/5726 (100.00%)
-Positive Passed: 4159/5726 (72.63%)
+AST Parsed     : 5743/5743 (100.00%)
+Positive Passed: 4161/5743 (72.45%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -638,6 +638,20 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["bar", "foo"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/bigintZeroIsDefinitelyFalsy.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["x", "y", "z"]
+rebuilt        : ScopeId(0): ["y", "z"]
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
+rebuilt        : <None>
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["x"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/bindingPatternContextualTypeDoesNotCauseWidening.ts
 Bindings mismatch:
@@ -3548,6 +3562,20 @@ rebuilt        : SymbolId(3): []
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitExportAssignmentWithTypeExports.ts
 An export assignment cannot be used in a module with other exported elements
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitExternalModuleContainerIndexDeclarationOrder.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["expand", "f1", "keep", "makeWidget", "obsA", "obsB", "w"]
+rebuilt        : ScopeId(0): ["f1", "keep", "makeWidget", "obsA", "obsB", "w"]
+Reference symbol mismatch for "expand":
+after transform: SymbolId(2) "expand"
+rebuilt        : <None>
+Reference symbol mismatch for "expand":
+after transform: SymbolId(2) "expand"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["expand"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitFunctionDuplicateNamespace.ts
 Symbol span mismatch for "f":
@@ -10822,6 +10850,17 @@ Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["require", "test2"]
 
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/narrowingNoInfer2.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["box", "f1", "f2"]
+rebuilt        : ScopeId(0): ["f1", "f2"]
+Reference symbol mismatch for "box":
+after transform: SymbolId(6) "box"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["box"]
+
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/narrowingRestGenericCall.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["_excluded", "_objectWithoutProperties", "call", "obj"]
@@ -11165,6 +11204,89 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["direct", "hasZField", "nested", "nestedUnion"]
 
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/newExpressionCalleeParentheses.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Foo", "a1", "a10", "a11", "a12", "a13", "a14", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "b1", "b2", "b3", "b4", "b5", "b6", "b7", "getPlugins", "getPluginsFactory", "getPluginsGeneric", "obj"]
+rebuilt        : ScopeId(0): ["a1", "a10", "a11", "a12", "a13", "a14", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "b1", "b2", "b3", "b4", "b5", "b6", "b7"]
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "obj":
+after transform: SymbolId(5) "obj"
+rebuilt        : <None>
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "getPluginsGeneric":
+after transform: SymbolId(1) "getPluginsGeneric"
+rebuilt        : <None>
+Reference symbol mismatch for "getPluginsFactory":
+after transform: SymbolId(3) "getPluginsFactory"
+rebuilt        : <None>
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "Foo":
+after transform: SymbolId(6) "Foo"
+rebuilt        : <None>
+Reference symbol mismatch for "Foo":
+after transform: SymbolId(6) "Foo"
+rebuilt        : <None>
+Reference symbol mismatch for "obj":
+after transform: SymbolId(5) "obj"
+rebuilt        : <None>
+Reference symbol mismatch for "obj":
+after transform: SymbolId(5) "obj"
+rebuilt        : <None>
+Reference symbol mismatch for "obj":
+after transform: SymbolId(5) "obj"
+rebuilt        : <None>
+Reference symbol mismatch for "obj":
+after transform: SymbolId(5) "obj"
+rebuilt        : <None>
+Reference symbol mismatch for "getPlugins":
+after transform: SymbolId(0) "getPlugins"
+rebuilt        : <None>
+Reference symbol mismatch for "obj":
+after transform: SymbolId(5) "obj"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["Foo", "getPlugins", "getPluginsFactory", "getPluginsGeneric", "obj"]
+
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noCircularDefinitionOnExportOfPrivateInMergedNamespace.ts
 Symbol reference IDs mismatch for "cat":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -11242,6 +11364,85 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Number", "String", "require"]
 rebuilt        : ["Number", "String", "decorator", "require"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noFlakyDeclarationEmitExportEqualsQualifiedNameOrder.ts
+An export assignment cannot be used in a module with other exported elements
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noFlakyDeclarationEmitExternalModuleContainerIndexOrder.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["expand", "f1", "keep", "makeWidget", "obsA", "obsB", "w"]
+rebuilt        : ScopeId(0): ["f1", "keep", "makeWidget", "obsA", "obsB", "w"]
+Reference symbol mismatch for "expand":
+after transform: SymbolId(2) "expand"
+rebuilt        : <None>
+Reference symbol mismatch for "expand":
+after transform: SymbolId(2) "expand"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["expand"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noFlakyDeclarationEmitLateBoundIndexSignatureSiblingsOrder.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "_defineProperty", "_objectSpread", "expand", "k", "obsA", "obsB", "oxa", "oxb"]
+rebuilt        : ScopeId(0): ["C", "_defineProperty", "_objectSpread", "obsA", "obsB"]
+Reference symbol mismatch for "k":
+after transform: SymbolId(0) "k"
+rebuilt        : <None>
+Reference symbol mismatch for "expand":
+after transform: SymbolId(3) "expand"
+rebuilt        : <None>
+Reference symbol mismatch for "expand":
+after transform: SymbolId(3) "expand"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["expand", "k"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noFlakyDeclarationEmitRenamedExportOrder.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["expand", "getX", "obsA", "obsB", "x"]
+rebuilt        : ScopeId(0): ["getX", "obsA", "obsB", "x"]
+Reference symbol mismatch for "expand":
+after transform: SymbolId(1) "expand"
+rebuilt        : <None>
+Reference symbol mismatch for "expand":
+after transform: SymbolId(1) "expand"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["expand"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noFlakyDeclarationEmitUmdGlobalAliasesOrder.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["expand", "obsA", "obsB", "oxa", "oxb", "w"]
+rebuilt        : ScopeId(0): ["obsA", "obsB", "w"]
+Reference symbol mismatch for "expand":
+after transform: SymbolId(2) "expand"
+rebuilt        : <None>
+Reference symbol mismatch for "expand":
+after transform: SymbolId(2) "expand"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["gc"]
+rebuilt        : ["expand", "gc"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noFlakyDeclarationEmitVariableMatchesInScopeOrder.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["expand", "obj", "obsA", "obsB"]
+rebuilt        : ScopeId(0): ["obj", "obsA", "obsB"]
+Reference symbol mismatch for "expand":
+after transform: SymbolId(0) "expand"
+rebuilt        : <None>
+Reference symbol mismatch for "expand":
+after transform: SymbolId(0) "expand"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["mk"]
+rebuilt        : ["expand", "mk"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noFlakyExportEqualsWithOtherExportsImportOrder.ts
+An export assignment cannot be used in a module with other exported elements
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noImplicitAnyDestructuringInPrivateMethod.ts
 Bindings mismatch:
@@ -11394,6 +11595,26 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["cafoo", "cfoo"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/nullishAndLogicalOrRightOperandWithBindingPattern.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["o", "p", "q"]
+rebuilt        : ScopeId(0): ["p", "q"]
+Reference symbol mismatch for "o":
+after transform: SymbolId(0) "o"
+rebuilt        : <None>
+Reference symbol mismatch for "o":
+after transform: SymbolId(0) "o"
+rebuilt        : <None>
+Reference symbol mismatch for "o":
+after transform: SymbolId(0) "o"
+rebuilt        : <None>
+Reference symbol mismatch for "o":
+after transform: SymbolId(0) "o"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["o"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/nullishCoalescingAlwaysNullFalsePositive.ts
 Bindings mismatch:
@@ -13734,6 +13955,23 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["test"]
 
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/reverseMappedTypePrivateMembers.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Account", "Entity", "_defineProperty", "explicit", "getAccount", "getAccountPlain", "inferred", "plain"]
+rebuilt        : ScopeId(0): ["Account", "Entity", "_defineProperty", "explicit", "inferred", "plain"]
+Reference symbol mismatch for "getAccountPlain":
+after transform: SymbolId(5) "getAccountPlain"
+rebuilt        : <None>
+Reference symbol mismatch for "getAccount":
+after transform: SymbolId(3) "getAccount"
+rebuilt        : <None>
+Reference symbol mismatch for "getAccount":
+after transform: SymbolId(3) "getAccount"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["getAccount", "getAccountPlain"]
+
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/reverseMappedUnionInference.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["createExtractor", "identifierExtractor", "isIdentifier", "isStringLiteral", "myUnion", "stringExtractor", "unionType"]
@@ -15018,6 +15256,20 @@ rebuilt        : SymbolId(4): Span { start: 327, end: 328 }
 Symbol redeclarations mismatch for "g":
 after transform: SymbolId(8): [Span { start: 231, end: 232 }, Span { start: 287, end: 288 }, Span { start: 327, end: 328 }]
 rebuilt        : SymbolId(4): []
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/spreadArgumentWithSingleGenericSignature.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["apply", "args", "r"]
+rebuilt        : ScopeId(0): ["r"]
+Reference symbol mismatch for "apply":
+after transform: SymbolId(0) "apply"
+rebuilt        : <None>
+Reference symbol mismatch for "args":
+after transform: SymbolId(6) "args"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["apply", "args"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/spreadBooleanRespectsFreshness.ts
 Bindings mismatch:
@@ -19429,6 +19681,38 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Error"]
 rebuilt        : ["Error", "value"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es2026/jsonParseWithSource.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["a", "condition", "parse", "parseWith", "text"]
+rebuilt        : ScopeId(0): ["a", "parse", "parseWith"]
+Reference symbol mismatch for "text":
+after transform: SymbolId(4) "text"
+rebuilt        : <None>
+Reference symbol mismatch for "text":
+after transform: SymbolId(4) "text"
+rebuilt        : <None>
+Reference symbol mismatch for "text":
+after transform: SymbolId(4) "text"
+rebuilt        : <None>
+Reference symbol mismatch for "text":
+after transform: SymbolId(4) "text"
+rebuilt        : <None>
+Reference symbol mismatch for "text":
+after transform: SymbolId(4) "text"
+rebuilt        : <None>
+Reference symbol mismatch for "text":
+after transform: SymbolId(4) "text"
+rebuilt        : <None>
+Reference symbol mismatch for "text":
+after transform: SymbolId(4) "text"
+rebuilt        : <None>
+Reference symbol mismatch for "condition":
+after transform: SymbolId(5) "condition"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["JSON", "undefined"]
+rebuilt        : ["JSON", "condition", "text", "undefined"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/Symbols/symbolDeclarationEmit3.ts
 Unresolved reference IDs mismatch for "Symbol":

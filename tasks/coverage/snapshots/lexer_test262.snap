@@ -1,8 +1,8 @@
-commit: d53ebc8b
+commit: 91c70759
 
 lexer_test262 Summary:
-AST Parsed     : 52127/52127 (100.00%)
-Positive Passed: 52123/52127 (99.99%)
+AST Parsed     : 52258/52258 (100.00%)
+Positive Passed: 52254/52258 (99.99%)
 Comments: tasks/coverage/test262/test/language/comments/multi-line-asi-line-separator.js
 
 Comments: tasks/coverage/test262/test/language/comments/multi-line-asi-paragraph-separator.js

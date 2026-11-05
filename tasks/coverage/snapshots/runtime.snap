@@ -1,8 +1,8 @@
-commit: d53ebc8b
+commit: 91c70759
 
 runtime Summary:
-AST Parsed     : 18277/18277 (100.00%)
-Positive Passed: 17315/18277 (94.74%)
+AST Parsed     : 18363/18363 (100.00%)
+Positive Passed: 17417/18363 (94.85%)
 minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -1029,42 +1029,6 @@ Test262Error: Expected a TypeError to be thrown but no exception was thrown at a
 minify Error: tasks/coverage/test262/test/language/expressions/class/name.js
 Test262Error: name descriptor value should be cls; name value should be cls
 
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-add.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «3») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-bitand.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «0») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-bitor.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «15») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-bitxor.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «257») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-div.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «0.5») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-exp.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «1000») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-lshift.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «96») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-mod.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «1») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-mult.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «6») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-rshift.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «3») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-srshift.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «3») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-sub.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «1») to be true
-
 minify Error: tasks/coverage/test262/test/language/expressions/does-not-equals/S11.9.2_A7.8.js
 Test262Error: #7: (1 != {valueOf: function() {throw "error"}, toString: function() {return 1}}) throw "error"
 
@@ -1172,24 +1136,6 @@ Test262Error: 3n < Symbol("2") throws TypeError Expected a TypeError to be throw
 
 minify Error: tasks/coverage/test262/test/language/expressions/less-than-or-equal/S11.8.3_A2.3_T1.js
 Test262Error: #1.3: Failed with: Test262Error: #1.1: Should have thrown
-
-transform Error: tasks/coverage/test262/test/language/expressions/logical-assignment/left-hand-side-private-reference-accessor-property-and.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «false») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/logical-assignment/left-hand-side-private-reference-accessor-property-nullish.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «1») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/logical-assignment/left-hand-side-private-reference-accessor-property-or.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «true») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/logical-assignment/left-hand-side-private-reference-method-and.js
-Test262Error: PutValue throws when storing the result in a method private reference Expected a TypeError to be thrown but no exception was thrown at all
-
-transform Error: tasks/coverage/test262/test/language/expressions/logical-assignment/left-hand-side-private-reference-method-short-circuit-nullish.js
-Test262Error: The right-hand side should not be evaluated
-
-transform Error: tasks/coverage/test262/test/language/expressions/logical-assignment/left-hand-side-private-reference-method-short-circuit-or.js
-Test262Error: The right-hand side should not be evaluated
 
 codegen Error: tasks/coverage/test262/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
 Test262Error: Expected SameValue(«[object Object]», «2») to be true
@@ -2001,6 +1947,9 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
+codegen Error: tasks/coverage/test262/test/language/statements/class/elements/arrow-body-arguments-label.js
+SyntaxError: 'arguments' is not allowed in class field initializer or static initialization block
+
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall-1.js
 Test262Error: Expected a SyntaxError but got a ReferenceError
 
@@ -2249,6 +2198,9 @@ Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
+
+codegen Error: tasks/coverage/test262/test/language/statements/class/static-init-arguments-label.js
+SyntaxError: 'arguments' is not allowed in class field initializer or static initialization block
 
 minify Error: tasks/coverage/test262/test/language/statements/class/static-method-gen-non-configurable-err.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
