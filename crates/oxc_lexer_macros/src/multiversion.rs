@@ -67,27 +67,27 @@ impl Multiversion<'_> {
     ///         // ... original function body ...
     ///     }
     ///
-    ///     #[inline(never)]
     ///     #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
     ///     #[allow(unreachable_code)]
+    ///     #[inline(never)]
     ///     unsafe fn __avx2<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Avx2) -> bool {
     ///         #[cfg(not(target_arch = "x86_64"))]
     ///         unreachable!();
     ///         __impl::<N, T>(arr, cpu)
     ///     }
     ///
-    ///     #[inline(never)]
     ///     #[cfg_attr(target_arch = "aarch64", target_feature(enable = "neon"))]
     ///     #[allow(unreachable_code)]
+    ///     #[inline(never)]
     ///     unsafe fn __neon<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Neon) -> bool {
     ///         #[cfg(not(target_arch = "aarch64"))]
     ///         unreachable!();
     ///         __impl::<N, T>(arr, cpu)
     ///     }
     ///
-    ///     #[inline(never)]
     ///     #[cfg_attr(target_feature = "sse2", target_feature(enable = "sse2"))]
     ///     #[allow(unreachable_code)]
+    ///     #[inline(never)]
     ///     unsafe fn __generic<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Generic) -> bool {
     ///         #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
     ///         unreachable!();
@@ -142,27 +142,27 @@ impl Multiversion<'_> {
     ///     // ... original function body ...
     /// }
     ///
-    /// #[inline(never)]
     /// #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
     /// #[allow(unreachable_code)]
+    /// #[inline(never)]
     /// unsafe fn __foo_avx2<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: crate::cpu::Avx2) -> bool {
     ///     #[cfg(not(target_arch = "x86_64"))]
     ///     unreachable!();
     ///     Self::__foo_impl::<N, T>(self, arr, cpu)
     /// }
     ///
-    /// #[inline(never)]
     /// #[cfg_attr(target_arch = "aarch64", target_feature(enable = "neon"))]
     /// #[allow(unreachable_code)]
+    /// #[inline(never)]
     /// unsafe fn __foo_neon<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: crate::cpu::Neon) -> bool {
     ///     #[cfg(not(target_arch = "aarch64"))]
     ///     unreachable!();
     ///     Self::__foo_impl::<N, T>(self, arr, cpu)
     /// }
     ///
-    /// #[inline(never)]
     /// #[cfg_attr(target_feature = "sse2", target_feature(enable = "sse2"))]
     /// #[allow(unreachable_code)]
+    /// #[inline(never)]
     /// unsafe fn __foo_generic<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: crate::cpu::Generic) -> bool {
     ///     #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
     ///     unreachable!();
@@ -249,9 +249,9 @@ impl Multiversion<'_> {
     /// aarch64, and `__generic` on aarch64 with Neon enabled at compile time.
     ///
     /// ```ignore
-    /// #[inline(never)]
     /// #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
     /// #[allow(unreachable_code)]
+    /// #[inline(never)]
     /// unsafe fn __avx2<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Avx2) -> bool {
     ///     #[cfg(not(target_arch = "x86_64"))]
     ///     unreachable!();
@@ -271,9 +271,9 @@ impl Multiversion<'_> {
         let call = self.call("impl");
 
         quote! {
-            #(#entry_attrs)*
             #target_feature_attr
             #[allow(unreachable_code)]
+            #(#entry_attrs)*
             #constness #unsafety fn #name #generics (#params #cpu_name: #cpu_ty) #return_type
             #where_clause
             {

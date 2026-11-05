@@ -3,7 +3,7 @@
 
 use crate::cpu::cpu_version;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 pub(super) enum FrameKind {
     #[default]
     Root,

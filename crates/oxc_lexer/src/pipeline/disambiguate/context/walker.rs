@@ -18,7 +18,7 @@ pub(super) struct Jump {
 }
 
 /// What may come next at the walk's position.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 pub(super) enum Expect {
     /// A statement may start here, so an operand may too.
     #[default]

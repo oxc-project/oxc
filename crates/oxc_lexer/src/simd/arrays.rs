@@ -12,6 +12,8 @@
 //! [`VecData128`]: super::VecData128
 //! [`VecData256`]: super::VecData256
 
+#![expect(clippy::inline_always, reason = "`as_ptr` methods are all no-ops at runtime")]
+
 use std::ptr;
 
 /// Array of integers which `Vec128::read_low_unaligned` can read.
@@ -24,7 +26,6 @@ pub unsafe trait IntArray64 {
     ///
     /// This pointer is guaranteed to be valid for unaligned reads of 8 bytes.
     #[cfg_attr(not(any(target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
-    #[expect(clippy::inline_always, reason = "no-op at runtime")]
     #[inline(always)]
     fn as_ptr(&self) -> *const u8 {
         ptr::from_ref(self).cast::<u8>()
@@ -41,7 +42,6 @@ pub unsafe trait IntArray128 {
     ///
     /// This pointer is guaranteed to be valid for unaligned reads of 16 bytes.
     #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
-    #[expect(clippy::inline_always, reason = "no-op at runtime")]
     #[inline(always)]
     fn as_ptr(&self) -> *const u8 {
         ptr::from_ref(self).cast::<u8>()
@@ -58,7 +58,6 @@ pub unsafe trait IntArray256 {
     ///
     /// This pointer is guaranteed to be valid for unaligned reads of 32 bytes.
     #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
-    #[expect(clippy::inline_always, reason = "no-op at runtime")]
     #[inline(always)]
     fn as_ptr(&self) -> *const u8 {
         ptr::from_ref(self).cast::<u8>()

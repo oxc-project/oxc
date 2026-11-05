@@ -8,8 +8,8 @@ use crate::{
     token::{SPAN_SENTINELS, StringSpan, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
 };
 
-#[repr(C)]
 #[derive(Clone, Copy, Default, Debug)]
+#[repr(C)]
 pub struct LineEntry {
     pub off: u32,
     pub line: u32,
