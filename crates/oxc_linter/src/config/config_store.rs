@@ -82,10 +82,6 @@ pub struct Config {
 }
 
 impl Config {
-    fn builtin_rule_plugins(plugins: LintPlugins) -> LintPlugins {
-        plugins
-    }
-
     pub fn new(
         rules: Vec<(RuleEnum, AllowWarnDeny)>,
         mut external_rules: Vec<(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)>,
@@ -181,13 +177,12 @@ impl Config {
         let plugins = self.combined_plugins(overrides_to_apply.clone());
         let settings = self.base.config.settings.clone();
 
-        let builtin_rule_plugins = Self::builtin_rule_plugins(plugins);
         let mut rules = self
             .base_rules
             .iter()
             .filter(|(rule, _)| {
                 LintPlugins::try_from(rule.plugin_name())
-                    .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
+                    .is_ok_and(|plugin| plugins.contains(plugin))
             })
             .cloned()
             .collect::<FxHashMap<_, _>>();
@@ -218,7 +213,7 @@ impl Config {
                         .iter()
                         .filter(|rule| {
                             LintPlugins::try_from(rule.plugin_name())
-                                .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
+                                .is_ok_and(|plugin| plugins.contains(plugin))
                         })
                         .cloned()
                         .collect::<Vec<_>>()
@@ -329,7 +324,7 @@ impl ConfigStore {
             // Overlapping overrides can enable the category's default no-cycle rule.
             let plugins = config.combined_plugins(config.overrides.iter());
             if config.plugins().has_import()
-                || !Config::builtin_rule_plugins(plugins).has_import()
+                || !plugins.has_import()
                 || !config
                     .categories
                     .get(&NoCycle::CATEGORY)

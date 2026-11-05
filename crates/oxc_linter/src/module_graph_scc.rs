@@ -63,28 +63,26 @@ pub fn cyclic_components(edges: &[Vec<usize>]) -> Vec<(usize, bool)> {
     // 3. Reverse finish order keeps each backward walk inside one unassigned SCC.
     let mut components = vec![(usize::MAX, false); edges.len()];
     let mut component_stack = Vec::new();
-    let mut component_nodes = Vec::new();
     for &root in finish_order.iter().rev() {
         if components[root].0 != usize::MAX {
             continue;
         }
-        components[root].0 = root;
+        components[root] = (root, true);
         component_stack.push(root);
+        let mut component_size = 0;
         while let Some(node) = component_stack.pop() {
-            component_nodes.push(node);
+            component_size += 1;
             for &dependency in &reverse_edges[node] {
                 if components[dependency].0 == usize::MAX {
-                    components[dependency].0 = root;
+                    components[dependency] = (root, true);
                     component_stack.push(dependency);
                 }
             }
         }
-        // A singleton is cyclic only if it has a self-loop.
-        let is_cyclic = component_nodes.len() > 1 || edges[root].contains(&root);
-        for &node in &component_nodes {
-            components[node].1 = is_cyclic;
+        // Only singleton components can be acyclic.
+        if component_size == 1 {
+            components[root].1 = edges[root].contains(&root);
         }
-        component_nodes.clear();
     }
     components
 }
