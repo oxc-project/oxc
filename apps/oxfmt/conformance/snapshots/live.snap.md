@@ -337,7 +337,7 @@
 
 ## html
 
-### Option 1: 488/490 (99.59%)
+### Option 1: 489/492 (99.39%)
 
 ```json
 {"printWidth":80}
@@ -345,10 +345,12 @@
 
 - [edge-cases/html/script-end-in-gql-template.html](diffs/html/edge-cases__html__script-end-in-gql-template.html.md)
   - apps/oxfmt/DIVERGENCES.md#script-end-in-embedded-template
+- [edge-cases/html/style-attribute-last-semicolon-comment.html](diffs/html/edge-cases__html__style-attribute-last-semicolon-comment.html.md)
+  - apps/oxfmt/DIVERGENCES.md#style-attribute-last-semicolon-comment
 - [externals/vite/html/valid.html](diffs/html/externals__vite__html__valid.html.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unquoted-value-with-slash
 
-### Option 2: 488/490 (99.59%)
+### Option 2: 489/492 (99.39%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore","singleAttributePerLine":true}
@@ -356,10 +358,12 @@
 
 - [edge-cases/html/script-end-in-gql-template.html](diffs/html/edge-cases__html__script-end-in-gql-template.html.md)
   - apps/oxfmt/DIVERGENCES.md#script-end-in-embedded-template
+- [edge-cases/html/style-attribute-last-semicolon-comment.html](diffs/html/edge-cases__html__style-attribute-last-semicolon-comment.html.md)
+  - apps/oxfmt/DIVERGENCES.md#style-attribute-last-semicolon-comment
 - [externals/vite/html/valid.html](diffs/html/externals__vite__html__valid.html.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unquoted-value-with-slash
 
-### Option 3: 488/490 (99.59%)
+### Option 3: 489/492 (99.39%)
 
 ```json
 {"printWidth":120,"htmlWhitespaceSensitivity":"strict","bracketSameLine":true}
@@ -367,6 +371,8 @@
 
 - [edge-cases/html/script-end-in-gql-template.html](diffs/html/edge-cases__html__script-end-in-gql-template.html.md)
   - apps/oxfmt/DIVERGENCES.md#script-end-in-embedded-template
+- [edge-cases/html/style-attribute-last-semicolon-comment.html](diffs/html/edge-cases__html__style-attribute-last-semicolon-comment.html.md)
+  - apps/oxfmt/DIVERGENCES.md#style-attribute-last-semicolon-comment
 - [externals/vite/html/valid.html](diffs/html/externals__vite__html__valid.html.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unquoted-value-with-slash
 

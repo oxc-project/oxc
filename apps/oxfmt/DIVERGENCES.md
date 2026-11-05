@@ -349,6 +349,33 @@ On the next parse (Prettier's and ours), the block closes there and the rest of 
 An HTML `<script>` body never prints `</script`: one the formatting produces (an embedded template part printed from its cooked value, html-in-js or gql-in-js) prints as `<\/script`.
 Prettier keeps it in html-in-js, css-in-js and markdown-in-js, but a gql-in-js part prints the cooked `</script`, which closes the `<script>` there.
 
+## style-attribute-last-semicolon-comment
+
+- Why: uniform-rule (comment presence never changes layout)
+- Pin: `conformance/fixtures/edge-cases/html/style-attribute-last-semicolon-comment.html`
+
+```html
+<!-- input -->
+<div style="color: red;"></div>
+<div style="color: red; /* c */"></div>
+<div style="color: red /* c */"></div>
+
+<!-- ours -->
+<div style="color: red"></div>
+<div style="color: red /* c */"></div>
+<div style="color: red /* c */"></div>
+
+<!-- prettier -->
+<div style="color: red"></div>
+<div style="color: red; /* c */"></div>
+<div style="color: red; /* c */"></div>
+```
+
+A `style` attribute's last declaration prints its `;` only when the attribute breaks, whether a comment follows or not.
+Same rule as `crates/oxc_formatter_css/DIVERGENCES.md#keyframe-selector-comment-list`;
+the `;` is a terminator, so the comment may sit where it was (`crates/oxc_formatter_css/AGENTS.md` "Placement invariants").
+Prettier prints the `;` when a comment follows: its last-declaration check counts the comment as a node.
+
 ## placeholder-case-in-child
 
 - Why: semantics (Prettier prints a lowercased placeholder in place of the `${}` expression)

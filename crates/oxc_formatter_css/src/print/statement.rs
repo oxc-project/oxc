@@ -9,16 +9,15 @@ use oxc_span::Span;
 use oxc_formatter_core::{
     arena_cow_str,
     builders::{
-        block_indent, dedent, empty_line, hard_line_break, if_group_breaks, indent,
-        soft_line_break_or_space, space, text, token,
+        block_indent, dedent, hard_line_break, if_group_breaks, indent, space, text, token,
     },
     write,
 };
 
 use crate::{
     comments::{
-        Gap, classify_gap, flush_leading_comments, flush_trailing_inside_comments,
-        is_suppression_comment, last_line_has_inline_comment, write_leading_comments,
+        Gap, classify_gap, flush_trailing_inside_comments, is_suppression_comment,
+        last_line_has_inline_comment, write_comments, write_statement_separator,
         write_trailing_same_line_comments,
     },
     format::to_span,
@@ -82,11 +81,13 @@ pub(super) fn end_with_semicolon(end: u32, f: &CssFormatter<'_, '_>) -> u32 {
 /// Trailing same-line comments are only claimed when they end before `upper`
 /// (a block's closing `}`), so inline rules don't steal comments that belong
 /// to the parent. Pass `u32::MAX` at the stylesheet root.
+/// `style_attribute`: the statements are an HTML `style` attribute's own, sharing a line when they fit.
 ///
 /// Mirrors Prettier's `printSequence`.
 pub(super) fn write_statement_sequence_bounded<'a>(
     statements: &[Statement<'a>],
     upper: u32,
+    style_attribute: bool,
     f: &mut CssFormatter<'_, 'a>,
 ) {
     let source = f.context().source_text();
@@ -96,8 +97,6 @@ pub(super) fn write_statement_sequence_bounded<'a>(
     // (`${m}\ncolor: red` -> no `;`, but `${m}\ncolor: red;\nx: 1` -> `x: 1;`).
     // Track that run so swallowed declarations keep a source-driven `;`.
     let mut swallowed = false;
-    // Only the attribute's own declarations, not a block's
-    let style_attribute = upper == u32::MAX && f.context().is_style_attribute();
     for (i, stmt) in statements.iter().enumerate() {
         let start = stmt.span().start;
         if i > 0 {
@@ -118,26 +117,17 @@ pub(super) fn write_statement_sequence_bounded<'a>(
                     write!(f, space());
                 }
             } else {
-                // A `style` attribute's declarations share a line when they fit
-                if style_attribute {
-                    write!(f, soft_line_break_or_space());
-                } else {
-                    write!(f, hard_line_break());
-                }
-                if gap == Gap::Blank {
-                    write!(f, empty_line());
-                }
+                write_statement_separator(gap, style_attribute, f);
             }
         }
 
-        let is_suppressed = f
-            .context()
-            .comments()
-            .iter_before(start)
-            .last()
-            .copied()
-            .is_some_and(|c| is_suppression_comment(source, c));
-        flush_leading_comments(start, f);
+        let leading = f.context().comments().take_before(start);
+        let is_suppressed = leading.last().is_some_and(|&c| is_suppression_comment(source, c));
+        if let Some(last) = leading.last() {
+            write_comments(leading, style_attribute, f);
+            let gap = classify_gap(source.bytes_range(last.span.end, start));
+            write_statement_separator(gap, style_attribute, f);
+        }
         let end = stmt_end(stmt, f);
         // `stmt_end` already consumes a trailing `;`,
         // so a source `;` is present exactly when it advanced past the raw statement span.
@@ -728,14 +718,13 @@ pub(super) fn write_block<'a>(block: &SimpleBlock<'a>, f: &mut CssFormatter<'_, 
             write!(f, hard_line_break());
         } else {
             let body = format_with(|f: &mut CssFormatter<'_, 'a>| {
-                let last_end = comments.last().unwrap().span.end;
-                write_leading_comments(comments, last_end, f);
+                write_comments(comments, false, f);
             });
             write!(f, block_indent(&body));
         }
     } else {
         let body = format_with(|f: &mut CssFormatter<'_, 'a>| {
-            write_statement_sequence_bounded(&block.statements, r_curly, f);
+            write_statement_sequence_bounded(&block.statements, r_curly, false, f);
             let last_end = block.statements.last().map_or(block_span.start, |s| stmt_end(s, f));
             flush_trailing_inside_comments(last_end, r_curly, f);
         });

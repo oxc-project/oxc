@@ -8,7 +8,7 @@ use oxc_formatter_core::{
 };
 
 use crate::{
-    comments::{write_gap, write_leading_comments},
+    comments::{classify_gap, write_comments, write_statement_separator},
     context::CssFormatContext,
 };
 
@@ -113,17 +113,23 @@ pub fn write_maybe_lowercase<'a>(value: &'a str, f: &mut CssFormatter<'_, 'a>) {
 ///
 /// Mirrors Prettier's `css-root` + `printSequence`.
 pub fn write_stylesheet<'a>(stylesheet: &Stylesheet<'a>, f: &mut CssFormatter<'_, 'a>) {
-    statement::write_statement_sequence_bounded(&stylesheet.statements, u32::MAX, f);
+    let style_attribute = f.context().is_style_attribute();
+    statement::write_statement_sequence_bounded(
+        &stylesheet.statements,
+        u32::MAX,
+        style_attribute,
+        f,
+    );
 
     // Comments after the last statement (or in an otherwise empty file).
     let remaining = f.context().comments().take_remaining();
     if !remaining.is_empty() {
-        if !stylesheet.statements.is_empty() {
+        if let Some(last) = stylesheet.statements.last() {
             let source = f.context().source_text();
-            let prev_end = stylesheet.statements.last().map_or(0, |s| statement::stmt_end(s, f));
-            write_gap(source.bytes_range(prev_end, remaining[0].span.start), f);
+            let prev_end = statement::stmt_end(last, f);
+            let gap = classify_gap(source.bytes_range(prev_end, remaining[0].span.start));
+            write_statement_separator(gap, style_attribute, f);
         }
-        let last_end = remaining.last().unwrap().span.end;
-        write_leading_comments(remaining, last_end, f);
+        write_comments(remaining, style_attribute, f);
     }
 }

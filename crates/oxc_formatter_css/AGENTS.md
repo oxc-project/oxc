@@ -48,7 +48,7 @@ they are collected via `ParserBuilder::comments()` into a positional cursor over
 
 Ownership is a claim discipline, not attachment: each printer claims the comments inside what it prints, in source order.
 
-- Statement level: `flush_leading_comments` before the statement, `write_terminator_tail_comments` before its `;`
+- Statement level: `write_comments` before the statement (then `write_statement_separator`), `write_terminator_tail_comments` before its `;`
 - Value level: a comma group claims its own head (`write_comma_group`); a bare value has no group to do so,
   its CALLER claims (`write_list_element` / `write_top_level_list_element`), never `write_component_value` itself (a `//` hardline would land inside the indent an arm opens)
 - After each statement, the sequence DISCARDS unclaimed comments inside the statement span:
@@ -82,6 +82,8 @@ The shared invariants (FORMATTER_POLICY.md "Comment placement invariants") apply
     and `write_at_rule` writes whatever is still pending before the `;` / `{`, so a prelude comment is never lost
   - own-line comments stay own-line at statement and trailing level, but a value-level own-line BLOCK comment is a plain fill item (joins the line when it fits):
     - it carries no line-based semantics, and freezing it own-line would pin a wrapped layout (= not idempotent)
+  - a `style` attribute's statements share a line when they fit, and its comments take the same separator (`write_statement_separator`):
+    they share the line exactly when the declarations do, own-line ones included (a same-line comment pair keeps its space)
 
 ### Line endings
 
