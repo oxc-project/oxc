@@ -756,3 +756,17 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────
    ╰────
   help: Remove the file extension from this import.
+
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import type { MyType } from "./typescript.js";
+   · ──────────────────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import x from "./typescript.js";
+   · ────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.
