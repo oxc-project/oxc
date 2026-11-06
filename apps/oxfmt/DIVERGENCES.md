@@ -920,6 +920,34 @@ Same rule as `crates/oxc_formatter_css/DIVERGENCES.md#keyframe-selector-comment-
 the `;` is a terminator, so the comment may sit where it was (`crates/oxc_formatter_css/AGENTS.md` "Placement invariants").
 Prettier prints the `;` when a comment follows: its last-declaration check counts the comment as a node.
 
+## doctype-case-in-script
+
+- Why: semantics (an html-in-js template is a JS string, and code reads its case; oxc#28793)
+- Pin: `conformance/fixtures/edge-cases/html/doctype-case-in-script.html`
+
+```html
+<!-- input -->
+<script>
+  const page = html`<!DOCTYPE html>
+    <html></html>`;
+</script>
+
+<!-- ours -->
+<script>
+  const page = html`<!DOCTYPE html>
+    <html></html>`;
+</script>
+
+<!-- prettier -->
+<script>
+  const page = html`<!doctype html>
+    <html></html>`;
+</script>
+```
+
+An html-in-js doctype prints as written in every host (crates/oxc_formatter_htmlish/DIVERGENCES.md#doctype-case).
+Prettier passes the host's file name to the embedded part, so it lowercases one in a `.html` / `.htm` host only.
+
 ## placeholder-case-in-child
 
 - Why: semantics (Prettier prints a lowercased placeholder in place of the `${}` expression)

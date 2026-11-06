@@ -62,8 +62,9 @@ The AST is never rewritten.
 
 An end tag the source omits is never added (DIVERGENCES.md#unclosed-at-end, DIVERGENCES.md#omitted-end-tag).
 A normalization is applied only where it is known safe for every reader, as in `oxc_formatter_css` (its AGENTS.md "Case"):
-a void element prints `/>`, a doctype `<!doctype html>` but in XHTML, which an XML parser may read (DIVERGENCES.md#doctype-case),
-and the tag and attribute names Prettier knows print lowercase in a `.html` file only (DIVERGENCES.md#tag-name-case).
+a void element prints `/>`, a doctype `<!doctype html>` in a standalone HTML document (a Vue file read as HTML too) or Angular template only,
+whose reader is an HTML parser (DIVERGENCES.md#doctype-case),
+and the tag and attribute names Prettier knows print lowercase in a `.html` file and a Vue file read as HTML only (DIVERGENCES.md#tag-name-case).
 
 The borrow rules (`src/print/tag.rs`) are shaped like Prettier's `print/tag.js` against the policy, kept deliberately (why: its module doc).
 

@@ -28,21 +28,18 @@ which changes what `pre` renders and what `textarea` submits.
 ## doctype-case
 
 - Why: uniform-rule (same construct, same output: the doctype of a `.html` file, which Prettier lowercases)
-- Pin: `tests/fixtures/vue/doctype-case.vue`
-- Conformance:
-  - `externals/mdn-learn/css_layout/multiple-column_layout/index.md`
-  - `externals/mdn-learn/css_layout/positioning/index.md`
+- Pin: `tests/fixtures/html/doctype-case.hta`, `tests/fixtures/vue/doctype-in-vue.vue`
 
-```vue
-<!-- input -->
+```html
+<!-- input (an .hta file) -->
 <!DOCTYPE html>
-<html><body><p>{{ a }}</p></body></html>
+<html><body><p>a</p></body></html>
 
 <!-- ours -->
 <!doctype html>
 <html>
   <body>
-    <p>{{ a }}</p>
+    <p>a</p>
   </body>
 </html>
 
@@ -50,14 +47,15 @@ which changes what `pre` renders and what `textarea` submits.
 <!DOCTYPE html>
 <html>
   <body>
-    <p>{{ a }}</p>
+    <p>a</p>
   </body>
 </html>
 ```
 
-`<!DOCTYPE html>` prints `<!doctype html>` in every HTML document but XHTML (`.xhtml`, `.xht`), where an XML parser needs `<!DOCTYPE`:
-a Vue page, html-in-js and an HTML code block too, and `.hta` / `.inc` files in oxfmt.
+`<!DOCTYPE html>` prints `<!doctype html>` in a standalone HTML document, whose reader is an HTML parser
+(`.hta` / `.inc` files in oxfmt too, and a Vue file read as HTML, as its names: DIVERGENCES.md#tag-name-case), and an Angular template (a `.html` file to Prettier).
 Prettier lowercases it in a file named `.html` / `.htm` only, as it decides by file name.
+Elsewhere (XHTML, a Vue single-file component, an embedded part) it prints as written, as in Prettier (but apps/oxfmt/DIVERGENCES.md#doctype-case-in-script).
 The `html` in any doctype prints lowercase (`<!DOCTYPE html PUBLIC …>`), as in Prettier.
 
 ## doctype-html-in-one-pass

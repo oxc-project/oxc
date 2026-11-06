@@ -13,7 +13,9 @@ pub struct DialectRules {
     /// Vue: the root's elements but `html` are single-file component blocks (`<template>`, `<script>`, `<i18n>`),
     /// and `{{ }}` and directive values are JS.
     pub vue_sfc: bool,
-    /// `<!DOCTYPE html>` prints `<!doctype html>`: everywhere but XHTML, where an XML parser needs `<!DOCTYPE`
+    /// `<!DOCTYPE html>` prints `<!doctype html>` in a standalone HTML document, whose reader is an HTML parser
+    /// (a Vue file read as HTML too), and an Angular template (a `.html` file to Prettier);
+    /// as written where embedded, in XHTML and a Vue single-file component
     /// (DIVERGENCES.md#doctype-case).
     pub lowercase_doctype: bool,
     /// A known HTML element's name and its known attributes print lowercase, as Prettier's HTML parser reads them:
@@ -32,7 +34,9 @@ impl DialectRules {
             keeps_element_gap_kind: variant == HtmlishVariant::Vue,
             has_blocks: variant == HtmlishVariant::Angular,
             vue_sfc: variant == HtmlishVariant::Vue,
-            lowercase_doctype: variant != HtmlishVariant::Xhtml,
+            lowercase_doctype: standalone
+                && (matches!(variant, HtmlishVariant::Html | HtmlishVariant::Angular)
+                    || (variant == HtmlishVariant::Vue && !sfc)),
             lowercase_known_names: standalone
                 && (variant == HtmlishVariant::Html || (variant == HtmlishVariant::Vue && !sfc)),
         }
