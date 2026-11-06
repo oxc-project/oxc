@@ -20,6 +20,12 @@ fn use_have_been_called_with(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+fn use_have_been_called_exactly_once_with(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using `toHaveBeenCalledExactlyOnceWith()`.")
+        .with_help("Prefer toHaveBeenCalledExactlyOnceWith(/* expected args */)")
+        .with_label(span)
+}
+
 pub const DOCUMENTATION: &str = r"### What it does
 
 Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`
@@ -38,6 +44,7 @@ Examples of **incorrect** code for this rule:
 ```javascript
 expect(someFunction).toBeCalled();
 expect(someFunction).toHaveBeenCalled();
+expect(someFunction).toHaveBeenCalledOnce();
 ```
 
 Examples of **correct** code for this rule:
@@ -46,6 +53,7 @@ expect(noArgsFunction).toBeCalledWith();
 expect(roughArgsFunction).toBeCalledWith(expect.anything(), expect.any(Date));
 expect(anyArgsFunction).toBeCalledTimes(1);
 expect(uncalledFunction).not.toBeCalled();
+expect(calledOnceFunction).toHaveBeenCalledExactlyOnceWith('expected');
 ```
 ";
 
@@ -79,6 +87,11 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
             ctx.diagnostic_with_fix(use_have_been_called_with(matcher_property.span), |fixer| {
                 fixer.replace(matcher_property.span, "toHaveBeenCalledWith")
             });
+        } else if matcher_name == "toHaveBeenCalledOnce" {
+            ctx.diagnostic_with_fix(
+                use_have_been_called_exactly_once_with(matcher_property.span),
+                |fixer| fixer.replace(matcher_property.span, "toHaveBeenCalledExactlyOnceWith"),
+            );
         }
     }
 }
