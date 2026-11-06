@@ -85,6 +85,15 @@ impl<'a> PeepholeOptimizations {
         }
 
         if let Some(boolean) = if_stmt.test.evaluate_value_to_boolean(ctx) {
+            let live_branch =
+                if boolean { Some(&if_stmt.consequent) } else { if_stmt.alternate.as_ref() };
+            // Annex B gives a bare function declaration in an `if` branch an implicit block.
+            // Unwrapping it would hoist the function into the enclosing scope.
+            if !ctx.current_scope_flags().is_strict_mode()
+                && matches!(live_branch, Some(Statement::FunctionDeclaration(_)))
+            {
+                return;
+            }
             let test_has_side_effects = if_stmt.test.may_have_side_effects(ctx);
             // Use "1" and "0" instead of "true" and "false" to be shorter.
             // And also prevent swapping consequent and alternate when `!0` is encountered.

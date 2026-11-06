@@ -159,9 +159,12 @@ impl<'a> Binder<'a> for Function<'a> {
                 includes |= SymbolFlags::AsyncOrGeneratorFunction;
             }
 
+            let is_if_statement_function =
+                is_declaration && is_function_decl_part_of_if_statement(self, builder);
+
             let excludes = if builder.source_type.is_typescript() {
                 SymbolFlags::FunctionExcludes
-            } else if is_declaration && is_function_decl_part_of_if_statement(self, builder) {
+            } else if is_if_statement_function {
                 SymbolFlags::empty()
             } else {
                 // `var x; function x() {}` is valid in non-strict mode, but `TypeScript`
@@ -176,8 +179,8 @@ impl<'a> Binder<'a> for Function<'a> {
             let scope_flags = builder.current_scope_flags();
 
             // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
-            // scopes also create an implicit var-like binding in the enclosing function
-            // scope. Hoist to the var scope — same pattern as var hoisting (line 46).
+            // scopes may also create a var binding in the enclosing function or script.
+            // Decided once the var scope has been bound. See `crate::annex_b`.
             if is_declaration // function expressions are bound in their own (var) scope
                 && !self.r#async // Annex B only applies to plain functions
                 && !self.generator // not generators or async generators
@@ -186,22 +189,7 @@ impl<'a> Binder<'a> for Function<'a> {
                 && !scope_flags.is_strict_mode()
             // no Annex B in strict mode / modules
             {
-                let block_scope_id = builder.current_scope_id;
-                let var_scope_id = builder
-                    .scoping
-                    .scope_ancestors(block_scope_id)
-                    .skip(1)
-                    .find(|&id| builder.scoping.scope_flags(id).is_var());
-                if let Some(var_scope_id) = var_scope_id
-                    && !builder.scoping.scope_has_binding(var_scope_id, ident.name)
-                {
-                    builder.scoping.move_binding_by_symbol_id(
-                        block_scope_id,
-                        var_scope_id,
-                        symbol_id,
-                    );
-                    builder.hoisting_variables.insert((block_scope_id, ident.name), symbol_id);
-                }
+                builder.declare_annex_b_function(symbol_id);
             }
 
             // Save `@__NO_SIDE_EFFECTS__`

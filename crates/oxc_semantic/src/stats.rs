@@ -2,9 +2,16 @@ use std::cell::Cell;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, IdentifierReference, Program, TSEnumMemberName},
+    ast::{
+        BindingIdentifier, Function, IdentifierReference, IfStatement, Program, Statement,
+        TSEnumMemberName,
+    },
 };
-use oxc_ast_visit::{Visit, walk::walk_ts_enum_member_name};
+use oxc_ast_visit::{
+    Visit,
+    walk::{walk_if_statement, walk_program, walk_ts_enum_member_name},
+};
+use oxc_span::SourceType;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 /// Macro to assert that `left >= right`
@@ -136,18 +143,55 @@ impl Stats {
 #[derive(Default)]
 struct Counter {
     stats: Stats,
+    source_type: SourceType,
+    scope_depth: u32,
+    strict_scope_depth: Option<u32>,
 }
 
 /// Visitor to count nodes, scopes, symbols and references in AST
 impl<'a> Visit<'a> for Counter {
+    fn visit_program(&mut self, program: &Program<'a>) {
+        self.source_type = program.source_type;
+        walk_program(self, program);
+    }
+
     #[inline]
     fn enter_node(&mut self, _: AstKind<'a>) {
         self.stats.nodes += 1;
     }
 
     #[inline]
-    fn enter_scope(&mut self, _: ScopeFlags, _: &Cell<Option<ScopeId>>) {
+    fn enter_scope(&mut self, flags: ScopeFlags, _: &Cell<Option<ScopeId>>) {
         self.stats.scopes += 1;
+        if self.strict_scope_depth.is_none() && flags.is_strict_mode() {
+            self.strict_scope_depth = Some(self.scope_depth);
+        }
+        self.scope_depth += 1;
+    }
+
+    #[inline]
+    fn leave_scope(&mut self) {
+        self.scope_depth -= 1;
+        if self.strict_scope_depth == Some(self.scope_depth) {
+            self.strict_scope_depth = None;
+        }
+    }
+
+    fn visit_if_statement(&mut self, stmt: &IfStatement<'a>) {
+        if self.strict_scope_depth.is_none() && !self.source_type.is_typescript() {
+            let is_annex_b_function = |function: &Function<'a>| {
+                function.id.is_some() && !function.r#async && !function.generator
+            };
+            if matches!(&stmt.consequent, Statement::FunctionDeclaration(function) if is_annex_b_function(function))
+            {
+                self.stats.scopes += 1;
+            }
+            if matches!(&stmt.alternate, Some(Statement::FunctionDeclaration(function)) if is_annex_b_function(function))
+            {
+                self.stats.scopes += 1;
+            }
+        }
+        walk_if_statement(self, stmt);
     }
 
     #[inline]
