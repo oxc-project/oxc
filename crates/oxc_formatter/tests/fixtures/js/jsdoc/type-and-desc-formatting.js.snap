@@ -135,7 +135,6 @@ function attach() {}
  */
 function withCodeBlock() {}
 
----------- Input variants differ: CR ----------
 --------------------------------
 { jsdoc: true, printWidth: 100 }
 --------------------------------
@@ -203,5 +202,4 @@ function attach() {}
  */
 function withCodeBlock() {}
 
----------- Input variants differ: CR ----------
 ===================== End =====================
