@@ -337,7 +337,7 @@
 
 ## html
 
-### Option 1: 489/492 (99.39%)
+### Option 1: 490/493 (99.39%)
 
 ```json
 {"printWidth":80}
@@ -350,7 +350,7 @@
 - [externals/vite/html/valid.html](diffs/html/externals__vite__html__valid.html.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unquoted-value-with-slash
 
-### Option 2: 489/492 (99.39%)
+### Option 2: 490/493 (99.39%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore","singleAttributePerLine":true}
@@ -363,7 +363,7 @@
 - [externals/vite/html/valid.html](diffs/html/externals__vite__html__valid.html.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unquoted-value-with-slash
 
-### Option 3: 489/492 (99.39%)
+### Option 3: 490/493 (99.39%)
 
 ```json
 {"printWidth":120,"htmlWhitespaceSensitivity":"strict","bracketSameLine":true}

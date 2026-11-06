@@ -23,8 +23,8 @@ mod object_like;
 mod object_pattern_like;
 mod parameters;
 mod program;
-pub use program::FormatProgramBody;
 mod return_or_throw_statement;
+mod root;
 pub mod semicolon;
 mod sequence_expression;
 mod switch_statement;
@@ -40,6 +40,7 @@ pub use arrow_function_expression::{
 };
 pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
 pub use fragment::{FormatFunctionParams, FormatTypeParameters};
+pub use root::FormatRoot;
 pub use semicolon::write_comments_before_closing_paren;
 pub use template::embed_hug;
 pub use union_type::{
@@ -58,7 +59,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodeKind, AstNodes},
     best_fitting, format_args,
     formatter::{
-        JsFormatter,
+        JsFormatter, TopLevelSemicolons,
         prelude::*,
         separated::FormatSeparatedIter,
         token::number::{format_number_token, format_trimmed_number, is_simple_number},
@@ -528,13 +529,14 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, EmptyStatement> {
     }
 }
 
-/// Whether the embedding decided this program's sole statement prints without its semicolon (see `crate::format_to_ir`):
+/// Whether the embedding decided this statement prints without its semicolon
+/// (see `TopLevelSemicolons`):
 /// no trailing one, and no ASI guard under `semi: false` either.
 fn is_semicolon_omitted_by_embedding(
     stmt: &AstNode<'_, '_, ExpressionStatement<'_>>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
-    f.context().embedding_omits_semicolon() && matches!(stmt.parent(), AstNodes::Program(_))
+    f.context().top_level_semicolons() == TopLevelSemicolons::Omitted(stmt.span)
 }
 
 /// Returns `true` if the expression needs a leading semicolon to prevent ASI issues.

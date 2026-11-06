@@ -9,7 +9,7 @@ use oxc_allocator::{Allocator, StringBuilder};
 use oxc_formatter_core::{
     Format, FormatElement, arena_cow_str,
     builders::{
-        group, hard_line_break, if_group_breaks, if_group_fits_on_line, indent, soft_block_indent,
+        hard_line_break, if_group_breaks, if_group_fits_on_line, indent, soft_block_indent,
         soft_line_break, soft_line_break_or_space, space, text,
     },
     spec::is_suppression_marker,
@@ -21,6 +21,7 @@ use super::{
     HtmlishFormatter,
     embed::{
         CssInHtmlStyleAttribute, JsInHtmlEventHandler, is_event_handler, write_attribute_value,
+        write_quoted,
     },
     format_with,
     tag::opening_end_borrowed,
@@ -232,7 +233,7 @@ pub(super) fn write_expanded<'a>(
     content: &impl Format<'a, HtmlishFormatContext<'a>>,
     f: &mut HtmlishFormatter<'_, 'a>,
 ) {
-    write!(f, ["\"", group(&soft_block_indent(content)), "\""]);
+    write_quoted(&soft_block_indent(content), f);
 }
 
 struct Candidate<'a> {

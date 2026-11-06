@@ -4,7 +4,7 @@ use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
     Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter, InputKind,
-    builders::{empty_line, hard_line_break, text},
+    builders::{empty_line, hard_line_break, soft_block_indent, text},
     spec::{FrontMatter, blank_front_matter, parse_front_matter, split_bom},
     write,
 };
@@ -331,7 +331,7 @@ impl<'a> Format<'a, CssFormatContext<'a>> for FormatCssRoot<'_, 'a> {
 
 /// Emits the stylesheet only; no BOM, no final newline
 /// (front matter still prints for a `VirtualDocument`, whose complete-document envelope the host hands over;
-/// the surrounding layout stays the host's).
+/// the surrounding layout stays the host's, but a `style` attribute's, laid out here: the host only quotes it).
 struct FormatCssEmbedded<'b, 'a> {
     stylesheet: &'b Stylesheet<'a>,
     front_matter: Option<FrontMatter<'a>>,
@@ -339,6 +339,15 @@ struct FormatCssEmbedded<'b, 'a> {
 
 impl<'a> Format<'a, CssFormatContext<'a>> for FormatCssEmbedded<'_, 'a> {
     fn fmt(&self, f: &mut CssFormatter<'_, 'a>) {
+        // A `style` attribute's declarations go on their own indented lines when they break
+        if f.context().is_style_attribute() {
+            if has_content(self.stylesheet, f) {
+                let stylesheet =
+                    print::format_with(|f| print::write_stylesheet(self.stylesheet, f));
+                write!(f, soft_block_indent(&stylesheet));
+            }
+            return;
+        }
         if let Some(fm) = &self.front_matter {
             let has_content = has_content(self.stylesheet, f);
             write_front_matter(fm, f);

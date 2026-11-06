@@ -4,7 +4,6 @@ use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    JsEmbeddedIn,
     options::{JsFormatOptions, QuoteStyle},
     utils::assignment_like::AssignmentLikeLayout,
 };
@@ -97,11 +96,20 @@ pub struct JsFormatContext<'ast> {
     /// - `None` hides the context below it, inside a nested non-Tailwind call
     tailwind_context_stack: Vec<Option<TailwindContextEntry>>,
 
-    /// Set only for an embedded program (see [`crate::format_to_ir`]):
-    /// its sole statement prints without its semicolon.
-    embedding_omits_semicolon: bool,
-    /// What an embedded program is embedded in (see [`crate::format_to_ir`]).
-    embedded_in: Option<JsEmbeddedIn>,
+    /// How an embedded program's top-level statements end
+    /// (see [`crate::format_to_ir`]).
+    top_level_semicolons: TopLevelSemicolons,
+    /// In a `"`-quoted HTML attribute value (see [`Self::in_html_attribute`]).
+    in_html_attribute: bool,
+}
+
+/// How an embedded program's top-level statements end.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TopLevelSemicolons {
+    /// As `semi` says.
+    AsOptions,
+    /// The expression statement (by its span) prints without its semicolon, and no ASI guard.
+    Omitted(Span),
 }
 
 impl std::fmt::Debug for JsFormatContext<'_> {
@@ -146,8 +154,8 @@ impl<'ast> JsFormatContext<'ast> {
             arrow_assignment_layout: None,
             quote_needed_stack: Vec::new(),
             tailwind_context_stack: Vec::new(),
-            embedding_omits_semicolon: false,
-            embedded_in: None,
+            top_level_semicolons: TopLevelSemicolons::AsOptions,
+            in_html_attribute: false,
         }
     }
 
@@ -233,22 +241,22 @@ impl<'ast> JsFormatContext<'ast> {
         *self.quote_needed_stack.last().unwrap_or(&false)
     }
 
-    pub(crate) fn set_embedding_omits_semicolon(&mut self, omit: bool) {
-        self.embedding_omits_semicolon = omit;
+    pub(crate) fn set_top_level_semicolons(&mut self, semicolons: TopLevelSemicolons) {
+        self.top_level_semicolons = semicolons;
     }
 
-    pub(crate) fn embedding_omits_semicolon(&self) -> bool {
-        self.embedding_omits_semicolon
+    pub(crate) fn top_level_semicolons(&self) -> TopLevelSemicolons {
+        self.top_level_semicolons
     }
 
-    pub(crate) fn set_embedded_in(&mut self, embedded_in: Option<JsEmbeddedIn>) {
-        self.embedded_in = embedded_in;
+    pub(crate) fn set_in_html_attribute(&mut self, in_html_attribute: bool) {
+        self.in_html_attribute = in_html_attribute;
     }
 
-    /// An HTML attribute's value (see [`JsEmbeddedIn::HtmlEventHandler`]):
+    /// An HTML attribute's value (an event handler):
     /// strings print in `'`, whatever they hold, as the attribute's quote is `"`.
     pub(crate) fn in_html_attribute(&self) -> bool {
-        self.embedded_in == Some(JsEmbeddedIn::HtmlEventHandler)
+        self.in_html_attribute
     }
 
     /// The quote a string prints in, the formatter's own too (a quoted property key):

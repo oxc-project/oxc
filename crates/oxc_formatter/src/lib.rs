@@ -26,7 +26,8 @@ use oxc_span::SourceType;
 // or the special-purpose AST-in `format_program`.
 pub(crate) use crate::ast_nodes::{AstNode, AstNodes};
 pub use crate::embed_context::{
-    CssInJsTemplate, HtmlInJsTemplate, JsEmbeddedIn, MarkdownInJsTemplate,
+    CssInJsTemplate, HtmlInJsTemplate, JsEmbeddedIn, JsRoot, MarkdownInJsTemplate, ProgramLayout,
+    ProgramSemicolons,
 };
 // `JsFormatContext` is public solely as the type parameter of the returned `Formatted`;
 // its methods are not part of the public contract.
@@ -110,52 +111,45 @@ pub fn format_with_session<'a>(
 }
 
 /// Parse `source_text` and build the IR for embedding into another formatter's document
-/// (dispatcher path, e.g. a `js` code fence in Markdown).
+/// (dispatcher path, e.g. a `js` code fence in Markdown, an `onclick` value).
 ///
 /// Unlike [`format_with_session`], this:
 /// - allocates from the session's shared arena and `GroupId` space, so the IR lives as long as the parent's document
 /// - leaves the Tailwind classes unsorted (the parent sorts them in its own batch)
 /// - emits neither a BOM nor the trailing newline
 ///
-/// `embedded_in` is what the program is embedded in, for the print rules that depend on it ([`JsEmbeddedIn`]).
+/// `source_text` is the part of the host's document as written, which parses as `root` says.
+/// `embedded_in` is what the host does with the code, for the rules that keep what it reads of it.
 ///
 /// # Errors
-/// Same as [`format()`].
+/// Returns the first parse error, or an error when a comment would not print.
 pub fn format_to_ir<'a>(
     session: &FormatSession<'a>,
     source_text: &str,
     source_type: SourceType,
     options: JsFormatOptions,
-    embedded_in: Option<JsEmbeddedIn>,
+    root: JsRoot,
+    embedded_in: JsEmbeddedIn,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
     let program = parse(allocator, allocator.alloc_str(source_text), source_type)?;
-    let node = AstNode::new(program, AstNodes::Dummy());
-    let mut context =
+
+    let mut js_context =
         JsFormatContext::new(program.source_text, program.source_type, &program.comments, options);
+    js_context.set_in_html_attribute(embedded_in.in_html_attribute);
 
-    // Special cases for js-in-xxx:
-    // - Single JSX in Markdown code block: omit the semicolon
-    // - Single expression in an HTML event handler attribute: omit the semicolon
-    let embedding_omits_semicolon = program.directives.is_empty()
-        && match program.body.as_slice() {
-            [Statement::ExpressionStatement(statement)] => match embedded_in {
-                Some(JsEmbeddedIn::MarkdownCodeBlock) => statement.expression.is_jsx(),
-                Some(JsEmbeddedIn::HtmlEventHandler) => true,
-                _ => false,
-            },
-            _ => false,
-        };
-    context.set_embedding_omits_semicolon(embedding_omits_semicolon);
-    context.set_embedded_in(embedded_in);
-
-    let (ir, _) = formatter::build_ir(
-        context,
+    let node = AstNode::new(program, AstNodes::Dummy());
+    let content = print::FormatRoot { program: &node, root };
+    let (ir, js_context) = formatter::build_ir(
+        js_context,
         session,
-        oxc_formatter_core::Arguments::new(&[oxc_formatter_core::Argument::new(
-            &print::FormatProgramBody(&node),
-        )]),
+        oxc_formatter_core::Arguments::new(&[oxc_formatter_core::Argument::new(&content)]),
     );
+
+    // Losing a comment is worse than leaving the code as written
+    if !js_context.comments().unprinted_comments().is_empty() {
+        return Err(OxcDiagnostic::error("Some comments in the code were not printed"));
+    }
     Ok(EmbeddedIr { ir })
 }
 

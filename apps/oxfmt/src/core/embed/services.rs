@@ -1,5 +1,5 @@
 //! Root `SessionServices` assembly: [`for_root`] builds the build's default service set,
-//! installed by every session-taking root (JS / CSS / Markdown / Vue-Svelte script).
+//! installed by every session-taking root (JS / CSS / Markdown / HTML / Svelte-Astro script).
 //! One name, one definition per build; the napi one additionally takes the `ExternalServices` transport.
 //!
 //! "Which languages may dispatch at all from this host" is the host crate's own gate

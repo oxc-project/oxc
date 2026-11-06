@@ -9,7 +9,8 @@ use std::sync::{Arc, OnceLock};
 use tracing::{debug, debug_span};
 
 use oxc_formatter::{
-    CssInJsTemplate, HtmlInJsTemplate, JsEmbeddedIn, JsFormatOptions, MarkdownInJsTemplate,
+    CssInJsTemplate, HtmlInJsTemplate, JsEmbeddedIn, JsFormatOptions, JsRoot, MarkdownInJsTemplate,
+    ProgramLayout, ProgramSemicolons,
 };
 use oxc_formatter_core::{
     DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher, FormatSession,
@@ -271,19 +272,13 @@ pub fn build_dispatcher(
             Route::Native(language) => {
                 Ok(format_native(language.trace_label(), || match language {
                     NativeLanguage::Js(source_type) => {
-                        let embedded_in = request
-                            .parent_context_as::<XxxInMarkdownCodeBlock>()
-                            .map(|_| JsEmbeddedIn::MarkdownCodeBlock)
-                            .or_else(|| {
-                                request
-                                    .parent_context_as::<JsInHtmlEventHandler>()
-                                    .map(|_| JsEmbeddedIn::HtmlEventHandler)
-                            });
+                        let (root, embedded_in) = js_root_of(&request);
                         oxc_formatter::format_to_ir(
                             session,
                             text,
                             source_type,
                             dispatch_config.js_options(),
+                            root,
                             embedded_in,
                         )
                     }
@@ -385,6 +380,25 @@ pub fn build_dispatcher(
             }
         }
     })
+}
+
+/// What the JS a request carries is ([`JsRoot`]) and what it is embedded in ([`JsEmbeddedIn`]), from the parent's marker.
+fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
+    if request.parent_context_as::<JsInHtmlEventHandler>().is_some() {
+        // An attribute's statements, on their own lines when they break
+        let root = JsRoot::Program {
+            semicolons: ProgramSemicolons::LoneExpressionOmitted,
+            layout: ProgramLayout::Indented,
+        };
+        return (root, JsEmbeddedIn { in_html_attribute: true });
+    }
+    let semicolons = if request.parent_context_as::<XxxInMarkdownCodeBlock>().is_some() {
+        ProgramSemicolons::LoneJsxOmitted
+    } else {
+        ProgramSemicolons::AsOptions
+    };
+    let root = JsRoot::Program { semicolons, layout: ProgramLayout::Bare };
+    (root, JsEmbeddedIn::default())
 }
 
 /// Runs one native branch: a parse failure is a deliberate skip

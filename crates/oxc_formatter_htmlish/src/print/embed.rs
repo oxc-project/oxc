@@ -6,25 +6,24 @@ use std::any::Any;
 
 use oxc_allocator::{ArenaVec, StringBuilder};
 use oxc_formatter_core::{
-    FormatElement, FormatOptions, builders::FormatOnce, dispatch_fragment_ir, map_text_in_ir, write,
+    Format, FormatElement, FormatOptions, builders::group, dispatch_fragment_ir, map_text_in_ir,
+    write,
 };
 use oxc_htmlish_parser::ast::NodeId;
 
-use super::{
-    HtmlishFormatter,
-    attribute::{quoted_piece, write_expanded},
-    text::dedent_string,
-};
-use crate::tree::Tree;
+use super::{HtmlishFormatter, attribute::quoted_piece, format_ir, text::dedent_string};
+use crate::{context::HtmlishFormatContext, tree::Tree};
 
-/// Parent→child context for CSS dispatched from an HTML `style` attribute's value (css-in-html).
+/// Parent→child context for CSS dispatched from a `style` attribute's value (css-in-html),
+/// in every dialect (HTML, and the plain attributes of Vue and Angular).
 ///
 /// The host translates it into CSS's `CssEmbeddedIn`.
 pub struct CssInHtmlStyleAttribute;
 
-/// Parent→child context for JS dispatched from an HTML event handler attribute's value (js-in-html, `onclick="..."`).
+/// Parent→child context for JS dispatched from an event handler attribute's value (js-in-html, `onclick="..."`),
+/// in every dialect (HTML, and the plain attributes of Vue and Angular).
 ///
-/// The host translates it into JS's `JsEmbeddedIn`.
+/// The host translates it into JS's `JsRoot::Program`, which lays out the value.
 pub struct JsInHtmlEventHandler;
 
 /// The event handler attributes, sorted (Prettier's `@prettier/html-event-attributes` 0.0.2).
@@ -129,6 +128,7 @@ pub fn is_event_handler(name: &str) -> bool {
 
 /// Writes an attribute's (unescaped) `value` formatted in `language`, quoted, a `"` in it as `&quot;`;
 /// `false` when the dispatcher leaves it as written.
+/// The child lays the value out, as `parent_context` asks: this only quotes it.
 pub fn write_attribute_value<'a>(
     language: &str,
     parent_context: &dyn Any,
@@ -138,10 +138,6 @@ pub fn write_attribute_value<'a>(
     let Some(ir) = dispatch_fragment_ir(f, language, value, Some(parent_context)) else {
         return false;
     };
-    if ir.is_empty() {
-        write!(f, "\"\"");
-        return true;
-    }
     let indent_width = f.options().indent_width();
     let ir = map_text_in_ir(ir, f.allocator(), &mut |text, out| {
         if !text.contains('"') {
@@ -150,8 +146,16 @@ pub fn write_attribute_value<'a>(
         out.push(FormatElement::text(quoted_piece(text, f), indent_width));
         true
     });
-    write_expanded(&FormatOnce::new(|f: &mut HtmlishFormatter<'_, 'a>| f.write_elements(ir)), f);
+    write_quoted(&format_ir(ir), f);
     true
+}
+
+/// Writes a value its child laid out, quoted, in a group.
+pub fn write_quoted<'a>(
+    content: &impl Format<'a, HtmlishFormatContext<'a>>,
+    f: &mut HtmlishFormatter<'_, 'a>,
+) {
+    write!(f, ["\"", group(content), "\""]);
 }
 
 /// Writes the body of `<script>` / `<style>` element `id` formatted in its language;

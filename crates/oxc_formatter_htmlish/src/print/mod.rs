@@ -1,9 +1,10 @@
 //! The printer: dispatch by node kind; elements, text and blocks get their own module,
 //! besides the separators between siblings (`children`), the tag markers (`tag`) and attributes (`attribute`).
 
+use oxc_allocator::ArenaVec;
 use oxc_formatter_core::{
-    Format, Formatter,
-    builders::{FormatWith, group, soft_space_or_block_indent, space, text, token},
+    Format, FormatElement, Formatter,
+    builders::{FormatOnce, FormatWith, group, soft_space_or_block_indent, space, text, token},
     write,
 };
 use oxc_htmlish_parser::ast::{NodeId, NodeKind};
@@ -47,6 +48,13 @@ where
     T: Fn(&mut HtmlishFormatter<'_, 'a>),
 {
     FormatWith::new(formatter)
+}
+
+/// Writes a child's IR (a dispatched part), once.
+pub fn format_ir<'a>(
+    ir: ArenaVec<'a, FormatElement<'a>>,
+) -> FormatOnce<impl FnOnce(&mut HtmlishFormatter<'_, 'a>)> {
+    FormatOnce::new(move |f: &mut HtmlishFormatter<'_, 'a>| f.write_elements(ir))
 }
 
 pub fn write_root(f: &mut HtmlishFormatter<'_, '_>) {

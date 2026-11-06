@@ -26,8 +26,10 @@ The AST-wrapping IR primitives (`AstNode`, `Format`, …) are `pub(crate)` and n
 - `format_program`: Special-purpose AST-in entry point
 - `format_with_session`: session-aware entry whose `FormatSession` carries the host-supplied `SessionServices`
   - the dispatcher (IR channel), the string embedder (JSDoc fences), and the Tailwind sorter (plain `format` / `format_program` wrap a service-less `PhysicalFile` session)
-- `format_to_ir`: Format a whole program as a dispatched child (e.g. a Markdown code block), returning IR for the parent's document
-  - `JsEmbeddedIn` carries what it is embedded in, translated by the orchestrator from the parent's marker
+- `format_to_ir`: Format a part of a document in another language as a dispatched child (a Markdown code block's program, an `on*` attribute's value), returning IR for the parent's document
+  - Parameterized by `JsRoot` (what the code parses as, and how its kind prints) and `JsEmbeddedIn` (what the host does with it, whatever the kind), translated by the orchestrator from the parent's marker
+  - The IR goes between the host's delimiters as is: the host names the layout (`ProgramLayout`), and this builds it
+  - Each kind's printing lives in `print/root/`, one module per kind
 
 ### Generated code
 

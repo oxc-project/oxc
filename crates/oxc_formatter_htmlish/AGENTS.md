@@ -17,6 +17,13 @@ Parse behavior and its own divergences are that repo's `AGENTS.md` / `DIVERGENCE
 What a dialect changes in the shared rules is a `DialectRules` field (`src/rules.rs`), resolved once per document;
 a dialect adds a field there, not a `Dialect` check at the use site.
 
+### Embedded languages
+
+Content in another language goes to the session's dispatcher (`src/print/embed.rs`), and prints as written where it is not formatted:
+`<script>` / `<style>` bodies, `style` / `on*` values.
+An attribute's value is laid out by its language, in the layout its marker names (JS's `JsRoot`, CSS's `CssEmbeddedIn`):
+this crate only quotes it (`write_quoted`: the `"`, `&quot;` for a `"` in it, a group), and knows nothing of the language's syntax.
+
 ### Preprocess
 
 The facts the printer needs besides the AST (CSS display, whitespace sensitivity, kept children, borrowed tag markers)
