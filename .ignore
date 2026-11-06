@@ -6,7 +6,7 @@ target/**
 tasks/coverage/test262/**
 tasks/coverage/babel/**
 tasks/coverage/typescript/**
-apps/oxfmt/conformance/fixtures/externals/**
+apps/oxfmt/conformance/externals/**
 apps/**/dist
 
 **/*.snap

@@ -347,19 +347,19 @@ jobs:
             pnpm
       # Conformance ---
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
-        id: conformance-fixtures
+        id: conformance-externals
         if: steps.filter-conformance.outputs.changed == 'true'
         with:
-          # Warm fixtures skip download entirely (`.version` stamps in download-fixtures.ts)
-          path: ./apps/oxfmt/conformance/fixtures/externals
+          # Warm externals skip download entirely (`.version` stamps in download-externals.ts)
+          path: ./apps/oxfmt/conformance/externals
         background: true
       - if: steps.filter.outputs.changed == 'true' || steps.filter-conformance.outputs.changed == 'true'
         name: Build tests
         run: pnpm --filter "./apps/oxfmt" build-test
-      - wait: conformance-fixtures
+      - wait: conformance-externals
       - if: steps.filter-conformance.outputs.changed == 'true'
-        name: Download conformance fixtures
-        run: pnpm --filter "./apps/oxfmt" download-fixtures
+        name: Download conformance externals
+        run: pnpm --filter "./apps/oxfmt" download-externals
       - parallel:
           - if: steps.filter.outputs.changed == 'true'
             name: Run tests
