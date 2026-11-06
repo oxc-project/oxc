@@ -774,3 +774,84 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───
    ╰────
   help: This expression returns a new object. Spreading it into an object expression to create a new object is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:2:29]
+ 1 │ const items = [1, 2, 2.5, 3];
+ 2 │         for (const item of [...items]) {
+   ·                             ───
+ 3 │             if (item === Math.floor(item)) {
+   ╰────
+  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:2:29]
+ 1 │ const set = new Set([1, 2, 3]);
+ 2 │         for (const item of [...set]) { set.add(item * 2); }
+   ·                             ───
+   ╰────
+  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:2:29]
+ 1 │ const items = [1, 2, 3]; const alias = items;
+ 2 │         for (const item of [...items]) { alias.pop(); consume(item); }
+   ·                             ───
+   ╰────
+  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:2:29]
+ 1 │ const items = [1, 2, 3]; const remove = () => items.pop();
+ 2 │         for (const item of [...items]) { remove(); consume(item); }
+   ·                             ───
+   ╰────
+  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:26]
+ 1 │ for (const challenge of [...Ladders.challenges.get(id) || []]) {
+   ·                          ───
+ 2 │             Ladders.challenges.remove(challenge);
+   ╰────
+  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:2:27]
+ 1 │ const items = [1, 2, 3];
+ 2 │         for (items[0] of [...items]) { consume(items); }
+   ·                           ───
+   ╰────
+  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:2:31]
+ 1 │ const items = [1, 2, 3];
+ 2 │         for (const item of (([...((items))]))) { items.shift(); consume(item); }
+   ·                               ───
+   ╰────
+  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:2:39]
+ 1 │ async function remove(items) {
+ 2 │             for await (const item of [...items]) { items.splice(0, 1); consume(item); }
+   ·                                       ───
+ 3 │         }
+   ╰────
+  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:2:29]
+ 1 │ const items = [1, 2, 3];
+ 2 │         for (const item of [...items.copyWithin(0)]) { items.pop(); consume(item); }
+   ·                             ───
+   ╰────
+  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:21]
+ 1 │ for (const item of [...items.map(f)]) { consume(item); }
+   ·                     ───
+   ╰────
+  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
