@@ -85,7 +85,9 @@ impl Rule for PreferAwaitToCallbacks {
 
                     if matches!(
                         callee_property_name,
-                        Some("on" | "once" | "addEventListener" | "removeEventListener")
+                        Some(
+                            "on" | "once" | "addEventListener" | "removeEventListener" | "onError"
+                        )
                     ) {
                         return;
                     }
@@ -178,6 +180,8 @@ fn test() {
         r#"socket.addEventListener("message", error => { console.log(error) })"#,
         r#"element.removeEventListener("click", error => { console.log(error) })"#,
         r#"ws.addEventListener("close", (error) => { console.log(error) })"#,
+        "app.onError((err, c) => c.json({ message: err.message }, 500))",
+        "app.onError(function (error, c) { return c.text(error.message, 500) })",
     ];
 
     let fail = vec![
