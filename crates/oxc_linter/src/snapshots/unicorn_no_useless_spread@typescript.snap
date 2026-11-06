@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.ts:1:37]
+ 1 │ function f(arr: number[]) { return [...arr.slice()]; }
+   ·                                     ───
+   ╰────
+  help: `arr.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.ts:1:42]
+ 1 │ function f(bufs: Uint8Array[]) { return [...bufs.slice()]; }
+   ·                                          ───
+   ╰────
+  help: `bufs.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.ts:1:52]
+ 1 │ function f({ buf }: { buf: Uint8Array }) { return [...buf.slice()]; }
+   ·                                                    ───
+   ╰────
+  help: `buf.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
