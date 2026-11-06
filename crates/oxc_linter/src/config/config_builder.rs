@@ -1630,6 +1630,14 @@ mod test {
         );
         assert_eq!(config.base.config.options.respect_eslint_disable_directives, Some(false));
 
+        let config = config_store_from_str(r#"{ "options": {"noInlineConfig": true } }"#);
+        assert_eq!(config.base.config.options.no_inline_config, Some(true));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/no_inline_config_true.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.no_inline_config, Some(true));
+
         let config = config_store_from_str(
             r#"{ "extends": ["fixtures/extends_config/options/deny_warnings_true.json"] }"#,
         );

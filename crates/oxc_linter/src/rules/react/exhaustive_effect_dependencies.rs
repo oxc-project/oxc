@@ -87,3 +87,50 @@ function Component({value, extra}) {
     )
     .test_and_snapshot();
 }
+
+#[test]
+fn test_no_inline_config() {
+    use crate::tester::Tester;
+    use serde_json::json;
+
+    let eslint_source = "
+import {useEffect} from 'react';
+function Component({value}) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    log(value);
+  }, []);
+}
+";
+
+    let oxlint_source = "
+import {useEffect} from 'react';
+function Component({value}) {
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    log(value);
+  }, []);
+}
+";
+
+    // By default the suppression comment makes the React Compiler skip the
+    // function, so the missing dependency is not reported.
+    let pass: Vec<(&str, Option<serde_json::Value>, Option<serde_json::Value>)> =
+        vec![(eslint_source, None, None), (oxlint_source, None, None)];
+
+    // With `noInlineConfig` the comment is ignored, so the missing dependency is reported.
+    let no_inline_config = Some(json!({ "options": { "noInlineConfig": true } }));
+    let fail: Vec<(&str, Option<serde_json::Value>, Option<serde_json::Value>)> = vec![
+        (eslint_source, None, no_inline_config.clone()),
+        (oxlint_source, None, no_inline_config),
+    ];
+
+    Tester::new(
+        ExhaustiveEffectDependencies::NAME,
+        ExhaustiveEffectDependencies::PLUGIN,
+        pass,
+        fail,
+    )
+    .with_snapshot_suffix("no_inline_config")
+    .test_and_snapshot();
+}

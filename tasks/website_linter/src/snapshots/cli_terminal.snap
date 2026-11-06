@@ -95,6 +95,8 @@ Inline Configuration Comments
                               `--report-unused-disable-directives`, but allows you to specify the
                               severity level of the reported errors. Only one of these two options
                               can be used at a time.
+        --no-inline-config    Prevent inline disable and enable comments from suppressing
+                              diagnostics
 
 Available positional items:
     PATH                      Single file, single path or list of paths
