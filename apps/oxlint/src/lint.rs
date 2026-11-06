@@ -761,9 +761,9 @@ fn render_config_builder_error(
 
 #[cfg(test)]
 mod test {
-    use std::fs;
+    use std::{fs, process::Termination};
 
-    use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
+    use crate::{DEFAULT_OXLINTRC_NAME, cli::CliRunResult, tester::Tester};
     use oxc_linter::rules::RULES;
 
     fn markdown_rule_row<'a>(output: &'a str, plugin: &str, name: &str) -> Vec<&'a str> {
@@ -1325,14 +1325,147 @@ mod test {
         let config_path = temp_dir.path().join(DEFAULT_OXLINTRC_NAME);
         assert!(!fs::exists(&config_path).unwrap());
 
-        let args = &["--init"];
-        Tester::new().with_cwd(temp_dir.path().to_path_buf()).test(args);
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        let (output, result) = tester.test_output(&["--init"]);
+        assert_eq!(output, "Configuration file created\n");
+        assert!(matches!(result, CliRunResult::ConfigFileInitSucceeded));
+        assert_eq!(result.report(), std::process::ExitCode::SUCCESS);
 
         assert!(fs::exists(&config_path).unwrap());
 
-        let content = fs::read_to_string(config_path).unwrap();
+        let content = fs::read_to_string(&config_path).unwrap();
 
         insta::assert_snapshot!("init_config", content);
+
+        assert_init_config_already_exists(&tester);
+        assert_eq!(fs::read_to_string(config_path).unwrap(), content);
+    }
+
+    fn assert_init_config_already_exists(tester: &Tester) {
+        let (output, result) = tester.test_output(&["--init"]);
+        assert_eq!(output, "Oxlint config file already exists.\nRemove it and re-run.\n");
+        assert!(matches!(result, CliRunResult::ConfigFileInitFailed));
+        assert_eq!(result.report(), std::process::ExitCode::FAILURE);
+    }
+
+    #[test]
+    fn test_init_config_existing_file() {
+        for (name, content) in [
+            (".oxlintrc.json", r#"{"rules":{"eqeqeq":"error"}}"#),
+            (".oxlintrc.json", "invalid JSON"),
+            (".oxlintrc.jsonc", "// custom config\n{}"),
+            ("oxlint.config.ts", "export default { rules: { eqeqeq: 'error' } };"),
+            ("oxlint.config.mts", "export default { rules: { eqeqeq: 'error' } };"),
+        ] {
+            let temp_dir = tempfile::tempdir().unwrap();
+            let config_path = temp_dir.path().join(name);
+            fs::write(&config_path, content).unwrap();
+
+            assert_init_config_already_exists(
+                &Tester::new().with_cwd(temp_dir.path().to_path_buf()),
+            );
+
+            assert_eq!(fs::read_to_string(config_path).unwrap(), content);
+            assert_eq!(fs::read_dir(temp_dir.path()).unwrap().count(), 1);
+        }
+    }
+
+    #[test]
+    fn test_init_config_multiple_existing_files() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let configs = [
+            (".oxlintrc.jsonc", "// custom config\n{}"),
+            ("oxlint.config.ts", "export default {};"),
+        ];
+        for (name, content) in configs {
+            fs::write(temp_dir.path().join(name), content).unwrap();
+        }
+
+        assert_init_config_already_exists(&Tester::new().with_cwd(temp_dir.path().to_path_buf()));
+
+        for (name, content) in configs {
+            assert_eq!(fs::read_to_string(temp_dir.path().join(name)).unwrap(), content);
+        }
+        assert_eq!(fs::read_dir(temp_dir.path()).unwrap().count(), configs.len());
+    }
+
+    #[test]
+    fn test_init_config_existing_directory() {
+        for name in [".oxlintrc.json", ".oxlintrc.jsonc", "oxlint.config.ts", "oxlint.config.mts"] {
+            let temp_dir = tempfile::tempdir().unwrap();
+            let config_path = temp_dir.path().join(name);
+            fs::create_dir(&config_path).unwrap();
+
+            assert_init_config_already_exists(
+                &Tester::new().with_cwd(temp_dir.path().to_path_buf()),
+            );
+
+            assert!(config_path.is_dir());
+            assert_eq!(fs::read_dir(&config_path).unwrap().count(), 0);
+            assert_eq!(fs::read_dir(temp_dir.path()).unwrap().count(), 1);
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_init_config_existing_symlink() {
+        for name in [".oxlintrc.json", ".oxlintrc.jsonc", "oxlint.config.ts", "oxlint.config.mts"] {
+            for dangling in [false, true] {
+                let temp_dir = tempfile::tempdir().unwrap();
+                let config_path = temp_dir.path().join(name);
+                let target = temp_dir.path().join("target");
+                let content = r#"{"rules":{"eqeqeq":"error"}}"#;
+                if !dangling {
+                    fs::write(&target, content).unwrap();
+                }
+                std::os::unix::fs::symlink(&target, &config_path).unwrap();
+
+                assert_init_config_already_exists(
+                    &Tester::new().with_cwd(temp_dir.path().to_path_buf()),
+                );
+
+                assert_eq!(fs::read_link(&config_path).unwrap(), target);
+                if dangling {
+                    assert!(!target.exists());
+                } else {
+                    assert_eq!(fs::read_to_string(target).unwrap(), content);
+                }
+                assert_eq!(
+                    fs::read_dir(temp_dir.path()).unwrap().count(),
+                    if dangling { 1 } else { 2 }
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_init_config_in_child_directory() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let parent_config_path = temp_dir.path().join(DEFAULT_OXLINTRC_NAME);
+        let content = r#"{"rules":{"eqeqeq":"error"}}"#;
+        fs::write(&parent_config_path, content).unwrap();
+        let child_dir = temp_dir.path().join("child");
+        fs::create_dir(&child_dir).unwrap();
+
+        let (output, result) = Tester::new().with_cwd(child_dir.clone()).test_output(&["--init"]);
+
+        assert_eq!(output, "Configuration file created\n");
+        assert!(matches!(result, CliRunResult::ConfigFileInitSucceeded));
+        assert!(child_dir.join(DEFAULT_OXLINTRC_NAME).is_file());
+        assert_eq!(fs::read_to_string(parent_config_path).unwrap(), content);
+    }
+
+    #[test]
+    fn test_init_config_missing_directory() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let cwd = temp_dir.path().join("missing");
+
+        let (output, result) = Tester::new().with_cwd(cwd.clone()).test_output(&["--init"]);
+
+        assert_eq!(output, "Failed to create configuration file\n");
+        assert!(matches!(result, CliRunResult::ConfigFileInitFailed));
+        assert_eq!(result.report(), std::process::ExitCode::FAILURE);
+        assert!(!cwd.exists());
     }
 
     #[test]
@@ -1601,6 +1734,20 @@ mod test {
         // https://github.com/oxc-project/oxc/pull/10597
         let args = &["--import-plugin", "-D", "import/no-cycle"];
         Tester::new().with_cwd("fixtures/cli/import-cycle".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_import_plugin_multi_group() {
+        // Regression test for overlapping import-graph groups.
+        // The CLI tester uses a 1-thread pool, so `group_size` is 4 and two groups are open at once.
+        // Groups take files longest path first, so the `_` padding in the fixture names sets the batches:
+        // 0. `hub`, `closed_*`: a chain into `hub` that finishes on its own.
+        // 1. `cycle_a`, `diamond_*`: `cycle_a` imports `hub` from the finished group 0.
+        // 2. `cycle_b`: `cycle_b` and `cycle_a` import each other, so groups 1 and 2 merge.
+        let args = &["--import-plugin", "-D", "import/no-cycle", "."];
+        Tester::new()
+            .with_cwd("fixtures/cli/import_plugin_multi_group".into())
+            .test_and_snapshot(args);
     }
 
     #[test]

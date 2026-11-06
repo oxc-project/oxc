@@ -1,6 +1,9 @@
+use crate::cpu::cpu_version;
+
 use crate::pipeline::chunk::{eqm, load64};
 
 /// First byte at or after i that is one of needles, or n.
+#[cpu_version(Generic)]
 #[inline(always)]
 pub unsafe fn find_generic<const K: usize>(
     src: *const u8,
@@ -29,6 +32,7 @@ pub unsafe fn find_generic<const K: usize>(
 }
 
 /// Bits of the 64 bytes at `base` that are brackets (`(){}[]`): bit `i` for byte `base + i`.
+#[cpu_version(Generic)]
 #[inline]
 pub fn bracket_bits_generic(src: &[u8], base: usize) -> u64 {
     let mut out = 0u64;

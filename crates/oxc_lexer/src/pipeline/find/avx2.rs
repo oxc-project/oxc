@@ -1,6 +1,9 @@
-use std::arch::x86_64::*;
+use std::mem::{self, MaybeUninit};
 
-use crate::pipeline::chunk::{load256, mm, veq};
+use crate::{
+    cpu::{Avx2, cpu_version},
+    simd::Vec256,
+};
 
 /// Ordered for speed, pairing `(` with `)`, `[` with `{` and `]` with `}` (see [`any_of`]).
 const BRACKET_BYTES: [u8; 6] = [b'(', b')', b'[', b'{', b']', b'}'];
@@ -8,15 +11,17 @@ const BRACKET_BYTES: [u8; 6] = [b'(', b')', b'[', b'{', b']', b'}'];
 /// First byte at or after i that is one of needles, or n.
 ///
 /// Needle order matters for speed. See comment on [`any_of`] below.
+#[cpu_version(Avx2)]
 #[inline]
 pub unsafe fn find_avx2<const K: usize>(
     src: *const u8,
     n: usize,
     mut i: usize,
     needles: [u8; K],
+    cpu: Avx2,
 ) -> usize {
     while i + 32 <= n {
-        let m = mm(any_of(load256(src, i), needles));
+        let m = any_of(Vec256::load_unaligned(src.add(i), cpu), needles).movemask();
         if m != 0 {
             return i + m.trailing_zeros() as usize;
         }
@@ -32,18 +37,15 @@ pub unsafe fn find_avx2<const K: usize>(
 }
 
 /// Bits of the 64 bytes at `base` that are brackets (`(){}[]`): bit `i` for byte `base + i`.
+#[cpu_version(Avx2)]
 #[inline]
-pub fn bracket_bits_avx2(src: &[u8], base: usize) -> u64 {
+pub fn bracket_bits_avx2(src: &[u8], base: usize, cpu: Avx2) -> u64 {
     let block = &src[base..base + 64];
+    let (chunks, _) = block.as_chunks::<32>();
     let mut out = 0u64;
-    for half in 0..2 {
-        // SAFETY: `block` holds 64 bytes, so a 32-byte load at offset 0 or 32 stays inside it;
-        // the OR-fold touches no memory and needs only `avx2`, which this module's `#[cfg]`
-        // guarantees.
-        let v = unsafe { load256(block.as_ptr(), half * 32) };
-        let m = unsafe { any_of(v, BRACKET_BYTES) };
-        // SAFETY: This module is only compiled on platforms that support AVX2
-        let mask = unsafe { mm(m) };
+    for (half, chunk) in chunks.iter().enumerate() {
+        let v = Vec256::read_unaligned(chunk, cpu);
+        let mask = any_of(v, BRACKET_BYTES).movemask();
         out |= u64::from(mask) << (half * 32);
     }
     out
@@ -63,14 +65,15 @@ pub fn bracket_bits_avx2(src: &[u8], base: usize) -> u64 {
 // LLVM only does this when the 2 compares are OR-ed together directly,
 // i.e. when the bytes are at indexes `2 * j` and `2 * j + 1` in `needles`.
 // The byte sets passed to `find` are ordered to make such pairs.
+#[cpu_version(Avx2)]
 #[inline(always)]
-unsafe fn any_of<const N: usize>(v: __m256i, needles: [u8; N]) -> __m256i {
-    let mut m = needles.map(|c| veq(v, c));
+fn any_of<const N: usize>(v: Vec256<Avx2>, needles: [u8; N]) -> Vec256<Avx2> {
+    let mut m = array_map(needles, |c| v.eq_u8(c), v.cpu());
     let mut len = N;
     while len > 1 {
         let half = len / 2;
         for j in 0..half {
-            m[j] = _mm256_or_si256(m[2 * j], m[2 * j + 1]);
+            m[j] = m[2 * j] | m[2 * j + 1];
         }
         if len % 2 == 1 {
             m[half] = m[len - 1];
@@ -78,4 +81,25 @@ unsafe fn any_of<const N: usize>(v: __m256i, needles: [u8; N]) -> __m256i {
         len = half + len % 2;
     }
     m[0]
+}
+
+/// Equivalent of `<[T; N]>::map`, which is guaranteed to be inlined.
+///
+/// `map` is `std` code, which is compiled without AVX2.
+/// If LLVM doesn't inline it into the caller, it calls the intrinsics out of line.
+#[cpu_version(Avx2)]
+#[inline(always)]
+fn array_map<T, U, const N: usize>(array: [T; N], f: impl Fn(T) -> U, _cpu: Avx2) -> [U; N] {
+    // If `f` panics, the values already in `out` aren't dropped. Ensure that can't leak memory.
+    const { assert!(!mem::needs_drop::<U>()) };
+
+    let mut out = [const { MaybeUninit::<U>::uninit() }; N];
+
+    for (slot, value) in out.iter_mut().zip(array) {
+        slot.write(f(value));
+    }
+
+    // SAFETY: `out` and `array` are both `N` long, so the loop initialized every element of `out`.
+    // `MaybeUninit<U>` has the same layout as `U`.
+    unsafe { mem::transmute_copy::<[MaybeUninit<U>; N], [U; N]>(&out) }
 }

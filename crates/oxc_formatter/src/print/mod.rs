@@ -11,7 +11,6 @@ mod call_like_expression;
 mod class;
 mod decorators;
 mod export_declarations;
-mod fragment;
 mod function;
 mod function_type;
 mod import_declaration;
@@ -23,8 +22,8 @@ mod object_like;
 mod object_pattern_like;
 mod parameters;
 mod program;
-pub use program::FormatProgramBody;
 mod return_or_throw_statement;
+mod root;
 pub mod semicolon;
 mod sequence_expression;
 mod switch_statement;
@@ -39,7 +38,7 @@ pub use arrow_function_expression::{
     FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
 pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
-pub use fragment::{FormatFunctionParams, FormatTypeParameters};
+pub use root::{FormatRoot, check_root, object_prints_double_brace, root_wrapper};
 pub use semicolon::write_comments_before_closing_paren;
 pub use template::embed_hug;
 pub use union_type::{
@@ -58,7 +57,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodeKind, AstNodes},
     best_fitting, format_args,
     formatter::{
-        JsFormatter,
+        JsFormatter, TopLevelSemicolons,
         prelude::*,
         separated::FormatSeparatedIter,
         token::number::{format_number_token, format_trimmed_number, is_simple_number},
@@ -89,7 +88,7 @@ use crate::{
             write_trailing_comments_before,
         },
         string::{FormatLiteralStringToken, StringLiteralParentKind},
-        tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
+        tailwindcss::{tailwind_context_for_class_list, write_tailwind_string_literal},
         typecast::is_cast_target,
     },
     write,
@@ -528,13 +527,14 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, EmptyStatement> {
     }
 }
 
-/// Whether the embedding decided this program's sole statement prints without its semicolon (see `crate::format_to_ir`):
+/// Whether the embedded program decided this statement prints without its semicolon
+/// ([`TopLevelSemicolons::Omitted`]):
 /// no trailing one, and no ASI guard under `semi: false` either.
 fn is_semicolon_omitted_by_embedding(
     stmt: &AstNode<'_, '_, ExpressionStatement<'_>>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
-    f.context().embedding_omits_semicolon() && matches!(stmt.parent(), AstNodes::Program(_))
+    f.context().top_level_semicolons() == TopLevelSemicolons::Omitted(stmt.span)
 }
 
 /// Returns `true` if the expression needs a leading semicolon to prevent ASI issues.
@@ -547,6 +547,12 @@ fn expression_statement_needs_semicolon<'a>(
     verbatim: bool,
 ) -> bool {
     if is_semicolon_omitted_by_embedding(stmt, f) {
+        return false;
+    }
+    // The program writes the `;` that ends the previous statement (`TopLevelSemicolons::Separated`)
+    if f.context().top_level_semicolons() == TopLevelSemicolons::Separated
+        && matches!(stmt.parent(), AstNodes::Program(_))
+    {
         return false;
     }
 
@@ -1103,8 +1109,17 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, BindingPattern<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameterRest<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, [self.rest()]);
-        write!(f, self.type_annotation());
+        let content = format_with(|f| {
+            write!(f, [self.rest()]);
+            write!(f, self.type_annotation());
+        });
+        // Decorators are laid out as on `FormalParameter`, an undecorated rest parameter stays ungrouped
+        let decorators = self.decorators();
+        if decorators.is_empty() {
+            write!(f, [content]);
+        } else {
+            write!(f, [group(&decorators), group(&content)]);
+        }
     }
 }
 
@@ -1237,7 +1252,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, StringLiteral<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         // Check if we're in a Tailwind context via stack (O(1) lookup)
         // This handles nested string literals inside JSXAttribute/CallExpression values
-        if let Some(ctx) = tailwind_context_for_string_literal(self, f) {
+        if let Some(ctx) = tailwind_context_for_class_list(self, f) {
             // We're inside a Tailwind context - sort this string literal as Tailwind classes
             write_tailwind_string_literal(self, ctx, f);
         } else {

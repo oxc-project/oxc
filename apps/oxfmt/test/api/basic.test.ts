@@ -40,10 +40,10 @@ describe("Format non-js", () => {
   });
 
   it("should surface Prettier parse errors as-is", async () => {
-    const brokenVue = `<template><div></template>`;
-    const result = await format("broken.vue", brokenVue, {});
+    const brokenAngular = `<div></span>`;
+    const result = await format("broken.component.html", brokenAngular, {});
 
-    expect(result.code).toBe(brokenVue);
+    expect(result.code).toBe(brokenAngular);
     expect(result.errors[0]?.message).toMatch(/Unexpected closing tag/);
   });
 });

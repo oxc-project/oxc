@@ -45,7 +45,7 @@ const categories: Category[] = [
     projects: [{ dir: join(EXTERNALS_DIR, "vue-vben-admin"), ext: ".vue" }],
     optionSets: [
       { printWidth: 80 },
-      { printWidth: 100, vueIndentScriptAndStyle: true, singleQuote: true },
+      { printWidth: 100, vueIndentScriptAndStyle: true, singleQuote: true, semi: false },
     ],
   },
   {

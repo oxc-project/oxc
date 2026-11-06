@@ -9,7 +9,7 @@ use oxc_allocator::{Allocator, StringBuilder};
 use oxc_formatter_core::{
     Format, FormatElement, arena_cow_str,
     builders::{
-        group, hard_line_break, if_group_breaks, if_group_fits_on_line, indent, soft_block_indent,
+        hard_line_break, if_group_breaks, if_group_fits_on_line, indent, soft_block_indent,
         soft_line_break, soft_line_break_or_space, space, text,
     },
     spec::is_suppression_marker,
@@ -21,9 +21,11 @@ use super::{
     HtmlishFormatter,
     embed::{
         CssInHtmlStyleAttribute, JsInHtmlEventHandler, is_event_handler, write_attribute_value,
+        write_quoted,
     },
     format_with,
     tag::opening_end_borrowed,
+    vue,
 };
 use crate::{
     context::HtmlishFormatContext,
@@ -60,7 +62,8 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
     let force_not_to_break = t.tag(id) == "script"
         && matches!(el.attributes.as_slice(), [only] if t.attribute_is(only.name.slice(t.source()), "src"))
         && item.first_child.is_none();
-    let per_line = single_attribute_per_line && el.attributes.len() > 1;
+    // Not on a Vue block's own lines
+    let per_line = single_attribute_per_line && el.attributes.len() > 1 && !t.is_sfc_block(id);
     let ignored = ignored_attributes(t, id);
     let is_ignored = |name: &str| {
         ignored.is_some_and(|names| {
@@ -129,6 +132,15 @@ fn write_attribute<'a>(
         return;
     }
     let raw = unescaped(value, f);
+    // A Vue attribute whose value is JS prints as written where it does not format (as Prettier does)
+    if t.rules().vue_sfc
+        && let Some(kind) = vue::value_kind(t, element, attribute, f)
+    {
+        if !vue::write_attribute_value(t, kind, raw, f) {
+            write_quoted_value(raw, f);
+        }
+        return;
+    }
     let class = is("class");
     // A placeholder would hide in the sorted class list, out of the parent's reach
     let tailwind =
@@ -198,8 +210,15 @@ fn write_tailwind_classes<'a>(
 fn write_quoted_value<'a>(raw: &'a str, f: &mut HtmlishFormatter<'_, 'a>) {
     let doubles = raw.bytes().filter(|&b| b == b'"').count();
     let singles = raw.bytes().filter(|&b| b == b'\'').count();
-    let (quote, escaped) = if doubles > singles { ("'", "&apos;") } else { ("\"", "&quot;") };
-    let printed = arena_cow_str(&raw.cow_replace(quote, escaped), f);
+    // A `char` pattern: a 1-char `&str` would build a substring searcher per call
+    let (quote, pattern, escaped) =
+        if doubles > singles { ("'", '\'', "&apos;") } else { ("\"", '"', "&quot;") };
+    // The chosen quote is the rarer one, so most values have none to escape
+    let printed = if doubles.min(singles) == 0 {
+        raw
+    } else {
+        arena_cow_str(&raw.cow_replace(pattern, escaped), f)
+    };
     write!(f, [text(quote), text(printed), text(quote)]);
 }
 
@@ -225,7 +244,7 @@ pub(super) fn write_expanded<'a>(
     content: &impl Format<'a, HtmlishFormatContext<'a>>,
     f: &mut HtmlishFormatter<'_, 'a>,
 ) {
-    write!(f, ["\"", group(&soft_block_indent(content)), "\""]);
+    write_quoted(&soft_block_indent(content), f);
 }
 
 struct Candidate<'a> {

@@ -7,18 +7,27 @@
 //!
 //! [`context`]: crate::pipeline::disambiguate::context
 
+use crate::cpu::{Cpu, cpu_multiversion};
+
 use crate::pipeline::disambiguate::{Tokens, Walks, context};
 
 use super::bytes::arrow_after_params;
 
 /// Whether the ambiguous < at lt is JSX, and whether it is an unterminated element to report.
+#[cpu_multiversion]
 #[inline(never)]
-pub fn jsx_over_generic(tokens: &Tokens, walks: &mut Walks, lt: usize, lp: usize) -> (bool, bool) {
+pub fn jsx_over_generic(
+    tokens: &Tokens,
+    walks: &mut Walks,
+    lt: usize,
+    lp: usize,
+    cpu: impl Cpu,
+) -> (bool, bool) {
     let site = context::before(tokens, walks, lt);
     if site.in_type || site.type_params {
         return (false, false);
     }
-    if arrow_after_params(tokens, lp) {
+    if arrow_after_params(tokens, lp, cpu) {
         return (false, site.operand);
     }
     (true, false)

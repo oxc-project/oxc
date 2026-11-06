@@ -1,0 +1,120 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<template>
+  <div class="text">
+    Sorry, we couldn’t find an account for <b>{{ phoneInput }}</b>, let's create one:
+  </div>
+  <div class="text">
+    Sorry, we couldn’t find an account for <b>phoneInputAAAA</b>, let's create one:
+  </div>
+  <span>
+    <NuxtLink class="relative z-10 hover:text-accent-fallback transition-colors duration-200">{{ maintainer.username || maintainer.name }}</NuxtLink><span v-if="idx < Math.min(pkg.maintainers.length, 3) - 1">, </span>
+  </span>
+  <template #replacement>
+    <span v-else><code>{{ replacement.id }}</code></span>
+    <span v-else><code>replacementId</code></span>
+  </template>
+  <p>
+    By continuing you agree to the <a href="https://www.comfy.org/privacy" target="_blank" class="cursor-pointer">{{ privacyLink }} </a>.
+  </p>
+  <p>
+    By continuing you agree to the <a href="https://www.comfy.org/privacy" target="_blank" class="cursor-pointer">privacyLinkAAAAA </a>.
+  </p>
+  <div>
+    Sorry, we couldn't find an account for <b>{{ phoneInput }}</b><i>let's create one:</i>
+  </div>
+  <div>
+    Sorry, we couldn't find an account for <b>phoneInputAAAAA</b><i>let's create one:</i>
+  </div>
+</template>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<template>
+  <div class="text">
+    Sorry, we couldn’t find an account for <b>{{ phoneInput }}</b>, let's create
+    one:
+  </div>
+  <div class="text">
+    Sorry, we couldn’t find an account for <b>phoneInputAAAA</b>, let's create
+    one:
+  </div>
+  <span>
+    <NuxtLink
+      class="relative z-10 hover:text-accent-fallback transition-colors duration-200"
+      >{{ maintainer.username || maintainer.name }}</NuxtLink
+    ><span v-if="idx < Math.min(pkg.maintainers.length, 3) - 1">, </span>
+  </span>
+  <template #replacement>
+    <span v-else><code>{{ replacement.id }}</code></span>
+    <span v-else><code>replacementId</code></span>
+  </template>
+  <p>
+    By continuing you agree to the
+    <a
+      href="https://www.comfy.org/privacy"
+      target="_blank"
+      class="cursor-pointer"
+      >{{ privacyLink }} </a
+    >.
+  </p>
+  <p>
+    By continuing you agree to the
+    <a
+      href="https://www.comfy.org/privacy"
+      target="_blank"
+      class="cursor-pointer"
+      >privacyLinkAAAAA </a
+    >.
+  </p>
+  <div>
+    Sorry, we couldn't find an account for <b>{{ phoneInput }}</b
+    ><i>let's create one:</i>
+  </div>
+  <div>
+    Sorry, we couldn't find an account for <b>phoneInputAAAAA</b
+    ><i>let's create one:</i>
+  </div>
+</template>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<template>
+  <div class="text">
+    Sorry, we couldn’t find an account for <b>{{ phoneInput }}</b>, let's create one:
+  </div>
+  <div class="text">
+    Sorry, we couldn’t find an account for <b>phoneInputAAAA</b>, let's create one:
+  </div>
+  <span>
+    <NuxtLink
+      class="relative z-10 hover:text-accent-fallback transition-colors duration-200"
+      >{{ maintainer.username || maintainer.name }}</NuxtLink
+    ><span v-if="idx < Math.min(pkg.maintainers.length, 3) - 1">, </span>
+  </span>
+  <template #replacement>
+    <span v-else><code>{{ replacement.id }}</code></span>
+    <span v-else><code>replacementId</code></span>
+  </template>
+  <p>
+    By continuing you agree to the
+    <a href="https://www.comfy.org/privacy" target="_blank" class="cursor-pointer"
+      >{{ privacyLink }} </a
+    >.
+  </p>
+  <p>
+    By continuing you agree to the
+    <a href="https://www.comfy.org/privacy" target="_blank" class="cursor-pointer"
+      >privacyLinkAAAAA </a
+    >.
+  </p>
+  <div>Sorry, we couldn't find an account for <b>{{ phoneInput }}</b><i>let's create one:</i></div>
+  <div>Sorry, we couldn't find an account for <b>phoneInputAAAAA</b><i>let's create one:</i></div>
+</template>
+
+===================== End =====================

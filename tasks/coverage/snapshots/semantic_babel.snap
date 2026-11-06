@@ -1,14 +1,17 @@
-commit: b835f0c6
+commit: 0372f7f1
 
 semantic_babel Summary:
-AST Parsed     : 2304/2304 (100.00%)
-Positive Passed: 2210/2304 (95.92%)
+AST Parsed     : 2329/2329 (100.00%)
+Positive Passed: 2233/2329 (95.88%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-open-export-default-from/input.js
 Cannot use export statement outside a module
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body-lexical-redeclaration/input.js
 Identifier `f` has already been declared
 Identifier `g` has already been declared
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.5-for-in-initializer-yield-before-in/input.js
+Unexpected token
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol flags mismatch for "_default":
@@ -190,6 +193,11 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Bindings mismatch:
 after transform: ScopeId(0): ["x"]
 rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/const-escaped-enum/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["enuma", "enumb"]
+rebuilt        : ScopeId(0): ["enuma"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/declare/input.ts
 Bindings mismatch:

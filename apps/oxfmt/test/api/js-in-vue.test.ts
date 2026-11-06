@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { format } from "../../dist/index.js";
 
-// NOTE: For now, Vue files are partially handled by Prettier
-
-describe("Format js-in-vue with prettier-plugin-oxfmt", () => {
+describe("Format js-in-vue", () => {
   it("should format .vue w/ sort-imports", async () => {
     const input = `
 <script lang="ts">
@@ -47,6 +45,41 @@ const cls = clsx("p-4 flex");
       vueIndentScriptAndStyle: true,
       experimentalSortImports: {},
       experimentalTailwindcss: { functions: ["clsx"] },
+    });
+
+    expect(result.code).toMatchSnapshot();
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should sort tailwindcss classes in .vue bindings", async () => {
+    const input = `
+<template>
+  <div :class="['p-4 flex', { 'p-4 flex': a }, \`p-4 flex \${b}\`]" v-bind:class="a ? 'p-4 flex' : 'm-2 block'" :foo="'p-4 flex'" :bar="'p-4 flex'" v-baz="'p-4 flex'">{{ 'p-4 flex' }}</div>
+  <p :class.prop="'p-4 flex'" .class="'p-4 flex'" />
+</template>
+`;
+    const result = await format("a.vue", input, {
+      sortTailwindcss: { attributes: ["bar", "v-baz"] },
+    });
+
+    expect(result.code).toMatchSnapshot();
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  // DIVERGENCES.md#js-in-vue-tailwind-functions
+  it("should sort tailwindcss functions in every .vue template expression", async () => {
+    const input = `
+<script setup lang="ts">
+const a = clsx("p-4 flex");
+</script>
+
+<template>
+  <p v-if="clsx('p-4 flex')">{{ clsx("p-4 flex") }}</p>
+  <p :title="clsx('p-4 flex')" @click="f(clsx('p-4 flex'))" />
+</template>
+`;
+    const result = await format("a.vue", input, {
+      sortTailwindcss: { functions: ["clsx"] },
     });
 
     expect(result.code).toMatchSnapshot();
@@ -327,6 +360,44 @@ const f = () => {
  * Docs.
  */
 </script>
+`);
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should keep `}}` out of an interpolation, from a template literal's substitution", async () => {
+    const input = `<template>
+  <p>{{ \`\${ {a: 1} }\` }}</p>
+  <p>{{ \`\${ a || {b: 1} }\` }}</p>
+  <p :title="\`\${ {a: 1} }\`">x</p>
+</template>
+`;
+    const result = await format("a.vue", input);
+
+    expect(result.code).toBe(`<template>
+  <p>{{ \`\${({ a: 1 })}\` }}</p>
+  <p>{{ \`\${a || ({ b: 1 })}\` }}</p>
+  <p :title="\`\${{ a: 1 }}\`">x</p>
+</template>
+`);
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should keep `}}` out of an interpolation without bracket spacing", async () => {
+    const input = `<template>
+  <p>{{ { a: { b: 1 } } }}</p>
+  <p>{{ { ...{ a: 1 } } }}</p>
+  <p>{{ { ...!{ a: 1 } } }}</p>
+  <p>{{ { ...(a ? b : { c }) } }}</p>
+</template>
+`;
+    const result = await format("a.vue", input, { bracketSpacing: false });
+
+    expect(result.code).toBe(`<template>
+  <p>{{ {a: ({b: 1})} }}</p>
+  <p>{{ {...({a: 1})} }}</p>
+  <p>{{ {...!({a: 1})} }}</p>
+  <p>{{ {...(a ? b : {c})} }}</p>
+</template>
 `);
     expect(result.errors).toStrictEqual([]);
   });

@@ -43,6 +43,7 @@ const LANGUAGES: Record<string, Language> = {
   ".yaml": "yaml",
   ".md": "markdown",
   ".html": "html",
+  ".xhtml": "html",
   ".vue": "vue",
 };
 
@@ -74,11 +75,9 @@ const PARSERS: Record<string, (name: string) => string> = {
   graphql: withExt(".graphql"),
   yaml: withExt(".yaml"),
   markdown: withExt(".md"),
-  html: withExt(".html"),
+  // An HTML extension is kept, as oxfmt reads some differently (`.xhtml`)
+  html: (name) => (LANGUAGES[extname(name)] === "html" ? name : withExt(".html")(name)),
   // The whole file goes to Prettier, but its `<script>` is formatted by oxc.
-  // A `.html` page under `vue` (e.g. `vue/html-vue/`) fails only on the doctype case for now:
-  // Prettier lowercases `<!DOCTYPE html>` for a `.html` filepath only, and this runs it as `.vue`.
-  // oxfmt's own Vue lowercases it everywhere (`crates/oxc_formatter_htmlish/DIVERGENCES.md#doctype-case`).
   vue: withExt(".vue"),
 };
 

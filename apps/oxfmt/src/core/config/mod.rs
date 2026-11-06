@@ -549,14 +549,14 @@ mod tests_slow_path_validation {
         let resolver = resolver_from_json(serde_json::json!({
             "printWidth": 80,
             "overrides": [
-                { "files": ["*.vue"], "options": { "printWidth": 1000 } }
+                { "files": ["*.mdx"], "options": { "printWidth": 1000 } }
             ]
         }));
 
         // Slow path triggers because the override matches.
-        let path = Path::new("App.vue");
+        let path = Path::new("page.mdx");
         let err =
-            resolver.resolve(path, FormatStrategy::Prettier(PrettierLanguage::Vue)).unwrap_err();
+            resolver.resolve(path, FormatStrategy::Prettier(PrettierLanguage::Mdx)).unwrap_err();
         assert!(err.contains("printWidth"), "expected printWidth validation error, got: {err}");
     }
 
@@ -590,8 +590,8 @@ mod tests_slow_path_validation {
     #[test]
     #[cfg(feature = "napi")]
     fn resolve_for_api_rejects_invalid_value_for_prettier() {
-        let path = Path::new("page.vue");
-        let strategy = FormatStrategy::Prettier(PrettierLanguage::Vue);
+        let path = Path::new("page.mdx");
+        let strategy = FormatStrategy::Prettier(PrettierLanguage::Mdx);
         let err = resolve_for_api(
             serde_json::json!({ "printWidth": 1000 }),
             path,

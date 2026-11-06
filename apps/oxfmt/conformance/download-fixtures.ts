@@ -135,7 +135,6 @@ export function assertDownloaded(names: string[]) {
   }
 }
 
-// @ts-expect-error -- `import.meta.main` is newer than the `@types/node` (24.1) here
 if (import.meta.main) {
   // Names given as arguments (e.g. `prettier`) narrow the download, none means every source
   const names = process.argv.slice(2);

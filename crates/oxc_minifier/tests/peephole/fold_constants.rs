@@ -481,7 +481,7 @@ fn test_fold_unary() {
 
     fold("a=-0", "a=-0");
     fold("a=-(0)", "a=-0");
-    fold_same("a=-Infinity");
+    fold("a=-Infinity", "a=-1e400");
     fold("a=-NaN", "a=NaN");
     fold_same("a=-foo()");
     fold("-undefined", "NaN");
@@ -497,7 +497,7 @@ fn test_fold_unary() {
     fold("a=+(f?!0:!1)", "a=+!!f");
     fold_same("a=+(f?(foo, !0):(bar, !1))");
     fold("a=+0", "a=0");
-    fold("a=+Infinity", "a=Infinity");
+    fold("a=+Infinity", "a=1e400");
     fold("a=+NaN", "a=NaN");
     fold("a=+-7", "a=-7");
     fold("a=+.5", "a=.5");
@@ -1014,10 +1014,10 @@ fn test_fold_arithmetic() {
 
 #[test]
 fn test_fold_arithmetic_infinity() {
-    fold("x=-Infinity-2", "x=-Infinity");
-    fold("x=Infinity-2", "x=Infinity");
-    fold("x=Infinity*5", "x=Infinity");
-    fold("x = Infinity ** 2", "x = Infinity");
+    fold("x=-Infinity-2", "x=-1e400");
+    fold("x=Infinity-2", "x=1e400");
+    fold("x=Infinity*5", "x=1e400");
+    fold("x = Infinity ** 2", "x = 1e400");
     fold("x = Infinity ** -2", "x = 0");
 
     fold("x = Infinity % Infinity", "x = NaN");
@@ -1100,13 +1100,13 @@ fn test_fold_multiply() {
 #[test]
 fn test_fold_division() {
     fold("x = Infinity / Infinity", "x = NaN");
-    fold("x = Infinity / 0", "x = Infinity");
+    fold("x = Infinity / 0", "x = 1e400");
     // `1 / 0` is the canonical printed spelling of Infinity and is kept as-is.
     fold_same("x = 1 / 0");
     fold_same("x = -1 / 0");
     // A negative-zero divisor is not canonical and can still be folded.
-    fold("x = 1 / -0", "x = -Infinity");
-    fold("x = -1 / -0", "x = Infinity");
+    fold("x = 1 / -0", "x = -1e400");
+    fold("x = -1 / -0", "x = 1e400");
     fold("x = 0 / 0", "x = NaN");
     fold("x = 360 / 360", "x = 1");
     fold("x = 10.5 / 0.75", "x = 14");
@@ -1191,7 +1191,7 @@ fn test_fold_exponential_disagrees_with_ieee_pow() {
     fold("x = (-1) ** NaN", "x = NaN");
 
     // The cases `pow` and `Number::exponentiate` agree on.
-    fold("x = 2 ** Infinity", "x = Infinity");
+    fold("x = 2 ** Infinity", "x = 1e400");
     fold("x = 2 ** NaN", "x = NaN");
     fold("x = NaN ** 0", "x = 1");
     fold("x = Infinity ** 0", "x = 1");
@@ -1334,8 +1334,8 @@ fn test_fold_instance_of_additional() {
 #[test]
 fn test_fold_left_child_op() {
     fold("x & Infinity & 2", "x & 0");
-    fold_same("x - Infinity - 2"); // FIXME: want "x-Infinity"
-    fold_same("x - 1 + Infinity");
+    fold("x - Infinity - 2", "x - 1e400 - 2"); // FIXME: want "x-1e400"
+    fold("x - 1 + Infinity", "x - 1 + 1e400");
     fold_same("x - 2 + 1");
     fold_same("x - 2 + 3");
     fold_same("1 + x - 2 + 1");
@@ -1397,8 +1397,8 @@ fn test_does_not_duplicate_large_tracked_strings_when_folding_addition() {
 #[test]
 fn test_to_number() {
     fold("x = +''", "x = 0");
-    fold("x = +'+Infinity'", "x = Infinity");
-    fold("x = +'-Infinity'", "x = -Infinity");
+    fold("x = +'+Infinity'", "x = 1e400");
+    fold("x = +'-Infinity'", "x = -1e400");
 
     for op in ["", "+", "-"] {
         for s in ["inf", "infinity", "INFINITY", "InFiNiTy"] {
