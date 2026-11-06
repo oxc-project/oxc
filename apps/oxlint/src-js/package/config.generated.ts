@@ -2102,6 +2102,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, ConsistentFunctionScoping]
     | [AllowWarnDeny, ExplicitLengthCheck]
     | [AllowWarnDeny, ExplicitTimerDelayMode]
+    | [AllowWarnDeny, FilenameCaseConfigJson]
     | [AllowWarnDeny, ImportStyleConfig]
     | [AllowWarnDeny, MaxNestedCalls]
     | [AllowWarnDeny, NoArrayReduce]
