@@ -1,6 +1,6 @@
 commit: 0372f7f1
 
-node: v24.19.0
+node: v26.12.1
 
 Passed: 326 of 419 (77.80%)
 
@@ -12,9 +12,9 @@ Failures:
 	    ^^^^^^^^^
 
 SyntaxError: Unexpected eval or arguments in strict mode
-    at new Script (node:vm:117:7)
-    at createScript (node:vm:269:10)
-    at Object.runInThisContext (node:vm:317:10)
+    at new Script (node:vm:118:7)
+    at createScript (node:vm:270:10)
+    at Object.runInThisContext (node:vm:318:10)
     at VitestModuleRunner.directRequest (./node_modules/vite/dist/node/module-runner.js:1288:80)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async VitestModuleRunner.cachedRequest (./node_modules/vite/dist/node/module-runner.js:1195:73)
@@ -38,9 +38,9 @@ AssertionError: expected undefined to be 'hello' // Object.is equality
 	               ^
 
 SyntaxError: Unexpected token '['
-    at new Script (node:vm:117:7)
-    at createScript (node:vm:269:10)
-    at Object.runInThisContext (node:vm:317:10)
+    at new Script (node:vm:118:7)
+    at createScript (node:vm:270:10)
+    at Object.runInThisContext (node:vm:318:10)
     at VitestModuleRunner.directRequest (./node_modules/vite/dist/node/module-runner.js:1288:80)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async VitestModuleRunner.cachedRequest (./node_modules/vite/dist/node/module-runner.js:1195:73)

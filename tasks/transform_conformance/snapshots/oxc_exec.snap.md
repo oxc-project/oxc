@@ -1,6 +1,6 @@
 commit: 0372f7f1
 
-node: v24.19.0
+node: v26.12.1
 
 Passed: 49 of 51 (96.08%)
 
