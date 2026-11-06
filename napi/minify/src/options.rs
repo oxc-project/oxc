@@ -385,6 +385,20 @@ pub struct LegalCommentsLinked {
 }
 
 #[napi(object)]
+pub struct CommentOptions {
+    /// Preserve annotation comments such as `@__PURE__`, `#__PURE__`,
+    /// `@__NO_SIDE_EFFECTS__`, `webpackChunkName`, and `@vite-ignore`.
+    ///
+    /// @default false
+    pub annotation: Option<bool>,
+
+    /// Preserve JSDoc comments.
+    ///
+    /// @default false
+    pub jsdoc: Option<bool>,
+}
+
+#[napi(object)]
 pub struct CodegenOptions {
     /// Remove whitespace.
     ///
@@ -408,6 +422,13 @@ pub struct CodegenOptions {
     /// @default false
     pub ascii_only: Option<bool>,
 
+    /// Preserve annotation and JSDoc comments. `true` enables both kinds;
+    /// an object enables each kind individually. Regular comments are always removed.
+    /// Legal comments are controlled separately by `legalComments`.
+    ///
+    /// @default false
+    pub comments: Option<Either<bool, CommentOptions>>,
+
     /// How to handle legal comments (comments containing `@license`, `@preserve`, or starting with `//!`/`/*!`).
     ///
     /// * `"none"` - Do not preserve any legal comments.
@@ -423,7 +444,12 @@ pub struct CodegenOptions {
 
 impl Default for CodegenOptions {
     fn default() -> Self {
-        Self { remove_whitespace: Some(true), ascii_only: None, legal_comments: None }
+        Self {
+            remove_whitespace: Some(true),
+            ascii_only: None,
+            comments: None,
+            legal_comments: None,
+        }
     }
 }
 
@@ -441,6 +467,17 @@ impl CodegenOptions {
             oxc_codegen::CodegenOptions { minify: false, ..oxc_codegen::CodegenOptions::minify() }
         };
         opts.ascii_only = self.ascii_only.unwrap_or(false);
+        match &self.comments {
+            Some(Either::A(enabled)) => {
+                opts.comments.annotation = *enabled;
+                opts.comments.jsdoc = *enabled;
+            }
+            Some(Either::B(comments)) => {
+                opts.comments.annotation = comments.annotation.unwrap_or(false);
+                opts.comments.jsdoc = comments.jsdoc.unwrap_or(false);
+            }
+            None => {}
+        }
 
         if let Some(legal) = &self.legal_comments {
             opts.comments.legal = match legal {

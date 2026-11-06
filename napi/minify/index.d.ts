@@ -35,6 +35,14 @@ export interface CodegenOptions {
    */
   asciiOnly?: boolean
   /**
+   * Preserve annotation and JSDoc comments. `true` enables both kinds;
+   * an object enables each kind individually. Regular comments are always removed.
+   * Legal comments are controlled separately by `legalComments`.
+   *
+   * @default false
+   */
+  comments?: boolean | CommentOptions
+  /**
    * How to handle legal comments (comments containing `@license`, `@preserve`, or starting with `//!`/`/*!`).
    *
    * * `"none"` - Do not preserve any legal comments.
@@ -46,6 +54,22 @@ export interface CodegenOptions {
    * @default "none" (when minifying)
    */
   legalComments?: 'none' | 'inline' | 'eof' | 'external' | { linked: string }
+}
+
+export interface CommentOptions {
+  /**
+   * Preserve annotation comments such as `@__PURE__`, `#__PURE__`,
+   * `@__NO_SIDE_EFFECTS__`, `webpackChunkName`, and `@vite-ignore`.
+   *
+   * @default false
+   */
+  annotation?: boolean
+  /**
+   * Preserve JSDoc comments.
+   *
+   * @default false
+   */
+  jsdoc?: boolean
 }
 
 export interface CompressOptions {
