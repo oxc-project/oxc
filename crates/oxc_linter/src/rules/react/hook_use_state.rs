@@ -31,6 +31,9 @@ fn follow_naming_convention(span: Span) -> OxcDiagnostic {
 struct HookUseStateConfig {
     /// When true the rule will ignore the name of the destructured value.
     allow_destructured_state: bool,
+
+    /// Ignore the naming convention when either binding starts with an underscore.
+    allow_unused: bool,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
@@ -76,6 +79,13 @@ declare_oxc_lint!(
     ///  return [color, setColor];
     ///}
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// `allowUnused` defaults to `false`, preserving the upstream naming convention.
+    /// Set it to `true` to allow intentionally unused value or setter bindings named
+    /// `_` or prefixed with `_`, such as `[_, setCount]` or `[count, _unusedSetter]`.
+    /// Both bindings must still form a valid value + setter pair.
     HookUseState,
     react,
     style,
@@ -148,6 +158,12 @@ impl Rule for HookUseState {
             ctx.diagnostic(require_to_destruct(array_pattern.span()));
             return;
         };
+
+        if self.0.allow_unused
+            && (value_variable_name.starts_with('_') || setter_variable_name.starts_with('_'))
+        {
+            return;
+        }
 
         let Some((lowercase_prefix, suffix)) =
             split_leading_lowercase(value_variable_name.as_str())
@@ -303,4 +319,61 @@ fn test() {
     ];
 
     Tester::new(HookUseState::NAME, HookUseState::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn test_allow_unused() {
+    use crate::tester::Tester;
+    use serde_json::json;
+
+    let pass = vec![
+        (
+            "import { useState } from 'react'; const [_, setCount] = useState(0);",
+            Some(json!([{"allowUnused": true}])),
+        ),
+        (
+            "import { useState } from 'react'; const [count, _unusedSetter] = useState(0);",
+            Some(json!([{"allowUnused": true}])),
+        ),
+        (
+            "import React from 'react'; const [{count}, _setter] = React.useState({count: 0});",
+            Some(json!([{"allowUnused": true, "allowDestructuredState": true}])),
+        ),
+    ];
+
+    let fail = vec![
+        ("import { useState } from 'react'; const [_, setCount] = useState(0);", None),
+        (
+            "import { useState } from 'react'; const [count, _] = useState(0);",
+            Some(json!([{"allowUnused": false}])),
+        ),
+        (
+            "import { useState } from 'react'; const [count, updateCount] = useState(0);",
+            Some(json!([{"allowUnused": true}])),
+        ),
+        (
+            "import { useState } from 'react'; const _state = useState(0);",
+            Some(json!([{"allowUnused": true}])),
+        ),
+        (
+            "import { useState } from 'react'; const [count, _setter, extra] = useState(0);",
+            Some(json!([{"allowUnused": true}])),
+        ),
+        (
+            "import { useState } from 'react'; const [count, _setter, ...rest] = useState(0);",
+            Some(json!([{"allowUnused": true}])),
+        ),
+        (
+            "import { useState } from 'react'; const [_, {}] = useState(0);",
+            Some(json!([{"allowUnused": true}])),
+        ),
+        (
+            "import React from 'react'; const [{count}, _setter] = React.useState({count: 0});",
+            Some(json!([{"allowUnused": true}])),
+        ),
+    ];
+
+    Tester::new(HookUseState::NAME, HookUseState::PLUGIN, pass, fail)
+        .with_snapshot_suffix("allow_unused")
+        .test_and_snapshot();
 }
