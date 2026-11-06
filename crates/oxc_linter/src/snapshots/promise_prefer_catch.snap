@@ -187,3 +187,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────
    ╰────
   help: Handle promise errors in a `catch` instead of using the second argument of `then`.
+
+  ⚠ promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
+   ╭─[prefer_catch.tsx:1:32]
+ 1 │ function foo(undefined) { prom.then(undefined, fn2) }
+   ·                                ────
+   ╰────
+  help: Handle promise errors in a `catch` instead of using the second argument of `then`.

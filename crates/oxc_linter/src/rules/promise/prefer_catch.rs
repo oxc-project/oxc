@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::MemberExpression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, MemberExpression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -79,11 +82,15 @@ impl Rule for PreferCatch {
             ctx.diagnostic(diagnostic);
             return;
         };
-        let then_value = then_arg.without_parentheses();
+        let is_null_or_undefined = match then_arg.without_parentheses() {
+            Expression::NullLiteral(_) => true,
+            Expression::Identifier(ident) => {
+                ident.is_undefined() && ctx.is_reference_to_global_variable(ident)
+            }
+            _ => false,
+        };
 
-        if (!then_value.is_null() && !then_value.is_undefined())
-            || call_expr.type_arguments.is_some()
-        {
+        if !is_null_or_undefined || call_expr.type_arguments.is_some() {
             ctx.diagnostic(diagnostic);
             return;
         }
@@ -146,6 +153,7 @@ fn test() {
         "foo(prom.then(fn1, fn2))",
         "cond ? prom.then(fn1, fn2) : other",
         "export default prom.then(fn1, fn2)",
+        "function foo(undefined) { prom.then(undefined, fn2) }",
     ];
 
     let fix = vec![
@@ -172,6 +180,10 @@ fn test() {
             "Promise.resolve(1).then<number, void>(null, () => {})",
         ),
         ("prom.then<string>(undefined, fn2)", "prom.then<string>(undefined, fn2)"),
+        (
+            "function foo(undefined) { prom.then(undefined, fn2) }",
+            "function foo(undefined) { prom.then(undefined, fn2) }",
+        ),
     ];
 
     Tester::new(PreferCatch::NAME, PreferCatch::PLUGIN, pass, fail)
