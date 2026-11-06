@@ -1446,8 +1446,7 @@ pub fn create_unused_directives_messages(
             RuleCommentType::All => {
                 let fixes = if let Some(source_text) = fix_source_text {
                     PossibleFixes::Single(
-                        unused_comment.create_fix(source_text)
-                            .with_message(fix_message),
+                        unused_comment.create_fix(source_text).with_message(fix_message),
                     )
                 } else {
                     PossibleFixes::None
@@ -1484,8 +1483,6 @@ pub fn create_unused_directives_messages(
         } else {
             directive_prefix.unused_enable_message()
         };
-        // TODO: fixer
-        // copy the structure of disable directives
         messages.push(Message::new(diagnostic(message, *span), PossibleFixes::None));
     }
 
