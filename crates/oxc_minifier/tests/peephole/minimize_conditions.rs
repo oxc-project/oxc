@@ -1494,3 +1494,16 @@ fn test_fold_equal_branches_keeps_indirect_access() {
     // A side-effectful test folds to a sequence, which stays indirect.
     test("(c() ? eval : eval)('x')", "(c(), eval)('x')");
 }
+
+#[test]
+fn test_no_compress_logical_assignment_with_eval() {
+    // The `eval` can rebind `x` between the read of `x.y` and the write, so the
+    // compound form would write to the old object.
+    test(
+        "function f() { var x = { y: 0 }; x.y || (eval(\"x = { y: 9 }\"), x.y = 3); return x.y; }",
+        "function f() {
+	var x = { y: 0 };
+	return x.y || (eval('x = { y: 9 }'), x.y = 3), x.y;
+}",
+    );
+}
