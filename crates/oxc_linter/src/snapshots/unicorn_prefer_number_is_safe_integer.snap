@@ -1,0 +1,318 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:8]
+ 1 │ Number.isInteger(x)
+   ·        ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:9]
+ 1 │ !Number.isInteger(x)
+   ·         ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:12]
+ 1 │ if (Number.isInteger(x)) {}
+   ·            ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:13]
+ 1 │ if (!Number.isInteger(x)) {}
+   ·             ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:8]
+ 1 │ Number.isInteger(0.5)
+   ·        ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:17]
+ 1 │ (( (( Number )).isInteger( ((x)), )))
+   ·                 ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:8]
+ 1 │ Number.isInteger(x) ? a : b
+   ·        ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:8]
+ 1 │ Number.isInteger(/* comment */ x)
+   ·        ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:8]
+ 1 │ Number.isInteger(...x)
+   ·        ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:8]
+ 1 │ Number.isInteger()
+   ·        ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ value % 1 === 0
+   · ───────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ 0 === value % 1
+   · ───────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ object.value % 1 === 0
+   · ──────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ (foo, bar) % 1 === 0
+   · ────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ Math.floor(value) === value
+   · ───────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ Math.floor(1) === 1.0
+   · ─────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ Math.floor(1n) === 0x1n
+   · ───────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ value === Math.floor(value)
+   · ───────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ Math.trunc(value) === value
+   · ───────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ value === Math.trunc(value)
+   · ───────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ Math.trunc(object.value) === object.value
+   · ─────────────────────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ Math.trunc(object["value"]) === object.value
+   · ────────────────────────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ _.isInteger(value)
+   · ──────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ lodash.isInteger(value)
+   · ───────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ underscore.isInteger(value)
+   · ───────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ _.isSafeInteger(value)
+   · ──────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ lodash.isSafeInteger(value)
+   · ───────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ underscore.isSafeInteger(value)
+   · ───────────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ value /* comment */ % 1 === 0
+   · ─────────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ 0 === value /* comment */ % 1
+   · ─────────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ _.isInteger(/* comment */ value)
+   · ────────────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ Math.trunc(/* comment */ value) === value
+   · ─────────────────────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:8]
+ 1 │ Number.isInteger(x as number)
+   ·        ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:8]
+ 1 │ Number.isInteger(x!)
+   ·        ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ Math.trunc(value as number) === value
+   · ─────────────────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ Math.trunc(value!) === value
+   · ────────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ Math.trunc(value) === value as number
+   · ─────────────────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:8]
+ 1 │ Number.isInteger(2 ** 53)
+   ·        ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:9]
+ 1 │ !Number.isInteger(2 ** 53)
+   ·         ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ [['1']] % 1 === 0
+   · ─────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over `Number.isInteger()`.
+   ╭─[prefer_number_is_safe_integer.tsx:1:8]
+ 1 │ Number.isInteger(x, y)
+   ·        ─────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ Math.trunc(object[index]) === object[index]
+   · ───────────────────────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ _.isInteger(object./* keep */value)
+   · ───────────────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:1]
+ 1 │ Math.trunc(value) === value /* keep */
+   · ───────────────────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
+
+  ⚠ unicorn(prefer-number-is-safe-integer): Prefer `Number.isSafeInteger()` over this integer check.
+   ╭─[prefer_number_is_safe_integer.tsx:1:20]
+ 1 │ function f(){return.5 % 1 === 0}
+   ·                    ────────────
+   ╰────
+  help: Review the value's type and range before using `Number.isSafeInteger()`.
