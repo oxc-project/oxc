@@ -1,6 +1,8 @@
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use serde_json::Value;
 
+use oxc_language_server::WorkingDirectory;
+
 use crate::core::config_discovery;
 
 #[derive(Debug, Default, Serialize, Clone, PartialEq, Eq)]
@@ -9,6 +11,20 @@ pub struct FormatOptions {
     /// An empty string is treated as unset.
     pub config_path: Option<String>,
     pub disable_nested_config: bool,
+    /// Additional project roots below the workspace folder, each formatted as if it were its own
+    /// workspace folder (like `eslint.workingDirectories`). Entries are existing directories,
+    /// given as a path relative to the workspace folder (`"packages/a"` or
+    /// `{ "directory": "packages/a" }`); glob characters are literal. Handled by the language
+    /// server, not by the tool. Always disabled in Vite+ mode.
+    ///
+    /// A working directory does not inherit the configuration of its workspace folder. It resolves
+    /// its own config from its own root, the same way opening that directory as a workspace folder
+    /// would.
+    ///
+    /// A file in a working directory is ignored when the `.prettierignore` of the workspace folder
+    /// ignores it, or when the `.prettierignore` of the working directory does.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub working_directories: Vec<WorkingDirectory>,
 }
 
 impl FormatOptions {
@@ -17,6 +33,16 @@ impl FormatOptions {
         !self.disable_nested_config
             && self.config_path.is_none()
             && config_discovery().nested_configs()
+    }
+
+    /// Whether the formatter has to be rebuilt for these new options.
+    ///
+    /// `workingDirectories` is deliberately not compared: the language server owns it and rebuilds
+    /// this formatter itself when the option *resolves* to a different set of roots. A change
+    /// which only rewrites the entries resolves to the same roots and must not restart.
+    pub fn needs_restart(&self, other: &Self) -> bool {
+        self.config_path != other.config_path
+            || self.disable_nested_config != other.disable_nested_config
     }
 }
 
@@ -53,6 +79,17 @@ impl TryFrom<Value> for FormatOptions {
                 .get("fmt.disableNestedConfig")
                 .and_then(Value::as_bool)
                 .unwrap_or(false),
+            // an invalid entry is reported by the language server, it does not hide the other ones
+            working_directories: object
+                .get("workingDirectories")
+                .and_then(Value::as_array)
+                .map(|entries| {
+                    entries
+                        .iter()
+                        .filter_map(|entry| WorkingDirectory::deserialize(entry).ok())
+                        .collect()
+                })
+                .unwrap_or_default(),
         })
     }
 }

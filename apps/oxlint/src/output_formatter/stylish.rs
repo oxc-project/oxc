@@ -11,6 +11,8 @@ use crate::output_formatter::InternalFormatter;
 #[derive(Debug, Default)]
 pub struct StylishOutputFormatter;
 
+// Keeps the default `reports_config_warnings`: diagnostics are grouped under the file they
+// belong to.
 impl InternalFormatter for StylishOutputFormatter {
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         let reporter = StylishReporter::default();
