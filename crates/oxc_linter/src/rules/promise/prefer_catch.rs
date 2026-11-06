@@ -80,7 +80,10 @@ impl Rule for PreferCatch {
             return;
         };
         let then_value = then_arg.without_parentheses();
-        if !then_value.is_null() && !then_value.is_undefined() {
+
+        if (!then_value.is_null() && !then_value.is_undefined())
+            || call_expr.type_arguments.is_some()
+        {
             ctx.diagnostic(diagnostic);
             return;
         }
@@ -164,6 +167,11 @@ fn test() {
         ("prom.then(null, fn2, extra())", "prom.catch(fn2, extra())"),
         ("prom.then(null, ...handlers)", "prom.catch(...handlers)"),
         ("foo(prom.then(null, fn2))", "foo(prom.catch(fn2))"),
+        (
+            "Promise.resolve(1).then<number, void>(null, () => {})",
+            "Promise.resolve(1).then<number, void>(null, () => {})",
+        ),
+        ("prom.then<string>(undefined, fn2)", "prom.then<string>(undefined, fn2)"),
     ];
 
     Tester::new(PreferCatch::NAME, PreferCatch::PLUGIN, pass, fail)
