@@ -11,5 +11,3 @@
 `````toml
 
 `````
-
-### Input variants differ: BOM

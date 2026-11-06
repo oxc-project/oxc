@@ -64,3 +64,14 @@ fn parse_error_is_err() {
         );
     }
 }
+
+/// A whitespace-only file formats to empty (Prettier does the same).
+#[test]
+fn whitespace_only_is_empty() {
+    for (source, expected) in
+        [("", ""), (" \n", ""), ("\u{feff}", "\u{feff}"), ("\u{feff} \n", "\u{feff}")]
+    {
+        let formatted = format(source, TomlFormatOptions::default()).expect("should format");
+        assert_eq!(formatted, expected, "{source:?}");
+    }
+}
