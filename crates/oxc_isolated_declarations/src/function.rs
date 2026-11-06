@@ -86,15 +86,20 @@ impl<'a> IsolatedDeclarations<'a> {
                 .map(|ts_type| {
                     // If a defaulted parameter is followed by a required parameter, declaration
                     // emit may need to add `undefined` to its type because the parameter cannot be
-                    // marked optional. Preserve annotations whose resolved type is unknown: unlike
-                    // TypeScript, isolated declaration emit does not have a type checker available
-                    // to determine whether they already include `undefined`.
+                    // marked optional. Isolated declaration emit has no type checker to tell
+                    // whether an unresolved annotation already includes `undefined`. Type
+                    // references are widened anyway: `T | undefined` is redundant at worst,
+                    // while keeping `T` is narrower than the source when `T` excludes
+                    // `undefined`. Other unresolved annotations are preserved.
                     if (is_remaining_params_have_required
                         || (param.optional && param.has_modifier()))
                         && !has_explicit_undefined_union_member(&ts_type)
                     {
                         let presence = undefined_presence(&ts_type);
                         let can_add = can_add_undefined(&ts_type);
+                        let can_add = can_add
+                            || matches!(presence, UndefinedPresence::Unresolved)
+                                && is_widenable_type_reference(&ts_type);
                         match (presence, can_add) {
                             (UndefinedPresence::Present, _)
                             | (UndefinedPresence::Unresolved, false) => {}
@@ -337,5 +342,40 @@ fn can_add_undefined(ts_type: &TSType<'_>) -> bool {
             intersection.types.iter().all(can_add_undefined)
         }
         _ => false,
+    }
+}
+
+/// Whether the annotation is a type reference, possibly parenthesized or in a union whose other
+/// members `undefined` can be added to, so that `T | undefined` is the safe emit.
+///
+/// Intersections and unions with `any` or `unknown` are excluded: their result depends on the
+/// referenced type in ways that may already include `undefined` or call for TS9025.
+fn is_widenable_type_reference(ts_type: &TSType<'_>) -> bool {
+    widenable_and_addable(ts_type).0
+}
+
+/// Returns `(is_widenable_type_reference(ts_type), can_add_undefined(ts_type))`, walking each
+/// nested union and parenthesized type once so deeply nested annotations stay linear.
+fn widenable_and_addable(ts_type: &TSType<'_>) -> (bool, bool) {
+    match ts_type {
+        TSType::TSTypeReference(_) => (true, false),
+        TSType::TSParenthesizedType(parenthesized) => {
+            widenable_and_addable(&parenthesized.type_annotation)
+        }
+        TSType::TSUnionType(union) => {
+            let mut has_reference = false;
+            let mut members_widenable = true;
+            let mut all_addable = true;
+            for member in &union.types {
+                let (widenable, addable) = widenable_and_addable(member);
+                has_reference |= widenable;
+                all_addable &= addable;
+                members_widenable &=
+                    !matches!(member, TSType::TSAnyKeyword(_) | TSType::TSUnknownKeyword(_))
+                        && (widenable || addable);
+            }
+            (has_reference && members_widenable, all_addable)
+        }
+        _ => (false, can_add_undefined(ts_type)),
     }
 }
