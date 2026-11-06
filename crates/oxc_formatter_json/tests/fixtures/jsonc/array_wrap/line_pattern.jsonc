@@ -1,0 +1,6 @@
+{
+  // Above the threshold: wraps two per line, trailing comma follows the option
+  "wrapped": ["a", "b", "c", "d", "e"],
+  // At or below the threshold: stays flat
+  "flat": ["a", "b", "c"]
+}

@@ -1,0 +1,69 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  // Above the threshold: wraps two per line, trailing comma follows the option
+  "wrapped": ["a", "b", "c", "d", "e"],
+  // At or below the threshold: stays flat
+  "flat": ["a", "b", "c"]
+}
+
+==================== Output ====================
+--------------------------------------------------------------------------------------
+{ arrayWrap: {"linePattern":"2","wrapThreshold":3}, printWidth: 80, variant: "jsonc" }
+--------------------------------------------------------------------------------------
+{
+  // Above the threshold: wraps two per line, trailing comma follows the option
+  "wrapped": [
+    "a", "b",
+    "c", "d",
+    "e",
+  ],
+  // At or below the threshold: stays flat
+  "flat": ["a", "b", "c"],
+}
+
+---------------------------------------------------------------------------------------
+{ arrayWrap: {"linePattern":"2","wrapThreshold":3}, printWidth: 100, variant: "jsonc" }
+---------------------------------------------------------------------------------------
+{
+  // Above the threshold: wraps two per line, trailing comma follows the option
+  "wrapped": [
+    "a", "b",
+    "c", "d",
+    "e",
+  ],
+  // At or below the threshold: stays flat
+  "flat": ["a", "b", "c"],
+}
+
+-------------------------------------------------------------------------------------------------------------
+{ arrayWrap: {"linePattern":"2","wrapThreshold":3}, printWidth: 80, trailingComma: "none", variant: "jsonc" }
+-------------------------------------------------------------------------------------------------------------
+{
+  // Above the threshold: wraps two per line, trailing comma follows the option
+  "wrapped": [
+    "a", "b",
+    "c", "d",
+    "e"
+  ],
+  // At or below the threshold: stays flat
+  "flat": ["a", "b", "c"]
+}
+
+--------------------------------------------------------------------------------------------------------------
+{ arrayWrap: {"linePattern":"2","wrapThreshold":3}, printWidth: 100, trailingComma: "none", variant: "jsonc" }
+--------------------------------------------------------------------------------------------------------------
+{
+  // Above the threshold: wraps two per line, trailing comma follows the option
+  "wrapped": [
+    "a", "b",
+    "c", "d",
+    "e"
+  ],
+  // At or below the threshold: stays flat
+  "flat": ["a", "b", "c"]
+}
+
+===================== End =====================

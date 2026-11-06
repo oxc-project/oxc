@@ -93,7 +93,7 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
         // `objectWrap` controls the multi-line shape preservation: with `Auto` (preserve),
         // an object whose source has a newline right after `{` stays expanded.
         // With `Never` (collapse), the group decides purely by width.
-        // The array side does NOT do this — only objects.
+        // Arrays do this only under Oxfmt's opt-in `arrayWrap` (see `array.rs`).
         let options = f.context().options();
         let expand = match options.expand {
             Expand::Auto => {

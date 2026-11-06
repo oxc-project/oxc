@@ -2,8 +2,9 @@ use oxc_formatter::SortImportsOptions;
 use oxc_formatter_core::CoreFormatOptions;
 
 use super::{
-    super::oxfmtrc::FormatConfig, to_core_options::to_core_options,
-    to_oxc_formatter::to_sort_imports,
+    super::oxfmtrc::FormatConfig,
+    to_core_options::to_core_options,
+    to_oxc_formatter::{to_array_line_pattern, to_sort_imports},
 };
 
 /// The artifacts of the validation gate:
@@ -15,6 +16,8 @@ use super::{
 pub struct ValidatedOptions {
     pub core: CoreFormatOptions,
     pub sort_imports: Option<SortImportsOptions>,
+    /// Per-line element counts of `arrayWrap.linePattern`.
+    pub array_line_pattern: Option<Vec<u32>>,
 }
 
 /// The eager validation gate during config resolution.
@@ -27,5 +30,9 @@ pub struct ValidatedOptions {
 /// # Errors
 /// Returns an error if any option value is invalid.
 pub fn validate(config: &FormatConfig) -> Result<ValidatedOptions, String> {
-    Ok(ValidatedOptions { core: to_core_options(config)?, sort_imports: to_sort_imports(config)? })
+    Ok(ValidatedOptions {
+        core: to_core_options(config)?,
+        sort_imports: to_sort_imports(config)?,
+        array_line_pattern: to_array_line_pattern(config)?,
+    })
 }

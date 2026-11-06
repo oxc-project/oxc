@@ -461,6 +461,7 @@ mod tests_to_prettier {
         // Even with all oxfmt-specific options set, none should appear in the Prettier options
         let config = config_from(
             r#"{
+                "arrayWrap": "collapse",
                 "insertFinalNewline": false,
                 "sortImports": true,
                 "sortPackageJson": true,
@@ -472,6 +473,7 @@ mod tests_to_prettier {
         let obj = value.as_object().unwrap();
 
         for key in [
+            "arrayWrap",
             "insertFinalNewline",
             "sortImports",
             "experimentalSortImports",
