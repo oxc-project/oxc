@@ -1,0 +1,18 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "overrides": [
+    {
+      "files": [
+        "*.ts"
+      ],
+      "plugins": [
+        "import"
+      ],
+      "rules": {
+        "import/no-cycle": "error"
+      }
+    }
+  ]
+}
