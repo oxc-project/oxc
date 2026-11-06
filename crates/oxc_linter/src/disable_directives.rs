@@ -1,8 +1,9 @@
-use std::cell::RefCell;
+use std::{borrow::Cow, cell::RefCell};
 
 use itertools::Itertools;
 use oxc_ast::Comment;
 use oxc_span::Span;
+use oxc_syntax::line_terminator::is_line_terminator;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
 
@@ -286,6 +287,36 @@ pub struct DisableRuleComment {
     pub r#type: RuleCommentType,
 }
 
+impl DisableRuleComment {
+    /// Remove the comment, preserving separators when it shares a line with code.
+    pub fn create_fix(&self, source_text: &str) -> Fix {
+        let has_code_before = source_text[..self.span.start as usize]
+            .rsplit(is_line_terminator)
+            .next()
+            .is_some_and(|text| !text.trim().is_empty());
+        let has_code_after = source_text[self.span.end as usize..]
+            .split(is_line_terminator)
+            .next()
+            .is_some_and(|text| !text.trim().is_empty());
+        let replacement = if has_code_before || has_code_after {
+            let line_terminators: String = self
+                .span
+                .source_text(source_text)
+                .chars()
+                .filter(|&ch| is_line_terminator(ch))
+                .collect();
+            if line_terminators.is_empty() {
+                Cow::Borrowed(" ")
+            } else {
+                Cow::Owned(line_terminators)
+            }
+        } else {
+            Cow::Borrowed("")
+        };
+        Fix::new(replacement, self.fix_span)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DisableDirectives {
     /// All the disabled rules with their corresponding covering spans
@@ -497,9 +528,6 @@ impl DisableDirectivesBuilder {
     /// span that covers the entire line (including leading whitespace and the
     /// trailing newline). Otherwise returns the comment's full outer span
     /// (including `//` or `/* */` delimiters).
-    ///
-    /// This span is stored in [`DisabledRule`] so that `Fix::delete(span)`
-    /// produces the correct edit without any extra post-processing in callers.
     #[expect(clippy::cast_possible_truncation)]
     pub(crate) fn compute_comment_fix_span(comment: &Comment, source_text: &str) -> Span {
         let outer_start = comment.span.start as usize;
@@ -726,14 +754,20 @@ impl DisableDirectivesBuilder {
                 }
                 DirectiveKind::Enable => {
                     if rule_names.is_empty() {
-                        if let Some((start, disable_prefix, _, _)) = self.disable_all_start.take() {
+                        if let Some((
+                            start,
+                            disable_prefix,
+                            disable_comment_span,
+                            disable_fix_span,
+                        )) = self.disable_all_start.take()
+                        {
                             self.add_interval(
                                 start,
                                 comment_span.start,
                                 DisabledRule::All {
                                     directive_prefix: disable_prefix,
-                                    comment_span: outer_span,
-                                    fix_span: comment_fix_span,
+                                    comment_span: disable_comment_span,
+                                    fix_span: disable_fix_span,
                                     is_next_line: false,
                                 },
                             );
@@ -745,8 +779,13 @@ impl DisableDirectivesBuilder {
                         // `eslint-enable rule-name1, rule-name2`
                         for (rule_name, name_span) in rule_names {
                             let name_span = name_span.move_right(rule_list_start);
-                            if let Some((start, disable_prefix, _, _, _)) =
-                                self.disable_start_map.remove(rule_name)
+                            if let Some((
+                                start,
+                                disable_prefix,
+                                disable_name_span,
+                                disable_comment_span,
+                                disable_fix_span,
+                            )) = self.disable_start_map.remove(rule_name)
                             {
                                 self.add_interval(
                                     start,
@@ -754,9 +793,9 @@ impl DisableDirectivesBuilder {
                                     DisabledRule::Single {
                                         directive_prefix: disable_prefix,
                                         rule_name: rule_name.to_string(),
-                                        name_span,
-                                        comment_span: outer_span,
-                                        fix_span: comment_fix_span,
+                                        name_span: disable_name_span,
+                                        comment_span: disable_comment_span,
+                                        fix_span: disable_fix_span,
                                         is_next_line: false,
                                     },
                                 );
@@ -1411,6 +1450,7 @@ pub fn create_unused_directives_diagnostics(
 mod tests {
     use oxc_allocator::Allocator;
     use oxc_ast::Comment;
+    use oxc_diagnostics::OxcDiagnostic;
     use oxc_parser::Parser;
     use oxc_semantic::{Semantic, SemanticBuilder};
     use oxc_span::{SourceType, Span};
@@ -1418,6 +1458,7 @@ mod tests {
     use crate::disable_directives::{
         DirectivePrefix, DisabledRule, RuleCommentRule, RuleCommentType,
     };
+    use crate::fixer::{Fixer, Message, PossibleFixes};
 
     use super::{DisableDirectives, DisableDirectivesBuilder};
 
@@ -1427,6 +1468,31 @@ mod tests {
         assert!(parser_ret.diagnostics.is_empty());
         let semantic_ret = SemanticBuilder::new_linter().build(allocator.alloc(parser_ret.program));
         semantic_ret.semantic
+    }
+
+    #[test]
+    fn test_fix_unused_disable_directives_inline() {
+        for prefix in ["eslint", "oxlint"] {
+            for line_terminator in ["", "\n", "\r\n", "\r", "\u{2028}", "\u{2029}"] {
+                let source_text = format!(
+                    "function f() {{ return/* {prefix}-disable no-debugger{line_terminator}*/42; }}"
+                );
+                let allocator = Allocator::default();
+                let semantic = process_source(&allocator, &source_text);
+                let directives =
+                    DisableDirectivesBuilder::new().build(&source_text, semantic.comments());
+                let unused_comments = directives.collect_unused_disable_comments();
+                let fix = unused_comments[0].create_fix(&source_text);
+                let messages = vec![Message::new(
+                    OxcDiagnostic::warn("Unused directive"),
+                    PossibleFixes::Single(fix),
+                )];
+                let result = Fixer::new(&source_text, messages, Some(SourceType::default())).fix();
+                let separator = if line_terminator.is_empty() { " " } else { line_terminator };
+                assert_eq!(result.fixed_code, format!("function f() {{ return{separator}42; }}"));
+                assert_eq!(result.messages, []);
+            }
+        }
     }
 
     /// Replicates the `compute_comment_fix_span` logic for use in tests.

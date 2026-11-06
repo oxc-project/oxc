@@ -20,7 +20,7 @@ use crate::{
         plugins::plugin_display_name,
     },
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
-    fixer::{Fix, FixKind, Message, PossibleFixes},
+    fixer::{FixKind, Message, PossibleFixes},
     frameworks::FrameworkOptions,
     module_record::ModuleRecord,
     options::LintOptions,
@@ -402,7 +402,6 @@ impl<'a> ContextHost<'a> {
 
         for unused_disable_comment in unused_disable_comments {
             let span = unused_disable_comment.span;
-            let fix_span = unused_disable_comment.fix_span;
             match &unused_disable_comment.r#type {
                 RuleCommentType::All => {
                     self.push_diagnostic(Message::new(
@@ -412,7 +411,8 @@ impl<'a> ContextHost<'a> {
                         .with_label(span)
                         .with_severity(rule_severity),
                         PossibleFixes::Single(
-                            Fix::delete(fix_span)
+                            unused_disable_comment
+                                .create_fix(source_text)
                                 .with_kind(FixKind::Suggestion)
                                 .with_message(fix_message),
                         ),

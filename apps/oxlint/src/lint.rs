@@ -1300,6 +1300,26 @@ mod test {
     }
 
     #[test]
+    fn test_fix_unused_disable_directives_inline() {
+        Tester::new().with_cwd("fixtures/cli/fix_argument".into()).test_fix_with_args(
+            "unused_disable_directives_inline.vue",
+            "<script>\nfunction f() { return/* oxlint-disable no-debugger */42; }\nfunction g() { return /* oxlint-disable no-console\n*/ 42; }\nconst/* oxlint-disable no-alert */x = 1;\n</script>\n",
+            "<script>\nfunction f() { return 42; }\nfunction g() { return \n 42; }\nconst x = 1;\n</script>\n",
+            &["--report-unused-disable-directives"],
+        );
+    }
+
+    #[test]
+    fn test_fix_unused_disable_directives_paired() {
+        Tester::new().with_cwd("fixtures/cli/fix_argument".into()).test_fix_with_args(
+            "unused_disable_directives_paired.vue",
+            "<script>\n/* oxlint-disable */\nconst a = 1;\n/* oxlint-enable */\ndebugger;\n/* oxlint-disable no-debugger, no-console */\ndebugger;\n/* oxlint-enable no-debugger, no-console */\nconsole.log(1);\n</script>\n",
+            "<script>\nconst a = 1;\n/* oxlint-enable */\ndebugger;\n/* oxlint-disable no-debugger */\ndebugger;\n/* oxlint-enable no-debugger, no-console */\nconsole.log(1);\n</script>\n",
+            &["--report-unused-disable-directives", "-D", "no-console"],
+        );
+    }
+
+    #[test]
     fn test_print_config_ban_all_rules() {
         let args = &["-A", "all", "--print-config"];
         Tester::new().with_cwd("fixtures".into()).test_and_snapshot(args);
