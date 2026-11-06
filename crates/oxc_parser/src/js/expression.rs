@@ -1634,6 +1634,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
+        if self.nesting_depth >= crate::MAX_NESTING_DEPTH {
+            let error = diagnostics::nesting_depth_exceeded(self.cur_token().span());
+            return self.fatal_error(error);
+        }
+        self.nesting_depth += 1;
+        let expr =
+            self.parse_assignment_expression_or_higher_inner(allow_return_type_in_arrow_function);
+        self.nesting_depth -= 1;
+        expr
+    }
+
+    fn parse_assignment_expression_or_higher_inner(
+        &mut self,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         let start = self.cur_start();

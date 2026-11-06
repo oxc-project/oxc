@@ -136,6 +136,15 @@ pub(crate) const MAX_LEN: usize = if size_of::<usize>() >= 8 {
     isize::MAX as usize
 };
 
+/// Maximum nesting depth of statements and expressions.
+///
+/// Parsing recurses per nesting level, so unbounded nesting (e.g. thousands of
+/// parentheses or nested blocks, which are all legal JavaScript) overflows the
+/// thread stack and aborts the process. 256 stays far above the nesting found in
+/// real-world code while keeping even debug builds - whose stack frames are much
+/// larger - safe on a 1 MiB stack.
+pub(crate) const MAX_NESTING_DEPTH: u32 = 256;
+
 /// Return value of [`Parser::parse`] consisting of AST, errors and comments
 ///
 /// ## AST Validity
@@ -668,6 +677,9 @@ struct ParserImpl<'a, C: ParserConfig> {
     /// Module Record Builder
     module_record_builder: ModuleRecordBuilder<'a>,
 
+    /// Current statement/expression nesting depth, bounded by [`MAX_NESTING_DEPTH`]
+    nesting_depth: u32,
+
     /// Precomputed typescript detection
     is_ts: bool,
 }
@@ -701,6 +713,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             ctx: Self::default_context(source_type, options),
             ast: ParserAstBuilder::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
+            nesting_depth: 0,
             is_ts: source_type.is_typescript(),
         }
     }
@@ -1372,6 +1385,36 @@ mod test {
         // U+FFFD inside string literals — should parse fine
         let ret = Parser::new(&allocator, "\"oops \u{FFFD} oops\";", source_type).parse();
         assert!(!ret.program.is_empty());
+        assert!(ret.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn nesting_over_limit_reports_error_instead_of_overflowing_stack() {
+        let allocator = Allocator::default();
+        let source_text = format!("{}x{}", "(".repeat(300), ")".repeat(300));
+        let ret = Parser::new(&allocator, &source_text, SourceType::mjs()).parse();
+        assert!(ret.fatal_error);
+        assert!(ret.diagnostics.has_errors());
+
+        let allocator = Allocator::default();
+        let source_text = format!("{}x{}", "{".repeat(300), "}".repeat(300));
+        let ret = Parser::new(&allocator, &source_text, SourceType::mjs()).parse();
+        assert!(ret.fatal_error);
+        assert!(ret.diagnostics.has_errors());
+    }
+
+    #[test]
+    fn nesting_under_limit_parses() {
+        let allocator = Allocator::default();
+        let source_text = format!("{}x{}", "(".repeat(200), ")".repeat(200));
+        let ret = Parser::new(&allocator, &source_text, SourceType::mjs()).parse();
+        assert!(!ret.fatal_error);
+        assert!(ret.diagnostics.is_empty());
+
+        let allocator = Allocator::default();
+        let source_text = format!("{}x{}", "{".repeat(200), "}".repeat(200));
+        let ret = Parser::new(&allocator, &source_text, SourceType::mjs()).parse();
+        assert!(!ret.fatal_error);
         assert!(ret.diagnostics.is_empty());
     }
 

@@ -135,6 +135,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
+        if self.nesting_depth >= crate::MAX_NESTING_DEPTH {
+            let error = diagnostics::nesting_depth_exceeded(self.cur_token().span());
+            return self.fatal_error(error);
+        }
+        self.nesting_depth += 1;
+        let stmt = self.parse_statement_list_item_inner(stmt_ctx);
+        self.nesting_depth -= 1;
+        stmt
+    }
+
+    fn parse_statement_list_item_inner(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
 
