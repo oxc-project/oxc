@@ -91,6 +91,10 @@ parser_diagnostics! {
         OxcDiagnostic::error("Source length exceeds 4 GiB limit")
     };
 
+    nesting_depth_exceeded(span: Span) => {
+        OxcDiagnostic::error("Nesting depth exceeds the maximum supported depth").with_label(span)
+    };
+
     file_appears_to_be_binary() => {
         ts_error("1490", "File appears to be binary.")
     };
