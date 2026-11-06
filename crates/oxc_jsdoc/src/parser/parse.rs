@@ -129,6 +129,14 @@ pub fn parse_jsdoc(
                 // block parsing subsequent `@tag` lines.
                 brace_depth = 0;
                 square_brace_depth = 0;
+                // Unmatched `{` and inline backticks in descriptions are also line-oriented.
+                // Otherwise `Example { a` or `Example `a` swallows the next `@param`.
+                // Code fences (3+ backticks) still span lines so `@` inside examples
+                // is not treated as a tag.
+                curly_brace_depth = 0;
+                if backtick_count < 3 {
+                    backtick_count = 0;
+                }
             }
             '{' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
                 curly_brace_depth += 1;
@@ -432,5 +440,27 @@ mod tests {
         let (comment, tags) = parse_jsdoc(src, 0);
         assert!(comment.parsed().contains("@scope/pkg)."));
         assert_eq!(tags.iter().map(|t| t.kind.parsed()).collect::<Vec<_>>(), vec!["foo", "param"]);
+    }
+
+    #[test]
+    fn unmatched_brace_in_description_does_not_prevent_tag_split() {
+        // https://github.com/oxc-project/oxc/issues/28859
+        let src = " \n * Example { a\n *\n * @param p the param";
+        assert_eq!(tag_kinds(src), vec!["param"]);
+    }
+
+    #[test]
+    fn unmatched_backtick_in_description_does_not_prevent_tag_split() {
+        // https://github.com/oxc-project/oxc/issues/28859
+        let src = " \n * Example `a\n *\n * @param p the param";
+        assert_eq!(tag_kinds(src), vec!["param"]);
+    }
+
+    #[test]
+    fn balanced_braces_and_code_spans_still_split_tags() {
+        for description in ["Example { a }", "Example `{ a }`", "Example a }"] {
+            let source = format!("\n * {description}\n *\n * @param p the param");
+            assert_eq!(tag_kinds(&source), vec!["param"], "{description}");
+        }
     }
 }
