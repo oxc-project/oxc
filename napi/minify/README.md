@@ -67,6 +67,24 @@ console.log(result.code);
 console.log(result.map);
 ```
 
+### Preserving comments
+
+Comments are removed by default. Use `codegen.comments.annotation` to keep annotations such as
+`@__PURE__` and `@__NO_SIDE_EFFECTS__` for downstream bundlers:
+
+```javascript
+const result = minifySync("library.mjs", source, {
+  codegen: {
+    comments: { annotation: true },
+  },
+});
+```
+
+Set `codegen.comments.jsdoc` to preserve JSDoc comments, or `codegen.comments: true` to enable
+both kinds. Regular comments are always removed. Legal comments are controlled separately by
+`codegen.legalComments`. These options preserve comments on surviving code; compression can
+still remove annotated code.
+
 ### Property-name mangling
 
 Property mangling is opt-in and independent from identifier mangling. `include` is a JavaScript
