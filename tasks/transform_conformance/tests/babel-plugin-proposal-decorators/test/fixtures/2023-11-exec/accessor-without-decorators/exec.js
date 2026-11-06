@@ -13,4 +13,6 @@ foo.a = 10;
 foo.setD(40);
 expect([foo.a, foo.getD()]).toEqual([10, 40]);
 class Sub extends Foo {}
-expect(() => Sub.b).toThrow(TypeError);
+expect(Sub.b).toBe(2);
+Sub.b = 20;
+expect(Foo.b).toBe(20);

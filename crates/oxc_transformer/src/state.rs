@@ -47,6 +47,9 @@ pub struct TransformState<'a> {
     // State for multiple plugins interacting
     /// `true` if class properties plugin is enabled
     pub is_class_properties_plugin_enabled: bool,
+    /// `true` if class properties transform lowers classes using standard decorators,
+    /// even if class properties plugin is otherwise disabled.
+    pub lowers_standard_decorators: bool,
 }
 
 impl Default for TransformState<'_> {
@@ -65,6 +68,7 @@ impl Default for TransformState<'_> {
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
             is_class_properties_plugin_enabled: false,
+            lowers_standard_decorators: false,
         }
     }
 }
@@ -89,6 +93,7 @@ impl TransformState<'_> {
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
             is_class_properties_plugin_enabled: options.env.es2022.class_properties.is_some(),
+            lowers_standard_decorators: !options.decorator.legacy,
         }
     }
 

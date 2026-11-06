@@ -175,6 +175,7 @@ impl<'a> Transformer<'a> {
                 self.env.es2022,
                 !self.typescript.allow_declare_fields
                     || self.typescript.remove_class_fields_without_initializer,
+                !self.decorator.legacy,
             ),
             x2_es2021: ES2021::new(self.env.es2021),
             x2_es2020: ES2020::new(self.env.es2020),
@@ -541,6 +542,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         self.decorator.exit_method_definition(def, ctx);
     }
 
+    fn enter_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_es2022.enter_object_property(prop, ctx);
+    }
+
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_new_expression(expr, ctx);
@@ -622,6 +627,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
             typescript.exit_statement(stmt, ctx);
         }
         self.decorator.exit_statement(stmt, ctx);
+        self.x2_es2022.exit_statement(stmt, ctx);
         self.x2_es2018.exit_statement(stmt, ctx);
         self.x2_es2017.exit_statement(stmt, ctx);
     }
@@ -771,6 +777,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.decorator.enter_decorator(node, ctx);
+        self.x2_es2022.enter_decorator(node, ctx);
     }
 
     fn enter_formal_parameter_rest(

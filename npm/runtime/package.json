@@ -343,6 +343,11 @@
       },
       "./src/helpers/decorate.js"
     ],
+    "./helpers/decorateElement": {
+      "node": "./src/helpers/decorateElement.js",
+      "import": "./src/helpers/esm/decorateElement.js",
+      "default": "./src/helpers/decorateElement.js"
+    },
     "./helpers/decorateMetadata": [
       {
         "node": "./src/helpers/decorateMetadata.js",
@@ -359,6 +364,16 @@
       },
       "./src/helpers/decorateParam.js"
     ],
+    "./helpers/decoratorMetadata": {
+      "node": "./src/helpers/decoratorMetadata.js",
+      "import": "./src/helpers/esm/decoratorMetadata.js",
+      "default": "./src/helpers/decoratorMetadata.js"
+    },
+    "./helpers/decoratorStart": {
+      "node": "./src/helpers/decoratorStart.js",
+      "import": "./src/helpers/esm/decoratorStart.js",
+      "default": "./src/helpers/decoratorStart.js"
+    },
     "./helpers/defaults": {
       "node": "./src/helpers/defaults.js",
       "import": "./src/helpers/esm/defaults.js",
@@ -442,8 +457,11 @@
     "./helpers/esm/createForOfIteratorHelperLoose": "./src/helpers/esm/createForOfIteratorHelperLoose.js",
     "./helpers/esm/createSuper": "./src/helpers/esm/createSuper.js",
     "./helpers/esm/decorate": "./src/helpers/esm/decorate.js",
+    "./helpers/esm/decorateElement": "./src/helpers/esm/decorateElement.js",
     "./helpers/esm/decorateMetadata": "./src/helpers/esm/decorateMetadata.js",
     "./helpers/esm/decorateParam": "./src/helpers/esm/decorateParam.js",
+    "./helpers/esm/decoratorMetadata": "./src/helpers/esm/decoratorMetadata.js",
+    "./helpers/esm/decoratorStart": "./src/helpers/esm/decoratorStart.js",
     "./helpers/esm/defaults": "./src/helpers/esm/defaults.js",
     "./helpers/esm/defineAccessor": "./src/helpers/esm/defineAccessor.js",
     "./helpers/esm/defineEnumerableProperties": "./src/helpers/esm/defineEnumerableProperties.js",
@@ -487,7 +505,9 @@
     "./helpers/esm/regeneratorKeys": "./src/helpers/esm/regeneratorKeys.js",
     "./helpers/esm/regeneratorRuntime": "./src/helpers/esm/regeneratorRuntime.js",
     "./helpers/esm/regeneratorValues": "./src/helpers/esm/regeneratorValues.js",
+    "./helpers/esm/runInitializers": "./src/helpers/esm/runInitializers.js",
     "./helpers/esm/set": "./src/helpers/esm/set.js",
+    "./helpers/esm/setClassName": "./src/helpers/esm/setClassName.js",
     "./helpers/esm/setFunctionName": "./src/helpers/esm/setFunctionName.js",
     "./helpers/esm/setPrototypeOf": "./src/helpers/esm/setPrototypeOf.js",
     "./helpers/esm/skipFirstGeneratorNext": "./src/helpers/esm/skipFirstGeneratorNext.js",
@@ -700,10 +720,20 @@
       "import": "./src/helpers/esm/regeneratorValues.js",
       "default": "./src/helpers/regeneratorValues.js"
     },
+    "./helpers/runInitializers": {
+      "node": "./src/helpers/runInitializers.js",
+      "import": "./src/helpers/esm/runInitializers.js",
+      "default": "./src/helpers/runInitializers.js"
+    },
     "./helpers/set": {
       "node": "./src/helpers/set.js",
       "import": "./src/helpers/esm/set.js",
       "default": "./src/helpers/set.js"
+    },
+    "./helpers/setClassName": {
+      "node": "./src/helpers/setClassName.js",
+      "import": "./src/helpers/esm/setClassName.js",
+      "default": "./src/helpers/setClassName.js"
     },
     "./helpers/setFunctionName": {
       "node": "./src/helpers/setFunctionName.js",

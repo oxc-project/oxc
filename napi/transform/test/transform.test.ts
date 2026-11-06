@@ -1,3 +1,5 @@
+import { createRequire } from "node:module";
+import { runInNewContext } from "node:vm";
 import { Worker } from "node:worker_threads";
 import { describe, expect, it, test } from "vitest";
 
@@ -302,6 +304,38 @@ describe("inject plugin", () => {
       },
     });
     expect(ret.code).toEqual('import a from "foo\\"";\nconsole.log(a);\n');
+  });
+});
+
+describe("standard decorators", () => {
+  test.each(["esnext", "es2015"])("runs through the public API targeting %s", (target) => {
+    const ret = transformSync(
+      "test.js",
+      `
+        const calls = [];
+        const holder = {
+          decorate(value, context) {
+            if (this !== holder) throw new Error("Lost decorator receiver");
+            calls.push(context.name);
+            return value;
+          }
+        };
+        const Decorated = @holder.decorate class {
+          @holder.decorate #value = 1;
+          static accessor count = 2;
+          get value() { return this.#value; }
+        };
+        const result = [calls, new Decorated().value, Decorated.count];
+      `,
+      { target, sourceType: "script", helpers: { mode: HelperMode.External } },
+    );
+    expect(ret.errors).toEqual([]);
+    const require = createRequire(import.meta.url);
+    const helpers = Object.fromEntries(
+      Object.entries(ret.helpersUsed).map(([name, path]) => [name, require(path)]),
+    );
+    const result = runInNewContext(`${ret.code}\nresult;`, { babelHelpers: helpers });
+    expect(result).toEqual([["#value", "Decorated"], 1, 2]);
   });
 });
 

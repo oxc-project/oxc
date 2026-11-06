@@ -1,4 +1,4 @@
-mod legacy;
+pub mod legacy;
 mod options;
 
 use oxc_ast::ast::*;
