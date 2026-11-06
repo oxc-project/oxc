@@ -1031,6 +1031,24 @@ fn handle_error<'a>(
 // Compilation pipeline
 // -----------------------------------------------------------------------
 
+/// Whether a lint run analyses functions that contain an ESLint suppression.
+///
+/// Transforms keep babel-plugin-react-compiler 1.0.0's bailout: a suppressed
+/// React rule may hide a violation that makes compiling the function unsafe.
+/// Lint follows eslint-plugin-react-hooks 7.1 (React #35184) instead: once the
+/// compiler validates hooks usage and memoization dependencies itself, a
+/// suppression no longer stops it from reporting the function's other
+/// diagnostics. The suppression is still reported (`react/rule-suppression`),
+/// since a 1.0.0 build skips the function.
+fn lint_validates_suppressed_rules(
+    output_mode: CompilerOutputMode,
+    env_config: &EnvironmentConfig,
+) -> bool {
+    output_mode == CompilerOutputMode::Lint
+        && env_config.validate_hooks_usage
+        && env_config.validate_exhaustive_memoization_dependencies
+}
+
 /// Attempt to compile a single function.
 ///
 /// Returns `CodegenFunction` on success or the failed attempt's diagnostics.
@@ -1047,7 +1065,18 @@ fn try_compile_function<'a, const EMIT: bool>(
     if let (Some(start), Some(end)) = (source.fn_start, source.fn_end) {
         let affecting = filter_suppressions_that_affect_function(&context.suppressions, start, end);
         if !affecting.is_empty() {
-            return Err(suppressions_to_diagnostics(&affecting, context.source_text));
+            let suppression_diagnostics =
+                suppressions_to_diagnostics(&affecting, context.source_text);
+            if !lint_validates_suppressed_rules(output_mode, env_config) {
+                return Err(suppression_diagnostics);
+            }
+            // Report the suppression and keep analysing the function, so its
+            // other diagnostics are not hidden behind it.
+            log_error(
+                &suppression_diagnostics,
+                Some(source.fn_node.diagnostic_span()),
+                &mut context.diagnostics,
+            );
         }
     }
 
