@@ -405,6 +405,30 @@ fn test_inline_single_use_function_declaration() {
         "function c() { function f() {} r.a = f; r.b = f; }",
         "function c() { function f() {} r.a = f, r.b = f; }",
     );
+    test(
+        "function c() { function a() { g() } function b() { h() } r.a = a; r.b = b; }",
+        "function c() { r.a = function() { g(); }, r.b = function() { h(); }; }",
+    );
+    test(
+        "function c() { function a() { g() } function b() { h() } r.b = b; r.a = a; }",
+        "function c() { r.b = function() { h(); }, r.a = function() { g(); }; }",
+    );
+    test(
+        "function c() { function f() { g() } k(); r.f = f; }",
+        "function c() { k(), r.f = function() { g(); }; }",
+    );
+    test("function c() { function f() {} r.a = r.b = f; }", "function c() { r.a = r.b = function() {}; }");
+    test(
+        "function c() { function a() { g() } function b() { a() } r.b = b; }",
+        "function c() { function a() { g(); } r.b = function() { a(); }; }",
+    );
+    test(
+        "function c() { function f() { g() } for (const x of k()) h(x); r.f = f; }",
+        "function c() { for (let x of k()) h(x); r.f = function() { g(); }; }",
+    );
+    test_same("function c() { r.f = f; function f() {} }");
+    test_same("function c() { function f() {} r.f += f; }");
+    test_same("function c(o) { function f() {} with (o) r.f = f; }");
     test_same("function c() { function f() {} function n() { eval('f'); } r.f = f; }");
     test("function c() { { function f() {} r.f = f; } }", "function c() { r.f = function() {}; }");
     test("function f() {} r.f = f;", "r.f = function() {};");
