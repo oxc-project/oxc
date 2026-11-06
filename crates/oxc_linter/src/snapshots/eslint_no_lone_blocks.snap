@@ -3,6 +3,62 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint(no-lone-blocks): Block is unnecessary.
+   ╭─[no_lone_blocks.tsx:1:19]
+ 1 │ function test() { { console.log(6); console.log(6) } }
+   ·                   ──────────────────────────────────
+   ╰────
+  help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
+
+  ⚠ eslint(no-lone-blocks): Block is unnecessary.
+   ╭─[no_lone_blocks.tsx:1:29]
+ 1 │ function test() { before(); { notify(); } }
+   ·                             ─────────────
+   ╰────
+  help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
+
+  ⚠ eslint(no-lone-blocks): Block is unnecessary.
+   ╭─[no_lone_blocks.tsx:1:19]
+ 1 │ function test() { { notify(); } after(); }
+   ·                   ─────────────
+   ╰────
+  help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
+
+  ⚠ eslint(no-lone-blocks): Block is unnecessary.
+   ╭─[no_lone_blocks.tsx:1:29]
+ 1 │ function test() { before(); { notify(); again(); } after(); }
+   ·                             ──────────────────────
+   ╰────
+  help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
+
+  ⚠ eslint(no-lone-blocks): Block is unnecessary.
+   ╭─[no_lone_blocks.tsx:1:38]
+ 1 │ const test = function () { before(); { notify(); } };
+   ·                                      ─────────────
+   ╰────
+  help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
+
+  ⚠ eslint(no-lone-blocks): Block is unnecessary.
+   ╭─[no_lone_blocks.tsx:1:32]
+ 1 │ const test = () => { before(); { notify(); } };
+   ·                                ─────────────
+   ╰────
+  help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
+
+  ⚠ eslint(no-lone-blocks): Block is unnecessary.
+   ╭─[no_lone_blocks.tsx:1:35]
+ 1 │ class Test { method() { before(); { notify(); } } }
+   ·                                   ─────────────
+   ╰────
+  help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
+
+  ⚠ eslint(no-lone-blocks): Block is unnecessary.
+   ╭─[no_lone_blocks.tsx:1:35]
+ 1 │ async function test() { before(); { await notify(); } }
+   ·                                   ───────────────────
+   ╰────
+  help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
+
+  ⚠ eslint(no-lone-blocks): Block is unnecessary.
    ╭─[no_lone_blocks.tsx:1:1]
  1 │ {}
    · ──
