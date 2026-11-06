@@ -5,7 +5,7 @@
 ```
   x fixable-boolean-plugin(no-console-false): Console with fixable: false
    ,-[files/index.js:2:1]
- 1 | debugger;
+ 1 | 
  2 | console.log("test");
    : ^^^^^^^^^^^^^^^^^^^
    `----
