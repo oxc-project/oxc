@@ -256,7 +256,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
                     ],
                     "flags": "ScopeFlags(0x0)",
                     "id": 25,
-                    "node": "Program",
+                    "node": "Function(g)",
                     "symbols": []
                   },
                   {
@@ -271,7 +271,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
                     ],
                     "flags": "ScopeFlags(0x0)",
                     "id": 27,
-                    "node": "Program",
+                    "node": "Function(g)",
                     "symbols": [
                       {
                         "flags": "SymbolFlags(Function)",
@@ -379,7 +379,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
                     ],
                     "flags": "ScopeFlags(0x0)",
                     "id": 33,
-                    "node": "Program",
+                    "node": "Function(g)",
                     "symbols": [
                       {
                         "flags": "SymbolFlags(Function)",
@@ -464,7 +464,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-de
                     ],
                     "flags": "ScopeFlags(0x0)",
                     "id": 39,
-                    "node": "Program",
+                    "node": "Function(g)",
                     "symbols": [
                       {
                         "flags": "SymbolFlags(Function)",

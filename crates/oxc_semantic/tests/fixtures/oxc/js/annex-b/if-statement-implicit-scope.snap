@@ -23,7 +23,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/if-statement-impli
                     ],
                     "flags": "ScopeFlags(0x0)",
                     "id": 4,
-                    "node": "Program",
+                    "node": "Function(g)",
                     "symbols": [
                       {
                         "flags": "SymbolFlags(Function)",
@@ -98,7 +98,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/if-statement-impli
             ],
             "flags": "ScopeFlags(0x0)",
             "id": 7,
-            "node": "Program",
+            "node": "Function(g)",
             "symbols": []
           },
           {
@@ -113,7 +113,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/if-statement-impli
             ],
             "flags": "ScopeFlags(0x0)",
             "id": 9,
-            "node": "Program",
+            "node": "Function(g)",
             "symbols": [
               {
                 "flags": "SymbolFlags(Function)",

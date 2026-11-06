@@ -2147,7 +2147,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_ambient_context(func.declare);
 
         // Annex B.3.3: a bare function declaration in an `if` branch has an implicit block scope.
-        // This scope has no AST node; traversal recovers it as the function body scope's parent.
+        // The function node supplies its source range; traversal recovers the implicit scope
+        // as the function body scope's parent.
         let has_annex_b_if_scope = func.is_declaration()
             && func.id.is_some()
             && !func.r#async
@@ -2157,8 +2158,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if has_annex_b_if_scope {
             let parent_scope_id = self.current_scope_id;
             let flags = self.scoping.get_new_scope_flags(ScopeFlags::empty(), parent_scope_id);
-            self.current_scope_id =
-                self.scoping.add_scope(Some(parent_scope_id), NodeId::DUMMY, flags);
+            self.current_scope_id = self.scoping.add_scope(
+                Some(parent_scope_id),
+                self.node_store.current_node_id,
+                flags,
+            );
         }
 
         if func.is_declaration() {
