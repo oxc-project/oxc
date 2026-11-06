@@ -9634,6 +9634,9 @@
             }
           ]
         },
+        "unicorn/prefer-split-limit": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/prefer-spread": {
           "$ref": "#/definitions/RuleNoConfig"
         },

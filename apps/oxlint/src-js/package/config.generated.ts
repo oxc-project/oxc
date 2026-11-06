@@ -1655,6 +1655,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-set-has"?: RuleNoConfig;
   "unicorn/prefer-set-size"?: RuleNoConfig;
   "unicorn/prefer-single-call"?: RuleNoConfig | [AllowWarnDeny, PreferSingleCallConfig];
+  "unicorn/prefer-split-limit"?: RuleNoConfig;
   "unicorn/prefer-spread"?: RuleNoConfig;
   "unicorn/prefer-string-raw"?: RuleNoConfig;
   "unicorn/prefer-string-replace-all"?: RuleNoConfig;
