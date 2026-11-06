@@ -1277,6 +1277,7 @@ export interface DummyRuleMap {
   "oxc/no-async-endpoint-handlers"?: RuleNoConfig | [AllowWarnDeny, NoAsyncEndpointHandlersConfig];
   "oxc/no-barrel-file"?: RuleNoConfig | [AllowWarnDeny, NoBarrelFile];
   "oxc/no-const-enum"?: RuleNoConfig;
+  "oxc/no-export-then"?: RuleNoConfig;
   "oxc/no-map-spread"?: RuleNoConfig | [AllowWarnDeny, NoMapSpreadConfig];
   "oxc/no-optional-chaining"?: RuleNoConfig | [AllowWarnDeny, NoOptionalChainingConfig];
   "oxc/no-rest-spread-properties"?: RuleNoConfig | [AllowWarnDeny, NoRestSpreadPropertiesOptions];
