@@ -4,31 +4,21 @@ import type { Parser, Doc } from "prettier";
 export const textToDoc: Parser<Doc>["parse"] = async (embeddedSourceText, textToDocOptions) => {
   // `_oxfmtPluginOptionsJson` is a JSON string bundled by Rust (`to_prettier::inject_oxfmt_plugin_payload`),
   // carrying the typed `FormatConfig` + parent filepath for the Rust-side `oxc_formatter`.
-  const { parser, parentParser, filepath, _oxfmtPluginOptionsJson, _oxfmtVueScriptLang } =
-    textToDocOptions;
-
-  // Detect context from Prettier's internal flags
-  const parentContext = detectParentContext(parentParser!, textToDocOptions);
+  const { parser, filepath, _oxfmtPluginOptionsJson } = textToDocOptions;
 
   // For (j|t)s-in-xxx, default `parser` is either `babel`(JS), `babel-ts` or `typescript`.
   // We need to infer the parse grammar (`source_ext`) for `oxc_formatter`.
   // - JS: always enable JSX for js-in-xxx, it's syntactically valid
-  // - TS: `typescript` (ts-in-vue|mdx) or `babel-ts` (ts-in-vue(script generic="..."))
+  // - TS: `typescript` or `babel-ts`
   //   - In case of ts-in-mdx, `filepath` is overridden as `dummy.ts(x)` to distinguish TSX or TS
-  //   - For tsx-in-vue (`<script lang="tsx">`), there is no signal from Prettier itself:
-  //     - both `lang="ts"` and `lang="tsx"` resolve to the `typescript` parser and `filepath` is the parent `.vue` file
-  //     - Nor from parsing: a JSX-free tsx block parses fine as plain ts
-  //     - So, our host pre-scans the SFC and passes `_oxfmtVueScriptLang: "tsx"` instead
   const isTS = parser === "typescript" || parser === "babel-ts";
-  const isTSX =
-    filepath.endsWith(".tsx") || (parentContext === "vue-script" && _oxfmtVueScriptLang === "tsx");
+  const isTSX = filepath.endsWith(".tsx");
   const embeddedSourceExt = isTS ? (isTSX ? "tsx" : "ts") : "jsx";
 
   const docJSON = await jsTextToDoc(
     embeddedSourceExt,
     embeddedSourceText,
     _oxfmtPluginOptionsJson as string,
-    parentContext,
   );
 
   if (docJSON === null) {
@@ -42,7 +32,7 @@ export const textToDoc: Parser<Doc>["parse"] = async (embeddedSourceText, textTo
     hasRootDedent: boolean;
   };
 
-  // Fast path for no refs (common when formatting small AST fragments):
+  // Fast path for no refs:
   // restore in place instead of the rebuilding walk `resolveRefs` does.
   if (refs.length === 0) {
     if (hasRootDedent) restoreRootDedents(doc);
@@ -110,26 +100,4 @@ function resolveRefs(node: unknown, rawRefs: unknown[], cache: unknown[]): unkno
   // Restore `align n: -Infinity` during the rebuild (see `restoreRootDedents`)
   if (out.type === "align" && out.n === null) out.n = Number.NEGATIVE_INFINITY;
   return out;
-}
-
-/**
- * Detects Vue fragment mode from Prettier's internal flags.
- *
- * When Prettier formats Vue SFC templates, it calls textToDoc with special flags:
- * - `__isVueForBindingLeft`: v-for left-hand side (e.g., `(item, index)` in `v-for="(item, index) in items"`)
- * - `__isVueBindings`: v-slot bindings (e.g., `{ item }` in `#default="{ item }"`)
- * - `__isEmbeddedTypescriptGenericParameters`: `<script generic="...">` type parameters
- */
-function detectParentContext(parentParser: string, options: Record<string, unknown>): string {
-  if (parentParser === "vue") {
-    if ("__isVueForBindingLeft" in options) return "vue-for-binding-left";
-    if ("__isVueBindings" in options) return "vue-bindings";
-    if ("__isEmbeddedTypescriptGenericParameters" in options) return "vue-script-generic";
-    return "vue-script";
-  }
-  if (parentParser === "svelte") {
-    return "svelte-script";
-  }
-
-  return parentParser;
 }

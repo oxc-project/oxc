@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.157.0] - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- 128c67d semantic: Check strict eval and arguments writes by reference flags (#28445) (Boshen)
+- fc0eed3 semantic: Stop let-binding scans at arrow functions (#28444) (Boshen)
+
+### ⚡ Performance
+
+- d85ee3d semantic: Skip arguments ancestry checks outside classes (#28510) (Boshen)
+- cf81d07 semantic: Reuse private reference resolution (#28509) (Boshen)
+- a79eebc semantic: Avoid duplicate maps for public JavaScript members (#28508) (Boshen)
+- 235ca3b semantic: Skip escape checks for unescaped strings (#28507) (Boshen)
+- 04b20c0 semantic: Compute duplicate parameter policy once per list (#28446) (Boshen)
+
 ## [0.156.0] - 2026-10-27
 
 ### 🐛 Bug Fixes

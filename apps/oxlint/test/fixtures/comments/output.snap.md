@@ -283,6 +283,20 @@
  2 | // Line comment after hashbang
    `----
 
+  x test-comments(test-comments): getAllComments: 3 comments
+  |   [0] Shebang: "/usr/bin/env node" at [0, 19]
+  |   [1] Line: " Line comment after hashbang" at [20, 50]
+  |   [2] Block: " Block comment after hashbang " at [51, 85]
+   ,-[files/hashbang.js:1:1]
+ 1 | ,-> #!/usr/bin/env node
+ 2 | |   // Line comment after hashbang
+ 3 | |   /* Block comment after hashbang */
+ 4 | |   const topLevelVariable1 = 1;
+ 5 | |   const topLevelVariable2 = 2;
+ 6 | |   
+ 7 | `-> export function topLevelFunction() {}
+   `----
+
   x test-comments(test-comments): VariableDeclaration(topLevelVariable1):
   | getCommentsBefore: 3 comments
   |   [0] Shebang: "/usr/bin/env node" at [0, 19]
@@ -296,18 +310,6 @@
  4 | const topLevelVariable1 = 1;
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  5 | const topLevelVariable2 = 2;
-   `----
-
-  x test-comments(test-comments): getAllComments: 3 comments
-  |   [0] Shebang: "/usr/bin/env node" at [0, 19]
-  |   [1] Line: " Line comment after hashbang" at [20, 50]
-  |   [2] Block: " Block comment after hashbang " at [51, 85]
-   ,-[files/hashbang.js:4:1]
- 3 |     /* Block comment after hashbang */
- 4 | ,-> const topLevelVariable1 = 1;
- 5 | |   const topLevelVariable2 = 2;
- 6 | |   
- 7 | `-> export function topLevelFunction() {}
    `----
 
   x test-comments(test-comments): VariableDeclaration(topLevelVariable2):

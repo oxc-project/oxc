@@ -2,42 +2,47 @@ use std::cell::RefCell;
 
 use rustc_hash::FxHashMap;
 
+use crate::cpu::{Cpu, cpu_multiversion};
+
 #[derive(Clone, Copy)]
-pub(crate) struct Resolved {
+pub struct Resolved {
     closer: Option<u32>,
-    pub(crate) args: Option<bool>,
+    pub args: Option<bool>,
 }
 
 impl Resolved {
-    pub(crate) fn closer(self) -> Option<usize> {
+    #[cpu_multiversion]
+    pub fn closer(self, _cpu: impl Cpu) -> Option<usize> {
         self.closer.map(|c| c as usize)
     }
 }
 
-pub(crate) struct Open {
-    pub(crate) pos: u32,
-    pub(crate) parens: i32,
-    pub(crate) brackets: i32,
-    pub(crate) braces: i32,
+pub struct Open {
+    pub pos: u32,
+    pub parens: i32,
+    pub brackets: i32,
+    pub braces: i32,
     /// A run of ruled-out <s, kept for the depth of the lists around them.
-    pub(crate) dead: u32,
+    pub dead: u32,
 }
 
 #[derive(Default)]
-pub(crate) struct Closers {
+pub struct Closers {
     memo: RefCell<FxHashMap<u32, Resolved>>,
     /// Scratch stacks of the forward passes, kept across queries.
-    pub(crate) lists: RefCell<Vec<Open>>,
-    pub(crate) groups: RefCell<Vec<u32>>,
+    pub lists: RefCell<Vec<Open>>,
+    pub groups: RefCell<Vec<u32>>,
 }
 
 impl Closers {
-    pub(crate) fn clear(&mut self) {
+    #[cpu_multiversion]
+    pub fn clear(&mut self, _cpu: impl Cpu) {
         self.memo.get_mut().clear();
     }
 
+    #[cpu_multiversion]
     #[inline]
-    pub(crate) fn get(&self, pos: usize) -> Option<Resolved> {
+    pub fn get(&self, pos: usize, _cpu: impl Cpu) -> Option<Resolved> {
         let memo = self.memo.borrow();
         if memo.is_empty() {
             return None;
@@ -45,12 +50,14 @@ impl Closers {
         memo.get(&(pos as u32)).copied()
     }
 
-    pub(crate) fn set(&self, pos: usize, closer: Option<usize>) {
+    #[cpu_multiversion]
+    pub fn set(&self, pos: usize, closer: Option<usize>, _cpu: impl Cpu) {
         let closer = closer.map(|c| c as u32);
         self.memo.borrow_mut().insert(pos as u32, Resolved { closer, args: None });
     }
 
-    pub(crate) fn set_args(&self, lt: usize, yes: bool) {
+    #[cpu_multiversion]
+    pub fn set_args(&self, lt: usize, yes: bool, _cpu: impl Cpu) {
         let mut memo = self.memo.borrow_mut();
         if memo.is_empty() {
             return;

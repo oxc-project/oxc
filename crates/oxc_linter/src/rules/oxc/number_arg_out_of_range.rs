@@ -1,7 +1,7 @@
-use oxc_ast::{AstKind, ast::Argument};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -58,9 +58,12 @@ declare_oxc_lint!(
 
 impl Rule for NumberArgOutOfRange {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(expr) = node.kind()
+        let AstKind::NumericLiteral(literal) = node.kind() else {
+            return;
+        };
+        if let AstKind::CallExpression(expr) = ctx.nodes().parent_kind(node.id())
+            && expr.arguments.first().is_some_and(|argument| argument.span() == literal.span)
             && let Some(member) = expr.callee.get_member_expr()
-            && let Some(Argument::NumericLiteral(literal)) = expr.arguments.first()
         {
             let value = literal.value;
             match member.static_property_name().and_then(JSStr::as_str) {
@@ -85,7 +88,21 @@ impl Rule for NumberArgOutOfRange {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![("var x = 42;var s = x.toString(16);", None)];
+    let pass = vec![
+        ("var x = 42;var s = x.toString(16);", None),
+        ("x.toString(2); x.toString(36)", None),
+        ("x.toFixed(0); x.toFixed(20)", None),
+        ("x.toExponential(0); x.toExponential(20)", None),
+        ("x.toPrecision(1); x.toPrecision(21)", None),
+        ("x.toString(16, 1)", None),
+        ("x.toString((1))", None),
+        ("x.toString(1 as number)", None),
+        ("x.toString(-1)", None),
+        ("x.toString(...[1])", None),
+        ("new x.toString(1)", None),
+        ("x.toString()", None),
+        ("x.otherMethod(100)", None),
+    ];
 
     let fail = vec![
         ("var x = 42;var s = x.toString(1);", None),
@@ -94,6 +111,8 @@ fn test() {
         ("var x = 42;var s = x['toExponential'](22);", None),
         ("var x = 42;var s = x.toPrecision(0);", None),
         ("var x = 42;var s = x.toPrecision(100);", None),
+        ("x.toString(1, 43)", None),
+        ("x?.toFixed(22)", None),
     ];
 
     Tester::new(NumberArgOutOfRange::NAME, NumberArgOutOfRange::PLUGIN, pass, fail)

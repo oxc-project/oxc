@@ -104,8 +104,10 @@ pub(super) fn format_css_doc<'a>(
         .iter()
         .map(|el| match el {
             FormatElement::EmbedPlaceholder(_) => 1,
-            FormatElement::Text { text, .. } => {
-                super::count_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX)
+            FormatElement::Text { text, .. }
+                if super::find_ignore_ascii_case(text.as_str(), PLACEHOLDER_PREFIX).is_some() =>
+            {
+                super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX).len() / 2
             }
             _ => 0,
         })
@@ -132,7 +134,10 @@ pub(super) fn format_css_doc<'a>(
                 // Same scan as html.rs: `split_on_placeholders` yields alternating
                 // [literal, index, literal, ...] (invalid matches fold into the literal),
                 // so even parts are text and odd parts are a placeholder.
-                FormatElement::Text { text, .. } if text.contains(PLACEHOLDER_PREFIX) => {
+                FormatElement::Text { text, .. }
+                    if super::find_ignore_ascii_case(text.as_str(), PLACEHOLDER_PREFIX)
+                        .is_some() =>
+                {
                     let parts = super::split_on_placeholders(
                         text.as_str(),
                         PLACEHOLDER_PREFIX,

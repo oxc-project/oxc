@@ -108,18 +108,10 @@ impl Rule for NoMultipleSlotArgs {
             _ => return,
         };
 
-        let inner = match member_expr.object.get_inner_expression() {
-            Expression::StaticMemberExpression(inner) => inner.as_ref(),
-            Expression::ChainExpression(chain_expr) => {
-                if let Some(MemberExpression::StaticMemberExpression(inner)) =
-                    chain_expr.expression.as_member_expression()
-                {
-                    inner.as_ref()
-                } else {
-                    return;
-                }
-            }
-            _ => return,
+        let Some(MemberExpression::StaticMemberExpression(inner)) =
+            member_expr.object.get_member_expr()
+        else {
+            return;
         };
 
         match inner.object.get_inner_expression() {

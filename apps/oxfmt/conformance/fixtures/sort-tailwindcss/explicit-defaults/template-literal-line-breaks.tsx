@@ -1,0 +1,5 @@
+const A = <div className={`
+      p-4 flex
+      ${x}
+      m-2 inline
+    `}>Hello</div>;

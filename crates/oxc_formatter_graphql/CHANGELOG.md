@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2026-11-02
+
+### ⚡ Performance
+
+- 46f8efd formatter_graphql: Print block string lines borrowed from the source (#28701) (leaysgur)
+
 ## [0.74.0] - 2026-10-19
 
 ### 🐛 Bug Fixes

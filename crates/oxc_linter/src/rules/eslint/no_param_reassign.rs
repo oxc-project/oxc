@@ -102,6 +102,13 @@ impl Rule for NoParamReassign {
         pattern.bound_names(&mut |ident| {
             let symbol_id = ident.symbol_id();
 
+            if !symbol_table.get_resolved_references(symbol_id).any(|reference| {
+                reference.is_write() || (self.0.props && reference.flags().is_member_write_target())
+            }) {
+                // If there are no write references to this parameter (or its properties if `props` is enabled), skip it.
+                return;
+            }
+
             let declaration_id = symbol_table.symbol_declaration(symbol_id);
             let name = symbol_table.symbol_name(symbol_id);
 

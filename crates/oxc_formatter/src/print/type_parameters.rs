@@ -91,7 +91,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, TSType
 /// - `.mts`/`.cts` reserve the constraint-less form at the grammar level (TS7060)
 ///
 /// Prettier's `shouldForceTrailingComma` instead sniffs the file path
-/// and keeps the comma in every non-`.ts` host, including plain-TS embedded scripts (e.g. ts-in-vue).
+/// and keeps the comma in every non-`.ts` host file, plain-TS code embedded in it included
+/// (`apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma`).
 /// This is a deliberate divergence: removal is keyed on the grammar the source is consumed as,
 /// not on the host file's path, so plain-TS sources behave identically wherever they live.
 fn should_force_trailing_comma_for_arrow_function(

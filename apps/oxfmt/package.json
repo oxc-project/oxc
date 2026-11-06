@@ -1,6 +1,6 @@
 {
   "name": "oxfmt-app",
-  "version": "0.75.0",
+  "version": "0.77.0",
   "private": true,
   "description": "Internal development package for oxfmt. For the published package.json template, see `npm/oxfmt/package.json`.",
   "license": "MIT",
@@ -15,8 +15,11 @@
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.js",
     "test": "vitest run",
-    "conformance": "node conformance/run.ts",
-    "download-fixtures": "node conformance/download-fixtures.js",
+    "conformance": "pnpm run conformance:fixture && pnpm run conformance:prettier && pnpm run conformance:live",
+    "conformance:fixture": "node conformance/run_fixture.ts",
+    "conformance:live": "node conformance/run_live.ts",
+    "conformance:prettier": "node conformance/run_prettier.ts",
+    "download-externals": "node conformance/download-externals.ts",
     "generate-config-types": "node scripts/generate-config-types.ts"
   },
   "dependencies": {

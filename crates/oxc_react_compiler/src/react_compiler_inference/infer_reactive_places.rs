@@ -380,6 +380,10 @@ impl StableSidemap {
 /// Returns whether a reactive value decides if `block_id` runs: a block in its
 /// post-dominator frontier ends in an `If`/`Branch`/`Switch` with a reactive test, or may
 /// throw to a `catch` and is decided by a reactive value (see [`ThrowingBlocks`]).
+///
+/// Unlike the TS implementation, this follows the frontiers of the controlling blocks
+/// too: in `if (prop) { x = 1; if (FLAG) return; }`, the store's block is decided by
+/// `FLAG` only directly, but `if (FLAG)` itself runs only when `prop` is truthy.
 fn is_reactive_controlled_block(
     block_id: BlockId,
     func: &HirFunction,
@@ -387,10 +391,22 @@ fn is_reactive_controlled_block(
     throwing_blocks: &ThrowingBlocks,
     reactive_map: &mut ReactivityMap,
 ) -> bool {
-    frontiers.iter(block_id).any(|control_block_id| {
-        has_reactive_test(control_block_id, func, reactive_map)
-            || throwing_blocks.reactive.contains(&control_block_id)
-    })
+    let mut visited = FxHashSet::default();
+    let mut worklist = vec![block_id];
+    while let Some(block_id) = worklist.pop() {
+        for control_block_id in frontiers.iter(block_id) {
+            if !visited.insert(control_block_id) {
+                continue;
+            }
+            if has_reactive_test(control_block_id, func, reactive_map)
+                || throwing_blocks.reactive.contains(&control_block_id)
+            {
+                return true;
+            }
+            worklist.push(control_block_id);
+        }
+    }
+    false
 }
 
 /// Returns whether the block ends in an `If`/`Branch`/`Switch` with a reactive test.
@@ -756,8 +772,10 @@ fn apply_reactive_flags_replay(
                             }
                         });
                     }
-                    InstructionValue::PrefixUpdate { lvalue, .. }
-                    | InstructionValue::PostfixUpdate { lvalue, .. } => {
+                    InstructionValue::PrefixUpdateLocal { lvalue, .. }
+                    | InstructionValue::PrefixUpdateContext { lvalue, .. }
+                    | InstructionValue::PostfixUpdateLocal { lvalue, .. }
+                    | InstructionValue::PostfixUpdateContext { lvalue, .. } => {
                         let id = lvalue.identifier;
                         if !stable_sidemap.is_stable(id) && reactive_ids[id] {
                             lvalue.reactive = true;

@@ -1,4 +1,5 @@
 use oxc_span::Span;
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use super::{
     jsdoc_parts::{JSDocCommentPart, JSDocTagKindPart},
@@ -120,7 +121,7 @@ pub fn parse_jsdoc(
             '\'' if backtick_count == 0 && !in_double_quotes => {
                 in_single_quotes = !in_single_quotes;
             }
-            '\n' => {
+            c if is_line_terminator(c) => {
                 in_double_quotes = false;
                 in_single_quotes = false;
                 // Parentheses and square-bracket syntaxes are line-oriented in JSDoc.
@@ -150,7 +151,8 @@ pub fn parse_jsdoc(
 
             '@' if can_parse
                 && at_line_start
-                && !is_indented_code_block(line_seen_star, spaces_after_star) =>
+                && !is_indented_code_block(line_seen_star, spaces_after_star)
+                && starts_block_tag(&source_text[end..]) =>
             {
                 let part = &source_text[start..end];
                 let span = Span::new(
@@ -176,10 +178,10 @@ pub fn parse_jsdoc(
         }
 
         // Update line-start tracking:
-        // - `\n` resets to true (new line)
+        // - A line terminator resets to true (new line)
         // - Whitespace and `*` preserve true (JSDoc line leaders like ` * `)
         // - Everything else sets to false
-        if ch == '\n' {
+        if is_line_terminator(ch) {
             at_line_start = true;
             line_seen_star = false;
             spaces_after_star = 0;
@@ -187,7 +189,7 @@ pub fn parse_jsdoc(
             if ch == '*' {
                 line_seen_star = true;
                 spaces_after_star = 0;
-            } else if matches!(ch, ' ' | '\t' | '\r') {
+            } else if matches!(ch, ' ' | '\t') {
                 if line_seen_star {
                     spaces_after_star += 1;
                 }
@@ -226,6 +228,17 @@ pub fn parse_jsdoc(
 fn is_indented_code_block(line_seen_star: bool, spaces_after_star: u32) -> bool {
     // 5 = 1 conventional space after `*` + 4 for indented code block
     line_seen_star && spaces_after_star >= 5
+}
+
+/// Whether `text`, placed at a line start, opens a block tag.
+/// A `/` in the tag name (e.g. an npm scope `@scope/pkg`) means prose,
+/// as comment-parser's `reTag` (`/^@[^\s/]+(?=\s|$)/`) used by eslint-plugin-jsdoc.
+///
+/// Unlike `reTag`, the name ends at `{` too (same as `parse_jsdoc_tag`),
+/// so `@param{import('./a').B} x` stays a tag, as TypeScript reads it.
+pub fn starts_block_tag(text: &str) -> bool {
+    text.starts_with('@')
+        && utils::find_token_range(text).is_some_and(|(_, end)| !text[..end].contains('/'))
 }
 
 /// tag_content: Starts with `@`, may be multiline
@@ -350,6 +363,16 @@ mod tests {
     }
 
     #[test]
+    fn tags_split_on_every_line_terminator() {
+        for newline in ["\r", "\r\n", "\u{2028}", "\u{2029}"] {
+            let src = format!(
+                "{newline} * @param {{string}} name{newline} * @returns {{boolean}}{newline} "
+            );
+            assert_eq!(tag_kinds(&src), vec!["param", "returns"], "{newline:?}");
+        }
+    }
+
+    #[test]
     fn inline_link_does_not_split_tag() {
         // {@link ...} should NOT start a new tag
         let src = " \n * @param {string} name See {@link Foo} for details\n * @returns {void}";
@@ -400,5 +423,14 @@ mod tests {
         let kinds = tag_kinds(src);
         // 4 spaces after `*` = 1 conventional + 3 indent → NOT an indented code block
         assert_eq!(kinds, vec!["deprecated", "type"]);
+    }
+
+    #[test]
+    fn slash_in_tag_name_is_not_a_tag() {
+        // An npm scope wrapped to a line start stays prose, as in comment-parser
+        let src = " The cues in\n * @scope/pkg).\n * @foo bar\n * @param{import('./a').B} x";
+        let (comment, tags) = parse_jsdoc(src, 0);
+        assert!(comment.parsed().contains("@scope/pkg)."));
+        assert_eq!(tags.iter().map(|t| t.kind.parsed()).collect::<Vec<_>>(), vec!["foo", "param"]);
     }
 }

@@ -1,0 +1,37 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/reactive-branch-with-constant-early-return.js
+---
+import { c as _c } from "react/compiler-runtime";
+const DEBUG = false;
+// `label` is set in a branch on `enabled` that also returns early behind a
+// constant, so it still depends on `enabled`.
+function Component(t0) {
+	const $ = _c(2);
+	const { enabled } = t0;
+	let label = "off";
+	if (enabled) {
+		label = "on";
+		if (DEBUG) {
+			return null;
+		}
+	}
+	let t1;
+	if ($[0] !== label) {
+		t1 = <div>{label}</div>;
+		$[0] = label;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{ enabled: true }],
+	sequentialRenders: [
+		{ enabled: true },
+		{ enabled: false },
+		{ enabled: true }
+	]
+};

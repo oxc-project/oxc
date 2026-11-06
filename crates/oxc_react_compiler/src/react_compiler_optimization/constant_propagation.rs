@@ -334,7 +334,8 @@ fn evaluate_instruction<'a>(
                     PrimitiveValue::Null
                     | PrimitiveValue::Undefined
                     | PrimitiveValue::Boolean(_)
-                    | PrimitiveValue::String(_) => {}
+                    | PrimitiveValue::String(_)
+                    | PrimitiveValue::BigInt { .. } => {}
                 }
             }
             None
@@ -381,12 +382,14 @@ fn evaluate_instruction<'a>(
                     PrimitiveValue::Null
                     | PrimitiveValue::Undefined
                     | PrimitiveValue::Boolean(_)
-                    | PrimitiveValue::String(_) => {}
+                    | PrimitiveValue::String(_)
+                    | PrimitiveValue::BigInt { .. } => {}
                 }
             }
             None
         }
-        InstructionValue::PostfixUpdate { lvalue, operation, value, span } => {
+        InstructionValue::PostfixUpdateLocal { lvalue, operation, value, span }
+        | InstructionValue::PostfixUpdateContext { lvalue, operation, value, span } => {
             let previous = read(constants, value);
             if let Some(Constant::Primitive { value: PrimitiveValue::Number(n), span: prev_span }) =
                 previous
@@ -413,7 +416,8 @@ fn evaluate_instruction<'a>(
             }
             None
         }
-        InstructionValue::PrefixUpdate { lvalue, operation, value, span } => {
+        InstructionValue::PrefixUpdateLocal { lvalue, operation, value, span }
+        | InstructionValue::PrefixUpdateContext { lvalue, operation, value, span } => {
             let previous = read(constants, value);
             if let Some(Constant::Primitive { value: PrimitiveValue::Number(n), .. }) = previous {
                 let prev_val = n.value();
@@ -551,6 +555,7 @@ fn evaluate_instruction<'a>(
                     PrimitiveValue::Boolean(b) => b.to_string(),
                     PrimitiveValue::Number(n) => n.value().to_js_string(),
                     PrimitiveValue::String(s) => s.as_str()?.to_string(),
+                    PrimitiveValue::BigInt { value, .. } => value.as_str().to_string(),
                     // TS rejects undefined subexpression values
                     PrimitiveValue::Undefined => return None,
                 };
@@ -695,6 +700,7 @@ fn is_truthy(value: &PrimitiveValue) -> bool {
             v != 0.0 && !v.is_nan()
         }
         PrimitiveValue::String(s) => !s.is_empty(),
+        PrimitiveValue::BigInt { value, .. } => value.as_str() != "0" && !value.as_str().is_empty(),
     }
 }
 
@@ -818,8 +824,10 @@ fn evaluate_binary_op<'a>(
         BinaryOperator::StrictInequality => {
             Some(PrimitiveValue::Boolean(!js_strict_equal(lhs, rhs)))
         }
-        BinaryOperator::Equality => Some(PrimitiveValue::Boolean(js_abstract_equal(lhs, rhs))),
-        BinaryOperator::Inequality => Some(PrimitiveValue::Boolean(!js_abstract_equal(lhs, rhs))),
+        BinaryOperator::Equality => js_abstract_equal(lhs, rhs).map(PrimitiveValue::Boolean),
+        BinaryOperator::Inequality => {
+            js_abstract_equal(lhs, rhs).map(|eq| PrimitiveValue::Boolean(!eq))
+        }
         BinaryOperator::In | BinaryOperator::Instanceof => None,
     }
 }
@@ -852,34 +860,39 @@ fn js_strict_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> bool {
             av == bv
         }
         (PrimitiveValue::String(a), PrimitiveValue::String(b)) => a == b,
+        (PrimitiveValue::BigInt { value: a, .. }, PrimitiveValue::BigInt { value: b, .. }) => {
+            a == b
+        }
         // Different types => false
         _ => false,
     }
 }
 
-fn js_abstract_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> bool {
+fn js_abstract_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> Option<bool> {
     match (lhs, rhs) {
-        (PrimitiveValue::Null, PrimitiveValue::Null) => true,
-        (PrimitiveValue::Undefined, PrimitiveValue::Undefined) => true,
+        (PrimitiveValue::Null, PrimitiveValue::Null) => Some(true),
+        (PrimitiveValue::Undefined, PrimitiveValue::Undefined) => Some(true),
         (PrimitiveValue::Null, PrimitiveValue::Undefined)
-        | (PrimitiveValue::Undefined, PrimitiveValue::Null) => true,
-        (PrimitiveValue::Boolean(a), PrimitiveValue::Boolean(b)) => a == b,
+        | (PrimitiveValue::Undefined, PrimitiveValue::Null) => Some(true),
+        (PrimitiveValue::Boolean(a), PrimitiveValue::Boolean(b)) => Some(a == b),
         (PrimitiveValue::Number(a), PrimitiveValue::Number(b)) => {
             let av = a.value();
             let bv = b.value();
-            if av.is_nan() || bv.is_nan() {
-                return false;
-            }
-            av == bv
+            if av.is_nan() || bv.is_nan() { Some(false) } else { Some(av == bv) }
         }
-        (PrimitiveValue::String(a), PrimitiveValue::String(b)) => a == b,
+        (PrimitiveValue::String(a), PrimitiveValue::String(b)) => Some(a == b),
+        (PrimitiveValue::BigInt { value: a, .. }, PrimitiveValue::BigInt { value: b, .. }) => {
+            Some(a == b)
+        }
+        // Do not fold mixed-type BigInt comparisons (e.g. 1n == 1, 1n == "1", 0n == false)
+        (PrimitiveValue::BigInt { .. }, _) | (_, PrimitiveValue::BigInt { .. }) => None,
         // Cross-type coercions for primitives
         (PrimitiveValue::Number(n), PrimitiveValue::String(s))
         | (PrimitiveValue::String(s), PrimitiveValue::Number(n)) => {
             // String is coerced to number using JS ToNumber semantics.
             let sv = s.as_str().map_or(f64::NAN, |s| s.string_to_number());
             let nv = n.value();
-            if nv.is_nan() || sv.is_nan() { false } else { nv == sv }
+            if nv.is_nan() || sv.is_nan() { Some(false) } else { Some(nv == sv) }
         }
         (PrimitiveValue::Boolean(b), other) => {
             let num = if *b { 1.0 } else { 0.0 };
@@ -890,6 +903,6 @@ fn js_abstract_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> bool {
             js_abstract_equal(other, &PrimitiveValue::Number(FloatValue::new(num)))
         }
         // null/undefined vs number/string => false
-        _ => false,
+        _ => Some(false),
     }
 }

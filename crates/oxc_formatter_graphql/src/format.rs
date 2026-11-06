@@ -67,6 +67,15 @@ pub fn parse_for_format<'a>(
     source_text: &str,
 ) -> Result<ParsedGraphql<'a>, OxcDiagnostic> {
     let (has_bom, stripped) = oxc_formatter_core::spec::split_bom(source_text);
+    // The GraphQL spec does not allow an empty document,
+    // but an empty file formats to empty, like the other languages
+    if stripped.trim().is_empty() {
+        let document = allocator.alloc(GraphQLDocument {
+            definitions: ArenaVec::new_in(&allocator),
+            span: oxc_graphql_parser::ast::Span::default(),
+        });
+        return Ok(ParsedGraphql { document, comments: &[], source: "", has_bom });
+    }
     let (document, source, comments) = parse_document(allocator, stripped).map_err(|mut err| {
         oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
         err

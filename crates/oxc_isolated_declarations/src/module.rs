@@ -155,17 +155,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let mut new_specifiers = ArenaVec::with_capacity_in(specifiers.len(), self);
         specifiers.iter().for_each(|specifier| {
-            let is_referenced = match specifier {
-                ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                    self.scope.has_reference(specifier.local.name)
-                }
-                ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                    self.scope.has_reference(specifier.local.name)
-                }
-                ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
-                    self.scope.has_reference(specifier.name())
-                }
-            };
+            let is_referenced = self.scope.has_reference(specifier.name());
             if is_referenced {
                 new_specifiers.push(specifier.clone_in(self.allocator()));
             }

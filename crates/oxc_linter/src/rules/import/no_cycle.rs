@@ -1,6 +1,6 @@
 use std::{
     ffi::OsStr,
-    path::{Component, Path, PathBuf},
+    path::{Component, Path},
     sync::Arc,
 };
 
@@ -20,7 +20,11 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_cycle_diagnostic(span: Span, stack: &[(CompactStr, PathBuf)], cwd: &Path) -> OxcDiagnostic {
+fn no_cycle_diagnostic(
+    span: Span,
+    stack: &[(CompactStr, Arc<ModuleRecord>)],
+    cwd: &Path,
+) -> OxcDiagnostic {
     let cycle_description = format_cycle(stack, cwd);
     OxcDiagnostic::warn("Dependency cycle detected")
         .with_help("Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.")
@@ -38,10 +42,11 @@ fn self_referencing_cycle_diagnostic(span: Span, is_import: bool) -> OxcDiagnost
         .with_label(span.primary_label("this module references itself"))
 }
 
-fn format_cycle(stack: &[(CompactStr, PathBuf)], cwd: &Path) -> String {
+fn format_cycle(stack: &[(CompactStr, Arc<ModuleRecord>)], cwd: &Path) -> String {
     let mut lines = Vec::with_capacity(stack.len() * 2 + 1);
 
-    for (i, (specifier, path)) in stack.iter().enumerate() {
+    for (i, (specifier, module_record)) in stack.iter().enumerate() {
+        let path = &module_record.resolved_absolute_path;
         let relative_path = path
             .strip_prefix(cwd)
             .unwrap_or(path)
@@ -155,22 +160,20 @@ impl Rule for NoCycle {
         }
 
         let needle = &module_record.resolved_absolute_path;
-        let mut direct_imports = module_record
-            .loaded_modules()
-            .iter()
-            .map(|(key, weak_module_record)| (key.clone(), weak_module_record.upgrade().unwrap()))
-            .collect::<Vec<_>>();
-        direct_imports.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+        let direct_imports = module_record.sorted_loaded_modules();
 
-        for (key, loaded_module_record) in direct_imports {
-            if !self.should_traverse_module(&key, &loaded_module_record, module_record) {
+        let mut stack = Vec::new();
+        let mut traversed = FxHashSet::default();
+        for (key, weak_module_record) in direct_imports.iter() {
+            let loaded_module_record = weak_module_record.upgrade().unwrap();
+            if !self.should_traverse_module(key, &loaded_module_record, module_record) {
                 continue;
             }
 
-            let requested_module = module_record.requested_modules[&key][0];
+            let requested_module = module_record.requested_modules[key][0];
             let span = requested_module.span;
-            let mut stack =
-                vec![(key.clone(), loaded_module_record.resolved_absolute_path.clone())];
+            stack.clear();
+            stack.push((key.clone(), Arc::clone(&loaded_module_record)));
 
             if loaded_module_record.resolved_absolute_path == *needle {
                 ctx.diagnostic(self_referencing_cycle_diagnostic(span, requested_module.is_import));
@@ -179,10 +182,11 @@ impl Rule for NoCycle {
 
             let visitor_result = ModuleGraphVisitorBuilder::default()
                 .max_depth(self.max_depth.saturating_sub(1))
+                .reuse_traversed(traversed)
                 .filter(|(key, val), parent| self.should_traverse_module(key, val, parent))
                 .event(|event, (key, val), _| match event {
                     ModuleGraphVisitorEvent::Enter => {
-                        stack.push((key.clone(), val.resolved_absolute_path.clone()));
+                        stack.push((key.clone(), Arc::clone(val)));
                     }
                     ModuleGraphVisitorEvent::Leave => {
                         stack.pop();
@@ -196,6 +200,7 @@ impl Rule for NoCycle {
                     }
                 });
 
+            traversed = visitor_result.traversed;
             if visitor_result.result {
                 ctx.diagnostic(no_cycle_diagnostic(
                     span,

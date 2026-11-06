@@ -1,0 +1,6 @@
+{
+  "typescript": {
+    "optimizeConstEnums": true,
+    "optimizeEnums": true
+  }
+}

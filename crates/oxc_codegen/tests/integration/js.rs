@@ -127,8 +127,20 @@ fn expr() {
     test_minify_same("throw await 1;");
     test_minify_same("await import(``);");
 
-    test("delete 2e308", "delete (0, Infinity);\n");
+    test("delete 2e308", "delete 1e400;\n");
     test_minify("delete 2e308", "delete(1/0);");
+
+    // Infinite literals must not print as `Infinity`, which a local binding can shadow.
+    test("function f(Infinity) { return 2e308; }", "function f(Infinity) {\n\treturn 1e400;\n}\n");
+    test("x = -2e308", "x = -1e400;\n");
+    test("x = (2e308).toString", "x = 1e400.toString;\n");
+    test("x = (-2e308) ** 2", "x = (-1e400) ** 2;\n");
+    test("x = y / 2e308", "x = y / 1e400;\n");
+    test("x = 2e308 in y", "x = 1e400 in y;\n");
+    test("x = y instanceof 2e308", "x = y instanceof 1e400;\n");
+    test("x = { 2e308: 0 }", "x = { [1e400]: 0 };\n");
+    test_minify("function f(Infinity) { return 2e308; }", "function f(Infinity){return 1/0}");
+    test_minify("x = y / 2e308", "x=y/(1/0);");
 
     test_minify_same(r#"({"http://a\r\" \n<'b:b@c\r\nd/e?f":{}});"#);
     test_minify_same("new(import(``),function(){});");

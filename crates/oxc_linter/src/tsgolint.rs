@@ -1352,24 +1352,51 @@ fn parse_single_message(
     }
 }
 
-/// Tries to find the `tsgolint` executable. In priority order, this will check:
+/// Tries to find a type-aware linter executable. In priority order, this will check:
 /// 1. The `OXLINT_TSGOLINT_PATH` environment variable.
-/// 2. The `tsgolint` binary in the current working directory's `node_modules/.bin` directory.
+/// 2. `node_modules/.bin` in the current working directory and its ancestors.
+/// 3. The system `PATH`.
+///
+/// Within each directory, `tsrs-lint` is preferred over `tsgolint`, unless Go profiling
+/// is requested with `OXLINT_TSGOLINT_TRACE`, `OXLINT_TSGOLINT_CPU`,
+/// `OXLINT_TSGOLINT_HEAP`, or `OXLINT_TSGOLINT_ALLOCS`. In that case, only
+/// `tsgolint` is considered. An explicit executable path overrides this selection.
 ///
 /// # Errors
 /// Returns an error if `OXLINT_TSGOLINT_PATH` is set but does not exist or is not a file.
-/// Returns an error if the tsgolint executable could not be found.
+/// Returns an error if no supported executable could be found.
 pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
-    // Check the environment variable first
+    let go_profiling = [
+        "OXLINT_TSGOLINT_TRACE",
+        "OXLINT_TSGOLINT_CPU",
+        "OXLINT_TSGOLINT_HEAP",
+        "OXLINT_TSGOLINT_ALLOCS",
+    ]
+    .iter()
+    .any(|name| std::env::var(name).is_ok());
+
+    // Package managers on Windows provide CMD shims or, in Bun's case, EXE shims.
+    #[cfg(windows)]
+    let files: &[&str] = if go_profiling {
+        &["tsgolint.CMD", "tsgolint.exe"]
+    } else {
+        &["tsrs-lint.CMD", "tsrs-lint.exe", "tsgolint.CMD", "tsgolint.exe"]
+    };
+    #[cfg(not(windows))]
+    let files: &[&str] = if go_profiling { &["tsgolint"] } else { &["tsrs-lint", "tsgolint"] };
+
     if let Ok(path_str) = std::env::var("OXLINT_TSGOLINT_PATH") {
         let path = PathBuf::from(&path_str);
         if path.is_dir() {
-            let tsgolint_path = path.join("tsgolint");
-            if tsgolint_path.exists() {
-                return Ok(tsgolint_path);
+            for file in files {
+                let executable_path = path.join(file);
+                if executable_path.is_file() {
+                    return Ok(executable_path);
+                }
             }
+            let expected = if go_profiling { "'tsgolint'" } else { "'tsrs-lint' or 'tsgolint'" };
             return Err(format!(
-                "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH points to directory '{path_str}' but 'tsgolint' binary not found inside"
+                "Failed to find type-aware linter executable: OXLINT_TSGOLINT_PATH points to directory '{path_str}' but no {expected} binary found inside"
             ));
         }
         if path.is_file() {
@@ -1380,34 +1407,20 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
         ));
     }
 
-    // Executing a sub-command in Windows needs a `cmd` or `ps1` extension.
-    // Since `cmd` is the most compatible one with older systems, we use that one first,
-    // then check for `exe` which is also common. Bun, for example, does not create a `cmd`
-    // file but still produces an `exe` file (https://github.com/oxc-project/oxc/issues/13784).
-    #[cfg(windows)]
-    let files = &["tsgolint.CMD", "tsgolint.exe"];
-    #[cfg(not(windows))]
-    let files = &["tsgolint"];
-
-    // Move upwards until we find a `package.json`, then look at `node_modules/.bin/tsgolint`
     let mut current_dir = cwd.to_path_buf();
     loop {
         for file in files {
             let node_modules_bin = current_dir.join("node_modules").join(".bin").join(file);
-            if node_modules_bin.exists() {
+            if node_modules_bin.is_file() {
                 return Ok(node_modules_bin);
             }
         }
 
-        // If we reach the root directory, stop searching
         if !current_dir.pop() {
             break;
         }
     }
 
-    // Finally, search in the system PATH
-    // This supports package managers that install binaries globally and make them
-    // available via PATH
     if let Ok(path_env) = std::env::var("PATH") {
         for dir in std::env::split_paths(&path_env) {
             for file in files {
@@ -1419,7 +1432,11 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
         }
     }
 
-    Err("Failed to find tsgolint executable. You may need to add the `oxlint-tsgolint` package to your project?".to_string())
+    if go_profiling {
+        Err("Failed to find tsgolint executable. Go profiling requires the `oxlint-tsgolint` package.".to_string())
+    } else {
+        Err("Failed to find type-aware linter executable. You may need to add the `tsrs` or `oxlint-tsgolint` package to your project?".to_string())
+    }
 }
 
 #[cfg(test)]
