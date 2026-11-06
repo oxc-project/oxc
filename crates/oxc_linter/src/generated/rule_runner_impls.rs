@@ -3988,6 +3988,25 @@ impl RuleRunner for crate::rules::unicorn::prefer_type_error::PreferTypeError {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::name_replacements::NameReplacements {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::BindingIdentifier,
+        AstType::ExportSpecifier,
+        AstType::ImportDefaultSpecifier,
+        AstType::ImportNamespaceSpecifier,
+        AstType::ImportSpecifier,
+        AstType::MethodDefinition,
+        AstType::ObjectProperty,
+        AstType::PropertyDefinition,
+        AstType::StaticMemberExpression,
+        AstType::TSEnumDeclaration,
+        AstType::TSInterfaceDeclaration,
+        AstType::TSNamespaceDeclaration,
+        AstType::TSTypeAliasDeclaration,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
 impl RuleRunner for crate::rules::unicorn::relative_url_style::RelativeUrlStyle {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::NewExpression]));
