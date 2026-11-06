@@ -27,15 +27,25 @@ impl<'a> PeepholeOptimizations {
                 return true;
             }
 
-            let keep = match element {
-                ClassElement::PropertyDefinition(prop) => {
-                    prop.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))
-                }
-                ClassElement::AccessorProperty(accessor) => {
-                    accessor.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))
-                }
-                _ => false,
+            // Decorators of a class element are applied when the class definition is
+            // evaluated, so dropping an element would drop their side effects too.
+            let has_decorators = match element {
+                ClassElement::MethodDefinition(method) => !method.decorators.is_empty(),
+                ClassElement::PropertyDefinition(prop) => !prop.decorators.is_empty(),
+                ClassElement::AccessorProperty(accessor) => !accessor.decorators.is_empty(),
+                ClassElement::StaticBlock(_) | ClassElement::TSIndexSignature(_) => false,
             };
+            let keep = has_decorators
+                || match element {
+                    ClassElement::PropertyDefinition(prop) => {
+                        prop.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))
+                    }
+                    ClassElement::AccessorProperty(accessor) => accessor
+                        .value
+                        .as_ref()
+                        .is_some_and(|value| value.may_have_side_effects(ctx)),
+                    _ => false,
+                };
             if !keep {
                 // The element is being silently dropped from the vector. Walk
                 // its subtree so identifier references inside (e.g. a method
