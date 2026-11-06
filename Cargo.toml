@@ -299,6 +299,8 @@ ignored = [
 # Force the registry request to resolve to the workspace copy so there's a single instance.
 [patch.crates-io]
 oxc_allocator = { path = "crates/oxc_allocator" }
+# Temporary pin for the token-buffer transfer API, pending an upstream release.
+oxc_sourcemap = { git = "https://github.com/oxc-project/oxc-sourcemap.git", rev = "7375335803ca5c37007c09ed61e41386e1fe5e68" }
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,

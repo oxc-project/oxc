@@ -87,7 +87,6 @@ impl<'a> SourcemapBuilder<'a> {
 
     pub fn into_sourcemap(mut self) -> oxc_sourcemap::SourceMap<'a> {
         self.names.shrink_to_fit();
-        self.tokens.shrink_to_fit();
 
         oxc_sourcemap::SourceMap::from_parts(oxc_sourcemap::SourceMapParts {
             file: None,
@@ -95,11 +94,12 @@ impl<'a> SourcemapBuilder<'a> {
             source_root: None,
             sources: vec![Cow::Owned(self.source_name)],
             source_contents: vec![Some(Cow::Borrowed(self.original_source))],
-            tokens: self.tokens.into_boxed_slice(),
+            tokens: Box::default(),
             token_chunks: None,
             ignore_list: None,
             debug_id: None,
         })
+        .with_tokens(self.tokens)
     }
 
     pub fn add_source_mapping_for_name(&mut self, output: &[u8], span: Span, name: &str) {
