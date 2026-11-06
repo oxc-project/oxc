@@ -936,13 +936,14 @@ impl Linter {
                         PossibleFixes::from(fix)
                     };
 
-                    ctx_host.push_diagnostic(Message::new(
-                        OxcDiagnostic::error(diagnostic.message)
-                            .with_label(span)
-                            .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                            .with_severity(severity.into()),
-                        possible_fixes,
-                    ));
+                    let mut error = OxcDiagnostic::error(diagnostic.message)
+                        .with_label(span)
+                        .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                        .with_severity(severity.into());
+                    if let Some(help) = diagnostic.help {
+                        error = error.with_help(help);
+                    }
+                    ctx_host.push_diagnostic(Message::new(error, possible_fixes));
                 }
             }
             Err(LintFileFailure { message: error, timings }) => {
