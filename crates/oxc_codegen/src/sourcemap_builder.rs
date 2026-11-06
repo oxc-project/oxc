@@ -92,11 +92,12 @@ impl<'a> SourcemapBuilder<'a> {
             source_root: None,
             sources: vec![Cow::Owned(self.source_name)],
             source_contents: vec![Some(Cow::Borrowed(self.original_source))],
-            tokens: self.tokens.into_boxed_slice(),
+            tokens: Box::default(),
             token_chunks: None,
             ignore_list: None,
             debug_id: None,
         })
+        .with_tokens(self.tokens)
     }
 
     pub fn add_source_mapping_for_name(&mut self, output: &[u8], span: Span, name: &str) {
