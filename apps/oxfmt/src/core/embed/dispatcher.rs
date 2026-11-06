@@ -286,9 +286,10 @@ pub fn build_dispatcher(
                     NativeLanguage::Js(source_type) => {
                         let (root, embedded_in) = js_root_of(&request);
                         // A block's program may hold imports to sort
-                        let is_block =
-                            matches!(root, JsRoot::Program { layout: ProgramLayout::Bare, .. });
-                        let options = if is_block {
+                        let options = if matches!(
+                            root,
+                            JsRoot::Program { layout: ProgramLayout::Bare, .. }
+                        ) {
                             dispatch_config.js_options()
                         } else {
                             dispatch_config.js_fragment_options()

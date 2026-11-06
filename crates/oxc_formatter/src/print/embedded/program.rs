@@ -70,23 +70,19 @@ fn top_level_semicolons(
     semicolons: ProgramSemicolons,
     semi: Semicolons,
 ) -> TopLevelSemicolons {
-    let lone_expression = match program.body.as_slice() {
-        [Statement::ExpressionStatement(statement)] if program.directives.is_empty() => {
-            Some(statement)
-        }
-        _ => None,
-    };
     match semicolons {
         ProgramSemicolons::AsOptions => TopLevelSemicolons::AsOptions,
         ProgramSemicolons::LoneJsxOmitted | ProgramSemicolons::LoneExpressionOmitted => {
-            lone_expression
-                .filter(|statement| {
-                    semicolons == ProgramSemicolons::LoneExpressionOmitted
-                        || statement.expression.is_jsx()
-                })
-                .map_or(TopLevelSemicolons::AsOptions, |statement| {
+            match program.body.as_slice() {
+                [Statement::ExpressionStatement(statement)]
+                    if program.directives.is_empty()
+                        && (semicolons == ProgramSemicolons::LoneExpressionOmitted
+                            || statement.expression.is_jsx()) =>
+                {
                     TopLevelSemicolons::Omitted(statement.span)
-                })
+                }
+                _ => TopLevelSemicolons::AsOptions,
+            }
         }
         ProgramSemicolons::MarksStatements => marking_statements(program, semi),
     }
@@ -97,11 +93,6 @@ fn top_level_semicolons(
 /// between the statements, and after a lone one that is no expression (`if (a) b();`) or that the host calls.
 /// Another lone expression reads the same without it ([`ProgramSemicolons::MarksStatements`]).
 fn marking_statements(program: &Program<'_>, semi: Semicolons) -> TopLevelSemicolons {
-    let separated = if semi == Semicolons::AsNeeded {
-        TopLevelSemicolons::Separated
-    } else {
-        TopLevelSemicolons::AsOptions
-    };
     let mut statements = program.body.iter().filter(|stmt| !is_dropped_statement(stmt));
     match (statements.next(), statements.next()) {
         (Some(Statement::ExpressionStatement(statement)), None)
@@ -109,8 +100,8 @@ fn marking_statements(program: &Program<'_>, semi: Semicolons) -> TopLevelSemico
         {
             TopLevelSemicolons::Omitted(statement.span)
         }
-        (Some(_), _) => separated,
-        (None, _) => TopLevelSemicolons::AsOptions,
+        (Some(_), _) if semi == Semicolons::AsNeeded => TopLevelSemicolons::Separated,
+        _ => TopLevelSemicolons::AsOptions,
     }
 }
 

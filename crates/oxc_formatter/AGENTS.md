@@ -96,13 +96,13 @@ The markers say how it reads (`JsEmbeddedIn`, `ExpressionRoot`'s flags, `Program
 
 - Where a print rule keeps the reading with what the formatter owns (a `;`, parens, a line break), it applies
 - Where none does, or the output would read otherwise for the host (code it does not accept would be accepted), `format_to_ir` returns `Err`: the host prints the code as written
-- Known gap: under `ExpressionRoot::ends_at_double_brace`, only an object is kept from printing `}}` (`print/root/expression.rs`);
+- Known gap: under `ExpressionRoot::ends_at_double_brace`, only an object is kept from printing `}}` (`print/embedded/expression.rs`);
   a function or class body right before another `}` can still print it (`${() => {}}`, `{a() {}}` without bracket spacing).
   Left as is for the cost: which code prints a `}` last is every node kind ending in one (a body, a class, a TS type literal), or the printed text,
   and whether a `}` follows it without bracket spacing is the printer's breaks; an object is the common case, and the one Prettier keeps (a property's value).
   It is loud, not wrong: the host fails to compile the output, nothing reads otherwise unnoticed
 
-Each kind's wrapper, checks and printing live in `print/root/`, one module per kind;
+Each kind's wrapper, checks and printing live in `print/embedded/`, one module per kind;
 a host's new use is a new policy of a kind (Astro's frontmatter is a `Program`), or a new `JsRoot` variant and module there (Svelte's `{@const}`).
 
 An embedded expression's root prints with the parsed `Program` as its parent, skipping its `ExpressionStatement`,

@@ -10,6 +10,7 @@ mod block_statement;
 mod call_like_expression;
 mod class;
 mod decorators;
+mod embedded;
 mod export_declarations;
 mod function;
 mod function_type;
@@ -23,7 +24,6 @@ mod object_pattern_like;
 mod parameters;
 mod program;
 mod return_or_throw_statement;
-mod root;
 pub mod semicolon;
 mod sequence_expression;
 mod switch_statement;
@@ -38,7 +38,7 @@ pub use arrow_function_expression::{
     FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
 pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
-pub use root::{FormatRoot, check_root, object_prints_double_brace, root_wrapper};
+pub use embedded::{FormatRoot, check_root, object_prints_double_brace, root_wrapper};
 pub use semicolon::write_comments_before_closing_paren;
 pub use template::embed_hug;
 pub use union_type::{
@@ -527,16 +527,6 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, EmptyStatement> {
     }
 }
 
-/// Whether the embedded program decided this statement prints without its semicolon
-/// ([`TopLevelSemicolons::Omitted`]):
-/// no trailing one, and no ASI guard under `semi: false` either.
-fn is_semicolon_omitted_by_embedding(
-    stmt: &AstNode<'_, '_, ExpressionStatement<'_>>,
-    f: &JsFormatter<'_, '_>,
-) -> bool {
-    f.context().top_level_semicolons() == TopLevelSemicolons::Omitted(stmt.span)
-}
-
 /// Returns `true` if the expression needs a leading semicolon to prevent ASI issues.
 ///
 /// `verbatim` is set for a suppressed statement, whose printed form is the source text:
@@ -546,7 +536,8 @@ fn expression_statement_needs_semicolon<'a>(
     f: &JsFormatter<'_, 'a>,
     verbatim: bool,
 ) -> bool {
-    if is_semicolon_omitted_by_embedding(stmt, f) {
+    // The embedded program omits its semicolon (`TopLevelSemicolons::Omitted`): no ASI guard either
+    if f.context().top_level_semicolons() == TopLevelSemicolons::Omitted(stmt.span) {
         return false;
     }
     // The program writes the `;` that ends the previous statement (`TopLevelSemicolons::Separated`)
@@ -679,7 +670,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ExpressionStatement<'a>> {
         write_leading_comments_with_asi_guard(self, false, f);
 
         let expression = self.expression();
-        if is_semicolon_omitted_by_embedding(self, f) {
+        if f.context().top_level_semicolons() == TopLevelSemicolons::Omitted(self.span) {
             write!(f, expression);
             return;
         }

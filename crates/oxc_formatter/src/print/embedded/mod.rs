@@ -1,6 +1,7 @@
 //! An embedded JS/TS part ([`crate::format_to_ir`]): the text each [`JsRoot`] is parsed in,
 //! the checks that it is the one its root names, and how it prints.
 //! A kind's own rules live in its module; this one dispatches on the root.
+//! JS as the child; JS as the parent (css-in-js and the like) is `print/template/embed/`.
 
 mod expression;
 mod params;
@@ -19,7 +20,6 @@ use crate::{
     JsRoot, ProgramSemicolons,
     ast_nodes::{AstNode, AstNodeKind},
     formatter::{JsFormatter, prelude::*},
-    write,
 };
 
 use super::block_statement::is_empty_block;
@@ -149,7 +149,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatRoot<'a, '_> {
                 let type_parameters = declaration.type_parameters().expect(
                     "`check_root` checked the code's shape: `type T<> = any` does not parse",
                 );
-                write!(f, params::FormatTypeParameters { decl: &type_parameters });
+                params::write_type_parameters(&type_parameters, f);
             }
             _ => unreachable!("`check_root` checked the code's shape"),
         }

@@ -7,7 +7,7 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::{Allocator, StringBuilder};
 use oxc_formatter_core::{
-    Format, FormatElement, arena_cow_str,
+    FormatElement, arena_cow_str,
     builders::{
         hard_line_break, if_group_breaks, if_group_fits_on_line, indent, soft_block_indent,
         soft_line_break, soft_line_break_or_space, space, text,
@@ -27,10 +27,7 @@ use super::{
     tag::opening_end_borrowed,
     vue,
 };
-use crate::{
-    context::HtmlishFormatContext,
-    tree::{Tree, collapse_whitespace},
-};
+use crate::tree::{Tree, collapse_whitespace};
 
 /// `<!-- prettier-ignore-attribute -->` right before the element: the attribute names it lists (all when none),
 /// which print as written.
@@ -239,14 +236,6 @@ pub(super) fn quoted_piece<'a>(piece: &'a str, f: &HtmlishFormatter<'_, 'a>) -> 
     arena_cow_str(&piece.cow_replace('"', "&quot;"), f)
 }
 
-/// `content` in quotes, on its own indented lines when the group breaks.
-pub(super) fn write_expanded<'a>(
-    content: &impl Format<'a, HtmlishFormatContext<'a>>,
-    f: &mut HtmlishFormatter<'_, 'a>,
-) {
-    write_quoted(&soft_block_indent(content), f);
-}
-
 struct Candidate<'a> {
     url: &'a str,
     /// The descriptor's number as printed, and its unit (`w` / `h` / `x`).
@@ -262,8 +251,8 @@ fn write_srcset<'a>(candidates: &[Candidate<'a>], f: &mut HtmlishFormatter<'_, '
     let mut padding = StringBuilder::new_in(f.allocator());
     padding.push_ascii_byte_repeat(b' ', max_url + 1 + max_left);
     let padding = padding.into_str();
-    write_expanded(
-        &format_with(|f| {
+    write_quoted(
+        &soft_block_indent(&format_with(|f| {
             for (i, c) in candidates.iter().enumerate() {
                 if i > 0 {
                     write!(f, [",", soft_line_break_or_space()]);
@@ -283,7 +272,7 @@ fn write_srcset<'a>(candidates: &[Candidate<'a>], f: &mut HtmlishFormatter<'_, '
                     );
                 }
             }
-        }),
+        })),
         f,
     );
 }
@@ -380,8 +369,8 @@ fn write_permissions_policy<'a>(value: &'a str, f: &mut HtmlishFormatter<'_, 'a>
         write!(f, "\"\"");
         return;
     }
-    write_expanded(
-        &format_with(|f| {
+    write_quoted(
+        &soft_block_indent(&format_with(|f| {
             for (i, directive) in directives.iter().enumerate() {
                 write!(f, text(directive));
                 if i + 1 == directives.len() {
@@ -390,7 +379,7 @@ fn write_permissions_policy<'a>(value: &'a str, f: &mut HtmlishFormatter<'_, 'a>
                     write!(f, [";", soft_line_break_or_space()]);
                 }
             }
-        }),
+        })),
         f,
     );
 }

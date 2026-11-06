@@ -154,10 +154,13 @@ pub fn write_interpolation<'a>(
     // The next sibling prints the `}}` right after this
     let borrowed = closing_end_borrowed(t, id);
     // The code Vue compiles, trimmed
-    let context = JsInVueTemplate::Interpolation;
-    if let Some(ir) =
-        dispatch_fragment_ir(f, t.vue_script_language(), expression.trim_ascii(), Some(&context))
-    {
+    let code = expression.trim_ascii();
+    if let Some(ir) = dispatch_fragment_ir(
+        f,
+        t.vue_script_language(),
+        code,
+        Some(&JsInVueTemplate::Interpolation),
+    ) {
         if borrowed {
             write!(f, [soft_line_indent_or_space(&format_ir(ir)), space()]);
         } else {
@@ -166,7 +169,7 @@ pub fn write_interpolation<'a>(
         return;
     }
     // Whitespace only prints nothing (`{{}}`), as an Angular one does
-    if expression.trim_ascii().is_empty() {
+    if code.is_empty() {
         return;
     }
     // A trailing line break prints at the indentation: the next line's `}}` lines up with the `{{`
