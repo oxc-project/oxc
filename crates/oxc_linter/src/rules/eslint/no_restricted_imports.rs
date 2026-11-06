@@ -1084,7 +1084,17 @@ impl Rule for NoRestrictedImports {
             );
         }
 
+        // Local `export { imported }` of an imported binding is rewritten as an
+        // indirect export that reuses the import statement span. That import was
+        // already diagnosed above, so skip it to avoid a duplicate report.
+        // Direct `export { name } from 'mod'` keeps its own statement span.
+        let import_statement_spans: FxHashSet<Span> =
+            module_record.import_entries.iter().map(|entry| entry.statement_span).collect();
+
         for entry in &module_record.indirect_export_entries {
+            if import_statement_spans.contains(&entry.statement_span) {
+                continue;
+            }
             self.report_export_name_allowed(
                 ctx,
                 entry,
@@ -3666,6 +3676,47 @@ fn test() {
             Some(
                 serde_json::json!([{ "patterns": [{ "regex": "^foo$", "allowImportNames": ["allowed"] }] }]),
             ),
+        ),
+        // https://github.com/oxc-project/oxc/issues/28781
+        (
+            "import { z } from 'zod';\nexport { z };",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "zod",
+                    "importNames": ["z"],
+                    "message": "Use 'util/zod' instead."
+                }]
+            }])),
+        ),
+        (
+            "import { z } from 'zod';\nexport { z as zz };",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "zod",
+                    "importNames": ["z"],
+                    "message": "Use 'util/zod' instead."
+                }]
+            }])),
+        ),
+        (
+            "export { z } from 'zod';",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "zod",
+                    "importNames": ["z"],
+                    "message": "Use 'util/zod' instead."
+                }]
+            }])),
+        ),
+        (
+            "import { z } from 'zod';\nimport { z as zz } from 'zod';",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "zod",
+                    "importNames": ["z"],
+                    "message": "Use 'util/zod' instead."
+                }]
+            }])),
         ),
     ]);
 
