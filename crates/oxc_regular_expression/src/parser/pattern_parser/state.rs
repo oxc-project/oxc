@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_str::Str;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::parser::{pattern_parser::group_name::capturing_group_name, reader::Reader};
 
@@ -84,8 +84,14 @@ fn parse_capturing_groups<'a>(
     //   (?=...), (?!...), (?<=...), (?<!...)
     let mut num_of_left_capturing_parens = 0;
 
-    // Track all named groups with their depth and alternative path
-    let mut named_groups: Vec<NamedGroupInfo<'a>> = Vec::new();
+    // Named groups seen so far, indexed by (name, first path element). Two groups
+    // can only share a name without it being an error when their alternative paths
+    // diverge, and `can_participate` requires the paths to agree on the first
+    // element, so the duplicate scan only needs the entries in the same bucket.
+    // A flat list scanned by name is quadratic for inputs like
+    // `(?:(?<a>x))|(?:(?<a>y))|...`.
+    let mut named_groups: FxHashMap<(Str<'a>, usize, usize), Vec<NamedGroupInfo>> =
+        FxHashMap::default();
     let mut group_names: FxHashSet<Str<'a>> = FxHashSet::default();
 
     // Track alternatives and depth
@@ -158,28 +164,32 @@ fn parse_capturing_groups<'a>(
                     };
                     let alternative_path = tracker.get_alternative_path();
 
-                    // A newly seen name cannot be a duplicate. Avoid scanning all prior
-                    // groups, which would be quadratic for many distinct names.
-                    if !group_names.insert(group_name) {
-                        for existing in &named_groups {
-                            if existing.name == group_name {
-                                // Check if they can participate together
-                                if AlternativeTracker::can_participate(
-                                    &existing.alternative_path,
-                                    &alternative_path,
-                                ) {
-                                    // True duplicate - return error
-                                    return Err(vec![existing.span, (span_start, span_end)]);
-                                }
+                    // A newly seen name cannot be a duplicate. For a repeated name,
+                    // only scan the entries whose first path element matches: paths
+                    // that differ there can never participate together.
+                    // `get_alternative_path` always keeps the enclosing disjunction's
+                    // alternative, so the path is never empty.
+                    let (first_disjunction, first_alternative) = alternative_path[0];
+                    if !group_names.insert(group_name)
+                        && let Some(existing_list) =
+                            named_groups.get(&(group_name, first_disjunction, first_alternative))
+                    {
+                        for existing in existing_list {
+                            // Check if they can participate together
+                            if AlternativeTracker::can_participate(
+                                &existing.alternative_path,
+                                &alternative_path,
+                            ) {
+                                // True duplicate - return error
+                                return Err(vec![existing.span, (span_start, span_end)]);
                             }
                         }
                     }
 
-                    named_groups.push(NamedGroupInfo {
-                        name: group_name,
-                        span: (span_start, span_end),
-                        alternative_path,
-                    });
+                    named_groups
+                        .entry((group_name, first_disjunction, first_alternative))
+                        .or_default()
+                        .push(NamedGroupInfo { span: (span_start, span_end), alternative_path });
                     continue;
                 }
             }
@@ -247,8 +257,7 @@ impl AlternativeTracker {
 
 /// Tracks information about a named capturing group
 #[derive(Debug, Clone)]
-struct NamedGroupInfo<'a> {
-    name: Str<'a>,
+struct NamedGroupInfo {
     span: (u32, u32),
     alternative_path: AlternativePath,
 }
