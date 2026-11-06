@@ -65,7 +65,7 @@ pub(super) unsafe fn classify_avx2(
         let d0 = (tb0 & DIGIT_MASK).gt_i8(0);
         let d1 = (tb1 & DIGIT_MASK).gt_i8(0);
         let wordm = (w0.movemask() as u64) | ((w1.movemask() as u64) << 32);
-        let wsm = ((!nws0.movemask()) as u64) | (((!nws1.movemask()) as u64) << 32);
+        let wsm = !((nws0.movemask() as u64) | ((nws1.movemask() as u64) << 32));
         *word.add(b) = wordm;
         *digit.add(b) = (d0.movemask() as u64) | ((d1.movemask() as u64) << 32);
         let misc0 = (v0.eq_u8(b'#') | v0.eq_u8(b'\\') | na0).movemask() as u64;
