@@ -24,5 +24,3 @@ const A = <div className="flex p-4" />;
 export const B = <div className="grid text-sm" />;
 
 `````
-
-### Input variants differ: CR

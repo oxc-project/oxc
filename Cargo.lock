@@ -2255,6 +2255,7 @@ version = "0.157.0"
 dependencies = [
  "oxc_ast",
  "oxc_span",
+ "oxc_syntax",
  "rustc-hash",
 ]
 

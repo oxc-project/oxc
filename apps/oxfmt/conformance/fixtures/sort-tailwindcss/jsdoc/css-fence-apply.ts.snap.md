@@ -24,5 +24,3 @@ export const C = 1;
 export const C = 1;
 
 `````
-
-### Input variants differ: CR

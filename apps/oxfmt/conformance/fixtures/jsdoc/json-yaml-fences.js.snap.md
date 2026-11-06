@@ -40,5 +40,3 @@
  */
 
 `````
-
-### Input variants differ: CR
