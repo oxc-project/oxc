@@ -25,6 +25,7 @@ use super::{
     },
     format_with,
     tag::opening_end_borrowed,
+    vue,
 };
 use crate::{
     context::HtmlishFormatContext,
@@ -61,7 +62,8 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
     let force_not_to_break = t.tag(id) == "script"
         && matches!(el.attributes.as_slice(), [only] if t.attribute_is(only.name.slice(t.source()), "src"))
         && item.first_child.is_none();
-    let per_line = single_attribute_per_line && el.attributes.len() > 1;
+    // Not on a Vue block's own lines
+    let per_line = single_attribute_per_line && el.attributes.len() > 1 && !t.is_sfc_block(id);
     let ignored = ignored_attributes(t, id);
     let is_ignored = |name: &str| {
         ignored.is_some_and(|names| {
@@ -130,6 +132,15 @@ fn write_attribute<'a>(
         return;
     }
     let raw = unescaped(value, f);
+    // A Vue attribute whose value is JS prints as written where it does not format (as Prettier does)
+    if t.rules().vue_sfc
+        && let Some(kind) = vue::value_kind(t, element, attribute, f)
+    {
+        if !vue::write_attribute_value(t, kind, raw, f) {
+            write_quoted_value(raw, f);
+        }
+        return;
+    }
     let class = is("class");
     // A placeholder would hide in the sorted class list, out of the parent's reach
     let tailwind =

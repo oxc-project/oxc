@@ -10,6 +10,9 @@ pub struct DialectRules {
     pub keeps_element_gap_kind: bool,
     /// Angular: control flow blocks can occur (checked before looking at a node's kind).
     pub has_blocks: bool,
+    /// Vue: the root's elements but `html` are single-file component blocks (`<template>`, `<script>`, `<i18n>`),
+    /// and `{{ }}` and directive values are JS.
+    pub vue_sfc: bool,
     /// `<!DOCTYPE html>` prints `<!doctype html>`: everywhere but XHTML, where an XML parser needs `<!DOCTYPE`
     /// (DIVERGENCES.md#doctype-case).
     pub lowercase_doctype: bool,
@@ -28,6 +31,7 @@ impl DialectRules {
                 || (variant == HtmlishVariant::Vue && !sfc),
             keeps_element_gap_kind: variant == HtmlishVariant::Vue,
             has_blocks: variant == HtmlishVariant::Angular,
+            vue_sfc: variant == HtmlishVariant::Vue,
             lowercase_doctype: variant != HtmlishVariant::Xhtml,
             lowercase_known_names: standalone && variant == HtmlishVariant::Html,
         }

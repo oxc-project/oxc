@@ -18,8 +18,10 @@ mod element;
 mod embed;
 mod tag;
 mod text;
+mod vue;
 
 pub use embed::{CssInHtmlStyleAttribute, JsInHtmlEventHandler};
+pub use vue::JsInVueTemplate;
 
 use block::write_block;
 use children::write_children;
@@ -101,11 +103,13 @@ fn write_node<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>)
             write_closing_tag_end(t, id, f);
         }
         NodeKind::Text(_) | NodeKind::Cdata => write_text(t, id, f),
-        // `{{ }}`; the expression keeps its lines until it is formatted
+        // `{{ }}`: Vue's expression formatted; Angular's keeps its lines until it is formatted
         NodeKind::Interpolation(interpolation) => {
-            write_opening_tag_start(t, id, f);
             let expression = interpolation.expression.slice(t.source());
-            if !expression.trim_ascii().is_empty() {
+            write_opening_tag_start(t, id, f);
+            if t.rules().vue_sfc {
+                vue::write_interpolation(t, id, expression, f);
+            } else if !expression.trim_ascii().is_empty() {
                 write!(
                     f,
                     soft_space_or_block_indent(&format_with(|f| write_dedented_lines(

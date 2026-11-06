@@ -135,17 +135,9 @@ pub fn write_attribute_value<'a>(
     value: &'a str,
     f: &mut HtmlishFormatter<'_, 'a>,
 ) -> bool {
-    let Some(ir) = dispatch_fragment_ir(f, language, value, Some(parent_context)) else {
+    let Some(ir) = dispatch_attribute_value(language, parent_context, value, f) else {
         return false;
     };
-    let indent_width = f.options().indent_width();
-    let ir = map_text_in_ir(ir, f.allocator(), &mut |text, out| {
-        if !text.contains('"') {
-            return false;
-        }
-        out.push(FormatElement::text(quoted_piece(text, f), indent_width));
-        true
-    });
     write_quoted(&format_ir(ir), f);
     true
 }
@@ -156,6 +148,25 @@ pub fn write_quoted<'a>(
     f: &mut HtmlishFormatter<'_, 'a>,
 ) {
     write!(f, ["\"", group(content), "\""]);
+}
+
+/// An attribute's (unescaped) `value` formatted in `language`, for `"` quotes: every `"` as `&quot;`;
+/// `None` when the dispatcher leaves it as written.
+pub fn dispatch_attribute_value<'a>(
+    language: &str,
+    parent_context: &dyn Any,
+    value: &str,
+    f: &HtmlishFormatter<'_, 'a>,
+) -> Option<ArenaVec<'a, FormatElement<'a>>> {
+    let ir = dispatch_fragment_ir(f, language, value, Some(parent_context))?;
+    let indent_width = f.options().indent_width();
+    Some(map_text_in_ir(ir, f.allocator(), &mut |text, out| {
+        if !text.contains('"') {
+            return false;
+        }
+        out.push(FormatElement::text(quoted_piece(text, f), indent_width));
+        true
+    }))
 }
 
 /// Writes the body of `<script>` / `<style>` element `id` formatted in its language;
@@ -219,25 +230,22 @@ fn escape_script_end<'a>(
     })
 }
 
-/// The language of the body of `<script>` / `<style>` element `id`, a name the dispatcher resolves;
-/// `None` for none (`<script src>`, a template type).
-fn content_language<'a>(t: &'a Tree<'a>, id: NodeId) -> Option<&'a str> {
-    let el = t.element(id)?;
-    let attribute = |name: &str| {
-        el.attributes
-            .iter()
-            .find(|attribute| t.attribute_is(attribute.name.slice(t.source()), name))
+/// The language of the body of `<script>` / `<style>` element `id`, or of a Vue block that is no markup,
+/// a name the dispatcher resolves; `None` for none (`<script src>`, a template type, `<docs>`).
+pub fn content_language<'a>(t: &'a Tree<'a>, id: NodeId) -> Option<&'a str> {
+    let script = match t.tag(id) {
+        "style" => return Some(t.lang(id).unwrap_or("css")),
+        "script" => true,
+        _ if t.is_non_html_sfc_block(id) => false,
+        _ => return None,
     };
-    let value =
-        |name: &str| attribute(name).map(|a| a.value.map_or("", |v| v.span.slice(t.source())));
-    match t.tag(id) {
-        "style" => Some(value("lang").unwrap_or("css")),
-        "script" if attribute("src").is_none() => match (value("lang"), value("type")) {
-            (None, None) => Some("js"),
-            (Some(lang), _) => Some(lang),
-            (None, Some(kind)) => script_type_language(kind),
-        },
-        _ => None,
+    if t.attribute_value(id, "src").is_some() {
+        return None;
+    }
+    match (t.lang(id), t.attribute_value(id, "type")) {
+        (Some(lang), _) => Some(lang),
+        (None, Some(kind)) => script_type_language(kind),
+        (None, None) => script.then_some("js"),
     }
 }
 
