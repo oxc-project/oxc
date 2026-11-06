@@ -2538,9 +2538,18 @@ pub fn immutable_value(
     variable: &str,
     mutation_span: Option<Span>,
     declaration_span: Option<Span>,
+    is_assigning_current_property: bool,
 ) -> OxcDiagnostic {
+    let help = if is_assigning_current_property {
+        format!(
+            "{}\n\nHint: If this value is a Ref (value returned by `useRef()`), rename the variable to end in \"Ref\".",
+            reason.as_ref()
+        )
+    } else {
+        reason.as_ref().to_string()
+    };
     let mut diagnostic = diagnostic(ErrorCategory::Immutability, "This value cannot be modified")
-        .with_help(reason.as_ref().to_string())
+        .with_help(help)
         .with_labels(
             mutation_span.map(|span| span.primary_label(format!("{variable} cannot be modified"))),
         );
