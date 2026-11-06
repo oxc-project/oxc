@@ -19,3 +19,9 @@ export const FIXTURE_ENTRYPOINT = {
 	fn: Component,
 	params: []
 };
+
+
+Lint-mode diagnostics (differ from transform):
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "React rule suppression prevents optimization", labels: [LabeledSpan { label: Some("Found React rule suppression"), span: Span { start: 176, end: 230 }, primary: true }], help: Some("Remove the suppression and address the reported React rule violation"), note: Some("React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled. React Compiler only works when your components follow all the rules of React, disabling them may result in unexpected or incorrect behavior. Found suppression `eslint-disable-next-line react-hooks/rules-of-hooks`"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Suppression") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot access refs during render", labels: [LabeledSpan { label: Some("Cannot update ref value during render"), span: Span { start: 236, end: 244 }, primary: true }, LabeledSpan { label: Some("This value is a ref"), span: Span { start: 233, end: 236 }, primary: false }], help: Some("React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Refs") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/refs") } }

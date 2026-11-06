@@ -93,6 +93,19 @@ function Component() {
   return state;
 }
 ",
+        // An `exhaustive-deps` suppression on the effect does not hide this rule (oxc#26277)
+        "
+import {useEffect, useState} from 'react';
+function Form({item}) {
+  const [name, setName] = useState('');
+  useEffect(() => {
+    if (!item) return;
+    setName(item.name);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item?.id]);
+  return <input value={name} onChange={(e) => setName(e.target.value)} />;
+}
+",
     ];
 
     Tester::new(SetStateInEffect::NAME, SetStateInEffect::PLUGIN, pass, fail).test_and_snapshot();
