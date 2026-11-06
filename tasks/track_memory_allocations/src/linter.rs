@@ -29,6 +29,7 @@ pub fn run(files: &TestFiles) -> io::Result<()> {
         let state = config_store.resolve(path);
         let host = Rc::new(ContextHost::new(
             path,
+            None,
             vec![ContextSubHost::new(semantic, module_record, 0, ContextSubHostOptions::default())],
             &allocator,
             LintOptions::default(),

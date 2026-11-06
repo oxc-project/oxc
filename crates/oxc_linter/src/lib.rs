@@ -265,6 +265,7 @@ pub struct Linter {
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
     workspace_uri: Option<Box<str>>,
+    cwd: Option<Box<Path>>,
 }
 
 impl Linter {
@@ -273,7 +274,15 @@ impl Linter {
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter, workspace_uri: None }
+        Self { options, config, external_linter, workspace_uri: None, cwd: None }
+    }
+
+    /// Set the working directory used to resolve linted file paths relative to
+    /// the project root (e.g. for rules that check directory names).
+    #[must_use]
+    pub fn with_cwd(mut self, cwd: &Path) -> Self {
+        self.cwd = Some(cwd.to_path_buf().into_boxed_path());
+        self
     }
 
     #[must_use]
@@ -361,8 +370,15 @@ impl Linter {
             .any(|(rule, _)| matches!(rule, RuleEnum::ReactTodo(_) | RuleEnum::ReactInvariant(_)));
 
         let mut ctx_host = Rc::new(
-            ContextHost::new(path, context_sub_hosts, allocator, self.options, config)
-                .with_react_compiler_env_options(react_compiler_env_options),
+            ContextHost::new(
+                path,
+                self.cwd.as_deref(),
+                context_sub_hosts,
+                allocator,
+                self.options,
+                config,
+            )
+            .with_react_compiler_env_options(react_compiler_env_options),
         );
 
         #[cfg(debug_assertions)]

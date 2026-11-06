@@ -266,6 +266,7 @@ mod test {
         let semantic = SemanticBuilder::new_linter().build(program).semantic;
         let ctx = Rc::new(ContextHost::new(
             "test.js",
+            None,
             vec![ContextSubHost::new(
                 semantic,
                 Arc::new(ModuleRecord::default()),
