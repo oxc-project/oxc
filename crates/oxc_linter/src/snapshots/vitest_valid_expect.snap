@@ -60,8 +60,8 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ vitest(valid-expect): Expect takes at most 1 argument
    ╭─[valid_expect.tsx:1:1]
- 1 │ expect(1, message).toBe(1);
-   · ──────────────────
+ 1 │ expect(1, 2).toBe(1);
+   · ────────────
    ╰────
   help: Remove the extra arguments.
 
