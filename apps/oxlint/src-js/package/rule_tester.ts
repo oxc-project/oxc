@@ -673,7 +673,7 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
 
   // Test output after fixes
   const { code } = test;
-  let fixedCode = runFixes(diagnostics, code);
+  let fixedCode = runFixes(diagnostics, code, test);
   if (fixedCode === null) fixedCode = code;
 
   // Re-lint and re-fix for additional passes if `recursive` option used
@@ -684,7 +684,7 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
   if (extraPassCount > 0 && fixedCode !== code) {
     for (let pass = 0; pass < extraPassCount; pass++) {
       const diagnostics = lint({ ...test, code: fixedCode }, plugin);
-      const newFixedCode = runFixes(diagnostics, fixedCode);
+      const newFixedCode = runFixes(diagnostics, fixedCode, test);
       if (newFixedCode === null) break;
       fixedCode = newFixedCode;
     }
@@ -713,19 +713,44 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
  *
  * @param diagnostics - Array of `Diagnostic`s returned by `lint`
  * @param code - Code to run fixes on
+ * @param test - Test case providing the original parsing options
  * @returns Fixed code, or `null` if no fixes to apply
  * @throws {Error} If error when applying fixes
  */
-function runFixes(diagnostics: Diagnostic[], code: string): string | null {
+function runFixes(diagnostics: Diagnostic[], code: string, test: TestCase): string | null {
   const fixGroups: FixReport[][] = [];
   for (const diagnostic of diagnostics) {
     if (diagnostic.fixes !== null) fixGroups.push(diagnostic.fixes);
   }
   if (fixGroups.length === 0) return null;
 
-  const fixedCode = applyFixes(code, JSON.stringify(fixGroups));
-  if (fixedCode === null) throw new Error("Failed to apply fixes");
+  return applyTestFixes(code, fixGroups, test, "Autofix");
+}
 
+/**
+ * Apply fixes and validate the result without running the rule again.
+ * @param code - Source to fix
+ * @param fixGroups - Fixes grouped by diagnostic
+ * @param test - Test case providing the original parsing options
+ * @param prefix - Context for an error, including the suggestion index when applicable
+ * @returns Fixed source text
+ * @throws {AssertionError} If applying fixes or parsing the result fails
+ */
+function applyTestFixes(
+  code: string,
+  fixGroups: FixReport[][],
+  test: TestCase,
+  prefix: string,
+): string {
+  const parseOptions = getParseOptions(test);
+  const filename = test.filename ?? `${DEFAULT_FILENAME_BASE}.${parseOptions.lang ?? "js"}`;
+  let fixedCode: string | null;
+  try {
+    fixedCode = applyFixes(code, JSON.stringify(fixGroups), filename, parseOptions);
+  } catch (error) {
+    assert.fail(`${prefix}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  assert(fixedCode !== null, `${prefix}: Failed to apply fixes`);
   return fixedCode;
 }
 
@@ -944,8 +969,7 @@ function assertSuggestionsAreCorrect(
     // Validate output
     assert(Object.hasOwn(expected, "output"), `${prefix}: \`output\` property is required`);
 
-    const suggestedCode = applyFixes(test.code, JSON.stringify([actual.fixes]));
-    assert(suggestedCode !== null, `${prefix}: Failed to apply suggestion fix`);
+    const suggestedCode = applyTestFixes(test.code, [actual.fixes], test, prefix);
 
     assert.strictEqual(
       suggestedCode,
