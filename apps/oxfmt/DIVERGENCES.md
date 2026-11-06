@@ -349,7 +349,7 @@ Prettier parses them as TS only for `lang="ts"`, and as JS for `lang="tsx"`, so 
 ## js-in-vue-tailwind-functions
 
 - Why: uniform-rule (same construct, same output: a `tailwindFunctions` call in a `<script>`, and in `v-if` of a JS file)
-- Pin: `test/api/js-in-vue.test.ts` ("should sort tailwindcss functions in every .vue template expression")
+- Pin: `conformance/fixtures/js-in-vue/sort-tailwindcss-functions/every-template-expression.vue`
 
 ```vue
 <!-- input: { sortTailwindcss: { functions: ["clsx"] } } -->
@@ -387,7 +387,6 @@ A listed function's classes sort in every template expression, as in the file's 
 prettier-plugin-tailwindcss sorts them only in some, by which parser Prettier picks:
 `v-if`, an `@click` expression and `v-for` of a JS file, none in a TS file.
 What the attributes sort (`class`, `:class`, a listed `attributes`) is the same.
-The pin is an API test: the conformance runners run no Tailwind sorter.
 
 ## js-in-vue-trailing-line-comment
 
@@ -526,7 +525,7 @@ Prettier lays out such children in the parent's group, which always breaks, so i
 ## js-in-vue-object-before-double-brace
 
 - Why: semantics (Vue ends `{{ }}` at the first `}}`)
-- Pin: `test/api/js-in-vue.test.ts` ("should keep `}}` out of an interpolation, from a template literal's substitution", "should keep `}}` out of an interpolation without bracket spacing")
+- Pin: `conformance/fixtures/js-in-vue/bracket-spacing-false/interpolation-closing-braces-template-literal.vue`, `conformance/fixtures/js-in-vue/bracket-spacing-false/interpolation-closing-braces.vue`
 
 ```vue
 <!-- input -->
@@ -572,7 +571,6 @@ In `{{ }}`, an object that would print right before another `}` prints in parens
 a template literal's substitution's, whatever `bracketSpacing` says, and, under `bracketSpacing: false`, an object's (a spread's argument too).
 Vue's tokenizer ends the interpolation at the first `}}`, so `{{ {...{a: 1}} }}` no longer compiles (`@vue/compiler-dom` 3.5.45: `Error parsing JavaScript expression`).
 Prettier does it for a property's value only.
-The pin is an API test.
 
 ## styled-extend-tag
 

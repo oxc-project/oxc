@@ -321,7 +321,7 @@ comment's indent or the `*` line prefix. At top level the re-embedded line lands
 subtracts the comment indent and the `*` prefix — the same base every JS/TS snippet in the
 same position uses. Final lines never exceed `printWidth - 4 + prefix`. At top level this is
 3 chars narrower than upstream (content 93 vs 96 at printWidth=100); pinned by
-`apps/oxfmt/test/api/jsdoc.test.ts` ("effective width" case).
+`apps/oxfmt/conformance/fixtures/jsdoc/native-fence-width.ts`.
 
 ## 12. Wrapping moves list-marker-like words to line starts, breaking idempotency
 

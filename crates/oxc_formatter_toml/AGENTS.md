@@ -29,7 +29,7 @@ Strong motivations, since these break rules every other language follows:
 - Width: the child is formatted at the full `printWidth` wherever it sits
   - Other languages' IR is printed by the parent's printer, so their width counts from the embedding column (e.g. inside a list item)
   - Prettier with the plugin behaves the same as now, but consistency across our languages comes first
-  - Pinned in `apps/oxfmt/test/api/markdown.test.ts`
+  - Pinned in `apps/oxfmt/conformance/fixtures/xxx-in-md/print-width-20/toml-code-block.md`
 
 Known limits of the string embedding (text with literal lines, the same as Prettier's `replaceEndOfLine()` on the plugin's string):
 
@@ -44,4 +44,4 @@ Known limits of the string embedding (text with literal lines, the same as Prett
 cargo c -p oxc_formatter_toml
 ```
 
-Embedded behavior is covered by `apps/oxfmt` tests (`test/api/front_matter.test.ts`, `test/api/markdown.test.ts`).
+Embedded behavior is covered by `apps/oxfmt`'s fixtures (`apps/oxfmt/conformance/fixtures/front-matter/`, `apps/oxfmt/conformance/fixtures/xxx-in-md/`).

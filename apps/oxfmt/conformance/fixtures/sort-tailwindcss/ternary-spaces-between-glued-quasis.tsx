@@ -1,0 +1,1 @@
+const A = <div className={`prefix${condition ? ' middle ' : ''}suffix`} />;

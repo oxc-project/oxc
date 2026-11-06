@@ -31,8 +31,9 @@ for (const fullPath of fixtures) {
 
   const lines = ["# Input", "", `${FENCE}${lang}`, input, FENCE, "", "# Output", ""];
   for (const options of resolveOptions(fullPath)) {
-    // With `endOfLine` set, its line endings are shown (`<CRLF>` etc.), so the snapshot pins them
-    const show = "endOfLine" in options ? showLineEndings : (text: string) => text;
+    // With `endOfLine` set or a `\r` in the output, its line endings are shown (`<CRLF>` etc.), so the snapshot pins them
+    const show = (text: string) =>
+      "endOfLine" in options || text.includes("\r") ? showLineEndings(text) : text;
     const block = ({ ok, text }: Awaited<ReturnType<typeof formatWithOxfmt>>) =>
       ok ? [`${FENCE}${lang}`, show(text), FENCE, ""] : ["### Errors", "", FENCE, text, FENCE, ""];
 
@@ -47,7 +48,10 @@ for (const fullPath of fixtures) {
     }
     const differ = [];
     for (const [variant, text, output] of inputVariants(input, first.text)) {
-      if ((await formatWithOxfmt(name, text, options)).text !== output) differ.push(variant);
+      // A lone CR is no TOML newline, so its CR variant is no equivalent input
+      if (variant === "CR" && lang === "toml") continue;
+      const res = await formatWithOxfmt(name, text, options);
+      if (res.text !== output) differ.push(res.ok ? variant : `${variant} (error)`);
     }
     if (differ.length > 0) lines.push(`### Input variants differ: ${differ.join(", ")}`, "");
   }
