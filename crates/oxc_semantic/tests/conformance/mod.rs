@@ -11,12 +11,14 @@ use oxc_semantic::{AstNode, Semantic, SymbolId};
 use crate::TestContext;
 
 mod test_identifier_reference;
+mod test_scope;
 mod test_symbol_declaration;
 
 pub fn conformance_suite() -> SemanticConformance {
     SemanticConformance::default()
         .with_test(test_symbol_declaration::SymbolDeclarationTest)
         .with_test(test_identifier_reference::IdentifierReferenceTest)
+        .with_test(test_scope::ScopeTest)
 }
 
 pub trait ConformanceTest {

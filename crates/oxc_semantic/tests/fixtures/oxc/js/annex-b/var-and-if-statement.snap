@@ -83,7 +83,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/var-and-if-stateme
                 ],
                 "flags": "ScopeFlags(0x0)",
                 "id": 8,
-                "node": "Program",
+                "node": "Function(g)",
                 "symbols": [
                   {
                     "flags": "SymbolFlags(Function)",
@@ -138,7 +138,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/var-and-if-stateme
                 ],
                 "flags": "ScopeFlags(0x0)",
                 "id": 12,
-                "node": "Program",
+                "node": "Function(g)",
                 "symbols": [
                   {
                     "flags": "SymbolFlags(Function)",
