@@ -394,3 +394,34 @@ pub fn create_export_named_class_reference<'a>(
         ModuleDeclaration::new_export_named_declaration(SPAN, specifiers, kind, ctx);
     Statement::from(export_class_reference)
 }
+
+/// Create `var` declaration.
+pub fn create_variable_declaration<'a>(
+    binding: &BoundIdentifier<'a>,
+    init: Expression<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> Statement<'a> {
+    let declarator = VariableDeclarator::new(
+        SPAN,
+        binding.create_binding_pattern(ctx),
+        None,
+        Some(init),
+        false,
+        ctx,
+    );
+    Statement::new_variable_declaration(
+        SPAN,
+        VariableDeclarationKind::Var,
+        [declarator],
+        false,
+        ctx,
+    )
+}
+
+/// Create `new WeakSet()` expression.
+pub fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    let weak_set = static_ident!("WeakSet");
+    let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), weak_set);
+    let ident = ctx.create_ident_expr(SPAN, weak_set, symbol_id, ReferenceFlags::Read);
+    Expression::new_new_expression_with_pure(SPAN, ident, None, [], true, ctx)
+}

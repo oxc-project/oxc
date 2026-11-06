@@ -1,5 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_syntax::scope::ScopeId;
 use oxc_traverse::Traverse;
 
 use crate::{context::TraverseCtx, state::TransformState};
@@ -49,6 +50,8 @@ pub struct TypeScript<'a> {
     rewrite_extensions: Option<TypeScriptRewriteExtensions>,
     // Options
     source_type_is_typescript_definition: bool,
+    /// Classes whose fields are handled for decorators when the target supports class fields.
+    class_fields_handled_scopes: Vec<ScopeId>,
     set_public_class_fields: bool,
     remove_class_fields_without_initializer: bool,
 }
@@ -62,6 +65,7 @@ impl<'a> TypeScript<'a> {
             module: TypeScriptModule::new(options.only_remove_type_imports, state.module),
             rewrite_extensions: TypeScriptRewriteExtensions::new(options),
             source_type_is_typescript_definition: state.source_type.is_typescript_definition(),
+            class_fields_handled_scopes: Vec::new(),
             set_public_class_fields: state.assumptions.set_public_class_fields,
             remove_class_fields_without_initializer: !options.allow_declare_fields
                 || options.remove_class_fields_without_initializer,
@@ -117,7 +121,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
         self.annotations.enter_class(class, ctx);
 
         // Class-properties owns field lowering and initialization order when enabled.
-        if !ctx.state.class_transform.transforms_fields() {
+        // It also handles decorated classes when the target supports class fields.
+        let transforms_fields = ctx.state.class_transform.transforms_fields();
+        let decorated_only =
+            !transforms_fields && ctx.state.class_transform.handles_class_fields(class);
+        if decorated_only {
+            self.class_fields_handled_scopes.push(class.scope_id.get().unwrap());
+            // Erase type-only fields before class-properties moves instance initializers.
+            self.remove_uninitialized_class_fields(class, ctx);
+        }
+        if !transforms_fields && !decorated_only {
             if self.set_public_class_fields {
                 self.transform_class_fields(class, ctx);
             } else {
@@ -132,9 +145,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.exit_class(class, ctx);
 
-        // Class-properties owns field lowering and initialization order when enabled.
-        if !ctx.state.class_transform.transforms_fields() {
-            self.transform_class_on_exit(class, ctx);
+        // The decorators have already been lowered, so use the ownership recorded on entry.
+        let decorated_only = self
+            .class_fields_handled_scopes
+            .last()
+            .is_some_and(|&scope_id| scope_id == class.scope_id.get().unwrap());
+        if decorated_only {
+            self.class_fields_handled_scopes.pop();
+        }
+        if !ctx.state.class_transform.transforms_fields() && !decorated_only {
+            self.remove_uninitialized_class_fields(class, ctx);
         }
     }
 
@@ -185,7 +205,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.annotations.enter_method_definition(def, ctx);
-        if ctx.state.class_transform.transforms_fields() || !self.set_public_class_fields {
+        let class_fields_handled = ctx.state.class_transform.transforms_fields()
+            || self
+                .class_fields_handled_scopes
+                .last()
+                .is_some_and(|&scope_id| scope_id == ctx.current_scope_id());
+        if class_fields_handled || !self.set_public_class_fields {
             Self::transform_class_constructor(def, ctx);
         }
     }

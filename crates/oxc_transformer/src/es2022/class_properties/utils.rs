@@ -5,27 +5,8 @@ use std::path::Path;
 
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_span::SPAN;
-use oxc_traverse::BoundIdentifier;
 
 use crate::context::TraverseCtx;
-
-/// Create `var` declaration.
-pub(super) fn create_variable_declaration<'a>(
-    binding: &BoundIdentifier<'a>,
-    init: Expression<'a>,
-    ctx: &TraverseCtx<'a>,
-) -> Statement<'a> {
-    let kind = VariableDeclarationKind::Var;
-    let declarator = VariableDeclarator::new(
-        SPAN,
-        binding.create_binding_pattern(ctx),
-        None,
-        Some(init),
-        false,
-        ctx,
-    );
-    Statement::new_variable_declaration(SPAN, kind, [declarator], false, ctx)
-}
 
 /// Convert an iterator of `Expression`s into an iterator of `Statement::ExpressionStatement`s.
 pub(super) fn exprs_into_stmts<'a, E>(

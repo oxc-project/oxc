@@ -235,10 +235,15 @@
     "classStaticPrivateFieldSpecGet.js",
     "classStaticPrivateFieldSpecSet.js",
     "classStaticPrivateMethodSet.js",
+    "decorateElement.js",
+    "decoratorMetadata.js",
+    "decoratorStart.js",
     "defineEnumerableProperties.js",
     "dispose.js",
     "objectSpread.js",
     "regeneratorRuntime.js",
+    "runInitializers.js",
+    "setClassName.js",
     "using.js"
   ]
 }

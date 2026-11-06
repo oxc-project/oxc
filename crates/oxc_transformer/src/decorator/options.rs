@@ -42,3 +42,16 @@ impl Default for DecoratorOptions {
 fn default_as_true() -> bool {
     true
 }
+
+/// Decorator semantics selected by the public transform options.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum DecoratorMode {
+    Legacy,
+    Standard,
+}
+
+impl DecoratorOptions {
+    pub(crate) fn mode(self) -> DecoratorMode {
+        if self.legacy { DecoratorMode::Legacy } else { DecoratorMode::Standard }
+    }
+}

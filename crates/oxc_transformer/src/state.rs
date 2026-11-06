@@ -88,7 +88,7 @@ impl TransformState<'_> {
             var_declarations: VarDeclarationsStore::new(),
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
-            class_transform: ClassTransform::new(options.env.es2022),
+            class_transform: ClassTransform::new(options.env.es2022, options.decorator.mode()),
         }
     }
 

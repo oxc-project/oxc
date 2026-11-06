@@ -199,6 +199,7 @@
 
 use indexmap::IndexMap;
 use rustc_hash::FxHashMap;
+
 use serde::Deserialize;
 
 use oxc_ast::ast::*;
@@ -206,13 +207,18 @@ use oxc_str::{Ident, IdentBuildHasher};
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::Traverse;
 
-use crate::{context::TraverseCtx, state::TransformState};
+use crate::{
+    context::TraverseCtx,
+    decorator::{DecoratorMode, standard::StandardDecoratorState},
+    state::TransformState,
+};
 
 mod class;
 mod class_bindings;
 mod class_details;
 mod computed_key;
 mod constructor;
+mod decorators;
 mod instance_prop_init;
 mod private_field;
 mod private_method;
@@ -221,7 +227,9 @@ mod static_block_and_prop_init;
 mod super_converter;
 mod utils;
 use class_bindings::ClassBindings;
-use class_details::{ClassDetails, ClassesStack, PrivateProp, ResolvedPrivateProp};
+use class_details::{
+    ClassDetails, ClassesStack, PrivateProp, PrivateProps, ResolvedPrivateName, ResolvedPrivateProp,
+};
 
 type IdentIndexMap<'a, V> = IndexMap<Ident<'a>, V, IdentBuildHasher>;
 
@@ -251,6 +259,9 @@ pub struct ClassProperties<'a> {
     ///
     /// This option is controlled by [`crate::TypeScriptOptions::remove_class_fields_without_initializer`].
     remove_class_fields_without_initializer: bool,
+    /// If `true`, only transform classes which have decorators.
+    /// Used when target supports class fields, but decorators need lowering.
+    only_decorated_classes: bool,
 
     // ----- State used during all phases of transform -----
     //
@@ -283,6 +294,9 @@ pub struct ClassProperties<'a> {
     insert_after_exprs: Vec<Expression<'a>>,
     /// Statements to insert after class declaration
     insert_after_stmts: Vec<Statement<'a>>,
+
+    /// Standard decorator options, metadata, and exit-phase scratch state.
+    decorator_state: StandardDecoratorState<'a>,
 }
 
 impl ClassProperties<'_> {
@@ -291,12 +305,15 @@ impl ClassProperties<'_> {
         options: ClassPropertiesOptions,
         transform_static_blocks: bool,
         remove_class_fields_without_initializer: bool,
+        decorator_mode: DecoratorMode,
+        only_decorated_classes: bool,
     ) -> Self {
         Self {
             set_public_class_fields: options.loose,
             private_fields_as_properties: options.loose,
             transform_static_blocks,
             remove_class_fields_without_initializer,
+            only_decorated_classes,
             classes_stack: ClassesStack::new(),
             private_field_count: 0,
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
@@ -304,11 +321,28 @@ impl ClassProperties<'_> {
             insert_before: vec![],
             insert_after_exprs: vec![],
             insert_after_stmts: vec![],
+            decorator_state: StandardDecoratorState::new(decorator_mode),
         }
     }
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator_state.wrap_decorated_loop_body(stmt, ctx);
+    }
+
+    fn enter_decorator(&mut self, decorator: &mut Decorator<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator_state.capture_decorator_receiver(decorator, ctx);
+    }
+
+    fn enter_object_property(
+        &mut self,
+        property: &mut ObjectProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.decorator_state.capture_object_property_class_name(property, ctx);
+    }
+
     #[expect(clippy::inline_always)]
     #[inline(always)] // Because this is a no-op in release mode
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -327,6 +361,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
 
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.transform_class_declaration_on_exit(class, ctx);
+    }
+
+    #[inline]
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.decorator_state.has_declaration_rewrites() {
+            self.decorator_state.rewrite_decorated_class_statement(stmt, ctx);
+        }
     }
 
     // `#[inline]` for fast exit for expressions which are not `Class`es
@@ -355,6 +396,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
         target: &mut AssignmentTarget<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        if self.only_decorated_classes
+            && let AssignmentTarget::PrivateFieldExpression(field) = target
+            && !self.private_field_needs_lowering(&field.field)
+        {
+            return;
+        }
         self.transform_assignment_target(target, ctx);
     }
 
@@ -392,6 +439,40 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
 }
 
 impl<'a> ClassProperties<'a> {
+    /// Native private names can share an optional chain with private names that need lowering.
+    fn private_field_needs_lowering(&mut self, ident: &PrivateIdentifier<'a>) -> bool {
+        !self.only_decorated_classes
+            || matches!(
+                self.classes_stack.resolve_private_name(ident),
+                ResolvedPrivateName::Lowered { .. }
+            )
+    }
+
+    /// Private identifier directly referenced by an expression which this transform rewrites.
+    fn direct_private_ident<'e>(expr: &'e Expression<'a>) -> Option<&'e PrivateIdentifier<'a>> {
+        match expr {
+            Expression::PrivateFieldExpression(field) => Some(&field.field),
+            Expression::PrivateInExpression(expr) => Some(&expr.left),
+            Expression::CallExpression(call) => match &call.callee {
+                Expression::PrivateFieldExpression(field) => Some(&field.field),
+                _ => None,
+            },
+            Expression::AssignmentExpression(assign) => match &assign.left {
+                AssignmentTarget::PrivateFieldExpression(field) => Some(&field.field),
+                _ => None,
+            },
+            Expression::UpdateExpression(update) => match &update.argument {
+                SimpleAssignmentTarget::PrivateFieldExpression(field) => Some(&field.field),
+                _ => None,
+            },
+            Expression::TaggedTemplateExpression(tagged) => match &tagged.tag {
+                Expression::PrivateFieldExpression(field) => Some(&field.field),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
     // Keep the rare private-field transform body out of the hot expression visitor.
     // Rust 1.97 otherwise inlines these large branches into the generated walker.
     #[inline(never)]
@@ -400,6 +481,12 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        if self.only_decorated_classes
+            && let Some(ident) = Self::direct_private_ident(expr)
+            && !self.private_field_needs_lowering(ident)
+        {
+            return;
+        }
         match expr {
             // `object.#prop`
             Expression::PrivateFieldExpression(_) => {

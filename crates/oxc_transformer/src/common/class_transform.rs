@@ -1,4 +1,10 @@
-use crate::es2022::{ClassPropertiesOptions, ES2022Options};
+use oxc_ast::ast::Class;
+
+use crate::{
+    decorator::DecoratorMode,
+    es2022::{ClassPropertiesOptions, ES2022Options},
+    utils::decorated_class::class_lowered_for_decorators,
+};
 
 /// Program-wide ownership of class field and static block lowering.
 ///
@@ -14,16 +20,24 @@ pub enum ClassTransform {
     ClassProperties {
         options: ClassPropertiesOptions,
         transform_static_blocks: bool,
+        decorator_mode: DecoratorMode,
+    },
+    /// Class-properties handles decorated classes and auto-accessors only.
+    StandardDecorators {
+        transform_static_blocks: bool,
     },
 }
 
 impl ClassTransform {
-    pub fn new(options: ES2022Options) -> Self {
+    pub fn new(options: ES2022Options, decorator_mode: DecoratorMode) -> Self {
         if let Some(properties_options) = options.class_properties {
             Self::ClassProperties {
                 options: properties_options,
                 transform_static_blocks: options.class_static_block,
+                decorator_mode,
             }
+        } else if decorator_mode == DecoratorMode::Standard {
+            Self::StandardDecorators { transform_static_blocks: options.class_static_block }
         } else if options.class_static_block {
             Self::StaticBlocks
         } else {
@@ -31,7 +45,16 @@ impl ClassTransform {
         }
     }
 
-    /// Whether class-properties owns field lowering and initialization order.
+    /// Whether class-properties owns fields for this class at class entry.
+    ///
+    /// Callers must retain the result if they need it after decorators and accessors are removed.
+    pub fn handles_class_fields(self, class: &Class<'_>) -> bool {
+        self.transforms_fields()
+            || (matches!(self, Self::StandardDecorators { .. })
+                && class_lowered_for_decorators(class))
+    }
+
+    /// Whether class-properties owns field lowering and initialization order for all classes.
     ///
     /// TypeScript must leave field lowering to it, and legacy decorators must leave class-alias
     /// initialization to it instead of inserting an alias assignment in a static block.
