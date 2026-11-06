@@ -190,6 +190,15 @@ fn mangler() {
 }
 
 #[test]
+fn proto_shorthand_preserves_key_when_mangled() {
+    test(
+        "function f(__proto__) { return Object.keys({ __proto__ }); }",
+        "function f(e) {\n\treturn Object.keys({ [\"__proto__\"]: e });\n}\n",
+        &MangleOptions::default(),
+    );
+}
+
+#[test]
 fn private_member_mangling() {
     let cases = [
         "class Foo { #privateField = 1; method() { return this.#privateField; } }",

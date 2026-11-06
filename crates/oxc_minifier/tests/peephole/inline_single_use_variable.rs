@@ -272,6 +272,10 @@ fn test_inline_single_use_variable() {
         "function wrapper() { var __proto__ = []; return { __proto__ } }",
         "function wrapper() { return { ['__proto__']: [] } }",
     );
+    test(
+        "function wrapper() { const __proto__ = 0; return { __proto__ } }",
+        "function wrapper() { let __proto__ = 0; return { ['__proto__']: 0 } }",
+    );
 
     // cannot be compressed to `function wrapper() { var foo; globalThis[console.log(foo)] = (() => { foo = 1 })() }`
     test(
