@@ -1,0 +1,82 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-check-only project/index.ts project/other.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[project/index.ts:3:33]
+ 2 | 
+ 3 | export const project: Value = { count: "project" };
+   :                                 ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+  x typescript(TS2322): Type 'number' is not assignable to type 'string'.
+   ,-[project/other.ts:1:14]
+ 1 | export const other: string = 123;
+   :              ^^^^^
+ 2 | Promise.resolve(2);
+   `----
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 2 files using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-check-only project/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[project/index.ts:3:33]
+ 2 | 
+ 3 | export const project: Value = { count: "project" };
+   :                                 ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-check-only project/clean.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
+
+########## 
+arguments: --type-check-only project/excluded/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[project/excluded/index.ts:1:14]
+ 1 | export const excluded: number = "excluded";
+   :              ^^^^^^^^
+ 2 | Promise.resolve(1);
+   `----
+
+  x typescript(TS2322): Type 'null' is not assignable to type 'number'.
+   ,-[project/excluded/index.ts:4:14]
+ 3 | debugger;
+ 4 | export const nullableExcluded: number = null;
+   :              ^^^^^^^^^^^^^^^^
+   `----
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
