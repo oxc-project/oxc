@@ -60,6 +60,8 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 - Known limitation, left since the triggers are rare and a fix would thread Tailwind state through `SimpleArgument`:
   a multiline template collapsed by sorting is still judged by its source line breaks in some layouts,
   so a Tailwind call with one inside a member chain can take a second pass to settle
+- Known limitation, left as the plugin does since nobody writes it and a fix would couple every layout check assuming collapsed classes:
+  - classes are split on whitespace in the source text, so an escaped whitespace in a JS string or template (`\` + a space, or a line continuation) is torn apart, and the output can fail to re-parse (`"foo bar \⏎"` becomes `"foo bar \"`)
 
 ### Embedded language formatting
 
