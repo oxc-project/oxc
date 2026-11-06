@@ -26,7 +26,7 @@ use crate::{
 /// suitable for use with raw transfer.
 ///
 /// Has different behavior depending on platform.
-/// Implementation for Windows is different, due to Windows' lack of virtual memory overcommit.
+/// The Windows pool can contain fewer than `thread_count` allocators when memory is tight.
 ///
 /// # Design
 /// This pool is designed for the linter to use with JS plugins.
@@ -58,9 +58,10 @@ use crate::{
 ///
 /// In all scenarios, `thread_count` fixed-size allocators is sufficient for the workload.
 ///
-/// We handle both scenarios (2) and (3) the same way, but implemented differently on Windows and Linux/Mac.
+/// We handle both scenarios (2) and (3) the same way, but create the pool differently on Windows.
 ///
-/// * Linux/Mac: No problem creating `thread_count` allocators.
+/// * Unix: Each allocator reserves address space and initially makes only a few pages writable.
+///   Creating `thread_count` allocators does not commit their full capacity.
 ///   That is sufficient for the workload. Pool will not need to grow.
 ///
 /// * Windows: There may not be enough memory for `thread_count` allocators.
@@ -87,16 +88,15 @@ pub struct FixedSizeAllocatorPool {
 impl FixedSizeAllocatorPool {
     /// Create a new [`FixedSizeAllocatorPool`] containing `thread_count` allocators.
     ///
-    /// Linux/Mac implementation.
+    /// Non-Windows implementation.
     ///
-    /// Linux/Mac systems that we support overcommit virtual memory, so there is plenty of virtual memory available.
-    /// Creating a number of allocators equal to the number of threads should be easily possible,
-    /// and they'll primarily consume only virtual memory, not physical memory.
+    /// On Unix, allocators reserve address space without making all pages writable.
+    /// Creating one per worker should need only a small amount of committed memory.
     ///
     /// The pool is not growable. Calling [`get`] on this pool when it's empty will panic.
     ///
     /// # Panics
-    /// Panics if cannot create `thread_count` allocators. This should be impossible if `thread_count` is accurate.
+    /// Panics if the system cannot create `thread_count` allocators.
     ///
     /// [`get`]: Self::get
     #[cfg(not(target_os = "windows"))]
@@ -183,7 +183,7 @@ impl FixedSizeAllocatorPool {
 
     /// Retrieve an [`Allocator`] from the pool.
     ///
-    /// Linux/Mac implementation.
+    /// Non-Windows implementation.
     ///
     /// # Panics
     ///
@@ -315,23 +315,16 @@ const _: () = {
 /// To achieve this, we manually allocate memory to back the `Allocator`'s single chunk,
 /// and to store other metadata.
 ///
-/// We over-allocate 4 GiB, and then use only half of that allocation - either the 1st half,
-/// or the 2nd half, depending on the alignment of the allocation received from `alloc.alloc()`.
-/// One of those halves will be aligned on 4 GiB, and that's the one we use.
+/// Each platform reserves or allocates enough address space to locate a 4 GiB-aligned block.
 ///
 /// Inner `Allocator` is wrapped in `ManuallyDrop` to prevent it freeing the memory itself,
 /// and `FixedSizeAllocator` has a custom `Drop` impl which frees the whole of the original allocation.
 ///
-/// We allocate via `System` allocator, bypassing any registered alternative global allocator
-/// (e.g. Mimalloc in linter). Mimalloc complains that it cannot serve allocations with high alignment,
-/// and presumably it's pointless to try to obtain such large allocations from a thread-local heap,
-/// so better to go direct to the system allocator anyway.
+/// The backing memory bypasses the registered global allocator (e.g. Mimalloc in the linter).
 ///
 /// # Regions of the allocated memory
 ///
-/// 2 GiB of the allocated memory is not used at all (see above).
-///
-/// The remaining 2 GiB - 16 bytes, which *is* used, is split up as follows:
+/// The 2 GiB - 16 byte block is split up as follows:
 ///
 /// ```txt
 ///                                                         WHOLE BLOCK - size 2 GiB - 16, aligned on 4 GiB
