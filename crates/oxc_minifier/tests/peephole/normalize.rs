@@ -365,3 +365,22 @@ fn preserve_legal_comment_above_removed_inner_function_use_strict() {
         "//! outer\nexport function f() {\n\t//! inner\n\tbar();\n}",
     );
 }
+
+#[test]
+fn test_no_fold_number_nan_when_nan_shadowed() {
+    // `Number.NaN` is NaN, but a local binding can capture the `NaN` identifier;
+    // folding to a bare `NaN` would read the local binding instead.
+    // A local binding captures `NaN`, so the fold falls back to `0 / 0` - the
+    // same value with no capturable name.
+    test(
+        "function f(NaN) { return Number.NaN; }",
+        "function f(NaN) {
+	return 0 / 0;
+}",
+    );
+    test(
+        "let NaN = 1; log(Number.NaN);",
+        "let NaN = 1;
+log(0 / 0);",
+    );
+}
