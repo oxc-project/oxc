@@ -144,6 +144,12 @@ trait InternalFormatter {
         None
     }
 
+    /// Whether the output is a single structured document (JSON, XML, ...) meant to be parsed
+    /// by other tools. Free-form messages must not be written to stdout for these formats.
+    fn is_machine_readable(&self) -> bool {
+        false
+    }
+
     /// oxlint words with [`DiagnosticService`](oxc_diagnostics::DiagnosticService),
     /// which uses a own reporter to output to stdout.
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter>;
@@ -182,6 +188,11 @@ impl OutputFormatter {
     /// At the end of the Lint command we may output extra information.
     pub fn lint_command_info(&self, lint_command_info: &LintCommandInfo) -> Option<String> {
         self.internal.lint_command_info(lint_command_info)
+    }
+
+    /// See [`InternalFormatter::is_machine_readable`] for more details.
+    pub fn is_machine_readable(&self) -> bool {
+        self.internal.is_machine_readable()
     }
 
     /// Returns the [`DiagnosticReporter`] which then will be used by [`DiagnosticService`](oxc_diagnostics::DiagnosticService)
