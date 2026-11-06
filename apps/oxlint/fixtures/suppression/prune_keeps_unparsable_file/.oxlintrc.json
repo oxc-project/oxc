@@ -1,0 +1,8 @@
+{
+  "plugins": ["typescript"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "no-debugger": "error",
+    "typescript/no-floating-promises": "error"
+  }
+}
