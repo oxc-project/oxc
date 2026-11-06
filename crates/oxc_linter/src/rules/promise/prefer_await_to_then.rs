@@ -94,10 +94,6 @@ impl Rule for PreferAwaitToThen {
             return;
         }
 
-        if matches!(ctx.nodes().parent_kind(node.id()), AstKind::ReturnStatement(_)) {
-            return;
-        }
-
         if !self.strict {
             // Already inside a yield or await
             if ctx.nodes().ancestors(node.id()).any(is_inside_yield_or_await) {
@@ -164,8 +160,13 @@ fn test() {
         ),
         ("const { promise, resolve } = Promise.withResolvers()", None),
         ("function x () { return Promise.all() } ", None),
-        ("function foo() { return hey.then(x => x) }", None),
-        ("async function foo() { return thing().then(x => x) }", None),
+        ("function x () { return Promise.allSettled(values) }", None),
+        ("function x () { return Promise.any(values) }", None),
+        ("function x () { return Promise.race(values) }", None),
+        ("function x () { return Promise.resolve(42) }", None),
+        ("function x () { return Promise.reject(error) }", None),
+        ("function x () { return Promise.withResolvers() }", None),
+        ("async function foo() { return await thing().then(x => x) }", None),
     ];
 
     let fail = vec![
@@ -175,6 +176,14 @@ fn test() {
         ("async function a() { hey.then(function() { }).then(function() { }) }", None),
         ("function foo() { hey.catch(x => {}) }", None),
         ("function foo() { hey.finally(x => {}) }", None),
+        ("function foo() { return hey.then(x => x) }", None),
+        ("async function foo() { return thing().then(x => x) }", None),
+        ("function foo() { return hey.catch(x => x) }", None),
+        ("function foo() { return hey.finally(() => {}) }", None),
+        (
+            "async function foo() { return await thing().then(x => x) }",
+            Some(serde_json::json!([{ "strict": true }])),
+        ),
         ("something().then(async () => await somethingElse())", None),
         (
             "async function foo() { await thing().then() }",
