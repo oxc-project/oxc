@@ -126,7 +126,38 @@ pub(super) fn generate_walk(schema: &Schema, config: &WalkConfig) -> TokenStream
             }
             traverser.exit_statements(&mut *stmts, ctx);
         }
+
+        ///@@line_break
+        /// Walk the `consequent` or `alternate` of an `IfStatement`.
+        ///
+        /// A function declaration directly in a branch has an implicit Annex B.3.3 block scope,
+        /// which has no AST node. Enter it before statement callbacks, which may replace the branch.
+        /// The block remains the branch's parent scope throughout traversal of that branch.
+        unsafe fn walk_if_statement_branch<#walk_generics>(
+            traverser: &mut Tr,
+            node: *mut Statement<'a>,
+            ctx: &mut #ctx_ty,
+        ) {
+            if let Statement::FunctionDeclaration(function) = &*node {
+                let body_scope_id = function.scope_id.get().unwrap();
+                let scope_id = ctx.scoping().scope_parent_id(body_scope_id).unwrap();
+                let previous_scope_id = ctx.current_scope_id();
+                let previous_block_scope_id = ctx.current_block_scope_id();
+                ctx.set_current_scope_id(scope_id);
+                ctx.set_current_block_scope_id(scope_id);
+                walk_statement(traverser, node, ctx);
+                ctx.set_current_scope_id(previous_scope_id);
+                ctx.set_current_block_scope_id(previous_block_scope_id);
+            } else {
+                walk_statement(traverser, node, ctx);
+            }
+        }
     }
+}
+
+/// Whether `field` is a branch of an `IfStatement`, walked by `walk_if_statement_branch`.
+fn is_if_statement_branch(struct_def: &StructDef, field: &FieldDef) -> bool {
+    struct_def.name() == "IfStatement" && matches!(field.name(), "consequent" | "alternate")
 }
 
 fn walk_generics_tokens(config: &WalkConfig) -> TokenStream {
@@ -336,6 +367,12 @@ fn generate_field_walk(struct_def: &StructDef, field: &FieldDef, schema: &Schema
     let field_type = field.type_def(schema);
     let field_type_name = ty_no_lifetime(field_type, schema);
 
+    if is_if_statement_branch(struct_def, field) {
+        return quote! {
+            walk_if_statement_branch(traverser, (node as *mut u8).add(ancestor::#field_offset) as *mut #field_type_name, ctx);
+        };
+    }
+
     generate_field_walk_inner(field_type, &field_offset, &field_type_name, schema)
 }
 
@@ -509,9 +546,11 @@ fn generate_field_walk_option_with_retag(
             }
         }
         _ => {
-            let innermost = inner_type.innermost_type(schema);
-            let inner_snake = innermost.snake_name();
-            let walk_fn = format_ident!("walk_{inner_snake}");
+            let walk_fn = if is_if_statement_branch(struct_def, field) {
+                format_ident!("walk_if_statement_branch")
+            } else {
+                format_ident!("walk_{}", inner_type.innermost_type(schema).snake_name())
+            };
             quote! {
                 if let Some(field) = &mut *((node as *mut u8).add(ancestor::#field_offset) as *mut #field_type_name) {
                     #retag
@@ -578,37 +617,6 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConf
         });
     }
 
-    // Enter the implicit Annex B.3.3 block before statement callbacks, which may replace
-    // the branch. The block remains its parent scope throughout traversal of that branch.
-    let (enter_annex_b_scope, exit_annex_b_scope) = if enum_def.name() == "Statement" {
-        (
-            quote! {
-                let annex_b_if_scope = if matches!(
-                    ctx.parent(),
-                    Ancestor::IfStatementConsequent(_) | Ancestor::IfStatementAlternate(_)
-                ) && let Statement::FunctionDeclaration(function) = &*node {
-                    let body_scope_id = function.scope_id.get().unwrap();
-                    let scope_id = ctx.scoping().scope_parent_id(body_scope_id).unwrap();
-                    let previous_scope_id = ctx.current_scope_id();
-                    let previous_block_scope_id = ctx.current_block_scope_id();
-                    ctx.set_current_scope_id(scope_id);
-                    ctx.set_current_block_scope_id(scope_id);
-                    Some((previous_scope_id, previous_block_scope_id))
-                } else {
-                    None
-                };
-            },
-            quote! {
-                if let Some((previous_scope_id, previous_block_scope_id)) = annex_b_if_scope {
-                    ctx.set_current_scope_id(previous_scope_id);
-                    ctx.set_current_block_scope_id(previous_block_scope_id);
-                }
-            },
-        )
-    } else {
-        (quote!(), quote!())
-    };
-
     quote! {
         ///@@line_break
         unsafe fn #walk_fn_name<#walk_generics>(
@@ -616,13 +624,11 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConf
             node: *mut #enum_ty,
             ctx: &mut #ctx_ty,
         ) {
-            #enter_annex_b_scope
             traverser.#enter_fn_name(&mut *node, ctx);
             match &mut *node {
                 #match_arms
             }
             traverser.#exit_fn_name(&mut *node, ctx);
-            #exit_annex_b_scope
         }
     }
 }
