@@ -3680,7 +3680,6 @@ fn test() {
         ),
     ]);
 
-    // A local re-export of an imported binding is reported once, on the import.
     let restricted_z_name = serde_json::json!([{
         "paths": [{ "name": "zod", "importNames": ["z"], "message": "Use 'util/zod' instead." }]
     }]);
@@ -3703,7 +3702,6 @@ fn test() {
             "import z from 'zod'; export { z };",
             Some(serde_json::json!([{ "paths": [{ "name": "zod", "importNames": ["default"] }] }])),
         ),
-        // A real `export ... from` is its own statement, so it keeps its own report.
         ("import { z } from 'zod'; export { z } from 'zod';", Some(restricted_z_name)),
     ]);
 
