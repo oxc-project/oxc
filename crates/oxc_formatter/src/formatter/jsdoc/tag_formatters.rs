@@ -337,6 +337,12 @@ impl JsdocFormatter<'_, '_> {
         let mut default_value: Option<&str> = None;
         if let Some(np) = &name_part {
             let name_raw = np.raw();
+            // A multi-line `[name=default]` keeps its lines as written (`tests/jsdoc/upstream-jsdoc-bugs.md` #15)
+            let name_raw = if name_raw.contains(is_line_terminator) {
+                self.session.allocator().alloc_str(&strip_jsdoc_star_prefixes(name_raw, '\n'))
+            } else {
+                name_raw
+            };
             if is_type_optional && !name_raw.starts_with('[') {
                 name_str = self.session.allocator().alloc_concat_strs_array(["[", name_raw, "]"]);
             } else if name_raw.starts_with('[') && name_raw.ends_with(']') {
@@ -392,8 +398,9 @@ impl JsdocFormatter<'_, '_> {
             tag_line.push_str(name_str);
         }
 
-        // Multi-line type: push each line of the tag separately, then handle
+        // Multi-line type or name: push each line of the tag separately, then handle
         // name + description on subsequent lines.
+        // TODO: Upstream still appends `Default is` and capitalizes the description here
         if tag_line.contains('\n') {
             let desc_raw = comment_part.parsed_preserving_whitespace();
             let desc_raw = desc_raw.trim();

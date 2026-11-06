@@ -407,3 +407,26 @@ Unlike comment-parser, the tag name ends at `{`:
 upstream reads `@param{import('./a').B} x` as prose and joins it into the description,
 so TypeScript loses the tag; oxfmt keeps it a tag.
 Pinned by `descriptions/047-at-word-never-wraps-to-line-start`.
+
+## 15. A multi-line `[name=default]` drops the name and the description
+
+**Severity**: High, the parameter name and its description are lost
+
+```js
+// Input
+/**
+ * @param {string[]} [list=[
+ *   "a",
+ *   "b",
+ * ]] The list.
+ */
+
+// Upstream
+/** @param {string[]} */
+```
+
+**Root cause**: comment-parser reads a tag name within its line,
+so `[list=[` is `spec:name:unpaired-brackets` and the tag keeps no name and no description.
+
+**oxfmt behavior**: the `*` prefixes are stripped and the lines are kept as written.
+Pinned by `main/031-multiline-default-value`.

@@ -97,7 +97,7 @@ pub fn append_trailing_dot(s: &str) -> Cow<'_, str> {
     Cow::Borrowed(s)
 }
 
-/// Strip JSDoc `*` continuation prefixes from multi-line type content,
+/// Strip JSDoc `*` continuation prefixes from multi-line type or name content,
 /// joining the lines with `separator`.
 ///
 /// When a type expression spans multiple lines inside a JSDoc block, the raw
@@ -108,8 +108,9 @@ pub fn append_trailing_dot(s: &str) -> Cow<'_, str> {
 /// - `'\n'` keeps its lines for the TS formatter,
 ///   as upstream's `comment-parser` strips `*` prefixes but keeps the newlines for `formatType()`
 ///
-/// NOTE: This compensates for `oxc_jsdoc`'s `JSDocTagTypePart::parsed()` returning the raw source text,
-/// `*` prefixes and line terminators included; the upgrade path is to strip them there.
+/// NOTE: This compensates for `oxc_jsdoc`'s `JSDocTagTypePart::parsed()` and `JSDocTagTypeNamePart::raw()`
+/// returning the raw source text, `*` prefixes and line terminators included;
+/// the upgrade path is to strip them there.
 pub fn strip_jsdoc_star_prefixes(s: &str, separator: char) -> String {
     let mut result = String::with_capacity(s.len());
     for (i, line) in LineTerminatorSplitter::new(s).enumerate() {
