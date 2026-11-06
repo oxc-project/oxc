@@ -26,8 +26,8 @@ use oxc_span::SourceType;
 // or the special-purpose AST-in `format_program`.
 pub(crate) use crate::ast_nodes::{AstNode, AstNodes};
 pub use crate::embed_context::{
-    CssInJsTemplate, HtmlInJsTemplate, JsEmbeddedIn, JsRoot, MarkdownInJsTemplate, ProgramLayout,
-    ProgramSemicolons,
+    CssInJsTemplate, ExpressionLayout, ExpressionRoot, HtmlInJsTemplate, JsEmbeddedIn, JsRoot,
+    MarkdownInJsTemplate, ProgramLayout, ProgramSemicolons,
 };
 // `JsFormatContext` is public solely as the type parameter of the returned `Formatted`;
 // its methods are not part of the public contract.
@@ -111,18 +111,21 @@ pub fn format_with_session<'a>(
 }
 
 /// Parse `source_text` and build the IR for embedding into another formatter's document
-/// (dispatcher path, e.g. a `js` code fence in Markdown, an `onclick` value).
+/// (dispatcher path, e.g. a `js` code fence in Markdown, an `onclick` value, a template's expression).
 ///
 /// Unlike [`format_with_session`], this:
 /// - allocates from the session's shared arena and `GroupId` space, so the IR lives as long as the parent's document
 /// - leaves the Tailwind classes unsorted (the parent sorts them in its own batch)
 /// - emits neither a BOM nor the trailing newline
 ///
-/// `source_text` is the part of the host's document as written, which parses as `root` says.
+/// `source_text` is the part of the host's document as written; it is wrapped here to parse as `root` says.
 /// `embedded_in` is what the host does with the code, for the rules that keep what it reads of it.
 ///
 /// # Errors
-/// Returns the first parse error, or an error when a comment would not print.
+/// Returns the first parse error, an error when the code is not the one `root` names,
+/// when a comment would not print,
+/// or, for a host that inlines the code ([`JsEmbeddedIn::inlines_code`]), when it ends in a line comment without a line break after it
+/// or is a top-level sequence in no parens.
 pub fn format_to_ir<'a>(
     session: &FormatSession<'a>,
     source_text: &str,
@@ -132,14 +135,22 @@ pub fn format_to_ir<'a>(
     embedded_in: JsEmbeddedIn,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
-    let program = parse(allocator, allocator.alloc_str(source_text), source_type)?;
+    let (prefix, suffix) = print::root_wrapper(root);
+    let wrapped = allocator.alloc_concat_strs_array([prefix, source_text, suffix]);
+    let program = parse(allocator, wrapped, source_type)?;
+    let ends_in_line_comment = print::check_root(
+        program,
+        prefix.len()..prefix.len() + source_text.len(),
+        root,
+        embedded_in.inlines_code,
+    )?;
 
     let mut js_context =
         JsFormatContext::new(program.source_text, program.source_type, &program.comments, options);
     js_context.set_in_html_attribute(embedded_in.in_html_attribute);
 
     let node = AstNode::new(program, AstNodes::Dummy());
-    let content = print::FormatRoot { program: &node, root };
+    let content = print::FormatRoot { program: &node, root, ends_in_line_comment };
     let (ir, js_context) = formatter::build_ir(
         js_context,
         session,

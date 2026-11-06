@@ -161,8 +161,14 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     /// There are some cases where the indentation is done by the parent, so if the parent is already doing
     /// the indentation, then there's no need to do a second indentation.
     /// [Prettier applies]: <https://github.com/prettier/prettier/blob/b0201e01ef99db799eb3716f15b7dfedb0a2e62b/src/language-js/print/binaryish.js#L122-L125>
-    pub fn should_not_indent_if_parent_indents(&self, parent: &AstNodes<'_, 'a>) -> bool {
+    pub fn should_not_indent_if_parent_indents(
+        &self,
+        parent: &AstNodes<'_, 'a>,
+        f: &JsFormatter<'_, 'a>,
+    ) -> bool {
         match parent {
+            // An embedded expression's root, which the host's delimiters indent (apps/oxfmt/DIVERGENCES.md#js-in-vue-bitwise-or)
+            parent if f.context().is_embedded_root(parent) => true,
             AstNodes::ReturnStatement(_)
             | AstNodes::ThrowStatement(_)
             | AstNodes::ForStatement(_)
@@ -248,7 +254,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
         }
 
         // Check if we can take another early-exit path before building the Vec
-        let should_not_indent = self.should_not_indent_if_parent_indents(self.parent());
+        let should_not_indent = self.should_not_indent_if_parent_indents(self.parent(), f);
 
         // Optimize: if should_not_indent is true, we can skip building the Vec entirely
         if should_not_indent {

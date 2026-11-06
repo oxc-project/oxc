@@ -390,7 +390,7 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
             semicolons: ProgramSemicolons::LoneExpressionOmitted,
             layout: ProgramLayout::Indented,
         };
-        return (root, JsEmbeddedIn { in_html_attribute: true });
+        return (root, JsEmbeddedIn { in_html_attribute: true, inlines_code: false });
     }
     let semicolons = if request.parent_context_as::<XxxInMarkdownCodeBlock>().is_some() {
         ProgramSemicolons::LoneJsxOmitted

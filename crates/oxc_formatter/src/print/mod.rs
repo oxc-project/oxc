@@ -40,7 +40,7 @@ pub use arrow_function_expression::{
 };
 pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
 pub use fragment::{FormatFunctionParams, FormatTypeParameters};
-pub use root::FormatRoot;
+pub use root::{FormatRoot, check_root, object_prints_double_brace, root_wrapper};
 pub use semicolon::write_comments_before_closing_paren;
 pub use template::embed_hug;
 pub use union_type::{
@@ -529,8 +529,8 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, EmptyStatement> {
     }
 }
 
-/// Whether the embedding decided this statement prints without its semicolon
-/// (see `TopLevelSemicolons`):
+/// Whether the embedded program decided this statement prints without its semicolon
+/// ([`TopLevelSemicolons::Omitted`]):
 /// no trailing one, and no ASI guard under `semi: false` either.
 fn is_semicolon_omitted_by_embedding(
     stmt: &AstNode<'_, '_, ExpressionStatement<'_>>,
@@ -549,6 +549,12 @@ fn expression_statement_needs_semicolon<'a>(
     verbatim: bool,
 ) -> bool {
     if is_semicolon_omitted_by_embedding(stmt, f) {
+        return false;
+    }
+    // The program writes the `;` that ends the previous statement (`TopLevelSemicolons::Separated`)
+    if f.context().top_level_semicolons() == TopLevelSemicolons::Separated
+        && matches!(stmt.parent(), AstNodes::Program(_))
+    {
         return false;
     }
 
