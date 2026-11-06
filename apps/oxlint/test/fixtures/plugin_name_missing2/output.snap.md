@@ -6,7 +6,7 @@
 Failed to parse oxlint configuration file.
 
   x Failed to load JS plugin: no_name
-  |   Error: Plugin must either define `meta.name`, be loaded from an NPM package with a `name` field in `package.json`, or be given an alias in config
+  |   Error: Plugin must either define `meta.namespace` or `meta.name`, be loaded from an NPM package with a `name` field in `package.json`, or be given an alias in config
 ```
 
 # stderr

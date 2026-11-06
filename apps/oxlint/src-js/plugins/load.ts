@@ -18,6 +18,8 @@ import type { SetNullable } from "../utils/types.ts";
 export interface Plugin {
   meta?: {
     name?: string;
+    /** Default rule prefix. An explicit alias in config takes priority. */
+    namespace?: string;
   };
   rules: Record<string, Rule>;
 }
@@ -151,10 +153,10 @@ export async function loadPlugin(
  * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @returns - Plugin details
- * @throws {Error} If `plugin.meta.name` is `null` / `undefined` and `packageName` not provided
+ * @throws {Error} If no namespace, name, package name, or alias is provided
  * @throws {Error} If another plugin with the same name is already registered
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
- * @throws {TypeError} If `plugin.meta.name` is not a string
+ * @throws {TypeError} If the selected metadata namespace or name is not a string
  */
 export function registerPlugin(
   plugin: Plugin,
@@ -332,16 +334,17 @@ export function registerPlugin(
  * Get plugin name.
  *
  * - Plugin is named with an alias in config, return the alias.
- * - If `plugin.meta.name` is defined, return it.
+ * - If `plugin.meta.namespace` is defined, return it unchanged.
+ * - If `plugin.meta.name` is defined, normalize and return it.
  * - Otherwise, fall back to `packageName`, if defined.
- * - If neither is defined, throw an error.
+ * - If none is defined, throw an error.
  *
  * @param plugin - Plugin object
  * @param pluginName - Plugin name (either alias or package name)
  * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
  * @returns Plugin name
- * @throws {TypeError} If `plugin.meta.name` is not a string
- * @throws {Error} If neither `plugin.meta.name` nor `packageName` are defined
+ * @throws {TypeError} If the selected metadata namespace or name is not a string
+ * @throws {Error} If no namespace, name, package name, or alias is provided
  */
 function getPluginName(
   plugin: Plugin,
@@ -354,9 +357,19 @@ function getPluginName(
     return pluginName;
   }
 
+  // A namespace is already a rule prefix, so do not normalize it as a package name.
+  const pluginMeta = plugin.meta,
+    pluginNamespace = pluginMeta?.namespace;
+  if (pluginNamespace != null) {
+    if (typeof pluginNamespace !== "string") {
+      throw new TypeError("`plugin.meta.namespace` must be a string if defined");
+    }
+    return pluginNamespace;
+  }
+
   // If plugin defines its own name, that takes priority over package name.
   // Normalize plugin name.
-  const pluginMetaName = plugin.meta?.name;
+  const pluginMetaName = pluginMeta?.name;
   if (pluginMetaName != null) {
     if (typeof pluginMetaName !== "string") {
       throw new TypeError("`plugin.meta.name` must be a string if defined");
@@ -368,7 +381,7 @@ function getPluginName(
   if (pluginName !== null) return pluginName;
 
   throw new Error(
-    "Plugin must either define `meta.name`, be loaded from an NPM package with a `name` field in `package.json`, "
+    "Plugin must either define `meta.namespace` or `meta.name`, be loaded from an NPM package with a `name` field in `package.json`, "
       + "or be given an alias in config",
   );
 }
