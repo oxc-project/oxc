@@ -471,7 +471,7 @@ impl<'a> LegacyDecorator<'a> {
     ///
     /// Instance: `get <key>() { return this.#<storage_name>; }`
     /// Static:   `get <key>() { return ClassName.#<storage_name>; }`
-    fn create_accessor_method(
+    pub(crate) fn create_accessor_method(
         decorators: ArenaVec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         kind: MethodDefinitionKind,
@@ -1428,7 +1428,7 @@ impl<'a> LegacyDecorator<'a> {
     }
 
     /// `export default Class`
-    fn create_export_default_class_reference(
+    pub(crate) fn create_export_default_class_reference(
         class_binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
@@ -1444,7 +1444,7 @@ impl<'a> LegacyDecorator<'a> {
     }
 
     /// `export { Class }`
-    fn create_export_named_class_reference(
+    pub(crate) fn create_export_named_class_reference(
         class_binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {

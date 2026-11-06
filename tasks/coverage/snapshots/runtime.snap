@@ -2,7 +2,7 @@ commit: 91c70759
 
 runtime Summary:
 AST Parsed     : 18367/18367 (100.00%)
-Positive Passed: 17419/18367 (94.84%)
+Positive Passed: 17421/18367 (94.85%)
 minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -1022,9 +1022,6 @@ Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 
 transform Error: tasks/coverage/test262/test/language/expressions/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/class/elements/syntax/valid/grammar-field-accessor.js
-SyntaxError: Unexpected identifier '$'
 
 transform Error: tasks/coverage/test262/test/language/expressions/class/heritage-async-arrow-function.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
@@ -2201,9 +2198,6 @@ Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
-
-transform Error: tasks/coverage/test262/test/language/statements/class/elements/syntax/valid/grammar-field-accessor.js
-SyntaxError: Unexpected identifier '$'
 
 codegen Error: tasks/coverage/test262/test/language/statements/class/static-init-arguments-label.js
 SyntaxError: 'arguments' is not allowed in class field initializer or static initialization block

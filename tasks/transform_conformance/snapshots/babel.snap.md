@@ -1,6 +1,6 @@
 commit: 0372f7f1
 
-Passed: 742/1324
+Passed: 742/1325
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1647,7 +1647,7 @@ transform-react-jsx-development: unknown field `sourceSelf`, expected one of `ru
 transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
 
 
-# babel-plugin-proposal-decorators (1/155)
+# babel-plugin-proposal-decorators (1/156)
 * 2023-11-accessors/context-name/input.js
 x Output mismatch
 
@@ -1694,6 +1694,9 @@ x Output mismatch
 x Output mismatch
 
 * 2023-11-accessors--to-es2015/undecorated-public/input.js
+x Output mismatch
+
+* 2023-11-accessors--to-es2015/undecorated-static-private/input.js
 x Output mismatch
 
 * 2023-11-accessors--to-es2015/undecorated-static-public/input.js
