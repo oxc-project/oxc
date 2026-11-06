@@ -207,6 +207,8 @@ pub struct OxcSortImportsOptions {
     pub sort_side_effects: Option<bool>,
     /// Sort order: "asc" | "desc" (default: "asc")
     pub order: Option<String>,
+    /// How import sources are compared: "natural" | "biome" (default: "natural")
+    pub r#type: Option<String>,
     /// Ignore case when sorting (default: true)
     pub ignore_case: Option<bool>,
     /// Add newlines between import groups (default: true)

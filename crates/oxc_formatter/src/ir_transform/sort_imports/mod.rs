@@ -1,3 +1,4 @@
+mod biome_order;
 mod compute_metadata;
 mod group_config;
 mod group_matcher;
