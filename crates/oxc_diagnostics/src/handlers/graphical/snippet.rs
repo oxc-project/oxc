@@ -158,8 +158,16 @@ impl GraphicalReportHandler {
                         primary_column + 1,
                     )?;
                 } else {
+                    // Keep terminal URL detection from including the surrounding brackets.
+                    let padding = if source_name.starts_with("file://") { " " } else { "" };
                     let source_name = source_name.style(style);
-                    writeln!(f, "[{}:{}:{}]", source_name, primary_line + 1, primary_column + 1)?;
+                    writeln!(
+                        f,
+                        "[{padding}{}:{}:{}{padding}]",
+                        source_name,
+                        primary_line + 1,
+                        primary_column + 1
+                    )?;
                 }
             }
             _ => {
@@ -223,7 +231,8 @@ impl GraphicalReportHandler {
         let line = line_buffer.format(line);
         let column = column_buffer.format(column);
 
-        f.write_char('[')?;
+        let is_file_url = source_name.is_some_and(|name| name.starts_with("file://"));
+        f.write_str(if is_file_url { "[ " } else { "[" })?;
         if let Some(source_name) = source_name {
             f.write_str(source_name)?;
             f.write_char(':')?;
@@ -231,7 +240,7 @@ impl GraphicalReportHandler {
         f.write_str(line)?;
         f.write_char(':')?;
         f.write_str(column)?;
-        f.write_str("]\n")
+        f.write_str(if is_file_url { " ]\n" } else { "]\n" })
     }
 
     /// Renders a line to the output formatter, replacing tabs with spaces.
@@ -257,7 +266,42 @@ impl GraphicalReportHandler {
 
 #[cfg(test)]
 mod tests {
+    use cow_utils::CowUtils as _;
+
+    use oxc_span::Span;
+
     use super::GraphicalReportHandler;
+    use crate::{GraphicalTheme, NamedSource, OxcDiagnostic, handlers::theme::DiagnosticColorize};
+
+    #[test]
+    fn snippet_headers_separate_file_urls_from_brackets() {
+        for theme in
+            [GraphicalTheme::none(), GraphicalTheme::unicode_nocolor(), GraphicalTheme::unicode()]
+        {
+            for (source_name, expected_header) in [
+                ("file:///project/input.ts", "[ file:///project/input.ts:2:3 ]"),
+                ("file:///C:/project/input.ts", "[ file:///C:/project/input.ts:2:3 ]"),
+                (
+                    "file:///project/%5Bslug%5D/input%20file.ts",
+                    "[ file:///project/%5Bslug%5D/input%20file.ts:2:3 ]",
+                ),
+                ("src/input.ts", "[src/input.ts:2:3]"),
+                ("/project/input.ts", "[/project/input.ts:2:3]"),
+            ] {
+                let diagnostic = OxcDiagnostic::warn("example")
+                    .with_label(Span::new(11, 17))
+                    .with_source_code(NamedSource::new(source_name, "first();\n  second();\n"));
+                let expected_header = expected_header
+                    .cow_replace(source_name, &source_name.style(theme.styles.link).to_string());
+                let mut output = String::new();
+                GraphicalReportHandler::new_themed(theme.clone())
+                    .render_report(&mut output, diagnostic.as_ref())
+                    .unwrap();
+
+                assert!(output.contains(expected_header.as_ref()), "{output}");
+            }
+        }
+    }
 
     #[test]
     fn direct_locations_match_standard_formatting() {
