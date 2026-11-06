@@ -41,6 +41,13 @@ pub fn duplicated_capturing_group_names(spans: Vec<Span>) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn nesting_depth_exceeded(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("{PREFIX} Nesting depth exceeds the maximum supported depth"))
+        .with_label(span)
+        .with_help("Reduce the nesting of groups or character classes")
+}
+
+#[cold]
 pub fn too_may_capturing_groups(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("{PREFIX} Too many capturing groups"))
         .with_label(span)
