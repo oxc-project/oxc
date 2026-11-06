@@ -11,7 +11,6 @@ mod call_like_expression;
 mod class;
 mod decorators;
 mod export_declarations;
-mod fragment;
 mod function;
 mod function_type;
 mod import_declaration;
@@ -39,7 +38,6 @@ pub use arrow_function_expression::{
     FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
 pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
-pub use fragment::{FormatFunctionParams, FormatTypeParameters};
 pub use root::{FormatRoot, check_root, object_prints_double_brace, root_wrapper};
 pub use semicolon::write_comments_before_closing_paren;
 pub use template::embed_hug;

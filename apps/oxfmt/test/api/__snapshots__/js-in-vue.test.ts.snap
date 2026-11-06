@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ sort-imports 1`] = `
+exports[`Format js-in-vue > should format .vue w/ sort-imports 1`] = `
 "<script lang="ts">
   import a from "a";
   import m from "m";
@@ -11,13 +11,11 @@ exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ sor
   import m from "m";
   import z from "z";
 </script>
-<template>
-  <div>{{ a + m + z }}</div>
-</template>
+<template><div>{{ a + m + z }}</div></template>
 "
 `;
 
-exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ sort-tailwindcss 1`] = `
+exports[`Format js-in-vue > should format .vue w/ sort-tailwindcss 1`] = `
 "<script setup>
   import clsx from "clsx";
   import { ref } from "vue";
@@ -32,7 +30,7 @@ exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ sor
 "
 `;
 
-exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ template literal (no vueIndentScriptAndStyle) 1`] = `
+exports[`Format js-in-vue > should format .vue w/ template literal (no vueIndentScriptAndStyle) 1`] = `
 "<script setup>
 const a = \`
   hello
@@ -45,7 +43,7 @@ const a = \`
 "
 `;
 
-exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ template literal idempotently (vueIndentScriptAndStyle) 1`] = `
+exports[`Format js-in-vue > should format .vue w/ template literal idempotently (vueIndentScriptAndStyle) 1`] = `
 "<script setup>
   const a = \`
   hello
@@ -58,7 +56,7 @@ exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ tem
 "
 `;
 
-exports[`Format js-in-vue with prettier-plugin-oxfmt > should preserve gql block-string blank lines through a .vue script 1`] = `
+exports[`Format js-in-vue > should preserve gql block-string blank lines through a .vue script 1`] = `
 "<script setup>
 const q = graphql\`
   """
@@ -72,5 +70,33 @@ const q = graphql\`
   }
 \`;
 </script>
+"
+`;
+
+exports[`Format js-in-vue > should sort tailwindcss classes in .vue bindings 1`] = `
+"<template>
+  <div
+    :class="['flex p-4', { 'flex p-4': a }, \`flex p-4 \${b}\`]"
+    v-bind:class="a ? 'flex p-4' : 'm-2 block'"
+    :foo="'p-4 flex'"
+    :bar="'flex p-4'"
+    v-baz="'flex p-4'"
+  >
+    {{ "p-4 flex" }}
+  </div>
+  <p :class.prop="'p-4 flex'" .class="'p-4 flex'" />
+</template>
+"
+`;
+
+exports[`Format js-in-vue > should sort tailwindcss functions in every .vue template expression 1`] = `
+"<script setup lang="ts">
+const a = clsx("flex p-4");
+</script>
+
+<template>
+  <p v-if="clsx('flex p-4')">{{ clsx("flex p-4") }}</p>
+  <p :title="clsx('flex p-4')" @click="f(clsx('flex p-4'))" />
+</template>
 "
 `;

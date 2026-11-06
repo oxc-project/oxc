@@ -102,14 +102,12 @@ export async function jsTextToDoc(
   sourceExt: string,
   sourceText: string,
   oxfmtPluginOptionsJson: string,
-  parentContext: string,
 ) {
   BINDINGS_CACHE ??= await import("./bindings");
   return BINDINGS_CACHE.jsTextToDoc(
     sourceExt,
     sourceText,
     oxfmtPluginOptionsJson,
-    parentContext,
     () => toFormatFileResult(Promise.reject("formatFile is unavailable for jsTextToDoc")),
     (options, code) => toNullable(formatEmbeddedDoc({ options, code })),
     (options, classes) => toNullable(sortTailwindClasses({ options, classes })),

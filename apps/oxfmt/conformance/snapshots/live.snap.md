@@ -1,30 +1,66 @@
 ## js-in-vue
 
-### Option 1: 331/334 (99.10%)
+### Option 1: 332/344 (96.51%)
 
 ```json
 {"printWidth":80}
 ```
 
+- [edge-cases/js-in-vue/bitwise-or.vue](diffs/js-in-vue/edge-cases__js-in-vue__bitwise-or.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-bitwise-or
+- [edge-cases/js-in-vue/for-alias-commas.vue](diffs/js-in-vue/edge-cases__js-in-vue__for-alias-commas.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-for-alias-as-params
 - [edge-cases/js-in-vue/generic-trailing-comma.vue](diffs/js-in-vue/edge-cases__js-in-vue__generic-trailing-comma.vue.md)
   - apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
+- [edge-cases/js-in-vue/handler-statements-semi-false.vue](diffs/js-in-vue/edge-cases__js-in-vue__handler-statements-semi-false.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-handler-statements
+- [edge-cases/js-in-vue/interpolation-in-broken-parent.vue](diffs/js-in-vue/edge-cases__js-in-vue__interpolation-in-broken-parent.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-interpolation-in-broken-parent
+- [edge-cases/js-in-vue/removed-attributes-as-written.vue](diffs/js-in-vue/edge-cases__js-in-vue__removed-attributes-as-written.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-removed-attributes-as-written
+- [edge-cases/js-in-vue/template-expression-tsx.vue](diffs/js-in-vue/edge-cases__js-in-vue__template-expression-tsx.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#tsx-in-vue-template-expressions
+- [edge-cases/js-in-vue/top-level-sequence.vue](diffs/js-in-vue/edge-cases__js-in-vue__top-level-sequence.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-top-level-sequence-as-written
+- [edge-cases/js-in-vue/trailing-line-comment.vue](diffs/js-in-vue/edge-cases__js-in-vue__trailing-line-comment.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-trailing-line-comment
+- [edge-cases/js-in-vue/v-pre-as-written.vue](diffs/js-in-vue/edge-cases__js-in-vue__v-pre-as-written.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-v-pre-as-written
 - [externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue](diffs/js-in-vue/externals__vue-vben-admin__@core__ui-kit__shadcn-ui__src__components__render-content__render-content.vue.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__common-ui__src__components__api-component__api-component.vue.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
   - apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
 
-### Option 2: 332/334 (99.40%)
+### Option 2: 333/344 (96.80%)
 
 ```json
-{"printWidth":100,"vueIndentScriptAndStyle":true,"singleQuote":true}
+{"printWidth":100,"vueIndentScriptAndStyle":true,"singleQuote":true,"semi":false}
 ```
 
+- [edge-cases/js-in-vue/for-alias-commas.vue](diffs/js-in-vue/edge-cases__js-in-vue__for-alias-commas.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-for-alias-as-params
 - [edge-cases/js-in-vue/generic-trailing-comma.vue](diffs/js-in-vue/edge-cases__js-in-vue__generic-trailing-comma.vue.md)
   - apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
+- [edge-cases/js-in-vue/handler-statements-semi-false.vue](diffs/js-in-vue/edge-cases__js-in-vue__handler-statements-semi-false.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-handler-statements
+- [edge-cases/js-in-vue/interpolation-in-broken-parent.vue](diffs/js-in-vue/edge-cases__js-in-vue__interpolation-in-broken-parent.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-interpolation-in-broken-parent
+- [edge-cases/js-in-vue/removed-attributes-as-written.vue](diffs/js-in-vue/edge-cases__js-in-vue__removed-attributes-as-written.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-removed-attributes-as-written
+- [edge-cases/js-in-vue/template-expression-tsx.vue](diffs/js-in-vue/edge-cases__js-in-vue__template-expression-tsx.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#tsx-in-vue-template-expressions
+- [edge-cases/js-in-vue/top-level-sequence.vue](diffs/js-in-vue/edge-cases__js-in-vue__top-level-sequence.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-top-level-sequence-as-written
+- [edge-cases/js-in-vue/trailing-line-comment.vue](diffs/js-in-vue/edge-cases__js-in-vue__trailing-line-comment.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-trailing-line-comment
+- [edge-cases/js-in-vue/v-pre-as-written.vue](diffs/js-in-vue/edge-cases__js-in-vue__v-pre-as-written.vue.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-v-pre-as-written
 - [externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__common-ui__src__components__api-component__api-component.vue.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
   - apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
+- [externals/vue-vben-admin/effects/layouts/src/authentication/icons/slogan.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__layouts__src__authentication__icons__slogan.vue.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#text-display-width
 
 ## gql-in-js
 

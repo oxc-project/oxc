@@ -162,7 +162,7 @@ impl Language {
             Self::Toml => Route::Native(NativeLanguage::Toml),
             Self::Html => Route::Native(NativeLanguage::Html(HtmlishVariant::Html)),
             Self::AngularHtml => Route::Prettier(PrettierLanguage::Angular),
-            Self::Vue => Route::Prettier(PrettierLanguage::Vue),
+            Self::Vue => Route::Native(NativeLanguage::Html(HtmlishVariant::Vue)),
             Self::Svelte => Route::Prettier(PrettierLanguage::Svelte),
             Self::Astro => Route::Prettier(PrettierLanguage::Astro),
             Self::Handlebars => Route::Prettier(PrettierLanguage::Glimmer),
@@ -195,7 +195,6 @@ mod tests {
         for (fence, parser) in [
             ("angular", "angular"),
             ("angular-html", "angular"),
-            ("vue", "vue"),
             ("svelte", "svelte"),
             ("astro", "astro"),
             ("handlebars", "glimmer"),

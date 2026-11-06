@@ -17,8 +17,8 @@ pub struct DialectRules {
     /// (DIVERGENCES.md#doctype-case).
     pub lowercase_doctype: bool,
     /// A known HTML element's name and its known attributes print lowercase, as Prettier's HTML parser reads them:
-    /// in a `.html` file, whose reader is an HTML parser; as written where embedded, in XHTML, Vue and Angular
-    /// (DIVERGENCES.md#tag-name-case).
+    /// in a `.html` file and a Vue file read as HTML, whose reader is an HTML parser;
+    /// as written where embedded, in XHTML, a Vue SFC and Angular (DIVERGENCES.md#tag-name-case).
     pub lowercase_known_names: bool,
 }
 
@@ -33,7 +33,8 @@ impl DialectRules {
             has_blocks: variant == HtmlishVariant::Angular,
             vue_sfc: variant == HtmlishVariant::Vue,
             lowercase_doctype: variant != HtmlishVariant::Xhtml,
-            lowercase_known_names: standalone && variant == HtmlishVariant::Html,
+            lowercase_known_names: standalone
+                && (variant == HtmlishVariant::Html || (variant == HtmlishVariant::Vue && !sfc)),
         }
     }
 }

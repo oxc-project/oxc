@@ -1,5 +1,7 @@
+//! [`JsRoot::FunctionParams`](crate::JsRoot::FunctionParams) (Vue `v-slot`, `v-for` left)
+//! and [`JsRoot::TypeParameters`](crate::JsRoot::TypeParameters) (Vue `<script generic>`).
+
 use oxc_ast::ast::*;
-use oxc_formatter_core::Format;
 
 use crate::{
     ast_nodes::AstNode,
@@ -9,32 +11,40 @@ use crate::{
     write,
 };
 
-use super::parameters::{ParameterLayout, ParameterList};
+use super::super::parameters::{ParameterLayout, ParameterList};
+
+/// Writes `params` in a group, in parens when `parens_when_many` and more than one or a rest element.
+pub(super) fn write_function_params<'a>(
+    params: &AstNode<'_, 'a, FormalParameters<'a>>,
+    parens_when_many: bool,
+    ends_in_line_comment: bool,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    let with_parens = parens_when_many && (1 < params.items.len() || params.rest.is_some());
+    let params = FormatFunctionParams { node: params, with_parens };
+    if ends_in_line_comment {
+        write!(f, soft_block_indent(&params));
+    } else {
+        write!(f, group(&params));
+    }
+}
 
 /// Formats `FormalParameters` placed in a binding position.
 ///
-/// The input is a `FormalParameters` node extracted from a synthetic `function _(...) {}`
-/// wrapper (see the `FragmentContext` input contract).
+/// The input is a `FormalParameters` node extracted from the `function _(...) {}`
+/// a [`JsRoot::FunctionParams`](crate::JsRoot::FunctionParams) is parsed in.
 ///
 /// Trailing commas at the parameter list level are suppressed,
 /// while trailing commas inside nested patterns (e.g., destructured objects/arrays)
 /// follow the normal `trailingComma` setting.
 ///
 /// For a binding-LHS position with multiple params (e.g., `(item, index)`),
-/// - `with_parens` wraps the list with parentheses
-/// - the nested indent/group structure mirrors Prettier's `html-binding.js`
-///   - <https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/print/html-binding.js#L14>
+/// `with_parens` wraps the list with parentheses, which break around it.
 ///
 /// For a plain binding position (e.g., `{ item }`), use the default (no parens).
-pub struct FormatFunctionParams<'a, 'b> {
+struct FormatFunctionParams<'a, 'b> {
     node: &'b AstNode<'b, 'a, FormalParameters<'a>>,
     with_parens: bool,
-}
-
-impl<'a, 'b> FormatFunctionParams<'a, 'b> {
-    pub fn new(node: &'b AstNode<'b, 'a, FormalParameters<'a>>, with_parens: bool) -> Self {
-        Self { node, with_parens }
-    }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatFunctionParams<'a, '_> {
@@ -60,20 +70,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatFunctionParams<'a, '_> {
 
 /// Formats a `TSTypeParameterDeclaration` placed in a standard declaration position.
 ///
-/// The input is a `TSTypeParameterDeclaration` extracted from a synthetic `type T<...> = any`
-/// wrapper (see the `FragmentContext` input contract).
+/// The input is a `TSTypeParameterDeclaration` extracted from the `type T<...> = any`
+/// a [`JsRoot::TypeParameters`](crate::JsRoot::TypeParameters) is parsed in.
 ///
 /// Outputs the comma-separated type parameter list with `soft_block_indent` wrapping with comments.
 /// Does NOT include angle bracket delimiters `<`/`>` or group wrapping.
 /// And trailing commas are suppressed.
-pub struct FormatTypeParameters<'a, 'b> {
-    decl: &'b AstNode<'b, 'a, TSTypeParameterDeclaration<'a>>,
-}
-
-impl<'a, 'b> FormatTypeParameters<'a, 'b> {
-    pub fn new(decl: &'b AstNode<'b, 'a, TSTypeParameterDeclaration<'a>>) -> Self {
-        Self { decl }
-    }
+pub(super) struct FormatTypeParameters<'a, 'b> {
+    pub decl: &'b AstNode<'b, 'a, TSTypeParameterDeclaration<'a>>,
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatTypeParameters<'a, '_> {

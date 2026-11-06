@@ -59,7 +59,7 @@ export interface FormatResult {
  * This API is specialized for JS/TS snippets embedded in non-JS files.
  * Unlike `format()`, it is called only for js-in-xxx `textToDoc()` flow.
  */
-export declare function jsTextToDoc(sourceExt: string, sourceText: string, oxfmtPluginOptionsJson: string, parentContext: string, formatFileCb: (options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>, formatEmbeddedDocCb: (options: Record<string, any>, code: string) => Promise<string | null>, sortTailwindClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<string | null>
+export declare function jsTextToDoc(sourceExt: string, sourceText: string, oxfmtPluginOptionsJson: string, formatFileCb: (options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>, formatEmbeddedDocCb: (options: Record<string, any>, code: string) => Promise<string | null>, sortTailwindClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<string | null>
 
 /**
  * NAPI based JS CLI entry point.

@@ -3,6 +3,7 @@
 //! A kind's own rules live in its module; this one dispatches on the root.
 
 mod expression;
+mod params;
 mod program;
 
 pub use expression::object_prints_double_brace;
@@ -18,6 +19,7 @@ use crate::{
     JsRoot, ProgramSemicolons,
     ast_nodes::{AstNode, AstNodeKind},
     formatter::{JsFormatter, prelude::*},
+    write,
 };
 
 use super::block_statement::is_empty_block;
@@ -28,6 +30,8 @@ pub fn root_wrapper(root: JsRoot) -> (&'static str, &'static str) {
     match root {
         JsRoot::Program { .. } => ("", ""),
         JsRoot::Expression(_) => ("(", "\n)"),
+        JsRoot::FunctionParams { .. } => ("function _(", "\n) {}"),
+        JsRoot::TypeParameters => ("type T<", "\n> = any"),
     }
 }
 
@@ -88,11 +92,16 @@ pub fn check_root(
         }
     }
 
-    match root {
-        JsRoot::Program { .. } => {}
-        JsRoot::Expression(expression) => {
+    match (root, program.body.as_slice()) {
+        (JsRoot::Program { .. }, _)
+        // `function _(` … `) {}`
+        | (JsRoot::FunctionParams { .. }, [Statement::FunctionDeclaration(_)])
+        // `type T<` … `> = any`, never empty: `type T<> = any` does not parse
+        | (JsRoot::TypeParameters, [Statement::TSTypeAliasDeclaration(_)]) => {}
+        (JsRoot::Expression(expression), _) => {
             expression::check(program, source, expression, inlines_code)?;
         }
+        _ => return Err(shape_error()),
     }
     Ok(ends_in_line_comment)
 }
@@ -127,6 +136,20 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatRoot<'a, '_> {
                     self.ends_in_line_comment,
                     f,
                 );
+            }
+            (JsRoot::FunctionParams { parens_when_many }, AstNodeKind::Function(function)) => {
+                params::write_function_params(
+                    &function.params(),
+                    parens_when_many,
+                    self.ends_in_line_comment,
+                    f,
+                );
+            }
+            (JsRoot::TypeParameters, AstNodeKind::TSTypeAliasDeclaration(declaration)) => {
+                let type_parameters = declaration.type_parameters().expect(
+                    "`check_root` checked the code's shape: `type T<> = any` does not parse",
+                );
+                write!(f, params::FormatTypeParameters { decl: &type_parameters });
             }
             _ => unreachable!("`check_root` checked the code's shape"),
         }

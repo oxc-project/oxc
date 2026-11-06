@@ -69,7 +69,7 @@ Oxfmt utilizes different implementations depending on the file extension and fil
 
 - Tier 1: Rust implementations using `oxc_formatter`, `oxc_formatter_json`, etc found in this repository
 - Tier 2: Rust implementations wrapping external libraries like `oxc_formatter_toml` (`oxc-toml`)
-- Tier 3: Delegations to Prettier via NAPI-JS calls (e.g., for Vue or MDX)
+- Tier 3: Delegations to Prettier via NAPI-JS calls (e.g., for Angular or MDX)
 - Tier 4: Delegations to Prettier that require additional Prettier plugins (e.g., for Svelte, Astro)
 
 NOTE: Rust written formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
@@ -96,8 +96,8 @@ Embedded languages (e.g. css-in-js, CSS front matter YAML) go through the `Forma
 
 Routing is ONE table (`route_embedded` in `src/core/language.rs`, which also maps the LSP `languageId`):
 
-- `Native` languages (js/ts/css/graphql/yaml/json/markdown/toml/html/...) get a Rust branch
-- `Prettier` set (angular/vue/svelte/astro/handlebars/mdx) goes to the Prettier Doc→IR channel (`embed/prettier_doc.rs`)
+- `Native` languages (js/ts/css/graphql/yaml/json/markdown/toml/html/vue/...) get a Rust branch
+- `Prettier` set (angular/svelte/astro/handlebars/mdx) goes to the Prettier Doc→IR channel (`embed/prettier_doc.rs`)
 - everything else is deliberately preserved
 
 Language-pair data crosses as `DispatchRequest::parent_context` markers the dispatcher translates for the child, so no language crate depends on another.
@@ -105,7 +105,7 @@ Language-pair data crosses as `DispatchRequest::parent_context` markers the disp
 Vocabulary: "fallback" = the dispatcher's optional `PrettierDocFallback` slot (a build/root may not install one).
 The pure Rust build runs fallback-less, so non-native embeds (angular-in-js, custom front matter) deliberately stay verbatim.
 
-The roots install `SessionServices`, all via `embed/services.rs::for_root` (one definition per build; the napi one takes the `ExternalServices` transport, and adds the Prettier fallback / string embedder / Tailwind sorter to the registry dispatcher): the JS/TS, CSS, Markdown and HTML file roots (`core/format.rs`, `PhysicalFile` sessions, both builds) and the Vue/Svelte/Astro `<script>` and Astro frontmatter root (`api/text_to_doc_api.rs`, `VirtualDocument` session, napi only).
+The roots install `SessionServices`, all via `embed/services.rs::for_root` (one definition per build; the napi one takes the `ExternalServices` transport, and adds the Prettier fallback / string embedder / Tailwind sorter to the registry dispatcher): the JS/TS, CSS, Markdown and HTML file roots (`core/format.rs`, `PhysicalFile` sessions, both builds) and the Svelte/Astro `<script>` and Astro frontmatter root (`api/text_to_doc_api.rs`, `VirtualDocument` session, napi only).
 
 Which languages may dispatch AT ALL from a given host is the host crate's own gate (e.g. `oxc_formatter_css` dispatches only `yaml`/`toml` front matter, `oxc_formatter_markdown` every fenced code block's language); the shared `route_embedded()` table then decides who serves the language.
 Adding a dispatch call to a host crate is therefore a routing decision (check `route_embedded()` and the xxx-in-yyy categories of `conformance:live` when doing so. A root needing a bespoke service set would assemble the `SessionServices` struct literally), none does today.
@@ -131,13 +131,15 @@ Tailwind class sorting (`sortTailwindcss`) splits responsibilities:
 
 - Rust collects classes into `FormatElement::TailwindClass`
   - `className` etc. in JS/TS, `@apply` in CSS — incl. css-in-js and JSDoc fenced blocks
+  - `class` and the listed attributes in HTML / Vue, and Vue's `:class` / bound listed attributes as JS
 - and the JS side sorts them in one batch
   - `sortTailwindClasses` → tailwind's `getClassOrder`, which needs the resolved Tailwind config
 
 Embedded children add classes into the `FormatSession`'s class scope, shared with the parent, so the root document sorts them in the same batch.
 
-The four data paths (JS/TS top-level / standalone CSS / embedded CSS / JSDoc fenced CSS) are documented at `embed::services::for_root` (napi definition).
-No CSS goes to Prettier for this; the pure Rust build never collects at all (both mappers gate collection behind napi, since no sorter exists there).
+The four data paths (JS/TS top-level / other standalone roots / embedded parts / JSDoc fenced blocks) are documented at `embed::services::for_root` (napi definition).
+No CSS goes to Prettier for this; the pure Rust build never collects at all (the JS, CSS and HTML mappers gate collection behind napi, since no sorter exists there).
+The languages Prettier formats (Angular, Svelte, Astro, ...) sort with `prettier-plugin-tailwindcss` instead.
 
 ## Verification
 

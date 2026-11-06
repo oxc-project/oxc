@@ -65,6 +65,13 @@ pub enum JsRoot {
     Program { semicolons: ProgramSemicolons, layout: ProgramLayout },
     /// An expression (Vue `{{ a }}`, `:a="b"`).
     Expression(ExpressionRoot),
+    /// Function params in a binding position (Vue `v-slot`, `v-for` left), in a group.
+    FunctionParams {
+        /// More than one, or a rest element, print in parens (Vue `v-for` left: `(item, index)`).
+        parens_when_many: bool,
+    },
+    /// Type parameters without their angle brackets (Vue `<script generic>`), on their own lines when they break.
+    TypeParameters,
 }
 
 /// How a program's top-level statements end.

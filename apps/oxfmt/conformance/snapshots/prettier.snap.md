@@ -687,19 +687,27 @@
 
 ## vue
 
-175/184 (95.11%)
+169/184 (91.85%)
 
 ### Failed
 
-- externals/prettier/vue/bracket-same-line/vue.html (💥💥, 98.22%)
-  - ❓unclassified
-- externals/prettier/vue/html-vue/elastic-header.html (💥, 99.18%)
-  - ❓unclassified
-- externals/prettier/vue/html-vue/hello-world.html (💥, 95.45%)
-  - ❓unclassified
-- externals/prettier/vue/html-vue/upper-case-2.html (💥, 90.91%)
-  - ❓unclassified
-- externals/prettier/vue/html-vue/upper-case-html-tag-2.html (💥, 88.89%)
-  - ❓unclassified
-- externals/prettier/vue/vue/template-dom.html (💥💥💥, 88.89%)
-  - ❓unclassified
+- externals/prettier/vue/event-binding/function-expression-ts.vue (💥, 64.29%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-handler-statements
+- externals/prettier/vue/interpolation/bitwise-or-operator.vue (💥, 68.75%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-bitwise-or
+- externals/prettier/vue/multiparser/snippet: non-space (💥, 0.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#vue-block-unicode-whitespace
+- externals/prettier/vue/ts-expression/filter.vue (💥, 64.29%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-bitwise-or
+- externals/prettier/vue/vue-3/script-setup.vue (💥, 71.43%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-removed-attributes-as-written
+- externals/prettier/vue/vue-3/style-variables.vue (💥, 71.43%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-removed-attributes-as-written
+- externals/prettier/vue/vue/attributes.vue (💥💥💥, 97.40%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-removed-attributes-as-written
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-handler-statements
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-trailing-line-comment
+- externals/prettier/vue/vue/filter.vue (💥💥💥, 60.53%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-bitwise-or
+- externals/prettier/vue/vue/slot-ts.vue (💥💥💥, 92.31%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-removed-attributes-as-written
