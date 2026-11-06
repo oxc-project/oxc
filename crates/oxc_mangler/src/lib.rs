@@ -597,6 +597,23 @@ impl<'a> SlotAssignment<'a> {
         ast_nodes: &AstNodes,
         constraints: &Constraints,
     ) -> Self {
+        let annex_b = AnnexBBlockFunctions::collect(allocator, scoping, constraints);
+        // Most programs have no such functions (there are none in strict mode). Compile a
+        // separate loop without their bookkeeping for those.
+        if annex_b.functions.is_empty() {
+            Self::compute_impl::<false>(allocator, scoping, ast_nodes, constraints, &annex_b)
+        } else {
+            Self::compute_impl::<true>(allocator, scoping, ast_nodes, constraints, &annex_b)
+        }
+    }
+
+    fn compute_impl<const ANNEX_B: bool>(
+        allocator: &'a Allocator,
+        scoping: &'a Scoping,
+        ast_nodes: &AstNodes,
+        constraints: &Constraints,
+        annex_b: &AnnexBBlockFunctions<'a>,
+    ) -> Self {
         // Names of bindings in direct-`eval` scopes — collected here, reserved in Phase 4.
         // TODO: eval reservation is conservative — ideally we'd reserve names per-slot.
         let mut eval_reserved_names = ArenaIdentHashSet::new_in(allocator);
@@ -614,7 +631,6 @@ impl<'a> SlotAssignment<'a> {
         let mut reusable_slots = ArenaVec::new_in(&allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
-        let annex_b = AnnexBBlockFunctions::collect(allocator, scoping, constraints);
         let mut annex_b_cursor = 0;
 
         // Walk down the scope tree and assign a slot number for each symbol. Doing it as a scope
@@ -622,8 +638,10 @@ impl<'a> SlotAssignment<'a> {
         for (scope_id, bindings) in scoping.iter_bindings() {
             // Scopes are visited in increasing id order, so the functions of this scope come next.
             let annex_b_start = annex_b_cursor;
-            while annex_b.functions.get(annex_b_cursor).is_some_and(|f| f.0 == scope_id) {
-                annex_b_cursor += 1;
+            if ANNEX_B {
+                while annex_b.functions.get(annex_b_cursor).is_some_and(|f| f.0 == scope_id) {
+                    annex_b_cursor += 1;
+                }
             }
             let annex_b_functions = &annex_b.functions[annex_b_start..annex_b_cursor];
 
@@ -642,7 +660,8 @@ impl<'a> SlotAssignment<'a> {
             // Sort `bindings` in declaration order.
             tmp_bindings.clear();
             tmp_bindings.extend(bindings.values().copied().filter(|&binding| {
-                constraints.is_mangle_candidate(binding, scoping) && !annex_b.is_excluded(binding)
+                constraints.is_mangle_candidate(binding, scoping)
+                    && !(ANNEX_B && annex_b.is_excluded(binding))
             }));
             if tmp_bindings.is_empty() && annex_b_functions.is_empty() {
                 continue;
@@ -746,7 +765,8 @@ impl<'a> SlotAssignment<'a> {
 /// Mark the scopes `symbol_id` is alive in below `scope_id`, the scope its slot is assigned in.
 ///
 /// `ancestor_set` contains the ancestors of `scope_id`.
-#[inline]
+#[expect(clippy::inline_always, reason = "hot path")]
+#[inline(always)]
 fn mark_live_scopes(
     slot_liveness: &mut BitSet,
     symbol_id: SymbolId,
