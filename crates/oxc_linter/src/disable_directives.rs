@@ -1,10 +1,12 @@
 use std::cell::RefCell;
 
 use itertools::Itertools;
-use oxc_ast::Comment;
-use oxc_span::Span;
+use memchr::memchr2;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
+
+use oxc_ast::Comment;
+use oxc_span::Span;
 
 use crate::{FixKind, fixer::Fix};
 
@@ -347,9 +349,14 @@ impl DisableDirectives {
                 // For next-line directives, only check if the diagnostic starts within the interval
                 // We intentionally only check span.start (not span.end) to avoid suppressing
                 // diagnostics for large constructs that merely contain the disabled line
+                let comment_span = interval.val.comment_span();
                 #[expect(clippy::suspicious_operation_groupings)]
                 {
                     span.start >= interval.start && span.start < interval.stop
+                        // A line directive must not suppress a diagnostic reported on itself.
+                        // `eslint-plugin-unicorn` achieves this by reporting
+                        // `no-abusive-eslint-disable` at a synthetic column before the line.
+                        && (span.start < comment_span.start || span.start >= comment_span.end)
                 }
             } else {
                 // For regular disable directives, check if there's any overlap
@@ -669,12 +676,15 @@ impl DisableDirectivesBuilder {
                     }
                 }
                 DirectiveKind::DisableLine => {
-                    // Get the span between the preceding newline to this comment
+                    // Get the span of the physical line containing this comment.
                     let start = source_text[..comment_span.start as usize]
                         .lines()
                         .next_back()
                         .map_or(0, |line| comment_span.start - line.len() as u32);
-                    let stop = comment_span.start;
+                    let comment_start = comment_span.start as usize;
+                    let stop = memchr2(b'\r', b'\n', &source_text.as_bytes()[comment_start..])
+                        .map_or(source_text.len(), |offset| comment_start + offset)
+                        as u32;
 
                     if rule_names.is_empty() {
                         self.add_interval(
@@ -1750,6 +1760,26 @@ mod tests {
         test_directive_span("// eslint-disable-next-line max-params    \r\n ABC", 42, 48);
         test_directive_span("// eslint-disable-next-line max-params    \n ABC \n", 42, 48);
         test_directive_span("// eslint-disable-next-line max-params    \r\n ABC \r\n", 42, 49);
+    }
+
+    #[test]
+    #[expect(clippy::cast_possible_truncation)]
+    fn disable_line_covers_the_entire_physical_line() {
+        test_directives(
+            |prefix| {
+                format!("before(); /* {prefix}-disable-line no-shadow */ after();\nnext_line();")
+            },
+            |source_text, _, directives| {
+                let before = Span::sized(source_text.find("before").unwrap() as u32, 6);
+                let after = Span::sized(source_text.find("after").unwrap() as u32, 5);
+                let next_line = Span::sized(source_text.find("next_line").unwrap() as u32, 9);
+
+                assert!(directives.contains("no-shadow", after));
+                assert!(directives.collect_unused_disable_comments().is_empty());
+                assert!(directives.contains("no-shadow", before));
+                assert!(!directives.contains("no-shadow", next_line));
+            },
+        );
     }
 
     #[test]
