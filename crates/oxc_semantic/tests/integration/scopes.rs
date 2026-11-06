@@ -224,6 +224,34 @@ fn var_hoisting() {
 }
 
 #[test]
+fn named_function_expression_catch_var_redeclaration_resolves_to_var_binding() {
+    let tester = SemanticTester::js(
+        "(function a() { try {} catch (a) { var a; } console.log(typeof a); })();",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let symbols = scoping
+        .symbol_ids()
+        .filter(|&symbol_id| scoping.symbol_name(symbol_id) == "a")
+        .collect::<Vec<_>>();
+    assert_eq!(symbols.len(), 2);
+    let function_name = symbols
+        .iter()
+        .find(|&&symbol_id| {
+            scoping.symbol_flags(symbol_id).contains(SymbolFlags::FunctionExpression)
+        })
+        .expect("named function expression should have a name binding");
+    let var_binding = symbols
+        .iter()
+        .find(|&&symbol_id| {
+            scoping.symbol_flags(symbol_id).contains(SymbolFlags::FunctionScopedVariable)
+        })
+        .expect("catch var redeclaration should create a function-scoped binding");
+    assert_eq!(scoping.get_resolved_references(*function_name).count(), 0);
+    assert_eq!(scoping.get_resolved_references(*var_binding).count(), 1);
+}
+
+#[test]
 fn test_ts_conditional_types() {
     SemanticTester::ts("type A<T> = T extends string ? T : false;")
         .has_some_symbol("T")

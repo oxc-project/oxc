@@ -166,6 +166,14 @@ fn remove_unused_variable_declaration() {
 }
 
 #[test]
+fn named_function_expression_catch_var_redeclaration_keeps_outer_var_binding() {
+    test_smallest(
+        "(function a() { try {} catch (a) { var a; } console.log(typeof a); })();",
+        "(function() { try {} catch (a) { var a; } console.log(typeof a); })();",
+    );
+}
+
+#[test]
 fn remove_unused_pure_iife_init() {
     // https://github.com/oxc-project/oxc/issues/17480
     test_smallest("var x = /* @__PURE__ */ foo()", "");
