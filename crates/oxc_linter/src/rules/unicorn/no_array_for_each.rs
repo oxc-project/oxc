@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FormalParameters, match_member_expression},
+    ast::{
+        CallExpression, Expression, FormalParameters, IdentifierReference, NewExpression, TSType,
+        TSTypeAnnotation, TSTypeName, match_member_expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,7 +11,10 @@ use oxc_span::Span;
 
 use crate::{
     AstNode,
-    ast_util::{is_method_call, leftmost_identifier_reference},
+    ast_util::{
+        get_declaration_of_variable, get_new_expr_ident_name, is_method_call,
+        leftmost_identifier_reference,
+    },
     context::LintContext,
     rule::Rule,
     utils::is_import_symbol,
@@ -114,6 +120,10 @@ impl Rule for NoArrayForEach {
                 _ => {}
             }
 
+            if is_known_non_array_receiver(object, ctx) {
+                return;
+            }
+
             let Some((span, _)) = member_expr.static_property_info() else {
                 return;
             };
@@ -124,6 +134,94 @@ impl Rule for NoArrayForEach {
 }
 
 pub const IGNORED_OBJECTS: [&str; 3] = ["Children", "r", "pIteration"];
+
+/// `forEach` calls are only reported when the receiver could be an array.
+/// Receivers constructed from classes other than `Array` and the typed arrays
+/// (`new Map()`, `new Set()`, `new Collection()`, ...), class and arrow function
+/// expressions, and bindings annotated with a non-indexed collection type are
+/// known not to be arrays.
+const INDEXED_COLLECTION_CONSTRUCTORS: [&str; 13] = [
+    "Array",
+    "Int8Array",
+    "Uint8Array",
+    "Uint8ClampedArray",
+    "Int16Array",
+    "Uint16Array",
+    "Int32Array",
+    "Uint32Array",
+    "Float16Array",
+    "Float32Array",
+    "Float64Array",
+    "BigInt64Array",
+    "BigUint64Array",
+];
+
+const NON_INDEXED_COLLECTION_TYPES: [&str; 11] = [
+    "Map",
+    "ReadonlyMap",
+    "WeakMap",
+    "Set",
+    "ReadonlySet",
+    "WeakSet",
+    "URLSearchParams",
+    "Headers",
+    "FormData",
+    "CanvasRenderingContext2D",
+    "OffscreenCanvasRenderingContext2D",
+];
+
+fn is_known_non_array_receiver<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
+    match expr.get_inner_expression() {
+        Expression::Identifier(ident) => is_known_non_array_binding(ident, ctx),
+        _ => is_definitely_non_array_expression(expr),
+    }
+}
+
+fn is_definitely_non_array_expression(expr: &Expression) -> bool {
+    match expr.get_inner_expression() {
+        Expression::NewExpression(new_expr) => !is_indexed_collection_constructor(new_expr),
+        Expression::ClassExpression(_) | Expression::ArrowFunctionExpression(_) => true,
+        _ => false,
+    }
+}
+
+fn is_indexed_collection_constructor(new_expr: &NewExpression) -> bool {
+    get_new_expr_ident_name(new_expr)
+        .is_some_and(|name| INDEXED_COLLECTION_CONSTRUCTORS.contains(&name))
+}
+
+fn is_known_non_array_binding<'a>(ident: &IdentifierReference<'a>, ctx: &LintContext<'a>) -> bool {
+    let Some(node) = get_declaration_of_variable(ident, ctx.semantic()) else {
+        return false;
+    };
+
+    match node.kind() {
+        AstKind::VariableDeclarator(declarator) => {
+            declarator.init.as_ref().is_some_and(is_definitely_non_array_expression)
+                || is_non_indexed_collection_annotation(declarator.type_annotation.as_deref())
+        }
+        AstKind::FormalParameter(param) => {
+            is_non_indexed_collection_annotation(param.type_annotation.as_deref())
+        }
+        _ => false,
+    }
+}
+
+fn is_non_indexed_collection_annotation(annotation: Option<&TSTypeAnnotation>) -> bool {
+    let Some(annotation) = annotation else {
+        return false;
+    };
+
+    let TSType::TSTypeReference(reference) = &annotation.type_annotation else {
+        return false;
+    };
+
+    matches!(
+        &reference.type_name,
+        TSTypeName::IdentifierReference(name)
+            if NON_INDEXED_COLLECTION_TYPES.contains(&name.name.as_str())
+    )
+}
 
 #[derive(Clone, Copy)]
 enum CallbackArguments {
@@ -171,6 +269,23 @@ fn test() {
         "Children.forEach(children, (child) => {});",
         r#"import { Effect } from "effect"; Effect.forEach([], () => {})"#,
         r#"import { Effect as E } from "effect"; E.forEach([], () => {})"#,
+        "new Map().forEach((value, key) => bar(value, key))",
+        "new Set([1, 2, 3]).forEach((value) => bar(value))",
+        "new WeakMap().forEach((value) => bar(value))",
+        "new URLSearchParams().forEach((value) => bar(value))",
+        "new Collection().forEach((node) => bar(node))",
+        "(new Map()).forEach((value) => bar(value))",
+        "const map = new Map(); map.forEach((value, key) => bar(value, key));",
+        "const set = new Set(); set.forEach((value) => bar(value));",
+        "const collection = new Collection(); collection.forEach((node) => bar(node));",
+        "(class {}).forEach((value) => bar(value))",
+        "(() => {}).forEach((value) => bar(value))",
+    ];
+
+    let pass_ts = vec![
+        "const map: Map<string, number> = new Map(); map.forEach((value) => bar(value));",
+        "const set = new Set<number>(); set.forEach((value) => bar(value));",
+        "function iterate(map: Map<string, number>) { map.forEach((value) => bar(value)); }",
     ];
 
     let fail = vec![
@@ -189,6 +304,10 @@ fn test() {
         "foo.forEach(function element(element, element1) {})",
         "this._listeners.forEach((listener: () => void) => listener());",
         "return foo.forEach(element => {bar(element)});",
+        "new Array(1, 2, 3).forEach((element) => bar(element))",
+        "new Uint8Array(8).forEach((element) => bar(element))",
+        "const array = [1, 2, 3]; array.forEach((element) => bar(element));",
+        "declare const items: unknown; items.forEach((element) => bar(element));",
     ];
 
     // TODO: Implement a fixer.
@@ -237,4 +356,7 @@ fn test() {
     ];
 
     Tester::new(NoArrayForEach::NAME, NoArrayForEach::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(NoArrayForEach::NAME, NoArrayForEach::PLUGIN, pass_ts, vec![] as Vec<&str>)
+        .change_rule_path_extension("ts")
+        .test();
 }
