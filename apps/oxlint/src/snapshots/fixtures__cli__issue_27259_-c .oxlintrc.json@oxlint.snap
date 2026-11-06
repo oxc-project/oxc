@@ -1,0 +1,22 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c .oxlintrc.json
+working directory: fixtures/cli/issue_27259
+----------
+
+  x jsx-a11y(alt-text): Missing `alt` attribute.
+   ,-[src/components/Avatar.jsx:3:10]
+ 2 | export function Avatar() {
+ 3 |   return <img src="/avatar.png" />;
+   :          ^^^^^^^^^^^^^^^^^^^^^^^^^
+ 4 | }
+   `----
+  help: Must have `alt` prop, either with meaningful text, or an empty string for decorative images.
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 2 files with 69 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
