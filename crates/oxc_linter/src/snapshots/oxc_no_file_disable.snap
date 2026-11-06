@@ -1,0 +1,160 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `eslint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /* eslint-disable */
+   ·   ────────────────
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `oxlint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /* oxlint-disable */
+   ·   ────────────────
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `eslint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /*eslint-disable*/
+   ·   ──────────────
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `oxlint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /*oxlint-disable*/
+   ·   ──────────────
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `eslint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /* eslint-disable no-debugger */
+   ·   ────────────────────────────
+ 2 │ debugger;
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `oxlint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /* oxlint-disable no-debugger, no-console */
+   ·   ────────────────────────────────────────
+ 2 │ debugger;
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `eslint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ // eslint-disable no-debugger
+   ·   ───────────────────────────
+ 2 │ debugger;
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `oxlint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ // oxlint-disable
+   ·   ───────────────
+ 2 │ debugger;
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `eslint-disable` comments.
+   ╭─[no_file_disable.tsx:1:13]
+ 1 │ debugger; /* eslint-disable no-console */
+   ·             ───────────────────────────
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `oxlint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ ╭─▶ /*
+ 2 │ ╰─▶     oxlint-disable no-debugger
+ 3 │     */
+ 4 │     debugger;
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `eslint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /* eslint-disable no-debugger */
+   ·   ────────────────────────────
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `oxlint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /* oxlint-disable no-debugger */
+   ·   ────────────────────────────
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `eslint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ ╭─▶ /* eslint-disable
+ 2 │ ╰─▶ no-debugger */
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `eslint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /* eslint-disable no-debugger -- needed for debugging */
+   ·   ────────────────────────────────────────────────────
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `oxlint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /* oxlint-disable -- generated file */
+   ·   ──────────────────────────────────
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `eslint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /* eslint-disable no-debugger */
+   ·   ────────────────────────────
+ 2 │ debugger;
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `oxlint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /* oxlint-disable no-debugger */
+   ·   ────────────────────────────
+ 2 │ debugger;
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `eslint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /* eslint-disable oxc/no-file-disable */
+   ·   ────────────────────────────────────
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `oxlint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /* oxlint-disable oxc/no-file-disable */
+   ·   ────────────────────────────────────
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `eslint-disable` comments.
+   ╭─[no_file_disable.tsx:1:3]
+ 1 │ /* eslint-disable no-debugger */
+   ·   ────────────────────────────
+ 2 │ /* oxlint-disable no-console */
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
+
+  ⚠ oxc(no-file-disable): Do not use file-scoped `oxlint-disable` comments.
+   ╭─[no_file_disable.tsx:2:3]
+ 1 │ /* eslint-disable no-debugger */
+ 2 │ /* oxlint-disable no-console */
+   ·   ───────────────────────────
+   ╰────
+  help: Use a disable-next-line or disable-line directive, or configure a file override.
