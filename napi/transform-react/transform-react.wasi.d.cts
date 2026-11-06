@@ -299,6 +299,7 @@ export interface ReactCompilerOptions {
   sources?: Array<string>
   /** Feature flags and validation settings for compiler passes. */
   environment?: ReactCompilerEnvironmentOptions
+  reportDiagnostics?: boolean;
 }
 
 /** React Fast Refresh options. */
