@@ -1,8 +1,8 @@
 use oxc_span::SourceType;
 
 use crate::{
-    CompressOptions, CompressOptionsUnused, test_options, test_options_source_type,
-    test_same_options, test_same_options_source_type, test_smallest,
+    CompressOptions, CompressOptionsUnused, test, test_options, test_options_source_type,
+    test_same, test_same_options, test_same_options_source_type, test_smallest,
 };
 
 #[test]
@@ -763,4 +763,12 @@ fn outer_arguments_binding_not_inlined_into_function() {
         SourceType::cjs().with_script(true),
         &options,
     );
+}
+
+#[test]
+fn test_no_inline_into_delete() {
+    // Sloppy-mode `delete x` on a declared binding is `false`; inlining the
+    // constant would make it `delete 1`, which is `true`.
+    test_same("function f() { let x = 1; function g() { return delete x; } return g(); }");
+    test_same("function f() { var x = 1; function g() { return delete x; } return g(); }");
 }
