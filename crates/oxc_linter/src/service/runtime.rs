@@ -892,7 +892,7 @@ impl Runtime {
                                 .insert(path.to_path_buf(), disable_directives);
                         }
 
-                        if me.linter.options().fix.is_some() {
+                        if me.linter.options().fix.is_some() && !me.linter.options().hide_fixable {
                             let fix_result = Fixer::new(
                                 dep.source_text,
                                 messages,
@@ -915,6 +915,10 @@ impl Runtime {
 
                         if !diff_manager.skip() {
                             messages = diff_manager.collect_file(path, &self.cwd, messages);
+                        }
+
+                        if me.linter.options().hide_fixable {
+                            messages.retain(|message| message.fixes.is_empty());
                         }
 
                         if !messages.is_empty() {

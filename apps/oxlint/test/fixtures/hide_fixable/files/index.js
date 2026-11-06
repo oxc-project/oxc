@@ -1,0 +1,4 @@
+fixable;
+manual;
+suggestion;
+noFix;
