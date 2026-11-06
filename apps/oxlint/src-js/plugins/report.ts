@@ -84,9 +84,14 @@ export interface DiagnosticReport {
   suggestions: SuggestionReport[] | null;
   // Not needed on Rust side, but `RuleTester` needs it
   messageId: string | null;
+  // Distinguish an omitted end location from an explicitly empty range in `RuleTester`.
+  [HAS_END_LOCATION]: boolean;
   // Only used in conformance tests. This field is not present except in conformance build.
   loc?: LocationWithOptionalEnd | null;
 }
+
+// Symbol-keyed metadata is available to `RuleTester` without being serialized to Rust.
+export const HAS_END_LOCATION = Symbol("hasEndLocation");
 
 // Diagnostics array. Reused for every file.
 export const diagnostics: DiagnosticReport[] = [];
@@ -120,6 +125,7 @@ export function report(
 
   // TODO: Validate `diagnostic`
   let start: number, end: number, loc: LocationWithOptionalEnd | LineColumn | undefined;
+  let hasEndLocation = true;
   // We need the original location in conformance tests
   let conformedLoc: LocationWithOptionalEnd | null = null;
 
@@ -144,6 +150,7 @@ export function report(
 
       if (endLineCol == null) {
         end = start;
+        hasEndLocation = false;
       } else if (typeof endLineCol === "object") {
         end = getOffsetFromLineColumn(endLineCol);
       } else {
@@ -155,6 +162,7 @@ export function report(
       typeAssertIs<LineColumn>(loc);
       start = getOffsetFromLineColumn(loc);
       end = start;
+      hasEndLocation = false;
 
       if (CONFORMANCE) conformedLoc = { start: loc, end: null };
     }
@@ -192,6 +200,7 @@ export function report(
   diagnostics.push({
     message,
     messageId,
+    [HAS_END_LOCATION]: hasEndLocation,
     start,
     end,
     ruleIndex: ruleDetails.ruleIndex,
