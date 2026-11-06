@@ -48,8 +48,6 @@ for (const fullPath of fixtures) {
     }
     const differ = [];
     for (const [variant, text, output] of inputVariants(input, first.text)) {
-      // A lone CR is no TOML newline, so its CR variant is no equivalent input
-      if (variant === "CR" && lang === "toml") continue;
       const res = await formatWithOxfmt(name, text, options);
       if (res.text !== output) differ.push(res.ok ? variant : `${variant} (error)`);
     }

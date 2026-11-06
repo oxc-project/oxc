@@ -10,7 +10,7 @@ use std::path::Path;
 
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_formatter_css::{
-    CssFormatOptions, CssRoot, CssVariant, TrailingCommas, format, parse_for_format,
+    CssFormatOptions, CssRoot, CssVariant, SingleQuote, TrailingCommas, format, parse_for_format,
 };
 use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
 
@@ -32,6 +32,11 @@ impl FixtureFormatter for CssHarness {
                 if let Some(s) = value.as_str() {
                     options.trailing_commas =
                         if s == "none" { TrailingCommas::Never } else { TrailingCommas::Always };
+                }
+            }
+            "singleQuote" => {
+                if let Some(b) = value.as_bool() {
+                    options.single_quote = SingleQuote::from(b);
                 }
             }
             _ => return false,
@@ -184,6 +189,10 @@ fn parse_error_is_err() {
         // when a declaration's value hits a top-level `{` (name + `:` parsed);
         // a selector error with no such head stays a hard error.
         ("a, { color: red; }", css),
+        // A stray closing brace (postcss rejects it too, "Unexpected }")
+        ("} a { color: red }", css),
+        // postcss tolerates this as raw at-rule params (Prettier destroys it to `@media ;`)
+        ("@media ( { }", css),
         // Pin for crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected, one input per shape.
         // CSS: a browser drops the rule
         ("a[id=func(\"foo\")] {}", css),

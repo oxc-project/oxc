@@ -5,7 +5,7 @@
 TOML formatter (`oxfmt`'s Tier 2 backend), a thin wrapper around [`oxc-toml`](https://github.com/oxc-project/oxc-toml).
 
 - `oxc-toml` is a formatter-only fork of Taplo, maintained in its own repository
-  - Formatting logic and its tests live there, not here
+  - Formatting logic and its tests live there; `tests/fixtures/` here pins only this crate's side (the option mapping, TOML 1.1 acceptance, line endings)
   - It prints a string, it does NOT build the `oxc_formatter_core` IR
 - Prettier has no TOML support; `prettier-plugin-toml` runs Taplo, so `oxc-toml`'s output is the reference as-is
 - Entry points:
@@ -42,6 +42,7 @@ Known limits of the string embedding (text with literal lines, the same as Prett
 
 ```sh
 cargo c -p oxc_formatter_toml
+cargo test -p oxc_formatter_toml  # fixture snapshots, review with `cargo insta review`
 ```
 
 Embedded behavior is covered by `apps/oxfmt`'s fixtures (`apps/oxfmt/conformance/fixtures/front-matter/`, `apps/oxfmt/conformance/fixtures/xxx-in-md/`).

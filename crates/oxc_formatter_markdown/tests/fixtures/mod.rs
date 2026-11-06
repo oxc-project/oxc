@@ -1,7 +1,9 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_markdown::{MarkdownFormatOptions, ProseWrap, format, parse_for_format};
+use oxc_formatter_markdown::{
+    MarkdownFormatOptions, ProseWrap, SingleQuote, format, parse_for_format,
+};
 use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
 
 mod fingerprint;
@@ -22,6 +24,11 @@ impl FixtureFormatter for MarkdownHarness {
                         "never" => ProseWrap::Never,
                         _ => ProseWrap::Preserve,
                     };
+                }
+            }
+            "singleQuote" => {
+                if let Some(b) = value.as_bool() {
+                    options.single_quote = SingleQuote::from(b);
                 }
             }
             _ => return false,

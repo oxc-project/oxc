@@ -1,1 +1,0 @@
-[{"sortImports": {"customGroups": [{"groupName": "scope-types", "elementNamePattern": ["@scope/**"], "modifiers": ["type"]}, {"groupName": "scope-values", "elementNamePattern": ["@scope/**"], "modifiers": ["value"]}], "groups": ["scope-types", "scope-values", "unknown"]}}]

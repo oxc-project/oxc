@@ -79,7 +79,8 @@ NOTE: Rust written formatters never fall back to Prettier, since they exist to r
 Known divergences live in DIVERGENCES.md (embedding / dispatch layer only); single-language ones live in the owning crate's.
 
 - `conformance/fixtures/` (committed): oxfmt's own fixtures, the spec of its output, never compared with Prettier
-  - Every formatting result goes here: divergence pins (minimal repros), embedded shapes, options Prettier does not have, ...
+  - Every oxfmt-layer formatting result goes here: divergence pins (minimal repros), embedding and dispatch, oxfmt-only options (`insertFinalNewline`, ...);
+    single-language results go to the owning crate's `tests/fixtures/`
   - A topic dir (`js-in-vue/`) holds its default case, a subdir named after its options (`semi-false/`) the rest, with its own `options.json`
   - `conformance/run_fixture.ts` records each as `<fixture>.snap.md` next to it, under every option set of its nearest `options.json` (an array of oxfmt options, `[{}]` when none)
   - Each is also checked for idempotency and its CRLF / CR / BOM variants; with `endOfLine` set, the output shows its line endings (`<CRLF>` etc.)
@@ -202,7 +203,7 @@ node ./node_modules/prettier/bin/prettier.cjs --config=fmt.json <file>
 ### `test/api/`: Node.js API tests
 
 Focuses on what a fixture cannot show: the API surface, error behavior (code kept as-is, label offsets), file-name routing, and comparisons between outputs. No fixtures, test inputs are inline in each test file.
-Formatting results go to `conformance/fixtures/` instead (see "Divergence vs Prettier").
+Formatting results go to `conformance/fixtures/` instead, or the owning crate's `tests/fixtures/` for single-language behavior (see "Divergence vs Prettier").
 
 - Multiple `*.test.ts` files coexist in a flat directory (no subdirectories)
 

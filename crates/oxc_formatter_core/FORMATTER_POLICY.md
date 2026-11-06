@@ -164,7 +164,7 @@ Snapshot tests driven by fixture files under `tests/fixtures/`; they cover what 
 A language crate's fixtures cover only its own side (e.g. `format_to_ir` on a fragment): they run without a dispatcher, so an embedded body stays verbatim.
 `build.rs` generates a test per fixture file: add a case by dropping a file in, no registration needed.
 Options are resolved from the nearest `options.json` up the directory tree.
-`apps/oxfmt`'s own (embedding) fixtures live in `conformance/fixtures/`, recorded by `conformance:fixture` as `<fixture>.snap.md` next to each:
+`apps/oxfmt`'s own (embedding / dispatch / oxfmt-only options) fixtures live in `conformance/fixtures/`, recorded by `conformance:fixture` as `<fixture>.snap.md` next to each:
 the same `options.json` lookup, but its option sets run as written (no `printWidth` rows added) and there is no fingerprint, see `apps/oxfmt`'s `AGENTS.md`.
 
 ```sh

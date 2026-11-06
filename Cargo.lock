@@ -2195,10 +2195,12 @@ dependencies = [
 name = "oxc_formatter_toml"
 version = "0.77.0"
 dependencies = [
+ "insta",
  "oxc-toml",
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_formatter_core",
+ "oxc_formatter_tests",
  "oxc_span",
 ]
 

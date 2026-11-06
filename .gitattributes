@@ -12,6 +12,8 @@ crates/oxc_formatter_htmlish/tests/fixtures/html/nul-byte/** text eol=lf diff
 crates/oxc_formatter_yaml/tests/fixtures/** text=auto eol=lf
 crates/oxc_formatter_yaml/tests/fixtures/yaml/crlf/** text=auto eol=crlf
 crates/oxc_formatter_markdown/tests/fixtures/** text=auto eol=lf
+crates/oxc_formatter_toml/tests/fixtures/** text=auto eol=lf
+crates/oxc_formatter_toml/tests/fixtures/toml/crlf/** text=auto eol=crlf
 apps/oxfmt/test/**/fixtures/** text=auto eol=lf
 apps/oxlint/test/fixtures/** text=auto eol=lf
 

@@ -113,7 +113,7 @@ pub trait FixtureFormatter {
     fn format(source: &str, path: &Path, options: &Self::Options) -> String;
 
     /// [`Self::Fingerprint`] of `source`.
-    /// Take it from the formatter's own parse (`parse_for_format`), so no test re-implements the parser setup.
+    /// Take it from the formatter's own parse (`parse_for_format`) where the crate exposes one, so no test re-implements the parser setup.
     fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> Self::Fingerprint;
 }
 
