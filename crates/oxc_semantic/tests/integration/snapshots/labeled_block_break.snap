@@ -36,11 +36,11 @@ bb6: {
 }
 
 bb7: {
-	unreachable
+
 }
 
 bb8: {
-
+	unreachable
 }
 
 bb9: {
@@ -68,9 +68,9 @@ Condition(IdentifierReference(condition))" shape = box]
     6 [ label = "bb6
 BlockStatement
 break <LABEL>" shape = box]
-    7 [ label = "bb7
+    7 [ label = "bb7" shape = box]
+    8 [ label = "bb8
 unreachable" shape = box]
-    8 [ label = "bb8" shape = box]
     9 [ label = "bb9" shape = box]
     10 [ label = "bb10" shape = box]
     1 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
@@ -79,15 +79,15 @@ unreachable" shape = box]
     2 -> 4 [ label="Normal"]
     5 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     6 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
-    7 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
-    6 -> 7 [ label="Unreachable", style="dotted"]
-    8 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    7 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     4 -> 5 [ label="Normal"]
     5 -> 6 [ label="Jump", color=green]
-    7 -> 8 [ label="Normal", style="dotted"]
-    5 -> 8 [ label="Jump", color=green]
+    5 -> 7 [ label="Jump", color=green]
+    8 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
+    6 -> 8 [ label="Unreachable", style="dotted"]
+    8 -> 7 [ label="Normal", style="dotted"]
     9 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
-    8 -> 9 [ label="Normal"]
+    7 -> 9 [ label="Normal"]
     6 -> 9 [ label="Jump", color=green]
     1 -> 3 [ label="Normal"]
     10 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
