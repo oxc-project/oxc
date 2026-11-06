@@ -93,11 +93,13 @@ impl LintCommandInfo {
         if ms < 1000 { format!("{ms}ms") } else { format!("{:.1}s", start_time.as_secs_f64()) }
     }
 
-    pub(super) fn format_execution_summary(&self) -> String {
+    pub(super) fn format_execution_summary(&self, no_summary: bool) -> String {
         let time = Self::get_execution_time(&self.start_time);
         let s = if self.number_of_files == 1 { "" } else { "s" };
 
-        let mut finished_text = if let Some(number_of_rules) = self.number_of_rules {
+        let mut finished_text = if no_summary {
+            String::new()
+        } else if let Some(number_of_rules) = self.number_of_rules {
             format!(
                 "Finished in {time} on {} file{s} with {} rules using {} threads.\n",
                 self.number_of_files, number_of_rules, self.threads_count
@@ -154,20 +156,23 @@ pub struct OutputFormatter {
 }
 
 impl OutputFormatter {
-    pub fn new(format: OutputFormat) -> Self {
-        Self { internal: Self::get_internal_formatter(format) }
+    pub fn new(format: OutputFormat, no_summary: bool) -> Self {
+        Self { internal: Self::get_internal_formatter(format, no_summary) }
     }
 
-    fn get_internal_formatter(format: OutputFormat) -> Box<dyn InternalFormatter> {
+    fn get_internal_formatter(
+        format: OutputFormat,
+        no_summary: bool,
+    ) -> Box<dyn InternalFormatter> {
         match format {
             OutputFormat::Json => Box::<JsonOutputFormatter>::default(),
             OutputFormat::Checkstyle => Box::<CheckStyleOutputFormatter>::default(),
-            OutputFormat::Github => Box::new(GithubOutputFormatter),
+            OutputFormat::Github => Box::new(GithubOutputFormatter { no_summary }),
             OutputFormat::Gitlab => Box::<GitlabOutputFormatter>::default(),
             OutputFormat::Unix => Box::<UnixOutputFormatter>::default(),
             OutputFormat::Agent => Box::<AgentOutputFormatter>::default(),
-            OutputFormat::Default => Box::new(DefaultOutputFormatter),
-            OutputFormat::Stylish => Box::<StylishOutputFormatter>::default(),
+            OutputFormat::Default => Box::new(DefaultOutputFormatter { no_summary }),
+            OutputFormat::Stylish => Box::new(StylishOutputFormatter { no_summary }),
             OutputFormat::JUnit => Box::<JUnitOutputFormatter>::default(),
             OutputFormat::Sarif => Box::<SarifOutputFormatter>::default(),
         }
@@ -196,6 +201,17 @@ mod test {
     use crate::tester::Tester;
 
     const TEST_CWD: &str = "fixtures/cli/output_formatter_diagnostic";
+
+    #[test]
+    fn test_output_formatter_no_summary() {
+        let tester = Tester::new().with_cwd(TEST_CWD.into());
+        for format in ["default", "github", "stylish"] {
+            let format = format!("--format={format}");
+            assert_eq!(tester.test_output_verbose(&[&format, "--no-summary", "ok.js"]), "");
+            tester.test_and_snapshot(&[&format, "--no-summary", "test.js"]);
+        }
+        tester.test_and_snapshot(&["--format=default", "--no-summary", "parser-error.js"]);
+    }
 
     #[test]
     fn test_output_formatter_diagnostic_formats() {
