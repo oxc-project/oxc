@@ -11787,6 +11787,12 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When true the rule will ignore the name of the destructured value."
+        },
+        "allowMissingSetter": {
+          "description": "When true the rule will allow a `useState` call destructured into a\nvalue only, without a setter, such as `const [value] = useState(init)`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When true the rule will allow a `useState` call destructured into a\nvalue only, without a setter, such as `const [value] = useState(init)`."
         }
       },
       "additionalProperties": false
