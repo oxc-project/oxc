@@ -1,0 +1,11 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "options": {
+    "reportUnusedDisableDirectives": "warn"
+  },
+  "rules": {
+    "no-debugger": "warn"
+  }
+}

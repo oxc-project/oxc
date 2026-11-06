@@ -86,13 +86,27 @@ impl DirectivesStore {
 
     /// Report unused disable directives
     ///
+    /// `severity_for` resolves the severity to use for a given file, so that configs nested in a
+    /// monorepo can set `reportUnusedDisableDirectives` per package. Returning `None` (or
+    /// [`AllowWarnDeny::Allow`]) skips the file.
+    ///
     /// # Panics
     /// Panics if the mutex is poisoned or if sending to the error channel fails.
-    pub fn report_unused(&self, severity: AllowWarnDeny, cwd: &Path, tx_error: &DiagnosticSender) {
+    pub fn report_unused(
+        &self,
+        severity_for: impl Fn(&Path) -> Option<AllowWarnDeny>,
+        cwd: &Path,
+        tx_error: &DiagnosticSender,
+    ) {
         use crate::create_unused_directives_diagnostics;
 
         let map = self.map.lock().expect("DirectivesStore mutex poisoned in report_unused");
         for (path, directives) in map.iter() {
+            let Some(severity) =
+                severity_for(path.as_path()).filter(|severity| severity.is_warn_deny())
+            else {
+                continue;
+            };
             let diagnostics = create_unused_directives_diagnostics(directives, severity);
 
             if !diagnostics.is_empty() {
@@ -147,6 +161,7 @@ impl Default for DirectivesStore {
 pub struct LintRunnerBuilder {
     regular_linter: Linter,
     type_aware_enabled: bool,
+    type_aware_forced: bool,
     type_check: bool,
     lint_service_options: LintServiceOptions,
     silent: bool,
@@ -161,6 +176,7 @@ impl LintRunnerBuilder {
         Self {
             regular_linter: linter,
             type_aware_enabled: false,
+            type_aware_forced: false,
             type_check: false,
             lint_service_options,
             silent: false,
@@ -174,6 +190,15 @@ impl LintRunnerBuilder {
     #[must_use]
     pub fn with_type_aware(mut self, enabled: bool) -> Self {
         self.type_aware_enabled = enabled;
+        self
+    }
+
+    /// Mark type-aware linting as explicitly requested (`--type-aware`, `--type-check-only`, or
+    /// the editor's `typeAware` setting), which applies it to every file instead of only the files
+    /// whose config enables `options.typeAware`.
+    #[must_use]
+    pub fn with_type_aware_forced(mut self, forced: bool) -> Self {
+        self.type_aware_forced = forced;
         self
     }
 
@@ -230,7 +255,8 @@ impl LintRunnerBuilder {
                         .with_type_check(self.type_check)
                         .with_type_check_only(self.type_check_only)
                         .with_timings(self.timings)
-                        .with_ignore_fixes(self.with_ignore_fixes),
+                        .with_ignore_fixes(self.with_ignore_fixes)
+                        .with_type_aware_forced(self.type_aware_forced),
                 ),
                 Err(e) => return Err(e),
             }
@@ -317,15 +343,23 @@ impl LintRunner {
         Ok(messages)
     }
 
-    /// Report unused disable directives
-    pub fn report_unused_directives(
-        &self,
-        severity: Option<AllowWarnDeny>,
-        tx_error: &DiagnosticSender,
-    ) {
-        if let Some(severity) = severity {
-            self.directives_store.report_unused(severity, &self.cwd, tx_error);
-        }
+    /// Report unused disable directives.
+    ///
+    /// The severity is resolved per file: the explicit CLI/editor setting wins, otherwise the
+    /// config which governs the file (root or nested) decides.
+    pub fn report_unused_directives(&self, tx_error: &DiagnosticSender) {
+        self.directives_store.report_unused(
+            |path| self.report_unused_directive_for(path),
+            &self.cwd,
+            tx_error,
+        );
+    }
+
+    /// The `reportUnusedDisableDirectives` severity that applies to `path`.
+    ///
+    /// See [`Linter::report_unused_directive_for`].
+    pub fn report_unused_directive_for(&self, path: &Path) -> Option<AllowWarnDeny> {
+        self.lint_service.linter().report_unused_directive_for(path)
     }
 
     /// Get the directives coordinator for external use
