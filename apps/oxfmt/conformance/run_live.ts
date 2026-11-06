@@ -1,13 +1,12 @@
-// oxlint-disable no-console, no-await-in-loop
+// oxlint-disable no-console
 
 import { createTwoFilesPatch } from "diff";
-import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
-import prettier from "prettier";
-import * as astroPlugin from "prettier-plugin-astro";
-import * as sveltePlugin from "prettier-plugin-svelte";
-import { format } from "../dist/index.js";
+import Tinypool from "tinypool";
 import { assertDownloaded, sources } from "./download-externals.ts";
+import type run from "./live_worker.ts";
+import type { LiveTask } from "./live_worker.ts";
 import {
   collectDivergences,
   type Divergence,
@@ -174,19 +173,16 @@ const categories: Category[] = [
 
 assertDownloaded(sources.map(({ name }) => name).filter((name) => name !== "prettier"));
 const divergences = collectDivergences();
-const results: CategoryResult[] = [];
+// Every comparison is one task, all categories at once, so a slow file never idles the other workers
+const pool = new Tinypool({ filename: new URL("./live_worker.ts", import.meta.url).href });
+const progress = { done: 0, total: 0 };
+const results = await Promise.all(categories.map(runCategory));
+await pool.destroy();
+if (process.stdout.isTTY) process.stdout.write("\n");
 
-for (const category of categories) {
-  const fixtures = [
-    ...collectFixtures(category.suites ?? [], false),
-    ...collectFixtures(category.projects ?? [], true),
-  ].sort((a, b) => a.name.localeCompare(b.name));
-
-  console.log(`[${category.name}] Running ${fixtures.length} fixtures...`);
-  const categoryResult = await runCategory(category, fixtures);
-  results.push(categoryResult);
-
-  for (const r of categoryResult.optionSetResults) {
+for (const { name, optionSetResults } of results) {
+  console.log(`[${name}] Ran ${optionSetResults[0].total} fixtures`);
+  for (const r of optionSetResults) {
     const pct = ((r.passed / r.total) * 100).toFixed(2);
     console.log(`  ${JSON.stringify(r.options)}: ${r.passed}/${r.total} (${pct}%)`);
   }
@@ -251,71 +247,39 @@ function collectFixtures(sources: Source[], isProject: boolean): Fixture[] {
   return results;
 }
 
-async function runCategory(category: Category, fixtures: Fixture[]): Promise<CategoryResult> {
-  const optionSetResults: OptionSetResult[] = [];
+async function runCategory(category: Category): Promise<CategoryResult> {
+  const fixtures = [
+    ...collectFixtures(category.suites ?? [], false),
+    ...collectFixtures(category.projects ?? [], true),
+  ].sort((a, b) => a.name.localeCompare(b.name));
 
-  for (const options of category.optionSets) {
-    let passed = 0;
-    const failures: Failure[] = [];
-
-    for (const fixture of fixtures) {
-      let input = readFileSync(fixture.fullPath, "utf8");
-      let expected = await formatWithPrettier(fixture.name, input, options);
-      // A project hands over Prettier's output, unless Prettier cannot read it back either
-      if (fixture.isProject && expected !== null) {
-        const again = await formatWithPrettier(fixture.name, expected, options);
-        if (again !== null) [input, expected] = [expected, again];
-      }
-      const prettierResult = expected ?? "ERROR";
-      const oxfmtResult = await formatWithOxfmt(fixture.name, input, options);
-
-      // Both failing to parse is not a pass, the fixture exercised nothing
-      if (oxfmtResult === prettierResult && oxfmtResult !== "ERROR") {
-        passed++;
-      } else {
-        failures.push({
-          name: fixture.name,
-          oxfmt: oxfmtResult,
-          prettier: prettierResult,
-        });
-      }
-    }
-
-    optionSetResults.push({
-      options,
-      passed,
-      total: fixtures.length,
-      failures,
-    });
-  }
+  const optionSetResults = await Promise.all(
+    category.optionSets.map(async (options): Promise<OptionSetResult> => {
+      // `Promise.all` keeps the fixture order, so the report stays deterministic
+      const outcomes = await Promise.all(
+        fixtures.map((fixture) => runTask({ ...fixture, options })),
+      );
+      const failures = outcomes.filter((o) => o !== null);
+      return {
+        options,
+        passed: fixtures.length - failures.length,
+        total: fixtures.length,
+        failures,
+      };
+    }),
+  );
 
   return { name: category.name, optionSetResults };
 }
 
-/** `null` when Prettier fails. */
-async function formatWithPrettier(
-  fileName: string,
-  content: string,
-  options: Record<string, unknown>,
-): Promise<string | null> {
-  try {
-    return await prettier.format(content, {
-      ...options,
-      filepath: fileName,
-      plugins: [sveltePlugin, astroPlugin],
-    });
-  } catch {
-    return null;
-  }
-}
-
-async function formatWithOxfmt(
-  fileName: string,
-  content: string,
-  options: Record<string, unknown>,
-): Promise<string> {
-  const res = await format(fileName, content, options);
-  return res.errors.length === 0 ? res.code : "ERROR";
+function runTask(task: LiveTask) {
+  progress.total++;
+  return (pool.run(task) as ReturnType<typeof run>).finally(() => {
+    // One overwritten line on a terminal, nothing in a log
+    if (process.stdout.isTTY) {
+      process.stdout.write(`\rRunning ${++progress.done}/${progress.total} comparisons...`);
+    }
+  });
 }
 
 function writeReport(results: CategoryResult[], divergences: Divergence[]) {
