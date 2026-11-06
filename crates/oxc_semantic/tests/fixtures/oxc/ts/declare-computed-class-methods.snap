@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
+assertion_line: 151
 input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/declare-computed-class-methods.ts
 ---
 [
@@ -112,7 +113,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/declare-computed-class-met
         "node": "VariableDeclarator(declaredMethodKey)",
         "references": [
           {
-            "flags": "ReferenceFlags(Type)",
+            "flags": "ReferenceFlags(Read | ValueAsType)",
             "id": 5,
             "name": "declaredMethodKey",
             "node_id": 34,
@@ -127,7 +128,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/declare-computed-class-met
         "node": "VariableDeclarator(declaredGetterKey)",
         "references": [
           {
-            "flags": "ReferenceFlags(Type)",
+            "flags": "ReferenceFlags(Read | ValueAsType)",
             "id": 6,
             "name": "declaredGetterKey",
             "node_id": 40,
@@ -142,7 +143,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/declare-computed-class-met
         "node": "VariableDeclarator(abstractMethodKey)",
         "references": [
           {
-            "flags": "ReferenceFlags(Type)",
+            "flags": "ReferenceFlags(Read | ValueAsType)",
             "id": 8,
             "name": "abstractMethodKey",
             "node_id": 55,
@@ -157,7 +158,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/declare-computed-class-met
         "node": "VariableDeclarator(abstractSetterKey)",
         "references": [
           {
-            "flags": "ReferenceFlags(Type)",
+            "flags": "ReferenceFlags(Read | ValueAsType)",
             "id": 9,
             "name": "abstractSetterKey",
             "node_id": 61,
