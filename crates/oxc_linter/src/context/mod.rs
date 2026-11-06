@@ -234,6 +234,9 @@ impl<'a> LintContext<'a> {
         if self.globals().is_enabled(var) {
             return true;
         }
+        if self.parent.current_sub_host().globals.iter().any(|global| global == var) {
+            return true;
+        }
         self.env_contains_var(var)
     }
 

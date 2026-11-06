@@ -12,6 +12,7 @@ use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_parser::Token;
 use oxc_semantic::Semantic;
 use oxc_span::{SourceType, Span};
+use oxc_str::CompactStr;
 
 use crate::{
     AllowWarnDeny, FrameworkFlags,
@@ -50,6 +51,9 @@ pub struct ContextSubHost<'a> {
     pub(super) parser_tokens: ArenaBox<'a, [Token]>,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
+    /// Variables that the framework declares for this script block.
+    /// See [`JavaScriptSource::globals`](crate::loader::JavaScriptSource::globals).
+    pub(super) globals: Vec<CompactStr>,
 }
 
 impl<'a> ContextSubHost<'a> {
@@ -83,6 +87,7 @@ impl<'a> ContextSubHost<'a> {
             disable_directives,
             framework_options: options.framework_options,
             parser_tokens: options.parser_tokens,
+            globals: options.globals,
         }
     }
 
@@ -120,6 +125,7 @@ pub struct ContextSubHostOptions<'a> {
     pub framework_options: FrameworkOptions,
     pub parser_tokens: ArenaBox<'a, [Token]>,
     pub respect_eslint_disable_directives: bool,
+    pub globals: Vec<CompactStr>,
 }
 
 impl Default for ContextSubHostOptions<'_> {
@@ -128,6 +134,7 @@ impl Default for ContextSubHostOptions<'_> {
             framework_options: FrameworkOptions::Default,
             parser_tokens: ArenaBox::new_empty_boxed_slice(),
             respect_eslint_disable_directives: true,
+            globals: Vec::new(),
         }
     }
 }

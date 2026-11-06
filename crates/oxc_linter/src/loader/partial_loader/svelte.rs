@@ -110,7 +110,7 @@ mod test {
 
     fn parse_svelte(source_text: &str) -> JavaScriptSource<'_> {
         let sources = SveltePartialLoader::new(source_text).parse();
-        *sources.first().unwrap()
+        sources.into_iter().next().unwrap()
     }
 
     #[test]

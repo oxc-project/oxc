@@ -1,6 +1,13 @@
 use memchr::memmem::{Finder, FinderRev};
 
+use oxc_allocator::Allocator;
+use oxc_ast::ast::{
+    Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, ObjectPropertyKind,
+    PropertyKey,
+};
+use oxc_parser::Parser;
 use oxc_span::{SourceType, Span};
+use oxc_str::CompactStr;
 
 use crate::loader::JavaScriptSource;
 
@@ -105,6 +112,11 @@ impl<'a> AstroPartialLoader<'a> {
             };
             let script_opening_tag = &self.source_text[pointer..pointer + offset];
             let is_javascript_script = Self::is_javascript_script(script_opening_tag);
+            let define_vars = if is_javascript_script {
+                Self::parse_define_vars(script_opening_tag)
+            } else {
+                Vec::new()
+            };
 
             pointer += offset + 1;
             let js_start = pointer;
@@ -130,13 +142,104 @@ impl<'a> AstroPartialLoader<'a> {
 
             // NOTE: loader checked that source_text.len() is less than u32::MAX
             #[expect(clippy::cast_possible_truncation)]
-            results.push(JavaScriptSource::partial(
-                &self.source_text[js_start..js_end],
-                SourceType::ts(),
-                js_start as u32,
-            ));
+            results.push(
+                JavaScriptSource::partial(
+                    &self.source_text[js_start..js_end],
+                    SourceType::ts(),
+                    js_start as u32,
+                )
+                .with_globals(define_vars),
+            );
         }
         results
+    }
+
+    /// Returns the variables that `define:vars={{ ... }}` declares in a `<script>`.
+    /// Astro declares each non-computed key of the object as a variable in the script.
+    /// <https://docs.astro.build/en/reference/directives-reference/#definevars>
+    ///
+    /// Astro's attribute syntax is close to JSX, so the opening tag is parsed as a JSX element.
+    /// Forms that JSX rejects, such as unquoted attribute values, declare nothing.
+    fn parse_define_vars(script_attributes: &str) -> Vec<CompactStr> {
+        if !script_attributes.contains("define:vars") {
+            return Vec::new();
+        }
+        let attributes = script_attributes.trim_end();
+        let attributes = attributes.strip_suffix('/').unwrap_or(attributes);
+        let allocator = Allocator::default();
+        let source_text = allocator.alloc_str(&format!("<script{attributes} />"));
+        let Ok(Expression::JSXElement(element)) =
+            Parser::new(&allocator, source_text, SourceType::tsx()).parse_expression()
+        else {
+            return Vec::new();
+        };
+
+        let Some((name_span, value)) =
+            element.opening_element.attributes.iter().find_map(|attribute| {
+                let JSXAttributeItem::Attribute(attribute) = attribute else {
+                    return None;
+                };
+                let JSXAttributeName::NamespacedName(name) = &attribute.name else {
+                    return None;
+                };
+                // JSX also accepts whitespace and comments around the colon.
+                if name.span.source_text(source_text) != "define:vars" {
+                    return None;
+                }
+                // Astro uses the first directive with a string or expression value.
+                attribute
+                    .value
+                    .as_ref()
+                    .filter(|value| {
+                        matches!(
+                            value,
+                            JSXAttributeValue::StringLiteral(_)
+                                | JSXAttributeValue::ExpressionContainer(_)
+                        )
+                    })
+                    .map(|value| (name.span, value))
+            })
+        else {
+            return Vec::new();
+        };
+        let JSXAttributeValue::ExpressionContainer(container) = value else {
+            return Vec::new();
+        };
+        // A comment after `=` is an unquoted Astro value, not JavaScript trivia.
+        // Conservatively reject comments anywhere in the name/value gap.
+        let value_prefix = Span::new(name_span.end, container.span.start).source_text(source_text);
+        if value_prefix.trim_matches([' ', '\t', '\r', '\n']) != "=" {
+            return Vec::new();
+        }
+        let Some(value) = container.expression.as_expression() else {
+            return Vec::new();
+        };
+        let Expression::ObjectExpression(object) = value.without_parentheses() else {
+            return Vec::new();
+        };
+
+        object
+            .properties
+            .iter()
+            .filter_map(|property| {
+                let ObjectPropertyKind::ObjectProperty(property) = property else {
+                    return None;
+                };
+                if property.computed {
+                    return None;
+                }
+                match &property.key {
+                    PropertyKey::StaticIdentifier(ident) => {
+                        Some(CompactStr::from(ident.name.as_str()))
+                    }
+                    // `None` for strings with lone surrogates, which cannot be variable names.
+                    PropertyKey::StringLiteral(literal) => {
+                        literal.value.as_str().map(CompactStr::from)
+                    }
+                    _ => None,
+                }
+            })
+            .collect()
     }
 
     fn is_javascript_script(content: &str) -> bool {
@@ -161,6 +264,8 @@ impl<'a> AstroPartialLoader<'a> {
 
 #[cfg(test)]
 mod test {
+    use oxc_str::CompactStr;
+
     use super::{AstroPartialLoader, JavaScriptSource};
 
     fn parse_astro(source_text: &str) -> Vec<JavaScriptSource<'_>> {
@@ -345,5 +450,185 @@ mod test {
             sources[1].source_text.trim(),
             "const marker = \"---\";\n            console.log(marker);"
         );
+    }
+
+    fn globals<'a>(source: &'a JavaScriptSource<'_>) -> Vec<&'a str> {
+        source.globals.iter().map(CompactStr::as_str).collect()
+    }
+
+    #[test]
+    fn test_parse_astro_define_vars() {
+        let source_text = r#"
+        ---
+        const foo = 1;
+        ---
+        <script is:inline define:vars={{ foo, bar: foo + 1, "baz": "}", [qux]: 1, ...rest }}>
+            console.log(foo, bar, baz);
+        </script>
+
+        <script>
+            console.log(foo);
+        </script>
+        "#;
+
+        let sources = parse_astro(source_text);
+        assert_eq!(sources.len(), 3);
+        assert_eq!(globals(&sources[0]), Vec::<&str>::new());
+        assert_eq!(globals(&sources[1]), vec!["foo", "bar", "baz"]);
+        assert_eq!(sources[1].source_text.trim(), "console.log(foo, bar, baz);");
+        assert_eq!(globals(&sources[2]), Vec::<&str>::new());
+    }
+
+    #[test]
+    fn test_parse_astro_define_vars_skips_braces_in_tokens() {
+        for source_text in [
+            r"<script define:vars={{ foo: /}/ }}>foo;</script>",
+            r"<script define:vars={{ foo: 1 /* } */ }}>foo;</script>",
+            r"<script define:vars={{ foo: `x${`}`}` }}>foo;</script>",
+            r"<script data-x={{ a: '}' }} define:vars={{ foo }}>foo;</script>",
+        ] {
+            let sources = parse_astro(source_text);
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(globals(&sources[0]), vec!["foo"], "{source_text}");
+        }
+    }
+
+    #[test]
+    fn test_parse_astro_define_vars_decodes_keys() {
+        let sources = parse_astro(
+            r#"<script define:vars={{ \u0066oo: 1, "b\u0061r": 2 }}>foo; bar;</script>"#,
+        );
+        assert_eq!(sources.len(), 1);
+        assert_eq!(globals(&sources[0]), vec!["foo", "bar"]);
+    }
+
+    #[test]
+    fn test_parse_astro_define_vars_with_parentheses() {
+        let sources = parse_astro(r"<script define:vars={({ foo: 1 })}>foo;</script>");
+        assert_eq!(sources.len(), 1);
+        assert_eq!(globals(&sources[0]), vec!["foo"]);
+    }
+
+    #[test]
+    fn test_parse_astro_define_vars_ignored() {
+        for source_text in [
+            // Not an object, or not an expression value.
+            r"<script define:vars={vars}>foo;</script>",
+            r#"<script define:vars="{{foo}}">foo;</script>"#,
+            // Astro matches the directive name exactly.
+            r"<script DEFINE:VARS={{ foo }}>foo;</script>",
+            // Invalid expression.
+            r"<script define:vars={{ foo: }}>foo;</script>",
+        ] {
+            let sources = parse_astro(source_text);
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "foo;", "{source_text}");
+            assert_eq!(globals(&sources[0]), Vec::<&str>::new(), "{source_text}");
+        }
+    }
+
+    #[test]
+    fn test_parse_astro_skips_json_script_after_expression_attribute() {
+        let source_text =
+            r#"<script data-x={{ foo: 1 /* ' */ }} type="application/json">{"foo":1}</script>"#;
+        assert!(parse_astro(source_text).is_empty());
+    }
+
+    #[test]
+    fn test_parse_astro_define_vars_after_spread_attribute() {
+        let sources = parse_astro(r"<script {...attrs} define:vars={{ foo }}>foo;</script>");
+        assert_eq!(sources.len(), 1);
+        assert_eq!(globals(&sources[0]), vec!["foo"]);
+    }
+
+    #[test]
+    fn test_parse_astro_define_vars_text_inside_other_values() {
+        for source_text in [
+            // Inside a comment of another attribute's expression.
+            "<script data-x={value // } define:vars={{ foo }}\n}>foo;</script>",
+            // A comment hides the brace that would end the object.
+            "<script define:vars={{ foo: 1 } // }\n.bar}>foo;</script>",
+            // Inside a template literal or unquoted value of another attribute.
+            r"<script data-x=`abc define:vars={{ foo }}`>foo;</script>",
+            r"<script data-x=abc/define:vars={{ foo }}>foo;</script>",
+            "<script data-x=abc\u{a0}define:vars={{ foo }}>foo;</script>",
+        ] {
+            let sources = parse_astro(source_text);
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "foo;", "{source_text}");
+            assert_eq!(globals(&sources[0]), Vec::<&str>::new(), "{source_text}");
+        }
+    }
+
+    #[test]
+    fn test_parse_astro_define_vars_self_closing() {
+        let sources = parse_astro(r"<script define:vars={{ foo }} /><script>foo;</script>");
+        assert_eq!(sources.len(), 2);
+        assert_eq!(globals(&sources[0]), vec!["foo"]);
+        assert_eq!(globals(&sources[1]), Vec::<&str>::new());
+    }
+
+    #[test]
+    fn test_parse_astro_define_vars_name_must_be_contiguous() {
+        for source_text in [
+            r"<script define :vars={{foo}}>foo;</script>",
+            r"<script define: vars={{foo}}>foo;</script>",
+            r"<script define : vars={{foo}}>foo;</script>",
+            "<script define:\nvars={{foo}}>foo;</script>",
+            r"<script define/*x*/:vars={{foo}}>foo;</script>",
+            r"<script define:/*x*/vars={{foo}}>foo;</script>",
+            "<script define:\u{a0}vars={{foo}}>foo;</script>",
+            // A textual absence check alone cannot handle this case.
+            r#"<script data-x="define:vars" define : vars={{foo}}>foo;</script>"#,
+        ] {
+            let sources = parse_astro(source_text);
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "foo;", "{source_text}");
+            assert_eq!(globals(&sources[0]), Vec::<&str>::new(), "{source_text}");
+        }
+    }
+
+    #[test]
+    fn test_parse_astro_define_vars_uses_first_directive_with_value() {
+        for source_text in [
+            r#"<script define:vars="" define:vars={{foo: 1}}>foo;</script>"#,
+            r#"<script define:vars="x" define:vars={{foo: 1}}>foo;</script>"#,
+            r"<script define:vars={other} define:vars={{foo: 1}}>foo;</script>",
+        ] {
+            let sources = parse_astro(source_text);
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "foo;", "{source_text}");
+            assert_eq!(globals(&sources[0]), Vec::<&str>::new(), "{source_text}");
+        }
+        for source_text in [
+            r"<script define:vars={{foo: 1}} define:vars={{bar: 2}}>foo;</script>",
+            r#"<script define:vars={{foo: 1}} define:vars="">foo;</script>"#,
+            r"<script define:vars define:vars={{foo: 1}}>foo;</script>",
+            r"<script define:vars=<x/> define:vars={{foo: 1}}>foo;</script>",
+        ] {
+            let sources = parse_astro(source_text);
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(globals(&sources[0]), vec!["foo"], "{source_text}");
+        }
+    }
+
+    #[test]
+    fn test_parse_astro_define_vars_value_must_follow_equals() {
+        for source_text in [
+            r"<script define:vars=/*comment*/{{foo}}>foo;</script>",
+            r"<script define:vars= /*comment*/ {{foo}}>foo;</script>",
+            "<script define:vars=//comment\n{{foo}}>foo;</script>",
+            "<script define:vars=//=\n{{foo}}>foo;</script>",
+            "<script define:vars=\u{a0}{{foo}}>foo;</script>",
+            "<script define:vars=\x0c{{foo}}>foo;</script>",
+            "<script define:vars\u{a0}={{foo}}>foo;</script>",
+        ] {
+            let sources = parse_astro(source_text);
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "foo;", "{source_text}");
+            assert_eq!(globals(&sources[0]), Vec::<&str>::new(), "{source_text}");
+        }
+        let sources = parse_astro("<script define:vars \t=\n {{foo}}>foo;</script>");
+        assert_eq!(globals(&sources[0]), vec!["foo"]);
     }
 }
