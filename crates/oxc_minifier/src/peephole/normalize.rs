@@ -336,7 +336,9 @@ impl<'a> Normalize {
         }
     }
 
-    fn is_unary_delete_ancestor<'t>(ancestors: impl Iterator<Item = Ancestor<'a, 't>>) -> bool {
+    pub(crate) fn is_unary_delete_ancestor<'t>(
+        ancestors: impl Iterator<Item = Ancestor<'a, 't>>,
+    ) -> bool {
         for ancestor in ancestors {
             match ancestor {
                 Ancestor::UnaryExpressionArgument(e) if e.operator().is_delete() => {
