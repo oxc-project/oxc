@@ -1884,3 +1884,14 @@ fn test_fold_left_child_op_keeps_side_effects() {
     // Still folds when nothing has side effects.
     fold("(3 ^ x) ^ [1, 1].length", "x ^ 1");
 }
+
+#[test]
+fn test_no_fold_object_with_proto_null() {
+    // `{ __proto__: null }` has no `valueOf`/`toString` on its prototype chain, so
+    // converting it to a primitive throws a `TypeError` instead of producing
+    // `NaN` / `"[object Object]"` - it must not be constant-folded.
+    test_same("log(+{ __proto__: null });");
+    test_same("log({ __proto__: null } + 1);");
+    test_same("log(`${ { __proto__: null } }`);");
+    test_same("var x = String({ __proto__: null });");
+}
