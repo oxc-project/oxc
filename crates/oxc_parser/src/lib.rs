@@ -1419,6 +1419,24 @@ mod test {
     }
 
     #[test]
+    fn ts_type_nesting_over_limit_reports_error_instead_of_overflowing_stack() {
+        let allocator = Allocator::default();
+        let source_text = format!("type T = {}A{};", "(".repeat(300), ")".repeat(300));
+        let ret = Parser::new(&allocator, &source_text, SourceType::ts()).parse();
+        assert!(ret.fatal_error);
+        assert!(ret.diagnostics.has_errors());
+    }
+
+    #[test]
+    fn ts_type_nesting_under_limit_parses() {
+        let allocator = Allocator::default();
+        let source_text = format!("type T = {}A{};", "(".repeat(200), ")".repeat(200));
+        let ret = Parser::new(&allocator, &source_text, SourceType::ts()).parse();
+        assert!(!ret.fatal_error);
+        assert!(ret.diagnostics.is_empty());
+    }
+
+    #[test]
     fn memory_leak() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
