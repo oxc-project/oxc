@@ -42,6 +42,7 @@ class Renderer {
 	boundary(props, children_fn) {}
 }
 
+---------- Input variants differ: CR ----------
 -----------------------------------------------
 { jsdoc: true, printWidth: 100, useTabs: true }
 -----------------------------------------------
@@ -63,4 +64,5 @@ class Renderer {
 	boundary(props, children_fn) {}
 }
 
+---------- Input variants differ: CR ----------
 ===================== End =====================

@@ -2187,6 +2187,7 @@ dependencies = [
 name = "oxc_formatter_tests"
 version = "0.62.0"
 dependencies = [
+ "cow-utils",
  "oxc_formatter_core",
  "serde_json",
 ]

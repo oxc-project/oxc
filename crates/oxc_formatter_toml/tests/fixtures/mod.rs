@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
+use oxc_formatter_tests::{FixtureFormatter, InputVariant, OptionValue, build_fixture_snapshot};
 use oxc_formatter_toml::{TomlFormatOptions, TrailingCommas, format};
 
 struct TomlHarness;
@@ -26,12 +26,21 @@ impl FixtureFormatter for TomlHarness {
         true
     }
 
-    fn format(source: &str, _path: &Path, options: &Self::Options) -> String {
-        format(source, *options).expect("format should succeed")
+    fn format(
+        source: &str,
+        _path: &Path,
+        options: &Self::Options,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        Ok(format(source, *options)?)
     }
 
     fn fingerprint(source: &str, _path: &Path, _options: &Self::Options) -> String {
         source.chars().filter(|c| !c.is_whitespace() && *c != ',').collect()
+    }
+
+    fn input_variants(_path: &Path) -> &'static [InputVariant] {
+        // A lone CR is not a TOML line break, but a syntax error
+        &[InputVariant::Crlf, InputVariant::Bom]
     }
 }
 

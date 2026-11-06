@@ -43,6 +43,7 @@ function multiLineType(props, children_fn) {}
  */
 function withDesc(options) {}
 
+---------- Input variants differ: CR ----------
 --------------------------------
 { jsdoc: true, printWidth: 100 }
 --------------------------------
@@ -65,4 +66,5 @@ function multiLineType(props, children_fn) {}
  */
 function withDesc(options) {}
 
+---------- Input variants differ: CR ----------
 ===================== End =====================

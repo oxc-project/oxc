@@ -12,7 +12,7 @@ use oxc_allocator::{Allocator, ArenaVec};
 use oxc_formatter_css::{
     CssFormatOptions, CssRoot, CssVariant, SingleQuote, TrailingCommas, format, parse_for_format,
 };
-use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
+use oxc_formatter_tests::{FixtureFormatter, InputVariant, OptionValue, build_fixture_snapshot};
 
 struct CssHarness;
 
@@ -44,7 +44,11 @@ impl FixtureFormatter for CssHarness {
         true
     }
 
-    fn format(source: &str, path: &Path, options: &Self::Options) -> String {
+    fn format(
+        source: &str,
+        path: &Path,
+        options: &Self::Options,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let options = CssFormatOptions { variant: variant_of(path), ..*options };
 
         if is_embedded(path) {
@@ -52,11 +56,7 @@ impl FixtureFormatter for CssHarness {
         }
 
         let allocator = Allocator::default();
-        format(&allocator, source, options)
-            .expect("format should succeed")
-            .print()
-            .expect("print should succeed")
-            .into_code()
+        Ok(format(&allocator, source, options)?.print()?.into_code())
     }
 
     fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> Fingerprint {
@@ -70,6 +70,11 @@ impl FixtureFormatter for CssHarness {
         )
         .expect("source should parse");
         Fingerprint { comments: parsed.comments.len() }
+    }
+
+    fn input_variants(path: &Path) -> &'static [InputVariant] {
+        // An embedded entry never sees a BOM: a leading U+FEFF there is content
+        if is_embedded(path) { &[InputVariant::Crlf, InputVariant::Cr] } else { InputVariant::ALL }
     }
 }
 
@@ -91,7 +96,10 @@ fn is_embedded(path: &Path) -> bool {
 
 /// Format through `format_to_ir` and print the raw IR, mirroring what the
 /// oxfmt dispatcher + parent template printing do (minus `${}` substitution).
-fn format_embedded(source: &str, options: CssFormatOptions) -> String {
+fn format_embedded(
+    source: &str,
+    options: CssFormatOptions,
+) -> Result<String, Box<dyn std::error::Error>> {
     use oxc_formatter_core::{Document, FormatElement, FormatOptions};
 
     let allocator = Allocator::default();
@@ -102,8 +110,7 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
         source,
         options,
         Some(oxc_formatter_css::CssEmbeddedIn::CssInJsTemplate),
-    )
-    .expect("format should succeed");
+    )?;
     // Simulate the host: replace each typed placeholder with the canonical
     // sentinel (the real host substitutes `${expr}`; tests have no expressions).
     // The printer `debug_assert`s on any surviving `EmbedPlaceholder`.
@@ -118,13 +125,12 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
         &session.allocator(),
     );
     let mut code = Document::new(elements, Vec::new())
-        .print(source.len(), options.as_print_options())
-        .expect("print should succeed")
+        .print(source.len(), options.as_print_options())?
         .into_code();
     // The embedded entry point emits no trailing newline (the parent owns it);
     // add one so snapshots stay diff-friendly.
     code.push('\n');
-    code
+    Ok(code)
 }
 
 fn test_file(path: &Path) {
