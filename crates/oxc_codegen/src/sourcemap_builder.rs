@@ -345,6 +345,16 @@ impl<'a> SourcemapBuilder<'a> {
                 }
                 idx += STRIDE;
             }
+
+            // The word scan stops at a special byte within the next word, or at
+            // a tail shorter than STRIDE. Skip common ASCII bytes (space and above)
+            // without repeating the word scan for every byte.
+            while idx < len {
+                if !(b' '..=0x7f).contains(&output[idx]) {
+                    break;
+                }
+                idx += 1;
+            }
             if idx >= len {
                 break;
             }
@@ -773,6 +783,32 @@ mod test {
         // Line breaks straddling the 8-byte SWAR word boundary (`\r` at index 7).
         create_mappings("aaaaaaa\r\nbbbbbbbb", 1, 8);
         create_mappings("aaaaaaa\rbbbbbbbb", 1, 8);
+    }
+
+    #[test]
+    fn generated_line_and_column_ascii_tails() {
+        for prefix_len in 0..=24 {
+            for (suffix, expected_line, expected_column) in [
+                ("", 0, prefix_len),
+                ("\txyz", 0, prefix_len + 4),
+                ("é😀", 0, prefix_len + 3),
+                ("\nxyz", 1, 3),
+                ("\rxyz", 1, 3),
+                ("\r\nxyz", 1, 3),
+                ("\u{2028}xyz", 1, 3),
+                ("\u{2029}xyz", 1, 3),
+            ] {
+                let output = format!("{}{suffix}", "a".repeat(prefix_len as usize));
+                let mut builder = SourcemapBuilder::new(Path::new("x.js"), "");
+                builder.update_generated_line_and_column(output.as_bytes());
+                assert_eq!(
+                    (builder.generated_line, builder.generated_column),
+                    (expected_line, expected_column),
+                    "prefix length {prefix_len}, suffix {suffix:?}"
+                );
+                assert_eq!(builder.last_generated_update, output.len());
+            }
+        }
     }
 
     #[test]
