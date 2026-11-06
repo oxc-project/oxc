@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.92.0] - 2026-11-06
+
+### 🚀 Features
+
+- 4a52ba2 oxlint: Discover tsrs for type-aware linting (#28751) (camc314)
+- b7d2c75 linter/eslint/no-redeclare: Add `ignoreDeclarationMerge` option (#28816) (Cam McHenry)
+
+### 🐛 Bug Fixes
+
+- 2091564 linter/jsdoc/require-param: Ignore enclosing function JSDoc (#28866) (camc314)
+- c6ec50b linter/react/only-export-components: Classify JSX values as non-components (#28761) (camc314)
+- 3c051ab linter/vitest/prefer-called-exactly-once-with: Preserve neighboring code in autofix (#28864) (camc314)
+- 674b962 linter/eslint/no-misleading-character-class: Use lazy regex for combining marks (#28822) (Sysix)
+- 838d339 linter/vitest/prefer-called-exactly-once-with: Avoid panic on non-ASCII text (#28850) (YT)
+- 8d24c26 linter/jsx-a11y/aria-role: Allow role={undefined} (#28804) (Abhay Godavarthy)
+- a7143bf linter/eslint/no-restricted-imports: Respect allowTypeImports correctly for empty patterns (#28842) (Cam McHenry)
+- 0cc6515 linter/unicorn/prefer-type-error: Report throws in unbraced if branches (#28819) (camc314)
+- ae43c80 linter/unicorn/prefer-single-call: Remove duplicate fix status (#28763) (Mikhail Baev)
+- a8a621a linter/eslint/no-fallthrough: Ignore unreachable exits from infinite loops (#28755) (camc314)
+- 7a17a80 linter/eslint/prefer-spread: Report calls on non-member expressions (#28753) (camc314)
+- 0ae350d linter/unicorn/no-zero-fractions: Preserve exponent case (#28752) (camc314)
+- b5b3f3f linter/eslint/no-misleading-character-class: Detect more combining characters (#28733) (Sysix)
+
+### ⚡ Performance
+
+- 74d50c1 linter: Overlap import graph batches instead of polling on a pool worker (#28323) (Dunqing)
+
 ## [1.91.0] - 2026-11-02
 
 ### 🚀 Features

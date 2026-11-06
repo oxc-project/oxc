@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.0] - 2026-11-06
+
+### 💥 BREAKING CHANGES
+
+- 00d1a67 oxfmt: [**BREAKING**] Format `parser:vue` files by `oxc_formatter_htmlish` (#28848) (leaysgur)
+
+### 🚀 Features
+
+- 119d82f formatter: Format a template's expressions and handlers as `JsRoot` (#28846) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- fa66fde oxlint,oxfmt: Resolve Vite+ config root from the config file directory (#28801) (MK (fengmk2))
+- 4d4104d formatter_htmlish: Preserve `doctype` case in embedded (#28797) (leaysgur)
+- ebfd40a formatter: Sort Tailwind calls printed as member chains (#28800) (Yuji Sugiura)
+- e62e5cb formatter: Decide quotes of a Tailwind key printed as one class (#28798) (Yuji Sugiura)
+- 959edc1 formatter: Don't sort templates in nested non-Tailwind calls (#28794) (Yuji Sugiura)
+- 94fbef5 formatter_css: Treat comments in `style` attr as fill items (#28832) (leaysgur)
+- 255c5cc formatter: Measure Tailwind class argument after collapsing whitespace (#28745) (Lee Jaeha / Adam)
+- e6c4fef formatter: Decide template and object key layouts from collapsed Tailwind classes (#28791) (Yuji Sugiura)
+- 0b44164 formatter: Decide JSX opening element layout from collapsed Tailwind class string (#28744) (Lee Jaeha / Adam)
+
+### ⚡ Performance
+
+- 2766d07 oxfmt: Spawn Prettier workers on demand (#28789) (YT)
+- 07627f7 oxfmt: Use worker_threads for tinypool again (#28787) (Yuji Sugiura)
+
 ## [0.76.0] - 2026-11-02
 
 ### 💥 BREAKING CHANGES
