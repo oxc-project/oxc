@@ -1,0 +1,75 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c .oxlintrc.json login.test.ts login.steps.ts
+working directory: fixtures/cli/additional_test_patterns
+----------
+
+  x jest(expect-expect): Test has no assertions
+   ,-[login.test.ts:1:1]
+ 1 | test('signs in with valid credentials', () => {
+   : ^^^^
+ 2 |   const attempts = 1;
+   `----
+  help: Add assertion(s) in this Test
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 2 files with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: -c .oxlintrc-jest-patterns.json login.test.ts login.steps.ts
+working directory: fixtures/cli/additional_test_patterns
+----------
+
+  x jest(expect-expect): Test has no assertions
+   ,-[login.steps.ts:1:1]
+ 1 | test('signs in with valid credentials', () => {
+   : ^^^^
+ 2 |   const attempts = 1;
+   `----
+  help: Add assertion(s) in this Test
+
+  x jest(expect-expect): Test has no assertions
+   ,-[login.test.ts:1:1]
+ 1 | test('signs in with valid credentials', () => {
+   : ^^^^
+ 2 |   const attempts = 1;
+   `----
+  help: Add assertion(s) in this Test
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 2 files with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: -c .oxlintrc-vitest-patterns.json login.test.ts login.steps.ts
+working directory: fixtures/cli/additional_test_patterns
+----------
+
+  x vitest(expect-expect): Test has no assertions
+   ,-[login.steps.ts:1:1]
+ 1 | test('signs in with valid credentials', () => {
+   : ^^^^
+ 2 |   const attempts = 1;
+   `----
+  help: Add assertion(s) in this Test
+
+  x vitest(expect-expect): Test has no assertions
+   ,-[login.test.ts:1:1]
+ 1 | test('signs in with valid credentials', () => {
+   : ^^^^
+ 2 |   const attempts = 1;
+   `----
+  help: Add assertion(s) in this Test
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 2 files with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
