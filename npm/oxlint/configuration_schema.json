@@ -9412,6 +9412,9 @@
         "unicorn/prefer-array-index-of": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-array-last-methods": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/prefer-array-some": {
           "$ref": "#/definitions/RuleNoConfig"
         },

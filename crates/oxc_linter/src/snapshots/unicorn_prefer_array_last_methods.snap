@@ -1,0 +1,88 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-array-last-methods): Prefer `Array#findLast()` over `Array#reverse().find()`.
+   ╭─[prefer_array_last_methods.tsx:1:17]
+ 1 │ array.reverse().find(fn)
+   ·                 ────
+   ╰────
+  help: Replace `.reverse().find()` with `.findLast()`.
+
+  ⚠ unicorn(prefer-array-last-methods): Prefer `Array#findLast()` over `Array#toReversed().find()`.
+   ╭─[prefer_array_last_methods.tsx:1:20]
+ 1 │ array.toReversed().find(fn)
+   ·                    ────
+   ╰────
+  help: Replace `.toReversed().find()` with `.findLast()`.
+
+  ⚠ unicorn(prefer-array-last-methods): Prefer `Array#findLastIndex()` over `Array#reverse().findIndex()`.
+   ╭─[prefer_array_last_methods.tsx:1:17]
+ 1 │ array.reverse().findIndex(fn)
+   ·                 ─────────
+   ╰────
+  help: Replace `.reverse().findIndex()` with `.findLastIndex()`.
+
+  ⚠ unicorn(prefer-array-last-methods): Prefer `Array#lastIndexOf()` over `Array#toReversed().indexOf()`.
+   ╭─[prefer_array_last_methods.tsx:1:20]
+ 1 │ array.toReversed().indexOf(foo)
+   ·                    ───────
+   ╰────
+  help: Replace `.toReversed().indexOf()` with `.lastIndexOf()`.
+
+  ⚠ unicorn(prefer-array-last-methods): Prefer `Array#reduceRight()` over `Array#reverse().reduce()`.
+   ╭─[prefer_array_last_methods.tsx:1:17]
+ 1 │ array.reverse().reduce(fn, 0)
+   ·                 ──────
+   ╰────
+  help: Replace `.reverse().reduce()` with `.reduceRight()`.
+
+  ⚠ unicorn(prefer-array-last-methods): Prefer `Array#findLast()` over `Array#reverse().find()`.
+   ╭─[prefer_array_last_methods.tsx:1:19]
+ 1 │ (array.reverse()).find(fn)
+   ·                   ────
+   ╰────
+  help: Replace `.reverse().find()` with `.findLast()`.
+
+  ⚠ unicorn(prefer-array-last-methods): Prefer `Array#findLast()` over `Array#toReversed().find()`.
+   ╭─[prefer_array_last_methods.tsx:1:22]
+ 1 │ (array).toReversed().find(fn)
+   ·                      ────
+   ╰────
+  help: Replace `.toReversed().find()` with `.findLast()`.
+
+  ⚠ unicorn(prefer-array-last-methods): Prefer `Array#findLast()` over `Array#toReversed().find()`.
+   ╭─[prefer_array_last_methods.tsx:1:24]
+ 1 │ foo.bar().toReversed().find(fn)
+   ·                        ────
+   ╰────
+  help: Replace `.toReversed().find()` with `.findLast()`.
+
+  ⚠ unicorn(prefer-array-last-methods): Prefer `Array#findLast()` over `Array#toReversed().find()`.
+   ╭─[prefer_array_last_methods.tsx:3:4]
+ 2 │   .toReversed()
+ 3 │   .find(fn)
+   ·    ────
+   ╰────
+  help: Replace `.toReversed().find()` with `.findLast()`.
+
+  ⚠ unicorn(prefer-array-last-methods): Prefer `Array#findLast()` over `Array#toReversed().find()`.
+   ╭─[prefer_array_last_methods.tsx:1:33]
+ 1 │ array./* comment */toReversed().find(fn)
+   ·                                 ────
+   ╰────
+  help: Replace `.toReversed().find()` with `.findLast()`.
+
+  ⚠ unicorn(prefer-array-last-methods): Prefer `Array#findLast()` over `Array#toReversed().find()`.
+   ╭─[prefer_array_last_methods.tsx:1:33]
+ 1 │ array.toReversed(/* comment */).find(fn)
+   ·                                 ────
+   ╰────
+  help: Replace `.toReversed().find()` with `.findLast()`.
+
+  ⚠ unicorn(prefer-array-last-methods): Prefer `Array#findLast()` over `Array#toReversed().find()`.
+   ╭─[prefer_array_last_methods.tsx:1:33]
+ 1 │ array.toReversed()./* comment */find(fn)
+   ·                                 ────
+   ╰────
+  help: Replace `.toReversed().find()` with `.findLast()`.
