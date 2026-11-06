@@ -380,6 +380,7 @@ pub use crate::rules::node::no_path_concat::NoPathConcat as NodeNoPathConcat;
 pub use crate::rules::node::no_process_env::NoProcessEnv as NodeNoProcessEnv;
 pub use crate::rules::node::no_sync::NoSync as NodeNoSync;
 pub use crate::rules::node::no_top_level_await::NoTopLevelAwait as NodeNoTopLevelAwait;
+pub use crate::rules::node::require_child_process_timeout::RequireChildProcessTimeout as NodeRequireChildProcessTimeout;
 pub use crate::rules::oxc::approx_constant::ApproxConstant as OxcApproxConstant;
 pub use crate::rules::oxc::bad_array_method_on_arguments::BadArrayMethodOnArguments as OxcBadArrayMethodOnArguments;
 pub use crate::rules::oxc::bad_bitwise_operator::BadBitwiseOperator as OxcBadBitwiseOperator;
@@ -1727,6 +1728,7 @@ pub enum RuleEnum {
     NodeNoProcessEnv(NodeNoProcessEnv),
     NodeNoSync(NodeNoSync),
     NodeNoTopLevelAwait(NodeNoTopLevelAwait),
+    NodeRequireChildProcessTimeout(NodeRequireChildProcessTimeout),
     VueComponentDefinitionNameCasing(VueComponentDefinitionNameCasing),
     VueDefineEmitsDeclaration(VueDefineEmitsDeclaration),
     VueDefinePropsDeclaration(VueDefinePropsDeclaration),
@@ -2600,53 +2602,54 @@ const NODE_NO_PATH_CONCAT_ID: usize = 822usize;
 const NODE_NO_PROCESS_ENV_ID: usize = 823usize;
 const NODE_NO_SYNC_ID: usize = 824usize;
 const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = 825usize;
-const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 826usize;
-const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 827usize;
-const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 828usize;
-const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 829usize;
-const VUE_MAX_PROPS_ID: usize = 830usize;
-const VUE_NEXT_TICK_STYLE_ID: usize = 831usize;
-const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 832usize;
-const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 833usize;
-const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 834usize;
-const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 835usize;
-const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 836usize;
-const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 837usize;
-const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 838usize;
-const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 839usize;
-const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 840usize;
-const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 841usize;
-const VUE_NO_DUPE_KEYS_ID: usize = 842usize;
-const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 843usize;
-const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 844usize;
-const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 845usize;
-const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 846usize;
-const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 847usize;
-const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 848usize;
-const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 849usize;
-const VUE_NO_RESERVED_KEYS_ID: usize = 850usize;
-const VUE_NO_RESERVED_PROPS_ID: usize = 851usize;
-const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 852usize;
-const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 853usize;
-const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 854usize;
-const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 855usize;
-const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 856usize;
-const VUE_PROP_NAME_CASING_ID: usize = 857usize;
-const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 858usize;
-const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 859usize;
-const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 860usize;
-const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 861usize;
-const VUE_REQUIRE_PROP_TYPES_ID: usize = 862usize;
-const VUE_REQUIRE_RENDER_RETURN_ID: usize = 863usize;
-const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 864usize;
-const VUE_REQUIRE_TYPED_REF_ID: usize = 865usize;
-const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 866usize;
-const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 867usize;
-const VUE_VALID_DEFINE_EMITS_ID: usize = 868usize;
-const VUE_VALID_DEFINE_OPTIONS_ID: usize = 869usize;
-const VUE_VALID_DEFINE_PROPS_ID: usize = 870usize;
-const VUE_VALID_NEXT_TICK_ID: usize = 871usize;
-static RULE_NAMES: [&str; 872usize] = [
+const NODE_REQUIRE_CHILD_PROCESS_TIMEOUT_ID: usize = 826usize;
+const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 827usize;
+const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 828usize;
+const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 829usize;
+const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 830usize;
+const VUE_MAX_PROPS_ID: usize = 831usize;
+const VUE_NEXT_TICK_STYLE_ID: usize = 832usize;
+const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 833usize;
+const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 834usize;
+const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 835usize;
+const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 836usize;
+const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 837usize;
+const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 838usize;
+const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 839usize;
+const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 840usize;
+const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 841usize;
+const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 842usize;
+const VUE_NO_DUPE_KEYS_ID: usize = 843usize;
+const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 844usize;
+const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 845usize;
+const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 846usize;
+const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 847usize;
+const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 848usize;
+const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 849usize;
+const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 850usize;
+const VUE_NO_RESERVED_KEYS_ID: usize = 851usize;
+const VUE_NO_RESERVED_PROPS_ID: usize = 852usize;
+const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 853usize;
+const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 854usize;
+const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 855usize;
+const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 856usize;
+const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 857usize;
+const VUE_PROP_NAME_CASING_ID: usize = 858usize;
+const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 859usize;
+const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 860usize;
+const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 861usize;
+const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 862usize;
+const VUE_REQUIRE_PROP_TYPES_ID: usize = 863usize;
+const VUE_REQUIRE_RENDER_RETURN_ID: usize = 864usize;
+const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 865usize;
+const VUE_REQUIRE_TYPED_REF_ID: usize = 866usize;
+const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 867usize;
+const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 868usize;
+const VUE_VALID_DEFINE_EMITS_ID: usize = 869usize;
+const VUE_VALID_DEFINE_OPTIONS_ID: usize = 870usize;
+const VUE_VALID_DEFINE_PROPS_ID: usize = 871usize;
+const VUE_VALID_NEXT_TICK_ID: usize = 872usize;
+static RULE_NAMES: [&str; 873usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3473,6 +3476,7 @@ static RULE_NAMES: [&str; 872usize] = [
     NodeNoProcessEnv::NAME,
     NodeNoSync::NAME,
     NodeNoTopLevelAwait::NAME,
+    NodeRequireChildProcessTimeout::NAME,
     VueComponentDefinitionNameCasing::NAME,
     VueDefineEmitsDeclaration::NAME,
     VueDefinePropsDeclaration::NAME,
@@ -4477,6 +4481,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NODE_NO_PROCESS_ENV_ID,
             Self::NodeNoSync(_) => NODE_NO_SYNC_ID,
             Self::NodeNoTopLevelAwait(_) => NODE_NO_TOP_LEVEL_AWAIT_ID,
+            Self::NodeRequireChildProcessTimeout(_) => NODE_REQUIRE_CHILD_PROCESS_TIMEOUT_ID,
             Self::VueComponentDefinitionNameCasing(_) => VUE_COMPONENT_DEFINITION_NAME_CASING_ID,
             Self::VueDefineEmitsDeclaration(_) => VUE_DEFINE_EMITS_DECLARATION_ID,
             Self::VueDefinePropsDeclaration(_) => VUE_DEFINE_PROPS_DECLARATION_ID,
@@ -5530,6 +5535,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::CATEGORY,
             Self::NodeNoSync(_) => NodeNoSync::CATEGORY,
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::CATEGORY,
+            Self::NodeRequireChildProcessTimeout(_) => NodeRequireChildProcessTimeout::CATEGORY,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::CATEGORY,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::CATEGORY,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::CATEGORY,
@@ -6525,6 +6531,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::FIX,
             Self::NodeNoSync(_) => NodeNoSync::FIX,
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::FIX,
+            Self::NodeRequireChildProcessTimeout(_) => NodeRequireChildProcessTimeout::FIX,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::FIX,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::FIX,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::FIX,
@@ -7778,6 +7785,9 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::documentation(),
             Self::NodeNoSync(_) => NodeNoSync::documentation(),
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::documentation(),
+            Self::NodeRequireChildProcessTimeout(_) => {
+                NodeRequireChildProcessTimeout::documentation()
+            }
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::documentation()
             }
@@ -10215,6 +10225,10 @@ impl RuleEnum {
             }
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::config_schema(generator)
                 .or_else(|| NodeNoTopLevelAwait::schema(generator)),
+            Self::NodeRequireChildProcessTimeout(_) => {
+                NodeRequireChildProcessTimeout::config_schema(generator)
+                    .or_else(|| NodeRequireChildProcessTimeout::schema(generator))
+            }
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::config_schema(generator)
                     .or_else(|| VueComponentDefinitionNameCasing::schema(generator))
@@ -11181,6 +11195,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => "node",
             Self::NodeNoSync(_) => "node",
             Self::NodeNoTopLevelAwait(_) => "node",
+            Self::NodeRequireChildProcessTimeout(_) => "node",
             Self::VueComponentDefinitionNameCasing(_) => "vue",
             Self::VueDefineEmitsDeclaration(_) => "vue",
             Self::VueDefinePropsDeclaration(_) => "vue",
@@ -13201,6 +13216,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(rule) => rule.run(node, ctx),
             Self::NodeNoSync(rule) => rule.run(node, ctx),
             Self::NodeNoTopLevelAwait(rule) => rule.run(node, ctx),
+            Self::NodeRequireChildProcessTimeout(rule) => rule.run(node, ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run(node, ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run(node, ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run(node, ctx),
@@ -14090,6 +14106,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(rule) => rule.run_once(ctx),
             Self::NodeNoSync(rule) => rule.run_once(ctx),
             Self::NodeNoTopLevelAwait(rule) => rule.run_once(ctx),
+            Self::NodeRequireChildProcessTimeout(rule) => rule.run_once(ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run_once(ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_once(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run_once(ctx),
@@ -14977,6 +14994,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(rule) => rule.should_run(ctx),
             Self::NodeNoSync(rule) => rule.should_run(ctx),
             Self::NodeNoTopLevelAwait(rule) => rule.should_run(ctx),
+            Self::NodeRequireChildProcessTimeout(rule) => rule.should_run(ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.should_run(ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.should_run(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.should_run(ctx),
@@ -15986,6 +16004,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::FLAGS,
             Self::NodeNoSync(_) => NodeNoSync::FLAGS,
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::FLAGS,
+            Self::NodeRequireChildProcessTimeout(_) => NodeRequireChildProcessTimeout::FLAGS,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::FLAGS,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::FLAGS,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::FLAGS,
@@ -17045,6 +17064,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::VERSION,
             Self::NodeNoSync(_) => NodeNoSync::VERSION,
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::VERSION,
+            Self::NodeRequireChildProcessTimeout(_) => NodeRequireChildProcessTimeout::VERSION,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::VERSION,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::VERSION,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::VERSION,
@@ -18045,6 +18065,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::INFO,
             Self::NodeNoSync(_) => NodeNoSync::INFO,
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::INFO,
+            Self::NodeRequireChildProcessTimeout(_) => NodeRequireChildProcessTimeout::INFO,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::INFO,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::INFO,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::INFO,
@@ -18930,6 +18951,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(rule) => rule.types_info(),
             Self::NodeNoSync(rule) => rule.types_info(),
             Self::NodeNoTopLevelAwait(rule) => rule.types_info(),
+            Self::NodeRequireChildProcessTimeout(rule) => rule.types_info(),
             Self::VueComponentDefinitionNameCasing(rule) => rule.types_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.types_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.types_info(),
@@ -19806,6 +19828,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(rule) => rule.run_info(),
             Self::NodeNoSync(rule) => rule.run_info(),
             Self::NodeNoTopLevelAwait(rule) => rule.run_info(),
+            Self::NodeRequireChildProcessTimeout(rule) => rule.run_info(),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.run_info(),
@@ -20816,6 +20839,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::NodeNoProcessEnv(NodeNoProcessEnv::default()),
         RuleEnum::NodeNoSync(NodeNoSync::default()),
         RuleEnum::NodeNoTopLevelAwait(NodeNoTopLevelAwait::default()),
+        RuleEnum::NodeRequireChildProcessTimeout(NodeRequireChildProcessTimeout::default()),
         RuleEnum::VueComponentDefinitionNameCasing(VueComponentDefinitionNameCasing::default()),
         RuleEnum::VueDefineEmitsDeclaration(VueDefineEmitsDeclaration::default()),
         RuleEnum::VueDefinePropsDeclaration(VueDefinePropsDeclaration::default()),
