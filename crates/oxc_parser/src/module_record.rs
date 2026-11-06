@@ -191,6 +191,13 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_import_expression(&mut self, e: &ImportExpression<'a>) {
+        // A speculative parse that visits the call site and is then rewound (e.g. the
+        // arrow-function guess for `x ? ([y] = import('m')) : z`) re-parses the same
+        // source and would record the same occurrence twice. A span identifies one
+        // syntactic occurrence, so drop exact duplicates.
+        if self.module_record.dynamic_imports.iter().any(|d| d.span == e.span) {
+            return;
+        }
         self.module_record
             .dynamic_imports
             .push(DynamicImport { span: e.span, module_request: e.source.span() });
@@ -198,7 +205,10 @@ impl<'a> ModuleRecordBuilder<'a> {
 
     pub fn visit_import_meta(&mut self, span: Span) {
         self.module_record.has_module_syntax = true;
-        self.module_record.import_metas.push(span);
+        // See `visit_import_expression`: rewound speculative parses revisit the same span.
+        if !self.module_record.import_metas.contains(&span) {
+            self.module_record.import_metas.push(span);
+        }
     }
 
     pub fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
@@ -784,6 +794,26 @@ mod module_record_tests {
         assert_eq!(module_record.dynamic_imports.len(), 1);
         assert_eq!(module_record.dynamic_imports[0].span, Span::new(0, 13));
         assert_eq!(module_record.dynamic_imports[0].module_request, Span::new(7, 12));
+    }
+
+    #[test]
+    fn dynamic_import_not_duplicated_by_speculative_arrow_parse() {
+        // The conditional expression forces the parser to guess whether `([y] = import('m'))`
+        // starts an arrow function. That guess parses the parameter initializer (visiting the
+        // import), is rewound, and the source is parsed again, which must not record the
+        // same call site twice.
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "x ? ([y] = import('m')) : z");
+        assert_eq!(module_record.dynamic_imports.len(), 1);
+        assert_eq!(module_record.dynamic_imports[0].span, Span::new(11, 22));
+    }
+
+    #[test]
+    fn import_meta_not_duplicated_by_speculative_arrow_parse() {
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "x ? ([y] = import.meta) : z");
+        assert_eq!(module_record.import_metas.len(), 1);
+        assert_eq!(module_record.import_metas[0], Span::new(11, 22));
     }
 
     #[test]
