@@ -68,11 +68,27 @@ include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"));
 #[test]
 fn parse_error_is_err() {
     let allocator = Allocator::default();
-    for source in ["query {{{", "", "# comments-only"] {
+    for source in ["query {{{", "# comments-only"] {
         assert!(
             format(&allocator, source, GraphqlFormatOptions::default()).is_err(),
             "{source:?} should fail to format"
         );
+    }
+}
+
+/// An empty document is a parse error, but a whitespace-only file formats to empty (Prettier does the same).
+#[test]
+fn whitespace_only_is_empty() {
+    let allocator = Allocator::default();
+    for (source, expected) in
+        [("", ""), (" \n", ""), ("\u{feff}", "\u{feff}"), ("\u{feff} \n", "\u{feff}")]
+    {
+        let formatted = format(&allocator, source, GraphqlFormatOptions::default())
+            .expect("whitespace-only input should format")
+            .print()
+            .expect("print should succeed")
+            .into_code();
+        assert_eq!(formatted, expected, "{source:?}");
     }
 }
 

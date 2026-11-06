@@ -11,5 +11,3 @@
 `````graphql
 
 `````
-
-### Input variants differ: BOM (error)
