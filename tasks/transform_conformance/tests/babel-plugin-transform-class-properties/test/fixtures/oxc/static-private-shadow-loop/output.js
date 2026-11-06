@@ -1,5 +1,6 @@
 const classes = [];
 for (let i = 0; i < 2; i++) {
+  let _C;
   class C {
     static has(C = this) {
       return babelHelpers.checkInRHS(C) === _C;
@@ -8,7 +9,7 @@ for (let i = 0; i < 2; i++) {
       return babelHelpers.assertClassBrand(_C, C, _m).call(C);
     }
   }
-  const _C = C;
+  _C = C;
   function _m() {
     return 42;
   }

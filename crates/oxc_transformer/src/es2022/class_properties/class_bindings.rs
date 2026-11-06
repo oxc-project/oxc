@@ -141,11 +141,7 @@ impl<'a> ClassBindings<'a> {
             // Create the alias in the class name's scope so each evaluation keeps its own brand.
             self.shadowed_name.get_or_insert_with(|| {
                 let scope_id = ctx.scoping().symbol_scope_id(name.symbol_id);
-                ctx.generate_uid(
-                    &name.name,
-                    scope_id,
-                    SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable,
-                )
+                ctx.generate_uid(&name.name, scope_id, SymbolFlags::BlockScopedVariable)
             })
         }
     }
