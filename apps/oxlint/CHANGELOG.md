@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.92.0] - 2026-11-06
+
+### 🚀 Features
+
+- b7d2c75 linter/eslint/no-redeclare: Add `ignoreDeclarationMerge` option (#28816) (Cam McHenry)
+
+### 🐛 Bug Fixes
+
+- fa66fde oxlint,oxfmt: Resolve Vite+ config root from the config file directory (#28801) (MK (fengmk2))
+- 3d3a6f4 react-compiler: Ignore callback-local reassignments (#28820) (camc314)
+- 28442f7 oxlint: Prevent --init from overwriting existing configs (#28754) (camc314)
+
+### ⚡ Performance
+
+- 74d50c1 linter: Overlap import graph batches instead of polling on a pool worker (#28323) (Dunqing)
+
 ## [1.91.0] - 2026-11-02
 
 ### 🚀 Features
