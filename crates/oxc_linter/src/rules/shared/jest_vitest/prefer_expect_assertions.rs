@@ -5,7 +5,8 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     utils::{
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, get_node_name, parse_general_jest_fn_call,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, find_test_callback, get_node_name,
+        parse_general_jest_fn_call,
     },
 };
 use oxc_ast::{
@@ -662,12 +663,6 @@ pub fn is_describe_call(call_expr: &CallExpression<'_>) -> bool {
     JestFnKind::from(callee_name)
         .to_general()
         .is_some_and(|jest_kind| matches!(jest_kind, JestGeneralFnKind::Describe))
-}
-
-fn find_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
-    call_expr.arguments.iter().rev().filter_map(|arg| arg.as_expression()).find(|expr| {
-        matches!(expr, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
-    })
 }
 
 fn callback_body<'a>(callback: &'a Expression<'a>) -> Option<CallbackBody<'a>> {

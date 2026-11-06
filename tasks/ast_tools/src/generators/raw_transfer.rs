@@ -1,6 +1,6 @@
 //! Generator for raw transfer deserializer.
 
-use std::{borrow::Cow, fmt::Debug, str};
+use std::{borrow::Cow, fmt::Debug, mem, str};
 
 use cow_utils::CowUtils;
 use lazy_regex::{Captures, Lazy, Regex, lazy_regex, regex::Replacer};
@@ -8,16 +8,20 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, ReplaceWith};
 use oxc_ast::{
     ast::{
-        Expression, LogicalOperator, ObjectExpression, ObjectPropertyKind, Program, PropertyKey,
-        PropertyKind,
+        Argument, AssignmentOperator, AssignmentTarget, BindingIdentifier, BindingPattern,
+        Expression, Function, IdentifierName, LogicalExpression, LogicalOperator, ObjectExpression,
+        ObjectProperty, ObjectPropertyKind, Program, PropertyKey, PropertyKind, Statement,
+        VariableDeclarationKind, VariableDeclarator,
     },
     builder::AstBuilder,
 };
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_span::SPAN;
+use oxc_str::{Ident, format_ident, static_ident};
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
     ALLOCATOR_CRATE_PATH, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
@@ -1817,23 +1821,274 @@ fn get_constants(schema: &Schema) -> Constants {
     }
 }
 
-/// Visitor to add `__proto__` field to all objects with `range` field in all deserialize functions,
+/// Visitor to make all objects with `range` field in all deserialize functions have `NodeProto` as prototype,
 /// to give access to `loc`.
+///
+/// Each object literal is replaced with a sequence expression which creates the object with
+/// `Object.create(NodeProto)` and assigns its properties, using a temp var:
+///
+/// ```js
+/// // Object literal
+/// { type: 'X', foo, ...(RANGE && { range: [start, end] }) }
+/// // Replaced with
+/// (node$0 = Object.create(NodeProto), node$0.type = 'X', node$0.foo = foo,
+///   RANGE && (node$0.range = [start, end]), node$0)
+/// ```
+///
+/// V8 creates objects this way much faster than with object literals containing `__proto__`.
+/// The sequence expression creates the object and then evaluates property values in the same order
+/// as the object literal does, and produces an identical object: same prototype, same own properties
+/// in same order with same attributes.
+///
+/// Getters are defined with `Object.defineProperty`, with the same attributes as a getter in an object literal
+/// (enumerable, configurable).
+///
+/// Temp vars are declared at the start of each function. Each level of nested object literals uses
+/// a separate temp var (`node$0`, `node$1`, ...).
 ///
 /// Works on AST pre-minification.
 struct LocFieldAdder<'a> {
     ast: AstBuilder<'a>,
+    /// Nesting depth of object literals being converted
+    depth: usize,
+    /// Number of temp vars required in current function. `None` if not in a function.
+    temp_count: Option<usize>,
 }
 
 impl<'a> LocFieldAdder<'a> {
     fn new(allocator: &'a Allocator) -> Self {
-        Self { ast: AstBuilder::new(allocator) }
+        Self { ast: AstBuilder::new(allocator), depth: 0, temp_count: None }
+    }
+
+    /// Get name of temp var for object literals at nesting depth `index`.
+    fn temp_name(&self, index: usize) -> Ident<'a> {
+        // In practice, nested object literals don't occur, so `index` is always 0.
+        // Use a static `Ident` for that case, with hash calculated at compile time.
+        if index == 0 {
+            static_ident!("node$0")
+        } else {
+            format_ident!(self.ast.allocator(), "node${index}")
+        }
+    }
+
+    /// Create sequence expression which creates object with `NodeProto` as prototype,
+    /// and assigns properties of `obj_expr` to it, using temp var `temp`.
+    fn create_node(&self, obj_expr: ObjectExpression<'a>, temp: Ident<'a>) -> Expression<'a> {
+        let mut exprs = ArenaVec::new_in(&self.ast);
+
+        // `node$0 = Object.create(NodeProto)`
+        let callee = Expression::new_static_member_expression(
+            SPAN,
+            Expression::new_identifier(SPAN, "Object", &self.ast),
+            IdentifierName::new(SPAN, "create", &self.ast),
+            false,
+            &self.ast,
+        );
+        let proto = Argument::from(Expression::new_identifier(SPAN, "NodeProto", &self.ast));
+        let object_create = Expression::new_call_expression(
+            SPAN,
+            callee,
+            None,
+            ArenaVec::from_iter_in([proto], &self.ast),
+            false,
+            &self.ast,
+        );
+        let target = AssignmentTarget::new_assignment_target_identifier(SPAN, temp, &self.ast);
+        exprs.push(Expression::new_assignment_expression(
+            SPAN,
+            AssignmentOperator::Assign,
+            target,
+            object_create,
+            &self.ast,
+        ));
+
+        for prop in obj_expr.properties {
+            match prop {
+                ObjectPropertyKind::ObjectProperty(prop) => exprs.push(self.define(prop, temp)),
+                ObjectPropertyKind::SpreadProperty(spread) => {
+                    // `...(cond && { a, b })` -> `cond && (node$0.a = a, node$0.b = b)`
+                    let Expression::LogicalExpression(logical_expr) =
+                        spread.unbox().argument.into_inner_expression()
+                    else {
+                        panic!("Unsupported spread in object literal");
+                    };
+                    let LogicalExpression { left, operator, right, .. } = logical_expr.unbox();
+                    let Expression::ObjectExpression(obj_expr) = right.into_inner_expression()
+                    else {
+                        panic!("Unsupported spread in object literal");
+                    };
+                    assert!(
+                        operator == LogicalOperator::And,
+                        "Unsupported spread in object literal"
+                    );
+
+                    let mut assignments = ArenaVec::new_in(&self.ast);
+                    for prop in obj_expr.unbox().properties {
+                        let ObjectPropertyKind::ObjectProperty(prop) = prop else {
+                            panic!("Unsupported spread in object literal");
+                        };
+                        assignments.push(self.define(prop, temp));
+                    }
+                    let right = if assignments.len() == 1 {
+                        assignments.pop().unwrap()
+                    } else {
+                        Expression::new_sequence_expression(SPAN, assignments, &self.ast)
+                    };
+                    exprs.push(Expression::new_logical_expression(
+                        SPAN,
+                        left,
+                        LogicalOperator::And,
+                        right,
+                        &self.ast,
+                    ));
+                }
+            }
+        }
+
+        exprs.push(Expression::new_identifier(SPAN, temp, &self.ast));
+        Expression::new_sequence_expression(SPAN, exprs, &self.ast)
+    }
+
+    /// Create expression which defines property `prop` on temp var `temp`.
+    ///
+    /// * `foo: value` -> `node$0.foo = value`
+    /// * `get foo() {}` ->
+    ///   `Object.defineProperty(node$0, 'foo', { get() {}, enumerable: true, configurable: true })`
+    fn define(&self, prop: ArenaBox<'a, ObjectProperty<'a>>, temp: Ident<'a>) -> Expression<'a> {
+        assert!(!prop.computed && !prop.method, "Unsupported property in object literal");
+        let PropertyKey::StaticIdentifier(key) = &prop.key else {
+            panic!("Unsupported property in object literal");
+        };
+        let key_name = key.name.as_str();
+        // Assigning these would hit a getter / setter on prototype chain, instead of defining a property
+        assert!(!matches!(key_name, "loc" | "__proto__"), "Unsupported property `{key_name}`");
+
+        match prop.kind {
+            PropertyKind::Init => {
+                let ObjectProperty { key, value, .. } = prop.unbox();
+                let PropertyKey::StaticIdentifier(key) = key else { unreachable!() };
+                let target = AssignmentTarget::new_static_member_expression(
+                    SPAN,
+                    Expression::new_identifier(SPAN, temp, &self.ast),
+                    key.unbox(),
+                    false,
+                    &self.ast,
+                );
+                Expression::new_assignment_expression(
+                    SPAN,
+                    AssignmentOperator::Assign,
+                    target,
+                    value,
+                    &self.ast,
+                )
+            }
+            PropertyKind::Get => {
+                // Same attributes as a getter in an object literal
+                let descriptor_prop = |name, value, method| {
+                    ObjectPropertyKind::new_object_property(
+                        SPAN,
+                        PropertyKind::Init,
+                        PropertyKey::new_static_identifier(SPAN, name, &self.ast),
+                        value,
+                        method,
+                        false,
+                        false,
+                        &self.ast,
+                    )
+                };
+                let descriptor = Expression::new_object_expression(
+                    SPAN,
+                    ArenaVec::from_iter_in(
+                        [
+                            descriptor_prop("get", prop.unbox().value, true),
+                            descriptor_prop(
+                                "enumerable",
+                                Expression::new_boolean_literal(SPAN, true, &self.ast),
+                                false,
+                            ),
+                            descriptor_prop(
+                                "configurable",
+                                Expression::new_boolean_literal(SPAN, true, &self.ast),
+                                false,
+                            ),
+                        ],
+                        &self.ast,
+                    ),
+                    &self.ast,
+                );
+                let define_property = Expression::new_static_member_expression(
+                    SPAN,
+                    Expression::new_identifier(SPAN, "Object", &self.ast),
+                    IdentifierName::new(SPAN, "defineProperty", &self.ast),
+                    false,
+                    &self.ast,
+                );
+                let args = [
+                    Argument::from(Expression::new_identifier(SPAN, temp, &self.ast)),
+                    Argument::from(Expression::new_string_literal(SPAN, key_name, None, &self.ast)),
+                    Argument::from(descriptor),
+                ];
+                Expression::new_call_expression(
+                    SPAN,
+                    define_property,
+                    None,
+                    ArenaVec::from_iter_in(args, &self.ast),
+                    false,
+                    &self.ast,
+                )
+            }
+            PropertyKind::Set => panic!("Unsupported setter in object literal"),
+        }
     }
 }
 
 impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
-    fn visit_object_expression(&mut self, obj_expr: &mut ObjectExpression<'a>) {
-        // Check if object has `range` field (`...(RANGE && { range: [start, end] })`)
+    fn visit_function(&mut self, func: &mut Function<'a>, flags: ScopeFlags) {
+        let depth = mem::take(&mut self.depth);
+        let temp_count = self.temp_count.replace(0);
+
+        walk_mut::walk_function(self, func, flags);
+
+        // Declare temp vars at start of function (`let node$0, node$1;`)
+        let count = self.temp_count.unwrap();
+        if count > 0 {
+            let declarations = ArenaVec::from_iter_in(
+                (0..count).map(|index| {
+                    VariableDeclarator::new(
+                        SPAN,
+                        BindingPattern::new_binding_identifier(
+                            SPAN,
+                            self.temp_name(index),
+                            &self.ast,
+                        ),
+                        None,
+                        None,
+                        false,
+                        &self.ast,
+                    )
+                }),
+                &self.ast,
+            );
+            let decl = Statement::new_variable_declaration(
+                SPAN,
+                VariableDeclarationKind::Let,
+                declarations,
+                false,
+                &self.ast,
+            );
+            func.body.as_mut().unwrap().statements.insert(0, decl);
+        }
+
+        self.depth = depth;
+        self.temp_count = temp_count;
+    }
+
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+        // Check if expression is object with `range` field (`...(RANGE && { range: [start, end] })`)
+        let Expression::ObjectExpression(obj_expr) = expr else {
+            walk_mut::walk_expression(self, expr);
+            return;
+        };
         let has_range_field = obj_expr.properties.iter().any(|prop| {
             if let ObjectPropertyKind::SpreadProperty(spread) = prop
                 && let Expression::ParenthesizedExpression(paren_expr) = &spread.argument
@@ -1847,22 +2102,28 @@ impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
                 false
             }
         });
-
-        if has_range_field {
-            // Insert `__proto__: NodeProto` as first field
-            let prop = ObjectPropertyKind::new_object_property(
-                SPAN,
-                PropertyKind::Init,
-                PropertyKey::new_static_identifier(SPAN, "__proto__", &self.ast),
-                Expression::new_identifier(SPAN, "NodeProto", &self.ast),
-                false,
-                false,
-                false,
-                &self.ast,
-            );
-            obj_expr.properties.insert(0, prop);
+        if !has_range_field {
+            walk_mut::walk_expression(self, expr);
+            return;
         }
 
-        walk_mut::walk_object_expression(self, obj_expr);
+        // Convert any nested object literals first, using the next temp var
+        let temp_count =
+            self.temp_count.as_mut().expect("Object literal with `range` field outside function");
+        let index = self.depth;
+        *temp_count = (*temp_count).max(index + 1);
+        self.depth += 1;
+        walk_mut::walk_expression(self, expr);
+        self.depth -= 1;
+
+        let temp = self.temp_name(index);
+        expr.replace_with(|expr| {
+            let Expression::ObjectExpression(obj_expr) = expr else { unreachable!() };
+            self.create_node(obj_expr.unbox(), temp)
+        });
+    }
+
+    fn visit_binding_identifier(&mut self, ident: &mut BindingIdentifier<'a>) {
+        assert!(!ident.name.starts_with("node$"), "`{}` clashes with temp vars", ident.name);
     }
 }

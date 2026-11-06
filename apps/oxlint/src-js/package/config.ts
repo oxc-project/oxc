@@ -9,28 +9,28 @@ import type {
   DummyRule,
   DummyRuleMap,
   ExternalPluginEntry,
-  Oxlintrc as FullOxlintrc,
+  Oxlintrc,
   OxlintEnv,
   OxlintGlobals,
   OxlintOverride,
   RuleCategories,
 } from "./config.generated.ts";
 
-type Oxlintrc = Omit<FullOxlintrc, "$schema" | "extends">;
-
 export type {
   AllowWarnDeny,
   DummyRule,
   DummyRuleMap,
   RuleCategories,
+  Oxlintrc,
   OxlintGlobals,
+  OxlintOverride,
   OxlintEnv,
   ExternalPluginEntry,
 };
 
 export type ExternalPluginsConfig = Exclude<Oxlintrc["jsPlugins"], undefined | null>;
 
-export interface OxlintConfig extends Oxlintrc {
+export interface OxlintConfig extends Omit<Oxlintrc, "$schema" | "extends"> {
   /**
    * Configuration objects to extend.
    *
@@ -38,8 +38,6 @@ export interface OxlintConfig extends Oxlintrc {
    */
   extends?: OxlintConfig[];
 }
-
-export type { OxlintOverride };
 
 /**
  * Define an Oxlint configuration with type inference.

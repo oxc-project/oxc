@@ -1471,10 +1471,11 @@ impl GenExpr for NumericLiteral<'_> {
                 } else {
                     p.print_space_before_identifier();
                 }
+                // Not `Infinity`, a local binding can shadow the global
                 if p.options.minify {
                     p.print_str("1/0");
                 } else {
-                    p.print_str("Infinity");
+                    p.print_str("1e400");
                 }
             });
         } else if value.is_sign_positive() {
@@ -2008,18 +2009,7 @@ impl GenExpr for UnaryExpression<'_> {
                 p.prev_op = Some(self.operator.into());
                 p.prev_op_end = p.code().len();
             }
-            // Forbid `delete Infinity`, which is syntax error in strict mode.
-            let is_delete_infinity = self.operator == UnaryOperator::Delete
-                && !p.options.minify
-                && matches!(&self.argument, Expression::NumericLiteral(lit) if lit.value.is_sign_positive() && lit.value.is_infinite());
-            if is_delete_infinity {
-                p.print_str("(0,");
-                p.print_soft_space();
-            }
             self.argument.print_expr(p, Precedence::Exponentiation, ctx);
-            if is_delete_infinity{
-                p.print_ascii_byte(b')');
-            }
         });
     }
 }

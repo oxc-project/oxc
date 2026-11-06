@@ -34,7 +34,7 @@ impl FormatJsxChildList {
 
     pub fn fmt_children<'a, 'b>(
         &self,
-        children: &'b AstNode<'a, ArenaVec<'a, JSXChild<'a>>>,
+        children: &'b AstNode<'b, 'a, ArenaVec<'a, JSXChild<'a>>>,
         f: &mut JsFormatter<'_, 'a>,
     ) -> FormatChildrenResult<'a, 'b> {
         // Use Biome's exact approach - no need for jsx_split_children at this stage
@@ -371,7 +371,7 @@ impl FormatJsxChildList {
     }
 
     fn children_meta(
-        children: &AstNode<'_, ArenaVec<'_, JSXChild<'_>>>,
+        children: &AstNode<'_, '_, ArenaVec<'_, JSXChild<'_>>>,
         comments: &Comments<'_>,
     ) -> ChildrenMeta {
         let mut meta = ChildrenMeta::default();

@@ -5,7 +5,7 @@ mod markdown;
 
 use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_formatter_core::{FormatElement, format_element::TextWidth, map_text_in_ir};
+use oxc_formatter_core::{FormatElement, map_text_in_ir};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -62,7 +62,7 @@ fn template_comment_language(
 /// Try to format a template literal with the embedded formatter if supported.
 /// Returns `true` if formatting was performed, `false` if not applicable.
 pub(super) fn try_format_template_literal<'a>(
-    template: &AstNode<'a, TemplateLiteral<'a>>,
+    template: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     // Without a dispatcher (`embeddedLanguageFormatting: off`), embeds print verbatim
@@ -82,16 +82,16 @@ pub(super) fn try_format_template_literal<'a>(
 /// Try to format a tagged template with the embedded formatter if supported.
 /// Returns `true` if formatting was performed, `false` if not applicable.
 pub(super) fn try_format_embedded_template<'a>(
-    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
+    tagged: &AstNode<'_, 'a, TaggedTemplateExpression<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     if !f.session().has_dispatcher() {
         return false;
     }
     match tagged_template_language(tagged) {
-        Some(EmbedLanguage::Css) => css::format_css_doc(tagged.quasi(), f),
-        Some(EmbedLanguage::Graphql) => graphql::format_graphql_doc(tagged.quasi(), f),
-        Some(EmbedLanguage::Html) => html::format_html_doc(tagged.quasi(), f, false),
+        Some(EmbedLanguage::Css) => css::format_css_doc(&tagged.quasi(), f),
+        Some(EmbedLanguage::Graphql) => graphql::format_graphql_doc(&tagged.quasi(), f),
+        Some(EmbedLanguage::Html) => html::format_html_doc(&tagged.quasi(), f, false),
         Some(EmbedLanguage::Markdown) => markdown::try_embed_markdown(tagged, f),
         None => false,
     }
@@ -170,7 +170,7 @@ pub fn embed_hug(
 /// Try to format a template literal inside a `graphql()` function call.
 /// Returns `true` if formatting was performed, `false` if not applicable.
 fn try_format_graphql_call<'a>(
-    template: &AstNode<'a, TemplateLiteral<'a>>,
+    template: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let AstNodes::CallExpression(call) = template.parent() else { return false };
@@ -187,7 +187,7 @@ fn try_format_graphql_call<'a>(
 /// - HTML
 /// - GraphQL
 fn try_format_comment_embedded<'a>(
-    template: &AstNode<'a, TemplateLiteral<'a>>,
+    template: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     match template_comment_language(template, f) {
@@ -200,7 +200,7 @@ fn try_format_comment_embedded<'a>(
 /// Try to format a template literal inside css prop or styled-jsx with the embedded formatter.
 /// Returns `true` if formatting was attempted, `false` if not applicable.
 fn try_format_css_template<'a>(
-    template_literal: &AstNode<'a, TemplateLiteral<'a>>,
+    template_literal: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     if !is_in_css_jsx(template_literal) {
@@ -210,7 +210,7 @@ fn try_format_css_template<'a>(
 }
 
 /// Check if the template literal is inside a `css` prop or `<style jsx>` element.
-fn is_in_css_jsx<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
+fn is_in_css_jsx<'a>(node: &AstNode<'_, 'a, TemplateLiteral<'a>>) -> bool {
     let AstNodes::JSXExpressionContainer(container) = node.parent() else {
         return false;
     };
@@ -241,7 +241,7 @@ fn is_in_css_jsx<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
 /// Try to format a template literal inside Angular @Component's template/styles property.
 /// Returns `true` if formatting was performed, `false` if not applicable.
 fn try_format_angular_component<'a>(
-    template_literal: &AstNode<'a, TemplateLiteral<'a>>,
+    template_literal: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     match get_angular_component_property(template_literal) {
@@ -252,7 +252,9 @@ fn try_format_angular_component<'a>(
 }
 
 /// Detect Angular `@Component({ template: \`...\`, styles: \`...\` })`.
-fn get_angular_component_property<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> Option<&'a str> {
+fn get_angular_component_property<'a>(
+    node: &AstNode<'_, 'a, TemplateLiteral<'a>>,
+) -> Option<&'a str> {
     let prop = match node.parent() {
         AstNodes::ObjectProperty(prop) => prop,
         AstNodes::ArrayExpression(arr) => {
@@ -300,16 +302,16 @@ fn get_angular_component_property<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -
 ///
 /// Handles both:
 /// - CSS: `` `PLACEHOLDER-{N}` ``
-/// - HTML: `PRETTIER_HTML_PLACEHOLDER_{N}_{C}_IN_JS`
+/// - HTML: `PRETTIER_HTML_PLACEHOLDER_{depth}_{N}_IN_JS`, the `{depth}_` passed as part of `prefix`
 ///
-/// The optional `_{digits}` counter group between index and suffix is skipped when present,
-/// so the same function works for both formats.
+/// The prefix and suffix match ASCII case-insensitively: a child may change their case
+/// (CSS lowercases a property name holding an HTML placeholder).
 fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&'a str> {
     let mut result = vec![];
     let mut remaining = text;
 
     loop {
-        let Some(start) = remaining.find(prefix) else {
+        let Some(start) = find_ignore_ascii_case(remaining, prefix) else {
             result.push(remaining);
             break;
         };
@@ -335,21 +337,14 @@ fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&
         }
 
         let digits = &after_prefix[..digit_end];
-        let mut after_digits = &after_prefix[digit_end..];
-
-        // Skip optional `_{digits}` (e.g., HTML counter `_0`)
-        if let Some(after_underscore) = after_digits.strip_prefix('_') {
-            let counter_end = after_underscore
-                .bytes()
-                .position(|b| !b.is_ascii_digit())
-                .unwrap_or(after_underscore.len());
-            if counter_end > 0 {
-                after_digits = &after_underscore[counter_end..];
-            }
-        }
+        let after_digits = &after_prefix[digit_end..];
 
         // Check for the suffix
-        if let Some(after_suffix) = after_digits.strip_prefix(suffix) {
+        let after_suffix = after_digits
+            .get(..suffix.len())
+            .filter(|s| s.eq_ignore_ascii_case(suffix))
+            .map(|_| &after_digits[suffix.len()..]);
+        if let Some(after_suffix) = after_suffix {
             // Valid placeholder — push the digit index
             result.push(digits);
             remaining = after_suffix;
@@ -364,6 +359,15 @@ fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&
     }
 
     result
+}
+
+/// `haystack.find(needle)`, ASCII case-insensitively.
+fn find_ignore_ascii_case(haystack: &str, needle: &str) -> Option<usize> {
+    let (haystack, needle) = (haystack.as_bytes(), needle.as_bytes());
+    let first = *needle.first()?;
+    memchr::memchr2_iter(first.to_ascii_lowercase(), first.to_ascii_uppercase(), haystack).find(
+        |&i| haystack.get(i..i + needle.len()).is_some_and(|w| w.eq_ignore_ascii_case(needle)),
+    )
 }
 
 // ---
@@ -401,7 +405,7 @@ fn escape_text_in_ir<'a>(
     let indent_width = f.options().indent_width;
     map_text_in_ir(ir, allocator, &mut |text, out| {
         let Some(text) = escape(text, allocator) else { return false };
-        out.push(FormatElement::Text { text, width: TextWidth::from_text(text, indent_width) });
+        out.push(FormatElement::text(text, indent_width));
         true
     })
 }
@@ -490,41 +494,4 @@ fn escape_backticks_raw<'a>(s: &'a str, allocator: &'a Allocator) -> Option<&'a 
     }
     result.push_str(&s[run_start..]);
     Some(result.into_str())
-}
-
-/// Count placeholder occurrences matching `{prefix}{digits}(_{digits})?{suffix}`.
-///
-/// The optional `_{digits}` middle group lets this serve both:
-/// - CSS sentinel `` `PLACEHOLDER-{N}` `` (no counter)
-/// - HTML sentinel `PRETTIER_HTML_PLACEHOLDER_{N}_{C}_IN_JS` (with counter)
-///
-/// Mirrors the grammar that [`split_on_placeholders`] uses for substitution.
-fn count_placeholders(text: &str, prefix: &str, suffix: &str) -> usize {
-    let mut count = 0;
-    let mut rest = text;
-    while let Some(start) = rest.find(prefix) {
-        let after_prefix = &rest[start + prefix.len()..];
-        let digit_end =
-            after_prefix.bytes().position(|b| !b.is_ascii_digit()).unwrap_or(after_prefix.len());
-        if digit_end > 0 {
-            let mut after_digits = &after_prefix[digit_end..];
-            // Skip optional `_{digits}` counter (HTML).
-            if let Some(after_underscore) = after_digits.strip_prefix('_') {
-                let counter_end = after_underscore
-                    .bytes()
-                    .position(|b| !b.is_ascii_digit())
-                    .unwrap_or(after_underscore.len());
-                if counter_end > 0 {
-                    after_digits = &after_underscore[counter_end..];
-                }
-            }
-            if let Some(tail) = after_digits.strip_prefix(suffix) {
-                count += 1;
-                rest = tail;
-                continue;
-            }
-        }
-        rest = &rest[start + prefix.len()..];
-    }
-    count
 }

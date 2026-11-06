@@ -154,7 +154,7 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
                 paren_expr.expression.is_constant(in_boolean_position, semantic)
             }
             Self::Identifier(ident) => {
-                ident.name == "undefined" && semantic.is_reference_to_global_variable(ident)
+                ident.is_undefined() && semantic.is_reference_to_global_variable(ident)
             }
             _ if self.is_literal() => true,
             _ => false,
@@ -281,6 +281,16 @@ pub fn iter_outer_expressions<'a, 's>(
                 | AstKind::TSTypeAssertion(_)
         )
     })
+}
+
+/// Checks whether the first outer expression calls the node as its callee.
+pub fn is_iife<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
+    let Some(AstKind::CallExpression(call)) =
+        iter_outer_expressions(semantic.nodes(), node.id()).next()
+    else {
+        return false;
+    };
+    call.callee.span().contains_inclusive(node.span())
 }
 
 pub fn get_declaration_of_variable<'a, 'b>(
@@ -963,7 +973,6 @@ pub fn is_node_within_call_argument<'a>(
     call: &CallExpression<'a>,
     target_arg_index: usize,
 ) -> bool {
-    // Early exit for out-of-bounds index
     if target_arg_index >= call.arguments.len() {
         return false;
     }

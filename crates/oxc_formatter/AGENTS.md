@@ -20,14 +20,11 @@ Call-sites use text-in entry points;
 The AST-wrapping IR primitives (`AstNode`, `Format`, …) are `pub(crate)` and not part of the contract.
 
 - `format`: Format a whole file (text-in)
-- `format_fragment`: Format a JS/TSX fragment for js-in-xxx embedding, parameterized by `FragmentContext`
-  - Drives context-dependent decisions like forced parentheses / quote style
-  - The formatter knows nothing about Prettier/Vue vocabulary, callers pass wrapped source
 - `format_program`: Special-purpose AST-in entry point
 - `format_with_session`: session-aware entry whose `FormatSession` carries the host-supplied `SessionServices`
   - the dispatcher (IR channel), the string embedder (JSDoc fences), and the Tailwind sorter (plain `format` / `format_program` wrap a service-less `PhysicalFile` session)
-- `format_to_ir`: Format a whole program as a dispatched child (e.g. a Markdown code block), returning IR for the parent's document
-  - `JsEmbeddedIn` carries what it is embedded in, translated by the orchestrator from the parent's marker
+- `format_to_ir`: Format a part of a document in another language as a dispatched child (a `<script>`'s or a Markdown code block's program, an `on*` attribute's value, Vue's `{{ }}` and directive values), returning IR for the parent's document
+  - Parameterized by `JsRoot` and `JsEmbeddedIn`, see "js-in-xxx" below
 
 ### Generated code
 
@@ -54,13 +51,21 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 
 ### Sort Tailwind CSS
 
-- Backed by `prettier-plugin-tailwindcss`
+- Backed by `prettier-plugin-tailwindcss`, but not fully compatible
 - Classes are collected during IR construction and sorted in one batch when the IR is stringified
 - Requires the session's `TailwindSorter` service (the sort itself is delegated to the host)
+- Covered by the Oxfmt API tests (`apps/oxfmt/test/api/sort_tailwindcss.test.ts`), since only the host sorts
+- Deliberately unlike the plugin, nothing in the arguments of a nested non-Tailwind call is sorted
+  (tailwindlabs/prettier-plugin-tailwindcss#426): `cn(x.includes("a  b"))` keeps `"a  b"`, which the plugin rewrites
+- Known limitation, left since the triggers are rare and a fix would thread Tailwind state through `SimpleArgument`:
+  a multiline template collapsed by sorting is still judged by its source line breaks in some layouts,
+  so a Tailwind call with one inside a member chain can take a second pass to settle
 
 ### Embedded language formatting
 
-Two directions: xxx-in-js (e.g. CSS in template literals) and js-in-xxx (e.g. Vue `script` block).
+Two directions: xxx-in-js (e.g. CSS in template literals), where this crate is the host, and js-in-xxx (e.g. a Vue `<script>`, `{{ }}`), where it is the child.
+
+#### xxx-in-js
 
 xxx-in-js goes through the `FormatDispatcher` that Oxfmt assembles: a Rust formatter serves the language when one exists, otherwise Prettier's Doc is converted to IR as the fallback.
 
@@ -75,7 +80,42 @@ Without a dispatcher (`embeddedLanguageFormatting: off`), templates print verbat
 With one, the layout around an embedded template (a sole argument, an arrow body) is decided from the AST (`embed_hug`), not from the source shape or whether its content formats.
 See `embed/mod.rs` for the shared helpers and `embed/{css,html,graphql,markdown}.rs` for each site's wiring.
 
-js-in-xxx works with `prettier-plugin-oxfmt` which uses `format_fragment`. See `apps/oxfmt` in details.
+#### js-in-xxx
+
+A host dispatches a part of its document (`format_to_ir`), its marker translated by the orchestrator into:
+
+- `JsRoot`: what the code parses as, and how its kind prints
+- `JsEmbeddedIn`: what the host does with it, whatever the kind
+
+The formatter knows nothing about the host's vocabulary; it wraps the source to parse it as the root says.
+It drives the context-dependent decisions: the layout in the host's delimiters, the quote style, the handler's semicolons.
+The IR goes between the host's delimiters as is: the host names the layout (`ProgramLayout` / `ExpressionLayout`), and this builds it, hugging as the AST says.
+
+What the host reads of the code is the contract: the output reads to the host as the input does, code it does not accept included.
+The markers say how it reads (`JsEmbeddedIn`, `ExpressionRoot`'s flags, `ProgramSemicolons`):
+
+- Where a print rule keeps the reading with what the formatter owns (a `;`, parens, a line break), it applies
+- Where none does, or the output would read otherwise for the host (code it does not accept would be accepted), `format_to_ir` returns `Err`: the host prints the code as written
+- Known gap: under `ExpressionRoot::ends_at_double_brace`, only an object is kept from printing `}}` (`print/embedded/expression.rs`);
+  a function or class body right before another `}` can still print it (`${() => {}}`, `{a() {}}` without bracket spacing).
+  Left as is for the cost: which code prints a `}` last is every node kind ending in one (a body, a class, a TS type literal), or the printed text,
+  and whether a `}` follows it without bracket spacing is the printer's breaks; an object is the common case, and the one Prettier keeps (a property's value).
+  It is loud, not wrong: the host fails to compile the output, nothing reads otherwise unnoticed
+
+Each kind's wrapper, checks and printing live in `print/embedded/`, one module per kind;
+a host's new use is a new policy of a kind (Astro's frontmatter is a `Program`), or a new `JsRoot` variant and module there (Svelte's `{@const}`).
+
+An embedded expression's root prints with the parsed `Program` as its parent, skipping its `ExpressionStatement`,
+so no statement rule applies to it (no `;`, no ASI guard):
+
+- A rule tells the root's parent by `JsFormatContext::is_embedded_root`, the `Program` while an embedded expression formats: a file has none
+- A walk up the ancestors ends at the `Program` as in any file
+- No `AstNodes` variant of its own: one would cost every node, as `AstNodes::span` would no longer inline
+- Where the root needs a rule of its own, it asks `is_embedded_root`, commented "An embedded expression's root" (find them by either)
+- A root the host reads as statements (`ExpressionRoot::reads_as_statements`) starts one, as an expression statement does (`parentheses::expression::starts_statement`):
+  a leading `{`, `function`, `class` or `let[` prints in parens
+
+The Svelte / Astro `<script>` Prettier formats goes through `prettier-plugin-oxfmt` (`format_with_session`). See `apps/oxfmt` in details.
 
 ## Comments
 
@@ -252,8 +292,3 @@ cargo test -p oxc_formatter --test mod
 # Run a subset by module path (directory structure = module hierarchy)
 cargo test -p oxc_formatter fixtures::js::comments
 ```
-
-### Prettier conformance
-
-The failing files in `tests/snapshots/conformance__prettier-{js,ts}.snap` are only partly audited:
-some are covered by an existing DIVERGENCES.md entry, the rest are unclassified, and no per-file list exists yet.

@@ -15,7 +15,9 @@ pub fn write_blockquote<'a>(quote: &'a Blockquote<'a>, f: &mut MarkdownFormatter
         write!(f, ">");
         return;
     }
-    let body = format_with(|f| block::write_blocks(&quote.children, block::Parent::Container, f));
+    let body = format_with(|f| {
+        block::write_blocks(&quote.children, block::Parent::Container { top_level: false }, f);
+    });
     // The prefixed column is the root that verbatim continuation lines return to
     write!(f, ["> ", prefix_align(&"> ", &mark_as_root(&body))]);
 }

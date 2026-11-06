@@ -163,3 +163,9 @@ try {
 }
 
 export { result, customStr, allowedSpread, notAllowedSpread, literalConst, optionalAccess, unsafeAccess, unknownStr };
+
+// Test await-thenable with allowMixedPromiseArrays option
+// This should NOT error because the array contains a Promise-like value
+Promise.all([1, Promise.resolve(2)]);
+// This SHOULD error because the array contains only synchronous values
+Promise.all([1, 2]);

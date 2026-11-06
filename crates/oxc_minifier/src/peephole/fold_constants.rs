@@ -2,14 +2,16 @@ use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     GlobalContext, ToJsString,
-    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, ValueType},
+    constant_evaluation::{
+        ConstantEvaluation, ConstantValue, DetermineValueType, ValueType, evaluate_to_js_string,
+    },
     side_effects::MayHaveSideEffects,
     with_number_literal,
 };
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::JSStr;
-use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
+use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -69,8 +71,18 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Whether the current node is the operand of `delete`. `delete "a".length` deletes a
+    /// non-configurable property, so it is false (or throws in strict mode), while deleting the
+    /// folded value would be true.
+    pub(super) fn is_delete_argument(ctx: &TraverseCtx<'a>) -> bool {
+        matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
+    }
+
     pub fn fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::StaticMemberExpression(e) = expr else { return };
+        if Self::is_delete_argument(ctx) {
+            return;
+        }
         // TODO: tryFoldObjectPropAccess(n, left, name)
         // `evaluate_value` only folds a narrow set of member accesses (currently
         // `.length` on constant strings/arrays) and bails cheaply otherwise.
@@ -87,6 +99,9 @@ impl<'a> PeepholeOptimizations {
 
     pub fn fold_computed_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ComputedMemberExpression(e) = expr else { return };
+        if Self::is_delete_argument(ctx) {
+            return;
+        }
         // TODO: tryFoldObjectPropAccess(n, left, name)
         // See `fold_static_member_expr`: bail via the cheap `evaluate_value`
         // check before walking the object and key for side effects.
@@ -228,12 +243,8 @@ impl<'a> PeepholeOptimizations {
         };
         let e = e.unbox();
         ctx.drop_expression(&e.right);
-        if Self::should_keep_indirect_access(&e.left, ctx) {
-            // `(o.f OP V)()` => `(0, o.f)()`
-            Self::preserve_indirect_access(e.right.span(), e.left, ctx)
-        } else {
-            e.left
-        }
+        // `(o.f OP V)()` => `(0, o.f)()`
+        Self::preserve_indirect_access_if_needed(e.right.span(), e.left, ctx)
     }
 
     /// Unfold the right side of the logical expression.
@@ -246,17 +257,14 @@ impl<'a> PeepholeOptimizations {
             unreachable!();
         };
         let mut e = e.unbox();
-        if !Self::remove_unused_expression(&mut e.left, ctx) {
+        if Self::remove_unused_expression(&mut e.left, ctx) {
+            ctx.drop_expression(&e.left);
+            // `(V OP o.f)` => `(0, o.f)`
+            // `(V OP x)` => `x`
+            Self::preserve_indirect_access_if_needed(e.left.span(), e.right, ctx)
+        } else {
             // `(a(), V) OP 1` => `(a(), V, 1)`
             Self::join_sequence(e.span, e.left, e.right, ctx)
-        } else if Self::should_keep_indirect_access(&e.right, ctx) {
-            // `(V OP o.f)` => `(0, o.f)`
-            ctx.drop_expression(&e.left);
-            Self::preserve_indirect_access(e.left.span(), e.right, ctx)
-        } else {
-            // `(V OP x)` => `x`
-            ctx.drop_expression(&e.left);
-            e.right
         }
     }
 
@@ -309,7 +317,7 @@ impl<'a> PeepholeOptimizations {
         if e.operator == BinaryOperator::Division
             && matches!(&e.right, Expression::NumericLiteral(r) if r.value == 0.0 && r.value.is_sign_positive())
             && matches!(&e.left, Expression::NumericLiteral(l) if l.value.abs() == 1.0)
-            && !matches!(&ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
+            && !Self::is_delete_argument(ctx)
         {
             return;
         }
@@ -594,7 +602,7 @@ impl<'a> PeepholeOptimizations {
                     .span()
                     .merge_within(e.right.span(), e.span)
                     .unwrap_or(SPAN);
-                let value = Str::from_strs_array_in([&left_str, &right_str], ctx);
+                let value = JSStr::from_js_strs_array_in([left_str, right_str], ctx);
                 let right = Expression::new_string_literal(span, value, None, ctx);
                 let left = left_binary_expr.left.take_in(ctx);
                 return Some(Expression::new_binary_expression(
@@ -631,7 +639,7 @@ impl<'a> PeepholeOptimizations {
                     .quasis
                     .first_mut()
                     .expect("template literal must have at least one quasi");
-                left_last_quasi.value.raw = Str::from_strs_array_in(
+                left_last_quasi.value.raw = Self::concat_template_literal_raw(
                     [left_last_quasi.value.raw.as_str(), right_first_quasi.value.raw.as_str()],
                     ctx,
                 );
@@ -656,16 +664,17 @@ impl<'a> PeepholeOptimizations {
                 left.span = left.span.merge_within(right_expr.span(), parent_span).unwrap_or(SPAN);
                 let last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
-                last_quasi.value.raw = Str::from_strs_array_in(
+                last_quasi.value.raw = Self::concat_template_literal_raw(
                     [
                         last_quasi.value.raw.as_str(),
-                        Self::escape_string_for_template_literal(&right_str).as_ref(),
+                        Self::escape_string_for_template_literal(right_str).as_ref(),
                     ],
                     ctx,
                 );
-                let new_cooked = last_quasi.value.cooked.map(|cooked| {
-                    JSStr::from_js_strs_array_in([cooked, JSStr::from(right_str.as_ref())], ctx)
-                });
+                let new_cooked = last_quasi
+                    .value
+                    .cooked
+                    .map(|cooked| JSStr::from_js_strs_array_in([cooked, right_str], ctx));
                 last_quasi.value.cooked = new_cooked;
                 return Some(left_expr.take_in(ctx));
             }
@@ -677,16 +686,17 @@ impl<'a> PeepholeOptimizations {
                     .quasis
                     .first_mut()
                     .expect("template literal must have at least one quasi");
-                first_quasi.value.raw = Str::from_strs_array_in(
+                first_quasi.value.raw = Self::concat_template_literal_raw(
                     [
-                        Self::escape_string_for_template_literal(&left_str).as_ref(),
+                        Self::escape_string_for_template_literal(left_str).as_ref(),
                         first_quasi.value.raw.as_str(),
                     ],
                     ctx,
                 );
-                let new_cooked = first_quasi.value.cooked.map(|cooked| {
-                    JSStr::from_js_strs_array_in([JSStr::from(left_str.as_ref()), cooked], ctx)
-                });
+                let new_cooked = first_quasi
+                    .value
+                    .cooked
+                    .map(|cooked| JSStr::from_js_strs_array_in([left_str, cooked], ctx));
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx));
             }
@@ -989,17 +999,19 @@ impl<'a> PeepholeOptimizations {
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
     pub fn inline_template_literal(t: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Single pass: compute the side-effect / `to_js_string` checks once (previously they ran in an
-        // `.any()` pre-scan and then again in the drain loop) and collect the inline-able expressions
-        // as `(index, value)`. Bail out cheaply when there is nothing to inline, leaving
+        // Single pass: compute the side-effect / `evaluate_to_js_string` checks once (previously they
+        // ran in an `.any()` pre-scan and then again in the drain loop) and collect the inline-able
+        // expressions as `(index, value)`. Bail out cheaply when there is nothing to inline, leaving
         // `t.expressions` untouched (no drain, no allocation — `inline_exprs` only allocates on push).
         let mut inline_exprs = Vec::new();
         for (idx, expr) in t.expressions.iter().enumerate() {
-            if !expr.may_have_side_effects(ctx)
-                && let Some(str) = expr.to_js_string(ctx)
-            {
-                inline_exprs.push((idx, str));
+            if expr.may_have_side_effects(ctx) {
+                continue;
             }
+            let Some(value) = evaluate_to_js_string(expr, ctx) else {
+                continue;
+            };
+            inline_exprs.push((idx, value));
         }
         if inline_exprs.is_empty() {
             return;
@@ -1021,33 +1033,19 @@ impl<'a> PeepholeOptimizations {
 
         // inline the extracted inline-able expressions into quasis
         // "current_quasis + extracted_value + next_quasis"
-        for (i, (idx, str)) in inline_exprs.into_iter().enumerate() {
+        for (i, (idx, value)) in inline_exprs.into_iter().enumerate() {
             let idx = idx - i;
             let next_quasi = (idx + 1 < t.quasis.len()).then(|| t.quasis.remove(idx + 1));
             let quasi = &mut t.quasis[idx];
-            let escaped = Self::escape_string_for_template_literal(&str);
+            let escaped = Self::escape_string_for_template_literal(value);
             let next_raw = next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
             let raw = quasi.value.raw.as_str();
-            let starts_with_digit = escaped
-                .as_bytes()
-                .first()
-                .or_else(|| next_raw.as_bytes().first())
-                .is_some_and(u8::is_ascii_digit);
-            let cooked_ends_with_null =
-                quasi.value.cooked.is_some_and(|cooked| cooked.as_bytes().last() == Some(&0));
-            quasi.value.raw = if starts_with_digit
-                && cooked_ends_with_null
-                && let Some(prefix) = raw.strip_suffix("\\0")
-            {
-                Str::from_strs_array_in([prefix, "\\x00", &escaped, next_raw], ctx)
-            } else {
-                Str::from_strs_array_in([raw, &escaped, next_raw], ctx)
-            };
+            quasi.value.raw = Self::concat_template_literal_raw([raw, &escaped, next_raw], ctx);
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {
                 Some(JSStr::from_js_strs_array_in(
-                    [cooked1, JSStr::from(str.as_ref()), cooked2.unwrap_or(JSStr::empty())],
+                    [cooked1, value, cooked2.unwrap_or(JSStr::empty())],
                     ctx,
                 ))
             } else {
@@ -1204,7 +1202,7 @@ pub(super) fn is_cjs_module_exports_hint(expr: &Expression<'_>) -> bool {
     let Expression::AssignmentExpression(assign) = expr else {
         return false;
     };
-    assign.operator == AssignmentOperator::Assign
+    assign.operator.is_assign()
         && assign
             .left
             .as_member_expression()

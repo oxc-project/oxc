@@ -21,7 +21,8 @@ use crate::{
     utils::{
         get_element_type, get_prop_value, get_string_literal_prop_value, has_jsx_prop,
         has_jsx_prop_ignore_case, is_hidden_from_screen_reader, is_interactive_element,
-        is_interactive_role, is_non_interactive_element, is_non_interactive_role, parse_jsx_value,
+        is_interactive_role, is_non_interactive_element, is_non_interactive_role,
+        is_nullish_jsx_attribute_value, parse_jsx_value,
     },
 };
 
@@ -236,16 +237,7 @@ fn has_active_handler(
         return false;
     };
 
-    get_prop_value(prop).is_none_or(|value| !is_nullish_value(value))
-}
-
-fn is_nullish_value(value: &JSXAttributeValue) -> bool {
-    matches!(
-        value,
-        JSXAttributeValue::ExpressionContainer(container)
-            if matches!(container.expression, JSXExpression::NullLiteral(_))
-                || container.expression.is_undefined()
-    )
+    get_prop_value(prop).is_none_or(|value| !is_nullish_jsx_attribute_value(value))
 }
 
 fn is_content_editable(jsx_el: &JSXOpeningElement) -> bool {

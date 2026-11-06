@@ -481,7 +481,7 @@ fn test_fold_unary() {
 
     fold("a=-0", "a=-0");
     fold("a=-(0)", "a=-0");
-    fold_same("a=-Infinity");
+    fold("a=-Infinity", "a=-1e400");
     fold("a=-NaN", "a=NaN");
     fold_same("a=-foo()");
     fold("-undefined", "NaN");
@@ -497,7 +497,7 @@ fn test_fold_unary() {
     fold("a=+(f?!0:!1)", "a=+!!f");
     fold_same("a=+(f?(foo, !0):(bar, !1))");
     fold("a=+0", "a=0");
-    fold("a=+Infinity", "a=Infinity");
+    fold("a=+Infinity", "a=1e400");
     fold("a=+NaN", "a=NaN");
     fold("a=+-7", "a=-7");
     fold("a=+.5", "a=.5");
@@ -944,9 +944,7 @@ fn test_fold_bit_shifts() {
 #[test]
 fn test_string_add() {
     fold("x = 'a' + 'bc'", "x = 'abc'");
-    // Lone surrogates are stored escaped in the string value; folding would
-    // materialize the escape encoding as literal text.
-    fold_same("x = '\\ud800' + 'y'");
+    fold("x = '\\ud800' + 'y'", "x = '\\ud800y'");
     fold("x = 'a' + 5", "x = 'a5'");
     fold("x = 5 + 'a'", "x = '5a'");
     fold("x = 'a' + 5n", "x = 'a5'");
@@ -1016,10 +1014,10 @@ fn test_fold_arithmetic() {
 
 #[test]
 fn test_fold_arithmetic_infinity() {
-    fold("x=-Infinity-2", "x=-Infinity");
-    fold("x=Infinity-2", "x=Infinity");
-    fold("x=Infinity*5", "x=Infinity");
-    fold("x = Infinity ** 2", "x = Infinity");
+    fold("x=-Infinity-2", "x=-1e400");
+    fold("x=Infinity-2", "x=1e400");
+    fold("x=Infinity*5", "x=1e400");
+    fold("x = Infinity ** 2", "x = 1e400");
     fold("x = Infinity ** -2", "x = 0");
 
     fold("x = Infinity % Infinity", "x = NaN");
@@ -1102,13 +1100,13 @@ fn test_fold_multiply() {
 #[test]
 fn test_fold_division() {
     fold("x = Infinity / Infinity", "x = NaN");
-    fold("x = Infinity / 0", "x = Infinity");
+    fold("x = Infinity / 0", "x = 1e400");
     // `1 / 0` is the canonical printed spelling of Infinity and is kept as-is.
     fold_same("x = 1 / 0");
     fold_same("x = -1 / 0");
     // A negative-zero divisor is not canonical and can still be folded.
-    fold("x = 1 / -0", "x = -Infinity");
-    fold("x = -1 / -0", "x = Infinity");
+    fold("x = 1 / -0", "x = -1e400");
+    fold("x = -1 / -0", "x = 1e400");
     fold("x = 0 / 0", "x = NaN");
     fold("x = 360 / 360", "x = 1");
     fold("x = 10.5 / 0.75", "x = 14");
@@ -1193,7 +1191,7 @@ fn test_fold_exponential_disagrees_with_ieee_pow() {
     fold("x = (-1) ** NaN", "x = NaN");
 
     // The cases `pow` and `Number::exponentiate` agree on.
-    fold("x = 2 ** Infinity", "x = Infinity");
+    fold("x = 2 ** Infinity", "x = 1e400");
     fold("x = 2 ** NaN", "x = NaN");
     fold("x = NaN ** 0", "x = 1");
     fold("x = Infinity ** 0", "x = 1");
@@ -1336,8 +1334,8 @@ fn test_fold_instance_of_additional() {
 #[test]
 fn test_fold_left_child_op() {
     fold("x & Infinity & 2", "x & 0");
-    fold_same("x - Infinity - 2"); // FIXME: want "x-Infinity"
-    fold_same("x - 1 + Infinity");
+    fold("x - Infinity - 2", "x - 1e400 - 2"); // FIXME: want "x-1e400"
+    fold("x - 1 + Infinity", "x - 1 + 1e400");
     fold_same("x - 2 + 1");
     fold_same("x - 2 + 3");
     fold_same("1 + x - 2 + 1");
@@ -1399,8 +1397,8 @@ fn test_does_not_duplicate_large_tracked_strings_when_folding_addition() {
 #[test]
 fn test_to_number() {
     fold("x = +''", "x = 0");
-    fold("x = +'+Infinity'", "x = Infinity");
-    fold("x = +'-Infinity'", "x = -Infinity");
+    fold("x = +'+Infinity'", "x = 1e400");
+    fold("x = +'-Infinity'", "x = -1e400");
 
     for op in ["", "+", "-"] {
         for s in ["inf", "infinity", "INFINITY", "InFiNiTy"] {
@@ -1552,6 +1550,107 @@ fn test_inline_values_in_template_literal() {
     fold("`foo${'${}'}`", "'foo${}'");
     fold("`foo${'${}'}${i}`", "`foo\\${}${i}`");
     fold_same("foo`foo${1}bar`");
+}
+
+#[test]
+fn template_joins_preserve_raw_boundaries() {
+    fold(r#"x = `${z}$` + "{a}\uD800""#, r"x = `${z}$\{a}\ud800`");
+    fold(r#"x = `$${"{a}\uD800"}${z}`"#, r"x = `$\{a}\ud800${z}`");
+    fold(r#"x = `$${""}{a}${z}`"#, r"x = `$\{a}${z}`");
+    fold(r"x = `${z}$` + `{a}${w}`", r"x = `${z}$\{a}${w}`");
+    fold(r#"x = `${z}\0` + "1\uD800""#, r"x = `${z}\x001\ud800`");
+    fold(r"x = `${z}\0` + `1${w}`", r"x = `${z}\x001${w}`");
+    fold(r#"x = `${z}\0${""}1${w}`"#, r"x = `${z}\x001${w}`");
+    // An escaped backslash followed by zero is not a null escape.
+    fold(r#"x = `${z}\\0` + "1\uD800""#, r"x = `${z}\\01\ud800`");
+    fold(r#"x = `${z}\\\0` + "1\uD800""#, r"x = `${z}\\\x001\ud800`");
+    // An already escaped dollar must keep its original value.
+    fold(r#"x = `${z}\$` + "{a}\uD800""#, r"x = `${z}\${a}\ud800`");
+}
+
+#[test]
+fn string_method_folds_handle_lone_surrogates() {
+    // A lone surrogate in the receiver is one UTF-16 code unit.
+    // The numeric folds count it like any other unit.
+    fold(r#"x = "a\uD800b".indexOf("b")"#, "x = 2");
+    fold(r#"x = "a\uD800b".indexOf("b", 2)"#, "x = 2");
+    fold(r#"x = "a\uD800b".indexOf("b", 3)"#, "x = -1");
+    fold(r#"x = "a\uD800b".indexOf("c")"#, "x = -1");
+    // Separated lone halves never match a formed surrogate pair.
+    fold(r#"x = "x\uD83Dy\uDE00z".indexOf("\u{1F600}")"#, "x = -1");
+    fold(r#"x = "a\u{1F600}\uD800b".indexOf("\u{1F600}")"#, "x = 1");
+    fold(r#"x = "a\uD800b\uD800b".lastIndexOf("b")"#, "x = 4");
+    fold(r#"x = "a\uD800b\uD800b".lastIndexOf("b", 3)"#, "x = 2");
+    fold(r#"x = "a\uD800b".lastIndexOf("")"#, "x = 3");
+    fold(r#"x = "a\uD800b".charCodeAt(1)"#, "x = 55296");
+    fold(r#"x = "a\uD800b".charCodeAt(2)"#, "x = 98");
+    fold(r#"x = "a\uD800b".charCodeAt(3)"#, "x = NaN");
+    fold(r#"x = +"\uD800""#, "x = NaN");
+    // A search value with a lone surrogate matches its code unit,
+    // including the same half of a formed pair.
+    fold(r#"x = "a\uD800b".indexOf("\uD800")"#, "x = 1");
+    fold(r#"x = "a\uD800b".lastIndexOf("\uD800")"#, "x = 1");
+    fold(r#"x = "a\u{1F600}b".indexOf("\uD83D")"#, "x = 1");
+    fold(r#"x = "a\u{1F600}b".indexOf("\uDE00")"#, "x = 2");
+    fold(r#"x = "a\u{1F600}b".lastIndexOf("\uD83D")"#, "x = 1");
+}
+
+#[test]
+fn string_folds_produce_lone_surrogates() {
+    // Concatenation repairs a pair split across the operands and keeps unmatched
+    // halves as lone units.
+    fold(r#"x = "\uD800" + "\uDC00""#, r#"x = "\u{10000}""#);
+    fold(r#"x = "a\uD83D" + "\uDE00b""#, r#"x = "a\u{1F600}b""#);
+    fold(r#"x = "\uD800" + "y""#, r#"x = "\uD800y""#);
+    fold(r#"x = "x" + "\uDC00""#, r#"x = "x\uDC00""#);
+    // A lone surrogate is one UTF-16 code unit of the length.
+    fold(r#"x = "a\uD800b".length"#, "x = 3");
+    fold(r#"x = "abc\uD800".length"#, "x = 4");
+    fold(r#"x = "a\u{1F600}b".length"#, "x = 4");
+    // Substring folds may split a pair or slice around a lone unit.
+    fold(r#"x = "a\uD800b".substring(1, 2)"#, r#"x = "\uD800""#);
+    fold(r#"x = "a\uD800b".slice(1)"#, r#"x = "\uD800b""#);
+    fold(r#"x = "a\u{1F600}b".charAt(1)"#, r#"x = "\uD83D""#);
+    fold(r#"x = "a\u{1F600}b".charAt(2)"#, r#"x = "\uDE00""#);
+    fold(r#"x = "a\uD800b".charAt(1)"#, r#"x = "\uD800""#);
+    fold(r#"x = "a\uD800b".charAt(9)"#, r#"x = """#);
+    // `fromCharCode` keeps surrogate units and forms adjacent pairs.
+    fold("x = String.fromCharCode(55296)", r#"x = "\uD800""#);
+    fold("x = String.fromCharCode(55357, 56832)", r#"x = "\u{1F600}""#);
+    // Comparisons order and compare by code units.
+    fold(r#"x = "\uD800" < "\uD801""#, "x = !0");
+    fold(r#"x = "\uDC00" < "\uD800""#, "x = !1");
+    fold(r#"x = "a\uD800" === "a\uD800""#, "x = !0");
+    fold(r#"x = "\uD800" === "\uDC00""#, "x = !1");
+}
+
+#[test]
+fn string_folds_decline_lone_surrogates() {
+    // encodeURI and encodeURIComponent throw a URIError on a lone surrogate at runtime,
+    // so folding them would change behavior.
+    fold_same(r#"x = encodeURI("a\uD800")"#);
+    fold_same(r#"x = encodeURIComponent("\uD800")"#);
+    fold_same(r#"x = decodeURI("a\uD800")"#);
+    fold_same(r#"x = decodeURIComponent("a\uD800")"#);
+    // The replace and casing machinery is UTF-8 and stays unfolded.
+    fold_same(r#"x = "a\uD800b".replace("a", "x")"#);
+    fold_same(r#"x = "ab".replace("a", "\uD800")"#);
+    fold_same(r#"x = "A\uD800".toLowerCase()"#);
+}
+
+#[test]
+fn string_values_with_lone_surrogates_join_templates() {
+    // A string holding a lone surrogate is inlined into a substitution or merged into a template.
+    // The raw text writes the surrogate as an escape, and a template left without substitutions
+    // becomes a string literal.
+    fold(r#"x = `a${"\uD800"}b`"#, r#"x = "a\uD800b""#);
+    fold(r#"x = `${"\uD83D"}${"\uDE00"}${a}`"#, r"x = `\ud83d\ude00${a}`");
+    fold(r#"x = `p${a}` + "\uDC00""#, r"x = `p${a}\udc00`");
+    fold(r#"x = "\uD83D" + `\uDE00${a}`"#, r"x = `\ud83d\uDE00${a}`");
+    fold(r#"x = `${"`\uD800$"}${a}`"#, r"x = `\`\ud800\$${a}`");
+    // `concat` joins a pair split across its arguments, as at runtime.
+    fold(r#"x = "a".concat("\uD800", "\uDC00")"#, r#"x = "a\u{10000}""#);
+    fold(r#"x = "\uD800".concat(a, "\uDC00")"#, r"x = `\ud800${a}\udc00`");
 }
 
 #[test]

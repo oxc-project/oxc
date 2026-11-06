@@ -1,0 +1,7 @@
+{
+  "reactCompiler": false,
+  "typescript": {
+    "optimizeConstEnums": true,
+    "optimizeEnums": false
+  }
+}

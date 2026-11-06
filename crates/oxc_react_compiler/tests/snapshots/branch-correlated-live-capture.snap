@@ -1,0 +1,36 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/branch-correlated-live-capture.js
+---
+import { c as _c } from "react/compiler-runtime";
+function Component(cond) {
+	const $ = _c(3);
+	let count;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		count = 0;
+		$[0] = count;
+	} else {
+		count = $[0];
+	}
+	let wrapper;
+	if ($[1] !== cond) {
+		let cb = _temp;
+		if (cond) {
+			wrapper = () => cb();
+		} else {
+			cb = () => count++;
+			wrapper = _temp2;
+		}
+		$[1] = cond;
+		$[2] = wrapper;
+	} else {
+		wrapper = $[2];
+	}
+	return wrapper;
+}
+function _temp2() {
+	return null;
+}
+function _temp() {
+	return null;
+}

@@ -150,7 +150,8 @@ pub fn parse_jsdoc(
 
             '@' if can_parse
                 && at_line_start
-                && !is_indented_code_block(line_seen_star, spaces_after_star) =>
+                && !is_indented_code_block(line_seen_star, spaces_after_star)
+                && starts_block_tag(&source_text[end..]) =>
             {
                 let part = &source_text[start..end];
                 let span = Span::new(
@@ -226,6 +227,17 @@ pub fn parse_jsdoc(
 fn is_indented_code_block(line_seen_star: bool, spaces_after_star: u32) -> bool {
     // 5 = 1 conventional space after `*` + 4 for indented code block
     line_seen_star && spaces_after_star >= 5
+}
+
+/// Whether `text`, placed at a line start, opens a block tag.
+/// A `/` in the tag name (e.g. an npm scope `@scope/pkg`) means prose,
+/// as comment-parser's `reTag` (`/^@[^\s/]+(?=\s|$)/`) used by eslint-plugin-jsdoc.
+///
+/// Unlike `reTag`, the name ends at `{` too (same as `parse_jsdoc_tag`),
+/// so `@param{import('./a').B} x` stays a tag, as TypeScript reads it.
+pub fn starts_block_tag(text: &str) -> bool {
+    text.starts_with('@')
+        && utils::find_token_range(text).is_some_and(|(_, end)| !text[..end].contains('/'))
 }
 
 /// tag_content: Starts with `@`, may be multiline
@@ -400,5 +412,14 @@ mod tests {
         let kinds = tag_kinds(src);
         // 4 spaces after `*` = 1 conventional + 3 indent → NOT an indented code block
         assert_eq!(kinds, vec!["deprecated", "type"]);
+    }
+
+    #[test]
+    fn slash_in_tag_name_is_not_a_tag() {
+        // An npm scope wrapped to a line start stays prose, as in comment-parser
+        let src = " The cues in\n * @scope/pkg).\n * @foo bar\n * @param{import('./a').B} x";
+        let (comment, tags) = parse_jsdoc(src, 0);
+        assert!(comment.parsed().contains("@scope/pkg)."));
+        assert_eq!(tags.iter().map(|t| t.kind.parsed()).collect::<Vec<_>>(), vec!["foo", "param"]);
     }
 }

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind, FunctionKind,
-    ast::{AssignmentTarget, FunctionType, VariableDeclarator},
+    ast::{AssignmentTarget, FunctionType, VariableDeclaration, VariableDeclarator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -239,14 +239,15 @@ fn component_parent_kind<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Optio
     }
 }
 
-fn variable_declarator<'a, 'c>(
+fn component_variable<'a>(
     node: &AstNode<'a>,
-    ctx: &'c LintContext<'a>,
-) -> Option<&'c VariableDeclarator<'a>> {
-    match component_parent_kind(node, ctx) {
-        Some(AstKind::VariableDeclarator(declaration)) => Some(declaration),
-        _ => None,
-    }
+    ctx: &LintContext<'a>,
+) -> Option<(&'a VariableDeclarator<'a>, &'a VariableDeclaration<'a>)> {
+    let AstKind::VariableDeclarator(declarator) = component_parent_kind(node, ctx)? else {
+        return None;
+    };
+    let declaration = ctx.nodes().parent_kind(declarator.node_id()).as_variable_declaration()?;
+    Some((declarator, declaration))
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -334,7 +335,7 @@ impl UnnamedComponentStyle {
 
 fn is_named<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     matches!(node.kind(), AstKind::Function(function) if function.r#type == FunctionType::FunctionDeclaration)
-        || variable_declarator(node, ctx).is_some()
+        || component_variable(node, ctx).is_some()
 }
 
 mod fix {
@@ -342,14 +343,14 @@ mod fix {
         AstKind, FunctionKind,
         ast::{
             ArrowFunctionExpression, FormalParameters, Function, FunctionType,
-            TSTypeParameterDeclaration, VariableDeclarator,
+            TSTypeParameterDeclaration, VariableDeclaration, VariableDeclarator,
         },
     };
     use oxc_span::{GetSpan, Span};
 
     use super::{
         ComponentStyle, FunctionStyle, NamedComponentStyle, UnnamedComponentStyle,
-        variable_declarator,
+        component_variable,
     };
     use crate::{AstNode, context::LintContext};
 
@@ -363,15 +364,11 @@ mod fix {
             return false;
         }
 
-        let declaration = variable_declarator(node, ctx);
-        if declaration.is_some_and(|declaration| {
-            matches!(
-                ctx.nodes().parent_kind(declaration.node_id()),
-                AstKind::VariableDeclaration(variable) if variable.declarations.len() > 1
-            )
-        }) {
+        let variable = component_variable(node, ctx);
+        if variable.is_some_and(|(_, declaration)| declaration.declarations.len() > 1) {
             return false;
         }
+        let declaration = variable.map(|(declarator, _)| declarator);
 
         match function {
             FunctionKind::Function(function) => {
@@ -531,8 +528,10 @@ mod fix {
             node: &AstNode<'a>,
             ctx: &LintContext<'a>,
         ) -> Self {
-            let declaration = variable_declarator(node, ctx);
-            let (replace_span, variable_kind) = variable_context(node, declaration, ctx);
+            let variable = component_variable(node, ctx);
+            let declaration = variable.map(|(declarator, _)| declarator);
+            let (replace_span, variable_kind) =
+                variable_context(node, variable.map(|(_, declaration)| declaration));
             Self {
                 replace_span,
                 name: function.id.as_ref().map_or_else(
@@ -566,8 +565,10 @@ mod fix {
             node: &AstNode<'a>,
             ctx: &LintContext<'a>,
         ) -> Self {
-            let declaration = variable_declarator(node, ctx);
-            let (replace_span, variable_kind) = variable_context(node, declaration, ctx);
+            let variable = component_variable(node, ctx);
+            let declaration = variable.map(|(declarator, _)| declarator);
+            let (replace_span, variable_kind) =
+                variable_context(node, variable.map(|(_, declaration)| declaration));
             Self {
                 replace_span,
                 name: variable_name(declaration),
@@ -592,17 +593,12 @@ mod fix {
 
     fn variable_context<'a>(
         node: &AstNode<'a>,
-        declaration: Option<&VariableDeclarator<'a>>,
-        ctx: &LintContext<'a>,
+        declaration: Option<&VariableDeclaration<'a>>,
     ) -> (Span, &'static str) {
         let Some(declaration) = declaration else {
             return (node.span(), "const");
         };
-        let AstKind::VariableDeclaration(variable) = ctx.nodes().parent_kind(declaration.node_id())
-        else {
-            unreachable!()
-        };
-        (variable.span, variable.kind.as_str())
+        (declaration.span, declaration.kind.as_str())
     }
 
     fn variable_name(declaration: Option<&VariableDeclarator<'_>>) -> String {

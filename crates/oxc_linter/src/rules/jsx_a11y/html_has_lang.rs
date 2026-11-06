@@ -89,7 +89,7 @@ fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
             | JSXExpression::NullLiteral(_)
             | JSXExpression::BooleanLiteral(_)
             | JSXExpression::NumericLiteral(_) => false,
-            JSXExpression::Identifier(id) => id.name != "undefined",
+            JSXExpression::Identifier(id) => !id.is_undefined(),
             JSXExpression::StringLiteral(str) => !str.value.is_empty(),
             JSXExpression::TemplateLiteral(t) => {
                 !t.expressions.is_empty()

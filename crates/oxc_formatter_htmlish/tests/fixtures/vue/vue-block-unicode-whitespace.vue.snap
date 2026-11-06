@@ -1,0 +1,24 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<custom lang="markdown">
+   
+</custom>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<custom lang="markdown">
+   
+</custom>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<custom lang="markdown">
+   
+</custom>
+
+===================== End =====================

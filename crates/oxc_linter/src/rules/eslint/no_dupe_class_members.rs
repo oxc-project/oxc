@@ -62,26 +62,37 @@ declare_oxc_lint!(
     short_description = "Disallow duplicate class members.",
 );
 
+const LINEAR_SEARCH_LIMIT: usize = 8;
+
 impl Rule for NoDupeClassMembers {
     fn run_once(&self, ctx: &LintContext) {
         ctx.classes().iter_enumerated().for_each(|(class_id, _)| {
             let mut defined_elements = FxHashMap::default();
             let elements = &ctx.classes().elements[class_id];
             for (element_id, element) in elements.iter_enumerated() {
-                if let Some(prev_element_id) = defined_elements.insert(&element.name, element_id) {
-                    let prev_element = &elements[prev_element_id];
-                    if element.r#static == prev_element.r#static
-                        && element.is_private == prev_element.is_private
-                        && (!(element.kind.is_setter_or_getter()
-                            && prev_element.kind.is_setter_or_getter())
-                            || element.kind == prev_element.kind)
-                    {
-                        ctx.diagnostic(no_dupe_class_members_diagnostic(
-                            &element.name,
-                            prev_element.span,
-                            element.span,
-                        ));
-                    }
+                let prev_element = if elements.len() <= LINEAR_SEARCH_LIMIT {
+                    // Search backwards to preserve the map's last-seen member semantics.
+                    elements
+                        .iter()
+                        .take(element_id.index())
+                        .rfind(|previous| previous.name == element.name)
+                } else {
+                    defined_elements
+                        .insert(&element.name, element_id)
+                        .map(|prev_element_id| &elements[prev_element_id])
+                };
+                if let Some(prev_element) = prev_element
+                    && element.r#static == prev_element.r#static
+                    && element.is_private == prev_element.is_private
+                    && (!(element.kind.is_setter_or_getter()
+                        && prev_element.kind.is_setter_or_getter())
+                        || element.kind == prev_element.kind)
+                {
+                    ctx.diagnostic(no_dupe_class_members_diagnostic(
+                        &element.name,
+                        prev_element.span,
+                        element.span,
+                    ));
                 }
             }
         });

@@ -15,7 +15,7 @@ use crate::{
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::{DefaultRuleConfig, Rule},
-    utils::{find_property, is_vue_component_options_object, vue_casing},
+    utils::{is_vue_component_options_object, vue_casing},
 };
 
 fn component_definition_name_casing_diagnostic(
@@ -140,7 +140,7 @@ impl ComponentDefinitionNameCasing {
     }
 
     fn check_name_property<'a>(&self, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-        let Some(prop) = find_property(obj, "name") else { return };
+        let Some(prop) = obj.find_property("name") else { return };
         self.check_name_node(&prop.value, ctx);
     }
 

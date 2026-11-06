@@ -106,7 +106,6 @@ use crate::{
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
     timing::{RuleTimingRecorder, RuleTimingStat},
-    utils::iter_possible_jest_call_node,
 };
 
 #[cfg(target_pointer_width = "64")]
@@ -188,7 +187,6 @@ thread_local! {
 fn execute_rules<'a, const TIMINGS: bool>(
     rules: &[(&RuleEnum, LintContext<'a>)],
     semantic: &Semantic<'a>,
-    should_run_on_jest_node: bool,
     with_runtime_optimization: bool,
     mut timing_recorder: Option<&mut RuleTimingRecorder>,
 ) {
@@ -233,18 +231,6 @@ fn execute_rules<'a, const TIMINGS: bool>(
                     rule.run::<TIMINGS>(node, ctx, timing_stat);
                 }
             }
-
-            if should_run_on_jest_node {
-                for jest_node in iter_possible_jest_call_node(semantic) {
-                    for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
-                        if rule.run_info().is_run_on_jest_node_implemented() {
-                            let timing_stat =
-                                get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                            rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
-                        }
-                    }
-                }
-            }
         });
     } else {
         // Unoptimized reference path: every rule runs on every node, with no type filtering. Used
@@ -256,13 +242,6 @@ fn execute_rules<'a, const TIMINGS: bool>(
             for node in semantic.nodes() {
                 let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
                 rule.run::<TIMINGS>(node, ctx, timing_stat);
-            }
-
-            if should_run_on_jest_node {
-                for jest_node in iter_possible_jest_call_node(semantic) {
-                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                    rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
-                }
             }
         }
     }
@@ -367,8 +346,24 @@ impl Linter {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
         let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
-        let mut ctx_host =
-            Rc::new(ContextHost::new(path, context_sub_hosts, allocator, self.options, config));
+        // The shared React Compiler run takes its environment additions from the
+        // `react/capitalized-calls` rule's resolved options, and runs the passes
+        // that only report `Todo` and `Invariant` when their rules are enabled.
+        let mut react_compiler_env_options = rules
+            .iter()
+            .find_map(|(rule, _)| match rule {
+                RuleEnum::ReactCapitalizedCalls(rule) => Some(rule.react_compiler_env_options()),
+                _ => None,
+            })
+            .unwrap_or_default();
+        react_compiler_env_options.report_todo_and_invariant = rules
+            .iter()
+            .any(|(rule, _)| matches!(rule, RuleEnum::ReactTodo(_) | RuleEnum::ReactInvariant(_)));
+
+        let mut ctx_host = Rc::new(
+            ContextHost::new(path, context_sub_hosts, allocator, self.options, config)
+                .with_react_compiler_env_options(react_compiler_env_options),
+        );
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;
@@ -418,21 +413,12 @@ impl Linter {
                 .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)))
                 .collect::<Vec<_>>();
 
-            let should_run_on_jest_node =
-                ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
-
-            execute_rules::<TIMINGS>(
-                &rules,
-                semantic,
-                should_run_on_jest_node,
-                true,
-                timing_recorder.as_mut(),
-            );
+            execute_rules::<TIMINGS>(&rules, semantic, true, timing_recorder.as_mut());
 
             #[cfg(debug_assertions)]
             {
                 let diagnostics_after_optimized = ctx_host.diagnostic_count();
-                execute_rules::<false>(&rules, semantic, should_run_on_jest_node, false, None);
+                execute_rules::<false>(&rules, semantic, false, None);
                 let diagnostics_after_unoptimized = ctx_host.diagnostic_count();
                 ctx_host.get_diagnostics(|diagnostics| {
                     let optimized_diagnostics = &diagnostics[current_diagnostic_index..diagnostics_after_optimized];

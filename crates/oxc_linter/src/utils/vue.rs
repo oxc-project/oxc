@@ -4,7 +4,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         CallExpression, ExportDefaultDeclarationKind, Expression, IdentifierReference,
-        ObjectExpression, ObjectProperty, ObjectPropertyKind, TSSignature, TSType, TSTypeName,
+        ObjectPropertyKind, TSSignature, TSType, TSTypeName,
     },
 };
 use oxc_span::{GetSpan, Span};
@@ -335,18 +335,6 @@ pub fn is_vue_component_options_call(call_expr: &CallExpression<'_>) -> bool {
 /// Check whether the identifier is imported as `nextTick` or aliased from `'vue'`.
 pub fn is_vue_next_tick_import(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
     is_import_symbol(ident, "vue", "nextTick", ctx)
-}
-
-/// Finds the first `ObjectProperty` whose static key matches `name` in the given object.
-/// `SpreadElement` entries are skipped.
-pub fn find_property<'a, 'b>(
-    obj: &'b ObjectExpression<'a>,
-    name: &str,
-) -> Option<&'b ObjectProperty<'a>> {
-    obj.properties.iter().find_map(|prop| {
-        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else { return None };
-        obj_prop.key.is_specific_static_name(name).then_some(obj_prop.as_ref())
-    })
 }
 
 /// Walks a `defineProps<T>()` type argument and invokes `f` for every member

@@ -254,9 +254,7 @@ impl AnchorIsValid {
                 Self::href_value_kind_from_string(str_lit.value)
             }
             JSXAttributeValue::ExpressionContainer(exp) => match &exp.expression {
-                JSXExpression::Identifier(ident) if ident.name == "undefined" => {
-                    HrefValueKind::Nullish
-                }
+                JSXExpression::Identifier(ident) if ident.is_undefined() => HrefValueKind::Nullish,
                 JSXExpression::NullLiteral(_) => HrefValueKind::Nullish,
                 JSXExpression::StringLiteral(str_lit) => {
                     Self::href_value_kind_from_string(str_lit.value)

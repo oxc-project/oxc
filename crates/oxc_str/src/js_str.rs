@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     fmt::{self, Debug, Display, Write},
     hash::{Hash, Hasher},
     iter::FusedIterator,
@@ -132,6 +133,18 @@ impl<'a> JSStr<'a> {
     pub fn from_str_in(value: &str, allocator: &impl GetAllocator<'a>) -> Self {
         // Check the length before allocating or copying.
         JSStr::from(value).clone_in(allocator.allocator())
+    }
+
+    /// Borrow a borrowed `Cow`, or copy an owned one into the arena, like [`Str::from_cow_in`].
+    ///
+    /// # Panics
+    /// Panics if the byte length exceeds `u32::MAX`.
+    #[inline]
+    pub fn from_cow_in(value: &Cow<'a, str>, allocator: &impl GetAllocator<'a>) -> Self {
+        match value {
+            Cow::Borrowed(value) => JSStr::from(*value),
+            Cow::Owned(value) => JSStr::from_str_in(value, allocator),
+        }
     }
 
     /// Concatenate JavaScript strings into an arena.

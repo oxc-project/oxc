@@ -19,14 +19,15 @@ use crate::{
 /// A hole's `,` is content (it keeps the hole count), so comments around it stay on their source side:
 /// the hole prints its leading comments, its `,`, then its same-line trailing comments.
 /// Comments after the last entry print before the `]` ([`write_unclaimed_comments`]), or lead the rest element.
-pub fn write_array_node<'a, T>(
+pub fn write_array_node<'b, 'a, T>(
     array_span: Span,
     rest_start: Option<u32>,
-    array: impl IntoIterator<Item = Option<&'a AstNode<'a, T>>>,
+    array: impl IntoIterator<Item = Option<AstNode<'b, 'a, T>>>,
     f: &mut JsFormatter<'_, 'a>,
 ) where
+    'a: 'b,
     T: 'a,
-    AstNode<'a, T>: Format<'a, JsFormatContext<'a>> + GetSpan,
+    AstNode<'b, 'a, T>: Format<'a, JsFormatContext<'a>> + GetSpan,
 {
     // The elements: from the `[` up to the `]` (exclusive) or the rest element
     let range = Span::new(array_span.start, rest_start.unwrap_or(array_span.end - 1));
@@ -83,7 +84,7 @@ pub fn write_array_node<'a, T>(
                         write!(
                             f,
                             group(&format_args!(
-                                FormatNodeWithoutTrailingComments(element),
+                                FormatNodeWithoutTrailingComments(&element),
                                 trailing
                             ))
                         );

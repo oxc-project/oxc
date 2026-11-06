@@ -554,6 +554,12 @@ impl<C: Config> ParserImpl<'_, C> {
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,
     ) -> Option<Modifier> {
+        // A modifier spelled with a Unicode escape (`st\u0061tic`) cannot act as a modifier.
+        // Leave it for identifier or property name parsing, e.g. a class field named `static`.
+        if self.cur_token().escaped() {
+            return None;
+        }
+
         let start = self.cur_start();
         let kind = self.cur_kind();
 
@@ -592,7 +598,7 @@ impl<C: Config> ParserImpl<'_, C> {
     }
 
     pub(crate) fn parse_contextual_modifier(&mut self, kind: Kind) -> bool {
-        if self.at(kind) && self.next_token_can_follow_modifier() {
+        if self.at(kind) && !self.cur_token().escaped() && self.next_token_can_follow_modifier() {
             self.bump_any();
             true
         } else {

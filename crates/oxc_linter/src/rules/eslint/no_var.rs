@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{BindingPattern, VariableDeclarationKind},
-};
+use oxc_ast::{AstKind, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -57,7 +54,7 @@ declare_oxc_lint!(
 impl Rule for NoVar {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::VariableDeclaration(dec) = node.kind()
-            && dec.kind == VariableDeclarationKind::Var
+            && dec.kind.is_var()
         {
             // Skip TypeScript ambient declarations (declare global/module/namespace)
             if has_ambient_typescript_ancestor(node.id(), ctx.nodes()) {
@@ -71,11 +68,11 @@ impl Rule for NoVar {
             let var_keyword_span = Span::sized(var_start, 3);
             ctx.diagnostic_with_fix(no_var_diagnostic(var_keyword_span), |fixer| {
                 let parent_span = ctx.nodes().parent_kind(node.id()).span();
-                if dec.declarations.iter().any(|decl| {
-                    decl.id.get_binding_identifiers().iter().any(|ident| {
-                        !ctx.scoping().symbol_redeclarations(ident.symbol_id()).is_empty()
-                            || ctx.symbol_references(ident.symbol_id()).any(|id| {
-                                !parent_span
+                if !dec.declarations.iter().all(|decl| {
+                    decl.id.all_binding_identifiers(&mut |ident| {
+                        ctx.scoping().symbol_redeclarations(ident.symbol_id()).is_empty()
+                            && ctx.symbol_references(ident.symbol_id()).all(|id| {
+                                parent_span
                                     .contains_inclusive(ctx.nodes().get_node(id.node_id()).span())
                             })
                     })
