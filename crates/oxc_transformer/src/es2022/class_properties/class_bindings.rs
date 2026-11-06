@@ -52,6 +52,11 @@ pub(super) struct ClassBindings<'a> {
     pub shadowed_name: Option<BoundIdentifier<'a>>,
     /// Temp var for WeakSet.
     pub brand: Option<BoundIdentifier<'a>>,
+    /// Original constructor bearing a decorated class's static private methods and accessors.
+    /// Class decorators may replace `name` / `temp`, but do not transfer this brand.
+    pub decorator_static_brand: Option<BoundIdentifier<'a>>,
+    /// Decorated classes use spec private lowering even when loose mode is configured.
+    pub force_private_spec: bool,
     /// `ScopeId` of hoist scope outside class (which temp `var` binding would be created in)
     pub outer_hoist_scope_id: ScopeId,
     /// `true` if should use temp binding for references to class in transpiled static private fields,
@@ -76,6 +81,8 @@ impl<'a> ClassBindings<'a> {
             temp: temp_binding,
             shadowed_name: None,
             brand: brand_binding,
+            decorator_static_brand: None,
+            force_private_spec: false,
             outer_hoist_scope_id: outer_scope_id,
             static_private_fields_use_temp,
             temp_var_is_created,
@@ -144,6 +151,23 @@ impl<'a> ClassBindings<'a> {
                 ctx.generate_uid(&name.name, scope_id, SymbolFlags::BlockScopedVariable)
             })
         }
+    }
+
+    /// Whether private names owned by this class use loose property storage.
+    pub fn private_fields_as_properties(&self, configured: bool) -> bool {
+        configured && !self.force_private_spec
+    }
+
+    /// Brand for static private uses. Decorated methods retain the original constructor;
+    /// decorated fields use WeakMaps and do not call this selector.
+    pub fn get_or_init_static_private_binding(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> &BoundIdentifier<'a> {
+        if self.decorator_static_brand.is_none() {
+            return self.get_or_init_static_binding(ctx);
+        }
+        self.decorator_static_brand.as_ref().unwrap()
     }
 
     /// Generate binding for temp var.

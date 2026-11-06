@@ -198,7 +198,9 @@
 //! * Class properties TC39 proposal: <https://github.com/tc39/proposal-class-fields>
 
 use indexmap::IndexMap;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
+
+use oxc_allocator::Address;
 use serde::Deserialize;
 
 use oxc_ast::ast::*;
@@ -213,6 +215,8 @@ mod class_bindings;
 mod class_details;
 mod computed_key;
 mod constructor;
+mod decorators;
+pub use decorators::{class_body_lowered_for_decorators, class_lowered_for_decorators};
 mod instance_prop_init;
 mod private_field;
 mod private_method;
@@ -251,6 +255,11 @@ pub struct ClassProperties<'a> {
     ///
     /// This option is controlled by [`crate::TypeScriptOptions::remove_class_fields_without_initializer`].
     remove_class_fields_without_initializer: bool,
+    /// If `true`, lower standard (TC39) decorators.
+    standard_decorators: bool,
+    /// If `true`, only transform classes which have decorators.
+    /// Used when target supports class fields, but decorators need lowering.
+    only_decorated_classes: bool,
 
     // ----- State used during all phases of transform -----
     //
@@ -283,6 +292,35 @@ pub struct ClassProperties<'a> {
     insert_after_exprs: Vec<Expression<'a>>,
     /// Statements to insert after class declaration
     insert_after_stmts: Vec<Statement<'a>>,
+
+    // ----- Standard decorators state -----
+    //
+    /// Initializer slot index of decorated fields and decorated `accessor` storage fields.
+    decorated_fields: FxHashMap<Address, u32>,
+    /// Storage fields created for decorated `accessor`s.
+    decorator_accessor_storage: FxHashSet<Address>,
+    /// Getters created for decorated `accessor`s.
+    decorator_accessor_getters: FxHashSet<Address>,
+    /// `__decorateElement` calls (exit phase only), see `DecoratorBucket`.
+    decorator_elements: [Vec<Expression<'a>>; 4],
+    /// `_Class_decorators` binding (exit phase only).
+    decorator_class_decorators: Option<oxc_traverse::BoundIdentifier<'a>>,
+    /// Original key names of `accessor` storage fields, for named evaluation.
+    decorator_accessor_names: FxHashMap<Address, oxc_str::JSStr<'a>>,
+    /// Names of anonymous class expressions in instance field initializers, for named evaluation.
+    decorator_named_classes: FxHashMap<Address, Expression<'a>>,
+    /// Keys of decorated instance fields, captured before they are moved into constructor.
+    decorator_instance_keys: FxHashMap<Address, Expression<'a>>,
+    /// Decorated class declarations to convert to `let _Foo = class Foo {}`, keyed by class address.
+    /// Values are `(inner binding, outer binding)`.
+    decorator_declaration_rewrites:
+        FxHashMap<Address, (oxc_traverse::BoundIdentifier<'a>, oxc_traverse::BoundIdentifier<'a>)>,
+    /// Length of `insert_before` after class decorators (exit phase only).
+    decorator_class_prefix_len: usize,
+    /// Inferred name of anonymous decorated class expression (exit phase only).
+    decorator_class_name: Option<Expression<'a>>,
+    /// Super class temp var binding (exit phase only).
+    decorator_super_class: Option<oxc_traverse::BoundIdentifier<'a>>,
 }
 
 impl ClassProperties<'_> {
@@ -291,12 +329,16 @@ impl ClassProperties<'_> {
         options: ClassPropertiesOptions,
         transform_static_blocks: bool,
         remove_class_fields_without_initializer: bool,
+        standard_decorators: bool,
+        only_decorated_classes: bool,
     ) -> Self {
         Self {
             set_public_class_fields: options.loose,
             private_fields_as_properties: options.loose,
             transform_static_blocks,
             remove_class_fields_without_initializer,
+            standard_decorators,
+            only_decorated_classes,
             classes_stack: ClassesStack::new(),
             private_field_count: 0,
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
@@ -304,6 +346,18 @@ impl ClassProperties<'_> {
             insert_before: vec![],
             insert_after_exprs: vec![],
             insert_after_stmts: vec![],
+            decorated_fields: FxHashMap::default(),
+            decorator_accessor_storage: FxHashSet::default(),
+            decorator_accessor_getters: FxHashSet::default(),
+            decorator_elements: Default::default(),
+            decorator_class_decorators: None,
+            decorator_super_class: None,
+            decorator_accessor_names: FxHashMap::default(),
+            decorator_class_name: None,
+            decorator_named_classes: FxHashMap::default(),
+            decorator_instance_keys: FxHashMap::default(),
+            decorator_class_prefix_len: 0,
+            decorator_declaration_rewrites: FxHashMap::default(),
         }
     }
 }
@@ -327,6 +381,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
 
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.transform_class_declaration_on_exit(class, ctx);
+    }
+
+    #[inline]
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !self.decorator_declaration_rewrites.is_empty() {
+            self.rewrite_decorated_class_statement(stmt, ctx);
+        }
     }
 
     // `#[inline]` for fast exit for expressions which are not `Class`es
@@ -355,6 +416,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
         target: &mut AssignmentTarget<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        if self.only_decorated_classes
+            && let AssignmentTarget::PrivateFieldExpression(field) = target
+            && self.classes_stack.is_passthrough_private(&field.field)
+        {
+            return;
+        }
         self.transform_assignment_target(target, ctx);
     }
 
@@ -392,6 +459,39 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
 }
 
 impl<'a> ClassProperties<'a> {
+    /// Private identifier directly referenced by an expression which this transform rewrites.
+    fn direct_private_ident<'e>(expr: &'e Expression<'a>) -> Option<&'e PrivateIdentifier<'a>> {
+        match expr {
+            Expression::PrivateFieldExpression(field) => Some(&field.field),
+            Expression::PrivateInExpression(expr) => Some(&expr.left),
+            Expression::CallExpression(call) => match &call.callee {
+                Expression::PrivateFieldExpression(field) => Some(&field.field),
+                _ => None,
+            },
+            Expression::AssignmentExpression(assign) => match &assign.left {
+                AssignmentTarget::PrivateFieldExpression(field) => Some(&field.field),
+                _ => None,
+            },
+            Expression::UpdateExpression(update) => match &update.argument {
+                SimpleAssignmentTarget::PrivateFieldExpression(field) => Some(&field.field),
+                _ => None,
+            },
+            Expression::TaggedTemplateExpression(tagged) => match &tagged.tag {
+                Expression::PrivateFieldExpression(field) => Some(&field.field),
+                _ => None,
+            },
+            Expression::ChainExpression(chain) => match &chain.expression {
+                ChainElement::PrivateFieldExpression(field) => Some(&field.field),
+                ChainElement::CallExpression(call) => match &call.callee {
+                    Expression::PrivateFieldExpression(field) => Some(&field.field),
+                    _ => None,
+                },
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
     // Keep the rare private-field transform body out of the hot expression visitor.
     // Rust 1.97 otherwise inlines these large branches into the generated walker.
     #[inline(never)]
@@ -400,6 +500,12 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        if self.only_decorated_classes
+            && let Some(ident) = Self::direct_private_ident(expr)
+            && self.classes_stack.is_passthrough_private(ident)
+        {
+            return;
+        }
         match expr {
             // `object.#prop`
             Expression::PrivateFieldExpression(_) => {

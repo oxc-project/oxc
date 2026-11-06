@@ -47,6 +47,9 @@ pub struct TransformState<'a> {
     // State for multiple plugins interacting
     /// Ownership of class field and static block lowering, shared by cooperating transforms.
     pub class_transform: ClassTransform,
+    /// `true` if class properties transform lowers classes using standard decorators,
+    /// even if class properties plugin is otherwise disabled.
+    pub lowers_standard_decorators: bool,
 }
 
 impl Default for TransformState<'_> {
@@ -65,6 +68,7 @@ impl Default for TransformState<'_> {
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
             class_transform: ClassTransform::default(),
+            lowers_standard_decorators: false,
         }
     }
 }
@@ -89,6 +93,7 @@ impl TransformState<'_> {
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
             class_transform: ClassTransform::new(options.env.es2022),
+            lowers_standard_decorators: !options.decorator.legacy,
         }
     }
 
