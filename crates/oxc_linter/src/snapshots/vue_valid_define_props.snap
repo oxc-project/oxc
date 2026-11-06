@@ -50,3 +50,30 @@ source: crates/oxc_linter/src/tester.rs
  5 │                   </script>
    ╰────
   help: Define at least one prop in `defineProps`.
+
+  ⚠ vue(valid-define-props): `defineProps` is referencing locally declared variables.
+   ╭─[valid_define_props.tsx:3:13]
+ 2 │             const PropsSchema = { entries: { msg: String } };
+ 3 │             defineProps(Object.keys(PropsSchema.entries));
+   ·             ─────────────────────────────────────────────
+ 4 │             </script>
+   ╰────
+  help: inline the variable or import it from another module.
+
+  ⚠ vue(valid-define-props): `defineProps` is referencing locally declared variables.
+   ╭─[valid_define_props.tsx:3:13]
+ 2 │             const propType = String;
+ 3 │             defineProps({ msg: propType });
+   ·             ──────────────────────────────
+ 4 │             </script>
+   ╰────
+  help: inline the variable or import it from another module.
+
+  ⚠ vue(valid-define-props): `defineProps` is referencing locally declared variables.
+   ╭─[valid_define_props.tsx:3:13]
+ 2 │             const defaultValue = getDefaultValue();
+ 3 │             defineProps({ msg: { default: () => defaultValue } });
+   ·             ─────────────────────────────────────────────────────
+ 4 │             </script>
+   ╰────
+  help: inline the variable or import it from another module.
