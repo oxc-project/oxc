@@ -404,7 +404,7 @@ jobs:
         with:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           cache-key: napi-compiler-windows
-          save-cache: ${{ github.ref_name == 'main' }}
+          save-cache: true
       - uses: $/.github/actions/clone-submodules
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -488,7 +488,7 @@ jobs:
             with:
               workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
               cache-key: napi-oxlint-windows
-              save-cache: ${{ github.ref_name == 'main' }}
+              save-cache: true
       - name: Install dependencies on Dev Drive
         if: steps.filter.outputs.changed == 'true'
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
@@ -535,7 +535,7 @@ jobs:
             with:
               workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
               cache-key: napi-oxfmt-windows
-              save-cache: ${{ github.ref_name == 'main' }}
+              save-cache: true
       - name: Install dependencies on Dev Drive
         if: steps.filter.outputs.changed == 'true'
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
