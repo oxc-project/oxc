@@ -47,7 +47,9 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
         // `this` is emitted as `Identifier` token instead of `Keyword`
         match type_name {
             TSTypeName::ThisExpression(this_expr) => {
-                self.ctx.emit_this_identifier_at(this_expr.span.start);
+                if !this_expr.span.is_unspanned() {
+                    self.ctx.emit_this_identifier_at(this_expr.span.start);
+                }
             }
             TSTypeName::IdentifierReference(ident) => {
                 self.visit_identifier_reference(ident);
@@ -93,6 +95,25 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
 
         if let Some(type_arguments) = &import_type.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
+        }
+    }
+
+    fn visit_class(&mut self, class: &Class<'a>) {
+        if let (Some(heritage), Some(implements)) = (&class.heritage, class.implements.first())
+            && implements.span.start < heritage.expression.span().start
+        {
+            self.visit_decorators(&class.decorators);
+            if let Some(id) = &class.id {
+                self.visit_binding_identifier(id);
+            }
+            if let Some(type_parameters) = &class.type_parameters {
+                self.visit_ts_type_parameter_declaration(type_parameters);
+            }
+            self.visit_ts_class_implements_list(&class.implements);
+            self.visit_class_heritage(heritage);
+            self.visit_class_body(&class.body);
+        } else {
+            walk::walk_class(self, class);
         }
     }
 
