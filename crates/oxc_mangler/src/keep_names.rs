@@ -91,23 +91,41 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
                 self.options.class && cls.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id)
             }
             AstKind::VariableDeclarator(decl) => {
-                if let BindingPattern::BindingIdentifier(id) = &decl.id
-                    && id.symbol_id() == symbol_id
-                {
-                    return decl
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| self.is_expression_whose_name_needs_to_be_kept(init));
-                }
-                if let Some(assign_pattern) =
-                    Self::find_assign_binding_pattern_kind_of_specific_symbol(&decl.id, symbol_id)
-                {
-                    return self.is_expression_whose_name_needs_to_be_kept(&assign_pattern.right);
-                }
-                false
+                self.is_name_set_binding_pattern(&decl.id, decl.init.as_ref(), symbol_id)
+            }
+            // function foo(bar = function() {}) {}, function foo({ bar = function() {} }) {}
+            AstKind::FormalParameter(param) => self.is_name_set_binding_pattern(
+                &param.pattern,
+                param.initializer.as_deref(),
+                symbol_id,
+            ),
+            // function foo(...[bar = function() {}]) {}
+            AstKind::FormalParameterRest(param) => {
+                self.is_name_set_binding_pattern(&param.rest.argument, None, symbol_id)
+            }
+            // try {} catch ({ foo = function() {} }) {}
+            AstKind::CatchParameter(param) => {
+                self.is_name_set_binding_pattern(&param.pattern, None, symbol_id)
             }
             _ => false,
         }
+    }
+
+    /// Whether the binding of `symbol_id` in `pattern` gets its value from an anonymous function or
+    /// class, either from `init` (the initializer of the whole pattern) or from a default value
+    /// inside the pattern.
+    fn is_name_set_binding_pattern(
+        &self,
+        pattern: &'a BindingPattern<'a>,
+        init: Option<&Expression<'a>>,
+        symbol_id: SymbolId,
+    ) -> bool {
+        if Self::is_binding_id_of_specific_symbol(pattern, symbol_id) {
+            return init.is_some_and(|init| self.is_expression_whose_name_needs_to_be_kept(init));
+        }
+        Self::find_assign_binding_pattern_kind_of_specific_symbol(pattern, symbol_id).is_some_and(
+            |assign_pattern| self.is_expression_whose_name_needs_to_be_kept(&assign_pattern.right),
+        )
     }
 
     fn is_name_set_reference_node(&self, reference_id: ReferenceId) -> bool {
@@ -180,9 +198,17 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
                 })
             }
             BindingPattern::ArrayPattern(array_pattern) => {
-                array_pattern.elements.iter().flatten().find_map(|binding| {
-                    Self::find_assign_binding_pattern_kind_of_specific_symbol(binding, symbol_id)
-                })
+                array_pattern
+                    .elements
+                    .iter()
+                    .flatten()
+                    // [...[foo = function() {}]]
+                    .chain(array_pattern.rest.as_ref().map(|rest| &rest.argument))
+                    .find_map(|binding| {
+                        Self::find_assign_binding_pattern_kind_of_specific_symbol(
+                            binding, symbol_id,
+                        )
+                    })
             }
             BindingPattern::AssignmentPattern(assign_pattern) => {
                 if Self::is_binding_id_of_specific_symbol(&assign_pattern.left, symbol_id) {
@@ -305,6 +331,49 @@ mod test {
         assert_eq!(collect(function_only(), "var [foo = () => {}] = []"), data("foo"));
         assert_eq!(collect(class_only(), "var [Foo = class {}] = []"), data("Foo"));
         assert_eq!(collect(function_only(), "var { foo = function() {} } = {}"), data("foo"));
+        assert_eq!(collect(function_only(), "var [...[foo = function() {}]] = []"), data("foo"));
+        assert_eq!(collect(class_only(), "var [...{ 0: Foo = class {} }] = []"), data("Foo"));
+    }
+
+    #[test]
+    fn test_parameters() {
+        assert_eq!(collect(function_only(), "(function(foo = function() {}) {})"), data("foo"));
+        assert_eq!(collect(function_only(), "((foo = (() => {})) => {})"), data("foo"));
+        assert_eq!(collect(class_only(), "(function(Foo = class {}) {})"), data("Foo"));
+        assert_eq!(collect(function_only(), "(function({ foo = function() {} }) {})"), data("foo"));
+        assert_eq!(collect(function_only(), "(function({ bar: foo = () => {} }) {})"), data("foo"));
+        assert_eq!(collect(function_only(), "(function([foo = () => {}]) {})"), data("foo"));
+        assert_eq!(
+            collect(function_only(), "(function({ a: [{ foo = () => {} }] }) {})"),
+            data("foo")
+        );
+        assert_eq!(collect(function_only(), "(function(...[foo = () => {}]) {})"), data("foo"));
+        assert_eq!(collect(class_only(), "(function(...{ 0: Foo = class {} }) {})"), data("Foo"));
+        assert_eq!(collect(function_only(), "({ m(foo = function() {}) {} })"), data("foo"));
+        assert_eq!(collect(function_only(), "({ set s(foo = function() {}) {} })"), data("foo"));
+        assert_eq!(collect(function_only(), "(function(bar, foo = () => {}) {})"), data("foo"));
+    }
+
+    #[test]
+    fn test_catch_parameters() {
+        assert_eq!(
+            collect(function_only(), "try {} catch ({ foo = function() {} }) {}"),
+            data("foo")
+        );
+        assert_eq!(collect(function_only(), "try {} catch ([foo = () => {}]) {}"), data("foo"));
+        assert_eq!(collect(class_only(), "try {} catch ([Foo = class {}]) {}"), data("Foo"));
+    }
+
+    #[test]
+    fn test_no_name_set() {
+        let none = FxHashSet::default();
+        assert_eq!(collect(function_only(), "(function(foo = 1, bar) {})"), none);
+        assert_eq!(collect(function_only(), "(function(foo = (0, function() {})) {})"), none);
+        assert_eq!(collect(class_only(), "(function(foo = function() {}) {})"), none);
+        assert_eq!(collect(function_only(), "(function(Foo = class {}) {})"), none);
+        assert_eq!(collect(function_only(), "(function(...foo) {})"), none);
+        assert_eq!(collect(function_only(), "try {} catch (foo) {}"), none);
+        assert_eq!(collect(function_only(), "try {} catch ({ foo = 1 }) {}"), none);
     }
 
     #[test]
