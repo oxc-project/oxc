@@ -129,7 +129,10 @@ fn report(ctx: &LintContext, node: &AstNode, parent_node: &AstNode) {
 
 fn is_lone_block(node: &AstNode, parent_node: &AstNode) -> bool {
     match parent_node.kind() {
-        AstKind::BlockStatement(_) | AstKind::StaticBlock(_) | AstKind::Program(_) => true,
+        AstKind::BlockStatement(_)
+        | AstKind::StaticBlock(_)
+        | AstKind::Program(_)
+        | AstKind::FunctionBody(_) => true,
         AstKind::SwitchCase(parent_node) => {
             let consequent = &parent_node.consequent;
             if consequent.len() != 1 {
@@ -148,10 +151,15 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        "function test() { before(); { let value = read(); use(value); } }",
+        "function test() { before(); { const value = read(); use(value); } }",
+        "function test() { before(); { function local() {} local(); } }",
+        "function test() { before(); { class Local {} use(Local); } }",
+        "function test() { before(); { using resource = read(); use(resource); } }",
+        "async function test() { before(); { await using resource = read(); use(resource); } }",
         "if (foo) { if (bar) { baz(); } }",
         "do { bar(); } while (foo)",
         "function foo() { while (bar) { baz() } }",
-        "function test() { { console.log(6); console.log(6) } }",
         "{ let x = 1; }",                      // { "ecmaVersion": 6 },
         "{ const x = 1; }",                    // { "ecmaVersion": 6 },
         "'use strict'; { function bar() {} }", // { "ecmaVersion": 6 },
@@ -225,6 +233,14 @@ fn test() {
     ];
 
     let fail = vec![
+        "function test() { { console.log(6); console.log(6) } }",
+        "function test() { before(); { notify(); } }",
+        "function test() { { notify(); } after(); }",
+        "function test() { before(); { notify(); again(); } after(); }",
+        "const test = function () { before(); { notify(); } };",
+        "const test = () => { before(); { notify(); } };",
+        "class Test { method() { before(); { notify(); } } }",
+        "async function test() { before(); { await notify(); } }",
         "{}",
         "{var x = 1;}",
         "foo(); {} bar();",
