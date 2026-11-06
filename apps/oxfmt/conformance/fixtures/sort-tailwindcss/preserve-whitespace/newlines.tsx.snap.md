@@ -25,8 +25,6 @@ shadow-lg` : "font-normal"}`} />;
 
 `````
 
-### Input variants differ: CRLF, CR
-
 ## `{"sortTailwindcss":{}}`
 
 `````tsx
