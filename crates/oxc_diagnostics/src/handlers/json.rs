@@ -75,6 +75,30 @@ impl JSONReportHandler {
         if let Some(source) = source {
             write!(f, r#""filename": "{}","#, escape(source.name().unwrap_or_default()))?;
         }
+        if let Some(fixes) = diagnostic.fixes() {
+            f.write_str(r#""fixes": ["#)?;
+            let mut wrote_fix = false;
+            for fix in fixes {
+                let Some(length) = fix.span.end.checked_sub(fix.span.start) else {
+                    continue;
+                };
+                if wrote_fix {
+                    f.write_char(',')?;
+                }
+                wrote_fix = true;
+                write!(f, r#"{{"kind": "{}","#, escape(fix.kind))?;
+                if let Some(message) = &fix.message {
+                    write!(f, r#""message": "{}","#, escape(message))?;
+                }
+                write!(
+                    f,
+                    r#""span": {{"offset": {},"length": {length}}},"content": "{}"}}"#,
+                    fix.span.start,
+                    escape(&fix.content)
+                )?;
+            }
+            f.write_str("],")?;
+        }
         f.write_str(r#""labels": ["#)?;
         let mut scanner = source.map(|source| SpanScanner::new(source.data(), 0, 0));
         for (index, label) in diagnostic.labels().iter().enumerate() {

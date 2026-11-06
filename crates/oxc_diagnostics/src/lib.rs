@@ -61,7 +61,7 @@ pub use crate::service::{DiagnosticSender, DiagnosticService};
 pub use crate::{
     handlers::{GraphicalReportHandler, GraphicalTheme, JSONReportHandler},
     named_source::NamedSource,
-    protocol::{Diagnostic, Severity, SourceCode},
+    protocol::{Diagnostic, DiagnosticFix, Severity, SourceCode},
 };
 pub use oxc_span::LabeledSpan;
 
@@ -235,6 +235,7 @@ impl Display for OxcCode {
 pub struct OxcDiagnosticInner {
     pub message: Cow<'static, str>,
     pub labels: Labels,
+    pub fixes: Option<Box<[DiagnosticFix]>>,
     pub help: Option<Cow<'static, str>>,
     pub note: Option<Cow<'static, str>>,
     pub severity: Severity,
@@ -274,6 +275,10 @@ impl Diagnostic for OxcDiagnostic {
     /// Labels covering problematic portions of source code.
     fn labels(&self) -> &[LabeledSpan] {
         &self.labels
+    }
+
+    fn fixes(&self) -> Option<&[DiagnosticFix]> {
+        self.fixes.as_deref()
     }
 
     /// An error code uniquely identifying this diagnostic.
@@ -318,6 +323,7 @@ impl OxcDiagnostic {
             inner: Box::new(OxcDiagnosticInner {
                 message,
                 labels: Labels::new(),
+                fixes: None,
                 help: None,
                 note: None,
                 severity,
@@ -470,6 +476,14 @@ impl OxcDiagnostic {
         self
     }
 
+    /// Attach alternative complete replacements to this diagnostic.
+    pub fn with_fixes(mut self, fixes: Box<[DiagnosticFix]>) -> Self {
+        if !fixes.is_empty() {
+            self.inner.fixes = Some(fixes);
+        }
+        self
+    }
+
     /// Add a URL that provides more information about this diagnostic.
     pub fn with_url<S: Into<Cow<'static, str>>>(mut self, url: S) -> Self {
         self.inner.url = Some(url.into());
@@ -542,6 +556,10 @@ impl<S: SourceCode> Diagnostic for DiagnosticWithSource<S> {
 
     fn labels(&self) -> &[LabeledSpan] {
         self.diagnostic.labels()
+    }
+
+    fn fixes(&self) -> Option<&[DiagnosticFix]> {
+        self.diagnostic.fixes()
     }
 
     fn source_code(&self) -> Option<&dyn SourceCode> {
