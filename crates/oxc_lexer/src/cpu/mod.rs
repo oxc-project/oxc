@@ -141,11 +141,12 @@ trait CpuPrivate {
 /// [`detect`]: Self::detect
 #[cfg(target_arch = "x86_64")]
 #[derive(Clone, Copy, Debug)]
+#[repr(u8)] // So `detect` can transmute it to/from `AtomicI8`
 pub enum DynCpu {
-    Generic(Generic),
-    Avx2(Avx2),
+    Generic(Generic) = 0,
+    Avx2(Avx2) = 1,
     #[expect(dead_code)]
-    Neon(Neon),
+    Neon(Neon) = 2,
 }
 
 /// Enum representing a CPU feature set.
@@ -196,6 +197,10 @@ const _: () = {
     };
     assert!(size_of::<DynCpu>() == expected_size);
 };
+
+/// [`DynCpu`] always has alignment 1.
+/// This also guarantees [`Generic`], [`Avx2`] and [`Neon`] have alignment 1.
+const _: () = assert!(align_of::<DynCpu>() == 1);
 
 impl Cpu for DynCpu {}
 
@@ -325,13 +330,45 @@ pub const BASELINE: Generic = Generic(());
 
 impl DynCpu {
     /// Detect CPU feature set.
+    ///
+    /// The result is cached, so only the first call checks the CPU's features.
     #[cfg(target_arch = "x86_64")]
+    #[inline]
     pub fn detect() -> Self {
-        // Currently a compile-time check. Later on will be replaced by runtime detection.
-        if cfg!(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")) {
-            Avx2(()).to_dyn()
+        use std::sync::atomic::{AtomicI8, Ordering};
+
+        /// Discriminant of the detected [`DynCpu`], or -1 if not detected yet.
+        static DETECTED: AtomicI8 = AtomicI8::new(-1);
+
+        /// Detect CPU feature set, and cache the result in [`DETECTED`].
+        ///
+        /// If threads race to call this, they each check the CPU and store the same value.
+        /// No thread blocks or sleeps.
+        #[cold]
+        #[inline(never)]
+        fn detect_uncached() -> DynCpu {
+            let cpu = if is_x86_feature_detected!("avx2")
+                && is_x86_feature_detected!("bmi2")
+                && is_x86_feature_detected!("popcnt")
+            {
+                Avx2(()).to_dyn()
+            } else {
+                BASELINE.to_dyn()
+            };
+
+            // SAFETY: `DynCpu` is `#[repr(u8)]` and its variants' fields are all zero-sized,
+            // so it's just its discriminant
+            let discriminant = unsafe { mem::transmute::<DynCpu, i8>(cpu) };
+            DETECTED.store(discriminant, Ordering::Relaxed);
+            cpu
+        }
+
+        let detected = DETECTED.load(Ordering::Relaxed);
+        if detected >= 0 {
+            // SAFETY: `DETECTED` only holds -1, or a `DynCpu` which `detect_uncached` stored
+            unsafe { mem::transmute::<i8, DynCpu>(detected) }
         } else {
-            BASELINE.to_dyn()
+            detect_uncached()
         }
     }
 
