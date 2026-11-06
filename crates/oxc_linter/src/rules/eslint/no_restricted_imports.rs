@@ -1057,8 +1057,10 @@ impl Rule for NoRestrictedImports {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
+        let import_statement_spans: FxHashSet<Span> =
+            module_record.import_entries.iter().map(|entry| entry.statement_span).collect();
 
-        self.report_side_effects(ctx, module_record);
+        self.report_side_effects(ctx, module_record, &import_statement_spans);
 
         let mut reported_general_import_paths = FxHashSet::default();
         let mut reported_general_import_patterns = FxHashSet::default();
@@ -1083,9 +1085,6 @@ impl Rule for NoRestrictedImports {
                 &mut reported_general_export_patterns,
             );
         }
-
-        let import_statement_spans: FxHashSet<Span> =
-            module_record.import_entries.iter().map(|entry| entry.statement_span).collect();
 
         for entry in &module_record.indirect_export_entries {
             // `import { a } from 'foo'; export { a };` is recorded as an indirect export that
@@ -1114,13 +1113,16 @@ impl Rule for NoRestrictedImports {
 }
 
 impl NoRestrictedImports {
-    fn report_side_effects(&self, ctx: &LintContext<'_>, module_record: &ModuleRecord) {
+    fn report_side_effects(
+        &self,
+        ctx: &LintContext<'_>,
+        module_record: &ModuleRecord,
+        import_statement_spans: &FxHashSet<Span>,
+    ) {
         if module_record.requested_modules.is_empty() {
             return;
         }
 
-        let import_statement_spans: FxHashSet<Span> =
-            module_record.import_entries.iter().map(|entry| entry.statement_span).collect();
         let mut side_effect_import_map: FxHashMap<&CompactStr, Vec<RequestedModule>> =
             FxHashMap::default();
 
