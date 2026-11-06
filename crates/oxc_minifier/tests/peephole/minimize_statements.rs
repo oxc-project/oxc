@@ -417,7 +417,10 @@ fn test_inline_single_use_function_declaration() {
         "function c() { function f() { g() } k(); r.f = f; }",
         "function c() { k(), r.f = function() { g(); }; }",
     );
-    test("function c() { function f() {} r.a = r.b = f; }", "function c() { r.a = r.b = function() {}; }");
+    test(
+        "function c() { function f() {} r.a = r.b = f; }",
+        "function c() { r.a = r.b = function() {}; }",
+    );
     test(
         "function c() { function a() { g() } function b() { a() } r.b = b; }",
         "function c() { function a() { g(); } r.b = function() { a(); }; }",
