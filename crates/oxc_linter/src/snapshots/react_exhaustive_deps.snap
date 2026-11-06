@@ -3174,6 +3174,69 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref.
+   ╭─[exhaustive_deps.tsx:5:24]
+ 4 │             if (section === 'a') ref.current?.scrollIntoView();
+ 5 │           }, [section, ref.current]);
+   ·                        ───────────
+ 6 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: OUTER.
+   ╭─[exhaustive_deps.tsx:5:24]
+ 4 │             console.log(section, OUTER);
+ 5 │           }, [section, OUTER]);
+   ·                        ─────
+ 6 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: OUTER.
+   ╭─[exhaustive_deps.tsx:8:13]
+ 7 │             page,
+ 8 │             OUTER,
+   ·             ─────
+ 9 │           ]);
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref.
+   ╭─[exhaustive_deps.tsx:8:24]
+ 7 │             if (section === 'a') ref.current?.scrollIntoView();
+ 8 │           }, [section, ref.current, other.current, OUTER, OTHER]);
+   ·                        ───────────
+ 9 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: OUTER.
+   ╭─[exhaustive_deps.tsx:8:52]
+ 7 │             if (section === 'a') ref.current?.scrollIntoView();
+ 8 │           }, [section, ref.current, other.current, OUTER, OTHER]);
+   ·                                                    ─────
+ 9 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: other.
+   ╭─[exhaustive_deps.tsx:8:37]
+ 7 │             if (section === 'a') ref.current?.scrollIntoView();
+ 8 │           }, [section, ref.current, other.current, OUTER, OTHER]);
+   ·                                     ─────────────
+ 9 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: OTHER.
+   ╭─[exhaustive_deps.tsx:8:59]
+ 7 │             if (section === 'a') ref.current?.scrollIntoView();
+ 8 │           }, [section, ref.current, other.current, OUTER, OTHER]);
+   ·                                                           ─────
+ 9 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+
   ⚠ react-hooks(exhaustive-deps): React Hook useSpecialEffect has a missing dependency: 'state'
    ╭─[exhaustive_deps.tsx:7:14]
  5 │             const someNumber: typeof state = 2;
