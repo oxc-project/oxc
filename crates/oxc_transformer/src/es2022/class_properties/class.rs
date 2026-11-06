@@ -452,6 +452,27 @@ impl<'a> ClassProperties<'a> {
 
         // Insert temp var for class if required. Name class if required.
         let class_details = self.classes_stack.last_mut();
+        if let Some(binding) = &class_details.bindings.shadowed_name {
+            // Initialize before static initializers, which can call methods using this alias.
+            // `const _Class = Class` preserves the per-evaluation identity of declarations in loops.
+            let init = class_details.bindings.name.as_ref().unwrap().create_read_expression(ctx);
+            let declarator = VariableDeclarator::new(
+                SPAN,
+                binding.create_binding_pattern(ctx),
+                None,
+                Some(init),
+                false,
+                ctx,
+            );
+            let stmt = Statement::new_variable_declaration(
+                SPAN,
+                VariableDeclarationKind::Const,
+                [declarator],
+                false,
+                ctx,
+            );
+            self.insert_after_stmts.insert(0, stmt);
+        }
         if let Some(temp_binding) = &class_details.bindings.temp {
             // Binding for class name is required
             if let Some(ident) = &class.id {
