@@ -1084,7 +1084,16 @@ impl Rule for NoRestrictedImports {
             );
         }
 
+        let import_statement_spans: FxHashSet<Span> =
+            module_record.import_entries.iter().map(|entry| entry.statement_span).collect();
+
         for entry in &module_record.indirect_export_entries {
+            // `import { a } from 'foo'; export { a };` is recorded as an indirect export that
+            // keeps the span of the import statement. The import entry was already checked above.
+            if import_statement_spans.contains(&entry.statement_span) {
+                continue;
+            }
+
             self.report_export_name_allowed(
                 ctx,
                 entry,
@@ -3667,6 +3676,33 @@ fn test() {
                 serde_json::json!([{ "patterns": [{ "regex": "^foo$", "allowImportNames": ["allowed"] }] }]),
             ),
         ),
+    ]);
+
+    // A local re-export of an imported binding is reported once, on the import.
+    let restricted_z_name = serde_json::json!([{
+        "paths": [{ "name": "zod", "importNames": ["z"], "message": "Use 'util/zod' instead." }]
+    }]);
+    pass.push((
+        "import type { z } from 'zod'; export { z };",
+        Some(serde_json::json!([{
+            "paths": [{ "name": "zod", "importNames": ["z"], "allowTypeImports": true }]
+        }])),
+    ));
+    fail.extend([
+        ("import { z } from 'zod'; export { z };", Some(restricted_z_name.clone())),
+        ("import { z } from 'zod'; export { z as zz };", Some(restricted_z_name.clone())),
+        ("import { z } from 'zod'; export { z, z as zz };", Some(restricted_z_name.clone())),
+        ("import { z } from 'zod'; export { z };", Some(serde_json::json!(["zod"]))),
+        (
+            "import { z } from 'zod'; export { z };",
+            Some(serde_json::json!([{ "patterns": [{ "group": ["zod"] }] }])),
+        ),
+        (
+            "import z from 'zod'; export { z };",
+            Some(serde_json::json!([{ "paths": [{ "name": "zod", "importNames": ["default"] }] }])),
+        ),
+        // A real `export ... from` is its own statement, so it keeps its own report.
+        ("import { z } from 'zod'; export { z } from 'zod';", Some(restricted_z_name)),
     ]);
 
     Tester::new(NoRestrictedImports::NAME, NoRestrictedImports::PLUGIN, pass, fail)
