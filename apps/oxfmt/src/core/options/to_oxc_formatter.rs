@@ -164,6 +164,9 @@ pub(super) fn to_sort_imports(config: &FormatConfig) -> Result<Option<SortImport
     if let Some(v) = sort_imports_config.partition_by_comment {
         sort_imports.partition_by_comment = v;
     }
+    if let Some(v) = sort_imports_config.partition_by_side_effect {
+        sort_imports.partition_by_side_effect = v;
+    }
     if let Some(v) = sort_imports_config.sort_side_effects {
         sort_imports.sort_side_effects = v;
     }
