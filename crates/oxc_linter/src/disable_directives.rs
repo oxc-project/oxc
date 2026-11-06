@@ -4,7 +4,7 @@ use itertools::Itertools;
 use oxc_ast::Comment;
 use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{FixKind, fixer::Fix};
 
@@ -296,11 +296,25 @@ pub struct DisableDirectives {
     unused_enable_comments: Box<[(DirectivePrefix, Option<String>, Span)]>,
     /// Spans of used enable directives, to filter out unused
     used_disable_comments: RefCell<Vec<DisabledRule>>,
+    /// Rules that were not run (e.g., type-aware rules when type-aware mode is disabled).
+    /// Directives for these rules should not be flagged as unused.
+    skipped_rules: RefCell<FxHashSet<String>>,
 }
 
 impl DisableDirectives {
     fn mark_disable_directive_used(&self, disable_directive: DisabledRule) {
         self.used_disable_comments.borrow_mut().push(disable_directive);
+    }
+
+    /// Mark a rule as skipped (not run).
+    /// Directives for skipped rules should not be flagged as unused.
+    pub fn mark_rule_skipped(&self, rule_name: &str) {
+        self.skipped_rules.borrow_mut().insert(rule_name.to_string());
+    }
+
+    /// Check if a rule was marked as skipped.
+    pub fn is_rule_skipped(&self, rule_name: &str) -> bool {
+        self.skipped_rules.borrow().contains(rule_name)
     }
 
     pub fn contains(&self, rule_name: &str, span: Span) -> bool {
@@ -374,6 +388,7 @@ impl DisableDirectives {
 
     pub fn collect_unused_disable_comments(&self) -> Vec<DisableRuleComment> {
         let used = self.used_disable_comments.borrow();
+        let skipped = self.skipped_rules.borrow();
 
         self.intervals
             .iter()
@@ -401,17 +416,30 @@ impl DisableDirectives {
                         }
                         match &interval.val {
                             DisabledRule::Single { rule_name, name_span, .. } => {
+                                // If the rule was skipped (e.g., type-aware rule without --type-aware),
+                                // we cannot know if the directive is unused, so don't flag it.
+                                if skipped.contains(rule_name) {
+                                    return None;
+                                }
                                 Some(RuleCommentRule {
                                     directive_prefix: interval.val.directive_prefix(),
                                     rule_name: rule_name.clone(),
                                     name_span: *name_span,
                                 })
                             }
-                            DisabledRule::All { .. } => Some(RuleCommentRule {
-                                directive_prefix: interval.val.directive_prefix(),
-                                rule_name: "all".to_string(),
-                                name_span: *comment_span,
-                            }),
+                            DisabledRule::All { .. } => {
+                                // For `eslint-disable` (all rules), if there are any skipped rules,
+                                // we can't know if the directive is unused because it might have disabled
+                                // those skipped rules. So don't flag it.
+                                if !skipped.is_empty() {
+                                    return None;
+                                }
+                                Some(RuleCommentRule {
+                                    directive_prefix: interval.val.directive_prefix(),
+                                    rule_name: "all".to_string(),
+                                    name_span: *comment_span,
+                                })
+                            }
                         }
                     })
                     .collect::<Vec<_>>();
@@ -484,6 +512,7 @@ impl DisableDirectivesBuilder {
             disable_rule_comments: self.disable_rule_comments.into_boxed_slice(),
             unused_enable_comments: self.unused_enable_comments.into_boxed_slice(),
             used_disable_comments: RefCell::new(Vec::new()),
+            skipped_rules: RefCell::new(FxHashSet::default()),
         }
     }
 
