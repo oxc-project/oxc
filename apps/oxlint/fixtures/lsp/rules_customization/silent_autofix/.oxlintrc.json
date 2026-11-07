@@ -1,0 +1,9 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "plugins": ["typescript"],
+  "rules": {
+    "typescript/no-import-type-side-effects": "error"
+  }
+}
