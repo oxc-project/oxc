@@ -583,7 +583,11 @@ impl ConfigStoreBuilder {
 
     /// # Panics
     /// This function will panic if the `oxlintrc` is not valid JSON.
-    pub fn resolve_final_config_file(&self, oxlintrc: Oxlintrc) -> String {
+    pub fn resolve_final_config_file(
+        &self,
+        oxlintrc: Oxlintrc,
+        external_plugin_store: &ExternalPluginStore,
+    ) -> String {
         let mut oxlintrc = oxlintrc;
         let previous_rules = std::mem::take(&mut oxlintrc.rules);
 
@@ -593,10 +597,9 @@ impl ConfigStoreBuilder {
             .map(|r| (get_name(&r.plugin_name, &r.rule_name), r))
             .collect::<rustc_hash::FxHashMap<_, _>>();
 
-        let new_rules = self
+        let mut new_rules: Vec<ESLintRule> = self
             .rules
             .iter()
-            .sorted_unstable_by_key(|(r, _)| (r.plugin_name(), r.name()))
             .map(|(r, severity)| ESLintRule {
                 plugin_name: r.plugin_name().to_string(),
                 rule_name: r.name().to_string(),
@@ -607,6 +610,20 @@ impl ConfigStoreBuilder {
                     .unwrap_or_default(),
             })
             .collect();
+
+        new_rules.extend(self.external_rules.iter().map(|(&rule_id, &(options_id, severity))| {
+            let (plugin_name, rule_name) = external_plugin_store.resolve_plugin_rule_names(rule_id);
+            ESLintRule {
+                plugin_name: plugin_name.to_string(),
+                rule_name: rule_name.to_string(),
+                severity,
+                config: external_plugin_store.rule_options(options_id).clone(),
+            }
+        }));
+
+        new_rules.sort_unstable_by(|a, b| {
+            a.plugin_name.cmp(&b.plugin_name).then_with(|| a.rule_name.cmp(&b.rule_name))
+        });
 
         oxlintrc.plugins = Some(self.config.plugins);
         oxlintrc.settings.clone_from(&self.config.settings);
@@ -925,6 +942,191 @@ mod test {
         let builder = ConfigStoreBuilder::empty();
         assert_eq!(builder.plugins(), LintPlugins::default());
         assert!(builder.rules.is_empty());
+    }
+
+    fn register_custom_plugin(store: &mut ExternalPluginStore) {
+        store.register_plugin(
+            PathBuf::from("path/to/custom-plugin"),
+            "custom".to_string(),
+            0,
+            vec!["my-rule".to_string(), "other-rule".to_string()],
+        );
+    }
+
+    fn parse_printed_rules(json: &str) -> serde_json::Map<String, serde_json::Value> {
+        serde_json::from_str::<serde_json::Value>(json).unwrap()["rules"]
+            .as_object()
+            .unwrap()
+            .clone()
+    }
+
+    #[test]
+    fn test_resolve_final_config_file_includes_external_rules() {
+        let mut store = ExternalPluginStore::new(true);
+        register_custom_plugin(&mut store);
+
+        let rule_with_options = store.lookup_rule_id("custom", "my-rule").unwrap();
+        let options = smallvec::smallvec![serde_json::json!({ "foo": 1 })];
+        let options_id = store.add_options(rule_with_options, &options);
+        let rule_without_options = store.lookup_rule_id("custom", "other-rule").unwrap();
+
+        let mut builder = ConfigStoreBuilder::empty();
+        builder.external_rules.insert(rule_with_options, (options_id, AllowWarnDeny::Warn));
+        builder
+            .external_rules
+            .insert(rule_without_options, (ExternalOptionsId::NONE, AllowWarnDeny::Deny));
+
+        let rules =
+            parse_printed_rules(&builder.resolve_final_config_file(Oxlintrc::default(), &store));
+
+        assert_eq!(rules["custom/my-rule"], serde_json::json!(["warn", [{ "foo": 1 }]]));
+        assert_eq!(rules["custom/other-rule"], serde_json::json!("deny"));
+        assert_eq!(rules.keys().collect::<Vec<_>>(), vec!["custom/my-rule", "custom/other-rule"]);
+    }
+
+    #[test]
+    fn test_resolve_final_config_file_mixes_builtin_and_external_rules() {
+        let mut store = ExternalPluginStore::new(true);
+        register_custom_plugin(&mut store);
+
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+            {
+                "categories": { "correctness": "off" },
+                "rules": {
+                    "no-debugger": "error",
+                    "custom/my-rule": ["warn", { "foo": 1 }],
+                    "custom/other-rule": "error"
+                }
+            }
+            "#,
+        )
+        .unwrap();
+
+        let builder =
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone(), None, &mut store, None)
+                .unwrap();
+
+        let rules = parse_printed_rules(&builder.resolve_final_config_file(oxlintrc, &store));
+
+        assert_eq!(rules["no-debugger"], serde_json::json!("deny"));
+        assert_eq!(rules["custom/my-rule"], serde_json::json!(["warn", [{ "foo": 1 }]]));
+        assert_eq!(rules["custom/other-rule"], serde_json::json!("deny"));
+        // Sorted by plugin name, then rule name (`custom` before `eslint`).
+        assert_eq!(
+            rules.keys().collect::<Vec<_>>(),
+            vec!["custom/my-rule", "custom/other-rule", "no-debugger"]
+        );
+    }
+
+    #[test]
+    fn test_resolve_final_config_file_prints_external_rules_absent_from_input_oxlintrc() {
+        let mut store = ExternalPluginStore::new(true);
+        register_custom_plugin(&mut store);
+
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+            {
+                "categories": { "correctness": "off" },
+                "rules": {
+                    "no-debugger": "error",
+                    "custom/my-rule": ["warn", { "foo": 1 }]
+                }
+            }
+            "#,
+        )
+        .unwrap();
+
+        let builder =
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut store, None).unwrap();
+
+        // `--print-config` passes the original root config, which may omit rules
+        // that were resolved from `extends` into the builder.
+        let rules =
+            parse_printed_rules(&builder.resolve_final_config_file(Oxlintrc::default(), &store));
+
+        assert_eq!(rules["custom/my-rule"], serde_json::json!(["warn", [{ "foo": 1 }]]));
+        assert_eq!(rules["no-debugger"], serde_json::json!("deny"));
+        assert!(!rules.contains_key("custom/other-rule"));
+    }
+
+    const NESTED_ROOT_CONFIG: &str = "fixtures/nested_config/.oxlintrc.json";
+    const NESTED_INDEPENDENT_CONFIG: &str = "fixtures/nested_config/package1/.oxlintrc.json";
+    const NESTED_EXTENDS_CONFIG: &str = "fixtures/nested_config/package2/.oxlintrc.json";
+
+    fn builder_from_nested_config(
+        path: &str,
+        store: &mut ExternalPluginStore,
+    ) -> (ConfigStoreBuilder, Oxlintrc) {
+        let oxlintrc = Oxlintrc::from_file(&PathBuf::from(path)).unwrap();
+        let builder =
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone(), None, store, None).unwrap();
+        (builder, oxlintrc)
+    }
+
+    #[test]
+    fn test_resolve_final_config_file_nested_config_is_independent() {
+        // Nested configs are not auto-merged with the parent.
+        // https://oxc.rs/docs/guide/usage/linter/nested-config.html
+        let mut store = ExternalPluginStore::new(true);
+        register_custom_plugin(&mut store);
+
+        let (root_builder, root_oxlintrc) =
+            builder_from_nested_config(NESTED_ROOT_CONFIG, &mut store);
+        let root_rules =
+            parse_printed_rules(&root_builder.resolve_final_config_file(root_oxlintrc, &store));
+
+        assert_eq!(root_rules["no-debugger"], serde_json::json!("deny"));
+        assert_eq!(root_rules["custom/my-rule"], serde_json::json!(["warn", [{ "foo": 1 }]]));
+        assert!(!root_rules.contains_key("no-console"));
+        assert!(!root_rules.contains_key("custom/other-rule"));
+
+        let mut nested_store = ExternalPluginStore::new(true);
+        let (nested_builder, nested_oxlintrc) =
+            builder_from_nested_config(NESTED_INDEPENDENT_CONFIG, &mut nested_store);
+        let nested_rules = parse_printed_rules(
+            &nested_builder.resolve_final_config_file(nested_oxlintrc, &nested_store),
+        );
+
+        assert_eq!(nested_rules["no-console"], serde_json::json!("deny"));
+        assert!(!nested_rules.contains_key("no-debugger"));
+        assert!(!nested_rules.contains_key("custom/my-rule"));
+    }
+
+    #[test]
+    fn test_resolve_final_config_file_nested_config_extends_parent() {
+        // Monorepo pattern: nested config extends the parent explicitly.
+        let mut store = ExternalPluginStore::new(true);
+        register_custom_plugin(&mut store);
+
+        let (builder, oxlintrc) = builder_from_nested_config(NESTED_EXTENDS_CONFIG, &mut store);
+        let rules = parse_printed_rules(&builder.resolve_final_config_file(oxlintrc, &store));
+
+        assert_eq!(rules["no-debugger"], serde_json::json!("deny"));
+        assert_eq!(rules["no-console"], serde_json::json!("allow"));
+        assert_eq!(rules["custom/my-rule"], serde_json::json!(["warn", [{ "foo": 1 }]]));
+        assert_eq!(rules["custom/other-rule"], serde_json::json!("deny"));
+        assert_eq!(
+            rules.keys().collect::<Vec<_>>(),
+            vec!["custom/my-rule", "custom/other-rule", "no-console", "no-debugger"]
+        );
+    }
+
+    #[test]
+    fn test_resolve_final_config_file_nested_config_extends_prints_from_builder() {
+        // `--print-config` passes the original nested oxlintrc, which omits rules
+        // inherited via `extends`. Those rules still come from the builder.
+        let mut store = ExternalPluginStore::new(true);
+        register_custom_plugin(&mut store);
+
+        let (builder, _) = builder_from_nested_config(NESTED_EXTENDS_CONFIG, &mut store);
+        let rules =
+            parse_printed_rules(&builder.resolve_final_config_file(Oxlintrc::default(), &store));
+
+        assert_eq!(rules["no-debugger"], serde_json::json!("deny"));
+        assert_eq!(rules["no-console"], serde_json::json!("allow"));
+        assert_eq!(rules["custom/my-rule"], serde_json::json!(["warn", [{ "foo": 1 }]]));
+        assert_eq!(rules["custom/other-rule"], serde_json::json!("deny"));
     }
 
     #[test]
