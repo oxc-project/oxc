@@ -66,16 +66,6 @@ impl Cpu {
         quote!(crate::cpu::DynCpu::#name)
     }
 
-    /// The `target_arch` of the platform which supports the feature set.
-    /// `None` for `Generic`, which every platform supports.
-    pub fn target_arch(self) -> Option<&'static str> {
-        match self {
-            Cpu::Avx2 => Some("x86_64"),
-            Cpu::Neon => Some("aarch64"),
-            Cpu::Generic => None,
-        }
-    }
-
     /// `cfg` predicate for the platforms where the feature set's type is uninhabited,
     /// so no value of it can exist.
     ///
