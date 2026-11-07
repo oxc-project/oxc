@@ -12,6 +12,7 @@ use std::{
     ptr::{self, NonNull},
     rc::Rc,
     string::ToString,
+    sync::{Arc, OnceLock},
     time::Duration,
 };
 
@@ -38,6 +39,7 @@ mod external_plugin_store;
 mod fixer;
 mod frameworks;
 mod globals;
+mod module_graph_scc;
 mod module_graph_visitor;
 mod module_record;
 mod options;
@@ -265,6 +267,7 @@ pub struct Linter {
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
     workspace_uri: Option<Box<str>>,
+    import_cycle_policies: OnceLock<rules::import::no_cycle::ImportCyclePolicies>,
 }
 
 impl Linter {
@@ -273,7 +276,13 @@ impl Linter {
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter, workspace_uri: None }
+        Self {
+            options,
+            config,
+            external_linter,
+            workspace_uri: None,
+            import_cycle_policies: OnceLock::new(),
+        }
     }
 
     #[must_use]
@@ -308,6 +317,14 @@ impl Linter {
     /// number of rules depends on which file is being linted.
     pub fn number_of_rules(&self, type_aware: bool) -> Option<usize> {
         self.config.number_of_rules(type_aware)
+    }
+
+    pub(crate) fn import_cycle_graph(&self) -> Option<Arc<module_graph_scc::ImportCycleGraph>> {
+        // Discover policies only once, and only if an import-graph run needs them.
+        let policies =
+            *self.import_cycle_policies.get_or_init(|| self.config.import_cycle_policies());
+        // A fresh invalidation token keeps independent runs isolated.
+        (!policies.is_empty()).then(|| Arc::new(module_graph_scc::ImportCycleGraph::new(policies)))
     }
 
     /// Return `true` if `Linter` has an external linter (JS plugins).

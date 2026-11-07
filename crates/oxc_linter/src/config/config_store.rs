@@ -8,7 +8,11 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{
     AllowWarnDeny,
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
-    rules::{RULES, RuleEnum},
+    rule::RuleMeta,
+    rules::{
+        RULES, RuleEnum,
+        import::no_cycle::{ImportCyclePolicies, NoCycle},
+    },
 };
 
 use super::{
@@ -78,10 +82,6 @@ pub struct Config {
 }
 
 impl Config {
-    fn builtin_rule_plugins(plugins: LintPlugins) -> LintPlugins {
-        plugins
-    }
-
     pub fn new(
         rules: Vec<(RuleEnum, AllowWarnDeny)>,
         mut external_rules: Vec<(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)>,
@@ -123,6 +123,27 @@ impl Config {
         self.base.rules.len()
     }
 
+    fn combined_plugins<'a>(
+        &self,
+        overrides: impl Iterator<Item = &'a ResolvedOxlintOverride>,
+    ) -> LintPlugins {
+        overrides.fold(self.plugins(), |plugins, entry| {
+            plugins | entry.plugins.unwrap_or_else(LintPlugins::empty)
+        })
+    }
+
+    fn override_category_plugins(
+        plugins: LintPlugins,
+        configured_plugins: LintPlugins,
+        override_plugins: Option<LintPlugins>,
+    ) -> LintPlugins {
+        if override_plugins.is_some_and(|entry_plugins| entry_plugins != plugins) {
+            plugins & !configured_plugins
+        } else {
+            LintPlugins::empty()
+        }
+    }
+
     pub fn apply_overrides(&self, path: &Path) -> ResolvedLinterState {
         if self.overrides.is_empty() {
             return self.base.clone();
@@ -153,22 +174,15 @@ impl Config {
 
         let mut env = self.base.config.env.clone();
         let mut globals = self.base.config.globals.clone();
-        let mut plugins = self.base.config.plugins;
+        let plugins = self.combined_plugins(overrides_to_apply.clone());
         let settings = self.base.config.settings.clone();
 
-        for override_config in overrides_to_apply.clone() {
-            if let Some(override_plugins) = override_config.plugins {
-                plugins |= override_plugins;
-            }
-        }
-
-        let builtin_rule_plugins = Self::builtin_rule_plugins(plugins);
         let mut rules = self
             .base_rules
             .iter()
             .filter(|(rule, _)| {
                 LintPlugins::try_from(rule.plugin_name())
-                    .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
+                    .is_ok_and(|plugin| plugins.contains(plugin))
             })
             .cloned()
             .collect::<FxHashMap<_, _>>();
@@ -188,41 +202,37 @@ impl Config {
         let mut configured_plugins = self.base.config.plugins;
 
         for override_config in overrides_to_apply {
-            if let Some(override_plugins) = override_config.plugins
-                && override_plugins != plugins
-            {
-                // Only apply categories to plugins that:
-                // 1. Are in the current accumulated plugin set
-                // 2. Have NOT been configured yet (not in root or previous overrides)
-                let unconfigured_plugins = plugins & !configured_plugins;
-
-                if !unconfigured_plugins.is_empty() {
-                    let all_rules = all_rules.get_or_insert_with(|| {
-                        RULES
-                            .iter()
-                            .filter(|rule| {
-                                LintPlugins::try_from(rule.plugin_name())
-                                    .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
-                            })
-                            .cloned()
-                            .collect::<Vec<_>>()
-                    });
-                    for (rule, severity) in all_rules.iter().filter_map(|rule| {
-                        let rule_plugin = LintPlugins::try_from(rule.plugin_name())
-                            .unwrap_or(LintPlugins::empty());
-                        // Only apply categories to rules from unconfigured plugins
-                        if !rule_plugin.is_empty() && unconfigured_plugins.contains(rule_plugin) {
-                            self.categories
-                                .get(&rule.category())
-                                .map(|severity| (rule.clone(), severity))
-                        } else {
-                            None
-                        }
-                    }) {
-                        rules.entry(rule).or_insert(*severity);
+            let unconfigured_plugins = Self::override_category_plugins(
+                plugins,
+                configured_plugins,
+                override_config.plugins,
+            );
+            if !unconfigured_plugins.is_empty() {
+                let all_rules = all_rules.get_or_insert_with(|| {
+                    RULES
+                        .iter()
+                        .filter(|rule| {
+                            LintPlugins::try_from(rule.plugin_name())
+                                .is_ok_and(|plugin| plugins.contains(plugin))
+                        })
+                        .cloned()
+                        .collect::<Vec<_>>()
+                });
+                for (rule, severity) in all_rules.iter().filter_map(|rule| {
+                    let rule_plugin =
+                        LintPlugins::try_from(rule.plugin_name()).unwrap_or(LintPlugins::empty());
+                    // Only apply categories to rules from unconfigured plugins
+                    if !rule_plugin.is_empty() && unconfigured_plugins.contains(rule_plugin) {
+                        self.categories
+                            .get(&rule.category())
+                            .map(|severity| (rule.clone(), severity))
+                    } else {
+                        None
                     }
-                    configured_plugins |= unconfigured_plugins;
+                }) {
+                    rules.entry(rule).or_insert(*severity);
                 }
+                configured_plugins |= unconfigured_plugins;
             }
 
             for (rule, severity) in &override_config.rules.builtin_rules {
@@ -293,6 +303,63 @@ pub struct ConfigStore {
 }
 
 impl ConfigStore {
+    /// Discover every potentially enabled no-cycle filter, conservatively ignoring glob overlap.
+    pub(crate) fn import_cycle_policies(&self) -> ImportCyclePolicies {
+        let mut policies = ImportCyclePolicies::default();
+        for config in std::iter::once(&self.base).chain(self.nested_configs.values()) {
+            let rules = config
+                .base
+                .rules
+                .iter()
+                .chain(config.overrides.iter().flat_map(|entry| &entry.rules.builtin_rules));
+            for (rule, severity) in rules {
+                if let RuleEnum::ImportNoCycle(rule) = rule
+                    && severity.is_warn_deny()
+                    && rule.uses_scc_prefilter()
+                {
+                    policies.insert(rule.graph_options());
+                }
+            }
+
+            // Overlapping overrides can enable the category's default no-cycle rule.
+            let plugins = config.combined_plugins(config.overrides.iter());
+            if config.plugins().has_import()
+                || !plugins.has_import()
+                || !config
+                    .categories
+                    .get(&NoCycle::CATEGORY)
+                    .is_some_and(|severity| severity.is_warn_deny())
+            {
+                continue;
+            }
+
+            // Categories only fill absent bindings. Earlier "off" overrides can remove a
+            // base binding; explicit settings in this same override still take precedence.
+            let mut may_be_missing = !config
+                .base_rules
+                .iter()
+                .any(|(rule, _)| matches!(rule, RuleEnum::ImportNoCycle(_)));
+            for entry in config.overrides.iter() {
+                let explicit = entry
+                    .rules
+                    .builtin_rules
+                    .iter()
+                    .find(|(rule, _)| matches!(rule, RuleEnum::ImportNoCycle(_)));
+                if may_be_missing
+                    && explicit.is_none()
+                    && Config::override_category_plugins(plugins, config.plugins(), entry.plugins)
+                        .has_import()
+                {
+                    policies.insert(NoCycle::default().graph_options());
+                    break;
+                }
+                may_be_missing |=
+                    explicit.is_some_and(|(_, severity)| *severity == AllowWarnDeny::Allow);
+            }
+        }
+        policies
+    }
+
     pub fn new(
         base_config: Config,
         nested_configs: FxHashMap<PathBuf, Config>,
@@ -437,6 +504,7 @@ mod test {
     use std::{
         path::{Path, PathBuf},
         str::FromStr,
+        sync::Arc,
     };
 
     use rustc_hash::FxHashMap;
@@ -463,6 +531,163 @@ mod test {
         ($json:tt) => {
             serde_json::from_value(serde_json::json!($json)).unwrap()
         };
+    }
+
+    #[test]
+    fn import_cycle_policies_include_overrides_nested_configs_and_added_plugin_categories() {
+        fn build(value: Value, external: &mut ExternalPluginStore) -> Config {
+            ConfigStoreBuilder::from_oxlintrc(
+                true,
+                serde_json::from_value(value).unwrap(),
+                None,
+                external,
+                None,
+            )
+            .unwrap()
+            .build(external)
+            .unwrap()
+        }
+        let eligible = |rule: &RuleEnum| matches!(rule, RuleEnum::ImportNoCycle(rule) if rule.uses_scc_prefilter());
+        for (value, expected) in [
+            (serde_json::json!({"categories": {}, "plugins": ["import"]}), false),
+            (
+                serde_json::json!({"categories": {}, "plugins": ["import"], "rules": {"import/no-cycle": "off"}}),
+                false,
+            ),
+            (
+                serde_json::json!({"categories": {}, "plugins": ["import"], "rules": {"import/no-cycle": ["error", {"maxDepth": 1}]}}),
+                false,
+            ),
+            (
+                serde_json::json!({"categories": {}, "plugins": ["import"], "rules": {"import/no-cycle": "error"}}),
+                true,
+            ),
+            (
+                serde_json::json!({"categories": {}, "plugins": ["import"], "overrides": [{"files": ["*.ts"], "rules": {"import/no-cycle": "error"}}]}),
+                true,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": ["typescript"], "overrides": [{"files": ["*.ts"], "plugins": ["import"]}]}),
+                true,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [{"files": ["*.ts"], "plugins": ["import"]}]}),
+                false,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [
+                    {"files": ["*.ts"], "plugins": ["import"]},
+                    {"files": ["*.ts"], "plugins": ["jest"]}
+                ]}),
+                true,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [
+                    {"files": ["*.ts"], "plugins": ["jest"]},
+                    {"files": ["*.ts"], "plugins": ["import"]}
+                ]}),
+                true,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [
+                    {"files": ["*.js"], "plugins": ["import"], "rules": {"import/no-cycle": "off"}},
+                    {"files": ["*.ts"], "plugins": ["jest"]},
+                    {"files": ["*.ts"], "plugins": ["import"]}
+                ]}),
+                true,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [
+                    {"files": ["*.ts"], "plugins": ["import"]},
+                    {"files": ["*.ts"], "plugins": ["jest"]},
+                    {"files": ["*.js"], "plugins": ["import"], "rules": {"import/no-cycle": "off"}}
+                ]}),
+                true,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": [], "overrides": [
+                    {"files": ["*.ts"], "plugins": ["import"], "rules": {"import/no-cycle": ["error", {"maxDepth": 1}]}},
+                    {"files": ["*.ts"], "plugins": ["import", "jest"], "rules": {"import/no-cycle": ["error", {"maxDepth": 1}]}}
+                ]}),
+                false,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": ["import"], "rules": {"import/no-cycle": "off"}, "overrides": [{"files": ["*.ts"], "plugins": ["import"]}]}),
+                false,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": ["typescript"], "overrides": [{"files": ["*.ts"], "plugins": ["import"], "rules": {"import/no-cycle": ["error", {"maxDepth": 1}]}}]}),
+                false,
+            ),
+            (
+                serde_json::json!({"categories": {"restriction": "warn"}, "plugins": ["typescript"], "overrides": [{"files": ["*.ts"], "plugins": ["import"], "rules": {"import/no-cycle": "off"}}]}),
+                false,
+            ),
+        ] {
+            let mut external = ExternalPluginStore::default();
+            let description = value.to_string();
+            let base = build(value, &mut external);
+            let store = ConfigStore::new(base, FxHashMap::default(), external);
+            assert_eq!(
+                store.resolve(Path::new("file.ts")).rules.iter().any(|(rule, _)| eligible(rule)),
+                expected,
+                "resolved config: {description}",
+            );
+            let linter = crate::Linter::new(crate::LintOptions::default(), store, None);
+            assert_eq!(
+                linter.import_cycle_graph().is_some(),
+                expected,
+                "SCC discovery: {description}"
+            );
+        }
+        let mut external = ExternalPluginStore::default();
+        let base = build(serde_json::json!({"categories": {}}), &mut external);
+        let nested = build(
+            serde_json::json!({"plugins": ["import"], "rules": {"import/no-cycle": "error"}}),
+            &mut external,
+        );
+        let nested = FxHashMap::from_iter([(PathBuf::from("nested"), nested)]);
+        let store = ConfigStore::new(base, nested, external);
+        let linter = crate::Linter::new(crate::LintOptions::default(), store, None);
+        assert!(linter.import_cycle_graph().is_some());
+
+        // Rare overrides and nested-config insertion order must not select a single policy.
+        for reverse in [false, true] {
+            let mut external = ExternalPluginStore::default();
+            let base = build(serde_json::json!({"categories": {}}), &mut external);
+            let mut configs = vec![
+                (
+                    "a",
+                    serde_json::json!({"plugins": ["import"], "overrides": [
+                        {"files": ["rare.ts"], "rules": {"import/no-cycle": ["error", {"ignoreTypes": false}]}},
+                        {"files": ["*.ts"], "excludeFiles": ["rare.ts"], "rules": {"import/no-cycle": "error"}}
+                    ]}),
+                ),
+                (
+                    "b",
+                    serde_json::json!({"plugins": ["import"], "rules": {"import/no-cycle": "error"}}),
+                ),
+            ];
+            if reverse {
+                configs.reverse();
+            }
+            let nested = configs
+                .into_iter()
+                .map(|(path, value)| (PathBuf::from(path), build(value, &mut external)))
+                .collect();
+            let linter = crate::Linter::new(
+                crate::LintOptions::default(),
+                ConfigStore::new(base, nested, external),
+                None,
+            );
+            let first = linter.import_cycle_graph().unwrap();
+            assert_eq!(first.policies.iter().count(), 2);
+            first.valid.store(false, std::sync::atomic::Ordering::Release);
+            let second = linter.import_cycle_graph().unwrap();
+            assert_eq!(second.policies, first.policies);
+            assert!(!Arc::ptr_eq(&first, &second));
+            assert!(second.valid.load(std::sync::atomic::Ordering::Acquire));
+        }
     }
 
     #[expect(clippy::default_trait_access)]
