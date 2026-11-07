@@ -181,6 +181,7 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
+    #[cfg(feature = "cfg")]
     fn branch_optional_chain(&mut self) {
         control_flow!(self, |cfg| {
             if let Some(exit) = self.optional_chain_exit {
@@ -2432,6 +2433,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.visit_span(&it.span);
         self.visit_expression(&it.object);
+        #[cfg(feature = "cfg")]
         if it.optional {
             self.branch_optional_chain();
         }
@@ -2444,6 +2446,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.visit_span(&it.span);
         self.visit_expression(&it.object);
+        #[cfg(feature = "cfg")]
         if it.optional {
             self.branch_optional_chain();
         }
@@ -2456,6 +2459,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.visit_span(&it.span);
         self.visit_expression(&it.object);
+        #[cfg(feature = "cfg")]
         if it.optional {
             self.branch_optional_chain();
         }
@@ -2995,6 +2999,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.visit_span(&expr.span);
         self.visit_expression(&expr.callee);
+        #[cfg(feature = "cfg")]
         if expr.optional {
             self.branch_optional_chain();
         }
