@@ -667,12 +667,15 @@ jobs:
     # It lexes every fixture with both AVX2 and generic, and fails if their outputs differ.
     #
     # This job covers what other jobs don't:
-    # - AVX2 leg (x86_64): Lint and test with `avx2`, `bmi2` and `popcnt` enabled at compile time.
+    # - AVX2 leg (x86_64): Test with `avx2`, `bmi2` and `popcnt` enabled at compile time.
     #   None of them is in the x86_64 baseline on any platform, so no other job builds with them.
-    # - Neon leg (aarch64): Lint, test and conformance. No other job builds Neon on PRs
-    #   (the aarch64 test jobs only run on `main`), and no other job lints it.
+    # - Neon leg (aarch64): Test and conformance. No other job builds Neon on PRs
+    #   (the aarch64 test jobs only run on `main`).
     #   Conformance regenerates the committed snapshots and fails on any diff,
     #   which ensures Neon behaves identically to AVX2 and generic.
+    #
+    # `CARGO_BUILD_WARNINGS: deny` makes the tests fail on any compiler warning,
+    # so warnings in code only compiled in these builds are still caught.
     #
     # See the LEXER section of `justfile` for the recipes.
     name: Lexer (${{ matrix.variant }})
@@ -721,10 +724,6 @@ jobs:
         with:
           tool: just
 
-      # The Neon leg gets clippy from `setup-rust` below
-      - run: rustup component add clippy
-        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'AVX2' }}
-
       # The Neon leg runs on a GitHub-hosted runner, where Namespace's cache isn't available.
       # Set up the same way as the "Test Linux ARM64" job, but with its own cache.
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
@@ -733,11 +732,6 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: lexer-aarch64
           tools: just
-          components: clippy
-
-      - name: Lint
-        if: steps.filter.outputs.changed == 'true'
-        run: just lint-lexer${{ matrix.suffix }}
 
       - name: Test
         if: steps.filter.outputs.changed == 'true'
