@@ -212,6 +212,21 @@ export async function lintSingleFileFixture(
     client,
   );
 }
+export async function lintFixtureWithUnsavedContent(
+  fixturesDir: string,
+  fixturePath: string,
+  languageId: string,
+  content: string,
+): Promise<string> {
+  const filePath = join(fixturesDir, fixturePath);
+  await using client = createLspConnection();
+  await client.initialize(
+    [{ uri: pathToFileURL(dirname(filePath)).href, name: "workspace-0" }],
+    PULL_DIAGNOSTICS_CAPABILITY,
+  );
+  return await getDiagnosticSnapshot(fixturePath, filePath, languageId, client, content);
+}
+
 export async function lintMultiFileFixture(
   fixturesDir: string,
   fixturePaths: {
@@ -486,9 +501,10 @@ async function getDiagnosticSnapshot(
   filePath: string,
   languageId: string,
   client: ReturnType<typeof createLspConnection>,
+  content?: string,
 ): Promise<string> {
   const fileUri = pathToFileURL(filePath).href;
-  const content = await fs.readFile(filePath, "utf-8");
+  content ??= await fs.readFile(filePath, "utf-8");
 
   await client.didOpen(fileUri, languageId, content);
 

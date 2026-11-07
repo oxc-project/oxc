@@ -52,6 +52,8 @@ pub type JsLintFileCb = ThreadsafeFunction<
         String,             // Globals for the file, as JSON string
         bool,               // Whether to collect per-rule timing information
         Option<String>,     // Workspace URI (`None` in CLI mode, `Some` in LSP mode)
+        Option<String>,     // Full source text of file, if file is partially loaded
+        u32,                // UTF-16 offset of linted section within full source text
     )>,
     // Return value
     Option<String>, // Success or failure payload serialized to JSON, or `None` if no output
@@ -66,6 +68,8 @@ pub type JsLintFileCb = ThreadsafeFunction<
         String,
         bool,
         Option<String>,
+        Option<String>,
+        u32,
     )>,
     // Error status
     Status,

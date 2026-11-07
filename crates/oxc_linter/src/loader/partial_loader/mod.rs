@@ -1,5 +1,5 @@
 use memchr::{memmem::Finder, memmem::FinderRev};
-use oxc_span::VALID_EXTENSIONS;
+use oxc_span::{SourceType, VALID_EXTENSIONS};
 
 use crate::loader::JavaScriptSource;
 
@@ -36,6 +36,21 @@ impl PartialLoader {
             "svelte" => Some(SveltePartialLoader::new(source_text).parse()),
             _ => None,
         }
+    }
+
+    /// Extract js sections for external linters.
+    ///
+    /// A file without any js section still gets an empty one, so JS plugins can report
+    /// against the original file.
+    pub fn parse_for_external_linter<'a>(
+        ext: &str,
+        source_text: &'a str,
+    ) -> Option<Vec<JavaScriptSource<'a>>> {
+        let mut sources = Self::parse(ext, source_text)?;
+        if sources.is_empty() {
+            sources.push(JavaScriptSource::partial("", SourceType::mjs(), 0));
+        }
+        Some(sources)
     }
 }
 
@@ -165,6 +180,23 @@ fn find_attribute<'a>(content: &'a str, target: &str) -> Option<AttributeValue<'
 
         if name.eq_ignore_ascii_case(target) {
             return Some(value);
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::PartialLoader;
+
+    #[test]
+    fn test_no_script_for_external_linter() {
+        for (ext, source_text) in
+            [("vue", "<template></template>"), ("svelte", "<div></div>"), ("astro", "<div></div>")]
+        {
+            let sources = PartialLoader::parse_for_external_linter(ext, source_text).unwrap();
+            assert_eq!(sources.len(), 1, "{ext}");
+            assert_eq!(sources[0].source_text, "", "{ext}");
+            assert_eq!(sources[0].start, 0, "{ext}");
         }
     }
 }

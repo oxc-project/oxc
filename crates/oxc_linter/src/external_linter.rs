@@ -58,6 +58,9 @@ pub type ExternalLinterLintFileCb = Arc<
                 // Workspace URI (e.g. `file:///path/to/workspace`).
                 // `None` in CLI mode (single workspace), `Some` in LSP mode.
                 Option<String>,
+                // Full source text of the file and UTF-16 offset of the linted section within it.
+                // `None` unless file is partially loaded (e.g. Vue, Astro, Svelte).
+                Option<(String, u32)>,
                 // Allocator
                 &Allocator,
             ) -> Result<LintFileOutput, LintFileFailure>
@@ -74,6 +77,14 @@ pub struct LoadPluginResult {
     pub rule_names: Vec<String>,
 }
 
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum DiagnosticRangeKind {
+    #[default]
+    Section,
+    Actual,
+}
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LintFileResult {
@@ -81,6 +92,8 @@ pub struct LintFileResult {
     pub message: String,
     pub start: u32,
     pub end: u32,
+    #[serde(default)]
+    pub range_kind: DiagnosticRangeKind,
     pub fixes: Option<Vec<JsFix>>,
     pub suggestions: Option<Vec<JsSuggestion>>,
 }

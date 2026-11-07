@@ -1,6 +1,7 @@
+import fs from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { lintFixture, lintMultiFileFixture } from "../utils";
+import { lintFixture, lintFixtureWithUnsavedContent, lintMultiFileFixture } from "../utils";
 
 const FIXTURES_DIR = join(import.meta.dirname, "fixtures");
 
@@ -51,6 +52,19 @@ describe("LSP linting", () => {
           { path: "nested-config/test.js", languageId: "javascript" },
           { path: "nested-config/nested/test.js", languageId: "javascript" },
         ]),
+      ).toMatchSnapshot();
+    });
+  });
+
+  describe("unsaved content", () => {
+    it("should pass unsaved content of a partially-loaded file to JS plugins", async () => {
+      const path = "config-js-plugin-vue/test.vue";
+      const content = (await fs.readFile(join(FIXTURES_DIR, path), "utf-8")).replace(
+        "template-ok",
+        "template-bad",
+      );
+      expect(
+        await lintFixtureWithUnsavedContent(FIXTURES_DIR, path, "vue", content),
       ).toMatchSnapshot();
     });
   });
