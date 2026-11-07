@@ -17,11 +17,23 @@ use crate::{
     surrogate_pair,
 };
 
+/// Maximum nesting depth of groups and character classes.
+///
+/// Parsing recurses per nesting level, so unbounded nesting (e.g. thousands of
+/// nested capturing groups, which is a legal pattern) overflows the thread stack
+/// and aborts the process. Debug builds have much larger stack frames than
+/// release builds, so the limit is profile-dependent.
+#[cfg(debug_assertions)]
+const MAX_NESTING_DEPTH: u32 = 64;
+#[cfg(not(debug_assertions))]
+const MAX_NESTING_DEPTH: u32 = 256;
+
 pub struct PatternParser<'a> {
     allocator: &'a Allocator,
     reader: Reader<'a>,
     state: State<'a>,
     span_factory: SpanFactory,
+    nesting_depth: u32,
 }
 
 impl<'a> PatternParser<'a> {
@@ -36,6 +48,7 @@ impl<'a> PatternParser<'a> {
             reader,
             state: State::new(unicode_mode, unicode_sets_mode),
             span_factory: SpanFactory::new(span_offset),
+            nesting_depth: 0,
         }
     }
 
@@ -106,6 +119,21 @@ impl<'a> PatternParser<'a> {
     //   Alternative[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] | Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups]
     // ```
     fn parse_disjunction(&mut self) -> Result<ast::Disjunction<'a>> {
+        // Every nested capturing group comes back through `parse_disjunction`, so
+        // this bounds the recursion depth. The same applies to nested classes via
+        // `parse_class_contents`.
+        if self.nesting_depth >= MAX_NESTING_DEPTH {
+            return Err(diagnostics::nesting_depth_exceeded(
+                self.span_factory.create(self.reader.offset(), self.reader.offset()),
+            ));
+        }
+        self.nesting_depth += 1;
+        let result = self.parse_disjunction_inner();
+        self.nesting_depth -= 1;
+        result
+    }
+
+    fn parse_disjunction_inner(&mut self) -> Result<ast::Disjunction<'a>> {
         let span_start = self.reader.offset();
 
         let mut body = ArenaVec::new_in(self);
@@ -822,6 +850,21 @@ impl<'a> PatternParser<'a> {
     //   [+UnicodeSetsMode] ClassSetExpression
     // ```
     fn parse_class_contents(
+        &mut self,
+    ) -> Result<(ast::CharacterClassContentsKind, ArenaVec<'a, ast::CharacterClassContents<'a>>)>
+    {
+        if self.nesting_depth >= MAX_NESTING_DEPTH {
+            return Err(diagnostics::nesting_depth_exceeded(
+                self.span_factory.create(self.reader.offset(), self.reader.offset()),
+            ));
+        }
+        self.nesting_depth += 1;
+        let result = self.parse_class_contents_inner();
+        self.nesting_depth -= 1;
+        result
+    }
+
+    fn parse_class_contents_inner(
         &mut self,
     ) -> Result<(ast::CharacterClassContentsKind, ArenaVec<'a, ast::CharacterClassContents<'a>>)>
     {
