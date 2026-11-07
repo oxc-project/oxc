@@ -1163,7 +1163,9 @@ impl Gen for TSExportAssignment<'_> {
         p.print_indent();
         p.print_comments_at(self.span.start);
         p.print_str("export = ");
-        self.expression.print_expr(p, Precedence::Lowest, ctx);
+        // The right-hand side is an AssignmentExpression position, so a parenthesized
+        // sequence expression must keep its parentheses.
+        self.expression.print_expr(p, Precedence::Comma, ctx);
         p.print_semicolon_after_statement();
     }
 }
@@ -4301,7 +4303,9 @@ impl Gen for TSEnumMember<'_> {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
-            init.print_expr(p, Precedence::Lowest, ctx);
+            // The initializer is an AssignmentExpression position, so a parenthesized
+            // sequence expression must keep its parentheses.
+            init.print_expr(p, Precedence::Comma, ctx);
         }
     }
 }
