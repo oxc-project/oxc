@@ -398,7 +398,12 @@ impl<'a> Codegen<'a> {
                 }
             }
             if start < end {
-                if mode == NonAsciiEscape::TemplateRaw {
+                if matches!(
+                    mode,
+                    NonAsciiEscape::TemplateRaw
+                        | NonAsciiEscape::RegExp
+                        | NonAsciiEscape::Directive
+                ) {
                     self.print_str_escaping_script_close_tag(&s[start..end]);
                 } else {
                     self.code.print_str(&s[start..end]);
@@ -423,7 +428,10 @@ impl<'a> Codegen<'a> {
             }
         }
         if start < s.len() {
-            if mode == NonAsciiEscape::TemplateRaw {
+            if matches!(
+                mode,
+                NonAsciiEscape::TemplateRaw | NonAsciiEscape::RegExp | NonAsciiEscape::Directive
+            ) {
                 self.print_str_escaping_script_close_tag(&s[start..]);
             } else {
                 self.code.print_str(&s[start..]);
@@ -528,7 +536,7 @@ impl<'a> Codegen<'a> {
     #[inline]
     pub(crate) fn print_directive_raw(&mut self, raw: &str) {
         if !self.options.ascii_only || raw.is_ascii() {
-            self.code.print_str(raw);
+            self.print_str_escaping_script_close_tag(raw);
         } else {
             self.print_non_ascii_escaped(raw, NonAsciiEscape::Directive);
         }
@@ -539,7 +547,7 @@ impl<'a> Codegen<'a> {
     #[inline]
     pub(crate) fn print_regex_pattern(&mut self, pattern: &str) {
         if !self.options.ascii_only || pattern.is_ascii() {
-            self.code.print_str(pattern);
+            self.print_str_escaping_script_close_tag(pattern);
         } else {
             self.print_non_ascii_escaped(pattern, NonAsciiEscape::RegExp);
         }
