@@ -511,3 +511,38 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ────
    ╰────
   help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:30]
+ 1 │ const query = "a"; if (title.match(query)) {}
+   ·                              ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:10]
+ 1 │ if (glob.match(file)) {}
+   ·          ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:33]
+ 1 │ let re = /a/; re = "a"; if (foo.match(re)) {}
+   ·                                 ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:37]
+ 1 │ var re = /a/; var re = "a"; if (foo.match(re)) {}
+   ·                                     ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:9]
+ 1 │ if (foo.match(new RegExp("a"))) {}
+   ·         ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
