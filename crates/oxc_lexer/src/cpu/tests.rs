@@ -731,3 +731,17 @@ fn cpu_version_fns() {
     assert_eq!(nth_mapped::<_, _, 1>([1, 2], |byte| byte + 1), 3);
     assert_eq!(Counter(100).plus_generic(1), 101);
 }
+
+/// Check [`DynCpu::detect`] returns [`Avx2`] only if the CPU supports AVX2, BMI2 and POPCNT.
+///
+/// Calls it twice, so at least 1 call reads the cached result.
+#[cfg(target_arch = "x86_64")]
+#[test]
+fn detect() {
+    let supported = is_x86_feature_detected!("avx2")
+        && is_x86_feature_detected!("bmi2")
+        && is_x86_feature_detected!("popcnt");
+    for _ in 0..2 {
+        assert_eq!(matches!(DynCpu::detect(), DynCpu::Avx2(_)), supported);
+    }
+}
