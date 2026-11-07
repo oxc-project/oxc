@@ -109,6 +109,15 @@ function Component() {
   return <Foo date={date} time={time} year={year} />;
 }
 ",
+        // A suppression of another React rule does not hide this one (oxc#26277)
+        "
+function Component() {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const filler = 0;
+  const rand = Math.random() + filler;
+  return <div>{rand}</div>;
+}
+",
     ];
 
     Tester::new(Purity::NAME, Purity::PLUGIN, pass, fail).test_and_snapshot();

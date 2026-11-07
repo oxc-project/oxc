@@ -15,3 +15,18 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
   note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect
+
+  ⚠ react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders
+   ╭─[set_state_in_effect.tsx:7:5]
+ 4 │   const [name, setName] = useState('');
+ 5 │   useEffect(() => {
+   ·   ────┬────
+   ·       ╰── This is the containing effect
+ 6 │     if (!item) return;
+ 7 │     setName(item.name);
+   ·     ───┬───
+   ·        ╰── Avoid calling setState() directly within an effect
+ 8 │     // eslint-disable-next-line react-hooks/exhaustive-deps
+   ╰────
+  help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect
