@@ -2,7 +2,7 @@ use super::PeepholeOptimizations;
 use crate::keep_var::KeepVar;
 use crate::{TraverseCtx, is_terminated::IsTerminated};
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::ast::{Expression, Statement};
+use oxc_ast::ast::{Declaration, Expression, Statement};
 use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_span::SPAN;
@@ -23,6 +23,21 @@ impl<'a> PeepholeOptimizations {
         {
             // preserve any potential TDZ issues
             return;
+        }
+
+        // In sloppy mode, function declarations nested in a dropped case create an
+        // Annex B.3.3 function-scoped binding that exists (uninitialized) even when
+        // the case never runs, so later assignments to the name write that local
+        // binding. Dropping the case would turn them into global writes. Keep the
+        // switch in that case. (Modules are strict and have no Annex B binding.)
+        if !ctx.source_type().is_module() {
+            let mut visitor = ContainsFunctionDeclaration::default();
+            for case in &switch_stmt.cases {
+                visitor.visit_switch_case(case);
+            }
+            if visitor.0 {
+                return;
+            }
         }
 
         let Some(discriminant) = switch_stmt.discriminant.evaluate_value(ctx) else {
@@ -135,6 +150,45 @@ impl<'a> PeepholeOptimizations {
             expressions.pop().unwrap()
         } else {
             Expression::new_sequence_expression(SPAN, expressions, ctx)
+        }
+    }
+}
+
+/// Walks dropped statements looking for function declarations, which get an
+/// Annex B.3.3 function-scoped binding in sloppy mode.
+#[derive(Default)]
+struct ContainsFunctionDeclaration(bool);
+
+impl<'a> VisitJs<'a> for ContainsFunctionDeclaration {
+    // `walk_statement` routes function declarations through `visit_declaration`.
+    fn visit_declaration(&mut self, it: &Declaration<'a>) {
+        if matches!(it, Declaration::FunctionDeclaration(_)) {
+            self.0 = true;
+        }
+    }
+
+    fn visit_statement(&mut self, it: &Statement<'a>) {
+        if self.0 {
+            return;
+        }
+        // Same selective traversal as `KeepVar`: only descend into statements that
+        // can nest a function declaration.
+        match it {
+            Statement::FunctionDeclaration(_) => self.0 = true,
+            Statement::BlockStatement(it) => self.visit_block_statement(it),
+            Statement::BreakStatement(it) => self.visit_break_statement(it),
+            Statement::ContinueStatement(it) => self.visit_continue_statement(it),
+            Statement::DoWhileStatement(it) => self.visit_do_while_statement(it),
+            Statement::ForInStatement(it) => self.visit_for_in_statement(it),
+            Statement::ForOfStatement(it) => self.visit_for_of_statement(it),
+            Statement::ForStatement(it) => self.visit_for_statement(it),
+            Statement::IfStatement(it) => self.visit_if_statement(it),
+            Statement::LabeledStatement(it) => self.visit_labeled_statement(it),
+            Statement::SwitchStatement(it) => self.visit_switch_statement(it),
+            Statement::TryStatement(it) => self.visit_try_statement(it),
+            Statement::WhileStatement(it) => self.visit_while_statement(it),
+            Statement::WithStatement(it) => self.visit_with_statement(it),
+            _ => {}
         }
     }
 }
