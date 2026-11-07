@@ -37,6 +37,6 @@ class C {
 }
 var _b_accessor_storage = { _: void 0 };
 babelHelpers.decorate([dec], C.prototype, "a", null);
-babelHelpers.decorate([dec], C, "b", null);
 babelHelpers.decorate([dec], C.prototype, "c", null);
 babelHelpers.decorate([dec], C.prototype, _a, null);
+babelHelpers.decorate([dec], C, "b", null);
