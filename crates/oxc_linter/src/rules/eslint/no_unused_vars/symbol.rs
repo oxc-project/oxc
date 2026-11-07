@@ -41,6 +41,12 @@ impl<'s, 'a> Symbol<'s, 'a> {
         Self { semantic, module_record, id: symbol_id, flags }
     }
 
+    /// Another symbol from the same file.
+    #[inline]
+    pub fn with_id(&self, symbol_id: SymbolId) -> Self {
+        Self::new(self.semantic, self.module_record, symbol_id)
+    }
+
     #[inline]
     pub fn id(&self) -> SymbolId {
         self.id

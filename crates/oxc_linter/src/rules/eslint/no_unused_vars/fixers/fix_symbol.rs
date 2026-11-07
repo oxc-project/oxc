@@ -5,21 +5,18 @@ use oxc_str::CompactStr;
 use super::Symbol;
 use crate::fixer::{Fix, RuleFix, RuleFixer};
 
-impl<'s, 'a> Symbol<'s, 'a> {
+impl<'a> Symbol<'_, 'a> {
     /// Delete a single declarator from a [`VariableDeclaration`] list with more
     /// than one declarator.
-    pub(super) fn delete_from_list<T>(
-        &self,
-        fixer: RuleFixer<'_, 'a>,
-        list: &[T],
-        own: &T,
-    ) -> RuleFix
+    pub(super) fn delete_from_list<T>(fixer: RuleFixer<'_, 'a>, list: &[T], own: &T) -> RuleFix
     where
         T: GetSpan,
-        Symbol<'s, 'a>: PartialEq<T>,
     {
-        let Some(own_position) = list.iter().position(|el| self == el) else {
-            // Happens when the symbol is in a destructuring pattern.
+        // Match by span rather than by symbol: when `own` is a destructuring
+        // pattern (`const a = 1, { b } = obj;`), the symbol is not the
+        // declarator's own binding identifier.
+        let own_span = own.span();
+        let Some(own_position) = list.iter().position(|el| el.span() == own_span) else {
             return fixer.noop();
         };
         let mut delete_range = own.span();

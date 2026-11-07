@@ -70,8 +70,16 @@ impl NoUnusedVars {
 
             match binding_info {
                 BindingInfo::SingleDestructure | BindingInfo::NotDestructure => {
-                    if has_neighbors {
-                        return symbol.delete_from_list(fixer, declarations, decl).dangerously();
+                    // `let a = 1, b = 2;` where `b` is unused too: delete the
+                    // whole declaration. Removing only `a` would leave
+                    // `let b = 2;` behind, and `b`'s own fix overlaps with
+                    // this one, so a single `--fix` pass would not finish.
+                    if has_neighbors
+                        && !declarations.iter().all(|other| {
+                            other.span == decl.span || self.is_removable_neighbor(symbol, other)
+                        })
+                    {
+                        return Symbol::delete_from_list(fixer, declarations, decl).dangerously();
                     }
                     return fixer.delete_range(span).dangerously();
                 }
@@ -116,6 +124,33 @@ impl NoUnusedVars {
         }
 
         fixer.noop()
+    }
+}
+
+impl NoUnusedVars {
+    /// Would `other`, a sibling declarator of an unused variable, be deleted
+    /// by this rule as well?
+    ///
+    /// This is the case when it has an initializer we are allowed to remove
+    /// and every binding it declares is unreferenced, not exported, and not
+    /// ignored.
+    fn is_removable_neighbor<'a>(
+        &self,
+        symbol: &Symbol<'_, 'a>,
+        other: &VariableDeclarator<'a>,
+    ) -> bool {
+        if other.init.as_ref().is_some_and(|init| is_skipped_init(symbol, init)) {
+            return false;
+        }
+        let mut has_bindings = false;
+        other.id.all_binding_identifiers(&mut |id| {
+            has_bindings = true;
+            let Some(symbol_id) = id.symbol_id.get() else { return false };
+            let neighbor = symbol.with_id(symbol_id);
+            !neighbor.has_references()
+                && !neighbor.is_exported_binding()
+                && self.is_ignored(&neighbor).is_none()
+        }) && has_bindings
     }
 }
 
