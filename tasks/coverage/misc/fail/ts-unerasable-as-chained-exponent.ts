@@ -1,4 +1,5 @@
 // https://github.com/microsoft/TypeScript/issues/63661
-// A chained `as T as U` keeps referring back to the `**` operator, so the trailing `**`
-// still makes the assertion impossible to erase. Syntax error.
+// For a chained `as T as U`, the check still compares against the `**` before the first
+// assertion, so the trailing `**` makes the assertions impossible to erase.
+// This is a syntax error.
 const x = 2 ** 3 as any as number ** 2;

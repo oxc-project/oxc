@@ -5371,9 +5371,9 @@ Negative Passed: 274/274 (100.00%)
   help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[misc/fail/ts-unerasable-as-chained-exponent.ts:4:34]
- 3 │ // still makes the assertion impossible to erase. Syntax error.
- 4 │ const x = 2 ** 3 as any as number ** 2;
+   ╭─[misc/fail/ts-unerasable-as-chained-exponent.ts:5:34]
+ 4 │ // This is a syntax error.
+ 5 │ const x = 2 ** 3 as any as number ** 2;
    ·                                  ▲
    ╰────
   help: Try inserting a semicolon here
@@ -5403,16 +5403,16 @@ Negative Passed: 274/274 (100.00%)
   help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[misc/fail/ts-unerasable-satisfies-chained-exponent.ts:4:48]
- 3 │ // operator, so the trailing `**` still makes the assertion impossible to erase. Syntax error.
- 4 │ const x = 2 ** 3 satisfies any satisfies number ** 2;
+   ╭─[misc/fail/ts-unerasable-satisfies-chained-exponent.ts:5:48]
+ 4 │ // impossible to erase. This is a syntax error.
+ 5 │ const x = 2 ** 3 satisfies any satisfies number ** 2;
    ·                                                ▲
    ╰────
   help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[misc/fail/ts-unerasable-satisfies-exponent.ts:4:34]
- 3 │ // so this is a syntax error.
+ 3 │ // This is a syntax error.
  4 │ const x = 2 ** 3 satisfies number ** 2;
    ·                                  ▲
    ╰────
