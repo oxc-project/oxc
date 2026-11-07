@@ -720,6 +720,18 @@ fn test_binary_expressions() {
     test("[] instanceof 1", true); // throws an error
     test("[] instanceof { [Symbol.hasInstance]() { throw 'foo' } }", true);
     test("[] instanceof Object", false);
+    for constructor in ["Object", "Number", "Boolean", "String", "Array"] {
+        for left in [
+            "(foo() > 0)",
+            "!foo()",
+            "void foo()",
+            "[foo()]",
+            "({ value: foo() })",
+            "(class { static value = foo() })",
+        ] {
+            test(&format!("{left} instanceof {constructor}"), true);
+        }
+    }
     test("a instanceof Object", true); // a maybe a proxy that has a side effectful "getPrototypeOf" trap
 
     // b maybe not a object
