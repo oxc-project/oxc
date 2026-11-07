@@ -1,6 +1,6 @@
 use std::{
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, RwLock},
 };
 
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -58,7 +58,12 @@ pub struct ResolvedOxlintOverrideRules {
     pub(crate) external_rules: Vec<(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)>,
 }
 
-#[derive(Debug, Clone)]
+/// Up to this many overrides, the set of overrides matching a path is encoded as a bitmask and
+/// used to memoize [`Config::apply_overrides`]. Beyond it, resolution falls back to the
+/// unmemoized path.
+const MAX_MEMOIZED_OVERRIDES: usize = u64::BITS as usize;
+
+#[derive(Debug)]
 pub struct Config {
     /// The basic linter state for this configuration.
     /// For files that match no overrides, this lint config will be used.
@@ -75,6 +80,25 @@ pub struct Config {
 
     /// An optional set of overrides to apply to the base state depending on the file being linted.
     pub(crate) overrides: ResolvedOxlintOverrides,
+
+    /// Memoizes [`Config::apply_overrides`], keyed by the bitmask of overrides that matched the
+    /// path. The resolved state depends on the path only through which overrides match it, and a
+    /// project has only a handful of distinct match-sets, so each is materialized once instead of
+    /// once per matching file (materialization clones every configured rule).
+    resolved_override_states: RwLock<FxHashMap<u64, ResolvedLinterState>>,
+}
+
+impl Clone for Config {
+    fn clone(&self) -> Self {
+        Self {
+            base: self.base.clone(),
+            base_rules: self.base_rules.clone(),
+            categories: self.categories.clone(),
+            overrides: self.overrides.clone(),
+            // The memo is derived state; a clone starts with a fresh one.
+            resolved_override_states: RwLock::new(FxHashMap::default()),
+        }
+    }
 }
 
 impl Config {
@@ -108,6 +132,7 @@ impl Config {
             base_rules: rules,
             categories,
             overrides,
+            resolved_override_states: RwLock::new(FxHashMap::default()),
         }
     }
 
@@ -123,6 +148,10 @@ impl Config {
         self.base.rules.len()
     }
 
+    #[expect(
+        clippy::missing_panics_doc,
+        reason = "lock is only poisoned if resolution itself panicked"
+    )]
     pub fn apply_overrides(&self, path: &Path) -> ResolvedLinterState {
         if self.overrides.is_empty() {
             return self.base.clone();
@@ -140,17 +169,59 @@ impl Config {
 
         let path = relative_path.to_string_lossy();
         let path = path.as_ref();
-        let overrides_to_apply = self
-            .overrides
-            .iter()
-            .filter(|config| config.files.is_match(path) && !config.exclude_files.is_match(path));
 
-        let mut overrides_to_apply = overrides_to_apply.peekable();
-
-        if overrides_to_apply.peek().is_none() {
-            return self.base.clone();
+        // With more overrides than fit in the memo key, resolve unmemoized.
+        if self.overrides.0.len() > MAX_MEMOIZED_OVERRIDES {
+            let mut overrides_to_apply = self
+                .overrides
+                .iter()
+                .filter(|config| {
+                    config.files.is_match(path) && !config.exclude_files.is_match(path)
+                })
+                .peekable();
+            if overrides_to_apply.peek().is_none() {
+                return self.base.clone();
+            }
+            return self.resolve_with_overrides(overrides_to_apply);
         }
 
+        // `resolve_with_overrides` only looks at which overrides matched, not the path itself,
+        // so the match-set alone is enough to key the cache.
+        let mut matched = 0u64;
+        for (index, config) in self.overrides.iter().enumerate() {
+            if config.files.is_match(path) && !config.exclude_files.is_match(path) {
+                matched |= 1u64 << index;
+            }
+        }
+        if matched == 0 {
+            return self.base.clone();
+        }
+        if let Some(state) = self
+            .resolved_override_states
+            .read()
+            .expect("override resolution cache poisoned")
+            .get(&matched)
+        {
+            return state.clone();
+        }
+        let state = self.resolve_with_overrides(
+            self.overrides
+                .iter()
+                .enumerate()
+                .filter(|(index, _)| matched & (1u64 << index) != 0)
+                .map(|(_, config)| config),
+        );
+        self.resolved_override_states
+            .write()
+            .expect("override resolution cache poisoned")
+            .insert(matched, state.clone());
+        state
+    }
+
+    fn resolve_with_overrides<'a>(
+        &'a self,
+        overrides_to_apply: impl Iterator<Item = &'a ResolvedOxlintOverride> + Clone,
+    ) -> ResolvedLinterState {
         let mut env = self.base.config.env.clone();
         let mut globals = self.base.config.globals.clone();
         let mut plugins = self.base.config.plugins;
