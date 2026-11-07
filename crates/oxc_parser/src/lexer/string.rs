@@ -176,11 +176,22 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     pub(crate) fn get_js_string(&self, token: Token) -> JSStr<'a> {
+        debug_assert_eq!(token.kind(), Kind::Str);
         if token.escaped() {
             self.escaped_strings[&token.start()]
         } else {
-            JSStr::from(self.get_string(token))
+            // Exclude the quotes before widening offsets, so JSStr's length stays bounded by u32.
+            let start = (token.start() + 1) as usize;
+            let end = (token.end() - 1) as usize;
+            JSStr::from(&self.source.whole()[start..end])
         }
+    }
+
+    /// Retrieve a string value for benchmarks.
+    #[cfg(feature = "benchmarking")]
+    #[inline]
+    pub fn get_js_string_for_benchmarks(&self, token: Token) -> JSStr<'a> {
+        self.get_js_string(token)
     }
 
     /// Save the string if it is escaped
