@@ -450,8 +450,58 @@ impl<'a> ClassProperties<'a> {
         // to before class
         self.transform_class_elements(class, ctx);
 
+        // Computed keys move outside the class. Reparent their first-level scopes as well,
+        // including functions containing brand checks against the lexical alias.
+        if !self.insert_before.is_empty() {
+            let keys = std::mem::take(&mut self.insert_before);
+            self.reparent_initializers_scope(&keys, ctx.current_scope_id(), None, ctx);
+            self.insert_before = keys;
+        }
+
         // Insert temp var for class if required. Name class if required.
         let class_details = self.classes_stack.last_mut();
+        let shadowed_name_declaration = if let Some(binding) = &class_details.bindings.shadowed_name
+        {
+            // Computed keys run before the class exists. Start with `undefined` so brand checks
+            // in keys can reject other objects without reading an uninitialized lexical binding.
+            // The `let` must be fresh for each evaluation of a declaration in a loop.
+            let declarator = VariableDeclarator::new(
+                SPAN,
+                binding.create_binding_pattern(ctx),
+                None,
+                None,
+                false,
+                ctx,
+            );
+            let declaration = Statement::new_variable_declaration(
+                SPAN,
+                VariableDeclarationKind::Let,
+                [declarator],
+                false,
+                ctx,
+            );
+
+            // A preserved static block runs during class evaluation, before after-class statements.
+            // Initialize the alias at the start of the first block, before its user code can call
+            // a method that uses it. Otherwise initialize before the extracted static initializers.
+            if let Some(block) = class.body.body.iter_mut().find_map(|element| match element {
+                ClassElement::StaticBlock(block) => Some(block),
+                _ => None,
+            }) {
+                let init = Expression::new_this_expression(SPAN, ctx);
+                let expr = create_assignment(binding, init, SPAN, ctx);
+                block.body.insert(0, Statement::new_expression_statement(SPAN, expr, ctx));
+            } else {
+                let init =
+                    class_details.bindings.name.as_ref().unwrap().create_read_expression(ctx);
+                let expr = create_assignment(binding, init, SPAN, ctx);
+                let stmt = Statement::new_expression_statement(SPAN, expr, ctx);
+                self.insert_after_stmts.insert(0, stmt);
+            }
+            Some(declaration)
+        } else {
+            None
+        };
         if let Some(temp_binding) = &class_details.bindings.temp {
             // Binding for class name is required
             if let Some(ident) = &class.id {
@@ -549,6 +599,11 @@ impl<'a> ClassProperties<'a> {
                     ctx.state.statement_injector.insert_many_before(&stmt_address, stmts);
                 }
             }
+        }
+
+        if let Some(declaration) = shadowed_name_declaration {
+            // `insert_many_before` prepends, so do this after inserting computed key evaluations.
+            ctx.state.statement_injector.insert_many_before(&stmt_address, [declaration]);
         }
 
         if !self.insert_after_stmts.is_empty() {
