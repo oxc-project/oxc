@@ -86,7 +86,10 @@ impl JsxNoNewObjectAsProp {
                 if let Some(init_span) = decl.init.as_ref().and_then(check_expression) {
                     return Some((decl.id.span(), Some(init_span)));
                 }
-                None
+                // look for destructuring defaults, e.g. `const { x = {} } = props`
+                let (id, init) = find_initialized_binding(&decl.id, symbol_id)?;
+                let init_span = check_expression(init)?;
+                Some((id.span(), Some(init_span)))
             }
             AstKind::FormalParameter(param) => {
                 let (id, init) = find_initialized_binding(&param.pattern, symbol_id)?;
@@ -175,6 +178,12 @@ fn test() {
         (r"const Foo = ({ x = 5 }) => <Item x={x} />", None),
         (r"const x = {}; const Foo = () => <Bar x={x} />", None),
         (r"const DEFAULT_X = {}; const Foo = ({ x = DEFAULT_X }) => <Bar x={x} />", None),
+        (r"const Foo = (props) => { const { x = 5 } = props; return <Item x={x} /> }", None),
+        (r"const Foo = (props) => { const { x = {}, y } = props; return <Item y={y} /> }", None),
+        (
+            r"const DEFAULT_X = {}; const Foo = (props) => { const { x = DEFAULT_X } = props; return <Item x={x} /> }",
+            None,
+        ),
         (
             r"
         import { FC, useMemo } from 'react';
@@ -219,6 +228,12 @@ fn test() {
         ),
         (r"const Foo = () => { const x = {}; return <Bar x={x} /> }", None),
         (r"const Foo = ({ x = {} }) => <Item x={x} />", None),
+        (r"const Foo = (props) => { const { x = {} } = props; return <Item x={x} /> }", None),
+        (r"const Foo = (props) => { const [x = {}] = props; return <Item x={x} /> }", None),
+        (
+            r"const Foo = (props) => { const { a: { x = {} } } = props; return <Item x={x} /> }",
+            None,
+        ),
         (r"const Foo = () => { const x: Foo = {}; return <Bar x={x} /> }", None),
         (r"const Foo = () => { const x: Foo = {} as Foo; return <Bar x={x} /> }", None),
         (r"const Foo = () => { const x: Foo = {} satisfies Foo; return <Bar x={x} /> }", None),
