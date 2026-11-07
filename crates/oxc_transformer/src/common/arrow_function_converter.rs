@@ -164,7 +164,10 @@ impl ArrowFunctionConverter<'_> {
         let async_generator_functions_enabled = env.es2018.async_generator_functions;
         let mode = if env.es2015.arrow_function.is_some() {
             ArrowFunctionConverterMode::Enabled
-        } else if async_to_generator_enabled || async_generator_functions_enabled {
+        } else if async_to_generator_enabled
+            || async_generator_functions_enabled
+            || env.es2018.object_rest_spread.is_some()
+        {
             ArrowFunctionConverterMode::AsyncOnly
         } else {
             ArrowFunctionConverterMode::Disabled
@@ -227,6 +230,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
             return;
         }
 
+        if ctx.state.parameter_generator_scopes.contains(&func.scope_id()) {
+            self.super_needs_transform_stack.push(true);
+        }
+
         self.this_var_stack.push(None);
         self.arguments_var_stack.push(None);
         self.constructor_super_stack.push(false);
@@ -252,6 +259,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.is_disabled() {
             return;
+        }
+
+        if ctx.state.parameter_generator_scopes.contains(&func.scope_id()) {
+            self.super_needs_transform_stack.pop();
         }
 
         let scope_id = func.scope_id();
@@ -326,10 +337,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
         if self.is_async_only() {
             // Ignore arrow functions
             if let Ancestor::FunctionBody(func) = ctx.parent() {
-                let is_async_method = self
+                let needs_arguments_capture = self
                     .will_transform_async_function(*func.r#async(), *func.generator())
                     && Self::is_class_method_like_ancestor(ctx.ancestor(1));
-                self.arguments_needs_transform_stack.push(is_async_method);
+                self.arguments_needs_transform_stack.push(needs_arguments_capture);
             }
         }
     }

@@ -3,7 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use rustc_hash::FxHashSet;
+
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::ScopeId;
 use oxc_span::SourceType;
 
 use crate::{
@@ -44,6 +47,8 @@ pub struct TransformState<'a> {
     /// Manage inserting statements at top of program globally
     pub top_level_statements: TopLevelStatementsStore<'a>,
 
+    pub parameter_generator_scopes: FxHashSet<ScopeId>,
+
     // State for multiple plugins interacting
     /// `true` if class properties plugin is enabled
     pub is_class_properties_plugin_enabled: bool,
@@ -64,6 +69,7 @@ impl Default for TransformState<'_> {
             var_declarations: VarDeclarationsStore::new(),
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
+            parameter_generator_scopes: FxHashSet::default(),
             is_class_properties_plugin_enabled: false,
         }
     }
@@ -88,6 +94,7 @@ impl TransformState<'_> {
             var_declarations: VarDeclarationsStore::new(),
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
+            parameter_generator_scopes: FxHashSet::default(),
             is_class_properties_plugin_enabled: options.env.es2022.class_properties.is_some(),
         }
     }
