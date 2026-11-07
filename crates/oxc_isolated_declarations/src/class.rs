@@ -42,6 +42,7 @@ impl<'a> IsolatedDeclarations<'a> {
     /// fallback for supported non-static keys such as `Symbol.iterator`.
     pub(crate) fn accessor_keys_match(left: &PropertyKey<'a>, right: &PropertyKey<'a>) -> bool {
         match (left, right) {
+            #[expect(clippy::float_cmp, reason = "Numeric property keys require exact equality.")]
             (PropertyKey::NumericLiteral(left), PropertyKey::NumericLiteral(right)) => {
                 left.value == right.value
             }
