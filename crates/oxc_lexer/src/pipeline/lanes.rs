@@ -1,6 +1,7 @@
 use std::{ptr, str};
 
 use oxc_ast::ast::{Comment, RegExpFlags};
+use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 use crate::{
@@ -31,6 +32,8 @@ pub(crate) struct Lanes {
     /// code-level survivors pay the identifier-char check. Empty for
     /// pure-ASCII input.
     pub unicode_leads: Vec<u32>,
+    /// Code-level whitespace chars other than space, tab, LF and CR, one span per char.
+    pub irregular_whitespaces: Vec<Span>,
     pub(super) module: bool,
     /// What the disambiguation questions keep across the lex: the context walks,
     /// the bracket bitmap and the closers the forward scans resolved.
@@ -50,6 +53,7 @@ impl Lanes {
         self.diags.clear();
         self.diag_suppress.clear();
         self.unicode_leads.clear();
+        self.irregular_whitespaces.clear();
     }
 
     #[cpu_multiversion]

@@ -482,7 +482,6 @@ impl<C: CpuSimd> Vec128<C> {
 impl<C: CpuSimd> Vec128<C> {
     /// Add either another [`Vec128`] or a `u8` to every byte of this [`Vec128`],
     /// wrapping on overflow.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub fn add_u8(self, other: impl Operand128<u8, C>) -> Self {
         cpu_select!(self.cpu(), {
