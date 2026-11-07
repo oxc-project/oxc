@@ -19,3 +19,24 @@ fn test_cfg_files() {
         });
     });
 }
+
+#[test]
+fn do_while_continue_reaches_condition_and_exit() {
+    for source in [
+        "do { continue; } while (a); reachable();",
+        "do { continue; } while (a && b); reachable();",
+        "outer: do { continue outer; } while (a ? b : c); reachable();",
+    ] {
+        let tester = SemanticTester::js(source).with_cfg(true);
+        let semantic = tester.build();
+        let cfg = semantic.cfg().unwrap();
+        for node in semantic.nodes().iter() {
+            if matches!(node.kind(), oxc_ast::AstKind::ExpressionStatement(_)) {
+                assert!(
+                    !cfg.basic_block(semantic.nodes().cfg_id(node.id())).is_unreachable(),
+                    "{source}"
+                );
+            }
+        }
+    }
+}

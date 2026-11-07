@@ -302,6 +302,10 @@ fn test() {
             return 'Hello, tsdown!';
         }
         ",
+        "do { continue; } while (condition); reachable();",
+        "do { continue; } while (a && b); reachable();",
+        "outer: do { continue outer; } while (condition); reachable();",
+        "export function retry(task, max) { let attempt = 0; do { try { return task(attempt); } catch { attempt++; continue; } } while (attempt < max); throw new Error('gave up'); }",
     ];
 
     let fail = vec![

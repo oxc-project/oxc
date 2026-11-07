@@ -4,7 +4,7 @@ use context::Ctx;
 pub use context::{CtxCursor, CtxFlags};
 use oxc_index::IndexVec;
 use oxc_syntax::node::NodeId;
-use petgraph::Direction;
+use petgraph::{Direction, visit::EdgeRef};
 
 use super::{
     BasicBlock, BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind, Graph, Instruction,
@@ -102,9 +102,35 @@ impl<'a> ControlFlowGraphBuilder<'a> {
             .iter()
             .any(|it| matches!(it, Instruction { kind: InstructionKind::Unreachable, .. }))
         {
-            self.basic_block_mut(b).mark_as_reachable();
+            self.mark_as_reachable(b);
         }
         self.graph.add_edge(a, b, weight);
+    }
+
+    fn mark_as_reachable(&mut self, node: BlockNodeId) {
+        if !self.basic_block(node).is_unreachable() {
+            return;
+        }
+        self.basic_block_mut(node).mark_as_reachable();
+        let mut pending = vec![node];
+        while let Some(node) = pending.pop() {
+            for edge in self.graph.edges(node) {
+                if matches!(edge.weight(), EdgeType::Unreachable) {
+                    continue;
+                }
+                let target = edge.target();
+                let block = &mut self.basic_blocks[self.graph[target]];
+                if block.is_unreachable()
+                    && !block
+                        .instructions()
+                        .iter()
+                        .any(|instruction| matches!(instruction.kind, InstructionKind::Unreachable))
+                {
+                    block.mark_as_reachable();
+                    pending.push(target);
+                }
+            }
+        }
     }
 
     pub fn push_statement(&mut self, stmt: NodeId) {
