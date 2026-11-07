@@ -178,6 +178,8 @@ impl<'a> ControlFlowGraphBuilder<'a> {
     }
 
     fn add_jump_edge(&mut self, mut source: BlockNodeId, target: BlockNodeId) {
+        self.add_edge(source, target, EdgeType::Jump);
+        let jump_source = source;
         loop {
             let next = self
                 .graph
@@ -188,7 +190,9 @@ impl<'a> ControlFlowGraphBuilder<'a> {
             let Some((_, end)) = next else { break };
             source = *end;
         }
-        self.add_edge(source, target, EdgeType::Jump);
+        if source != jump_source {
+            self.add_edge(source, target, EdgeType::Jump);
+        }
     }
 
     pub fn append_condition_to(&mut self, block: BlockNodeId, node: Option<NodeId>) {

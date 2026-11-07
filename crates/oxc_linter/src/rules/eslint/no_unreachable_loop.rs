@@ -993,6 +993,8 @@ fn test() {
         }
     }
     pass.extend([
+        ("outer: while (a) { try { continue outer; } finally { cleanup(); } }", None).into(),
+        ("outer: while (a) { try { try { continue outer; } finally { inner(); } } finally { cleanup(); } }", None).into(),
         ("while (false) { foo(); }", None).into(),
         ("while (bar) { foo(); if (true) { break; } }", None).into(),
         ("do foo(); while (false)", None).into(),

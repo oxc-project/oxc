@@ -254,6 +254,12 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        (
+            "<script>export default { render() { while (a) { try { break; } finally { cleanup(); } } return h('div'); } }</script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![

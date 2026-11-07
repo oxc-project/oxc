@@ -420,6 +420,8 @@ fn test() {
                 return 0;
             }
         }", None),
+        ("const obj = { get x() { while (a) { try { break; } finally { cleanup(); } } return 1; } };", None),
+        ("const obj = { get x() { while (a) { try { try { break; } finally { inner(); } } finally { cleanup(); } } return 1; } };", None),
     ];
 
     let fail = vec![
