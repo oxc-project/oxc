@@ -128,6 +128,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 let e0 = bm_next0(word, p + 1, n, cpu);
                 let e = if *src.add(e0) == b'\\' && *src.add(e0 + 1) == b'u' {
                     *kind.add(p) = tk!(PrivateIdentEscaped);
+                    nesc += 1;
                     scan_ident_esc(src, n, e0, cpu)
                 } else {
                     *kind.add(p) = tk!(PrivateIdent);

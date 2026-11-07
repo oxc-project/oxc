@@ -610,6 +610,22 @@ fn jsx_child_tag_after_comment_or_unicode_space() {
 }
 
 #[test]
+fn jsx_container_after_backslash_u_in_text() {
+    // JSX text has no escapes, so a backslash-u before a container lexes as text.
+    for (code, plain) in [
+        ("x = <a>\\u{1}</a>;", "x = <a>u{1}</a>;"),
+        ("x = <a>a\\u{b}c</a>;", "x = <a>au{b}c</a>;"),
+        ("x = <a>\\u{1}\\u{2}</a>;", "x = <a>u{1}u{2}</a>;"),
+        ("x = <a>\\u{2 / 3}</a>;", "x = <a>u{2 / 3}</a>;"),
+        ("x = <a>\\u{f\\u{41}}</a>;", "x = <a>u{f\\u{41}}</a>;"),
+        ("x = <a>#\\u{f\\u{41}}</a>;", "x = <a>#u{f\\u{41}}</a>;"),
+    ] {
+        assert_eq!(kinds_of(code, ScriptJSX), kinds_of(plain, ScriptJSX), "{code:?}");
+        assert!(diag_codes_of(code, ScriptJSX).is_empty(), "{code:?}");
+    }
+}
+
+#[test]
 fn jsx_member_tag_name_matches_across_trivia() {
     // A comment or Unicode whitespace before the `.` of a member name (`<A/*c*/.B>`) hides no
     // mismatch: the closing tag names the same element.
