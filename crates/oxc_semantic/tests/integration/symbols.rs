@@ -180,6 +180,11 @@ fn test_hoisted_var_does_not_reuse_block_type_binding() {
         "function f() { { type X = string; var X = 1; type Y = X; X; } X; }",
         "function f() { { interface X {} var X = 1; type Y = X; X; } X; }",
         "function f() { { type X = string; { var X = 1; } type Y = X; X; } X; }",
+        "function f() { { var X = 1; interface X {} type Y = X; X; } X; }",
+        "function f() { { var X = 1; type X = string; type Y = X; X; } X; }",
+        "function f() { { { var X = 1; } interface X {} type Y = X; X; } X; }",
+        "function f() { { var X = 1; interface X {} var X = 2; type Y = X; X; } X; }",
+        "function f() { switch (0) { case 0: var X = 1; interface X {} case 1: interface X {} type Y = X; X; } X; }",
     ] {
         let tester = SemanticTester::ts(source);
         let semantic = tester.build();
@@ -196,11 +201,48 @@ fn test_hoisted_var_does_not_reuse_block_type_binding() {
             .unwrap();
         let type_symbol = symbols.into_iter().find(|&symbol| symbol != value_symbol).unwrap();
         assert_ne!(scoping.symbol_scope_id(value_symbol), scoping.symbol_scope_id(type_symbol));
-        assert_eq!(scoping.get_resolved_references(value_symbol).count(), 2);
-        assert_eq!(scoping.get_resolved_references(type_symbol).count(), 1);
+        assert!(!scoping.symbol_flags(value_symbol).is_type(), "{source}");
+        assert_eq!(scoping.get_resolved_references(value_symbol).count(), 2, "{source}");
+        assert_eq!(scoping.get_resolved_references(type_symbol).count(), 1, "{source}");
         assert!(scoping.get_resolved_references(value_symbol).all(Reference::is_read));
         assert!(scoping.get_resolved_references(type_symbol).all(Reference::is_type));
         assert!(!scoping.root_unresolved_references().contains_key("X"));
+    }
+}
+
+#[test]
+fn test_block_interface_is_not_visible_outside_of_hoisted_var() {
+    let tester = SemanticTester::ts(
+        "switch (0) { case 0: var I = 0; interface I {} case 1: interface I {} } type Outer = I;",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    // `Outer` cannot use the hoisted value `I` as a type, and the interface is out of scope.
+    assert!(scoping.root_unresolved_references().contains_key("I"));
+}
+
+#[test]
+fn test_lexical_redeclaration_of_hoisted_var_next_to_block_type_binding() {
+    for source in [
+        "function f() { { var X; interface X {} let X; } }",
+        "function f() { { var X; type X = string; const X = 1; } }",
+        "function f() { { var X; interface X {} class X {} } }",
+        "function f() { { interface X {} var X; let X; } }",
+        "function f() { type X = number; { var X; interface X {} let X; } }",
+    ] {
+        SemanticTester::ts(source).has_error("Identifier `X` has already been declared");
+    }
+}
+
+#[test]
+fn test_block_type_binding_ignores_outer_type_merged_with_hoisted_var() {
+    for source in [
+        "function f() { type X = number; { interface X { a: number } var X = 0; interface X { b: number } const value: X = { a: 1, b: 2 }; } }",
+        "function f() { type X = number; { var X = 0; interface X {} } }",
+        "function f() { type X = number; { var X = 0; type X = string; } }",
+        "function f() { interface X {} { var X = 0; type X = string; } }",
+    ] {
+        SemanticTester::ts(source).build();
     }
 }
 

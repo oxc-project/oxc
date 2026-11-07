@@ -1,0 +1,24 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+a { content: "hi"; font-family: "Arial" }
+
+==================== Output ====================
+----------------------------------------------------
+{ printWidth: 80, singleQuote: true, useTabs: true }
+----------------------------------------------------
+a {
+	content: 'hi';
+	font-family: 'Arial';
+}
+
+-----------------------------------------------------
+{ printWidth: 100, singleQuote: true, useTabs: true }
+-----------------------------------------------------
+a {
+	content: 'hi';
+	font-family: 'Arial';
+}
+
+===================== End =====================

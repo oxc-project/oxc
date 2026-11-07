@@ -45,7 +45,7 @@ fn html_comment_content() {
     buf.resize(buf.len() + PAD, 0);
     let options = LexOptions { source_type_module: false, ..Default::default() };
     let (result, arena) = lex_utf8(&buf, source.len() as u32, options);
-    assert!(result.diagnostics().is_empty());
+    assert_eq!(result.diagnostics(), []);
     let comments = result.comments(&arena);
     assert_eq!(comments.len(), 3);
     for (comment, content) in comments.iter().zip(["a", "", ""]) {

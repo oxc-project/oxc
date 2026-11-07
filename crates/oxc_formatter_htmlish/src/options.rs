@@ -14,14 +14,15 @@ pub enum HtmlishVariant {
     /// Prettier's `parser: angular` equivalent.
     Angular,
     /// Prettier's `parser: html` on an XHTML file (`.xhtml`, `.xht`), which an XML parser may read:
-    /// read and printed as HTML, but the doctype keeps its case.
+    /// read and printed as HTML, but `/>` closes every element and the doctype keeps its case.
     Xhtml,
 }
 
 impl HtmlishVariant {
     pub(crate) fn to_dialect(self) -> Dialect {
         match self {
-            Self::Html | Self::Xhtml => Dialect::Html,
+            Self::Html => Dialect::Html,
+            Self::Xhtml => Dialect::Xhtml,
             Self::Vue => Dialect::Vue,
             Self::Angular => Dialect::Angular,
         }
@@ -42,6 +43,8 @@ pub struct HtmlishFormatOptions {
     pub bracket_same_line: bool,
     /// Mirrors Prettier's `singleAttributePerLine`.
     pub single_attribute_per_line: bool,
+    /// Indent the content of a Vue file's `<script>` and `<style>` blocks. Mirrors Prettier's `vueIndentScriptAndStyle`.
+    pub vue_indent_script_and_style: bool,
     /// Sort Tailwind CSS classes (by the session's sorter, as prettier-plugin-tailwindcss does):
     /// those of `class`, and of the attributes listed here; `None` leaves them as they are.
     pub sort_tailwindcss: Option<Vec<String>>,

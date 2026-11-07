@@ -4778,7 +4778,7 @@ impl RuleRunner for crate::rules::promise::prefer_await_to_then::PreferAwaitToTh
 
 impl RuleRunner for crate::rules::promise::prefer_catch::PreferCatch {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::ExpressionStatement]));
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

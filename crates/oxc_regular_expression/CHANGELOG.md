@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.157.0] - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- b03c7b8 regular_expression: Allow incomplete oversized legacy quantifiers (#28449) (Boshen)
+- cb64638 regular_expression: Reject incomplete Unicode atom escapes (#28448) (Boshen)
+- 8e61652 regex: Reject templates without cooked values (#28345) (Boshen)
+- 2e3126c regex: Decode constructor patterns and flags consistently (#28298) (Boshen)
+- 8a90be2 regex: Track capture groups and disjunction identity (#28297) (Boshen)
+- 3dc2cb0 regex: Preserve escape values and boundaries (#28296) (Boshen)
+
+### ⚡ Performance
+
+- 9b6b7bf regular_expression: Advance validated Unicode escapes directly (#28514) (Boshen)
+- 82e1982 regular_expression: Share Unicode property name prefixes (#28513) (Boshen)
+- 5395a40 regular_expression: Parse class set character prefixes once (#28512) (Boshen)
+- 3708934 regular_expression: Defer literal range dash allocation (#28511) (Boshen)
+- 550e98a regular_expression: Avoid rescanning unique capture names (#28450) (Boshen)
+- ab5655a regex: Remove redundant character-class and quantifier checks (#28288) (Boshen)
+
 ## [0.153.0] - 2026-10-05
 
 ### 🐛 Bug Fixes

@@ -103,7 +103,7 @@ fn words(value: &str, cdata: bool) -> impl Iterator<Item = &str> {
 }
 
 /// `value` without its trailing whitespace and leading blank lines.
-fn trim_preserving_indentation(value: &str) -> &str {
+pub fn trim_preserving_indentation(value: &str) -> &str {
     let value = value.trim_ascii_end();
     let mut start = 0;
     while let Some(newline) = value[start..].find('\n') {

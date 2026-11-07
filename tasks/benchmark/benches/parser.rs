@@ -1,8 +1,11 @@
 use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
-use oxc_benchmark::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use oxc_benchmark::{
+    BenchmarkId, Criterion, black_box, criterion_group, criterion_main, whitespace_cases,
+};
 use oxc_estree_tokens::{ESTreeTokenOptionsJS, to_estree_tokens_json};
 use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
+use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
 
 fn bench_parser(criterion: &mut Criterion) {
@@ -26,6 +29,35 @@ fn bench_parser(criterion: &mut Criterion) {
                         ..ParseOptions::default()
                     })
                     .parse();
+                allocator.reset();
+            });
+        });
+    }
+
+    group.finish();
+}
+
+fn bench_parser_whitespace(criterion: &mut Criterion) {
+    let mut group = criterion.benchmark_group("parser_whitespace");
+    let source_type = SourceType::mjs();
+
+    for (name, source_text) in whitespace_cases() {
+        group.bench_function(name, |b| {
+            let mut allocator = Allocator::default();
+            assert!(
+                Parser::new(&allocator, &source_text, source_type).parse().diagnostics.is_empty()
+            );
+            allocator.reset();
+
+            b.iter(|| {
+                black_box(
+                    Parser::new(&allocator, &source_text, source_type)
+                        .with_options(ParseOptions {
+                            parse_regular_expression: true,
+                            ..ParseOptions::default()
+                        })
+                        .parse(),
+                );
                 allocator.reset();
             });
         });
@@ -122,5 +154,5 @@ fn bench_estree_tokens(criterion: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(parser, bench_parser, bench_estree, bench_estree_tokens);
+criterion_group!(parser, bench_parser, bench_parser_whitespace, bench_estree, bench_estree_tokens);
 criterion_main!(parser);

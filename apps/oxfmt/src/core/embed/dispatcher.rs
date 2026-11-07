@@ -9,7 +9,8 @@ use std::sync::{Arc, OnceLock};
 use tracing::{debug, debug_span};
 
 use oxc_formatter::{
-    CssInJsTemplate, HtmlInJsTemplate, JsEmbeddedIn, JsFormatOptions, MarkdownInJsTemplate,
+    CssInJsTemplate, ExpressionLayout, ExpressionRoot, HtmlInJsTemplate, JsEmbeddedIn,
+    JsFormatOptions, JsRoot, MarkdownInJsTemplate, ProgramLayout, ProgramSemicolons,
 };
 use oxc_formatter_core::{
     DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher, FormatSession,
@@ -19,7 +20,7 @@ use oxc_formatter_css::{CssEmbeddedIn, CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_htmlish::{
     CssInHtmlStyleAttribute, HtmlishEmbeddedIn, HtmlishFormatOptions, HtmlishVariant,
-    JsInHtmlEventHandler,
+    JsInHtmlEventHandler, JsInVueTemplate,
 };
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_formatter_markdown::{MarkdownFormatOptions, XxxInMarkdownCodeBlock};
@@ -55,6 +56,9 @@ pub struct ResolvedDispatchConfig {
     /// sorted like the host's own imports (and a Vue `<script>`'s).
     validated: Arc<ValidatedOptions>,
     js: OnceLock<JsFormatOptions>,
+    /// [`Self::js`] without `sort_imports`, for a part that is no block's program (an attribute's value, an interpolation),
+    /// which holds no import.
+    js_fragment: OnceLock<JsFormatOptions>,
     graphql: OnceLock<GraphqlFormatOptions>,
     /// One cell per [`CssVariant`]: JSDoc fences dispatch css/scss/less as-is, while css-in-js always uses Scss.
     css: [OnceLock<CssFormatOptions>; 3],
@@ -92,6 +96,7 @@ impl ResolvedDispatchConfig {
             config,
             validated,
             js: OnceLock::new(),
+            js_fragment: OnceLock::new(),
             graphql: OnceLock::new(),
             css: [OnceLock::new(), OnceLock::new(), OnceLock::new()],
             yaml: OnceLock::new(),
@@ -148,6 +153,14 @@ impl ResolvedDispatchConfig {
                     self.validated.sort_imports.clone(),
                 )
             })
+            .clone()
+    }
+
+    /// Cloned once per fragment, so the import sorting options are left out:
+    /// a fragment has no import, and they are the costly part to clone.
+    pub fn js_fragment_options(&self) -> JsFormatOptions {
+        self.js_fragment
+            .get_or_init(|| to_oxc_formatter(&self.config, self.validated.core, None))
             .clone()
     }
 
@@ -271,19 +284,22 @@ pub fn build_dispatcher(
             Route::Native(language) => {
                 Ok(format_native(language.trace_label(), || match language {
                     NativeLanguage::Js(source_type) => {
-                        let embedded_in = request
-                            .parent_context_as::<XxxInMarkdownCodeBlock>()
-                            .map(|_| JsEmbeddedIn::MarkdownCodeBlock)
-                            .or_else(|| {
-                                request
-                                    .parent_context_as::<JsInHtmlEventHandler>()
-                                    .map(|_| JsEmbeddedIn::HtmlEventHandler)
-                            });
+                        let (root, embedded_in) = js_root_of(&request);
+                        // A block's program may hold imports to sort
+                        let options = if matches!(
+                            root,
+                            JsRoot::Program { layout: ProgramLayout::Bare, .. }
+                        ) {
+                            dispatch_config.js_options()
+                        } else {
+                            dispatch_config.js_fragment_options()
+                        };
                         oxc_formatter::format_to_ir(
                             session,
                             text,
                             source_type,
-                            dispatch_config.js_options(),
+                            options,
+                            root,
                             embedded_in,
                         )
                     }
@@ -387,6 +403,63 @@ pub fn build_dispatcher(
     })
 }
 
+/// What the JS a request carries is ([`JsRoot`]) and what it is embedded in ([`JsEmbeddedIn`]), from the parent's marker.
+fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
+    // An attribute's statements, on their own lines when they break
+    let in_attribute = |semicolons| JsRoot::Program { semicolons, layout: ProgramLayout::Indented };
+    let expression = |layout| ExpressionRoot {
+        layout,
+        tailwind_classes: false,
+        ends_at_double_brace: false,
+        reads_as_statements: false,
+        in_parens: false,
+    };
+    if let Some(&part) = request.parent_context_as::<JsInVueTemplate>() {
+        let root = match part {
+            JsInVueTemplate::Interpolation => JsRoot::Expression(ExpressionRoot {
+                ends_at_double_brace: true,
+                ..expression(ExpressionLayout::Bare)
+            }),
+            JsInVueTemplate::Binding { tailwind_classes } => JsRoot::Expression(ExpressionRoot {
+                tailwind_classes,
+                ..expression(ExpressionLayout::Hug { literals: true })
+            }),
+            JsInVueTemplate::Expression { tailwind_classes, in_parens } => {
+                JsRoot::Expression(ExpressionRoot {
+                    tailwind_classes,
+                    in_parens,
+                    ..expression(ExpressionLayout::Hug { literals: false })
+                })
+            }
+            JsInVueTemplate::HandlerExpression => JsRoot::Expression(ExpressionRoot {
+                reads_as_statements: true,
+                // `$event => (…)`
+                in_parens: true,
+                ..expression(ExpressionLayout::Hug { literals: false })
+            }),
+            JsInVueTemplate::ForSource => JsRoot::Expression(expression(ExpressionLayout::Group)),
+            JsInVueTemplate::Handler => in_attribute(ProgramSemicolons::MarksStatements),
+            JsInVueTemplate::ForAlias => JsRoot::FunctionParams { parens_when_many: true },
+            JsInVueTemplate::SlotProps => JsRoot::FunctionParams { parens_when_many: false },
+            JsInVueTemplate::ScriptGeneric => JsRoot::TypeParameters,
+        };
+        // Every one but an interpolation is a `"`-quoted attribute value
+        let in_html_attribute = part != JsInVueTemplate::Interpolation;
+        return (root, JsEmbeddedIn { in_html_attribute, inlines_code: true });
+    }
+    if request.parent_context_as::<JsInHtmlEventHandler>().is_some() {
+        let root = in_attribute(ProgramSemicolons::LoneExpressionOmitted);
+        return (root, JsEmbeddedIn { in_html_attribute: true, inlines_code: false });
+    }
+    let semicolons = if request.parent_context_as::<XxxInMarkdownCodeBlock>().is_some() {
+        ProgramSemicolons::LoneJsxOmitted
+    } else {
+        ProgramSemicolons::AsOptions
+    };
+    let root = JsRoot::Program { semicolons, layout: ProgramLayout::Bare };
+    (root, JsEmbeddedIn::default())
+}
+
 /// Runs one native branch: a parse failure is a deliberate skip
 /// (the embedded part stays as-is), never an operational error.
 fn format_native<'a, E: std::fmt::Display>(
@@ -464,6 +537,7 @@ mod tests {
             "md",
             "toml",
             "html",
+            "vue",
         ] {
             let text = match language {
                 "graphql" | "gql" => "{ a }",
@@ -472,6 +546,7 @@ mod tests {
                 "json" | "jsonc" | "json5" => "{ \"a\": 1 }",
                 "markdown" | "md" => "#  a",
                 "html" => "<p>  a  </p>",
+                "vue" => "<template><p>{{ a }}</p></template>",
                 _ => "a  =  1",
             };
             let response = session.dispatch(DispatchRequest {
@@ -523,7 +598,7 @@ mod tests {
             },
         );
 
-        for (language, text) in [("vue", "<template></template>"), ("ini", "a = 1")] {
+        for (language, text) in [("mdx", "# a"), ("ini", "a = 1")] {
             let response = session.dispatch(DispatchRequest {
                 language,
                 text,

@@ -10,11 +10,12 @@
 //!   A `(` can, as in `f<T>(x)`. An identifier can't, as in `a < b > c`.
 
 use crate::{
-    pipeline::bytes::{is_digit, is_id_start, line_break_in},
+    cpu::{Cpu, cpu_multiversion},
     token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
 };
 
 use crate::pipeline::{
+    bytes::{is_digit, is_id_start, line_break_in},
     disambiguate::common::{Tokens, bits, word_len},
     keywords::kw_match_at,
 };
@@ -23,9 +24,10 @@ use super::bytes::{
     list_closer, raw_template_end, skip_raw_literal, skip_trivia_fwd, skip_trivia_nl,
 };
 
-fn gt_follower(tokens: &Tokens, i: usize) -> bool {
+#[cpu_multiversion]
+fn gt_follower(tokens: &Tokens, i: usize, cpu: impl Cpu) -> bool {
     let (src, n) = (tokens.src, tokens.n);
-    let (i, broke) = skip_trivia_nl(src, n, i);
+    let (i, broke) = skip_trivia_nl(src, n, i, cpu);
     if i >= n {
         return true;
     }
@@ -41,13 +43,13 @@ fn gt_follower(tokens: &Tokens, i: usize) -> bool {
         b'(' | b'`' | b'=' | b')' | b']' | b'}' | b',' | b';' | b':' | b'?' | b'|' | b'&'
         | b'*' | b'%' | b'^' => true,
         b'!' | b'+' | b'-' => nx == b'=',
-        b'.' => !is_digit(nx),
+        b'.' => !is_digit(nx, cpu),
         b'<' => nx == b'<' || nx == b'=',
         // An identifier with a leading Unicode escape starts an expression like any other name.
         b'\\' => nx != b'u',
-        _ if is_digit(c) => false,
-        _ if is_id_start(c) => {
-            let kw = kw_match_at(true, src, i, word_len(src, i)) as u8;
+        _ if is_digit(c, cpu) => false,
+        _ if is_id_start(c, cpu) => {
+            let kw = kw_match_at(true, src, i, word_len(src, i, cpu), cpu) as u8;
             matches_tk!(kw, KwIn | KwInstanceof | KwAs | KwSatisfies | KwExtends)
         }
         b'{' | b'[' | b'>' | b'~' | b'@' | b'#' | b'"' | b'\'' => false,
@@ -55,8 +57,9 @@ fn gt_follower(tokens: &Tokens, i: usize) -> bool {
     }
 }
 
+#[cpu_multiversion]
 #[rustfmt::skip::macros(matches_tk)]
-fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
+fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool {
     let Tokens { src, st, kind, .. } = *tokens;
     let mut start = true;
     let mut braces: i32 = 0;
@@ -79,17 +82,17 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
     // Start of the previous significant token: a type reference takes no arguments across a
     // line break, so a `<` after one is checked against it.
     let mut prev = usize::MAX;
-    let mut w = bits::next1(st, lo, hi);
+    let mut w = bits::next1(st, lo, hi, cpu);
     while w < hi {
-        let mut k = tokens.base_kind(w);
-        if w == skip || is_trivia_byte(k) {
-            w = bits::next1(st, w + 1, hi);
+        let mut k = tokens.base_kind(w, cpu);
+        if w == skip || is_trivia_byte(k, cpu) {
+            w = bits::next1(st, w + 1, hi, cpu);
             continue;
         }
         // A line break after a member's type starts the next member unless the token continues it.
         if !start
             && open.last() == Some(&b':')
-            && line_break_in(src, prev, w)
+            && line_break_in(src, prev, w, cpu)
             && (k < OP_KIND_BASE
                 || matches!(src[w], b'[' | b'(' | b'<' | b'+' | b'-' | b'"' | b'\''))
         {
@@ -100,11 +103,11 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
         }
         // Text carve has not reached yet: a raw comment is trivia, a raw string or template is a
         // literal type.
-        let j = skip_raw_literal(src, kind, hi, w);
+        let j = skip_raw_literal(src, kind, hi, w, cpu);
         if j != w {
             let c0 = src[w];
             if c0 == b'/' {
-                w = bits::next1(st, j, hi);
+                w = bits::next1(st, j, hi, cpu);
                 continue;
             }
             k = if c0 == b'`' { tk!(TemplateNoSub) } else { tk!(String) };
@@ -116,7 +119,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
             prev = w;
             prev_kw = 0;
             no_dot = false;
-            w = bits::next1(st, j, hi);
+            w = bits::next1(st, j, hi, cpu);
             continue;
         }
         let c = src[w];
@@ -131,11 +134,15 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
         elem_start = false;
         if matches_tk!(k, Ident | IdentEscaped) {
             // A qualified name's part is a name (z.infer, a.typeof).
-            let dotted = prev != usize::MAX && tokens.member_dot(prev);
-            let kk = if dotted { 0 } else { kw_match_at(true, src, w, word_len(src, w)) as u8 };
+            let dotted = prev != usize::MAX && tokens.member_dot(prev, cpu);
+            let kk = if dotted {
+                0
+            } else {
+                kw_match_at(true, src, w, word_len(src, w, cpu), cpu) as u8
+            };
             // A keyword type (`this`, `any`, `null`, ...) takes no type arguments; in a type
             // query it names a value, which may (`typeof this<A>`).
-            this_head = keyword_type(kk) && last_kw != tk!(KwTypeof);
+            this_head = keyword_type(kk, cpu) && last_kw != tk!(KwTypeof);
             if !start && braces == 0 && !matches_tk!(kk, KwExtends | KwIs | KwIn) {
                 return false;
             }
@@ -143,9 +150,11 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
             // `,` of the list): a reserved word there is no type. Elsewhere a keyword is read
             // as a name: a property (`{ return: T }`), a reference after `=>`, `:`, `|`. `super`
             // names a value only in a type query (`typeof super.x`).
+            let const_param = kk == tk!(KwConst) && angle_bits & 1 != 0;
             if was_elem_start
-                && type_illegal_kind(kk)
+                && type_illegal_kind(kk, cpu)
                 && !(kk == tk!(KwSuper) && last_kw == tk!(KwTypeof))
+                && !const_param
             {
                 return false;
             }
@@ -159,9 +168,10 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
             prev_kw = kk;
             // At the start of a type only an operator takes an operand; any other word is a name.
             start = if start {
-                type_prefix_kind(kk)
+                type_prefix_kind(kk, cpu)
+                    || const_param
                     || (kk == tk!(KwAbstract)
-                        && tokens.ident_is(skip_trivia_fwd(src, hi, w + 8), b"new"))
+                        && tokens.ident_is(skip_trivia_fwd(src, hi, w + 8, cpu), b"new", cpu))
             } else {
                 matches_tk!(kk, KwExtends | KwIs | KwIn | KwAs)
             };
@@ -178,15 +188,15 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
             // text; its substitution `}` is still a punctuator. Read the literal as a whole then
             // (a template type), instead of its tail as tokens.
             if k == tk!(TemplateHead) {
-                let (close, end) = raw_template_end(src, hi, w);
-                if close < hi && tokens.base_kind(close) >= OP_KIND_BASE {
+                let (close, end) = raw_template_end(src, hi, w, cpu);
+                if close < hi && tokens.base_kind(close, cpu) >= OP_KIND_BASE {
                     if end > hi {
                         return false;
                     }
                     start = false;
                     paren_ok = false;
                     prev = w;
-                    w = bits::next1(st, end, hi);
+                    w = bits::next1(st, end, hi, cpu);
                     continue;
                 }
             }
@@ -223,14 +233,14 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                 }
                 b'<' => {
                     let nx = src[w + 1];
-                    if was_this || nx == b'=' || (nx == b'<' && !bits::get(st, w + 1)) {
+                    if was_this || nx == b'=' || (nx == b'<' && !bits::get(st, w + 1, cpu)) {
                         return false;
                     }
                     // No function type follows an operator that takes an operand.
-                    if braces == 0 && type_prefix_kind(last_kw) && last_kw != tk!(KwNew) {
+                    if braces == 0 && type_prefix_kind(last_kw, cpu) && last_kw != tk!(KwNew) {
                         return false;
                     }
-                    if !start && prev != usize::MAX && line_break_in(src, prev, w) {
+                    if !start && prev != usize::MAX && line_break_in(src, prev, w, cpu) {
                         return false;
                     }
                     angle_bits = (angle_bits << 1) | u64::from(start);
@@ -240,7 +250,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                 }
                 b'>' => {
                     let nx = src[w + 1];
-                    if (nx == b'=' || nx == b'>') && !bits::get(st, w + 1) {
+                    if (nx == b'=' || nx == b'>') && !bits::get(st, w + 1, cpu) {
                         return false;
                     }
                     if angle_depth > 0 {
@@ -253,7 +263,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                 b'=' => {
                     // `=>` of a function type, or a type-parameter default (the walk also reads
                     // member type-parameter lists here).
-                    if src[w + 1] == b'>' && bits::get(st, w + 1) {
+                    if src[w + 1] == b'>' && bits::get(st, w + 1, cpu) {
                         skip = w + 1;
                     }
                     start = true;
@@ -300,7 +310,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                         return false;
                     }
                     // An optional member, parameter or tuple element; else the ? of a conditional.
-                    let after = src[skip_trivia_fwd(src, hi, w + 1)];
+                    let after = src[skip_trivia_fwd(src, hi, w + 1, cpu)];
                     let optional = match open.last() {
                         Some(b'{') => true,
                         Some(b'(') => matches!(after, b':' | b',' | b')'),
@@ -327,10 +337,10 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                 }
                 b'-' | b'+' => {
                     // A sign before a numeric literal, or a mapped type's readonly or ? modifier.
-                    let a = skip_trivia_fwd(src, hi, w + 1);
-                    let number = c == b'-' && start && (is_digit(src[a]) || src[a] == b'.');
+                    let a = skip_trivia_fwd(src, hi, w + 1, cpu);
+                    let number = c == b'-' && start && (is_digit(src[a], cpu) || src[a] == b'.');
                     let modifier = open.last() == Some(&b'{')
-                        && (src[a] == b'?' || (start && tokens.ident_is(a, b"readonly")));
+                        && (src[a] == b'?' || (start && tokens.ident_is(a, b"readonly", cpu)));
                     if !number && !modifier && !open.contains(&b'k') {
                         return false;
                     }
@@ -343,14 +353,15 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
         }
         paren_ok = ok_paren;
         prev = w;
-        w = bits::next1(st, w + 1, hi);
+        w = bits::next1(st, w + 1, hi, cpu);
     }
     true
 }
 
 /// A keyword that is a whole type by itself, as any, null or this, and takes no type arguments.
+#[cpu_multiversion]
 #[rustfmt::skip::macros(matches_tk)]
-pub fn keyword_type(kw: u8) -> bool {
+pub fn keyword_type(kw: u8, _cpu: impl Cpu) -> bool {
     matches_tk!(
         kw,
         KwAny | KwBigInt | KwBoolean | KwNever | KwNumber | KwObject | KwString | KwSymbol
@@ -358,9 +369,10 @@ pub fn keyword_type(kw: u8) -> bool {
     )
 }
 
+#[cpu_multiversion]
 #[inline(always)]
 #[rustfmt::skip::macros(matches_tk)]
-fn type_illegal_kind(k: u8) -> bool {
+fn type_illegal_kind(k: u8, _cpu: impl Cpu) -> bool {
     matches_tk!(
         k,
         KwDelete | KwFunction | KwClass | KwInstanceof | KwSuper | KwSwitch
@@ -374,25 +386,29 @@ fn type_illegal_kind(k: u8) -> bool {
 /// position: a balanced list whose contents are types and whose closer is followed by a token that
 /// cannot start an expression. In a type, every `<` after a name opens a list, so a `<` this
 /// accepts opens one in any context.
-pub fn type_args_at(tokens: &Tokens, lt: usize) -> bool {
+#[cpu_multiversion]
+#[inline(never)]
+pub fn type_args_at(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
     let closers = tokens.closers;
-    if let Some(yes) = closers.get(lt).and_then(|r| r.args) {
+    if let Some(yes) = closers.get(lt, cpu).and_then(|r| r.args) {
         return yes;
     }
-    let yes = list_closer(tokens, lt).is_some_and(|gt| list_is_type_args(tokens, lt, gt));
-    closers.set_args(lt, yes);
+    let yes = list_closer(tokens, lt, cpu).is_some_and(|gt| list_is_type_args(tokens, lt, gt, cpu));
+    closers.set_args(lt, yes, cpu);
     yes
 }
 
-fn list_is_type_args(tokens: &Tokens, lt: usize, gt: usize) -> bool {
+#[cpu_multiversion]
+fn list_is_type_args(tokens: &Tokens, lt: usize, gt: usize, cpu: impl Cpu) -> bool {
     !matches!(tokens.src[gt + 1], b'=' | b'>')
-        && gt_follower(tokens, gt + 1)
-        && type_list_legal(tokens, lt + 1, gt)
+        && gt_follower(tokens, gt + 1, cpu)
+        && type_list_legal(tokens, lt + 1, gt, cpu)
 }
 
+#[cpu_multiversion]
 #[inline(always)]
 #[rustfmt::skip::macros(matches_tk)]
-fn type_prefix_kind(k: u8) -> bool {
+fn type_prefix_kind(k: u8, _cpu: impl Cpu) -> bool {
     matches_tk!(
         k,
         KwKeyof | KwTypeof | KwReadonly | KwUnique | KwInfer | KwNew | KwImport

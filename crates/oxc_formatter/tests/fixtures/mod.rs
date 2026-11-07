@@ -70,14 +70,16 @@ impl FixtureFormatter for JsHarness {
         true
     }
 
-    fn format(source: &str, path: &Path, options: &Self::Options) -> String {
+    fn format(
+        source: &str,
+        path: &Path,
+        options: &Self::Options,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let source_type = SourceType::from_path(path).unwrap();
         let allocator = Allocator::default();
-        oxc_formatter::format(&allocator, source, source_type, options.clone())
-            .unwrap()
-            .print()
-            .unwrap()
-            .into_code()
+        Ok(oxc_formatter::format(&allocator, source, source_type, options.clone())?
+            .print()?
+            .into_code())
     }
 
     fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> Fingerprint {

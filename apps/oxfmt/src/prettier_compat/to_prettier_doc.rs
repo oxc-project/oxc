@@ -15,7 +15,7 @@ use oxc_formatter_core::{
 
 /// Converts `oxc_formatter` IR (`FormatElement` slice) into Prettier Doc.
 ///
-/// This is used for js-in-xxx formatting (both full and fragment)
+/// This is used for the Svelte / Astro `<script>` Prettier formats (`text_to_doc`)
 /// where the IR must be returned to Prettier as an unresolved Doc (rather than a printed string)
 /// so that Prettier can handle line-wrapping in the parent context.
 ///
@@ -44,7 +44,6 @@ pub fn format_elements_to_prettier_doc(
     let mut state = ConvertState::new(sorted_tailwind_classes);
     // The conversion starts at a line start (the printer's `line_width == 0`),
     // so a leading `Space` is dropped, not flushed.
-    // (Fragment Docs are spliced mid-line by Prettier, but no fragment IR can start with a `Space`.)
     let children = convert_elements(elements, &mut state, LineState::Hardline)?;
     let doc = normalize_array(children);
     // The JS side skips the restore walk entirely when `hasRootDedent` is false,

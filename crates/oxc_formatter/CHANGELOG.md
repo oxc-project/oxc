@@ -4,6 +4,50 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.0] - 2026-11-06
+
+### 💥 BREAKING CHANGES
+
+- 00d1a67 oxfmt: [**BREAKING**] Format `parser:vue` files by `oxc_formatter_htmlish` (#28848) (leaysgur)
+
+### 🚀 Features
+
+- 119d82f formatter: Format a template's expressions and handlers as `JsRoot` (#28846) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- ebfd40a formatter: Sort Tailwind calls printed as member chains (#28800) (Yuji Sugiura)
+- e62e5cb formatter: Decide quotes of a Tailwind key printed as one class (#28798) (Yuji Sugiura)
+- 959edc1 formatter: Don't sort templates in nested non-Tailwind calls (#28794) (Yuji Sugiura)
+- 6ffbe32 formatter/jsdoc: Prevent `@tag` from being moved to the line start (#28835) (leaysgur)
+- 255c5cc formatter: Measure Tailwind class argument after collapsing whitespace (#28745) (Lee Jaeha / Adam)
+- e6c4fef formatter: Decide template and object key layouts from collapsed Tailwind classes (#28791) (Yuji Sugiura)
+- 0b44164 formatter: Decide JSX opening element layout from collapsed Tailwind class string (#28744) (Lee Jaeha / Adam)
+- b8ba9ae formatter: Print decorators on rest parameters (#28731) (YT)
+
+## [0.76.0] - 2026-11-02
+
+### 💥 BREAKING CHANGES
+
+- 296623d oxfmt: [**BREAKING**] Format `parser:html` files by `oxc_formatter_htmlish` (#28273) (Yuji Sugiura)
+
+### 🐛 Bug Fixes
+
+- dbcc358 formatter: Keep arrow conditional body parens before a leading `function`/`class` (#28710) (Yuji Sugiura)
+- fb3aefa formatter: Keep source parens around html-in-js placeholders past comments (#28381) (Yuji Sugiura)
+- e738dae formatter: Quote keys added in an HTML event handler with single quotes (#28380) (Yuji Sugiura)
+- f00862b formatter: Keep parens around a generic function type in a type assertion (#28173) (vidigoat)
+- 9ead5c4 formatter: Handle `this.b` and `super.b` like `foo.b` (#28200) (leaysgur)
+- 72a54cf formatter: Break parens of `(a + b)[c]` like `(a + b).c` (#28199) (leaysgur)
+- b8f4f34 formatter: Print `x.b` and `x.#b` samely (#28193) (leaysgur)
+- 9ddccb7 formatter: Keep parens for private field (#28188) (leaysgur)
+
+### 📚 Documentation
+
+- 303d9e8 formatter: Strengthen `start-token-no-double-parens` rationale (#28711) (Yuji Sugiura)
+- a82ce83 oxfmt: Update unclassified divergence (#28685) (Yuji Sugiura)
+- 01ed68a oxfmt,formatter_htmlish,formatter: Clean up behavior comments (#28384) (Yuji Sugiura)
+
 ## [0.75.0] - 2026-10-27
 
 ### 🐛 Bug Fixes

@@ -90,7 +90,7 @@ The core is parameterized over a consumer-supplied context so it stays language-
 - Only language-pair specific data crosses as `dyn Any`, core never learns concrete languages:
   - When the parent picks the child language, it passes the pair's own data (css-in-js's `CssInJsTemplate`, html-in-js's `HtmlInJsTemplate`)
   - When it cannot (a Markdown code block's name resolves in the host), it passes a fact about itself to every child,
-    and the host translates it into the pair's data once the child language is known (`XxxInMarkdownCodeBlock` → `JsEmbeddedIn`)
+    and the host translates it into the pair's data once the child language is known (`XxxInMarkdownCodeBlock` → JS's `JsRoot::Program`)
 - `FormatSession` (`session/mod.rs`) is the execution unit:
   - One arena, one shared `GroupId` space (`Arc<UniqueGroupIdBuilder>`), one Tailwind class scope (`Rc<RefCell<Vec<String>>>`), the host's `SessionServices`, and the input's envelope semantics (`InputKind`), usable by standalone roots and dispatched children alike
   - `SessionServices` names the three per-run duties, one field each: `dispatcher` (IR channel), `string_embedder` (string-out channel, `(language, code, print_width)`; temporary, see domain (4)'s exit criterion), `tailwind_sorter` (print-time batch sort). Core only transports them

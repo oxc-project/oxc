@@ -718,17 +718,6 @@ fn get_context_reassignment(
     let mut returned_loaded_contexts = CapturedContexts::default();
     let (initial_context_values, context_values_by_block, hoisted_function_values) =
         infer_context_values_by_block(func, functions);
-    // Bindings owned by this function are ordinary locals while it executes,
-    // but become context variables for child closures.
-    let mut child_context_variables = context_variables.clone();
-    for param in &func.params {
-        let place = match param {
-            ParamPattern::Place(place) => place,
-            ParamPattern::Spread(spread) => &spread.place,
-        };
-        child_context_variables.insert(place.identifier);
-    }
-    collect_outer_context_variables(func, &mut child_context_variables);
 
     for (&block_id, block) in &func.body.blocks {
         let mut context_values = context_values_at_block_entry(
@@ -774,7 +763,7 @@ fn get_context_reassignment(
                         identifiers,
                         functions,
                         env,
-                        &mut child_context_variables,
+                        context_variables,
                         true,
                         inner_is_async && !inner_function.generator,
                         diagnostics,

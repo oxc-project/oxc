@@ -3869,6 +3869,11 @@ export interface NoRedeclare {
    * When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
    */
   builtinGlobals?: boolean;
+  /**
+   * When `true`, automatically merged declarations like namespace, class, etc. will be
+   * ignored when checking for redeclarations.
+   */
+  ignoreDeclarationMerge?: boolean;
 }
 export interface NoRestrictedExportsConfig {
   /**

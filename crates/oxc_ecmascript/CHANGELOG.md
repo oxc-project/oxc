@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.157.0] - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- eaa8e90 ecmascript: Avoid numeric `+` folding when an operand may be a string (#28544) (camc314)
+
+### ⚡ Performance
+
+- 444f24a ecmascript: Short-circuit simple parameter checks for rest (#28503) (Boshen)
+- 8239dac parser: Replace dragonbox_ecma with zmij_ecma (#28282) (Boshen)
+
 ## [0.156.0] - 2026-10-27
 
 ### 💥 BREAKING CHANGES

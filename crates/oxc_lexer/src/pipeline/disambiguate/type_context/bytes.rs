@@ -13,16 +13,19 @@
 //! [`match_delim_back`]: crate::pipeline::disambiguate::common::Tokens::match_delim_back
 
 use crate::{
-    pipeline::bytes::{
-        block_comment_end, is_id_start, is_ws, line_break_in, line_terminator_after,
-        unicode_ws_len_at,
-    },
+    cpu::{Cpu, cpu_multiversion},
     token::{OP_KIND_BASE, matches_tk, tk},
 };
 
-use crate::pipeline::disambiguate::{
-    FORWARD_SCAN_CAP,
-    common::{Closers, Open, Tokens, bits},
+use crate::pipeline::{
+    bytes::{
+        block_comment_end, is_id_start, is_ws, line_break_in, line_terminator_after,
+        unicode_ws_len_at,
+    },
+    disambiguate::{
+        FORWARD_SCAN_CAP,
+        common::{Closers, Open, Tokens, bits},
+    },
 };
 
 /// Bytes the forward angle match reacts to. Everything else is skipped without touching a bitmap.
@@ -56,72 +59,76 @@ static GT_SCAN_DELIM: [bool; 256] = {
 /// first `>`) and from `a << b > (c)` (no `=>` after the parameters). Every
 /// reject path returns false, i.e. today's fused `<<`, so a wrong answer can
 /// never split a real shift.
+#[cpu_multiversion]
 #[inline(never)]
-pub fn lt_run_split(tokens: &Tokens, lt: usize) -> bool {
+pub fn lt_run_split(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
     let Tokens { src, st, n, .. } = *tokens;
     // A TypeParameter starts with an identifier (or the `const` modifier),
     // which is what makes `<<=` cost two bytes to reject.
-    let head = skip_trivia_fwd(src, n, lt + 2);
+    let head = skip_trivia_fwd(src, n, lt + 2, cpu);
     if head >= n {
         return false;
     }
     let hc = src[head];
-    if !(is_id_start(hc) || (hc == b'\\' && src[head + 1] == b'u')) {
+    if !(is_id_start(hc, cpu) || (hc == b'\\' && src[head + 1] == b'u')) {
         return false;
     }
     // Already fused by coalesce: a shift.
-    if !bits::get(st, lt + 1) {
+    if !bits::get(st, lt + 1, cpu) {
         return false;
     }
-    let Some(gt) = list_closer(tokens, lt + 1) else {
+    let Some(gt) = list_closer(tokens, lt + 1, cpu) else {
         return false;
     };
-    let lp = skip_trivia_fwd(src, n, gt + 1);
-    if lp >= n || src[lp] != b'(' || !arrow_after_params(tokens, lp) {
+    let lp = skip_trivia_fwd(src, n, gt + 1, cpu);
+    if lp >= n || src[lp] != b'(' || !arrow_after_params(tokens, lp, cpu) {
         return false;
     }
     // The outer list must close too, or this was a comparison against a
     // generic arrow function and the parser would have backtracked as well.
-    list_closer(tokens, lt).is_some()
+    list_closer(tokens, lt, cpu).is_some()
 }
 
-pub(super) fn arrow_after_params(tokens: &Tokens, lp: usize) -> bool {
+#[cpu_multiversion]
+pub(super) fn arrow_after_params(tokens: &Tokens, lp: usize, cpu: impl Cpu) -> bool {
     let Tokens { src, n, .. } = *tokens;
-    let Some(rp) = group_closer(tokens, lp) else {
+    let Some(rp) = group_closer(tokens, lp, cpu) else {
         return false;
     };
-    let ar = skip_trivia_fwd(src, n, rp + 1);
+    let ar = skip_trivia_fwd(src, n, rp + 1, cpu);
     ar < n && src[ar] == b'=' && src[ar + 1] == b'>'
 }
 
-pub(super) fn skip_trivia_fwd(src: &[u8], n: usize, i: usize) -> usize {
-    skip_trivia_nl(src, n, i).0
+#[cpu_multiversion]
+pub(super) fn skip_trivia_fwd(src: &[u8], n: usize, i: usize, cpu: impl Cpu) -> usize {
+    skip_trivia_nl(src, n, i, cpu).0
 }
 
 /// The first non-trivia byte at or after i (or n), and whether a line terminator came first.
+#[cpu_multiversion]
 #[inline(always)]
-pub(super) fn skip_trivia_nl(src: &[u8], n: usize, mut i: usize) -> (usize, bool) {
+pub(super) fn skip_trivia_nl(src: &[u8], n: usize, mut i: usize, cpu: impl Cpu) -> (usize, bool) {
     let mut broke = false;
-    if i < n && !is_ws(src[i]) && src[i] != b'/' && src[i] < 0x80 {
+    if i < n && !is_ws(src[i], cpu) && src[i] != b'/' && src[i] < 0x80 {
         return (i, false);
     }
     while i < n {
         let c = src[i];
-        if is_ws(c) {
+        if is_ws(c, cpu) {
             broke |= c == b'\n' || c == b'\r';
             i += 1;
         } else if c == b'/' && src[i + 1] == b'/' {
-            i = line_terminator_after(src, n, i + 2);
+            i = line_terminator_after(src, n, i + 2, cpu);
         } else if c == b'/' && src[i + 1] == b'*' {
-            let e = block_comment_end(src, n, i + 2);
+            let e = block_comment_end(src, n, i + 2, cpu);
             if e >= n {
                 return (n, broke);
             }
-            broke |= line_break_in(src, i + 2, e);
+            broke |= line_break_in(src, i + 2, e, cpu);
             i = e + 1;
-        } else if c >= 0x80 && unicode_ws_len_at(src, i) != 0 {
-            broke |= line_break_in(src, i, i + 3);
-            i += unicode_ws_len_at(src, i);
+        } else if c >= 0x80 && unicode_ws_len_at(src, i, cpu) != 0 {
+            broke |= line_break_in(src, i, i + 3, cpu);
+            i += unicode_ws_len_at(src, i, cpu);
         } else {
             break;
         }
@@ -129,32 +136,35 @@ pub(super) fn skip_trivia_nl(src: &[u8], n: usize, mut i: usize) -> (usize, bool
     (i, broke)
 }
 
-pub(super) fn list_closer(tokens: &Tokens, lt: usize) -> Option<usize> {
-    match tokens.closers.get(lt) {
-        Some(r) => r.closer(),
-        None => resolve_lists(tokens, lt),
+#[cpu_multiversion]
+pub(super) fn list_closer(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> Option<usize> {
+    match tokens.closers.get(lt, cpu) {
+        Some(r) => r.closer(cpu),
+        None => resolve_lists(tokens, lt, cpu),
     }
 }
 
-fn group_closer(tokens: &Tokens, lp: usize) -> Option<usize> {
-    match tokens.closers.get(lp) {
-        Some(r) => r.closer(),
-        None => resolve_groups(tokens, lp),
+#[cpu_multiversion]
+fn group_closer(tokens: &Tokens, lp: usize, cpu: impl Cpu) -> Option<usize> {
+    match tokens.closers.get(lp, cpu) {
+        Some(r) => r.closer(cpu),
+        None => resolve_groups(tokens, lp, cpu),
     }
 }
 
+#[cpu_multiversion]
 #[inline]
-fn past_raw(tokens: &Tokens, lim: usize, i: usize) -> Option<usize> {
+fn past_raw(tokens: &Tokens, lim: usize, i: usize, cpu: impl Cpu) -> Option<usize> {
     let (src, kind) = (tokens.src, tokens.kind);
-    let j = skip_raw_literal(src, kind, lim, i);
+    let j = skip_raw_literal(src, kind, lim, i, cpu);
     if j != i {
         return (j < lim).then_some(j);
     }
     // Asked from the JSX carve, a template head may be carved while its tail is still
     // raw text (its substitution `}` a punctuator): cross the literal whole.
-    if tokens.base_kind(i) == tk!(TemplateHead) {
-        let (close, end) = raw_template_end(src, lim, i);
-        if close < lim && tokens.base_kind(close) >= OP_KIND_BASE {
+    if tokens.base_kind(i, cpu) == tk!(TemplateHead) {
+        let (close, end) = raw_template_end(src, lim, i, cpu);
+        if close < lim && tokens.base_kind(close, cpu) >= OP_KIND_BASE {
             return (end <= lim).then_some(end);
         }
     }
@@ -162,8 +172,9 @@ fn past_raw(tokens: &Tokens, lim: usize, i: usize) -> Option<usize> {
 }
 
 /// The > closing the < at start, if the brackets inside balance and no ; on its level ends it.
+#[cpu_multiversion]
 #[inline(never)]
-fn resolve_lists(tokens: &Tokens, start: usize) -> Option<usize> {
+fn resolve_lists(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> {
     let Tokens { src, st, opch, n, closers, .. } = *tokens;
     let budget = start + FORWARD_SCAN_CAP;
     let mut stack = closers.lists.borrow_mut();
@@ -172,8 +183,8 @@ fn resolve_lists(tokens: &Tokens, start: usize) -> Option<usize> {
     let (mut parens, mut brackets, mut braces) = (0i32, 0i32, 0i32);
     let mut i = start + 1;
     while i < n {
-        if bits::get(st, i) {
-            match past_raw(tokens, n, i) {
+        if bits::get(st, i, cpu) {
+            match past_raw(tokens, n, i, cpu) {
                 Some(j) if j != i => {
                     i = j;
                     continue;
@@ -183,8 +194,8 @@ fn resolve_lists(tokens: &Tokens, start: usize) -> Option<usize> {
             }
         }
         let c = src[i];
-        if GT_SCAN_DELIM[c as usize] && bits::get(st, i) {
-            let op = bits::get(opch, i);
+        if GT_SCAN_DELIM[c as usize] && bits::get(st, i, cpu) {
+            let op = bits::get(opch, i, cpu);
             match c {
                 b'<' => {
                     if op && src[i + 1] != b'=' {
@@ -206,7 +217,7 @@ fn resolve_lists(tokens: &Tokens, start: usize) -> Option<usize> {
                                 e.parens == parens && e.brackets == brackets && e.braces == braces;
                             let closer = balanced.then_some(i);
                             if i > budget {
-                                closers.set(e.pos as usize, closer);
+                                closers.set(e.pos as usize, closer, cpu);
                             }
                             if e.pos as usize == start {
                                 return closer;
@@ -217,23 +228,27 @@ fn resolve_lists(tokens: &Tokens, start: usize) -> Option<usize> {
                 b'(' => parens += 1,
                 b')' => {
                     parens -= 1;
-                    kill(&mut stack, closers, i > budget, |e| e.parens > parens);
+                    kill(&mut stack, closers, i > budget, |e| e.parens > parens, cpu);
                 }
                 b'[' => brackets += 1,
                 b']' => {
                     brackets -= 1;
-                    kill(&mut stack, closers, i > budget, |e| e.brackets > brackets);
+                    kill(&mut stack, closers, i > budget, |e| e.brackets > brackets, cpu);
                 }
                 b'{' => braces += 1,
                 b'}' => {
-                    if !matches_tk!(tokens.base_kind(i), TemplateMiddle | TemplateTail) {
+                    if !matches_tk!(tokens.base_kind(i, cpu), TemplateMiddle | TemplateTail) {
                         braces -= 1;
-                        kill(&mut stack, closers, i > budget, |e| e.braces > braces);
+                        kill(&mut stack, closers, i > budget, |e| e.braces > braces, cpu);
                     }
                 }
-                _ => kill(&mut stack, closers, i > budget, |e| {
-                    e.parens == parens && e.brackets == brackets && e.braces == braces
-                }),
+                _ => kill(
+                    &mut stack,
+                    closers,
+                    i > budget,
+                    |e| e.parens == parens && e.brackets == brackets && e.braces == braces,
+                    cpu,
+                ),
             }
             if stack[0].dead > 0 {
                 // start died, and everything above it went with it.
@@ -244,21 +259,28 @@ fn resolve_lists(tokens: &Tokens, start: usize) -> Option<usize> {
     }
     if n > budget {
         for e in stack.iter().filter(|e| e.dead == 0) {
-            closers.set(e.pos as usize, None);
+            closers.set(e.pos as usize, None, cpu);
         }
     }
     None
 }
 
 /// Live openers' bracket counts only grow upward, so nothing below the first survivor is doomed.
-fn kill(stack: &mut Vec<Open>, closers: &Closers, record: bool, doomed: impl Fn(&Open) -> bool) {
+#[cpu_multiversion]
+fn kill(
+    stack: &mut Vec<Open>,
+    closers: &Closers,
+    record: bool,
+    doomed: impl Fn(&Open) -> bool,
+    cpu: impl Cpu,
+) {
     let mut dead = 0u32;
     while let Some(top) = stack.last() {
         if top.dead > 0 {
             dead += top.dead;
         } else if doomed(top) {
             if record {
-                closers.set(top.pos as usize, None);
+                closers.set(top.pos as usize, None, cpu);
             }
             dead += 1;
         } else {
@@ -271,8 +293,9 @@ fn kill(stack: &mut Vec<Open>, closers: &Closers, record: bool, doomed: impl Fn(
     }
 }
 
+#[cpu_multiversion]
 #[inline(never)]
-fn resolve_groups(tokens: &Tokens, start: usize) -> Option<usize> {
+fn resolve_groups(tokens: &Tokens, start: usize, cpu: impl Cpu) -> Option<usize> {
     let Tokens { src, st, n, closers, .. } = *tokens;
     let budget = start + FORWARD_SCAN_CAP;
     let mut open = closers.groups.borrow_mut();
@@ -280,8 +303,8 @@ fn resolve_groups(tokens: &Tokens, start: usize) -> Option<usize> {
     open.push(start as u32);
     let mut i = start + 1;
     while i < n {
-        if bits::get(st, i) {
-            match past_raw(tokens, n, i) {
+        if bits::get(st, i, cpu) {
+            match past_raw(tokens, n, i, cpu) {
                 Some(j) if j != i => {
                     i = j;
                     continue;
@@ -295,7 +318,7 @@ fn resolve_groups(tokens: &Tokens, start: usize) -> Option<usize> {
                     // Never empty: start is popped last.
                     let lp = open.pop().unwrap() as usize;
                     if i > budget {
-                        closers.set(lp, Some(i));
+                        closers.set(lp, Some(i), cpu);
                     }
                     if lp == start {
                         return Some(i);
@@ -308,7 +331,7 @@ fn resolve_groups(tokens: &Tokens, start: usize) -> Option<usize> {
     }
     if n > budget {
         for &lp in open.iter() {
-            closers.set(lp as usize, None);
+            closers.set(lp as usize, None, cpu);
         }
     }
     None
@@ -317,28 +340,36 @@ fn resolve_groups(tokens: &Tokens, start: usize) -> Option<usize> {
 /// If a comment, string or template carve has not reached yet starts at the token start `i`, the
 /// position just past it; else `i`. Forward scans from before the carve cursor cross raw text;
 /// carved literals have cleared interiors and are never re-entered.
+#[cpu_multiversion]
 #[inline]
-pub(super) fn skip_raw_literal(src: &[u8], kind: &[u8], n: usize, i: usize) -> usize {
+pub(super) fn skip_raw_literal(
+    src: &[u8],
+    kind: &[u8],
+    n: usize,
+    i: usize,
+    cpu: impl Cpu,
+) -> usize {
     if kind[i] < OP_KIND_BASE {
         return i;
     }
     let c = src[i];
     match c {
         b'/' => match src[i + 1] {
-            b'/' => line_terminator_after(src, n, i + 2),
+            b'/' => line_terminator_after(src, n, i + 2, cpu),
             b'*' => {
-                let e = block_comment_end(src, n, i + 2);
+                let e = block_comment_end(src, n, i + 2, cpu);
                 if e < n { e + 1 } else { n }
             }
             _ => i,
         },
-        b'"' | b'\'' => past_raw_string(src, n, i, c),
-        b'`' => raw_template_end(src, n, i).1.min(n),
+        b'"' | b'\'' => past_raw_string(src, n, i, c, cpu),
+        b'`' => raw_template_end(src, n, i, cpu).1.min(n),
         _ => i,
     }
 }
 
-fn past_raw_string(src: &[u8], lim: usize, i: usize, quote: u8) -> usize {
+#[cpu_multiversion]
+fn past_raw_string(src: &[u8], lim: usize, i: usize, quote: u8, _cpu: impl Cpu) -> usize {
     let mut j = i + 1;
     while j < lim {
         let d = src[j];
@@ -358,7 +389,8 @@ fn past_raw_string(src: &[u8], lim: usize, i: usize, quote: u8) -> usize {
 /// end (exclusive) of the whole literal, over raw bytes. `lim` when the `}` is not found before
 /// `lim`, `lim + 1` when the literal does not end before it. Cold: a template inside a
 /// speculated type-argument list.
-pub(super) fn raw_template_end(src: &[u8], lim: usize, i: usize) -> (usize, usize) {
+#[cpu_multiversion]
+pub(super) fn raw_template_end(src: &[u8], lim: usize, i: usize, cpu: impl Cpu) -> (usize, usize) {
     let mut last_close = lim;
     let mut subs: Vec<u32> = Vec::new();
     let mut in_text = true;
@@ -407,11 +439,11 @@ pub(super) fn raw_template_end(src: &[u8], lim: usize, i: usize) -> (usize, usiz
                     in_text = true;
                     j += 1;
                 }
-                b'"' | b'\'' => j = past_raw_string(src, lim, j, c),
+                b'"' | b'\'' => j = past_raw_string(src, lim, j, c, cpu),
                 b'/' => match src[j + 1] {
-                    b'/' => j = line_terminator_after(src, lim, j + 2),
+                    b'/' => j = line_terminator_after(src, lim, j + 2, cpu),
                     b'*' => {
-                        let e = block_comment_end(src, lim, j + 2);
+                        let e = block_comment_end(src, lim, j + 2, cpu);
                         if e >= lim {
                             return (lim, lim + 1);
                         }

@@ -4,15 +4,19 @@
 //! run to `n`, the source length: a forward scan that finds nothing before `n` answers `n`, and a
 //! backward one that reaches the start answers `None`.
 
+use crate::cpu::{Cpu, cpu_multiversion};
+
 /// Is bit `i` set?
+#[cpu_multiversion]
 #[inline(always)]
-pub fn get(bits: &[u64], i: usize) -> bool {
+pub fn get(bits: &[u64], i: usize, _cpu: impl Cpu) -> bool {
     (bits[i >> 6] >> (i & 63)) & 1 != 0
 }
 
 /// The first set bit at or after `i`, or `n`.
+#[cpu_multiversion]
 #[inline(always)]
-pub fn next1(bits: &[u64], i: usize, n: usize) -> usize {
+pub fn next1(bits: &[u64], i: usize, n: usize, _cpu: impl Cpu) -> usize {
     let mut w = i >> 6;
     let x = bits[w] & !((1u64 << (i & 63)).wrapping_sub(1));
     if x != 0 {
@@ -30,8 +34,9 @@ pub fn next1(bits: &[u64], i: usize, n: usize) -> usize {
 }
 
 /// The last set bit before `p`, or `None`.
+#[cpu_multiversion]
 #[inline(always)]
-pub fn prev1(bits: &[u64], p: usize) -> Option<usize> {
+pub fn prev1(bits: &[u64], p: usize, _cpu: impl Cpu) -> Option<usize> {
     if p == 0 {
         return None;
     }

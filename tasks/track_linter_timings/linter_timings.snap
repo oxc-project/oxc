@@ -371,7 +371,7 @@ promise/no-return-wrap                                  |  62606
 promise/param-names                                     |   1421
 promise/prefer-await-to-callbacks                       |  79418
 promise/prefer-await-to-then                            |  62606
-promise/prefer-catch                                    |  24802
+promise/prefer-catch                                    |  62606
 promise/spec-only                                       |  95297
 promise/valid-params                                    |  62606
 react/button-has-type                                   |   7019

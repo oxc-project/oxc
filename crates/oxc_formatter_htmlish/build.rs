@@ -9,7 +9,7 @@ fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = PathBuf::from(out_dir).join("generated_tests.rs");
 
-    let config = GenerateConfig { extensions: &["html", "vue", "xhtml"] };
+    let config = GenerateConfig { extensions: &["html", "hta", "vue", "xhtml"] };
 
     generate_tests(&dest_path, Path::new("tests/fixtures"), &config).unwrap();
 }
