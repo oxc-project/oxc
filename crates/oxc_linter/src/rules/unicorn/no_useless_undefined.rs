@@ -220,7 +220,10 @@ impl Rule for NoUselessUndefined {
                     fixer.replace(conditional.span, replacement)
                 });
             }
-            AstKind::IdentifierReference(undefined_literal) if undefined_literal.is_undefined() => {
+            AstKind::IdentifierReference(undefined_literal)
+                if undefined_literal.is_undefined()
+                    && ctx.is_reference_to_global_variable(undefined_literal) =>
+            {
                 let Some(parent_node) = outermost_paren_parent(node, ctx) else {
                     return;
                 };
@@ -356,11 +359,15 @@ impl Rule for NoUselessUndefined {
                     return;
                 }
 
+                let is_global_undefined = |expression: &Expression| {
+                    matches!(expression, Expression::Identifier(ident)
+                        if ident.is_undefined() && ctx.is_reference_to_global_variable(ident))
+                };
                 let arguments = &call_expr.arguments;
                 if !arguments
                     .last()
                     .and_then(Argument::as_expression)
-                    .is_some_and(Expression::is_undefined)
+                    .is_some_and(is_global_undefined)
                 {
                     return;
                 }
@@ -376,7 +383,7 @@ impl Rule for NoUselessUndefined {
                 let mut undefined_args_spans = Vec::new();
                 for i in (0..arguments.len()).rev() {
                     let arg = &arguments[i];
-                    if arg.as_expression().is_some_and(Expression::is_undefined) {
+                    if arg.as_expression().is_some_and(is_global_undefined) {
                         let span = arg.span();
                         undefined_args_spans.push(span);
                     } else {
@@ -835,6 +842,14 @@ fn test() {
             "function getBackLinks(subject: string, limit = 16, cursor?: string, reverse = false, ttl: number | undefined = undefined) {}",
             None,
         ),
+        ("function a() { const undefined = 1; let x = undefined; return x; }", None),
+        ("function b(undefined) { { let y = undefined; return y; } }", None),
+        ("function c(undefined) { return undefined; }", None),
+        ("function d(undefined, f) { return f(undefined, undefined); }", None),
+        ("function* e(undefined) { yield undefined; }", None),
+        ("function g(undefined, h = undefined) { return h; }", None),
+        ("const arrow = (undefined) => undefined;", None),
+        ("function defaults(undefined) { const {x = undefined} = {}; }", None),
     ];
 
     let fail = vec![
