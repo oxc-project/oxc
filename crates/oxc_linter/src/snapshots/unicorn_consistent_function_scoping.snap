@@ -13,18 +13,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(consistent-function-scoping): Function `Bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:2:26]
- 1 │ function doFoo(FooComponent) {
-   ·          ──┬──
-   ·            ╰── Outer scope where this function is defined
- 2 │                 function Bar() {
-   ·                          ─┬─
-   ·                           ╰── This function does not use any variables from the parent function
- 3 │                     return <FooComponent />;
-   ╰────
-  help: Move `Bar` to the outer scope to avoid recreating it on every call.
-
-  ⚠ unicorn(consistent-function-scoping): Function `Bar` does not capture any variables from its parent scope
-   ╭─[consistent_function_scoping.tsx:2:26]
  1 │ function Foo() {
    ·          ─┬─
    ·           ╰── Outer scope where this function is defined
@@ -65,6 +53,33 @@ source: crates/oxc_linter/src/tester.rs
  5 │             }
    ╰────
   help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `Bar` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:1:29]
+ 1 │ function doFoo() { function Bar() { return <div />; } return Bar; };
+   ·          ──┬──              ─┬─
+   ·            │                 ╰── This function does not use any variables from the parent function
+   ·            ╰── Outer scope where this function is defined
+   ╰────
+  help: Move `Bar` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `Bar` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:1:32]
+ 1 │ function doFoo(div) { function Bar() { return <div />; } return Bar; };
+   ·          ──┬──                 ─┬─
+   ·            │                    ╰── This function does not use any variables from the parent function
+   ·            ╰── Outer scope where this function is defined
+   ╰────
+  help: Move `Bar` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `Bar` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:1:29]
+ 1 │ function doFoo() { function Bar() { return <this.Component />; } return Bar; };
+   ·          ──┬──              ─┬─
+   ·            │                 ╰── This function does not use any variables from the parent function
+   ·            ╰── Outer scope where this function is defined
+   ╰────
+  help: Move `Bar` to the outer scope to avoid recreating it on every call.
 
   ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:2:26]
