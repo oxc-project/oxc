@@ -1,0 +1,42 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: "*"
+working directory: fixtures/globs
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 0 files with 89 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
+
+########## 
+arguments: "*.ts"
+working directory: fixtures/globs
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 0 files with 89 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
+
+########## 
+arguments: "*.{js,ts}"
+working directory: fixtures/globs
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 0 files with 89 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
+
+########## 
+arguments: "./**/*.{js,ts}"
+working directory: fixtures/globs
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 0 files with 89 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
