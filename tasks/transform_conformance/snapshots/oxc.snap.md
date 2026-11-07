@@ -1,6 +1,6 @@
 commit: 0372f7f1
 
-Passed: 310/439
+Passed: 316/440
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (43/63)
+# babel-plugin-transform-typescript (49/64)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -104,35 +104,12 @@ Symbol reference IDs mismatch for "NestInner":
 after transform: SymbolId(18): [ReferenceId(31), ReferenceId(32), ReferenceId(33), ReferenceId(34), ReferenceId(35)]
 rebuilt        : SymbolId(9): [ReferenceId(25), ReferenceId(26), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(31)]
 
-* enum-string-alias-member/input.ts
-Symbol reference IDs mismatch for "Color":
-after transform: SymbolId(4): [ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(12)]
-rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(8)]
-
 * enum-surrogate-string-value/input.ts
 Missing ReferenceId: "E"
 Missing ReferenceId: "E"
 Symbol reference IDs mismatch for "E":
 after transform: SymbolId(10): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10)]
 rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9)]
-
-* enum-template-literal/input.ts
-Symbol reference IDs mismatch for "Size":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(7)]
-rebuilt        : SymbolId(0): [ReferenceId(3)]
-Symbol reference IDs mismatch for "Animal":
-after transform: SymbolId(3): [ReferenceId(1), ReferenceId(3), ReferenceId(11)]
-rebuilt        : SymbolId(2): [ReferenceId(7)]
-
-* enum-template-literal-number/input.ts
-Symbol reference IDs mismatch for "NumberEnum":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(13)]
-rebuilt        : SymbolId(0): [ReferenceId(9)]
-
-* enum-template-literal-trailing-quasi/input.ts
-Symbol reference IDs mismatch for "NumberEnum":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(8)]
-rebuilt        : SymbolId(0): [ReferenceId(5)]
 
 * export-elimination/input.ts
 Bindings mismatch:
@@ -160,11 +137,6 @@ rebuilt        : SymbolId(0): []
 Symbol redeclarations mismatch for "y":
 after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(3): []
-
-* optimize-enums/merged-enum/input.ts
-Unresolved references mismatch:
-after transform: ["A"]
-rebuilt        : []
 
 * redeclarations/input.ts
 Bindings mismatch:

@@ -29,3 +29,24 @@ fn transforms_enum_when_enum_eval_enabled() {
 fn panics_when_enum_eval_disabled() {
     run(false);
 }
+
+#[test]
+fn folded_enum_initializers_remove_const_references() {
+    for optimize_enums in [false, true] {
+        let allocator = Allocator::default();
+        let mut program =
+            Parser::new(&allocator, r#"const o = "o"; enum E { A = o }"#, SourceType::ts())
+                .parse()
+                .program;
+        let scoping =
+            SemanticBuilder::new().with_enum_eval(true).build(&program).semantic.into_scoping();
+        let symbol_id = scoping.symbol_ids().find(|&id| scoping.symbol_name(id) == "o").unwrap();
+        assert_eq!(scoping.get_resolved_reference_ids(symbol_id).len(), 1);
+        let mut options = TransformOptions::default();
+        options.typescript.optimize_enums = optimize_enums;
+        let ret = Transformer::new(&allocator, Path::new("a.ts"), &options)
+            .build_with_scoping(scoping, &mut program);
+        assert!(ret.diagnostics.is_empty());
+        assert_eq!(ret.scoping.get_resolved_reference_ids(symbol_id).len(), 0);
+    }
+}

@@ -2,7 +2,7 @@ use std::cell::Cell;
 
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::{VisitJsMut, walk_js_mut};
+use oxc_ast_visit::{Visit, VisitJsMut, walk_js_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{SPAN, Span};
@@ -87,6 +87,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
         stmts.retain(|stmt| {
             if let Statement::TSEnumDeclaration(decl) = stmt {
                 names_to_remove.push(decl.id.name);
+                IdentifierReferenceRemover(ctx).visit_ts_enum_declaration(decl);
                 return false;
             }
             true
@@ -350,21 +351,24 @@ impl<'a> TypeScriptEnum {
 
                         initializer
                     }
-                    Some(constant_value) => match constant_value {
-                        ConstantValue::Number(v) => {
-                            prev_constant_number = Some(v);
-                            Self::get_initializer_expr(v, ctx)
+                    Some(constant_value) => {
+                        IdentifierReferenceRemover(ctx).visit_expression(&initializer);
+                        match constant_value {
+                            ConstantValue::Number(v) => {
+                                prev_constant_number = Some(v);
+                                Self::get_initializer_expr(v, ctx)
+                            }
+                            ConstantValue::String(s) => {
+                                prev_constant_number = None;
+                                Expression::new_string_literal(
+                                    SPAN,
+                                    Str::from_str_in(&s, ctx),
+                                    None,
+                                    ctx,
+                                )
+                            }
                         }
-                        ConstantValue::String(s) => {
-                            prev_constant_number = None;
-                            Expression::new_string_literal(
-                                SPAN,
-                                Str::from_str_in(&s, ctx),
-                                None,
-                                ctx,
-                            )
-                        }
-                    },
+                    }
                 }
                 // No initializer, try to infer the value from the previous member.
             } else if let Some(value) = &prev_constant_number {
@@ -599,6 +603,14 @@ impl<'a> TypeScriptEnum {
             }
         }
         None
+    }
+}
+
+struct IdentifierReferenceRemover<'a, 'ctx>(&'ctx mut TraverseCtx<'a>);
+
+impl<'a> Visit<'a> for IdentifierReferenceRemover<'a, '_> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        self.0.delete_reference_for_identifier(ident);
     }
 }
 

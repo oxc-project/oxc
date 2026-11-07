@@ -109,6 +109,7 @@ pub struct SemanticBuilder<'a> {
 
     /// Should enum member values be evaluated?
     enum_eval: bool,
+    enum_eval_declarations: Vec<crate::ts_enum::eval::EnumEvalDeclaration<'a>>,
 
     /// Should additional syntax checks be performed?
     ///
@@ -166,6 +167,7 @@ impl<'a> SemanticBuilder<'a> {
             stats: None,
             excess_capacity: 0.0,
             enum_eval: false,
+            enum_eval_declarations: Vec::new(),
             check_syntax_error: false,
             #[cfg(feature = "cfg")]
             cfg: None,
@@ -347,6 +349,13 @@ impl<'a> SemanticBuilder<'a> {
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
+        if self.enum_eval {
+            crate::ts_enum::eval::evaluate_declarations(
+                &self.enum_eval_declarations,
+                &mut self.scoping,
+                self.source_text.len(),
+            );
+        }
 
         // Check that estimated counts accurately (unless in release mode)
         #[cfg(debug_assertions)]
@@ -2682,6 +2691,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(init) = &decl.init {
             self.visit_expression(init);
         }
+        if self.enum_eval
+            && self.source_type.is_typescript()
+            && let BindingPattern::BindingIdentifier(binding) = &decl.id
+            && self.scoping.symbol_flags(binding.symbol_id()).is_const_variable()
+        {
+            self.enum_eval_declarations
+                .push(crate::ts_enum::eval::EnumEvalDeclaration::Const(self.alloc(decl)));
+        }
         self.leave_node(kind);
     }
 
@@ -2849,9 +2866,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
         self.visit_ts_enum_body(&decl.body);
-        // Evaluate enum member values after all members are bound
         if self.enum_eval {
-            crate::ts_enum::eval::evaluate_enum_members(decl, &mut self.scoping);
+            self.enum_eval_declarations
+                .push(crate::ts_enum::eval::EnumEvalDeclaration::Enum(self.alloc(decl)));
         }
         self.leave_node(kind);
         self.leave_ambient_context(decl.declare);

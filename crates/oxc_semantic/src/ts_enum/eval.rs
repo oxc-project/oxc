@@ -1,5 +1,8 @@
+use rustc_hash::{FxHashMap, FxHashSet};
+
 use oxc_ast::ast::{
-    BinaryExpression, Expression, IdentifierReference, TSEnumDeclaration, UnaryExpression,
+    BinaryExpression, BindingPattern, Expression, IdentifierReference, TSEnumDeclaration,
+    UnaryExpression, VariableDeclarator,
 };
 use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_str::{CompactStr, Ident, JSStr};
@@ -18,6 +21,70 @@ struct EnumEvalCtx<'s> {
     scope_id: ScopeId,
     enum_symbol_id: Option<SymbolId>,
     scoping: &'s Scoping,
+    constants: &'s EnumEvaluator,
+    string_limit: usize,
+}
+
+pub enum EnumEvalDeclaration<'a> {
+    Const(&'a VariableDeclarator<'a>),
+    Enum(&'a TSEnumDeclaration<'a>),
+}
+
+pub fn evaluate_declarations(
+    declarations: &[EnumEvalDeclaration<'_>],
+    scoping: &mut Scoping,
+    source_len: usize,
+) {
+    if !declarations.iter().any(|decl| matches!(decl, EnumEvalDeclaration::Enum(_))) {
+        return;
+    }
+    let mut evaluator = EnumEvaluator { string_budget: source_len, ..EnumEvaluator::default() };
+    for declaration in declarations {
+        match declaration {
+            EnumEvalDeclaration::Const(decl) => evaluator.evaluate_const(decl, scoping),
+            EnumEvalDeclaration::Enum(decl) => evaluate_enum_members(decl, scoping, &evaluator),
+        }
+    }
+}
+
+#[derive(Default)]
+struct EnumEvaluator {
+    const_values: FxHashMap<SymbolId, ConstantValue>,
+    string_constants: FxHashSet<SymbolId>,
+    string_budget: usize,
+}
+
+impl EnumEvaluator {
+    fn evaluate_const(&mut self, decl: &VariableDeclarator<'_>, scoping: &Scoping) {
+        let BindingPattern::BindingIdentifier(binding) = &decl.id else { return };
+        let Some(init) = &decl.init else { return };
+        let init = init.get_inner_expression();
+        let symbol_id = binding.symbol_id();
+        if !scoping.symbol_flags(symbol_id).is_const_variable() {
+            return;
+        }
+        let ctx = EnumEvalCtx {
+            scope_id: scoping.symbol_scope_id(symbol_id),
+            enum_symbol_id: None,
+            scoping,
+            constants: self,
+            // A short chain of string aliases can otherwise expand exponentially.
+            string_limit: self.string_budget,
+        };
+        let value = evaluate_expression(init, &ctx).filter(
+            |value| !matches!(value, ConstantValue::String(s) if s.len() > ctx.string_limit),
+        );
+        let is_string = matches!(value, Some(ConstantValue::String(_)))
+            || (value.is_none() && is_string_expression(init, &ctx));
+        if let Some(value) = value {
+            if let ConstantValue::String(value) = &value {
+                self.string_budget -= value.len();
+            }
+            self.const_values.insert(symbol_id, value);
+        } else if is_string {
+            self.string_constants.insert(symbol_id);
+        }
+    }
 }
 
 enum SiblingLookup {
@@ -41,7 +108,11 @@ enum SiblingLookup {
 /// enum Mixed { X = "hello", Y }
 /// // X → "hello", Y → None (can't auto-increment after string)
 /// ```
-pub fn evaluate_enum_members(decl: &TSEnumDeclaration<'_>, scoping: &mut Scoping) {
+fn evaluate_enum_members(
+    decl: &TSEnumDeclaration<'_>,
+    scoping: &mut Scoping,
+    constants: &EnumEvaluator,
+) {
     let Some(scope_id) = decl.body.scope_id.get() else { return };
 
     let enum_symbol_id = decl.id.symbol_id.get();
@@ -59,7 +130,13 @@ pub fn evaluate_enum_members(decl: &TSEnumDeclaration<'_>, scoping: &mut Scoping
 
     for member in &decl.body.members {
         let value = if let Some(init) = &member.initializer {
-            let ctx = EnumEvalCtx { scope_id, enum_symbol_id, scoping };
+            let ctx = EnumEvalCtx {
+                scope_id,
+                enum_symbol_id,
+                scoping,
+                constants,
+                string_limit: usize::MAX,
+            };
             evaluate_expression(init, &ctx)
         } else {
             match &prev_value {
@@ -74,7 +151,16 @@ pub fn evaluate_enum_members(decl: &TSEnumDeclaration<'_>, scoping: &mut Scoping
         let is_string = matches!(value, Some(ConstantValue::String(_)))
             || (value.is_none()
                 && member.initializer.as_ref().is_some_and(|init| {
-                    is_string_expression(init, &EnumEvalCtx { scope_id, enum_symbol_id, scoping })
+                    is_string_expression(
+                        init,
+                        &EnumEvalCtx {
+                            scope_id,
+                            enum_symbol_id,
+                            scoping,
+                            constants,
+                            string_limit: usize::MAX,
+                        },
+                    )
                 }));
         if let Some(ref value) = value
             && let Some(symbol_id) = member_symbol
@@ -109,10 +195,15 @@ fn is_string_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> bool {
                 }
             }
             resolve_identifier_symbol(ident, ctx).is_some_and(|symbol_id| {
-                ctx.scoping.is_string_enum_member(
-                    ctx.scoping.symbol_scope_id(symbol_id),
-                    ident.name.into(),
-                )
+                ctx.constants.string_constants.contains(&symbol_id)
+                    || matches!(
+                        ctx.constants.const_values.get(&symbol_id),
+                        Some(ConstantValue::String(_))
+                    )
+                    || ctx.scoping.is_string_enum_member(
+                        ctx.scoping.symbol_scope_id(symbol_id),
+                        ident.name.into(),
+                    )
             })
         }
         Expression::StaticMemberExpression(member) => {
@@ -135,7 +226,20 @@ fn is_string_member(object: &Expression<'_>, name: JSStr<'_>, ctx: &EnumEvalCtx<
         })
 }
 
+fn string_constant(value: &str, ctx: &EnumEvalCtx<'_>) -> Option<ConstantValue> {
+    (value.len() <= ctx.string_limit).then(|| ConstantValue::String(CompactStr::from(value)))
+}
+
+fn append_string(value: &mut String, suffix: &str, ctx: &EnumEvalCtx<'_>) -> Option<()> {
+    if value.len().checked_add(suffix.len())? > ctx.string_limit {
+        return None;
+    }
+    value.push_str(suffix);
+    Some(())
+}
+
 fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<ConstantValue> {
+    let expr = expr.without_parentheses();
     match expr {
         Expression::Identifier(_)
         | Expression::ComputedMemberExpression(_)
@@ -144,12 +248,10 @@ fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<C
         Expression::BinaryExpression(expr) => eval_binary_expression(expr, ctx),
         Expression::UnaryExpression(expr) => eval_unary_expression(expr, ctx),
         Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
-        Expression::StringLiteral(lit) => {
-            Some(ConstantValue::String(CompactStr::from(lit.value.as_str()?)))
-        }
+        Expression::StringLiteral(lit) => string_constant(lit.value.as_str()?, ctx),
         Expression::TemplateLiteral(lit) => {
             if let Some(quasi) = lit.single_quasi() {
-                Some(ConstantValue::String(CompactStr::from(quasi.as_str()?)))
+                string_constant(quasi.as_str()?, ctx)
             } else {
                 let mut value = String::new();
                 for (i, quasi) in lit.quasis.iter().enumerate() {
@@ -157,27 +259,28 @@ fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<C
                         Some(cooked) => cooked.as_str()?,
                         None => quasi.value.raw.as_str(),
                     };
-                    value.push_str(cooked_or_raw);
+                    append_string(&mut value, cooked_or_raw, ctx)?;
                     if i < lit.expressions.len() {
                         match evaluate_expression(&lit.expressions[i], ctx)? {
-                            ConstantValue::String(s) => value.push_str(&s),
-                            ConstantValue::Number(n) => value.push_str(&n.to_js_string()),
+                            ConstantValue::String(s) => append_string(&mut value, &s, ctx)?,
+                            ConstantValue::Number(n) => {
+                                append_string(&mut value, &n.to_js_string(), ctx)?;
+                            }
                         }
                     }
                 }
                 Some(ConstantValue::String(CompactStr::from(value.as_str())))
             }
         }
-        Expression::ParenthesizedExpression(expr) => evaluate_expression(&expr.expression, ctx),
         _ => None,
     }
 }
 
-/// Resolve an identifier or member expression to a previously evaluated enum value.
+/// Resolve an identifier or member expression to a previously evaluated constant value.
 ///
 /// Uses a three-level lookup strategy for bare identifiers:
 /// 1. Sibling enum fallback — `enum A { X = 1 } enum A { Y = X }` (merged declarations)
-/// 2. Lexical binding — `enum A { X = 1, Y = X }` (X is resolved in the same scope)
+/// 2. Lexical binding — an enum member or a const variable
 /// 3. Unbound globals — `Infinity` and `NaN`
 ///
 /// Also handles cross-enum member access:
@@ -201,7 +304,12 @@ fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<Constant
             }
 
             if let Some(symbol_id) = resolve_identifier_symbol(ident, ctx) {
-                return ctx.scoping.get_enum_member_value(symbol_id).cloned();
+                return ctx
+                    .scoping
+                    .get_enum_member_value(symbol_id)
+                    .or_else(|| ctx.constants.const_values.get(&symbol_id))
+                    .filter(|value| !matches!(value, ConstantValue::String(s) if s.len() > ctx.string_limit))
+                    .cloned();
             }
 
             match ident.name.as_str() {
@@ -215,7 +323,12 @@ fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<Constant
         Expression::StaticMemberExpression(member_expr) => {
             let Expression::Identifier(obj_ident) = &member_expr.object else { return None };
             let obj_symbol_id = resolve_identifier_symbol(obj_ident, ctx)?;
-            find_in_enum_body_scopes(member_expr.property.name, obj_symbol_id, ctx.scoping)
+            find_in_enum_body_scopes(
+                member_expr.property.name,
+                obj_symbol_id,
+                ctx.scoping,
+                ctx.string_limit,
+            )
         }
         Expression::ComputedMemberExpression(member_expr) => {
             let Expression::Identifier(obj_ident) = &member_expr.object else { return None };
@@ -227,6 +340,7 @@ fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<Constant
                 Ident::from(prop_lit.value.as_str()?),
                 obj_symbol_id,
                 ctx.scoping,
+                ctx.string_limit,
             )
         }
         _ => None,
@@ -262,8 +376,8 @@ fn eval_binary_expression(
             ConstantValue::Number(v) => v.to_js_string(),
         };
         match &right {
-            ConstantValue::String(s) => result.push_str(s),
-            ConstantValue::Number(v) => result.push_str(&v.to_js_string()),
+            ConstantValue::String(s) => append_string(&mut result, s, ctx)?,
+            ConstantValue::Number(v) => append_string(&mut result, &v.to_js_string(), ctx)?,
         }
         return Some(ConstantValue::String(CompactStr::from(result.as_str())));
     }
@@ -341,11 +455,13 @@ fn find_in_enum_body_scopes(
     member_name: Ident<'_>,
     enum_symbol_id: SymbolId,
     scoping: &Scoping,
+    string_limit: usize,
 ) -> Option<ConstantValue> {
     let body_scopes = scoping.get_enum_body_scopes(enum_symbol_id)?;
     for &body_scope in body_scopes {
         if let Some(member_symbol_id) = scoping.get_binding(body_scope, member_name)
             && let Some(value) = scoping.get_enum_member_value(member_symbol_id)
+            && !matches!(value, ConstantValue::String(s) if s.len() > string_limit)
         {
             return Some(value.clone());
         }
