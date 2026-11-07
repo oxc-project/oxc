@@ -2,11 +2,13 @@
 use std::path::{Path, PathBuf};
 
 mod diff;
+mod pgo;
 mod request;
 mod snapshot;
 mod test_file;
 
 pub use diff::{print_diff_in_terminal, print_text_diff};
+pub use pgo::write_pgo_case;
 
 pub use crate::{
     request::{agent, local_agent},
