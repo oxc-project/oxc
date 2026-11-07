@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 134/134 (100.00%)
 Positive Passed: 134/134 (100.00%)
-Negative Passed: 275/275 (100.00%)
+Negative Passed: 274/274 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -5407,14 +5407,6 @@ Negative Passed: 275/275 (100.00%)
  3 │ // operator, so the trailing `**` still makes the assertion impossible to erase. Syntax error.
  4 │ const x = 2 ** 3 satisfies any satisfies number ** 2;
    ·                                                ▲
-   ╰────
-  help: Try inserting a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[misc/fail/ts-unerasable-satisfies-chained.ts:5:47]
- 4 │ // to erase. Syntax error.
- 5 │ const x = 1 + 1 satisfies any satisfies number * 2;
-   ·                                               ▲
    ╰────
   help: Try inserting a semicolon here
 
