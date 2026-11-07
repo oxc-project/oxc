@@ -529,11 +529,27 @@ impl<'a> TypeScriptEnum {
     fn get_initializer_expr(value: f64, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let is_negative = value < 0.0;
 
-        // Infinity
-        let expr = if value.is_infinite() {
+        let expr = if value.is_nan()
+            && ctx.scoping().find_binding(ctx.current_scope_id(), static_ident!("NaN")).is_some()
+        {
+            let zero = Self::get_number_literal_expression(0.0, ctx);
+            let denominator = Self::get_number_literal_expression(0.0, ctx);
+            Expression::new_binary_expression(
+                SPAN,
+                zero,
+                BinaryOperator::Division,
+                denominator,
+                ctx,
+            )
+        } else if value.is_infinite() {
             let infinity = static_ident!("Infinity");
-            let infinity_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), infinity);
-            ctx.create_ident_expr(SPAN, infinity, infinity_symbol_id, ReferenceFlags::Read)
+            if ctx.scoping().find_binding(ctx.current_scope_id(), infinity).is_some() {
+                let one = Self::get_number_literal_expression(1.0, ctx);
+                let zero = Self::get_number_literal_expression(0.0, ctx);
+                Expression::new_binary_expression(SPAN, one, BinaryOperator::Division, zero, ctx)
+            } else {
+                ctx.create_ident_expr(SPAN, infinity, None, ReferenceFlags::Read)
+            }
         } else {
             let value = if is_negative { -value } else { value };
             Self::get_number_literal_expression(value, ctx)

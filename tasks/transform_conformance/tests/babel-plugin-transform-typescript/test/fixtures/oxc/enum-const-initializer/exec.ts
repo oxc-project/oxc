@@ -116,3 +116,14 @@ const a64 = a63;
 const a65 = a64;
 enum LongAlias { A = a65 }
 expect(LongAlias).toEqual({ A: "s" });
+
+const infinity = Infinity;
+const nan = NaN;
+function nonFinite(Infinity: number, NaN: number) {
+  enum Values { Positive = infinity, Negative = -infinity, NotANumber = nan }
+  return [Values.Positive, Values.Negative, Values.NotANumber];
+}
+const values = nonFinite(7, 9);
+expect(values[0]).toBe(Infinity);
+expect(values[1]).toBe(-Infinity);
+expect(values[2]).toBeNaN();
