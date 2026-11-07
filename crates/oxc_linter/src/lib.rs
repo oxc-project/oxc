@@ -12,8 +12,11 @@ use std::{
     ptr::{self, NonNull},
     rc::Rc,
     string::ToString,
+    sync::OnceLock,
     time::Duration,
 };
+
+use cow_utils::CowUtils;
 
 use oxc_allocator::{Allocator, AllocatorPool, ArenaVec, CloneIn, TakeIn};
 use oxc_ast::{
@@ -257,6 +260,31 @@ fn execute_rules<'a, const TIMINGS: bool>(
 
 /// Base URL for the documentation, used to generate rule documentation URLs when a diagnostic is reported.
 const WEBSITE_BASE_RULES_URL: &str = "https://oxc.rs/docs/guide/usage/linter/rules";
+
+/// Build a rule's documentation URL.
+///
+/// `OXLINT_RULES_URL` can override the documentation base URL. A trailing slash is optional.
+/// It can also be a full URL template containing `{plugin}` and `{rule}`, for mirrors with a
+/// different URL layout or file extension. An unset or empty value uses the Oxc website.
+/// The environment variable is read once, when the first rule URL is generated.
+pub fn rule_documentation_url(plugin: &str, rule: &str) -> String {
+    const PLUGIN_PLACEHOLDER: &str = "{plugin}";
+    const RULE_PLACEHOLDER: &str = "{rule}";
+    static OVERRIDE: OnceLock<Option<String>> = OnceLock::new();
+    let configured = OVERRIDE
+        .get_or_init(|| std::env::var("OXLINT_RULES_URL").ok().filter(|url| !url.is_empty()))
+        .as_deref();
+    if let Some(template) = configured
+        && (template.contains(PLUGIN_PLACEHOLDER) || template.contains(RULE_PLACEHOLDER))
+    {
+        return template
+            .cow_replace(PLUGIN_PLACEHOLDER, plugin)
+            .cow_replace(RULE_PLACEHOLDER, rule)
+            .into_owned();
+    }
+    let base = configured.unwrap_or(WEBSITE_BASE_RULES_URL).trim_end_matches('/');
+    format!("{base}/{plugin}/{rule}.html")
+}
 
 #[derive(Debug)]
 #[expect(clippy::struct_field_names)]
