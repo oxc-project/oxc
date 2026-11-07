@@ -282,6 +282,9 @@ impl IdLength {
             AstKind::ExportSpecifier(_)
             | AstKind::ImportAttribute(_)
             | AstKind::ImportSpecifier(_)
+            | AstKind::TSQualifiedName(_)
+            | AstKind::TSImportType(_)
+            | AstKind::TSImportTypeQualifiedName(_)
             | AstKind::WithClause(_) => {
                 return;
             }
@@ -689,6 +692,30 @@ fn test() {
         ("({q: q} = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
         ("({[q]: q} = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
         ("({[((q))]: q} = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
+        (
+            r#"import * as cp from "node:child_process";
+import type * as ts from "typescript";
+export const value = cp.someVeryLongExternalPropertyNameHere;
+export type Program = ts.EmitAndSemanticDiagnosticsBuilderProgram;
+export type Imported = import("typescript").EmitAndSemanticDiagnosticsBuilderProgram;
+export function run(options: cp.ExecFileSyncOptionsWithStringEncoding): void {}"#,
+            Some(
+                serde_json::json!([{ "min": 2, "max": 30, "properties": "never", "checkGeneric": false }]),
+            ),
+        ),
+        ("type Foo = a.b.c;", None),
+        ("type Foo = typeof a.b.c;", None),
+        (r#"type Foo = import("mod").a;"#, None),
+        (r#"type Foo = import("mod").a.b.c;"#, None),
+        (r#"type Foo = typeof import("mod").a.b.c;"#, None),
+        (
+            "type Foo = ns.VeryLongNamespace.VeryLongType;",
+            Some(serde_json::json!([{ "max": 5, "properties": "always" }])),
+        ),
+        (
+            r#"type Foo = import("mod").VeryLongNamespace.VeryLongType;"#,
+            Some(serde_json::json!([{ "max": 5, "properties": "never" }])),
+        ),
     ];
 
     let fail = vec![
@@ -809,6 +836,13 @@ fn test() {
         ("({q: q = q} = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
         ("for ([q] in foo) {}", None),
         ("({...q} = foo);", None),
+        ("type A = ns.x;", None),
+        ("const a: ns.x = value;", None),
+        (r#"import * as a from "mod"; type Foo = a.b;"#, None),
+        (
+            "type VeryLongAlias = ns.VeryLongType;",
+            Some(serde_json::json!([{ "max": 5, "properties": "never" }])),
+        ),
     ];
 
     Tester::new(IdLength::NAME, IdLength::PLUGIN, pass, fail).test_and_snapshot();

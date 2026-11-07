@@ -1,35 +1,3 @@
-//! Keywords, and matching words against them.
-//!
-//! [`KEYWORDS_JS`] and [`KEYWORDS_TS`] list the keywords, with the [`TokenKind`] of each.
-//! [`kw_match`] and [`kw_match_at`] check whether a word is a keyword.
-//!
-//! Keywords are found with a perfect hash. JS and TS have different hashes:
-//!
-//! ```text
-//! index = (u16(c0, c1) * DISPS_MUL) >> 26
-//! JS:  slot = (DISPS_JS[index] ^ (len << 1)) & 63
-//! TS:  slot = (DISPS_TS[index] ^ (len << 1) ^ c_last) & 127
-//! ```
-//!
-//! `c0`, `c1` and `c_last` are the first, second and last bytes of the word, and `len` is its length.
-//! `index` depends only on the first 2 bytes, so the CPU can load `DISPS_*[index]` in parallel with
-//! calculating `len`. The JS hash does not need the last byte, which saves a load that depends on `len`.
-//!
-//! [`KW_TEXT`] holds each JS keyword's text in its JS slot, and each keyword's text (JS or TS)
-//! in its TS slot, zero-padded to 16 bytes.
-//!
-//! A JS keyword whose JS slot and TS slot differ is in the table twice.
-//! A word is a keyword if the word, zero-padded to 16 bytes, is equal to the entry in its slot.
-//! Keyword never contain `\0`, so checking bytes also checks that the lengths are equal.
-//!
-//! JS mode converts the slot to a [`TokenKind`] with [`KW_KINDS_JS`], and TS mode with [`KW_KINDS_TS`].
-//! JS slots can hold TS-only keywords (at their TS slots), so `KW_KINDS_JS` maps every slot which is not
-//! a JS keyword's JS slot to `Ident`.
-//!
-//! [`DISPS_MUL`], [`DISPS_JS`] and [`DISPS_TS`] are hard-coded.
-//! Tests check that each hash gives every keyword a different slot,
-//! and that no 2 different keywords map to the same slot in [`KW_TEXT`].
-
 use std::{cmp::min, hint, ptr};
 
 use constcat::concat_slices;
@@ -96,12 +64,10 @@ impl KeywordDef {
         let cpu = BASELINE;
 
         let word = self.word.as_bytes();
-        let index = disps_index(word[0] as u16 | ((word[1] as u16) << 8), cpu);
-        let len = word.len();
         if is_ts {
-            keyword_hash_ts(DISPS_TS.0[index], len, word[len - 1], cpu)
+            keyword_hash_ts(self.padded()[0], cpu)
         } else {
-            keyword_hash_js(DISPS_JS.0[index], len, cpu)
+            keyword_hash_js(word[0] as u16 | ((word[1] as u16) << 8), word.len(), cpu)
         }
     }
 }
@@ -281,76 +247,94 @@ struct Aligned64<T>(T);
 #[repr(C, align(128))]
 struct Aligned128<T>(T);
 
-/// Number of slots in keyword tables.
-const SLOT_COUNT: usize = 128;
+/// Number of JS slots, as the JS hash is at most 63 + 16.
+const JS_SLOT_COUNT: usize = 80;
 
-/// Number of slots which JS keywords hash to.
-const JS_SLOT_COUNT: usize = 64;
+/// Number of TS slots.
+const SLOT_COUNT: usize = 256;
 
-/// Multiplier for [`disps_index`].
-const DISPS_MUL: u32 = 0x7734_D7C1;
+/// Multiplier for the JS keyword hash.
+const JS_MUL: u32 = 0x14D9_7F90;
 
-/// Shift for [`disps_index`].
-const DISPS_SHIFT: u32 = 26;
+/// Multiplier for the TS keyword hash.
+const TS_MUL: u64 = 0x686A_C588_6DD9_FA39;
 
-/// Displacements for the JS keyword hash, indexed by [`disps_index`].
-///
-/// Every entry must be less than 64, so every JS slot is less than 64.
-/// [`kw_match`] relies on that for soundness.
-#[rustfmt::skip]
-static DISPS_JS: Aligned64<[u8; 64]> = Aligned64([
-      5,  21,   0,   0,  21,  37,   0,   1,
-     33,   0,   9,   0,   0,   0,   0,   0,
-      0,   0,   0,   0,  19,   0,   0,  40,
-      0,  16,   0,   0,   0,   0,   0,  34,
-      0,  37,   0,  17,   0,   0,   5,   0,
-      0,   2,   0,   0,  33,   0,  15,  16,
-      0,   0,   0,  12,   0,   0,  32,   0,
-     35,  32,   0,  18,  18,   0,  32,  32,
-]);
+/// JS keyword text by JS slot in 8-byte cells, which a keyword over 8 bytes runs past.
+static KW_TEXT_JS: Aligned64<[u64; JS_SLOT_COUNT + 1]> = {
+    let mut text = [0; JS_SLOT_COUNT + 1];
 
-const _: () = {
     let mut i = 0;
-    while i < DISPS_JS.0.len() {
-        assert!(DISPS_JS.0[i] < 64, "every entry of `DISPS_JS` must be less than 64");
+    while i < KEYWORDS_JS.len() {
+        let kw = &KEYWORDS_JS[i];
+        if !matches!(kw.kind, TokenKind::Ident) {
+            let slot = kw.slot(false);
+            let padded = kw.padded();
+            assert!(
+                text[slot] == 0 && (padded[1] == 0 || text[slot + 1] == 0),
+                "JS keywords overlap"
+            );
+            text[slot] = padded[0];
+            text[slot + 1] |= padded[1];
+        }
         i += 1;
     }
+
+    Aligned64(text)
 };
 
-/// Displacements for the TS keyword hash, indexed by [`disps_index`].
-#[rustfmt::skip]
-static DISPS_TS: Aligned64<[u8; 64]> = Aligned64([
-     33,  33,  64,   0,  16,  50,   0,   1,
-     33,   0,  34,   0,   0,   0,  80,  65,
-     67,   0,   0,  40,   3,   0,   0,  36,
-      0,   3,   4,   0,   0,   0,  32,  74,
-      0,  80,  66,  33,  80,   0,   0,   0,
-     64,  13,  80,  33,  32,   0,  11,  32,
-      0,   0,   0,   1,   0,  64,  42,  65,
-     54,  33,  64,  22,  35,   0,  37,  35,
-]);
+/// Bit N is set if the JS keyword in the slot has a byte N.
+static KW_BITS_JS: Aligned64<[u32; JS_SLOT_COUNT]> = {
+    let mut bits = [0; JS_SLOT_COUNT];
 
-/// Text of keywords, zero-padded to 16 bytes, indexed by slot.
-///
-/// Each JS keyword is in its JS slot, and each keyword (JS or TS) is in its TS slot.
-/// Each entry is 2 x `u64`s holding bytes 0-7 and 8-15. Empty slots are all zeros.
-static KW_TEXT: Aligned128<[[u64; 2]; SLOT_COUNT]> = {
+    let mut i = 0;
+    while i < KEYWORDS_JS.len() {
+        let kw = &KEYWORDS_JS[i];
+        if !matches!(kw.kind, TokenKind::Ident) {
+            bits[kw.slot(false)] = (1 << kw.word.len()) - 1;
+        }
+        i += 1;
+    }
+
+    Aligned64(bits)
+};
+
+/// Byte N is 0xFF if the JS keyword in the slot has a byte N.
+static KW_MASKS_JS: Aligned64<[[u64; 2]; JS_SLOT_COUNT]> = {
+    let mut masks = [[0; 2]; JS_SLOT_COUNT];
+
+    let mut i = 0;
+    while i < KEYWORDS_JS.len() {
+        let kw = &KEYWORDS_JS[i];
+        if !matches!(kw.kind, TokenKind::Ident) {
+            let slot = kw.slot(false);
+            let mut j = 0;
+            while j < kw.word.len() {
+                masks[slot][j / 8] |= 0xFF << ((j % 8) * 8);
+                j += 1;
+            }
+        }
+        i += 1;
+    }
+
+    Aligned64(masks)
+};
+
+/// Keyword text by TS slot, zero-padded to 16 bytes.
+static KW_TEXT_TS: Aligned64<[[u64; 2]; SLOT_COUNT]> = {
     let mut text = [[0; 2]; SLOT_COUNT];
 
     let mut i = 0;
     while i < KEYWORDS_TS.len() {
         let kw = &KEYWORDS_TS[i];
         if !matches!(kw.kind, TokenKind::Ident) {
-            let padded = kw.padded();
-            if i < KEYWORDS_JS.len() {
-                text[kw.slot(false)] = padded;
-            }
-            text[kw.slot(true)] = padded;
+            let slot = kw.slot(true);
+            assert!(text[slot][0] == 0, "TS hash is not perfect");
+            text[slot] = kw.padded();
         }
         i += 1;
     }
 
-    Aligned128(text)
+    Aligned64(text)
 };
 
 /// [`TokenKind`] of each JS keyword, indexed by JS slot. Other slots are `Ident`.
@@ -383,33 +367,18 @@ const fn kinds_table<const N: usize>(keywords: &[KeywordDef], is_ts: bool) -> [T
     kinds
 }
 
-/// Get index into [`DISPS_JS`] or [`DISPS_TS`] for a word, from its first 2 bytes as a little-endian `u16`.
+/// Get a word's JS slot from its first 2 bytes and its length.
 #[cpu_multiversion]
 #[inline(always)]
-const fn disps_index(first_2: u16, _cpu: impl Cpu) -> usize {
-    ((first_2 as u32).wrapping_mul(DISPS_MUL) >> DISPS_SHIFT) as usize
+const fn keyword_hash_js(first_2: u16, len: usize, _cpu: impl Cpu) -> usize {
+    ((first_2 as u32).wrapping_mul(JS_MUL) >> 26) as usize + len
 }
 
-/// Get a word's JS slot.
-///
-/// `disp` is the entry in [`DISPS_JS`] for the word.
-///
-/// Every entry in `DISPS_JS` is less than 64, so if `len` is at most 16, the result is less than 64.
-/// Therefore, result does not need masking to the table size.
+/// Get a word's TS slot from its first 8 bytes, with any bytes after the word zeroed.
 #[cpu_multiversion]
 #[inline(always)]
-const fn keyword_hash_js(disp: u8, len: usize, _cpu: impl Cpu) -> usize {
-    (disp as usize) ^ (len << 1)
-}
-
-/// Get a word's TS slot.
-///
-/// `disp` is the entry in [`DISPS_TS`] for the word, and `last` is the last byte of the word.
-/// A non-ASCII last byte can take the hash up to 255, so it's masked to the table size.
-#[cpu_multiversion]
-#[inline(always)]
-const fn keyword_hash_ts(disp: u8, len: usize, last: u8, _cpu: impl Cpu) -> usize {
-    ((disp as usize) ^ (len << 1) ^ (last as usize)) & (SLOT_COUNT - 1)
+const fn keyword_hash_ts(first_8: u64, _cpu: impl Cpu) -> usize {
+    (first_8.wrapping_mul(TS_MUL) >> 56) as usize
 }
 
 /// Check if the word of `len` bytes at `pos` in `src` is a keyword.
@@ -474,84 +443,80 @@ pub(super) unsafe fn kw_match<const IS_TS: bool>(
     len: usize,
     cpu: impl Cpu,
 ) -> TokenKind {
-    // Getting `disp` does not depend on `len`, so the CPU can load it in parallel with calculating `len`
-    let first_2 = ptr::read_unaligned(ptr as *const u16);
-    let index = disps_index(first_2, cpu);
-
-    let slot = if IS_TS {
-        let disp = DISPS_TS.0[index];
-        keyword_hash_ts(disp, len, *ptr.add(len - 1), cpu)
+    let (slot, is_match) = if IS_TS {
+        match to_dyn(cpu) {
+            DynCpu::Avx2(cpu) => ts_match_avx2(ptr, len, cpu),
+            DynCpu::Neon(cpu) => ts_match_neon(ptr, len, cpu),
+            DynCpu::Generic(_) => ts_match_generic(ptr, len),
+        }
     } else {
-        let disp = DISPS_JS.0[index];
-        let slot = keyword_hash_js(disp, len, cpu);
-        // SAFETY: Every entry in `DISPS_JS` is less than 64 (checked at compile time).
-        // Caller guarantees `len` is at most 16, so `len << 1` is at most 32.
-        // XOR of 2 values less than 64 is less than 64.
-        // This lets the compiler skip bounds checks when indexing `KW_TEXT` and `KW_KINDS_JS`.
+        let slot = keyword_hash_js(ptr::read_unaligned(ptr as *const u16), len, cpu);
+        // SAFETY: The JS hash is at most 63 + 16, as the caller guarantees len is at most 16.
         unsafe { assert_unchecked!(slot < JS_SLOT_COUNT) };
-        slot
+        let is_match = match to_dyn(cpu) {
+            DynCpu::Avx2(cpu) => js_match_avx2(ptr, slot, cpu),
+            DynCpu::Neon(cpu) => js_match_neon(ptr, slot, cpu),
+            DynCpu::Generic(_) => js_match_generic(ptr, slot),
+        };
+        (slot, is_match)
     };
 
-    let is_match = text_matches(ptr, len, &KW_TEXT.0[slot], cpu);
     let kind = if IS_TS { KW_KINDS_TS.0[slot] } else { KW_KINDS_JS.0[slot] };
     // Whether a candidate is a keyword is unpredictable, so tell LLVM to select without a branch.
     // Without the hint, it branches to skip loading `kind` when there's no match.
     hint::select_unpredictable(is_match, kind, TokenKind::Ident)
 }
 
-/// Check if the word of `len` bytes at `ptr`, zero-padded to 16 bytes, is equal to `text`.
-///
-/// # SAFETY
-///
-/// `ptr` must be valid for reading 16 bytes, and `len` must be between 0 and 16 (inclusive).
-#[cpu_multiversion]
-#[inline(always)]
-unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2], cpu: impl Cpu) -> bool {
-    match to_dyn(cpu) {
-        DynCpu::Avx2(cpu) => text_matches_avx2(ptr, len, text, cpu),
-        DynCpu::Neon(cpu) => text_matches_neon(ptr, len, text, cpu),
-        DynCpu::Generic(_) => text_matches_generic(ptr, len, text),
-    }
-}
-
-/// [`text_matches`] for AVX2.
-///
-/// # SAFETY
-///
-/// Same as [`text_matches`].
+// The JS slot grows with the length, so matching the keyword's own bytes also matches the length.
 #[cpu_version(Avx2)]
 #[inline(always)]
-unsafe fn text_matches_avx2(ptr: *const u8, len: usize, text: &[u64; 2], cpu: Avx2) -> bool {
+unsafe fn js_match_avx2(ptr: *const u8, slot: usize, cpu: Avx2) -> bool {
     let word = Vec128::load_unaligned(ptr, cpu);
-    let mask = Vec128::read_unaligned(len_mask(len, cpu), cpu);
-    let text = Vec128::read_unaligned(text, cpu);
-    let masked_word = word & mask;
-    masked_word.all_eq_u8(text)
+    let text = Vec128::read_unaligned(KW_TEXT_JS.0[slot..].first_chunk::<2>().unwrap(), cpu);
+    (!word.eq_u8(text).movemask() & KW_BITS_JS.0[slot]) == 0
 }
 
-/// [`text_matches`] for Neon.
-///
-/// # SAFETY
-///
-/// Same as [`text_matches`].
 #[cpu_version(Neon)]
 #[inline(always)]
-unsafe fn text_matches_neon(ptr: *const u8, len: usize, text: &[u64; 2], cpu: Neon) -> bool {
+unsafe fn js_match_neon(ptr: *const u8, slot: usize, cpu: Neon) -> bool {
     let word = Vec128::load_unaligned(ptr, cpu);
-    let mask = Vec128::read_unaligned(len_mask(len, cpu), cpu);
-    let text = Vec128::read_unaligned(text, cpu);
-    let masked_word = word & mask;
-    masked_word.all_eq_u8(text)
+    let text = Vec128::read_unaligned(KW_TEXT_JS.0[slot..].first_chunk::<2>().unwrap(), cpu);
+    ((word ^ text) & Vec128::read_unaligned(&KW_MASKS_JS.0[slot], cpu)).is_zero()
 }
 
-/// [`text_matches`] for all other CPUs.
-///
-/// # SAFETY
-///
-/// Same as [`text_matches`].
 #[cpu_version(Generic)]
 #[inline(always)]
-unsafe fn text_matches_generic(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
+unsafe fn js_match_generic(ptr: *const u8, slot: usize) -> bool {
+    use ptr::read_unaligned;
+
+    let ptr = ptr as *const u64;
+    let text = KW_TEXT_JS.0[slot..].first_chunk::<2>().unwrap();
+    let mask = &KW_MASKS_JS.0[slot];
+    let first_8 = (read_unaligned(ptr) ^ text[0]) & mask[0];
+    let second_8 = (read_unaligned(ptr.add(1)) ^ text[1]) & mask[1];
+    (first_8 | second_8) == 0
+}
+
+// The masked word's first 8 bytes are the hash key, and all 16 are compared with the keyword.
+#[cpu_version(Avx2)]
+#[inline(always)]
+unsafe fn ts_match_avx2(ptr: *const u8, len: usize, cpu: Avx2) -> (usize, bool) {
+    let word = Vec128::load_unaligned(ptr, cpu) & Vec128::read_unaligned(len_mask(len, cpu), cpu);
+    let slot = keyword_hash_ts(word.get_u64::<0>(), cpu);
+    (slot, word.all_eq_u8(Vec128::read_unaligned(&KW_TEXT_TS.0[slot], cpu)))
+}
+
+#[cpu_version(Neon)]
+#[inline(always)]
+unsafe fn ts_match_neon(ptr: *const u8, len: usize, cpu: Neon) -> (usize, bool) {
+    let word = Vec128::load_unaligned(ptr, cpu) & Vec128::read_unaligned(len_mask(len, cpu), cpu);
+    let slot = keyword_hash_ts(word.get_u64::<0>(), cpu);
+    (slot, word.all_eq_u8(Vec128::read_unaligned(&KW_TEXT_TS.0[slot], cpu)))
+}
+
+#[cpu_version(Generic)]
+#[inline(always)]
+unsafe fn ts_match_generic(ptr: *const u8, len: usize) -> (usize, bool) {
     use ptr::read_unaligned;
 
     let cpu = BASELINE;
@@ -560,7 +525,9 @@ unsafe fn text_matches_generic(ptr: *const u8, len: usize, text: &[u64; 2]) -> b
     let mask_ptr = len_mask(len, cpu).as_ptr() as *const u64;
     let masked_first_8 = read_unaligned(ptr) & read_unaligned(mask_ptr);
     let masked_second_8 = read_unaligned(ptr.add(1)) & read_unaligned(mask_ptr.add(1));
-    ((masked_first_8 ^ text[0]) | (masked_second_8 ^ text[1])) == 0
+    let slot = keyword_hash_ts(masked_first_8, cpu);
+    let text = &KW_TEXT_TS.0[slot];
+    (slot, ((masked_first_8 ^ text[0]) | (masked_second_8 ^ text[1])) == 0)
 }
 
 /// Get 16 bytes which are a mask with the first `len` bytes set to `0xFF`, and the rest 0.
@@ -611,14 +578,19 @@ mod tests {
         buf[..word.len()].copy_from_slice(word);
         buf[word.len()..word.len() + after.len()].copy_from_slice(after);
 
+        let cpu = DynCpu::detect();
         // SAFETY: `buf` is 48 bytes. `word.len()` is between 1-16 bytes.
-        unsafe {
+        let (baseline, detected) = unsafe {
             if is_ts {
-                kw_match::<true>(buf.as_ptr(), word.len(), BASELINE)
+                let baseline = kw_match::<true>(buf.as_ptr(), word.len(), BASELINE);
+                (baseline, kw_match::<true>(buf.as_ptr(), word.len(), cpu))
             } else {
-                kw_match::<false>(buf.as_ptr(), word.len(), BASELINE)
+                let baseline = kw_match::<false>(buf.as_ptr(), word.len(), BASELINE);
+                (baseline, kw_match::<false>(buf.as_ptr(), word.len(), cpu))
             }
-        }
+        };
+        assert_eq!(baseline, detected, "baseline and detected CPU disagree");
+        baseline
     }
 
     #[test]
@@ -681,22 +653,6 @@ mod tests {
                 panic!("TS hash is not perfect: `{word}` and `{other}` both hash to slot {slot}");
             }
             used[slot] = Some(word);
-        }
-    }
-
-    /// A JS keyword's JS slot must not be the TS slot of a different keyword, as they share `KW_TEXT`
-    #[test]
-    fn test_kw_text_no_conflicts() {
-        for js_kw in keywords(&KEYWORDS_JS) {
-            let slot = js_kw.slot(false);
-            for ts_kw in keywords(&KEYWORDS_TS) {
-                assert!(
-                    ts_kw.word == js_kw.word || ts_kw.slot(true) != slot,
-                    "JS slot of `{}` is TS slot of `{}` (slot {slot})",
-                    js_kw.word,
-                    ts_kw.word
-                );
-            }
         }
     }
 

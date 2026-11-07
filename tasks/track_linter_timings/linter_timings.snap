@@ -580,7 +580,7 @@ unicorn/no-useless-length-check                         |  12119
 unicorn/no-useless-promise-resolve-reject               |  62606
 unicorn/no-useless-spread                               |  18240
 unicorn/no-useless-switch-case                          |    284
-unicorn/no-useless-undefined                            | 272171
+unicorn/no-useless-undefined                            | 276893
 unicorn/no-zero-fractions                               |  14295
 unicorn/number-literal-case                             |  14334
 unicorn/numeric-separators-style                        |  14334
