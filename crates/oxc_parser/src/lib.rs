@@ -445,6 +445,25 @@ mod parser_parse {
         // # Implementation note
         // Dispatches via `Any`, same as `parse` does.
         pub fn parse_expression(self) -> Result<Expression<'a>, Diagnostics> {
+            self.parse_expression_impl(true).map(|(expression, _)| expression)
+        }
+
+        /// Parse an expression at the start of an embedded language region.
+        ///
+        /// Returns the expression and the byte offset of the following token, after
+        /// whitespace and comments. The caller must validate that token as the
+        /// enclosing language's expression terminator.
+        ///
+        /// # Errors
+        /// Returns diagnostics if the expression has syntax errors.
+        pub fn parse_expression_prefix(self) -> Result<(Expression<'a>, u32), Diagnostics> {
+            self.parse_expression_impl(false)
+        }
+
+        fn parse_expression_impl(
+            self,
+            require_eof: bool,
+        ) -> Result<(Expression<'a>, u32), Diagnostics> {
             let config: &dyn Any = &self.config;
             if config.is::<NoTokensParserConfig>() {
                 parse_expression_with_no_tokens_config(
@@ -452,6 +471,7 @@ mod parser_parse {
                     self.source_text,
                     self.source_type,
                     self.options,
+                    require_eof,
                 )
             } else if config.is::<TokensParserConfig>() {
                 parse_expression_with_tokens_config(
@@ -459,6 +479,7 @@ mod parser_parse {
                     self.source_text,
                     self.source_type,
                     self.options,
+                    require_eof,
                 )
             } else if let Some(&config) = config.downcast_ref::<RuntimeParserConfig>() {
                 parse_expression_with_runtime_config(
@@ -466,6 +487,7 @@ mod parser_parse {
                     self.source_text,
                     self.source_type,
                     self.options,
+                    require_eof,
                     config,
                 )
             } else {
@@ -477,7 +499,7 @@ mod parser_parse {
                     self.config,
                     UniquePromise::new(),
                 )
-                .parse_expression()
+                .parse_expression(require_eof)
             }
         }
     }
@@ -570,7 +592,8 @@ mod parser_parse {
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
-    ) -> Result<Expression<'a>, Diagnostics> {
+        require_eof: bool,
+    ) -> Result<(Expression<'a>, u32), Diagnostics> {
         ParserImpl::<NoTokensParserConfig>::new(
             allocator,
             source_text,
@@ -579,7 +602,7 @@ mod parser_parse {
             NoTokensParserConfig,
             UniquePromise::new(),
         )
-        .parse_expression()
+        .parse_expression(require_eof)
     }
 
     #[inline(never)]
@@ -588,7 +611,8 @@ mod parser_parse {
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
-    ) -> Result<Expression<'a>, Diagnostics> {
+        require_eof: bool,
+    ) -> Result<(Expression<'a>, u32), Diagnostics> {
         ParserImpl::<TokensParserConfig>::new(
             allocator,
             source_text,
@@ -597,7 +621,7 @@ mod parser_parse {
             TokensParserConfig,
             UniquePromise::new(),
         )
-        .parse_expression()
+        .parse_expression(require_eof)
     }
 
     #[inline(never)]
@@ -606,8 +630,9 @@ mod parser_parse {
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
+        require_eof: bool,
         config: RuntimeParserConfig,
-    ) -> Result<Expression<'a>, Diagnostics> {
+    ) -> Result<(Expression<'a>, u32), Diagnostics> {
         ParserImpl::<RuntimeParserConfig>::new(
             allocator,
             source_text,
@@ -616,7 +641,7 @@ mod parser_parse {
             config,
             UniquePromise::new(),
         )
-        .parse_expression()
+        .parse_expression(require_eof)
     }
 }
 use parser_parse::UniquePromise;
@@ -798,17 +823,21 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
     }
 
-    pub fn parse_expression(mut self) -> Result<Expression<'a>, Diagnostics> {
+    pub fn parse_expression(
+        mut self,
+        require_eof: bool,
+    ) -> Result<(Expression<'a>, u32), Diagnostics> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
         let expr = self.parse_expr();
-        if !self.at(Kind::Eof) {
+        if require_eof && !self.at(Kind::Eof) {
             self.set_unexpected();
         }
         if let Some(FatalError { error, .. }) = self.fatal_error.take() {
             return Err(error.into_diagnostic().into());
         }
         self.check_unfinished_errors();
+        let next_token = self.cur_token().start();
         let errors = self
             .lexer
             .errors
@@ -819,7 +848,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         if !errors.is_empty() {
             return Err(errors);
         }
-        Ok(expr)
+        Ok((expr, next_token))
     }
 
     #[expect(clippy::cast_possible_truncation)]
@@ -1073,6 +1102,49 @@ mod test {
         for source in ["a b", "a;", "let x = 1"] {
             assert!(Parser::new(&allocator, source, source_type).parse_expression().is_err());
         }
+    }
+
+    #[test]
+    fn parse_expression_prefix_preserves_terminator() {
+        let allocator = Allocator::default();
+        for source in [
+            "value / 2}",
+            "count++ / 2}",
+            "object.in / 2}",
+            "值 / 2}",
+            "`<script>${`nested ${value}`}</script>`}",
+            "value /* } */}",
+            "value // comment\u{2028}}",
+            "value // comment\u{2029}}",
+        ] {
+            let (expression, next_token) = Parser::new(&allocator, source, SourceType::ts())
+                .parse_expression_prefix()
+                .unwrap();
+            assert_eq!(&source[next_token as usize..], "}", "{source}");
+            assert!(expression.span().end <= next_token);
+        }
+        for next_token in [
+            Parser::new(&allocator, "value /* comment */}", SourceType::ts())
+                .with_config(TokensParserConfig)
+                .parse_expression_prefix()
+                .unwrap()
+                .1,
+            Parser::new(&allocator, "value /* comment */}", SourceType::ts())
+                .with_config(RuntimeParserConfig::new(true))
+                .parse_expression_prefix()
+                .unwrap()
+                .1,
+            Parser::new(&allocator, "value /* comment */}", SourceType::ts())
+                .with_config(RuntimeParserConfig::new(false))
+                .parse_expression_prefix()
+                .unwrap()
+                .1,
+        ] {
+            assert_eq!(next_token, 19);
+        }
+        assert!(
+            Parser::new(&allocator, "a + }", SourceType::ts()).parse_expression_prefix().is_err()
+        );
     }
 
     #[test]
