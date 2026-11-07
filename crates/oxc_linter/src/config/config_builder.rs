@@ -1407,6 +1407,65 @@ mod test {
     }
 
     #[test]
+    fn test_extends_aliased_rule_overridden_regardless_of_siblings() {
+        // `no-restricted-imports` and `typescript/no-restricted-imports` resolve to the same
+        // rule. When a config extends a base that configures the rule under one name and
+        // configures it itself under the other, the extending config's options must win —
+        // regardless of which other rules are configured alongside it. The winner used to be
+        // decided by hash-map iteration order in `Oxlintrc::merge`, so an unrelated sibling
+        // rule entry could silently flip it.
+        let siblings = [
+            "",
+            r#""no-use-before-define": "off","#,
+            r#""no-shadow": "off","#,
+            r#""no-unused-vars": "off","#,
+            r#""no-redeclare": "off","#,
+            r#""eqeqeq": "off","#,
+            r#""no-var": "off","#,
+            r#""prefer-const": "off","#,
+        ];
+        for sibling in siblings {
+            let config = config_store_from_str(&format!(
+                r#"
+                {{
+                    "extends": ["fixtures/extends_config/aliased_rule_config.json"],
+                    "plugins": ["eslint", "typescript"],
+                    "rules": {{
+                        {sibling}
+                        "typescript/no-restricted-imports": [
+                            "error",
+                            {{ "paths": [{{ "name": "react-native", "message": "from-child" }}] }}
+                        ]
+                    }}
+                }}
+                "#
+            ));
+
+            let configured: Vec<_> = config
+                .rules()
+                .iter()
+                .filter(|(r, _)| r.name() == "no-restricted-imports")
+                .collect();
+            assert_eq!(
+                configured.len(),
+                1,
+                "aliased entries should collapse into one rule (sibling {sibling:?})"
+            );
+            let (rule, severity) = configured[0];
+            assert_eq!(*severity, AllowWarnDeny::Deny, "sibling {sibling:?}");
+            let debug = format!("{rule:?}");
+            assert!(
+                debug.contains("react-native"),
+                "extending config's `paths` should win (sibling {sibling:?}): {debug}"
+            );
+            assert!(
+                !debug.contains("*/internal"),
+                "base config's `patterns` should be overridden (sibling {sibling:?}): {debug}"
+            );
+        }
+    }
+
+    #[test]
     fn test_extends_invalid() {
         let invalid_config = {
             let mut external_plugin_store = ExternalPluginStore::default();
