@@ -1521,9 +1521,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                     Expression::new_ts_satisfies_expression(span, lhs, type_annotation, self)
                 };
-                // When we have `a ## b as SomeType $$ c` or `a ## b satisfies SomeType $$ c`, where `##` and `$$`
-                // are binary operators, we want to stop parsing when `$$` would bind before `##` after erasing the
-                // assertion. See https://github.com/microsoft/TypeScript/issues/63527.
+                // When we have `a ## b as T $$ c` or `a ## b satisfies T $$ c`, where `##` and `$$`
+                // are binary operators, we want to stop parsing when `$$` would bind before `##`
+                // after erasing the assertion.
+                // See <https://github.com/microsoft/TypeScript/issues/63527>.
                 if let Some(last_precedence) = last_operand_precedence
                     && let Some(next_precedence) = kind_to_precedence(self.re_lex_right_angle())
                     && (next_precedence > last_precedence
