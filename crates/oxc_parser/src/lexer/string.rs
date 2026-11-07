@@ -187,13 +187,6 @@ impl<'a, C: Config> Lexer<'a, C> {
         }
     }
 
-    /// Retrieve a string value for benchmarks.
-    #[cfg(feature = "benchmarking")]
-    #[inline]
-    pub fn get_js_string_for_benchmarks(&self, token: Token) -> JSStr<'a> {
-        self.get_js_string(token)
-    }
-
     /// Save the string if it is escaped
     /// This reduces the overall memory consumption while keeping the `Token` size small
     /// Strings without escaped values can be retrieved as is from the token span
