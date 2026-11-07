@@ -211,6 +211,52 @@ fieldless_enum! {
 #[allow(clippy::enum_glob_use, clippy::allow_attributes)]
 use Kind::*;
 
+// The multiplier gives each current keyword its own slot. The const initializer checks
+// collisions, so adding a keyword cannot silently change recognition.
+#[inline]
+const fn keyword_index(lo: u64, hi: u32) -> usize {
+    ((lo ^ ((hi as u64) << 1)).wrapping_mul(18_316_918_464_218_193_323) >> 55) as usize
+}
+
+// Derive the table from the existing keyword spellings, without a second list or generated file.
+static KEYWORDS: [(u64, u32, Kind); 512] = {
+    let mut table = [(0, 0, Kind::Ident); 512];
+    let mut i = 0;
+    while i < Kind::VARIANTS.len() {
+        let kind = Kind::VARIANTS[i];
+        if kind.is_any_keyword() {
+            let bytes = kind.to_str().as_bytes();
+            assert!(bytes.len() >= 2 && bytes.len() <= 11, "Keyword exceeds packed lookup length");
+            let mut lo = 0;
+            let mut hi = 0;
+            let mut j = 0;
+            while j < bytes.len() {
+                if j < 8 {
+                    lo |= (bytes[j] as u64) << (j * 8);
+                } else {
+                    hi |= (bytes[j] as u32) << ((j - 8) * 8);
+                }
+                j += 1;
+            }
+            let index = keyword_index(lo, hi);
+            assert!(
+                matches!(table[index].2, Kind::Ident),
+                "Keyword hash collision: update multiplier"
+            );
+            // The upper byte is free: keywords use at most three bytes in `hi`.
+            // Include length so NULs in invalid escaped identifiers cannot match zero padding.
+            #[expect(
+                clippy::cast_possible_truncation,
+                reason = "Keyword length is asserted to be at most 11 bytes"
+            )]
+            let len = bytes.len() as u32;
+            table[index] = (lo, hi | (len << 24), kind);
+        }
+        i += 1;
+    }
+    table
+};
+
 impl Kind {
     #[inline]
     pub const fn is_eof(self) -> bool {
@@ -440,119 +486,41 @@ impl Kind {
         matches!(self, LCurly | LBrack | PrivateIdentifier) || self.is_binding_identifier()
     }
 
-    #[cold]
+    // Pack the whole identifier into two words. Overlapping loads avoid a per-byte packing loop.
+    // Comparing both words after the lookup rejects non-keywords which hash to an occupied slot.
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "At most three bytes remain above the low 64-bit word"
+    )]
+    #[inline]
     pub fn match_keyword(s: &str) -> Self {
-        let len = s.len();
-        // SAFETY: Already checked `len <= 1`.
-        if len <= 1 || len >= 12 || !unsafe { s.as_bytes().get_unchecked(0) }.is_ascii_lowercase() {
-            return Ident;
+        let s = s.as_bytes();
+        let n = s.len();
+        if !(2..=11).contains(&n) {
+            return Kind::Ident;
         }
-        Self::match_keyword_impl(s)
+        let (lo, hi) = if n < 4 {
+            (
+                u64::from(u16::from_le_bytes([s[0], s[1]]))
+                    | (u64::from(s[n - 1]) << ((n - 1) * 8)),
+                0,
+            )
+        } else if n < 8 {
+            let a = u32::from_le_bytes(s[..4].try_into().unwrap());
+            let b = u32::from_le_bytes(s[n - 4..].try_into().unwrap());
+            (u64::from(a) | (u64::from(b) << ((n - 4) * 8)), 0)
+        } else {
+            let a = u64::from_le_bytes(s[..8].try_into().unwrap());
+            let b = u64::from_le_bytes(s[n - 8..].try_into().unwrap());
+            let hi = if n == 8 { 0 } else { (b >> ((16 - n) * 8)) as u32 };
+            (a, hi)
+        };
+        let index = keyword_index(lo, hi);
+        let entry = KEYWORDS[index];
+        if entry.0 == lo && entry.1 == hi | ((n as u32) << 24) { entry.2 } else { Kind::Ident }
     }
 
-    fn match_keyword_impl(s: &str) -> Self {
-        match s {
-            "as" => As,
-            "do" => Do,
-            "if" => If,
-            "in" => In,
-            "is" => Is,
-            "of" => Of,
-
-            "any" => Any,
-            "for" => For,
-            "get" => Get,
-            "let" => Let,
-            "new" => New,
-            "out" => Out,
-            "set" => Set,
-            "try" => Try,
-            "var" => Var,
-
-            "case" => Case,
-            "else" => Else,
-            "enum" => Enum,
-            "from" => From,
-            "meta" => Meta,
-            "null" => Null,
-            "this" => This,
-            "true" => True,
-            "type" => Type,
-            "void" => Void,
-            "with" => With,
-
-            "async" => Async,
-            "await" => Await,
-            "break" => Break,
-            "catch" => Catch,
-            "class" => Class,
-            "const" => Const,
-            "false" => False,
-            "infer" => Infer,
-            "keyof" => KeyOf,
-            "never" => Never,
-            "super" => Super,
-            "throw" => Throw,
-            "using" => Using,
-            "while" => While,
-            "yield" => Yield,
-            "defer" => Defer,
-
-            "assert" => Assert,
-            "bigint" => BigInt,
-            "delete" => Delete,
-            "export" => Export,
-            "global" => Global,
-            "import" => Import,
-            "module" => Module,
-            "number" => Number,
-            "object" => Object,
-            "public" => Public,
-            "return" => Return,
-            "static" => Static,
-            "string" => String,
-            "switch" => Switch,
-            "symbol" => Symbol,
-            "target" => Target,
-            "typeof" => Typeof,
-            "unique" => Unique,
-            "source" => Source,
-
-            "asserts" => Asserts,
-            "boolean" => Boolean,
-            "declare" => Declare,
-            "default" => Default,
-            "extends" => Extends,
-            "finally" => Finally,
-            "package" => Package,
-            "private" => Private,
-            "require" => Require,
-            "unknown" => Unknown,
-
-            "abstract" => Abstract,
-            "accessor" => Accessor,
-            "continue" => Continue,
-            "debugger" => Debugger,
-            "function" => Function,
-            "override" => Override,
-            "readonly" => Readonly,
-
-            "interface" => Interface,
-            "intrinsic" => Intrinsic,
-            "namespace" => Namespace,
-            "protected" => Protected,
-            "satisfies" => Satisfies,
-            "undefined" => Undefined,
-
-            "implements" => Implements,
-            "instanceof" => Instanceof,
-
-            "constructor" => Constructor,
-            _ => Ident,
-        }
-    }
-
-    pub fn to_str(self) -> &'static str {
+    pub const fn to_str(self) -> &'static str {
         #[expect(clippy::match_same_arms)]
         match self {
             Undetermined => "Unknown",

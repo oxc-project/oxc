@@ -494,46 +494,73 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Read each char and set the current token
     /// Whitespace and line terminators are skipped
-    #[inline] // Make sure is inlined into `next_token`
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn read_next_token(&mut self) -> Kind {
         self.trivia_builder.clear_annotation_comments();
 
-        let end_pos = self.source.end();
+        let kind = self.read_next_token_once();
+        kind.unwrap_or_else(|| self.read_next_token_after_skip())
+    }
+
+    // Keep the trivia loop out of the common call so scanner state need not survive a loop backedge.
+    #[cold]
+    fn read_next_token_after_skip(&mut self) -> Kind {
         loop {
-            // Single spaces between tokens are common, so consume a space before processing the next token.
-            // Can only do this if there are at least 2 bytes left in source.
-            // If there aren't 2 bytes left, delegate to `read_next_token_at_end` (cold branch).
-            let mut pos = self.source.position();
-            // SAFETY: `source.end()` is always equal to or after `source.position()`
-            let remaining_bytes = unsafe { end_pos.offset_from(pos) };
-            if remaining_bytes >= 2 {
-                // SAFETY: There are at least 2 bytes remaining in source.
-                let mut byte = unsafe { pos.read() };
-
-                // Only update the cursor and read again when consuming a space.
-                if byte == b' ' {
-                    // SAFETY: At least 2 bytes remain, so advancing past one ASCII space
-                    // leaves at least one byte to read.
-                    pos = unsafe { pos.add(1) };
-                    self.source.set_position(pos);
-                    // SAFETY: At least one byte remains after the space.
-                    byte = unsafe { pos.read() };
-                }
-
-                // Set token start
-                let offset = self.source.offset_of(pos);
-                self.token.set_start(offset);
-
-                // SAFETY: `byte` is byte value at current position in source
-                let kind = unsafe { self.handle_byte(byte) };
-                if kind != Kind::Skip {
-                    return kind;
-                }
-            } else {
-                // Only 0 or 1 bytes left in source.
-                // Delegate to `#[cold]` function as this is a very rare case.
-                return self.read_next_token_at_end();
+            let kind = self.read_next_token_once();
+            if let Some(kind) = kind {
+                return kind;
             }
+        }
+    }
+
+    // The common call and the trivia loop share this scanner.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn read_next_token_once(&mut self) -> Option<Kind> {
+        let end_pos = self.source.end();
+        // Single spaces between tokens are common, so consume a space before processing the next token.
+        // Can only do this if there are at least 2 bytes left in source.
+        // If there aren't 2 bytes left, delegate to `read_next_token_at_end` (cold branch).
+        let mut pos = self.source.position();
+        // SAFETY: `source.end()` is always equal to or after `source.position()`
+        let remaining_bytes = unsafe { end_pos.offset_from(pos) };
+        if remaining_bytes >= 2 {
+            // SAFETY: There are at least 2 bytes remaining in source.
+            let mut byte = unsafe { pos.read() };
+
+            // Only update the cursor and read again when consuming a space.
+            if byte == b' ' {
+                // SAFETY: At least 2 bytes remain, so advancing past one ASCII space
+                // leaves at least one byte to read.
+                pos = unsafe { pos.add(1) };
+                self.source.set_position(pos);
+                // SAFETY: At least one byte remains after the space.
+                byte = unsafe { pos.read() };
+            }
+
+            if matches!(byte, b'\r' | b'\n') {
+                // SAFETY: `pos` points to the ASCII line break just read.
+                self.source.set_position(unsafe { pos.add(1) });
+                self.line_break_handler();
+                pos = self.source.position();
+                if pos.is_end_of(&self.source) {
+                    return Some(self.read_next_token_at_end());
+                }
+                // SAFETY: The line-break handler leaves a UTF-8 boundary before EOF.
+                byte = unsafe { pos.read() };
+            }
+
+            // Set token start
+            let offset = self.source.offset_of(pos);
+            self.token.set_start(offset);
+
+            // SAFETY: `byte` is byte value at current position in source
+            unsafe { self.handle_byte(byte) }
+        } else {
+            // Only 0 or 1 bytes left in source.
+            // Delegate to `#[cold]` function as this is a very rare case.
+            Some(self.read_next_token_at_end())
         }
     }
 
@@ -547,7 +574,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         if let Some(byte) = self.peek_byte() {
             // SAFETY: `byte` is byte value at current position in source
             let kind = unsafe { self.handle_byte(byte) };
-            if kind != Kind::Skip {
+            if let Some(kind) = kind {
                 return kind;
             }
             // Last byte was whitespace/line break (`Kind::Skip`), so now at EOF
@@ -590,7 +617,7 @@ impl<'a, C: Config> Lexer<'a, C> {
 
                 // SAFETY: `byte` is byte value at current position in source.
                 let kind = unsafe { self.handle_byte(byte) };
-                if kind != Kind::Skip {
+                if let Some(kind) = kind {
                     return kind;
                 }
             } else {
@@ -613,7 +640,7 @@ impl<'a, C: Config> Lexer<'a, C> {
 
             // SAFETY: `byte` is byte value at current position in source.
             let kind = unsafe { self.handle_byte(byte) };
-            if kind != Kind::Skip {
+            if let Some(kind) = kind {
                 return kind;
             }
             self.token.set_start(offset + 1);
