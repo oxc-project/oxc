@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 use oxc_str::JSStr;
 
 use crate::{
-    DetermineValueType, ToBigInt, ToIntegerIndex, ValueType,
+    DetermineValueType, StringToNumber, ToBigInt, ToIntegerIndex, ValueType,
     to_numeric::ToNumeric,
     to_primitive::{ToPrimitive, ToPrimitiveResult},
 };
@@ -809,6 +809,31 @@ fn any_arg_throws_to_number<'a>(
     args.iter().any(|arg| arg.as_expression().is_some_and(|e| e.value_type(ctx).is_bigint()))
 }
 
+/// Whether the expression, used as an `ArrayBuffer`/TypedArray length, throws a
+/// *negative-length* `RangeError` in `ToIndex`.
+///
+/// Maximum-length errors are droppable per the minifier's assumptions, so only
+/// provably negative values are reported; anything not statically known is kept.
+fn may_throw_to_index<'a>(expr: &Expression<'a>, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+    let negative = |n: f64| !n.is_nan() && n < 0.0;
+    match expr.without_parentheses() {
+        Expression::NumericLiteral(lit) => negative(lit.value),
+        // `ToNumber` of the string decides: `NaN` -> 0 is fine, a negative number throws.
+        Expression::StringLiteral(lit) => {
+            lit.value.as_str().is_none_or(|value| negative(value.string_to_number()))
+        }
+        // `ToIndex` of these is always 0 or 1.
+        _ if matches!(
+            expr.value_type(ctx),
+            ValueType::Null | ValueType::Undefined | ValueType::Boolean
+        ) =>
+        {
+            false
+        }
+        _ => true,
+    }
+}
+
 /// Whether `expr` is a numeric literal (optionally negated) that is not a valid Unicode
 /// code point — i.e. not an integer in `[0, 0x10FFFF]` — for which
 /// `String.fromCodePoint` throws a `RangeError`.
@@ -885,9 +910,17 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
                     return new_expr_first_arg_may_be_symbol(self, ctx);
                 }
                 // new Date(arg): ToPrimitive then ToNumber — both Symbol and BigInt throw.
-                // new ArrayBuffer(arg): ToIndex → ToNumber — same.
-                "Date" | "ArrayBuffer" => {
+                "Date" => {
                     return new_expr_first_arg_may_be_symbol_or_bigint(self, ctx);
+                }
+                // new ArrayBuffer(arg): ToPrimitive then ToNumber — Symbol and BigInt throw;
+                // the length additionally goes through `ToIndex`, which throws a RangeError
+                // for negative numbers and values >= 2^53.
+                "ArrayBuffer" => {
+                    return new_expr_first_arg_may_be_symbol_or_bigint(self, ctx)
+                        || self.arguments.first().is_some_and(|arg| {
+                            arg.as_expression().is_some_and(|e| may_throw_to_index(e, ctx))
+                        });
                 }
                 // Error constructors: ToString(msg) throws on Symbol.
                 _ if is_error_constructor(name) => {
@@ -901,15 +934,13 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
                         return true;
                     }
                     return self.arguments.first().is_some_and(|arg| {
-                        arg.as_expression().is_none_or(|e| {
-                            !matches!(
-                                e.value_type(ctx),
-                                ValueType::Number
-                                    | ValueType::String
-                                    | ValueType::Boolean
-                                    | ValueType::Null
-                                    | ValueType::Undefined
-                            )
+                        arg.as_expression().is_none_or(|e| match e.value_type(ctx) {
+                            // The length goes through `ToIndex`, which throws a RangeError
+                            // for negative numbers and values >= 2^53.
+                            ValueType::Number | ValueType::String => may_throw_to_index(e, ctx),
+                            // `ToIndex` of these is always 0 or 1.
+                            ValueType::Boolean | ValueType::Null | ValueType::Undefined => false,
+                            _ => true,
                         })
                     });
                 }
