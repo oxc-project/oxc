@@ -24,7 +24,7 @@ use std::{
 };
 
 use super::{
-    CpuSimd, Vec128Impl, Vec256Impl,
+    CpuSimd, Vec128, Vec256,
     arrays::{IntArray128, IntArray256},
 };
 
@@ -94,7 +94,6 @@ impl VecData128 {
     /// Get a `*const u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for aligned reads of 16 bytes.
-    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub const fn as_ptr(&self) -> *const u8 {
         self.0.as_slice().as_ptr()
@@ -103,7 +102,7 @@ impl VecData128 {
     /// Get a `*mut u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for aligned writes of 16 bytes.
-    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
+    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub const fn as_mut_ptr(&mut self) -> *mut u8 {
         self.0.as_mut_ptr()
@@ -114,8 +113,8 @@ impl VecData128 {
     /// [`Vec128`]: super::Vec128
     /// [`Vec128::read`]: super::Vec128::read
     #[inline(always)]
-    pub fn read<C: CpuSimd>(&self, cpu: C) -> C::Vec128 {
-        C::Vec128::read(self, cpu)
+    pub fn read<C: CpuSimd>(&self, cpu: C) -> Vec128<C> {
+        Vec128::read(self, cpu)
     }
 }
 
@@ -212,7 +211,6 @@ impl VecData256 {
     /// Get a `*const u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for aligned reads of 32 bytes.
-    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub const fn as_ptr(&self) -> *const u8 {
         self.0.as_slice().as_ptr()
@@ -221,7 +219,7 @@ impl VecData256 {
     /// Get a `*mut u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for aligned writes of 32 bytes.
-    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
+    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub const fn as_mut_ptr(&mut self) -> *mut u8 {
         self.0.as_mut_ptr()
@@ -240,8 +238,8 @@ impl VecData256 {
     /// [`Vec256`]: super::Vec256
     /// [`Vec256::read`]: super::Vec256::read
     #[inline(always)]
-    pub fn read<C: CpuSimd>(&self, cpu: C) -> C::Vec256 {
-        C::Vec256::read(self, cpu)
+    pub fn read<C: CpuSimd>(&self, cpu: C) -> Vec256<C> {
+        Vec256::read(self, cpu)
     }
 }
 

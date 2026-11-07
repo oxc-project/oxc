@@ -34,7 +34,6 @@
 //!
 //! [`#[cpu_version]`] marks each implementation with the CPU feature set it's for.
 //! [`#[cpu_multiversion]`] turns a function into one with a separate entry point for each CPU feature set.
-//! [`#[cpu_impl]`] marks methods which only work on one CPU feature set's platform.
 //!
 //! The attribute macros are in the `oxc_lexer_macros` crate.
 //!
@@ -78,11 +77,10 @@
 //!
 //! [`#[cpu_version]`]: macro@cpu_version
 //! [`#[cpu_multiversion]`]: macro@cpu_multiversion
-//! [`#[cpu_impl]`]: macro@cpu_impl
 
 use std::{convert::Infallible as Never, mem};
 
-pub(crate) use oxc_lexer_macros::{cpu_impl, cpu_multiversion, cpu_version};
+pub(crate) use oxc_lexer_macros::{cpu_multiversion, cpu_version};
 
 #[cfg(test)]
 mod tests;

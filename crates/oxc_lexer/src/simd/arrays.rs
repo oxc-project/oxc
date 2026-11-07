@@ -25,7 +25,6 @@ pub unsafe trait IntArray64 {
     /// Get a `*const u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for unaligned reads of 8 bytes.
-    #[cfg_attr(not(any(target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     fn as_ptr(&self) -> *const u8 {
         ptr::from_ref(self).cast::<u8>()
@@ -41,7 +40,6 @@ pub unsafe trait IntArray128 {
     /// Get a `*const u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for unaligned reads of 16 bytes.
-    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     fn as_ptr(&self) -> *const u8 {
         ptr::from_ref(self).cast::<u8>()
@@ -57,7 +55,6 @@ pub unsafe trait IntArray256 {
     /// Get a `*const u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for unaligned reads of 32 bytes.
-    #[cfg_attr(not(any(test, target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     fn as_ptr(&self) -> *const u8 {
         ptr::from_ref(self).cast::<u8>()

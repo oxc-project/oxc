@@ -9,13 +9,9 @@
 
 use std::{array, mem::transmute};
 
-use crate::{
-    cpu::{Avx2, DynCpu, Neon},
-    simd::{
-        CpuSimd, Vec128, Vec256, VecData128, VecData256, operand::Operand128, vec128::Vec128Impl,
-        vec256::Vec256Impl,
-    },
-};
+use crate::cpu::{Avx2, DynCpu, Neon};
+
+use super::{CpuSimd, Vec128, Vec256, VecData128, VecData256, operand::Operand128};
 
 /// Get this platform's CPU type with SIMD vectors, if the CPU supports it.
 pub(super) fn simd_cpu() -> Option<
@@ -35,10 +31,7 @@ pub(super) fn simd_cpu() -> Option<
 }
 
 /// Get the bytes of a [`Vec128`].
-pub(super) fn to_bytes128<C: CpuSimd>(v: Vec128<C>) -> [u8; 16]
-where
-    Vec128<C>: Vec128Impl<Cpu = C>,
-{
+pub(super) fn to_bytes128<C: CpuSimd>(v: Vec128<C>) -> [u8; 16] {
     let mut out = [0; 16];
     // SAFETY: `out` is valid for writing 16 bytes
     unsafe { v.store_unaligned(out.as_mut_ptr()) };
@@ -46,10 +39,7 @@ where
 }
 
 /// Get the bytes of a [`Vec256`].
-pub(super) fn to_bytes256<C: CpuSimd>(v: Vec256<C>) -> [u8; 32]
-where
-    Vec256<C>: Vec256Impl<Cpu = C>,
-{
+pub(super) fn to_bytes256<C: CpuSimd>(v: Vec256<C>) -> [u8; 32] {
     let mut out = [0; 32];
     // SAFETY: `out` is valid for writing 32 bytes
     unsafe { v.store_unaligned(out.as_mut_ptr()) };
@@ -57,10 +47,7 @@ where
 }
 
 /// Get the `u32`s of a [`Vec256`].
-pub(super) fn to_u32s<C: CpuSimd>(v: Vec256<C>) -> [u32; 8]
-where
-    Vec256<C>: Vec256Impl<Cpu = C>,
-{
+pub(super) fn to_u32s<C: CpuSimd>(v: Vec256<C>) -> [u32; 8] {
     let mut out = [0; 8];
     // SAFETY: `out` is valid for writing 32 bytes
     unsafe { v.store_unaligned(out.as_mut_ptr().cast::<u8>()) };
@@ -87,8 +74,7 @@ pub(super) fn map_u16(bytes: [u8; 32], f: impl Fn(u16) -> u16) -> [u8; 32] {
     out
 }
 
-/// Each CPU type's vectors have the same size and alignment on every platform,
-/// including those where they wrap a [`VecData128`] or [`VecData256`] instead of a SIMD type.
+/// Each CPU type's vectors have the same size and alignment on every platform.
 #[test]
 fn size_and_alignment() {
     assert_eq!((size_of::<Vec128<Avx2>>(), align_of::<Vec128<Avx2>>()), (16, 16));
