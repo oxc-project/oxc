@@ -147,9 +147,9 @@ pub(crate) use safe_byte_match_table;
 pub(super) fn find_ascii_byte4<const A: u8, const B: u8, const C: u8, const D: u8>(
     bytes: &[u8],
 ) -> Option<usize> {
-    const { assert!(A.is_ascii() && B.is_ascii() && C.is_ascii() && D.is_ascii()) };
     const LO: u64 = 0x0101_0101_0101_0101;
     const HI: u64 = 0x8080_8080_8080_8080;
+    const { assert!(A.is_ascii() && B.is_ascii() && C.is_ascii() && D.is_ascii()) };
 
     let mut offset = 0;
     while offset + 8 <= bytes.len() {
