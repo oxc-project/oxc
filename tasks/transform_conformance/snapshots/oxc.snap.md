@@ -1,6 +1,6 @@
 commit: 0372f7f1
 
-Passed: 310/439
+Passed: 314/443
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -210,7 +210,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (55/58)
+# babel-plugin-transform-react-jsx (59/62)
 * refresh/import-after-component/input.js
 Missing ScopeId
 Missing ReferenceId: "useFoo"

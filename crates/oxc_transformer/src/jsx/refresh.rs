@@ -115,6 +115,7 @@ pub struct ReactRefresh<'a> {
     refresh_reg: RefreshIdentifierResolver<'a>,
     refresh_sig: RefreshIdentifierResolver<'a>,
     emit_full_signatures: bool,
+    force_reset: bool,
     // States
     registrations: Vec<(BoundIdentifier<'a>, Str<'a>)>,
     /// Used to wrap call expression with signature.
@@ -135,6 +136,7 @@ impl<'a> ReactRefresh<'a> {
             refresh_reg: RefreshIdentifierResolver::parse(refresh_reg, ast),
             refresh_sig: RefreshIdentifierResolver::parse(refresh_sig, ast),
             emit_full_signatures: options.is_some_and(|options| options.emit_full_signatures),
+            force_reset: false,
             registrations: Vec::default(),
             last_signature: None,
             function_signature_keys: FxHashMap::default(),
@@ -146,6 +148,9 @@ impl<'a> ReactRefresh<'a> {
 
 impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.force_reset = program.comments.iter().any(|comment| {
+            comment.content_span().source_text(ctx.state.source_text).contains("@refresh reset")
+        });
         self.used_in_jsx_bindings = UsedInJSXBindingsCollector::collect(program, ctx);
 
         let mut new_statements = ArenaVec::with_capacity_in(program.body.len() * 2, ctx);
@@ -636,7 +641,7 @@ impl<'a> ReactRefresh<'a> {
             ctx,
         );
 
-        let force_reset = custom_hooks_in_scope.len() != callee_len;
+        let force_reset = self.force_reset || custom_hooks_in_scope.len() != callee_len;
 
         let mut arguments = ArenaVec::new_in(ctx);
         arguments.push(Argument::new_string_literal(SPAN, key, None, ctx));
@@ -707,9 +712,6 @@ impl<'a> ReactRefresh<'a> {
 
         body.statements.insert(0, call_expression);
 
-        // Following is the signature call expression, will be generated in call site.
-        // _s(App, signature_key, false, function() { return [] });
-        //                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ custom hooks only
         let binding_identifier = binding.create_binding_identifier(ctx);
         Some((binding_identifier, arguments))
     }
