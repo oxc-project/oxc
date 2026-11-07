@@ -124,10 +124,6 @@ trait CpuPrivate {
 // on any machine, and Rust Analyzer sees all the code for all archs "as one".
 // But the uninhabited variants allow compiler to apply dead code removal to code paths
 // which aren't for the architecture crate is being compiled for.
-//
-// Variants are ordered so that `Generic` is always 0, and the SIMD feature set
-// available on the platform is 1. Uninhabited variants don't exist at runtime,
-// so this type behaves like a `bool`.
 
 /// Enum representing a CPU feature set.
 ///
@@ -160,6 +156,10 @@ pub enum DynCpu {
 /// via target feature detection.
 ///
 /// [`detect`]: Self::detect
+//
+// This is the only circumstance in which runtime feature detection is necessary.
+// `Neon` is uninhabited, so `Generic` (0) and `Avx2` (1) are the only usable variants,
+// making this type equivalent to a `bool`.
 #[cfg(all(
     target_arch = "x86_64",
     not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
@@ -187,9 +187,11 @@ pub enum DynCpu {
     // Can never be created on aarch64 when Neon is enabled at compile time. See `Generic`.
     #[cfg_attr(target_feature = "neon", expect(dead_code))]
     Generic(Generic),
-    Neon(Neon),
     #[expect(dead_code)]
     Avx2(Avx2),
+    // Can never be created on aarch64 when Neon is disabled at compile time. See `Neon`.
+    #[cfg_attr(not(target_feature = "neon"), expect(dead_code))]
+    Neon(Neon),
 }
 
 /// Enum representing a CPU feature set.
@@ -210,18 +212,16 @@ pub enum DynCpu {
     Neon(Neon),
 }
 
-/// On aarch64 with neon enabled, [`DynCpu`] has only 1 inhabited variant, so is a ZST.
-/// Ditto on x86_64 with AVX2, BMI2 and POPCNT enabled, and when arch is not x86_64 or aarch64.
-/// On all other platforms it's 1 byte.
+/// [`DynCpu`] has 2 inhabited variants on x86_64 when not all of AVX2, BMI2 and POPCNT
+/// are enabled at compile time (so runtime detection is required).
+/// On all other platforms it only has 1 inhabited variant, so is a ZST.
 const _: () = {
     let expected_size = cfg_select! {
-        all(target_arch = "aarch64", target_feature = "neon") => 0,
         all(
             target_arch = "x86_64",
-            all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
-        ) => 0,
-        not(any(target_arch = "x86_64", target_arch = "aarch64")) => 0,
-        _ => 1,
+            not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
+        ) => 1,
+        _ => 0,
     };
     assert!(size_of::<DynCpu>() == expected_size);
 };
@@ -284,14 +284,22 @@ impl CpuPrivate for Avx2 {
 
 /// aarch64 Neon CPU feature set.
 ///
-/// On platforms other than aarch64, this type is uninhabited - `Neon` can never be created.
+/// This type is uninhabited - `Neon` can never be created - on:
+///
+/// - Platforms other than aarch64.
+/// - aarch64 with Neon disabled at compile time.
+///
 /// So [`DynCpu::Neon`] can never exist there, and the compiler removes code which handles it.
 ///
 /// The type still exists there, so [`DynCpu`] has the same variants on every platform.
+///
+/// Neon is always enabled on aarch64 except on `aarch64*-unknown-none-softfloat` platforms
+/// or when it's specifically disabled by compiling with `-C target-feature=-neon`.
+/// Either way, it can be detected at compile time. No runtime feature check.
 #[derive(Clone, Copy, Debug)]
 pub struct Neon(
     cfg_select! {
-        target_arch = "aarch64" => (),
+        all(target_arch = "aarch64", target_feature = "neon") => (),
         _ => Never,
     },
 );
@@ -300,7 +308,7 @@ impl Cpu for Neon {}
 
 impl CpuPrivate for Neon {
     const DYN_CPU: Option<DynCpu> = cfg_select! {
-        target_arch = "aarch64" => Some(DynCpu::Neon(Neon(()))),
+        all(target_arch = "aarch64", target_feature = "neon") => Some(DynCpu::Neon(Neon(()))),
         _ => None,
     };
 }
@@ -363,44 +371,23 @@ pub const BASELINE: Avx2 = Avx2(());
 
 /// Feature set to use without detecting the CPU's features.
 ///
-/// AVX2, BMI2 and POPCNT aren't all enabled at compile time,
-/// so only the generic feature set is known to be available.
-#[cfg(all(
-    target_arch = "x86_64",
-    not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
-))]
-pub const BASELINE: Generic = Generic(());
-
-/// Feature set to use without detecting the CPU's features.
-///
 /// Neon is enabled at compile time, which guarantees that it's available.
 #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
 pub const BASELINE: Neon = Neon(());
 
 /// Feature set to use without detecting the CPU's features.
 ///
-/// Neon is disabled at compile time, so only the generic feature set is known to be available.
-#[cfg(all(target_arch = "aarch64", not(target_feature = "neon")))]
-pub const BASELINE: Generic = Generic(());
-
-/// Feature set to use without detecting the CPU's features.
-///
-/// Only the generic feature set is available on platforms other than x86_64 and aarch64.
-#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+/// Only generic feature set is supported, or can be guaranteed to be supported.
+#[cfg(not(any(
+    all(
+        target_arch = "x86_64",
+        all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
+    ),
+    all(target_arch = "aarch64", target_feature = "neon")
+)))]
 pub const BASELINE: Generic = Generic(());
 
 impl DynCpu {
-    /// Detect CPU feature set.
-    #[cfg(all(
-        target_arch = "x86_64",
-        all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
-    ))]
-    #[inline]
-    pub fn detect() -> Self {
-        // AVX2, BMI2 and POPCNT are enabled at compile time
-        Avx2(()).to_dyn()
-    }
-
     /// Detect CPU feature set.
     ///
     /// The result is cached, so only the first call checks the CPU's features.
@@ -448,18 +435,17 @@ impl DynCpu {
     }
 
     /// Detect CPU feature set.
-    #[cfg(target_arch = "aarch64")]
+    #[cfg(not(all(
+        target_arch = "x86_64",
+        not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
+    )))]
+    #[expect(clippy::inline_always, reason = "folds to a constant")]
+    #[inline(always)]
     pub fn detect() -> Self {
-        // Neon is always enabled except on `aarch64*-unknown-none-softfloat` platforms
-        // or when it's specifically disabled by compiling with `-C target-feature=-neon`.
-        // Either way, it can be detected at compile time. No runtime feature check.
-        BASELINE.to_dyn()
-    }
-
-    /// Detect CPU feature set.
-    #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
-    pub fn detect() -> Self {
-        // Only generic feature set is available
+        // No runtime feature check is required on:
+        // - x86_64 with AVX2, BMI2, and POPCNT enabled at compile time
+        // - aarch64
+        // - any other platform
         BASELINE.to_dyn()
     }
 }

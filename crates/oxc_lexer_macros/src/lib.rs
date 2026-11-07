@@ -56,8 +56,9 @@ mod version;
 /// that feature set's type is uninhabited, so its entry point can never be called,
 /// and the compiler removes it. Its target features only apply on the platform which has them,
 /// so there are none there. `Generic` is uninhabited where a SIMD feature set is enabled
-/// at compile time (Neon on aarch64, or AVX2, BMI2 and POPCNT on x86_64),
-/// so the same applies to `__generic` there.
+/// at compile time (Neon on aarch64, or AVX2, BMI2 and POPCNT on x86_64), so the same applies
+/// to `__generic` there. `Neon` is uninhabited on aarch64 with Neon disabled at compile time,
+/// so the same applies to `__neon` there, except that it keeps Neon's target feature.
 ///
 /// Where the feature set's type is uninhabited, the entry point starts with `unreachable!()`,
 /// before it calls `__impl`.
@@ -188,8 +189,8 @@ mod version;
 ///     #[allow(unreachable_code)]
 ///     #[inline(never)]
 ///     unsafe fn __neon(src: &[u8], n: usize, cpu: Neon) -> usize {
-///         // `Neon` is uninhabited on other platforms. See above.
-///         #[cfg(not(target_arch = "aarch64"))]
+///         // `Neon` is uninhabited except on aarch64 with Neon enabled. See above.
+///         #[cfg(not(all(target_arch = "aarch64", target_feature = "neon")))]
 ///         unreachable!();
 ///         __impl(src, n, cpu)
 ///     }
