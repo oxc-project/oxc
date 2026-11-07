@@ -135,6 +135,10 @@ fn mangler() {
         "function _() { var x; try { throw 0 } catch (e) { e } }", // e can shadow x
         "function _() { var x; try { throw 0 } catch (e) { var e } }", // e can shadow x (not implemented)
         "function _() { var x; try { throw 0 } catch { var e } }",     // e should not shadow x
+        "function _() { var y; { let z; try { throw 0 } catch (y) { var y = 2; z } } }",
+        "function _() { var y; try { throw 0 } catch (y) { var y = 2; () => { let w; y } } }",
+        "function _() { try { throw 10 } catch (y) { try { throw 20 } catch (y) { var y = 3; use(y) } use(y) } use(y) }",
+        "function _() { try { throw 1 } catch (y) { var y = 2; use(y) } try { throw 3 } catch (y) { var y = 4; use(y) } use(y) }",
         "function _() { var x; var y; }", // x and y should have different names
         "function _() { var x; let y; }", // x and y should have different names
         "function _() { { var x; var y; } }", // x and y should have different names
@@ -187,6 +191,20 @@ fn mangler() {
     insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
         insta::assert_snapshot!("mangler", snapshot);
     });
+}
+
+#[test]
+fn catch_parameter_redeclared_by_var() {
+    test(
+        "(function (x) { function g(y) { try { throw 0; } catch (y) { var y = 2; console.log(y); } return x; } console.log(g(5)); })(1);",
+        "(function (e) { function t(t) { try { throw 0; } catch (t) { var t = 2; console.log(t); } return e; } console.log(t(5)); })(1);",
+        &MangleOptions::default(),
+    );
+    let source = "var y = 0; try { throw 0 } catch (y) { var y = 2; y }";
+    assert_eq!(
+        mangle_script(source, &MangleOptions::default()),
+        "var y = 0;\ntry {\n\tthrow 0;\n} catch (y) {\n\tvar y = 2;\n\ty;\n}\n",
+    );
 }
 
 #[test]

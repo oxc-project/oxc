@@ -93,6 +93,11 @@ impl Rule for NoRedeclare {
         };
 
         for symbol_id in ctx.scoping().symbol_ids() {
+            // A catch-local `var` assigns to the catch parameter but declares a
+            // separate enclosing binding. Check that binding's redeclarations only.
+            if ctx.scoping().catch_var_binding(symbol_id).is_some() {
+                continue;
+            }
             let name = ctx.scoping().symbol_name(symbol_id);
             let decl_span = ctx.scoping().symbol_span(symbol_id);
             let is_builtin = builtin_globals.is_some_and(|builtin_globals| {
@@ -162,6 +167,33 @@ impl Rule for NoRedeclare {
             }
         }
     }
+}
+
+#[test]
+fn test_catch_var_bindings() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "function f() { try {} catch (e) { var e = 2; } }",
+        "function f() { try {} catch (e) { var [e] = [2]; } }",
+        "function f() { try {} catch (e) { for (var e of []) {} } }",
+        "function f() { try {} catch (e) { for (var e in {}) {} } }",
+        "function f() { try {} catch (e) { try {} catch (e) { var e; } } }",
+        "function f() { try {} catch (e) { function g() { var e; } } }",
+    ];
+    let fail = vec![
+        "function f(e) { try {} catch (e) { var e = 2; } }",
+        "function f() { var e = 1; try {} catch (e) { var e = 2; } }",
+        "function f() { try {} catch (e) { var e; var e; } }",
+        "function f() { try {} catch (e) { var e; } var e; }",
+        "function f() { try {} catch (e) { var e; } try {} catch (e) { var e; } }",
+    ];
+
+    // The catch skip runs before the TypeScript-specific checks, so one JS run covers it.
+    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, fail)
+        .change_rule_path_extension("cjs")
+        .with_snapshot_suffix("catch-var-bindings")
+        .test_and_snapshot();
 }
 
 #[test]

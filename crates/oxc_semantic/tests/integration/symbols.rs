@@ -3,6 +3,16 @@ use oxc_span::SourceType;
 
 use crate::util::SemanticTester;
 
+#[test]
+fn test_catch_var_bindings_survive_clone() {
+    let tester = SemanticTester::js("try {} catch (e) { var e; }");
+    let semantic = tester.build();
+    let pairs = semantic.scoping().catch_var_bindings().collect::<Vec<_>>();
+    assert_eq!(pairs.len(), 1);
+    let cloned = semantic.scoping().clone_in_with_semantic_ids_with_another_arena();
+    assert_eq!(cloned.catch_var_bindings().collect::<Vec<_>>(), pairs);
+}
+
 fn assert_root_and_single_local_reference_counts(
     tester: &SemanticTester<'_>,
     expected: &[(&str, usize, usize)],

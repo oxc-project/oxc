@@ -736,6 +736,18 @@ fn treeshake_options_annotations_false() {
 }
 
 #[test]
+fn remove_unused_assignment_keeps_eval_visible_catch_writes() {
+    test_smallest(
+        "function f() { try { throw 1 } catch (y) { { var y; y = 2; } console.log(eval('y')); } return y; } console.log(f());",
+        "function f() { try { throw 1 } catch (y) { var y = 2; console.log(eval('y')); } return y; } console.log(f());",
+    );
+    test_smallest(
+        "function f() { try { throw 1 } catch (y) { var y; function set() { y = 2; } set(); console.log(eval('y')); } return y; } console.log(f());",
+        "function f() { try { throw 1 } catch (y) { var y; function set() { y = 2; } set(), console.log(eval('y')); } return y; } console.log(f());",
+    );
+}
+
+#[test]
 fn remove_unused_assignment_expression() {
     use oxc_span::SourceType;
     let options = CompressOptions::smallest();

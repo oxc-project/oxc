@@ -80,7 +80,16 @@ impl ConformanceTest for SymbolDeclarationTest {
         let span = semantic.scoping().symbol_span(symbol_id);
 
         match declaration.kind() {
-            AstKind::VariableDeclarator(decl) => check_binding_pattern(symbol_id, &decl.id),
+            AstKind::VariableDeclarator(decl) => {
+                // A catch-local `var` also declares a separate binding in the enclosing var scope.
+                if decl.id.get_binding_identifier().is_some_and(|id| {
+                    semantic.scoping().catch_var_binding(id.symbol_id()) == Some(symbol_id)
+                }) {
+                    TestResult::Pass
+                } else {
+                    check_binding_pattern(symbol_id, &decl.id)
+                }
+            }
             AstKind::CatchParameter(caught) => check_binding_pattern(symbol_id, &caught.pattern),
             AstKind::Function(func) => match func.id.as_ref() {
                 Some(id) => check_binding(symbol_id, id),

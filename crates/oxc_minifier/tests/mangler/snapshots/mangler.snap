@@ -165,6 +165,67 @@ function _() {
 	}
 }
 
+function _() { var y; { let z; try { throw 0 } catch (y) { var y = 2; z } } }
+function _() {
+	var e;
+	{
+		let t;
+		try {
+			throw 0;
+		} catch (e) {
+			var e = 2;
+			t;
+		}
+	}
+}
+
+function _() { var y; try { throw 0 } catch (y) { var y = 2; () => { let w; y } } }
+function _() {
+	var e;
+	try {
+		throw 0;
+	} catch (e) {
+		var e = 2;
+		() => {
+			let t;
+			e;
+		};
+	}
+}
+
+function _() { try { throw 10 } catch (y) { try { throw 20 } catch (y) { var y = 3; use(y) } use(y) } use(y) }
+function _() {
+	try {
+		throw 10;
+	} catch (t) {
+		try {
+			throw 20;
+		} catch (e) {
+			var e = 3;
+			use(e);
+		}
+		use(t);
+	}
+	use(e);
+}
+
+function _() { try { throw 1 } catch (y) { var y = 2; use(y) } try { throw 3 } catch (y) { var y = 4; use(y) } use(y) }
+function _() {
+	try {
+		throw 1;
+	} catch (e) {
+		var e = 2;
+		use(e);
+	}
+	try {
+		throw 3;
+	} catch (e) {
+		var e = 4;
+		use(e);
+	}
+	use(e);
+}
+
 function _() { var x; var y; }
 function _() {
 	var e;
