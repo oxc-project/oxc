@@ -1552,6 +1552,7 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f() { let fin = 0; outer: while (condition()) { try { try { break outer; } finally { fin = 1; } } finally { use(fin); } } return fin; }",
         "function f() { let fin = 0; outer: while (condition()) { try { while (condition()) { continue outer; } } finally { fin = 1; } } return fin; }",
         "function f() { let fin = 0; while (condition()) { try { break; } finally { if (condition()) fin = 1; } } return fin; }",
+        "function f() { let fin = 0; outer: inner: while (condition()) { try { continue outer; } finally { fin = 1; } } return fin; }",
     ];
 
     let fail = vec![

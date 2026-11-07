@@ -3595,8 +3595,11 @@ impl RuleRunner for crate::rules::unicorn::no_useless_switch_case::NoUselessSwit
 }
 
 impl RuleRunner for crate::rules::unicorn::no_useless_undefined::NoUselessUndefined {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::IdentifierReference]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ConditionalExpression,
+        AstType::IdentifierReference,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

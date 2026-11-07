@@ -165,7 +165,7 @@ impl<'a> MayHaveSideEffects<'a> for BinaryExpression<'a> {
                         && ctx.is_global_reference(right_ident)
                         && !self.left.value_type(ctx).is_undetermined()
                     {
-                        return false;
+                        return self.left.may_have_side_effects(ctx);
                     }
                 }
                 // instanceof can throw `TypeError`

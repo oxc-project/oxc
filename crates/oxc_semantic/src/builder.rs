@@ -1204,15 +1204,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             cfg.add_edge(before_do_while_stmt_graph_ix, start_body_graph_ix, EdgeType::Normal);
             // body of do-while to start of condition
             cfg.add_edge(after_body_graph_ix, start_of_condition_graph_ix, EdgeType::Normal);
-            // end of condition to after do while
-            cfg.add_edge(end_of_condition_graph_ix, end_do_while_graph_ix, EdgeType::Normal);
-            // end of condition to after start of body
-            cfg.add_edge(end_of_condition_graph_ix, start_body_graph_ix, EdgeType::Backedge);
-
             cfg.ctx(None)
                 .mark_break(end_do_while_graph_ix)
                 .mark_continue(start_of_condition_graph_ix)
                 .resolve_with_upper_label();
+            // end of condition to after do while
+            cfg.add_edge(end_of_condition_graph_ix, end_do_while_graph_ix, EdgeType::Normal);
+            // end of condition to after start of body
+            cfg.add_edge(end_of_condition_graph_ix, start_body_graph_ix, EdgeType::Backedge);
         });
         /* cfg */
 
