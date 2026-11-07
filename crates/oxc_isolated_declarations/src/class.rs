@@ -39,7 +39,7 @@ impl<'a> IsolatedDeclarations<'a> {
     /// string literal, numeric literal, or no-substitution template literal with the
     /// same static name identifies the same property. Keep structural equality as a
     /// fallback for supported non-static keys such as `Symbol.iterator`.
-    fn accessor_keys_match(left: &PropertyKey<'a>, right: &PropertyKey<'a>) -> bool {
+    pub(crate) fn accessor_keys_match(left: &PropertyKey<'a>, right: &PropertyKey<'a>) -> bool {
         left.static_name().zip(right.static_name()).is_some_and(|(left, right)| left == right)
             || left.content_eq(right)
     }

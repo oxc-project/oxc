@@ -1,0 +1,63 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/object-accessor-readonly.ts
+---
+```
+==================== .D.TS ====================
+
+export declare const getter: {
+	readonly value: number;
+};
+export declare const setter: {
+	value: number;
+};
+export declare const pair: {
+	value: number;
+};
+export declare const reverse: {
+	value: number;
+};
+export declare const computed: {
+	value: number;
+};
+export declare const distinct: {
+	readonly value: number;
+	other: number;
+};
+export declare const getterConst: {
+	readonly value: number;
+};
+export declare const setterConst: {
+	value: number;
+};
+export declare const pairConst: {
+	value: number;
+};
+export declare const reverseConst: {
+	value: number;
+};
+export declare const computedConst: {
+	value: number;
+};
+export declare const distinctConst: {
+	readonly value: number;
+	other: number;
+};
+export declare const mixed: {
+	value: number;
+};
+export declare const mixedReverse: {
+	value: number;
+};
+export declare const numeric: {
+	1: number;
+};
+export declare const mixedConst: {
+	value: number;
+};
+export declare const mixedReverseConst: {
+	value: number;
+};
+export declare const numericConst: {
+	1: number;
+};
