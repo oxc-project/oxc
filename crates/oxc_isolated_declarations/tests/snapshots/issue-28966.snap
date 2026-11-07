@@ -12,6 +12,7 @@ export declare class Store {
 	accessor callback: (value: string) => void;
 	private accessor hidden;
 	accessor unknown;
+	accessor missing;
 }
 
 
@@ -23,7 +24,16 @@ export declare class Store {
  6 |   private accessor hidden = 0;
  7 |   accessor unknown = getValue();
    :            ^^^^^^^
- 8 | }
+ 8 |   accessor missing;
+   `----
+
+  x TS9012: Property must have an explicit type annotation with
+  | --isolatedDeclarations.
+   ,-[8:12]
+ 7 |   accessor unknown = getValue();
+ 8 |   accessor missing;
+   :            ^^^^^^^
+ 9 | }
    `----
 
 

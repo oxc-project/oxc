@@ -5,4 +5,5 @@ export class Store {
   accessor callback = (value: string): void => {};
   private accessor hidden = 0;
   accessor unknown = getValue();
+  accessor missing;
 }
