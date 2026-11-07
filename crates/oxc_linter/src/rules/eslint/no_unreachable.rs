@@ -302,6 +302,9 @@ fn test() {
             return 'Hello, tsdown!';
         }
         ",
+        "function f() { for (;;) { B: { break; } } return 'ok'; }",
+        "function f() { for (;;) { B: { break B; } return 'ok'; } }",
+        "function f() { for (;;) { B: C: { continue; } } }",
     ];
 
     let fail = vec![
@@ -375,6 +378,8 @@ fn test() {
         }
         ",
         "function foo() { while (true) { return ''; } return ''; }",
+        "function f() { for (;;) { B: { break; } throw 1; } return \"ok\"; }",
+        "function f(x) { switch (x) { default: B: { break; } throw 1; } return \"ok\"; }",
     ];
 
     Tester::new(NoUnreachable::NAME, NoUnreachable::PLUGIN, pass, fail).test_and_snapshot();

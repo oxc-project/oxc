@@ -247,7 +247,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
                 .rev()
                 // anything up the function is unreachable
                 .take_while(|it| !it.flags.intersects(CtxFlags::FUNCTION))
-                .find(|it| it.flags.contains(flag))
+                .find(|it| it.label.is_none() && it.flags.contains(flag))
         };
 
         if let Some(ctx) = ctx {

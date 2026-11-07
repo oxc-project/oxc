@@ -36,3 +36,20 @@ fn labeled_statement_with_multiple_loops_continue_and_break() {
 
     cfg.build();
 }
+
+#[test]
+fn unlabeled_break_skips_labeled_context() {
+    let mut cfg = ControlFlowGraphBuilder::default();
+    cfg.attach_error_harness(oxc_cfg::ErrorEdgeKind::Implicit);
+    cfg.ctx(None).default().allow_break();
+    cfg.ctx(Some("B")).default().allow_break();
+    let before_break = cfg.new_basic_block_normal();
+    cfg.append_break(NodeId::DUMMY, None);
+    let after_label = cfg.new_basic_block_normal();
+    cfg.ctx(Some("B")).mark_break(after_label).resolve();
+    let after_loop = cfg.new_basic_block_normal();
+    cfg.ctx(None).mark_break(after_loop).resolve();
+    let cfg = cfg.build();
+    assert!(cfg.is_reachable(before_break, after_loop));
+    assert!(!cfg.is_reachable(before_break, after_label));
+}
