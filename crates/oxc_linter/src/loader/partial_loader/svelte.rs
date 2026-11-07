@@ -90,11 +90,19 @@ impl<'a> SveltePartialLoader<'a> {
                 return Some(pointer + SCRIPT_START.len());
             } else if rest.as_bytes().get(1).is_some_and(|b| b.is_ascii_alphabetic() || *b == b'/')
             {
-                let Some(end) = find_script_closing_angle(self.source_text, pointer + 1) else {
+                let tag_end = if rest.strip_prefix("<style").is_some_and(|rest| {
+                    rest.starts_with('>') || rest.starts_with(char::is_whitespace)
+                }) {
+                    find_script_closing_angle(self.source_text, pointer + 1)
+                        .map(|offset| pointer + offset + 2)
+                } else {
+                    find_markup_tag_end(self.source_text, pointer + 1)
+                };
+                let Some(end) = tag_end else {
                     pointer += 1;
                     continue;
                 };
-                pointer += end + 2;
+                pointer = end;
                 if self.source_text[..pointer - 1].trim_end().ends_with('/') {
                     continue;
                 }
@@ -127,6 +135,27 @@ impl<'a> SveltePartialLoader<'a> {
     }
 }
 
+fn find_markup_tag_end(source_text: &str, mut pointer: usize) -> Option<usize> {
+    let bytes = source_text.as_bytes();
+    let mut quote = None;
+    while let Some(&byte) = bytes.get(pointer) {
+        if byte == b'{'
+            && let Some(end) = skip_attribute_expression(source_text, pointer)
+        {
+            pointer = end;
+            continue;
+        }
+        match byte {
+            b'\'' | b'"' if quote == Some(byte) => quote = None,
+            b'\'' | b'"' if quote.is_none() => quote = Some(byte),
+            b'>' if quote.is_none() => return Some(pointer + 1),
+            _ => {}
+        }
+        pointer += 1;
+    }
+    None
+}
+
 fn skip_raw_text(source_text: &str, mut pointer: usize, closing: &str) -> Option<usize> {
     let finder = Finder::new(closing);
     loop {
@@ -141,6 +170,15 @@ fn skip_raw_text(source_text: &str, mut pointer: usize, closing: &str) -> Option
 
 fn skip_markup_expression(source_text: &str, pointer: usize) -> Option<usize> {
     let mut expression = source_text[pointer + 1..].trim_start();
+    if let Some(closing_block) = expression.strip_prefix('/')
+        && let Some(name_end) = closing_block.find(|c: char| !c.is_ascii_alphabetic())
+        && name_end > 0
+    {
+        let rest = closing_block[name_end..].trim_start();
+        if rest.starts_with('}') {
+            return Some(source_text.len() - rest.len() + 1);
+        }
+    }
     if expression.starts_with(['@', '#', ':']) {
         expression =
             expression[1..].trim_start_matches(|c: char| c.is_ascii_alphabetic()).trim_start();
@@ -148,11 +186,21 @@ fn skip_markup_expression(source_text: &str, pointer: usize) -> Option<usize> {
             return Some(source_text.len() - expression.len() + 1);
         }
     }
-    let start = source_text.len() - expression.len();
+    skip_expression(source_text, source_text.len() - expression.len())
+}
+
+fn skip_attribute_expression(source_text: &str, pointer: usize) -> Option<usize> {
+    let expression = source_text[pointer + 1..].trim_start();
+    let expression = expression.strip_prefix("...").unwrap_or(expression).trim_start();
+    skip_expression(source_text, source_text.len() - expression.len())
+}
+
+fn skip_expression(source_text: &str, pointer: usize) -> Option<usize> {
     let allocator = Allocator::default();
-    let (_, next_token) =
-        Parser::new(&allocator, expression, SourceType::ts()).parse_expression_prefix().ok()?;
-    let end = start + next_token as usize;
+    let (_, next_token) = Parser::new(&allocator, &source_text[pointer..], SourceType::ts())
+        .parse_expression_prefix()
+        .ok()?;
+    let end = pointer + next_token as usize;
     (source_text.as_bytes().get(end) == Some(&b'}')).then_some(end + 1)
 }
 
@@ -465,5 +513,55 @@ let {json}: {json: string} = $props();
     fn test_html_expression_without_component_scripts() {
         let source_text = r"{@html `<script>${json}</script>`}";
         assert!(SveltePartialLoader::new(source_text).parse().is_empty());
+    }
+    #[test]
+    fn test_script_after_attribute_with_braces_in_string() {
+        for attributes in [
+            r#"title={"}"}"#,
+            r#"title={"{"}"#,
+            r#"title={`${"}"}`}"#,
+            r#"title="before {"}"} after""#,
+            r#"{...{title: "}"}}"#,
+            r#"{...(count > 0 ? {title: "}"} : {})}"#,
+        ] {
+            let source_text =
+                format!(r#"<div {attributes}></div><script>const text = `">`; debugger;</script>"#);
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{attributes}");
+            assert_eq!(sources[0].source_text, r#"const text = `">`; debugger;"#);
+        }
+    }
+
+    #[test]
+    fn test_script_after_closing_block() {
+        let source_text = r"{#if true}<p>hello</p>{/if}<script>const re = /}/; debugger;</script>";
+        let sources = SveltePartialLoader::new(source_text).parse();
+        assert_eq!(sources.len(), 1);
+        assert_eq!(sources[0].source_text, "const re = /}/; debugger;");
+    }
+    #[test]
+    fn test_script_with_literal_braces_in_component_attributes() {
+        for source_text in [
+            r#"<script data-x="{">const s="}"; debugger;</script>"#,
+            r#"<script data-x="{'">const x = '}'; debugger;</script>"#,
+            r#"<style data-x="{">.x { color: red; }</style><script>debugger;</script>"#,
+        ] {
+            let sources = SveltePartialLoader::new(source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert!(sources[0].source_text.contains("debugger;"));
+        }
+    }
+
+    #[test]
+    fn test_regex_in_attribute_is_not_a_closing_block() {
+        for attributes in [
+            r#"title={/if}>/.test(value)} data-x="<script>ignored</script>""#,
+            r#"title={/if}"/.test('<script>ignored</script>')}"#,
+        ] {
+            let source_text = format!("<div {attributes}></div><script>debugger;</script>");
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{attributes}");
+            assert_eq!(sources[0].source_text, "debugger;");
+        }
     }
 }
