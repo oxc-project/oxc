@@ -32,12 +32,7 @@ jobs:
   determine-matrix:
     name: Determine Benchmark
     runs-on: ubuntu-latest
-    if: >
-      github.repository == 'oxc-project/oxc' &&
-      (
-        github.event_name != 'pull_request' ||
-        !contains(github.event.pull_request.labels.*.name, '0-merge')
-      )
+    if: false # This experiment runs only the focused parser benchmarks below.
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -102,3 +97,33 @@ jobs:
         with:
           mode: ${{ matrix.mode }}
           run: cargo codspeed run ${{ matrix.component }}
+
+  string-scanning:
+    name: String scanning (${{ matrix.mode }})
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [simulation, walltime]
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12
+        with:
+          cache-key: benchmark-compiler
+          tools: cargo-codspeed@4.7.0
+      - name: Build parser benchmark
+        run: >-
+          cargo codspeed build -m ${{ matrix.mode }} -p oxc_benchmark
+          --bench parser --no-default-features --features compiler,codspeed --locked
+      - name: Measure parser benchmark
+        uses: CodSpeedHQ/action@c4fd08a3a159bd0cc208da1e0edf32b8c47d75e5
+        with:
+          mode: ${{ matrix.mode }}
+          run: |
+            if [ "${{ matrix.mode }}" = "walltime" ]; then
+              cargo codspeed run -p oxc_benchmark --bench parser 'parser(\[|/|_string_scanning)' -- --warm-up-time 1 --measurement-time 2 --sample-size 30
+            else
+              cargo codspeed run -p oxc_benchmark --bench parser 'parser(\[|/|_string_scanning)'
+            fi

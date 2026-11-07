@@ -3,6 +3,7 @@ use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_benchmark::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use oxc_estree_tokens::{ESTreeTokenOptionsJS, to_estree_tokens_json};
 use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
+use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
 
 fn bench_parser(criterion: &mut Criterion) {
@@ -122,5 +123,33 @@ fn bench_estree_tokens(criterion: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(parser, bench_parser, bench_estree, bench_estree_tokens);
+fn bench_string_scanning(criterion: &mut Criterion) {
+    let mut group = criterion.benchmark_group("parser_string_scanning");
+    for (name, literal) in [
+        ("short_strings", format!("\"{}\"", "a".repeat(8))),
+        ("medium_strings", format!("\"{}\"", "a".repeat(64))),
+        ("long_strings", format!("\"{}\"", "a".repeat(4096))),
+        ("unicode_strings", format!("\"{}中😀\"", "a".repeat(256))),
+        ("escaped_strings", format!("\"{}\\n{}\"", "a".repeat(128), "b".repeat(128))),
+        ("short_templates", format!("`{}`", "a".repeat(8))),
+        ("long_templates", format!("`{}`", "a".repeat(4096))),
+        ("template_substitutions", format!("`{}${{value}}{}`", "a".repeat(128), "b".repeat(128))),
+    ] {
+        let source = format!("[{}];", format!("{literal},").repeat(262_144 / (literal.len() + 1)));
+        let source_type = SourceType::mjs();
+        let mut allocator = Allocator::default();
+        let ret = Parser::new(&allocator, &source, source_type).parse();
+        assert!(ret.diagnostics.is_empty());
+        allocator.reset();
+        group.bench_function(name, |b| {
+            b.iter(|| {
+                Parser::new(&allocator, &source, source_type).parse();
+                allocator.reset();
+            });
+        });
+    }
+    group.finish();
+}
+
+criterion_group!(parser, bench_parser, bench_estree, bench_estree_tokens, bench_string_scanning);
 criterion_main!(parser);
