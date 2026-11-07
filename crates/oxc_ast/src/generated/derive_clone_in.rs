@@ -962,6 +962,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentExpression<'_> {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             operator: CloneIn::clone_in_impl(&self.operator, with_semantic_ids, allocator),
+            left_parenthesized: CloneIn::clone_in_impl(
+                &self.left_parenthesized,
+                with_semantic_ids,
+                allocator,
+            ),
             left: CloneIn::clone_in_impl(&self.left, with_semantic_ids, allocator),
             right: CloneIn::clone_in_impl(&self.right, with_semantic_ids, allocator),
         }
@@ -1149,6 +1154,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTargetWithDefault<'_> {
         AssignmentTargetWithDefault {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            binding_parenthesized: CloneIn::clone_in_impl(
+                &self.binding_parenthesized,
+                with_semantic_ids,
+                allocator,
+            ),
             binding: CloneIn::clone_in_impl(&self.binding, with_semantic_ids, allocator),
             init: CloneIn::clone_in_impl(&self.init, with_semantic_ids, allocator),
         }

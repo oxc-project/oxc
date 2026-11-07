@@ -484,6 +484,7 @@ impl ContentEq for ConditionalExpression<'_> {
 impl ContentEq for AssignmentExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.operator, &other.operator)
+            && ContentEq::content_eq(&self.left_parenthesized, &other.left_parenthesized)
             && ContentEq::content_eq(&self.left, &other.left)
             && ContentEq::content_eq(&self.right, &other.right)
     }
@@ -588,7 +589,8 @@ impl ContentEq for AssignmentTargetMaybeDefault<'_> {
 
 impl ContentEq for AssignmentTargetWithDefault<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.binding, &other.binding)
+        ContentEq::content_eq(&self.binding_parenthesized, &other.binding_parenthesized)
+            && ContentEq::content_eq(&self.binding, &other.binding)
             && ContentEq::content_eq(&self.init, &other.init)
     }
 }

@@ -171,7 +171,13 @@ impl<'a, C: Config> CoverGrammar<'a, AssignmentExpression<'a>, C>
     for AssignmentTargetWithDefault<'a>
 {
     fn cover(expr: AssignmentExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        AssignmentTargetWithDefault::new(expr.span, expr.left, expr.right, p)
+        AssignmentTargetWithDefault::new_with_binding_parenthesized(
+            expr.span,
+            expr.left_parenthesized,
+            expr.left,
+            expr.right,
+            p,
+        )
     }
 }
 

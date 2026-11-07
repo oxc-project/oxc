@@ -453,11 +453,14 @@ impl<'a> ClassStaticBlock<'a> {
                     Some(param.pattern().get_identifier_name().map(Str::from))
                 }
                 Ancestor::AssignmentExpressionRight(assign)
-                    if assign.operator().is_assign() || assign.operator().is_logical() =>
+                    if !*assign.left_parenthesized()
+                        && (assign.operator().is_assign() || assign.operator().is_logical()) =>
                 {
                     Some(Self::assignment_name(assign.left()))
                 }
-                Ancestor::AssignmentTargetWithDefaultInit(target) => {
+                Ancestor::AssignmentTargetWithDefaultInit(target)
+                    if !*target.binding_parenthesized() =>
+                {
                     Some(Self::assignment_name(target.binding()))
                 }
                 Ancestor::AssignmentTargetPropertyIdentifierInit(target) => {

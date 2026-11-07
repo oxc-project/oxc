@@ -1890,10 +1890,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::assignment_is_not_simple(lhs.span()));
         }
         let left = AssignmentTarget::cover(lhs, self);
+        let left_parenthesized = left_parenthesized_span.is_some()
+            && matches!(left, AssignmentTarget::AssignmentTargetIdentifier(_));
         self.bump_any();
         let right =
             self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
-        Expression::new_assignment_expression(self.end_span(start), operator, left, right, self)
+        Expression::new_assignment_expression_with_left_parenthesized(
+            self.end_span(start),
+            operator,
+            left_parenthesized,
+            left,
+            right,
+            self,
+        )
     }
 
     /// Section 13.16 Sequence Expression
