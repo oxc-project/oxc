@@ -17,11 +17,35 @@ impl<C: Config> Lexer<'_, C> {
         // Consume it, along with any further line breaks.
         // Irregular line breaks and whitespace are not consumed.
         // They're uncommon, so leave them for the next call to `handle_byte` to take care of.
-        byte_search! {
+        let byte = byte_search! {
             lexer: self,
             table: NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE,
             handle_eof: 0, // Fall through to below
         };
+
+        // Produce common tokens here to avoid another `read_next_token` loop iteration.
+        // Leave quotes to the caller so JSX attribute values use their own string reader.
+        if byte.is_ascii_alphabetic()
+            || matches!(
+                byte,
+                b'_' | b'$'
+                    | b'('
+                    | b')'
+                    | b';'
+                    | b'{'
+                    | b'}'
+                    | b'['
+                    | b']'
+                    | b','
+                    | b':'
+                    | b'@'
+                    | b'~'
+            )
+        {
+            self.token.set_start(self.offset());
+            // SAFETY: The search stopped on this ASCII byte at the current source position.
+            return unsafe { self.handle_byte(byte) };
+        }
 
         Kind::Skip
     }
