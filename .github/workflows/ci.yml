@@ -399,10 +399,11 @@ jobs:
       # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
         if: steps.filter.outputs.changed == 'true'
-      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
+      - uses: oxc-project/setup-rust@3c7db05c625356ba94ad7df0a60ec5060939081c # feat/workspaces-input
         if: steps.filter.outputs.changed == 'true'
         with:
-          cache-key: napi
+          workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+          cache-key: napi-compiler-windows
           save-cache: ${{ github.ref_name == 'main' }}
       - uses: $/.github/actions/clone-submodules
         if: steps.filter.outputs.changed == 'true'
@@ -482,10 +483,11 @@ jobs:
       - parallel:
           - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
             if: steps.filter.outputs.changed == 'true'
-          - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
+          - uses: oxc-project/setup-rust@3c7db05c625356ba94ad7df0a60ec5060939081c # feat/workspaces-input
             if: steps.filter.outputs.changed == 'true'
             with:
-              cache-key: napi
+              workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+              cache-key: napi-oxlint-windows
               save-cache: ${{ github.ref_name == 'main' }}
       - name: Install dependencies on Dev Drive
         if: steps.filter.outputs.changed == 'true'
@@ -528,10 +530,11 @@ jobs:
       - parallel:
           - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
             if: steps.filter.outputs.changed == 'true'
-          - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
+          - uses: oxc-project/setup-rust@3c7db05c625356ba94ad7df0a60ec5060939081c # feat/workspaces-input
             if: steps.filter.outputs.changed == 'true'
             with:
-              cache-key: napi
+              workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+              cache-key: napi-formatter-windows
               save-cache: ${{ github.ref_name == 'main' }}
       - name: Install dependencies on Dev Drive
         if: steps.filter.outputs.changed == 'true'
