@@ -217,13 +217,24 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     };
 
+                    let readonly = match object.kind {
+                        PropertyKind::Init => is_const,
+                        PropertyKind::Get | PropertyKind::Set => !expr
+                            .properties
+                            .iter()
+                            .filter_map(ObjectPropertyKind::as_property)
+                            .any(|property| {
+                                property.kind == PropertyKind::Set && property.key.content_eq(key)
+                            }),
+                    };
+
                     let key = self.transform_property_key(key);
                     let property_signature = TSSignature::new_ts_property_signature(
                         object.span,
                         key.as_expression()
                             .is_some_and(|k| !k.is_string_literal() && !k.is_number_literal()),
                         false,
-                        is_const,
+                        readonly,
                         key,
                         type_annotation,
                         self,

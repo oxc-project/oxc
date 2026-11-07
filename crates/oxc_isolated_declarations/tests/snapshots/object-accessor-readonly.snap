@@ -1,0 +1,22 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/object-accessor-readonly.ts
+---
+```
+==================== .D.TS ====================
+
+export declare const getter: {
+	readonly value: number;
+};
+export declare const setter: {
+	value: number;
+};
+export declare const pair: {
+	value: number;
+};
+export declare const constGetter: {
+	readonly value: number;
+};
+export declare const constPair: {
+	value: number;
+};
