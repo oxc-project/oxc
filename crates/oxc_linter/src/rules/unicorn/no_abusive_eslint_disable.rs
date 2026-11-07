@@ -116,12 +116,13 @@ impl Rule for NoAbusiveEslintDisable {
     }
 }
 
+/// Rule names may have any number of `/`-separated segments
+/// (e.g. `n/no-unsupported-features/node-builtins`). A scoped name
+/// (`@scope/...`) must name at least one segment after the scope.
 fn is_valid_rule_name(rule_name: &str) -> bool {
-    let segment_count = rule_name.split('/').count();
-    if rule_name.starts_with('@') {
-        segment_count == 2 || segment_count == 3
-    } else {
-        segment_count <= 2
+    match rule_name.strip_prefix('@') {
+        Some(scoped) => scoped.contains('/'),
+        None => true,
     }
 }
 
@@ -146,6 +147,10 @@ fn test() {
         "eval(); // eslint-disable-line no-eval, @scope/plugin/rule-name",
         "eval(); // eslint-disable-line @scope/rule-name",
         "eval(); // eslint-disable-line no-eval, @scope/rule-name",
+        "eval(); // eslint-disable-line n/no-unsupported-features/node-builtins",
+        "eval(); // oxlint-disable-line node/no-unsupported-features/node-builtins",
+        "eval(); // eslint-disable-line @scope/plugin/category/rule-name",
+        "/* eslint-disable n/no-unsupported-features/es-builtins */",
         "eval(); // eslint-line-disable",
         "eval(); // some comment",
         "/* eslint-disable no-eval */",
