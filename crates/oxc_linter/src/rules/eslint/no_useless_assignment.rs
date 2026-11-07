@@ -395,7 +395,7 @@ impl Rule for NoUselessAssignment {
                             EdgeType::Normal | EdgeType::NewFunction | EdgeType::Join => {
                                 scratch_live.union(&cfg_traverse_state[succ_id]);
                             }
-                            EdgeType::Jump => {
+                            EdgeType::Jump | EdgeType::Liveness => {
                                 scratch_live.union(&cfg_traverse_state[succ_id]);
 
                                 // `continue` edges are modeled as `Jump`s to the loop header, so
@@ -844,6 +844,7 @@ impl NoUselessAssignment {
             match edge.weight() {
                 EdgeType::Normal
                 | EdgeType::Jump
+                | EdgeType::Liveness
                 | EdgeType::NewFunction
                 | EdgeType::Backedge
                 | EdgeType::Error(_) => {

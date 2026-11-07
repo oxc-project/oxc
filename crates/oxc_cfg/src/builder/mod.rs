@@ -92,10 +92,18 @@ impl<'a> ControlFlowGraphBuilder<'a> {
     }
 
     pub fn add_edge(&mut self, a: BlockNodeId, b: BlockNodeId, weight: EdgeType) {
+        if matches!(weight, EdgeType::Liveness) {
+            self.graph.add_edge(a, b, weight);
+            return;
+        }
         if matches!(weight, EdgeType::NewFunction) {
             self.basic_block_mut(b).mark_as_reachable();
         } else if matches!(weight, EdgeType::Unreachable) || self.basic_block(a).is_unreachable() {
-            if self.graph.edges_directed(b, Direction::Incoming).count() == 0 {
+            if !self
+                .graph
+                .edges_directed(b, Direction::Incoming)
+                .any(|edge| !matches!(edge.weight(), EdgeType::Liveness))
+            {
                 self.basic_block_mut(b).mark_as_unreachable();
             }
         } else if !self
@@ -191,7 +199,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
             source = *end;
         }
         if source != jump_source {
-            self.add_edge(source, target, EdgeType::Jump);
+            self.add_edge(source, target, EdgeType::Liveness);
         }
     }
 

@@ -131,6 +131,7 @@ fn contains_return_statement(node: &AstNode, ctx: &LintContext) -> bool {
             EdgeType::Jump | EdgeType::Normal => None,
             // For these two type, we flag it as not found.
             EdgeType::Unreachable
+            | EdgeType::Liveness
             | EdgeType::Error(_)
             | EdgeType::Finalize
             | EdgeType::Join

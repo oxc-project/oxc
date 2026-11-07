@@ -174,6 +174,7 @@ impl NoThisBeforeSuper {
                 EdgeType::Jump | EdgeType::Normal => None,
                 EdgeType::Join if follow_join => None,
                 EdgeType::Unreachable
+                | EdgeType::Liveness
                 | EdgeType::Join
                 | EdgeType::Error(_)
                 | EdgeType::Finalize
@@ -205,11 +206,12 @@ impl NoThisBeforeSuper {
                     }
                 // If we haven't visited a super call and we have a non-error/finalize path
                 // forward, continue visiting this branch.
-                } else if cfg
-                    .graph
-                    .edges(*basic_block_id)
-                    .any(|it| !matches!(it.weight(), EdgeType::Error(_) | EdgeType::Finalize))
-                {
+                } else if cfg.graph.edges(*basic_block_id).any(|it| {
+                    !matches!(
+                        it.weight(),
+                        EdgeType::Error(_) | EdgeType::Finalize | EdgeType::Liveness
+                    )
+                }) {
                     (DefinitelyCallsThisBeforeSuper::No, true)
                 // Otherwise we mark it as a `Maybe` so we can analyze error/finalize paths separately.
                 } else {

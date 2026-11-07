@@ -670,7 +670,8 @@ fn has_conditional_path_accept_throw(
             match edge.weight() {
                 EdgeType::NewFunction
                 | EdgeType::Error(ErrorEdgeKind::Implicit)
-                | EdgeType::Unreachable => {}
+                | EdgeType::Unreachable
+                | EdgeType::Liveness => {}
                 EdgeType::Error(ErrorEdgeKind::Explicit)
                 | EdgeType::Join
                 | EdgeType::Finalize

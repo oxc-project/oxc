@@ -369,7 +369,13 @@ impl ConstructorSuper {
         neighbors_filtered_by_edge_weight(
             &cfg.graph,
             constructor_block,
-            &|edge| if matches!(edge, EdgeType::NewFunction) { Some(()) } else { None },
+            &|edge| {
+                if matches!(edge, EdgeType::NewFunction | EdgeType::Liveness) {
+                    Some(())
+                } else {
+                    None
+                }
+            },
             &mut |block_id, (): ()| {
                 let block = cfg.basic_block(*block_id);
 
@@ -615,6 +621,7 @@ impl ConstructorSuper {
 
                     EdgeType::NewFunction
                     | EdgeType::Unreachable
+                    | EdgeType::Liveness
                     | EdgeType::Error(oxc_cfg::ErrorEdgeKind::Implicit) => {}
 
                     EdgeType::Jump | EdgeType::Normal | EdgeType::Join | EdgeType::Finalize => {
@@ -901,6 +908,8 @@ fn test() {
         "class A extends B { constructor() { super(); try { throw new Error(); } catch (e) {} } }",
         // super() in finally always executes
         "class A extends B { constructor() { try { mayThrow(); } catch (e) {} finally { super(); } } }",
+        "class C extends B { constructor() { done: { try { if (condition) throw 0; super(); break done; } finally { cleanup(); } } } }",
+        "class C extends B { constructor() { done: { try { try { if (condition) throw 0; super(); break done; } finally { inner(); } } finally { cleanup(); } } } }",
     ];
 
     let fail = vec![
@@ -1009,6 +1018,7 @@ fn test() {
                 } while (condition);
             }
         }",
+        "class C extends B { constructor() { done: { try { if (condition) break done; super(); } finally { cleanup(); } } } }",
     ];
 
     Tester::new(ConstructorSuper::NAME, ConstructorSuper::PLUGIN, pass, fail).test_and_snapshot();
