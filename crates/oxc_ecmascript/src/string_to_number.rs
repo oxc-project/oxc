@@ -55,6 +55,9 @@ impl StringToNumber for &str {
 
             if radix != 0 {
                 let s = &s[2..];
+                if s.starts_with(['+', '-']) {
+                    return f64::NAN;
+                }
 
                 // Fast path
                 if let Ok(value) = u32::from_str_radix(s, radix) {
@@ -104,6 +107,32 @@ mod tests {
     use num_bigint::BigUint;
 
     use super::StringToNumber;
+
+    #[test]
+    fn rejects_signs_in_nondecimal_strings() {
+        for prefix in ["0b", "0B", "0o", "0O", "0x", "0X"] {
+            assert_eq!(format!("{prefix}1").as_str().string_to_number(), 1.0);
+            for digits in ["0", "1", "0001", "111111111111111111111111111111111"] {
+                for sign in ["+", "-"] {
+                    for input in
+                        [format!("{prefix}{sign}{digits}"), format!("{sign}{prefix}{digits}")]
+                    {
+                        assert!(input.as_str().string_to_number().is_nan(), "{input}");
+                        assert!(
+                            oxc_str::JSStr::from(input.as_str()).string_to_number().is_nan(),
+                            "{input}"
+                        );
+                        let padded = format!(" \t{input}\u{FEFF}");
+                        assert!(padded.as_str().string_to_number().is_nan(), "{padded}");
+                    }
+                }
+            }
+        }
+        assert_eq!("+1".string_to_number(), 1.0);
+        assert_eq!("-1".string_to_number(), -1.0);
+        assert_eq!("+Infinity".string_to_number(), f64::INFINITY);
+        assert_eq!("-Infinity".string_to_number(), f64::NEG_INFINITY);
+    }
 
     #[test]
     #[expect(clippy::cast_precision_loss)]
