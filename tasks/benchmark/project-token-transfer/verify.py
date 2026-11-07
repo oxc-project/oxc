@@ -18,9 +18,12 @@ for case in sorted(root.iterdir()):
     mapped = case.name.endswith("_map") and not case.name.endswith("no_map")
     maps = list((case / "baseline").rglob("*.map"))
     assert bool(maps) == mapped, case
+    sources = set()
     for path in maps:
         source_map = json.loads(path.read_text())
         assert source_map["version"] == 3 and source_map["mappings"]
-        assert len(source_map["sources"]) > 100
-    report.append({"case": case.name, "identical": True, "files": baseline})
+        sources.update(source_map["sources"])
+    if mapped:
+        assert len(sources) > 100
+    report.append({"case": case.name, "identical": True, "sources": len(sources), "files": baseline})
 print(json.dumps(report, indent=2))

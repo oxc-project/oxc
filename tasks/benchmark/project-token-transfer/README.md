@@ -11,6 +11,8 @@ file switched between builds is `oxc_codegen/src/sourcemap_builder.rs`.
 - Normal and minified builds write JS and serialized maps through `Bundler.write`.
 - Sourcemap-off normal builds serve as controls.
 - The executable uses mimalloc, as Rolldown's production native binding does.
+- Release optimization and fat LTO are retained; symbols are kept for memory
+  instrumentation of the statically linked allocator.
 - Each invocation creates a fresh process and resolver; OS file caches are warm.
 - Native comparisons use 20 rounds per pass in baseline/candidate/candidate/baseline
   order, on the same CI runner. Startup, I/O, source-map lifetimes and teardown are

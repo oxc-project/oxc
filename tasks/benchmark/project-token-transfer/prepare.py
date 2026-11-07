@@ -17,6 +17,10 @@ for cargo in sorted((oxc / "crates").glob("*/Cargo.toml")):
     text += f'{name} = {{ path = "{cargo.parent}" }}\n'
 text += 'oxc_sourcemap = { git = "https://github.com/oxc-project/oxc-sourcemap.git", rev = "7375335803ca5c37007c09ed61e41386e1fe5e68" }\n'
 manifest.write_text(text)
+bench_manifest = rolldown / "crates/bench/Cargo.toml"
+bench_manifest.write_text(bench_manifest.read_text().replace(
+    "[dev-dependencies]\n", "[dev-dependencies]\nrolldown_common = { workspace = true }\n"
+))
 examples = rolldown / "crates/bench/examples"
 examples.mkdir(exist_ok=True)
 shutil.copyfile(pathlib.Path(__file__).with_name("project_build.rs"), examples / "project_build.rs")

@@ -2,7 +2,8 @@
 
 use std::path::PathBuf;
 
-use rolldown::{Bundler, BundlerOptions, InputItem, Output, Platform, SourceMapType, TsConfig};
+use rolldown::{Bundler, BundlerOptions, InputItem, Platform, SourceMapType, TsConfig};
+use rolldown_common::Output;
 
 #[global_allocator]
 static ALLOCATOR: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
