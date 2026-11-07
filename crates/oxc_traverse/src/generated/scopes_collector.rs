@@ -13,27 +13,41 @@ use std::cell::Cell;
 
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
+use oxc_semantic::Scoping;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 /// Visitor that locates all child scopes.
 ///
 /// Note: Direct child scopes only, not grandchild scopes.
 /// Does not do full traversal - stops each time it hits a node with a scope.
-pub struct ChildScopeCollector {
+pub struct ChildScopeCollector<'s> {
+    scoping: &'s Scoping,
+    parent_scope_id: ScopeId,
     pub(crate) scope_ids: Vec<ScopeId>,
 }
 
-impl ChildScopeCollector {
-    pub(crate) fn new() -> Self {
-        Self { scope_ids: vec![] }
+impl<'s> ChildScopeCollector<'s> {
+    pub(crate) fn new(scoping: &'s Scoping, parent_scope_id: ScopeId) -> Self {
+        Self { scoping, parent_scope_id, scope_ids: vec![] }
     }
 
     pub(crate) fn add_scope(&mut self, scope_id: &Cell<Option<ScopeId>>) {
         self.scope_ids.push(scope_id.get().unwrap());
     }
+    fn visit_if_branch(&mut self, stmt: &Statement) {
+        if let Statement::FunctionDeclaration(function) = stmt {
+            let body_scope_id = function.scope_id.get().unwrap();
+            let parent_scope_id = self.scoping.scope_parent_id(body_scope_id).unwrap();
+            if parent_scope_id != self.parent_scope_id {
+                self.scope_ids.push(parent_scope_id);
+                return;
+            }
+        }
+        self.visit_statement(stmt);
+    }
 }
 
-impl<'a> Visit<'a> for ChildScopeCollector {
+impl<'a> Visit<'a> for ChildScopeCollector<'_> {
     #[inline]
     fn visit_program(&mut self, it: &Program<'a>) {
         self.add_scope(&it.scope_id);
@@ -710,13 +724,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     fn visit_expression_statement(&mut self, it: &ExpressionStatement<'a>) {
         self.visit_expression(&it.expression);
     }
-
-    #[inline]
     fn visit_if_statement(&mut self, it: &IfStatement<'a>) {
         self.visit_expression(&it.test);
-        self.visit_statement(&it.consequent);
+        self.visit_if_branch(&it.consequent);
         if let Some(alternate) = &it.alternate {
-            self.visit_statement(alternate);
+            self.visit_if_branch(alternate);
         }
     }
 

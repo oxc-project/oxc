@@ -34,6 +34,7 @@ pub fn print_rust(tokens: &TokenStream, generator_path: &str) -> String {
 /// Does not format on disk - interfaces with `rustfmt` via stdin/stdout.
 pub fn rust_fmt(source_text: &str) -> String {
     let mut rustfmt = Command::new("rustfmt")
+        .args(["--edition", "2024"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

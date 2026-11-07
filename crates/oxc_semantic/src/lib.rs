@@ -25,6 +25,7 @@ pub use oxc_syntax::{
 #[cfg(feature = "cfg")]
 pub mod dot;
 
+mod annex_b;
 #[cfg(feature = "linter")]
 mod ast_types_bitset;
 mod binder;

@@ -112,7 +112,7 @@ impl<'a> TraverseScoping<'a> {
         scope_id: ScopeId,
         flags: ScopeFlags,
     ) -> ScopeId {
-        let mut collector = ChildScopeCollector::new();
+        let mut collector = ChildScopeCollector::new(&self.scoping, scope_id);
         collector.visit_statement(stmt);
         self.insert_scope_below(scope_id, &collector.scope_ids, flags)
     }
@@ -129,7 +129,7 @@ impl<'a> TraverseScoping<'a> {
         expr: &Expression,
         flags: ScopeFlags,
     ) -> ScopeId {
-        let mut collector = ChildScopeCollector::new();
+        let mut collector = ChildScopeCollector::new(&self.scoping, self.current_scope_id);
         collector.visit_expression(expr);
         self.insert_scope_below(self.current_scope_id, &collector.scope_ids, flags)
     }
@@ -146,7 +146,7 @@ impl<'a> TraverseScoping<'a> {
         stmts: &ArenaVec<'a, Statement<'a>>,
         flags: ScopeFlags,
     ) -> ScopeId {
-        let mut collector = ChildScopeCollector::new();
+        let mut collector = ChildScopeCollector::new(&self.scoping, self.current_scope_id);
         collector.visit_statements(stmts);
         self.insert_scope_below(self.current_scope_id, &collector.scope_ids, flags)
     }
@@ -217,7 +217,7 @@ impl<'a> TraverseScoping<'a> {
     /// For example when unwrapping `(() => foo)()` to just `foo`.
     /// `foo` here could be an expression which itself contains scopes.
     pub fn remove_scope_for_expression(&mut self, scope_id: ScopeId, expr: &Expression) {
-        let mut collector = ChildScopeCollector::new();
+        let mut collector = ChildScopeCollector::new(&self.scoping, scope_id);
         collector.visit_expression(expr);
 
         let child_ids = collector.scope_ids;

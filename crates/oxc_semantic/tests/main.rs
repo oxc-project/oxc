@@ -53,6 +53,11 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
                 result.push(',');
             }
             result.push('{');
+            if let Some(binding_id) = scope_tree.annex_b_block_functions().get(&symbol_id) {
+                result.push_str(
+                    format!("\"annex_b_block_binding\": {},", binding_id.index()).as_str(),
+                );
+            }
             result.push_str(
                 format!("\"flags\": \"{:?}\",", semantic.scoping().symbol_flags(symbol_id))
                     .as_str(),
