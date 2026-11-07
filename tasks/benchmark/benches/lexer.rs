@@ -5,7 +5,9 @@ use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
-use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use oxc_benchmark::{
+    BenchmarkId, Criterion, black_box, criterion_group, criterion_main, whitespace_cases,
+};
 use oxc_parser::{
     Parser,
     config::{LexerConfig, NoTokensLexerConfig},
@@ -32,6 +34,35 @@ fn bench_lexer(criterion: &mut Criterion) {
             });
         });
     }
+    group.finish();
+}
+
+fn bench_lexer_whitespace(criterion: &mut Criterion) {
+    let mut group = criterion.benchmark_group("lexer_whitespace");
+    let source_type = SourceType::mjs();
+
+    for (name, source_text) in whitespace_cases() {
+        group.bench_function(name, |b| {
+            let mut allocator = Allocator::default();
+            assert!(
+                lex_whole_file(&allocator, &source_text, source_type, NoTokensLexerConfig)
+                    .errors()
+                    .is_empty()
+            );
+            allocator.reset();
+
+            b.iter(|| {
+                black_box(lex_whole_file(
+                    &allocator,
+                    &source_text,
+                    source_type,
+                    NoTokensLexerConfig,
+                ));
+                allocator.reset();
+            });
+        });
+    }
+
     group.finish();
 }
 
@@ -207,5 +238,5 @@ fn convert_to_string(text: &str) -> String {
     format!("{quote}{text}{quote}")
 }
 
-criterion_group!(lexer, bench_lexer);
+criterion_group!(lexer, bench_lexer, bench_lexer_whitespace);
 criterion_main!(lexer);
