@@ -1,4 +1,5 @@
-use crate::{test, test_same};
+use crate::{CompressOptions, test, test_options_source_type, test_same};
+use oxc_span::SourceType;
 
 #[test]
 fn test_drop_unreachable_switch_cases_with_sequence_expressions() {
@@ -67,4 +68,17 @@ fn test_drop_unreachable_switch_cases_tdz_in_case() {
         "switch (1) { case 2: let x = 1; case 1: console.log(1); }",
     );
     test_same("switch (1) { case 2: function x() {} case 1: console.log(x); }");
+}
+
+#[test]
+fn test_keep_switch_with_annex_b_function_in_dropped_case() {
+    // Sloppy mode: the dropped case's function declaration still creates a
+    // function-scoped binding (Annex B.3.3), so `g = 1` writes the local binding.
+    // Dropping the case would make it a global write.
+    test_options_source_type(
+        "delete globalThis.g; function f() { switch (1) { case 1: break; case 2: { function g() {} } } g = 1; return [typeof g, globalThis.g === 1]; } console.log(f(), globalThis.g);",
+        "delete globalThis.g; function f() { switch (1) { case 1: break; case 2: { function g() {} } } return g = 1, [typeof g, globalThis.g === 1]; } console.log(f(), globalThis.g);",
+        SourceType::cjs(),
+        &CompressOptions::smallest(),
+    );
 }
