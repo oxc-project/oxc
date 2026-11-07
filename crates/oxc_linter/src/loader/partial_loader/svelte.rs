@@ -333,7 +333,9 @@ fn skip_style(
         }
     }
     let bytes = source_text.as_bytes();
-    let mut depth = 0usize;
+    let mut braces = 0usize;
+    let mut parentheses = 0usize;
+    let mut brackets = 0usize;
     let mut quote = None;
     while let Some(&byte) = bytes.get(pointer) {
         if byte == b'\\' {
@@ -351,15 +353,25 @@ fn skip_style(
                     pointer += source_text[pointer + 2..].find("*/")? + 4;
                     continue;
                 }
-                b'{' | b'(' | b'[' => depth += 1,
-                b'}' | b')' | b']' => depth = depth.saturating_sub(1),
+                b'(' if pointer >= 3
+                    && bytes[pointer - 3..pointer].eq_ignore_ascii_case(b"url") =>
+                {
+                    pointer = skip_css_url(source_text, pointer + 1)?;
+                    continue;
+                }
+                b'{' => braces += 1,
+                b'}' => braces = braces.saturating_sub(1),
+                b'(' => parentheses += 1,
+                b')' => parentheses = parentheses.saturating_sub(1),
+                b'[' => brackets += 1,
+                b']' => brackets = brackets.saturating_sub(1),
                 b'<' if source_text[pointer..].starts_with(COMMENT_START) => {
                     pointer += source_text[pointer + COMMENT_START.len()..].find(COMMENT_END)?
                         + COMMENT_START.len()
                         + COMMENT_END.len();
                     continue;
                 }
-                b'<' if depth == 0 => {
+                b'<' if braces == 0 && parentheses == 0 && brackets == 0 => {
                     if let Some(rest) = source_text[pointer..].strip_prefix("</style") {
                         let rest = rest.trim_start_matches(is_svelte_whitespace);
                         if rest.starts_with('>') {
@@ -369,6 +381,25 @@ fn skip_style(
                 }
                 _ => {}
             }
+        }
+        pointer += 1;
+    }
+    None
+}
+
+fn skip_css_url(source_text: &str, mut pointer: usize) -> Option<usize> {
+    let bytes = source_text.as_bytes();
+    let mut quote = None;
+    while let Some(&byte) = bytes.get(pointer) {
+        if byte == b'\\' {
+            pointer = pointer.saturating_add(2);
+            continue;
+        }
+        match byte {
+            b'\'' | b'"' if quote == Some(byte) => quote = None,
+            b'\'' | b'"' if quote.is_none() => quote = Some(byte),
+            b')' if quote.is_none() => return Some(pointer + 1),
+            _ => {}
         }
         pointer += 1;
     }
@@ -941,11 +972,24 @@ let {json}: {json: string} = $props();
     }
 
     #[test]
+    fn test_component_style_with_url_delimiters() {
+        for url in ["foo{", "foo[", "foo/*bar", "foo<!--bar", r"foo\)bar{", "'foo){'"] {
+            let source_text = format!(
+                "<style>.a {{ background: url({url}); }}</style><script>debugger;</script>"
+            );
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "debugger;", "{source_text}");
+        }
+    }
+
+    #[test]
     fn test_component_style_with_closing_tag_text() {
         for css in [
             r#".a::before { content: "</style><script>ignored</script>"; }"#,
             ".a { /* </style><script>ignored</script> */ color: red; }",
             "/* </style><script>ignored</script> */ .a { color: red; }",
+            ".a { background: url(var(--x)) </style><script>ignored</script>; }",
             "<!-- { --> .a { color: red; }",
             "<!-- </style><script>ignored</script> --> .a { color: red; }",
         ] {
