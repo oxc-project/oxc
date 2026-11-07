@@ -143,6 +143,13 @@ fn is_function_bind_call(call_expr: &CallExpression) -> bool {
     !call_expr.optional && is_method_call(call_expr, None, Some(&["bind"]), None, None)
 }
 
+fn is_global_undefined(arg: &Argument, ctx: &LintContext<'_>) -> bool {
+    let Argument::Identifier(ident) = arg else {
+        return false;
+    };
+    ident.is_undefined() && ctx.is_reference_to_global_variable(ident)
+}
+
 fn is_has_function_return_type(node: &AstNode, ctx: &LintContext<'_>) -> bool {
     match node.kind() {
         AstKind::Program(_) => false,
@@ -161,7 +168,10 @@ impl Rule for NoUselessUndefined {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::IdentifierReference(undefined_literal) if undefined_literal.is_undefined() => {
+            AstKind::IdentifierReference(undefined_literal)
+                if undefined_literal.is_undefined()
+                    && ctx.is_reference_to_global_variable(undefined_literal) =>
+            {
                 let Some(parent_node) = outermost_paren_parent(node, ctx) else {
                     return;
                 };
@@ -298,11 +308,7 @@ impl Rule for NoUselessUndefined {
                 }
 
                 let arguments = &call_expr.arguments;
-                if !arguments
-                    .last()
-                    .and_then(Argument::as_expression)
-                    .is_some_and(Expression::is_undefined)
-                {
+                if !arguments.last().is_some_and(|arg| is_global_undefined(arg, ctx)) {
                     return;
                 }
 
@@ -317,7 +323,7 @@ impl Rule for NoUselessUndefined {
                 let mut undefined_args_spans = Vec::new();
                 for i in (0..arguments.len()).rev() {
                     let arg = &arguments[i];
-                    if arg.as_expression().is_some_and(Expression::is_undefined) {
+                    if is_global_undefined(arg, ctx) {
                         let span = arg.span();
                         undefined_args_spans.push(span);
                     } else {
@@ -566,6 +572,11 @@ fn test() {
             "function getBackLinks(subject: string, limit = 16, cursor?: string, reverse = false, ttl: number | undefined = undefined) {}",
             None,
         ),
+        ("function foo() { const undefined = 1; let x = undefined; return x; }", None),
+        ("function foo(undefined) { return undefined; }", None),
+        ("function foo(undefined, f) { return f(undefined); }", None),
+        ("function* foo(undefined) { yield undefined; }", None),
+        ("function foo(undefined, bar = undefined) { return bar; }", None),
     ];
 
     let fail = vec![
