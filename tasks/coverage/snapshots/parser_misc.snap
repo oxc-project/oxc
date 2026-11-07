@@ -5403,9 +5403,9 @@ Negative Passed: 274/274 (100.00%)
   help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[misc/fail/ts-unerasable-satisfies-chained-exponent.ts:5:48]
- 4 │ // impossible to erase. This is a syntax error.
- 5 │ const x = 2 ** 3 satisfies any satisfies number ** 2;
+   ╭─[misc/fail/ts-unerasable-satisfies-chained-exponent.ts:6:48]
+ 5 │ // This is a syntax error.
+ 6 │ const x = 2 ** 3 satisfies any satisfies number ** 2;
    ·                                                ▲
    ╰────
   help: Try inserting a semicolon here
