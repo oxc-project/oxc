@@ -1,0 +1,93 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ import(no-cycle): Dependency cycle detected
+   ╭─[cycles/ignore-external/entry.js:1:23]
+ 1 │ import { value } from 'cycle-package'; export const entry = value;
+   ·                       ───────────────
+   ╰────
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ cycle-package (fixtures/import/cycles/ignore-external/node_modules/cycle-package/index.js)
+           │         ⬇ imports
+           │    ../../entry.js (fixtures/import/cycles/ignore-external/entry.js)
+           ╰─────────╯ imports the current file
+
+  ⚠ import(no-cycle): Dependency cycle detected
+   ╭─[cycles/ignore-external/entry.js:1:23]
+ 1 │ import { value } from 'cycle-package'; export const entry = value;
+   ·                       ───────────────
+   ╰────
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ cycle-package (fixtures/import/cycles/ignore-external/node_modules/cycle-package/index.js)
+           │         ⬇ imports
+           │    ../../entry.js (fixtures/import/cycles/ignore-external/entry.js)
+           ╰─────────╯ imports the current file
+
+  ⚠ import(no-cycle): Dependency cycle detected
+   ╭─[cycles/ignore-external/entry.js:1:23]
+ 1 │ import { value } from './internal.js'; export const entry = value;
+   ·                       ───────────────
+   ╰────
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./internal.js (fixtures/import/cycles/ignore-external/internal.js)
+           │         ⬇ imports
+           │    cycle-package (fixtures/import/cycles/ignore-external/node_modules/cycle-package/index.js)
+           │         ⬇ imports
+           │    ../../entry.js (fixtures/import/cycles/ignore-external/entry.js)
+           ╰─────────╯ imports the current file
+
+  ⚠ import(no-cycle): Dependency cycle detected
+   ╭─[cycles/ignore-external/entry.js:1:23]
+ 1 │ import { value } from './internal.js'; export const entry = value;
+   ·                       ───────────────
+   ╰────
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./internal.js (fixtures/import/cycles/ignore-external/internal.js)
+           │         ⬇ imports
+           │    cycle-package (fixtures/import/cycles/ignore-external/node_modules/cycle-package/index.js)
+           │         ⬇ imports
+           │    ../../entry.js (fixtures/import/cycles/ignore-external/entry.js)
+           ╰─────────╯ imports the current file
+
+  ⚠ import(no-cycle): Dependency cycle detected
+   ╭─[cycles/ignore-external/entry.js:1:23]
+ 1 │ import { value } from 'cycle-package'; export const entry = value;
+   ·                       ───────────────
+   ╰────
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ cycle-package (fixtures/import/cycles/ignore-external/node_modules/cycle-package/index.js)
+           │         ⬇ imports
+           │    ../../entry.js (fixtures/import/cycles/ignore-external/entry.js)
+           ╰─────────╯ imports the current file
+
+  ⚠ import(no-cycle): Dependency cycle detected
+   ╭─[cycles/ignore-external/entry.js:1:23]
+ 1 │ import { value } from './internal.js'; export const entry = value;
+   ·                       ───────────────
+   ╰────
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./internal.js (fixtures/import/cycles/ignore-external/internal.js)
+           │         ⬇ imports
+           │    cycle-package (fixtures/import/cycles/ignore-external/node_modules/cycle-package/index.js)
+           │         ⬇ imports
+           │    ../../entry.js (fixtures/import/cycles/ignore-external/entry.js)
+           ╰─────────╯ imports the current file
+
+  ⚠ import(no-cycle): Dependency cycle detected
+   ╭─[cycles/ignore-external/entry.js:1:23]
+ 1 │ import { value } from './local.js'; export const entry = value;
+   ·                       ────────────
+   ╰────
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./local.js (fixtures/import/cycles/ignore-external/local.js)
+           │         ⬇ imports
+           │    ./entry.js (fixtures/import/cycles/ignore-external/entry.js)
+           ╰─────────╯ imports the current file
