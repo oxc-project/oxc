@@ -190,6 +190,20 @@ fn mangler() {
 }
 
 #[test]
+fn nested_catch_with_same_name_var() {
+    // The inner `console.log(e)` reads the inner catch parameter, which is also the `var e`.
+    // It must be renamed together with the inner declaration, not with the outer catch parameter.
+    let mangled = mangle(
+        "function _() { try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'inner'; console.log(e) } } }",
+        &MangleOptions::default(),
+    );
+    let inner = mangled.split("catch (").nth(2).expect("inner catch");
+    let name = inner.split(')').next().unwrap();
+    assert!(inner.contains(&format!("var {name} = \"inner\"")), "{mangled}");
+    assert!(inner.contains(&format!("console.log({name})")), "{mangled}");
+}
+
+#[test]
 fn private_member_mangling() {
     let cases = [
         "class Foo { #privateField = 1; method() { return this.#privateField; } }",
