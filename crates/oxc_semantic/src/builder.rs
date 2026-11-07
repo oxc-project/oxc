@@ -13,8 +13,8 @@ use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::Visit;
 #[cfg(feature = "cfg")]
 use oxc_cfg::{
-    ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
-    IterationInstructionKind, ReturnInstructionKind,
+    BlockNodeId, ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind,
+    InstructionKind, IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_ecmascript::IsSimpleParameterList;
@@ -125,6 +125,8 @@ pub struct SemanticBuilder<'a> {
 
     #[cfg(feature = "cfg")]
     ast_node_records: Vec<NodeId>,
+    #[cfg(feature = "cfg")]
+    optional_chain_exit: Option<BlockNodeId>,
 }
 
 /// Data returned by [`SemanticBuilder::build`].
@@ -174,7 +176,20 @@ impl<'a> SemanticBuilder<'a> {
             class_table_builder: ClassTableBuilder::new(),
             #[cfg(feature = "cfg")]
             ast_node_records: Vec::new(),
+            #[cfg(feature = "cfg")]
+            optional_chain_exit: None,
         }
+    }
+
+    fn branch_optional_chain(&mut self) {
+        control_flow!(self, |cfg| {
+            if let Some(exit) = self.optional_chain_exit {
+                let before = cfg.current_node_ix;
+                let continued = cfg.new_basic_block_normal();
+                cfg.add_edge(before, continued, EdgeType::Normal);
+                cfg.add_edge(before, exit, EdgeType::Normal);
+            }
+        });
     }
 
     /// Create a builder configured for the **compiler pipeline** (the
@@ -1326,6 +1341,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg  */
 
         self.visit_expression(&expr.right);
+        #[cfg(feature = "cfg")]
+        if let Some(cfg) = &self.cfg
+            && let AstNodeStoreKind::Full(nodes) = &mut self.node_store.kind
+        {
+            nodes.set_cfg_id(expr.node_id(), cfg.current_node_ix);
+        }
 
         /* cfg */
         control_flow!(self, |cfg| {
@@ -2377,11 +2398,67 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.current_reference_flags = ReferenceFlags::empty();
     }
 
+    fn visit_chain_expression(&mut self, it: &ChainExpression<'a>) {
+        let kind = AstKind::ChainExpression(self.alloc(it));
+        self.enter_node(kind);
+        #[cfg(feature = "cfg")]
+        let previous_exit = self.optional_chain_exit;
+        #[cfg(feature = "cfg")]
+        let exit = control_flow!(self, |cfg| {
+            let current = cfg.current_node_ix;
+            let exit = cfg.new_basic_block_normal();
+            cfg.current_node_ix = current;
+            exit
+        });
+        #[cfg(feature = "cfg")]
+        if self.cfg.is_some() {
+            self.optional_chain_exit = Some(exit);
+        }
+        self.visit_span(&it.span);
+        self.visit_chain_element(&it.expression);
+        control_flow!(self, |cfg| {
+            cfg.add_edge(cfg.current_node_ix, exit, EdgeType::Normal);
+            cfg.current_node_ix = exit;
+        });
+        #[cfg(feature = "cfg")]
+        {
+            self.optional_chain_exit = previous_exit;
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_static_member_expression(&mut self, it: &StaticMemberExpression<'a>) {
+        let kind = AstKind::StaticMemberExpression(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_span(&it.span);
+        self.visit_expression(&it.object);
+        if it.optional {
+            self.branch_optional_chain();
+        }
+        self.visit_identifier_name(&it.property);
+        self.leave_node(kind);
+    }
+
+    fn visit_private_field_expression(&mut self, it: &PrivateFieldExpression<'a>) {
+        let kind = AstKind::PrivateFieldExpression(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_span(&it.span);
+        self.visit_expression(&it.object);
+        if it.optional {
+            self.branch_optional_chain();
+        }
+        self.visit_private_identifier(&it.field);
+        self.leave_node(kind);
+    }
+
     fn visit_computed_member_expression(&mut self, it: &ComputedMemberExpression<'a>) {
         let kind = AstKind::ComputedMemberExpression(self.alloc(it));
         self.enter_node(kind);
         self.visit_span(&it.span);
         self.visit_expression(&it.object);
+        if it.optional {
+            self.branch_optional_chain();
+        }
         // The key expression is a read context, not part of the property write —
         // strip MemberWriteTarget so it doesn't leak onto identifiers inside the key
         // (e.g. `key` in `this[key] = 1`, where `this` doesn't consume the flag).
@@ -2918,6 +2995,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.visit_span(&expr.span);
         self.visit_expression(&expr.callee);
+        if expr.optional {
+            self.branch_optional_chain();
+        }
         if let Some(type_arguments) = &expr.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }
