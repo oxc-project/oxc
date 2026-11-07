@@ -16,7 +16,7 @@ use crate::{
 };
 
 #[test]
-fn vec128_shift() {
+fn vec128_shift_u8() {
     let DynCpu::Neon(cpu) = DynCpu::detect() else { return };
 
     let bytes: [u8; 16] = pattern(37, 11);

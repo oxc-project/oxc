@@ -46,8 +46,16 @@ pub(super) fn to_bytes256<C: CpuSimd>(v: Vec256<C>) -> [u8; 32] {
     out
 }
 
+/// Get the `u32`s of a [`Vec128`].
+pub(super) fn to_u32s128<C: CpuSimd>(v: Vec128<C>) -> [u32; 4] {
+    let mut out = [0; 4];
+    // SAFETY: `out` is valid for writing 16 bytes
+    unsafe { v.store_unaligned(out.as_mut_ptr().cast::<u8>()) };
+    out
+}
+
 /// Get the `u32`s of a [`Vec256`].
-pub(super) fn to_u32s<C: CpuSimd>(v: Vec256<C>) -> [u32; 8] {
+pub(super) fn to_u32s256<C: CpuSimd>(v: Vec256<C>) -> [u32; 8] {
     let mut out = [0; 8];
     // SAFETY: `out` is valid for writing 32 bytes
     unsafe { v.store_unaligned(out.as_mut_ptr().cast::<u8>()) };
@@ -65,9 +73,9 @@ pub(super) fn map2<const N: usize>(a: [u8; N], b: [u8; N], f: impl Fn(u8, u8) ->
 }
 
 /// Transform an array of bytes as if it was an array of `u16`s.
-pub(super) fn map_u16(bytes: [u8; 32], f: impl Fn(u16) -> u16) -> [u8; 32] {
-    let mut out = [0; 32];
-    for i in (0..32).step_by(2) {
+pub(super) fn map_u16<const N: usize>(bytes: [u8; N], f: impl Fn(u16) -> u16) -> [u8; N] {
+    let mut out = [0; N];
+    for i in (0..N).step_by(2) {
         let value = f(u16::from_le_bytes([bytes[i], bytes[i + 1]]));
         out[i..i + 2].copy_from_slice(&value.to_le_bytes());
     }
@@ -90,9 +98,8 @@ fn vec128_create() {
     assert_eq!(to_bytes128(Vec128::zero(cpu)), [0; 16]);
     assert_eq!(to_bytes128(Vec128::splat(0x85, cpu)), [0x85; 16]);
 
-    let bytes = to_bytes128(Vec128::splat_u32(0x8234_5678, cpu));
-    assert_eq!(bytes[..], *[0x8234_5678u32; 4].map(u32::to_le_bytes).as_flattened());
-    assert_eq!(to_bytes128(0x8234_5678u32.into_vec128(cpu)), bytes);
+    assert_eq!(to_u32s128(Vec128::splat_u32(0x8234_5678, cpu)), [0x8234_5678; 4]);
+    assert_eq!(to_u32s128(0x8234_5678u32.into_vec128(cpu)), [0x8234_5678; 4]);
 
     let bytes = pattern(37, 11);
     assert_eq!(to_bytes128(Vec128::read_unaligned(&bytes, cpu)), bytes);
@@ -254,6 +261,16 @@ fn vec128_bitwise() {
 }
 
 #[test]
+fn vec128_shift() {
+    let Some(cpu) = simd_cpu() else { return };
+
+    let bytes: [u8; 16] = pattern(37, 11);
+    let v = Vec128::read_unaligned(&bytes, cpu);
+    assert_eq!(to_bytes128(v.shl_u16::<3>()), map_u16(bytes, |x| x << 3));
+    assert_eq!(to_bytes128(v.shr_u16::<4>()), map_u16(bytes, |x| x >> 4));
+}
+
+#[test]
 fn vec128_add_sub() {
     let Some(cpu) = simd_cpu() else { return };
 
@@ -269,6 +286,19 @@ fn vec128_add_sub() {
     assert_eq!(to_bytes128(va.saturating_add_u8(0x90)), a.map(|x| x.saturating_add(0x90)));
     assert_eq!(to_bytes128(va.sub_u8(0x90)), a.map(|x| x.wrapping_sub(0x90)));
     assert_eq!(to_bytes128(va.saturating_sub_u8(0x90)), a.map(|x| x.saturating_sub(0x90)));
+}
+
+#[test]
+fn vec128_add_u32() {
+    let Some(cpu) = simd_cpu() else { return };
+
+    let a: [u32; 4] = [1, 2, 3, u32::MAX];
+    let b: [u32; 4] = [10, 20, 0x1_0000, 2];
+    let sum = Vec128::read_unaligned(&a, cpu).add_u32(Vec128::read_unaligned(&b, cpu));
+    assert_eq!(to_u32s128(sum), [11, 22, 0x1_0003, 1]);
+
+    let sum = Vec128::read_unaligned(&a, cpu).add_u32(16);
+    assert_eq!(to_u32s128(sum), [17, 18, 19, 15]);
 }
 
 #[test]
@@ -362,6 +392,17 @@ fn vec128_blend() {
 }
 
 #[test]
+fn vec128_rearrange_u32s() {
+    let Some(cpu) = simd_cpu() else { return };
+
+    let s = Vec128::read_unaligned(&[0u32, 1, 2, 3], cpu);
+    let o = Vec128::read_unaligned(&[10u32, 11, 12, 13], cpu);
+
+    assert_eq!(to_u32s128(s.unpack_lo_u32(o)), [0, 10, 1, 11]);
+    assert_eq!(to_u32s128(s.unpack_hi_u32(o)), [2, 12, 3, 13]);
+}
+
+#[test]
 fn vec128_get_u64() {
     let Some(cpu) = simd_cpu() else { return };
 
@@ -379,13 +420,13 @@ fn vec256_create() {
     assert_eq!(to_bytes256(Vec256::zero(Vec256::zero(cpu).cpu())), [0; 32]);
     assert_eq!(to_bytes256(Vec256::splat(0x85, cpu)), [0x85; 32]);
     assert_eq!(to_bytes256(Vec256::splat(0x85, cpu).eq_u8(0x85)), [0xFF; 32]);
-    assert_eq!(to_u32s(Vec256::splat_u32(0x8234_5678, cpu)), [0x8234_5678; 8]);
+    assert_eq!(to_u32s256(Vec256::splat_u32(0x8234_5678, cpu)), [0x8234_5678; 8]);
 
     let bytes = pattern(37, 11);
     assert_eq!(to_bytes256(Vec256::read_unaligned(&bytes, cpu)), bytes);
 
     let values = [1, 2, 3, 0x8000_0000, 5, 6, 7, u32::MAX];
-    assert_eq!(to_u32s(Vec256::read_unaligned(&values, cpu)), values);
+    assert_eq!(to_u32s256(Vec256::read_unaligned(&values, cpu)), values);
 }
 
 #[test]
@@ -400,7 +441,7 @@ fn vec256_from_vec128() {
     assert_eq!(splatted[16..], bytes);
 
     let expected: [u32; 8] = array::from_fn(|i| u32::from(bytes[i]));
-    assert_eq!(to_u32s(Vec256::widen_u8_to_u32(v)), expected);
+    assert_eq!(to_u32s256(Vec256::widen_u8_to_u32(v)), expected);
 }
 
 #[test]
@@ -550,10 +591,10 @@ fn vec256_add_u32() {
     let a: [u32; 8] = [1, 2, 3, 4, 5, 6, 7, u32::MAX];
     let b: [u32; 8] = [10, 20, 30, 0x1_0000, 50, 60, 70, 2];
     let sum = Vec256::read_unaligned(&a, cpu).add_u32(Vec256::read_unaligned(&b, cpu));
-    assert_eq!(to_u32s(sum), [11, 22, 33, 0x1_0004, 55, 66, 77, 1]);
+    assert_eq!(to_u32s256(sum), [11, 22, 33, 0x1_0004, 55, 66, 77, 1]);
 
     let sum = Vec256::read_unaligned(&a, cpu).add_u32(16);
-    assert_eq!(to_u32s(sum), [17, 18, 19, 20, 21, 22, 23, 15]);
+    assert_eq!(to_u32s256(sum), [17, 18, 19, 20, 21, 22, 23, 15]);
 }
 
 #[test]
@@ -638,10 +679,10 @@ fn vec256_rearrange_u32s() {
     let s = Vec256::read_unaligned(&[0u32, 1, 2, 3, 4, 5, 6, 7], cpu);
     let o = Vec256::read_unaligned(&[10u32, 11, 12, 13, 14, 15, 16, 17], cpu);
 
-    assert_eq!(to_u32s(s.unpack_lo_u32(o)), [0, 10, 1, 11, 4, 14, 5, 15]);
-    assert_eq!(to_u32s(s.unpack_hi_u32(o)), [2, 12, 3, 13, 6, 16, 7, 17]);
-    assert_eq!(to_u32s(s.join_lo_halves(o)), [0, 1, 2, 3, 10, 11, 12, 13]);
-    assert_eq!(to_u32s(s.join_hi_halves(o)), [4, 5, 6, 7, 14, 15, 16, 17]);
+    assert_eq!(to_u32s256(s.unpack_lo_u32(o)), [0, 10, 1, 11, 4, 14, 5, 15]);
+    assert_eq!(to_u32s256(s.unpack_hi_u32(o)), [2, 12, 3, 13, 6, 16, 7, 17]);
+    assert_eq!(to_u32s256(s.join_lo_halves(o)), [0, 1, 2, 3, 10, 11, 12, 13]);
+    assert_eq!(to_u32s256(s.join_hi_halves(o)), [4, 5, 6, 7, 14, 15, 16, 17]);
 }
 
 #[test]

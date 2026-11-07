@@ -430,6 +430,52 @@ impl<C: CpuSimd> Vec128<C> {
             _ => unused!(self, other)
         })
     }
+
+    /// Shift each of the 8 `u16`s of this [`Vec128`] left by `BITS` bits.
+    ///
+    /// `BITS` must be between 1 and 15 (inclusive).
+    #[inline(always)]
+    pub fn shl_u16<const BITS: i32>(self) -> Self {
+        cpu_select!(self.cpu(), {
+            Avx2 => {
+                // SAFETY: `Avx2` arm only runs if `self` is a `Vec128<Avx2>`, so CPU supports AVX2,
+                // which includes SSE2
+                Self::new(unsafe { _mm_slli_epi16::<BITS>(self.inner()) }, self.cpu())
+            }
+            Neon => {
+                // SAFETY: `Neon` arm only runs if `self` is a `Vec128<Neon>`, so CPU supports Neon
+                let inner = unsafe {
+                    let shifted = vshlq_n_u16::<BITS>(vreinterpretq_u16_u8(self.inner()));
+                    vreinterpretq_u8_u16(shifted)
+                };
+                Self::new(inner, self.cpu())
+            }
+            _ => unused!(self)
+        })
+    }
+
+    /// Shift each of the 8 `u16`s of this [`Vec128`] right by `BITS` bits.
+    ///
+    /// `BITS` must be between 1 and 15 (inclusive).
+    #[inline(always)]
+    pub fn shr_u16<const BITS: i32>(self) -> Self {
+        cpu_select!(self.cpu(), {
+            Avx2 => {
+                // SAFETY: `Avx2` arm only runs if `self` is a `Vec128<Avx2>`, so CPU supports AVX2,
+                // which includes SSE2
+                Self::new(unsafe { _mm_srli_epi16::<BITS>(self.inner()) }, self.cpu())
+            }
+            Neon => {
+                // SAFETY: `Neon` arm only runs if `self` is a `Vec128<Neon>`, so CPU supports Neon
+                let inner = unsafe {
+                    let shifted = vshrq_n_u16::<BITS>(vreinterpretq_u16_u8(self.inner()));
+                    vreinterpretq_u8_u16(shifted)
+                };
+                Self::new(inner, self.cpu())
+            }
+            _ => unused!(self)
+        })
+    }
 }
 
 /// Arithmetic ops.
@@ -511,6 +557,33 @@ impl<C: CpuSimd> Vec128<C> {
                 let other = other.into_vec128(self.cpu());
                 // SAFETY: `Neon` arm only runs if `self` is a `Vec128<Neon>`, so CPU supports Neon
                 Self::new(unsafe { vqsubq_u8(self.inner(), other.inner()) }, self.cpu())
+            }
+            _ => unused!(self, other)
+        })
+    }
+
+    /// Add either another [`Vec128`] or a `u32` to every `u32` of this [`Vec128`],
+    /// wrapping on overflow.
+    #[inline(always)]
+    pub fn add_u32(self, other: impl Operand128<u32, C>) -> Self {
+        cpu_select!(self.cpu(), {
+            Avx2 => {
+                let other = other.into_vec128(self.cpu());
+                // SAFETY: `Avx2` arm only runs if `self` is a `Vec128<Avx2>`, so CPU supports AVX2,
+                // which includes SSE2
+                Self::new(unsafe { _mm_add_epi32(self.inner(), other.inner()) }, self.cpu())
+            }
+            Neon => {
+                let other = other.into_vec128(self.cpu());
+                // SAFETY: `Neon` arm only runs if `self` is a `Vec128<Neon>`, so CPU supports Neon
+                let inner = unsafe {
+                    let sum = vaddq_u32(
+                        vreinterpretq_u32_u8(self.inner()),
+                        vreinterpretq_u32_u8(other.inner()),
+                    );
+                    vreinterpretq_u8_u32(sum)
+                };
+                Self::new(inner, self.cpu())
             }
             _ => unused!(self, other)
         })
@@ -659,6 +732,63 @@ impl<C: CpuSimd> Vec128<C> {
                 )
             }
             _ => unused!(self, other, mask)
+        })
+    }
+}
+
+/// `u32`-wise ops.
+impl<C: CpuSimd> Vec128<C> {
+    /// Interleave the low 2 `u32`s of this [`Vec128`] and `other`.
+    ///
+    /// The result is `[s0, o0, s1, o1]`,
+    /// where `sN` and `oN` are the `u32`s at index `N` in `self` and `other`.
+    #[inline(always)]
+    pub fn unpack_lo_u32(self, other: Self) -> Self {
+        cpu_select!(self.cpu(), {
+            Avx2 => {
+                // SAFETY: `Avx2` arm only runs if `self` is a `Vec128<Avx2>`, so CPU supports AVX2,
+                // which includes SSE2
+                Self::new(unsafe { _mm_unpacklo_epi32(self.inner(), other.inner()) }, self.cpu())
+            }
+            Neon => {
+                // SAFETY: `Neon` arm only runs if `self` is a `Vec128<Neon>`, so CPU supports Neon
+                let inner = unsafe {
+                    let zipped = vzip1q_u32(
+                        vreinterpretq_u32_u8(self.inner()),
+                        vreinterpretq_u32_u8(other.inner()),
+                    );
+                    vreinterpretq_u8_u32(zipped)
+                };
+                Self::new(inner, self.cpu())
+            }
+            _ => unused!(self, other)
+        })
+    }
+
+    /// Interleave the high 2 `u32`s of this [`Vec128`] and `other`.
+    ///
+    /// The result is `[s2, o2, s3, o3]`,
+    /// where `sN` and `oN` are the `u32`s at index `N` in `self` and `other`.
+    #[inline(always)]
+    pub fn unpack_hi_u32(self, other: Self) -> Self {
+        cpu_select!(self.cpu(), {
+            Avx2 => {
+                // SAFETY: `Avx2` arm only runs if `self` is a `Vec128<Avx2>`, so CPU supports AVX2,
+                // which includes SSE2
+                Self::new(unsafe { _mm_unpackhi_epi32(self.inner(), other.inner()) }, self.cpu())
+            }
+            Neon => {
+                // SAFETY: `Neon` arm only runs if `self` is a `Vec128<Neon>`, so CPU supports Neon
+                let inner = unsafe {
+                    let zipped = vzip2q_u32(
+                        vreinterpretq_u32_u8(self.inner()),
+                        vreinterpretq_u32_u8(other.inner()),
+                    );
+                    vreinterpretq_u8_u32(zipped)
+                };
+                Self::new(inner, self.cpu())
+            }
+            _ => unused!(self, other)
         })
     }
 }

@@ -407,16 +407,10 @@ impl<C: CpuSimd> Vec256<C> {
                 // SAFETY: `Avx2` arm only runs if `self` is a `Vec256<Avx2>`, so CPU supports AVX2
                 Self::new(unsafe { _mm256_slli_epi16::<BITS>(self.inner()) }, self.cpu())
             }
-            Neon => {
-                // SAFETY: `Neon` arm only runs if `self` is a `Vec256<Neon>`, so CPU supports Neon
-                let inner = unsafe {
-                    let low = vshlq_n_u16::<BITS>(vreinterpretq_u16_u8(self.inner().0));
-                    let high = vshlq_n_u16::<BITS>(vreinterpretq_u16_u8(self.inner().1));
-                    uint8x16x2_t(vreinterpretq_u8_u16(low), vreinterpretq_u8_u16(high))
-                };
-                Self::new(inner, self.cpu())
+            _ => {
+                let (low, high) = self.into_halves();
+                Self::from_halves(low.shl_u16::<BITS>(), high.shl_u16::<BITS>())
             }
-            _ => unused!(self)
         })
     }
 
@@ -430,16 +424,10 @@ impl<C: CpuSimd> Vec256<C> {
                 // SAFETY: `Avx2` arm only runs if `self` is a `Vec256<Avx2>`, so CPU supports AVX2
                 Self::new(unsafe { _mm256_srli_epi16::<BITS>(self.inner()) }, self.cpu())
             }
-            Neon => {
-                // SAFETY: `Neon` arm only runs if `self` is a `Vec256<Neon>`, so CPU supports Neon
-                let inner = unsafe {
-                    let low = vshrq_n_u16::<BITS>(vreinterpretq_u16_u8(self.inner().0));
-                    let high = vshrq_n_u16::<BITS>(vreinterpretq_u16_u8(self.inner().1));
-                    uint8x16x2_t(vreinterpretq_u8_u16(low), vreinterpretq_u8_u16(high))
-                };
-                Self::new(inner, self.cpu())
+            _ => {
+                let (low, high) = self.into_halves();
+                Self::from_halves(low.shr_u16::<BITS>(), high.shr_u16::<BITS>())
             }
-            _ => unused!(self)
         })
     }
 }
@@ -538,23 +526,11 @@ impl<C: CpuSimd> Vec256<C> {
                 // SAFETY: `Avx2` arm only runs if `self` is a `Vec256<Avx2>`, so CPU supports AVX2
                 Self::new(unsafe { _mm256_add_epi32(self.inner(), other.inner()) }, self.cpu())
             }
-            Neon => {
-                let other = other.into_vec256(self.cpu());
-                // SAFETY: `Neon` arm only runs if `self` is a `Vec256<Neon>`, so CPU supports Neon
-                let inner = unsafe {
-                    let low = vaddq_u32(
-                        vreinterpretq_u32_u8(self.inner().0),
-                        vreinterpretq_u32_u8(other.inner().0),
-                    );
-                    let high = vaddq_u32(
-                        vreinterpretq_u32_u8(self.inner().1),
-                        vreinterpretq_u32_u8(other.inner().1),
-                    );
-                    uint8x16x2_t(vreinterpretq_u8_u32(low), vreinterpretq_u8_u32(high))
-                };
-                Self::new(inner, self.cpu())
+            _ => {
+                let (low, high) = self.into_halves();
+                let (other_low, other_high) = other.into_vec256(self.cpu()).into_halves();
+                Self::from_halves(low.add_u32(other_low), high.add_u32(other_high))
             }
-            _ => unused!(self, other)
         })
     }
 }
@@ -662,22 +638,11 @@ impl<C: CpuSimd> Vec256<C> {
                 // SAFETY: `Avx2` arm only runs if `self` is a `Vec256<Avx2>`, so CPU supports AVX2
                 Self::new(unsafe { _mm256_unpacklo_epi32(self.inner(), other.inner()) }, self.cpu())
             }
-            Neon => {
-                // SAFETY: `Neon` arm only runs if `self` is a `Vec256<Neon>`, so CPU supports Neon
-                let inner = unsafe {
-                    let low = vzip1q_u32(
-                        vreinterpretq_u32_u8(self.inner().0),
-                        vreinterpretq_u32_u8(other.inner().0),
-                    );
-                    let high = vzip1q_u32(
-                        vreinterpretq_u32_u8(self.inner().1),
-                        vreinterpretq_u32_u8(other.inner().1),
-                    );
-                    uint8x16x2_t(vreinterpretq_u8_u32(low), vreinterpretq_u8_u32(high))
-                };
-                Self::new(inner, self.cpu())
+            _ => {
+                let (low, high) = self.into_halves();
+                let (other_low, other_high) = other.into_halves();
+                Self::from_halves(low.unpack_lo_u32(other_low), high.unpack_lo_u32(other_high))
             }
-            _ => unused!(self, other)
         })
     }
 
@@ -692,22 +657,11 @@ impl<C: CpuSimd> Vec256<C> {
                 // SAFETY: `Avx2` arm only runs if `self` is a `Vec256<Avx2>`, so CPU supports AVX2
                 Self::new(unsafe { _mm256_unpackhi_epi32(self.inner(), other.inner()) }, self.cpu())
             }
-            Neon => {
-                // SAFETY: `Neon` arm only runs if `self` is a `Vec256<Neon>`, so CPU supports Neon
-                let inner = unsafe {
-                    let low = vzip2q_u32(
-                        vreinterpretq_u32_u8(self.inner().0),
-                        vreinterpretq_u32_u8(other.inner().0),
-                    );
-                    let high = vzip2q_u32(
-                        vreinterpretq_u32_u8(self.inner().1),
-                        vreinterpretq_u32_u8(other.inner().1),
-                    );
-                    uint8x16x2_t(vreinterpretq_u8_u32(low), vreinterpretq_u8_u32(high))
-                };
-                Self::new(inner, self.cpu())
+            _ => {
+                let (low, high) = self.into_halves();
+                let (other_low, other_high) = other.into_halves();
+                Self::from_halves(low.unpack_hi_u32(other_low), high.unpack_hi_u32(other_high))
             }
-            _ => unused!(self, other)
         })
     }
 }

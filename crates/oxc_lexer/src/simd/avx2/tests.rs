@@ -11,7 +11,7 @@ use crate::{
     cpu::DynCpu,
     simd::{
         Vec128, Vec256,
-        tests::{pattern, to_bytes128, to_bytes256, to_u32s},
+        tests::{pattern, to_bytes128, to_bytes256, to_u32s256},
     },
 };
 
@@ -113,5 +113,5 @@ fn vec256_shuffle_u32s() {
 
     // Only bottom 3 bits of indices are used
     let indices = Vec256::read_unaligned(&[7u32, 0, 3, 3, 8 + 1, 2, 6, 4], cpu);
-    assert_eq!(to_u32s(s.shuffle_u32s(indices)), [7, 0, 3, 3, 1, 2, 6, 4]);
+    assert_eq!(to_u32s256(s.shuffle_u32s(indices)), [7, 0, 3, 3, 1, 2, 6, 4]);
 }
