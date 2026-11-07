@@ -6,7 +6,8 @@ use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
 
 fn bench_parser(criterion: &mut Criterion) {
-    let mut group = criterion.benchmark_group("parser");
+    let variant = std::env::var("PARSER_SWAR_VARIANT").unwrap_or_else(|_| "default".into());
+    let mut group = criterion.benchmark_group(format!("parser_{variant}"));
 
     for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
@@ -35,7 +36,8 @@ fn bench_parser(criterion: &mut Criterion) {
 }
 
 fn bench_string_scanning(criterion: &mut Criterion) {
-    let mut group = criterion.benchmark_group("parser_string_scanning");
+    let variant = std::env::var("PARSER_SWAR_VARIANT").unwrap_or_else(|_| "default".into());
+    let mut group = criterion.benchmark_group(format!("parser_string_scanning_{variant}"));
     for (name, literal) in [
         ("short_strings", format!("\"{}\"", "a".repeat(8))),
         ("medium_strings", format!("\"{}\"", "a".repeat(64))),

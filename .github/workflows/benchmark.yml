@@ -113,13 +113,21 @@ jobs:
         with:
           cache-key: benchmark-compiler
           tools: cargo-codspeed@4.7.0
-      - name: Build parser benchmark
-        run: >-
-          cargo codspeed build -m ${{ matrix.mode }} -p oxc_benchmark
-          --bench parser_swar_walltime --no-default-features --features compiler --locked
+      - name: Build baseline and candidate on the same runner
+        run: |
+          git fetch --depth 1 origin bf11006b83472ca475e45f11e213223617f2ab27
+          git restore --source=bf11006b83472ca475e45f11e213223617f2ab27 crates/oxc_parser/src/lexer/search.rs crates/oxc_parser/src/lexer/string.rs crates/oxc_parser/src/lexer/template.rs
+          cargo codspeed build -m walltime -p oxc_benchmark --bench parser_swar_walltime --no-default-features --features compiler --locked
+          cp target/codspeed/walltime/oxc_benchmark/parser_swar_walltime /tmp/parser-swar-baseline
+          git restore --source=HEAD crates/oxc_parser/src/lexer/search.rs crates/oxc_parser/src/lexer/string.rs crates/oxc_parser/src/lexer/template.rs
+          cargo codspeed build -m walltime -p oxc_benchmark --bench parser_swar_walltime --no-default-features --features compiler --locked
+          cp target/codspeed/walltime/oxc_benchmark/parser_swar_walltime /tmp/parser-swar-candidate
       - name: Measure parser benchmark
         uses: CodSpeedHQ/action@c4fd08a3a159bd0cc208da1e0edf32b8c47d75e5
         with:
           mode: ${{ matrix.mode }}
           run: |
-            cargo codspeed run -p oxc_benchmark --bench parser_swar_walltime -- --warm-up-time 1 --measurement-time 2 --sample-size 30
+            for variant in baseline_1 candidate_1 candidate_2 baseline_2; do
+              cp "/tmp/parser-swar-${variant%_*}" target/codspeed/walltime/oxc_benchmark/parser_swar_walltime
+              PARSER_SWAR_VARIANT="$variant" cargo codspeed run -p oxc_benchmark --bench parser_swar_walltime -- --warm-up-time 0.5 --measurement-time 1 --sample-size 30
+            done
