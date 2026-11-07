@@ -179,7 +179,9 @@ fn is_regexp<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
         let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx) else {
             return false;
         };
-        if ctx.scoping().symbol_is_mutated(symbol_id) {
+        if ctx.scoping().symbol_is_mutated(symbol_id)
+            || !ctx.scoping().symbol_redeclarations(symbol_id).is_empty()
+        {
             return false;
         }
         let declaration = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
@@ -345,6 +347,8 @@ fn test() {
         r#"const query = "a"; if (title.match(query)) {}"#,
         "if (glob.match(file)) {}",
         r#"let re = /a/; re = "a"; if (foo.match(re)) {}"#,
+        r#"var re = /a/; var re = "a"; if (foo.match(re)) {}"#,
+        r#"if (foo.match(new RegExp("a"))) {}"#,
     ];
 
     let fix = vec![
@@ -420,6 +424,12 @@ fn test() {
         (
             r#"let re = /a/; re = "a"; if (foo.match(re)) {}"#,
             r#"let re = /a/; re = "a"; if (foo.match(re)) {}"#,
+            None,
+            FixKind::Fix,
+        ),
+        (
+            r#"var re = /a/; var re = "a"; if (foo.match(re)) {}"#,
+            r#"var re = /a/; var re = "a"; if (foo.match(re)) {}"#,
             None,
             FixKind::Fix,
         ),

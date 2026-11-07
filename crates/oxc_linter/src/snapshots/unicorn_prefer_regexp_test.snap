@@ -532,3 +532,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────
    ╰────
   help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:37]
+ 1 │ var re = /a/; var re = "a"; if (foo.match(re)) {}
+   ·                                     ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:9]
+ 1 │ if (foo.match(new RegExp("a"))) {}
+   ·         ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
