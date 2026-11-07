@@ -33,3 +33,5 @@ oxc_diagnostics = { workspace = true, optional = true }
 
 [features]
 oxc_diagnostics = ["dep:oxc_diagnostics"]
+# Expose `oxc_lexer::testing` module, for conformance tests
+testing = []

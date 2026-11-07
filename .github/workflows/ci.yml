@@ -654,22 +654,25 @@ jobs:
           git diff --exit-code
 
   lexer:
-    # `oxc_lexer` compiles to one of 3 implementations, chosen at build time:
+    # `oxc_lexer` has 3 implementations:
     # 1. AVX2 on x86_64 with `avx2` + `bmi2` + `popcnt`.
     # 2. Neon on aarch64.
     # 3. Generic everywhere else.
     #
-    # Each leg of this job builds one of them. The AVX2 and generic legs run on x86_64, the Neon leg on aarch64.
+    # On x86_64, a build contains both AVX2 and generic, and picks one at runtime, depending on
+    # what the CPU supports. A build with `avx2`, `bmi2` and `popcnt` enabled at compile time
+    # contains only AVX2.
     #
-    # Coverage by other jobs:
-    # - None of `avx2`, `bmi2` and `popcnt` is in the x86_64 baseline on any platform, so the AVX2 implementation
-    #   is never built unless asked for explicitly - which means no other job here lints, tests or runs it.
-    # - No other job builds Neon on PRs (the aarch64 test jobs only run on `main`), and no other job lints it.
-    # - Generic is already linted by the "Lint" job and tested by the "Test Linux" job,
-    #   so this job only runs conformance for it.
+    # Lexer conformance is part of the "Conformance" job, which runs on x86_64.
+    # It lexes every fixture with both AVX2 and generic, and fails if their outputs differ.
     #
-    # All legs regenerate the committed conformance snapshots and fail on any diff,
-    # which ensures the 3 implementations behave identically to each other.
+    # This job covers what other jobs don't:
+    # - AVX2 leg (x86_64): Lint and test with `avx2`, `bmi2` and `popcnt` enabled at compile time.
+    #   None of them is in the x86_64 baseline on any platform, so no other job builds with them.
+    # - Neon leg (aarch64): Lint, test and conformance. No other job builds Neon on PRs
+    #   (the aarch64 test jobs only run on `main`), and no other job lints it.
+    #   Conformance regenerates the committed snapshots and fails on any diff,
+    #   which ensures Neon behaves identically to AVX2 and generic.
     #
     # See the LEXER section of `justfile` for the recipes.
     name: Lexer (${{ matrix.variant }})
@@ -680,9 +683,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - variant: generic
-            runner: namespace-profile-linux-x64-default
-            suffix: ""
           - variant: AVX2
             runner: namespace-profile-linux-x64-default
             suffix: "-avx2"
@@ -701,14 +701,15 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
+      # Only the Neon leg runs conformance
       - uses: $/.github/actions/clone-submodules
         id: lexer-fixtures
-        if: steps.filter.outputs.changed == 'true'
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'Neon' }}
         with:
           node-compat-table: false
         background: true
 
-      # The x86_64 legs run on Namespace runners, which provide the cache
+      # The AVX2 leg runs on a Namespace runner, which provides the cache
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant != 'Neon' }}
         with:
@@ -720,8 +721,8 @@ jobs:
         with:
           tool: just
 
+      # The Neon leg gets clippy from `setup-rust` below
       - run: rustup component add clippy
-        # No need to run on generic - linting already covered by "Lint" job
         if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'AVX2' }}
 
       # The Neon leg runs on a GitHub-hosted runner, where Namespace's cache isn't available.
@@ -735,27 +736,20 @@ jobs:
           components: clippy
 
       - name: Lint
-        # No need to run on generic - already covered by "Lint" job
-        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant != 'generic' }}
+        if: steps.filter.outputs.changed == 'true'
         run: just lint-lexer${{ matrix.suffix }}
 
       - name: Test
-        # No need to run on generic - already covered by "Test Linux" job
-        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant != 'generic' }}
+        if: steps.filter.outputs.changed == 'true'
         run: just test-lexer${{ matrix.suffix }}
 
       - wait: lexer-fixtures
 
       - name: Conformance
-        # Run on all 3 implementations - none of them is run anywhere else.
-        # The harness prints which implementation it was built with (`oxc_lexer::IMPLEMENTATION`).
-        # Checking it here is what guarantees this leg exercised the build it asked for.
-        if: steps.filter.outputs.changed == 'true'
+        # AVX2 and generic are covered by the "Conformance" job
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'Neon' }}
         run: |
-          set -o pipefail
-          just conformance-lexer${{ matrix.suffix }} | tee "$RUNNER_TEMP/lexer.log"
-          grep -qxF "Lexer implementation: ${{ matrix.variant }}" "$RUNNER_TEMP/lexer.log" ||
-            { echo "::error::Expected ${{ matrix.variant }}, but the harness reported otherwise"; exit 1; }
+          cargo coverage lexer
           git diff --exit-code
 
   test-codegen:

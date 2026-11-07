@@ -251,6 +251,16 @@ impl Lexer {
         // them declared discriminants.
         unsafe { kinds_from_bytes(bytes) }
     }
+
+    /// Set the CPU feature set this [`Lexer`] lexes with, and return the previous one.
+    ///
+    /// Only used in conformance testing.
+    #[cfg(feature = "testing")]
+    pub(crate) fn replace_cpu(&mut self, cpu: DynCpu) -> DynCpu {
+        let previous = self.cpu;
+        self.cpu = cpu;
+        previous
+    }
 }
 
 impl Default for Lexer {
