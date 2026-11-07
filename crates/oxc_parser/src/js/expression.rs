@@ -1693,21 +1693,42 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if self.is_yield_expression() {
                 return self.parse_yield_expression();
             }
-            // `() => {}`, `(x) => {}`, `async x => {}`
-            if matches!(self.cur_kind(), Kind::LParen | Kind::LAngle | Kind::Async)
-                && let Some(mut arrow_expr) =
-                    self.try_parse_arrow_function_expression(allow_return_type_in_arrow_function)
-            {
-                if let Some(comments) = no_side_effects_comments
-                    && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
-                {
-                    func.pure = true;
-                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+            'parse_lhs: {
+                // `() => {}`, `(x) => {}`, `async x => {}`
+                let arrow_expr = match kind {
+                    Kind::LParen if !self.is_ts && !self.ctx.has_decorator() => {
+                        let pure_comments =
+                            self.lexer.trivia_builder.previous_token_pure_comments();
+                        match self.try_parse_arrow_function_expression::<true>(
+                            allow_return_type_in_arrow_function,
+                        ) {
+                            Some(Expression::ParenthesizedExpression(parenthesized)) => {
+                                break 'parse_lhs self.parse_reused_parenthesized_expression_rest(
+                                    start,
+                                    parenthesized,
+                                    pure_comments,
+                                );
+                            }
+                            arrow => arrow,
+                        }
+                    }
+                    Kind::LParen | Kind::LAngle | Kind::Async => self
+                        .try_parse_arrow_function_expression::<false>(
+                            allow_return_type_in_arrow_function,
+                        ),
+                    _ => None,
+                };
+                if let Some(mut arrow_expr) = arrow_expr {
+                    if let Some(comments) = no_side_effects_comments
+                        && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                    {
+                        func.pure = true;
+                        self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                    }
+                    return arrow_expr;
                 }
-                return arrow_expr;
+                self.parse_binary_expression_or_higher(Precedence::Comma)
             }
-
-            self.parse_binary_expression_or_higher(Precedence::Comma)
         };
         let lhs_parenthesized_span = lhs_parenthesized.then(|| self.end_span(start));
         let kind = self.cur_kind();
@@ -1752,6 +1773,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         expr
+    }
+
+    #[inline(never)]
+    fn parse_reused_parenthesized_expression_rest(
+        &mut self,
+        start: u32,
+        parenthesized: ArenaBox<'a, ParenthesizedExpression<'a>>,
+        pure_comments: Option<(u32, NonZeroU32)>,
+    ) -> Expression<'a> {
+        let primary = if self.options.preserve_parens {
+            Expression::ParenthesizedExpression(parenthesized)
+        } else {
+            parenthesized.unbox().expression
+        };
+        let lhs = self.parse_primary_expression_rest(start, primary, pure_comments);
+        if kind_to_precedence(self.cur_kind()).is_none() {
+            lhs
+        } else {
+            self.parse_binary_expression_rest(start, lhs, true, Precedence::Comma)
+        }
     }
 
     #[cold]
