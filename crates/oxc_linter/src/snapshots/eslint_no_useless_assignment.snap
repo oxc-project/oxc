@@ -660,3 +660,52 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─
    ╰────
   help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:33]
+ 1 │ function a() { var x = 1; x += (x = 5); return x; }
+   ·                                 ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:32]
+ 1 │ function h() { let x = 1; x = (x = x + 1); return x; }
+   ·                                ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:37]
+ 1 │ function nested() { let x = 1; x = (x = (x = x + 1)); return x; }
+   ·                                     ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:42]
+ 1 │ function nested() { let x = 1; x = (x = (x = x + 1)); return x; }
+   ·                                          ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:49]
+ 1 │ function sibling() { let x = 1; x = (x = x + 1, x = x + 2); return x; }
+   ·                                                 ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:40]
+ 1 │ function compound() { let x = 1; x += (x += (x = 5)); return x; }
+   ·                                        ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:46]
+ 1 │ function compound() { let x = 1; x += (x += (x = 5)); return x; }
+   ·                                              ─
+   ╰────
+  help: Consider removing or reusing the assigned value.

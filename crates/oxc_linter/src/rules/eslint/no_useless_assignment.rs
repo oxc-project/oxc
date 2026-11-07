@@ -206,40 +206,49 @@ impl Rule for NoUselessAssignment {
                 );
             }
 
-            // Process references inline with reordering for assignment expressions like a = a + 1
             let ambiguous_destructuring_assignments =
                 Self::ambiguous_destructuring_assignments(ctx, symbol_id);
-            let mut pending_assignment_lhs: Option<(&Reference, bool)> = None;
+            let mut pending_assignments: SmallVec<[(&Reference, NodeId, bool); 2]> =
+                SmallVec::new();
+            let mut last_rhs_read_cfg = None;
             let mut last_conservative_assignment = None;
             let mut ambiguous_assignment_index = 0;
 
             for reference in ctx.symbol_references(symbol_id) {
-                let mut is_within_pending_assignment = false;
-                if let Some((lhs, previous_value_read)) = pending_assignment_lhs
-                    && let Some(assign_node_id) = Self::get_assignment_node(ctx, lhs)
+                while let Some(&(lhs, assign_node_id, previous_value_read)) =
+                    pending_assignments.last()
                 {
-                    let assign_node = ctx.nodes().get_node(assign_node_id);
-                    if assign_node
+                    if ctx
+                        .nodes()
+                        .get_node(assign_node_id)
                         .span()
                         .contains_inclusive(ctx.nodes().get_node(reference.node_id()).span())
                     {
-                        if reference.is_read() && !reference.is_write() {
-                            pending_assignment_lhs = Some((lhs, true));
+                        break;
+                    }
+                    pending_assignments.pop();
+                    last_rhs_read_cfg = None;
+                    Self::process_reference_deferred(
+                        ctx,
+                        graph,
+                        &mut cfg_ops,
+                        lhs,
+                        compact_idx,
+                        var_decl,
+                        decl_node,
+                        &mut tracked_symbols[compact_idx as usize],
+                        true,
+                        previous_value_read,
+                    );
+                }
+
+                if reference.is_read() && !reference.is_write() {
+                    let read_cfg = ctx.nodes().cfg_id(reference.node_id());
+                    if last_rhs_read_cfg != Some(read_cfg) {
+                        for (lhs, _, previous_value_read) in &mut pending_assignments {
+                            *previous_value_read |= ctx.nodes().cfg_id(lhs.node_id()) != read_cfg;
                         }
-                        is_within_pending_assignment = true;
-                    } else {
-                        Self::process_reference_deferred(
-                            ctx,
-                            graph,
-                            &mut cfg_ops,
-                            lhs,
-                            compact_idx,
-                            var_decl,
-                            decl_node,
-                            &mut tracked_symbols[compact_idx as usize],
-                            previous_value_read,
-                        );
-                        pending_assignment_lhs = None;
+                        last_rhs_read_cfg = Some(read_cfg);
                     }
                 }
 
@@ -274,9 +283,6 @@ impl Rule for NoUselessAssignment {
                         tracked_symbol.is_used = true;
                         last_conservative_assignment = Some(assignment_node_id);
                     }
-                    if is_within_pending_assignment && let Some((lhs, _)) = pending_assignment_lhs {
-                        pending_assignment_lhs = Some((lhs, true));
-                    }
                     if reference.is_read()
                         && !Self::has_same_parent_variable_scope(
                             ctx,
@@ -289,36 +295,29 @@ impl Rule for NoUselessAssignment {
                     continue;
                 }
 
-                if is_within_pending_assignment {
-                    Self::process_reference_deferred(
-                        ctx,
-                        graph,
-                        &mut cfg_ops,
-                        reference,
-                        compact_idx,
-                        var_decl,
-                        decl_node,
-                        &mut tracked_symbols[compact_idx as usize],
-                        false,
-                    );
-                    continue;
-                }
-
-                if reference.is_write() && Self::get_assignment_node(ctx, reference).is_some() {
-                    if let Some((prev, previous_value_read)) = pending_assignment_lhs.take() {
-                        Self::process_reference_deferred(
+                if reference.is_write()
+                    && let Some(assignment_node_id) = Self::get_assignment_node(ctx, reference)
+                {
+                    if reference.is_read() {
+                        Self::push_op(
                             ctx,
                             graph,
                             &mut cfg_ops,
-                            prev,
+                            reference.node_id(),
+                            Operation::Read,
                             compact_idx,
-                            var_decl,
-                            decl_node,
-                            &mut tracked_symbols[compact_idx as usize],
-                            previous_value_read,
                         );
+                        tracked_symbols[compact_idx as usize].is_used = true;
+                        if !Self::has_same_parent_variable_scope(
+                            ctx,
+                            tracked_symbols[compact_idx as usize].scope_id,
+                            ctx.nodes().get_node(reference.node_id()).scope_id(),
+                        ) {
+                            tracked_symbols[compact_idx as usize].has_captured_read = true;
+                        }
                     }
-                    pending_assignment_lhs = Some((reference, reference.is_read()));
+                    pending_assignments.push((reference, assignment_node_id, false));
+                    last_rhs_read_cfg = None;
                 } else {
                     Self::process_reference_deferred(
                         ctx,
@@ -330,11 +329,12 @@ impl Rule for NoUselessAssignment {
                         decl_node,
                         &mut tracked_symbols[compact_idx as usize],
                         false,
+                        false,
                     );
                 }
             }
 
-            if let Some((lhs, previous_value_read)) = pending_assignment_lhs {
+            for (lhs, _, previous_value_read) in pending_assignments.into_iter().rev() {
                 Self::process_reference_deferred(
                     ctx,
                     graph,
@@ -344,6 +344,7 @@ impl Rule for NoUselessAssignment {
                     var_decl,
                     decl_node,
                     &mut tracked_symbols[compact_idx as usize],
+                    true,
                     previous_value_read,
                 );
             }
@@ -544,11 +545,12 @@ impl NoUselessAssignment {
         var_decl: Option<&VariableDeclarator>,
         decl_node: &oxc_semantic::AstNode,
         tracked_symbol: &mut TrackedSymbol,
+        read_already_processed: bool,
         previous_value_read: bool,
     ) {
         let op_node = reference.node_id();
 
-        if reference.is_read() {
+        if reference.is_read() && !read_already_processed {
             Self::push_op(ctx, graph, cfg_ops, op_node, Operation::Read, compact_idx);
             tracked_symbol.is_used = true;
             if !tracked_symbol.has_captured_read
@@ -575,9 +577,6 @@ impl NoUselessAssignment {
             }
 
             if previous_value_read && !reference.is_read() {
-                // Model RHS self-reads before the deferred assignment write.
-                // This keeps the previous value live without making nested
-                // read-write expressions like `x = x++` live after their write.
                 Self::push_op(ctx, graph, cfg_ops, op_node, Operation::Read, compact_idx);
             }
 
@@ -1547,6 +1546,8 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f(p, q = (p = 1), r = (p = 2)) { return p; }",
         "function f(p, { [p = 1]: q } = (p = 2, {})) { return p; }",
         "function f(p, { a = (p = 1) } = (p = 2, {})) { return p; }",
+        "function f(c) { let x = 1; x = c ? x : 2; return x; }",
+        "function used() { let x = 1; x = (x = x + 1, use(x)); return x; }",
     ];
 
     let fail = vec![
@@ -1909,6 +1910,11 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f(p) { use(p); p = 1; }",
         "function f(p, q = p) { p = 1; return q; }",
         "function f(cb = p => { p = 1; p = 2; return p; }) { return cb; }",
+        "function a() { var x = 1; x += (x = 5); return x; }",
+        "function h() { let x = 1; x = (x = x + 1); return x; }",
+        "function nested() { let x = 1; x = (x = (x = x + 1)); return x; }",
+        "function sibling() { let x = 1; x = (x = x + 1, x = x + 2); return x; }",
+        "function compound() { let x = 1; x += (x += (x = 5)); return x; }",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
