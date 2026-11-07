@@ -1882,7 +1882,6 @@ dependencies = [
  "bitflags",
  "cow-utils",
  "insta",
- "memchr",
  "oxc_allocator",
  "oxc_ast",
  "oxc_data_structures",
