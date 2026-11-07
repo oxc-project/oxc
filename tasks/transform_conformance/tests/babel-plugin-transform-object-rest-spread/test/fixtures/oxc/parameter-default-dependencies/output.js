@@ -1,4 +1,4 @@
-const _excluded = ["a"], _excluded2 = ["a"], _excluded3 = ["a"], _excluded4 = ["a"], _excluded5 = ["a"], _excluded6 = ["a"], _excluded7 = ["a"], _excluded8 = ["a"], _excluded9 = ["a"], _excluded10 = ["a"], _excluded11 = ["a"], _excluded12 = ["a"], _excluded13 = ["a"];
+const _excluded = ["a"], _excluded2 = ["a"], _excluded3 = ["a"], _excluded4 = ["a"], _excluded5 = ["a"], _excluded6 = ["a"], _excluded7 = ["a"], _excluded8 = ["a"], _excluded9 = ["a"], _excluded10 = ["a"], _excluded11 = ["a"];
 function f(_ref, _ref2 = void 0) {
   let { a } = _ref, x = babelHelpers.objectWithoutProperties(_ref, _excluded);
   let b = _ref2 === void 0 ? a : _ref2;
@@ -56,45 +56,16 @@ function redeclared(_ref21, _ref22 = void 0, _ref23 = void 0) {
     return [a, read()];
   })(a);
 }
-function callTime(_ref24, _ref25 = void 0, _ref26 = void 0) {
-  let _arguments = arguments;
+function bodyEval(_ref24, _ref25 = void 0) {
   let { a } = _ref24, rest = babelHelpers.objectWithoutProperties(_ref24, _excluded10);
-  let selected = _ref25 === void 0 ? a : _ref25;
-  let read = _ref26 === void 0 ? { ["read"]: () => a }.read : _ref26;
-  return function* () {
-    yield read();
-  }.apply(this, arguments);
-}
-function bodyEval(_ref27, _ref28 = void 0) {
-  let { a } = _ref27, rest = babelHelpers.objectWithoutProperties(_ref27, _excluded11);
-  let b = _ref28 === void 0 ? a : _ref28;
+  let b = _ref25 === void 0 ? a : _ref25;
   return (() => {
     let hidden = 3;
     return eval("hidden") + b;
   })();
 }
-function shadowAsync(_ref29, _ref30 = void 0, _ref31 = void 0, _ref32 = void 0) {
-  try {
-    let { a } = _ref29, rest = babelHelpers.objectWithoutProperties(_ref29, _excluded12);
-    let selected = _ref30 === void 0 ? a : _ref30;
-    let read = _ref31 === void 0 ? { ["read"]: () => a }.read : _ref31;
-    let other = _ref32 === void 0 ? { ["other"]: () => outside }.other : _ref32;
-    return (async () => {
-      let outside = 2;
-      return 3;
-    })();
-  } catch (_error) {
-    return (async () => {
-      throw _error;
-    })();
-  }
-}
-function argumentIdentity(_ref33, _ref34 = void 0, _ref35 = void 0) {
-  let _arguments2 = arguments;
-  let { a } = _ref33, rest = babelHelpers.objectWithoutProperties(_ref33, _excluded13);
-  let b = _ref34 === void 0 ? a : _ref34;
-  let saved = _ref35 === void 0 ? _arguments2 : _ref35;
-  return function* () {
-    yield saved === _arguments2;
-  }.apply(this, arguments);
+async function asynchronous(_ref26, _ref27 = void 0) {
+  let { a } = _ref26, rest = babelHelpers.objectWithoutProperties(_ref26, _excluded11);
+  let b = _ref27 === void 0 ? a : _ref27;
+  return b;
 }

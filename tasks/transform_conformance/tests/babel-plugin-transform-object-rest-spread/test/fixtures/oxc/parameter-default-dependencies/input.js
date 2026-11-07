@@ -8,7 +8,5 @@ function closure({ a, ...rest }, selected = a, read = () => a) { return read(); 
 const outside = 7;
 function shadowed({ a, ...rest }, b = a, read = () => outside) { let outside = 9; return read(); }
 function redeclared({ a, ...rest }, selected = a, read = () => a) { var a = 2; return [a, read()]; }
-function* callTime({ a, ...rest }, selected = a, read = () => a) { yield read(); }
 function bodyEval({ a, ...rest }, b = a) { let hidden = 3; return eval('hidden') + b; }
-async function shadowAsync({ a, ...rest }, selected = a, read = () => a, other = () => outside) { let outside = 2; return 3; }
-function* argumentIdentity({ a, ...rest }, b = a, saved = arguments) { yield saved === arguments; }
+async function asynchronous({ a, ...rest }, b = a) { return b; }

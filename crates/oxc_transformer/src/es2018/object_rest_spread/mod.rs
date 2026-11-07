@@ -45,7 +45,7 @@ use crate::{
     common::helper_loader::{Helper, helper_call, helper_call_expr, helper_load},
     context::TraverseCtx,
     state::TransformState,
-    utils::{ast_builder::arrow_function_body_as_function_body_mut, sync_function_symbol_flags},
+    utils::ast_builder::arrow_function_body_as_function_body_mut,
 };
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
@@ -567,19 +567,15 @@ impl<'a> ObjectRestSpread<'a> {
     fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = func.scope_id();
         let Some(body) = func.body.as_mut() else { return };
-        if let Some(wrapped) = Self::lower_parameter_dependencies(
-            &mut func.params,
-            body,
-            scope_id,
-            func.r#async,
-            func.generator,
-            ctx,
-        ) {
-            if wrapped {
-                func.r#async = false;
-                func.generator = false;
-                sync_function_symbol_flags(func, ctx);
-            }
+        if !func.generator
+            && Self::lower_parameter_dependencies(
+                &mut func.params,
+                body,
+                scope_id,
+                func.r#async,
+                ctx,
+            )
+        {
             return;
         }
         for param in &mut func.params.items {
@@ -602,17 +598,8 @@ impl<'a> ObjectRestSpread<'a> {
             return;
         }
         let body = arrow_function_body_as_function_body_mut(&mut arrow.body, ctx);
-        if let Some(wrapped) = Self::lower_parameter_dependencies(
-            &mut arrow.params,
-            body,
-            scope_id,
-            arrow.r#async,
-            false,
-            ctx,
-        ) {
-            if wrapped {
-                arrow.r#async = false;
-            }
+        if Self::lower_parameter_dependencies(&mut arrow.params, body, scope_id, arrow.r#async, ctx)
+        {
             return;
         }
         for param in &mut arrow.params.items {

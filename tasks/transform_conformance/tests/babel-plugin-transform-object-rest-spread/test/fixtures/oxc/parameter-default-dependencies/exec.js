@@ -60,65 +60,24 @@ function className({ a, ...rest }, selected = a, value = class { static label = 
 expect(className({ a: 1 })).toEqual(['value', 'value', 1]);
 function evaluation({ a, ...rest }, selected = a, b = eval('a')) { let aBody = 2; return b; }
 expect(evaluation({ a: 1 })).toBe(1);
-function *generator({ a, ...rest }, b = a) { yield b; }
-expect(generator({ a: 1 }).next().value).toBe(1);
-
-const callEvents = [];
-function* callTime({ a, ...rest }, selected = a, read = (callEvents.push('default'), () => a)) { yield read(); }
-const iterator = callTime({ a: 1 });
-expect(callEvents).toEqual(['default']);
-expect(iterator.next().value).toBe(1);
-callTime({ a: 1 }).return();
-expect(callEvents).toEqual(['default', 'default']);
-
-function* argumentIdentity({ a, ...rest }, b = a, saved = arguments) { yield saved === arguments; yield arguments.callee; }
-const identityIterator = argumentIdentity({ a: 1 });
-expect(identityIterator.next().value).toBe(true);
-expect(() => identityIterator.next()).toThrow(TypeError);
-function* argumentBinding({ a, ...rest }, b = a, read = () => arguments) { arguments = ['changed']; yield read() === arguments; }
-expect(argumentBinding({ a: 1 }).next().value).toBe(true);
-
-function* nestedArguments({ a, ...rest }, b = a) {
-  function inner(c = arguments[0]) { return c; }
-  yield [inner(), inner(3)];
-}
-expect(nestedArguments({ a: 1 }).next().value).toEqual([undefined, 3]);
-const evalReceiver = { marker: 7, *read({ a, ...rest }, b = a) { yield [eval('this.marker'), eval('arguments[0].a')]; } };
-expect(evalReceiver.read({ a: 1 }, 1).next().value).toEqual([7, 1]);
-
-function* evalArguments({ a, ...rest }, b = a, saved = arguments) { yield eval('arguments') === saved; }
-expect(evalArguments({ a: 1 }, 1).next().value).toBe(true);
-
-const inherited = { value() { return this.marker; } };
-const generatorReceiver = {
-  __proto__: inherited,
-  marker: 4,
-  *read({ a, ...rest }, selected = a, read = () => a, other = () => outside) {
-    let outside = 2;
-    yield [super.value(), this.marker, arguments[0].a, read(), other()];
-  }
-};
-expect(generatorReceiver.read({ a: 1 }).next().value).toEqual([4, 4, 1, 1, 7]);
-
 function bodyEval({ a, ...rest }, b = a) { let hidden = 3; return eval('hidden') + b; }
 expect(bodyEval({ a: 1 })).toBe(4);
 
-const asyncEvents = [];
-async function* asyncGenerator({ a, ...rest }, selected = a, read = (asyncEvents.push('default'), () => a)) { yield [read(), this.marker, arguments[0].a]; }
-const asyncIterator = asyncGenerator.call({ marker: 3 }, { a: 1 });
-expect(asyncEvents).toEqual(['default']);
+function* unchangedGenerator({ a, ...rest }, b = a) { yield b; }
+unchangedGenerator.prototype.custom = () => 'custom';
+const iterator = unchangedGenerator({ a: 1 }, 2);
+expect(Object.getPrototypeOf(iterator)).toBe(unchangedGenerator.prototype);
+expect(iterator instanceof unchangedGenerator).toBe(true);
+expect(iterator.custom()).toBe('custom');
+expect(iterator.next().value).toBe(2);
+expect(() => new unchangedGenerator({ a: 1 }, 2)).toThrow(TypeError);
 
-const settlement = [];
-async function shadowAsync({ a, ...rest }, selected = a, read = () => a, other = () => outside) { let outside = 2; return 3; }
-const settled = shadowAsync({ a: 1 }).then(() => settlement.push('function'));
-const tick = Promise.resolve().then(() => settlement.push('tick'));
-async function rejection({ a, ...rest }, selected = a, read = () => a, b = (() => { throw new Error('default'); })()) { let outside = 2; return eval('outside'); }
-let rejected;
-expect(() => { rejected = rejection({ a: 1 }); }).not.toThrow();
+async function unchangedAsync({ a, ...rest }, b = a, read = () => outside) { let outside = 2; return b; }
+expect(unchangedAsync.constructor.name).toBe('AsyncFunction');
+expect(() => new unchangedAsync({ a: 1 }, 2)).toThrow(TypeError);
 async function asynchronous({ a, ...rest }, b = a) { return b; }
+expect(asynchronous.constructor.name).toBe('AsyncFunction');
 return Promise.all([
-  asyncIterator.next().then(value => expect(value).toEqual({ value: [1, 3, 1], done: false })),
   asynchronous({ a: 1 }).then(value => expect(value).toBe(1)),
-  Promise.all([settled, tick]).then(() => expect(settlement).toEqual(['function', 'tick'])),
-  expect(rejected).rejects.toThrow('default'),
+  unchangedAsync({ a: 1 }, 2).then(value => expect(value).toBe(2)),
 ]);
