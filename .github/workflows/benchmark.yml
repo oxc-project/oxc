@@ -28,6 +28,7 @@ jobs:
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12
         with:
           cache-key: benchmark-project-tokens
+          save-cache: true
       - name: Get pinned bundler and real source projects
         run: |
           set -euo pipefail
@@ -49,7 +50,7 @@ jobs:
             source_ref=HEAD
             if [ "$variant" = baseline ]; then source_ref=7c22786f9bb21cf18358b76ca6dc84f8a7d2b16f; fi
             git restore --source="$source_ref" crates/oxc_codegen/src/sourcemap_builder.rs
-            cargo build --release --manifest-path tmp/rolldown/Cargo.toml -p bench --example project_build -j 2
+            (cd tmp/rolldown && cargo build --release -p bench --example project_build -j 2)
             cp "$CARGO_TARGET_DIR/release/examples/project_build" "tmp/project-binaries/$variant"
           done
           python3 tasks/benchmark/project-token-transfer/configure.py "$PWD" "$PWD/tmp/project-inputs" "$PWD/tmp/project-binaries"
