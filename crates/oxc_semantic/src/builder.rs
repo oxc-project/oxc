@@ -109,7 +109,7 @@ pub struct SemanticBuilder<'a> {
 
     /// Should enum member values be evaluated?
     enum_eval: bool,
-    enum_eval_declarations: Vec<crate::ts_enum::eval::EnumEvalDeclaration<'a>>,
+    enum_eval_declarations: SmallVec<[&'a TSEnumDeclaration<'a>; 4]>,
 
     /// Should additional syntax checks be performed?
     ///
@@ -167,7 +167,7 @@ impl<'a> SemanticBuilder<'a> {
             stats: None,
             excess_capacity: 0.0,
             enum_eval: false,
-            enum_eval_declarations: Vec::new(),
+            enum_eval_declarations: SmallVec::new(),
             check_syntax_error: false,
             #[cfg(feature = "cfg")]
             cfg: None,
@@ -353,7 +353,7 @@ impl<'a> SemanticBuilder<'a> {
             crate::ts_enum::eval::evaluate_declarations(
                 &self.enum_eval_declarations,
                 &mut self.scoping,
-                self.source_text.len(),
+                program,
             );
         }
 
@@ -2691,14 +2691,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(init) = &decl.init {
             self.visit_expression(init);
         }
-        if self.enum_eval
-            && self.source_type.is_typescript()
-            && let BindingPattern::BindingIdentifier(binding) = &decl.id
-            && self.scoping.symbol_flags(binding.symbol_id()).is_const_variable()
-        {
-            self.enum_eval_declarations
-                .push(crate::ts_enum::eval::EnumEvalDeclaration::Const(self.alloc(decl)));
-        }
         self.leave_node(kind);
     }
 
@@ -2867,8 +2859,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_binding_identifier(&decl.id);
         self.visit_ts_enum_body(&decl.body);
         if self.enum_eval {
-            self.enum_eval_declarations
-                .push(crate::ts_enum::eval::EnumEvalDeclaration::Enum(self.alloc(decl)));
+            self.enum_eval_declarations.push(self.alloc(decl));
         }
         self.leave_node(kind);
         self.leave_ambient_context(decl.declare);

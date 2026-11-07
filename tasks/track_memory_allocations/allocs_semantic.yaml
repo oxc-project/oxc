@@ -1,8 +1,8 @@
 checker.ts:
   file size: 2922154 # 2.92 MB
-  sys allocs: 46
-  sys reallocs: 0
-  sys deallocs: 46
+  sys allocs: 47
+  sys reallocs: 2
+  sys deallocs: 47
   sys alloc bytes: 3866958 # 3.87 MB
   sys peak growth: 3858362 # 3.86 MB
   arena allocs: 0

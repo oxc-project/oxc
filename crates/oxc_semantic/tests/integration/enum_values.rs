@@ -124,6 +124,28 @@ fn expanding_const_strings_are_bounded() {
 }
 
 #[test]
+fn deep_const_aliases() {
+    use std::fmt::Write;
+    for (literal, expected) in
+        [("1", ConstantValue::Number(1.0)), ("'s'", ConstantValue::String("s".into()))]
+    {
+        let mut source = format!("const n0 = {literal};");
+        for i in 1..=1000 {
+            write!(source, "const n{i} = n{};", i - 1).unwrap();
+        }
+        source.push_str("enum E { X = n1000 }");
+        assert_eq!(get_enum_member_value(&source, "X"), Some(expected));
+    }
+}
+
+#[test]
+fn nested_destructured_const_is_not_evaluated() {
+    let source =
+        format!("{}const {{ x }} = value; enum E {{ X = x }}{}", "{".repeat(64), "}".repeat(64));
+    assert_eq!(get_enum_member_value(&source, "X"), None);
+}
+
+#[test]
 fn binary_expressions() {
     let source = "enum A { X = 1 + 2, Y = 1 << 3 }";
     debug_assert_eq!(get_enum_member_value(source, "X"), Some(ConstantValue::Number(3.0)));
