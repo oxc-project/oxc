@@ -56,10 +56,9 @@ pub(super) unsafe fn classify_avx2(
         let tb1 = v_wblo.shuffle_u8s(v1) & v_wbhi.shuffle_u8s(hn1);
         // Non-ASCII bytes count as identifier chars in `word` and are folded
         // into `misc` so `misc_pre` can re-classify Unicode whitespace.
-        let na0 = v0.lt_i8(0);
-        let na1 = v1.lt_i8(0);
-        let w0 = (tb0 & WORD_MASK).gt_i8(0) | na0;
-        let w1 = (tb1 & WORD_MASK).gt_i8(0) | na1;
+        // Blend and movemask read only the top bit, which adding 0x7f sets for ASCII word bytes.
+        let w0 = (tb0 & WORD_MASK).add_u8(0x7f) | v0;
+        let w1 = (tb1 & WORD_MASK).add_u8(0x7f) | v1;
         let nws0 = (tb0 & WS_MASK).eq_u8(0);
         let nws1 = (tb1 & WS_MASK).eq_u8(0);
         let d0 = (tb0 & DIGIT_MASK).gt_i8(0);
@@ -68,9 +67,11 @@ pub(super) unsafe fn classify_avx2(
         let wsm = ((!nws0.movemask()) as u64) | (((!nws1.movemask()) as u64) << 32);
         *word.add(b) = wordm;
         *digit.add(b) = (d0.movemask() as u64) | ((d1.movemask() as u64) << 32);
-        let misc0 = (v0.eq_u8(b'#') | v0.eq_u8(b'\\') | na0).movemask() as u64;
-        let misc1 = (v1.eq_u8(b'#') | v1.eq_u8(b'\\') | na1).movemask() as u64;
-        *misc.add(b) = misc0 | (misc1 << 32);
+        let misc0 = (v0.eq_u8(b'#') | v0.eq_u8(b'\\') | v0).movemask() as u64;
+        let misc1 = (v1.eq_u8(b'#') | v1.eq_u8(b'\\') | v1).movemask() as u64;
+        // VT and FF are the only bytes with the top bit of tb set.
+        let vt_ff = (tb0.movemask() as u64) | ((tb1.movemask() as u64) << 32);
+        *misc.add(b) = misc0 | (misc1 << 32) | vt_ff;
         let t0 = v_mlo.shuffle_u8s(v0) & v_mhi.shuffle_u8s(hn0);
         let t1 = v_mlo.shuffle_u8s(v1) & v_mhi.shuffle_u8s(hn1);
         *dot.add(b) = (t0.movemask() as u64) | ((t1.movemask() as u64) << 32);

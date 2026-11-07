@@ -89,10 +89,7 @@ pub(super) const MERGED_LUTS: MergedLuts = {
 /// Works the same way as [`MergedLuts`].
 /// For an ASCII byte `c`, `lo[c & 15] & hi[c >> 4]` has these bits set:
 ///
-/// * Bits 0-5: `c` is an identifier char. One bit per row: `$`, digits, `A`-`O`, `P`-`Z` and `_`,
-///   `a`-`o`, `p`-`z`. Bit 1 (digits) also serves as the digit class.
-/// * Bit 6: `c` is whitespace other than space (tab, line feed etc).
-/// * Bit 7: `c` is space.
+/// * Bits 0-4: identifier chars, bit 1 being digits. Bits 5-7: space, tab LF and CR, VT and FF.
 ///
 /// Bytes >= 0x80 get no bits.
 /// The SIMD implementations of `classify` count them as identifier chars separately.
@@ -102,11 +99,13 @@ pub(super) struct WordLuts {
 }
 
 /// Bits of a [`WORD_LUTS`] lookup which are set if a byte is an identifier char.
-pub(super) const WORD_MASK: u8 = 0x3f;
+pub(super) const WORD_MASK: u8 = 0x1f;
 /// Bits of a [`WORD_LUTS`] lookup which are set if a byte is whitespace.
-pub(super) const WS_MASK: u8 = 0xc0;
+pub(super) const WS_MASK: u8 = 0xe0;
 /// Bit of a [`WORD_LUTS`] lookup which is set if a byte is a digit.
 pub(super) const DIGIT_MASK: u8 = 0x02;
+/// Bit of a WORD_LUTS lookup which is set if a byte is vertical tab or form feed.
+pub(super) const VT_FF_MASK: u8 = 0x80;
 
 pub(super) const WORD_LUTS: WordLuts = {
     let cpu = BASELINE;
@@ -114,7 +113,9 @@ pub(super) const WORD_LUTS: WordLuts = {
     let mut wb_lo = [0; 16];
     let mut wb_hi = [0; 16];
 
-    const BROWS: [(u8, u8); 8] = [(2, 0), (3, 1), (4, 2), (5, 3), (6, 4), (7, 5), (0, 6), (2, 7)];
+    // A-O and a-o share bit 2, which stays exact because their low nibbles are the same.
+    const BROWS: [(u8, u8); 9] =
+        [(2, 0), (3, 1), (4, 2), (6, 2), (5, 3), (7, 4), (2, 5), (0, 6), (0, 7)];
 
     let mut i = 0;
     while i < BROWS.len() {
@@ -126,12 +127,12 @@ pub(super) const WORD_LUTS: WordLuts = {
             let inset = match bit {
                 0 => c == b'$',
                 1 => is_digit(c, cpu),
-                2 => c >= b'A' && c <= b'O',
+                2 => (c >= b'A' && c <= b'O') || (c >= b'a' && c <= b'o'),
                 3 => (c >= b'P' && c <= b'Z') || c == b'_',
-                4 => c >= b'a' && c <= b'o',
-                5 => c >= b'p' && c <= b'z',
-                6 => is_ws(c, cpu) && c != b' ',
-                _ => c == b' ',
+                4 => c >= b'p' && c <= b'z',
+                5 => c == b' ',
+                6 => is_ws(c, cpu) && c != b' ' && c != 0x0b && c != 0x0c,
+                _ => c == 0x0b || c == 0x0c,
             };
             if inset {
                 wb_lo[lo as usize] |= 1u8 << bit;
@@ -188,10 +189,12 @@ mod tests {
             let wd = (c >= 0x80) || (tb & WORD_MASK) != 0;
             let ws = (tb & WS_MASK) != 0;
             let dg = (tb & DIGIT_MASK) != 0;
+            let vt_ff = (tb & VT_FF_MASK) != 0;
             assert!(
                 wd == is_word(cb, BASELINE)
                     && ws == is_ws(cb, BASELINE)
-                    && dg == is_digit(cb, BASELINE),
+                    && dg == is_digit(cb, BASELINE)
+                    && vt_ff == matches!(cb, 0x0b | 0x0c),
                 " WORD_LUTS.lo / hi wrong at byte {c:#04x}"
             );
         }

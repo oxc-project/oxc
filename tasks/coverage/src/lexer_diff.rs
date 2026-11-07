@@ -106,7 +106,7 @@ pub fn run_lexer_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
 
 fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
     // If parser panics, there is nothing to compare against, so skip fixture
-    let Ok((old_spans, mut old_comments, old_error, old_last_error_start)) =
+    let Ok((old_spans, mut old_comments, mut old_ws, old_error, old_last_error_start)) =
         catch_unwind(AssertUnwindSafe(|| parser_stream(code, source_type)))
     else {
         return TestResult::Passed;
@@ -116,7 +116,7 @@ fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
         Ok(output) => output,
         Err(failure) => return failure,
     };
-    let (new_spans, mut new_comments, new_error) = lexer_stream(code, &result, &arena);
+    let (new_spans, mut new_comments, mut new_ws, new_error) = lexer_stream(code, &result, &arena);
 
     // Only compare comments which start before the parser's last error.
     //
@@ -131,11 +131,21 @@ fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
     if let Some(end) = old_last_error_start {
         old_comments.retain(|comment| comment.span.start < end);
         new_comments.retain(|comment| comment.span.start < end);
+        old_ws.retain(|span| span.start < end);
+        new_ws.retain(|span| span.start < end);
     }
+    let trivia_diff = || match comment_diff(code, &new_comments, &old_comments) {
+        TestResult::Passed if new_ws != old_ws => TestResult::Mismatch(
+            "IrregularWhitespaces",
+            fmt_spans(&new_ws, code),
+            fmt_spans(&old_ws, code),
+        ),
+        result => result,
+    };
 
     // A fatal error discards the parser's tokens, so only comments can be compared
     let Some(old_spans) = old_spans else {
-        return comment_diff(code, &new_comments, &old_comments);
+        return trivia_diff();
     };
 
     if new_spans == old_spans {
@@ -145,7 +155,7 @@ fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
                 format!("first error: {}\n", fmt_diagnostic(new_error)),
                 "(parser reported no errors)\n".to_string(),
             ),
-            _ => comment_diff(code, &new_comments, &old_comments),
+            _ => trivia_diff(),
         };
     }
 
@@ -153,7 +163,7 @@ fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
         && diagnostic_key(new_error) == diagnostic_key(old_error)
         && prefix_matches(&new_spans, &old_spans, label_start(old_error))
     {
-        return comment_diff(code, &new_comments, &old_comments);
+        return trivia_diff();
     }
 
     token_mismatch(code, &new_spans, &old_spans, new_error.as_ref(), old_error.as_ref())
@@ -164,7 +174,7 @@ fn lexer_stream(
     code: &str,
     result: &LexResult,
     arena: &Arena,
-) -> (Vec<Span>, Vec<Comment>, Option<OxcDiagnostic>) {
+) -> (Vec<Span>, Vec<Comment>, Vec<Span>, Option<OxcDiagnostic>) {
     let kinds = result.tok_kinds(arena);
     let token_spans = result.tok_spans(arena);
     assert_eq!(kinds.len(), token_spans.len());
@@ -178,6 +188,7 @@ fn lexer_stream(
         .collect();
 
     let comments = result.comments(arena).to_vec();
+    let irregular_whitespaces = result.irregular_whitespaces(arena).to_vec();
 
     let error = result
         .diagnostics()
@@ -185,7 +196,7 @@ fn lexer_stream(
         .min_by_key(|error| error.off)
         .map(|error| to_oxc_diagnostic(error, code));
 
-    (spans, comments, error)
+    (spans, comments, irregular_whitespaces, error)
 }
 
 /// Lex `code` with `oxc_lexer`, with each CPU feature set this CPU supports,
@@ -274,6 +285,10 @@ fn first_difference(a: &(LexResult, Arena), b: &(LexResult, Arena)) -> Option<(S
         .or_else(|| lane_difference("regex flags", a.regex_flags(a_arena), b.regex_flags(b_arena)))
         .or_else(|| lane_difference("comments", a.comments(a_arena), b.comments(b_arena)))
         .or_else(|| {
+            let (a_ws, b_ws) = (a.irregular_whitespaces(a_arena), b.irregular_whitespaces(b_arena));
+            lane_difference("irregular whitespaces", a_ws, b_ws)
+        })
+        .or_else(|| {
             lane_difference("hit resource limit", &[a.hit_resource_limit], &[b.hit_resource_limit])
         })
 }
@@ -290,23 +305,25 @@ fn lane_difference<T: PartialEq + Debug>(name: &str, a: &[T], b: &[T]) -> Option
     Some((describe(a), describe(b)))
 }
 
+/// Token spans, comments, irregular whitespaces, first error and start of the last error.
+type ParserStream =
+    (Option<Vec<Span>>, Vec<Comment>, Vec<Span>, Option<OxcDiagnostic>, Option<u32>);
+
 /// Get token stream and comments from `oxc_parser`,
 /// plus the first error and the start of the last error (if any).
 /// Token stream is `None` if parser hit a fatal error.
-fn parser_stream(
-    code: &str,
-    source_type: SourceType,
-) -> (Option<Vec<Span>>, Vec<Comment>, Option<OxcDiagnostic>, Option<u32>) {
+fn parser_stream(code: &str, source_type: SourceType) -> ParserStream {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, code, source_type).with_config(TokensParserConfig).parse();
 
     let spans =
         if ret.fatal_error { None } else { Some(ret.tokens.iter().map(Token::span).collect()) };
     let comments = ret.program.comments.iter().map(conform_comment).collect();
+    let irregular_whitespaces = ret.irregular_whitespaces.to_vec();
     let last_error_start = ret.diagnostics.iter().map(label_start).max();
     let error = ret.diagnostics.into_iter().min_by_key(label_start);
 
-    (spans, comments, error, last_error_start)
+    (spans, comments, irregular_whitespaces, error, last_error_start)
 }
 
 /// Copy of a comment from the parser, with the fields which only the parser sets reset to the values

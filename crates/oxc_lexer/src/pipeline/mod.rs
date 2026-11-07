@@ -38,7 +38,7 @@ use classify::classify;
 use coalesce::{KWB, coalesce};
 use compress::{STAGE_CAP, compress, init_pair_luts, write_sentinels};
 use disambiguate::{Brackets, Closers, Tokens};
-use misc::{misc_post, misc_pre};
+use misc::{misc_post, misc_pre, retain_code_whitespace};
 
 pub struct Lexer {
     word: Vec<u64>,
@@ -197,6 +197,9 @@ impl Lexer {
         carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes, cpu);
         coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes, cpu);
         misc_post(sp, n, st, word, misc, kind, nesc, cpu);
+        if !self.lanes.irregular_whitespaces.is_empty() {
+            retain_code_whitespace(&self.st, &self.kind, &mut self.lanes.irregular_whitespaces);
+        }
         let sig_len = compress(
             src,
             n,

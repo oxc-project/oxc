@@ -122,6 +122,10 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
             copy_lane(&l.regex_flags, arena.regex_flags.cast::<u8>(), arena.regex_flags_capacity);
         let n_cr = copy_lane(&l.comments, arena.comments, arena.comments_capacity);
         let n_diag = copy_lane(&l.diags, arena.diags, arena.diags_capacity);
+        arena.irregular_whitespaces.clear();
+        arena.irregular_whitespaces.extend_from_slice(&l.irregular_whitespaces);
+        #[expect(clippy::cast_possible_truncation, reason = "bounded by MAX_SOURCE_LEN")]
+        let n_irr = l.irregular_whitespaces.len() as u32;
 
         #[expect(
             clippy::cast_possible_truncation,
@@ -143,6 +147,7 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
             regex_flags_count: n_rxf,
             comments_count: n_cr,
             cooked_bytes_count: n_cb,
+            irregular_whitespaces_count: n_irr,
         }
     })
 }
@@ -215,6 +220,7 @@ fn empty_result(arena: &Arena) -> LexResult {
         regex_flags_count: 0,
         comments_count: 0,
         cooked_bytes_count: 0,
+        irregular_whitespaces_count: 0,
     }
 }
 
