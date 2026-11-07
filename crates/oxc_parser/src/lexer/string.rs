@@ -6,7 +6,7 @@ use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
     Kind, Lexer, Span, Token, cold_branch,
-    search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
+    search::{SafeByteMatchTable, byte_search, find_ascii_byte4, safe_byte_match_table},
 };
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
@@ -37,6 +37,8 @@ macro_rules! handle_string_literal {
             lexer: $lexer,
             table: $table,
             start: after_opening_quote,
+            search: find_ascii_byte4::<$delimiter, b'\\', b'\r', b'\n'>,
+            continue_if: (byte, pos) false,
             handle_eof: {
                 // Unterminated string is invalid JS, so a cold path. Building the diagnostic
                 // out-of-line keeps the `OxcDiagnostic` return buffer out of this handler's

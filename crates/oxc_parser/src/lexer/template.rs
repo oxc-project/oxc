@@ -7,7 +7,7 @@ use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
     Kind, Lexer, SourcePosition, Token, cold_branch,
-    search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
+    search::{SafeByteMatchTable, byte_search, find_ascii_byte4, safe_byte_match_table},
 };
 
 const MIN_ESCAPED_TEMPLATE_LIT_LEN: usize = 16;
@@ -25,10 +25,13 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// the unescaped string. This division keeps the path for common case as fast as possible.
     pub(super) fn read_template_literal(&mut self, substitute: Kind, tail: Kind) -> Kind {
         let mut ret = substitute;
+        let start = self.source.position();
 
         byte_search! {
             lexer: self,
             table: TEMPLATE_LITERAL_TABLE,
+            start: start,
+            search: find_ascii_byte4::<b'$', b'`', b'\r', b'\\'>,
             continue_if: (next_byte, pos) {
                 match next_byte {
                     b'$' => {
@@ -210,6 +213,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             lexer: self,
             table: TEMPLATE_LITERAL_TABLE,
             start: pos,
+            search: find_ascii_byte4::<b'$', b'`', b'\r', b'\\'>,
             continue_if: (next_byte, pos) {
                 if next_byte == b'$' {
                     // SAFETY: Next byte is `$` which is ASCII, so after it is a UTF-8 char boundary

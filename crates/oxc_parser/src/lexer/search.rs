@@ -142,6 +142,44 @@ macro_rules! safe_byte_match_table {
 }
 pub(crate) use safe_byte_match_table;
 
+/// Find the first of four ASCII bytes, skipping eight bytes at a time.
+#[inline]
+pub(super) fn find_ascii_byte4<const A: u8, const B: u8, const C: u8, const D: u8>(
+    bytes: &[u8],
+) -> Option<usize> {
+    const { assert!(A.is_ascii() && B.is_ascii() && C.is_ascii() && D.is_ascii()) };
+    const LO: u64 = 0x0101_0101_0101_0101;
+    const HI: u64 = 0x8080_8080_8080_8080;
+
+    let mut offset = 0;
+    while offset + 8 <= bytes.len() {
+        let word = u64::from_le_bytes(bytes[offset..offset + 8].try_into().unwrap());
+        let mask = |byte| {
+            let value = word ^ (LO * u64::from(byte));
+            value.wrapping_sub(LO) & !value & HI
+        };
+        let matches = mask(A) | mask(B) | mask(C) | mask(D);
+        if matches != 0 {
+            return Some(offset + matches.trailing_zeros() as usize / 8);
+        }
+        offset += 8;
+    }
+    bytes[offset..]
+        .iter()
+        .position(|&b| b == A || b == B || b == C || b == D)
+        .map(|index| offset + index)
+}
+
+macro_rules! byte_search_batch {
+    ($batch:ident, $table:ident) => {
+        $batch.iter().position(|&byte| $table.matches(byte))
+    };
+    ($batch:ident, $table:ident, $search:expr) => {
+        ($search)($batch)
+    };
+}
+pub(crate) use byte_search_batch;
+
 /// Macro to search for first byte matching a `SafeByteMatchTable`.
 ///
 /// Search processes source in batches of `SEARCH_BATCH_SIZE` bytes for speed.
@@ -255,6 +293,8 @@ pub(crate) use safe_byte_match_table;
 /// Using `byte_search!` with the provided `SafeByteMatchTable` is guaranteed to leave
 /// `lexer.source` positioned on a UTF-8 character boundary when entering `handle_match`, which
 /// makes the internal calls to `Source`'s unsafe methods sound.
+/// If a specialized `search` is supplied, it must return the first matching index in its
+/// input, using exactly the same byte set as the table, or `None` if there is no match.
 macro_rules! byte_search {
     // Simple version.
     // `start` is calculated from current position of `lexer.source`.
@@ -312,6 +352,7 @@ macro_rules! byte_search {
         lexer: $lexer:ident,
         table: $table:ident,
         start: $start:ident,
+        $(search: $search:expr,)?
         continue_if: ($byte:ident, $pos:ident) $should_continue:expr,
         handle_eof: $eof_handler:expr,
     ) => {{
@@ -343,13 +384,11 @@ macro_rules! byte_search {
                 // So `$pos.add()` in this loop cannot go out of bounds.
                 let batch = unsafe { $pos.slice(crate::lexer::search::SEARCH_BATCH_SIZE) };
                 'inner: loop {
-                    for (i, &byte) in batch.iter().enumerate() {
-                        if $table.matches(byte) {
-                            // SAFETY: Cannot go out of bounds (see above).
-                            // Also see above about UTF-8 character boundaries invariant.
-                            $pos = unsafe { $pos.add(i) };
-                            break 'inner byte;
-                        }
+                    if let Some(i) = crate::lexer::search::byte_search_batch!(batch, $table $(, $search)?) {
+                        // SAFETY: Batch search returns an index of a matching byte in `batch`.
+                        // The specialized search must match exactly the bytes in `$table`.
+                        $pos = unsafe { $pos.add(i) };
+                        break 'inner batch[i];
                     }
                     // No match in batch - search next batch.
                     // SAFETY: Cannot go out of bounds (see above).
@@ -412,3 +451,31 @@ macro_rules! byte_search {
     }};
 }
 pub(crate) use byte_search;
+
+#[cfg(test)]
+mod tests {
+    use super::find_ascii_byte4;
+
+    #[test]
+    fn four_byte_search_matches_scalar() {
+        fn check<const A: u8, const B: u8, const C: u8, const D: u8>() {
+            for len in 0..=24 {
+                let mut bytes = vec![b'x'; len];
+                for index in 0..len {
+                    for byte in 0..=u8::MAX {
+                        bytes[index] = byte;
+                        let expected = bytes.iter().position(|&b| [A, B, C, D].contains(&b));
+                        assert_eq!(find_ascii_byte4::<A, B, C, D>(&bytes), expected);
+                    }
+                    bytes[index] = b'x';
+                }
+            }
+            // A zero-byte mask can also mark a subsequent byte after a borrow.
+            let bytes = [b'x', b'x', A, A ^ 1, B, B ^ 1, C, D];
+            assert_eq!(find_ascii_byte4::<A, B, C, D>(&bytes), Some(2));
+        }
+        check::<b'"', b'\\', b'\r', b'\n'>();
+        check::<b'\'', b'\\', b'\r', b'\n'>();
+        check::<b'$', b'`', b'\r', b'\\'>();
+    }
+}
