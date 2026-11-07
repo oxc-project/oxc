@@ -258,8 +258,8 @@ export function foo(a: any): number {
     fn dts_literal_inference() {
         transform_dts_test("export const foo = 42;", "export declare const foo = 42;");
         transform_dts_test("export const foo = \"foo\";", "export declare const foo = \"foo\";");
-        transform_dts_test("export const foo = true;", "export declare const foo: boolean;");
-        transform_dts_test("export const foo = false;", "export declare const foo: boolean;");
+        transform_dts_test("export const foo = true;", "export declare const foo = true;");
+        transform_dts_test("export const foo = false;", "export declare const foo = false;");
         transform_dts_test("export const foo = null;", "export declare const foo: null;");
         transform_dts_test("export let foo = undefined;", "export declare let foo: undefined;");
         transform_dts_test("export let foo = 10n;", "export declare let foo: bigint;");
