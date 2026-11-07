@@ -1,0 +1,30 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/declare-enum.ts
+---
+```
+==================== .D.TS ====================
+
+export declare enum Mode {
+	Read,
+	Write
+}
+export declare enum E {
+	A,
+	B = 5,
+	C
+}
+export declare enum F {
+	A = 2,
+	B,
+	C = "c"
+}
+export declare const enum G {
+	A = 0,
+	B = 5,
+	C = 6
+}
+export declare enum H {
+	A = 0,
+	B = 1
+}
