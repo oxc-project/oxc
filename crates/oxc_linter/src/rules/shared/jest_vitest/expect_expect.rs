@@ -6,15 +6,15 @@ use serde::de::Error;
 use oxc_ast::{
     AstKind,
     ast::{
-        BlockStatement, CallExpression, Expression, ExpressionStatement, FormalParameter, Function,
-        IdentifierReference, IfStatement, Statement,
+        BindingPattern, BlockStatement, CallExpression, Expression, ExpressionStatement,
+        FormalParameter, Function, IdentifierReference, IfStatement, Statement,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, format_compact_str};
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
@@ -235,6 +235,9 @@ fn run<'a>(
             // Visit each argument of the test call
             for argument in &call_expr.arguments {
                 if let Some(expr) = argument.as_expression() {
+                    if use_vitest_assertions {
+                        visitor.bench_fixture_name = bench_fixture_name(expr);
+                    }
                     visitor.check_expression(expr);
                     if visitor.found_assertion {
                         return;
@@ -249,9 +252,32 @@ fn run<'a>(
     }
 }
 
+/// Returns the name a Vitest `bench` test-context fixture is reachable under in a test callback:
+/// `bench` for `({ bench })`, `b` for `({ bench: b })` and `ctx.bench` for `(ctx)`.
+fn bench_fixture_name(callback: &Expression<'_>) -> Option<CompactStr> {
+    let params = match callback {
+        Expression::FunctionExpression(func) => &func.params,
+        Expression::ArrowFunctionExpression(func) => &func.params,
+        _ => return None,
+    };
+    match &params.items.first()?.pattern {
+        BindingPattern::BindingIdentifier(id) => Some(format_compact_str!("{}.bench", id.name)),
+        BindingPattern::ObjectPattern(pattern) => pattern
+            .properties
+            .iter()
+            .find(|prop| prop.key.is_specific_static_name("bench"))?
+            .value
+            .get_identifier_name()
+            .map(CompactStr::from),
+        _ => None,
+    }
+}
+
 struct AssertionVisitor<'a, 'b> {
     ctx: &'b LintContext<'a>,
     assert_function_matchers: &'b [AssertFunctionMatcher],
+    /// Calls to the Vitest `bench` fixture count as assertions: a benchmark has nothing to assert.
+    bench_fixture_name: Option<CompactStr>,
     visited: FxHashSet<Span>,
     found_assertion: bool,
 }
@@ -264,6 +290,7 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
         Self {
             ctx,
             assert_function_matchers,
+            bench_fixture_name: None,
             visited: FxHashSet::default(),
             found_assertion: false,
         }
@@ -323,7 +350,12 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
 impl<'a> VisitJs<'a> for AssertionVisitor<'a, '_> {
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         let name = get_node_name(&call_expr.callee);
-        if self.assert_function_matchers.iter().any(|matcher| matcher.is_match(&name)) {
+        if self.assert_function_matchers.iter().any(|matcher| matcher.is_match(&name))
+            || self
+                .bench_fixture_name
+                .as_ref()
+                .is_some_and(|bench| is_exact_assert_function_match(&name, bench))
+        {
             self.found_assertion = true;
             return;
         }

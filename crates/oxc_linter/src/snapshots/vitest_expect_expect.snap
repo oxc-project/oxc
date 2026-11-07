@@ -108,3 +108,17 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     // ...
    ╰────
   help: Add assertion(s) in this Test
+
+  ⚠ vitest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail', ({ bench }) => {});
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ vitest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail', ({ task }) => { bench('x', () => {}); });
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test

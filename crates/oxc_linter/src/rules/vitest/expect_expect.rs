@@ -268,7 +268,27 @@ fn test() {
 
                 ",
             None,
-        )
+        ),
+        (
+            "import { test } from 'vitest';
+
+            test('sum', async ({ bench }) => {
+              await bench.compare(
+                bench('reduce', () => { [1, 2, 3].reduce((a, b) => a + b, 0); }),
+                bench('loop', () => { let total = 0; for (const n of [1, 2, 3]) total += n; }),
+              );
+            });",
+            None,
+        ),
+        (
+            "test('parse', async ({ bench }) => { await bench('parse', () => JSON.parse('{}')).run(); });",
+            None,
+        ),
+        (
+            "test('parse', { retry: 3 }, async ({ bench: b }) => { await b('parse', () => {}).run(); });",
+            None,
+        ),
+        ("test('parse', async (ctx) => { await ctx.bench('parse', () => {}).run(); });", None),
     ];
 
     let fail = vec![
@@ -337,6 +357,8 @@ fn test() {
             ",
             Some(serde_json::json!([{ "assertFunctionNames": ["expect", "foo"] }])),
         ),
+        ("test('should fail', ({ bench }) => {});", None),
+        ("test('should fail', ({ task }) => { bench('x', () => {}); });", None),
         // Todo: currently we couldn't support ignore the typecheck option.
         // (
         //     "
