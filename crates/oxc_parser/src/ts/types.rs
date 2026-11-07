@@ -189,16 +189,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.parse_ts_type_parameters_impl(false)
     }
 
+    #[inline]
     fn parse_ts_type_parameters_impl(
         &mut self,
         allow_variance: bool,
     ) -> (Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>, bool) {
-        if !self.is_ts {
+        if !self.is_ts || !self.at(Kind::LAngle) {
             return (None, false);
         }
-        if !self.at(Kind::LAngle) {
-            return (None, false);
-        }
+        self.parse_ts_type_parameters_worker(allow_variance)
+    }
+
+    fn parse_ts_type_parameters_worker(
+        &mut self,
+        allow_variance: bool,
+    ) -> (Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>, bool) {
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.advance(Kind::LAngle);
@@ -917,10 +922,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         None
     }
 
+    #[inline]
     pub(crate) fn parse_type_arguments_of_type_reference(
         &mut self,
     ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
-        if !self.cur_token().is_on_new_line() && self.re_lex_ts_l_angle() {
+        if self.cur_token().is_on_new_line()
+            || !matches!(
+                self.cur_kind(),
+                Kind::LAngle | Kind::ShiftLeft | Kind::LtEq | Kind::ShiftLeftEq
+            )
+        {
+            return None;
+        }
+        self.parse_type_arguments_of_type_reference_impl()
+    }
+
+    fn parse_type_arguments_of_type_reference_impl(
+        &mut self,
+    ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
+        if self.re_lex_ts_l_angle() {
             let start = self.cur_start();
             let opening_span = self.cur_token().span();
             debug_assert!(self.at(Kind::LAngle));
