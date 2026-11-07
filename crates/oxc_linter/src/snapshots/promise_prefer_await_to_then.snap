@@ -10,6 +10,34 @@ source: crates/oxc_linter/src/tester.rs
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
   ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:59]
+ 1 │ import { pending } from './pending'; const next = pending.then(x => x)
+   ·                                                           ────
+   ╰────
+  help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
+
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:55]
+ 1 │ import pending from './pending'; const next = pending.catch(x => x)
+   ·                                                       ─────
+   ╰────
+  help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
+
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:58]
+ 1 │ const pending = import('./module'); const next = pending.then(x => x)
+   ·                                                          ────
+   ╰────
+  help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
+
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:33]
+ 1 │ const next = import('./module').then(x => x)
+   ·                                 ────
+   ╰────
+  help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
+
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:43]
  1 │ function foo() { hey.then(function() { }).then() }
    ·                                           ────
