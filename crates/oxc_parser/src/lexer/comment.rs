@@ -23,12 +23,41 @@ static LINE_BREAK_TABLE: SafeByteMatchTable =
 static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| matches!(b, b'*' | b'\r' | b'\n' | LS_OR_PS_FIRST));
 
+/// Find a line break candidate, or a possible block-comment terminator.
+/// The first 0xE2 byte is checked by the caller for Unicode LS/PS.
+#[inline]
+fn find_comment_special<const BLOCK: bool>(bytes: &[u8]) -> Option<usize> {
+    const LO: u64 = 0x0101_0101_0101_0101;
+    const HI: u64 = 0x8080_8080_8080_8080;
+
+    let mut offset = 0;
+    while offset + 8 <= bytes.len() {
+        let word = u64::from_le_bytes(bytes[offset..offset + 8].try_into().unwrap());
+        let mask = |byte| {
+            let value = word ^ (LO * u64::from(byte));
+            value.wrapping_sub(LO) & !value & HI
+        };
+        let mut matches = mask(b'\r') | mask(b'\n') | mask(LS_OR_PS_FIRST);
+        if BLOCK {
+            matches |= mask(b'*');
+        }
+        if matches != 0 {
+            return Some(offset + matches.trailing_zeros() as usize / 8);
+        }
+        offset += 8;
+    }
+    bytes[offset..]
+        .iter()
+        .position(|&b| matches!(b, b'\r' | b'\n' | LS_OR_PS_FIRST) || (BLOCK && b == b'*'))
+        .map(|index| offset + index)
+}
+
 impl<'a, C: Config> Lexer<'a, C> {
     /// Section 12.4 Single Line Comment
     pub(super) fn skip_single_line_comment(&mut self, kind: CommentKind) -> Kind {
         let start = self.source.position();
         let remaining = self.source.remaining().as_bytes();
-        let Some(index) = memchr::memchr3(b'\r', b'\n', LS_OR_PS_FIRST, remaining) else {
+        let Some(index) = find_comment_special::<false>(remaining) else {
             self.source.advance_to_end();
             self.trivia_builder.add_line_comment(
                 self.token.start(),
@@ -239,5 +268,53 @@ impl<'a, C: Config> Lexer<'a, C> {
             self.consume_char();
         }
         Kind::HashbangComment
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::find_comment_special;
+
+    #[test]
+    fn swar_comment_search_matches_scalar() {
+        fn check<const BLOCK: bool>() {
+            let expected = |bytes: &[u8]| {
+                bytes
+                    .iter()
+                    .position(|&b| matches!(b, b'\r' | b'\n' | 0xE2) || (BLOCK && b == b'*'))
+            };
+            for len in 0..=33 {
+                let mut bytes = vec![b'x'; len];
+                for index in 0..len {
+                    for byte in 0..=u8::MAX {
+                        bytes[index] = byte;
+                        assert_eq!(find_comment_special::<BLOCK>(&bytes), expected(&bytes));
+                    }
+                    bytes[index] = b'x';
+                }
+            }
+            // Borrow propagation may mark a byte after the actual match, but must
+            // never change the position of the first match.
+            for special in [b'\r', b'\n', 0xE2, b'*'] {
+                let bytes = [b'x', b'x', special, special ^ 1, b'x', b'x', b'x', b'x'];
+                assert_eq!(find_comment_special::<BLOCK>(&bytes), expected(&bytes));
+            }
+            let mut seed = 0x1234_5678_u32;
+            for len in 0..=96 {
+                for _ in 0..32 {
+                    let bytes: Vec<_> = (0..len)
+                        .map(|_| {
+                            seed ^= seed << 13;
+                            seed ^= seed >> 17;
+                            seed ^= seed << 5;
+                            seed.to_le_bytes()[0]
+                        })
+                        .collect();
+                    assert_eq!(find_comment_special::<BLOCK>(&bytes), expected(&bytes));
+                }
+            }
+        }
+        check::<false>();
+        check::<true>();
     }
 }
