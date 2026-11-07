@@ -109,23 +109,28 @@ impl<'a> SveltePartialLoader<'a> {
                     tag.find(|c: char| is_svelte_whitespace(c) || matches!(c, '/' | '>'))?;
                 let name = &tag[..name_end];
                 let closing = rest.starts_with("</");
-                if !closing && name == "script" {
-                    return Some(pointer + SCRIPT_START.len());
-                }
-                let static_text = name == "style" && context.is_root();
+                let static_text = matches!(name, "script" | "style") && context.is_root();
                 let Some(end) = find_markup_tag_end(self.source_text, pointer + 1, static_text)
                 else {
                     pointer += 1;
                     continue;
                 };
-                let self_closing = self.source_text[pointer..end - 1].trim_end().ends_with('/');
+                let self_closing = self.source_text[pointer..end - 1]
+                    .trim_end_matches(is_svelte_whitespace)
+                    .ends_with('/');
+                if !closing && name == "script" && !self_closing {
+                    return Some(pointer + SCRIPT_START.len());
+                }
+                let component_style_attributes =
+                    static_text.then_some(&self.source_text[pointer..end - 1]);
                 pointer = end;
                 if closing {
                     context.close(name);
                 } else {
                     match name {
                         "style" if !self_closing => {
-                            pointer = skip_style(self.source_text, pointer, static_text)?;
+                            pointer =
+                                skip_style(self.source_text, pointer, component_style_attributes)?;
                         }
                         "textarea" if !self_closing => {
                             pointer = skip_textarea(self.source_text, pointer)?;
@@ -307,9 +312,25 @@ fn find_markup_tag_end(source_text: &str, mut pointer: usize, static_text: bool)
     None
 }
 
-fn skip_style(source_text: &str, mut pointer: usize, component: bool) -> Option<usize> {
-    if !component {
+fn skip_style(
+    source_text: &str,
+    mut pointer: usize,
+    component_attributes: Option<&str>,
+) -> Option<usize> {
+    let Some(attributes) = component_attributes else {
         return Some(pointer + source_text[pointer..].find("</style>")? + "</style>".len());
+    };
+    if find_attribute(attributes, "lang")
+        .is_some_and(|lang| !matches!(lang, AttributeValue::Value("css")))
+    {
+        let finder = Finder::new("</style");
+        loop {
+            pointer += finder.find(&source_text.as_bytes()[pointer..])? + "</style".len();
+            let rest = source_text[pointer..].trim_start_matches(is_svelte_whitespace);
+            if rest.starts_with('>') {
+                return Some(source_text.len() - rest.len() + 1);
+            }
+        }
     }
     let bytes = source_text.as_bytes();
     let mut depth = 0usize;
@@ -892,6 +913,31 @@ let {json}: {json: string} = $props();
         let sources = SveltePartialLoader::new(source_text).parse();
         assert_eq!(sources.len(), 1);
         assert_eq!(sources[0].source_text, "debugger;");
+    }
+
+    #[test]
+    fn test_preprocessed_styles_preserve_scripts() {
+        for lang in ["scss", "sass", "less", "stylus"] {
+            for comment in ["// {", "// (", "// \"", "// </stylex>"] {
+                let source_text = format!(
+                    "<style lang=\"{lang}\">{comment}\n.a {{ color: red; }}\n</style ><script>debugger;</script>"
+                );
+                let sources = SveltePartialLoader::new(&source_text).parse();
+                assert_eq!(sources.len(), 1, "{source_text}");
+                assert_eq!(sources[0].source_text, "debugger;", "{source_text}");
+            }
+        }
+    }
+
+    #[test]
+    fn test_self_closing_scripts_preserve_component_scripts() {
+        for element in ["<script/>", "<script />", "<script/\u{feff}>", "<script title={\"}\"}/>"] {
+            let source_text =
+                format!("<svelte:head>{element}</svelte:head><script>debugger;</script>");
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "debugger;", "{source_text}");
+        }
     }
 
     #[test]
