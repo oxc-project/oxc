@@ -418,6 +418,21 @@ fn escaped_identifiers_are_identifiers_in_every_walk() {
 }
 
 #[test]
+fn identifier_escape_ends_at_unicode_whitespace() {
+    // Identifiers and private names end at Unicode whitespace, so the next word lexes alone.
+    for (code, plain) in [
+        ("x = a\\u{41}\u{a0}in\u{a0}b\\u{42};", "x = a\\u{41} in b\\u{42};"),
+        ("x = a\\u{41}\u{3000}in\u{3000}this\\u{41};", "x = a\\u{41} in this\\u{41};"),
+        (
+            "class C { #a; m(o) { #a\u{a0}in\u{a0}o\\u{62}; } }",
+            "class C { #a; m(o) { #a in o\\u{62}; } }",
+        ),
+    ] {
+        assert_eq!(kinds_of(code, ScriptJS), kinds_of(plain, ScriptJS), "{code:?}");
+    }
+}
+
+#[test]
 fn legacy_octal_literal_ends_before_a_dot() {
     for (code, want) in [
         ("x = 010.5;", "IDENT = NUMBER NUMBER ;"),
@@ -619,6 +634,7 @@ fn jsx_container_after_backslash_u_in_text() {
         ("x = <a>\\u{2 / 3}</a>;", "x = <a>u{2 / 3}</a>;"),
         ("x = <a>\\u{f\\u{41}}</a>;", "x = <a>u{f\\u{41}}</a>;"),
         ("x = <a>#\\u{f\\u{41}}</a>;", "x = <a>#u{f\\u{41}}</a>;"),
+        ("x = <a>\\u{\u{a0}this\\u{41}}</a>;", "x = <a>u{\u{a0}this\\u{41}}</a>;"),
     ] {
         assert_eq!(kinds_of(code, ScriptJSX), kinds_of(plain, ScriptJSX), "{code:?}");
         assert!(diag_codes_of(code, ScriptJSX).is_empty(), "{code:?}");
