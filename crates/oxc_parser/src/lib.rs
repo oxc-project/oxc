@@ -445,25 +445,6 @@ mod parser_parse {
         // # Implementation note
         // Dispatches via `Any`, same as `parse` does.
         pub fn parse_expression(self) -> Result<Expression<'a>, Diagnostics> {
-            self.parse_expression_impl(true).map(|(expression, _)| expression)
-        }
-
-        /// Parse an expression at the start of an embedded language region.
-        ///
-        /// Returns the expression and the byte offset of the following token, after
-        /// whitespace and comments. The caller must validate that token as the
-        /// enclosing language's expression terminator.
-        ///
-        /// # Errors
-        /// Returns diagnostics if the expression has syntax errors.
-        pub fn parse_expression_prefix(self) -> Result<(Expression<'a>, u32), Diagnostics> {
-            self.parse_expression_impl(false)
-        }
-
-        fn parse_expression_impl(
-            self,
-            require_eof: bool,
-        ) -> Result<(Expression<'a>, u32), Diagnostics> {
             let config: &dyn Any = &self.config;
             if config.is::<NoTokensParserConfig>() {
                 parse_expression_with_no_tokens_config(
@@ -471,7 +452,6 @@ mod parser_parse {
                     self.source_text,
                     self.source_type,
                     self.options,
-                    require_eof,
                 )
             } else if config.is::<TokensParserConfig>() {
                 parse_expression_with_tokens_config(
@@ -479,7 +459,6 @@ mod parser_parse {
                     self.source_text,
                     self.source_type,
                     self.options,
-                    require_eof,
                 )
             } else if let Some(&config) = config.downcast_ref::<RuntimeParserConfig>() {
                 parse_expression_with_runtime_config(
@@ -487,7 +466,6 @@ mod parser_parse {
                     self.source_text,
                     self.source_type,
                     self.options,
-                    require_eof,
                     config,
                 )
             } else {
@@ -499,8 +477,33 @@ mod parser_parse {
                     self.config,
                     UniquePromise::new(),
                 )
-                .parse_expression(require_eof)
+                .parse_expression()
             }
+        }
+    }
+
+    impl<'a> Parser<'a, TokensParserConfig> {
+        /// Collect tokens read while parsing an expression prefix, including its next token.
+        ///
+        /// Fatal errors may stop tokenization before the expression ends. The final token may
+        /// be `Eof` or `Undetermined`. Syntax errors are not returned;
+        /// embedded-language scanners can resume after grammar that is not JavaScript.
+        pub fn tokenize_expression_prefix(self) -> ArenaVec<'a, Token> {
+            let mut parser = ParserImpl::<TokensParserConfig>::new(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                self.config,
+                UniquePromise::new(),
+            );
+            parser.bump_any();
+            let _ = parser.parse_expr();
+            let mut tokens = parser.lexer.take_tokens();
+            if let Some(error) = &parser.fatal_error {
+                tokens.retain(|token| token.end() <= error.token_end);
+            }
+            tokens
         }
     }
 
@@ -592,8 +595,7 @@ mod parser_parse {
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
-        require_eof: bool,
-    ) -> Result<(Expression<'a>, u32), Diagnostics> {
+    ) -> Result<Expression<'a>, Diagnostics> {
         ParserImpl::<NoTokensParserConfig>::new(
             allocator,
             source_text,
@@ -602,7 +604,7 @@ mod parser_parse {
             NoTokensParserConfig,
             UniquePromise::new(),
         )
-        .parse_expression(require_eof)
+        .parse_expression()
     }
 
     #[inline(never)]
@@ -611,8 +613,7 @@ mod parser_parse {
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
-        require_eof: bool,
-    ) -> Result<(Expression<'a>, u32), Diagnostics> {
+    ) -> Result<Expression<'a>, Diagnostics> {
         ParserImpl::<TokensParserConfig>::new(
             allocator,
             source_text,
@@ -621,7 +622,7 @@ mod parser_parse {
             TokensParserConfig,
             UniquePromise::new(),
         )
-        .parse_expression(require_eof)
+        .parse_expression()
     }
 
     #[inline(never)]
@@ -630,9 +631,8 @@ mod parser_parse {
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
-        require_eof: bool,
         config: RuntimeParserConfig,
-    ) -> Result<(Expression<'a>, u32), Diagnostics> {
+    ) -> Result<Expression<'a>, Diagnostics> {
         ParserImpl::<RuntimeParserConfig>::new(
             allocator,
             source_text,
@@ -641,7 +641,7 @@ mod parser_parse {
             config,
             UniquePromise::new(),
         )
-        .parse_expression(require_eof)
+        .parse_expression()
     }
 }
 use parser_parse::UniquePromise;
@@ -823,21 +823,17 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
     }
 
-    pub fn parse_expression(
-        mut self,
-        require_eof: bool,
-    ) -> Result<(Expression<'a>, u32), Diagnostics> {
+    pub fn parse_expression(mut self) -> Result<Expression<'a>, Diagnostics> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
         let expr = self.parse_expr();
-        if require_eof && !self.at(Kind::Eof) {
+        if !self.at(Kind::Eof) {
             self.set_unexpected();
         }
         if let Some(FatalError { error, .. }) = self.fatal_error.take() {
             return Err(error.into_diagnostic().into());
         }
         self.check_unfinished_errors();
-        let next_token = self.cur_token().start();
         let errors = self
             .lexer
             .errors
@@ -848,7 +844,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         if !errors.is_empty() {
             return Err(errors);
         }
-        Ok((expr, next_token))
+        Ok(expr)
     }
 
     #[expect(clippy::cast_possible_truncation)]
@@ -1105,46 +1101,37 @@ mod test {
     }
 
     #[test]
-    fn parse_expression_prefix_preserves_terminator() {
+    fn expression_prefix_tokens_preserve_boundaries_and_errors() {
         let allocator = Allocator::default();
         for source in [
             "value / 2}",
             "count++ / 2}",
             "object.in / 2}",
             "值 / 2}",
-            "`<script>${`nested ${value}`}</script>`}",
+            "`<script>${`nested ${value as string}`}</script>`}",
             "value /* } */}",
             "value // comment\u{2028}}",
             "value // comment\u{2029}}",
         ] {
-            let (expression, next_token) = Parser::new(&allocator, source, SourceType::ts())
-                .parse_expression_prefix()
-                .unwrap();
-            assert_eq!(&source[next_token as usize..], "}", "{source}");
-            assert!(expression.span().end <= next_token);
-        }
-        for next_token in [
-            Parser::new(&allocator, "value /* comment */}", SourceType::ts())
+            let tokens = Parser::new(&allocator, source, SourceType::ts())
                 .with_config(TokensParserConfig)
-                .parse_expression_prefix()
-                .unwrap()
-                .1,
-            Parser::new(&allocator, "value /* comment */}", SourceType::ts())
-                .with_config(RuntimeParserConfig::new(true))
-                .parse_expression_prefix()
-                .unwrap()
-                .1,
-            Parser::new(&allocator, "value /* comment */}", SourceType::ts())
-                .with_config(RuntimeParserConfig::new(false))
-                .parse_expression_prefix()
-                .unwrap()
-                .1,
-        ] {
-            assert_eq!(next_token, 19);
+                .tokenize_expression_prefix();
+            let last = tokens.last().unwrap();
+            assert_eq!(last.kind(), Kind::RCurly, "{source}");
+            assert_eq!(last.end() as usize, source.len(), "{source}");
         }
-        assert!(
-            Parser::new(&allocator, "a + }", SourceType::ts()).parse_expression_prefix().is_err()
-        );
+        for (source, expected) in [
+            ("items as {value = '<textarea>'}}", Kind::Eq),
+            ("if value}", Kind::If),
+            ("'unterminated", Kind::Undetermined),
+            ("value", Kind::Eof),
+            ("`a${value +   ", Kind::Eof),
+        ] {
+            let tokens = Parser::new(&allocator, source, SourceType::ts())
+                .with_config(TokensParserConfig)
+                .tokenize_expression_prefix();
+            assert_eq!(tokens.last().unwrap().kind(), expected, "{source}");
+        }
     }
 
     #[test]

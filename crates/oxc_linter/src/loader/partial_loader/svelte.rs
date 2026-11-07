@@ -1,15 +1,16 @@
 use memchr::{memchr2, memmem::Finder};
 
 use oxc_allocator::Allocator;
-use oxc_parser::Parser;
+use oxc_parser::{Kind, Parser, config::TokensParserConfig};
 use oxc_span::SourceType;
+use oxc_syntax::{
+    identifier::{is_identifier_start, is_white_space},
+    line_terminator::is_line_terminator,
+};
 
 use crate::loader::JavaScriptSource;
 
-use super::{
-    AttributeValue, COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_attribute,
-    find_script_closing_angle,
-};
+use super::{AttributeValue, COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_attribute};
 
 pub struct SveltePartialLoader<'a> {
     source_text: &'a str,
@@ -30,21 +31,26 @@ impl<'a> SveltePartialLoader<'a> {
     ///    <https://github.com/sveltejs/svelte.dev/blob/ba7ad256f786aa5bc67eac3a58608f3f50b59e91/apps/svelte.dev/content/tutorial/02-advanced-svelte/08-script-module/02-module-exports/index.md>
     fn parse_scripts(&self) -> Vec<JavaScriptSource<'a>> {
         let mut pointer = 0;
-        let Some(result1) = self.parse_script(&mut pointer) else {
+        let mut context = MarkupContext::default();
+        let Some(result1) = self.parse_script(&mut pointer, &mut context) else {
             return vec![];
         };
-        let Some(result2) = self.parse_script(&mut pointer) else {
+        let Some(result2) = self.parse_script(&mut pointer, &mut context) else {
             return vec![result1];
         };
         vec![result1, result2]
     }
 
-    fn parse_script(&self, pointer: &mut usize) -> Option<JavaScriptSource<'a>> {
+    fn parse_script(
+        &self,
+        pointer: &mut usize,
+        context: &mut MarkupContext<'a>,
+    ) -> Option<JavaScriptSource<'a>> {
         let script_end_finder = Finder::new(SCRIPT_END);
-        *pointer = self.find_script_start(*pointer)?;
+        *pointer = self.find_script_start(*pointer, context)?;
 
-        // find closing ">"
-        let offset = find_script_closing_angle(self.source_text, *pointer)?;
+        let end = find_markup_tag_end(self.source_text, *pointer, context.is_root())?;
+        let offset = end - *pointer - 1;
 
         let content = &self.source_text[*pointer..*pointer + offset];
         let lang = Self::extract_lang_attribute(content);
@@ -72,7 +78,11 @@ impl<'a> SveltePartialLoader<'a> {
         Some(JavaScriptSource::partial(source_text, source_type, js_start as u32))
     }
 
-    fn find_script_start(&self, mut pointer: usize) -> Option<usize> {
+    fn find_script_start(
+        &self,
+        mut pointer: usize,
+        context: &mut MarkupContext<'a>,
+    ) -> Option<usize> {
         if !self.source_text[pointer..].contains(SCRIPT_START) {
             return None;
         }
@@ -81,42 +91,48 @@ impl<'a> SveltePartialLoader<'a> {
             pointer += offset;
             let rest = &self.source_text[pointer..];
             if rest.starts_with('{') {
-                pointer = skip_markup_expression(self.source_text, pointer).unwrap_or(pointer + 1);
+                if let Some(end) = skip_markup_expression(self.source_text, pointer) {
+                    context.expression(&self.source_text[pointer + 1..end - 1]);
+                    pointer = end;
+                } else {
+                    pointer += 1;
+                }
             } else if rest.starts_with(COMMENT_START) {
                 pointer += rest.find(COMMENT_END)? + COMMENT_END.len();
-            } else if let Some(attributes) = rest.strip_prefix(SCRIPT_START)
-                && attributes.chars().next().is_some_and(|ch| ch.is_whitespace() || ch == '>')
-            {
-                return Some(pointer + SCRIPT_START.len());
-            } else if rest.as_bytes().get(1).is_some_and(|b| b.is_ascii_alphabetic() || *b == b'/')
-            {
-                let tag_end = if rest.strip_prefix("<style").is_some_and(|rest| {
-                    rest.starts_with('>') || rest.starts_with(char::is_whitespace)
-                }) {
-                    find_script_closing_angle(self.source_text, pointer + 1)
-                        .map(|offset| pointer + offset + 2)
-                } else {
-                    find_markup_tag_end(self.source_text, pointer + 1)
-                };
-                let Some(end) = tag_end else {
+            } else {
+                let tag = rest.strip_prefix("</").or_else(|| rest.strip_prefix('<'))?;
+                if !tag.chars().next().is_some_and(is_identifier_start) {
+                    pointer += 1;
+                    continue;
+                }
+                let name_end =
+                    tag.find(|c: char| is_svelte_whitespace(c) || matches!(c, '/' | '>'))?;
+                let name = &tag[..name_end];
+                let closing = rest.starts_with("</");
+                if !closing && name == "script" {
+                    return Some(pointer + SCRIPT_START.len());
+                }
+                let static_text = name == "style" && context.is_root();
+                let Some(end) = find_markup_tag_end(self.source_text, pointer + 1, static_text)
+                else {
                     pointer += 1;
                     continue;
                 };
+                let self_closing = self.source_text[pointer..end - 1].trim_end().ends_with('/');
                 pointer = end;
-                if self.source_text[..pointer - 1].trim_end().ends_with('/') {
-                    continue;
-                }
-                for tag in ["style", "textarea"] {
-                    if rest.strip_prefix('<').and_then(|rest| rest.strip_prefix(tag)).is_some_and(
-                        |rest| rest.starts_with('>') || rest.starts_with(char::is_whitespace),
-                    ) {
-                        let closing = if tag == "style" { "</style" } else { "</textarea" };
-                        pointer = skip_raw_text(self.source_text, pointer, closing)?;
-                        break;
+                if closing {
+                    context.close(name);
+                } else {
+                    match name {
+                        "style" if !self_closing => {
+                            pointer = skip_style(self.source_text, pointer, static_text)?;
+                        }
+                        "textarea" if !self_closing => {
+                            pointer = skip_textarea(self.source_text, pointer)?;
+                        }
+                        _ => context.open(name, self_closing),
                     }
                 }
-            } else {
-                pointer += 1;
             }
         }
         None
@@ -135,11 +151,146 @@ impl<'a> SveltePartialLoader<'a> {
     }
 }
 
-fn find_markup_tag_end(source_text: &str, mut pointer: usize) -> Option<usize> {
+#[derive(Default)]
+struct MarkupContext<'a> {
+    elements: Vec<&'a str>,
+    blocks: Vec<usize>,
+}
+
+impl<'a> MarkupContext<'a> {
+    fn is_root(&self) -> bool {
+        self.elements.is_empty() && self.blocks.is_empty()
+    }
+
+    fn expression(&mut self, expression: &str) {
+        match expression.trim_start_matches(is_svelte_whitespace).as_bytes().first() {
+            Some(b'#') => self.blocks.push(self.elements.len()),
+            Some(b':') => {
+                if let Some(&depth) = self.blocks.last() {
+                    self.elements.truncate(depth);
+                }
+            }
+            Some(b'/') => {
+                if let Some(depth) = self.blocks.pop() {
+                    self.elements.truncate(depth);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn close(&mut self, name: &str) {
+        let depth = self.blocks.last().copied().unwrap_or(0);
+        if let Some(index) = self.elements[depth..].iter().rposition(|&element| element == name) {
+            self.elements.truncate(depth + index);
+        }
+    }
+
+    fn open(&mut self, name: &'a str, self_closing: bool) {
+        let depth = self.blocks.last().copied().unwrap_or(0);
+        if self.elements.len() > depth
+            && self.elements.last().is_some_and(|&parent| implicitly_closes(parent, name))
+        {
+            self.elements.pop();
+        }
+        if !self_closing
+            && !matches!(
+                name,
+                "area"
+                    | "base"
+                    | "br"
+                    | "col"
+                    | "command"
+                    | "embed"
+                    | "hr"
+                    | "img"
+                    | "input"
+                    | "keygen"
+                    | "link"
+                    | "meta"
+                    | "param"
+                    | "source"
+                    | "track"
+                    | "wbr"
+            )
+        {
+            self.elements.push(name);
+        }
+    }
+}
+
+fn implicitly_closes(parent: &str, name: &str) -> bool {
+    match parent {
+        "li" => name == "li",
+        "dt" | "dd" => matches!(name, "dt" | "dd"),
+        "p" => matches!(
+            name,
+            "address"
+                | "article"
+                | "aside"
+                | "blockquote"
+                | "div"
+                | "dl"
+                | "fieldset"
+                | "footer"
+                | "form"
+                | "h1"
+                | "h2"
+                | "h3"
+                | "h4"
+                | "h5"
+                | "h6"
+                | "header"
+                | "hgroup"
+                | "hr"
+                | "main"
+                | "menu"
+                | "nav"
+                | "ol"
+                | "p"
+                | "pre"
+                | "section"
+                | "table"
+                | "ul"
+        ),
+        "rt" | "rp" => matches!(name, "rt" | "rp"),
+        "optgroup" => name == "optgroup",
+        "option" => matches!(name, "option" | "optgroup"),
+        "thead" | "tbody" => matches!(name, "tbody" | "tfoot"),
+        "tfoot" => name == "tbody",
+        "tr" => matches!(name, "tr" | "tbody"),
+        "td" | "th" => matches!(name, "td" | "th" | "tr"),
+        _ => false,
+    }
+}
+
+fn skip_textarea(source_text: &str, mut pointer: usize) -> Option<usize> {
+    let bytes = source_text.as_bytes();
+    while let Some(offset) = memchr2(b'<', b'{', &bytes[pointer..]) {
+        pointer += offset;
+        let rest = &source_text[pointer..];
+        if rest.starts_with('{') {
+            pointer = skip_markup_expression(source_text, pointer).unwrap_or(pointer + 1);
+        } else if rest
+            .as_bytes()
+            .get(..10)
+            .is_some_and(|name| name.eq_ignore_ascii_case(b"</textarea"))
+            && (rest[10..].starts_with('>') || rest[10..].starts_with(is_svelte_whitespace))
+        {
+            return Some(pointer + 10 + rest[10..].find('>')? + 1);
+        } else {
+            pointer += 1;
+        }
+    }
+    None
+}
+
+fn find_markup_tag_end(source_text: &str, mut pointer: usize, static_text: bool) -> Option<usize> {
     let bytes = source_text.as_bytes();
     let mut quote = None;
     while let Some(&byte) = bytes.get(pointer) {
         if byte == b'{'
+            && (!static_text || quote.is_none())
             && let Some(end) = skip_attribute_expression(source_text, pointer)
         {
             pointer = end;
@@ -156,32 +307,76 @@ fn find_markup_tag_end(source_text: &str, mut pointer: usize) -> Option<usize> {
     None
 }
 
-fn skip_raw_text(source_text: &str, mut pointer: usize, closing: &str) -> Option<usize> {
-    let finder = Finder::new(closing);
-    loop {
-        pointer += finder.find(&source_text.as_bytes()[pointer..])? + closing.len();
-        if source_text[pointer..].starts_with('>')
-            || source_text[pointer..].starts_with(char::is_whitespace)
-        {
-            return Some(pointer + find_script_closing_angle(source_text, pointer)? + 1);
-        }
+fn skip_style(source_text: &str, mut pointer: usize, component: bool) -> Option<usize> {
+    if !component {
+        return Some(pointer + source_text[pointer..].find("</style>")? + "</style>".len());
     }
+    let bytes = source_text.as_bytes();
+    let mut depth = 0usize;
+    let mut quote = None;
+    while let Some(&byte) = bytes.get(pointer) {
+        if byte == b'\\' {
+            pointer = pointer.saturating_add(2);
+            continue;
+        }
+        if let Some(delimiter) = quote {
+            if byte == delimiter {
+                quote = None;
+            }
+        } else {
+            match byte {
+                b'\'' | b'"' => quote = Some(byte),
+                b'/' if bytes.get(pointer + 1) == Some(&b'*') => {
+                    pointer += source_text[pointer + 2..].find("*/")? + 4;
+                    continue;
+                }
+                b'{' | b'(' | b'[' => depth += 1,
+                b'}' | b')' | b']' => depth = depth.saturating_sub(1),
+                b'<' if source_text[pointer..].starts_with(COMMENT_START) => {
+                    pointer += source_text[pointer + COMMENT_START.len()..].find(COMMENT_END)?
+                        + COMMENT_START.len()
+                        + COMMENT_END.len();
+                    continue;
+                }
+                b'<' if depth == 0 => {
+                    if let Some(rest) = source_text[pointer..].strip_prefix("</style") {
+                        let rest = rest.trim_start_matches(is_svelte_whitespace);
+                        if rest.starts_with('>') {
+                            return Some(source_text.len() - rest.len() + 1);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+        pointer += 1;
+    }
+    None
+}
+
+fn is_svelte_whitespace(c: char) -> bool {
+    is_white_space(c) || is_line_terminator(c)
 }
 
 fn skip_markup_expression(source_text: &str, pointer: usize) -> Option<usize> {
-    let mut expression = source_text[pointer + 1..].trim_start();
+    let mut expression = source_text[pointer + 1..].trim_start_matches(is_svelte_whitespace);
     if let Some(closing_block) = expression.strip_prefix('/')
         && let Some(name_end) = closing_block.find(|c: char| !c.is_ascii_alphabetic())
         && name_end > 0
     {
-        let rest = closing_block[name_end..].trim_start();
+        let rest = closing_block[name_end..].trim_start_matches(is_svelte_whitespace);
         if rest.starts_with('}') {
             return Some(source_text.len() - rest.len() + 1);
         }
     }
+    let is_else = expression.starts_with(":else");
     if expression.starts_with(['@', '#', ':']) {
-        expression =
-            expression[1..].trim_start_matches(|c: char| c.is_ascii_alphabetic()).trim_start();
+        expression = expression[1..]
+            .trim_start_matches(|c: char| c.is_ascii_alphabetic())
+            .trim_start_matches(is_svelte_whitespace);
+        if is_else && let Some(condition) = expression.strip_prefix("if") {
+            expression = condition.trim_start_matches(is_svelte_whitespace);
+        }
         if expression.starts_with('}') {
             return Some(source_text.len() - expression.len() + 1);
         }
@@ -190,18 +385,61 @@ fn skip_markup_expression(source_text: &str, pointer: usize) -> Option<usize> {
 }
 
 fn skip_attribute_expression(source_text: &str, pointer: usize) -> Option<usize> {
-    let expression = source_text[pointer + 1..].trim_start();
-    let expression = expression.strip_prefix("...").unwrap_or(expression).trim_start();
+    let expression = source_text[pointer + 1..].trim_start_matches(is_svelte_whitespace);
+    let expression = expression
+        .strip_prefix("...")
+        .unwrap_or(expression)
+        .trim_start_matches(is_svelte_whitespace);
     skip_expression(source_text, source_text.len() - expression.len())
 }
 
-fn skip_expression(source_text: &str, pointer: usize) -> Option<usize> {
-    let allocator = Allocator::default();
-    let (_, next_token) = Parser::new(&allocator, &source_text[pointer..], SourceType::ts())
-        .parse_expression_prefix()
-        .ok()?;
-    let end = pointer + next_token as usize;
-    (source_text.as_bytes().get(end) == Some(&b'}')).then_some(end + 1)
+fn skip_expression(source_text: &str, mut pointer: usize) -> Option<usize> {
+    const INITIAL_CHUNK_LEN: usize = 128;
+    let mut depth: usize = 1;
+    let mut chunk_len = INITIAL_CHUNK_LEN;
+    loop {
+        let mut end = pointer.saturating_add(chunk_len).min(source_text.len());
+        while !source_text.is_char_boundary(end) {
+            end -= 1;
+        }
+        let allocator = Allocator::default();
+        let tokens = Parser::new(&allocator, &source_text[pointer..end], SourceType::ts())
+            .with_config(TokensParserConfig)
+            .tokenize_expression_prefix();
+        let mut next_depth = depth;
+        let mut consumed = 0;
+        let mut needs_more = false;
+        for token in &tokens {
+            match token.kind() {
+                Kind::Eof | Kind::Undetermined => {
+                    needs_more = true;
+                    break;
+                }
+                Kind::LCurly => next_depth += 1,
+                Kind::RCurly => {
+                    next_depth -= 1;
+                    if next_depth == 0 {
+                        return Some(pointer + token.end() as usize);
+                    }
+                }
+                _ => {}
+            }
+            consumed = token.end() as usize;
+        }
+        if needs_more || consumed == end - pointer {
+            if end == source_text.len() {
+                return None;
+            }
+            chunk_len = chunk_len.saturating_mul(2);
+        } else {
+            if consumed == 0 {
+                return None;
+            }
+            pointer += consumed;
+            depth = next_depth;
+            chunk_len = INITIAL_CHUNK_LEN;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -534,11 +772,16 @@ let {json}: {json: string} = $props();
 
     #[test]
     fn test_script_after_closing_block() {
-        let source_text = r"{#if true}<p>hello</p>{/if}<script>const re = /}/; debugger;</script>";
-        let sources = SveltePartialLoader::new(source_text).parse();
-        assert_eq!(sources.len(), 1);
-        assert_eq!(sources[0].source_text, "const re = /}/; debugger;");
+        for closing in ["{/if}", "{\u{feff}/if}", "{/if\u{feff}}"] {
+            let source_text = format!(
+                "{{#if true}}<p>hello</p>{closing}<script>const re = /}}/; debugger;</script>"
+            );
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{closing}");
+            assert_eq!(sources[0].source_text, "const re = /}/; debugger;");
+        }
     }
+
     #[test]
     fn test_script_with_literal_braces_in_component_attributes() {
         for source_text in [
@@ -562,6 +805,121 @@ let {json}: {json: string} = $props();
             let sources = SveltePartialLoader::new(&source_text).parse();
             assert_eq!(sources.len(), 1, "{attributes}");
             assert_eq!(sources[0].source_text, "debugger;");
+        }
+    }
+    #[test]
+    fn test_script_after_else_if_header() {
+        let source_text = "{#if ok}<p>one</p>{:else if value === '<textarea>'}<p>two</p>{/if}<script>debugger;</script>";
+        let sources = SveltePartialLoader::new(source_text).parse();
+        assert_eq!(sources.len(), 1);
+        assert_eq!(sources[0].source_text, "debugger;");
+    }
+
+    #[test]
+    fn test_script_after_other_block_headers() {
+        for source_text in [
+            "{#await value === '<textarea>' ? promise : promise then result}<p>hi</p>{/await}<script lang='ts'>debugger;</script>",
+            "{#each items as {x = '<textarea>'}}<p>hi</p>{/each}<script lang='ts'>debugger;</script>",
+            "{#await promise then {x = '<textarea>'}}<p>hi</p>{/await}<script lang='ts'>debugger;</script>",
+            "{#each items as {x = '<textarea>'}, i ('<textarea>')}<p>hi</p>{/each}<script lang='ts'>debugger;</script>",
+            "{#snippet content(x: string = '<textarea>')}<p>hi</p>{/snippet}<script lang='ts'>debugger;</script>",
+            "{#each (items as string[]) as {x = '<textarea>'}}<p>hi</p>{/each}<script lang='ts'>debugger;</script>",
+            "{#each `a${value as string}` as {x = '<textarea>'}}<p>hi</p>{/each}<script lang='ts'>debugger;</script>",
+        ] {
+            let sources = SveltePartialLoader::new(source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "debugger;");
+        }
+    }
+    #[test]
+    fn test_expression_tokenization_chunk_boundaries() {
+        for len in [120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 255, 256, 257] {
+            for expression in [
+                format!("'{}<textarea>'", "a".repeat(len)),
+                format!("'{}<textarea>'", "日".repeat(len)),
+                format!(r"/{}}}<textarea>/.source", "a".repeat(len)),
+                format!("value {} / 2", " ".repeat(len)),
+                format!("value {} // <textarea> }}\n", " ".repeat(len)),
+                format!("value /* {} <textarea> }} */", "a".repeat(len)),
+                format!("`{}${{value as string}}<textarea>`", "a".repeat(len)),
+                format!("`a${{value + {} other}}<textarea>`", " ".repeat(len)),
+            ] {
+                let source_text = format!("{{@html {expression}}}<script>debugger;</script>");
+                let sources = SveltePartialLoader::new(&source_text).parse();
+                assert_eq!(sources.len(), 1, "{len}: {expression}");
+                assert_eq!(sources[0].source_text, "debugger;");
+            }
+        }
+    }
+    #[test]
+    fn test_component_attribute_context_after_markup() {
+        for prefix in [
+            "<br>",
+            "<command><keygen>",
+            "<div></div>",
+            "<div\u{feff}></div>",
+            "<p>text<hr>",
+            "<p><hr/>",
+            "<p><div/>",
+            "{#if ok}<p>one{:else}<p>two{/if}",
+            "<Widget />",
+            "<svelte:head><title>x</title></svelte:head>",
+        ] {
+            let source_text = format!(
+                "{prefix}<style title=\"before {{\">.a {{ color: red; }}</style><script>debugger;</script>"
+            );
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "debugger;", "{source_text}");
+        }
+    }
+
+    #[test]
+    fn test_textarea_closing_tag_variants() {
+        for closing in
+            ["</TEXTAREA>", "</TextArea>", "</textarea\u{feff}>", "</textarea title=\">\">"]
+        {
+            let source_text = format!("<textarea>text{closing}<script>debugger;</script>");
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "debugger;", "{source_text}");
+        }
+    }
+
+    #[test]
+    fn test_textarea_expression_with_closing_tag_text() {
+        let source_text = r"<textarea>{'</textarea><script>ignored</script>'}</textarea><script>debugger;</script>";
+        let sources = SveltePartialLoader::new(source_text).parse();
+        assert_eq!(sources.len(), 1);
+        assert_eq!(sources[0].source_text, "debugger;");
+    }
+
+    #[test]
+    fn test_component_style_with_closing_tag_text() {
+        for css in [
+            r#".a::before { content: "</style><script>ignored</script>"; }"#,
+            ".a { /* </style><script>ignored</script> */ color: red; }",
+            "/* </style><script>ignored</script> */ .a { color: red; }",
+            "<!-- { --> .a { color: red; }",
+            "<!-- </style><script>ignored</script> --> .a { color: red; }",
+        ] {
+            let source_text = format!("<style>{css}</style><script>debugger;</script>");
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "debugger;", "{source_text}");
+        }
+    }
+
+    #[test]
+    fn test_style_attribute_contexts_preserve_scripts() {
+        for source_text in [
+            r#"<style data-x={"}"}>.a { color: red; }</style><script>const text = `">`; debugger;</script>"#,
+            r#"<svelte:head><style title={"}"}>.a { color: red; }</style></svelte:head><script>const text = `">`; debugger;</script>"#,
+            r#"<div><style title="before {"></style><script>ignored</script>"} after">.a { color: red; }</style></div><script>debugger;</script>"#,
+        ] {
+            let sources = SveltePartialLoader::new(source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert!(sources[0].source_text.contains("debugger;"), "{source_text}");
         }
     }
 }
