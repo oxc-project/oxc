@@ -15,7 +15,7 @@ use schemars::schema::SingleOrVec;
 use serde::{
     Deserialize, Serialize, Serializer,
     de::{self, Deserializer, Visitor},
-    ser::SerializeMap,
+    ser::{SerializeMap, SerializeSeq},
 };
 use smallvec::SmallVec;
 
@@ -582,13 +582,24 @@ impl Serialize for OxlintRules {
                 // e.g. unicorn/some-rule: "warn"
                 rules.serialize_entry(&key, rule.severity.as_str())?;
             } else {
-                // e.g. unicorn/some-rule: ["warn", { foo: "bar" }]
-                let value = (rule.severity.as_str(), &rule.config);
-                rules.serialize_entry(&key, &value)?;
+                rules.serialize_entry(&key, &RuleOptions(rule))?;
             }
         }
 
         rules.end()
+    }
+}
+
+struct RuleOptions<'a>(&'a ESLintRule);
+
+impl Serialize for RuleOptions<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut sequence = serializer.serialize_seq(Some(self.0.config.len() + 1))?;
+        sequence.serialize_element(self.0.severity.as_str())?;
+        for option in &self.0.config {
+            sequence.serialize_element(option)?;
+        }
+        sequence.end()
     }
 }
 
@@ -755,6 +766,25 @@ mod test {
     };
 
     use super::{OxlintRules, RuleSet};
+
+    #[test]
+    fn test_serialize_rule_options_roundtrip() {
+        let input = json!({
+            "no-debugger": "deny",
+            "no-alert": ["warn"],
+            "max-params": ["deny", { "max": 2 }],
+            "eqeqeq": ["warn", "always", { "null": "ignore" }],
+            "custom/arrays": ["deny", ["a", "b"], null, false, 7],
+        });
+        let rules = OxlintRules::deserialize(&input).unwrap();
+        let serialized = serde_json::to_value(&rules).unwrap();
+        assert_eq!(serialized["no-alert"], json!("warn"));
+        for name in ["no-debugger", "max-params", "eqeqeq", "custom/arrays"] {
+            assert_eq!(serialized[name], input[name], "{name}");
+        }
+        let reparsed = OxlintRules::deserialize(&serialized).unwrap();
+        assert_eq!(rules, reparsed);
+    }
 
     #[test]
     fn test_parse_rules() {
