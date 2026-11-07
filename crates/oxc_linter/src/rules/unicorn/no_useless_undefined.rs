@@ -1,18 +1,21 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression, ComputedMemberExpression, Expression, SpreadElement},
 };
+use oxc_ast_visit::{Visit, walk::walk_expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
     AstNode,
-    ast_util::{is_method_call, outermost_paren_parent},
+    ast_util::{could_be_asi_hazard, is_method_call, outermost_paren_parent},
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::{is_same_expression, pad_fix_with_token_boundary},
 };
 
 fn warn() -> OxcDiagnostic {
@@ -77,7 +80,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     recommended,
-    fix,
+    fix_suggestion,
     config = NoUselessUndefined,
     version = "0.6.1",
     short_description = "Disallow useless `undefined`.",
@@ -161,6 +164,62 @@ impl Rule for NoUselessUndefined {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
+            AstKind::ConditionalExpression(conditional) => {
+                let is_undefined = |expression: &Expression| {
+                    matches!(expression.without_parentheses(), Expression::Identifier(ident)
+                        if ident.is_undefined() && ctx.is_reference_to_global_variable(ident))
+                };
+                let consequent_undefined = is_undefined(&conditional.consequent);
+                if consequent_undefined == is_undefined(&conditional.alternate) {
+                    return;
+                }
+                let (undefined, branch) = if consequent_undefined {
+                    (&conditional.consequent, &conditional.alternate)
+                } else {
+                    (&conditional.alternate, &conditional.consequent)
+                };
+                let Expression::ComputedMemberExpression(access) = branch.get_inner_expression()
+                else {
+                    return;
+                };
+                if access.optional
+                    || indexed_access_test_validity(&conditional.test, access, ctx)
+                        != Some(!consequent_undefined)
+                    || !is_safe_indexed_access_part(&access.object)
+                    || !is_safe_indexed_access_part(&access.expression)
+                {
+                    return;
+                }
+                let diagnostic = no_useless_undefined_diagnostic(undefined.span())
+                    .with_help("Use the indexed access directly.");
+                if ctx.has_comments_between(conditional.span) || is_reference_context(node, ctx) {
+                    ctx.diagnostic(diagnostic);
+                    return;
+                }
+                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    let mut replacement = fixer.source_range(branch.span()).to_string();
+                    if (replacement.starts_with('<')
+                        || matches!(
+                            access.object.get_inner_expression(),
+                            Expression::ObjectExpression(_) | Expression::FunctionExpression(_)
+                        ))
+                        && !replacement.starts_with('(')
+                    {
+                        replacement = format!("({replacement})");
+                    }
+                    if replacement.starts_with(['[', '(', '/', '+', '-', '`'])
+                        && could_be_asi_hazard(node, ctx)
+                    {
+                        replacement.insert(0, ';');
+                    }
+                    pad_fix_with_token_boundary(
+                        ctx.source_text(),
+                        conditional.span,
+                        &mut replacement,
+                    );
+                    fixer.replace(conditional.span, replacement)
+                });
+            }
             AstKind::IdentifierReference(undefined_literal) if undefined_literal.is_undefined() => {
                 let Some(parent_node) = outermost_paren_parent(node, ctx) else {
                     return;
@@ -354,6 +413,216 @@ impl Rule for NoUselessUndefined {
             _ => {}
         }
     }
+}
+
+fn static_number(expression: &Expression) -> Option<f64> {
+    match expression.get_inner_expression() {
+        Expression::NumericLiteral(number) => Some(number.value),
+        Expression::UnaryExpression(unary) => match unary.operator {
+            UnaryOperator::UnaryPlus => static_number(&unary.argument),
+            UnaryOperator::UnaryNegation => static_number(&unary.argument).map(|value| -value),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn is_safe_integer(number: f64) -> bool {
+    number.fract() == 0.0 && number.abs() <= 9_007_199_254_740_991.0
+}
+
+#[expect(clippy::float_cmp, reason = "Numeric literal values must match exactly")]
+fn is_same_indexed_access_reference(
+    left: &Expression,
+    right: &Expression,
+    ctx: &LintContext,
+) -> bool {
+    let left = left.get_inner_expression();
+    let right = right.get_inner_expression();
+    match (left, right) {
+        (Expression::NumericLiteral(left), Expression::NumericLiteral(right)) => {
+            return left.value == right.value;
+        }
+        (Expression::BigIntLiteral(left), Expression::BigIntLiteral(right)) => {
+            return left.value == right.value;
+        }
+        _ => {}
+    }
+    (left.is_literal()
+        || matches!(
+            left,
+            Expression::Identifier(_) | Expression::ThisExpression(_) | Expression::Super(_)
+        )
+        || matches!(left, Expression::TemplateLiteral(template) if template.expressions.is_empty()))
+        && is_same_expression(left, right, ctx)
+}
+
+#[expect(clippy::float_cmp, reason = "Bounds and offsets are validated as safe integers")]
+fn indexed_access_test_validity(
+    test: &Expression,
+    access: &ComputedMemberExpression,
+    ctx: &LintContext,
+) -> Option<bool> {
+    let Expression::BinaryExpression(test) = test.get_inner_expression() else {
+        return None;
+    };
+    let mut operator = test.operator;
+    if !operator.is_compare() {
+        return None;
+    }
+    let index = access.expression.get_inner_expression();
+    let (index, offset) = match index {
+        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Subtraction => {
+            match static_number(&binary.right) {
+                Some(offset) if is_safe_integer(offset) && offset > 0.0 => {
+                    (binary.left.get_inner_expression(), offset)
+                }
+                _ => (index, 0.0),
+            }
+        }
+        _ => (index, 0.0),
+    };
+    let left = test.left.get_inner_expression();
+    let right = test.right.get_inner_expression();
+    let boundary = if is_same_indexed_access_reference(left, index, ctx) {
+        right
+    } else if is_same_indexed_access_reference(right, index, ctx) {
+        operator = match operator {
+            BinaryOperator::LessThan => BinaryOperator::GreaterThan,
+            BinaryOperator::LessEqualThan => BinaryOperator::GreaterEqualThan,
+            BinaryOperator::GreaterThan => BinaryOperator::LessThan,
+            BinaryOperator::GreaterEqualThan => BinaryOperator::LessEqualThan,
+            _ => return None,
+        };
+        left
+    } else {
+        return None;
+    };
+    if let Some(boundary) = static_number(boundary).filter(|value| is_safe_integer(*value)) {
+        return match operator {
+            BinaryOperator::GreaterEqualThan if boundary == offset => Some(true),
+            BinaryOperator::GreaterThan if boundary == offset - 1.0 => Some(true),
+            BinaryOperator::LessThan if boundary == offset => Some(false),
+            BinaryOperator::LessEqualThan if boundary == offset - 1.0 => Some(false),
+            _ => None,
+        };
+    }
+    if offset != 0.0 {
+        return None;
+    }
+    let (length, minus_one) = match boundary {
+        Expression::BinaryExpression(binary)
+            if binary.operator == BinaryOperator::Subtraction
+                && static_number(&binary.right) == Some(1.0) =>
+        {
+            (binary.left.get_inner_expression(), true)
+        }
+        _ => (boundary, false),
+    };
+    let Expression::StaticMemberExpression(length) = length else {
+        return None;
+    };
+    if length.optional
+        || length.property.name != "length"
+        || !is_same_indexed_access_reference(
+            length.object.get_inner_expression(),
+            access.object.get_inner_expression(),
+            ctx,
+        )
+    {
+        return None;
+    }
+    match (operator, minus_one) {
+        (BinaryOperator::LessThan, false) | (BinaryOperator::LessEqualThan, true) => Some(true),
+        (BinaryOperator::GreaterEqualThan, false) | (BinaryOperator::GreaterThan, true) => {
+            Some(false)
+        }
+        _ => None,
+    }
+}
+
+fn is_safe_indexed_access_part(expression: &Expression) -> bool {
+    struct OptionalChainVisitor {
+        found: bool,
+    }
+    impl<'a> Visit<'a> for OptionalChainVisitor {
+        fn visit_expression(&mut self, expression: &Expression<'a>) {
+            if self.found {
+                return;
+            }
+            if matches!(expression, Expression::ChainExpression(_)) {
+                self.found = true;
+            } else {
+                walk_expression(self, expression);
+            }
+        }
+    }
+
+    struct SafetyVisitor {
+        safe: bool,
+    }
+    impl<'a> Visit<'a> for SafetyVisitor {
+        fn visit_expression(&mut self, expression: &Expression<'a>) {
+            if !self.safe {
+                return;
+            }
+            match expression {
+                Expression::CallExpression(_)
+                | Expression::ImportExpression(_)
+                | Expression::V8IntrinsicExpression(_)
+                | Expression::NewExpression(_)
+                | Expression::TaggedTemplateExpression(_)
+                | Expression::AssignmentExpression(_)
+                | Expression::UpdateExpression(_)
+                | Expression::AwaitExpression(_)
+                | Expression::YieldExpression(_)
+                | Expression::ComputedMemberExpression(_)
+                | Expression::StaticMemberExpression(_)
+                | Expression::PrivateFieldExpression(_)
+                | Expression::ChainExpression(_)
+                | Expression::ClassExpression(_)
+                | Expression::JSXElement(_)
+                | Expression::JSXFragment(_) => self.safe = false,
+                Expression::UnaryExpression(unary) if unary.operator.is_delete() => {
+                    self.safe = false;
+                }
+                Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
+                    let mut visitor = OptionalChainVisitor { found: false };
+                    visitor.visit_expression(expression);
+                    self.safe = !visitor.found;
+                }
+                _ => walk_expression(self, expression),
+            }
+        }
+
+        fn visit_spread_element(&mut self, _: &SpreadElement<'a>) {
+            self.safe = false;
+        }
+    }
+    let mut visitor = SafetyVisitor { safe: true };
+    visitor.visit_expression(expression);
+    visitor.safe
+}
+
+fn is_reference_context(node: &AstNode, ctx: &LintContext) -> bool {
+    let mut expression = node;
+    for parent in ctx.nodes().ancestors(node.id()) {
+        match parent.kind() {
+            AstKind::ParenthesizedExpression(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSTypeAssertion(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSInstantiationExpression(_) => expression = parent,
+            AstKind::CallExpression(call) => return call.callee.span() == expression.span(),
+            AstKind::TaggedTemplateExpression(tagged) => {
+                return tagged.tag.span() == expression.span();
+            }
+            AstKind::UnaryExpression(unary) => return unary.operator.is_delete(),
+            _ => return false,
+        }
+    }
+    false
 }
 
 #[test]
@@ -804,6 +1073,252 @@ fn test_trailing_arguments() {
         ("call?.(value, undefined, undefined);", "call?.(value);", None),
     ];
     Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test();
+}
+
+#[test]
+fn test_guarded_indexed_access() {
+    use crate::tester::Tester;
+
+    let fail = vec![
+        "function a(array, index) { return index >= 0 ? array[index] : undefined; }",
+        "function b(array, index) { return index > -1 ? array[index] : undefined; }",
+        "function c(array, index) { return index < 0 ? undefined : array[index]; }",
+        "function d(array, index) { return index < array.length ? array[index] : undefined; }",
+        "function e(array, index) { return array.length > index ? array[index] : undefined; }",
+        "function f(array, index) { return index >= array.length ? undefined : array[index]; }",
+        "function g(array, index) { return index <= array.length - 1 ? array[index] : undefined; }",
+        "function h(array, index) { return index >= 1 ? array[index - 1] : undefined; }",
+    ];
+    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, vec![], fail)
+        .intentionally_allow_no_fix_tests()
+        .with_snapshot_suffix("guarded_indexed_access")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_indexed_access_bounds() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let mut pass = vec![];
+    let mut fail = vec![];
+    let mut fix = vec![];
+    for (test, access, valid) in [
+        ("index >= 0", "array[index]", true),
+        ("index > -1", "array[index]", true),
+        ("index < 0", "array[index]", false),
+        ("index <= -1", "array[index]", false),
+        ("0 <= index", "array[index]", true),
+        ("-1 < index", "array[index]", true),
+        ("0 > index", "array[index]", false),
+        ("-1 >= index", "array[index]", false),
+        ("index >= 5", "array[index - 5]", true),
+        ("index > 4", "array[index - 5]", true),
+        ("index < 5", "array[index - 5]", false),
+        ("index <= 4", "array[index - 5]", false),
+        ("5 <= index", "array[index - 5]", true),
+        ("4 < index", "array[index - 5]", true),
+        ("5 > index", "array[index - 5]", false),
+        ("4 >= index", "array[index - 5]", false),
+        ("index < array.length", "array[index]", true),
+        ("index <= array.length - 1", "array[index]", true),
+        ("index >= array.length", "array[index]", false),
+        ("index > array.length - 1", "array[index]", false),
+        ("array.length > index", "array[index]", true),
+        ("array.length - 1 >= index", "array[index]", true),
+        ("array.length <= index", "array[index]", false),
+        ("array.length - 1 < index", "array[index]", false),
+    ] {
+        let (consequent, alternate) =
+            if valid { (access, "undefined") } else { ("undefined", access) };
+        let source = format!("const value = {test} ? {consequent} : {alternate};");
+        fail.push(source.clone());
+        pass.push(format!("const value = {test} ? {alternate} : {consequent};"));
+        fix.push((source, format!("const value = {access};"), None, FixKind::Suggestion));
+    }
+    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test();
+}
+
+#[test]
+fn test_indexed_access_safety() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let pass = vec![
+        "const value = index >= 0 ? array[index] : other;",
+        "const value = index >= 0 ? array[index] : (undefined as Foo);",
+        "const value = index >= 0 ? object.property : undefined;",
+        "const value = index >= 0 ? array?.[index] : undefined;",
+        "const value = index >= 0 ? object?.items[index] : undefined;",
+        "const value = index >= 0 ? getArray()[index] : undefined;",
+        "const value = index >= 0 ? import('x')[index] : undefined;",
+        "const value = index >= 0 ? [() => foo?.bar][index] : undefined;",
+        "const value = index >= 0 ? function() { return foo?.bar; }[index] : undefined;",
+        "const value = index >= 0 ? object.items[index] : undefined;",
+        "const value = index >= 0 ? array[index++] : undefined;",
+        "const value = index >= 0 ? array[getIndex()] : undefined;",
+        "const value = index >= 0 ? array[object.index] : undefined;",
+        "const value = index < otherArray.length ? array[index] : undefined;",
+        "const value = index >= 0 ? array[index + 1] : undefined;",
+        "const value = index >= 0 ? array[otherIndex] : undefined;",
+        "const value = index >= 5 ? array[index] : undefined;",
+        "const value = index < array.length ? array[index - 1] : undefined;",
+        "const value = foo?.bar >= 0 ? array[foo.bar] : undefined;",
+        "const value = condition ? array[index] : undefined;",
+        "const value = index + 1 >= 0 ? array[index + 1] : undefined;",
+        "const value = index - 1 >= 0 ? array[index - 1] : undefined;",
+        "const value = index >= object?.minimum ? array[index] : undefined;",
+        "const value = index == 0 ? array[index] : undefined;",
+        "const value = index >= 0.5 ? array[index - 0.5] : undefined;",
+        "const value = index >= 9007199254740992 ? array[index - 9007199254740992] : undefined;",
+        "const value = index >= 0 ? array[index - -1] : undefined;",
+        "const value = index >= 0 ? array[index - offset] : undefined;",
+        "const value = index < array?.length ? array[index] : undefined;",
+        "const value = index < array['length'] ? array[index] : undefined;",
+        "const value = index <= array.length ? array[index] : undefined;",
+        "const value = index < array.length - 1 ? array[index] : undefined;",
+        "function f(undefined, array, index) { return index >= 0 ? array[index] : undefined; }",
+    ];
+    let no_suggestion = [
+        "const value = index >= 0 ? array[index] /* keep */ : undefined;",
+        "const value = index /* keep */ >= 0 ? array[index] : undefined;",
+        "const value = index >= 0 ? array[index] : /* keep */ undefined;",
+        "(index >= 0 ? array[index] : undefined)();",
+        "(index >= 0 ? array[index] : undefined)?.();",
+        "(index >= 0 ? array[index] : undefined)`template`;",
+        "delete (index >= 0 ? array[index] : undefined);",
+        "((index >= 0 ? array[index] : undefined) as Function)();",
+    ];
+    let mut fail = no_suggestion.to_vec();
+    let mut fix = vec![
+        (
+            "const value = 0n < array.length ? array[0n] : undefined;",
+            "const value = array[0n];",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const value = 0x0n >= 0 ? array[0n] : undefined;",
+            "const value = array[0n];",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const value = index >= 0 ? [() => foo.bar][index] : undefined;",
+            "const value = [() => foo.bar][index];",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const value = index >= 0 ? (array[index] as string) : undefined;",
+            "const value = (array[index] as string);",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const value = (index as number) >= 0 ? array[index as number] : undefined;",
+            "const value = array[index as number];",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const value = index! >= 0 ? array[index!] : undefined;",
+            "const value = array[index!];",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const value = (index satisfies number) >= 0 ? array[index satisfies number] : undefined;",
+            "const value = array[index satisfies number];",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const value = <number>index >= 0 ? array[<number>index] : undefined;",
+            "const value = array[<number>index];",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const value = index >= (0 as number) ? array[index] : undefined;",
+            "const value = array[index];",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const value = index >= 5 ? array[index - (5 as number)] : undefined;",
+            "const value = array[index - (5 as number)];",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const value = index <= array.length - (1 as number) ? array[index] : undefined;",
+            "const value = array[index];",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "function f() { return(index) >= 0 ? array[index] : undefined; }",
+            "function f() { return array[index]; }",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "a()\nindex >= 0 ? [array][index] : undefined;",
+            "a()\n;[array][index];",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "a()\nindex >= 0 ? <number>array[index] : undefined;",
+            "a()\n;(<number>array[index]);",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "if (condition) index >= 0 ? <number>array[index] : undefined;",
+            "if (condition) (<number>array[index]);",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "function f() { return(index) >= 0 ? <number>array[index] : undefined; }",
+            "function f() { return(<number>array[index]); }",
+            None,
+            FixKind::Suggestion,
+        ),
+        ("index >= 0 ? {}[index] : undefined;", "({}[index]);", None, FixKind::Suggestion),
+        (
+            "index >= 0 ? function() {}[index] : undefined;",
+            "(function() {}[index]);",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "if (condition) index >= 0 ? [array][index] : undefined;",
+            "if (condition) [array][index];",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const value = index >= 0 ? array[index] : undefined;",
+            "const value = index >= 0 ? array[index] : undefined;",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "const value = index >= 0 ? array[index] : undefined;",
+            "const value = array[index];",
+            Some(serde_json::json!([{ "checkArguments": false, "checkArrowFunctionBody": false }])),
+            FixKind::Suggestion,
+        ),
+    ];
+    fail.extend(fix.iter().map(|(source, _, _, _)| *source));
+    fix.extend(no_suggestion.iter().map(|source| (*source, *source, None, FixKind::Suggestion)));
+    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
+        .change_rule_path_extension("ts")
         .expect_fix(fix)
         .test();
 }
