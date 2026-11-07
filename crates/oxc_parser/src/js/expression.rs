@@ -1479,7 +1479,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             let Some(left_precedence) = kind_to_precedence(kind) else { break };
 
-            let stop = if left_precedence.is_right_associative() {
+            // Exponentiation is the only right-associative operator in PRECEDENCE_TABLE.
+            let stop = if kind == Kind::Star2 {
                 left_precedence < min_precedence
             } else {
                 left_precedence <= min_precedence
