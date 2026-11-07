@@ -187,6 +187,31 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
     // lone surrogate and cannot report its redeclaration.
     let mut lone_surrogate_names = FxHashMap::<JSStr<'a>, Span>::default();
 
+    // Merged enum declarations share one symbol, and each declaration binds its members in
+    // its own body scope, so the binder never sees cross-declaration duplicates
+    // (`enum E { A = 1 } enum E { A = 2 }`). The enum body scopes of the earlier
+    // declarations are recorded by the enum evaluator.
+    if ctx.enum_eval
+        && let Some(enum_symbol_id) = decl.id.symbol_id.get()
+        && let Some(current_scope_id) = decl.body.scope_id.get()
+        && let Some(body_scopes) = ctx.scoping.get_enum_body_scopes(enum_symbol_id)
+    {
+        let members = &decl.body.members;
+        for &scope_id in body_scopes.iter().filter(|scope_id| **scope_id != current_scope_id) {
+            for member in members {
+                if let Some(name) = member.id.static_name().as_str()
+                    && let Some(first) = ctx.scoping.get_binding(scope_id, name.into())
+                {
+                    ctx.error(diagnostics::redeclaration(
+                        name,
+                        ctx.scoping.symbol_span(first),
+                        member.id.span(),
+                    ));
+                }
+            }
+        }
+    }
+
     decl.body.members.iter().for_each(|member| {
         let name = match &member.id {
             TSEnumMemberName::Identifier(_) => None,

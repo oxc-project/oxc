@@ -257,3 +257,42 @@ fn surrogate_member_string_kind() {
         assert!(scoping.is_string_enum_member(scope, member.id.static_name()));
     }
 }
+
+fn check_diagnostics(source: &str) -> Vec<String> {
+    let allocator = Allocator::default();
+    let parsed = Parser::new(&allocator, source, SourceType::ts()).parse();
+    assert!(parsed.diagnostics.is_empty(), "Parse errors: {:?}", parsed.diagnostics);
+    let ret = SemanticBuilder::new()
+        .with_check_syntax_error(true)
+        .with_enum_eval(true)
+        .build(&parsed.program);
+    ret.diagnostics.errors().map(oxc_diagnostics::OxcDiagnostic::render).collect()
+}
+
+#[test]
+fn checker_merged_enum_duplicate_member_names() {
+    // Duplicate member names across merged declarations (tsc: Duplicate identifier).
+    let diags = check_diagnostics("enum E { A = 1 } enum E { A = 2 }");
+    assert!(
+        diags.iter().any(|m| m.contains("has already been declared")),
+        "expected a redeclaration diagnostic, got {diags:?}"
+    );
+
+    let diags = check_diagnostics(r#"enum E { A = "x" } enum E { A = "y" }"#);
+    assert!(
+        diags.iter().any(|m| m.contains("has already been declared")),
+        "expected a redeclaration diagnostic, got {diags:?}"
+    );
+
+    // Distinct members across merged declarations stay clean.
+    let diags = check_diagnostics("enum E { A = 1 } enum E { B = 2 }");
+    assert!(diags.is_empty(), "expected no diagnostics, got {diags:?}");
+
+    // Same-declaration duplicates are still reported exactly once (by the binder).
+    let diags = check_diagnostics("enum E { A = 1, A = 2 }");
+    assert_eq!(
+        diags.iter().filter(|m| m.contains("has already been declared")).count(),
+        1,
+        "expected exactly one redeclaration diagnostic, got {diags:?}"
+    );
+}
