@@ -74,6 +74,15 @@ impl<'a> ToPrimitive<'a> for Expression<'a> {
                             ToPrimitiveResult::String
                         }
                     }
+                    // `Symbol(...)` always evaluates to a symbol primitive.
+                    Expression::CallExpression(call) => match &call.callee {
+                        Expression::Identifier(ident)
+                            if ident.name == "Symbol" && ctx.is_global_reference(ident) =>
+                        {
+                            ToPrimitiveResult::Symbol
+                        }
+                        _ => ToPrimitiveResult::Undetermined,
+                    },
                     _ => ToPrimitiveResult::Undetermined,
                 }
             }

@@ -634,19 +634,30 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
                 }
                 return expr.to_big_int(ctx).is_none();
             }
-            if is_pure_global_function(name)
-                || is_pure_callable_constructor(name)
-                || (name == "RegExp" && is_valid_regexp(&self.arguments, ctx))
-            {
+            if is_pure_global_function(name) {
                 if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                    return true;
+                }
+                // Every one of these functions coerces its arguments via `ToString`
+                // (`parseInt`, `decodeURI`, ...) or `ToNumber` (`isNaN`, `isFinite`).
+                // Both coercions throw a TypeError on a Symbol argument.
+                if any_arg_is_symbol(&self.arguments, ctx) {
                     return true;
                 }
                 // `isNaN`/`isFinite` coerce their argument via `ToNumber`, which throws a
                 // TypeError on a BigInt. (The other pure globals — `parseInt`, `decodeURI`,
-                // `String()`, ... — `ToString`, which accepts BigInt.)
+                // ... — `ToString`, which accepts BigInt.)
                 if matches!(name, "isNaN" | "isFinite")
                     && any_arg_throws_to_number(&self.arguments, ctx)
                 {
+                    return true;
+                }
+                return false;
+            }
+            if is_pure_callable_constructor(name)
+                || (name == "RegExp" && is_valid_regexp(&self.arguments, ctx))
+            {
+                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
                     return true;
                 }
                 return false;
@@ -679,6 +690,15 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
                 return true;
             }
             let object = object.name.as_str();
+            // Most of these methods coerce their arguments via `ToString`/`ToNumber`
+            // (`Date.parse`, `Math.*`, `Symbol.for`, ...), which throws a TypeError on a
+            // Symbol argument. `Array.isArray`/`Array.of`, `ArrayBuffer.isView` and
+            // `Object.is` don't coerce.
+            if !matches!(object, "Array" | "ArrayBuffer" | "Object")
+                && any_arg_is_symbol(&self.arguments, ctx)
+            {
+                return true;
+            }
             // `ToNumber`-coercing methods throw a TypeError on a BigInt argument.
             let coerces_to_number = match object {
                 "Math" => true,
@@ -807,6 +827,13 @@ fn any_arg_throws_to_number<'a>(
     ctx: &impl MayHaveSideEffectsContext<'a>,
 ) -> bool {
     args.iter().any(|arg| arg.as_expression().is_some_and(|e| e.value_type(ctx).is_bigint()))
+}
+
+/// Whether any argument is provably a symbol — such coercions throw a TypeError.
+fn any_arg_is_symbol<'a>(args: &[Argument<'a>], ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+    args.iter().any(|arg| {
+        arg.as_expression().is_some_and(|e| e.to_primitive(ctx) == ToPrimitiveResult::Symbol)
+    })
 }
 
 /// Whether `expr` is a numeric literal (optionally negated) that is not a valid Unicode
