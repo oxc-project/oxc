@@ -9181,6 +9181,9 @@
         "unicorn/no-immediate-mutation": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-incorrect-query-selector": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-instanceof-array": {
           "$ref": "#/definitions/RuleNoConfig"
         },

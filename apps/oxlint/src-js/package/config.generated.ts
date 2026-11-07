@@ -1572,6 +1572,7 @@ export interface DummyRuleMap {
   "unicorn/no-empty-file"?: RuleNoConfig;
   "unicorn/no-hex-escape"?: RuleNoConfig;
   "unicorn/no-immediate-mutation"?: RuleNoConfig;
+  "unicorn/no-incorrect-query-selector"?: RuleNoConfig;
   "unicorn/no-instanceof-array"?: RuleNoConfig;
   "unicorn/no-instanceof-builtins"?: RuleNoConfig | [AllowWarnDeny, NoInstanceofBuiltinsConfig];
   "unicorn/no-invalid-fetch-options"?: RuleNoConfig;

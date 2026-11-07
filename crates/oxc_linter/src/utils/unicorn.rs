@@ -115,7 +115,12 @@ pub fn is_node_value_not_dom_node(expr: &Expression) -> bool {
             | Expression::ObjectExpression(_)
             | Expression::TemplateLiteral(_)
             | Expression::StringLiteral(_)
-    )
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::BooleanLiteral(_)
+            | Expression::NullLiteral(_)
+            | Expression::RegExpLiteral(_)
+    ) || expr.is_undefined()
 }
 
 pub fn is_empty_stmt(stmt: &Statement) -> bool {
