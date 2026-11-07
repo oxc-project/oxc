@@ -20,9 +20,6 @@ const PS_BYTES_2_AND_3: [u8; 2] = [0x80, 0xA9];
 static LINE_BREAK_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| matches!(b, b'\r' | b'\n' | LS_OR_PS_FIRST));
 
-static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
-    safe_byte_match_table!(|b| matches!(b, b'*' | b'\r' | b'\n' | LS_OR_PS_FIRST));
-
 /// Find a line break candidate, or a possible block-comment terminator.
 /// The first 0xE2 byte is checked by the caller for Unicode LS/PS.
 #[inline]
@@ -57,7 +54,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     pub(super) fn skip_single_line_comment(&mut self, kind: CommentKind) -> Kind {
         let start = self.source.position();
         let remaining = self.source.remaining().as_bytes();
-        let Some(index) = find_comment_special::<false>(remaining) else {
+        let Some(index) = memchr::memchr3(b'\r', b'\n', LS_OR_PS_FIRST, remaining) else {
             self.source.advance_to_end();
             self.trivia_builder.add_line_comment(
                 self.token.start(),
@@ -144,74 +141,45 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Section 12.4 Multi Line Comment
     pub(super) fn skip_multi_line_comment(&mut self) -> Kind {
-        // We need to identify if comment contains line breaks or not
-        // (`CommentKind::SingleLineBlock` or `CommentKind::MultiLineBlock`).
-        // So we have to use the loop below for the first line of the comment even if
-        // `Token`'s `is_on_new_line` flag is already set.
-        // If the loop finds a line break before end of the comment, we then switch to
-        // the faster `skip_multi_line_comment_after_line_break` which searches
-        // for the end of the comment using `memchr`.
-
-        byte_search! {
-            lexer: self,
-            table: MULTILINE_COMMENT_START_TABLE,
-            continue_if: (next_byte, pos) {
-                // Match found. Decide whether to continue searching.
-                if next_byte == b'*' {
-                    // SAFETY: Next byte is `*` (ASCII) so after it is UTF-8 char boundary
-                    let after_star = unsafe { pos.add(1) };
-                    if after_star.is_not_end_of(&self.source) {
-                        // If next byte isn't `/`, continue
-                        // SAFETY: Have checked there's at least 1 further byte to read
-                        if unsafe { after_star.read() } == b'/' {
-                            // Consume `*/`
-                            // SAFETY: Consuming `*/` leaves `pos` on a UTF-8 char boundary
-                            pos = unsafe { pos.add(2) };
-                            false
-                        } else {
-                            true
-                        }
-                    } else {
-                        // This is last byte in file. Continue to `handle_eof`.
-                        // This is illegal in valid JS, so mark this branch cold.
-                        cold_path();
-                        true
+        let mut pos = self.source.position();
+        loop {
+            let remaining = self.source.str_from_pos_to_end(pos).as_bytes();
+            let Some(index) = find_comment_special::<true>(remaining) else {
+                self.source.advance_to_end();
+                self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range()));
+                return Kind::Eof;
+            };
+            // SAFETY: The matching byte is ASCII or the UTF-8 leading byte 0xE2.
+            pos = unsafe { pos.add(index) };
+            match remaining[index] {
+                b'*' => {
+                    if remaining.get(index + 1) == Some(&b'/') {
+                        // SAFETY: Both bytes of the closing delimiter are present.
+                        self.source.set_position(unsafe { pos.add(2) });
+                        break;
                     }
-                } else if next_byte == LS_OR_PS_FIRST {
-                    // `0xE2`. Could be first byte of LS/PS, or could be some other Unicode char.
-                    // Either way, Unicode is uncommon, so make this a cold branch.
+                    // SAFETY: The matching ASCII byte is present, including at EOF.
+                    pos = unsafe { pos.add(1) };
+                }
+                LS_OR_PS_FIRST => {
                     cold_path();
-                    // SAFETY: Next byte is `0xE2` which is always 1st byte of a 3-byte UTF-8 char.
-                    // So safe to advance `pos` by 1 and read 2 bytes.
+                    // SAFETY: 0xE2 starts a three-byte character in valid UTF-8.
                     let next2 = unsafe { pos.add(1).read2() };
+                    // SAFETY: Consuming the full character preserves its UTF-8 boundary.
+                    pos = unsafe { pos.add(3) };
                     if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
-                        // Irregular line break
                         self.token.set_is_on_new_line(true);
-                        // SAFETY: Consuming this 3-byte UTF-8 char leaves a UTF-8 char boundary.
-                        let after_line_break = unsafe { pos.add(3) };
-                        return self.skip_multi_line_comment_after_line_break(after_line_break);
+                        return self.skip_multi_line_comment_after_line_break(pos);
                     }
-                    // Some other Unicode char beginning with `0xE2`.
-                    // Skip 3 bytes (macro skips 1 already, so skip 2 here), and continue searching.
-                    // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
-                    // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
-                    pos = unsafe { pos.add(2) };
-                    true
-                } else {
-                    // Regular line break.
-                    // No need to look for more line breaks, so switch to faster search just for `*/`.
+                }
+                _ => {
                     self.token.set_is_on_new_line(true);
-                    // SAFETY: Regular line breaks are ASCII, so skipping 1 byte is a UTF-8 char boundary.
+                    // SAFETY: The matching CR or LF is present and is ASCII.
                     let after_line_break = unsafe { pos.add(1) };
                     return self.skip_multi_line_comment_after_line_break(after_line_break);
                 }
-            },
-            handle_eof: {
-                self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range()));
-                return Kind::Eof;
-            },
-        };
-
+            }
+        }
         self.trivia_builder.add_block_comment(
             self.token.start(),
             self.offset(),
