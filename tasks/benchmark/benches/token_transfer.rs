@@ -32,6 +32,7 @@ fn fingerprint(output: &CodegenReturn<'_>) -> u64 {
     hash.finish()
 }
 
+#[expect(clippy::print_stdout, reason = "CI compares output fingerprints between variants")]
 fn bench_file(criterion: &mut Criterion, file: &TestFile, source_map: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, &file.source_text, file.source_type).parse();
