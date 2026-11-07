@@ -65,7 +65,13 @@ pub struct LintCommand {
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 
-    #[bpaf(external)]
+    #[bpaf(
+        external,
+        guard(
+            SuppressionOptions::is_valid,
+            "--no-suppressions cannot be combined with --suppress-all or --prune-suppressions"
+        )
+    )]
     pub suppression_options: SuppressionOptions,
 
     /// Single file, single path or list of paths
@@ -75,6 +81,10 @@ pub struct LintCommand {
 
 #[derive(Debug, Clone, Bpaf)]
 pub struct SuppressionOptions {
+    /// Ignore the bulk suppressions file without reading or modifying it
+    #[bpaf(long("no-suppressions"), switch, hide)]
+    pub no_suppressions: bool,
+
     /// Generate suppressions for all current violations
     #[bpaf(switch, hide)]
     pub suppress_all: bool,
@@ -82,6 +92,12 @@ pub struct SuppressionOptions {
     /// Remove entries for violations that no longer exist
     #[bpaf(switch, hide)]
     pub prune_suppressions: bool,
+}
+
+impl SuppressionOptions {
+    fn is_valid(&self) -> bool {
+        !self.no_suppressions || !(self.suppress_all || self.prune_suppressions)
+    }
 }
 
 impl LintCommand {
@@ -795,6 +811,19 @@ mod lint_options {
         assert!(options.type_check_only);
         let options = get_lint_options(".");
         assert!(!options.type_check_only);
+    }
+
+    #[test]
+    fn no_suppressions() {
+        assert!(!get_lint_options(".").suppression_options.no_suppressions);
+        assert!(get_lint_options("--no-suppressions").suppression_options.no_suppressions);
+        assert!(get_lint_options("--no-suppressions --fix").suppression_options.no_suppressions);
+        for flag in ["--suppress-all", "--prune-suppressions"] {
+            for args in [["--no-suppressions", flag], [flag, "--no-suppressions"]] {
+                let error = lint_command().run_inner(args.as_slice()).unwrap_err();
+                assert!(error.unwrap_stderr().contains("cannot be combined"));
+            }
+        }
     }
 
     #[test]
