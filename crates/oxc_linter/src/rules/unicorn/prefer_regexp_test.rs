@@ -8,8 +8,12 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule,
-    utils::is_logical_expression,
+    AstNode,
+    ast_util::{get_symbol_id_of_variable, outermost_paren_parent},
+    context::LintContext,
+    fixer::RuleFixer,
+    rule::Rule,
+    utils::{is_logical_expression, is_regexp_callee},
 };
 
 fn prefer_regexp_test_diagnostic(span: Span) -> OxcDiagnostic {
@@ -51,7 +55,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     recommended,
-    fix,
+    fix_suggestion,
     version = "0.0.16",
     short_description = "Prefers `RegExp#test()` over `String#match()` and `String#exec()`.",
 );
@@ -145,10 +149,14 @@ impl Rule for PreferRegexpTest {
             return;
         }
 
-        ctx.diagnostic_with_fix(prefer_regexp_test_diagnostic(span), |fixer| {
-            if !is_match {
-                return fixer.replace(span, "test");
-            }
+        if !is_match {
+            ctx.diagnostic_with_fix(prefer_regexp_test_diagnostic(span), |fixer| {
+                fixer.replace(span, "test")
+            });
+            return;
+        }
+
+        let fix = |fixer: RuleFixer<'_, 'a>| {
             let mut fix = fixer.new_fix_with_capacity(3);
 
             fix.push(fixer.replace(span, "test"));
@@ -156,13 +164,46 @@ impl Rule for PreferRegexpTest {
             fix.push(fixer.replace_with(member_expr.object(), &call_expr.arguments[0]));
 
             fix.with_message("Replace with `RegExp.test()`")
-        });
+        };
+
+        if call_expr.arguments[0].as_expression().is_some_and(|expr| is_regexp(expr, ctx)) {
+            ctx.diagnostic_with_fix(prefer_regexp_test_diagnostic(span), fix);
+        } else {
+            ctx.diagnostic_with_suggestion(prefer_regexp_test_diagnostic(span), fix);
+        }
+    }
+}
+
+fn is_regexp<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
+    if let Expression::Identifier(ident) = expr.get_inner_expression() {
+        let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx) else {
+            return false;
+        };
+        if ctx.scoping().symbol_is_mutated(symbol_id) {
+            return false;
+        }
+        let declaration = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
+        let AstKind::VariableDeclarator(declarator) = declaration.kind() else {
+            return false;
+        };
+        return declarator.id.is_binding_identifier()
+            && declarator.init.as_ref().is_some_and(|init| is_regexp_value(init, ctx));
+    }
+    is_regexp_value(expr, ctx)
+}
+
+fn is_regexp_value<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
+    match expr.get_inner_expression() {
+        Expression::RegExpLiteral(_) => true,
+        Expression::NewExpression(new_expr) => is_regexp_callee(&new_expr.callee, ctx),
+        Expression::CallExpression(call_expr) => is_regexp_callee(&call_expr.callee, ctx),
+        _ => false,
     }
 }
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         "const bar = !re.test(foo)",
@@ -301,6 +342,9 @@ fn test() {
         "const value = (s.match(/x/) || a) ? 1 : 2;",
         "const value = Boolean(a && s.match(/x/));",
         "const value = !(a || /x/.exec(s));",
+        r#"const query = "a"; if (title.match(query)) {}"#,
+        "if (glob.match(file)) {}",
+        r#"let re = /a/; re = "a"; if (foo.match(re)) {}"#,
     ];
 
     let fix = vec![
@@ -347,6 +391,39 @@ fn test() {
         ("const value = Boolean(a && s.match(/x/));", "const value = Boolean(a && /x/.test(s));"),
         ("const value = !(a || /x/.exec(s));", "const value = !(a || /x/.test(s));"),
     ];
+
+    let mut fix = fix
+        .into_iter()
+        .map(|(source, expected)| (source, expected, None, FixKind::Fix))
+        .collect::<Vec<_>>();
+    fix.extend([
+        (
+            r#"if (foo.match(new RegExp("a"))) {}"#,
+            r#"if (new RegExp("a").test(foo)) {}"#,
+            None,
+            FixKind::Fix,
+        ),
+        (
+            r#"const query = "a"; if (title.match(query)) {}"#,
+            r#"const query = "a"; if (title.match(query)) {}"#,
+            None,
+            FixKind::Fix,
+        ),
+        (
+            r#"const query = "a"; if (title.match(query)) {}"#,
+            r#"const query = "a"; if (query.test(title)) {}"#,
+            None,
+            FixKind::Suggestion,
+        ),
+        ("if (glob.match(file)) {}", "if (glob.match(file)) {}", None, FixKind::Fix),
+        ("if (glob.match(file)) {}", "if (file.test(glob)) {}", None, FixKind::Suggestion),
+        (
+            r#"let re = /a/; re = "a"; if (foo.match(re)) {}"#,
+            r#"let re = /a/; re = "a"; if (foo.match(re)) {}"#,
+            None,
+            FixKind::Fix,
+        ),
+    ]);
 
     Tester::new(PreferRegexpTest::NAME, PreferRegexpTest::PLUGIN, pass, fail)
         .expect_fix(fix)
