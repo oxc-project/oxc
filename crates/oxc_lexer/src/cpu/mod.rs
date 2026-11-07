@@ -137,7 +137,7 @@ trait CpuPrivate {
     target_arch = "x86_64",
     all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
 ))]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DynCpu {
     // Can never be created on x86_64 when AVX2, BMI2 and POPCNT are enabled at compile time.
     // See `Generic`.
@@ -164,7 +164,7 @@ pub enum DynCpu {
     target_arch = "x86_64",
     not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
 ))]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u8)] // So `detect` can transmute it to/from `AtomicI8`
 pub enum DynCpu {
     Generic(Generic) = 0,
@@ -182,7 +182,7 @@ pub enum DynCpu {
 ///
 /// [`detect`]: Self::detect
 #[cfg(target_arch = "aarch64")]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DynCpu {
     // Can never be created on aarch64 when Neon is enabled at compile time. See `Generic`.
     #[cfg_attr(target_feature = "neon", expect(dead_code))]
@@ -203,7 +203,7 @@ pub enum DynCpu {
 ///
 /// [`detect`]: Self::detect
 #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DynCpu {
     Generic(Generic),
     #[expect(dead_code)]
@@ -265,7 +265,7 @@ pub const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {
 /// So [`DynCpu::Avx2`] can never exist there, and the compiler removes code which handles it.
 ///
 /// The type still exists there, so [`DynCpu`] has the same variants on every platform.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Avx2(
     cfg_select! {
         target_arch = "x86_64" => (),
@@ -296,7 +296,7 @@ impl CpuPrivate for Avx2 {
 /// Neon is always enabled on aarch64 except on `aarch64*-unknown-none-softfloat` platforms
 /// or when it's specifically disabled by compiling with `-C target-feature=-neon`.
 /// Either way, it can be detected at compile time. No runtime feature check.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Neon(
     cfg_select! {
         all(target_arch = "aarch64", target_feature = "neon") => (),
@@ -329,7 +329,7 @@ impl CpuPrivate for Neon {
 ///
 /// The type still exists there, so code which uses it is still compiled and type-checked.
 /// That means generic code is still linted, and is visible to rust-analyzer, when working on an ARM Mac.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Generic(
     cfg_select! {
         not(any(
