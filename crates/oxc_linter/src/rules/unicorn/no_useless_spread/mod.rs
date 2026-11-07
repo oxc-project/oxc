@@ -542,6 +542,29 @@ fn get_method_name(call_expr: &CallExpression) -> Option<String> {
 }
 
 #[test]
+fn test_fix_preserves_numeric_literals() {
+    use crate::tester::Tester;
+
+    let mut fix = ["5000", "1_000", "0xCA_FE", "0b1010_0000", "0o7_000", "1E3", "0.000_001"]
+        .into_iter()
+        .map(|literal| {
+            (
+                format!("const obj = {{ ...{{ amount: {literal}, other: 1000, small: 500 }} }};"),
+                format!(
+                    "const obj = ({{\n\tamount: {literal},\n\tother: 1000,\n\tsmall: 500\n}});"
+                ),
+            )
+        })
+        .collect::<Vec<_>>();
+    fix.push(("[...[5000], ...[0xCAFE, 1_000]]".to_string(), "[5000, 0xCAFE, 1_000]".to_string()));
+
+    Tester::new::<&str>(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, vec![], vec![])
+        .change_rule_path_extension("mjs")
+        .expect_fix(fix)
+        .test();
+}
+
+#[test]
 fn test() {
     use crate::tester::Tester;
 
