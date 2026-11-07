@@ -7,6 +7,7 @@ use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{JSStr, Str};
+use oxc_syntax::constant_value::ConstantValue;
 
 use crate::{builder::SemanticBuilder, diagnostics};
 
@@ -224,6 +225,20 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
                     // E = -1
                     | Expression::UnaryExpression(_)
             );
+            // The syntactic classification above treats `A = foo() + 1` and `A = E.Str` as
+            // constant initializers, but only a *numeric* constant allows the next member to
+            // omit its initializer. When enum member values have been evaluated, they decide
+            // precisely whether the next member auto-increments.
+            if ctx.enum_eval
+                && let Some(scope_id) = decl.body.scope_id.get()
+                && let Some(name) = member.id.static_name().as_str()
+            {
+                let value = ctx
+                    .scoping
+                    .get_binding(scope_id, name.into())
+                    .and_then(|symbol_id| ctx.scoping.get_enum_member_value(symbol_id));
+                need_initializer = !matches!(value, Some(ConstantValue::Number(_)));
+            }
         } else if need_initializer {
             ctx.error(diagnostics::enum_member_must_have_initializer(member.span));
         }
