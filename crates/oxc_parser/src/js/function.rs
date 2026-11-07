@@ -67,6 +67,32 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         (this_param, formal_parameters)
     }
 
+    /// Parse an ambiguous JS arrow head, retaining whether its final comma prevents it
+    /// from also being a parenthesized expression.
+    pub(super) fn parse_cover_arrow_parameters(
+        &mut self,
+    ) -> (ArenaBox<'a, FormalParameters<'a>>, bool) {
+        debug_assert!(!self.is_ts);
+        let start = self.cur_start();
+        let opening_span = self.cur_token().span();
+        self.expect(Kind::LParen);
+        let (list, rest) =
+            self.parse_formal_parameters_list(FunctionKind::Expression, opening_span);
+        let has_trailing_comma =
+            list.last().is_some_and(|param| param.span.end < self.prev_token_end);
+        self.expect(Kind::RParen);
+        let params = FormalParameters::boxed(
+            self.end_span(start),
+            FormalParameterKind::ArrowFormalParameters,
+            list,
+            rest,
+            self,
+        );
+        (params, has_trailing_comma)
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_formal_parameters_list(
         &mut self,
         func_kind: FunctionKind,

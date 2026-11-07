@@ -1,9 +1,9 @@
-use oxc_allocator::ArenaBox;
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_span::FileExtension;
+use oxc_span::{FileExtension, GetSpan, Span};
 use oxc_syntax::precedence::Precedence;
 
-use super::{FunctionKind, Tristate};
+use super::{FunctionKind, Tristate, grammar::CoverGrammar};
 use crate::{Context, ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
 struct ArrowFunctionHead<'a> {
@@ -15,7 +15,7 @@ struct ArrowFunctionHead<'a> {
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
-    pub(super) fn try_parse_arrow_function_expression(
+    pub(super) fn try_parse_arrow_function_expression<const REUSE_JS_HEAD: bool>(
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Option<Expression<'a>> {
@@ -71,6 +71,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Tristate::True => Some(self.parse_parenthesized_arrow_function_expression(
                 allow_return_type_in_arrow_function,
             )),
+            Tristate::Maybe if REUSE_JS_HEAD => {
+                self.parse_possible_js_parenthesized_expression(allow_return_type_in_arrow_function)
+            }
             Tristate::Maybe => self.parse_possible_parenthesized_arrow_function_expression(
                 allow_return_type_in_arrow_function,
             ),
@@ -317,7 +320,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.cur_token().is_on_new_line() {
             self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
         }
-
         self.expect(Kind::Arrow);
 
         ArrowFunctionHead { type_parameters, params, return_type, r#async, start }
@@ -374,6 +376,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.parse_arrow_function_expression_body(head, allow_return_type_in_arrow_function)
     }
 
+    fn expect_arrow_after_head(&mut self) {
+        if self.cur_token().is_on_new_line() {
+            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
+        }
+        self.expect(Kind::Arrow);
+    }
+
     fn parse_possible_parenthesized_arrow_function_expression(
         &mut self,
         allow_return_type_in_arrow_function: bool,
@@ -427,5 +436,184 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         Some(body)
+    }
+
+    #[inline(never)]
+    fn parse_possible_js_parenthesized_expression(
+        &mut self,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Option<Expression<'a>> {
+        let pos = self.cur_token().start();
+        if self.state.not_parenthesized_arrow.contains(&pos) {
+            return None;
+        }
+        let checkpoint = self.checkpoint_with_error_recovery();
+        let errors_len = self.errors.len();
+        let (params, has_trailing_comma) = self.parse_cover_arrow_parameters();
+        let head = ArrowFunctionHead {
+            type_parameters: None,
+            params,
+            return_type: None,
+            r#async: false,
+            start: pos,
+        };
+        if !self.at(Kind::Arrow) {
+            // Reuse the successful parameter parse, including its initializers and property
+            // keys, when it also represents an ordinary parenthesized expression.
+            if !self.has_fatal_error()
+                && self.errors.len() == errors_len
+                && !has_trailing_comma
+                && head.params.rest.is_none()
+                && !head.params.items.is_empty()
+                && let Some(expression) = self.cover_arrow_head_as_expression(head)
+            {
+                return Some(expression);
+            }
+            self.state.not_parenthesized_arrow.insert(pos);
+            self.rewind(checkpoint);
+            return None;
+        }
+        self.expect_arrow_after_head();
+        if self.has_fatal_error() {
+            self.state.not_parenthesized_arrow.insert(pos);
+            self.rewind(checkpoint);
+            return None;
+        }
+        Some(self.parse_arrow_function_expression_body(head, allow_return_type_in_arrow_function))
+    }
+
+    #[inline(never)]
+    fn cover_arrow_head_as_expression(
+        &mut self,
+        head: ArrowFunctionHead<'a>,
+    ) -> Option<Expression<'a>> {
+        let span = head.params.span;
+        let params = head.params.unbox();
+        let len = params.items.len();
+        let mut items = params.items.into_iter();
+        let first = self.cover_parameter_as_expression(items.next().unwrap())?;
+        let expression = if len == 1 {
+            first
+        } else {
+            let start = first.span().start;
+            let mut expressions = ArenaVec::with_capacity_in(len, self);
+            expressions.push(first);
+            for item in items {
+                expressions.push(self.cover_parameter_as_expression(item)?);
+            }
+            let end = expressions.last().unwrap().span().end;
+            Expression::new_sequence_expression(Span::new(start, end), expressions, self)
+        };
+        // Keep the wrapper until the caller distinguishes this from an arrow. The caller
+        // removes it when `preserve_parens` is disabled.
+        Some(Expression::new_parenthesized_expression(span, expression, self))
+    }
+
+    fn cover_parameter_as_expression(
+        &mut self,
+        param: FormalParameter<'a>,
+    ) -> Option<Expression<'a>> {
+        let left = self.cover_binding_as_expression(param.pattern)?;
+        Some(if let Some(initializer) = param.initializer {
+            let left = AssignmentTarget::cover(left, self);
+            Expression::new_assignment_expression(
+                param.span,
+                AssignmentOperator::Assign,
+                left,
+                initializer.unbox(),
+                self,
+            )
+        } else {
+            left
+        })
+    }
+
+    fn cover_binding_as_expression(
+        &mut self,
+        pattern: BindingPattern<'a>,
+    ) -> Option<Expression<'a>> {
+        Some(match pattern {
+            BindingPattern::BindingIdentifier(ident) => {
+                if ident.name == "await" && !self.ctx.has_await() {
+                    self.state.encountered_await_identifier = true;
+                }
+                Expression::new_identifier(ident.span, ident.name, self)
+            }
+            BindingPattern::AssignmentPattern(pattern) => {
+                let pattern = pattern.unbox();
+                let left = self.cover_binding_as_expression(pattern.left)?;
+                let left = AssignmentTarget::cover(left, self);
+                Expression::new_assignment_expression(
+                    pattern.span,
+                    AssignmentOperator::Assign,
+                    left,
+                    pattern.right,
+                    self,
+                )
+            }
+            BindingPattern::ArrayPattern(pattern) => {
+                let pattern = pattern.unbox();
+                let mut elements = ArenaVec::with_capacity_in(
+                    pattern.elements.len() + usize::from(pattern.rest.is_some()),
+                    self,
+                );
+                for element in pattern.elements {
+                    // Binding elisions do not retain their token spans. Reparse those arrays.
+                    let expression = self.cover_binding_as_expression(element?)?;
+                    elements.push(ArrayExpressionElement::from(expression));
+                }
+                if let Some(rest) = pattern.rest {
+                    let rest = rest.unbox();
+                    let argument = self.cover_binding_as_expression(rest.argument)?;
+                    elements.push(ArrayExpressionElement::SpreadElement(SpreadElement::boxed(
+                        rest.span, argument, self,
+                    )));
+                }
+                Expression::new_array_expression(pattern.span, elements, self)
+            }
+            BindingPattern::ObjectPattern(pattern) => {
+                let pattern = pattern.unbox();
+                let mut properties = ArenaVec::with_capacity_in(
+                    pattern.properties.len() + usize::from(pattern.rest.is_some()),
+                    self,
+                );
+                for property in pattern.properties {
+                    if property.shorthand
+                        && matches!(property.value, BindingPattern::AssignmentPattern(_))
+                    {
+                        // Preserve deferred CoverInitializedName validation on the ordinary path.
+                        return None;
+                    }
+                    let value = if property.shorthand {
+                        let BindingPattern::BindingIdentifier(ident) = property.value else {
+                            return None;
+                        };
+                        // As in object-literal parsing, an `await` shorthand does not mark
+                        // this statement for unambiguous top-level-await reparsing.
+                        Expression::new_identifier(ident.span, ident.name, self)
+                    } else {
+                        self.cover_binding_as_expression(property.value)?
+                    };
+                    properties.push(ObjectPropertyKind::ObjectProperty(ObjectProperty::boxed(
+                        property.span,
+                        PropertyKind::Init,
+                        property.key,
+                        value,
+                        false,
+                        property.shorthand,
+                        property.computed,
+                        self,
+                    )));
+                }
+                if let Some(rest) = pattern.rest {
+                    let rest = rest.unbox();
+                    let argument = self.cover_binding_as_expression(rest.argument)?;
+                    properties.push(ObjectPropertyKind::SpreadProperty(SpreadElement::boxed(
+                        rest.span, argument, self,
+                    )));
+                }
+                Expression::new_object_expression(pattern.span, properties, self)
+            }
+        })
     }
 }

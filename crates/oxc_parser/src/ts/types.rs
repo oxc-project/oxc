@@ -461,13 +461,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             | Kind::Never
             | Kind::Object
             // Parse `null` as `TSNullKeyword` instead of null literal to align with typescript eslint.
-            | Kind::Null => {
-                if self.lexer.peek_token().kind() == Kind::Dot {
-                    self.parse_type_reference()
-                } else {
-                    self.parse_keyword_type()
-                }
-            }
+            | Kind::Null => self.parse_keyword_type(),
             // TODO: js doc types: `JSDocAllType`, `JSDocFunctionType`
             // Kind::StarEq => {
             // scanner.reScanAsteriskEqualsToken();
@@ -548,53 +542,35 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_keyword_type(&mut self) -> TSType<'a> {
-        let start = self.cur_start();
-        match self.cur_kind() {
-            Kind::Any => {
-                self.bump_any();
-                TSType::new_ts_any_keyword(self.end_span(start), self)
-            }
-            Kind::BigInt => {
-                self.bump_any();
-                TSType::new_ts_big_int_keyword(self.end_span(start), self)
-            }
-            Kind::Boolean => {
-                self.bump_any();
-                TSType::new_ts_boolean_keyword(self.end_span(start), self)
-            }
-            Kind::Never => {
-                self.bump_any();
-                TSType::new_ts_never_keyword(self.end_span(start), self)
-            }
-            Kind::Number => {
-                self.bump_any();
-                TSType::new_ts_number_keyword(self.end_span(start), self)
-            }
-            Kind::Object => {
-                self.bump_any();
-                TSType::new_ts_object_keyword(self.end_span(start), self)
-            }
-            Kind::String => {
-                self.bump_any();
-                TSType::new_ts_string_keyword(self.end_span(start), self)
-            }
-            Kind::Symbol => {
-                self.bump_any();
-                TSType::new_ts_symbol_keyword(self.end_span(start), self)
-            }
-            Kind::Undefined => {
-                self.bump_any();
-                TSType::new_ts_undefined_keyword(self.end_span(start), self)
-            }
-            Kind::Unknown => {
-                self.bump_any();
-                TSType::new_ts_unknown_keyword(self.end_span(start), self)
-            }
-            Kind::Null => {
-                self.bump_any();
-                TSType::new_ts_null_keyword(self.end_span(start), self)
-            }
-            _ => self.unexpected(),
+        let token = self.cur_token();
+        // Escaped keywords are allowed as the first part of a qualified type name,
+        // but not as keyword types. Keep lookahead only for this uncommon case.
+        if token.escaped() && self.lexer.peek_token().kind() == Kind::Dot {
+            return self.parse_type_reference();
+        }
+        self.bump_any();
+        let span = token.span();
+        // A keyword and a qualified name both consume the first token, so decide
+        // between them afterwards instead of lexing the following token twice.
+        if self.at(Kind::Dot) {
+            let ident = IdentifierName::new(span, self.ident(self.token_source(&token)), self);
+            let name = TSTypeName::new_identifier_reference(ident.span, ident.name, self);
+            let name = self.parse_ts_qualified_type_name(span.start, name);
+            return self.parse_type_reference_with_name(span.start, name);
+        }
+        match token.kind() {
+            Kind::Any => TSType::new_ts_any_keyword(span, self),
+            Kind::BigInt => TSType::new_ts_big_int_keyword(span, self),
+            Kind::Boolean => TSType::new_ts_boolean_keyword(span, self),
+            Kind::Never => TSType::new_ts_never_keyword(span, self),
+            Kind::Number => TSType::new_ts_number_keyword(span, self),
+            Kind::Object => TSType::new_ts_object_keyword(span, self),
+            Kind::String => TSType::new_ts_string_keyword(span, self),
+            Kind::Symbol => TSType::new_ts_symbol_keyword(span, self),
+            Kind::Undefined => TSType::new_ts_undefined_keyword(span, self),
+            Kind::Unknown => TSType::new_ts_unknown_keyword(span, self),
+            Kind::Null => TSType::new_ts_null_keyword(span, self),
+            _ => unreachable!(),
         }
     }
 

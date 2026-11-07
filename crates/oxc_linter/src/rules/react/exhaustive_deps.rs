@@ -592,7 +592,7 @@ impl Rule for ExhaustiveDeps {
                 }
             }
 
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_dangerous_suggestion(
                 unnecessary_outer_scope_dependency_diagnostic(
                     hook_name,
                     &dependency.name,
@@ -1552,6 +1552,36 @@ fn invalid_configs_error_in_from_configuration() {
 
     let valid_regex = serde_json::json!([{ "additionalHooks": "useSpecialEffect" }]);
     assert!(ExhaustiveDeps::from_configuration(valid_regex).is_ok());
+}
+
+#[test]
+fn test_unnecessary_dependency_suggestions() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let cases = [
+        (
+            "function A({ section }) { const ref = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section, ref.current]); }",
+            "function A({ section }) { const ref = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section]); }",
+        ),
+        (
+            "const OUTER = 1; function B({ section }) { useEffect(() => { console.log(section, OUTER); }, [section, OUTER]); }",
+            "const OUTER = 1; function B({ section }) { useEffect(() => { console.log(section, OUTER); }, [section]); }",
+        ),
+    ];
+
+    let fail = cases.iter().map(|(source, _)| *source).collect();
+    let fix = cases
+        .into_iter()
+        .flat_map(|(source, expected)| {
+            [
+                (source, source, None, FixKind::SafeFix),
+                (source, source, None, FixKind::SafeFixOrSuggestion),
+                (source, expected, None, FixKind::DangerousSuggestion),
+            ]
+        })
+        .collect();
+
+    Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, vec![], fail).expect_fix(fix).test();
 }
 
 #[test]

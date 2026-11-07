@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     cell::{Cell, OnceCell, RefCell},
     ffi::OsStr,
     path::Path,
@@ -8,10 +7,9 @@ use std::{
 };
 
 use oxc_allocator::{Allocator, ArenaBox};
-use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_parser::Token;
 use oxc_semantic::Semantic;
-use oxc_span::{SourceType, Span};
+use oxc_span::SourceType;
 
 use crate::{
     AllowWarnDeny, FrameworkFlags,
@@ -19,8 +17,10 @@ use crate::{
         LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, OxlintSettings,
         plugins::plugin_display_name,
     },
-    disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
-    fixer::{Fix, FixKind, Message, PossibleFixes},
+    disable_directives::{
+        DisableDirectives, DisableDirectivesBuilder, create_unused_directives_messages,
+    },
+    fixer::{FixKind, Message},
     frameworks::FrameworkOptions,
     module_record::ModuleRecord,
     options::LintOptions,
@@ -393,78 +393,12 @@ impl<'a> ContextHost<'a> {
     }
 
     /// report unused enable/disable directives, add these as Messages to diagnostics
-    pub fn report_unused_directives(&self, rule_severity: Severity) {
-        // report unused disable
-        // relate to lint result, check after linter run finish
-        let unused_disable_comments = self.disable_directives().collect_unused_disable_comments();
-        let fix_message = "remove unused disable directive";
-        let source_text = self.source_text();
-
-        for unused_disable_comment in unused_disable_comments {
-            let span = unused_disable_comment.span;
-            let fix_span = unused_disable_comment.fix_span;
-            match &unused_disable_comment.r#type {
-                RuleCommentType::All => {
-                    self.push_diagnostic(Message::new(
-                        OxcDiagnostic::error(
-                            unused_disable_comment.directive_prefix.unused_disable_message(),
-                        )
-                        .with_label(span)
-                        .with_severity(rule_severity),
-                        PossibleFixes::Single(
-                            Fix::delete(fix_span)
-                                .with_kind(FixKind::Suggestion)
-                                .with_message(fix_message),
-                        ),
-                    ));
-                }
-                RuleCommentType::Single(rules_vec) => {
-                    for rule in rules_vec {
-                        let rule_message = Cow::<str>::Owned(
-                            rule.directive_prefix.unused_disable_rule_message(&rule.rule_name),
-                        );
-
-                        let fix = rule.create_fix(source_text, span).with_message(fix_message);
-
-                        self.push_diagnostic(Message::new(
-                            OxcDiagnostic::error(rule_message)
-                                .with_label(rule.name_span)
-                                .with_severity(rule_severity),
-                            PossibleFixes::Single(fix),
-                        ));
-                    }
-                }
-            }
-        }
-
-        let unused_enable_comments = self.disable_directives().unused_enable_comments();
-        let mut unused_directive_diagnostics: Vec<(Cow<str>, Span)> =
-            Vec::with_capacity(unused_enable_comments.len());
-        // report unused enable
-        // not relate to lint result, check during comment directives' construction
-        for (directive_prefix, rule_name, enable_comment_span) in unused_enable_comments {
-            unused_directive_diagnostics.push((
-                rule_name.as_ref().map_or_else(
-                    || Cow::Owned(directive_prefix.unused_enable_message()),
-                    |name| Cow::Owned(directive_prefix.unused_enable_rule_message(name)),
-                ),
-                *enable_comment_span,
-            ));
-        }
-
-        self.append_diagnostics(
-            unused_directive_diagnostics
-                .into_iter()
-                .map(|(message, span)| {
-                    Message::new(
-                        OxcDiagnostic::error(message).with_label(span).with_severity(rule_severity),
-                        // TODO: fixer
-                        // copy the structure of disable directives
-                        PossibleFixes::None,
-                    )
-                })
-                .collect(),
-        );
+    pub fn report_unused_directives(&self, severity: AllowWarnDeny) {
+        self.append_diagnostics(create_unused_directives_messages(
+            self.disable_directives(),
+            severity,
+            Some((self.fix, self.source_text())),
+        ));
     }
 
     /// Take ownership of all diagnostics collected during linting.
