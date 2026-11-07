@@ -1,6 +1,7 @@
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_span::{ContentEq, GetSpan, SPAN};
+use oxc_syntax::number::ToJsString;
 
 use crate::{
     IsolatedDeclarations,
@@ -40,8 +41,21 @@ impl<'a> IsolatedDeclarations<'a> {
     /// same static name identifies the same property. Keep structural equality as a
     /// fallback for supported non-static keys such as `Symbol.iterator`.
     pub(crate) fn accessor_keys_match(left: &PropertyKey<'a>, right: &PropertyKey<'a>) -> bool {
-        left.static_name().zip(right.static_name()).is_some_and(|(left, right)| left == right)
-            || left.content_eq(right)
+        match (left, right) {
+            (PropertyKey::NumericLiteral(left), PropertyKey::NumericLiteral(right)) => {
+                left.value == right.value
+            }
+            (PropertyKey::NumericLiteral(number), other)
+            | (other, PropertyKey::NumericLiteral(number)) => {
+                other.static_name().is_some_and(|name| name == number.value.to_js_string().as_str())
+            }
+            _ => {
+                left.static_name()
+                    .zip(right.static_name())
+                    .is_some_and(|(left, right)| left == right)
+                    || left.content_eq(right)
+            }
+        }
     }
 
     pub(crate) fn is_literal_key(key: &PropertyKey<'a>) -> bool {

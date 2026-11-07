@@ -61,3 +61,21 @@ export declare const mixedReverseConst: {
 export declare const numericConst: {
 	1: number;
 };
+export declare const exponentialDistinct: {
+	readonly 1e21: number;
+	"1000000000000000000000": string;
+};
+export declare const exponentialPair: {
+	1e21: number;
+};
+export declare const smallDistinct: {
+	"0.0000001": string;
+	readonly 1e-7: number;
+};
+export declare const smallPair: {
+	"1e-7": number;
+};
+export declare class NumericAccessors {
+	get 1e21(): number;
+	set "1000000000000000000000"(v: string);
+}
