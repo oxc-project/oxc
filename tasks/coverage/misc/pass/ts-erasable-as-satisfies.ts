@@ -28,6 +28,10 @@ const x20 = 1 + 1 as any as number >= 2;
 const x21 = 1 + 1 as number >> 2;
 const x22 = 1 + 1 as any as number >> 2;
 
+// Equal-precedence left-associative operators keep their grouping when erased.
+const x25 = 2 * 3 as number * 2;
+const x26 = 2 * 3 as any as number * 2;
+
 const y01 = 1 satisfies number * 2;
 const y02 = 1 satisfies any satisfies number * 2;
 const y05 = 1 satisfies number + 1 * 2;
@@ -52,3 +56,7 @@ const y20 = 1 + 1 satisfies any satisfies number >= 2;
 
 const y21 = 1 + 1 satisfies number >> 2;
 const y22 = 1 + 1 satisfies any satisfies number >> 2;
+
+// Equal-precedence left-associative operators keep their grouping when erased.
+const y25 = 2 * 3 satisfies number * 2;
+const y26 = 2 * 3 satisfies any satisfies number * 2;
