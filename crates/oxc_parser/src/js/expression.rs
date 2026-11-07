@@ -1524,7 +1524,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // When we have `a ## b as T $$ c` or `a ## b satisfies T $$ c`, where `##` and `$$`
                 // are binary operators, we want to stop parsing when `$$` would bind before `##`
                 // after erasing the assertion.
-                // See <https://github.com/microsoft/TypeScript/issues/63527>.
+                // See <https://github.com/microsoft/TypeScript/issues/63527>
+                // and <https://github.com/microsoft/TypeScript/issues/63661>.
                 if let Some(last_precedence) = last_operand_precedence
                     && let Some(next_precedence) = kind_to_precedence(self.re_lex_right_angle())
                     && (next_precedence > last_precedence
