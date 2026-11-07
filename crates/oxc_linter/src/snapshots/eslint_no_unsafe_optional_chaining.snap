@@ -141,3 +141,17 @@ source: crates/oxc_linter/src/tester.rs
    ·       ────────
    ╰────
   help: This can result in NaN.
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:2]
+ 1 │ (obj?.foo as Foo).bar;
+   ·  ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:2]
+ 1 │ (obj?.foo satisfies Foo)();
+   ·  ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
