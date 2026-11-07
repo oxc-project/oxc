@@ -275,7 +275,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_primary_expression(&mut self) -> Expression<'a> {
         // Ordinary identifiers do not need async-function or contextual-keyword disambiguation.
         if self.at(Kind::Ident) {
-            return self.parse_identifier_expression();
+            return self.parse_plain_identifier_expression();
         }
         let kind = self.cur_kind();
         match kind {
@@ -1403,7 +1403,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // Identifiers cannot start a unary or prefix-update expression. Parse their
             // suffixes directly, keeping pure annotations inside the postfix update.
             let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
-            let primary = self.parse_identifier_expression();
+            let primary = self.parse_plain_identifier_expression();
             self.parse_primary_expression_rest(lhs_start, primary, pure_comments)
         } else if self.ctx.has_in() && kind == Kind::PrivateIdentifier {
             // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
