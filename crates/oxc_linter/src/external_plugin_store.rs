@@ -49,6 +49,8 @@ pub struct ExternalPluginStore {
     options: IndexVec<ExternalOptionsId, (ExternalRuleId, SmallVec<[serde_json::Value; 1]>)>,
 
     is_enabled: bool,
+    /// `plugin/rule` names skipped because the store is disabled, in config order, once each.
+    ignored_rules: Vec<String>,
 }
 
 impl Default for ExternalPluginStore {
@@ -68,6 +70,7 @@ impl ExternalPluginStore {
             rules: IndexVec::default(),
             options,
             is_enabled,
+            ignored_rules: Vec::new(),
         }
     }
 
@@ -79,6 +82,17 @@ impl ExternalPluginStore {
     /// Returns `true` if no external plugins have been loaded.
     pub fn is_empty(&self) -> bool {
         self.plugins.is_empty()
+    }
+
+    pub fn record_ignored_rule(&mut self, plugin_name: &str, rule_name: &str) {
+        let full_name = format!("{plugin_name}/{rule_name}");
+        if !self.ignored_rules.contains(&full_name) {
+            self.ignored_rules.push(full_name);
+        }
+    }
+
+    pub fn ignored_rules(&self) -> &[String] {
+        &self.ignored_rules
     }
 
     pub fn is_plugin_registered(&self, plugin_path: &Path) -> bool {
