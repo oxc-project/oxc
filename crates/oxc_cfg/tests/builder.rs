@@ -53,3 +53,32 @@ fn unlabeled_break_skips_labeled_context() {
     assert!(cfg.is_reachable(before_break, after_loop));
     assert!(!cfg.is_reachable(before_break, after_label));
 }
+
+#[test]
+fn stacked_loop_labels_share_continue_target() {
+    let mut cfg = ControlFlowGraphBuilder::default();
+    cfg.attach_error_harness(oxc_cfg::ErrorEdgeKind::Implicit);
+    let target = cfg.new_basic_block_normal();
+    for label in ["a", "b", "c"] {
+        cfg.ctx(Some(label)).default().allow_break();
+    }
+    cfg.ctx(None).default().allow_break().allow_continue();
+    let mut sources = Vec::new();
+    for label in ["a", "b", "c"] {
+        let source = cfg.new_basic_block_normal();
+        cfg.append_continue(NodeId::DUMMY, Some(label));
+        sources.push(source);
+    }
+    cfg.ctx(None).mark_continue(target).resolve_with_upper_label();
+    for _ in 0..3 {
+        cfg.ctx(None).resolve();
+    }
+    let cfg = cfg.build();
+    for source in sources {
+        assert!(
+            cfg.graph
+                .edges_connecting(source, target)
+                .any(|edge| matches!(edge.weight(), oxc_cfg::EdgeType::Jump))
+        );
+    }
+}

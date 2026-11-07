@@ -305,6 +305,9 @@ fn test() {
         "function f() { for (;;) { B: { break; } } return 'ok'; }",
         "function f() { for (;;) { B: { break B; } return 'ok'; } }",
         "function f() { for (;;) { B: C: { continue; } } }",
+        "function f() { do { continue; } while (condition); after(); }",
+        "function f() { a: b: do { while (other) { continue a; } } while (condition); after(); }",
+        "function q3() { var n = 0; a: b: c: do { n++; continue b; } while (n < 3); return n; }",
     ];
 
     let fail = vec![
