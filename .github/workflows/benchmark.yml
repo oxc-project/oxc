@@ -32,12 +32,7 @@ jobs:
   determine-matrix:
     name: Determine Benchmark
     runs-on: ubuntu-latest
-    if: >
-      github.repository == 'oxc-project/oxc' &&
-      (
-        github.event_name != 'pull_request' ||
-        !contains(github.event.pull_request.labels.*.name, '0-merge')
-      )
+    if: false # Temporary token-transfer benchmark, scoped below.
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -102,3 +97,71 @@ jobs:
         with:
           mode: ${{ matrix.mode }}
           run: cargo codspeed run ${{ matrix.component }}
+
+  token-transfer:
+    name: Token transfer (${{ matrix.profile }})
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [walltime, analysis]
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12
+        with:
+          cache-key: benchmark-compiler
+          tools: cargo-codspeed@4.7.0
+      - name: Build both versions with both allocators
+        env:
+          CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+          TOKEN_PROFILE: ${{ matrix.profile }}
+        run: |
+          set -euo pipefail
+          git fetch --depth 1 origin 7c22786f9bb21cf18358b76ca6dc84f8a7d2b16f
+          measurement=walltime
+          if [ "$TOKEN_PROFILE" = "analysis" ]; then measurement=simulation; fi
+          for allocator in never_grow system; do
+            features=compiler
+            if [ "$allocator" = "system" ]; then features=compiler,system_allocator; fi
+            for variant in baseline candidate; do
+              source_ref=HEAD
+              if [ "$variant" = "baseline" ]; then source_ref=7c22786f9bb21cf18358b76ca6dc84f8a7d2b16f; fi
+              git restore --source="$source_ref" crates/oxc_codegen/src/sourcemap_builder.rs
+              cargo codspeed build -m "$measurement" -p oxc_benchmark --bench token_transfer --no-default-features --features "$features" --locked
+              cp "target/codspeed/$TOKEN_PROFILE/oxc_benchmark/token_transfer" "/tmp/tokens-$allocator-$variant"
+            done
+          done
+      - name: Paired walltime
+        if: matrix.profile == 'walltime'
+        uses: CodSpeedHQ/action@c4fd08a3a159bd0cc208da1e0edf32b8c47d75e5
+        with:
+          mode: walltime
+          run: |
+            set -euo pipefail
+            for allocator in never_grow system; do
+              for variant in baseline_1 candidate_1 candidate_2 baseline_2; do
+                cp "/tmp/tokens-$allocator-${variant%_*}" target/codspeed/walltime/oxc_benchmark/token_transfer
+                TOKEN_VARIANT="$variant" cargo codspeed run -p oxc_benchmark --bench token_transfer -- --warm-up-time 0.5 --measurement-time 1 --sample-size 30 | tee "/tmp/tokens-$allocator-$variant.log"
+              done
+              sed -n '/^CHECK /p' "/tmp/tokens-$allocator-baseline_1.log" > /tmp/tokens-baseline-checks
+              sed -n '/^CHECK /p' "/tmp/tokens-$allocator-candidate_1.log" > /tmp/tokens-candidate-checks
+              diff -u /tmp/tokens-baseline-checks /tmp/tokens-candidate-checks
+            done
+      - name: Simulation and memory
+        if: matrix.profile == 'analysis'
+        uses: CodSpeedHQ/action@c4fd08a3a159bd0cc208da1e0edf32b8c47d75e5
+        with:
+          mode: simulation,memory
+          run: |
+            set -euo pipefail
+            for allocator in never_grow system; do
+              for variant in baseline candidate; do
+                cp "/tmp/tokens-$allocator-$variant" target/codspeed/analysis/oxc_benchmark/token_transfer
+                TOKEN_VARIANT="$variant" cargo codspeed run -p oxc_benchmark --bench token_transfer | tee "/tmp/tokens-$allocator-$variant.log"
+              done
+              sed -n '/^CHECK /p' "/tmp/tokens-$allocator-baseline.log" > /tmp/tokens-baseline-checks
+              sed -n '/^CHECK /p' "/tmp/tokens-$allocator-candidate.log" > /tmp/tokens-candidate-checks
+              diff -u /tmp/tokens-baseline-checks /tmp/tokens-candidate-checks
+            done

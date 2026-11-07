@@ -1,9 +1,16 @@
-use std::alloc::{GlobalAlloc, Layout, System};
+use std::alloc::System;
+#[cfg(not(feature = "system_allocator"))]
+use std::alloc::{GlobalAlloc, Layout};
 
 pub use criterion::*;
 
 #[global_allocator]
+#[cfg(not(feature = "system_allocator"))]
 static GLOBAL: NeverGrowInPlaceAllocator = NeverGrowInPlaceAllocator;
+
+#[global_allocator]
+#[cfg(feature = "system_allocator")]
+static GLOBAL: System = System;
 
 /// Global allocator for use in benchmarks.
 ///
@@ -24,10 +31,12 @@ static GLOBAL: NeverGrowInPlaceAllocator = NeverGrowInPlaceAllocator;
 /// [`GlobalAlloc::realloc`] implementation which *never* grows in place.
 /// It therefore represents the "worse case scenario" for memory allocation performance.
 /// This behavior is consistent and predictable, and therefore stabilizes benchmark results.
+#[cfg(not(feature = "system_allocator"))]
 struct NeverGrowInPlaceAllocator;
 
 // SAFETY: Methods simply delegate to `System` allocator
 #[expect(clippy::undocumented_unsafe_blocks)]
+#[cfg(not(feature = "system_allocator"))]
 unsafe impl GlobalAlloc for NeverGrowInPlaceAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         unsafe { System.alloc(layout) }
