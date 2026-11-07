@@ -1,5 +1,5 @@
 use crate::{
-    cpu::{Cpu, cpu_multiversion},
+    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version},
     error::DiagCode,
     token::tk,
 };
@@ -126,8 +126,12 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                     continue;
                 }
                 let e0 = bm_next0(word, p + 1, n, cpu);
-                let e = if *src.add(e0) == b'\\' && *src.add(e0 + 1) == b'u' {
+                let e = if *src.add(e0) == b'\\'
+                    && *src.add(e0 + 1) == b'u'
+                    && !holds_unicode_ws(src, p + 1, e0)
+                {
                     *kind.add(p) = tk!(PrivateIdentEscaped);
+                    nesc += 1;
                     scan_ident_esc(src, n, e0, cpu)
                 } else {
                     *kind.add(p) = tk!(PrivateIdent);
@@ -146,6 +150,15 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
         }
     }
     nesc
+}
+
+/// Cold: whether src[a..b] holds a multi-byte WhiteSpace or LineTerminator.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+unsafe fn holds_unicode_ws(src: *const u8, a: usize, b: usize) -> bool {
+    let cpu = BASELINE;
+    (a..b).any(|i| *src.add(i) >= 0x80 && unicode_ws_len_at_unchecked(src, i, cpu) != 0)
 }
 
 /// Validate the UTF-8 sequence led by the byte at `p` (>= 0x80). Returns

@@ -1,15 +1,16 @@
 use crate::{
-    cpu::{Cpu, cpu_multiversion},
+    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version},
     error::DiagCode,
     token::tk,
 };
 
 use crate::pipeline::{
-    bitmap::{bm_clear, bm_clear_range, bm_set},
+    bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
     bytes::{is_digit, is_id_start, is_word},
     disambiguate::{not_operator_position, prev_sig},
     find::find,
     lanes::Lanes,
+    scan::scan_ident_esc,
     token_view,
 };
 
@@ -577,6 +578,9 @@ pub(super) unsafe fn carve_jsx(
                 }
                 let c = *src.add(s);
                 if c == b'{' {
+                    if *src.add(s - 1) == b'u' && *src.add(s - 2) == b'\\' {
+                        restore_escaped_container(src, n, st, word, kind, s);
+                    }
                     stack.push(JFrame {
                         kind: JFrameKind::JsxCont,
                         parent: JMode::Text,
@@ -703,6 +707,35 @@ pub(super) unsafe fn carve_jsx(
             }
             JFrameKind::TemplateSub => {}
         }
+    }
+}
+
+/// Cold: misc_pre read a backslash-u in JSX text as an escape running into the container at s.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+unsafe fn restore_escaped_container(
+    src: *const u8,
+    n: usize,
+    st: *mut u64,
+    word: *const u64,
+    kind: *mut u8,
+    s: usize,
+) {
+    let cpu = BASELINE;
+    bm_set(st, s, cpu);
+    let mut i = s + 1;
+    if bm_get(word, i, cpu) {
+        bm_set(st, i, cpu);
+        i = bm_next0(word, i, n, cpu);
+    }
+    if *src.add(i) == b'\\' && *src.add(i + 1) == b'u' {
+        bm_set(st, i, cpu);
+        *kind.add(i) = tk!(IdentEscaped);
+        i = scan_ident_esc(src, n, i, cpu);
+    }
+    if *src.add(i) == b'}' {
+        bm_set(st, i, cpu);
     }
 }
 

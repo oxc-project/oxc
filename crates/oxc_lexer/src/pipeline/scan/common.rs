@@ -3,7 +3,7 @@ use std::slice;
 use crate::cpu::{Cpu, cpu_multiversion};
 
 use crate::pipeline::{
-    bytes::{hex_val, is_digit, is_word},
+    bytes::{hex_val, is_digit, is_word, unicode_ws_len_at_unchecked},
     find::find,
 };
 
@@ -183,7 +183,10 @@ pub unsafe fn scan_ident_esc(src: *const u8, n: usize, p: usize, cpu: impl Cpu) 
                     k += 1;
                 }
             }
-            while i < n && is_word(*src.add(i), cpu) {
+            while i < n
+                && is_word(*src.add(i), cpu)
+                && unicode_ws_len_at_unchecked(src, i, cpu) == 0
+            {
                 i += 1;
             }
             continue;
