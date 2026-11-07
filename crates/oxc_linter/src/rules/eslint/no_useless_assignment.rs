@@ -1547,6 +1547,11 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f(p, q = (p = 1), r = (p = 2)) { return p; }",
         "function f(p, { [p = 1]: q } = (p = 2, {})) { return p; }",
         "function f(p, { a = (p = 1) } = (p = 2, {})) { return p; }",
+        "function f() { let fin = 0; for (const k in { a: 1 }) { try { continue; } finally { fin = 1; } } return fin; }",
+        "function g() { let fin = 0; while (true) { try { break; } finally { fin = 1; } } return fin; }",
+        "function f() { let fin = 0; outer: while (condition()) { try { try { break outer; } finally { fin = 1; } } finally { use(fin); } } return fin; }",
+        "function f() { let fin = 0; outer: while (condition()) { try { while (condition()) { continue outer; } } finally { fin = 1; } } return fin; }",
+        "function f() { let fin = 0; while (condition()) { try { break; } finally { if (condition()) fin = 1; } } return fin; }",
     ];
 
     let fail = vec![
@@ -1909,6 +1914,8 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f(p) { use(p); p = 1; }",
         "function f(p, q = p) { p = 1; return q; }",
         "function f(cb = p => { p = 1; p = 2; return p; }) { return cb; }",
+        "function f() { let fin = 0; use(fin); while (condition()) { try { break; } finally { fin = 1; } } }",
+        "function f() { let fin = 0; while (condition()) { try { break; } finally { fin = 1; fin = 2; } } return fin; }",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
