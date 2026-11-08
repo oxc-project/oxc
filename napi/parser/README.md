@@ -21,10 +21,9 @@ If you need all ASTs in the same with-TS-properties format, use the `astType: 't
 The only differences between Oxc's AST and ESTree / TS-ESTree are:
 
 - Support for Stage 3 [decorators](https://github.com/tc39/proposal-decorators).
-- Support for Stage 3 ECMA features [`import defer`](https://github.com/tc39/proposal-defer-import-eval)
-  and [`import source`](https://github.com/tc39/proposal-source-phase-imports).
-- In TS-ESTree AST, `import.defer(...)` and `import.source(...)` are represented as an `ImportExpression`
-  with `'defer'` or `'source'` in `phase` field (as in ESTree spec), where TS-ESLint represents these
+- Support for the Stage 3 ECMA feature [`import source`](https://github.com/tc39/proposal-source-phase-imports).
+- In TS-ESTree AST, `import.source(...)` is represented as an `ImportExpression`
+  with `'source'` in the `phase` field (as in ESTree spec), where TS-ESLint represents it
   as a `CallExpression` with `MetaProperty` as its `callee`.
 - Addition of a non-standard `hashbang` field to `Program`.
 
