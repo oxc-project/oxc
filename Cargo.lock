@@ -2286,6 +2286,7 @@ dependencies = [
  "oxc_ast",
  "oxc_data_structures",
  "oxc_diagnostics",
+ "oxc_lexer",
  "oxc_simd",
  "oxc_span",
  "oxc_syntax",

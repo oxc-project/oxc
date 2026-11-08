@@ -37,5 +37,7 @@ oxc_diagnostics = ["dep:oxc_diagnostics"]
 testing = ["oxc_simd/testing"]
 
 [dev-dependencies]
-# The unit tests use `oxc_simd`'s testing helpers, e.g. `#[test_cpus]`
+# The integration tests use `oxc_lexer::testing`
+oxc_lexer = { workspace = true, features = ["testing"] }
+# The tests use `oxc_simd`'s testing helpers, e.g. `#[test_cpus]`
 oxc_simd = { workspace = true, features = ["testing"] }
