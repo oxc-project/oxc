@@ -453,6 +453,7 @@ pub fn validate_no_ref_access_in_render(func: &HirFunction, env: &mut Environmen
         &*env,
         &mut ref_env,
         &mut errors,
+        0,
     );
     let mut seen = FxHashSet::default();
     let retain = errors
@@ -501,6 +502,7 @@ fn collect_temporaries_sidemap(
     }
 }
 
+#[expect(clippy::too_many_arguments)]
 fn validate_no_ref_access_in_render_impl(
     func: &HirFunction,
     identifiers: &IndexSlice<IdentifierId, [Identifier]>,
@@ -509,7 +511,15 @@ fn validate_no_ref_access_in_render_impl(
     env: &Environment,
     ref_env: &mut Env,
     errors: &mut Vec<OxcDiagnostic>,
+    depth: u32,
 ) -> RefAccessType {
+    /// A generous bound far below the point where recursion overflows small thread
+    /// stacks; deep function nesting is not compilable output anyway.
+    const MAX_FUNCTION_NESTING_DEPTH: u32 = 1000;
+    if depth > MAX_FUNCTION_NESTING_DEPTH {
+        errors.push(diagnostics::todo_validate_function_nesting_too_deep(func.span));
+        return RefAccessType::None;
+    }
     let mut return_values: Vec<RefAccessType> = Vec::new();
 
     // Process params
@@ -685,6 +695,7 @@ fn validate_no_ref_access_in_render_impl(
                             env,
                             ref_env,
                             &mut inner_errors,
+                            depth + 1,
                         );
                         let (return_type, read_ref_effect, ref_access_span) =
                             if inner_errors.is_empty() {

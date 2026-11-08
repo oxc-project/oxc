@@ -64,8 +64,13 @@ fn validate_context_variable_lvalues_with_errors(
         functions,
         identifiers,
         errors,
+        0,
     )
 }
+
+/// A generous bound far below the point where recursion overflows small thread
+/// stacks; deep function nesting is not compilable output anyway.
+const MAX_FUNCTION_NESTING_DEPTH: u32 = 1000;
 
 fn validate_context_variable_lvalues_impl(
     func: &HirFunction,
@@ -73,7 +78,11 @@ fn validate_context_variable_lvalues_impl(
     functions: &IndexSlice<FunctionId, [HirFunction]>,
     identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     errors: &mut Diagnostics,
+    depth: u32,
 ) -> Result<(), OxcDiagnostic> {
+    if depth > MAX_FUNCTION_NESTING_DEPTH {
+        return Err(diagnostics::todo_validate_function_nesting_too_deep(func.span));
+    }
     let mut inner_function_ids: Vec<FunctionId> = Vec::new();
 
     for (_block_id, block) in &func.body.blocks {
@@ -145,6 +154,7 @@ fn validate_context_variable_lvalues_impl(
             functions,
             identifiers,
             errors,
+            depth + 1,
         )?;
     }
 
