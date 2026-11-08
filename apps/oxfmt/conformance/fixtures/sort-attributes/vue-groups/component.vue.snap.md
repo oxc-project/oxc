@@ -14,22 +14,22 @@
 `````vue
 <template>
   <Widget
+    @input="input"
+    z="last"
+    :bound-z="z"
+    id="id"
+    title="Title"
     v-if="show"
     v-for="item in items"
     v-model="value"
-    v-custom="custom"
     class="classes"
-    id="id"
     data-a="a"
     data-z="z"
-    title="Title"
     :bound-a="a"
-    :bound-z="z"
     a="first"
-    z="last"
     tabindex="0"
     @click="click"
-    @input="input"
+    v-custom="custom"
   />
 </template>
 
@@ -40,22 +40,22 @@
 `````vue
 <template>
   <Widget
+    @input="input"
+    z="last"
+    :bound-z="z"
+    id="id"
+    title="Title"
     v-if="show"
     v-for="item in items"
     v-model="value"
-    v-custom="custom"
     class="classes"
-    id="id"
     data-z="z"
     data-a="a"
-    title="Title"
-    :bound-z="z"
     :bound-a="a"
-    z="last"
     a="first"
     tabindex="0"
-    @input="input"
     @click="click"
+    v-custom="custom"
   />
 </template>
 

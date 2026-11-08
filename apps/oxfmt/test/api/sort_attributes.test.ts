@@ -48,6 +48,36 @@ describe("sortAttributes", () => {
     ).toBe(result.code);
   });
 
+  it.each([
+    '<Widget :z="next()" :a="next()" />',
+    '<Widget :z="state.z" :a="state.a" />',
+    '<Widget :z="z" :a="a" />',
+    '<Widget :z="next()" :a />',
+    '<Widget v-bind:z="next()" v-bind:a="next()" />',
+    '<Widget v-model="one" :modelValue="two" />',
+    '<Widget :modelValue="two" v-model="one" />',
+    '<Widget v-model:title="one" :title="two" />',
+    '<Widget v-on:click="z" @click="a" />',
+    '<Widget @click="z" v-on:click="a" />',
+    '<Widget @click="z" :onClick="a" />',
+    "<div v-z v-a />",
+    '<div v-z="next()" v-a="next()" />',
+    '<div v-z v-show="visible" v-a />',
+  ])("preserves Vue evaluation and directive order in %s", async (template) => {
+    const input = `<template>${template}</template>`;
+    const baseline = await format("input.vue", input, { sortAttributes: false });
+    expect(baseline.errors).toStrictEqual([]);
+    const results = await Promise.all(
+      [true, { order: "desc" as const }, { groups: ["^v-", "^@", "^:", "$DEFAULT"] }].map(
+        (sortAttributes) => format("input.vue", input, { sortAttributes }),
+      ),
+    );
+    for (const result of results) {
+      expect(result.errors).toStrictEqual([]);
+      expect(result.code).toBe(baseline.code);
+    }
+  });
+
   it.each(["html", "vue", "tsx"])("composes with Tailwind sorting in %s", async (extension) => {
     const source =
       extension === "tsx"

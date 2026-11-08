@@ -268,7 +268,7 @@ pub struct FormatConfig {
     /// Sort HTML, Vue and JSX/TSX attributes into configurable groups.
     ///
     /// Pass `true` or an object to enable alphabetical sorting, `false` to disable.
-    /// Spreads and dynamic attribute names separate sortable runs. Tags with ignored
+    /// Spreads, Vue directives and dynamic attribute names separate sortable runs. Tags with ignored
     /// attributes or JSX comments keep their attribute order.
     ///
     /// - Languages: HTML, Vue, JSX, TSX
@@ -672,8 +672,8 @@ pub struct SortAttributesConfig {
     pub groups: Option<Vec<String>>,
     /// Alphabetical order within each group. Group order is never reversed.
     /// Equal names retain their original order. JSX spreads and expressions that may
-    /// have side effects stay in place. Vue object bindings and dynamic arguments
-    /// stay in place; tags with conflicting bindings keep their original order.
+    /// have side effects stay in place. Vue directives stay in place to preserve
+    /// expression evaluation order, generated property precedence and lifecycle hook order.
     ///
     /// - Default: `"asc"`
     #[serde(skip_serializing_if = "Option::is_none")]

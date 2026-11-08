@@ -16,7 +16,7 @@ use oxc_formatter_core::{
     spec::is_suppression_marker,
     write,
 };
-use oxc_htmlish_parser::ast::{Attribute, NodeId, NodeKind, Quote};
+use oxc_htmlish_parser::ast::{Attribute, AttributeKind, NodeId, NodeKind, Quote};
 
 use super::{
     HtmlishFormatter,
@@ -79,22 +79,10 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
             let mut attributes = Vec::with_capacity(el.attributes.len());
             for attribute in &el.attributes {
                 let name = t.attribute_name(id, attribute.name.slice(t.source()));
-                // Vue's long and short binding forms can write the same property.
-                // Sorting a tag with conflicting bindings could change which value wins.
-                let key = if t.rules().vue_sfc {
-                    name.strip_prefix(':')
-                        .or_else(|| name.strip_prefix("v-bind:"))
-                        .unwrap_or(name)
-                        .split('.')
-                        .next()
-                        .unwrap()
-                } else {
-                    name
-                };
                 let key = if t.rules().names_ignore_case {
-                    key.cow_to_ascii_lowercase()
+                    name.cow_to_ascii_lowercase()
                 } else {
-                    Cow::Borrowed(key)
+                    Cow::Borrowed(name)
                 };
                 if !names.insert(key) {
                     return None;
@@ -107,11 +95,10 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
                 attributes.push((options.group_index(&name), name, attribute));
             }
             for chunk in attributes.split_mut(|(_, name, attribute)| {
-                (t.rules().vue_sfc
-                    && (matches!(name.as_ref(), "v-bind" | "v-on")
-                        || name.starts_with("v-bind.")
-                        || name.starts_with("v-on.")
-                        || name.contains('[')))
+                // A directive can evaluate JS, generate props also written by another
+                // attribute, or run lifecycle hooks. Keep it in place, and never move
+                // another attribute across it: even a simple binding can read a getter.
+                (t.rules().vue_sfc && matches!(attribute.kind, AttributeKind::Vue(_)))
                     || f.context().embedded_in().is_some_and(|embedded| {
                         embedded.has_placeholder(name)
                             || attribute.value.is_some_and(|value| {
