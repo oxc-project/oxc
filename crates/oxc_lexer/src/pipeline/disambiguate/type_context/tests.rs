@@ -1,8 +1,6 @@
-use crate::{
-    cpu::{DynCpu, testing::test_cpus},
-    error::DiagCode,
-    token::TokenKind,
-};
+use oxc_simd::{DynCpu, test_cpus};
+
+use crate::{error::DiagCode, token::TokenKind};
 
 use crate::pipeline::disambiguate::{
     FORWARD_SCAN_CAP,

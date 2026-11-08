@@ -1,4 +1,4 @@
-use crate::cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
 use super::common::Tokens;
 

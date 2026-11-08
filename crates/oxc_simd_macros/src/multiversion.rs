@@ -70,7 +70,7 @@ impl Multiversion<'_> {
     ///     #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
     ///     #[allow(unreachable_code)]
     ///     #[inline(never)]
-    ///     unsafe fn __avx2<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Avx2) -> bool {
+    ///     unsafe fn __avx2<'a, const N: usize, T>(arr: &'a [T; N], cpu: ::oxc_simd::Avx2) -> bool {
     ///         #[cfg(not(target_arch = "x86_64"))]
     ///         unreachable!();
     ///         __impl::<N, T>(arr, cpu)
@@ -79,7 +79,7 @@ impl Multiversion<'_> {
     ///     #[cfg_attr(target_arch = "aarch64", target_feature(enable = "neon"))]
     ///     #[allow(unreachable_code)]
     ///     #[inline(never)]
-    ///     unsafe fn __neon<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Neon) -> bool {
+    ///     unsafe fn __neon<'a, const N: usize, T>(arr: &'a [T; N], cpu: ::oxc_simd::Neon) -> bool {
     ///         #[cfg(not(all(target_arch = "aarch64", target_feature = "neon")))]
     ///         unreachable!();
     ///         __impl::<N, T>(arr, cpu)
@@ -88,7 +88,7 @@ impl Multiversion<'_> {
     ///     #[cfg_attr(target_feature = "sse2", target_feature(enable = "sse2"))]
     ///     #[allow(unreachable_code)]
     ///     #[inline(never)]
-    ///     unsafe fn __generic<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Generic) -> bool {
+    ///     unsafe fn __generic<'a, const N: usize, T>(arr: &'a [T; N], cpu: ::oxc_simd::Generic) -> bool {
     ///         #[cfg(any(
     ///             all(target_arch = "aarch64", target_feature = "neon"),
     ///             all(
@@ -100,10 +100,10 @@ impl Multiversion<'_> {
     ///         __impl::<N, T>(arr, cpu)
     ///     }
     ///
-    ///     match crate::cpu::to_dyn(cpu) {
-    ///         crate::cpu::DynCpu::Avx2(cpu) => unsafe { __avx2::<N, T>(arr, cpu) },
-    ///         crate::cpu::DynCpu::Neon(cpu) => unsafe { __neon::<N, T>(arr, cpu) },
-    ///         crate::cpu::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
+    ///     match ::oxc_simd::to_dyn(cpu) {
+    ///         ::oxc_simd::DynCpu::Avx2(cpu) => unsafe { __avx2::<N, T>(arr, cpu) },
+    ///         ::oxc_simd::DynCpu::Neon(cpu) => unsafe { __neon::<N, T>(arr, cpu) },
+    ///         ::oxc_simd::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
     ///     }
     /// }
     /// ```
@@ -134,10 +134,10 @@ impl Multiversion<'_> {
     /// /// Do some stuff.
     /// #[inline(always)]
     /// unsafe fn foo<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: impl Cpu) -> bool {
-    ///     match crate::cpu::to_dyn(cpu) {
-    ///         crate::cpu::DynCpu::Avx2(cpu) => unsafe { Self::__foo_avx2::<N, T>(self, arr, cpu) },
-    ///         crate::cpu::DynCpu::Neon(cpu) => unsafe { Self::__foo_neon::<N, T>(self, arr, cpu) },
-    ///         crate::cpu::DynCpu::Generic(cpu) => unsafe {
+    ///     match ::oxc_simd::to_dyn(cpu) {
+    ///         ::oxc_simd::DynCpu::Avx2(cpu) => unsafe { Self::__foo_avx2::<N, T>(self, arr, cpu) },
+    ///         ::oxc_simd::DynCpu::Neon(cpu) => unsafe { Self::__foo_neon::<N, T>(self, arr, cpu) },
+    ///         ::oxc_simd::DynCpu::Generic(cpu) => unsafe {
     ///             Self::__foo_generic::<N, T>(self, arr, cpu)
     ///         },
     ///     }
@@ -151,7 +151,7 @@ impl Multiversion<'_> {
     /// #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
     /// #[allow(unreachable_code)]
     /// #[inline(never)]
-    /// unsafe fn __foo_avx2<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: crate::cpu::Avx2) -> bool {
+    /// unsafe fn __foo_avx2<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: ::oxc_simd::Avx2) -> bool {
     ///     #[cfg(not(target_arch = "x86_64"))]
     ///     unreachable!();
     ///     Self::__foo_impl::<N, T>(self, arr, cpu)
@@ -160,7 +160,7 @@ impl Multiversion<'_> {
     /// #[cfg_attr(target_arch = "aarch64", target_feature(enable = "neon"))]
     /// #[allow(unreachable_code)]
     /// #[inline(never)]
-    /// unsafe fn __foo_neon<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: crate::cpu::Neon) -> bool {
+    /// unsafe fn __foo_neon<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: ::oxc_simd::Neon) -> bool {
     ///     #[cfg(not(all(target_arch = "aarch64", target_feature = "neon")))]
     ///     unreachable!();
     ///     Self::__foo_impl::<N, T>(self, arr, cpu)
@@ -169,7 +169,7 @@ impl Multiversion<'_> {
     /// #[cfg_attr(target_feature = "sse2", target_feature(enable = "sse2"))]
     /// #[allow(unreachable_code)]
     /// #[inline(never)]
-    /// unsafe fn __foo_generic<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: crate::cpu::Generic) -> bool {
+    /// unsafe fn __foo_generic<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: ::oxc_simd::Generic) -> bool {
     ///     #[cfg(any(
     ///         all(target_arch = "aarch64", target_feature = "neon"),
     ///         all(
@@ -269,7 +269,7 @@ impl Multiversion<'_> {
     /// #[cfg_attr(target_arch = "x86_64", target_feature(enable = "avx2,bmi2,popcnt"))]
     /// #[allow(unreachable_code)]
     /// #[inline(never)]
-    /// unsafe fn __avx2<'a, const N: usize, T>(arr: &'a [T; N], cpu: crate::cpu::Avx2) -> bool {
+    /// unsafe fn __avx2<'a, const N: usize, T>(arr: &'a [T; N], cpu: ::oxc_simd::Avx2) -> bool {
     ///     #[cfg(not(target_arch = "x86_64"))]
     ///     unreachable!();
     ///     __impl::<N, T>(arr, cpu)
@@ -308,10 +308,10 @@ impl Multiversion<'_> {
     /// is uninhabited, so its arm can never run.
     ///
     /// ```ignore
-    /// match crate::cpu::to_dyn(cpu) {
-    ///     crate::cpu::DynCpu::Avx2(cpu) => unsafe { __avx2::<N, T>(arr, cpu) },
-    ///     crate::cpu::DynCpu::Neon(cpu) => unsafe { __neon::<N, T>(arr, cpu) },
-    ///     crate::cpu::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
+    /// match ::oxc_simd::to_dyn(cpu) {
+    ///     ::oxc_simd::DynCpu::Avx2(cpu) => unsafe { __avx2::<N, T>(arr, cpu) },
+    ///     ::oxc_simd::DynCpu::Neon(cpu) => unsafe { __neon::<N, T>(arr, cpu) },
+    ///     ::oxc_simd::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
     /// }
     /// ```
     fn cpu_match(&self) -> TokenStream {
@@ -329,7 +329,7 @@ impl Multiversion<'_> {
         });
 
         quote! {
-            match crate::cpu::to_dyn(#cpu_name) {
+            match ::oxc_simd::to_dyn(#cpu_name) {
                 #(#arms)*
             }
         }

@@ -22,7 +22,7 @@ doctest = false
 [dependencies]
 oxc_ast = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["assert_unchecked", "branch_hints", "str"] }
-oxc_lexer_macros = { workspace = true }
+oxc_simd = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 constcat = { workspace = true }
@@ -34,4 +34,8 @@ oxc_diagnostics = { workspace = true, optional = true }
 [features]
 oxc_diagnostics = ["dep:oxc_diagnostics"]
 # Expose `oxc_lexer::testing` module, for conformance tests
-testing = []
+testing = ["oxc_simd/testing"]
+
+[dev-dependencies]
+# The unit tests use `oxc_simd`'s testing helpers, e.g. `#[test_cpus]`
+oxc_simd = { workspace = true, features = ["testing"] }

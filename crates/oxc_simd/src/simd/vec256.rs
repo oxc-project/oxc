@@ -38,9 +38,10 @@ use super::{
 /// Holds a `C: CpuSimd`, so a vector can only exist if the CPU supports that feature set.
 /// `C` is zero-sized, so [`Vec256`] is the same size as the type it wraps.
 ///
-/// See comment on [`Vec256Inner`] explaining the `Vec256Storage` type.
+/// See comment on `Vec256Inner` explaining the `Vec256Storage` type.
 #[cfg_attr(not(any(target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
 #[derive(Clone, Copy)]
+#[must_use]
 pub struct Vec256<C: CpuSimd> {
     storage: C::Vec256Storage,
     cpu: C,
@@ -104,7 +105,7 @@ impl<C: CpuSimd> Vec256<C> {
 
 /// Accessors.
 impl<C: CpuSimd> Vec256<C> {
-    /// Get the [`CpuSimd`] token from this [`Vec256`].
+    /// Get the `CpuSimd` token from this [`Vec256`].
     #[inline(always)]
     pub fn cpu(self) -> C {
         self.cpu
@@ -266,7 +267,6 @@ impl<C: CpuSimd> Vec256<C> {
     ///
     /// - `ptr` must be valid for writing 32 bytes.
     /// - `ptr` must be aligned on 32.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub unsafe fn store(self, ptr: *mut u8) {
         cpu_select!(self.cpu(), {
@@ -314,7 +314,6 @@ impl<C: CpuSimd> Vec256<C> {
     }
 
     /// Write a [`Vec256`] into a [`VecData256`], which is aligned on 32.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub fn write(self, dst: &mut VecData256) {
         // SAFETY: `VecData256` guarantees `dst.as_mut_ptr()`
@@ -341,6 +340,7 @@ impl<C: CpuSimd> Vec256<C> {
     }
 
     /// Invert all the bits of this [`Vec256`].
+    #[expect(clippy::should_implement_trait, reason = "`Not` trait is implemented too")]
     #[inline(always)]
     pub fn not(self) -> Self {
         self.xor(Self::splat(0xFF, self.cpu()))
@@ -454,7 +454,6 @@ impl<C: CpuSimd> Vec256<C> {
 
     /// Add either another [`Vec256`] or a `u8` to every byte of this [`Vec256`],
     /// stopping at 255.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub fn saturating_add_u8(self, other: impl Operand256<u8, C>) -> Self {
         cpu_select!(self.cpu(), {
@@ -476,7 +475,6 @@ impl<C: CpuSimd> Vec256<C> {
 
     /// Subtract either another [`Vec256`] or a `u8` from every byte of this [`Vec256`],
     /// wrapping on overflow.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub fn sub_u8(self, other: impl Operand256<u8, C>) -> Self {
         cpu_select!(self.cpu(), {
@@ -495,7 +493,6 @@ impl<C: CpuSimd> Vec256<C> {
 
     /// Subtract either another [`Vec256`] or a `u8` from every byte of this [`Vec256`],
     /// stopping at 0.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub fn saturating_sub_u8(self, other: impl Operand256<u8, C>) -> Self {
         cpu_select!(self.cpu(), {
@@ -556,7 +553,6 @@ impl<C: CpuSimd> Vec256<C> {
     }
 
     /// Check if every byte of this [`Vec256`] equals either another [`Vec256`] or a `u8`.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub fn all_eq_u8(self, other: impl Operand256<u8, C>) -> bool {
         self.xor(other).is_zero()

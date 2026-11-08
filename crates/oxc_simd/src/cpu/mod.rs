@@ -35,7 +35,7 @@
 //! [`#[cpu_version]`] marks each implementation with the CPU feature set it's for.
 //! [`#[cpu_multiversion]`] turns a function into one with a separate entry point for each CPU feature set.
 //!
-//! The attribute macros are in the `oxc_lexer_macros` crate.
+//! The attribute macros are in the `oxc_simd_macros` crate.
 //!
 //! * Given a specific type (e.g. `Avx2`): the choice is made at compile time.
 //! * Given a [`DynCpu`]: the choice is made at runtime.
@@ -75,15 +75,13 @@
 //!
 //! DO NOT add any other way to create these types (e.g. a `Default` impl or a public constructor).
 //!
-//! [`#[cpu_version]`]: macro@cpu_version
-//! [`#[cpu_multiversion]`]: macro@cpu_multiversion
+//! [`#[cpu_version]`]: macro@crate::cpu_version
+//! [`#[cpu_multiversion]`]: macro@crate::cpu_multiversion
 
 use std::{convert::Infallible as Never, mem};
 
-pub(crate) use oxc_lexer_macros::{cpu_multiversion, cpu_version};
-
 #[cfg(any(test, feature = "testing"))]
-pub mod testing;
+mod testing;
 
 #[cfg(test)]
 mod tests;
@@ -144,10 +142,8 @@ trait CpuPrivate {
 pub enum DynCpu {
     // Can never be created on x86_64 when AVX2, BMI2 and POPCNT are enabled at compile time.
     // See `Generic`.
-    #[expect(dead_code)]
     Generic(Generic),
     Avx2(Avx2),
-    #[expect(dead_code)]
     Neon(Neon),
 }
 
@@ -172,7 +168,6 @@ pub enum DynCpu {
 pub enum DynCpu {
     Generic(Generic) = 0,
     Avx2(Avx2) = 1,
-    #[expect(dead_code)]
     Neon(Neon) = 2,
 }
 
@@ -188,12 +183,9 @@ pub enum DynCpu {
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DynCpu {
     // Can never be created on aarch64 when Neon is enabled at compile time. See `Generic`.
-    #[cfg_attr(target_feature = "neon", expect(dead_code))]
     Generic(Generic),
-    #[expect(dead_code)]
     Avx2(Avx2),
     // Can never be created on aarch64 when Neon is disabled at compile time. See `Neon`.
-    #[cfg_attr(not(target_feature = "neon"), expect(dead_code))]
     Neon(Neon),
 }
 
@@ -209,9 +201,7 @@ pub enum DynCpu {
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DynCpu {
     Generic(Generic),
-    #[expect(dead_code)]
     Avx2(Avx2),
-    #[expect(dead_code)]
     Neon(Neon),
 }
 
@@ -250,7 +240,7 @@ impl CpuPrivate for DynCpu {
 /// Only [`DynCpu`] needs `cpu`. It's taken for all types so that this can only be called
 /// by code which already has one of these types.
 ///
-/// [`#[cpu_multiversion]`]: macro@cpu_multiversion
+/// [`#[cpu_multiversion]`]: macro@crate::cpu_multiversion
 #[expect(clippy::inline_always, reason = "folds to a constant, except for `DynCpu`")]
 #[inline(always)]
 pub const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {

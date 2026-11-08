@@ -3,7 +3,10 @@
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::{_MM_HINT_T0, _mm_prefetch};
 
-use crate::cpu::{Cpu, DynCpu, cpu_multiversion, to_dyn};
+use crate::{
+    cpu::{Cpu, DynCpu, to_dyn},
+    cpu_multiversion,
+};
 
 /// Ask the CPU to fetch the cache line containing `p` into all levels of the cache.
 ///

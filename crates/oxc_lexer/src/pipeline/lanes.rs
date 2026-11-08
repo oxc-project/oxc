@@ -1,13 +1,12 @@
 use std::{ptr, str};
 
 use oxc_ast::ast::{Comment, RegExpFlags};
+use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version, to_dyn};
 use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 use crate::{
-    cpu::{Avx2, BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_version, to_dyn},
     error::{DiagCode, DiagSeverity, Diagnostic},
-    simd::Vec256,
     token::StringSpan,
 };
 
@@ -1218,7 +1217,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
 
 #[cfg(test)]
 mod tests {
-    use crate::cpu::testing::test_cpus;
+    use oxc_simd::test_cpus;
 
     use super::*;
 

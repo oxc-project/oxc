@@ -1,10 +1,7 @@
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 use oxc_span::Span;
 
-use crate::{
-    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version},
-    error::DiagCode,
-    token::tk,
-};
+use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},

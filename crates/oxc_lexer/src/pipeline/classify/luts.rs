@@ -1,4 +1,4 @@
-use crate::{cpu::BASELINE, simd::VecData128};
+use oxc_simd::{BASELINE, VecData128};
 
 use crate::pipeline::{
     bytes::{is_digit, is_ws},

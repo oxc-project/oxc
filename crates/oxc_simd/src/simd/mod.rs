@@ -76,7 +76,6 @@
 //! - [`arrays`]: traits for arrays of integers which vectors can read without alignment.
 //! - [`macros`]: [`cpu_select!`] and [`unused!`] macros, used for defining methods.
 //! - [`operand`]: traits which let an operation take either a vector or a scalar.
-//! - [`prefetch`]: a function which asks the CPU to fetch memory into the cache.
 //!
 //! [`Avx2`]: crate::cpu::Avx2
 //! [`Neon`]: crate::cpu::Neon
@@ -89,7 +88,6 @@
 //! [`cpu_select!`]: macros::cpu_select
 //! [`cpu`]: crate::cpu
 //! [`unused!`]: macros::unused
-//! [`prefetch`]: mod@prefetch
 
 use crate::cpu::Cpu;
 
@@ -99,12 +97,10 @@ mod data;
 mod macros;
 mod neon;
 mod operand;
-mod prefetch;
 mod vec128;
 mod vec256;
 
 pub use data::{VecData128, VecData256};
-pub use prefetch::prefetch;
 pub use vec128::Vec128;
 pub use vec256::Vec256;
 

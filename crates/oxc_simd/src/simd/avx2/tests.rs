@@ -8,11 +8,12 @@
 use std::array;
 
 use crate::{
-    cpu::{Avx2, testing::test_cpus},
+    cpu::Avx2,
     simd::{
         Vec128, Vec256,
         tests::{pattern, to_bytes128, to_bytes256, to_u32s256},
     },
+    test_cpus,
 };
 
 /// Get the scalar equivalent of `movemask`.

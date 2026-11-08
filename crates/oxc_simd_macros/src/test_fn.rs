@@ -39,12 +39,12 @@ enum CpuParam {
 /// /// Check `kw_flush` sets each word's kind.
 /// #[test]
 /// fn test_kw_flush() {
-///     #[crate::cpu::cpu_multiversion]
+///     #[::oxc_simd::cpu_multiversion]
 ///     fn test_kw_flush(cpu: impl Cpu) {
 ///         // ...
 ///     }
 ///
-///     crate::cpu::DynCpu::for_each_supported(test_kw_flush);
+///     ::oxc_simd::DynCpu::for_each_supported(test_kw_flush);
 /// }
 /// ```
 ///
@@ -52,8 +52,8 @@ enum CpuParam {
 /// instead, and is only called with the AVX2 feature set:
 ///
 /// ```ignore
-/// crate::cpu::DynCpu::for_each_supported(|cpu| {
-///     if let crate::cpu::DynCpu::Avx2(cpu) = cpu {
+/// ::oxc_simd::DynCpu::for_each_supported(|cpu| {
+///     if let ::oxc_simd::DynCpu::Avx2(cpu) = cpu {
 ///         vec128_movemask(cpu);
 ///     }
 /// });
@@ -90,21 +90,23 @@ pub fn expand(args: TokenStream, item: TokenStream) -> Result<TokenStream> {
     // So the code under test is called with a specific CPU type (e.g. `Avx2`),
     // and compiled the same way as in the lexer. See the docs on `test_cpus`.
     let inner_attr = match cpu_param {
-        CpuParam::Impl => Some(quote!(#[crate::cpu::cpu_multiversion])),
+        CpuParam::Impl => Some(quote!(#[::oxc_simd::cpu_multiversion])),
         CpuParam::Dyn => None,
         CpuParam::Simd(cpu) => {
             let cpu_name = cpu.ident();
-            Some(quote!(#[crate::cpu::cpu_version(#cpu_name)]))
+            Some(quote!(#[::oxc_simd::cpu_version(#cpu_name)]))
         }
     };
 
     let call = match cpu_param {
-        CpuParam::Impl | CpuParam::Dyn => quote!(crate::cpu::DynCpu::for_each_supported(#name);),
+        CpuParam::Impl | CpuParam::Dyn => {
+            quote!(::oxc_simd::DynCpu::for_each_supported(#name);)
+        }
         // Only call it with that CPU feature set, and only if this CPU supports it
         CpuParam::Simd(cpu) => {
             let variant = cpu.variant();
             quote! {
-                crate::cpu::DynCpu::for_each_supported(|cpu| {
+                ::oxc_simd::DynCpu::for_each_supported(|cpu| {
                     if let #variant(cpu) = cpu {
                         #name(cpu);
                     }

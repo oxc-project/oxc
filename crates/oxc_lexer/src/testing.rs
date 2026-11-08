@@ -2,14 +2,16 @@
 //!
 //! Only available with the `testing` Cargo feature.
 
-use crate::{Arena, LexOptions, LexResult, SCRATCH, cpu::DynCpu, lex_utf8};
+use oxc_simd::DynCpu;
+
+use crate::{Arena, LexOptions, LexResult, SCRATCH, lex_utf8};
 
 /// A CPU feature set which this CPU supports.
 ///
 /// Only [`for_each_cpu`] creates them, so code outside this crate can only lex with
 /// CPU feature sets which this CPU supports.
 ///
-/// A wrapper around `DynCpu`, so `DynCpu` stays private to this crate.
+/// A wrapper around [`DynCpu`].
 #[derive(Clone, Copy)]
 pub struct CpuFeatureSet(DynCpu);
 
@@ -22,7 +24,7 @@ impl CpuFeatureSet {
 
 /// Call `f` with each CPU feature set that this CPU supports, best first.
 ///
-/// Same as `DynCpu::for_each_supported`, for code outside this crate.
+/// Same as [`DynCpu::for_each_supported`], but gives each one as a [`CpuFeatureSet`].
 pub fn for_each_cpu(mut f: impl FnMut(CpuFeatureSet)) {
     DynCpu::for_each_supported(|cpu| f(CpuFeatureSet(cpu)));
 }

@@ -6,7 +6,7 @@ use std::{
     sync::OnceLock,
 };
 
-use crate::cpu::{Avx2, cpu_version};
+use oxc_simd::{Avx2, cpu_version};
 
 /// Single copy of [`PairLuts`], shared across all threads.
 ///

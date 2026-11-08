@@ -73,7 +73,6 @@ impl CpuSimdPrivate for Neon {
 /// [`Vec128`] methods which are specific to Neon.
 impl Vec128<Neon> {
     /// Shift each of the 16 bytes of this [`Vec128`] left by `BITS` bits.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub fn shl_u8<const BITS: i32>(self) -> Self {
         cpu_select!(self.cpu(), {

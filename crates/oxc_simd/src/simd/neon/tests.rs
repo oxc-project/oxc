@@ -8,11 +8,12 @@
 use std::array;
 
 use crate::{
-    cpu::{Neon, testing::test_cpus},
+    cpu::Neon,
     simd::{
         Vec128, Vec256,
         tests::{map2, pattern, to_bytes128, to_bytes256},
     },
+    test_cpus,
 };
 
 #[test_cpus]

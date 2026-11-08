@@ -1,10 +1,7 @@
 use oxc_ast::{Comment, CommentContent, CommentKind};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
-use crate::{
-    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version},
-    error::DiagCode,
-    token::tk,
-};
+use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
@@ -564,8 +561,7 @@ fn preceded_by_line_terminator(src: &[u8], mut q: usize) -> bool {
 #[cfg(test)]
 mod tests {
     use oxc_ast::ast::CommentContent;
-
-    use crate::cpu::{Cpu, testing::test_cpus};
+    use oxc_simd::{Cpu, test_cpus};
 
     use super::classify;
 

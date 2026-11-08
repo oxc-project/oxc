@@ -1,6 +1,6 @@
-//! Proc macros for `oxc_lexer`'s CPU feature sets.
+//! Proc macros for `oxc_simd`'s CPU feature sets.
 //!
-//! `oxc_lexer` has a type for each CPU feature set which it has SIMD code for (`Avx2` and `Neon`),
+//! `oxc_simd` has a type for each CPU feature set which it has SIMD code for (`Avx2` and `Neon`),
 //! and `Generic` for none. Holding one proves that the CPU supports that feature set.
 //! See the docs on its `cpu` module.
 //!
@@ -13,10 +13,10 @@
 //!
 //! - [`test_cpus`]: A test which runs with each feature set the CPU supports.
 //!
-//! `oxc_lexer` code chooses between versions with a `match` on `to_dyn(cpu)`.
+//! Code chooses between versions with a `match` on `to_dyn(cpu)`.
 //!
-//! The macros are only for `oxc_lexer`.
-//! Their output refers to its `cpu` and `simd` modules by path.
+//! The macros are only for `oxc_simd`, and crates which use it.
+//! Their output refers to its items by path, e.g. `::oxc_simd::Avx2`.
 
 #![warn(clippy::missing_docs_in_private_items)]
 
@@ -37,7 +37,7 @@ mod version;
 /// so SIMD functions which the function calls can be inlined into it.
 ///
 /// ```ignore
-/// use crate::cpu::{Cpu, cpu_multiversion};
+/// use oxc_simd::{Cpu, cpu_multiversion};
 ///
 /// /// Compress tokens.
 /// #[cpu_multiversion]
@@ -247,7 +247,7 @@ pub fn cpu_multiversion(args: TokenStream, item: TokenStream) -> TokenStream {
 /// - `#[cpu_version(Generic)]`
 ///
 /// ```ignore
-/// use crate::cpu::{Avx2, cpu_version};
+/// use oxc_simd::{Avx2, cpu_version};
 ///
 /// #[cpu_version(Avx2)]
 /// #[inline]
@@ -317,7 +317,7 @@ pub fn cpu_multiversion(args: TokenStream, item: TokenStream) -> TokenStream {
 ///         // ...
 ///     }
 ///
-///     let _: crate::cpu::Avx2 = cpu;
+///     let _: ::oxc_simd::Avx2 = cpu;
 ///
 ///     // SAFETY: The check above shows this parameter is a type which guarantees
 ///     // that the CPU supports the target features which `__impl` has
@@ -326,7 +326,7 @@ pub fn cpu_multiversion(args: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 ///
 /// The `let _` is required for soundness. The macro only sees the type's name, so it can't tell
-/// that a parameter's type `Avx2` is really `crate::cpu::Avx2`. It might be a type alias or
+/// that a parameter's type `Avx2` is really `::oxc_simd::Avx2`. It might be a type alias or
 /// a generic parameter with that name. The `let _` fails to compile if so, and generates no code.
 ///
 /// Attributes go where [`cpu_multiversion`] puts them. `__impl` is the entry point here, so it
@@ -356,7 +356,7 @@ pub fn cpu_version(args: TokenStream, item: TokenStream) -> TokenStream {
 /// The test passes `cpu` to the code it tests.
 ///
 /// ```ignore
-/// use crate::cpu::{Avx2, Cpu, DynCpu, testing::test_cpus};
+/// use oxc_simd::{Avx2, Cpu, DynCpu, test_cpus};
 ///
 /// /// Check `kw_flush` sets each word's kind.
 /// #[test_cpus]
@@ -381,23 +381,23 @@ pub fn cpu_version(args: TokenStream, item: TokenStream) -> TokenStream {
 /// /// Check `kw_flush` sets each word's kind.
 /// #[test]
 /// fn test_kw_flush() {
-///     #[crate::cpu::cpu_multiversion]
+///     #[::oxc_simd::cpu_multiversion]
 ///     fn test_kw_flush(cpu: impl Cpu) {
 ///         // ...
 ///     }
 ///
-///     crate::cpu::DynCpu::for_each_supported(test_kw_flush);
+///     ::oxc_simd::DynCpu::for_each_supported(test_kw_flush);
 /// }
 ///
 /// #[test]
 /// fn vec128_movemask() {
-///     #[crate::cpu::cpu_version(Avx2)]
+///     #[::oxc_simd::cpu_version(Avx2)]
 ///     fn vec128_movemask(cpu: Avx2) {
 ///         // ...
 ///     }
 ///
-///     crate::cpu::DynCpu::for_each_supported(|cpu| {
-///         if let crate::cpu::DynCpu::Avx2(cpu) = cpu {
+///     ::oxc_simd::DynCpu::for_each_supported(|cpu| {
+///         if let ::oxc_simd::DynCpu::Avx2(cpu) = cpu {
 ///             vec128_movemask(cpu);
 ///         }
 ///     });
@@ -409,7 +409,7 @@ pub fn cpu_version(args: TokenStream, item: TokenStream) -> TokenStream {
 ///         // ...
 ///     }
 ///
-///     crate::cpu::DynCpu::for_each_supported(test_dynamic);
+///     ::oxc_simd::DynCpu::for_each_supported(test_dynamic);
 /// }
 /// ```
 ///

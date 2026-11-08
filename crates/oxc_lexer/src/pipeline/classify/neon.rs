@@ -1,8 +1,6 @@
-use crate::{
-    cpu::{Neon, cpu_version},
-    simd::{Vec128, Vec256, VecData128},
-    token::tk,
-};
+use oxc_simd::{Neon, Vec128, Vec256, VecData128, cpu_version};
+
+use crate::token::tk;
 
 use super::{
     luts::{

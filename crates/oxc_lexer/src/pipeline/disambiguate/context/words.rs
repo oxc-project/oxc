@@ -1,10 +1,9 @@
 //! Words: which spellings are keywords here (contextual keywords), the statement keywords,
 //! plain names, and member keys with their modifiers.
 
-use crate::{
-    cpu::{BASELINE, cpu_version},
-    token::{OP_KIND_BASE, matches_tk, tk},
-};
+use oxc_simd::{BASELINE, cpu_version};
+
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use crate::pipeline::disambiguate::{common::Tokens, type_context::keyword_type};
 

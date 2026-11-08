@@ -1,9 +1,8 @@
 use std::ptr;
 
-use crate::{
-    cpu::{BASELINE, cpu_version},
-    token::tk,
-};
+use oxc_simd::{BASELINE, cpu_version};
+
+use crate::token::tk;
 
 use crate::pipeline::{
     bytes::{is_digit, is_word, is_ws},

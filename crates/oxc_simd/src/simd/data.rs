@@ -45,7 +45,6 @@ impl VecData128 {
     }
 
     /// Create a [`VecData128`] from an array of `u32`s, each in native byte order.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub const fn from_u32s(values: [u32; 4]) -> Self {
         let mut bytes = [[0; 4]; 4];
@@ -54,7 +53,9 @@ impl VecData128 {
             bytes[i] = values[i].to_ne_bytes();
             i += 1;
         }
-        Self(*bytes.as_flattened().first_chunk().unwrap())
+        #[expect(clippy::missing_panics_doc, reason = "can't fail - there are exactly 16 bytes")]
+        let arr = *bytes.as_flattened().first_chunk().unwrap();
+        Self(arr)
     }
 
     /// Get a reference to the bytes of this [`VecData128`].
@@ -74,7 +75,6 @@ impl VecData128 {
     }
 
     /// Get a reference to the contents of this [`VecData128`], as `u32`s in native byte order.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub const fn as_u32s(&self) -> &[u32; 4] {
         // SAFETY: `VecData128` is 16 bytes, aligned on 16. `[u32; 4]` is 16 bytes, aligned on 4.
@@ -83,7 +83,6 @@ impl VecData128 {
     }
 
     /// Get a mutable reference to the contents of this [`VecData128`], as `u32`s in native byte order.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub const fn as_u32s_mut(&mut self) -> &mut [u32; 4] {
         // SAFETY: `VecData128` is 16 bytes, aligned on 16. `[u32; 4]` is 16 bytes, aligned on 4.
@@ -102,7 +101,6 @@ impl VecData128 {
     /// Get a `*mut u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for aligned writes of 16 bytes.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub const fn as_mut_ptr(&mut self) -> *mut u8 {
         self.0.as_mut_ptr()
@@ -172,7 +170,9 @@ impl VecData256 {
             bytes[i] = values[i].to_ne_bytes();
             i += 1;
         }
-        Self(*bytes.as_flattened().first_chunk().unwrap())
+        #[expect(clippy::missing_panics_doc, reason = "can't fail - there are exactly 32 bytes")]
+        let arr = *bytes.as_flattened().first_chunk().unwrap();
+        Self(arr)
     }
 
     /// Get a reference to the bytes of this [`VecData256`].
@@ -192,7 +192,6 @@ impl VecData256 {
     }
 
     /// Get a reference to the contents of this [`VecData256`], as `u32`s in native byte order.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub const fn as_u32s(&self) -> &[u32; 8] {
         // SAFETY: `VecData256` is 32 bytes, aligned on 32. `[u32; 8]` is 32 bytes, aligned on 4.
@@ -219,7 +218,6 @@ impl VecData256 {
     /// Get a `*mut u8` pointing to start of the array.
     ///
     /// This pointer is guaranteed to be valid for aligned writes of 32 bytes.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub const fn as_mut_ptr(&mut self) -> *mut u8 {
         self.0.as_mut_ptr()

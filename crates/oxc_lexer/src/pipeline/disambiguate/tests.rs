@@ -1,9 +1,6 @@
-use crate::{
-    LexOptions, Lexer, PAD,
-    cpu::{DynCpu, testing::test_cpus},
-    error::DiagCode,
-    token::TokenKind,
-};
+use oxc_simd::{DynCpu, test_cpus};
+
+use crate::{LexOptions, Lexer, PAD, error::DiagCode, token::TokenKind};
 
 /// Minimal version of `SourceType` just for tests.
 ///

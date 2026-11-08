@@ -3,12 +3,9 @@ use std::{cmp::min, hint, ptr};
 use constcat::concat_slices;
 
 use oxc_data_structures::{assert_unchecked, branch_hints::unlikely, str::const_str_eq};
+use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Neon, Vec128, cpu_multiversion, cpu_version, to_dyn};
 
-use crate::{
-    cpu::{Avx2, BASELINE, Cpu, DynCpu, Neon, cpu_multiversion, cpu_version, to_dyn},
-    simd::Vec128,
-    token::{KW_KIND_BASE, TokenKind},
-};
+use crate::token::{KW_KIND_BASE, TokenKind};
 
 const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
 const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -556,7 +553,7 @@ static LEN_MASK_WINDOW: Aligned32<[u8; 32]> = {
 
 #[cfg(test)]
 mod tests {
-    use crate::cpu::testing::test_cpus;
+    use oxc_simd::test_cpus;
 
     use super::*;
 

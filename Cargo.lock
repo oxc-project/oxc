@@ -2285,19 +2285,10 @@ dependencies = [
  "oxc_ast",
  "oxc_data_structures",
  "oxc_diagnostics",
- "oxc_lexer_macros",
+ "oxc_simd",
  "oxc_span",
  "oxc_syntax",
  "rustc-hash",
-]
-
-[[package]]
-name = "oxc_lexer_macros"
-version = "0.0.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 3.0.5",
 ]
 
 [[package]]
@@ -2662,6 +2653,22 @@ dependencies = [
  "self_cell",
  "serde_json",
  "smallvec",
+]
+
+[[package]]
+name = "oxc_simd"
+version = "0.0.0"
+dependencies = [
+ "oxc_simd_macros",
+]
+
+[[package]]
+name = "oxc_simd_macros"
+version = "0.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.5",
 ]
 
 [[package]]

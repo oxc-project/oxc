@@ -6,10 +6,9 @@
 
 use std::ptr;
 
-use crate::{
-    cpu::{Cpu, cpu_multiversion},
-    token::TokenKind,
-};
+use oxc_simd::{Cpu, cpu_multiversion};
+
+use crate::token::TokenKind;
 
 use crate::pipeline::keywords::kw_match;
 
@@ -111,7 +110,9 @@ unsafe fn word_len(word: *const u64, pos: usize, _cpu: impl Cpu) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cpu::testing::test_cpus, token::tk};
+    use oxc_simd::test_cpus;
+
+    use crate::token::tk;
 
     use super::*;
 

@@ -7,11 +7,11 @@
 
 use std::slice;
 
+use oxc_simd::{BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_version};
 use oxc_span::Span;
 
 use crate::{
     PAD,
-    cpu::{BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_version},
     options::LexOptions,
     token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
 };

@@ -192,17 +192,17 @@ _lexer-x86-target := if os() == "macos" { "x86_64-apple-darwin" } else if os() =
 _lexer-generic := "--target " + _lexer-x86-target
 _lexer-avx2 := _lexer-generic + " --config .cargo/lexer-avx2.toml"
 
-# Run `oxc_lexer`'s tests, built for the host
+# Run `oxc_lexer`'s and `oxc_simd`'s tests, built for the host
 test-lexer *args='':
-  cargo test -p oxc_lexer {{args}}
+  cargo test -p oxc_lexer -p oxc_simd {{args}}
 
-# Run `oxc_lexer`'s tests against the AVX2 implementation
+# Run `oxc_lexer`'s and `oxc_simd`'s tests against the AVX2 implementation
 test-lexer-avx2 *args='':
-  cargo test -p oxc_lexer {{_lexer-avx2}} {{args}}
+  cargo test -p oxc_lexer -p oxc_simd {{_lexer-avx2}} {{args}}
 
-# Run `oxc_lexer`'s tests against the generic implementation, on x86_64
+# Run `oxc_lexer`'s and `oxc_simd`'s tests against the generic implementation, on x86_64
 test-lexer-generic *args='':
-  cargo test -p oxc_lexer {{_lexer-generic}} {{args}}
+  cargo test -p oxc_lexer -p oxc_simd {{_lexer-generic}} {{args}}
 
 # Run lexer conformance, built for the host
 conformance-lexer *args='':
@@ -212,9 +212,9 @@ conformance-lexer *args='':
 conformance-lexer-x86 *args='':
   {{ if os() == "macos" { "ROSETTA_ADVERTISE_AVX=1 " } else { "" } }}cargo run -p oxc_coverage --profile coverage {{_lexer-generic}} -- lexer {{args}}
 
-# Lint `oxc_lexer` and `oxc_lexer_macros`
+# Lint `oxc_lexer`, `oxc_simd` and `oxc_simd_macros`
 lint-lexer *args='':
-  just lint -p oxc_lexer -p oxc_lexer_macros {{args}}
+  just lint -p oxc_lexer -p oxc_simd -p oxc_simd_macros {{args}}
 
 # `ready-lexer` fails if any step fails, or if conformance changes the lexer snapshots.
 # Only the lexer snapshots are checked for changes, so it can be run with other uncommitted changes.

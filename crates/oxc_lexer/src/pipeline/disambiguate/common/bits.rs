@@ -4,7 +4,7 @@
 //! run to `n`, the source length: a forward scan that finds nothing before `n` answers `n`, and a
 //! backward one that reaches the start answers `None`.
 
-use crate::cpu::{Cpu, cpu_multiversion};
+use oxc_simd::{Cpu, cpu_multiversion};
 
 /// Is bit `i` set?
 #[cpu_multiversion]

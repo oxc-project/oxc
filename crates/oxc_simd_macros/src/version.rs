@@ -31,7 +31,7 @@ use crate::{
 struct Proof {
     /// The parameter's name.
     param_name: TokenStream,
-    /// The type it must be, with its path, e.g. `crate::simd::Vec128<crate::cpu::Avx2>`.
+    /// The type it must be, with its path, e.g. `::oxc_simd::Vec128<::oxc_simd::Avx2>`.
     ty: TokenStream,
 }
 
@@ -74,7 +74,7 @@ pub fn expand(args: TokenStream, item: TokenStream) -> Result<TokenStream> {
 /// /// Do some stuff (AVX2 version).
 /// #[inline(never)]
 /// unsafe fn foo<'a, const N: usize, T>(mut arr: &'a [T; N], cpu: Avx2) -> bool {
-///     let _: crate::cpu::Avx2 = cpu;
+///     let _: ::oxc_simd::Avx2 = cpu;
 ///     // ... original function body ...
 /// }
 /// ```
@@ -109,7 +109,7 @@ fn with_proof(func: &Func, proof: &Proof) -> TokenStream {
 ///         // ... original function body ...
 ///     }
 ///
-///     let _: crate::cpu::Avx2 = cpu;
+///     let _: ::oxc_simd::Avx2 = cpu;
 ///
 ///     unsafe { __impl::<N, T>(arr, cpu) }
 /// }
@@ -188,7 +188,7 @@ fn parse_cpu(args: TokenStream) -> Result<Cpu> {
 /// For `v: Vec128<Avx2>`:
 ///
 /// ```ignore
-/// Proof { param_name: v, ty: crate::simd::Vec128<crate::cpu::Avx2> }
+/// Proof { param_name: v, ty: ::oxc_simd::Vec128<::oxc_simd::Avx2> }
 /// ```
 fn find_proof(func: &Func, cpu: Cpu) -> Result<Proof> {
     let proof = func.params.iter().find_map(|param| {
@@ -198,7 +198,7 @@ fn find_proof(func: &Func, cpu: Cpu) -> Result<Proof> {
                 if (name == "Vec128" || name == "Vec256") && arg == cpu.name() =>
             {
                 let cpu_ty = cpu.ty();
-                quote!(crate::simd::#name<#cpu_ty>)
+                quote!(::oxc_simd::#name<#cpu_ty>)
             }
             _ => return None,
         };
@@ -239,7 +239,7 @@ fn check_no_cpu_params(func: &Func) -> Result<()> {
 
 /// The name of a type written as `Name` or `Name<Arg>`, with any path prefix, and `Arg`'s name.
 ///
-/// - `crate::cpu::Avx2` -> `Some((Avx2, None))`
+/// - `::oxc_simd::Avx2` -> `Some((Avx2, None))`
 /// - `Vec128<Avx2>` -> `Some((Vec128, Some(Avx2)))`
 /// - `&Avx2`, `Vec128<Avx2, X>`, `impl Cpu` -> `None`
 fn type_name(ty: &Type) -> Option<(&Ident, Option<&Ident>)> {

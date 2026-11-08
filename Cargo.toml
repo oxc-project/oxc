@@ -172,9 +172,10 @@ oxc_formatter_toml = { path = "crates/oxc_formatter_toml" } # TOML formatter
 oxc_formatter_yaml = { path = "crates/oxc_formatter_yaml" } # YAML formatter
 oxc_language_server = { path = "crates/oxc_language_server", default-features = false } # Language server
 oxc_lexer = { path = "crates/oxc_lexer" } # JS/TS lexer (incubating; AVX2, Neon, and generic implementations)
-oxc_lexer_macros = { path = "crates/oxc_lexer_macros" } # Proc macros for `oxc_lexer`
 oxc_linter = { path = "crates/oxc_linter" } # Linting engine
 oxc_macros = { path = "crates/oxc_macros" } # Proc macros
+oxc_simd = { path = "crates/oxc_simd" } # CPU feature sets and SIMD vector types (incubating)
+oxc_simd_macros = { path = "crates/oxc_simd_macros" } # Proc macros for `oxc_simd`
 oxc_tasks_common = { path = "tasks/common" } # Task utilities
 oxc_tasks_transform_checker = { path = "tasks/transform_checker" } # Transform validation
 website_common = { path = "tasks/website_common" } # Website utilities
@@ -314,7 +315,7 @@ debug = false
 # Compile macros with some optimizations to make consuming crates build faster
 oxc_macros.opt-level = 1
 oxc_ast_macros.opt-level = 1
-oxc_lexer_macros.opt-level = 1
+oxc_simd_macros.opt-level = 1
 # Compile insta and its dependencies in release mode for faster snapshot tests
 # See: https://insta.rs/docs/quickstart/#optional-faster-runs
 insta.opt-level = 3

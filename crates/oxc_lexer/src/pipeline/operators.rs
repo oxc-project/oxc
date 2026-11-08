@@ -28,10 +28,9 @@
 //! that they produce no collisions. If a change to the operator list breaks that,
 //! the test's failure message gives a replacement.
 
-use crate::{
-    cpu::{BASELINE, Cpu, cpu_multiversion},
-    token::TokenKind,
-};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion};
+
+use crate::token::TokenKind;
 
 use crate::pipeline::bytes::is_digit;
 
@@ -376,10 +375,9 @@ const fn first_4_bytes(txt: &[u8]) -> [u8; 4] {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        cpu::testing::test_cpus,
-        token::{OP_KIND_BASE, OP_KIND_MAX},
-    };
+    use oxc_simd::test_cpus;
+
+    use crate::token::{OP_KIND_BASE, OP_KIND_MAX};
 
     use super::*;
 

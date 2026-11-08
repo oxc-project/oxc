@@ -1,6 +1,6 @@
 use std::iter;
 
-use crate::cpu::{Avx2, testing::test_cpus};
+use oxc_simd::{Avx2, test_cpus};
 
 use super::{compress_blocks_avx2, init_pair_luts_avx2};
 

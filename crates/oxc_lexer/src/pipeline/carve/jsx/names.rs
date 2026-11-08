@@ -1,6 +1,6 @@
 use std::ptr;
 
-use crate::cpu::{Cpu, cpu_multiversion};
+use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::pipeline::{
     bitmap::bm_next0,

@@ -1,7 +1,7 @@
 //! What the walk remembers per frame: the kind of every open bracket or virtual frame,
 //! its per-kind state, and the keyword codes the walk reads off the source.
 
-use crate::cpu::cpu_version;
+use oxc_simd::cpu_version;
 
 #[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 pub(super) enum FrameKind {

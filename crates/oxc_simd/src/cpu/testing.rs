@@ -4,9 +4,6 @@
 
 use std::mem;
 
-#[cfg(test)]
-pub(crate) use oxc_lexer_macros::test_cpus;
-
 use super::{BASELINE, DynCpu, to_dyn};
 
 impl DynCpu {

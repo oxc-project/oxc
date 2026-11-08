@@ -1,9 +1,8 @@
 //! The token stream as the disambiguation questions read it.
 
-use crate::{
-    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version},
-    token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk},
-};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
+
+use crate::token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk};
 
 use crate::pipeline::{
     bytes::{is_digit, line_break_in},

@@ -39,6 +39,7 @@ use super::{
 /// `C` is zero-sized, so [`Vec128`] is the same size as the type it wraps.
 #[cfg_attr(not(any(target_arch = "x86_64", target_arch = "aarch64")), expect(dead_code))]
 #[derive(Clone, Copy)]
+#[must_use]
 pub struct Vec128<C: CpuSimd> {
     inner: Vec128Inner,
     cpu: C,
@@ -95,7 +96,7 @@ impl<C: CpuSimd> Vec128<C> {
 
 /// Accessors.
 impl<C: CpuSimd> Vec128<C> {
-    /// Get the [`CpuSimd`] token from this [`Vec128`].
+    /// Get the `CpuSimd` token from this [`Vec128`].
     #[inline(always)]
     pub fn cpu(self) -> C {
         self.cpu
@@ -105,7 +106,6 @@ impl<C: CpuSimd> Vec128<C> {
 /// Creation methods.
 impl<C: CpuSimd> Vec128<C> {
     /// Create a [`Vec128`] with all bits zero.
-    #[cfg_attr(not(any(test, target_arch = "aarch64")), expect(dead_code))]
     #[inline(always)]
     pub fn zero(cpu: C) -> Self {
         Self::splat(0, cpu)
@@ -264,7 +264,6 @@ impl<C: CpuSimd> Vec128<C> {
     ///
     /// - `ptr` must be valid for writing 16 bytes.
     /// - `ptr` must be aligned on 16.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub unsafe fn store(self, ptr: *mut u8) {
         cpu_select!(self.cpu(), {
@@ -340,7 +339,6 @@ impl<C: CpuSimd> Vec128<C> {
     }
 
     /// Write a [`Vec128`] into a [`VecData128`], which is aligned on 16.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub fn write(self, dst: &mut VecData128) {
         // SAFETY: `VecData128` guarantees `dst.as_mut_ptr()`
@@ -369,6 +367,7 @@ impl<C: CpuSimd> Vec128<C> {
     }
 
     /// Invert all the bits of this [`Vec128`].
+    #[expect(clippy::should_implement_trait, reason = "`Not` trait is implemented too")]
     #[inline(always)]
     pub fn not(self) -> Self {
         self.xor(Self::splat(0xFF, self.cpu()))
@@ -502,7 +501,6 @@ impl<C: CpuSimd> Vec128<C> {
 
     /// Add either another [`Vec128`] or a `u8` to every byte of this [`Vec128`],
     /// stopping at 255.
-    #[cfg_attr(not(test), expect(dead_code))]
     #[inline(always)]
     pub fn saturating_add_u8(self, other: impl Operand128<u8, C>) -> Self {
         cpu_select!(self.cpu(), {

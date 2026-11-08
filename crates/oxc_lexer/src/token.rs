@@ -3,7 +3,7 @@ use std::{
     mem, slice,
 };
 
-use crate::cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
 macro_rules! define_token_kind {
     ($( $variant:ident = $value:literal => $name:literal ),+ $(,)?) => {
@@ -510,10 +510,9 @@ impl StringSpan {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        LexOptions, Lexer, PAD,
-        cpu::{BASELINE, Cpu, DynCpu, testing::test_cpus},
-    };
+    use oxc_simd::{BASELINE, Cpu, DynCpu, test_cpus};
+
+    use crate::{LexOptions, Lexer, PAD};
 
     use super::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
 

@@ -1,7 +1,6 @@
-use crate::{
-    cpu::{DynCpu, testing::test_cpus},
-    token::TokenKind,
-};
+use oxc_simd::{DynCpu, test_cpus};
+
+use crate::token::TokenKind;
 
 use crate::pipeline::disambiguate::tests::{FileType, division, kinds_of, regex};
 

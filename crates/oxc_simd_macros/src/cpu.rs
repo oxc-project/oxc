@@ -6,7 +6,7 @@ use syn::Ident;
 
 /// A CPU feature set.
 ///
-/// `oxc_lexer`'s `cpu` module has a type with the same name for each,
+/// `oxc_simd`'s `cpu` module has a type with the same name for each,
 /// and a `DynCpu` variant which holds it.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Cpu {
@@ -54,22 +54,22 @@ impl Cpu {
         Ident::new(self.name(), Span::call_site())
     }
 
-    /// The type, with its path, e.g. `crate::cpu::Avx2`.
+    /// The type, with its path, e.g. `::oxc_simd::Avx2`.
     pub fn ty(self) -> TokenStream {
         let name = self.ident();
-        quote!(crate::cpu::#name)
+        quote!(::oxc_simd::#name)
     }
 
-    /// The `DynCpu` variant which holds the type, e.g. `crate::cpu::DynCpu::Avx2`.
+    /// The `DynCpu` variant which holds the type, e.g. `::oxc_simd::DynCpu::Avx2`.
     pub fn variant(self) -> TokenStream {
         let name = self.ident();
-        quote!(crate::cpu::DynCpu::#name)
+        quote!(::oxc_simd::DynCpu::#name)
     }
 
     /// `cfg` predicate for the platforms where the feature set's type is uninhabited,
     /// so no value of it can exist.
     ///
-    /// Must match the `cfg_select!` in the type's definition in `oxc_lexer`'s `cpu` module.
+    /// Must match the `cfg_select!` in the type's definition in `oxc_simd`'s `cpu` module.
     pub fn uninhabited_cfg(self) -> TokenStream {
         match self {
             Cpu::Avx2 => quote!(not(target_arch = "x86_64")),

@@ -1,8 +1,6 @@
-use crate::{
-    cpu::{Avx2, cpu_version},
-    simd::Vec256,
-    token::tk,
-};
+use oxc_simd::{Avx2, Vec256, cpu_version};
+
+use crate::token::tk;
 
 use super::{
     luts::{DIGIT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, WORD_LUTS, WORD_MASK, WS_MASK},
