@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 
@@ -286,11 +288,71 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, JSXEmptyExpression> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, JSXAttributeItem<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if self.len() > 1
+            && let Some(options) = f.options().sort_attributes.as_ref()
+            // The comment cursor prints in source order. Keep comments and their targets in place.
+            && !{
+                let span = self.parent().span();
+                f.context().comments().has_comment_in_range(span.start, span.end)
+            }
+        {
+            let mut attributes: Vec<_> = self
+                .iter()
+                .map(|attribute| {
+                    let name = attribute.as_attribute().map(|attribute| match &attribute.name {
+                        JSXAttributeName::Identifier(name) => Cow::Borrowed(name.name.as_str()),
+                        JSXAttributeName::NamespacedName(name) => {
+                            Cow::Owned(format!("{}:{}", name.namespace.name, name.name.name))
+                        }
+                    });
+                    let group = name.as_deref().map_or(0, |name| options.group_index(name));
+                    (group, name, attribute)
+                })
+                .collect();
+
+            // Spreads and expressions whose evaluation may have effects are fixed boundaries.
+            for chunk in attributes.split_mut(|(_, _, attribute)| !sortable_attribute(attribute)) {
+                chunk.sort_by(|(a_group, a_name, _), (b_group, b_name, _)| {
+                    a_group.cmp(b_group).then_with(|| {
+                        let order = a_name.cmp(b_name);
+                        if options.descending { order.reverse() } else { order }
+                    })
+                });
+            }
+            if f.options().attribute_position == AttributePosition::Multiline {
+                f.join_nodes_with_hardline()
+                    .entries(attributes.iter().map(|(_, _, attribute)| *attribute));
+            } else {
+                f.join_nodes_with_soft_line()
+                    .entries(attributes.iter().map(|(_, _, attribute)| *attribute));
+            }
+            return;
+        }
         if f.options().attribute_position == AttributePosition::Multiline {
             f.join_nodes_with_hardline().entries(self.iter());
         } else {
             f.join_nodes_with_soft_line().entries(self.iter());
         }
+    }
+}
+
+fn sortable_attribute(attribute: &JSXAttributeItem<'_>) -> bool {
+    let JSXAttributeItem::Attribute(attribute) = attribute else { return false };
+    match &attribute.value {
+        None | Some(JSXAttributeValue::StringLiteral(_)) => true,
+        Some(JSXAttributeValue::ExpressionContainer(container)) => matches!(
+            container.expression,
+            JSXExpression::Identifier(_)
+                | JSXExpression::BooleanLiteral(_)
+                | JSXExpression::NullLiteral(_)
+                | JSXExpression::NumericLiteral(_)
+                | JSXExpression::BigIntLiteral(_)
+                | JSXExpression::StringLiteral(_)
+                | JSXExpression::RegExpLiteral(_)
+                | JSXExpression::ArrowFunctionExpression(_)
+                | JSXExpression::FunctionExpression(_)
+        ),
+        _ => false,
     }
 }
 

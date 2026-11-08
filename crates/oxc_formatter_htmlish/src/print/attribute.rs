@@ -4,6 +4,7 @@
 use std::{any::Any, borrow::Cow};
 
 use cow_utils::CowUtils;
+use rustc_hash::FxHashSet;
 
 use oxc_allocator::{Allocator, StringBuilder};
 use oxc_formatter_core::{
@@ -68,6 +69,66 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
         })
     };
 
+    let sorted = f
+        .options()
+        .sort_attributes
+        .as_ref()
+        .filter(|_| el.attributes.len() > 1 && ignored.is_none())
+        .and_then(|options| {
+            let mut names = FxHashSet::default();
+            let mut attributes = Vec::with_capacity(el.attributes.len());
+            for attribute in &el.attributes {
+                let name = t.attribute_name(id, attribute.name.slice(t.source()));
+                // Vue's long and short binding forms can write the same property.
+                // Sorting a tag with conflicting bindings could change which value wins.
+                let key = if t.rules().vue_sfc {
+                    name.strip_prefix(':')
+                        .or_else(|| name.strip_prefix("v-bind:"))
+                        .unwrap_or(name)
+                        .split('.')
+                        .next()
+                        .unwrap()
+                } else {
+                    name
+                };
+                let key = if t.rules().names_ignore_case {
+                    key.cow_to_ascii_lowercase()
+                } else {
+                    Cow::Borrowed(key)
+                };
+                if !names.insert(key) {
+                    return None;
+                }
+                let name = if t.rules().names_ignore_case {
+                    name.cow_to_ascii_lowercase()
+                } else {
+                    Cow::Borrowed(name)
+                };
+                attributes.push((options.group_index(&name), name, attribute));
+            }
+            for chunk in attributes.split_mut(|(_, name, attribute)| {
+                (t.rules().vue_sfc
+                    && (matches!(name.as_ref(), "v-bind" | "v-on")
+                        || name.starts_with("v-bind.")
+                        || name.starts_with("v-on.")
+                        || name.contains('[')))
+                    || f.context().embedded_in().is_some_and(|embedded| {
+                        embedded.has_placeholder(name)
+                            || attribute.value.is_some_and(|value| {
+                                embedded.has_placeholder(value.span.slice(t.source()))
+                            })
+                    })
+            }) {
+                chunk.sort_by(|(a_group, a_name, _), (b_group, b_name, _)| {
+                    a_group.cmp(b_group).then_with(|| {
+                        let order = a_name.cmp(b_name);
+                        if options.descending { order.reverse() } else { order }
+                    })
+                });
+            }
+            Some(attributes)
+        });
+
     write!(
         f,
         indent(&format_with(|f| {
@@ -76,7 +137,9 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
             } else {
                 write!(f, soft_line_break_or_space());
             }
-            for (i, attribute) in el.attributes.iter().enumerate() {
+            for i in 0..el.attributes.len() {
+                let attribute =
+                    sorted.as_ref().map_or(&el.attributes[i], |attributes| attributes[i].2);
                 if i > 0 {
                     if per_line {
                         write!(f, hard_line_break());

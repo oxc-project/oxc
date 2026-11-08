@@ -2058,6 +2058,7 @@ dependencies = [
  "fast-glob",
  "insta",
  "itoa",
+ "lazy-regex",
  "markdown",
  "memchr",
  "natord",
@@ -2138,6 +2139,7 @@ version = "0.77.0"
 dependencies = [
  "cow-utils",
  "insta",
+ "lazy-regex",
  "memchr",
  "oxc-htmlish-parser",
  "oxc_allocator",
@@ -2146,6 +2148,7 @@ dependencies = [
  "oxc_formatter_tests",
  "oxc_span",
  "pico-args",
+ "rustc-hash",
  "zmij_ecma",
 ]
 
