@@ -2,6 +2,7 @@ use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaVec, ReplaceWith};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
+    StringToNumber,
     constant_evaluation::{ConstantValue, DetermineValueType, ValueType},
     side_effects::{is_typed_array_constructor, is_valid_regexp},
 };
@@ -476,7 +477,44 @@ impl<'a> Normalize {
                     ValueType::Object,
                 ],
             ),
-            "ArrayBuffer" | "Date" => (false, false, &[ValueType::BigInt]),
+            "Date" => (false, false, &[ValueType::BigInt]),
+            // `new ArrayBuffer(n)`'s length goes through `ToIndex`: a negative literal
+            // (`new ArrayBuffer(-1)` — or a folded negative numeric string) throws a
+            // RangeError that is not a droppable maximum-length error, so such arguments
+            // must not be marked pure. A non-negative numeric literal, a missing argument,
+            // or a nullish/boolean argument (which convert to 0 or 1) are pure; BigInt
+            // throws via the table; anything else (a non-literal number or string) is kept.
+            "ArrayBuffer" => {
+                let safe_length = new_expr.arguments.is_empty()
+                    || (new_expr.arguments.len() == 1
+                        && match new_expr.arguments[0].as_expression() {
+                            Some(Expression::NumericLiteral(lit)) => lit.value >= 0.0,
+                            // An empty array converts to 0.
+                            Some(Expression::ArrayExpression(arr)) if arr.elements.is_empty() => {
+                                true
+                            }
+                            // `ToNumber` of the string decides: `NaN` (-> 0) and
+                            // too-large values follow the droppable maximum-length
+                            // allowance; a negative number throws.
+                            Some(Expression::StringLiteral(lit)) => {
+                                lit.value.as_str().is_some_and(|value| {
+                                    let n = value.string_to_number();
+                                    n.is_nan() || n >= 0.0
+                                })
+                            }
+                            Some(expr) => {
+                                matches!(
+                                    expr.value_type(ctx),
+                                    ValueType::Null | ValueType::Undefined | ValueType::Boolean
+                                )
+                            }
+                            None => false,
+                        });
+                if safe_length && Self::can_set_pure(ident, ctx) {
+                    new_expr.pure = true;
+                }
+                return;
+            }
             "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError" | "SyntaxError"
             | "TypeError" | "URIError" | "Number" | "Object" | "String" => (false, false, &[]),
             // RegExp needs special validation using the regex parser
