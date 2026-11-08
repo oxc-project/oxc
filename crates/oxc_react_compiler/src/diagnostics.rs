@@ -761,6 +761,19 @@ where
 }
 
 #[cold]
+pub fn todo_validate_function_nesting_too_deep<L, T>(labels: T) -> OxcDiagnostic
+where
+    L: Into<oxc_diagnostics::LabeledSpan>,
+    T: IntoIterator<Item = L>,
+{
+    diagnostic(
+        ErrorCategory::Todo,
+        "function nesting exceeds the maximum depth supported by validation",
+    )
+    .with_labels(labels)
+}
+
+#[cold]
 pub fn todo_support_destructuring_context_variables<L, T>(labels: T) -> OxcDiagnostic
 where
     L: Into<oxc_diagnostics::LabeledSpan>,

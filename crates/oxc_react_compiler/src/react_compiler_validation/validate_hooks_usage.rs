@@ -10,6 +10,8 @@
 //! and not called dynamically. Also validates that hooks are not
 //! called inside function expressions.
 
+use super::MAX_FUNCTION_NESTING_DEPTH;
+
 use std::iter::once;
 
 use oxc_diagnostics::OxcDiagnostic;
@@ -388,7 +390,7 @@ pub fn validate_hooks_usage(
                 }
                 InstructionValue::ObjectMethod { lowered_func, .. }
                 | InstructionValue::FunctionExpression { lowered_func, .. } => {
-                    visit_function_expression(env, lowered_func.func)?;
+                    visit_function_expression(env, lowered_func.func, 1)?;
                 }
                 _ => {
                     // For all other instructions: visit operands, set lvalue kinds
@@ -427,7 +429,13 @@ pub fn validate_hooks_usage(
 fn visit_function_expression(
     env: &mut Environment,
     func_id: FunctionId,
+    depth: u32,
 ) -> Result<(), OxcDiagnostic> {
+    if depth > MAX_FUNCTION_NESTING_DEPTH {
+        return Err(diagnostics::todo_validate_function_nesting_too_deep(
+            std::iter::empty::<Span>(),
+        ));
+    }
     // Collect items in instruction order to process them sequentially.
     // Each item is either a call to check or a nested function to visit.
     enum Item {
@@ -486,7 +494,7 @@ fn visit_function_expression(
                 }
             }
             Item::NestedFunc(nested_func_id) => {
-                visit_function_expression(env, nested_func_id)?;
+                visit_function_expression(env, nested_func_id, depth + 1)?;
             }
         }
     }

@@ -29,3 +29,6 @@ pub use validate_no_set_state_in_render::validate_no_set_state_in_render;
 pub use validate_preserved_manual_memoization::validate_preserved_manual_memoization;
 pub use validate_static_components::validate_static_components;
 pub use validate_use_memo::validate_use_memo;
+
+// Unlike the TS implementation, bound nested validation to protect small thread stacks.
+pub(super) const MAX_FUNCTION_NESTING_DEPTH: u32 = 64;
