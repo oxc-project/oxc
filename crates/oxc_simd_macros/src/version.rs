@@ -216,12 +216,15 @@ fn find_proof(func: &Func, cpu: Cpu) -> Result<Proof> {
     })
 }
 
-/// Error if a parameter has a CPU type, or is a SIMD vector.
+/// Error if a parameter has a CPU type other than `DynCpu`, or is a SIMD vector.
 ///
 /// A generic version only runs where the CPU feature set is `BASELINE`'s,
 /// so it uses `BASELINE` where it needs a CPU type.
+///
+/// A `DynCpu` parameter is allowed. It's one type, so the function is still only compiled once,
+/// and it can pass the `DynCpu` on to code which picks an implementation at runtime.
 fn check_no_cpu_params(func: &Func) -> Result<()> {
-    const CPU_TYPES: [&str; 6] = ["Avx2", "Neon", "Generic", "DynCpu", "Vec128", "Vec256"];
+    const CPU_TYPES: [&str; 5] = ["Avx2", "Neon", "Generic", "Vec128", "Vec256"];
 
     let has_cpu_type = |ty: &Type| {
         is_impl_cpu(ty)
@@ -231,7 +234,10 @@ fn check_no_cpu_params(func: &Func) -> Result<()> {
     match func.params.iter().find(|param| has_cpu_type(&param.ty)) {
         Some(param) => Err(Error::new_spanned(
             &param.ty,
-            "`cpu_version(Generic)` functions can't have a parameter with a CPU or SIMD Vec type",
+            concat!(
+                "`cpu_version(Generic)` functions can't have a parameter with a CPU type ",
+                "(except `DynCpu`), or a SIMD Vec type",
+            ),
         )),
         None => Ok(()),
     }

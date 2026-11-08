@@ -74,6 +74,7 @@ impl Lexer {
     /// Should only be called directly by tests. Use [`new`] for production code.
     ///
     /// [`new`]: Self::new
+    #[cpu_version(Generic)]
     #[inline]
     pub(crate) fn new_with_cpu(cpu: DynCpu) -> Lexer {
         init_pair_luts(cpu);

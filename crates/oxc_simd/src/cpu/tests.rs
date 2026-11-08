@@ -705,6 +705,12 @@ macro_rules! wrapped_tests {
 wrapped_tests!(wrapped_avx2, Avx2);
 wrapped_tests!(wrapped_neon, Neon);
 
+/// Takes a `DynCpu`, and passes it to code which picks an implementation at runtime.
+#[cpu_version(Generic)]
+fn double_dyn(x: u32, cpu: DynCpu) -> u32 {
+    double(x, cpu)
+}
+
 /// Generics with `>>` and a `(...)` in them.
 #[cpu_version(Generic)]
 fn nth_mapped<T: Into<Vec<u8>>, F: FnOnce(u8) -> u8, const N: usize>(bytes: T, f: F) -> u8 {
@@ -734,6 +740,7 @@ fn cpu_version_fns() {
     assert!(is_zero(BASELINE));
     assert_eq!(add_if_zero(1, 2, cpu), 3);
     assert_eq!(add_if_zero(1, 2, BASELINE), 3);
+    assert_eq!(double_dyn(21, cpu), 42);
     assert_eq!(nth_mapped::<_, _, 1>([1, 2], |byte| byte + 1), 3);
     assert_eq!(Counter(100).plus_generic(1), 101);
 }
