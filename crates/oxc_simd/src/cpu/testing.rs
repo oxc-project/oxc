@@ -36,15 +36,6 @@ impl DynCpu {
             run(baseline);
         }
     }
-
-    /// Name of the CPU feature set, for test failure messages.
-    pub fn name(self) -> &'static str {
-        match self {
-            DynCpu::Generic(_) => "Generic",
-            DynCpu::Avx2(_) => "Avx2",
-            DynCpu::Neon(_) => "Neon",
-        }
-    }
 }
 
 /// Guard which prints the name of a CPU feature set when it's dropped.
