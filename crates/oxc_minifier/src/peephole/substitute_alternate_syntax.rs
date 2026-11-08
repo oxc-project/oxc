@@ -1195,7 +1195,12 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<&'a str> {
         match callee {
             Expression::StaticMemberExpression(e) => {
-                if !e.object.is_specific_id("window") {
+                let Expression::Identifier(ident) = &e.object else { return None };
+                if ident.name != "window" {
+                    return None;
+                }
+                // A local binding can shadow the global object.
+                if !ctx.is_global_reference(ident) {
                     return None;
                 }
                 Some(e.property.name.as_str())
@@ -1371,11 +1376,41 @@ impl<'a> PeepholeOptimizations {
     ) {
         if let ChainElement::CallExpression(call_expr) = &mut expr.expression {
             // `window.Object?.()` -> `Object?.()`
+            // The rewrite assumes `window` is the global object and that `Object`
+            // resolves to the global constructor, so bail out when a local binding
+            // shadows either name.
+            let window_is_global = match call_expr.callee.as_member_expression() {
+                Some(mem_expr) => {
+                    // Same shapes `is_specific_member_access("window", "Object")` accepts.
+                    let object = match mem_expr {
+                        MemberExpression::StaticMemberExpression(member) => {
+                            (member.property.name == "Object").then_some(&member.object)
+                        }
+                        MemberExpression::ComputedMemberExpression(member) => {
+                            match &member.expression {
+                                Expression::StringLiteral(str) if str.value == "Object" => {
+                                    Some(&member.object)
+                                }
+                                _ => None,
+                            }
+                        }
+                        MemberExpression::PrivateFieldExpression(_) => None,
+                    };
+                    match object {
+                        Some(Expression::Identifier(ident)) => {
+                            ident.name == "window" && ctx.is_global_reference(ident)
+                        }
+                        _ => false,
+                    }
+                }
+                _ => false,
+            };
             if call_expr.arguments.is_empty()
-                && call_expr
-                    .callee
-                    .as_member_expression()
-                    .is_some_and(|mem_expr| mem_expr.is_specific_member_access("window", "Object"))
+                && window_is_global
+                && ctx
+                    .scoping()
+                    .find_binding(ctx.scoping.current_scope_id(), "Object".into())
+                    .is_none()
             {
                 let object = static_ident!("Object");
                 let reference_id = ctx.create_unbound_reference(object, ReferenceFlags::Read);

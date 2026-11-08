@@ -381,7 +381,8 @@ impl<'a> Normalize {
         if Self::is_unary_delete_ancestor(ctx.ancestors()) {
             return None;
         }
-        Some(Expression::new_nan(ident.span, ctx))
+        // `value_to_expr` falls back to `0 / 0` when a local binding captures `NaN`.
+        Some(ctx.value_to_expr(ident.span, ConstantValue::Number(f64::NAN)))
     }
 
     pub(crate) fn set_no_side_effects_to_call_expr(
