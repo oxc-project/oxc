@@ -1218,37 +1218,43 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
 
 #[cfg(test)]
 mod tests {
-    use crate::cpu::BASELINE;
+    use crate::cpu::testing::test_cpus;
 
     use super::*;
 
-    fn push_tpl(body: &[u8]) -> Vec<u8> {
+    /// Push template `body` to a new [`Lanes`] with CPU feature set `cpu`,
+    /// and return its cooked bytes.
+    #[cpu_multiversion]
+    fn push_tpl(body: &[u8], cpu: impl Cpu) -> Vec<u8> {
         let mut padded = body.to_vec();
         padded.extend_from_slice(&[0u8; 64]);
         let mut l = Lanes::default();
-        l.push_template(&padded, 0, body.len(), BASELINE);
+        l.push_template(&padded, 0, body.len(), cpu);
         let sp = l.templates[0];
         let s = (sp.start & StringSpan::START_MASK) as usize;
         let e = (sp.end_and_flags & StringSpan::END_MASK) as usize;
         l.cooked[s..e].to_vec()
     }
 
-    #[test]
-    fn push_template_normalizes_raw_cr() {
-        assert_eq!(push_tpl(b"a\r\nb"), b"a\nb");
-        assert_eq!(push_tpl(b"a\rb"), b"a\nb");
-        assert_eq!(push_tpl(br"a\r\nb\`c"), b"a\r\nb`c");
-        assert_eq!(push_tpl(b"a\r\nb\\`c"), b"a\nb`c");
+    #[test_cpus]
+    fn push_template_normalizes_raw_cr(cpu: impl Cpu) {
+        assert_eq!(push_tpl(b"a\r\nb", cpu), b"a\nb");
+        assert_eq!(push_tpl(b"a\rb", cpu), b"a\nb");
+        assert_eq!(push_tpl(br"a\r\nb\`c", cpu), b"a\r\nb`c");
+        assert_eq!(push_tpl(b"a\r\nb\\`c", cpu), b"a\nb`c");
     }
 
-    #[test]
-    fn push_template_keeps_escaped_cr_lf() {
-        assert_eq!(push_tpl(br"\r\n"), b"\r\n");
-        assert_eq!(push_tpl(br"\r"), b"\r");
-        assert_eq!(push_tpl(b"\r\n"), b"\n");
+    #[test_cpus]
+    fn push_template_keeps_escaped_cr_lf(cpu: impl Cpu) {
+        assert_eq!(push_tpl(br"\r\n", cpu), b"\r\n");
+        assert_eq!(push_tpl(br"\r", cpu), b"\r");
+        assert_eq!(push_tpl(b"\r\n", cpu), b"\n");
     }
 
-    fn cook(body: &[u8]) -> (Vec<u8>, bool) {
+    /// Cook string `body` with [`cook_decode`] and CPU feature set `cpu`.
+    /// Returns the cooked bytes, and whether they contain a lone surrogate.
+    #[cpu_multiversion]
+    fn cook(body: &[u8], cpu: impl Cpu) -> (Vec<u8>, bool) {
         let mut padded = body.to_vec();
         padded.extend_from_slice(&[0u8; 32]);
         let mut out = vec![0u8; body.len() + 32];
@@ -1261,7 +1267,7 @@ mod tests {
                 out.as_mut_ptr(),
                 0,
                 &mut diags,
-                BASELINE,
+                cpu,
             )
         };
         out.truncate(wi as usize);
@@ -1270,8 +1276,8 @@ mod tests {
 
     /// The "detection only" guarantee: EMIT=true must cook byte-identically
     /// to EMIT=false on every malformed escape (fallback chars preserved).
-    #[test]
-    fn emit_does_not_change_cooked_bytes() {
+    #[test_cpus]
+    fn emit_does_not_change_cooked_bytes(cpu: impl Cpu) {
         for body in [
             br"\u{110000}".as_slice(),
             br"\uZZZZ",
@@ -1295,7 +1301,7 @@ mod tests {
                     out_t.as_mut_ptr(),
                     0,
                     &mut diags,
-                    BASELINE,
+                    cpu,
                 )
             };
             let (wf, _, _) = unsafe {
@@ -1306,7 +1312,7 @@ mod tests {
                     out_f.as_mut_ptr(),
                     0,
                     &mut Vec::new(),
-                    BASELINE,
+                    cpu,
                 )
             };
             assert_eq!(wt, wf);
@@ -1319,104 +1325,107 @@ mod tests {
         }
     }
 
-    #[test]
-    fn cook_decode_escapes() {
-        assert_eq!(cook(br"\n").0, b"\n");
-        assert_eq!(cook(br"\b\f\t\r\v").0, &[0x08, 0x0C, b'\t', b'\r', 0x0B]);
-        assert_eq!(cook(br"\x41").0, b"A");
-        assert_eq!(cook(br"\u0041").0, b"A");
-        assert_eq!(cook(br"\u{41}").0, b"A");
-        assert_eq!(cook(br"\u{1F600}").0, "\u{1F600}".as_bytes());
-        assert_eq!(cook(br"\101").0, b"A");
-        assert_eq!(cook(br"\0").0, b"\0");
-        assert_eq!(cook(br#"\\\"\'"#).0, br#"\"'"#);
-        assert_eq!(cook(br"\u{xyz").0, b"uxyz");
-        assert_eq!(cook(br"\u{}").0, b"u}");
-        assert_eq!(cook(br"\u{12").0, b"u");
+    #[test_cpus]
+    fn cook_decode_escapes(cpu: impl Cpu) {
+        assert_eq!(cook(br"\n", cpu).0, b"\n");
+        assert_eq!(cook(br"\b\f\t\r\v", cpu).0, &[0x08, 0x0C, b'\t', b'\r', 0x0B]);
+        assert_eq!(cook(br"\x41", cpu).0, b"A");
+        assert_eq!(cook(br"\u0041", cpu).0, b"A");
+        assert_eq!(cook(br"\u{41}", cpu).0, b"A");
+        assert_eq!(cook(br"\u{1F600}", cpu).0, "\u{1F600}".as_bytes());
+        assert_eq!(cook(br"\101", cpu).0, b"A");
+        assert_eq!(cook(br"\0", cpu).0, b"\0");
+        assert_eq!(cook(br#"\\\"\'"#, cpu).0, br#"\"'"#);
+        assert_eq!(cook(br"\u{xyz", cpu).0, b"uxyz");
+        assert_eq!(cook(br"\u{}", cpu).0, b"u}");
+        assert_eq!(cook(br"\u{12", cpu).0, b"u");
     }
 
-    #[test]
-    fn cook_hex_escape_is_a_code_point() {
+    #[test_cpus]
+    fn cook_hex_escape_is_a_code_point(cpu: impl Cpu) {
         assert_eq!(
-            cook(br"\x41\x7f\x80\xa0\xe9\xff").0,
+            cook(br"\x41\x7f\x80\xa0\xe9\xff", cpu).0,
             "A\u{7f}\u{80}\u{a0}\u{e9}\u{ff}".as_bytes()
         );
         assert_eq!(
-            cook(br"\x41\x7f\x80\xa0\xe9\xff").0,
+            cook(br"\x41\x7f\x80\xa0\xe9\xff", cpu).0,
             &[0x41, 0x7F, 0xC2, 0x80, 0xC2, 0xA0, 0xC3, 0xA9, 0xC3, 0xBF]
         );
-        assert_eq!(cook(br"\x00\x01\x1f").0, &[0x00, 0x01, 0x1F]);
+        assert_eq!(cook(br"\x00\x01\x1f", cpu).0, &[0x00, 0x01, 0x1F]);
         for cp in 0u32..=0xFF {
             let src = format!("\\x{cp:02x}");
             let want = char::from_u32(cp).unwrap().to_string();
-            assert_eq!(cook(src.as_bytes()).0, want.as_bytes(), "\\x{cp:02x}");
+            assert_eq!(cook(src.as_bytes(), cpu).0, want.as_bytes(), "\\x{cp:02x}");
         }
-        assert!(std::str::from_utf8(&cook(br"\xff").0).is_ok());
+        assert!(std::str::from_utf8(&cook(br"\xff", cpu).0).is_ok());
     }
 
-    #[test]
-    fn cook_escape_forms_agree() {
+    #[test_cpus]
+    fn cook_escape_forms_agree(cpu: impl Cpu) {
         for cp in 0u32..=0xFF {
-            let hex = cook(format!("\\x{cp:02x}").as_bytes()).0;
-            let uni = cook(format!("\\u{cp:04x}").as_bytes()).0;
+            let hex = cook(format!("\\x{cp:02x}").as_bytes(), cpu).0;
+            let uni = cook(format!("\\u{cp:04x}").as_bytes(), cpu).0;
             assert_eq!(hex, uni, "\\x vs \\u for U+{cp:04X}");
             if cp <= 0o377 {
-                let oct = cook(format!("\\{cp:o}").as_bytes()).0;
+                let oct = cook(format!("\\{cp:o}").as_bytes(), cpu).0;
                 assert_eq!(hex, oct, "\\x vs octal for U+{cp:04X}");
             }
         }
     }
 
-    #[test]
-    fn cook_decode_lone_surrogate() {
-        let (out, lone) = cook(br"\uD83D");
+    #[test_cpus]
+    fn cook_decode_lone_surrogate(cpu: impl Cpu) {
+        let (out, lone) = cook(br"\uD83D", cpu);
         assert!(lone, "lone-surrogate flag must be set");
         assert_eq!(out, [0xED, 0xA0, 0xBD]);
     }
 
     /// Adjacent 4-digit escapes forming a surrogate pair combine into one
     /// code point (oxc_parser's SurrogatePair rule); the braced form does not.
-    #[test]
-    fn cook_decode_surrogate_pairs() {
-        let (out, lone) = cook(br"\uD834\uDF06");
+    #[test_cpus]
+    fn cook_decode_surrogate_pairs(cpu: impl Cpu) {
+        let (out, lone) = cook(br"\uD834\uDF06", cpu);
         assert!(!lone, "a combined pair is not a lone surrogate");
         assert_eq!(out, "\u{1D306}".as_bytes());
 
         // A high escape followed by a non-low stays lone; the next escape
         // decodes independently.
-        let (out, lone) = cook(br"\uD834\u0041");
+        let (out, lone) = cook(br"\uD834\u0041", cpu);
         assert!(lone);
         assert_eq!(out, [0xED, 0xA0, 0xB4, b'A']);
 
         // Braced escapes never pair (parser parity).
-        let (out, lone) = cook(br"\u{D834}\u{DF06}");
+        let (out, lone) = cook(br"\u{D834}\u{DF06}", cpu);
         assert!(lone, "braced surrogates stay lone");
         assert_eq!(out, [0xED, 0xA0, 0xB4, 0xED, 0xBC, 0x86]);
     }
 
     /// `\` + LS/PS is a LineContinuation: cooks to nothing (like `\<LF>`).
-    #[test]
-    fn cook_decode_ls_ps_line_continuation() {
+    #[test_cpus]
+    fn cook_decode_ls_ps_line_continuation(cpu: impl Cpu) {
         let mut body = Vec::new();
         body.extend_from_slice(b"a\\");
         body.extend_from_slice("\u{2028}".as_bytes());
         body.extend_from_slice(b"b\\");
         body.extend_from_slice("\u{2029}".as_bytes());
         body.extend_from_slice(b"c");
-        assert_eq!(cook(&body).0, b"abc");
+        assert_eq!(cook(&body, cpu).0, b"abc");
         // a raw LS/PS is content, not a continuation - it must survive
         let mut raw = Vec::new();
         raw.extend_from_slice(b"a");
         raw.extend_from_slice("\u{2028}".as_bytes());
         raw.extend_from_slice(b"b");
-        assert_eq!(cook(&raw).0, raw);
+        assert_eq!(cook(&raw, cpu).0, raw);
     }
 
     /// Template TV: raw <CR><LF> and <CR> normalize to <LF>; escape-produced
     /// `\r` survives; the string monomorph (CRLF=false) never normalizes.
-    #[test]
-    fn cook_decode_template_cr_normalization() {
-        fn cook_tpl(body: &[u8]) -> Vec<u8> {
+    #[test_cpus]
+    fn cook_decode_template_cr_normalization(cpu: impl Cpu) {
+        /// Cook template `body` with [`cook_decode`] and CPU feature set `cpu`,
+        /// and return the cooked bytes.
+        #[cpu_multiversion]
+        fn cook_tpl(body: &[u8], cpu: impl Cpu) -> Vec<u8> {
             let mut padded = body.to_vec();
             padded.extend_from_slice(&[0u8; 32]);
             let mut out = vec![0u8; body.len() + 32];
@@ -1428,20 +1437,20 @@ mod tests {
                     out.as_mut_ptr(),
                     0,
                     &mut Vec::new(),
-                    BASELINE,
+                    cpu,
                 )
             };
             out.truncate(wi as usize);
             out
         }
-        assert_eq!(cook_tpl(b"a\r\nb"), b"a\nb");
-        assert_eq!(cook_tpl(b"a\rb"), b"a\nb");
-        assert_eq!(cook_tpl(b"a\r\r\nb"), b"a\n\nb");
+        assert_eq!(cook_tpl(b"a\r\nb", cpu), b"a\nb");
+        assert_eq!(cook_tpl(b"a\rb", cpu), b"a\nb");
+        assert_eq!(cook_tpl(b"a\r\r\nb", cpu), b"a\n\nb");
         // Escape-produced CR is content, not a line ending.
-        assert_eq!(cook_tpl(br"a\rb"), b"a\rb");
+        assert_eq!(cook_tpl(br"a\rb", cpu), b"a\rb");
         // `\<CR><LF>` line continuation still cooks to nothing.
-        assert_eq!(cook_tpl(b"a\\\r\nb"), b"ab");
+        assert_eq!(cook_tpl(b"a\\\r\nb", cpu), b"ab");
         // The string monomorph is untouched by design.
-        assert_eq!(cook(b"a\r\nb").0, b"a\r\nb");
+        assert_eq!(cook(b"a\r\nb", cpu).0, b"a\r\nb");
     }
 }

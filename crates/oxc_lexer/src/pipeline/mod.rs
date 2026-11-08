@@ -62,10 +62,20 @@ pub struct Lexer {
 }
 
 impl Lexer {
+    /// Create a new [`Lexer`].
     #[cpu_version(Generic)]
     pub fn new() -> Lexer {
         let cpu = DynCpu::detect();
+        Self::new_with_cpu(cpu)
+    }
 
+    /// Create a new [`Lexer`] with specified CPU feature set.
+    ///
+    /// Should only be called directly by tests. Use [`new`] for production code.
+    ///
+    /// [`new`]: Self::new
+    #[inline]
+    pub(crate) fn new_with_cpu(cpu: DynCpu) -> Lexer {
         init_pair_luts(cpu);
 
         Lexer {

@@ -82,6 +82,9 @@ use std::{convert::Infallible as Never, mem};
 
 pub(crate) use oxc_lexer_macros::{cpu_multiversion, cpu_version};
 
+#[cfg(any(test, feature = "testing"))]
+pub mod testing;
+
 #[cfg(test)]
 mod tests;
 
@@ -447,17 +450,5 @@ impl DynCpu {
         // - aarch64
         // - any other platform
         BASELINE.to_dyn()
-    }
-
-    /// Name of the CPU feature set, for test failure messages.
-    ///
-    /// Only used in conformance testing.
-    #[cfg(feature = "testing")]
-    pub fn name(self) -> &'static str {
-        match self {
-            DynCpu::Generic(_) => "Generic",
-            DynCpu::Avx2(_) => "Avx2",
-            DynCpu::Neon(_) => "Neon",
-        }
     }
 }

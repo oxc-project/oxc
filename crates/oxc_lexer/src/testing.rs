@@ -2,11 +2,7 @@
 //!
 //! Only available with the `testing` Cargo feature.
 
-use crate::{
-    Arena, LexOptions, LexResult, SCRATCH,
-    cpu::{BASELINE, DynCpu, to_dyn},
-    lex_utf8,
-};
+use crate::{Arena, LexOptions, LexResult, SCRATCH, cpu::DynCpu, lex_utf8};
 
 /// A CPU feature set which this CPU supports.
 ///
@@ -26,19 +22,9 @@ impl CpuFeatureSet {
 
 /// Call `f` with each CPU feature set that this CPU supports, best first.
 ///
-/// That's the one `DynCpu::detect` returns, then the generic one, if it's different.
-/// Where a SIMD feature set is enabled at compile time, the generic one doesn't exist,
-/// so `f` is only called once.
+/// Same as `DynCpu::for_each_supported`, for code outside this crate.
 pub fn for_each_cpu(mut f: impl FnMut(CpuFeatureSet)) {
-    let detected = DynCpu::detect();
-    f(CpuFeatureSet(detected));
-
-    // `BASELINE` is the generic feature set,
-    // except where a SIMD feature set is enabled at compile time, and then it's `detected`
-    let baseline = to_dyn(BASELINE);
-    if baseline != detected {
-        f(CpuFeatureSet(baseline));
-    }
+    DynCpu::for_each_supported(|cpu| f(CpuFeatureSet(cpu)));
 }
 
 /// Same as [`lex_utf8`], but lexes with CPU feature set `cpu`,

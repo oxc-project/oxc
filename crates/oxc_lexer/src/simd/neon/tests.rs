@@ -3,22 +3,20 @@
 //!
 //! `simd::tests` has the tests which apply to every CPU type.
 //!
-//! Each test returns early without checking anything if the CPU doesn't support Neon.
+//! Each test only runs if the CPU supports Neon. Otherwise it passes without checking anything.
 
 use std::array;
 
 use crate::{
-    cpu::DynCpu,
+    cpu::{Neon, testing::test_cpus},
     simd::{
         Vec128, Vec256,
         tests::{map2, pattern, to_bytes128, to_bytes256},
     },
 };
 
-#[test]
-fn vec128_shift_u8() {
-    let DynCpu::Neon(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn vec128_shift_u8(cpu: Neon) {
     let bytes: [u8; 16] = pattern(37, 11);
     let v = Vec128::read_unaligned(&bytes, cpu);
 
@@ -26,10 +24,8 @@ fn vec128_shift_u8() {
     assert_eq!(to_bytes128(v.shr_u8::<3>()), bytes.map(|x| x >> 3));
 }
 
-#[test]
-fn vec128_pairwise_add_u8() {
-    let DynCpu::Neon(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn vec128_pairwise_add_u8(cpu: Neon) {
     let (a, b): ([u8; 16], [u8; 16]) = (pattern(37, 11), pattern(101, 200));
     let (va, vb) = (Vec128::read_unaligned(&a, cpu), Vec128::read_unaligned(&b, cpu));
 
@@ -40,10 +36,8 @@ fn vec128_pairwise_add_u8() {
     assert_eq!(to_bytes128(va.pairwise_add_u8(vb)), expected);
 }
 
-#[test]
-fn vec128_test_u8() {
-    let DynCpu::Neon(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn vec128_test_u8(cpu: Neon) {
     let (a, b): ([u8; 16], [u8; 16]) = (pattern(37, 11), pattern(101, 200));
     let (va, vb) = (Vec128::read_unaligned(&a, cpu), Vec128::read_unaligned(&b, cpu));
 
@@ -54,10 +48,8 @@ fn vec128_test_u8() {
     assert_eq!(test, a.map(|x| if x & 0x88 != 0 { 0xFF } else { 0 }));
 }
 
-#[test]
-fn vec128_shuffle_u8s() {
-    let DynCpu::Neon(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn vec128_shuffle_u8s(cpu: Neon) {
     let bytes: [u8; 16] = pattern(37, 11);
     let v = Vec128::read_unaligned(&bytes, cpu);
 
@@ -67,10 +59,8 @@ fn vec128_shuffle_u8s() {
     assert_eq!(shuffled, control.map(|c| if c < 16 { bytes[c as usize] } else { 0 }));
 }
 
-#[test]
-fn vec128_blend() {
-    let DynCpu::Neon(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn vec128_blend(cpu: Neon) {
     let (a, b, mask) = (pattern(37, 11), pattern(101, 200), pattern(23, 5));
     let v = Vec128::read_unaligned(&a, cpu)
         .blend(Vec128::read_unaligned(&b, cpu), Vec128::read_unaligned(&mask, cpu));
@@ -82,10 +72,8 @@ fn vec128_blend() {
     assert_eq!(to_bytes128(v), expected);
 }
 
-#[test]
-fn vec256_shuffle_u8s() {
-    let DynCpu::Neon(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn vec256_shuffle_u8s(cpu: Neon) {
     let table: [u8; 32] = pattern(37, 11);
     let v = Vec256::read_unaligned(&table, cpu);
 
@@ -95,10 +83,8 @@ fn vec256_shuffle_u8s() {
     assert_eq!(to_bytes128(shuffled), expected);
 }
 
-#[test]
-fn vec256_blend() {
-    let DynCpu::Neon(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn vec256_blend(cpu: Neon) {
     let (a, b, mask) = (pattern(37, 11), pattern(101, 200), pattern(23, 5));
     let v = Vec256::read_unaligned(&a, cpu)
         .blend(Vec256::read_unaligned(&b, cpu), Vec256::read_unaligned(&mask, cpu));

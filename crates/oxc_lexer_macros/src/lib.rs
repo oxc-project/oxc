@@ -9,6 +9,10 @@
 //! - [`cpu_multiversion`]: One function, compiled once for each feature set.
 //! - [`cpu_version`]: One version of some code, for one feature set.
 //!
+//! And one for testing that code:
+//!
+//! - [`test_cpus`]: A test which runs with each feature set the CPU supports.
+//!
 //! `oxc_lexer` code chooses between versions with a `match` on `to_dyn(cpu)`.
 //!
 //! The macros are only for `oxc_lexer`.
@@ -23,6 +27,7 @@ use syn::{Error, Result};
 mod cpu;
 mod func;
 mod multiversion;
+mod test_fn;
 mod version;
 
 /// Turns a function into one with a separate entry point for each CPU feature set.
@@ -337,6 +342,119 @@ pub fn cpu_multiversion(args: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn cpu_version(args: TokenStream, item: TokenStream) -> TokenStream {
     output(version::expand(args.into(), item.into()))
+}
+
+/// Turns a function into a test which runs with each CPU feature set this CPU supports.
+///
+/// The function takes the feature set as one of:
+///
+/// - `cpu: impl Cpu`
+/// - `cpu: DynCpu`
+/// - `cpu: Avx2`
+/// - `cpu: Neon`
+///
+/// The test passes `cpu` to the code it tests.
+///
+/// ```ignore
+/// use crate::cpu::{Avx2, Cpu, DynCpu, testing::test_cpus};
+///
+/// /// Check `kw_flush` sets each word's kind.
+/// #[test_cpus]
+/// fn test_kw_flush(cpu: impl Cpu) {
+///     // ...
+/// }
+///
+/// #[test_cpus]
+/// fn vec128_movemask(cpu: Avx2) {
+///     // ...
+/// }
+///
+/// #[test_cpus]
+/// fn test_dynamic(cpu: DynCpu) {
+///     // ...
+/// }
+/// ```
+///
+/// expands to:
+///
+/// ```ignore
+/// /// Check `kw_flush` sets each word's kind.
+/// #[test]
+/// fn test_kw_flush() {
+///     #[crate::cpu::cpu_multiversion]
+///     fn test_kw_flush(cpu: impl Cpu) {
+///         // ...
+///     }
+///
+///     crate::cpu::DynCpu::for_each_supported(test_kw_flush);
+/// }
+///
+/// #[test]
+/// fn vec128_movemask() {
+///     #[crate::cpu::cpu_version(Avx2)]
+///     fn vec128_movemask(cpu: Avx2) {
+///         // ...
+///     }
+///
+///     crate::cpu::DynCpu::for_each_supported(|cpu| {
+///         if let crate::cpu::DynCpu::Avx2(cpu) = cpu {
+///             vec128_movemask(cpu);
+///         }
+///     });
+/// }
+///
+/// #[test]
+/// fn test_dynamic() {
+///     fn test_dynamic(cpu: DynCpu) {
+///         // ...
+///     }
+///
+///     crate::cpu::DynCpu::for_each_supported(test_dynamic);
+/// }
+/// ```
+///
+/// `DynCpu::for_each_supported` calls the inner function with the feature set
+/// `DynCpu::detect` returns, then with the generic one, if it's different.
+///
+/// - On an x86_64 CPU with AVX2, that's AVX2, then generic.
+/// - On aarch64, that's Neon only.
+///
+/// If the inner function panics, `for_each_supported` prints which feature set it panicked with,
+/// so a test failure says which one failed.
+///
+/// [`cpu_multiversion`] gives the inner function an entry point for each feature set,
+/// compiled with that feature set's target features. Given a `DynCpu`, it calls the entry point
+/// for that feature set. So the code under test is called with a specific CPU type
+/// (e.g. `Avx2`), as it is in the lexer, not with `DynCpu`.
+/// And it's compiled the same way: `#[inline(always)]` code is compiled as part of the entry point,
+/// with its target features, so e.g. AVX2 intrinsics are inlined into it.
+///
+/// A test helper which takes `cpu: impl Cpu` should be `#[cpu_multiversion]` too,
+/// for the same reason.
+///
+/// A test which needs a `DynCpu` (e.g. to set a `Lexer`'s feature set) can take `cpu: DynCpu`
+/// instead. Then the inner function is the original function, without `#[cpu_multiversion]`.
+///
+/// A test of code which only one SIMD feature set has (e.g. methods of `Vec128<Avx2>`) can take
+/// `cpu: Avx2` or `cpu: Neon`. It only runs with that feature set, if this CPU supports it.
+/// Otherwise it passes without checking anything. The inner function gets [`cpu_version`],
+/// which compiles it with the feature set's target features, for the same reason as above.
+///
+/// The parameter can have any name, but the macro only recognises the types by name,
+/// so they must be written `impl Cpu`, `DynCpu`, `Avx2`, or `Neon`.
+///
+/// The test can't return a value. A test can return a `Result`, but ignoring it would let a test
+/// which returns an `Err` pass.
+///
+/// The inner function shadows the test inside its body, so the call refers to it.
+/// It has no `#[track_caller]`, so a failure points at the line in the test which failed.
+///
+/// All attributes (doc comments, `#[ignore]`, lint attributes, etc.) go on the test.
+/// Lint attributes cover the inner function too, because it's nested inside the test.
+/// The macro adds `#[test]`, so the function mustn't have it already.
+#[proc_macro_attribute]
+pub fn test_cpus(args: TokenStream, item: TokenStream) -> TokenStream {
+    output(test_fn::expand(args.into(), item.into()))
 }
 
 /// The macro's output, or the error as a `compile_error!`.

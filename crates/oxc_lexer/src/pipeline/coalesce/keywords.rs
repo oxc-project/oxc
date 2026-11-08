@@ -111,16 +111,14 @@ unsafe fn word_len(word: *const u64, pos: usize, _cpu: impl Cpu) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cpu::DynCpu, token::tk};
+    use crate::{cpu::testing::test_cpus, token::tk};
 
     use super::*;
 
     /// Check [`kw_flush`] gets each word's length from the word bitmap and sets its kind,
     /// including for words longer than 16 bytes, and words crossing a 64-byte boundary.
-    #[test]
-    fn test_kw_flush() {
-        let cpu = DynCpu::detect();
-
+    #[test_cpus]
+    fn test_kw_flush(cpu: impl Cpu) {
         let words: [(usize, &str, TokenKind, bool); 6] = [
             (3, "class", TokenKind::KwClass, false),
             (20, "interface", TokenKind::KwInterface, true),

@@ -514,7 +514,11 @@ fn halve(x: u32, cpu: impl Cpu) -> u32 {
     }
 }
 
-/// Tests of functions which `cpu_version!` wraps in a safe function, for one CPU feature set.
+/// Tests of functions which `#[cpu_version]` wraps in a safe function, for one CPU feature set.
+///
+/// Doesn't use `#[test_cpus]``, because that would compile the tests with the feature set's
+/// target features. The point is to check that the wrapped functions can be called
+/// from code without them, with no unsafe.
 macro_rules! wrapped_tests {
     ($module:ident, $cpu:ident) => {
         mod $module {
@@ -697,7 +701,6 @@ macro_rules! wrapped_tests {
 }
 
 wrapped_tests!(wrapped_avx2, Avx2);
-
 wrapped_tests!(wrapped_neon, Neon);
 
 /// Generics with `>>` and a `(...)` in them.

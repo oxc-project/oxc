@@ -1,4 +1,8 @@
-use crate::{error::DiagCode, token::TokenKind};
+use crate::{
+    cpu::{DynCpu, testing::test_cpus},
+    error::DiagCode,
+    token::TokenKind,
+};
 
 use crate::pipeline::disambiguate::{
     FORWARD_SCAN_CAP,
@@ -12,8 +16,8 @@ use crate::pipeline::disambiguate::{
 // Can reference `ScriptJS` directly, instead of `FileType::ScriptJS`.
 use FileType::*;
 
-#[test]
-fn gt_run_in_expression_position_follows_the_type_argument_lookahead() {
+#[test_cpus]
+fn gt_run_in_expression_position_follows_the_type_argument_lookahead(cpu: DynCpu) {
     for follower in [
         "e",
         "1",
@@ -29,12 +33,12 @@ fn gt_run_in_expression_position_follows_the_type_argument_lookahead() {
         "new E()",
         "function () {}",
     ] {
-        gt_run_fused(&format!("foo(a<b, c<d >> {follower});"));
+        gt_run_fused(&format!("foo(a<b, c<d >> {follower});"), cpu);
     }
-    gt_run_fused("foo(a<b, c<d, e<f >>> g);");
-    gt_run_fused("x = a<b>>c;");
-    gt_run_fused("x = a<b>>=c;");
-    gt_run_fused("x = a<b>>>c;");
+    gt_run_fused("foo(a<b, c<d, e<f >>> g);", cpu);
+    gt_run_fused("x = a<b>>c;", cpu);
+    gt_run_fused("x = a<b>>=c;", cpu);
+    gt_run_fused("x = a<b>>>c;", cpu);
     for follower in [
         "(e)",
         "`t`",
@@ -51,18 +55,18 @@ fn gt_run_in_expression_position_follows_the_type_argument_lookahead() {
         ".y",
         "",
     ] {
-        gt_run_split(&format!("foo(a<b, c<d >> {follower});"));
+        gt_run_split(&format!("foo(a<b, c<d >> {follower});"), cpu);
     }
-    gt_run_split("foo(a<b, c<d >>\ne);");
-    gt_run_split("foo(a<b, c<d >> /* c\n */ e);");
-    gt_run_split("x = a<b<c>>;");
-    gt_run_split("x = a<b<c>>.y;");
-    gt_run_split("x = a<b<c>>(y);");
-    gt_run_split("x = a<b<c>>`t`;");
+    gt_run_split("foo(a<b, c<d >>\ne);", cpu);
+    gt_run_split("foo(a<b, c<d >> /* c\n */ e);", cpu);
+    gt_run_split("x = a<b<c>>;", cpu);
+    gt_run_split("x = a<b<c>>.y;", cpu);
+    gt_run_split("x = a<b<c>>(y);", cpu);
+    gt_run_split("x = a<b<c>>`t`;", cpu);
 }
 
-#[test]
-fn gt_run_in_type_context_always_splits() {
+#[test_cpus]
+fn gt_run_in_type_context_always_splits(cpu: DynCpu) {
     for code in [
         "let x: a<b<c>>[] = y;",
         "let x: a<b<c>>[1] = y;",
@@ -104,13 +108,13 @@ fn gt_run_in_type_context_always_splits() {
         "let x: Map<K, List<List<T>> > = y;",
         "declare function f<T>(p: T): Foo<Bar<T>>[]\n<Foo>hello world</Foo>;",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
 }
 
-#[test]
-fn gt_glued_to_eq_splits_only_in_type_context() {
-    let ts = |code: &str| kinds_of(code, ScriptTS);
+#[test_cpus]
+fn gt_glued_to_eq_splits_only_in_type_context(cpu: DynCpu) {
+    let ts = |code: &str| kinds_of(code, ScriptTS, cpu);
     for code in [
         "var v : Foo<T>= 1;",
         "type X<T>= T;",
@@ -131,8 +135,8 @@ fn gt_glued_to_eq_splits_only_in_type_context() {
     assert!(ts("foo(a<b, c<d>>= e);").contains(&TokenKind::RShiftEq));
 }
 
-#[test]
-fn gt_run_region_must_scan_as_a_type_list() {
+#[test_cpus]
+fn gt_run_region_must_scan_as_a_type_list(cpu: DynCpu) {
     for code in [
         "foo(a<b + 1, c<d >> (e));",
         "foo(a<b * 2, c<d >> (e));",
@@ -147,7 +151,7 @@ fn gt_run_region_must_scan_as_a_type_list() {
         "{ a<b + 1, c<d >> (e) }",
         "x; a<b + 1, c<d >> (e);",
     ] {
-        gt_run_fused(code);
+        gt_run_fused(code, cpu);
     }
     for code in [
         "foo(a<b.c, d<e >> (f));",
@@ -165,12 +169,12 @@ fn gt_run_region_must_scan_as_a_type_list() {
         "foo(a<keyof T, c<d >> (e));",
         "foo(a<<T>(x: T) => T, c<d >> (e));",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
 }
 
-#[test]
-fn lt_lt_openers_close_with_a_split_gt_run() {
+#[test_cpus]
+fn lt_lt_openers_close_with_a_split_gt_run(cpu: DynCpu) {
     for code in [
         "let e: Map<<T>(x: T) => T, Set<U>> = null!;",
         "const r = f<<T>(x: T) => Array<T>>(0);",
@@ -182,19 +186,19 @@ fn lt_lt_openers_close_with_a_split_gt_run() {
         "a!?.<<T>(x: T) => A<B>>(b);",
     ] {
         for file_type in [ScriptTS, ScriptTSX] {
-            let ks = kinds_of(code, file_type);
+            let ks = kinds_of(code, file_type, cpu);
             assert!(
                 !ks.iter().any(|k| matches!(k, TokenKind::LShift | TokenKind::RShift)),
                 "{code:?}: {ks:?}"
             );
         }
     }
-    let ks = kinds_of("x = a!<<b;", ScriptTS);
+    let ks = kinds_of("x = a!<<b;", ScriptTS, cpu);
     assert!(ks.contains(&TokenKind::LShift), "{ks:?}");
 }
 
-#[test]
-fn optional_call_type_arguments_are_never_jsx() {
+#[test_cpus]
+fn optional_call_type_arguments_are_never_jsx(cpu: DynCpu) {
     for code in [
         "a?.<T>(b);",
         "a?.<T>();",
@@ -211,42 +215,44 @@ fn optional_call_type_arguments_are_never_jsx() {
         "if (a?.<T>(b)) {}",
         "a?.< <T>(x: T) => T>(b);",
     ] {
-        let ks = kinds_of(code, ScriptTSX);
+        let ks = kinds_of(code, ScriptTSX, cpu);
         assert!(!ks.contains(&TokenKind::JsxLt), "{code:?} must not open JSX: {ks:?}");
-        assert_eq!(diag_codes_of(code, ScriptTSX), [], "{code:?}");
+        assert_eq!(diag_codes_of(code, ScriptTSX, cpu), [], "{code:?}");
     }
     stream(
         "a?.<T>(b); <div/>;",
         ScriptTSX,
         "IDENT ?. < IDENT > ( IDENT ) ; JSX_LT IDENT / JSX_TAG_END ;",
+        cpu,
     );
     stream(
         "<a>{b?.<T>(c)}</a>;",
         ScriptTSX,
         "JSX_LT IDENT > { IDENT ?. < IDENT > ( IDENT ) } JSX_LT / IDENT JSX_TAG_END ;",
+        cpu,
     );
-    division("x = a?.<T>(b) / 2;", ScriptTSX);
-    regex("a?.<T>(b);\n/re/g;", ScriptTSX);
+    division("x = a?.<T>(b) / 2;", ScriptTSX, cpu);
+    regex("a?.<T>(b);\n/re/g;", ScriptTSX, cpu);
 }
 
-#[test]
-fn const_type_parameter_inside_a_type_list() {
+#[test_cpus]
+fn const_type_parameter_inside_a_type_list(cpu: DynCpu) {
     for code in [
         "f<<const T>(x: T) => T>(y);",
         "f<A, <const T>(x: T) => T>(y);",
         "f<A, <T, const U>(x: T) => U>(y);",
         "a?.<A, <const T>(x: T) => T>(y);",
     ] {
-        assert_eq!(diag_codes_of(code, ScriptTSX), [], "{code:?}");
+        assert_eq!(diag_codes_of(code, ScriptTSX, cpu), [], "{code:?}");
     }
-    gt_run_split("x = f<A, <const T>(y: T) => B<C>>(1);");
+    gt_run_split("x = f<A, <const T>(y: T) => B<C>>(1);", cpu);
     // In a type argument list const is still no type.
-    gt_run_fused("x = f<A<const>>(1);");
-    gt_run_fused("x = f<A<const T>>(1);");
+    gt_run_fused("x = f<A<const>>(1);", cpu);
+    gt_run_fused("x = f<A<const T>>(1);", cpu);
 }
 
-#[test]
-fn gt_run_head_context_covers_heritage_members_and_spreads() {
+#[test_cpus]
+fn gt_run_head_context_covers_heritage_members_and_spreads(cpu: DynCpu) {
     for code in [
         "interface X extends A, B<C<D>> {}",
         "class X extends A implements B, C<D<E>> {}",
@@ -276,7 +282,7 @@ fn gt_run_head_context_covers_heritage_members_and_spreads() {
         "export const f: {\n  <T2 extends ReadonlyArray<unknown>>(that: T2): <T1 extends ReadonlyArray<unknown>>(self: T1) => [...T1, ...T2]\n  <const T1 extends ReadonlyArray<unknown>, const T2 extends ReadonlyArray<unknown>>(self: T1, that: T2): [...T1, ...T2]\n} = dual(2, x);",
         "let a: T[]\n<A<B<C>>>(y);",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
     for code in [
         "let o = { ...a<b<c>>[0] };",
@@ -290,14 +296,14 @@ fn gt_run_head_context_covers_heritage_members_and_spreads() {
         "a, b<c<d>>[0];",
         "foo(a<(b ? c : d), e<f >> (g));",
     ] {
-        gt_run_fused(code);
+        gt_run_fused(code, cpu);
     }
-    let ks = kinds_of("f(x => { const a: A<B<C>>[] = []; }, { a: b<c<d>>[0] });", ScriptTS);
+    let ks = kinds_of("f(x => { const a: A<B<C>>[] = []; }, { a: b<c<d>>[0] });", ScriptTS, cpu);
     assert_eq!(ks.iter().filter(|k| is_fused_gt(**k)).count(), 1, "{ks:?}");
 }
 
-#[test]
-fn gt_follower_after_a_line_break_still_rejects_the_shift_operands() {
+#[test_cpus]
+fn gt_follower_after_a_line_break_still_rejects_the_shift_operands(cpu: DynCpu) {
     for code in [
         "let x = f<A<B<C>>>\n+1;",
         "let x = f<A<B<C>>>\n-1;",
@@ -305,9 +311,9 @@ fn gt_follower_after_a_line_break_still_rejects_the_shift_operands() {
         "let x = f<A<B<C>>> /* c\n */ +1;",
         "let x = f<A<B<C>>>\u{2028}+1;",
     ] {
-        gt_run_fused(code);
+        gt_run_fused(code, cpu);
     }
-    let ks = kinds_of("let x = f<A<B<C>>>\n<div/>;", ScriptTSX);
+    let ks = kinds_of("let x = f<A<B<C>>>\n<div/>;", ScriptTSX, cpu);
     assert!(ks.contains(&TokenKind::URShift), "{ks:?}");
     for code in [
         "let x = f<A<B<C>>>\n++y;",
@@ -325,14 +331,14 @@ fn gt_follower_after_a_line_break_still_rejects_the_shift_operands() {
         "type X = Foo<Bar<T>>\n+1;",
         "class C<T extends List<List<T>>\n> {}",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
-    let ks = kinds_of("let x: Map<K, V<W<T>>>\n<div/>;", ScriptTSX);
+    let ks = kinds_of("let x: Map<K, V<W<T>>>\n<div/>;", ScriptTSX, cpu);
     assert!(!ks.iter().any(|k| is_fused_gt(*k)), "{ks:?}");
 }
 
-#[test]
-fn gt_run_in_class_expression_heritage_lists() {
+#[test_cpus]
+fn gt_run_in_class_expression_heritage_lists(cpu: DynCpu) {
     for code in [
         "(class implements Thenable<V<number>>, Bar<Promise<-1, Thenable<intrinsic, void>>> {\n\n})\n",
         "[class implements Array, Set<Bar<never>> {}];",
@@ -351,15 +357,15 @@ fn gt_run_in_class_expression_heritage_lists() {
         "x = y as Foo & Bar<Baz<T>>[];",
         "let x: typeof y | Bar<Baz<T>>[];",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
     for code in ["x = [a, [b]<c<d>>[0]];", "x = a, b<c<d>>[0];"] {
-        gt_run_fused(code);
+        gt_run_fused(code, cpu);
     }
 }
 
-#[test]
-fn gt_run_head_after_a_line_break_follows_asi() {
+#[test_cpus]
+fn gt_run_head_after_a_line_break_follows_asi(cpu: DynCpu) {
     for code in [
         "debugger\n<Map<Partial>>baz;",
         "for (;;) { break\n<Map<Partial>>baz; }",
@@ -386,7 +392,7 @@ fn gt_run_head_after_a_line_break_follows_asi() {
         "let x = <Foo>\n<Bar<Baz<T>>>y;",
         "return\n<Map<P>>baz;",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
     for code in [
         "x = y as Foo\n<Map<P>>baz;",
@@ -401,12 +407,12 @@ fn gt_run_head_after_a_line_break_follows_asi() {
         "throw y\n<Map<P>>baz;",
         "x = 1\n<Map<Partial>>baz;",
     ] {
-        gt_run_fused(code);
+        gt_run_fused(code, cpu);
     }
 }
 
-#[test]
-fn gt_run_third_tier_head_contexts() {
+#[test_cpus]
+fn gt_run_third_tier_head_contexts(cpu: DynCpu) {
     for code in [
         "_(...<Promise<Bar, intrinsic>><React.FC<Bar<1n>>>[obj]);",
         "x = [...<Record<number, Promise<K<T<Record<K>>>>>>1e3] as Foo;",
@@ -437,16 +443,16 @@ fn gt_run_third_tier_head_contexts() {
         "class C extends (e) { @dec #p: Record<T<T<Array>>[]>; }",
         "let x: Foo.Bar[Baz<Qux<T>>];",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
     for code in [
         "x = a ? (b) : c<d<e>>[0];",
         "f(a, b ? (c) : d<e<f>>[0]);",
         "let o = { x: a ? (b) : c<d<e>>[0] };",
     ] {
-        gt_run_fused(code);
+        gt_run_fused(code, cpu);
     }
-    let ts = |code: &str| kinds_of(code, ScriptTS);
+    let ts = |code: &str| kinds_of(code, ScriptTS, cpu);
     for code in ["x = y satisfies T<string, React.FC>>>this.baz;", "x = y as Foo<Bar>>>z;"] {
         let ks = ts(code);
         assert_eq!(ks.iter().filter(|k| **k == TokenKind::RShift).count(), 1, "{code:?}: {ks:?}");
@@ -457,8 +463,8 @@ fn gt_run_third_tier_head_contexts() {
     assert_eq!(ks.iter().filter(|k| **k == TokenKind::Gt).count(), 2, "{ks:?}");
 }
 
-#[test]
-fn this_heads_and_value_braces_before_a_run() {
+#[test_cpus]
+fn this_heads_and_value_braces_before_a_run(cpu: DynCpu) {
     for code in [
         "class C implements this<Record, this>, K<Record<Pick<T>>> {}",
         "this<A<B>>(x);",
@@ -467,7 +473,7 @@ fn this_heads_and_value_braces_before_a_run() {
         "function f() {}\n<Map<P>>baz;",
         "type X = A extends B<C, D extends E ? F : G> ? H : I<J<K>>[];",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
     for code in [
         "new Foo<this<this, a.b.C<symbol>>>(x);",
@@ -482,9 +488,9 @@ fn this_heads_and_value_braces_before_a_run() {
         "x = class {}\n<Map<P>>baz;",
         "x = a > b ? c : d<e<f>>[0];",
     ] {
-        gt_run_fused(code);
+        gt_run_fused(code, cpu);
     }
-    let ks = kinds_of("x = a >>ete<this<1n, Map>>(arr);", ScriptTS);
+    let ks = kinds_of("x = a >>ete<this<1n, Map>>(arr);", ScriptTS, cpu);
     assert_eq!(ks.iter().filter(|k| **k == TokenKind::RShift).count(), 2, "{ks:?}");
     for code in [
         "let Foo: -1\n\n<React.FC<undefined, this>>a;",
@@ -494,38 +500,40 @@ fn this_heads_and_value_braces_before_a_run() {
         "class C { @dec() async *'n'<V = Promise<Promise<T>>>() {} }",
         "let o = { *'n'<T = A<B<C>>>() {} };",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
 }
 
-#[test]
-fn escaped_type_parameter_name_after_lt_lt() {
+#[test_cpus]
+fn escaped_type_parameter_name_after_lt_lt(cpu: DynCpu) {
     stream(
         "let s: a<<\\u{62}c>(x: T) => T>;",
         ScriptTS,
         "let IDENT : IDENT < < IDENT > ( IDENT : IDENT ) => IDENT > ;",
+        cpu,
     );
     stream(
         "const r = f<<\\u{62}c>(a: \\u{62}c) => \\u{62}c>(y);",
         ScriptTS,
         "const IDENT = IDENT < < IDENT > ( IDENT : IDENT ) => IDENT > ( IDENT ) ;",
+        cpu,
     );
 }
 
-#[test]
-fn template_literal_type_inside_a_lt_lt_list() {
+#[test_cpus]
+fn template_literal_type_inside_a_lt_lt_list(cpu: DynCpu) {
     for code in [
         "(a?.c)<<n>() => T<F<G<\"lit\">>>, readonly R<0x1f, Foo>[], `${Foo<Map<R>>}`,>(y);",
         "let e: Map<<T>(x: T) => `${T}`, U>;",
     ] {
-        let ks = kinds_of(code, ScriptTS);
+        let ks = kinds_of(code, ScriptTS, cpu);
         assert!(!ks.contains(&TokenKind::LShift), "{code:?}: {ks:?}");
     }
 }
 
-#[test]
-fn tsx_generic_function_type_in_type_position() {
-    let tsx = |code: &str| kinds_of(code, ScriptTSX);
+#[test_cpus]
+fn tsx_generic_function_type_in_type_position(cpu: DynCpu) {
+    let tsx = |code: &str| kinds_of(code, ScriptTSX, cpu);
     let type_params = |code: &str| {
         let ks = tsx(code);
         assert!(!ks.contains(&TokenKind::JsxLt), "{code:?} must not open JSX: {ks:?}");
@@ -591,9 +599,9 @@ fn tsx_generic_function_type_in_type_position() {
     assert!(!ks.contains(&TokenKind::JsxLt), "comparison chain: {ks:?}");
 }
 
-#[test]
-fn jsx_candidate_scans_stay_bounded() {
-    let tsx = |code: &str| kinds_of(code, ScriptTSX);
+#[test_cpus]
+fn jsx_candidate_scans_stay_bounded(cpu: DynCpu) {
+    let tsx = |code: &str| kinds_of(code, ScriptTSX, cpu);
     let ks = tsx("let a: <T>(x: T) => T = null!;");
     assert!(!ks.contains(&TokenKind::JsxLt), "type position: {ks:?}");
     let far = format!("let a = <T>(x){}</T>;", " ".repeat(70 * 1024));
@@ -609,9 +617,9 @@ fn jsx_candidate_scans_stay_bounded() {
 /// That decides the pair which shares the prefix `const r = f<{ m: <T>(`
 /// and has opposite answers, even when a same-named close tag exists
 /// elsewhere in the file for the probe to find.
-#[test]
-fn bare_brace_in_children_rules_out_jsx() {
-    let tsx = |code: &str| kinds_of(code, ScriptTSX);
+#[test_cpus]
+fn bare_brace_in_children_rules_out_jsx(cpu: DynCpu) {
+    let tsx = |code: &str| kinds_of(code, ScriptTSX, cpu);
     let ks = tsx("const r = f<{ m: <T>(x: T) => T }>(0);\nconst z = <T>hi</T>;");
     assert_eq!(
         ks.iter().filter(|k| **k == TokenKind::JsxLt).count(),
@@ -628,10 +636,11 @@ fn bare_brace_in_children_rules_out_jsx() {
     assert!(ks.contains(&TokenKind::JsxLt), "container braces are not text: {ks:?}");
 }
 
-#[test]
-fn tsx_generic_function_type_is_decided_by_its_arrow() {
-    let jsx_count =
-        |code: &str| kinds_of(code, ScriptTSX).iter().filter(|k| **k == TokenKind::JsxLt).count();
+#[test_cpus]
+fn tsx_generic_function_type_is_decided_by_its_arrow(cpu: DynCpu) {
+    let jsx_count = |code: &str| {
+        kinds_of(code, ScriptTSX, cpu).iter().filter(|k| **k == TokenKind::JsxLt).count()
+    };
     let tail = "\nconst z = <T>hi</T>;";
     for head in [
         "const r = f<{ m: <T>(x: T) => Array<T> }>(0);",
@@ -671,19 +680,19 @@ fn tsx_generic_function_type_is_decided_by_its_arrow() {
     }
 }
 
-#[test]
-fn tsx_generic_arrow_in_expression_position_is_diagnosed() {
+#[test_cpus]
+fn tsx_generic_arrow_in_expression_position_is_diagnosed(cpu: DynCpu) {
     let diagnosed = |code: &str| {
-        let codes = diag_codes_of(code, ScriptTSX);
+        let codes = diag_codes_of(code, ScriptTSX, cpu);
         assert!(
             codes.contains(&DiagCode::UnterminatedJsxElement),
             "{code:?} must be diagnosed: {codes:?}"
         );
-        let ks = kinds_of(code, ScriptTSX);
+        let ks = kinds_of(code, ScriptTSX, cpu);
         assert!(!ks.contains(&TokenKind::JsxLt), "{code:?} lexes as type parameters: {ks:?}");
     };
     let silent = |code: &str| {
-        let codes = diag_codes_of(code, ScriptTSX);
+        let codes = diag_codes_of(code, ScriptTSX, cpu);
         assert!(!codes.contains(&DiagCode::UnterminatedJsxElement), "{code:?} is valid: {codes:?}");
     };
     for code in [
@@ -719,8 +728,8 @@ fn tsx_generic_arrow_in_expression_position_is_diagnosed() {
     }
 }
 
-#[test]
-fn tsx_function_expression_type_parameters_after_star_or_async() {
+#[test_cpus]
+fn tsx_function_expression_type_parameters_after_star_or_async(cpu: DynCpu) {
     for (code, want) in [
         (
             "export const foo = function* <T>() {};",
@@ -743,12 +752,12 @@ fn tsx_function_expression_type_parameters_after_star_or_async() {
             "IDENT = IDENT * JSX_LT IDENT > JSX_TEXT JSX_LT / IDENT JSX_TAG_END ;",
         ),
     ] {
-        stream(code, ScriptTSX, want);
+        stream(code, ScriptTSX, want, cpu);
     }
 }
 
-#[test]
-fn tsx_call_and_construct_signatures_are_type_parameters() {
+#[test_cpus]
+fn tsx_call_and_construct_signatures_are_type_parameters(cpu: DynCpu) {
     for (code, want) in [
         ("type X = { <T>(x: T): U; }", "type IDENT = { < IDENT > ( IDENT : IDENT ) : IDENT ; }"),
         (
@@ -801,7 +810,7 @@ fn tsx_call_and_construct_signatures_are_type_parameters() {
             "declare function IDENT ( IDENT : { < IDENT > ( IDENT : IDENT ) : IDENT } ) : void ;",
         ),
     ] {
-        stream(code, ScriptTSX, want);
+        stream(code, ScriptTSX, want, cpu);
     }
     for code in [
         "if (a) { <T>(x)</T> }",
@@ -820,14 +829,14 @@ fn tsx_call_and_construct_signatures_are_type_parameters() {
         "x = [a, <T>(x)</T>];",
         "if (x)\n<T>(y)</T>",
     ] {
-        let ks = kinds_of(code, ScriptTSX);
+        let ks = kinds_of(code, ScriptTSX, cpu);
         assert!(ks.contains(&TokenKind::JsxLt), "{code:?} must open JSX: {ks:?}");
         assert!(!ks.contains(&TokenKind::Lt), "{code:?} must open JSX: {ks:?}");
     }
 }
 
-#[test]
-fn keyword_named_generic_members() {
+#[test_cpus]
+fn keyword_named_generic_members(cpu: DynCpu) {
     for (code, want) in [
         (
             "class C { delete<const U>(x: U): U {} }",
@@ -843,24 +852,24 @@ fn keyword_named_generic_members() {
             "type IDENT = { void < IDENT > ( IDENT : IDENT ) : IDENT } ;",
         ),
     ] {
-        stream(code, ScriptTSX, want);
+        stream(code, ScriptTSX, want, cpu);
     }
     for code in [
         "{ delete <T>(x)</T> }",
         "function f() { a; typeof <T>(x)</T> }",
         "if (a) { void <T>(x)</T> }",
     ] {
-        let ks = kinds_of(code, ScriptTSX);
+        let ks = kinds_of(code, ScriptTSX, cpu);
         assert!(ks.contains(&TokenKind::JsxLt), "{code:?} must open JSX: {ks:?}");
     }
 }
 
-#[test]
-fn constructor_type_parameter_annotations_are_type_regions() {
+#[test_cpus]
+fn constructor_type_parameter_annotations_are_type_regions(cpu: DynCpu) {
     let silent = |code: &str| {
-        let codes = diag_codes_of(code, ScriptTSX);
+        let codes = diag_codes_of(code, ScriptTSX, cpu);
         assert!(codes.is_empty(), "{code:?}: {codes:?}");
-        let ks = kinds_of(code, ScriptTSX);
+        let ks = kinds_of(code, ScriptTSX, cpu);
         assert!(!ks.contains(&TokenKind::JsxLt), "{code:?}: {ks:?}");
     };
     silent("declare function b(obj: new (bar: <T>() => U<T>, arr: T<U>) => unknown): void;");
@@ -876,16 +885,16 @@ fn constructor_type_parameter_annotations_are_type_regions() {
     silent("for (const k in (b: <obj>() => Record) => { bar; }) {}");
 }
 
-#[test]
-fn optional_markers_are_not_ternaries_for_the_jsx_diagnostic() {
+#[test_cpus]
+fn optional_markers_are_not_ternaries_for_the_jsx_diagnostic(cpu: DynCpu) {
     let silent = |code: &str| {
-        let codes = diag_codes_of(code, ScriptTSX);
+        let codes = diag_codes_of(code, ScriptTSX, cpu);
         assert!(codes.is_empty(), "{code:?}: {codes:?}");
-        let ks = kinds_of(code, ScriptTSX);
+        let ks = kinds_of(code, ScriptTSX, cpu);
         assert!(!ks.contains(&TokenKind::JsxLt), "{code:?}: {ks:?}");
     };
     let diagnosed = |code: &str| {
-        let codes = diag_codes_of(code, ScriptTSX);
+        let codes = diag_codes_of(code, ScriptTSX, cpu);
         assert!(
             codes.contains(&DiagCode::UnterminatedJsxElement),
             "{code:?} must be diagnosed: {codes:?}"
@@ -921,16 +930,16 @@ fn optional_markers_are_not_ternaries_for_the_jsx_diagnostic() {
     }
 }
 
-#[test]
-fn member_and_parameter_annotations_are_type_regions_for_the_jsx_diagnostic() {
+#[test_cpus]
+fn member_and_parameter_annotations_are_type_regions_for_the_jsx_diagnostic(cpu: DynCpu) {
     let silent = |code: &str| {
-        let codes = diag_codes_of(code, ScriptTSX);
+        let codes = diag_codes_of(code, ScriptTSX, cpu);
         assert!(codes.is_empty(), "{code:?}: {codes:?}");
-        let ks = kinds_of(code, ScriptTSX);
+        let ks = kinds_of(code, ScriptTSX, cpu);
         assert!(!ks.contains(&TokenKind::JsxLt), "{code:?}: {ks:?}");
     };
     let diagnosed = |code: &str| {
-        let codes = diag_codes_of(code, ScriptTSX);
+        let codes = diag_codes_of(code, ScriptTSX, cpu);
         assert!(
             codes.contains(&DiagCode::UnterminatedJsxElement),
             "{code:?} must be diagnosed: {codes:?}"
@@ -1011,8 +1020,8 @@ fn member_and_parameter_annotations_are_type_regions_for_the_jsx_diagnostic() {
     }
 }
 
-#[test]
-fn keyword_types_take_no_type_arguments() {
+#[test_cpus]
+fn keyword_types_take_no_type_arguments(cpu: DynCpu) {
     // `any<z>` is `any` then a comparison: keyword types never take arguments.
     for kw in [
         "any",
@@ -1031,15 +1040,15 @@ fn keyword_types_take_no_type_arguments() {
         "true",
         "false",
     ] {
-        gt_run_fused(&format!("x = y as {kw}<z>>w;"));
-        gt_run_fused(&format!("x = y satisfies {kw} < z >> w;"));
+        gt_run_fused(&format!("x = y as {kw}<z>>w;"), cpu);
+        gt_run_fused(&format!("x = y satisfies {kw} < z >> w;"), cpu);
     }
-    gt_run_fused("let x: any = y as string < z >> w;");
-    gt_run_split("x = y as A<z>>w;");
+    gt_run_fused("let x: any = y as string < z >> w;", cpu);
+    gt_run_split("x = y as A<z>>w;", cpu);
 }
 
-#[test]
-fn function_head_name_after_a_line_break_keeps_its_return_type_list() {
+#[test_cpus]
+fn function_head_name_after_a_line_break_keeps_its_return_type_list(cpu: DynCpu) {
     for code in [
         "function\nf<T>(): U<O<T>, C<T>> {}",
         "function //c\nf<T>(): U<O<T>> {}",
@@ -1048,12 +1057,12 @@ fn function_head_name_after_a_line_break_keeps_its_return_type_list() {
         "async function\nf(): Promise<Array<T>> {}",
         "class\nC<T> extends B<C<T>> {}",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
 }
 
-#[test]
-fn nested_type_reference_after_a_line_break_takes_no_arguments() {
+#[test_cpus]
+fn nested_type_reference_after_a_line_break_takes_no_arguments(cpu: DynCpu) {
     // A type reference takes no arguments across a line break, so the speculative list fails.
     for code in [
         "x = f<A\n<B>>(c);",
@@ -1065,7 +1074,7 @@ fn nested_type_reference_after_a_line_break_takes_no_arguments() {
         "x = f<A.B\n<C>>(d);",
         "x = f<typeof a\n<C>>(d);",
     ] {
-        gt_run_fused(code);
+        gt_run_fused(code, cpu);
     }
     for code in [
         "x = f<A<\nB>>(c);",
@@ -1073,15 +1082,15 @@ fn nested_type_reference_after_a_line_break_takes_no_arguments() {
         "x = f<A<B\n>>(c);",
         "x = f<A, /* c */ B<C>>(d);",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
 }
 
-#[test]
-fn tsx_type_parameter_list_signals_cross_trivia() {
+#[test_cpus]
+fn tsx_type_parameter_list_signals_cross_trivia(cpu: DynCpu) {
     // A comment between the parameter name and its `,` / `=` / `extends` still marks a list;
     // an `extends` attribute followed by a comment still marks a tag.
-    let tsx = |code: &str| kinds_of(code, ScriptTSX);
+    let tsx = |code: &str| kinds_of(code, ScriptTSX, cpu);
     for (code, plain) in [
         ("x = <T //c\nextends U>(a: T) => a;", "x = <T extends U>(a: T) => a;"),
         ("x = <T /*c*/ extends U>(a: T) => a;", "x = <T extends U>(a: T) => a;"),
@@ -1094,71 +1103,71 @@ fn tsx_type_parameter_list_signals_cross_trivia() {
         ("x = <T extends //c\n />;", "x = <T extends />;"),
     ] {
         assert_eq!(tsx(code), tsx(plain), "{code:?}");
-        assert!(diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
+        assert!(diag_codes_of(code, ScriptTSX, cpu).is_empty(), "{code:?}");
     }
 }
 
-#[test]
-fn tsx_const_followed_by_a_line_break_is_a_jsx_tag_name() {
+#[test_cpus]
+fn tsx_const_followed_by_a_line_break_is_a_jsx_tag_name(cpu: DynCpu) {
     // `const` is only a modifier on the same line as its parameter.
     for code in [
         "x = <const\nextends U>hi</const>;",
         "x = <const\nT extends U>hi</const>;",
         "x = <const /*\n*/ extends U>hi</const>;",
     ] {
-        assert!(kinds_of(code, ScriptTSX).contains(&TokenKind::JsxLt), "{code:?}");
-        assert!(diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
+        assert!(kinds_of(code, ScriptTSX, cpu).contains(&TokenKind::JsxLt), "{code:?}");
+        assert!(diag_codes_of(code, ScriptTSX, cpu).is_empty(), "{code:?}");
     }
 }
 
-#[test]
-fn keyword_type_followed_by_a_dot_is_a_member_access() {
+#[test_cpus]
+fn keyword_type_followed_by_a_dot_is_a_member_access(cpu: DynCpu) {
     // `this`, `null`, `true`, `false` and `void` are whole types: `this.x` is not a type, so the
     // speculative list fails and the run is a shift. `any.x` and `string.x` are qualified names.
     for kw in ["this", "null", "true", "false", "void"] {
-        gt_run_fused(&format!("x = a<b<{kw}.y>>(1);"));
+        gt_run_fused(&format!("x = a<b<{kw}.y>>(1);"), cpu);
     }
     for kw in ["any", "string", "undefined"] {
-        gt_run_split(&format!("x = a<b<{kw}.y>>(1);"));
+        gt_run_split(&format!("x = a<b<{kw}.y>>(1);"), cpu);
     }
-    gt_run_split("x = a<b<this>>(1);");
-    gt_run_split("x = a<b<this[1]>>(1);");
-    gt_run_split("x = a<b<typeof this.y>>(1);");
+    gt_run_split("x = a<b<this>>(1);", cpu);
+    gt_run_split("x = a<b<this[1]>>(1);", cpu);
+    gt_run_split("x = a<b<typeof this.y>>(1);", cpu);
 }
 
-#[test]
-fn super_is_a_type_only_in_a_type_query() {
-    gt_run_split("x = a<b<typeof super.y>>(1);");
-    gt_run_split("x = a<b<typeof super>>(1);");
-    gt_run_fused("x = a<b<super.y>>(1);");
+#[test_cpus]
+fn super_is_a_type_only_in_a_type_query(cpu: DynCpu) {
+    gt_run_split("x = a<b<typeof super.y>>(1);", cpu);
+    gt_run_split("x = a<b<typeof super>>(1);", cpu);
+    gt_run_fused("x = a<b<super.y>>(1);", cpu);
     // A type query names a value, which takes type arguments even when it spells a keyword type.
-    gt_run_split("x = c<Map<typeof this<A, 1>>>(1);");
-    gt_run_fused("x = c<Map<this<A, 1>>>(1);");
+    gt_run_split("x = c<Map<typeof this<A, 1>>>(1);", cpu);
+    gt_run_fused("x = c<Map<this<A, 1>>>(1);", cpu);
 }
 
-#[test]
-fn keywords_as_names_inside_a_type_list() {
+#[test_cpus]
+fn keywords_as_names_inside_a_type_list(cpu: DynCpu) {
     // `let` is an identifier in a type; a reserved word is refused only where a list element
     // starts (tsc's `isStartOfType`), and read as a name elsewhere: a property, a reference
     // after `=>`.
-    gt_run_split("x = f<A<(let: T) => U>>(1);");
-    gt_run_split("x = f<A<let>>(1);");
-    gt_run_split("x = f<A<{ return: T; class?: U }>>(1);");
-    gt_run_split("x = f<A<(x: T) => return>>(1);");
-    gt_run_fused("x = f<A<return>>(1);");
-    gt_run_fused("x = f<A<B, return>>(1);");
+    gt_run_split("x = f<A<(let: T) => U>>(1);", cpu);
+    gt_run_split("x = f<A<let>>(1);", cpu);
+    gt_run_split("x = f<A<{ return: T; class?: U }>>(1);", cpu);
+    gt_run_split("x = f<A<(x: T) => return>>(1);", cpu);
+    gt_run_fused("x = f<A<return>>(1);", cpu);
+    gt_run_fused("x = f<A<B, return>>(1);", cpu);
 }
 
-#[test]
-fn escaped_identifier_follower_starts_an_expression() {
+#[test_cpus]
+fn escaped_identifier_follower_starts_an_expression(cpu: DynCpu) {
     // An identifier written with a Unicode escape follows a `>` run like any other name.
-    gt_run_fused(r"x = f<T<U>>\u0061;");
-    gt_run_fused(r"x = f<T<U>> \u{61};");
-    gt_run_split("x = f<T<U>>\n\\u0061;");
+    gt_run_fused(r"x = f<T<U>>\u0061;", cpu);
+    gt_run_fused(r"x = f<T<U>> \u{61};", cpu);
+    gt_run_split("x = f<T<U>>\n\\u0061;", cpu);
 }
 
-#[test]
-fn line_break_before_extends_inside_a_type_parameter_list() {
+#[test_cpus]
+fn line_break_before_extends_inside_a_type_parameter_list(cpu: DynCpu) {
     // Inside a `<...>` list a line break is trivia, so no statement ends there. The template
     // literal type keeps the run from being settled without a walk.
     for code in [
@@ -1167,124 +1176,124 @@ fn line_break_before_extends_inside_a_type_parameter_list() {
         "f = <T\nextends A<B>>(x: T) => 1;",
         "f = <T /*\n*/ extends Replace<A, `{${string}}`, B>>(x: T) => 1;",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
 }
 
-#[test]
-fn type_argument_lists_longer_than_the_bounded_scan() {
+#[test_cpus]
+fn type_argument_lists_longer_than_the_bounded_scan(cpu: DynCpu) {
     // Past FORWARD_SCAN_CAP the closer comes from the memoized pass.
     let members: String = (0..400).map(|i| format!("a{i}: string; ")).collect();
     let big = format!("{{ {members}}}");
     assert!(big.len() > FORWARD_SCAN_CAP);
-    gt_run_split(&format!("f<A<{big}>>(x);"));
-    gt_run_split(&format!("new F<A<{big}>>();"));
-    gt_run_split(&format!("a?.f<A<{big}>>();"));
-    gt_run_split(&format!("f<A<{big}>>`t`;"));
-    gt_run_split(&format!("x = f<A<{big}>>;"));
-    division(&format!("x = f<{big}> / 2 / 1;"), ScriptTS);
+    gt_run_split(&format!("f<A<{big}>>(x);"), cpu);
+    gt_run_split(&format!("new F<A<{big}>>();"), cpu);
+    gt_run_split(&format!("a?.f<A<{big}>>();"), cpu);
+    gt_run_split(&format!("f<A<{big}>>`t`;"), cpu);
+    gt_run_split(&format!("x = f<A<{big}>>;"), cpu);
+    division(&format!("x = f<{big}> / 2 / 1;"), ScriptTS, cpu);
     let values: String = (0..400).map(|i| format!("a{i}: 1 + 1, ")).collect();
-    gt_run_fused(&format!("x = a < b < {{ {values}}} >> c;"));
+    gt_run_fused(&format!("x = a < b < {{ {values}}} >> c;"), cpu);
 }
 
-#[test]
-fn lt_lt_openers_around_lists_longer_than_the_bounded_scan() {
+#[test_cpus]
+fn lt_lt_openers_around_lists_longer_than_the_bounded_scan(cpu: DynCpu) {
     let members: String = (0..6000).map(|i| format!("a{i}: string; ")).collect();
     let big = format!("{{ {members}}}");
     for code in [
         format!("let x: Array<<T>(x: T) => {big}> = y;"),
         format!("let x: Array<<T extends {big}>(x: T) => T> = y;"),
     ] {
-        let ks = kinds_of(&code, ScriptTS);
+        let ks = kinds_of(&code, ScriptTS, cpu);
         assert!(!ks.contains(&TokenKind::LShift), "{} tokens", ks.len());
     }
 }
 
-#[test]
-fn lt_lt_openers_around_a_parameter_list_longer_than_the_bounded_scan() {
+#[test_cpus]
+fn lt_lt_openers_around_a_parameter_list_longer_than_the_bounded_scan(cpu: DynCpu) {
     let members: String = (0..6000).map(|i| format!("a{i}: string; ")).collect();
     let code = format!("let x: Array<<T>(a: {{ {members}}}) => T> = y;");
-    let ks = kinds_of(&code, ScriptTS);
+    let ks = kinds_of(&code, ScriptTS, cpu);
     assert!(!ks.contains(&TokenKind::LShift), "{} tokens", ks.len());
 }
 
-#[test]
-fn tsx_function_type_with_trivia_before_its_parameters() {
-    let plain = kinds_of("let f: <T> (x: T) => T;", ScriptTSX);
+#[test_cpus]
+fn tsx_function_type_with_trivia_before_its_parameters(cpu: DynCpu) {
+    let plain = kinds_of("let f: <T> (x: T) => T;", ScriptTSX, cpu);
     for code in [
         "let f: <T> /*c*/ (x: T) => T;",
         "let f: <T> // c\n(x: T) => T;",
         "let f: <T>\u{a0}(x: T) => T;",
     ] {
-        assert_eq!(kinds_of(code, ScriptTSX), plain, "{code:?}");
+        assert_eq!(kinds_of(code, ScriptTSX, cpu), plain, "{code:?}");
     }
 }
 
-#[test]
-fn jsx_element_type_arguments_with_deeply_nested_template_types() {
+#[test_cpus]
+fn jsx_element_type_arguments_with_deeply_nested_template_types(cpu: DynCpu) {
     let deep = format!("{}T{}", "`${".repeat(33), "}`".repeat(33));
     let code = format!("x = <Foo<{deep}> />;");
-    assert!(diag_codes_of(&code, ScriptTSX).is_empty(), "{code}");
-    let ks = kinds_of(&code, ScriptTSX);
+    assert!(diag_codes_of(&code, ScriptTSX, cpu).is_empty(), "{code}");
+    let ks = kinds_of(&code, ScriptTSX, cpu);
     assert_eq!(ks.iter().filter(|k| **k == TokenKind::JsxLt).count(), 1, "{ks:?}");
     assert!(ks.contains(&TokenKind::JsxTagEnd), "{ks:?}");
 }
 
-#[test]
-fn tsx_template_type_with_deeply_nested_substitutions_in_expression_type_arguments() {
+#[test_cpus]
+fn tsx_template_type_with_deeply_nested_substitutions_in_expression_type_arguments(cpu: DynCpu) {
     let deep = format!("{}U{}", "`${".repeat(10), "}`".repeat(10));
     let code = format!("x = f<`${{<T>(x: T) => {deep}}}`>(1);");
-    assert!(diag_codes_of(&code, ScriptTSX).is_empty(), "{code}");
+    assert!(diag_codes_of(&code, ScriptTSX, cpu).is_empty(), "{code}");
 }
 
-#[test]
-fn no_function_type_after_a_type_operator_or_a_name_on_the_line_before() {
+#[test_cpus]
+fn no_function_type_after_a_type_operator_or_a_name_on_the_line_before(cpu: DynCpu) {
     for word in ["keyof", "readonly", "unique", "infer", "abstract", "asserts", "is", "as"] {
-        gt_run_fused(&format!("f<{word}\n<T>>(x);"));
+        gt_run_fused(&format!("f<{word}\n<T>>(x);"), cpu);
     }
-    gt_run_split("f<abstract<T>>(x);");
-    gt_run_split("f<z.infer<typeof s>>();");
-    gt_run_split("f<A<[...infer U]>>();");
-    gt_run_fused("x = c ? f<a : A<B>>(y);");
-    gt_run_split("x = f<A extends B ? C : D<E>>(y);");
+    gt_run_split("f<abstract<T>>(x);", cpu);
+    gt_run_split("f<z.infer<typeof s>>();", cpu);
+    gt_run_split("f<A<[...infer U]>>();", cpu);
+    gt_run_fused("x = c ? f<a : A<B>>(y);", cpu);
+    gt_run_split("x = f<A extends B ? C : D<E>>(y);", cpu);
 }
 
-#[test]
-fn trivia_inside_a_lt_lt_generic_function_type() {
+#[test_cpus]
+fn trivia_inside_a_lt_lt_generic_function_type(cpu: DynCpu) {
     for code in [
         "let a: Array<</*c*/T>(x: T) => T>;",
         "let a: Array<<T> /*c*/ (x: T) => T>;",
         "let a: Array<<T>(x: T) /*c*/ => T>;",
     ] {
-        let ks = kinds_of(code, ScriptTS);
+        let ks = kinds_of(code, ScriptTS, cpu);
         assert!(!ks.contains(&TokenKind::LShift), "{code:?}: {ks:?}");
     }
 }
 
-#[test]
-fn yield_and_await_are_type_names_in_a_type_list() {
-    gt_run_split("x = a<b<yield>>(1);");
-    gt_run_split("x = a<b<await>>(1);");
-    gt_run_split("function* g() { x = a<b<yield>>(1); }");
+#[test_cpus]
+fn yield_and_await_are_type_names_in_a_type_list(cpu: DynCpu) {
+    gt_run_split("x = a<b<yield>>(1);", cpu);
+    gt_run_split("x = a<b<await>>(1);", cpu);
+    gt_run_split("function* g() { x = a<b<yield>>(1); }", cpu);
 }
 
-#[test]
-fn implements_after_a_run_starts_an_expression() {
-    gt_run_fused("x = a<b<c>> implements;");
+#[test_cpus]
+fn implements_after_a_run_starts_an_expression(cpu: DynCpu) {
+    gt_run_fused("x = a<b<c>> implements;", cpu);
 }
 
-#[test]
-fn type_query_on_this_takes_type_arguments() {
-    gt_run_split("let x: M<typeof this<typeof this<A>>>\n+1;");
+#[test_cpus]
+fn type_query_on_this_takes_type_arguments(cpu: DynCpu) {
+    gt_run_split("let x: M<typeof this<typeof this<A>>>\n+1;", cpu);
 }
 
-#[test]
-fn return_type_run_after_a_walk_that_stopped_in_a_method_body() {
-    gt_run_split("class A { m() { x as P<Q<T>>; } n() {} o(): P<Q<T>> {} }");
+#[test_cpus]
+fn return_type_run_after_a_walk_that_stopped_in_a_method_body(cpu: DynCpu) {
+    gt_run_split("class A { m() { x as P<Q<T>>; } n() {} o(): P<Q<T>> {} }", cpu);
 }
 
-#[test]
-fn expression_operators_in_a_type_literal_rule_out_type_arguments() {
+#[test_cpus]
+fn expression_operators_in_a_type_literal_rule_out_type_arguments(cpu: DynCpu) {
     // No type takes a binary sign, a ternary without extends, or a sign before a name.
     for code in [
         "x = f<{a: b + c}>\n/re/g;",
@@ -1293,7 +1302,7 @@ fn expression_operators_in_a_type_literal_rule_out_type_arguments() {
         "x = f<{a: [b ? c : d]}>\n/re/g;",
         "x = f<-b>\n/re/g;",
     ] {
-        regex(code, ScriptTS);
+        regex(code, ScriptTS, cpu);
     }
     for code in [
         "x = f<{+readonly [K in T]+?: V}>\n/2/g;",
@@ -1305,6 +1314,6 @@ fn expression_operators_in_a_type_literal_rule_out_type_arguments() {
         "x = f<{a: b\nc?: d}>\n/2/g;",
         "x = f<{a: b\n<T>(): c}>\n/2/g;",
     ] {
-        division(code, ScriptTS);
+        division(code, ScriptTS, cpu);
     }
 }

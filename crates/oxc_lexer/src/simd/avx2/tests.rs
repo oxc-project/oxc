@@ -3,12 +3,12 @@
 //!
 //! `simd::tests` has the tests which apply to every CPU type.
 //!
-//! Each test returns early without checking anything if the CPU doesn't support AVX2.
+//! Each test only runs if the CPU supports AVX2. Otherwise it passes without checking anything.
 
 use std::array;
 
 use crate::{
-    cpu::DynCpu,
+    cpu::{Avx2, testing::test_cpus},
     simd::{
         Vec128, Vec256,
         tests::{pattern, to_bytes128, to_bytes256, to_u32s256},
@@ -26,10 +26,8 @@ fn shuffle(bytes: &[u8], control: &[u8]) -> Vec<u8> {
     control.iter().map(select).collect()
 }
 
-#[test]
-fn vec128_movemask() {
-    let DynCpu::Avx2(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn vec128_movemask(cpu: Avx2) {
     let (a, b): ([u8; 16], [u8; 16]) = (pattern(37, 11), pattern(101, 200));
     let (va, vb) = (Vec128::read_unaligned(&a, cpu), Vec128::read_unaligned(&b, cpu));
 
@@ -37,10 +35,8 @@ fn vec128_movemask() {
     assert_eq!(vb.movemask(), top_bits(&b));
 }
 
-#[test]
-fn vec128_shuffle_u8s() {
-    let DynCpu::Avx2(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn vec128_shuffle_u8s(cpu: Avx2) {
     let bytes: [u8; 16] = pattern(37, 11);
     let v = Vec128::read_unaligned(&bytes, cpu);
 
@@ -50,10 +46,8 @@ fn vec128_shuffle_u8s() {
     assert_eq!(shuffled[..], shuffle(&bytes, &control));
 }
 
-#[test]
-fn vec128_blend() {
-    let DynCpu::Avx2(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn vec128_blend(cpu: Avx2) {
     let (a, b, mask) = (pattern(37, 11), pattern(101, 200), pattern(23, 5));
     let v = Vec128::read_unaligned(&a, cpu)
         .blend(Vec128::read_unaligned(&b, cpu), Vec128::read_unaligned(&mask, cpu));
@@ -65,10 +59,8 @@ fn vec128_blend() {
     assert_eq!(to_bytes128(v), expected);
 }
 
-#[test]
-fn vec256_movemask() {
-    let DynCpu::Avx2(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn vec256_movemask(cpu: Avx2) {
     let (a, b): ([u8; 32], [u8; 32]) = (pattern(37, 11), pattern(101, 200));
     let (va, vb) = (Vec256::read_unaligned(&a, cpu), Vec256::read_unaligned(&b, cpu));
 
@@ -76,10 +68,8 @@ fn vec256_movemask() {
     assert_eq!(vb.movemask(), top_bits(&b));
 }
 
-#[test]
-fn vec256_shuffle_u8s() {
-    let DynCpu::Avx2(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn vec256_shuffle_u8s(cpu: Avx2) {
     let bytes = pattern(37, 11);
     let control: [u8; 32] = pattern(23, 5);
     assert!(control.iter().any(|c| c & 0x80 != 0) && control.iter().any(|c| c & 0x80 == 0));
@@ -90,10 +80,8 @@ fn vec256_shuffle_u8s() {
     assert_eq!(shuffled[16..], shuffle(&bytes[16..], &control[16..]));
 }
 
-#[test]
-fn vec256_blend() {
-    let DynCpu::Avx2(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn vec256_blend(cpu: Avx2) {
     let (a, b, mask) = (pattern(37, 11), pattern(101, 200), pattern(23, 5));
     let v = Vec256::read_unaligned(&a, cpu)
         .blend(Vec256::read_unaligned(&b, cpu), Vec256::read_unaligned(&mask, cpu));
@@ -105,10 +93,8 @@ fn vec256_blend() {
     assert_eq!(to_bytes256(v), expected);
 }
 
-#[test]
-fn vec256_shuffle_u32s() {
-    let DynCpu::Avx2(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn vec256_shuffle_u32s(cpu: Avx2) {
     let s = Vec256::read_unaligned(&[0u32, 1, 2, 3, 4, 5, 6, 7], cpu);
 
     // Only bottom 3 bits of indices are used
