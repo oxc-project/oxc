@@ -1,6 +1,6 @@
 commit: 0372f7f1
 
-Passed: 741/1169
+Passed: 744/1169
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1138,7 +1138,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (110/158)
+# babel-plugin-transform-typescript (113/158)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1240,17 +1240,8 @@ rebuilt        : ScopeId(0): []
 Symbol redeclarations mismatch for "Animals":
 after transform: SymbolId(0): [Span { start: 5, end: 12 }, Span { start: 41, end: 48 }]
 rebuilt        : SymbolId(0): []
-Unresolved references mismatch:
-after transform: ["Cat", "Dog"]
-rebuilt        : []
 
 * enum/enum-merging-inner-references-shadow/input.ts
-Symbol reference IDs mismatch for "Cat":
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): []
-Symbol reference IDs mismatch for "Dog":
-after transform: SymbolId(1): [ReferenceId(1)]
-rebuilt        : SymbolId(1): []
 Symbol redeclarations mismatch for "Animals":
 after transform: SymbolId(2): [Span { start: 38, end: 45 }, Span { start: 65, end: 72 }, Span { start: 92, end: 99 }]
 rebuilt        : SymbolId(2): []
@@ -1275,15 +1266,7 @@ Symbol redeclarations mismatch for "E":
 after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 40, end: 41 }]
 rebuilt        : SymbolId(0): []
 
-* enum/outer-references/input.ts
-Symbol reference IDs mismatch for "socketType":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(10)]
-rebuilt        : SymbolId(0): [ReferenceId(7)]
-
 * enum/reverse-mappings-syntactically-determinable/input.ts
-x Output mismatch
-
-* enum/ts5.0-const-foldable/input.ts
 x Output mismatch
 
 * exports/declare-namespace/input.ts
@@ -1454,9 +1437,6 @@ rebuilt        : SymbolId(0): []
 x Output mismatch
 
 * optimize-const-enums/namespace/input.ts
-x Output mismatch
-
-* regression/15768/input.ts
 x Output mismatch
 
 

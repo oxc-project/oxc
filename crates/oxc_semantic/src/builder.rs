@@ -109,6 +109,7 @@ pub struct SemanticBuilder<'a> {
 
     /// Should enum member values be evaluated?
     enum_eval: bool,
+    enum_eval_declarations: SmallVec<[&'a TSEnumDeclaration<'a>; 4]>,
 
     /// Should additional syntax checks be performed?
     ///
@@ -166,6 +167,7 @@ impl<'a> SemanticBuilder<'a> {
             stats: None,
             excess_capacity: 0.0,
             enum_eval: false,
+            enum_eval_declarations: SmallVec::new(),
             check_syntax_error: false,
             #[cfg(feature = "cfg")]
             cfg: None,
@@ -347,6 +349,13 @@ impl<'a> SemanticBuilder<'a> {
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
+        if self.enum_eval {
+            crate::ts_enum::eval::evaluate_declarations(
+                &self.enum_eval_declarations,
+                &mut self.scoping,
+                program,
+            );
+        }
 
         // Check that estimated counts accurately (unless in release mode)
         #[cfg(debug_assertions)]
@@ -2848,9 +2857,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
         self.visit_ts_enum_body(&decl.body);
-        // Evaluate enum member values after all members are bound
         if self.enum_eval {
-            crate::ts_enum::eval::evaluate_enum_members(decl, &mut self.scoping);
+            self.enum_eval_declarations.push(self.alloc(decl));
         }
         self.leave_node(kind);
         self.leave_ambient_context(decl.declare);

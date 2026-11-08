@@ -49,6 +49,103 @@ fn string_members() {
 }
 
 #[test]
+fn const_variable_initializer() {
+    assert_eq!(
+        get_enum_member_value(r#"const o = "o"; enum E { A = o, B = 1 }"#, "A"),
+        Some(ConstantValue::String("o".into()))
+    );
+}
+
+#[test]
+fn const_variable_aliases_and_scopes() {
+    for (source, expected) in [
+        (r#"const a = "a", b = a + "b"; enum E { X = b }"#, "ab"),
+        (r#"const a = ("a" as const); enum E { X = a }"#, "a"),
+        (r#"const a = "outer"; { const a = "inner"; enum E { X = a } }"#, "inner"),
+        (r#"const a = "outer"; { const a = "inner"; } enum E { X = a }"#, "outer"),
+        (r#"const a = "outer"; enum E { a = "member", X = a }"#, "member"),
+        (r#"const a = "outer"; enum E { a = "member" } enum E { X = a }"#, "member"),
+    ] {
+        assert_eq!(
+            get_enum_member_value(source, "X"),
+            Some(ConstantValue::String(expected.into())),
+            "{source}"
+        );
+    }
+    assert_eq!(
+        get_enum_member_value("const a = 2; enum E { X = a + 1, Y }", "Y"),
+        Some(ConstantValue::Number(4.0))
+    );
+}
+
+#[test]
+fn nonconstant_variable_initializers() {
+    for source in [
+        r#"let a = "a"; enum E { X = a }"#,
+        r#"var a = "a"; enum E { X = a }"#,
+        "const a = foo(); enum E { X = a }",
+        "const a = b; const b = a; enum E { X = a }",
+        r#"enum E { X = a } const a = "a";"#,
+        r#"const { a } = { a: "a" }; enum E { X = a }"#,
+        r#"const a = "outer"; function f(a: string) { enum E { X = a } }"#,
+    ] {
+        assert_eq!(get_enum_member_value(source, "X"), None, "{source}");
+    }
+}
+
+#[test]
+fn const_initializers_wait_for_reference_resolution() {
+    let source = r#"const a = "outer"; function f() { function g() { const b = a; enum E { X = b } return E; } const a = "inner"; return g(); }"#;
+    assert_eq!(get_enum_member_value(source, "X"), None);
+}
+
+#[test]
+fn parenthesized_const_and_enum_references() {
+    assert_eq!(
+        get_enum_member_value(r#"const a = "a", b = (a); enum E { X = (b) }"#, "X"),
+        Some(ConstantValue::String("a".into()))
+    );
+    assert_eq!(
+        get_enum_member_value("enum E { A = 1, B = (A), X }", "X"),
+        Some(ConstantValue::Number(2.0))
+    );
+}
+
+#[test]
+fn expanding_const_strings_are_bounded() {
+    let mut source = String::from("const s0 = 'x';");
+    for i in 1..=20 {
+        use std::fmt::Write;
+        write!(source, "const s{i} = s{} + s{};", i - 1, i - 1).unwrap();
+    }
+    assert!(get_enum_member_value(&source, "X").is_none());
+    source.push_str("enum E { X = s20 }");
+    assert!(get_enum_member_value(&source, "X").is_none());
+}
+
+#[test]
+fn deep_const_aliases() {
+    use std::fmt::Write;
+    for (literal, expected) in
+        [("1", ConstantValue::Number(1.0)), ("'s'", ConstantValue::String("s".into()))]
+    {
+        let mut source = format!("const n0 = {literal};");
+        for i in 1..=1000 {
+            write!(source, "const n{i} = n{};", i - 1).unwrap();
+        }
+        source.push_str("enum E { X = n1000 }");
+        assert_eq!(get_enum_member_value(&source, "X"), Some(expected));
+    }
+}
+
+#[test]
+fn nested_destructured_const_is_not_evaluated() {
+    let source =
+        format!("{}const {{ x }} = value; enum E {{ X = x }}{}", "{".repeat(64), "}".repeat(64));
+    assert_eq!(get_enum_member_value(&source, "X"), None);
+}
+
+#[test]
 fn binary_expressions() {
     let source = "enum A { X = 1 + 2, Y = 1 << 3 }";
     debug_assert_eq!(get_enum_member_value(source, "X"), Some(ConstantValue::Number(3.0)));
@@ -90,11 +187,11 @@ fn infinity_nan() {
 }
 
 #[test]
-fn shadowed_infinity_nan_are_not_evaluated_as_globals() {
+fn shadowed_infinity_nan_use_const_values() {
     let source =
         "function f() { const Infinity = 1; const NaN = 2; enum A { X = Infinity, Y = NaN } }";
-    assert_eq!(get_enum_member_value(source, "X"), None);
-    assert_eq!(get_enum_member_value(source, "Y"), None);
+    assert_eq!(get_enum_member_value(source, "X"), Some(ConstantValue::Number(1.0)));
+    assert_eq!(get_enum_member_value(source, "Y"), Some(ConstantValue::Number(2.0)));
 }
 
 #[test]

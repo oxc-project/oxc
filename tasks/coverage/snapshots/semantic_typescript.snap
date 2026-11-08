@@ -2,7 +2,7 @@ commit: 6161772c
 
 semantic_typescript Summary:
 AST Parsed     : 5743/5743 (100.00%)
-Positive Passed: 4161/5743 (72.45%)
+Positive Passed: 4162/5743 (72.47%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -2069,11 +2069,9 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/comp
 Missing ReferenceId: "Foo"
 Missing ReferenceId: "Foo"
 Missing ReferenceId: "Foo"
-Missing ReferenceId: "Foo"
-Missing ReferenceId: "Foo"
 Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(14): [ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(29)]
-rebuilt        : SymbolId(3): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(13), ReferenceId(14), ReferenceId(16), ReferenceId(17), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(27), ReferenceId(28), ReferenceId(29)]
+after transform: SymbolId(14): [ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27)]
+rebuilt        : SymbolId(3): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(12), ReferenceId(14), ReferenceId(15), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(23), ReferenceId(24)]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/computedEnumTypeWidening.ts
 Bindings mismatch:
@@ -10288,17 +10286,11 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/merg
 Symbol redeclarations mismatch for "E":
 after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 33, end: 34 }]
 rebuilt        : SymbolId(0): []
-Unresolved references mismatch:
-after transform: ["a"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/mergedEnumDeclarationMemberReferences.ts
 Symbol redeclarations mismatch for "E":
 after transform: SymbolId(0): [Span { start: 75, end: 76 }, Span { start: 109, end: 110 }]
 rebuilt        : SymbolId(0): []
-Unresolved references mismatch:
-after transform: ["A", "B"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/mergedModuleDeclarationCodeGen5.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -16576,11 +16568,6 @@ Unresolved references mismatch:
 after transform: ["undefined"]
 rebuilt        : ["s", "undefined"]
 
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/underscoreEscapedNameInEnum.ts
-Symbol reference IDs mismatch for "E":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(6)]
-rebuilt        : SymbolId(0): [ReferenceId(5)]
-
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/underscoreMapFirst.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["MyView", "View", "_"]
@@ -19415,9 +19402,6 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/e
 Symbol redeclarations mismatch for "Animals":
 after transform: SymbolId(0): [Span { start: 12, end: 19 }, Span { start: 45, end: 52 }, Span { start: 78, end: 85 }]
 rebuilt        : SymbolId(0): []
-Unresolved references mismatch:
-after transform: ["Cat", "Dog"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/enums/enumMerging.ts
 Symbol redeclarations mismatch for "EImpl1":

@@ -2,7 +2,7 @@ use std::cell::Cell;
 
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::{VisitJsMut, walk_js_mut};
+use oxc_ast_visit::{Visit, VisitJsMut, walk_js_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{SPAN, Span};
@@ -87,6 +87,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
         stmts.retain(|stmt| {
             if let Statement::TSEnumDeclaration(decl) = stmt {
                 names_to_remove.push(decl.id.name);
+                IdentifierReferenceRemover(ctx).visit_ts_enum_declaration(decl);
                 return false;
             }
             true
@@ -350,21 +351,24 @@ impl<'a> TypeScriptEnum {
 
                         initializer
                     }
-                    Some(constant_value) => match constant_value {
-                        ConstantValue::Number(v) => {
-                            prev_constant_number = Some(v);
-                            Self::get_initializer_expr(v, ctx)
+                    Some(constant_value) => {
+                        IdentifierReferenceRemover(ctx).visit_expression(&initializer);
+                        match constant_value {
+                            ConstantValue::Number(v) => {
+                                prev_constant_number = Some(v);
+                                Self::get_initializer_expr(v, ctx)
+                            }
+                            ConstantValue::String(s) => {
+                                prev_constant_number = None;
+                                Expression::new_string_literal(
+                                    SPAN,
+                                    Str::from_str_in(&s, ctx),
+                                    None,
+                                    ctx,
+                                )
+                            }
                         }
-                        ConstantValue::String(s) => {
-                            prev_constant_number = None;
-                            Expression::new_string_literal(
-                                SPAN,
-                                Str::from_str_in(&s, ctx),
-                                None,
-                                ctx,
-                            )
-                        }
-                    },
+                    }
                 }
                 // No initializer, try to infer the value from the previous member.
             } else if let Some(value) = &prev_constant_number {
@@ -525,11 +529,27 @@ impl<'a> TypeScriptEnum {
     fn get_initializer_expr(value: f64, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let is_negative = value < 0.0;
 
-        // Infinity
-        let expr = if value.is_infinite() {
+        let expr = if value.is_nan()
+            && ctx.scoping().find_binding(ctx.current_scope_id(), static_ident!("NaN")).is_some()
+        {
+            let zero = Self::get_number_literal_expression(0.0, ctx);
+            let denominator = Self::get_number_literal_expression(0.0, ctx);
+            Expression::new_binary_expression(
+                SPAN,
+                zero,
+                BinaryOperator::Division,
+                denominator,
+                ctx,
+            )
+        } else if value.is_infinite() {
             let infinity = static_ident!("Infinity");
-            let infinity_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), infinity);
-            ctx.create_ident_expr(SPAN, infinity, infinity_symbol_id, ReferenceFlags::Read)
+            if ctx.scoping().find_binding(ctx.current_scope_id(), infinity).is_some() {
+                let one = Self::get_number_literal_expression(1.0, ctx);
+                let zero = Self::get_number_literal_expression(0.0, ctx);
+                Expression::new_binary_expression(SPAN, one, BinaryOperator::Division, zero, ctx)
+            } else {
+                ctx.create_ident_expr(SPAN, infinity, None, ReferenceFlags::Read)
+            }
         } else {
             let value = if is_negative { -value } else { value };
             Self::get_number_literal_expression(value, ctx)
@@ -599,6 +619,14 @@ impl<'a> TypeScriptEnum {
             }
         }
         None
+    }
+}
+
+struct IdentifierReferenceRemover<'a, 'ctx>(&'ctx mut TraverseCtx<'a>);
+
+impl<'a> Visit<'a> for IdentifierReferenceRemover<'a, '_> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        self.0.delete_reference_for_identifier(ident);
     }
 }
 
