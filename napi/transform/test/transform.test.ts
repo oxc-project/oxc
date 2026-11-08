@@ -1,8 +1,9 @@
+import { createRequire } from "node:module";
+import { runInNewContext } from "node:vm";
 import { Worker } from "node:worker_threads";
 import { describe, expect, it, test } from "vitest";
 
 import { HelperMode, transformSync, transform } from "../index";
-import objectWithoutProperties from "../../../npm/runtime/src/helpers/objectWithoutProperties.js";
 
 describe("simple", () => {
   const code = "export class A<T> {}";
@@ -569,7 +570,12 @@ describe("object-rest parameter scopes", () => {
       helpers: { mode: HelperMode.External },
     });
     expect(result.errors).toEqual([]);
-    const run = new Function("babelHelpers", `${result.code}; return f({ a: 2 });`);
-    expect(run({ objectWithoutProperties })).toEqual(expected);
+    const require = createRequire(import.meta.url);
+    const value = runInNewContext(`${result.code}; f({ a: 2 });`, {
+      babelHelpers: {
+        objectWithoutProperties: require("../../../npm/runtime/src/helpers/objectWithoutProperties.js"),
+      },
+    });
+    expect(value).toEqual(expected);
   });
 });
