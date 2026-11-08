@@ -22,6 +22,10 @@ jobs:
   test-ubuntu:
     name: Test Linux
     runs-on: namespace-profile-linux-x64-default
+    env:
+      # Fail if the CPU doesn't support AVX2, so AVX2 can't quietly go untested.
+      # See `DynCpu::for_each_supported` in `oxc_simd` crate.
+      OXC_SIMD_EXPECT: Avx2
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
@@ -39,6 +43,10 @@ jobs:
     if: ${{ github.ref_name == 'main' }}
     name: Test Linux ARM64
     runs-on: ubuntu-24.04-arm
+    env:
+      # Fail if the CPU doesn't support Neon, so Neon can't quietly go untested.
+      # See `DynCpu::for_each_supported` in `oxc_simd` crate.
+      OXC_SIMD_EXPECT: Neon
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - parallel:
@@ -55,6 +63,10 @@ jobs:
     if: ${{ github.ref_name == 'main' }}
     name: Test Mac
     runs-on: namespace-profile-mac-default
+    env:
+      # Fail if the CPU doesn't support Neon, so Neon can't quietly go untested.
+      # See `DynCpu::for_each_supported` in `oxc_simd` crate.
+      OXC_SIMD_EXPECT: Neon
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       # `cache: pnpm` is intentionally omitted. On Mac OS, `cache: pnpm` replaces the pnpm store directory
@@ -76,6 +88,10 @@ jobs:
     if: ${{ github.ref_name == 'main' || github.event_name == 'workflow_dispatch' }}
     name: Test Windows
     runs-on: windows-latest
+    env:
+      # Fail if the CPU doesn't support Neon, so Neon can't quietly go untested.
+      # See `DynCpu::for_each_supported` in `oxc_simd` crate.
+      OXC_SIMD_EXPECT: Avx2
     steps:
       - run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -609,6 +625,10 @@ jobs:
   conformance:
     name: Conformance
     runs-on: namespace-profile-linux-x64-default
+    env:
+      # Fail if the CPU doesn't support AVX2, so AVX2 can't quietly go untested.
+      # See `DynCpu::for_each_supported` in `oxc_simd` crate.
+      OXC_SIMD_EXPECT: Avx2
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
@@ -680,6 +700,9 @@ jobs:
     if: ${{ github.ref_name != 'main' }}
     env:
       CARGO_BUILD_WARNINGS: deny
+      # Fail if the CPU doesn't support Neon, so Neon can't quietly go untested.
+      # See `DynCpu::for_each_supported` in `oxc_simd` crate.
+      OXC_SIMD_EXPECT: Neon
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 

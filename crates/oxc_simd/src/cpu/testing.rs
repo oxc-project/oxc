@@ -2,7 +2,10 @@
 //!
 //! Only compiled for tests, or with the `testing` Cargo feature.
 
-use std::mem;
+use std::{
+    env, mem,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use super::{BASELINE, DynCpu, to_dyn};
 
@@ -16,8 +19,18 @@ impl DynCpu {
     /// If `f` panics, print which CPU feature set it panicked with,
     /// so a test failure says which one failed.
     ///
+    /// # Panics
+    ///
+    /// Panics if the `OXC_SIMD_EXPECT` environment variable is set, and isn't the name of the
+    /// CPU feature set which [`detect`] returns (e.g. `Avx2`). CI sets it, so that a CI machine
+    /// which doesn't support the expected SIMD feature set fails, instead of quietly testing
+    /// fewer feature sets.
+    ///
     /// [`detect`]: Self::detect
     pub fn for_each_supported(mut f: impl FnMut(DynCpu)) {
+        let detected = DynCpu::detect();
+        check_expected(detected);
+
         let mut run = |cpu: DynCpu| {
             // Dropped while unwinding if `f` panics, which prints `cpu`'s name
             let report = ReportCpuOnPanic(cpu);
@@ -26,7 +39,6 @@ impl DynCpu {
             mem::forget(report);
         };
 
-        let detected = DynCpu::detect();
         run(detected);
 
         // `BASELINE` is the generic feature set,
@@ -36,6 +48,32 @@ impl DynCpu {
             run(baseline);
         }
     }
+}
+
+/// Panic if the `OXC_SIMD_EXPECT` environment variable is set, and isn't the name of `detected`.
+/// See [`DynCpu::for_each_supported`].
+///
+/// Reading an environment variable takes a lock and allocates, and `for_each_supported` is called
+/// for every conformance fixture, so this only checks it until the check passes once.
+/// If it fails, every later call checks again, and fails again.
+fn check_expected(detected: DynCpu) {
+    /// Whether the check has passed.
+    static CHECKED: AtomicBool = AtomicBool::new(false);
+
+    if CHECKED.load(Ordering::Relaxed) {
+        return;
+    }
+
+    if let Some(expected) = env::var_os("OXC_SIMD_EXPECT") {
+        let actual = detected.name();
+        assert!(
+            expected == actual,
+            "`OXC_SIMD_EXPECT` is `{}`, but the best CPU feature set this CPU supports is `{actual}`",
+            expected.display(),
+        );
+    }
+
+    CHECKED.store(true, Ordering::Relaxed);
 }
 
 /// Guard which prints the name of a CPU feature set when it's dropped.
