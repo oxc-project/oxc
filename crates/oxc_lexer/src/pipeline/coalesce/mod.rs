@@ -1,9 +1,9 @@
 use std::{ptr, slice};
 
+use oxc_simd::{Cpu, cpu_multiversion, prefetch};
+
 use crate::{
-    cpu::{Cpu, cpu_multiversion},
     error::DiagCode,
-    simd::prefetch,
     token::{TokenKind, tk},
 };
 

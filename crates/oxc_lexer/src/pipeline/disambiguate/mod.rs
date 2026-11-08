@@ -22,7 +22,7 @@
 //! buffers, and keeps what it learns across the lex in a [`DisambiguateState`] the lexer owns.
 //! [`common`] holds the parts both questions need.
 
-use crate::cpu::{Cpu, cpu_multiversion, cpu_version};
+use oxc_simd::{Cpu, cpu_multiversion, cpu_version};
 
 mod common;
 mod context;

@@ -1,10 +1,9 @@
 //! Inside a JSX tag or element only the structure matters: nested tags, containers and the
 //! end of the element.
 
-use crate::{
-    cpu::{BASELINE, cpu_version},
-    token::{OP_KIND_BASE, tk},
-};
+use oxc_simd::{BASELINE, cpu_version};
+
+use crate::token::{OP_KIND_BASE, tk};
 
 use crate::pipeline::disambiguate::common::Tokens;
 

@@ -1,8 +1,7 @@
-use crate::{
-    cpu::{Cpu, cpu_multiversion},
-    error::DiagCode,
-    token::tk,
-};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
+use oxc_span::Span;
+
+use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},
@@ -103,12 +102,18 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                     if p + len < n {
                         bm_set(st, p + len, cpu);
                     }
+                    lanes.irregular_whitespaces.push(Span::new(p as u32, (p + len) as u32));
                 } else if (0xC2..=0xF4).contains(&c) {
                     // Non-whitespace lead: record the position only. The
                     // identifier-char check is deferred to drain, where leads
                     // inside literal tokens drop before ever paying for it.
                     lanes.unicode_leads.push(p as u32);
                 }
+                continue;
+            }
+            // Vertical tab or form feed, the only misc bytes below 0x20.
+            if c < 0x20 {
+                lanes.irregular_whitespaces.push(Span::new(p as u32, p as u32 + 1));
                 continue;
             }
             if !bm_get(st, p, cpu) {
@@ -126,8 +131,12 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                     continue;
                 }
                 let e0 = bm_next0(word, p + 1, n, cpu);
-                let e = if *src.add(e0) == b'\\' && *src.add(e0 + 1) == b'u' {
+                let e = if *src.add(e0) == b'\\'
+                    && *src.add(e0 + 1) == b'u'
+                    && !holds_unicode_ws(src, p + 1, e0)
+                {
                     *kind.add(p) = tk!(PrivateIdentEscaped);
+                    nesc += 1;
                     scan_ident_esc(src, n, e0, cpu)
                 } else {
                     *kind.add(p) = tk!(PrivateIdent);
@@ -146,6 +155,33 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
         }
     }
     nesc
+}
+
+/// Drop the irregular whitespace candidates that carve put inside a literal, comment or JSX text.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+pub fn retain_code_whitespace(st: &[u64], kind: &[u8], spans: &mut Vec<Span>) {
+    spans.retain(|span| {
+        let p = span.start as usize;
+        let mut w = p >> 6;
+        let mut bits = st[w] & (u64::MAX >> (63 - (p & 63)));
+        while bits == 0 {
+            let Some(prev) = w.checked_sub(1) else { return false };
+            w = prev;
+            bits = st[w];
+        }
+        kind[(w << 6) + 63 - bits.leading_zeros() as usize] == tk!(Whitespace)
+    });
+}
+
+/// Cold: whether src[a..b] holds a multi-byte WhiteSpace or LineTerminator.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+unsafe fn holds_unicode_ws(src: *const u8, a: usize, b: usize) -> bool {
+    let cpu = BASELINE;
+    (a..b).any(|i| *src.add(i) >= 0x80 && unicode_ws_len_at_unchecked(src, i, cpu) != 0)
 }
 
 /// Validate the UTF-8 sequence led by the byte at `p` (>= 0x80). Returns

@@ -275,7 +275,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_primary_expression(&mut self) -> Expression<'a> {
         // Ordinary identifiers do not need async-function or contextual-keyword disambiguation.
         if self.at(Kind::Ident) {
-            return self.parse_identifier_expression();
+            return self.parse_plain_identifier_expression();
         }
         let kind = self.cur_kind();
         match kind {
@@ -1167,15 +1167,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         in_optional_chain: &mut bool,
     ) -> Expression<'a> {
         let mut lhs = lhs;
-        // The caller only enters here with the current token being `(` or `?.`. For `(`,
-        // `parse_member_expression_rest` is a no-op (`(` ∉ its FIRST set: `?.`, `.`, `[`,
-        // template, TS `!`/`<`), so skip the redundant re-scan on entry; entering on `?.`, and
-        // every later iteration (after `Arguments`), still needs it.
+        // The caller has already parsed all member continuations, leaving `(` or `?.`.
+        // Skip the initial member re-scan, including repeated lookahead after `?.`.
+        // Later iterations must parse members following the call arguments.
         debug_assert!(
             matches!(self.cur_kind(), Kind::LParen | Kind::QuestionDot),
             "parse_call_expression_rest is only entered on `(` or `?.`",
         );
-        let mut rescan_members = !self.at(Kind::LParen);
+        let mut rescan_members = false;
         while self.fatal_error.is_none() {
             if rescan_members {
                 lhs = self.parse_member_expression_rest(
@@ -1403,7 +1402,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // Identifiers cannot start a unary or prefix-update expression. Parse their
             // suffixes directly, keeping pure annotations inside the postfix update.
             let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
-            let primary = self.parse_identifier_expression();
+            let primary = self.parse_plain_identifier_expression();
             self.parse_primary_expression_rest(lhs_start, primary, pure_comments)
         } else if self.ctx.has_in() && kind == Kind::PrivateIdentifier {
             // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
@@ -1479,7 +1478,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             let Some(left_precedence) = kind_to_precedence(kind) else { break };
 
-            let stop = if left_precedence.is_right_associative() {
+            // Exponentiation is the only right-associative operator in PRECEDENCE_TABLE.
+            let stop = if kind == Kind::Star2 {
                 left_precedence < min_precedence
             } else {
                 left_precedence <= min_precedence
@@ -1692,21 +1692,42 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if self.is_yield_expression() {
                 return self.parse_yield_expression();
             }
-            // `() => {}`, `(x) => {}`, `async x => {}`
-            if matches!(self.cur_kind(), Kind::LParen | Kind::LAngle | Kind::Async)
-                && let Some(mut arrow_expr) =
-                    self.try_parse_arrow_function_expression(allow_return_type_in_arrow_function)
-            {
-                if let Some(comments) = no_side_effects_comments
-                    && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
-                {
-                    func.pure = true;
-                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+            'parse_lhs: {
+                // `() => {}`, `(x) => {}`, `async x => {}`
+                let arrow_expr = match kind {
+                    Kind::LParen if !self.is_ts && !self.ctx.has_decorator() => {
+                        let pure_comments =
+                            self.lexer.trivia_builder.previous_token_pure_comments();
+                        match self.try_parse_arrow_function_expression::<true>(
+                            allow_return_type_in_arrow_function,
+                        ) {
+                            Some(Expression::ParenthesizedExpression(parenthesized)) => {
+                                break 'parse_lhs self.parse_reused_parenthesized_expression_rest(
+                                    start,
+                                    parenthesized,
+                                    pure_comments,
+                                );
+                            }
+                            arrow => arrow,
+                        }
+                    }
+                    Kind::LParen | Kind::LAngle | Kind::Async => self
+                        .try_parse_arrow_function_expression::<false>(
+                            allow_return_type_in_arrow_function,
+                        ),
+                    _ => None,
+                };
+                if let Some(mut arrow_expr) = arrow_expr {
+                    if let Some(comments) = no_side_effects_comments
+                        && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                    {
+                        func.pure = true;
+                        self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                    }
+                    return arrow_expr;
                 }
-                return arrow_expr;
+                self.parse_binary_expression_or_higher(Precedence::Comma)
             }
-
-            self.parse_binary_expression_or_higher(Precedence::Comma)
         };
         let lhs_parenthesized_span = lhs_parenthesized.then(|| self.end_span(start));
         let kind = self.cur_kind();
@@ -1751,6 +1772,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         expr
+    }
+
+    #[inline(never)]
+    fn parse_reused_parenthesized_expression_rest(
+        &mut self,
+        start: u32,
+        parenthesized: ArenaBox<'a, ParenthesizedExpression<'a>>,
+        pure_comments: Option<(u32, NonZeroU32)>,
+    ) -> Expression<'a> {
+        let primary = if self.options.preserve_parens {
+            Expression::ParenthesizedExpression(parenthesized)
+        } else {
+            parenthesized.unbox().expression
+        };
+        let lhs = self.parse_primary_expression_rest(start, primary, pure_comments);
+        if kind_to_precedence(self.cur_kind()).is_none() {
+            lhs
+        } else {
+            self.parse_binary_expression_rest(start, lhs, true, Precedence::Comma)
+        }
     }
 
     #[cold]

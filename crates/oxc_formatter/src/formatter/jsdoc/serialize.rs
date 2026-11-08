@@ -156,7 +156,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         if merged_desc.is_empty()
             && effective_tags.len() == 1
             && effective_tags[0].1 == "type"
-            && !content.contains('\n')
+            && !comment.is_multiline_block()
             && effective_tags[0].0.comment().parsed().trim().is_empty()
         {
             return None;
@@ -355,7 +355,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             crate::options::CommentLineStrategy::Multiline => false,
             crate::options::CommentLineStrategy::Keep => {
                 // Preserve original: only use single-line if original was single-line
-                second.is_none() && !content.contains('\n')
+                second.is_none() && !comment.is_multiline_block()
             }
         };
         if use_single_line {

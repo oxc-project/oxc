@@ -5,7 +5,9 @@ use std::{
     io::{ErrorKind, Read, Write, stderr},
     iter, mem,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex},
+    process::Child,
+    sync::{Arc, Mutex, mpsc},
+    thread::JoinHandle,
     time::Duration,
 };
 
@@ -136,6 +138,9 @@ impl TsGoLintState {
         self
     }
 
+    /// Runs `tsgolint` on `paths` to completion. Equivalent to [`Self::start`] followed by
+    /// [`TsGoLintRun::finish`].
+    ///
     /// # Panics
     /// - when `stdin` of subprocess cannot be opened
     /// - when `stdout` of subprocess cannot be opened
@@ -152,15 +157,35 @@ impl TsGoLintState {
         diff_manager: &Arc<DiffManager>,
         rule_timing_store: Option<&RuleTimingStore>,
     ) -> Result<(), String> {
+        self.start(paths).finish(
+            disable_directives_map,
+            error_sender,
+            file_system,
+            diff_manager,
+            rule_timing_store,
+        )
+    }
+
+    /// Spawns `tsgolint` for `paths` and decodes its output on a background thread, so it can
+    /// run while the regular lint pass does.
+    ///
+    /// Nothing is reported until [`TsGoLintRun::finish`], which must run after the regular pass:
+    /// diagnostics are filtered by the disable directives that pass collects. Spawn errors are
+    /// reported by `finish` as well.
+    ///
+    /// # Panics
+    /// - when `stdin` of subprocess cannot be opened
+    /// - when `stdout` of subprocess cannot be opened
+    pub fn start(self, paths: &[Arc<OsStr>]) -> TsGoLintRun {
         if paths.is_empty() {
-            return Ok(());
+            return TsGoLintRun { started: None };
         }
 
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
 
         let json_input = self.json_input(paths, None, &mut resolved_configs);
         if json_input.configs.is_empty() {
-            return Ok(());
+            return TsGoLintRun { started: None };
         }
 
         let all_paths = {
@@ -174,29 +199,97 @@ impl TsGoLintState {
             paths_buff
         };
 
-        let should_fix = self.fix || self.fix_suggestions;
-        let cwd = self.cwd.clone();
+        let process = self.spawn_tsgolint(&json_input).map(|mut child| {
+            let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
+            let (sender, messages) = mpsc::channel();
+            // Drain stdout as it is written so `tsgolint` never blocks on a full pipe. Message
+            // processing stops at the first error, so stop reading there too.
+            let reader = std::thread::spawn(move || {
+                for msg in TsGoLintMessageStream::new(stdout) {
+                    let is_error = !matches!(
+                        msg,
+                        Ok(TsGoLintMessage::Diagnostic(_) | TsGoLintMessage::Timing(_))
+                    );
+                    if sender.send(msg).is_err() || is_error {
+                        break;
+                    }
+                }
+            });
+            TsGoLintProcess { child, messages, reader }
+        });
+
+        TsGoLintRun {
+            started: Some(StartedRun { state: self, resolved_configs, all_paths, process }),
+        }
+    }
+}
+
+/// A `tsgolint` run started by [`TsGoLintState::start`].
+pub struct TsGoLintRun {
+    /// `None` when there was nothing to lint.
+    started: Option<StartedRun>,
+}
+
+struct StartedRun {
+    state: TsGoLintState,
+    resolved_configs: FxHashMap<PathBuf, ResolvedLinterState>,
+    all_paths: Vec<PathBuf>,
+    /// The spawned process, or the error from spawning it.
+    process: Result<TsGoLintProcess, String>,
+}
+
+struct TsGoLintProcess {
+    child: Child,
+    /// Messages decoded from stdout by `reader`, in the order `tsgolint` wrote them.
+    messages: mpsc::Receiver<Result<TsGoLintMessage, String>>,
+    reader: JoinHandle<()>,
+}
+
+impl TsGoLintRun {
+    /// Waits for `tsgolint` to exit and reports its diagnostics, filtered by the disable
+    /// directives that the regular lint pass collected, then applies its fixes.
+    ///
+    /// # Panics
+    /// - when `tsgolint` process cannot be awaited
+    ///
+    /// # Errors
+    /// A human-readable error message indicating why the linting failed.
+    pub fn finish(
+        mut self,
+        disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
+        error_sender: DiagnosticSender,
+        file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
+        diff_manager: &Arc<DiffManager>,
+        rule_timing_store: Option<&RuleTimingStore>,
+    ) -> Result<(), String> {
+        let Some(StartedRun { state, resolved_configs, all_paths, process }) = self.started.take()
+        else {
+            return Ok(());
+        };
+
+        let should_fix = state.fix || state.fix_suggestions;
+        let cwd = state.cwd.clone();
         let sender_for_fixes = error_sender.clone();
 
         let diff_manager_clone_to_ts_go = Arc::<DiffManager>::clone(diff_manager);
 
         let handler = std::thread::spawn(move || {
-            let mut child = self.spawn_tsgolint(&json_input)?;
+            let TsGoLintProcess { mut child, messages, reader } = process?;
 
-            let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
-
-            // Process stdout stream in a separate thread to send diagnostics as they arrive
+            // Process messages in a separate thread to send diagnostics as they arrive
             let stdout_handler = std::thread::spawn(move || -> Result<TsGoLintOutput, String> {
                 let disable_directives_map =
                     disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
 
-                let mut diagnostic_handler =
-                    DiagnosticHandler::new(self.cwd.clone(), self.silent, should_fix, error_sender);
+                let mut diagnostic_handler = DiagnosticHandler::new(
+                    state.cwd.clone(),
+                    state.silent,
+                    should_fix,
+                    error_sender,
+                );
                 let mut timings = vec![];
 
-                let msg_iter = TsGoLintMessageStream::new(stdout);
-
-                for msg in msg_iter {
+                for msg in messages {
                     match msg {
                         Ok(TsGoLintMessage::Error(err)) => {
                             return Err(err.error);
@@ -258,6 +351,12 @@ impl TsGoLintState {
                             return Err(e);
                         }
                     }
+                }
+
+                // The channel also closes when decoding panicked. Fail this thread then, as it
+                // did when it decoded stdout itself.
+                if let Err(panic) = reader.join() {
+                    std::panic::resume_unwind(panic);
                 }
 
                 Ok(TsGoLintOutput {
@@ -356,7 +455,20 @@ impl TsGoLintState {
             Err(err) => Err(format!("Error running tsgolint: {err:?}")),
         }
     }
+}
 
+impl Drop for TsGoLintRun {
+    /// Stops `tsgolint` when the run is dropped without [`TsGoLintRun::finish`] (e.g. the regular
+    /// pass unwound), so the process does not outlive the run.
+    fn drop(&mut self) {
+        if let Some(StartedRun { process: Ok(process), .. }) = &mut self.started {
+            let _ = process.child.kill();
+            let _ = process.child.wait();
+        }
+    }
+}
+
+impl TsGoLintState {
     /// Spawn the tsgolint process with the given input.
     fn spawn_tsgolint(&self, json_input: &Payload) -> Result<std::process::Child, String> {
         let mut cmd = std::process::Command::new(&self.executable_path);

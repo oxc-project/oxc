@@ -1,4 +1,5 @@
 use oxc_span::Span;
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use super::{
     jsdoc_parts::{JSDocCommentPart, JSDocTagKindPart},
@@ -120,7 +121,7 @@ pub fn parse_jsdoc(
             '\'' if backtick_count == 0 && !in_double_quotes => {
                 in_single_quotes = !in_single_quotes;
             }
-            '\n' => {
+            c if is_line_terminator(c) => {
                 in_double_quotes = false;
                 in_single_quotes = false;
                 // Parentheses and square-bracket syntaxes are line-oriented in JSDoc.
@@ -177,10 +178,10 @@ pub fn parse_jsdoc(
         }
 
         // Update line-start tracking:
-        // - `\n` resets to true (new line)
+        // - A line terminator resets to true (new line)
         // - Whitespace and `*` preserve true (JSDoc line leaders like ` * `)
         // - Everything else sets to false
-        if ch == '\n' {
+        if is_line_terminator(ch) {
             at_line_start = true;
             line_seen_star = false;
             spaces_after_star = 0;
@@ -188,7 +189,7 @@ pub fn parse_jsdoc(
             if ch == '*' {
                 line_seen_star = true;
                 spaces_after_star = 0;
-            } else if matches!(ch, ' ' | '\t' | '\r') {
+            } else if matches!(ch, ' ' | '\t') {
                 if line_seen_star {
                     spaces_after_star += 1;
                 }
@@ -359,6 +360,16 @@ mod tests {
         let src = " \n * @param {string} name The name\n * @returns {boolean} True if valid";
         let kinds = tag_kinds(src);
         assert_eq!(kinds, vec!["param", "returns"]);
+    }
+
+    #[test]
+    fn tags_split_on_every_line_terminator() {
+        for newline in ["\r", "\r\n", "\u{2028}", "\u{2029}"] {
+            let src = format!(
+                "{newline} * @param {{string}} name{newline} * @returns {{boolean}}{newline} "
+            );
+            assert_eq!(tag_kinds(&src), vec!["param", "returns"], "{newline:?}");
+        }
     }
 
     #[test]

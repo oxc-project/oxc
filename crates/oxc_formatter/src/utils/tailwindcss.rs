@@ -422,7 +422,8 @@ pub fn write_tailwind_template_element<'a>(
     ctx: TailwindContextEntry,
     f: &mut JsFormatter<'_, 'a>,
 ) {
-    let content = f.source_text().text_for(element);
+    // Not the source text, `raw` has its line endings normalized to `\n`
+    let content = element.value.raw.as_str();
 
     // Get quasi position from context (set when the quasi was written in template.rs)
     let is_first = ctx.is_first_quasi;

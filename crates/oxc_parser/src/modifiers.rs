@@ -529,7 +529,19 @@ impl<C: Config> ParserImpl<'_, C> {
         Modifier::new(start, modifier_kind)
     }
 
+    #[inline]
     pub(crate) fn parse_modifiers(
+        &mut self,
+        permit_const_as_modifier: bool,
+        stop_on_start_of_class_static_block: bool,
+    ) -> Modifiers {
+        if self.at(Kind::Ident) {
+            return Modifiers::empty();
+        }
+        self.parse_modifiers_impl(permit_const_as_modifier, stop_on_start_of_class_static_block)
+    }
+
+    fn parse_modifiers_impl(
         &mut self,
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,

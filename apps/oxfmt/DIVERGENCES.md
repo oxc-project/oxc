@@ -5,7 +5,7 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 ## ts-in-vue-generic-trailing-comma
 
 - Why: uniform-rule (embedded script formats like its standalone file)
-- Pin: `conformance/fixtures/edge-cases/js-in-vue/generic-trailing-comma.vue`
+- Pin: `conformance/fixtures/js-in-vue/generic-trailing-comma.vue`
 - Conformance:
   - `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`
 
@@ -33,7 +33,7 @@ in ts-in-md and plain `.ts` — one rule over that internal inconsistency, the s
 ## js-in-vue-for-alias-as-params
 
 - Why: invariant
-- Pin: `conformance/fixtures/edge-cases/js-in-vue/for-alias-commas.vue`
+- Pin: `conformance/fixtures/js-in-vue/for-alias-commas.vue`
 
 ```vue
 <!-- input -->
@@ -64,7 +64,7 @@ the string is uniform-rule (same construct, same output: a default value in `v-s
 ## js-in-vue-bitwise-or
 
 - Why: uniform-rule (same construct, same output: a `&&` chain in the same root)
-- Pin: `conformance/fixtures/edge-cases/js-in-vue/bitwise-or.vue`
+- Pin: `conformance/fixtures/js-in-vue/bitwise-or.vue`
 - Conformance:
   - `externals/prettier/vue/interpolation/bitwise-or-operator.vue`
   - `externals/prettier/vue/ts-expression/filter.vue`
@@ -120,7 +120,7 @@ A migration build (`@vue/compat`'s `COMPILER_FILTERS`) still reads them as filte
 ## js-in-vue-removed-attributes-as-written
 
 - Why: semantics (Vue 3 passes `slot-scope` to the element as a string, which formatting changes)
-- Pin: `conformance/fixtures/edge-cases/js-in-vue/removed-attributes-as-written.vue`
+- Pin: `conformance/fixtures/js-in-vue/removed-attributes-as-written.vue`
 - Conformance:
   - `externals/prettier/vue/vue/attributes.vue`
   - `externals/prettier/vue/vue/slot-ts.vue`
@@ -157,7 +157,7 @@ it reads neither value of `setup` and `vars` (`@vue/compiler-sfc` 3.5.45 compile
 ## js-in-vue-v-pre-as-written
 
 - Why: semantics (Vue renders a `v-pre` element and its content as written)
-- Pin: `conformance/fixtures/edge-cases/js-in-vue/v-pre-as-written.vue`
+- Pin: `conformance/fixtures/js-in-vue/v-pre-as-written.vue`
 
 ```vue
 <!-- input -->
@@ -185,7 +185,7 @@ Prettier formats them, which changes what renders (`{{ a + b }}`) and the attrib
 ## js-in-vue-handler-statements
 
 - Why: semantics (Vue reads an event handler holding a `;` as statements, and one without as an expression; prettier/prettier#14270)
-- Pin: `conformance/fixtures/edge-cases/js-in-vue/handler-statements-semi-false.vue`
+- Pin: `conformance/fixtures/js-in-vue/handler-statements-semi-false.vue`
 - Conformance:
   - `externals/prettier/vue/event-binding/function-expression-ts.vue`
   - `externals/prettier/vue/vue/attributes.vue`
@@ -312,7 +312,7 @@ Vue reads it as statements, which do not compile, and the parens would make it c
 ## tsx-in-vue-template-expressions
 
 - Why: uniform-rule (same construct, same output: a template expression of a `lang="ts"` file, which Prettier parses as TS)
-- Pin: `conformance/fixtures/edge-cases/js-in-vue/template-expression-tsx.vue`
+- Pin: `conformance/fixtures/js-in-vue/template-expression-tsx.vue`
 
 ```vue
 <!-- input -->
@@ -349,7 +349,7 @@ Prettier parses them as TS only for `lang="ts"`, and as JS for `lang="tsx"`, so 
 ## js-in-vue-tailwind-functions
 
 - Why: uniform-rule (same construct, same output: a `tailwindFunctions` call in a `<script>`, and in `v-if` of a JS file)
-- Pin: `test/api/js-in-vue.test.ts` ("should sort tailwindcss functions in every .vue template expression")
+- Pin: `conformance/fixtures/js-in-vue/sort-tailwindcss-functions/every-template-expression.vue`
 
 ```vue
 <!-- input: { sortTailwindcss: { functions: ["clsx"] } } -->
@@ -387,12 +387,11 @@ A listed function's classes sort in every template expression, as in the file's 
 prettier-plugin-tailwindcss sorts them only in some, by which parser Prettier picks:
 `v-if`, an `@click` expression and `v-for` of a JS file, none in a TS file.
 What the attributes sort (`class`, `:class`, a listed `attributes`) is the same.
-The pin is an API test: the conformance runners run no Tailwind sorter.
 
 ## js-in-vue-trailing-line-comment
 
 - Why: semantics (Prettier's output adds the comment's words as attributes of the element)
-- Pin: `conformance/fixtures/edge-cases/js-in-vue/trailing-line-comment.vue`
+- Pin: `conformance/fixtures/js-in-vue/trailing-line-comment.vue`
 - Conformance:
   - `externals/prettier/vue/vue/attributes.vue`
 
@@ -448,7 +447,7 @@ it puts the others on their own lines, which makes a binding compile where it di
 ## js-in-vue-top-level-sequence-as-written
 
 - Why: semantics (Vue reads a top-level `a, b` as more than one value, which the added parens make one)
-- Pin: `conformance/fixtures/edge-cases/js-in-vue/top-level-sequence.vue`
+- Pin: `conformance/fixtures/js-in-vue/top-level-sequence.vue`
 
 ```vue
 <!-- input -->
@@ -483,7 +482,7 @@ the source's (`{{ (a,b) }}`), or Vue's own, around `v-if`, `v-else-if` and an ev
 ## js-in-vue-interpolation-in-broken-parent
 
 - Why: uniform-rule (same construct, same output: `{{ }}` in a `<div>`; prettier/prettier#11406)
-- Pin: `conformance/fixtures/edge-cases/js-in-vue/interpolation-in-broken-parent.vue`
+- Pin: `conformance/fixtures/js-in-vue/interpolation-in-broken-parent.vue`
 
 ```vue
 <!-- input -->
@@ -526,7 +525,7 @@ Prettier lays out such children in the parent's group, which always breaks, so i
 ## js-in-vue-object-before-double-brace
 
 - Why: semantics (Vue ends `{{ }}` at the first `}}`)
-- Pin: `test/api/js-in-vue.test.ts` ("should keep `}}` out of an interpolation, from a template literal's substitution", "should keep `}}` out of an interpolation without bracket spacing")
+- Pin: `conformance/fixtures/js-in-vue/bracket-spacing-false/interpolation-closing-braces-template-literal.vue`, `conformance/fixtures/js-in-vue/bracket-spacing-false/interpolation-closing-braces.vue`
 
 ```vue
 <!-- input -->
@@ -572,12 +571,11 @@ In `{{ }}`, an object that would print right before another `}` prints in parens
 a template literal's substitution's, whatever `bracketSpacing` says, and, under `bracketSpacing: false`, an object's (a spread's argument too).
 Vue's tokenizer ends the interpolation at the first `}}`, so `{{ {...{a: 1}} }}` no longer compiles (`@vue/compiler-dom` 3.5.45: `Error parsing JavaScript expression`).
 Prettier does it for a property's value only.
-The pin is an API test: the conformance runners run no `bracketSpacing: false`.
 
 ## styled-extend-tag
 
 - Why: cost
-- Pin: `conformance/fixtures/edge-cases/css-in-js/styled-extend-tag.js`
+- Pin: `conformance/fixtures/css-in-js/styled-extend-tag.js`
 - Conformance:
   - `externals/prettier/js/multiparser-css/styled-components.js`
 
@@ -604,7 +602,7 @@ so its template stays verbatim; Prettier still formats it. Deprecated API, not w
 ## embedded-template-short-argument
 
 - Why: invariant
-- Pin: `conformance/fixtures/edge-cases/gql-in-js/embedded-template-short-argument.js`
+- Pin: `conformance/fixtures/gql-in-js/embedded-template-short-argument.js`
 
 ```js
 /* input */
@@ -638,7 +636,7 @@ We treat an embedded template as never short, which gives Prettier's second-pass
 ## embedded-template-invalid-content
 
 - Why: uniform-rule (same construct, same output: the same template with valid content)
-- Pin: `conformance/fixtures/edge-cases/gql-in-js/embedded-template-invalid-content.js`
+- Pin: `conformance/fixtures/gql-in-js/embedded-template-invalid-content.js`
 
 ```js
 /* input */
@@ -669,7 +667,7 @@ Under `embeddedLanguageFormatting: off`, the source shape still decides, like Pr
 ## nested-fence-length
 
 - Why: semantics (prettier/prettier#19908)
-- Pin: `conformance/fixtures/edge-cases/xxx-in-md/nested-fence-length.md`
+- Pin: `conformance/fixtures/xxx-in-md/nested-fence-length.md`
 - Conformance:
   - `externals/prettier/js/multiparser-markdown/codeblock.js`
 
@@ -705,7 +703,7 @@ Prettier `main` counts the printed content since #19908; the pin (3.9.10) still 
 ## line-ranged-code-block
 
 - Why: uniform-rule (same construct, same output: `` ```js{1,3} ``)
-- Pin: `conformance/fixtures/edge-cases/xxx-in-md/line-ranged-code-block.md`
+- Pin: `conformance/fixtures/xxx-in-md/line-ranged-code-block.md`
 
 ````markdown
 <!-- input -->
@@ -739,7 +737,7 @@ Prettier formats it when a space separates the language, and keeps `js{1,3}` as 
 ## lwc-code-block
 
 - Why: uniform-rule (code fence names follow Shiki's vocabulary)
-- Pin: `conformance/fixtures/edge-cases/xxx-in-md/lwc-code-block.md`
+- Pin: `conformance/fixtures/xxx-in-md/lwc-code-block.md`
 - Conformance:
   - `externals/prettier/markdown/code/lwc/lwc.md`
 
@@ -769,7 +767,7 @@ Prettier looks it up in linguist, where `lwc` is an alias of its Lightning Web C
 ## whitespace-only-code-block
 
 - Why: uniform-rule (embedded script formats like its standalone file)
-- Pin: `conformance/fixtures/edge-cases/xxx-in-md/whitespace-only-code-block.md`
+- Pin: `conformance/fixtures/xxx-in-md/whitespace-only-code-block.md`
 
 `````markdown
 <!-- input -->
@@ -796,7 +794,7 @@ Prettier keeps `json` / `json5` blocks as written: their parser rejects a blank 
 ## astro-style-lang-sass
 
 - Why: cost
-- Pin: `conformance/fixtures/edge-cases/astro/style-lang-sass.astro`
+- Pin: `conformance/fixtures/astro/style-lang-sass.astro`
 - Conformance:
   - `externals/plugin-astro/styles/with-sass/input.astro`
   - `externals/plugin-astro/styles/with-indented-sass/input.astro`
@@ -830,7 +828,7 @@ Not tested but `oxc-css-parser` already parses it, so we can add Sass support fo
 ## front-matter-indented-delimiter
 
 - Why: semantics
-- Pin: `conformance/fixtures/edge-cases/xxx-in-md/front-matter-indented-delimiter.md`
+- Pin: `conformance/fixtures/xxx-in-md/front-matter-indented-delimiter.md`
 
 ```markdown
 <!-- input -->
@@ -859,7 +857,7 @@ On the next parse (Prettier's and ours), the block closes there and the rest of 
 ## script-end-in-embedded-template
 
 - Why: semantics (the first `</script` ends an HTML `<script>`, the rest of the code becomes markup)
-- Pin: `conformance/fixtures/edge-cases/html/script-end-in-gql-template.html`
+- Pin: `conformance/fixtures/html/script-end-in-gql-template.html`
 
 ```html
 <!-- input -->
@@ -896,7 +894,7 @@ Prettier keeps it in html-in-js, css-in-js and markdown-in-js, but a gql-in-js p
 ## style-attribute-last-semicolon-comment
 
 - Why: uniform-rule (comment presence never changes layout)
-- Pin: `conformance/fixtures/edge-cases/html/style-attribute-last-semicolon-comment.html`
+- Pin: `conformance/fixtures/html/style-attribute-last-semicolon-comment.html`
 
 ```html
 <!-- input -->
@@ -923,7 +921,7 @@ Prettier prints the `;` when a comment follows: its last-declaration check count
 ## doctype-case-in-script
 
 - Why: semantics (an html-in-js template is a JS string, and code reads its case; oxc#28793)
-- Pin: `conformance/fixtures/edge-cases/html/doctype-case-in-script.html`
+- Pin: `conformance/fixtures/html/doctype-case-in-script.html`
 
 ```html
 <!-- input -->
@@ -951,7 +949,7 @@ Prettier passes the host's file name to the embedded part, so it lowercases one 
 ## placeholder-case-in-child
 
 - Why: semantics (Prettier prints a lowercased placeholder in place of the `${}` expression)
-- Pin: `conformance/fixtures/edge-cases/html-in-js/placeholder-case-in-child.js`
+- Pin: `conformance/fixtures/html-in-js/placeholder-case-in-child.js`
 
 ```js
 // input
@@ -979,9 +977,8 @@ Prettier looks for the placeholder as it wrote it, so the lowercased one stays i
 ## pre-like-template-expression
 
 - Why: uniform-rule (same construct, same output: an expression outside `pre`-like content, whose lines indent from the line its `${` starts on; prettier/prettier#20355)
-- Pin: `conformance/fixtures/edge-cases/html-in-js/pre-like-template-expression.js`
+- Pin: `conformance/fixtures/html-in-js/pre-like-template-expression.js`, `conformance/fixtures/html-in-js/template-expression-indent.js`
 - Conformance:
-  - `edge-cases/html-in-js/template-expression-indent.js`
   - `externals/prettier/js/embeded/indention/19518.js`
 
 ```js
@@ -1027,7 +1024,7 @@ Reformatting the expression changes no content: its source is code, not text in 
 ## dynamic-tag-name-end-tag
 
 - Why: uniform-rule (same construct, same output: an element htm's `<//>` closes, which Prettier formats; prettier/prettier#17849)
-- Pin: `conformance/fixtures/edge-cases/html-in-js/dynamic-tag-name.js`
+- Pin: `conformance/fixtures/html-in-js/dynamic-tag-name.js`
 - Conformance:
   - `externals/webawesome/button/button.ts`
 

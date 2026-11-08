@@ -28,17 +28,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn is_using_statement(&mut self) -> bool {
-        // `await using` requires `using` immediately after `await` on the same line. Cheaply peek
-        // for it first, so the common `await <expr>` statement avoids the heavier `lookahead`
-        // (checkpoint + rewind) and only `await using` pays for the declaration check.
-        let next = self.lexer.peek_token();
-        next.kind() == Kind::Using
-            && !next.is_on_new_line()
-            && self.lookahead(|p| {
-                p.bump_any(); // bump `await`
-                // Also recognize object patterns so invalid declarations can recover.
-                p.is_using_declaration()
-            })
+        // Inspect both declaration tokens under one lexer checkpoint.
+        let checkpoint = self.lexer.checkpoint();
+        let next = self.lexer.next_token();
+        let is_using = next.kind() == Kind::Using && !next.is_on_new_line() && {
+            let binding = self.lexer.next_token();
+            // Also recognize object patterns so invalid declarations can recover.
+            (binding.kind().is_binding_identifier() || binding.kind() == Kind::LCurly)
+                && !binding.is_on_new_line()
+        };
+        self.lexer.rewind(checkpoint);
+        is_using
     }
 
     pub(crate) fn parse_using_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
@@ -68,13 +68,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decl_parent: VariableDeclarationParent,
         declare: bool,
     ) -> ArenaBox<'a, VariableDeclaration<'a>> {
-        let mut declarations = ArenaVec::new_in(self);
-        loop {
-            let declaration = self.parse_variable_declarator(decl_parent, kind);
-            declarations.push(declaration);
-            if !self.eat(Kind::Comma) {
-                break;
-            }
+        let first = self.parse_variable_declarator(decl_parent, kind);
+        let mut declarations = ArenaVec::from_value_in(first, self);
+        while self.eat(Kind::Comma) {
+            declarations.push(self.parse_variable_declarator(decl_parent, kind));
         }
 
         if matches!(decl_parent, VariableDeclarationParent::Statement) {

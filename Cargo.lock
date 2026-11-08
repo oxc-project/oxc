@@ -280,7 +280,7 @@ version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "faf9468729b8cbcea668e36183cb69d317348c2e08e994829fb56ebfdfbaac34"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -682,7 +682,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1511,7 +1511,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1970,6 +1970,7 @@ dependencies = [
  "oxc_formatter",
  "oxc_formatter_core",
  "oxc_lexer",
+ "oxc_simd",
  "oxc_tasks_common",
  "oxc_tasks_transform_checker",
  "phf",
@@ -2187,6 +2188,7 @@ dependencies = [
 name = "oxc_formatter_tests"
 version = "0.62.0"
 dependencies = [
+ "cow-utils",
  "oxc_formatter_core",
  "serde_json",
 ]
@@ -2195,10 +2197,12 @@ dependencies = [
 name = "oxc_formatter_toml"
 version = "0.77.0"
 dependencies = [
+ "insta",
  "oxc-toml",
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_formatter_core",
+ "oxc_formatter_tests",
  "oxc_span",
 ]
 
@@ -2253,6 +2257,7 @@ version = "0.157.0"
 dependencies = [
  "oxc_ast",
  "oxc_span",
+ "oxc_syntax",
  "rustc-hash",
 ]
 
@@ -2274,26 +2279,18 @@ dependencies = [
 
 [[package]]
 name = "oxc_lexer"
-version = "0.139.0"
+version = "0.0.0"
 dependencies = [
  "constcat",
  "memchr",
  "oxc_ast",
  "oxc_data_structures",
  "oxc_diagnostics",
- "oxc_lexer_macros",
+ "oxc_lexer",
+ "oxc_simd",
  "oxc_span",
  "oxc_syntax",
  "rustc-hash",
-]
-
-[[package]]
-name = "oxc_lexer_macros"
-version = "0.0.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 3.0.5",
 ]
 
 [[package]]
@@ -2658,6 +2655,22 @@ dependencies = [
  "self_cell",
  "serde_json",
  "smallvec",
+]
+
+[[package]]
+name = "oxc_simd"
+version = "0.0.0"
+dependencies = [
+ "oxc_simd_macros",
+]
+
+[[package]]
+name = "oxc_simd_macros"
+version = "0.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.5",
 ]
 
 [[package]]
@@ -3376,9 +3389,9 @@ dependencies = [
 
 [[package]]
 name = "rust-lapper"
-version = "1.3.0"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5aafed57460ca80eb88c33989af3a31348dbde8e68f86f4fe2107c1a5fcd55b8"
+checksum = "1bb35006d8df35922a2685518c4f6580af2851aecd2d9826be06aeddb9429a5f"
 dependencies = [
  "num-traits",
 ]
@@ -3399,7 +3412,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3818,7 +3831,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4352,7 +4365,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

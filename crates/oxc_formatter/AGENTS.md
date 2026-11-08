@@ -54,12 +54,14 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 - Backed by `prettier-plugin-tailwindcss`, but not fully compatible
 - Classes are collected during IR construction and sorted in one batch when the IR is stringified
 - Requires the session's `TailwindSorter` service (the sort itself is delegated to the host)
-- Covered by the Oxfmt API tests (`apps/oxfmt/test/api/sort_tailwindcss.test.ts`), since only the host sorts
+- Covered by Oxfmt's fixtures (`apps/oxfmt/conformance/fixtures/sort-tailwindcss/`), since only the host sorts
 - Deliberately unlike the plugin, nothing in the arguments of a nested non-Tailwind call is sorted
   (tailwindlabs/prettier-plugin-tailwindcss#426): `cn(x.includes("a  b"))` keeps `"a  b"`, which the plugin rewrites
 - Known limitation, left since the triggers are rare and a fix would thread Tailwind state through `SimpleArgument`:
   a multiline template collapsed by sorting is still judged by its source line breaks in some layouts,
   so a Tailwind call with one inside a member chain can take a second pass to settle
+- Known limitation, left as the plugin does since nobody writes it and a fix would couple every layout check assuming collapsed classes:
+  - classes are split on whitespace in the source text, so an escaped whitespace in a JS string or template (`\` + a space, or a line continuation) is torn apart, and the output can fail to re-parse (`"foo bar \⏎"` becomes `"foo bar \"`)
 
 ### Embedded language formatting
 
