@@ -8,10 +8,10 @@ This crate provides a fast, ESLint-compatible linting engine with comprehensive 
 
 ## Key Features
 
-- **ESLint compatibility**: Drop-in replacement for most ESLint workflows
-- **High performance**: 50-100x faster than ESLint on large codebases
+- **ESLint rules**: Native implementations of rules from ESLint and popular plugins
+- **High performance**: Shared AST and semantic analysis across rules
 - **Comprehensive rules**: Supports most popular ESLint rules and plugins
-- **TypeScript support**: Full TypeScript linting with type-aware rules
+- **TypeScript support**: Syntax-aware rules; the Oxlint CLI integrates with `oxlint-tsgolint` for type-aware rules
 - **Plugin system**: Extensible architecture for custom rules
 
 ## Architecture
@@ -32,9 +32,9 @@ This crate provides a fast, ESLint-compatible linting engine with comprehensive 
 
 ### ESLint Compatibility
 
-- **Configuration format**: Supports ESLint config files
+- **Configuration format**: Uses Oxlint configuration; migrate ESLint configuration with the [migration guide](https://oxc.rs/docs/guide/usage/linter/migrate-from-eslint.html)
 - **Rule parity**: Implements behavior-compatible versions of popular rules
-- **Plugin ecosystem**: Compatible with many ESLint plugins
+- **Plugin ecosystem**: The Oxlint CLI supports JavaScript plugins with an ESLint-compatible rule API
 - **Migration path**: Easy transition from ESLint to oxlint
 
 The linter is designed to be both a standalone tool and a library component for integration into other development tools.

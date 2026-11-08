@@ -10,8 +10,8 @@ This crate converts AST nodes back into source code strings, supporting JavaScri
 
 - **Fast code generation**: Optimized for performance with minimal allocations
 - **Source map support**: Generate accurate source maps during output
-- **Configurable formatting**: Control whitespace, semicolons, and other formatting options
-- **Comment preservation**: Maintain comments during code generation
+- **Configurable formatting**: Control minification, indentation, quote style, and comment handling
+- **Comment handling**: Preserve supported leading comments and configure legal-comment output
 - **Binary expression optimization**: Intelligent parentheses insertion
 
 ## Architecture

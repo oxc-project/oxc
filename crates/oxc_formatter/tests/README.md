@@ -37,9 +37,11 @@ tests/
 
 ## Adding New Tests
 
+Run the commands in this section from `crates/oxc_formatter`. Fixture paths are relative to that crate.
+
 ### Simple Test (using default options)
 
-Just create a new file in `fixtures/js/` or `fixtures/ts/`:
+Just create a new file in `tests/fixtures/js/` or `tests/fixtures/ts/`:
 
 ```bash
 # Create a new test file
@@ -134,7 +136,7 @@ cargo insta review -p oxc_formatter
    - Example: `fixtures/js/comments/test.js` → `fixtures::js::comments::test()`
 4. **Test Execution**: Each generated test function calls the shared `test_file()` helper
 5. **Option Resolution**: For each file, walk up the directory tree to find `options.json`
-6. **Formatting**: Format the file with each option set
+6. **Formatting**: Format the file with each option set at print widths 80 and 100, plus any distinct configured width; check idempotency and CRLF / CR / BOM input variants
 7. **Snapshot**: Generate a snapshot showing input + all outputs (stored next to test file)
 8. **Comparison**: Compare with existing snapshot (if any)
 
@@ -148,7 +150,7 @@ cargo insta review -p oxc_formatter
 - **Organization**: Use subdirectories to group related tests (e.g., `fixtures/js/arrows/`, `fixtures/js/classes/`)
 - **Shared Options**: Put `options.json` at the directory level to apply to all files in that directory
 - **Override Options**: Create `options.json` in a subdirectory to override parent options
-- **Default Options**: If no `options.json` is found, `FormatOptions::default()` is used
+- **Default Options**: If no `options.json` is found, `JsFormatOptions::default()` is used, with output checked at print widths 80 and 100
 - **File Extensions**: The source type is detected automatically from the file extension
 - **Co-located Snapshots**: Snapshots are stored next to test files for easy navigation and review
 - **Rebuilds**: The build script automatically rebuilds when files in `tests/fixtures/` change

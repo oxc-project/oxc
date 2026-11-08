@@ -11,9 +11,8 @@ This crate performs semantic analysis on JavaScript and TypeScript ASTs, buildin
 - **Symbol resolution**: Build complete symbol tables with binding information
 - **Scope analysis**: Construct scope trees following ECMAScript scoping rules
 - **Reference tracking**: Track all variable references and their relationships
-- **Control flow**: Optional control flow graph construction
-- **JSDoc parsing**: Extract and parse JSDoc comments
-- **Module analysis**: Analyze import/export relationships
+- **Control flow**: Optional control flow graph construction with the `cfg` feature
+- **JSDoc parsing**: Extract and parse JSDoc comments with the `jsdoc` feature
 
 ## Architecture
 

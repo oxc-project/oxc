@@ -19,9 +19,9 @@ This crate implements TypeScript's isolated declarations feature, which generate
 
 Isolated declarations allow generating TypeScript declaration files without full type inference by requiring that:
 
-- All exported functions have explicit return types
-- All exported variables have explicit types
-- Type information is locally available
+- Types can be determined from the current file without following imports
+- Exported declarations have explicit annotations where their types cannot be inferred locally
+- Supported local inference includes simple literal initializers and some function return expressions
 
 ### Implementation Details
 

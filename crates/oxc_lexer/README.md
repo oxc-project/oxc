@@ -1,11 +1,12 @@
 # Oxc Lexer
 
-A spec compliant standalone lexer for JS/JSX/TS.
+A standalone lexer for JavaScript, TypeScript, and JSX, under development.
 
-## Overview
+- SIMD implementations for x86_64 AVX2 and aarch64 Neon, with a generic implementation for other CPUs.
+  CPU feature selection is provided by `oxc_simd`.
+- Optional UTF-8 and regular expression validation through `LexOptions`.
+- Optional comment and whitespace tokens, line tables, and diagnostic limits.
+- Input buffers require `PAD` zero bytes after the source text; see `lex_utf8` and `lex_utf8_arena`.
+- Currently available only on little-endian targets.
 
-- Test262 compliant.
-- TS/JSX Working
-- UTF-8 validation costs 0.15CPB (Cycles per byte), optional parameter.
-- SIMD in x86_64 AVX2, Scalar for every other platform currently (in progress).
-- Regex vs Division cases should be handled even in pathological cases.
+The parser still uses its own lexer in `oxc_parser`; this crate is not its default lexer.

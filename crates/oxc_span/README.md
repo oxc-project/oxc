@@ -18,7 +18,7 @@ This crate provides essential utilities for managing source positions and spans 
 ### Span System
 
 - **Byte positions**: All positions are UTF-8 byte offsets
-- **Inclusive ranges**: Spans include start position, exclude end position
+- **Half-open ranges**: Spans include the start position and exclude the end position
 - **Efficiency**: Uses u32 for positions, supporting files up to 4GB
 - **Precision**: Enables precise error highlighting and source maps
 

@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="OXC Logo" src="https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/preview-universal.png" width="700">
+  <img alt="OXC Logo" src="https://oxc.rs/oxc-dark.svg" width="700">
 </p>
 
 <div align="center">
@@ -25,7 +25,7 @@ The easiest way to get started with `oxc` is by adding this to your `Cargo.toml`
 
 ```toml
 [dependencies]
-oxc = { version = "*", features = ["full"] }
+oxc = { version = "*", features = ["full", "cfg"] }
 ```
 
 In most cases, code using oxc will follow this general pipeline:
@@ -98,7 +98,7 @@ if fatal_error {
 // these, and they are disabled by default.
 let SemanticBuilderReturn {
     semantic,
-    errors: semantic_errors,
+    diagnostics: semantic_errors,
 } = SemanticBuilder::new()
     .with_check_syntax_error(true) // Enable extra syntax error checking
     .with_cfg(true)                // Build a Control Flow Graph
@@ -127,18 +127,18 @@ These feature flags enable/disable various tools in oxc's toolchain:
 - `minifier`: Enable the `minifier` and `mangler` modules for terser-like minification.
 - `codegen`: Enable the `codegen` module, which prints ASTs to source code and source maps.
 - `mangler`: Enable the `mangler` module without enabling `minifier`.
-- `cfg`: Expose the `cfg` module. CFGs may still be created in `semantic`
-  without turning this on.
+- `cfg`: Expose the `cfg` module and enable control flow graph construction in `semantic`.
+  This feature is not included in `full`.
 - `ast_visit`: Enable the `ast_visit` module for AST traversal.
 - `regular_expression`: Enable regular expression parsing support.
-- `isolated_declarations`: enable the `isolated_declarations` module for
-  generating typescript type declarations
+- `isolated_declarations`: Enable the `isolated_declarations` module for
+  generating TypeScript type declarations.
 
 These feature flags modify the behavior of oxc's tools. None of them are enabled
 by the `full` feature.
 
-- `serialize`: Implements `Serialize` and `Deserialize` for various oxc data
-  structures.
+- `serialize`: Enable ESTree JSON serialization for AST nodes and serialization support
+  for supporting data structures.
 - `conformance`: Enables additional AST visitor hooks for conformance tests.
 
 [crate-oxc-badge]: https://img.shields.io/crates/v/oxc?style=flat-square&logo=rust
@@ -147,7 +147,7 @@ by the `full` feature.
 [docs-oxc-url]: https://docs.rs/oxc
 [github-badge]: https://img.shields.io/badge/GitHub-oxc--project%2Foxc-8da0cb?style=flat-square&logo=github
 [github-url]: https://github.com/oxc-project/oxc
-[playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0?style=flat-square
+[playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0&style=flat-square
 [playground-url]: https://playground.oxc.rs/
 [website-badge]: https://img.shields.io/badge/Website-blue?style=flat-square
 [website-url]: https://oxc.rs

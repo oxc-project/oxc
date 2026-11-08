@@ -11,12 +11,10 @@ All transforms are implementations of the `Traverse` trait.
 
 ## Composing transforms
 
-We aim to run all transforms together **in a single AST visitation pass**.
-
-This will be the most performant method, though it causes some complexity, especially due to interactions
-between different transforms acting on the same code. It is unclear at present if this methodology will
-be viable, but it is our initial aim, and we will only fall back to multiple passes if single-pass proves
-unworkable.
+`TransformerImpl` composes enabled transforms in a shared AST traversal. Its `enter_*` and
+`exit_*` callbacks dispatch to child transforms in a defined order; preserve that order when
+adding a transform. See [`src/lib.rs`](src/lib.rs) for the current pipeline. Individual transforms
+may still perform local traversals when needed.
 
 ## Style guide for implementing transforms
 
@@ -30,12 +28,13 @@ follow this style guide closely.
 
 Each transform should be in its own file.
 
-Some transforms just delegate work to sub-transforms. e.g. `React` transform delegates to the `ReactJsx`
-and `ReactDisplayName` transforms.
+Some transforms delegate work to sub-transforms. For example, `Jsx` delegates to `JsxImpl`,
+`ReactDisplayName`, and `ReactRefresh`.
 
 ### Comments
 
-For a maintainable and understandable codebase, please go big on code comments. The more, the merrier!
+Use comments to explain transform semantics, interactions, and non-obvious constraints.
+Prefer descriptive names and clear control flow over comments that narrate the code.
 
 #### Top of file
 
@@ -53,24 +52,20 @@ explaining how the pieces fit together.
 
 #### Code snippets
 
-`AstBuilder` calls are often very verbose. Preface each chunk of `AstBuilder` calls with a short comment
+AST construction can be verbose. When it helps explain the intended syntax, preface construction with a short comment
 showing what this code produces. e.g.:
 
 ```rs
 // `let Foo;`
-let declarations = {
-    let ident = BindingIdentifier::new(SPAN, "Foo");
-    let pattern_kind = self.ast.binding_pattern_identifier(ident);
-    let binding = self.ast.binding_pattern(pattern_kind, None, false);
-    let decl = self.ast.variable_declarator(SPAN, VariableDeclarationKind::Let, binding, None, false);
-    self.ast.new_vec_single(decl)
-};
-let var_decl = Declaration::VariableDeclaration(self.ast.variable_declaration(
+let binding = BindingPattern::new_binding_identifier(SPAN, "Foo", ctx);
+let declarator = VariableDeclarator::new(SPAN, binding, None, None, false, ctx);
+let var_decl = Statement::new_variable_declaration(
     SPAN,
-    kind,
-    declarations,
-    Modifiers::empty(),
-));
+    VariableDeclarationKind::Let,
+    [declarator],
+    false,
+    ctx,
+);
 ```
 
 #### Where we can improve on Babel
@@ -90,9 +85,16 @@ comment, so we can return to it later.
 
 ### Clear "entry points"
 
-"Entry points" are where the visitor calls into the transform.
+"Entry points" are where the visitor calls into the transform. In-crate transforms share
+`TransformState` and use the local context alias:
 
-- Entry points of transform should be implemented as `impl Traverse for MyTransform`.
+```rs
+use oxc_traverse::Traverse;
+
+use crate::{context::TraverseCtx, state::TransformState};
+```
+
+- Entry points of transform should be implemented as `impl<'a> Traverse<'a, TransformState<'a>> for MyTransform`.
 - Those methods have to be called `enter_*` and `exit_*`.
 - Parent transform will only interface with child transform via these entry points.
 - Only other method exposed externally should be `new`. That should be at top of the file.
@@ -117,7 +119,7 @@ impl FunctionRenamer {
 }
 
 // Entry points
-impl<'a> Traverse<'a> for FunctionRenamer {
+impl<'a> Traverse<'a, TransformState<'a>> for FunctionRenamer {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
             Statement::FunctionDeclaration(func) => {
@@ -128,15 +130,14 @@ impl<'a> Traverse<'a> for FunctionRenamer {
                     self.rename_function(func, ctx);
                 }
             }
+            _ => {}
         }
     }
 }
 
 // Internal methods
 impl FunctionRenamer {
-    /// Rename the function
-    // This function's name describes what it does, not just `transform_function`
-    fn rename_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn rename_function<'a>(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         // Do stuff
     }
 }
@@ -155,7 +156,7 @@ Here some of logic from child transform is "leaked" into the parent:
 
 ```rs
 // src/do_stuff/mod.rs
-impl<'a> Traverse<'a> for ParentTransform {
+impl<'a> Traverse<'a, TransformState<'a>> for ParentTransform {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.child_is_enabled {
             match expr {
@@ -172,7 +173,7 @@ impl<'a> Traverse<'a> for ParentTransform {
 }
 
 // src/do_stuff/child.rs
-impl<'a> Traverse<'a> for ChildTransform {
+impl<'a> Traverse<'a, TransformState<'a>> for ChildTransform {
     fn enter_jsx_element(&mut self, elem: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {
         // Do stuff
     }
@@ -188,7 +189,7 @@ All the child transform's logic is encapsulated in `ChildTransform`:
 
 ```rs
 // src/do_stuff/mod.rs
-impl<'a> Traverse<'a> for ParentTransform {
+impl<'a> Traverse<'a, TransformState<'a>> for ParentTransform {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.child_is_enabled {
             self.child.enter_expression(expr, ctx);
@@ -197,7 +198,7 @@ impl<'a> Traverse<'a> for ParentTransform {
 }
 
 // src/do_stuff/child.rs
-impl<'a> Traverse<'a> for ChildTransform {
+impl<'a> Traverse<'a, TransformState<'a>> for ChildTransform {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
             Expression::JSXElement(e) => {
@@ -212,10 +213,10 @@ impl<'a> Traverse<'a> for ChildTransform {
 }
 
 impl ChildTransform {
-    fn do_stuff_to_jsx_element(&mut self, elem: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn do_stuff_to_jsx_element<'a>(&mut self, elem: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {
         // Do stuff
     }
-    fn do_stuff_to_jsx_fragment(&mut self, elem: &mut JSXFragment<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn do_stuff_to_jsx_fragment<'a>(&mut self, elem: &mut JSXFragment<'a>, ctx: &mut TraverseCtx<'a>) {
         // Do stuff
     }
 }

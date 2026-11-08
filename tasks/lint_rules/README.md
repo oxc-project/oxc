@@ -4,7 +4,7 @@ Task to update implementation progress for each linter plugin.
 
 ```sh
 Usage:
-  $ cmd [--target=<pluginName>]... [--update] [--help]
+  $ node tasks/lint_rules/src/main.mjs [--target=<pluginName>]... [--update] [--help]
 
 Options:
   --target, -t: Which plugin to target, multiple allowed
@@ -12,7 +12,7 @@ Options:
   --help, -h: Print this help message
 ```
 
-Environment variables `GITHUB_TOKEN` is required when `--update` is specified.
+Install this task's dependencies with `npm --prefix tasks/lint_rules install -f`, then run the command from the repository root. This task is not a pnpm workspace package. The `GITHUB_TOKEN` environment variable is required when `--update` is specified.
 
 ## Design
 

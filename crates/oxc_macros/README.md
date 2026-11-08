@@ -19,10 +19,11 @@ This crate provides procedural macros that simplify the declaration and implemen
 
 The macros generate:
 
-- Rule struct definitions
+- `RuleMeta` implementations for existing rule structs
 - Metadata for documentation generation
-- Registration code for the rule system
-- Consistent interfaces across all rules
+- Configuration conversion implementations
+
+Rule registration is generated separately by `cargo lintgen`.
 
 ### Documentation Generation
 
