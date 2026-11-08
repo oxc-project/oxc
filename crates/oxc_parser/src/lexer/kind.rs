@@ -492,6 +492,13 @@ impl Kind {
         clippy::cast_possible_truncation,
         reason = "At most three bytes remain above the low 64-bit word"
     )]
+    #[cfg_attr(
+        not(feature = "benchmarking"),
+        expect(
+            clippy::missing_panics_doc,
+            reason = "The length guard guarantees the indexed bytes and exact-width slices exist"
+        )
+    )]
     #[inline]
     pub fn match_keyword(s: &str) -> Self {
         let s = s.as_bytes();
