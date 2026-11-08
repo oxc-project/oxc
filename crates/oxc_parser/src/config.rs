@@ -131,6 +131,14 @@ pub trait LexerConfig: Default {
     /// [`tokens`]: LexerConfig::tokens
     const TOKENS_METHOD_IS_STATIC: bool;
 
+    /// Permit the built-in common-token and newline dispatch paths.
+    ///
+    /// Opting in allows the lexer to bypass `byte_handlers`, its indexing, and its
+    /// handlers for ASCII identifier starts, digits, quotes, common punctuation,
+    /// and CR/LF. Custom configurations inherit `false`, preserving the original
+    /// three-punctuation bypass and all other byte-table effects.
+    const COMMON_TOKEN_DISPATCH: bool = false;
+
     /// Returns `true` if tokens are enabled.
     fn tokens(&self) -> bool;
 
@@ -144,6 +152,8 @@ pub struct NoTokensLexerConfig;
 
 impl LexerConfig for NoTokensLexerConfig {
     type ByteHandlers = ByteHandlers<Self>;
+
+    const COMMON_TOKEN_DISPATCH: bool = true;
 
     const TOKENS_METHOD_IS_STATIC: bool = true;
 
@@ -164,6 +174,8 @@ pub struct TokensLexerConfig;
 
 impl LexerConfig for TokensLexerConfig {
     type ByteHandlers = ByteHandlers<Self>;
+
+    const COMMON_TOKEN_DISPATCH: bool = true;
 
     const TOKENS_METHOD_IS_STATIC: bool = true;
 
@@ -194,6 +206,8 @@ impl RuntimeLexerConfig {
 
 impl LexerConfig for RuntimeLexerConfig {
     type ByteHandlers = ByteHandlers<Self>;
+
+    const COMMON_TOKEN_DISPATCH: bool = true;
 
     const TOKENS_METHOD_IS_STATIC: bool = false;
 

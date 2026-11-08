@@ -539,7 +539,9 @@ impl<'a, C: Config> Lexer<'a, C> {
                 byte = unsafe { pos.read() };
             }
 
-            if matches!(byte, b'\r' | b'\n') {
+            if C::COMMON_TOKEN_DISPATCH && matches!(byte, b'\r' | b'\n') {
+                // Keep the same scratch start as the original LIN table handler.
+                self.token.set_start(self.source.offset_of(pos));
                 // SAFETY: `pos` points to the ASCII line break just read.
                 self.source.set_position(unsafe { pos.add(1) });
                 self.line_break_handler();

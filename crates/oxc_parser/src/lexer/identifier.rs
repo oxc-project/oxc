@@ -28,6 +28,57 @@ fn is_identifier_start_ascii_byte(byte: u8) -> bool {
 }
 
 impl<'a, C: Config> Lexer<'a, C> {
+    /// Read the identifier suffix for the original byte-handler table.
+    ///
+    /// Keep the suffix contract when letter-specific handlers are remapped.
+    /// The opted-in dispatcher uses the separate classified reader below.
+    ///
+    /// # SAFETY
+    /// The current source byte must exist and be ASCII, and must be unconsumed.
+    pub(super) unsafe fn identifier_name_fallback_handler(&mut self) -> &'a str {
+        // Advance past 1st byte.
+        // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
+        let after_first = unsafe { self.source.position().add(1) };
+
+        // Consume bytes which are part of identifier
+        let next_byte = byte_search! {
+            lexer: self,
+            table: NOT_ASCII_ID_CONTINUE_TABLE,
+            start: after_first,
+            handle_eof: {
+                // Return identifier minus its first char.
+                // SAFETY: `lexer.source` is positioned at EOF, so there is no valid value
+                // of `after_first` which could be after current position.
+                return unsafe { self.source.str_from_pos_to_current_unchecked(after_first) };
+            },
+        };
+
+        // Found a matching byte.
+        // Either end of identifier found, or a Unicode char, or `\` escape.
+        // Handle uncommon cases in cold branches to keep the common ASCII path
+        // as fast as possible.
+        if !next_byte.is_ascii() {
+            cold_path();
+            // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+            // makes `start_pos` `source`'s position as it was at start of this function
+            let start_pos = unsafe { after_first.sub(1) };
+            return &self.identifier_tail_unicode(start_pos)[1..];
+        }
+        if next_byte == b'\\' {
+            cold_path();
+            // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+            // makes `start_pos` `source`'s position as it was at start of this function
+            let start_pos = unsafe { after_first.sub(1) };
+            return &self.identifier_backslash(start_pos, false)[1..];
+        }
+
+        // Return identifier minus its first char.
+        // SAFETY: `after_first` was position of `lexer.source` at start of this search.
+        // Searching only proceeds in forwards direction, so `lexer.source.position()`
+        // cannot be before `after_first`.
+        unsafe { self.source.str_from_pos_to_current_unchecked(after_first) }
+    }
+
     /// Read and classify an identifier starting with an ASCII identifier character.
     /// Unicode and escapes continue from the end of the ASCII prefix.
     ///

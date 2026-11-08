@@ -56,7 +56,7 @@ const PUNCTUATION_KINDS: [Kind; 256] = {
 };
 
 impl<C: Config> Lexer<'_, C> {
-    /// Handle common token classes directly, falling back to byte handlers for other bytes.
+    /// Handle common token classes directly for opted-in configurations.
     /// Returns `None` for trivia.
     ///
     /// # SAFETY
@@ -68,6 +68,24 @@ impl<C: Config> Lexer<'_, C> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub(super) unsafe fn handle_byte(&mut self, byte: u8) -> Option<Kind> {
+        if !C::COMMON_TOKEN_DISPATCH {
+            // Keep the original bypass and byte-table accessor/index/handler order.
+            let kind = match byte {
+                b'(' => Kind::LParen,
+                b')' => Kind::RParen,
+                b';' => Kind::Semicolon,
+                _ => {
+                    let byte_handlers = self.config.byte_handlers();
+                    // SAFETY: The caller guarantees the original byte-handler invariants.
+                    let kind = unsafe { byte_handlers[byte as usize](self) };
+                    return if kind == Kind::Skip { None } else { Some(kind) };
+                }
+            };
+            // SAFETY: These are the same three single-byte ASCII tokens as before.
+            self.source.set_position(unsafe { self.source.position().add(1) });
+            return Some(kind);
+        }
+
         match TOKEN_CLASSES[byte as usize] {
             // SAFETY: The table identifies ASCII identifier starts.
             TokenClass::Identifier => Some(unsafe { self.identifier_name_handler() }),
@@ -106,8 +124,7 @@ impl<C: Config> Lexer<'_, C> {
 pub type ByteHandler<C> = unsafe fn(&mut Lexer<'_, C>) -> Kind;
 pub type ByteHandlers<C> = [ByteHandler<C>; 256];
 
-/// Map bytes outside the common token classes to their handlers.
-/// Directly handled classes and invalid UTF-8 starts use `UER`.
+/// Macro to create a lookup table mapping any incoming byte to a handler function defined below.
 /// <https://github.com/ratel-rust/ratel-core/blob/e55a1310ba69a3f5ce2a9a6eef643feced02ac08/ratel/src/lexer/mod.rs>
 #[rustfmt::skip]
 macro_rules! byte_handlers {
@@ -116,12 +133,12 @@ macro_rules! byte_handlers {
         //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F    //
             ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, ISP, ISP, LIN, ERR, ERR, // 0
             ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, // 1
-            SPS, EXL, UER, HAS, UER, PRC, AMP, UER, UER, UER, ATR, PLS, UER, MIN, PRD, SLH, // 2
-            UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, LSS, EQL, UER, QST, // 3
-            UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // 4
-            UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, ESC, UER, CRT, UER, // 5
-            TPL, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // 6
-            UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, PIP, UER, UER, ERR, // 7
+            SPS, EXL, QOD, HAS, IDT, PRC, AMP, QOS, UER, UER, ATR, PLS, COM, MIN, PRD, SLH, // 2
+            ZER, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, COL, UER, LSS, EQL, GTR, QST, // 3
+            AT_, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, // 4
+            IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, BTO, ESC, BTC, CRT, IDT, // 5
+            TPL, L_A, L_B, L_C, L_D, L_E, L_F, L_G, IDT, L_I, IDT, L_K, L_L, L_M, L_N, L_O, // 6
+            L_P, IDT, L_R, L_S, L_T, L_U, L_V, L_W, IDT, L_Y, IDT, BEO, PIP, BEC, TLD, ERR, // 7
             UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // 8
             UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // 9
             UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // A
@@ -195,6 +212,51 @@ macro_rules! ascii_byte_handler {
     };
 }
 
+/// Macro for defining byte handler for an ASCII character which is start of an identifier
+/// (`a`-`z`, `A`-`Z`, `$` or `_`).
+///
+/// Macro calls `Lexer::identifier_name_fallback_handler` to get the text of the identifier,
+/// minus its first character.
+///
+/// `Lexer::identifier_name_fallback_handler` is an unsafe function, but if byte being consumed is ASCII,
+/// its requirements are met.
+///
+/// # SAFETY
+/// Only use this macro to define byte handlers for ASCII characters.
+///
+/// ```rust,ignore
+/// ascii_identifier_handler!(L_G(id_without_first_char) match id_without_first_char.as_bytes() {
+///     b"et" => Kind::Get,
+///     b"lobal" => Kind::Global,
+///     _ => Kind::Ident,
+/// });
+/// ```
+///
+/// expands to:
+///
+/// ```rust,ignore
+/// #[expect(non_snake_case)]
+/// fn L_G<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+///     // SAFETY: This macro is only used for ASCII characters
+///     let id_without_first_char = unsafe { lexer.identifier_name_fallback_handler() };
+///     match id_without_first_char.as_bytes() {
+///         b"et" => Kind::Get,
+///         b"lobal" => Kind::Global,
+///         _ => Kind::Ident,
+///     }
+/// }
+/// ```
+macro_rules! ascii_identifier_handler {
+    ($id:ident($str:ident) $body:expr) => {
+        #[expect(non_snake_case)]
+        fn $id<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+            // SAFETY: This macro is only used for ASCII characters
+            let $str = unsafe { lexer.identifier_name_fallback_handler() };
+            $body
+        }
+    };
+}
+
 // `\0` `\1` etc
 ascii_byte_handler!(ERR(lexer) {
     let c = lexer.consume_char();
@@ -239,6 +301,18 @@ ascii_byte_handler!(EXL(lexer) {
     }
 });
 
+// "
+ascii_byte_handler!(QOD(lexer) {
+    // SAFETY: This function is only called for `"`
+    unsafe { lexer.read_string_literal_double_quote() }
+});
+
+// '
+ascii_byte_handler!(QOS(lexer) {
+    // SAFETY: This function is only called for `'`
+    unsafe { lexer.read_string_literal_single_quote() }
+});
+
 // #
 ascii_byte_handler!(HAS(lexer) {
     lexer.consume_char();
@@ -246,6 +320,9 @@ ascii_byte_handler!(HAS(lexer) {
 });
 
 // `A..=Z`, `a..=z` (except special cases below), `_`, `$`
+ascii_identifier_handler!(IDT(_id_without_first_char) {
+    Kind::Ident
+});
 
 // %
 ascii_byte_handler!(PRC(lexer) {
@@ -301,6 +378,12 @@ ascii_byte_handler!(PLS(lexer) {
     }
 });
 
+// ,
+ascii_byte_handler!(COM(lexer) {
+    lexer.consume_char();
+    Kind::Comma
+});
+
 // -
 ascii_byte_handler!(MIN(lexer) {
     lexer.consume_char();
@@ -336,6 +419,24 @@ ascii_byte_handler!(SLH(lexer) {
     }
 });
 
+// 0
+ascii_byte_handler!(ZER(lexer) {
+    lexer.consume_char();
+    lexer.read_zero()
+});
+
+// 1 to 9
+ascii_byte_handler!(DIG(lexer) {
+    lexer.consume_char();
+    lexer.decimal_literal_after_first_digit()
+});
+
+// :
+ascii_byte_handler!(COL(lexer) {
+    lexer.consume_char();
+    Kind::Colon
+});
+
 // <
 ascii_byte_handler!(LSS(lexer) {
     lexer.consume_char();
@@ -356,6 +457,13 @@ ascii_byte_handler!(EQL(lexer) {
     } else {
         Kind::Eq
     }
+});
+
+// >
+ascii_byte_handler!(GTR(lexer) {
+    lexer.consume_char();
+    // `>=` is re-lexed with [Lexer::next_jsx_child]
+    Kind::RAngle
 });
 
 // ?
@@ -386,9 +494,27 @@ ascii_byte_handler!(QST(lexer) {
     }
 });
 
+// @
+ascii_byte_handler!(AT_(lexer) {
+    lexer.consume_char();
+    Kind::At
+});
+
+// [
+ascii_byte_handler!(BTO(lexer) {
+    lexer.consume_char();
+    Kind::LBrack
+});
+
 // \
 ascii_byte_handler!(ESC(lexer) {
     lexer.identifier_backslash_handler()
+});
+
+// ]
+ascii_byte_handler!(BTC(lexer) {
+    lexer.consume_char();
+    Kind::RBrack
 });
 
 // ^
@@ -405,6 +531,12 @@ ascii_byte_handler!(CRT(lexer) {
 ascii_byte_handler!(TPL(lexer) {
     lexer.consume_char();
     lexer.read_template_literal(Kind::TemplateHead, Kind::NoSubstitutionTemplate)
+});
+
+// {
+ascii_byte_handler!(BEO(lexer) {
+    lexer.consume_char();
+    Kind::LCurly
 });
 
 // |
@@ -428,6 +560,191 @@ ascii_byte_handler!(PIP(lexer) {
     }
 });
 
+// }
+ascii_byte_handler!(BEC(lexer) {
+    lexer.consume_char();
+    Kind::RCurly
+});
+
+// ~
+ascii_byte_handler!(TLD(lexer) {
+    lexer.consume_char();
+    Kind::Tilde
+});
+
+// Byte patterns let the compiler compare fixed-size chunks without calling a string comparison
+// routine for keyword lengths that are not a power of two.
+ascii_identifier_handler!(L_A(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"wait" => Kind::Await,
+    b"sync" => Kind::Async,
+    b"bstract" => Kind::Abstract,
+    b"ccessor" => Kind::Accessor,
+    b"ny" => Kind::Any,
+    b"s" => Kind::As,
+    b"ssert" => Kind::Assert,
+    b"sserts" => Kind::Asserts,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_B(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"reak" => Kind::Break,
+    b"oolean" => Kind::Boolean,
+    b"igint" => Kind::BigInt,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_C(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"onst" => Kind::Const,
+    b"lass" => Kind::Class,
+    b"ontinue" => Kind::Continue,
+    b"atch" => Kind::Catch,
+    b"ase" => Kind::Case,
+    b"onstructor" => Kind::Constructor,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_D(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"o" => Kind::Do,
+    b"elete" => Kind::Delete,
+    b"eclare" => Kind::Declare,
+    b"efault" => Kind::Default,
+    b"ebugger" => Kind::Debugger,
+    b"efer" => Kind::Defer,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_E(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"lse" => Kind::Else,
+    b"num" => Kind::Enum,
+    b"xport" => Kind::Export,
+    b"xtends" => Kind::Extends,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_F(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"unction" => Kind::Function,
+    b"alse" => Kind::False,
+    b"or" => Kind::For,
+    b"inally" => Kind::Finally,
+    b"rom" => Kind::From,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_G(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"et" => Kind::Get,
+    b"lobal" => Kind::Global,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_I(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"f" => Kind::If,
+    b"nstanceof" => Kind::Instanceof,
+    b"n" => Kind::In,
+    b"mplements" => Kind::Implements,
+    b"mport" => Kind::Import,
+    b"nfer" => Kind::Infer,
+    b"nterface" => Kind::Interface,
+    b"ntrinsic" => Kind::Intrinsic,
+    b"s" => Kind::Is,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_K(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"eyof" => Kind::KeyOf,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_L(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"et" => Kind::Let,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_M(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"eta" => Kind::Meta,
+    b"odule" => Kind::Module,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_N(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"ull" => Kind::Null,
+    b"ew" => Kind::New,
+    b"umber" => Kind::Number,
+    b"amespace" => Kind::Namespace,
+    b"ever" => Kind::Never,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_O(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"f" => Kind::Of,
+    b"bject" => Kind::Object,
+    b"ut" => Kind::Out,
+    b"verride" => Kind::Override,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_P(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"ackage" => Kind::Package,
+    b"rivate" => Kind::Private,
+    b"rotected" => Kind::Protected,
+    b"ublic" => Kind::Public,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_R(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"eturn" => Kind::Return,
+    b"equire" => Kind::Require,
+    b"eadonly" => Kind::Readonly,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_S(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"et" => Kind::Set,
+    b"uper" => Kind::Super,
+    b"witch" => Kind::Switch,
+    b"tatic" => Kind::Static,
+    b"ymbol" => Kind::Symbol,
+    b"tring" => Kind::String,
+    b"atisfies" => Kind::Satisfies,
+    b"ource" => Kind::Source,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_T(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"his" => Kind::This,
+    b"rue" => Kind::True,
+    b"hrow" => Kind::Throw,
+    b"ry" => Kind::Try,
+    b"ypeof" => Kind::Typeof,
+    b"arget" => Kind::Target,
+    b"ype" => Kind::Type,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_U(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"ndefined" => Kind::Undefined,
+    b"sing" => Kind::Using,
+    b"nique" => Kind::Unique,
+    b"nknown" => Kind::Unknown,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_V(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"ar" => Kind::Var,
+    b"oid" => Kind::Void,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_W(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"hile" => Kind::While,
+    b"ith" => Kind::With,
+    _ => Kind::Ident,
+});
+
+ascii_identifier_handler!(L_Y(id_without_first_char) match id_without_first_char.as_bytes() {
+    b"ield" => Kind::Yield,
+    _ => Kind::Ident,
+});
+
 // Non-ASCII characters.
 //
 // Note: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII chars.
@@ -448,4 +765,209 @@ fn UNI<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
 #[expect(non_snake_case)]
 fn UER<C: Config>(_lexer: &mut Lexer<'_, C>) -> Kind {
     unreachable!();
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{cell::RefCell, ops::Index};
+
+    use oxc_allocator::Allocator;
+    use oxc_span::{SourceType, Span};
+
+    use crate::config::LexerConfig;
+
+    use super::super::UniquePromise;
+    use super::{ByteHandler, Kind, Lexer};
+
+    #[derive(Debug, Eq, PartialEq)]
+    enum Event {
+        Accessor,
+        Index(usize),
+        Handler(u8),
+    }
+
+    struct CountingTable {
+        handler: ByteHandler<CountingLexerConfig>,
+        events: RefCell<Vec<Event>>,
+    }
+
+    impl Default for CountingTable {
+        fn default() -> Self {
+            Self { handler: remapped_ascii_handler, events: RefCell::default() }
+        }
+    }
+
+    impl Index<usize> for CountingTable {
+        type Output = ByteHandler<CountingLexerConfig>;
+
+        fn index(&self, index: usize) -> &Self::Output {
+            self.events.borrow_mut().push(Event::Index(index));
+            &self.handler
+        }
+    }
+
+    #[derive(Default)]
+    struct CountingLexerConfig {
+        table: CountingTable,
+    }
+
+    impl LexerConfig for CountingLexerConfig {
+        type ByteHandlers = CountingTable;
+
+        // A static token mode must not opt custom byte tables into built-in dispatch.
+        const TOKENS_METHOD_IS_STATIC: bool = true;
+
+        fn tokens(&self) -> bool {
+            false
+        }
+
+        fn byte_handlers(&self) -> &Self::ByteHandlers {
+            self.table.events.borrow_mut().push(Event::Accessor);
+            &self.table
+        }
+    }
+
+    unsafe fn remapped_ascii_handler(lexer: &mut Lexer<'_, CountingLexerConfig>) -> Kind {
+        let byte = lexer.peek_byte().unwrap();
+        lexer.config.table.events.borrow_mut().push(Event::Handler(byte));
+        lexer.consume_char();
+        // A sentinel kind distinguishes table dispatch from every optimized input below.
+        Kind::Debugger
+    }
+
+    unsafe fn remapped_ascii_skip_handler(lexer: &mut Lexer<'_, CountingLexerConfig>) -> Kind {
+        // SAFETY: This has the same current-ASCII-byte precondition as the original helper.
+        unsafe { remapped_ascii_handler(lexer) };
+        Kind::Skip
+    }
+
+    unsafe fn remapped_letter_handler(lexer: &mut Lexer<'_, CountingLexerConfig>) -> Kind {
+        let byte = lexer.peek_byte().unwrap();
+        lexer.config.table.events.borrow_mut().push(Event::Handler(byte));
+        super::L_A(lexer)
+    }
+
+    #[test]
+    fn custom_common_tokens_preserve_byte_table_effects() {
+        // All 78 common-class bytes, plus CR/LF. Only the original three
+        // punctuation bytes may bypass this default-false custom configuration.
+        let bytes =
+            b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$0123456789'\"{}[],:~@>\r\n();";
+        for &byte in bytes {
+            let source = format!("{} ", char::from(byte));
+            let allocator = Allocator::default();
+            let mut lexer = Lexer::new(
+                &allocator,
+                &source,
+                SourceType::mjs(),
+                CountingLexerConfig::default(),
+                UniquePromise::new_for_tests_and_benchmarks(),
+            );
+            let token = lexer.first_token();
+            let expected = match byte {
+                b'(' => Some(Kind::LParen),
+                b')' => Some(Kind::RParen),
+                b';' => Some(Kind::Semicolon),
+                _ => None,
+            };
+            if let Some(kind) = expected {
+                assert_eq!(token.kind(), kind, "byte {byte:#04x}");
+                assert!(lexer.config.table.events.borrow().is_empty(), "byte {byte:#04x}");
+            } else {
+                assert_eq!(token.kind(), Kind::Debugger, "byte {byte:#04x}");
+                assert_eq!(
+                    *lexer.config.table.events.borrow(),
+                    [Event::Accessor, Event::Index(usize::from(byte)), Event::Handler(byte)],
+                    "byte {byte:#04x}"
+                );
+            }
+            assert_eq!(token.span(), Span::new(0, 1), "byte {byte:#04x}");
+            assert_eq!(lexer.remaining(), " ", "byte {byte:#04x}");
+        }
+    }
+
+    #[test]
+    fn custom_skip_results_preserve_byte_table_effects() {
+        let bytes =
+            b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$0123456789'\"{}[],:~@>\r\n();";
+        for &byte in bytes {
+            let source = format!("x{};", char::from(byte));
+            let allocator = Allocator::default();
+            let mut lexer = Lexer::new(
+                &allocator,
+                &source,
+                SourceType::mjs(),
+                CountingLexerConfig::default(),
+                UniquePromise::new_for_tests_and_benchmarks(),
+            );
+            let first = lexer.first_token();
+            assert_eq!(first.kind(), Kind::Debugger);
+            assert_eq!(first.span(), Span::new(0, 1));
+            assert_eq!(lexer.token, super::super::Token::default());
+            lexer.config.table.handler = remapped_ascii_skip_handler;
+            lexer.config.table.events.borrow_mut().clear();
+
+            let token = lexer.next_token();
+            let bypass_kind = match byte {
+                b'(' => Some(Kind::LParen),
+                b')' => Some(Kind::RParen),
+                b';' => Some(Kind::Semicolon),
+                _ => None,
+            };
+            if let Some(kind) = bypass_kind {
+                assert_eq!(token.kind(), kind, "byte {byte:#04x}");
+                assert_eq!(token.span(), Span::new(1, 2), "byte {byte:#04x}");
+                assert_eq!(lexer.remaining(), ";", "byte {byte:#04x}");
+                assert!(lexer.config.table.events.borrow().is_empty(), "byte {byte:#04x}");
+            } else {
+                // The remapped byte is trivia. The reader retries and emits the suffix
+                // semicolon through the original bypass, without another table access.
+                assert_eq!(token.kind(), Kind::Semicolon, "byte {byte:#04x}");
+                assert_eq!(token.span(), Span::new(2, 3), "byte {byte:#04x}");
+                assert_eq!(lexer.remaining(), "", "byte {byte:#04x}");
+                assert_eq!(
+                    *lexer.config.table.events.borrow(),
+                    [Event::Accessor, Event::Index(usize::from(byte)), Event::Handler(byte)],
+                    "byte {byte:#04x}"
+                );
+            }
+            // Remapped CR/LF has only the custom handler's effects; it must not gain
+            // the built-in newline behavior because token mode happens to be static.
+            assert!(!token.is_on_new_line(), "byte {byte:#04x}");
+            assert!(!token.escaped(), "byte {byte:#04x}");
+            assert!(!token.has_separator(), "byte {byte:#04x}");
+            assert_eq!(lexer.token, super::super::Token::default());
+            assert!(lexer.errors.is_empty(), "byte {byte:#04x}");
+        }
+    }
+
+    #[test]
+    fn remapped_letter_handler_preserves_suffix_recognition() {
+        for (source, escaped) in [("bwait ", false), ("bwait", false), (r"bw\u0061it ", true)] {
+            let allocator = Allocator::default();
+            let mut config = CountingLexerConfig::default();
+            config.table.handler = remapped_letter_handler;
+            let mut lexer = Lexer::new(
+                &allocator,
+                source,
+                SourceType::mjs(),
+                config,
+                UniquePromise::new_for_tests_and_benchmarks(),
+            );
+            let token = lexer.first_token();
+            // L_A historically matches the suffix and ignores the remapped first ASCII
+            // byte. Classifying the whole current spelling would change this result.
+            assert_eq!(token.kind(), Kind::Await, "{source:?}");
+            let end = source.len() - usize::from(source.ends_with(' '));
+            assert_eq!(token.span(), Span::new(0, u32::try_from(end).unwrap()), "{source:?}");
+            assert_eq!(lexer.remaining(), &source[end..], "{source:?}");
+            assert_eq!(token.escaped(), escaped, "{source:?}");
+            assert_eq!(
+                *lexer.config.table.events.borrow(),
+                [Event::Accessor, Event::Index(usize::from(b'b')), Event::Handler(b'b')],
+                "{source:?}"
+            );
+            assert!(lexer.errors.is_empty(), "{source:?}");
+        }
+    }
 }
