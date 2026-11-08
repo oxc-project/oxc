@@ -365,11 +365,52 @@ export function foo(a: any): number {
         );
         transform_dts_test(
             "export default 42;",
-            "declare const _default: number;\nexport default _default;",
+            "declare const _default = 42;\nexport default _default;",
         );
         transform_dts_test(
             "const a: number = 42; export default a;",
             "declare const a: number;\nexport default a;",
+        );
+    }
+
+    #[test]
+    fn dts_default_export_literal() {
+        for (value, expected) in [
+            ("true", "true"),
+            ("false", "false"),
+            ("-1", "-1"),
+            ("(1)", "1"),
+            ("((true))", "true"),
+            ("\"x\"", "\"x\""),
+            ("`x`", "\"x\""),
+            ("1n", "1n"),
+            ("-1n", "-1n"),
+            ("+1", "1"),
+        ] {
+            transform_dts_test(
+                &format!("export default {value};"),
+                &format!("declare const _default = {expected};\nexport default _default;"),
+            );
+            transform_dts_test(
+                &format!("export = {value};"),
+                &format!("declare const _default = {expected};\nexport = _default;"),
+            );
+        }
+        transform_dts_test(
+            "export default null;",
+            "declare const _default: null;\nexport default _default;",
+        );
+        transform_dts_test(
+            "export default \"x\" as const;",
+            "declare const _default: \"x\";\nexport default _default;",
+        );
+    }
+
+    #[test]
+    fn dts_unary_plus_literal() {
+        transform_dts_test(
+            "export class Foo { readonly foo = +1; }",
+            "export declare class Foo {\n  readonly foo = 1;\n}",
         );
     }
 
