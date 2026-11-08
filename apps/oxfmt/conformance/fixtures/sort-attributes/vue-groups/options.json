@@ -1,0 +1,38 @@
+[
+  {
+    "sortAttributes": {
+      "groups": [
+        "^v-if",
+        "^v-else-if",
+        "^v-else",
+        "^v-for",
+        "^v-model",
+        "^v-",
+        "$CODE_GUIDE",
+        "^:",
+        "$DEFAULT",
+        "^tabindex",
+        "^@"
+      ],
+      "order": "asc"
+    }
+  },
+  {
+    "sortAttributes": {
+      "groups": [
+        "^v-if",
+        "^v-else-if",
+        "^v-else",
+        "^v-for",
+        "^v-model",
+        "^v-",
+        "$CODE_GUIDE",
+        "^:",
+        "$DEFAULT",
+        "^tabindex",
+        "^@"
+      ],
+      "order": "desc"
+    }
+  }
+]

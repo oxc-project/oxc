@@ -1,0 +1,63 @@
+import { describe, expect, it } from "vitest";
+import { format } from "../../dist/index.js";
+
+describe("sortAttributes", () => {
+  it.each(["html", "vue", "jsx", "tsx"])("is opt-in for %s", async (extension) => {
+    const source =
+      extension === "html" || extension === "vue"
+        ? '<div z="last" a="first"></div>'
+        : 'const element = <div z="last" a="first" />;';
+    const filename = `input.${extension}`;
+    const defaults = await format(filename, source);
+    const disabled = await format(filename, source, { sortAttributes: false });
+    const enabled = await format(filename, source, { sortAttributes: true });
+    const object = await format(filename, source, { sortAttributes: {} });
+    for (const result of [defaults, disabled, enabled, object]) {
+      expect(result.errors).toStrictEqual([]);
+    }
+    expect(disabled.code).toBe(defaults.code);
+    expect(enabled.code).toBe(object.code);
+    expect(enabled.code).not.toBe(defaults.code);
+    expect((await format(filename, enabled.code, { sortAttributes: true })).code).toBe(
+      enabled.code,
+    );
+  });
+
+  it.each([
+    { groups: ["["] },
+    { groups: ["$MISSING"] },
+    { groups: ["$DEFAULT", "$DEFAULT"] },
+    { order: "invalid" },
+    { group: ["^id$"] },
+  ])("rejects invalid configuration %j", async (sortAttributes) => {
+    const source = '<div z="last" a="first"></div>';
+    // @ts-expect-error: Invalid options must be rejected without changing the input.
+    const result = await format("input.html", source, { sortAttributes });
+    expect(result.code).toBe(source);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].message).toMatch(/sortAttributes/i);
+  });
+
+  it("does not reverse equal JSX attributes in descending order", async () => {
+    const source = 'const element = <div a="first" a="second" z="last" />;';
+    const result = await format("input.jsx", source, { sortAttributes: { order: "desc" } });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code.indexOf('a="first"')).toBeLessThan(result.code.indexOf('a="second"'));
+    expect(
+      (await format("input.jsx", result.code, { sortAttributes: { order: "desc" } })).code,
+    ).toBe(result.code);
+  });
+
+  it.each(["html", "vue", "tsx"])("composes with Tailwind sorting in %s", async (extension) => {
+    const source =
+      extension === "tsx"
+        ? 'const element = <div z="last" className="p-4 flex" a="first" />;'
+        : '<div z="last" class="p-4 flex" a="first"></div>';
+    const options = { sortAttributes: true, sortTailwindcss: true } as const;
+    const result = await format(`input.${extension}`, source, options);
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toContain('="flex p-4"');
+    expect(result.code.indexOf('a="first"')).toBeLessThan(result.code.indexOf('z="last"'));
+    expect((await format(`input.${extension}`, result.code, options)).code).toBe(result.code);
+  });
+});

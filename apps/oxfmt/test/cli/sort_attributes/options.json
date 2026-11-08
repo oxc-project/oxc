@@ -1,0 +1,20 @@
+[
+  {
+    "args": ["--check", "."]
+  },
+  {
+    "args": ["--stdin-filepath", "input.html"],
+    "stdin": "input.html"
+  },
+  {
+    "args": ["--stdin-filepath", "input.tsx"],
+    "stdin": "input.tsx"
+  },
+  {
+    "args": ["--stdin-filepath", "keep.html"],
+    "stdin": "keep.html"
+  },
+  {
+    "args": ["--config", "invalid.json", "--check", "input.html"]
+  }
+]
