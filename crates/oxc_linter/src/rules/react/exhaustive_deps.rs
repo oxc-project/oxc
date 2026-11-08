@@ -1470,12 +1470,12 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 
 mod fix {
     use super::Name;
-    use oxc_allocator::{Allocator, ArenaVec, CloneIn};
+    use oxc_allocator::{Allocator, CloneIn};
     use oxc_ast::{
         ast::{ArrayExpression, Expression},
         builder::AstBuilder,
     };
-    use oxc_span::{GetSpan, SPAN};
+    use oxc_span::{GetSpan, SPAN, Span};
     use oxc_str::Str;
 
     use crate::{
@@ -1516,23 +1516,38 @@ mod fix {
         dependency: &Dependency,
         deps: &ArrayExpression<'a>,
     ) -> RuleFix {
-        let mut codegen = fixer.codegen();
-
-        let alloc = Allocator::default();
-        let ast_builder = AstBuilder::new(&alloc);
-
-        let new_deps = deps
+        let Some(element_span) = deps
             .elements
             .iter()
-            .filter(|el| (*el).span() != dependency.span)
-            .map(|el| el.clone_in(&alloc));
+            .map(GetSpan::span)
+            .find(|span| *span == dependency.span || span.contains_inclusive(dependency.span))
+        else {
+            return fixer.noop();
+        };
 
-        codegen.print_expression(&Expression::new_array_expression(
+        fixer.delete_range(span_covering_entry_and_comma(
+            fixer.source_text(),
+            element_span,
             deps.span,
-            ArenaVec::from_iter_in(new_deps, &ast_builder),
-            &ast_builder,
-        ));
-        fixer.replace(deps.span, codegen.into_source_text())
+        ))
+    }
+
+    /// Delete one array entry and its trailing comma without rewriting the rest
+    /// of the array, so comments, layout, and sibling removals stay intact.
+    fn span_covering_entry_and_comma(source: &str, element: Span, array: Span) -> Span {
+        let bytes = source.as_bytes();
+        let mut offset = element.end;
+        while offset < array.end {
+            match bytes[offset as usize] {
+                b' ' | b'\t' => offset += 1,
+                // Do not consume whitespace after the comma: the fixer treats
+                // boundary-adjacent spans as overlapping, so sibling removals
+                // in the same array must leave a gap.
+                b',' => return Span::new(element.start, offset + 1),
+                _ => break,
+            }
+        }
+        element
     }
 }
 
@@ -1586,7 +1601,7 @@ fn test_unnecessary_dependency_suggestions() {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         r"function MyComponent() {
@@ -4322,6 +4337,38 @@ const Component = ({ filter }) => {
           const [, setState] = useState(0);
           useCallback(() => setState(1), [setState.foo]);
         }",
+        // https://github.com/oxc-project/oxc/issues/28884
+        r"function A({ section }) {
+          const ref = useRef(null);
+          useEffect(() => {
+            if (section === 'a') ref.current?.scrollIntoView();
+          }, [section, ref.current]);
+        }",
+        r"const OUTER = 1;
+        function B({ section }) {
+          useEffect(() => {
+            console.log(section, OUTER);
+          }, [section, OUTER]);
+        }",
+        r"const OUTER = 1;
+        function D({ section, page }) {
+          useEffect(() => {
+            console.log(section, page, OUTER);
+          }, [
+            section, // re-run when the tab changes
+            page,
+            OUTER,
+          ]);
+        }",
+        r"const OUTER = 1;
+        const OTHER = 2;
+        function C({ section }) {
+          const ref = useRef(null);
+          const other = useRef(null);
+          useEffect(() => {
+            if (section === 'a') ref.current?.scrollIntoView();
+          }, [section, ref.current, other.current, OUTER, OTHER]);
+        }",
     ];
 
     let pass_additional_hooks = vec![(
@@ -4471,7 +4518,7 @@ const Component = ({ filter }) => {
         // Test duplicate dependency removal
         (
             "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [local, local]); }",
-            "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [local]); }",
+            "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [ local]); }",
         ),
         (
             "const x = {}; function Comp() { useEffect(() => {}, [x]) }",
@@ -4485,6 +4532,61 @@ const Component = ({ filter }) => {
         ),
     ];
 
+    // https://github.com/oxc-project/oxc/issues/28884
+    let issue_28884_fix = vec![
+        // Removing effect deps changes when the effect runs, so plain `--fix` must leave them.
+        (
+            "function A({ section }) { const ref = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section, ref.current]); }",
+            "function A({ section }) { const ref = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section, ref.current]); }",
+            None,
+            FixKind::SafeFix,
+        ),
+        (
+            "const OUTER = 1; function B({ section }) { useEffect(() => { console.log(section, OUTER); }, [section, OUTER]); }",
+            "const OUTER = 1; function B({ section }) { useEffect(() => { console.log(section, OUTER); }, [section, OUTER]); }",
+            None,
+            FixKind::SafeFix,
+        ),
+        (
+            "const OUTER = 1;\nfunction D({ section, page }) {\n  useEffect(() => {\n    console.log(section, page, OUTER);\n  }, [\n    section, // re-run when the tab changes\n    page,\n    OUTER,\n  ]);\n}",
+            "const OUTER = 1;\nfunction D({ section, page }) {\n  useEffect(() => {\n    console.log(section, page, OUTER);\n  }, [\n    section, // re-run when the tab changes\n    page,\n    OUTER,\n  ]);\n}",
+            None,
+            FixKind::SafeFix,
+        ),
+        (
+            "const OUTER = 1; const OTHER = 2; function C({ section }) { const ref = useRef(null); const other = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section, ref.current, other.current, OUTER, OTHER]); }",
+            "const OUTER = 1; const OTHER = 2; function C({ section }) { const ref = useRef(null); const other = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section, ref.current, other.current, OUTER, OTHER]); }",
+            None,
+            FixKind::SafeFix,
+        ),
+        // Dangerous suggestions may remove the entries, but must not rewrite the whole array
+        // (comments and sibling formatting have to survive, and several removals must not overlap).
+        (
+            "function A({ section }) { const ref = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section, ref.current]); }",
+            "function A({ section }) { const ref = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section, ]); }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const OUTER = 1; function B({ section }) { useEffect(() => { console.log(section, OUTER); }, [section, OUTER]); }",
+            "const OUTER = 1; function B({ section }) { useEffect(() => { console.log(section, OUTER); }, [section, ]); }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const OUTER = 1;\nfunction D({ section, page }) {\n  useEffect(() => {\n    console.log(section, page, OUTER);\n  }, [\n    section, // re-run when the tab changes\n    page,\n    OUTER,\n  ]);\n}",
+            "const OUTER = 1;\nfunction D({ section, page }) {\n  useEffect(() => {\n    console.log(section, page, OUTER);\n  }, [\n    section, // re-run when the tab changes\n    page,\n    \n  ]);\n}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const OUTER = 1; const OTHER = 2; function C({ section }) { const ref = useRef(null); const other = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section, ref.current, other.current, OUTER, OTHER]); }",
+            "const OUTER = 1; const OTHER = 2; function C({ section }) { const ref = useRef(null); const other = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section,    ]); }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+    ];
+
     Tester::new(
         ExhaustiveDeps::NAME,
         ExhaustiveDeps::PLUGIN,
@@ -4495,6 +4597,11 @@ const Component = ({ filter }) => {
             .collect::<Vec<_>>(),
         fail.iter().map(|&code| (code, None)).chain(fail_additional_hooks).collect::<Vec<_>>(),
     )
-    .expect_fix(fix)
+    .expect_fix({
+        let mut cases: Vec<crate::tester::ExpectFixTestCase> =
+            fix.into_iter().map(Into::into).collect();
+        cases.extend(issue_28884_fix.into_iter().map(Into::into));
+        cases
+    })
     .test_and_snapshot();
 }
