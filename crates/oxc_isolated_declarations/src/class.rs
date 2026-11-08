@@ -154,28 +154,6 @@ impl<'a> IsolatedDeclarations<'a> {
         )
     }
 
-    fn get_literal_initializer_without_const_assertion(
-        &self,
-        expr: &Expression<'a>,
-    ) -> Option<Expression<'a>> {
-        match expr {
-            Expression::BooleanLiteral(_)
-            | Expression::NumericLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::StringLiteral(_) => Some(expr.clone_in(self.allocator())),
-            Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
-                self.transform_template_to_string(lit).map(Expression::StringLiteral)
-            }
-            Expression::UnaryExpression(expr) if Self::can_infer_unary_expression(expr) => {
-                Some(Expression::UnaryExpression(expr.clone_in(self.allocator())))
-            }
-            Expression::ParenthesizedExpression(expr) => {
-                self.get_literal_initializer_without_const_assertion(&expr.expression)
-            }
-            _ => None,
-        }
-    }
-
     fn is_non_const_array_literal(expr: &Expression<'a>) -> bool {
         match expr {
             Expression::ArrayExpression(_) => true,
