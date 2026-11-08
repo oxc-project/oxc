@@ -2935,6 +2935,7 @@ dependencies = [
  "fast-glob",
  "ignore",
  "json-strip-comments",
+ "lazy-regex",
  "mimalloc-safe",
  "napi",
  "napi-build",

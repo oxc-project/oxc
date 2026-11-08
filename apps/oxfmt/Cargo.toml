@@ -51,6 +51,7 @@ ignore = { workspace = true, features = ["simd-accel"] }
 json-strip-comments = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
+lazy-regex = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }

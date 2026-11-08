@@ -160,6 +160,15 @@
       "type": "boolean",
       "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte, Astro\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
     },
+    "sortAttributes": {
+      "description": "Sort HTML, Vue and JSX/TSX attributes into configurable groups.\n\nPass `true` or an object to enable alphabetical sorting, `false` to disable.\nSpreads and dynamic attribute names separate sortable runs. Tags with ignored\nattributes or JSX comments keep their attribute order.\n\n- Languages: HTML, Vue, JSX, TSX\n- Default: Disabled",
+      "allOf": [
+        {
+          "$ref": "#/definitions/SortAttributesUserConfig"
+        }
+      ],
+      "markdownDescription": "Sort HTML, Vue and JSX/TSX attributes into configurable groups.\n\nPass `true` or an object to enable alphabetical sorting, `false` to disable.\nSpreads and dynamic attribute names separate sortable runs. Tags with ignored\nattributes or JSX comments keep their attribute order.\n\n- Languages: HTML, Vue, JSX, TSX\n- Default: Disabled"
+    },
     "sortImports": {
       "description": "Sort import statements.\n\nUses a similar algorithm to [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\n\nPass `true` or an object to enable, `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled",
       "allOf": [
@@ -489,6 +498,15 @@
           "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte, Astro\n- Default: `false`\n- Overrides `.editorconfig.quote_type`",
           "type": "boolean",
           "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte, Astro\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
+        },
+        "sortAttributes": {
+          "description": "Sort HTML, Vue and JSX/TSX attributes into configurable groups.\n\nPass `true` or an object to enable alphabetical sorting, `false` to disable.\nSpreads and dynamic attribute names separate sortable runs. Tags with ignored\nattributes or JSX comments keep their attribute order.\n\n- Languages: HTML, Vue, JSX, TSX\n- Default: Disabled",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SortAttributesUserConfig"
+            }
+          ],
+          "markdownDescription": "Sort HTML, Vue and JSX/TSX attributes into configurable groups.\n\nPass `true` or an object to enable alphabetical sorting, `false` to disable.\nSpreads and dynamic attribute names separate sortable runs. Tags with ignored\nattributes or JSX comments keep their attribute order.\n\n- Languages: HTML, Vue, JSX, TSX\n- Default: Disabled"
         },
         "sortImports": {
           "description": "Sort import statements.\n\nUses a similar algorithm to [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\n\nPass `true` or an object to enable, `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled",
@@ -826,6 +844,39 @@
         "as-needed",
         "consistent",
         "preserve"
+      ]
+    },
+    "SortAttributesConfig": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "description": "Rust regular expressions matched in order against attribute names.\nThe first matching group wins. Unmatched attributes go in `$DEFAULT`,\nor after all groups when `$DEFAULT` is omitted.\n\n`$CODE_GUIDE` expands to the attribute order from\n[Code Guide](https://codeguide.co/#html-attribute-order): class, id, name,\ndata-*, src, for, type, href, value, title, alt, role, aria-*.\n\nHTML names are lowercased before matching and sorting. Vue and JSX names keep their case.\n\n- Default: `[]` (one group for all attributes)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Rust regular expressions matched in order against attribute names.\nThe first matching group wins. Unmatched attributes go in `$DEFAULT`,\nor after all groups when `$DEFAULT` is omitted.\n\n`$CODE_GUIDE` expands to the attribute order from\n[Code Guide](https://codeguide.co/#html-attribute-order): class, id, name,\ndata-*, src, for, type, href, value, title, alt, role, aria-*.\n\nHTML names are lowercased before matching and sorting. Vue and JSX names keep their case.\n\n- Default: `[]` (one group for all attributes)"
+        },
+        "order": {
+          "description": "Alphabetical order within each group. Group order is never reversed.\nEqual names retain their original order. JSX spreads and expressions that may\nhave side effects stay in place. Vue object bindings and dynamic arguments\nstay in place; tags with conflicting bindings keep their original order.\n\n- Default: `\"asc\"`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SortOrderConfig"
+            }
+          ],
+          "markdownDescription": "Alphabetical order within each group. Group order is never reversed.\nEqual names retain their original order. JSX spreads and expressions that may\nhave side effects stay in place. Vue object bindings and dynamic arguments\nstay in place; tags with conflicting bindings keep their original order.\n\n- Default: `\"asc\"`"
+        }
+      },
+      "additionalProperties": false
+    },
+    "SortAttributesUserConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/SortAttributesConfig"
+        }
       ]
     },
     "SortGroupItemConfig": {

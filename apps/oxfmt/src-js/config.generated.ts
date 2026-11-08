@@ -43,6 +43,8 @@ export type LineWrappingStyleConfig = "greedy" | "balance";
 export type ObjectWrapConfig = "preserve" | "collapse";
 export type ProseWrapConfig = "always" | "never" | "preserve";
 export type QuotePropsConfig = "as-needed" | "consistent" | "preserve";
+export type SortAttributesUserConfig = boolean | SortAttributesConfig;
+export type SortOrderConfig = "asc" | "desc";
 export type SortImportsUserConfig = boolean | SortImportsConfig;
 /**
  * Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics).
@@ -65,7 +67,6 @@ export type ImportSelectorConfig =
   | "external"
   | "import";
 export type SortGroupItemConfig = NewlinesBetweenMarker | string | string[];
-export type SortOrderConfig = "asc" | "desc";
 export type SortPackageJsonUserConfig = boolean | SortPackageJsonConfig;
 export type SortTailwindcssUserConfig = boolean | SortTailwindcssConfig;
 export type SvelteUserConfig = boolean | SvelteConfig;
@@ -270,6 +271,17 @@ export interface Oxfmtrc {
    * - Overrides `.editorconfig.quote_type`
    */
   singleQuote?: boolean;
+  /**
+   * Sort HTML, Vue and JSX/TSX attributes into configurable groups.
+   *
+   * Pass `true` or an object to enable alphabetical sorting, `false` to disable.
+   * Spreads and dynamic attribute names separate sortable runs. Tags with ignored
+   * attributes or JSX comments keep their attribute order.
+   *
+   * - Languages: HTML, Vue, JSX, TSX
+   * - Default: Disabled
+   */
+  sortAttributes?: SortAttributesUserConfig;
   /**
    * Sort import statements.
    *
@@ -655,6 +667,17 @@ export interface FormatConfig {
    */
   singleQuote?: boolean;
   /**
+   * Sort HTML, Vue and JSX/TSX attributes into configurable groups.
+   *
+   * Pass `true` or an object to enable alphabetical sorting, `false` to disable.
+   * Spreads and dynamic attribute names separate sortable runs. Tags with ignored
+   * attributes or JSX comments keep their attribute order.
+   *
+   * - Languages: HTML, Vue, JSX, TSX
+   * - Default: Disabled
+   */
+  sortAttributes?: SortAttributesUserConfig;
+  /**
    * Sort import statements.
    *
    * Uses a similar algorithm to [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
@@ -733,6 +756,31 @@ export interface FormatConfig {
    */
   vueIndentScriptAndStyle?: boolean;
   [k: string]: unknown;
+}
+export interface SortAttributesConfig {
+  /**
+   * Rust regular expressions matched in order against attribute names.
+   * The first matching group wins. Unmatched attributes go in `$DEFAULT`,
+   * or after all groups when `$DEFAULT` is omitted.
+   *
+   * `$CODE_GUIDE` expands to the attribute order from
+   * [Code Guide](https://codeguide.co/#html-attribute-order): class, id, name,
+   * data-*, src, for, type, href, value, title, alt, role, aria-*.
+   *
+   * HTML names are lowercased before matching and sorting. Vue and JSX names keep their case.
+   *
+   * - Default: `[]` (one group for all attributes)
+   */
+  groups?: string[];
+  /**
+   * Alphabetical order within each group. Group order is never reversed.
+   * Equal names retain their original order. JSX spreads and expressions that may
+   * have side effects stay in place. Vue object bindings and dynamic arguments
+   * stay in place; tags with conflicting bindings keep their original order.
+   *
+   * - Default: `"asc"`
+   */
+  order?: SortOrderConfig;
 }
 export interface SortImportsConfig {
   /**
