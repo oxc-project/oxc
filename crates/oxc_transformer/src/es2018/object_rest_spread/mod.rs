@@ -567,7 +567,13 @@ impl<'a> ObjectRestSpread<'a> {
     fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = func.scope_id();
         let Some(body) = func.body.as_mut() else { return };
+        let is_setter = match ctx.parent() {
+            Ancestor::MethodDefinitionValue(method) => *method.kind() == MethodDefinitionKind::Set,
+            Ancestor::ObjectPropertyValue(property) => *property.kind() == PropertyKind::Set,
+            _ => false,
+        };
         if !func.generator
+            && !is_setter
             && Self::lower_parameter_dependencies(
                 &mut func.params,
                 body,

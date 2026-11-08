@@ -4,11 +4,11 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::{Visit, VisitMut};
+use oxc_ast_visit::{Visit, VisitMut, walk_mut};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::SPAN;
-use oxc_str::static_ident;
+use oxc_str::{Ident, static_ident};
 use oxc_traverse::{BoundIdentifier, MaybeBoundIdentifier};
 
 use super::ObjectRestSpread;
@@ -37,6 +37,24 @@ impl<'a> ObjectRestSpread<'a> {
         references.visit_formal_parameters(params);
         if !references.found {
             return false;
+        }
+
+        let mut let_parameter = None;
+        params.bound_names(&mut |ident| {
+            if ident.name == "let" {
+                let_parameter = Some(ident.symbol_id());
+            }
+        });
+        if let_parameter.is_some() {
+            if ctx.scoping().scope_flags(scope_id).contains_direct_eval() {
+                return false;
+            }
+            let mut with_statement = WithStatementFinder::default();
+            with_statement.visit_formal_parameters(params);
+            with_statement.visit_function_body(body);
+            if with_statement.found {
+                return false;
+            }
         }
 
         let mut shadow = BodyShadow { scope_id, ctx, found: false };
@@ -82,28 +100,8 @@ impl<'a> ObjectRestSpread<'a> {
             let value = temp.create_read_expression(ctx);
             let init = if let Some(default) = param.initializer.take() {
                 let mut default = default.unbox();
-                if let BindingPattern::BindingIdentifier(ident) = &pattern
-                    && default.get_inner_expression().is_anonymous_function_definition()
-                {
-                    let name = Expression::new_string_literal(SPAN, ident.name, None, ctx);
-                    let property = ObjectPropertyKind::new_object_property(
-                        SPAN,
-                        PropertyKind::Init,
-                        PropertyKey::from(name),
-                        default,
-                        false,
-                        false,
-                        true,
-                        ctx,
-                    );
-                    let object = Expression::new_object_expression(SPAN, [property], ctx);
-                    default = Expression::new_static_member_expression(
-                        SPAN,
-                        object,
-                        IdentifierName::new(SPAN, ident.name, ctx),
-                        false,
-                        ctx,
-                    );
+                if let BindingPattern::BindingIdentifier(ident) = &pattern {
+                    default = preserve_parameter_name(default, ident.name, ctx);
                 }
                 param.initializer = Some(ctx.alloc(Expression::new_void_0(SPAN, ctx)));
                 let test = Expression::new_binary_expression(
@@ -141,6 +139,14 @@ impl<'a> ObjectRestSpread<'a> {
             body.statements = prefix;
         } else {
             body.statements.splice(0..0, prefix);
+        }
+        if let Some(symbol_id) = let_parameter {
+            let name = ctx.generate_uid_name("let");
+            let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+            ctx.scoping_mut().rename_symbol(symbol_id, scope_id, name);
+            let mut rename = RenameParameter { symbol_id, name, ctx };
+            rename.visit_formal_parameters(params);
+            rename.visit_function_body(body);
         }
         true
     }
@@ -349,4 +355,127 @@ struct BodyParameter<'a> {
     source: MaybeBoundIdentifier<'a>,
     binding: BoundIdentifier<'a>,
     flags: SymbolFlags,
+}
+
+fn preserve_parameter_name<'a>(
+    value: Expression<'a>,
+    name: Ident<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> Expression<'a> {
+    if !value.get_inner_expression().is_anonymous_function_definition() {
+        return value;
+    }
+    let key = Expression::new_string_literal(SPAN, name, None, ctx);
+    let property = ObjectPropertyKind::new_object_property(
+        SPAN,
+        PropertyKind::Init,
+        PropertyKey::from(key),
+        value,
+        false,
+        false,
+        true,
+        ctx,
+    );
+    let object = Expression::new_object_expression(SPAN, [property], ctx);
+    Expression::new_static_member_expression(
+        SPAN,
+        object,
+        IdentifierName::new(SPAN, name, ctx),
+        false,
+        ctx,
+    )
+}
+
+struct RenameParameter<'a, 'ctx> {
+    symbol_id: SymbolId,
+    name: Ident<'a>,
+    ctx: &'ctx TraverseCtx<'a>,
+}
+
+impl<'a> VisitMut<'a> for RenameParameter<'a, '_> {
+    fn visit_assignment_pattern(&mut self, pattern: &mut AssignmentPattern<'a>) {
+        if let BindingPattern::BindingIdentifier(ident) = &pattern.left
+            && ident.symbol_id() == self.symbol_id
+        {
+            pattern.right =
+                preserve_parameter_name(pattern.right.take_in(self.ctx), ident.name, self.ctx);
+        }
+        walk_mut::walk_assignment_pattern(self, pattern);
+    }
+
+    fn visit_assignment_expression(&mut self, expr: &mut AssignmentExpression<'a>) {
+        if (expr.operator.is_assign() || expr.operator.is_logical())
+            && let AssignmentTarget::AssignmentTargetIdentifier(ident) = &expr.left
+            && self.ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+                == Some(self.symbol_id)
+        {
+            expr.right =
+                preserve_parameter_name(expr.right.take_in(self.ctx), ident.name, self.ctx);
+        }
+        walk_mut::walk_assignment_expression(self, expr);
+    }
+
+    fn visit_assignment_target_with_default(
+        &mut self,
+        target: &mut AssignmentTargetWithDefault<'a>,
+    ) {
+        if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &target.binding
+            && self.ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+                == Some(self.symbol_id)
+        {
+            target.init =
+                preserve_parameter_name(target.init.take_in(self.ctx), ident.name, self.ctx);
+        }
+        walk_mut::walk_assignment_target_with_default(self, target);
+    }
+
+    fn visit_assignment_target_property(&mut self, property: &mut AssignmentTargetProperty<'a>) {
+        if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) = property
+            && self.ctx.scoping().get_reference(ident.binding.reference_id()).symbol_id()
+                == Some(self.symbol_id)
+        {
+            let name = ident.binding.name;
+            let key =
+                PropertyKey::StaticIdentifier(IdentifierName::boxed(ident.span, name, self.ctx));
+            let binding = AssignmentTarget::AssignmentTargetIdentifier(
+                self.ctx.alloc(ident.binding.take_in(self.ctx)),
+            );
+            let binding = if let Some(init) = ident.init.take() {
+                AssignmentTargetMaybeDefault::new_assignment_target_with_default(
+                    ident.span, binding, init, self.ctx,
+                )
+            } else {
+                AssignmentTargetMaybeDefault::from(binding)
+            };
+            *property = AssignmentTargetProperty::new_assignment_target_property_property(
+                ident.span, key, binding, false, self.ctx,
+            );
+        }
+        walk_mut::walk_assignment_target_property(self, property);
+    }
+
+    fn visit_binding_identifier(&mut self, ident: &mut BindingIdentifier<'a>) {
+        if ident.symbol_id() == self.symbol_id {
+            ident.name = self.name;
+        }
+    }
+
+    fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
+        if self.ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+            == Some(self.symbol_id)
+        {
+            ident.name = self.name;
+        }
+    }
+}
+
+#[derive(Default)]
+struct WithStatementFinder {
+    found: bool,
+}
+
+impl<'a> Visit<'a> for WithStatementFinder {
+    fn visit_with_statement(&mut self, _stmt: &WithStatement<'a>) {
+        self.found = true;
+    }
 }
