@@ -1490,9 +1490,9 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
     // Package managers on Windows provide CMD shims or, in Bun's case, EXE shims.
     #[cfg(windows)]
     let files: &[&str] = if go_profiling {
-        &["tsgolint.CMD", "tsgolint.exe"]
+        &["tsgolint.cmd", "tsgolint.exe"]
     } else {
-        &["tsrs-lint.CMD", "tsrs-lint.exe", "tsgolint.CMD", "tsgolint.exe"]
+        &["tsrs-lint.cmd", "tsrs-lint.exe", "tsgolint.cmd", "tsgolint.exe"]
     };
     #[cfg(not(windows))]
     let files: &[&str] = if go_profiling { &["tsgolint"] } else { &["tsrs-lint", "tsgolint"] };
