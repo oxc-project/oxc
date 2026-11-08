@@ -24,10 +24,10 @@ use oxc::{
     span::{SourceType, Span},
 };
 use oxc_lexer::{
-    Arena, LexOptions, LexResult, PAD, TokenKind,
-    diagnostics::to_oxc_diagnostic,
-    testing::{for_each_cpu, lex_utf8_with_cpu},
+    Arena, LexOptions, LexResult, PAD, TokenKind, diagnostics::to_oxc_diagnostic,
+    testing::lex_utf8_with_cpu,
 };
+use oxc_simd::DynCpu;
 use rayon::prelude::*;
 
 use crate::{
@@ -225,7 +225,7 @@ fn lex_with_each_cpu(
 
     let mut outputs = vec![];
     let mut panicked = vec![];
-    for_each_cpu(|cpu| {
+    DynCpu::for_each_supported(|cpu| {
         match catch_unwind(AssertUnwindSafe(|| lex_utf8_with_cpu(&buf, len_u32, options, cpu))) {
             Ok(output) => outputs.push((cpu, output)),
             Err(_) => panicked.push(cpu.name()),
@@ -248,7 +248,7 @@ fn lex_with_each_cpu(
 
     let mut outputs = outputs.into_iter();
     let (first_cpu, first) =
-        outputs.next().expect("`for_each_cpu` calls its closure at least once");
+        outputs.next().expect("`for_each_supported` calls its closure at least once");
     for (cpu, output) in outputs {
         if let Some((expected, actual)) = first_difference(&first, &output) {
             return Err(TestResult::Mismatch(

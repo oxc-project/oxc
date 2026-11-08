@@ -1970,6 +1970,7 @@ dependencies = [
  "oxc_formatter",
  "oxc_formatter_core",
  "oxc_lexer",
+ "oxc_simd",
  "oxc_tasks_common",
  "oxc_tasks_transform_checker",
  "phf",

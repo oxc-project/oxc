@@ -1,33 +1,12 @@
 //! Functions for testing the lexer with each CPU feature set.
 //!
+//! [`DynCpu::for_each_supported`] gives each CPU feature set which this CPU supports.
+//!
 //! Only available with the `testing` Cargo feature.
 
 use oxc_simd::DynCpu;
 
 use crate::{Arena, LexOptions, LexResult, SCRATCH, lex_utf8};
-
-/// A CPU feature set which this CPU supports.
-///
-/// Only [`for_each_cpu`] creates them, so code outside this crate can only lex with
-/// CPU feature sets which this CPU supports.
-///
-/// A wrapper around [`DynCpu`].
-#[derive(Clone, Copy)]
-pub struct CpuFeatureSet(DynCpu);
-
-impl CpuFeatureSet {
-    /// Name of the CPU feature set, for test failure messages.
-    pub fn name(self) -> &'static str {
-        self.0.name()
-    }
-}
-
-/// Call `f` with each CPU feature set that this CPU supports, best first.
-///
-/// Same as [`DynCpu::for_each_supported`], but gives each one as a [`CpuFeatureSet`].
-pub fn for_each_cpu(mut f: impl FnMut(CpuFeatureSet)) {
-    DynCpu::for_each_supported(|cpu| f(CpuFeatureSet(cpu)));
-}
 
 /// Same as [`lex_utf8`], but lexes with CPU feature set `cpu`,
 /// instead of the best one this CPU supports.
@@ -40,9 +19,9 @@ pub fn lex_utf8_with_cpu(
     src: &[u8],
     len: u32,
     options: LexOptions,
-    cpu: CpuFeatureSet,
+    cpu: DynCpu,
 ) -> (LexResult, Arena) {
-    let _switch = SwitchCpu::new(cpu.0);
+    let _switch = SwitchCpu::new(cpu);
     lex_utf8(src, len, options)
 }
 
