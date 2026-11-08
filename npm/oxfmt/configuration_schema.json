@@ -858,13 +858,13 @@
           "markdownDescription": "Rust regular expressions matched in order against attribute names.\nThe first matching group wins. Unmatched attributes go in `$DEFAULT`,\nor after all groups when `$DEFAULT` is omitted.\n\n`$CODE_GUIDE` expands to the attribute order from\n[Code Guide](https://codeguide.co/#html-attribute-order): class, id, name,\ndata-*, src, for, type, href, value, title, alt, role, aria-*.\n\nHTML names are lowercased before matching and sorting. Vue and JSX names keep their case.\n\n- Default: `[]` (one group for all attributes)"
         },
         "order": {
-          "description": "Alphabetical order within each group. Group order is never reversed.\nEqual names retain their original order. JSX spreads and expressions that may\nhave side effects stay in place. Vue directives stay in place to preserve\nexpression evaluation order, generated property precedence and lifecycle hook order.\n\n- Default: `\"asc\"`",
+          "description": "Alphabetical order within each group. Group order is never reversed.\nEqual names retain their original order. JSX spreads and expressions that may\nhave side effects, including identifier reads, stay in place. Vue directives preserve\ntheir positions to keep expression evaluation order, generated property precedence\nand lifecycle hook order unchanged.\n\n- Default: `\"asc\"`",
           "allOf": [
             {
               "$ref": "#/definitions/SortOrderConfig"
             }
           ],
-          "markdownDescription": "Alphabetical order within each group. Group order is never reversed.\nEqual names retain their original order. JSX spreads and expressions that may\nhave side effects stay in place. Vue directives stay in place to preserve\nexpression evaluation order, generated property precedence and lifecycle hook order.\n\n- Default: `\"asc\"`"
+          "markdownDescription": "Alphabetical order within each group. Group order is never reversed.\nEqual names retain their original order. JSX spreads and expressions that may\nhave side effects, including identifier reads, stay in place. Vue directives preserve\ntheir positions to keep expression evaluation order, generated property precedence\nand lifecycle hook order unchanged.\n\n- Default: `\"asc\"`"
         }
       },
       "additionalProperties": false

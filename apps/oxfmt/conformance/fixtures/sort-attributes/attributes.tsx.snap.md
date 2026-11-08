@@ -11,6 +11,9 @@ const comments = <Widget z="last" /* keep before a */ a="first" />;
 const inside = <Widget z="last" fn={() => { /* keep */ run(); }} a="first" />;
 // prettier-ignore
 const ignored = <Widget z="last"   a="first" />;
+const identifiers = <Widget z={z} a={a} />;
+const reverseIdentifiers = <Widget a={a} z={z} />;
+const identifierBoundary = <Widget z="before" a="before" getter={value} y="after" b="after" />;
 
 `````
 
@@ -35,9 +38,9 @@ const spread = (
   <Widget a="before" z="before" {...props} a="after" z="after" {...more} b="end" y="end" />
 );
 const effects = (
-  <Widget a={a} z={z} effect={run()} b="after" y="after" member={object.value} c="last" x="last" />
+  <Widget z={z} a={a} effect={run()} b="after" y="after" member={object.value} c="last" x="last" />
 );
-const handlers = <Widget a={null} id={id} onClick={() => run()} z={true} />;
+const handlers = <Widget onClick={() => run()} z={true} id={id} a={null} />;
 const duplicate = <Widget a="first" a="second" z="last" />;
 const namespace = <svg a="first" xlink:href="#icon" xml:lang="en" z="last" />;
 const comments = <Widget z="last" /* keep before a */ a="first" />;
@@ -52,6 +55,9 @@ const inside = (
 );
 // prettier-ignore
 const ignored = <Widget z="last"   a="first" />;
+const identifiers = <Widget z={z} a={a} />;
+const reverseIdentifiers = <Widget a={a} z={z} />;
+const identifierBoundary = <Widget a="before" z="before" getter={value} b="after" y="after" />;
 
 `````
 
@@ -91,6 +97,9 @@ const inside = (
 );
 // prettier-ignore
 const ignored = <Widget z="last"   a="first" />;
+const identifiers = <Widget z={z} a={a} />;
+const reverseIdentifiers = <Widget a={a} z={z} />;
+const identifierBoundary = <Widget z="before" a="before" getter={value} y="after" b="after" />;
 
 `````
 
@@ -113,9 +122,9 @@ const spread = (
   <Widget a="before" z="before" {...props} a="after" z="after" {...more} b="end" y="end" />
 );
 const effects = (
-  <Widget a={a} z={z} effect={run()} b="after" y="after" member={object.value} c="last" x="last" />
+  <Widget z={z} a={a} effect={run()} b="after" y="after" member={object.value} c="last" x="last" />
 );
-const handlers = <Widget id={id} a={null} onClick={() => run()} z={true} />;
+const handlers = <Widget onClick={() => run()} z={true} id={id} a={null} />;
 const duplicate = <Widget a="first" a="second" z="last" />;
 const namespace = <svg a="first" xlink:href="#icon" xml:lang="en" z="last" />;
 const comments = <Widget z="last" /* keep before a */ a="first" />;
@@ -130,6 +139,9 @@ const inside = (
 );
 // prettier-ignore
 const ignored = <Widget z="last"   a="first" />;
+const identifiers = <Widget z={z} a={a} />;
+const reverseIdentifiers = <Widget a={a} z={z} />;
+const identifierBoundary = <Widget a="before" z="before" getter={value} b="after" y="after" />;
 
 `````
 
@@ -152,9 +164,9 @@ const spread = (
   <Widget a="before" z="before" {...props} a="after" z="after" {...more} b="end" y="end" />
 );
 const effects = (
-  <Widget a={a} z={z} effect={run()} b="after" y="after" member={object.value} c="last" x="last" />
+  <Widget z={z} a={a} effect={run()} b="after" y="after" member={object.value} c="last" x="last" />
 );
-const handlers = <Widget id={id} a={null} onClick={() => run()} z={true} />;
+const handlers = <Widget onClick={() => run()} z={true} id={id} a={null} />;
 const duplicate = <Widget a="first" a="second" z="last" />;
 const namespace = <svg a="first" xlink:href="#icon" xml:lang="en" z="last" />;
 const comments = <Widget z="last" /* keep before a */ a="first" />;
@@ -169,6 +181,9 @@ const inside = (
 );
 // prettier-ignore
 const ignored = <Widget z="last"   a="first" />;
+const identifiers = <Widget z={z} a={a} />;
+const reverseIdentifiers = <Widget a={a} z={z} />;
+const identifierBoundary = <Widget a="before" z="before" getter={value} b="after" y="after" />;
 
 `````
 
@@ -201,8 +216,8 @@ const spread = (
 );
 const effects = (
   <Widget
-    a={a}
     z={z}
+    a={a}
     effect={run()}
     b="after"
     y="after"
@@ -213,10 +228,10 @@ const effects = (
 );
 const handlers = (
   <Widget
-    a={null}
-    id={id}
     onClick={() => run()}
     z={true}
+    id={id}
+    a={null}
   />
 );
 const duplicate = (
@@ -251,5 +266,26 @@ const inside = (
 );
 // prettier-ignore
 const ignored = <Widget z="last"   a="first" />;
+const identifiers = (
+  <Widget
+    z={z}
+    a={a}
+  />
+);
+const reverseIdentifiers = (
+  <Widget
+    a={a}
+    z={z}
+  />
+);
+const identifierBoundary = (
+  <Widget
+    a="before"
+    z="before"
+    getter={value}
+    b="after"
+    y="after"
+  />
+);
 
 `````

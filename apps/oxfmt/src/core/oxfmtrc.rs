@@ -672,8 +672,9 @@ pub struct SortAttributesConfig {
     pub groups: Option<Vec<String>>,
     /// Alphabetical order within each group. Group order is never reversed.
     /// Equal names retain their original order. JSX spreads and expressions that may
-    /// have side effects stay in place. Vue directives stay in place to preserve
-    /// expression evaluation order, generated property precedence and lifecycle hook order.
+    /// have side effects, including identifier reads, stay in place. Vue directives preserve
+    /// their positions to keep expression evaluation order, generated property precedence
+    /// and lifecycle hook order unchanged.
     ///
     /// - Default: `"asc"`
     #[serde(skip_serializing_if = "Option::is_none")]

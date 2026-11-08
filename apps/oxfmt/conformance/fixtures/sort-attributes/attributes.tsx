@@ -8,3 +8,6 @@ const comments = <Widget z="last" /* keep before a */ a="first" />;
 const inside = <Widget z="last" fn={() => { /* keep */ run(); }} a="first" />;
 // prettier-ignore
 const ignored = <Widget z="last"   a="first" />;
+const identifiers = <Widget z={z} a={a} />;
+const reverseIdentifiers = <Widget a={a} z={z} />;
+const identifierBoundary = <Widget z="before" a="before" getter={value} y="after" b="after" />;

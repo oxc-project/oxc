@@ -49,6 +49,32 @@ describe("sortAttributes", () => {
   });
 
   it.each([
+    ["input.js", 'const element = html`<div z="before" ...${props} a="after"></div>`;'],
+    ["input.js", 'const element = html`<div a="before" ...${props} z="after"></div>`;'],
+    ["input.js", 'const element = html`<div z="before" ${name}="value" a="after"></div>`;'],
+    ["input.js", 'const element = html`<div z="before" data-${key}="value" a="after"></div>`;'],
+    ["input.vue", '<template><Widget fooBar="first" foo-bar="second" /></template>'],
+    ["input.vue", '<template><Widget foo-bar="first" fooBar="second" /></template>'],
+    ["input.vue", '<template><Widget fooBarBaz="first" foo-bar-baz="second" /></template>'],
+    ["input.vue", '<template><Widget foo1="first" foo-1="second" /></template>'],
+    ["input.vue", '<template><Widget foo_bar="first" foo-_bar="second" /></template>'],
+    ["input.tsx", "const element = <C z={z} a={a} />;"],
+    ["input.tsx", "const element = <C a={a} z={z} />;"],
+  ])("preserves precedence and evaluation order in %s: %s", async (filename, input) => {
+    const baseline = await format(filename, input, { sortAttributes: false });
+    expect(baseline.errors).toStrictEqual([]);
+    const results = await Promise.all(
+      [true, { order: "desc" as const }, { groups: ["^a$", "^foo-bar$", "$DEFAULT", "^z$"] }].map(
+        (sortAttributes) => format(filename, input, { sortAttributes }),
+      ),
+    );
+    for (const result of results) {
+      expect(result.errors).toStrictEqual([]);
+      expect(result.code).toBe(baseline.code);
+    }
+  });
+
+  it.each([
     '<Widget :z="next()" :a="next()" />',
     '<Widget :z="state.z" :a="state.a" />',
     '<Widget :z="z" :a="a" />',

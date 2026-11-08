@@ -79,11 +79,16 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
             let mut attributes = Vec::with_capacity(el.attributes.len());
             for attribute in &el.attributes {
                 let name = t.attribute_name(id, attribute.name.slice(t.source()));
-                let key = if t.rules().names_ignore_case {
-                    name.cow_to_ascii_lowercase()
+                let mut key = if t.rules().vue_sfc {
+                    // Distinct source names can resolve to the same declared component prop.
+                    vue::prop_name(name)
                 } else {
                     Cow::Borrowed(name)
                 };
+                if t.rules().names_ignore_case && key.bytes().any(|byte| byte.is_ascii_uppercase())
+                {
+                    key.to_mut().make_ascii_lowercase();
+                }
                 if !names.insert(key) {
                     return None;
                 }
@@ -94,13 +99,14 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
                 };
                 attributes.push((options.group_index(&name), name, attribute));
             }
-            for chunk in attributes.split_mut(|(_, name, attribute)| {
+            for chunk in attributes.split_mut(|(_, _, attribute)| {
                 // A directive can evaluate JS, generate props also written by another
                 // attribute, or run lifecycle hooks. Keep it in place, and never move
                 // another attribute across it: even a simple binding can read a getter.
                 (t.rules().vue_sfc && matches!(attribute.kind, AttributeKind::Vue(_)))
                     || f.context().embedded_in().is_some_and(|embedded| {
-                        embedded.has_placeholder(name)
+                        // Match against the source: sort keys may have folded the marker's case.
+                        embedded.has_placeholder(attribute.name.slice(t.source()))
                             || attribute.value.is_some_and(|value| {
                                 embedded.has_placeholder(value.span.slice(t.source()))
                             })

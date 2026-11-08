@@ -311,6 +311,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, JSXAtt
                 .collect();
 
             // Spreads and expressions whose evaluation may have effects are fixed boundaries.
+            // Without binding information, even an identifier can read a global accessor.
             for chunk in attributes.split_mut(|(_, _, attribute)| !sortable_attribute(attribute)) {
                 chunk.sort_by(|(a_group, a_name, _), (b_group, b_name, _)| {
                     a_group.cmp(b_group).then_with(|| {
@@ -342,8 +343,7 @@ fn sortable_attribute(attribute: &JSXAttributeItem<'_>) -> bool {
         None | Some(JSXAttributeValue::StringLiteral(_)) => true,
         Some(JSXAttributeValue::ExpressionContainer(container)) => matches!(
             container.expression,
-            JSXExpression::Identifier(_)
-                | JSXExpression::BooleanLiteral(_)
+            JSXExpression::BooleanLiteral(_)
                 | JSXExpression::NullLiteral(_)
                 | JSXExpression::NumericLiteral(_)
                 | JSXExpression::BigIntLiteral(_)
