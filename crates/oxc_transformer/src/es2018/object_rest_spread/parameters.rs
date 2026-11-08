@@ -79,6 +79,7 @@ impl<'a> ObjectRestSpread<'a> {
         if params.kind != FormalParameterKind::ArrowFormalParameters
             && let Some(symbol_id) = ctx.scoping().get_binding(scope_id, static_ident!("arguments"))
             && body_bindings.symbols.contains(&symbol_id)
+            && ctx.scoping().symbol_flags(symbol_id).is_function_scoped_declaration()
             && !copied_parameters.iter().any(|param| param.binding.symbol_id == symbol_id)
         {
             copied_parameters.push(BodyParameter {
