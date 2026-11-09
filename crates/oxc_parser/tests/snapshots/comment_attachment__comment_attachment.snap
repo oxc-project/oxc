@@ -194,6 +194,29 @@ interface I { m(this: P, a: /* m */ T): void; (this: P, a: /* c */ T): void }
 /* m */ -> Leading TSTypeReference `T`
 /* c */ -> Leading TSTypeReference `T`
 
+##### discarded_this_parameter
+
+=== ts (unambiguous) ===
+type C = new (this: (a: A, // a
+ b: B) => void) => object;
+---
+// a -> Dangling FormalParameters `(this: (a: A, // a
+ b: B) => void)`
+
+=== ts (unambiguous) ===
+interface I { new (this: (a: A, // a
+ b: B) => void): I }
+---
+// a -> Dangling FormalParameters `(this: (a: A, // a
+ b: B) => void)`
+
+=== ts (unambiguous) ===
+const f = (this: (a: A, // a
+ b: B) => void) => {};
+---
+// a -> Dangling FormalParameters `(this: (a: A, // a
+ b: B) => void)`
+
 ##### speculation_and_cover_grammar
 
 === js ===

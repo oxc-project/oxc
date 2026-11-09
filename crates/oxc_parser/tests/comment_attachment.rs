@@ -117,6 +117,11 @@ fn comment_attachment() {
         SourceType::ts(),
     );
 
+    cases.group("discarded_this_parameter");
+    cases.add("type C = new (this: (a: A, // a\n b: B) => void) => object;", SourceType::ts());
+    cases.add("interface I { new (this: (a: A, // a\n b: B) => void): I }", SourceType::ts());
+    cases.add("const f = (this: (a: A, // a\n b: B) => void) => {};", SourceType::ts());
+
     cases.group("speculation_and_cover_grammar");
     cases.add("let f = (/* a */ a) => a; let g = (/* p */ b);", SourceType::mjs());
     cases.add("let f = <T,>(/* a */ a: T) => a; x = a < /* b */ b > c;", SourceType::ts());
