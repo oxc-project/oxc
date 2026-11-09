@@ -42,14 +42,14 @@
 
 use std::ops::Range;
 
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind, Comment, CommentContent, CommentPlacement,
     ast::{
         BindingPattern, BindingProperty, ClassElement, Declaration, Decorator, Directive,
-        ExportDefaultDeclarationKind, Expression, ExpressionStatement, FormalParameters, Function,
-        JSXChild, ObjectPropertyKind, Program, Statement, SwitchCase, TSCallSignatureDeclaration,
-        TSFunctionType, TSMethodSignature, TSSignature, TSTemplateLiteralType, TSThisParameter,
-        TSType, TemplateLiteral,
+        ExportDefaultDeclarationKind, Expression, ExpressionStatement, FormalParameter, JSXChild,
+        ObjectPropertyKind, Program, Statement, SwitchCase, TSSignature, TSTemplateLiteralType,
+        TSThisParameter, TSType, TemplateLiteral,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -58,7 +58,6 @@ use oxc_syntax::{
     identifier::is_white_space,
     line_terminator::is_line_terminator,
     node::{GetNodeId, NodeId},
-    scope::ScopeFlags,
 };
 
 use crate::{ParserConfig as Config, ParserImpl};
@@ -138,7 +137,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// in a statement list. There is nothing to do if every comment lexed is assigned, except
     /// those before the list.
     #[inline]
-    pub(crate) fn finish_list_element_comments<T: ListElement>(
+    pub(crate) fn finish_list_element_comments<T: ListElement<'a>>(
         &mut self,
         element: &T,
         list: &ListComments,
@@ -154,7 +153,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     #[cold]
     #[inline(never)]
-    fn finish_list_element_comments_cold<T: ListElement>(
+    fn finish_list_element_comments_cold<T: ListElement<'a>>(
         &mut self,
         element: &T,
         list: &ListComments,
@@ -169,7 +168,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn attach_list_element_leading_comments<T: ListElement>(
+    fn attach_list_element_leading_comments<T: ListElement<'a>>(
         &mut self,
         element: &T,
         list: &ListComments,
@@ -220,7 +219,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// element.
     #[cold]
     #[inline(never)]
-    fn attach_list_element_comments<T: ListElement>(
+    fn attach_list_element_comments<T: ListElement<'a>>(
         &mut self,
         element: &T,
         lexed: usize,
@@ -268,7 +267,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Assign the unassigned comments in `range` by walking the node `visit` visits, which
     /// contains them.
     #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32 offsets")]
-    fn walk_comments(&mut self, range: Range<usize>, visit: impl FnOnce(&mut Walker<'_>)) {
+    fn walk_comments(&mut self, range: Range<usize>, visit: impl FnOnce(&mut Walker<'_, 'a>)) {
         let trivia = &mut self.lexer.trivia_builder;
         let pending = &mut self.comment_attacher.pending;
         pending.clear();
@@ -544,7 +543,8 @@ pub fn attach_comments_to_program(comments: &mut [Comment]) {
     }
 }
 
-pub struct Walker<'w> {
+pub struct Walker<'w, 'a> {
+    pending_this_param: Option<&'a TSThisParameter<'a>>,
     comments: &'w mut [Comment],
     /// Sorted indices of comments following a comma on the same line.
     comma_comments: &'w [u32],
@@ -555,7 +555,7 @@ pub struct Walker<'w> {
     depth: u32,
 }
 
-impl<'w> Walker<'w> {
+impl<'w> Walker<'w, '_> {
     #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32 offsets")]
     fn new(
         comments: &'w mut [Comment],
@@ -574,7 +574,15 @@ impl<'w> Walker<'w> {
             preceding: None,
             preceding_end: 0,
         });
-        Self { comments, comma_comments, pending, frames, source_text, depth: 0 }
+        Self {
+            comments,
+            comma_comments,
+            pending,
+            frames,
+            source_text,
+            depth: 0,
+            pending_this_param: None,
+        }
     }
 
     fn finish(mut self) {
@@ -839,9 +847,9 @@ fn partition_before(comments: &[Comment], end: usize, pos: u32) -> usize {
 }
 
 /// A node in a list without separators, which owns the comments before it.
-pub trait ListElement: GetSpan + GetNodeId {
+pub trait ListElement<'a>: GetSpan + GetNodeId {
     /// Visit the node with a walker.
-    fn visit(&self, walker: &mut Walker<'_>);
+    fn visit(&self, walker: &mut Walker<'_, 'a>);
 
     /// Whether the node's first token is before its span, so comments before it are not next to
     /// it.
@@ -850,8 +858,8 @@ pub trait ListElement: GetSpan + GetNodeId {
     }
 }
 
-impl ListElement for Statement<'_> {
-    fn visit(&self, walker: &mut Walker<'_>) {
+impl<'a> ListElement<'a> for Statement<'a> {
+    fn visit(&self, walker: &mut Walker<'_, 'a>) {
         walker.visit_statement(self);
     }
 
@@ -861,8 +869,8 @@ impl ListElement for Statement<'_> {
     }
 }
 
-impl ListElement for ExpressionStatement<'_> {
-    fn visit(&self, walker: &mut Walker<'_>) {
+impl<'a> ListElement<'a> for ExpressionStatement<'a> {
+    fn visit(&self, walker: &mut Walker<'_, 'a>) {
         walker.visit_expression_statement(self);
     }
 }
@@ -885,14 +893,14 @@ fn decorators_before<'s, 'a>(statement: &'s Statement<'a>) -> &'s [Decorator<'a>
     &class.decorators[..len]
 }
 
-impl ListElement for ClassElement<'_> {
-    fn visit(&self, walker: &mut Walker<'_>) {
+impl<'a> ListElement<'a> for ClassElement<'a> {
+    fn visit(&self, walker: &mut Walker<'_, 'a>) {
         walker.visit_class_element(self);
     }
 }
 
-impl ListElement for SwitchCase<'_> {
-    fn visit(&self, walker: &mut Walker<'_>) {
+impl<'a> ListElement<'a> for SwitchCase<'a> {
+    fn visit(&self, walker: &mut Walker<'_, 'a>) {
         walker.visit_switch_case(self);
     }
 }
@@ -919,23 +927,6 @@ fn is_whitespace(c: char) -> bool {
     is_white_space(c) || is_line_terminator(c)
 }
 
-impl Walker<'_> {
-    fn visit_parameters_with_this<'a>(
-        &mut self,
-        this_param: &TSThisParameter<'a>,
-        params: &FormalParameters<'a>,
-    ) {
-        let kind = AstKind::FormalParameters(self.alloc(params));
-        self.enter_node(kind);
-        self.visit_ts_this_parameter(this_param);
-        self.visit_formal_parameter_list(&params.items);
-        if let Some(rest) = &params.rest {
-            self.visit_formal_parameter_rest(rest);
-        }
-        self.leave_node(kind);
-    }
-}
-
 macro_rules! prune {
     ($($visit:ident, $walk:ident, $ty:ident;)*) => {
         $(
@@ -948,7 +939,7 @@ macro_rules! prune {
     };
 }
 
-impl<'a> Visit<'a> for Walker<'_> {
+impl<'a> Visit<'a> for Walker<'_, 'a> {
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.depth += 1;
         if self.depth == self.frames.last().unwrap().depth + 1 {
@@ -989,75 +980,17 @@ impl<'a> Visit<'a> for Walker<'_> {
         self.leave_node(kind);
     }
 
-    // `this_param` is inside `params`, so it is visited as the first parameter in the
-    // FormalParameters frame, rather than before it.
-    fn visit_function(&mut self, it: &Function<'a>, flags: ScopeFlags) {
-        let Some(this_param) = &it.this_param else {
-            return walk::walk_function(self, it, flags);
-        };
-        let kind = AstKind::Function(self.alloc(it));
-        self.enter_node(kind);
-        if let Some(id) = &it.id {
-            self.visit_binding_identifier(id);
-        }
-        if let Some(type_parameters) = &it.type_parameters {
-            self.visit_ts_type_parameter_declaration(type_parameters);
-        }
-        self.visit_parameters_with_this(this_param, &it.params);
-        if let Some(return_type) = &it.return_type {
-            self.visit_ts_type_annotation(return_type);
-        }
-        if let Some(body) = &it.body {
-            self.visit_function_body(body);
-        }
-        self.leave_node(kind);
+    // The generated visitors visit the sibling `this_param` immediately before
+    // `FormalParameters`. Its span belongs inside the parentheses, alongside the other items.
+    fn visit_ts_this_parameter(&mut self, it: &TSThisParameter<'a>) {
+        self.pending_this_param = Some(self.alloc(it));
     }
 
-    fn visit_ts_function_type(&mut self, it: &TSFunctionType<'a>) {
-        let Some(this_param) = &it.this_param else {
-            return walk::walk_ts_function_type(self, it);
-        };
-        let kind = AstKind::TSFunctionType(self.alloc(it));
-        self.enter_node(kind);
-        if let Some(type_parameters) = &it.type_parameters {
-            self.visit_ts_type_parameter_declaration(type_parameters);
+    fn visit_formal_parameter_list(&mut self, items: &ArenaVec<'a, FormalParameter<'a>>) {
+        if let Some(this_param) = self.pending_this_param.take() {
+            walk::walk_ts_this_parameter(self, this_param);
         }
-        self.visit_parameters_with_this(this_param, &it.params);
-        self.visit_ts_type_annotation(&it.return_type);
-        self.leave_node(kind);
-    }
-
-    fn visit_ts_method_signature(&mut self, it: &TSMethodSignature<'a>) {
-        let Some(this_param) = &it.this_param else {
-            return walk::walk_ts_method_signature(self, it);
-        };
-        let kind = AstKind::TSMethodSignature(self.alloc(it));
-        self.enter_node(kind);
-        self.visit_property_key(&it.key);
-        if let Some(type_parameters) = &it.type_parameters {
-            self.visit_ts_type_parameter_declaration(type_parameters);
-        }
-        self.visit_parameters_with_this(this_param, &it.params);
-        if let Some(return_type) = &it.return_type {
-            self.visit_ts_type_annotation(return_type);
-        }
-        self.leave_node(kind);
-    }
-
-    fn visit_ts_call_signature_declaration(&mut self, it: &TSCallSignatureDeclaration<'a>) {
-        let Some(this_param) = &it.this_param else {
-            return walk::walk_ts_call_signature_declaration(self, it);
-        };
-        let kind = AstKind::TSCallSignatureDeclaration(self.alloc(it));
-        self.enter_node(kind);
-        if let Some(type_parameters) = &it.type_parameters {
-            self.visit_ts_type_parameter_declaration(type_parameters);
-        }
-        self.visit_parameters_with_this(this_param, &it.params);
-        if let Some(return_type) = &it.return_type {
-            self.visit_ts_type_annotation(return_type);
-        }
-        self.leave_node(kind);
+        walk::walk_formal_parameter_list(self, items);
     }
 
     fn visit_binding_property(&mut self, it: &BindingProperty<'a>) {

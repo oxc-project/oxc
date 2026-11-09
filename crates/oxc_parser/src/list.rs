@@ -124,7 +124,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// between elements is skipped, as in a class body, where it is an empty element with no node.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub(crate) fn parse_braced_list<const SKIP_SEMICOLONS: bool, T: ListElement>(
+    pub(crate) fn parse_braced_list<const SKIP_SEMICOLONS: bool, T: ListElement<'a>>(
         &mut self,
         mut parse_element: impl FnMut(&mut Self) -> T,
     ) -> ArenaVec<'a, T> {
