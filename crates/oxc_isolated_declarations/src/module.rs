@@ -113,19 +113,25 @@ impl<'a> IsolatedDeclarations<'a> {
         if matches!(expr, Expression::Identifier(_)) {
             None
         } else {
-            // declare const _default: Type
+            // declare const _default = 1;
+            // declare const _default: Type;
             let kind = VariableDeclarationKind::Const;
             let name = self.create_unique_name("_default");
             let id = BindingPattern::new_binding_identifier(SPAN, name, self);
-            let type_annotation = self
-                .infer_type_from_expression(expr)
-                .map(|ts_type| TSTypeAnnotation::boxed(SPAN, ts_type, self));
+            let init = self.get_literal_initializer_without_const_assertion(expr);
+            let type_annotation = if init.is_some() {
+                None
+            } else {
+                let type_annotation = self
+                    .infer_type_from_expression(expr)
+                    .map(|ts_type| TSTypeAnnotation::boxed(SPAN, ts_type, self));
+                if type_annotation.is_none() {
+                    self.error(default_export_inferred(expr.span()));
+                }
+                type_annotation
+            };
 
-            if type_annotation.is_none() {
-                self.error(default_export_inferred(expr.span()));
-            }
-
-            let declaration = VariableDeclarator::new(SPAN, id, type_annotation, None, false, self);
+            let declaration = VariableDeclarator::new(SPAN, id, type_annotation, init, false, self);
 
             let variable_statement = Statement::new_variable_declaration(
                 decl_span,

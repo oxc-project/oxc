@@ -1,6 +1,7 @@
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_span::{ContentEq, GetSpan, SPAN};
+use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     IsolatedDeclarations,
@@ -154,7 +155,10 @@ impl<'a> IsolatedDeclarations<'a> {
         )
     }
 
-    fn get_literal_initializer_without_const_assertion(
+    /// Returns the initializer to keep in the declaration if `expr` is a primitive
+    /// literal, such as `true`, `1`, `-1`, `+1`, `"x"`, `` `x` ``, or `1n`.
+    /// The returned initializer has no parentheses and no unary `+`, like the tsc output.
+    pub(crate) fn get_literal_initializer_without_const_assertion(
         &self,
         expr: &Expression<'a>,
     ) -> Option<Expression<'a>> {
@@ -165,6 +169,13 @@ impl<'a> IsolatedDeclarations<'a> {
             | Expression::StringLiteral(_) => Some(expr.clone_in(self.allocator())),
             Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
                 self.transform_template_to_string(lit).map(Expression::StringLiteral)
+            }
+            // tsc rejects `+1` in an ambient `const` (TS1254), so drop the `+`.
+            Expression::UnaryExpression(expr)
+                if expr.operator == UnaryOperator::UnaryPlus
+                    && matches!(expr.argument, Expression::NumericLiteral(_)) =>
+            {
+                Some(expr.argument.clone_in(self.allocator()))
             }
             Expression::UnaryExpression(expr) if Self::can_infer_unary_expression(expr) => {
                 Some(Expression::UnaryExpression(expr.clone_in(self.allocator())))
