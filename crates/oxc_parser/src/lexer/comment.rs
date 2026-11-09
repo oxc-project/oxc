@@ -20,34 +20,8 @@ const PS_BYTES_2_AND_3: [u8; 2] = [0x80, 0xA9];
 static LINE_BREAK_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| matches!(b, b'\r' | b'\n' | LS_OR_PS_FIRST));
 
-/// Find a line break candidate, or a possible block-comment terminator.
-/// The first 0xE2 byte is checked by the caller for Unicode LS/PS.
-#[inline]
-fn find_comment_special<const BLOCK: bool>(bytes: &[u8]) -> Option<usize> {
-    const LO: u64 = 0x0101_0101_0101_0101;
-    const HI: u64 = 0x8080_8080_8080_8080;
-
-    let mut offset = 0;
-    while offset + 8 <= bytes.len() {
-        let word = u64::from_le_bytes(bytes[offset..offset + 8].try_into().unwrap());
-        let mask = |byte| {
-            let value = word ^ (LO * u64::from(byte));
-            value.wrapping_sub(LO) & !value & HI
-        };
-        let mut matches = mask(b'\r') | mask(b'\n') | mask(LS_OR_PS_FIRST);
-        if BLOCK {
-            matches |= mask(b'*');
-        }
-        if matches != 0 {
-            return Some(offset + matches.trailing_zeros() as usize / 8);
-        }
-        offset += 8;
-    }
-    bytes[offset..]
-        .iter()
-        .position(|&b| matches!(b, b'\r' | b'\n' | LS_OR_PS_FIRST) || (BLOCK && b == b'*'))
-        .map(|index| offset + index)
-}
+static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
+    safe_byte_match_table!(|b| matches!(b, b'*' | b'\r' | b'\n' | LS_OR_PS_FIRST));
 
 impl<'a, C: Config> Lexer<'a, C> {
     /// Section 12.4 Single Line Comment
@@ -141,45 +115,74 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Section 12.4 Multi Line Comment
     pub(super) fn skip_multi_line_comment(&mut self) -> Kind {
-        let mut pos = self.source.position();
-        loop {
-            let remaining = self.source.str_from_pos_to_end(pos).as_bytes();
-            let Some(index) = find_comment_special::<true>(remaining) else {
-                self.source.advance_to_end();
-                self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range()));
-                return Kind::Eof;
-            };
-            // SAFETY: The matching byte is ASCII or the UTF-8 leading byte 0xE2.
-            pos = unsafe { pos.add(index) };
-            match remaining[index] {
-                b'*' => {
-                    if remaining.get(index + 1) == Some(&b'/') {
-                        // SAFETY: Both bytes of the closing delimiter are present.
-                        self.source.set_position(unsafe { pos.add(2) });
-                        break;
+        // We need to identify if comment contains line breaks or not
+        // (`CommentKind::SingleLineBlock` or `CommentKind::MultiLineBlock`).
+        // So we have to use the loop below for the first line of the comment even if
+        // `Token`'s `is_on_new_line` flag is already set.
+        // If the loop finds a line break before end of the comment, we then switch to
+        // the faster `skip_multi_line_comment_after_line_break` which searches
+        // for the end of the comment using `memchr`.
+
+        byte_search! {
+            lexer: self,
+            table: MULTILINE_COMMENT_START_TABLE,
+            continue_if: (next_byte, pos) {
+                // Match found. Decide whether to continue searching.
+                if next_byte == b'*' {
+                    // SAFETY: Next byte is `*` (ASCII) so after it is UTF-8 char boundary
+                    let after_star = unsafe { pos.add(1) };
+                    if after_star.is_not_end_of(&self.source) {
+                        // If next byte isn't `/`, continue
+                        // SAFETY: Have checked there's at least 1 further byte to read
+                        if unsafe { after_star.read() } == b'/' {
+                            // Consume `*/`
+                            // SAFETY: Consuming `*/` leaves `pos` on a UTF-8 char boundary
+                            pos = unsafe { pos.add(2) };
+                            false
+                        } else {
+                            true
+                        }
+                    } else {
+                        // This is last byte in file. Continue to `handle_eof`.
+                        // This is illegal in valid JS, so mark this branch cold.
+                        cold_path();
+                        true
                     }
-                    // SAFETY: The matching ASCII byte is present, including at EOF.
-                    pos = unsafe { pos.add(1) };
-                }
-                LS_OR_PS_FIRST => {
+                } else if next_byte == LS_OR_PS_FIRST {
+                    // `0xE2`. Could be first byte of LS/PS, or could be some other Unicode char.
+                    // Either way, Unicode is uncommon, so make this a cold branch.
                     cold_path();
-                    // SAFETY: 0xE2 starts a three-byte character in valid UTF-8.
+                    // SAFETY: Next byte is `0xE2` which is always 1st byte of a 3-byte UTF-8 char.
+                    // So safe to advance `pos` by 1 and read 2 bytes.
                     let next2 = unsafe { pos.add(1).read2() };
-                    // SAFETY: Consuming the full character preserves its UTF-8 boundary.
-                    pos = unsafe { pos.add(3) };
                     if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
+                        // Irregular line break
                         self.token.set_is_on_new_line(true);
-                        return self.skip_multi_line_comment_after_line_break(pos);
+                        // SAFETY: Consuming this 3-byte UTF-8 char leaves a UTF-8 char boundary.
+                        let after_line_break = unsafe { pos.add(3) };
+                        return self.skip_multi_line_comment_after_line_break(after_line_break);
                     }
-                }
-                _ => {
+                    // Some other Unicode char beginning with `0xE2`.
+                    // Skip 3 bytes (macro skips 1 already, so skip 2 here), and continue searching.
+                    // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
+                    // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
+                    pos = unsafe { pos.add(2) };
+                    true
+                } else {
+                    // Regular line break.
+                    // No need to look for more line breaks, so switch to faster search just for `*/`.
                     self.token.set_is_on_new_line(true);
-                    // SAFETY: The matching CR or LF is present and is ASCII.
+                    // SAFETY: Regular line breaks are ASCII, so skipping 1 byte is a UTF-8 char boundary.
                     let after_line_break = unsafe { pos.add(1) };
                     return self.skip_multi_line_comment_after_line_break(after_line_break);
                 }
-            }
-        }
+            },
+            handle_eof: {
+                self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range()));
+                return Kind::Eof;
+            },
+        };
+
         self.trivia_builder.add_block_comment(
             self.token.start(),
             self.offset(),
@@ -236,53 +239,5 @@ impl<'a, C: Config> Lexer<'a, C> {
             self.consume_char();
         }
         Kind::HashbangComment
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::find_comment_special;
-
-    #[test]
-    fn swar_comment_search_matches_scalar() {
-        fn check<const BLOCK: bool>() {
-            let expected = |bytes: &[u8]| {
-                bytes
-                    .iter()
-                    .position(|&b| matches!(b, b'\r' | b'\n' | 0xE2) || (BLOCK && b == b'*'))
-            };
-            for len in 0..=33 {
-                let mut bytes = vec![b'x'; len];
-                for index in 0..len {
-                    for byte in 0..=u8::MAX {
-                        bytes[index] = byte;
-                        assert_eq!(find_comment_special::<BLOCK>(&bytes), expected(&bytes));
-                    }
-                    bytes[index] = b'x';
-                }
-            }
-            // Borrow propagation may mark a byte after the actual match, but must
-            // never change the position of the first match.
-            for special in [b'\r', b'\n', 0xE2, b'*'] {
-                let bytes = [b'x', b'x', special, special ^ 1, b'x', b'x', b'x', b'x'];
-                assert_eq!(find_comment_special::<BLOCK>(&bytes), expected(&bytes));
-            }
-            let mut seed = 0x1234_5678_u32;
-            for len in 0..=96 {
-                for _ in 0..32 {
-                    let bytes: Vec<_> = std::iter::repeat_with(|| {
-                        seed ^= seed << 13;
-                        seed ^= seed >> 17;
-                        seed ^= seed << 5;
-                        seed.to_le_bytes()[0]
-                    })
-                    .take(len)
-                    .collect();
-                    assert_eq!(find_comment_special::<BLOCK>(&bytes), expected(&bytes));
-                }
-            }
-        }
-        check::<false>();
-        check::<true>();
     }
 }

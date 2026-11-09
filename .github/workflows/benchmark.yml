@@ -28,11 +28,11 @@ jobs:
           MODE: ${{ matrix.mode }}
         run: |
           set -euo pipefail
-          git fetch --depth 1 origin 6611cf9826e5162dbae49c4fb1e7a2a415a182ab c0125dae5f612503c186f79fa97261e9ac93dd19
+          git fetch --depth 1 origin 6611cf9826e5162dbae49c4fb1e7a2a415a182ab c0125dae5f612503c186f79fa97261e9ac93dd19 a44558ff1a573480d316da21f9be90ce021d9c26
           output=analysis
           if [ "$MODE" = walltime ]; then output=walltime; fi
           for variant in baseline line block; do
-            source_ref=HEAD
+            source_ref=a44558ff1a573480d316da21f9be90ce021d9c26
             if [ "$variant" = baseline ]; then source_ref=6611cf9826e5162dbae49c4fb1e7a2a415a182ab; fi
             if [ "$variant" = line ]; then source_ref=c0125dae5f612503c186f79fa97261e9ac93dd19; fi
             git restore --source="$source_ref" crates/oxc_parser/src/lexer/comment.rs
