@@ -17,6 +17,7 @@ use crate::react_compiler_hir::{
     AliasingEffect, BlockId, FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue,
     ParamPattern, Place, PrimitiveValue, Terminal, Type, TypeId, UnaryOperator, is_use_ref_type,
 };
+use oxc_ast::ast::LogicalOperator;
 use oxc_span::Span;
 
 // --- RefId ---
@@ -393,6 +394,42 @@ fn guard_check(errors: &mut Vec<OxcDiagnostic>, operand: &Place, env: &Env) {
     }
 }
 
+/// `ref.current ??= init` (and the handwritten `ref.current ?? (ref.current = init)`)
+/// lowers as a nullish `Logical` whose alternate stores the same ref. That is the
+/// same lazy initialization the `if (ref.current == null)` guard already allows.
+///
+/// Returns the ref id when `block` is that logical's test block (the `Branch` on
+/// the loaded `current`) and the alternate writes the same ref.
+fn nullish_lazy_ref_init_ref_id(
+    func: &HirFunction,
+    coalesce_test_blocks: &FxHashSet<BlockId>,
+    block_id: BlockId,
+    terminal: &Terminal<'_>,
+    ref_env: &Env,
+) -> Option<RefId> {
+    if !coalesce_test_blocks.contains(&block_id) {
+        return None;
+    }
+    let Terminal::Branch { test, alternate, .. } = terminal else {
+        return None;
+    };
+    let RefAccessType::RefValue { ref_id: Some(ref_id), .. } = ref_env.get(test.identifier)? else {
+        return None;
+    };
+    let alternate_block = func.body.blocks.get(alternate)?;
+    let stores_same_ref = alternate_block.instructions.iter().any(|&instr_id| {
+        let instr = &func.instructions[instr_id.index()];
+        let InstructionValue::PropertyStore { object, .. } = &instr.value else {
+            return false;
+        };
+        matches!(
+            ref_env.get(object.identifier),
+            Some(RefAccessType::Ref { ref_id: store_ref }) if store_ref == ref_id
+        )
+    });
+    if stores_same_ref { Some(*ref_id) } else { None }
+}
+
 #[derive(Debug, PartialEq, Eq, Hash)]
 struct DiagnosticLabelKey<'a> {
     label: Option<&'a str>,
@@ -541,6 +578,18 @@ fn validate_no_ref_access_in_render_impl(
             }
         }
     }
+
+    // Test blocks of `??` logicals. `ref.current ??= init` is one of these whose
+    // alternate stores the ref; see [`nullish_lazy_ref_init_ref_id`].
+    let coalesce_test_blocks: FxHashSet<BlockId> = func
+        .body
+        .blocks
+        .values()
+        .filter_map(|block| match &block.terminal {
+            Terminal::Logical { operator: LogicalOperator::Coalesce, test, .. } => Some(*test),
+            _ => None,
+        })
+        .collect();
 
     // Fixed-point iteration (up to 10 iterations)
     for iteration in 0..10 {
@@ -1088,8 +1137,33 @@ fn validate_no_ref_access_in_render_impl(
                 safe_blocks.push((*fallthrough, *ref_id));
             }
 
+            // `ref.current ?? (ref.current = init)` / `ref.current ??= init`:
+            // the branch test is the nullish check, not a render read, and the
+            // alternate store is the lazy initialization. Extend the same
+            // safe-block window the `if (ref.current == null)` guard uses.
+            // Registered here (the test block) rather than on the `Logical`
+            // terminal so the window starts after the shared fallthrough block,
+            // which is reserved — and therefore visited — before this block.
+            let lazy_ref_init = nullish_lazy_ref_init_ref_id(
+                func,
+                &coalesce_test_blocks,
+                block.id,
+                &block.terminal,
+                ref_env,
+            );
+            if let (Some(ref_id), Terminal::Branch { fallthrough, .. }) =
+                (lazy_ref_init, &block.terminal)
+                && !safe_blocks.iter().any(|(_, r)| r == &ref_id)
+            {
+                safe_blocks.push((*fallthrough, ref_id));
+            }
+
             // Process terminal operands
             for operand in &each_terminal_operand(&block.terminal) {
+                if lazy_ref_init.is_some() && matches!(&block.terminal, Terminal::Branch { .. }) {
+                    // Nullish test of a lazy ref initialization; not an access.
+                    continue;
+                }
                 if !matches!(&block.terminal, Terminal::Return { .. }) {
                     validate_no_ref_value_access(errors, ref_env, operand);
                     if !matches!(&block.terminal, Terminal::If { .. }) {
