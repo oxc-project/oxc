@@ -49,7 +49,7 @@ impl<'a> SveltePartialLoader<'a> {
         let script_end_finder = Finder::new(SCRIPT_END);
         *pointer = self.find_script_start(*pointer, context)?;
 
-        let end = find_markup_tag_end(self.source_text, *pointer, context.is_root())?;
+        let end = find_markup_tag_end(self.source_text, *pointer, context.is_root())?.end;
         let offset = end - *pointer - 1;
 
         let content = &self.source_text[*pointer..*pointer + offset];
@@ -110,14 +110,13 @@ impl<'a> SveltePartialLoader<'a> {
                 let name = &tag[..name_end];
                 let closing = rest.starts_with("</");
                 let static_text = matches!(name, "script" | "style") && context.is_root();
-                let Some(end) = find_markup_tag_end(self.source_text, pointer + 1, static_text)
+                let Some(tag_end) = find_markup_tag_end(self.source_text, pointer + 1, static_text)
                 else {
                     pointer += 1;
                     continue;
                 };
-                let self_closing = self.source_text[pointer..end - 1]
-                    .trim_end_matches(is_svelte_whitespace)
-                    .ends_with('/');
+                let end = tag_end.end;
+                let self_closing = tag_end.self_closing;
                 if !closing && name == "script" && !self_closing {
                     return Some(pointer + SCRIPT_START.len());
                 }
@@ -290,24 +289,88 @@ fn skip_textarea(source_text: &str, mut pointer: usize) -> Option<usize> {
     None
 }
 
-fn find_markup_tag_end(source_text: &str, mut pointer: usize, static_text: bool) -> Option<usize> {
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum AttributePosition {
+    Name,
+    BeforeValue,
+    UnquotedValue,
+}
+
+struct MarkupTagEnd {
+    end: usize,
+    self_closing: bool,
+}
+
+fn find_markup_tag_end(
+    source_text: &str,
+    mut pointer: usize,
+    static_text: bool,
+) -> Option<MarkupTagEnd> {
     let bytes = source_text.as_bytes();
     let mut quote = None;
+    let mut self_closing = false;
+    let mut position = AttributePosition::Name;
     while let Some(&byte) = bytes.get(pointer) {
+        let character = source_text[pointer..].chars().next()?;
+        if quote.is_none() {
+            if !static_text && position == AttributePosition::Name {
+                let rest = &source_text[pointer..];
+                if let Some(comment) = rest.strip_prefix("/*") {
+                    pointer += comment.find("*/")? + 4;
+                    continue;
+                }
+                if let Some(comment) = rest.strip_prefix("//") {
+                    pointer += comment.find('\n')? + 2;
+                    continue;
+                }
+            }
+            if is_svelte_whitespace(character) {
+                if position == AttributePosition::UnquotedValue {
+                    position = AttributePosition::Name;
+                }
+                pointer += character.len_utf8();
+                continue;
+            }
+        }
         if byte == b'{'
             && (!static_text || quote.is_none())
             && let Some(end) = skip_attribute_expression(source_text, pointer)
         {
+            if quote.is_none() && position == AttributePosition::BeforeValue {
+                position = AttributePosition::UnquotedValue;
+            }
+            self_closing = false;
             pointer = end;
             continue;
         }
+        let slash_closes = quote.is_none()
+            && byte == b'/'
+            && (position == AttributePosition::Name
+                || !static_text
+                    && position == AttributePosition::UnquotedValue
+                    && bytes.get(pointer + 1) == Some(&b'>'));
         match byte {
-            b'\'' | b'"' if quote == Some(byte) => quote = None,
-            b'\'' | b'"' if quote.is_none() => quote = Some(byte),
-            b'>' if quote.is_none() => return Some(pointer + 1),
+            b'\'' | b'"' if quote == Some(byte) => {
+                quote = None;
+                position = AttributePosition::Name;
+            }
+            b'\'' | b'"' if quote.is_none() => {
+                quote = Some(byte);
+                position = AttributePosition::Name;
+            }
+            b'>' if quote.is_none() => {
+                return Some(MarkupTagEnd { end: pointer + 1, self_closing });
+            }
+            b'=' if quote.is_none() && position == AttributePosition::Name => {
+                position = AttributePosition::BeforeValue;
+            }
+            _ if quote.is_none() && position == AttributePosition::BeforeValue => {
+                position = AttributePosition::UnquotedValue;
+            }
             _ => {}
         }
-        pointer += 1;
+        self_closing = slash_closes;
+        pointer += character.len_utf8();
     }
     None
 }
@@ -460,6 +523,9 @@ fn skip_attribute_expression(source_text: &str, pointer: usize) -> Option<usize>
     let expression = source_text[pointer + 1..].trim_start_matches(is_svelte_whitespace);
     let expression = expression
         .strip_prefix("...")
+        .or_else(|| {
+            expression.strip_prefix("@attach").filter(|rest| rest.starts_with(is_svelte_whitespace))
+        })
         .unwrap_or(expression)
         .trim_start_matches(is_svelte_whitespace);
     skip_expression(source_text, source_text.len() - expression.len())
@@ -701,6 +767,9 @@ fn validate_expression(
         match Parser::new(&allocator, input, SourceType::ts()).parse_expression() {
             Ok(_) => return true,
             Err(mut diagnostics) => {
+                if validate_expression(source, "async () => (", ")", offset, candidates) {
+                    return true;
+                }
                 diagnostics
                     .extend(Parser::new(&allocator, input, SourceType::ts()).parse().diagnostics);
                 diagnostics
@@ -1115,6 +1184,89 @@ let {json}: {json: string} = $props();
             assert_eq!(sources[0].source_text, "debugger;");
         }
     }
+    #[test]
+    fn test_script_after_awaited_markup_expressions() {
+        for markup in [
+            "{await Promise.resolve('<textarea>')}",
+            "{@html await Promise.resolve('<textarea>')}",
+            "{#if await Promise.resolve('<textarea>')}<p>hi</p>{/if}",
+            "{#each await Promise.resolve(['<textarea>']) as value}<p>{value}</p>{/each}",
+            "<div title={await Promise.resolve('><textarea>')}></div>",
+            "<div title=\"before {await Promise.resolve('><textarea>')} after\"></div>",
+        ] {
+            let source_text = format!("{markup}<script>debugger;</script>");
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "debugger;", "{source_text}");
+        }
+    }
+
+    #[test]
+    fn test_script_after_attachment_attributes() {
+        for attributes in [
+            "{@attach fn(`><textarea>`)}",
+            "{@attach fn({value: '><textarea>'})}",
+            "{@attach\u{feff}fn(`><textarea>`)}",
+            "{@attach /* } > <textarea> */ fn(`><textarea>`)}",
+            "title=\"value\" {@attach fn(`><textarea>`)} data-value={42}",
+        ] {
+            let source_text = format!("<div {attributes}></div><script>debugger;</script>");
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "debugger;", "{source_text}");
+        }
+    }
+
+    #[test]
+    fn test_static_script_attribute_slash_is_not_self_closing() {
+        for attributes in ["data-x=foo/", "data-x=foo/ ", "data-x=/", "data-x=//literal/"] {
+            let source_text = format!("<script {attributes}>debugger;</script>");
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "debugger;", "{source_text}");
+        }
+    }
+
+    #[test]
+    fn test_attribute_comment_ending_is_not_self_closing() {
+        for attributes in ["/* comment */", "title=\"value\" /* ' */", "// comment /\n"] {
+            let source_text = format!(
+                "<svelte:head><script {attributes}>nested();</script></svelte:head><script>component();</script>"
+            );
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 2, "{source_text}");
+            assert_eq!(sources[0].source_text, "nested();", "{source_text}");
+            assert_eq!(sources[1].source_text, "component();", "{source_text}");
+        }
+    }
+
+    #[test]
+    fn test_script_after_attribute_comments() {
+        for attributes in [
+            "/* '<textarea> */",
+            "// '<textarea>\n",
+            "// '<textarea>\r\n",
+            "title=\"value\"/* '><textarea> */ data-value={42}",
+            "{...props}/* '><textarea> */",
+            "/* '><textarea> */ title=\"value\" // '><textarea>\n data-value={42}",
+            "title=\"/* '><textarea> */\"",
+            "title=\"// '><textarea>\"",
+            "data-url=https://example.com/path",
+            "data-value=foo/*bar*/suffix",
+            "data-value = //literal",
+            "data-value = /*literal*/suffix",
+            "data-value={value}//literal",
+            "data-value={value}/*literal*/suffix",
+            "data-value=日/*literal*/suffix",
+            "data-url=https://example.com/path /* '><textarea> */",
+        ] {
+            let source_text = format!("<div {attributes}></div><script>debugger;</script>");
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "debugger;", "{source_text}");
+        }
+    }
+
     #[test]
     fn test_script_after_declaration_tags() {
         for markup in [
