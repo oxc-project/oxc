@@ -1403,6 +1403,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // suffixes directly, keeping pure annotations inside the postfix update.
             let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
             let primary = self.parse_plain_identifier_expression();
+            if self.at_expression_delimiter() {
+                return primary;
+            }
             self.parse_primary_expression_rest(lhs_start, primary, pure_comments)
         } else if self.ctx.has_in() && kind == Kind::PrivateIdentifier {
             // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
@@ -1423,6 +1426,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return lhs;
         }
         self.parse_binary_expression_rest(lhs_start, lhs, lhs_parenthesized, lhs_precedence)
+    }
+
+    #[inline]
+    fn at_expression_delimiter(&self) -> bool {
+        matches!(
+            self.cur_kind(),
+            Kind::Comma
+                | Kind::RParen
+                | Kind::RBrack
+                | Kind::RCurly
+                | Kind::Semicolon
+                | Kind::Colon
+        )
     }
 
     #[expect(clippy::inline_always)]
@@ -1678,15 +1694,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 _ => self.parse_literal_expression(),
             };
             // The leaf is complete when the next token is an expression delimiter.
-            if matches!(
-                self.cur_kind(),
-                Kind::Comma
-                    | Kind::RParen
-                    | Kind::RBrack
-                    | Kind::RCurly
-                    | Kind::Semicolon
-                    | Kind::Colon
-            ) {
+            if self.at_expression_delimiter() {
                 return primary;
             }
             let lhs = self.parse_primary_expression_rest(start, primary, pure_comments);
