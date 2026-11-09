@@ -93,6 +93,7 @@ declare_oxc_lint!(
     NoReservedProps,
     vue,
     correctness,
+    recommended,
     config = NoReservedProps,
     version = "1.69.0",
     short_description = "Disallow reserved attribute names (e.g. `key`, `ref`) from being used as prop names.",

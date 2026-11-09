@@ -4,7 +4,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         CallExpression, ExportDefaultDeclarationKind, Expression, IdentifierReference,
-        ObjectExpression, ObjectProperty, ObjectPropertyKind, TSSignature, TSType, TSTypeName,
+        ObjectPropertyKind, TSSignature, TSType, TSTypeName,
     },
 };
 use oxc_span::{GetSpan, Span};
@@ -337,18 +337,6 @@ pub fn is_vue_next_tick_import(ident: &IdentifierReference, ctx: &LintContext<'_
     is_import_symbol(ident, "vue", "nextTick", ctx)
 }
 
-/// Finds the first `ObjectProperty` whose static key matches `name` in the given object.
-/// `SpreadElement` entries are skipped.
-pub fn find_property<'a, 'b>(
-    obj: &'b ObjectExpression<'a>,
-    name: &str,
-) -> Option<&'b ObjectProperty<'a>> {
-    obj.properties.iter().find_map(|prop| {
-        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else { return None };
-        obj_prop.key.is_specific_static_name(name).then_some(obj_prop.as_ref())
-    })
-}
-
 /// Walks a `defineProps<T>()` type argument and invokes `f` for every member
 /// signature it contains, mirroring eslint-plugin-vue's `flattenTypeNodes`:
 /// unions, intersections and `interface`/`type` references are resolved
@@ -470,7 +458,7 @@ pub fn get_computed_getter_context(
                 {
                     let vue_options = nodes.parent_node(great.id());
                     if is_vue_component_options_object(vue_options, ctx) {
-                        let key = prop.key.static_name().map(|s| s.to_string());
+                        let key = prop.key.static_name().map(|s| s.display().to_string());
                         return Some(ComputedContext::OptionsApi(key));
                     }
                 }
@@ -488,7 +476,7 @@ pub fn get_computed_getter_context(
                     {
                         let vue_options = nodes.parent_node(computed_prop_node.id());
                         if is_vue_component_options_object(vue_options, ctx) {
-                            let key = key_prop.key.static_name().map(|s| s.to_string());
+                            let key = key_prop.key.static_name().map(|s| s.display().to_string());
                             return Some(ComputedContext::OptionsApi(key));
                         }
                     }

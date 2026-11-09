@@ -5,7 +5,7 @@
 //! the JS-specific operations are exposed via the [`JsFormatter`] type alias and an
 //! extension trait that is blanket-implemented for the alias.
 
-use oxc_formatter_core::{Buffer, Format, FormatElements, Formatter, GroupId, SourceText};
+use oxc_formatter_core::{Format, FormatElements, Formatter, GroupId, SourceText};
 use oxc_span::{GetSpan, Span};
 
 use crate::source_text::SourceTextExt as _;

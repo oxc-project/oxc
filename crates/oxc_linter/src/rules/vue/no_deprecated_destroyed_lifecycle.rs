@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression,
+        CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression, ObjectProperty,
         ObjectPropertyKind, PropertyKey,
     },
 };
@@ -63,6 +63,7 @@ declare_oxc_lint!(
     NoDeprecatedDestroyedLifecycle,
     vue,
     correctness,
+    recommended,
     fix,
     version = "1.35.0",
     short_description = "Disallow using deprecated `destroyed` and `beforeDestroy` lifecycle hooks in Vue.js 3.0.0+.",
@@ -184,9 +185,7 @@ enum KeyType {
 }
 
 /// Get the property key name, span, whether it's a shorthand property, and key type
-fn get_property_key_info(
-    prop: &oxc_ast::ast::ObjectProperty,
-) -> Option<(String, Span, bool, KeyType)> {
+fn get_property_key_info(prop: &ObjectProperty) -> Option<(String, Span, bool, KeyType)> {
     match &prop.key {
         PropertyKey::StaticIdentifier(ident) => {
             Some((ident.name.to_string(), ident.span, prop.shorthand, KeyType::Identifier))

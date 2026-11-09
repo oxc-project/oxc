@@ -209,11 +209,9 @@ impl ConsistentGenericConstructors {
         let fixer = fixer.for_multifix();
         let source_text = ctx.source_text();
 
-        // Get the type arguments text
         let type_params_text =
             &source_text[type_params.span.start as usize..type_params.span.end as usize];
 
-        // Find the position where the binding pattern ends (before the colon)
         let binding_end = Self::find_binding_end_position(node);
 
         // Find the colon position by searching only between the binding end and type annotation.
@@ -292,7 +290,6 @@ impl ConsistentGenericConstructors {
         let fixer = fixer.for_multifix();
         let source_text = ctx.source_text();
 
-        // Get the callee name (constructor name)
         let Expression::Identifier(callee_ident) = &new_expression.callee else {
             return fixer.noop();
         };
@@ -305,7 +302,6 @@ impl ConsistentGenericConstructors {
         // Build the type annotation to insert (no comments between name and type args)
         let type_annotation = format!(": {callee_name}{type_args_text}");
 
-        // Find the position to insert the type annotation (after the binding pattern/identifier)
         let Some(insert_pos) = Self::find_type_annotation_insert_position(node, ctx) else {
             return fixer.noop();
         };

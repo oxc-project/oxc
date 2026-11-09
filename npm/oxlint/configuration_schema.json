@@ -57,7 +57,7 @@
       "markdownDescription": "Globs to ignore during linting. Patterns use gitignore-style matching,\nrooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..`\nare rejected as a configuration error."
     },
     "jsPlugins": {
-      "description": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```",
+      "description": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```",
       "anyOf": [
         {
           "type": "null"
@@ -70,7 +70,7 @@
           "uniqueItems": true
         }
       ],
-      "markdownDescription": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```"
+      "markdownDescription": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```"
     },
     "options": {
       "description": "Oxlint config options.",
@@ -989,6 +989,18 @@
       },
       "additionalProperties": false
     },
+    "AwaitThenableConfig": {
+      "type": "object",
+      "properties": {
+        "allowMixedPromiseArrays": {
+          "description": "Allow Promise aggregators such as `Promise.all` to receive mixed arrays or\niterables containing at least one potentially Promise-like value.\nInputs containing only synchronous values are still reported.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Allow Promise aggregators such as `Promise.all` to receive mixed arrays or\niterables containing at least one potentially Promise-like value.\nInputs containing only synchronous values are still reported."
+        }
+      },
+      "additionalProperties": false
+    },
     "BanConfigValue": {
       "description": "Represents the different ways a ban config can be specified in JSON.\nCan be:\n- `true` - ban with default message\n- A string - ban with custom message\n- An object with `message` and optional `fixWith` and `suggest`",
       "anyOf": [
@@ -1160,6 +1172,26 @@
         "type": "string"
       },
       "markdownDescription": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`."
+    },
+    "CapitalizedCallsConfig": {
+      "type": "object",
+      "properties": {
+        "allow": {
+          "description": "Exact names of capitalized functions that may be called directly.\nForwarded to the React Compiler's `validateNoCapitalizedCalls`\nenvironment option.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Exact names of capitalized functions that may be called directly.\nForwarded to the React Compiler's `validateNoCapitalizedCalls`\nenvironment option."
+        },
+        "allowPattern": {
+          "description": "A regex pattern; capitalized functions whose name matches may be called\ndirectly, checked alongside `allow`. Useful when a codebase has a\nnaming convention for capitalized non-component factories, such as\ngenerated event or schema builders (e.g. `\"Event$\"`).",
+          "type": "string",
+          "markdownDescription": "A regex pattern; capitalized functions whose name matches may be called\ndirectly, checked alongside `allow`. Useful when a codebase has a\nnaming convention for capitalized non-component factories, such as\ngenerated event or schema builders (e.g. `\"Event$\"`)."
+        }
+      },
+      "additionalProperties": false
     },
     "CapitalizedCommentsOptions": {
       "description": "Configuration for the capitalized-comments rule.\n\nThe first element specifies whether comments should `\"always\"` or `\"never\"`\nbegin with a capital letter. The second element is an optional object\ncontaining additional options.",
@@ -6568,7 +6600,24 @@
           ]
         },
         "react/capitalized-calls": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/CapitalizedCallsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "react/checked-requires-onchange-or-readonly": {
           "anyOf": [
@@ -7556,7 +7605,24 @@
           ]
         },
         "typescript/await-thenable": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AwaitThenableConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "typescript/ban-ts-comment": {
           "anyOf": [
@@ -8340,6 +8406,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/no-unsafe-declaration-merging": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "typescript/no-unsafe-enum-assignment": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/no-unsafe-enum-comparison": {
@@ -15280,6 +15349,12 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`)."
+        },
+        "ignoreDeclarationMerge": {
+          "description": "When `true`, automatically merged declarations like namespace, class, etc. will be\nignored when checking for redeclarations.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "When `true`, automatically merged declarations like namespace, class, etc. will be\nignored when checking for redeclarations."
         }
       },
       "additionalProperties": false

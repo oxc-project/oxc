@@ -6,7 +6,6 @@ use oxlint::{
 };
 
 fn main() -> CliRunResult {
-    // Parse command line arguments from std::env::args()
     let command = lint_command().run();
 
     // Both LSP and CLI use `tracing` for logging

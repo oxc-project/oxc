@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, collections::hash_map::Entry};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 use smallvec::SmallVec;
@@ -140,13 +140,17 @@ impl Codegen<'_> {
         kind: AnnotationKind,
         newline_after: bool,
     ) {
+        // `entry` probes the map once, and the comment is moved out of it rather than cloned.
+        // `entry` reserves capacity when the key is absent, which allocates if the map is empty,
+        // so check for that first. `annotation_comments` being empty is a common case.
         if self.source_text.is_some()
-            && let Some(comment) = self.annotation_comments.get(&start).cloned()
-            && kind.matches(&comment)
-            // Inline line comments would swallow the rest of the line.
-            && (!comment.is_line() || newline_after)
+            && !self.annotation_comments.is_empty()
+            && let Entry::Occupied(entry) = self.annotation_comments.entry(start)
+            && kind.matches(entry.get())
+            // Inline line comments would swallow the rest of the line
+            && (!entry.get().is_line() || newline_after)
         {
-            self.annotation_comments.remove(&start);
+            let comment = entry.remove();
             self.print_comment(&comment);
             if newline_after {
                 self.print_hard_newline();

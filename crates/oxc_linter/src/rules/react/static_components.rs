@@ -46,6 +46,7 @@ declare_react_compiler_lint!(
     StaticComponents,
     react,
     correctness,
+    recommended,
     version = "1.79.0",
     short_description = "Validates that components are static, not recreated on every render.",
 );

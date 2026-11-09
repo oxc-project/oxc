@@ -57,3 +57,24 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────
    ╰────
   help: Did you mean to use a template string literal?
+
+  ⚠ eslint(no-template-curly-in-string): Template placeholders will not interpolate in regular strings
+   ╭─[no_template_curly_in_string.tsx:1:1]
+ 1 │ '\uD800 ${name}'
+   · ────────────────
+   ╰────
+  help: Did you mean to use a template string literal?
+
+  ⚠ eslint(no-template-curly-in-string): Template placeholders will not interpolate in regular strings
+   ╭─[no_template_curly_in_string.tsx:1:1]
+ 1 │ '${\uDC00}'
+   · ───────────
+   ╰────
+  help: Did you mean to use a template string literal?
+
+  ⚠ eslint(no-template-curly-in-string): Template placeholders will not interpolate in regular strings
+   ╭─[no_template_curly_in_string.tsx:1:1]
+ 1 │ '${name} \uD800'
+   · ────────────────
+   ╰────
+  help: Did you mean to use a template string literal?

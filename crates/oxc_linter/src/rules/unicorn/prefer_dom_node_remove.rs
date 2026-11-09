@@ -44,6 +44,7 @@ declare_oxc_lint!(
     PreferDomNodeRemove,
     unicorn,
     pedantic,
+    recommended,
     pending,
     version = "0.0.18",
     short_description = "Prefers the use of `child.remove()` over `parentNode.removeChild(child)`.",

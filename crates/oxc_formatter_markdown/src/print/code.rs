@@ -5,8 +5,7 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::ArenaVec;
 use oxc_formatter_core::{
-    Buffer, BufferExtensions, DispatchRequest, Document, FormatElement, FormatOptions, InputKind,
-    PrintWidth, arena_cow_str,
+    DispatchRequest, Document, FormatElement, FormatOptions, InputKind, PrintWidth, arena_cow_str,
     builders::{
         FormatOnce, exact_line_breaks, hard_line_break, mark_as_root, space_align, text, token,
     },
@@ -89,7 +88,7 @@ pub fn write_code_block<'a>(code: &'a CodeBlock<'a>, f: &mut MarkdownFormatter<'
 ///
 /// Sent to every child language as `DispatchRequest::parent_context`;
 /// the host translates it into the pair's data once the child language is known
-/// (e.g. JS's `JsEmbeddedIn`: a lone JSX element prints without its semicolon).
+/// (e.g. JS's `JsRoot::Program`: a lone JSX element prints without its semicolon).
 pub struct XxxInMarkdownCodeBlock {
     /// This host is embedded in a JS template literal,
     /// so a Markdown child prints `~` fences too.

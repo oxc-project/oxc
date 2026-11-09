@@ -1,3 +1,5 @@
+use oxc_simd::{DynCpu, test_cpus};
+
 use crate::{LexOptions, Lexer, PAD, error::DiagCode, token::TokenKind};
 
 /// Minimal version of `SourceType` just for tests.
@@ -43,16 +45,21 @@ impl FileType {
 // Can reference `ScriptJS` directly, instead of `FileType::ScriptJS`.
 use FileType::*;
 
+/// Lex `code` as `file_type`, with walk settings `full_walk_only` and `no_run_rules`,
+/// and CPU feature set `cpu`.
+///
+/// Returns the [`Lexer`] and the token count.
 fn lex(
     code: &str,
     file_type: FileType,
     full_walk_only: bool,
     no_run_rules: bool,
+    cpu: DynCpu,
 ) -> (Lexer, usize) {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len();
     buf.resize(n + PAD, 0);
-    let mut lx = Lexer::new();
+    let mut lx = Lexer::new_with_cpu(cpu);
     lx.lanes.disambiguate.walks.full_walk_only = full_walk_only;
     lx.lanes.disambiguate.walks.no_run_rules = no_run_rules;
     let count = lx.lex(&buf, n, file_type.options());
@@ -61,10 +68,10 @@ fn lex(
 
 /// Lex with the bounded walks and shortcuts, then with the full walk alone: both must agree.
 #[track_caller]
-fn lex_checked(code: &str, file_type: FileType) -> (Lexer, usize) {
-    let (lx, count) = lex(code, file_type, false, false);
-    let (walk, walk_count) = lex(code, file_type, false, true);
-    let (full, full_count) = lex(code, file_type, true, false);
+fn lex_checked(code: &str, file_type: FileType, cpu: DynCpu) -> (Lexer, usize) {
+    let (lx, count) = lex(code, file_type, false, false, cpu);
+    let (walk, walk_count) = lex(code, file_type, false, true, cpu);
+    let (full, full_count) = lex(code, file_type, true, false, cpu);
     let tokens = |lx: &Lexer, count: usize| {
         let kinds = lx.kinds()[..count].iter().zip(&lx.spans).map(|(k, s)| (*k, s.start, s.end));
         let diags = lx.lanes.diags.iter().map(|d| (d.code, d.off, d.len));
@@ -77,16 +84,16 @@ fn lex_checked(code: &str, file_type: FileType) -> (Lexer, usize) {
 }
 
 #[track_caller]
-pub(super) fn kinds_of(code: &str, file_type: FileType) -> Vec<TokenKind> {
-    let (lx, count) = lex_checked(code, file_type);
+pub(super) fn kinds_of(code: &str, file_type: FileType, cpu: DynCpu) -> Vec<TokenKind> {
+    let (lx, count) = lex_checked(code, file_type, cpu);
     lx.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
 }
 
 /// Assert that the token stream for `code` contains at least one `RegExp` token
 /// and does not contain any `Slash` or `SlashEq` tokens.
 #[track_caller]
-pub(super) fn regex(code: &str, file_type: FileType) {
-    let ks = kinds_of(code, file_type);
+pub(super) fn regex(code: &str, file_type: FileType, cpu: DynCpu) {
+    let ks = kinds_of(code, file_type, cpu);
     assert!(
         !ks.iter().any(|kind| matches!(kind, TokenKind::Slash | TokenKind::SlashEq)),
         "expected no division in {code:?}: kinds {ks:?}"
@@ -97,31 +104,31 @@ pub(super) fn regex(code: &str, file_type: FileType) {
 /// Assert that the token stream for `code` contains at least one `Slash` token
 /// and does not contain any `RegExp` tokens.
 #[track_caller]
-pub(super) fn division(code: &str, file_type: FileType) {
-    let ks = kinds_of(code, file_type);
+pub(super) fn division(code: &str, file_type: FileType, cpu: DynCpu) {
+    let ks = kinds_of(code, file_type, cpu);
     assert!(!ks.contains(&TokenKind::RegExp), "expected division in {code:?}: kinds {ks:?}");
     assert!(ks.contains(&TokenKind::Slash), "expected a `/` in {code:?}: kinds {ks:?}");
 }
 
-#[test]
-fn long_walks_resolve_exactly() {
+#[test_cpus]
+fn long_walks_resolve_exactly(cpu: DynCpu) {
     let spine = ["T"; 300].join(" & ");
-    regex(&format!("let x: {spine}\n/re/g.exec(s);"), ScriptTS);
+    regex(&format!("let x: {spine}\n/re/g.exec(s);"), ScriptTS, cpu);
     let body: String = (0..400).map(|i| format!("  a{i}: T;\n")).collect();
-    regex(&format!("let x: {{\n{body}}} & U\n/re/g.exec(s);"), ScriptTS);
+    regex(&format!("let x: {{\n{body}}} & U\n/re/g.exec(s);"), ScriptTS, cpu);
     let args: String = (0..3000).map(|i| format!("a{i}, ")).collect();
-    division(&format!("f({args}0) / 2"), ScriptJS);
-    regex(&format!("if ({args}0) /re/.test(s)"), ScriptJS);
+    division(&format!("f({args}0) / 2"), ScriptJS, cpu);
+    regex(&format!("if ({args}0) /re/.test(s)"), ScriptJS, cpu);
     let deep = 2000usize;
     let nested = format!("{}x{}", "[".repeat(deep), "]".repeat(deep));
-    division(&format!("y = {nested} / 2"), ScriptJS);
+    division(&format!("y = {nested} / 2"), ScriptJS, cpu);
     let blocks = format!("{}x\n{}", "{".repeat(deep), "}\n/a/\n".repeat(deep));
-    let ks = kinds_of(&blocks, ScriptJS);
+    let ks = kinds_of(&blocks, ScriptJS, cpu);
     assert_eq!(ks.iter().filter(|k| **k == TokenKind::RegExp).count(), deep, "{}", ks.len());
     let heritage: String = (0..100).map(|i| format!("I{i}, ")).collect();
-    division(&format!("x = class extends A implements {heritage}J {{}} / 2"), ScriptTS);
+    division(&format!("x = class extends A implements {heritage}J {{}} / 2"), ScriptTS, cpu);
     let members: String = (0..2000).map(|i| format!("  m{i}(): Foo<Bar<T>> {{}}\n")).collect();
-    let ks = kinds_of(&format!("class C {{\n{members}  m<T = A<B>>() {{}}\n}}"), ScriptTS);
+    let ks = kinds_of(&format!("class C {{\n{members}  m<T = A<B>>() {{}}\n}}"), ScriptTS, cpu);
     assert!(
         !ks.iter().any(|k| matches!(k, TokenKind::RShift | TokenKind::URShift)),
         "{}",
@@ -129,9 +136,9 @@ fn long_walks_resolve_exactly() {
     );
 }
 
-#[test]
-fn jsx_tag_name_after_comment() {
-    let tsx = |code: &str| kinds_of(code, ScriptTSX);
+#[test_cpus]
+fn jsx_tag_name_after_comment(cpu: DynCpu) {
+    let tsx = |code: &str| kinds_of(code, ScriptTSX, cpu);
     for code in [
         "var x = </**/div></div>;",
         "var x = < /*a*/ ></ /*b*/>;",
@@ -152,21 +159,21 @@ fn jsx_tag_name_after_comment() {
     assert!(!ks.contains(&TokenKind::JsxLt), "comparison must stay relational: {ks:?}");
 }
 
-#[test]
-fn unicode_zero_width_space_is_whitespace() {
-    let ks = kinds_of("x\u{200b}\ny", ScriptJS);
+#[test_cpus]
+fn unicode_zero_width_space_is_whitespace(cpu: DynCpu) {
+    let ks = kinds_of("x\u{200b}\ny", ScriptJS, cpu);
     assert_eq!(
         ks.iter().filter(|&&k| k == TokenKind::Ident).count(),
         2,
         "U+200B must separate tokens: {ks:?}"
     );
-    division("let a = 1;\u{200b}let b = 2 / 3;", ScriptJS);
+    division("let a = 1;\u{200b}let b = 2 / 3;", ScriptJS, cpu);
 }
 
-#[test]
-fn unicode_next_line_is_whitespace() {
-    division("var a = 1;\u{85}var b = 2 / 3;", ScriptJS);
-    let ks = kinds_of("var a = 1;\u{85}var b = 2;", ScriptJS);
+#[test_cpus]
+fn unicode_next_line_is_whitespace(cpu: DynCpu) {
+    division("var a = 1;\u{85}var b = 2 / 3;", ScriptJS, cpu);
+    let ks = kinds_of("var a = 1;\u{85}var b = 2;", ScriptJS, cpu);
     assert_eq!(
         ks.iter().filter(|&&k| k == TokenKind::KwVar).count(),
         2,
@@ -174,9 +181,9 @@ fn unicode_next_line_is_whitespace() {
     );
 }
 
-#[test]
-fn jsx_self_close_allows_whitespace() {
-    let jsx = |code: &str| kinds_of(code, ScriptJSX);
+#[test_cpus]
+fn jsx_self_close_allows_whitespace(cpu: DynCpu) {
+    let jsx = |code: &str| kinds_of(code, ScriptJSX, cpu);
     for code in [
         "const a = <N x=\"v\"/>;\nconst b = 1;",
         "const a = <N x=\"v\" / >;\nconst b = 1;",
@@ -195,8 +202,8 @@ fn jsx_self_close_allows_whitespace() {
 }
 
 #[track_caller]
-pub(super) fn diag_codes_of(code: &str, file_type: FileType) -> Vec<DiagCode> {
-    let (lx, _) = lex_checked(code, file_type);
+pub(super) fn diag_codes_of(code: &str, file_type: FileType, cpu: DynCpu) -> Vec<DiagCode> {
+    let (lx, _) = lex_checked(code, file_type, cpu);
     lx.lanes.diags.iter().map(|d| d.code).collect()
 }
 
@@ -205,22 +212,22 @@ pub(super) fn is_fused_gt(k: TokenKind) -> bool {
 }
 
 #[track_caller]
-pub(super) fn gt_run_fused(code: &str) {
-    let ks = kinds_of(code, ScriptTS);
+pub(super) fn gt_run_fused(code: &str, cpu: DynCpu) {
+    let ks = kinds_of(code, ScriptTS, cpu);
     assert!(ks.iter().any(|k| is_fused_gt(*k)), "{code:?} must fuse the `>` run: {ks:?}");
 }
 
 #[track_caller]
-pub(super) fn gt_run_split(code: &str) {
-    let ks = kinds_of(code, ScriptTS);
+pub(super) fn gt_run_split(code: &str, cpu: DynCpu) {
+    let ks = kinds_of(code, ScriptTS, cpu);
     assert!(
         !ks.iter().any(|k| is_fused_gt(*k) || *k == TokenKind::Ge),
         "{code:?} must split the `>` run: {ks:?}"
     );
 }
 
-#[test]
-fn jsx_element_type_argument_runs_never_reach_coalesce() {
+#[test_cpus]
+fn jsx_element_type_argument_runs_never_reach_coalesce(cpu: DynCpu) {
     for code in [
         "const d = <div<A<B>>>x</div>;",
         "const d = <div<Missing<AlsoMissing>>></div>;",
@@ -228,30 +235,30 @@ fn jsx_element_type_argument_runs_never_reach_coalesce() {
         "const f = <Foo<A<B>> bar={a >> b} />;",
         "x = <Foo<A<B>>/>\ny = a >> (b);",
     ] {
-        let ks = kinds_of(code, ScriptTSX);
+        let ks = kinds_of(code, ScriptTSX, cpu);
         assert!(!ks.iter().any(|k| is_fused_gt(*k)) || code.contains(">> "), "{code:?}: {ks:?}");
         assert!(!ks.contains(&TokenKind::LShift), "{code:?}: {ks:?}");
     }
-    let ks = kinds_of("const d = <div<A<B>>>x</div>;", ScriptTSX);
+    let ks = kinds_of("const d = <div<A<B>>>x</div>;", ScriptTSX, cpu);
     assert!(ks.contains(&TokenKind::JsxText), "{ks:?}");
     assert_eq!(ks.iter().filter(|k| **k == TokenKind::Gt).count(), 3, "{ks:?}");
-    let ks = kinds_of("const f = <Foo<A<B>> bar={a >> b} />;", ScriptTSX);
+    let ks = kinds_of("const f = <Foo<A<B>> bar={a >> b} />;", ScriptTSX, cpu);
     assert_eq!(ks.iter().filter(|k| **k == TokenKind::RShift).count(), 1, "{ks:?}");
-    let ks = kinds_of("x = <Foo<A<B>>/>\ny = a >> (b);", ScriptTSX);
+    let ks = kinds_of("x = <Foo<A<B>>/>\ny = a >> (b);", ScriptTSX, cpu);
     assert_eq!(ks.iter().filter(|k| **k == TokenKind::RShift).count(), 1, "{ks:?}");
 }
 
-#[test]
-fn tsx_element_type_arguments_with_generic_function_type() {
-    let ks = kinds_of("<Component<<T>(v: T) => void> />", ScriptTSX);
+#[test_cpus]
+fn tsx_element_type_arguments_with_generic_function_type(cpu: DynCpu) {
+    let ks = kinds_of("<Component<<T>(v: T) => void> />", ScriptTSX, cpu);
     assert!(!ks.contains(&TokenKind::LShift), "{ks:?}");
     assert_eq!(ks.iter().filter(|k| **k == TokenKind::JsxLt).count(), 1, "{ks:?}");
-    let ks = kinds_of("const a = <Box<(x: T) => Foo<T>> prop={1} />;", ScriptTSX);
+    let ks = kinds_of("const a = <Box<(x: T) => Foo<T>> prop={1} />;", ScriptTSX, cpu);
     assert_eq!(ks.iter().filter(|k| **k == TokenKind::JsxLt).count(), 1, "{ks:?}");
 }
 
-fn names_of(code: &str, file_type: FileType) -> String {
-    kinds_of(code, file_type)
+fn names_of(code: &str, file_type: FileType, cpu: DynCpu) -> String {
+    kinds_of(code, file_type, cpu)
         .iter()
         .map(|k| match k {
             TokenKind::Number
@@ -268,8 +275,8 @@ fn names_of(code: &str, file_type: FileType) -> String {
         .join(" ")
 }
 
-fn spans_of(code: &str, file_type: FileType) -> Vec<(u32, u32)> {
-    let (lx, count) = lex_checked(code, file_type);
+fn spans_of(code: &str, file_type: FileType, cpu: DynCpu) -> Vec<(u32, u32)> {
+    let (lx, count) = lex_checked(code, file_type, cpu);
     let kinds = &lx.kinds()[..count];
     assert!(lx.spans.len() >= count);
 
@@ -282,12 +289,12 @@ fn spans_of(code: &str, file_type: FileType) -> Vec<(u32, u32)> {
 }
 
 #[track_caller]
-pub(super) fn stream(code: &str, file_type: FileType, want: &str) {
-    assert_eq!(names_of(code, file_type), want, "{code:?}");
+pub(super) fn stream(code: &str, file_type: FileType, want: &str, cpu: DynCpu) {
+    assert_eq!(names_of(code, file_type, cpu), want, "{code:?}");
 }
 
-#[test]
-fn jsx_element_as_attribute_value_opens_a_nested_frame() {
+#[test_cpus]
+fn jsx_element_as_attribute_value_opens_a_nested_frame(cpu: DynCpu) {
     for (code, want) in [
         (
             "<App foo=<div>bar</div> />;",
@@ -334,21 +341,23 @@ fn jsx_element_as_attribute_value_opens_a_nested_frame() {
             "IDENT = JSX_LT IDENT IDENT = STRING IDENT = { NUMBER < NUMBER } / JSX_TAG_END ;",
         ),
     ] {
-        stream(code, ScriptJSX, want);
+        stream(code, ScriptJSX, want, cpu);
     }
     stream(
         "const a = <Foo<T> key=<Bar<U> x=\"1\"/> />;",
         ScriptTSX,
         "const IDENT = JSX_LT IDENT < IDENT > IDENT = JSX_LT IDENT < IDENT > IDENT = STRING / JSX_TAG_END / JSX_TAG_END ;",
+        cpu,
     );
 }
 
-#[test]
-fn jsx_child_element_name_after_trivia() {
+#[test_cpus]
+fn jsx_child_element_name_after_trivia(cpu: DynCpu) {
     stream(
         "const a = <div>\n  x<br />\n  < br />\n  y\n</div>;",
         ScriptTSX,
         "const IDENT = JSX_LT IDENT > JSX_TEXT JSX_LT IDENT / JSX_TAG_END JSX_TEXT JSX_LT IDENT / JSX_TAG_END JSX_TEXT JSX_LT / IDENT JSX_TAG_END ;",
+        cpu,
     );
     for (code, want) in [
         (
@@ -369,12 +378,12 @@ fn jsx_child_element_name_after_trivia() {
             "IDENT = JSX_LT IDENT > JSX_TEXT JSX_LT IDENT > JSX_TEXT JSX_LT / IDENT JSX_TAG_END JSX_LT / IDENT JSX_TAG_END ;",
         ),
     ] {
-        stream(code, ScriptJSX, want);
+        stream(code, ScriptJSX, want, cpu);
     }
 }
 
-#[test]
-fn jsx_names_glue_every_hyphen() {
+#[test_cpus]
+fn jsx_names_glue_every_hyphen(cpu: DynCpu) {
     for (code, want) in [
         ("x = <a--b/>;", "IDENT = JSX_LT IDENT / JSX_TAG_END ;"),
         ("y = <a-/>;", "IDENT = JSX_LT IDENT / JSX_TAG_END ;"),
@@ -390,35 +399,51 @@ fn jsx_names_glue_every_hyphen() {
         ),
         ("x = <a-b:c-d/>;", "IDENT = JSX_LT IDENT : IDENT / JSX_TAG_END ;"),
     ] {
-        stream(code, ScriptJSX, want);
+        stream(code, ScriptJSX, want, cpu);
     }
-    assert_eq!(spans_of("x = <a--b/>;", ScriptJSX)[3], (5, 9));
-    assert_eq!(spans_of("y = <a-/>;", ScriptJSX)[3], (5, 7));
+    assert_eq!(spans_of("x = <a--b/>;", ScriptJSX, cpu)[3], (5, 9));
+    assert_eq!(spans_of("y = <a-/>;", ScriptJSX, cpu)[3], (5, 7));
     stream(
         "<Foo<-1> data-x=\"1\"/>;",
         ScriptTSX,
         "JSX_LT IDENT < - NUMBER > IDENT = STRING / JSX_TAG_END ;",
+        cpu,
     );
 }
 
-#[test]
-fn escaped_identifiers_are_identifiers_in_every_walk() {
-    regex("let \\u{62}c\n/re/.x;", ScriptJS);
-    regex("let \\u{62}c: T\n/re/.x;", ScriptTS);
-    regex("declare const \\u{62}c: Set<T>\n/re/.x;", ScriptTS);
-    regex("var a = 1, \\u{62}c\n/re/.x;", ScriptJS);
-    regex("for (;;) { break \\u{6f}uter\n/re/.test(b); }", ScriptJS);
-    regex("type \\u{41} = T\n/re/.exec(s);", ScriptTS);
-    regex("declare function \\u{66}(): T\n/re/.exec(s);", ScriptTS);
-    division("x = \\u{62}c\n/re/g.exec(s);", ScriptJS);
-    division("\\u{62}c / 2;", ScriptJS);
-    division("x.\\u{62}c / 2;", ScriptJS);
-    gt_run_split("type \\u{41} = Foo<Bar<T>>[];");
-    gt_run_split("let \\u{62}c: Foo<Bar<T>>[] = y;");
+#[test_cpus]
+fn escaped_identifiers_are_identifiers_in_every_walk(cpu: DynCpu) {
+    regex("let \\u{62}c\n/re/.x;", ScriptJS, cpu);
+    regex("let \\u{62}c: T\n/re/.x;", ScriptTS, cpu);
+    regex("declare const \\u{62}c: Set<T>\n/re/.x;", ScriptTS, cpu);
+    regex("var a = 1, \\u{62}c\n/re/.x;", ScriptJS, cpu);
+    regex("for (;;) { break \\u{6f}uter\n/re/.test(b); }", ScriptJS, cpu);
+    regex("type \\u{41} = T\n/re/.exec(s);", ScriptTS, cpu);
+    regex("declare function \\u{66}(): T\n/re/.exec(s);", ScriptTS, cpu);
+    division("x = \\u{62}c\n/re/g.exec(s);", ScriptJS, cpu);
+    division("\\u{62}c / 2;", ScriptJS, cpu);
+    division("x.\\u{62}c / 2;", ScriptJS, cpu);
+    gt_run_split("type \\u{41} = Foo<Bar<T>>[];", cpu);
+    gt_run_split("let \\u{62}c: Foo<Bar<T>>[] = y;", cpu);
 }
 
-#[test]
-fn legacy_octal_literal_ends_before_a_dot() {
+#[test_cpus]
+fn identifier_escape_ends_at_unicode_whitespace(cpu: DynCpu) {
+    // Identifiers and private names end at Unicode whitespace, so the next word lexes alone.
+    for (code, plain) in [
+        ("x = a\\u{41}\u{a0}in\u{a0}b\\u{42};", "x = a\\u{41} in b\\u{42};"),
+        ("x = a\\u{41}\u{3000}in\u{3000}this\\u{41};", "x = a\\u{41} in this\\u{41};"),
+        (
+            "class C { #a; m(o) { #a\u{a0}in\u{a0}o\\u{62}; } }",
+            "class C { #a; m(o) { #a in o\\u{62}; } }",
+        ),
+    ] {
+        assert_eq!(kinds_of(code, ScriptJS, cpu), kinds_of(plain, ScriptJS, cpu), "{code:?}");
+    }
+}
+
+#[test_cpus]
+fn legacy_octal_literal_ends_before_a_dot(cpu: DynCpu) {
     for (code, want) in [
         ("x = 010.5;", "IDENT = NUMBER NUMBER ;"),
         ("x = 010.toString();", "IDENT = NUMBER . IDENT ( ) ;"),
@@ -432,79 +457,82 @@ fn legacy_octal_literal_ends_before_a_dot() {
         ("x = 010n;", "IDENT = NUMBER IDENT ;"),
         ("x = 08n;", "IDENT = NUMBER IDENT ;"),
     ] {
-        stream(code, ScriptJS, want);
+        stream(code, ScriptJS, want, cpu);
     }
-    assert_eq!(spans_of("x = 010.5;", ScriptJS)[2], (4, 7));
-    assert_eq!(spans_of("x = 010.5;", ScriptJS)[3], (7, 9));
+    assert_eq!(spans_of("x = 010.5;", ScriptJS, cpu)[2], (4, 7));
+    assert_eq!(spans_of("x = 010.5;", ScriptJS, cpu)[3], (7, 9));
 }
 
-#[test]
-fn type_context_before_a_declaration_keyword() {
-    gt_run_split("x = () => {}\n<Map<P>>baz;");
-    gt_run_split("x = async () => {}\n<Map<P>>baz;");
-    regex("declare function f(): Foo<T>\nclass C {}\n/re/.test(s);", ScriptTS);
-    regex("let x: Foo<T>\nfunction f() {}\n/re/.test(s);", ScriptTS);
-    division("x = <T>\nfunction(){} / 2;", ScriptTS);
+#[test_cpus]
+fn type_context_before_a_declaration_keyword(cpu: DynCpu) {
+    gt_run_split("x = () => {}\n<Map<P>>baz;", cpu);
+    gt_run_split("x = async () => {}\n<Map<P>>baz;", cpu);
+    regex("declare function f(): Foo<T>\nclass C {}\n/re/.test(s);", ScriptTS, cpu);
+    regex("let x: Foo<T>\nfunction f() {}\n/re/.test(s);", ScriptTS, cpu);
+    division("x = <T>\nfunction(){} / 2;", ScriptTS, cpu);
     stream(
         "class C<T> extends B implements I, void {}\n/=/.test(s);",
         ScriptTS,
         "class IDENT < IDENT > extends IDENT implements IDENT , void { } REGEXP . IDENT ( IDENT ) ;",
+        cpu,
     );
 }
 
-#[test]
-fn gt_run_heads_after_asi_and_this() {
-    gt_run_split("let cb\n<Promise<V<Promise<-1>>>>cb;");
-    gt_run_split("declare const Foo: `x${`y${Record<A<B>>}`}`\n<Array<Thenable<T>>>a;");
+#[test_cpus]
+fn gt_run_heads_after_asi_and_this(cpu: DynCpu) {
+    gt_run_split("let cb\n<Promise<V<Promise<-1>>>>cb;", cpu);
+    gt_run_split("declare const Foo: `x${`y${Record<A<B>>}`}`\n<Array<Thenable<T>>>a;", cpu);
     gt_run_split(
         "(f() satisfies Thenable<`lit`> extends 0x1f ? keyof (X) : U<Set<Record<V<X<Map<X<K<1.5>>, Foo>>>>, Foo>> > el);",
+        cpu,
     );
-    gt_run_fused("x = y satisfies this<$JSX<-1>>\n[class <K, V> extends (a) {}];");
-    gt_run_fused("x = a[0].b<c<d>>[0];");
-    let ks = kinds_of("x = [f].#p <\n{ _ }| 's'>= b;", ScriptTS);
+    gt_run_fused("x = y satisfies this<$JSX<-1>>\n[class <K, V> extends (a) {}];", cpu);
+    gt_run_fused("x = a[0].b<c<d>>[0];", cpu);
+    let ks = kinds_of("x = [f].#p <\n{ _ }| 's'>= b;", ScriptTS, cpu);
     assert!(ks.contains(&TokenKind::Ge), "{ks:?}");
-    regex("type Foo = | {} | bigint\n<import('m').baz<Bar<T<P>>>>/'/.x;", ScriptTS);
-    regex("let x: T\n<U>/re/.test(s);", ScriptTS);
-    division("let x = y\n<T>/re/.source;", ScriptTS);
+    regex("type Foo = | {} | bigint\n<import('m').baz<Bar<T<P>>>>/'/.x;", ScriptTS, cpu);
+    regex("let x: T\n<U>/re/.test(s);", ScriptTS, cpu);
+    division("let x = y\n<T>/re/.source;", ScriptTS, cpu);
 }
 
-#[test]
-fn relational_heads_before_a_balanced_run() {
-    gt_run_split("x = { a: 1, ...<T<U<V>>>[baz] };");
-    gt_run_split("f(...<Thenable<K>>[], false);");
-    gt_run_split("x = c ? function* (...a): Pick<E<F<G>>>[][] {} : null;");
-    gt_run_fused("x = (y)--<z ? 1 : $<A, B<C>>().p>> w;");
-    gt_run_fused("x = y satisfies Exclude<never>\n<typeof obj | Exclude<K<'lit'>>>(baz);");
-    gt_run_fused("x = y as Pick | this<U<V<W>>>\n/'/.x;");
-    gt_run_fused("const x = Foo >>> (n)`\n`\n<U<Bar>>foo;");
-    gt_run_split("f(this<A<B>>(x));");
-    gt_run_split("return this<A<B>>(x);");
-    gt_run_split("interface x extends this<Thenable<Record<Record>>>, U {}");
-    gt_run_split("class C<V, T> implements this<Array<undefined>>, T {}");
-    gt_run_split("class C implements this<Map<\"lit\">>, this {}");
+#[test_cpus]
+fn relational_heads_before_a_balanced_run(cpu: DynCpu) {
+    gt_run_split("x = { a: 1, ...<T<U<V>>>[baz] };", cpu);
+    gt_run_split("f(...<Thenable<K>>[], false);", cpu);
+    gt_run_split("x = c ? function* (...a): Pick<E<F<G>>>[][] {} : null;", cpu);
+    gt_run_fused("x = (y)--<z ? 1 : $<A, B<C>>().p>> w;", cpu);
+    gt_run_fused("x = y satisfies Exclude<never>\n<typeof obj | Exclude<K<'lit'>>>(baz);", cpu);
+    gt_run_fused("x = y as Pick | this<U<V<W>>>\n/'/.x;", cpu);
+    gt_run_fused("const x = Foo >>> (n)`\n`\n<U<Bar>>foo;", cpu);
+    gt_run_split("f(this<A<B>>(x));", cpu);
+    gt_run_split("return this<A<B>>(x);", cpu);
+    gt_run_split("interface x extends this<Thenable<Record<Record>>>, U {}", cpu);
+    gt_run_split("class C<V, T> implements this<Array<undefined>>, T {}", cpu);
+    gt_run_split("class C implements this<Map<\"lit\">>, this {}", cpu);
     regex(
         "let c: T = y satisfies A<B<C>> extends infer U ? U : import('m').a<(V<never>)[Set]>\nnamespace Foo { class X {} }\n/foo/.exec(s);",
         ScriptTS,
+        cpu,
     );
-    gt_run_fused("x = y satisfies A\n<Set<K>, Partial<U>>ab;");
-    gt_run_split("x = y as A<B<C>> as D;");
-    gt_run_fused("x = b()!\n<Array<Set<unknown>>>Foo;");
-    gt_run_fused("x = c! < 0.5>>> a;");
-    division("export default { a: 1 } / obj(x);", ScriptJS);
-    regex("x = y as Pick | this<U<V<W>>>\n/'/.x;", ScriptTS);
-    regex("x = y satisfies this<U<V<W>>>\n/'/.x;", ScriptTS);
-    division("x = this<A<B>> / 2;", ScriptTS);
-    regex("x ? a : [b][c]()\n{}\n/y/.exec(s);", ScriptJS);
-    regex("f(class { accessor x = y })\n{ }\n/</.test(s);", ScriptJS);
+    gt_run_fused("x = y satisfies A\n<Set<K>, Partial<U>>ab;", cpu);
+    gt_run_split("x = y as A<B<C>> as D;", cpu);
+    gt_run_fused("x = b()!\n<Array<Set<unknown>>>Foo;", cpu);
+    gt_run_fused("x = c! < 0.5>>> a;", cpu);
+    division("export default { a: 1 } / obj(x);", ScriptJS, cpu);
+    regex("x = y as Pick | this<U<V<W>>>\n/'/.x;", ScriptTS, cpu);
+    regex("x = y satisfies this<U<V<W>>>\n/'/.x;", ScriptTS, cpu);
+    division("x = this<A<B>> / 2;", ScriptTS, cpu);
+    regex("x ? a : [b][c]()\n{}\n/y/.exec(s);", ScriptJS, cpu);
+    regex("f(class { accessor x = y })\n{ }\n/</.test(s);", ScriptJS, cpu);
     // `b<c<d>>` is not a type-argument list: its closing `>` is glued to another `>` and rescans as
     // `>>` (tsc's `reScanGreaterToken`), so every `<` compares and the run is `>>>` + `>`.
-    let ks = kinds_of("x = a > b<c<d>>>>(e);", ScriptTS);
+    let ks = kinds_of("x = a > b<c<d>>>>(e);", ScriptTS, cpu);
     assert_eq!(ks.iter().filter(|k| **k == TokenKind::Gt).count(), 2, "{ks:?}");
     assert!(ks.contains(&TokenKind::URShift), "{ks:?}");
 }
 
-#[test]
-fn gt_runs_in_members_separated_only_by_line_breaks() {
+#[test_cpus]
+fn gt_runs_in_members_separated_only_by_line_breaks(cpu: DynCpu) {
     // Without a `;` or `,` between members, the line break after the run ends the member: the
     // name on the next line is another member, not the operand of a comparison, and a `<` there
     // opens a signature's type parameters.
@@ -517,12 +545,12 @@ fn gt_runs_in_members_separated_only_by_line_breaks() {
         "interface I {\n  <T, V = W>(a: A, v?: V): P<Q<T>>\n  <T, V = W>(o: O<V>): P<Q<T>>\n}",
         "interface I {\n  <T>(a: A): B extends C ? D : () => E<T>\n  <M>(b: B): E<F<M>>\n}",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
 }
 
-#[test]
-fn gt_runs_after_arrows_mapped_types_and_import_types_inside_lists() {
+#[test_cpus]
+fn gt_runs_after_arrows_mapped_types_and_import_types_inside_lists(cpu: DynCpu) {
     // An arrow in a conditional type's branch, a mapped type with an `as` clause, or an
     // `import("m")` chain inside a type-argument list does not end the list: the run after it
     // still closes it.
@@ -533,12 +561,12 @@ fn gt_runs_after_arrows_mapped_types_and_import_types_inside_lists() {
         "declare const c: import(\"m\").A<B<import(\"m\").C<D<import(\"m\").E<F, G.H & G.I>>, J<import(\"m\").K, never>>>, \"ref\"> & import(\"m\").L<F>;",
         "declare const p: {\n  a: {\n    b: () => P<import(\"m\").Q<import(\"n\").R<import(\"o\").S>>>;\n  };\n};",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
 }
 
-#[test]
-fn gt_runs_closing_lists_that_open_in_any_context() {
+#[test_cpus]
+fn gt_runs_closing_lists_that_open_in_any_context(cpu: DynCpu) {
     // The token after the run fails TypeScript's expression speculation (`{`, a name), but the
     // list can only be a list: a type parameter list `<T extends`, a name after a keyword only a
     // type follows, a return type, a dotted name in a heritage clause.
@@ -555,22 +583,22 @@ fn gt_runs_closing_lists_that_open_in_any_context() {
         "const f = function (): A<B<C>> {};",
         "const o = { m(): A<B<C>> {} };",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
 }
 
-#[test]
-fn relational_heads_that_look_like_type_references() {
+#[test_cpus]
+fn relational_heads_that_look_like_type_references(cpu: DynCpu) {
     // The same tokens read as an expression: a `case` label, a property named `function`.
     for code in
         ["switch (v) {\n  case (x): a < b < c >> d;\n}", "c ? o.function(x) : a < b < c >> d;"]
     {
-        gt_run_fused(code);
+        gt_run_fused(code, cpu);
     }
 }
 
-#[test]
-fn gt_runs_after_parameter_lists_inside_types() {
+#[test_cpus]
+fn gt_runs_after_parameter_lists_inside_types(cpu: DynCpu) {
     // A run after a parameter list inside a type: rest and optional parameters, object types as
     // parameter types, and multi-line type parameter lists.
     for code in [
@@ -581,12 +609,12 @@ fn gt_runs_after_parameter_lists_inside_types() {
         "interface I {\n  <\n    A extends (...a: any[]) => any,\n    B = C<A>\n  >(a: A): <D extends E<A>>(d?: D, ...r: F<B>) => G<D, H<A>>\n\n  <J, K = L<J>>(j: J): J\n}",
         "interface I {\n  <A>(a: A): B<A>\n\n  <C, D = E<C>>( // note\n    c: C\n  ): C\n}",
     ] {
-        gt_run_split(code);
+        gt_run_split(code, cpu);
     }
 }
 
-#[test]
-fn jsx_child_tag_after_comment_or_unicode_space() {
+#[test_cpus]
+fn jsx_child_tag_after_comment_or_unicode_space(cpu: DynCpu) {
     // Trivia between `<` and `/`, or around a closing name, leaves the same tag.
     for (code, plain) in [
         ("x = <a>x</*c*//a>;", "x = <a>x</a>;"),
@@ -604,13 +632,30 @@ fn jsx_child_tag_after_comment_or_unicode_space() {
         ("x = <>x<\u{a0}/>;", "x = <>x</>;"),
         ("x = <>x</\u{a0}>;", "x = <>x</>;"),
     ] {
-        assert_eq!(kinds_of(code, ScriptJSX), kinds_of(plain, ScriptJSX), "{code:?}");
-        assert!(diag_codes_of(code, ScriptJSX).is_empty(), "{code:?}");
+        assert_eq!(kinds_of(code, ScriptJSX, cpu), kinds_of(plain, ScriptJSX, cpu), "{code:?}");
+        assert!(diag_codes_of(code, ScriptJSX, cpu).is_empty(), "{code:?}");
     }
 }
 
-#[test]
-fn jsx_member_tag_name_matches_across_trivia() {
+#[test_cpus]
+fn jsx_container_after_backslash_u_in_text(cpu: DynCpu) {
+    // JSX text has no escapes, so a backslash-u before a container lexes as text.
+    for (code, plain) in [
+        ("x = <a>\\u{1}</a>;", "x = <a>u{1}</a>;"),
+        ("x = <a>a\\u{b}c</a>;", "x = <a>au{b}c</a>;"),
+        ("x = <a>\\u{1}\\u{2}</a>;", "x = <a>u{1}u{2}</a>;"),
+        ("x = <a>\\u{2 / 3}</a>;", "x = <a>u{2 / 3}</a>;"),
+        ("x = <a>\\u{f\\u{41}}</a>;", "x = <a>u{f\\u{41}}</a>;"),
+        ("x = <a>#\\u{f\\u{41}}</a>;", "x = <a>#u{f\\u{41}}</a>;"),
+        ("x = <a>\\u{\u{a0}this\\u{41}}</a>;", "x = <a>u{\u{a0}this\\u{41}}</a>;"),
+    ] {
+        assert_eq!(kinds_of(code, ScriptJSX, cpu), kinds_of(plain, ScriptJSX, cpu), "{code:?}");
+        assert!(diag_codes_of(code, ScriptJSX, cpu).is_empty(), "{code:?}");
+    }
+}
+
+#[test_cpus]
+fn jsx_member_tag_name_matches_across_trivia(cpu: DynCpu) {
     // A comment or Unicode whitespace before the `.` of a member name (`<A/*c*/.B>`) hides no
     // mismatch: the closing tag names the same element.
     for code in [
@@ -621,15 +666,15 @@ fn jsx_member_tag_name_matches_across_trivia() {
         "x = <a/*c*/:b>x</a:b>;",
         "x = <A.B>x</A/*c*/.B>;",
     ] {
-        assert!(diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
+        assert!(diag_codes_of(code, ScriptTSX, cpu).is_empty(), "{code:?}");
     }
     for code in ["x = <A/*c*/.B>x</A.C>;", "x = <A\u{a0}.B>x</A>;"] {
-        assert!(!diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
+        assert!(!diag_codes_of(code, ScriptTSX, cpu).is_empty(), "{code:?}");
     }
 }
 
-#[test]
-fn tsx_template_type_in_expression_type_arguments_is_not_jsx() {
+#[test_cpus]
+fn tsx_template_type_in_expression_type_arguments_is_not_jsx(cpu: DynCpu) {
     // Asked from the JSX carve, the list `f<`${<T>(x: T) => T}`>` still has a raw template
     // tail; the speculation must read the literal whole, so the `<T>` inside is a function
     // type, not an unterminated element.
@@ -643,14 +688,14 @@ fn tsx_template_type_in_expression_type_arguments_is_not_jsx() {
         "x = f<`${a}${<U>(y: U) => U}`>(1);",
         "x = f<`a${b}c${<U>(y: U) => U}`>(1);",
     ] {
-        assert!(diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
+        assert!(diag_codes_of(code, ScriptTSX, cpu).is_empty(), "{code:?}");
     }
-    gt_run_split("x = f<A<`${<T>(x: T) => T}`>>(1);");
+    gt_run_split("x = f<A<`${<T>(x: T) => T}`>>(1);", cpu);
 }
 
-#[test]
-fn bracket_bitmap_follows_the_token_starts() {
+#[test_cpus]
+fn bracket_bitmap_follows_the_token_starts(cpu: DynCpu) {
     // The bracket word is built while the string in it is still raw text.
-    regex("if (a) /x/; if (s = \"(\") /re/.test(x);", ScriptJS);
-    gt_run_split("x = (a) / 2; y = f<B<(a: \"((\") => void>>(1);");
+    regex("if (a) /x/; if (s = \"(\") /re/.test(x);", ScriptJS, cpu);
+    gt_run_split("x = (a) / 2; y = f<B<(a: \"((\") => void>>(1);", cpu);
 }

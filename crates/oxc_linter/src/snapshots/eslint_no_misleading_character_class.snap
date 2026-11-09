@@ -1222,3 +1222,227 @@ source: crates/oxc_linter/src/tester.rs
    ·   ──────────────
    ╰────
   help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[ગુ]/
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[कि]/
+   ·   ──
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[ક્]/
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ /[नमस्ते]/
+   ·     ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:15]
+ 1 │ /[नमस्ते]/
+   ·      ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:14]
+ 1 │ new RegExp('[ગુ]', 'u');
+   ·              ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[а҃]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[אָ]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[بَ]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[ܐܰ]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[ހަ]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[ߊ߫]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[কা]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[ਕਾ]/u
+   ·   ──
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[କା]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[கா]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[కా]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[ಕಾ]/u
+   ·   ──
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[കാ]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[කා]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[กั]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[ກັ]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[ཀཱ]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[ကါ]/u
+   ·   ──
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[កា]/u
+   ·   ──
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[ᠠ᠋]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[ᬆ]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[が]/u
+   ·   ──
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[ꦏꦴ]/u
+   ·   ──
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[𑀓𑀸]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[𐨕𐨁]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[𑌕𑌾]/u
+   ·   ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.

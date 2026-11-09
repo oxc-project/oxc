@@ -25,3 +25,13 @@ for (a // c1
 ; b; c) {}
 for (a; // t
 b; c) {}
+
+// Right after the `(`, a same-line run ending in a line comment moves to its own line as a whole (the opener exception),
+// and own-line comments sharing a line stay together
+for (// c
+;;) {}
+for (/* a */ // b
+;;) {}
+for (;
+/* a */ // b
+;) {}

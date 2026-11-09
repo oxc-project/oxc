@@ -255,10 +255,8 @@ fn resolve_expect_parameter_prefix_from_pattern(
             Some(CompactStr::from(format!("{}.expect", id.name)))
         }
         BindingPattern::ObjectPattern(pattern) => {
-            let prop = pattern
-                .properties
-                .iter()
-                .find(|p| p.key.static_name().is_some_and(|name| name == "expect"))?;
+            let prop =
+                pattern.properties.iter().find(|p| p.key.is_specific_static_name("expect"))?;
 
             let local_name = match &prop.value {
                 BindingPattern::BindingIdentifier(id) => id.name.as_str(),

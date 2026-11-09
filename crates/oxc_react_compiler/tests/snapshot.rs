@@ -37,6 +37,17 @@ use oxc_span::SourceType;
 
 #[test]
 fn snapshots() {
+    // Deeply nested fixtures can overflow libtest's default 2 MiB stack during
+    // semantic analysis on s390x. Match the formatter conformance suite's stack size.
+    std::thread::Builder::new()
+        .stack_size(16 * 1024 * 1024)
+        .spawn(run_snapshots)
+        .unwrap()
+        .join()
+        .unwrap();
+}
+
+fn run_snapshots() {
     let fixtures = concat!(env!("CARGO_MANIFEST_DIR"), "/fixtures");
     insta::glob!(fixtures, "**/*.{js,cjs,mjs,ts,cts,mts,jsx,tsx}", |path| {
         let source = fs::read_to_string(path).unwrap();
@@ -221,6 +232,7 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
                 }
             }
             "outputMode" => options.output_mode = value.and_then(|v| unquote(v).parse().ok()),
+            "lintSkipReactiveScopePasses" => options.lint_skip_reactive_scope_passes = true,
             // Fixed test default (upstream `testComplexPluginOptionDefaults`).
             "gating" => {
                 options.gating = Some(GatingConfig {
@@ -428,6 +440,10 @@ fn test_module_type_provider() -> FxIndexMap<String, TypeConfig> {
             ]),
         ),
         (
+            "ReactCompilerNoAliasTest".to_string(),
+            object([("applyCallbackAndReturnPrimitive", no_alias_apply_primitive_fn())]),
+        ),
+        (
             "ReactCompilerTest".to_string(),
             object([
                 ("useHookNotTypedAsHook", type_ref()),
@@ -498,6 +514,42 @@ fn incompatible_fn(message: &str) -> TypeConfig {
         canonical_name: None,
         aliasing: None,
         known_incompatible: Some(message.to_string()),
+    })
+}
+
+fn no_alias_apply_primitive_fn() -> TypeConfig {
+    TypeConfig::Function(FunctionTypeConfig {
+        positional_params: vec![Effect::ConditionallyMutate],
+        rest_param: None,
+        callee_effect: Effect::Read,
+        return_type: Box::new(type_ref()),
+        return_value_kind: ValueKind::Primitive,
+        no_alias: Some(true),
+        mutable_only_if_operands_are_mutable: None,
+        impure: None,
+        canonical_name: None,
+        aliasing: Some(AliasingSignatureConfig {
+            receiver: "@receiver",
+            params: &["@callback"],
+            rest: None,
+            returns: "@returns",
+            temporaries: &["@callbackReturn"],
+            effects: &[
+                AliasingEffectConfig::Create {
+                    into: "@returns",
+                    value: ValueKind::Primitive,
+                    reason: ValueReason::KnownReturnSignature,
+                },
+                AliasingEffectConfig::Apply {
+                    receiver: "@receiver",
+                    function: "@callback",
+                    mutates_function: false,
+                    args: &[],
+                    into: "@callbackReturn",
+                },
+            ],
+        }),
+        known_incompatible: None,
     })
 }
 

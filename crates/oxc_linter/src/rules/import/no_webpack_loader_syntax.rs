@@ -6,11 +6,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_named_as_default_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unexpected `!` in `{name}`."))
+fn no_webpack_loader_syntax_diagnostic(name: JSStr<'_>, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected `!` in `{}`.", name.display()))
         .with_help("Do not use import syntax to configure webpack loaders")
         .with_label(span)
 }
@@ -76,10 +77,11 @@ impl Rule for NoWebpackLoaderSyntax {
                         return;
                     }
 
-                    if let Some(value) = ident.value.as_str()
-                        && value.contains('!')
-                    {
-                        ctx.diagnostic(no_named_as_default_diagnostic(value, ident.span));
+                    if ident.value.contains('!') {
+                        ctx.diagnostic(no_webpack_loader_syntax_diagnostic(
+                            ident.value,
+                            ident.span,
+                        ));
                     }
                 }
             }
@@ -89,10 +91,11 @@ impl Rule for NoWebpackLoaderSyntax {
                     return;
                 }
 
-                if let Some(value) = import_decl.source.value.as_str()
-                    && value.contains('!')
-                {
-                    ctx.diagnostic(no_named_as_default_diagnostic(value, import_decl.source.span));
+                if import_decl.source.value.contains('!') {
+                    ctx.diagnostic(no_webpack_loader_syntax_diagnostic(
+                        import_decl.source.value,
+                        import_decl.source.span,
+                    ));
                 }
             }
             _ => {}
@@ -116,6 +119,8 @@ fn test() {
         "var foo = require('foo')",
         "var foo = require('./')",
         "var foo = require('@scope/foo')",
+        r"import foo from '\uD800'",
+        r"var foo = require('\uDC00/foo')",
     ];
 
     let fail = vec![
@@ -127,6 +132,9 @@ fn test() {
         "var find = require('-babel-loader!lodash.find')",
         "var foo = require('style!css!./foo.css')",
         "var data = require('json!@scope/my-package/data.json')",
+        r"import foo from 'babel!\uD800'",
+        r"var foo = require('\uDC00!lodash')",
+        r"var foo = require('\u0062abel!\uD800')",
     ];
 
     Tester::new(NoWebpackLoaderSyntax::NAME, NoWebpackLoaderSyntax::PLUGIN, pass, fail)

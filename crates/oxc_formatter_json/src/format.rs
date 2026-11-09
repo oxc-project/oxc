@@ -2,8 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::{Comment, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, Format, FormatContext, FormatSession, FormatState, Formatted,
-    VecBuffer,
+    Document, EmbeddedIr, Format, FormatContext, FormatSession, FormatState, Formatted, Formatter,
     builders::{hard_line_break, text},
     write,
 };
@@ -39,14 +38,16 @@ pub fn format<'a>(
     // 0.3x source bytes plus a 1024-element floor for tiny-file spikes (`{}` is 3 elements)
     // avoids reallocation for 99.5% of the corpus.
     let capacity = (parsed.wrapped_source.len() * 3 / 10).max(1024);
-    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
+    let mut buffer = Formatter::with_capacity(capacity, &mut state);
 
     write!(&mut buffer, FormatJsonRoot { expression: parsed.expression, has_bom: parsed.has_bom });
 
     let elements = buffer.into_vec();
     let context = state.into_context();
 
-    if let Some(err) = context.take_error() {
+    if let Some(mut err) = context.take_error() {
+        let (_, stripped) = oxc_formatter_core::spec::split_bom(source_text);
+        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
         return Err(err);
     }
 
@@ -79,8 +80,11 @@ pub fn parse_for_format<'a>(
     source_text: &str,
     options: JsonFormatOptions,
 ) -> Result<ParsedJson<'a>, OxcDiagnostic> {
-    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
-    let parsed = parse_json(allocator, source_text, options.variant)?;
+    let (has_bom, stripped) = oxc_formatter_core::spec::split_bom(source_text);
+    let parsed = parse_json(allocator, stripped, options.variant).map_err(|mut err| {
+        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+        err
+    })?;
     Ok(ParsedJson {
         expression: parsed.expression,
         comments: parsed.comments,
@@ -115,7 +119,7 @@ pub fn format_to_ir<'a>(
         parsed.source_offset,
     );
     let mut state = FormatState::new_with_session(context, session.clone());
-    let mut buffer = VecBuffer::new(&mut state);
+    let mut buffer = Formatter::new(&mut state);
 
     write!(&mut buffer, FormatJsonEmbedded { expression: parsed.expression });
 

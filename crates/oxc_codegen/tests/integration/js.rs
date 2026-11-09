@@ -127,8 +127,20 @@ fn expr() {
     test_minify_same("throw await 1;");
     test_minify_same("await import(``);");
 
-    test("delete 2e308", "delete (0, Infinity);\n");
+    test("delete 2e308", "delete 1e400;\n");
     test_minify("delete 2e308", "delete(1/0);");
+
+    // Infinite literals must not print as `Infinity`, which a local binding can shadow.
+    test("function f(Infinity) { return 2e308; }", "function f(Infinity) {\n\treturn 1e400;\n}\n");
+    test("x = -2e308", "x = -1e400;\n");
+    test("x = (2e308).toString", "x = 1e400.toString;\n");
+    test("x = (-2e308) ** 2", "x = (-1e400) ** 2;\n");
+    test("x = y / 2e308", "x = y / 1e400;\n");
+    test("x = 2e308 in y", "x = 1e400 in y;\n");
+    test("x = y instanceof 2e308", "x = y instanceof 1e400;\n");
+    test("x = { 2e308: 0 }", "x = { [1e400]: 0 };\n");
+    test_minify("function f(Infinity) { return 2e308; }", "function f(Infinity){return 1/0}");
+    test_minify("x = y / 2e308", "x=y/(1/0);");
 
     test_minify_same(r#"({"http://a\r\" \n<'b:b@c\r\nd/e?f":{}});"#);
     test_minify_same("new(import(``),function(){});");
@@ -1370,6 +1382,90 @@ fn js_str_round_trip() {
                 _ => panic!("expected string value: {output}"),
             };
             assert_eq!(value.encode_utf16().collect::<Vec<_>>(), units, "{output}");
+        }
+    }
+}
+
+#[test]
+fn jsx_attribute_with_lone_surrogate_value() {
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+    use oxc_str::{JSStr, JSStrBuilder};
+    use oxc_syntax::xml_entities::decode_entities;
+
+    // Generated attributes must preserve their JavaScript value after JSX entity decoding,
+    // including literal entity text next to a lone surrogate.
+    let allocator = Allocator::new();
+    let source_type = SourceType::jsx();
+    let mut parsed = Parser::new(
+        &allocator,
+        "<div a=\"x\" b=\"y\" c=\"z\" d=\"w\" e=\"x\" f=\"y\" />;",
+        source_type,
+    )
+    .parse();
+    assert!(parsed.diagnostics.is_empty());
+    let Statement::ExpressionStatement(statement) = &mut parsed.program.body[0] else {
+        panic!("expected expression statement");
+    };
+    let Expression::JSXElement(element) = &mut statement.expression else {
+        panic!("expected JSX element");
+    };
+    let values: [&[u16]; 6] = [
+        &[0x61, 0xD800, 0x62],
+        &[0x61, 0xD83D, 0xDE00, 0x22],
+        &[0xD800, 0x22, 0x27],
+        &[0x22, 0x27],
+        &[0xD800, 0x26, 0x61, 0x6D, 0x70, 0x3B], // Lone lead surrogate + literal &amp;
+        &[0xDC00, 0x26, 0x23, 0x78, 0x34, 0x31, 0x3B], // Lone trail surrogate + literal &#x41;
+    ];
+    for (attribute, units) in element.opening_element.attributes.iter_mut().zip(values) {
+        let JSXAttributeItem::Attribute(attribute) = attribute else {
+            panic!("expected attribute");
+        };
+        let Some(JSXAttributeValue::StringLiteral(literal)) = &mut attribute.value else {
+            panic!("expected string attribute value");
+        };
+        let mut builder = JSStrBuilder::new_in(&&allocator);
+        builder.push_utf16(units);
+        literal.value = builder.into_js_str();
+        literal.raw = None;
+    }
+
+    for minify in [false, true] {
+        let options = CodegenOptions { minify, ..CodegenOptions::default() };
+        let output = Codegen::new().with_options(options.clone()).build(&parsed.program).code;
+        let reparsed = Parser::new(&allocator, &output, source_type).parse();
+        assert!(reparsed.diagnostics.is_empty(), "{output}");
+        let Statement::ExpressionStatement(statement) = &reparsed.program.body[0] else {
+            panic!("expected expression statement: {output}");
+        };
+        let Expression::JSXElement(element) = &statement.expression else {
+            panic!("expected JSX element: {output}");
+        };
+        assert_eq!(element.opening_element.attributes.len(), values.len());
+        for (attribute, units) in element.opening_element.attributes.iter().zip(values) {
+            let JSXAttributeItem::Attribute(attribute) = attribute else {
+                panic!("expected attribute: {output}");
+            };
+            let value = match attribute.value.as_ref().unwrap() {
+                JSXAttributeValue::StringLiteral(literal) => {
+                    let raw = literal.value.as_str().unwrap();
+                    let mut decoded = None;
+                    decode_entities(raw, &mut decoded, raw.len(), &allocator);
+                    decoded.map_or_else(|| JSStr::from(raw), JSStrBuilder::into_js_str)
+                }
+                JSXAttributeValue::ExpressionContainer(container) => {
+                    let JSXExpression::StringLiteral(literal) = &container.expression else {
+                        panic!("expected string expression: {output}");
+                    };
+                    literal.value
+                }
+                _ => panic!("expected string attribute value: {output}"),
+            };
+            assert_eq!(value.encode_utf16().collect::<Vec<_>>(), units, "{output}");
+        }
+        if !minify {
+            assert_eq!(Codegen::new().with_options(options).build(&reparsed.program).code, output);
         }
     }
 }

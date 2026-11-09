@@ -1535,8 +1535,8 @@ describe("RuleTester", () => {
   it("errors when parsing failure", () => {
     const tester = new RuleTester();
     tester.run("no-foo", simpleRule, {
-      valid: ["let"],
-      invalid: [{ code: "let", errors: 1 }],
+      valid: ["let x ="],
+      invalid: [{ code: "let x =", errors: 1 }],
     });
     expect(runCases()).toMatchInlineSnapshot(`
       [

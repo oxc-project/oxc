@@ -491,7 +491,7 @@ impl<'a> AstKind<'a> {
 
             Self::ObjectProperty(p) => format!(
                 "ObjectProperty({})",
-                p.key.name().unwrap_or_else(|| StaticPropertyName::from(COMPUTED))
+                p.key.name().unwrap_or_else(|| StaticPropertyName::from(COMPUTED)).display()
             )
             .into(),
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
@@ -643,6 +643,15 @@ impl<'a> AstKind<'a> {
             Self::TSImportTypeQualifiedName(_) => "TSImportTypeQualifiedName".into(),
         }
     }
+}
+
+/// A regular function or arrow function.
+#[derive(Debug, Clone, Copy)]
+pub enum FunctionKind<'a, 'b> {
+    /// A function declaration, expression, or method.
+    Function(&'b Function<'a>),
+    /// An arrow function expression.
+    Arrow(&'b ArrowFunctionExpression<'a>),
 }
 
 /// This is a subset of [`AstKind`] that represents member expressions.

@@ -63,6 +63,7 @@ declare_oxc_lint!(
     NoScriptComponentInHead,
     nextjs,
     correctness,
+    recommended,
     version = "0.2.0",
     short_description = "Prevent usage of `next/script` in `next/head` component.",
 );

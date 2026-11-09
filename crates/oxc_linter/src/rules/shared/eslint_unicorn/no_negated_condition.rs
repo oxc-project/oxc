@@ -132,14 +132,12 @@ fn fix_conditional_expression<'a>(
     let fixer = fixer.for_multifix();
     let mut fixes = fixer.new_fix_with_capacity(10);
 
-    let is_unary = matches!(negated_test, Expression::UnaryExpression(_));
     let source = ctx.source_text();
     let expr_span = conditional_expr.span;
 
     // Detect ASI / keyword spacing from what the expression will look like after removing `!`.
     let (needs_space_before, needs_asi_semi, needs_restricted_parens, needs_exposed_expr_parens) =
-        if is_unary {
-            let Expression::UnaryExpression(unary) = negated_test else { unreachable!() };
+        if let Expression::UnaryExpression(unary) = negated_test {
             // Text after deleting the leading `!` (preserves comments between `!` and operand).
             let after_bang = ctx.source_range(Span::new(unary.span.start + 1, unary.span.end));
             let first_significant = after_bang.trim_start().chars().next();

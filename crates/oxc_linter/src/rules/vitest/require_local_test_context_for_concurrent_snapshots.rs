@@ -1,11 +1,12 @@
 use oxc_ast::{AstKind, ast::MemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
@@ -86,25 +87,32 @@ declare_oxc_lint!(
     RequireLocalTestContextForConcurrentSnapshots,
     vitest,
     correctness,
+    recommended,
     version = "0.8.0",
     short_description = "The rule is intended to ensure that concurrent snapshot tests are executed within a properly configured local test context.",
 );
 
 impl Rule for RequireLocalTestContextForConcurrentSnapshots {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        Self::run(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        Self::run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
 impl RequireLocalTestContextForConcurrentSnapshots {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
+    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CallExpression(call_expr) = node.kind() {
-            if !is_type_of_jest_fn_call(call_expr, possible_jest_node, ctx, &[JestFnKind::Expect]) {
+            let Some(possible_jest_node) =
+                PossibleJestNode::from_call_expression(node, call_expr, ctx)
+            else {
+                return;
+            };
+            if !is_type_of_jest_fn_call(call_expr, &possible_jest_node, ctx, &[JestFnKind::Expect])
+            {
                 return;
             }
 
@@ -119,13 +127,12 @@ impl RequireLocalTestContextForConcurrentSnapshots {
                 return;
             }
 
-            let test_or_describe_node_found =
-                ctx.nodes().ancestors(possible_jest_node.node.id()).any(|node| {
-                    node.kind()
-                        .as_call_expression()
-                        .and_then(|call_expr| call_expr.callee.as_member_expression())
-                        .is_some_and(|member_expr| is_test_or_describe_node(member_expr))
-                });
+            let test_or_describe_node_found = ctx.nodes().ancestors(node.id()).any(|node| {
+                node.kind()
+                    .as_call_expression()
+                    .and_then(|call_expr| call_expr.callee.as_member_expression())
+                    .is_some_and(|member_expr| is_test_or_describe_node(member_expr))
+            });
 
             if test_or_describe_node_found {
                 ctx.diagnostic(require_local_test_context_for_concurrent_snapshots_diagnostic(

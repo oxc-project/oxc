@@ -2,6 +2,21 @@ use std::alloc::{GlobalAlloc, Layout, System};
 
 pub use criterion::*;
 
+/// Synthetic JavaScript workloads for whitespace scanning in the lexer and parser.
+pub fn whitespace_cases() -> impl Iterator<Item = (&'static str, String)> {
+    // Put runs between tokens: indentation after a newline is already consumed
+    // by the line-break handler. Single spaces control `read_next_token`'s fast path.
+    [
+        ("single_space", "x + y;\n"),
+        ("short_spaces", "x  +  y;\n"),
+        ("long_spaces", "x                                       +                        y;\n"),
+        ("tabs", "x\t\t\t\t\t\t\t\t+\t\t\t\t\t\t\t\ty;\n"),
+        ("mixed_spaces_tabs", "x \t \t \t \t \t \t \t \t+ \t \t \t \t \t \t \t \ty;\n"),
+    ]
+    .into_iter()
+    .map(|(name, source)| (name, source.repeat(128)))
+}
+
 #[global_allocator]
 static GLOBAL: NeverGrowInPlaceAllocator = NeverGrowInPlaceAllocator;
 

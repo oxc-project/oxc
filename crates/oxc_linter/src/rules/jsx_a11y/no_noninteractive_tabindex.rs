@@ -90,6 +90,7 @@ declare_oxc_lint!(
     NoNoninteractiveTabindex,
     jsx_a11y,
     correctness,
+    recommended,
     config = NoNoninteractiveTabindexConfig,
     version = "0.15.4",
     short_description = "This rule checks that non-interactive elements don't have a tabIndex which would make them interactive via keyboard navigation.",

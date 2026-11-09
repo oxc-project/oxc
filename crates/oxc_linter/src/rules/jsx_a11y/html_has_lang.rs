@@ -54,6 +54,7 @@ declare_oxc_lint!(
     HtmlHasLang,
     jsx_a11y,
     correctness,
+    recommended,
     version = "0.0.18",
     short_description = "Ensures that every HTML document has a lang attribute.",
 );
@@ -88,7 +89,7 @@ fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
             | JSXExpression::NullLiteral(_)
             | JSXExpression::BooleanLiteral(_)
             | JSXExpression::NumericLiteral(_) => false,
-            JSXExpression::Identifier(id) => id.name != "undefined",
+            JSXExpression::Identifier(id) => !id.is_undefined(),
             JSXExpression::StringLiteral(str) => !str.value.is_empty(),
             JSXExpression::TemplateLiteral(t) => {
                 !t.expressions.is_empty()

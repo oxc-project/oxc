@@ -77,6 +77,13 @@ pub enum Tag {
     EndMarkAsRoot,
 }
 
+// `Tag` must fit next to the tag of [crate::FormatElement] (see the size assertion in `format_element/mod.rs`),
+// so its payloads keep it 4-byte aligned: no `u64` or plain pointer (use `packed(4)` like [Prefix]).
+const _: () = assert!(
+    size_of::<Tag>() <= 12 && align_of::<Tag>() <= 4,
+    "`Tag` exceeds 12 bytes or 4-byte alignment, `FormatElement` would exceed 16 bytes"
+);
+
 impl Tag {
     /// Returns `true` if `self` is any start tag.
     pub const fn is_start(&self) -> bool {
@@ -261,8 +268,10 @@ impl Align {
 /// The string a [Tag::StartPrefix] prints after the indention on every new line.
 ///
 /// Prefixes are syntax tokens (`"> "`, `" * "`) or syntax columns ([Self::spaces]), so `'static`;
-/// the double reference keeps the payload one pointer wide (see the size assertion in `format_element/mod.rs`).
+/// the double reference keeps the payload one pointer wide, and `packed(4)` keeps [Tag] 4-byte aligned
+/// (see the size assertion next to [Tag]).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(C, packed(4))]
 pub struct Prefix(pub(crate) &'static &'static str);
 
 /// The widest single space prefix, wider runs chain several (see [Prefix::spaces]).
@@ -315,7 +324,7 @@ impl Prefix {
 /// Registering the name also asserts that no two labels share a `value`.
 #[derive(Eq, PartialEq, Copy, Clone)]
 pub struct LabelId {
-    value: u64,
+    value: u32,
 }
 
 impl std::fmt::Debug for LabelId {
@@ -344,9 +353,9 @@ mod debug_names {
 
     /// All `(value, name)` pairs ever registered.
     /// Labels are few (one `Label` impl per language with a handful of variants), so a linear scan is fine.
-    static NAMES: Mutex<Vec<(u64, &'static str)>> = Mutex::new(Vec::new());
+    static NAMES: Mutex<Vec<(u32, &'static str)>> = Mutex::new(Vec::new());
 
-    pub(super) fn record(value: u64, name: &'static str) {
+    pub(super) fn record(value: u32, name: &'static str) {
         let mut names = NAMES.lock().unwrap();
         if let Some((_, existing_name)) = names.iter().find(|(existing, _)| *existing == value) {
             assert_eq!(
@@ -358,7 +367,7 @@ mod debug_names {
         }
     }
 
-    pub(super) fn lookup(value: u64) -> Option<&'static str> {
+    pub(super) fn lookup(value: u32) -> Option<&'static str> {
         NAMES
             .lock()
             .unwrap()
@@ -370,8 +379,8 @@ mod debug_names {
 /// Defines the valid labels of a language. You want to have at most one implementation per formatter
 /// project.
 pub trait Label {
-    /// Returns the `u64` uniquely identifying this specific label.
-    fn id(&self) -> u64;
+    /// Returns the `u32` uniquely identifying this specific label.
+    fn id(&self) -> u32;
 
     /// Returns the name of the label that is shown in debug builds.
     fn debug_name(&self) -> &'static str;

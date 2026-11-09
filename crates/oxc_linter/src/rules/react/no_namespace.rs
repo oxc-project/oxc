@@ -8,7 +8,7 @@ use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::is_create_element_call};
 
-fn no_namespace_diagnostic(span: Span, component_name: &str) -> OxcDiagnostic {
+fn no_namespace_diagnostic(span: Span, component_name: impl std::fmt::Display) -> OxcDiagnostic {
     let message = format!(
         r"React component {component_name} must not be in a namespace, as React does not support them."
     );
@@ -67,10 +67,9 @@ impl Rule for NoNamespace {
                     return;
                 };
 
-                if let Some(value) = str_lit.value.as_str()
-                    && value.contains(':')
-                {
-                    ctx.diagnostic(no_namespace_diagnostic(str_lit.span, value));
+                let value = str_lit.value;
+                if value.contains(':') {
+                    ctx.diagnostic(no_namespace_diagnostic(str_lit.span, value.display()));
                 }
             }
             _ => {}
@@ -108,6 +107,8 @@ fn test() {
         "<Object.TestComponent />",
         r#"React.createElement("Object.TestComponent")"#,
         "React.createElement(null)",
+        r#"React.createElement("a\uD800b")"#,
+        r#"React.createElement("\uDC00")"#,
         "React.createElement(true)",
         "React.createElement({})",
     ];
@@ -115,6 +116,10 @@ fn test() {
     let fail = vec![
         "<ns:testcomponent />",
         r#"React.createElement("ns:testcomponent")"#,
+        // Lone surrogates beside the namespace separator are still namespaced names.
+        r#"React.createElement("ns:\uD800")"#,
+        r#"React.createElement("\uDC00:testcomponent")"#,
+        r#"React.createElement("\uD83D\uDE00:\uD800")"#,
         "<ns:testComponent />",
         r#"React.createElement("ns:testComponent")"#,
         "<ns:test_component />",

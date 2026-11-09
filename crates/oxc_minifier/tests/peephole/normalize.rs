@@ -78,7 +78,34 @@ fn drop_console_does_not_leak_references() {
 #[test]
 fn drop_debugger() {
     let options = CompressOptions { drop_debugger: true, ..default_options() };
+
     test_options("debugger", "", &options);
+    test_options(
+        "export function f(x) { debugger; if (x) debugger; return x }",
+        "export function f(x) { return x }",
+        &options,
+    );
+    test_options(
+        "export function f(x) { debugger; if (x) { debugger; } return x }",
+        "export function f(x) { return x }",
+        &options,
+    );
+    test_options("if (foo()) debugger", "foo()", &options);
+    test_options("if (x) debugger; else foo()", "x || foo()", &options);
+    test_options("if (x) foo(); else debugger", "x && foo()", &options);
+    test_options("while (foo()) debugger", "for (; foo(););", &options);
+    test_options("do debugger; while (foo())", "do; while (foo());", &options);
+    test_options("for (foo(); bar(); baz()) debugger", "for (foo(); bar(); baz());", &options);
+    test_options("for (var x in foo()) debugger", "for (var x in foo());", &options);
+    test_options("for (var x of foo()) debugger", "for (var x of foo());", &options);
+    test_options("label: debugger", "", &options);
+}
+
+#[test]
+fn keep_debugger() {
+    test_same("export function f(x) { debugger; if (x) debugger; return x }");
+    test_same("if (x) debugger; else debugger;");
+    test_same("for (; foo();) debugger;");
 }
 
 #[test]
@@ -337,4 +364,45 @@ fn preserve_legal_comment_above_removed_inner_function_use_strict() {
         "//! outer\n'use strict';\nexport function f() {\n  //! inner\n  'use strict';\n  bar();\n}",
         "//! outer\nexport function f() {\n\t//! inner\n\tbar();\n}",
     );
+}
+
+#[test]
+fn preserve_throwing_buffer_lengths_and_uri_arguments() {
+    for expression in [
+        "new ArrayBuffer(-1)",
+        "new ArrayBuffer('-1')",
+        "new ArrayBuffer(Infinity)",
+        "new ArrayBuffer(9007199254740992)",
+        "new ArrayBuffer(0, { get maxByteLength() { foo(); } })",
+        "decodeURI('%')",
+        "decodeURIComponent('%')",
+        "decodeURIComponent('%C0%AF')",
+        "decodeURIComponent('%ED%A0%80')",
+        r#"encodeURI("\uD800")"#,
+        r#"encodeURIComponent("\uDC00")"#,
+        "decodeURIComponent(x)",
+        "encodeURI(x)",
+    ] {
+        let expected = if expression == "new ArrayBuffer(Infinity)" {
+            "new ArrayBuffer(1e400)"
+        } else {
+            expression
+        };
+        test(expression, expected);
+        test_options(
+            &format!("try {{ const unused = {expression}; after(); }} catch (e) {{ caught(e); }}"),
+            &format!("try {{ {expected}, after(); }} catch (e) {{ caught(e); }}"),
+            &CompressOptions::smallest(),
+        );
+    }
+    for expression in [
+        "new ArrayBuffer(-0.5)",
+        "new ArrayBuffer(NaN)",
+        "decodeURI('%23')",
+        "decodeURIComponent('%F0%9F%98%80')",
+        r#"encodeURI("\uD83D\uDE00")"#,
+        "encodeURIComponent(123)",
+    ] {
+        test(expression, "");
+    }
 }

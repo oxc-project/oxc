@@ -2,8 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget, CallExpression,
-        Expression, NewExpression, ObjectPropertyKind, Statement, VariableDeclaration,
-        VariableDeclarator,
+        Expression, NewExpression, ObjectPropertyKind, SimpleAssignmentTarget, Statement,
+        VariableDeclaration, VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -630,9 +630,7 @@ fn expression_references_variable(expr: &Expression<'_>, var_name: &str) -> bool
             .is_some_and(|e| expression_references_variable(e, var_name)),
         // Update expression: array++, ++array
         Expression::UpdateExpression(update) => {
-            if let oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(id) =
-                &update.argument
-            {
+            if let SimpleAssignmentTarget::AssignmentTargetIdentifier(id) = &update.argument {
                 id.name == var_name
             } else {
                 false

@@ -71,6 +71,7 @@ declare_oxc_lint!(
     ReturnInEmitsValidator,
     vue,
     correctness,
+    recommended,
     version = "1.67.0",
     short_description = "Enforce that a `return` statement is present in `emits` validators (in Vue.js 3.0.0+).",
 );
@@ -127,7 +128,7 @@ fn get_emit_validator_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<
         }
         let component_obj = nodes.parent_node(outer.id());
         if is_vue_component_options_object(component_obj, ctx) {
-            return Some(emit_name.to_string());
+            return Some(emit_name.display().to_string());
         }
         return None;
     }
@@ -138,7 +139,7 @@ fn get_emit_validator_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<
         && let AstKind::CallExpression(call) = outer.kind()
         && call.callee.get_identifier_reference().is_some_and(|ident| ident.name == "defineEmits")
     {
-        return Some(emit_name.to_string());
+        return Some(emit_name.display().to_string());
     }
 
     None

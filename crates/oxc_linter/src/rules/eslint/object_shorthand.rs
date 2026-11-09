@@ -5,8 +5,8 @@ use schemars::JsonSchema;
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        ArrowFunctionExpression, Expression, Function, ObjectExpression, ObjectProperty,
-        ObjectPropertyKind, PropertyKind,
+        ArrowFunctionExpression, Expression, Function, IdentifierReference, NewTarget,
+        ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKind, Super, ThisExpression,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -507,12 +507,7 @@ impl<'a, 'c> ArrowFunctionLexicalIdentifierVisitor<'a, 'c> {
 }
 
 impl<'a> Visit<'a> for ArrowFunctionLexicalIdentifierVisitor<'a, '_> {
-    fn visit_function(
-        &mut self,
-        _it: &oxc_ast::ast::Function<'a>,
-        _flags: oxc_semantic::ScopeFlags,
-    ) {
-    }
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
 
     fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
         if self.has_lexical_identifier {
@@ -522,19 +517,19 @@ impl<'a> Visit<'a> for ArrowFunctionLexicalIdentifierVisitor<'a, '_> {
         walk::walk_arrow_function_expression(self, it);
     }
 
-    fn visit_this_expression(&mut self, _it: &oxc_ast::ast::ThisExpression) {
+    fn visit_this_expression(&mut self, _it: &ThisExpression) {
         self.has_lexical_identifier = true;
     }
 
-    fn visit_super(&mut self, _it: &oxc_ast::ast::Super) {
+    fn visit_super(&mut self, _it: &Super) {
         self.has_lexical_identifier = true;
     }
 
-    fn visit_new_target(&mut self, _it: &oxc_ast::ast::NewTarget) {
+    fn visit_new_target(&mut self, _it: &NewTarget) {
         self.has_lexical_identifier = true;
     }
 
-    fn visit_identifier_reference(&mut self, it: &oxc_ast::ast::IdentifierReference<'a>) {
+    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
         if self.ctx.scoping().root_unresolved_references().get("arguments").is_some_and(
             |references| references.iter().any(|&reference_id| reference_id == it.reference_id()),
         ) {

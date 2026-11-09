@@ -4,6 +4,7 @@
     "module": "Preserve",
     "moduleResolution": "Bundler",
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "target": "ESNext",
     "strict": true,
     "skipLibCheck": true

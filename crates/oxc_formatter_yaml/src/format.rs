@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, VecBuffer,
+    Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter,
     builders::{hard_line_break, text},
     write,
 };
@@ -36,7 +36,7 @@ pub fn format<'a>(
     // Pre-allocate: measured on 6,925 real-world files (kubernetes, vscode, saleor, bootstrap),
     // 0.3x source bytes plus a 1024-element floor for tiny-file spikes avoids reallocation for 99.9% of the corpus.
     let capacity = (parsed.source.len() * 3 / 10).max(1024);
-    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
+    let mut buffer = Formatter::with_capacity(capacity, &mut state);
 
     write!(&mut buffer, FormatYamlRoot { root: parsed.root, has_bom: parsed.has_bom });
 
@@ -70,8 +70,11 @@ pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
     source_text: &str,
 ) -> Result<ParsedYaml<'a>, OxcDiagnostic> {
-    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
-    let (root, source, comments) = parse_root(allocator, source_text)?;
+    let (has_bom, stripped) = oxc_formatter_core::spec::split_bom(source_text);
+    let (root, source, comments) = parse_root(allocator, stripped).map_err(|mut err| {
+        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+        err
+    })?;
     Ok(ParsedYaml { root, comments, source, has_bom })
 }
 
@@ -95,7 +98,7 @@ pub fn format_to_ir<'a>(
     let context =
         YamlFormatContext::new(options, source, comments, print::last_descendant_end(root));
     let mut state = FormatState::new_with_session(context, session.clone());
-    let mut buffer = VecBuffer::new(&mut state);
+    let mut buffer = Formatter::new(&mut state);
 
     write!(&mut buffer, FormatYamlEmbedded { root });
 
@@ -114,12 +117,14 @@ fn parse_root<'a>(
     // NOTE: Normalize line endings BEFORE parsing, unlike other `oxc_formatter_xxx`.
     // For YAML formatter, the printer slices verbatim text from the source in many places.
     // YAML is also unusual in that line breaks and whitespace have meaning.
-    let source_text = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
-    let source: &'a str = allocator.alloc_str(&source_text);
+    let normalized = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
+    let source: &'a str = allocator.alloc_str(&normalized);
 
     let root = Parser::new(allocator, source).parse().map_err(|error| {
-        OxcDiagnostic::error(format!("Syntax error: {}", error.kind))
-            .with_label(to_span(error.span))
+        let mut err = OxcDiagnostic::error(format!("Syntax error: {}", error.kind))
+            .with_label(to_span(error.span));
+        oxc_formatter_core::restore_crlf_labels(&mut err.labels, source_text);
+        err
     })?;
 
     let root = allocator.alloc(root);

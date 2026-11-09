@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2022"
+  },
+  "files": [
+    "index.ts"
+  ]
+}

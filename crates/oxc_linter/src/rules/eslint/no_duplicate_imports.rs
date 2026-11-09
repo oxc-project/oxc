@@ -175,7 +175,7 @@ impl Rule for NoDuplicateImports {
 
                 if let Some(existing) = import_map.get(source)
                     && can_merge_imports(
-                        &import_type,
+                        &entry.import_name,
                         existing,
                         self.allow_separate_type_imports,
                         requested_module_is_type_import,
@@ -428,26 +428,18 @@ impl Rule for NoDuplicateImports {
 }
 
 fn can_merge_imports(
-    current_type: &ImportType,
+    current_type: &ImportImportName,
     existing: &[(ImportType, Span, ModuleType, bool)],
     allow_separate_type_imports: bool,
     is_current_statement_type_import: bool,
     is_current_specifier_type: bool,
 ) -> bool {
-    if *current_type == ImportType::AllButDefault {
-        return false;
-    }
-
-    if *current_type == ImportType::SideEffect {
-        return !existing.is_empty();
-    }
-
     // Special case: both are type imports (statement-level)
     // Check if one is default and one is named (cannot be merged per ESLint)
     let all_existing_are_type = existing.iter().all(|(_, _, _, is_stmt_type)| *is_stmt_type);
     if is_current_statement_type_import && is_current_specifier_type && all_existing_are_type {
-        let current_is_default = matches!(current_type, ImportType::Default);
-        let current_is_named = matches!(current_type, ImportType::Named);
+        let current_is_default = matches!(current_type, ImportImportName::Default(_));
+        let current_is_named = matches!(current_type, ImportImportName::Name(_));
         let has_default = existing.iter().any(|(t, _, _, _)| matches!(t, ImportType::Default));
         let has_named = existing.iter().any(|(t, _, _, _)| matches!(t, ImportType::Named));
 
@@ -490,14 +482,14 @@ fn can_merge_imports(
     let has_default = default.is_some();
 
     match current_type {
-        ImportType::Named => {
+        ImportImportName::Name(_) => {
             has_named
                 || (has_default
                     && !namespace.is_some_and(|(_, namespace_span, _, _)| {
                         default.unwrap().1 == *namespace_span
                     }))
         }
-        ImportType::Namespace => {
+        ImportImportName::NamespaceObject => {
             if has_named
                 && has_default
                 && let Some((_, named_span, _, _)) = named
@@ -509,8 +501,7 @@ fn can_merge_imports(
 
             has_namespace || has_default
         }
-        ImportType::Default => has_default || has_namespace || has_named,
-        _ => unreachable!("other ImportType values should be already checked"),
+        ImportImportName::Default(_) => has_default || has_namespace || has_named,
     }
 }
 

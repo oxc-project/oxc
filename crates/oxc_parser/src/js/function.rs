@@ -67,6 +67,32 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         (this_param, formal_parameters)
     }
 
+    /// Parse an ambiguous JS arrow head, retaining whether its final comma prevents it
+    /// from also being a parenthesized expression.
+    pub(super) fn parse_cover_arrow_parameters(
+        &mut self,
+    ) -> (ArenaBox<'a, FormalParameters<'a>>, bool) {
+        debug_assert!(!self.is_ts);
+        let start = self.cur_start();
+        let opening_span = self.cur_token().span();
+        self.expect(Kind::LParen);
+        let (list, rest) =
+            self.parse_formal_parameters_list(FunctionKind::Expression, opening_span);
+        let has_trailing_comma =
+            list.last().is_some_and(|param| param.span.end < self.prev_token_end);
+        self.expect(Kind::RParen);
+        let params = FormalParameters::boxed(
+            self.end_span(start),
+            FormalParameterKind::ArrowFormalParameters,
+            list,
+            rest,
+            self,
+        );
+        (params, has_trailing_comma)
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_formal_parameters_list(
         &mut self,
         func_kind: FunctionKind,
@@ -454,20 +480,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         r#async: bool,
     ) -> Expression<'a> {
-        let func_kind = FunctionKind::Expression;
-        self.expect(Kind::Function);
-
-        let generator = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
-        let id = self.parse_function_id(func_kind, r#async, generator.is_some());
-        let function = self.parse_function(
-            start,
-            id,
-            r#async,
-            generator,
-            func_kind,
-            FormalParameterKind::FormalParameter,
-            &Modifiers::empty(),
-        );
+        let function = self.parse_function_impl(start, r#async, FunctionKind::Expression);
         Expression::FunctionExpression(function)
     }
 
@@ -543,6 +556,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         generator: bool,
     ) -> Option<BindingIdentifier<'a>> {
         let kind = self.cur_kind();
+        if kind == Kind::Ident {
+            return Some(self.parse_plain_binding_identifier());
+        }
         if kind.is_binding_identifier() {
             let mut ctx = self.ctx;
             if func_kind.is_expression() {

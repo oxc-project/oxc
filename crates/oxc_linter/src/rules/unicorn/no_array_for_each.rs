@@ -69,6 +69,7 @@ declare_oxc_lint!(
     NoArrayForEach,
     unicorn,
     restriction,
+    recommended,
     pending,
     version = "0.0.19",
     short_description = "Forbids the use of `Array#forEach` in favor of a for loop.",

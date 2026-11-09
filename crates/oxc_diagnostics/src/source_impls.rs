@@ -242,6 +242,14 @@ impl PrefixScan {
     #[inline]
     fn new(input: &[u8], end: usize, context_lines_before: usize) -> Self {
         let prefix = &input[..end];
+        if context_lines_before == 0 && memchr::memchr(b'\r', prefix).is_none() {
+            let line_count = bytecount::count(prefix, b'\n');
+            return Self {
+                line_count,
+                leading: LeadingContext { start_line: line_count, ..LeadingContext::new(0) },
+                current_line_start: memchr::memrchr(b'\n', prefix).map_or(0, |pos| pos + 1),
+            };
+        }
         if context_lines_before == 1 {
             return Self::one_context_line(prefix);
         }
@@ -796,6 +804,30 @@ impl<T: ?Sized + SourceCode> SourceCode for Arc<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn zero_context_prefix_matches_generic_path() {
+        for input in [
+            b"".as_slice(),
+            b"no breaks",
+            b"\n\nzero\none\n\ntwo\nthree\n",
+            b"zero\r\none\r\n\r\ntwo\rthree\n",
+            "\u{00e9}\n\u{1f600}\n".as_bytes(),
+        ] {
+            for cut in 0..=input.len() {
+                let fast = PrefixScan::new(input, cut, 0);
+                let generic = PrefixScan::new(input, cut, 2);
+                assert_eq!(fast.line_count, generic.line_count, "input={input:?}, cut={cut}");
+                assert_eq!(
+                    fast.current_line_start, generic.current_line_start,
+                    "input={input:?}, cut={cut}"
+                );
+                assert_eq!(fast.leading.start_line, fast.line_count, "input={input:?}, cut={cut}");
+                assert_eq!(fast.leading.len(), 0, "input={input:?}, cut={cut}");
+                assert_eq!(fast.leading.starting_offset(cut), cut, "input={input:?}, cut={cut}");
+            }
+        }
+    }
 
     #[test]
     fn lf_prefix_fast_path_matches_generic_path() {

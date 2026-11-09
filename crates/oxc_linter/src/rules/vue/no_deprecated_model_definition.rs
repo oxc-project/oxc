@@ -85,6 +85,7 @@ declare_oxc_lint!(
     NoDeprecatedModelDefinition,
     vue,
     correctness,
+    recommended,
     pending,
     config = NoDeprecatedModelDefinition,
     version = "1.63.0",

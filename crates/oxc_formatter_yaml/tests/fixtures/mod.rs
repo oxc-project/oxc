@@ -1,11 +1,8 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
-use oxc_formatter_yaml::{YamlFormatOptions, format, parse_for_format};
-
-mod options;
-use options::apply_yaml_options;
+use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
+use oxc_formatter_yaml::{ProseWrap, SingleQuote, YamlFormatOptions, format, parse_for_format};
 
 struct YamlHarness;
 
@@ -19,19 +16,34 @@ impl FixtureFormatter for YamlHarness {
     type Options = YamlFormatOptions;
     type Fingerprint = Fingerprint;
 
-    fn parse_options(json: &OptionSet) -> Self::Options {
-        let mut options = YamlFormatOptions::default();
-        apply_yaml_options(&mut options, json);
-        options
+    fn apply_option(options: &mut Self::Options, key: &str, value: &OptionValue) -> bool {
+        match key {
+            "proseWrap" => {
+                if let Some(s) = value.as_str() {
+                    options.prose_wrap = match s {
+                        "always" => ProseWrap::Always,
+                        "never" => ProseWrap::Never,
+                        _ => ProseWrap::Preserve,
+                    };
+                }
+            }
+            "singleQuote" => {
+                if let Some(b) = value.as_bool() {
+                    options.single_quote = SingleQuote::from(b);
+                }
+            }
+            _ => return false,
+        }
+        true
     }
 
-    fn format(source: &str, _path: &Path, options: &Self::Options) -> String {
+    fn format(
+        source: &str,
+        _path: &Path,
+        options: &Self::Options,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let allocator = Allocator::default();
-        format(&allocator, source, *options)
-            .expect("format should succeed")
-            .print()
-            .expect("print should succeed")
-            .into_code()
+        Ok(format(&allocator, source, *options)?.print()?.into_code())
     }
 
     fn fingerprint(source: &str, _path: &Path, _options: &Self::Options) -> Fingerprint {

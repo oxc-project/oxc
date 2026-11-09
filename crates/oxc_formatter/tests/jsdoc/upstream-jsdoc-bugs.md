@@ -321,7 +321,7 @@ comment's indent or the `*` line prefix. At top level the re-embedded line lands
 subtracts the comment indent and the `*` prefix — the same base every JS/TS snippet in the
 same position uses. Final lines never exceed `printWidth - 4 + prefix`. At top level this is
 3 chars narrower than upstream (content 93 vs 96 at printWidth=100); pinned by
-`apps/oxfmt/test/api/jsdoc.test.ts` ("effective width" case).
+`apps/oxfmt/conformance/fixtures/jsdoc/native-fence-width.ts`.
 
 ## 12. Wrapping moves list-marker-like words to line starts, breaking idempotency
 
@@ -344,3 +344,89 @@ printer (`shouldPreventBreak`, regex `/^>|^(?:[*+-]|#{1,6}|\d+[).])$/`): any dig
 guarded (not just `1.`) and `>` matches as a prefix (`>=` at a line start opens a blockquote).
 Pinned by `line-wrapping-balance/007-block-marker-not-moved-to-line-start`.
 
+## 13. Description text is written back without escapes, so it can close the comment or change
+
+**Severity**: High — the output can fail to parse (`*/` inside the comment)
+
+The plugin parses descriptions as markdown and writes each text node's parsed value.
+That value has the escapes removed (`\*`, `\/`, `\\`) and character references decoded (`&amp;`),
+and emphasis is always written `_x_` / `**x**` regardless of its neighbours.
+
+| Description          | Upstream output  | Problem                                                                |
+| -------------------- | ---------------- | ---------------------------------------------------------------------- |
+| `See __a__/b`        | `See **a**/b`    | `*/` closes the comment                                                |
+| `Glob: src/**\/*.js` | `src/**/*.js`    | Same, the author's `\/` is dropped                                     |
+| `\*not emphasis\*`   | `*not emphasis*` | Becomes emphasis on the next pass (not idempotent)                     |
+| `Multiply a*b*c`     | `a_b_c`          | Intraword `_` is no emphasis, the text changes                         |
+| `\\\\`               | `\\`             | One backslash less on every pass (hosseinmd/prettier-plugin-jsdoc#152) |
+
+**Root cause**: `descriptionFormatter.ts` stringifies `text` nodes from `mdAst.value`
+(`mdast-util-from-markdown` output) with no escaping, and picks the emphasis marker without looking at the context.
+
+**oxfmt behavior**: the written text parses back to the same markdown and never contains `*/`.
+
+- A text node is written as it appears in the source (escapes and character references kept)
+- Emphasis is written `_x_` unless inside a word (`a*b*c` keeps `*`), strong `**x**` unless followed by `/` (keeps `__`)
+- Descriptions written out without the markdown pass (one-line tag descriptions) get the same marker normalization in place
+
+A bare URL with `__` (`http://x.io/__init__.py`) is strong per CommonMark, so it is still written `**init**` as upstream;
+code spans, `<...>` autolinks, links and `{@link}` keep the URL.
+Pinned by `descriptions/045-markdown-round-trip`.
+
+## 14. Wrapping moves an `@word` to a line start, turning prose into a block tag
+
+**Severity**: Medium — `--write` then `--check` fails, and the sentence is split into a new tag
+
+```js
+// Input
+/** Pass the value through the options bag as described in the docs for the big @foo plugin here. */
+
+// Upstream 1st pass
+/**
+ * Pass the value through the options bag as described in the docs for the big
+ * @foo plugin here.
+ */
+
+// Upstream 2nd pass
+/**
+ * Pass the value through the options bag as described in the docs for the big
+ *
+ * @foo plugin here.
+ */
+```
+
+**Root cause**: same as #12, `breakDescriptionToLines` ignores what a line start means to the next parse.
+comment-parser starts a tag at a line-start `@` (`/^@[^\s/]+(?=\s|$)/`).
+
+**oxfmt behavior**: `wrap_paragraph` never breaks before a word that starts a tag (same guard as #12),
+decided by `oxc_jsdoc::parser::starts_block_tag`.
+A tag name with `/` (an npm scope like `@scope/pkg`) is not a tag for comment-parser nor `oxc_jsdoc`,
+so it may wrap to a line start as upstream does (oxc-project/oxc#28808).
+
+Unlike comment-parser, the tag name ends at `{`:
+upstream reads `@param{import('./a').B} x` as prose and joins it into the description,
+so TypeScript loses the tag; oxfmt keeps it a tag.
+Pinned by `descriptions/047-at-word-never-wraps-to-line-start`.
+
+## 15. A multi-line `[name=default]` drops the name and the description
+
+**Severity**: High, the parameter name and its description are lost
+
+```js
+// Input
+/**
+ * @param {string[]} [list=[
+ *   "a",
+ *   "b",
+ * ]] The list.
+ */
+
+// Upstream
+/** @param {string[]} */
+```
+
+**Root cause**: comment-parser reads a tag name within its line,
+so `[list=[` is `spec:name:unpaired-brackets` and the tag keeps no name and no description.
+
+**oxfmt behavior**: the `*` prefixes are stripped and the lines are kept as written.
+Pinned by `main/031-multiline-default-value`.

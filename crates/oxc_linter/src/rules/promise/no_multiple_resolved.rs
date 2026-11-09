@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, CallExpression, Expression},
+    ast::{ArrowFunctionExpression, BindingIdentifier, CallExpression, Expression, Function},
 };
 use oxc_ast_visit::VisitJs;
 use oxc_cfg::{
@@ -743,15 +743,9 @@ impl<'a> VisitJs<'a> for ResolveFinder<'a> {
         }
     }
 
-    fn visit_function(
-        &mut self,
-        _it: &oxc_ast::ast::Function<'a>,
-        _flags: oxc_semantic::ScopeFlags,
-    ) {
-    }
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
 
-    fn visit_arrow_function_expression(&mut self, _it: &oxc_ast::ast::ArrowFunctionExpression<'a>) {
-    }
+    fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {}
 }
 
 #[test]

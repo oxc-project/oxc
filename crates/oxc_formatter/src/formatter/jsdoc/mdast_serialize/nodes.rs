@@ -63,7 +63,8 @@ pub(super) fn serialize_children(
                 for child in children.iter().take(run_end).skip(run_start) {
                     match child {
                         Node::Paragraph(para) => {
-                            let text = collect_inline_text_from_children(&para.children);
+                            let text =
+                                collect_inline_text_from_children(&para.children, opts.source);
                             if !merged_text.is_empty() && !merged_text.ends_with(' ') {
                                 merged_text.push(' ');
                             }
@@ -228,7 +229,7 @@ fn serialize_node(
             serialize_paragraph(para, indent, first_para_offset, opts, lines);
         }
         Node::Heading(heading) => {
-            let text = collect_inline_text(node);
+            let text = collect_inline_text(node, opts.source);
             let prefix = "#".repeat(heading.depth as usize);
             if !lines.is_empty() && !lines.last_is_empty() {
                 lines.push_empty();
@@ -269,7 +270,7 @@ fn serialize_node(
         // Inline nodes are normally collected by collect_inline_text,
         // but handle them here for any edge case where they appear at block level
         _ => {
-            let text = collect_inline_text(node);
+            let text = collect_inline_text(node, opts.source);
             if !text.is_empty() {
                 lines.push(text);
             }
@@ -329,7 +330,7 @@ fn serialize_paragraph(
                 }
                 current_segment.clear();
             } else {
-                collect_inline_recursive(child, &mut current_segment);
+                collect_inline_recursive(child, opts.source, &mut current_segment);
             }
         }
 
@@ -350,7 +351,7 @@ fn serialize_paragraph(
     }
 
     // Normal paragraph: collect all inline text, then wrap (placeholders restored at the end)
-    let inline_text = collect_inline_text_from_children(&para.children);
+    let inline_text = collect_inline_text_from_children(&para.children, opts.source);
     let effective_width = opts.max_width.saturating_sub(indent);
     let ind = super::super::wrap::indent_str(indent);
 
@@ -665,7 +666,7 @@ fn serialize_node_for_list_item(
     opts: &SerializeOptions<'_>,
 ) -> String {
     if let Node::Paragraph(para) = node {
-        let inline_text = collect_inline_text_from_children(&para.children);
+        let inline_text = collect_inline_text_from_children(&para.children, opts.source);
         let mut buf = LineBuffer::new();
         if is_first_child {
             wrap_paragraph(&inline_text, opts.max_width, 0, marker_width, &mut buf);
@@ -755,7 +756,7 @@ const EMBEDDED_FENCE_LANGUAGES: [&str; 6] = ["css", "less", "scss", "json", "yam
 ///   formatted in-process via [`format_jsdoc_js_snippet`] (`oxc_formatter`'s own parser/formatter).
 /// - Non-JS/TS fenced code of [`EMBEDDED_FENCE_LANGUAGES`]:
 ///   when the session carries a string embedder, routed through it (the string channel);
-///   absent one (Rust-only conformance, or the language has no native branch), preserved verbatim.
+///   absent one (e.g. the crate's own fixture tests) or on its failure, preserved verbatim.
 ///
 /// NOTE: `@example` fences diverge here, see `tag_formatters::format_example_fenced_block`.
 fn format_code_value<'a>(

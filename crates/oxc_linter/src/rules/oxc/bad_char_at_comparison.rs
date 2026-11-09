@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression, TSType, VariableDeclarator},
+    ast::{BinaryExpression, Expression, TSType, VariableDeclarationKind, VariableDeclarator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -103,9 +103,7 @@ fn invalid_comparison_string(expr: &Expression) -> Option<(Span, usize)> {
     let expr = expr.without_parentheses();
     let value = match expr {
         Expression::StringLiteral(literal) => literal.value,
-        Expression::TemplateLiteral(literal) if literal.expressions.is_empty() => {
-            literal.quasis.first()?.value.cooked?
-        }
+        Expression::TemplateLiteral(literal) => literal.single_quasi()?,
         _ => return None,
     };
     let len = value.len_utf16();
@@ -160,7 +158,8 @@ fn is_definitely_string_declarator(declarator: &VariableDeclarator, ctx: &LintCo
         return true;
     }
 
-    if !variable_declaration_kind(declarator, ctx).is_const()
+    if !variable_declaration_kind(declarator, ctx.nodes())
+        .is_some_and(VariableDeclarationKind::is_const)
         || !declarator.id.is_binding_identifier()
     {
         return false;

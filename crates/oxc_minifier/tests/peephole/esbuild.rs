@@ -218,11 +218,8 @@ fn js_parser_test() {
     );
     test("while (x) { if (y) continue; z(); }", "for (; x; ) y || z();");
     test("while (x) { if (y) continue; else z(); w(); }", "for (; x; ) y || (z(), w());");
-    test("while (x) { t(); if (y) continue; z(); }", "for (; x; ) t(), !y && z();");
-    test(
-        "while (x) { t(); if (y) continue; else z(); w(); }",
-        "for (; x; ) t(), !y && (z(), w());",
-    );
+    test("while (x) { t(); if (y) continue; z(); }", "for (; x; ) t(), y || z();");
+    test("while (x) { t(); if (y) continue; else z(); w(); }", "for (; x; ) t(), y || (z(), w());");
     test("while (x) { debugger; if (y) continue; z(); }", "for (; x; ) { debugger; y || z(); }");
     test(
         "while (x) { debugger; if (y) continue; else z(); w(); }",
@@ -371,12 +368,13 @@ fn js_parser_test() {
     test("a = 'abc'[-0]", "a = 'a';");
     test("a = 'abc'[0]", "a = 'a';");
     test("a = 'abc'[2]", "a = 'c';");
-    test("a = 'abc'[3]", "a = 'abc'[3];");
+    // esbuild keeps this; oxc assumes `String.prototype` has no index properties.
+    test("a = 'abc'[3]", "a = void 0;");
     test("a = 'abc'[NaN]", "a = 'abc'[NaN];");
     test("a = 'abc'[-1e100]", "a = 'abc'[-1e100];");
     test("a = 'abc'[1e100]", "a = 'abc'[1e100];");
-    test("a = 'abc'[-Infinity]", "a = 'abc'[-Infinity];");
-    test("a = 'abc'[Infinity]", "a = 'abc'[Infinity];");
+    test("a = 'abc'[-Infinity]", "a = 'abc'[-1e400];");
+    test("a = 'abc'[Infinity]", "a = 'abc'[1e400];");
     test("a = !(b == c)", "a = b != c;");
     test("a = !(b != c)", "a = b == c;");
     test("a = !(b === c)", "a = b !== c;");
@@ -939,10 +937,10 @@ fn constant_evaluation_test() {
     test("x = 3 % 6", "x = 3;");
     test("x = 3 ** 6", "x = 729;");
     test("x = 0 / 0", "x = NaN;");
-    test("x = 123 / 0", "x = Infinity;");
-    test("x = 123 / -0", "x = -Infinity;");
-    test("x = -123 / 0", "x = -Infinity;");
-    test("x = -123 / -0", "x = Infinity;");
+    test("x = 123 / 0", "x = 1e400;");
+    test("x = 123 / -0", "x = -1e400;");
+    test("x = -123 / 0", "x = -1e400;");
+    test("x = -123 / -0", "x = 1e400;");
     test("x = 3 < 6", "x = !0;");
     test("x = 3 > 6", "x = !1;");
     test("x = 3 <= 6", "x = !0;");
@@ -1152,10 +1150,10 @@ fn test_minimize_exit_statements() {
     test("if (a) return b; else return c; return d;", "return a ? b : c;");
     test("function x() { if (y) return; z(); }", "function x() { y || z();}");
     test("function x() { if (y) return; else z(); w(); }", "function x() { y || (z(), w());}");
-    test("function x() { t(); if (y) return; z(); }", "function x() { t(), !y && z();}");
+    test("function x() { t(); if (y) return; z(); }", "function x() { t(), y || z();}");
     test(
         "function x() { t(); if (y) return; else z(); w(); }",
-        "function x() { t(), !y && (z(), w());}",
+        "function x() { t(), y || (z(), w());}",
     );
     test("function x() { debugger; if (y) return; z(); }", "function x() { debugger; y || z();}");
     test(

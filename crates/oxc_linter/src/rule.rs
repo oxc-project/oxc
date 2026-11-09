@@ -14,7 +14,6 @@ use oxc_semantic::AstTypesBitset;
 use crate::{
     AstNode, FixKind,
     context::{ContextHost, LintContext},
-    utils::PossibleJestNode,
 };
 
 pub trait Rule: Sized + Default + fmt::Debug {
@@ -49,18 +48,6 @@ pub trait Rule: Sized + Default + fmt::Debug {
     #[expect(unused_variables)]
     #[inline]
     fn run_once(&self, ctx: &LintContext) {}
-
-    /// Run on each Jest node (e.g. `it`, `describe`, `test`, `expect`, etc.).
-    /// This is only called if the Jest plugin is enabled and the file is a test file.
-    /// It should be used to run rules that are specific to Jest or Vitest.
-    #[expect(unused_variables)]
-    #[inline]
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-    }
 
     /// Check if a rule should be run at all.
     ///
@@ -400,8 +387,6 @@ pub enum RuleRunFunctionsImplemented {
     Run,
     /// Only `run_once` is implemented
     RunOnce,
-    /// Only `run_on_jest_node` is implemented
-    RunOnJestNode,
 }
 
 impl RuleRunFunctionsImplemented {
@@ -411,10 +396,6 @@ impl RuleRunFunctionsImplemented {
 
     pub fn is_run_once_implemented(self) -> bool {
         matches!(self, Self::RunOnce | Self::Unknown)
-    }
-
-    pub fn is_run_on_jest_node_implemented(self) -> bool {
-        matches!(self, Self::RunOnJestNode | Self::Unknown)
     }
 }
 
@@ -672,10 +653,12 @@ impl From<RuleFixMeta> for FixKind {
 
 #[cfg(test)]
 mod test {
+
     use crate::{
         RuleMeta, RuleRunner,
         rule::{DefaultRuleConfig, TupleRuleConfig},
     };
+    use oxc_ast::AstType;
 
     use super::RuleCategory;
     use rustc_hash::FxHashMap;
@@ -772,6 +755,10 @@ mod test {
         assert_rule_runs_on_node_types(
             &unicorn::consistent_assert::ConsistentAssert,
             &[ImportDeclaration],
+        );
+        assert_rule_runs_on_node_types(
+            &unicorn::prefer_string_replace_all::PreferStringReplaceAll,
+            &[CallExpression, VariableDeclarator],
         );
         assert_rule_runs_on_node_types(
             &promise::always_return::AlwaysReturn::default(),
@@ -958,10 +945,7 @@ mod test {
         assert_eq!(de.into_inner(), *expected);
     }
 
-    fn assert_rule_runs_on_node_types<R: RuleMeta + RuleRunner>(
-        rule: &R,
-        node_types: &[oxc_ast::AstType],
-    ) {
+    fn assert_rule_runs_on_node_types<R: RuleMeta + RuleRunner>(rule: &R, node_types: &[AstType]) {
         let types = rule.types_info();
         assert!(types.is_some(), "{}: NODE_TYPES is None", R::NAME);
         let types = types.unwrap();

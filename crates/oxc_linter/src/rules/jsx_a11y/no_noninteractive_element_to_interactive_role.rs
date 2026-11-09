@@ -140,6 +140,7 @@ declare_oxc_lint!(
     NoNoninteractiveElementToInteractiveRole,
     jsx_a11y,
     correctness,
+    recommended,
     config = NoNoninteractiveElementToInteractiveRoleConfig,
     version = "1.64.0",
     short_description = "Disallow using an interactive WAI-ARIA role on a non-interactive HTML element.",
@@ -185,14 +186,12 @@ impl Rule for NoNoninteractiveElementToInteractiveRole {
             return;
         }
 
-        // Skip if this element-role combination is allowed by config.
         if let Some(allowed) = self.0.allowed_roles.get(element_type.as_ref())
             && allowed.iter().any(|r: &CompactStr| r.as_str() == first_role)
         {
             return;
         }
 
-        // Report if the element is non-interactive AND the role is interactive.
         if is_non_interactive_element(&element_type, jsx_el) && is_interactive_role(first_role) {
             ctx.diagnostic(no_noninteractive_element_to_interactive_role_diagnostic(
                 role_attr.span,

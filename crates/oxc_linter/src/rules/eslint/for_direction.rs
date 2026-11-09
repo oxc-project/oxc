@@ -132,7 +132,7 @@ impl Rule for ForDirection {
 
         if update_direction != expected_update_direction {
             ctx.diagnostic_with_dangerous_fix(
-                for_direction_diagnostic(test.span, get_update_span(update_expr)),
+                for_direction_diagnostic(test.span, update_expr.span()),
                 |fixer| apply_rule_fix(&fixer, update_expr),
             );
         }
@@ -232,16 +232,6 @@ fn get_update_direction(
         },
         // can't determine other kinds of updates
         _ => None,
-    }
-}
-
-fn get_update_span(update: &Expression) -> Span {
-    match update {
-        Expression::UpdateExpression(update) => update.span,
-        Expression::AssignmentExpression(assign) => assign.span,
-        _ => unreachable!(
-            "get_update_span should only be called with UpdateExpression or AssignmentExpression"
-        ),
     }
 }
 

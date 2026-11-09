@@ -1,0 +1,829 @@
+# externals/gitlab/stylesheets/page_bundles/work_items.scss
+
+## Option 1
+
+`````json
+{"printWidth":80}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -148,11 +148,12 @@
+     display: grid;
+     // allow the main content area to shrink
+     // grid items have "max-width: auto" so without the minmax the content can
+     // spill outside of the overview container
+-    grid-template-columns:
+-      minmax(0, 1fr)
+-      $work-item-overview-right-sidebar-width;
++    grid-template-columns: minmax(
++        0,
++        1fr
++      ) $work-item-overview-right-sidebar-width;
+     column-gap: $work-item-overview-gap-width;
+   }
+ }
+ 
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+@import "mixins_and_variables_and_functions";
+@import "system_note_styles";
+
+$work-item-field-inset-shadow: inset 0 0 0 $gl-border-size-1
+  var(--gray-200, $gray-200) !important;
+$work-item-overview-right-sidebar-width: 20rem;
+$work-item-sticky-header-height: 52px;
+$work-item-overview-gap-width: 2rem;
+
+.gl-token-selector-token-container {
+  display: flex;
+  align-items: center;
+}
+
+.hide-unfocused-input-decoration:not(:focus, :hover),
+.hide-unfocused-input-decoration:disabled {
+  background-color: transparent;
+  border-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+
+.work-item-assignees {
+  .assign-myself {
+    display: none;
+  }
+
+  @include media-breakpoint-up(sm) {
+    .assignees-selector:hover .assign-myself {
+      display: block;
+    }
+  }
+}
+
+.work-item-due-date {
+  .gl-datepicker-input.gl-form-input.form-control {
+    width: 10rem;
+
+    &:not(:focus, :hover) {
+      box-shadow: none;
+
+      ~ .gl-datepicker-actions {
+        display: none;
+      }
+    }
+
+    &[disabled] {
+      background-color: var(--white, $white);
+      box-shadow: none;
+
+      ~ .gl-datepicker-actions {
+        display: none;
+      }
+    }
+  }
+
+  .gl-datepicker-actions:focus,
+  .gl-datepicker-actions:hover {
+    display: flex !important;
+  }
+}
+
+.work-item-labels {
+  .gl-token {
+    padding-left: $gl-spacing-scale-1;
+  }
+
+  .gl-token-close {
+    display: none;
+  }
+}
+
+//TODO: remove all the styles related to `gl-dropdown` when all `.work-item-dropdown`s are migrated
+.work-item-dropdown {
+  // duplicate classname because we are fighting with gl-button styles
+  .gl-dropdown-toggle.gl-dropdown-toggle {
+    background: none;
+
+    &:hover,
+    &:focus {
+      box-shadow: $work-item-field-inset-shadow;
+      background-color: $input-bg;
+
+      .gl-dark & {
+        // $input-bg is overridden in dark mode but that does not
+        // work in page bundles currently, manually override here
+        background-color: var(--gray-50, $input-bg);
+      }
+    }
+
+    &.is-not-focused:not(:hover, :focus) {
+      box-shadow: none;
+
+      .gl-button-icon {
+        visibility: hidden;
+      }
+    }
+  }
+
+  // need to override the listbox styles to match with dropdown
+  // till the dropdown are converted to listbox
+  .gl-new-dropdown-toggle.gl-new-dropdown-toggle {
+    &:hover,
+    &:focus {
+      box-shadow: $work-item-field-inset-shadow;
+      background-color: $input-bg;
+
+      .gl-dark & {
+        // $input-bg is overridden in dark mode but that does not
+        // work in page bundles currently, manually override here
+        background-color: var(--gray-50, $input-bg);
+      }
+    }
+
+    &:not(:hover, :focus) {
+      box-shadow: none;
+
+      .gl-new-dropdown-chevron {
+        visibility: hidden;
+      }
+    }
+  }
+
+  > .col {
+    min-width: 0;
+  }
+}
+
+// sticky error placement for errors in modals , by default it is 83px for full view
+#work-item-detail-modal {
+  .flash-container.flash-container-page.sticky {
+    top: -8px;
+  }
+}
+
+.work-item-notifications-form {
+  .gl-toggle {
+    margin-left: auto;
+  }
+
+  .gl-toggle-label {
+    font-weight: $gl-font-weight-normal;
+  }
+}
+
+.work-item-overview {
+  @include media-breakpoint-up(md) {
+    display: grid;
+    // allow the main content area to shrink
+    // grid items have "max-width: auto" so without the minmax the content can
+    // spill outside of the overview container
+    grid-template-columns: minmax(
+        0,
+        1fr
+      ) $work-item-overview-right-sidebar-width;
+    column-gap: $work-item-overview-gap-width;
+  }
+}
+
+.work-item-overview-right-sidebar {
+  margin-top: $gl-spacing-scale-5;
+
+  @include media-breakpoint-up(md) {
+    margin-top: 0;
+    grid-row-start: 1;
+    grid-column-start: 2;
+    grid-row-end: 4;
+
+    &.is-modal {
+      .work-item-attributes-wrapper {
+        top: 0;
+      }
+    }
+  }
+}
+
+.work-item-attributes-wrapper {
+  .work-item-overview & {
+    @include media-breakpoint-up(md) {
+      top: calc(
+        #{$calc-application-header-height} + #{$work-item-sticky-header-height}
+      );
+      height: calc(
+        #{$calc-application-viewport-height} -
+          #{$work-item-sticky-header-height}
+      );
+      margin-bottom: calc(#{$content-wrapper-padding} * -1);
+      padding-inline: 0.5rem;
+      position: sticky;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+  }
+
+  .work-item-date-picker {
+    max-width: 175px;
+  }
+}
+
+.work-item-field-label {
+  .work-item-overview & {
+    max-width: 30%;
+    flex: none;
+  }
+}
+
+.work-item-field-value {
+  .work-item-overview & {
+    max-width: 65%;
+  }
+
+  &.gl-form-select {
+    &:hover,
+    &:focus {
+      box-shadow: $work-item-field-inset-shadow;
+    }
+  }
+}
+
+.work-item-parent-field-value {
+  .work-item-overview & {
+    max-width: 75%;
+  }
+}
+
+.token-selector-menu-class {
+  .work-item-overview & {
+    width: 100%;
+    min-width: 100%;
+  }
+}
+
+.work-item-notification-toggle {
+  .gl-toggle {
+    margin-left: auto;
+  }
+
+  .gl-toggle-label {
+    font-weight: normal;
+  }
+}
+
+.editable-wi-title {
+  width: 100%;
+  @include media-breakpoint-up(md) {
+    width: calc(
+      100% - #{$work-item-overview-right-sidebar-width} -
+        #{$work-item-overview-gap-width}
+    );
+  }
+}
+// Disclosure hierarchy component, used for Ancestors widget
+
+$disclosure-hierarchy-chevron-dimension: 1.2rem;
+
+@mixin hierarchy-active-item-color {
+  background-color: var(--gray-50, $gray-50);
+
+  &::after {
+    background-color: var(--gray-50, $gray-50);
+  }
+}
+
+@mixin hierarchy-path-chevron {
+  content: "";
+  position: absolute;
+  background-color: inherit;
+  top: 0.39rem;
+  right: px-to-rem(-9px);
+  width: $disclosure-hierarchy-chevron-dimension;
+  height: $disclosure-hierarchy-chevron-dimension;
+  transform: rotate(45deg) skew(14deg, 14deg);
+}
+
+.disclosure-hierarchy {
+  @include media-breakpoint-up(sm) {
+    margin-right: $gl-spacing-scale-7;
+  }
+}
+
+.disclosure-hierarchy-item:first-child,
+.disclosure-hierarchy-item:last-child {
+  flex-shrink: 1;
+}
+
+.disclosure-hierarchy-button {
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: $gl-spacing-scale-48;
+  padding-left: $gl-spacing-scale-4;
+  padding-top: calc(#{$gl-spacing-scale-3} - 1px);
+  padding-bottom: calc(#{$gl-spacing-scale-3} - 1px);
+  display: flex;
+  position: relative;
+  font-size: $gl-font-size-sm;
+  border: 1px solid var(--gray-100, $gray-100);
+  border-right-style: none;
+  border-left-style: none;
+  line-height: $gl-line-height-16;
+  padding-right: $grid-size;
+  background: var(--gray-10, $white);
+
+  &::before,
+  &::after {
+    @include hierarchy-path-chevron;
+    border: 1px solid var(--gray-100, $gray-100);
+    border-color: inherit;
+    border-bottom-color: transparent;
+    border-left-color: transparent;
+    border-top-left-radius: $gl-border-radius-small;
+    border-bottom-right-radius: $gl-border-radius-small;
+  }
+
+  &::before {
+    background: var(--gray-10, $white);
+    left: -10px;
+    z-index: 1;
+  }
+
+  &::after {
+    z-index: 0;
+  }
+
+  .disclosure-hierarchy-item:first-child & {
+    padding-left: $gl-spacing-scale-3;
+    border-left: 1px solid var(--gray-100, $gray-100);
+    border-top-left-radius: $gl-border-radius-base;
+    border-bottom-left-radius: $gl-border-radius-base;
+
+    &::before {
+      display: none;
+    }
+
+    &:active,
+    &:focus,
+    &:focus:active {
+      // Custom focus
+      box-shadow:
+        1px 1px 0 1px $blue-400,
+        2px -1px 0 1px $blue-400,
+        -1px 1px 0 1px $blue-400,
+        -1px -1px 0 1px $blue-400 !important;
+    }
+  }
+
+  .disclosure-hierarchy-item:last-child & {
+    padding-right: $gl-spacing-scale-4;
+    border-right: 1px solid var(--gray-100, $gray-100);
+    border-top-right-radius: $gl-border-radius-base;
+    border-bottom-right-radius: $gl-border-radius-base;
+
+    &::after {
+      display: none;
+    }
+  }
+
+  &[disabled] {
+    color: $gl-text-color-disabled;
+    cursor: not-allowed;
+  }
+
+  &:not([disabled]):hover {
+    border-color: var(--gray-400, $gray-400);
+    @include hierarchy-active-item-color;
+    color: var(--gray-900, $gray-900);
+
+    &::after {
+      border-left: 1px solid var(--gray-50, $gray-50);
+      border-bottom: 1px solid var(--gray-50, $gray-50);
+      z-index: 3;
+    }
+  }
+
+  &:active,
+  &:focus,
+  &:focus:active {
+    // Custom focus
+    box-shadow:
+      1px 1px 0 1px $blue-400,
+      2px -1px 0 1px $blue-400 !important;
+    outline: none;
+    border-top: 1px solid var(--gray-400, $gray-400);
+    border-bottom: 1px solid var(--gray-400, $gray-400);
+    @include hierarchy-active-item-color;
+    z-index: 2;
+    border-radius: $gl-border-radius-small;
+
+    &::before,
+    &::after {
+      box-shadow: 2px -2px 0 1px $blue-400;
+    }
+  }
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+@import "mixins_and_variables_and_functions";
+@import "system_note_styles";
+
+$work-item-field-inset-shadow: inset 0 0 0 $gl-border-size-1
+  var(--gray-200, $gray-200) !important;
+$work-item-overview-right-sidebar-width: 20rem;
+$work-item-sticky-header-height: 52px;
+$work-item-overview-gap-width: 2rem;
+
+.gl-token-selector-token-container {
+  display: flex;
+  align-items: center;
+}
+
+.hide-unfocused-input-decoration:not(:focus, :hover),
+.hide-unfocused-input-decoration:disabled {
+  background-color: transparent;
+  border-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+
+.work-item-assignees {
+  .assign-myself {
+    display: none;
+  }
+
+  @include media-breakpoint-up(sm) {
+    .assignees-selector:hover .assign-myself {
+      display: block;
+    }
+  }
+}
+
+.work-item-due-date {
+  .gl-datepicker-input.gl-form-input.form-control {
+    width: 10rem;
+
+    &:not(:focus, :hover) {
+      box-shadow: none;
+
+      ~ .gl-datepicker-actions {
+        display: none;
+      }
+    }
+
+    &[disabled] {
+      background-color: var(--white, $white);
+      box-shadow: none;
+
+      ~ .gl-datepicker-actions {
+        display: none;
+      }
+    }
+  }
+
+  .gl-datepicker-actions:focus,
+  .gl-datepicker-actions:hover {
+    display: flex !important;
+  }
+}
+
+.work-item-labels {
+  .gl-token {
+    padding-left: $gl-spacing-scale-1;
+  }
+
+  .gl-token-close {
+    display: none;
+  }
+}
+
+//TODO: remove all the styles related to `gl-dropdown` when all `.work-item-dropdown`s are migrated
+.work-item-dropdown {
+  // duplicate classname because we are fighting with gl-button styles
+  .gl-dropdown-toggle.gl-dropdown-toggle {
+    background: none;
+
+    &:hover,
+    &:focus {
+      box-shadow: $work-item-field-inset-shadow;
+      background-color: $input-bg;
+
+      .gl-dark & {
+        // $input-bg is overridden in dark mode but that does not
+        // work in page bundles currently, manually override here
+        background-color: var(--gray-50, $input-bg);
+      }
+    }
+
+    &.is-not-focused:not(:hover, :focus) {
+      box-shadow: none;
+
+      .gl-button-icon {
+        visibility: hidden;
+      }
+    }
+  }
+
+  // need to override the listbox styles to match with dropdown
+  // till the dropdown are converted to listbox
+  .gl-new-dropdown-toggle.gl-new-dropdown-toggle {
+    &:hover,
+    &:focus {
+      box-shadow: $work-item-field-inset-shadow;
+      background-color: $input-bg;
+
+      .gl-dark & {
+        // $input-bg is overridden in dark mode but that does not
+        // work in page bundles currently, manually override here
+        background-color: var(--gray-50, $input-bg);
+      }
+    }
+
+    &:not(:hover, :focus) {
+      box-shadow: none;
+
+      .gl-new-dropdown-chevron {
+        visibility: hidden;
+      }
+    }
+  }
+
+  > .col {
+    min-width: 0;
+  }
+}
+
+// sticky error placement for errors in modals , by default it is 83px for full view
+#work-item-detail-modal {
+  .flash-container.flash-container-page.sticky {
+    top: -8px;
+  }
+}
+
+.work-item-notifications-form {
+  .gl-toggle {
+    margin-left: auto;
+  }
+
+  .gl-toggle-label {
+    font-weight: $gl-font-weight-normal;
+  }
+}
+
+.work-item-overview {
+  @include media-breakpoint-up(md) {
+    display: grid;
+    // allow the main content area to shrink
+    // grid items have "max-width: auto" so without the minmax the content can
+    // spill outside of the overview container
+    grid-template-columns:
+      minmax(0, 1fr)
+      $work-item-overview-right-sidebar-width;
+    column-gap: $work-item-overview-gap-width;
+  }
+}
+
+.work-item-overview-right-sidebar {
+  margin-top: $gl-spacing-scale-5;
+
+  @include media-breakpoint-up(md) {
+    margin-top: 0;
+    grid-row-start: 1;
+    grid-column-start: 2;
+    grid-row-end: 4;
+
+    &.is-modal {
+      .work-item-attributes-wrapper {
+        top: 0;
+      }
+    }
+  }
+}
+
+.work-item-attributes-wrapper {
+  .work-item-overview & {
+    @include media-breakpoint-up(md) {
+      top: calc(
+        #{$calc-application-header-height} + #{$work-item-sticky-header-height}
+      );
+      height: calc(
+        #{$calc-application-viewport-height} -
+          #{$work-item-sticky-header-height}
+      );
+      margin-bottom: calc(#{$content-wrapper-padding} * -1);
+      padding-inline: 0.5rem;
+      position: sticky;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+  }
+
+  .work-item-date-picker {
+    max-width: 175px;
+  }
+}
+
+.work-item-field-label {
+  .work-item-overview & {
+    max-width: 30%;
+    flex: none;
+  }
+}
+
+.work-item-field-value {
+  .work-item-overview & {
+    max-width: 65%;
+  }
+
+  &.gl-form-select {
+    &:hover,
+    &:focus {
+      box-shadow: $work-item-field-inset-shadow;
+    }
+  }
+}
+
+.work-item-parent-field-value {
+  .work-item-overview & {
+    max-width: 75%;
+  }
+}
+
+.token-selector-menu-class {
+  .work-item-overview & {
+    width: 100%;
+    min-width: 100%;
+  }
+}
+
+.work-item-notification-toggle {
+  .gl-toggle {
+    margin-left: auto;
+  }
+
+  .gl-toggle-label {
+    font-weight: normal;
+  }
+}
+
+.editable-wi-title {
+  width: 100%;
+  @include media-breakpoint-up(md) {
+    width: calc(
+      100% - #{$work-item-overview-right-sidebar-width} -
+        #{$work-item-overview-gap-width}
+    );
+  }
+}
+// Disclosure hierarchy component, used for Ancestors widget
+
+$disclosure-hierarchy-chevron-dimension: 1.2rem;
+
+@mixin hierarchy-active-item-color {
+  background-color: var(--gray-50, $gray-50);
+
+  &::after {
+    background-color: var(--gray-50, $gray-50);
+  }
+}
+
+@mixin hierarchy-path-chevron {
+  content: "";
+  position: absolute;
+  background-color: inherit;
+  top: 0.39rem;
+  right: px-to-rem(-9px);
+  width: $disclosure-hierarchy-chevron-dimension;
+  height: $disclosure-hierarchy-chevron-dimension;
+  transform: rotate(45deg) skew(14deg, 14deg);
+}
+
+.disclosure-hierarchy {
+  @include media-breakpoint-up(sm) {
+    margin-right: $gl-spacing-scale-7;
+  }
+}
+
+.disclosure-hierarchy-item:first-child,
+.disclosure-hierarchy-item:last-child {
+  flex-shrink: 1;
+}
+
+.disclosure-hierarchy-button {
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: $gl-spacing-scale-48;
+  padding-left: $gl-spacing-scale-4;
+  padding-top: calc(#{$gl-spacing-scale-3} - 1px);
+  padding-bottom: calc(#{$gl-spacing-scale-3} - 1px);
+  display: flex;
+  position: relative;
+  font-size: $gl-font-size-sm;
+  border: 1px solid var(--gray-100, $gray-100);
+  border-right-style: none;
+  border-left-style: none;
+  line-height: $gl-line-height-16;
+  padding-right: $grid-size;
+  background: var(--gray-10, $white);
+
+  &::before,
+  &::after {
+    @include hierarchy-path-chevron;
+    border: 1px solid var(--gray-100, $gray-100);
+    border-color: inherit;
+    border-bottom-color: transparent;
+    border-left-color: transparent;
+    border-top-left-radius: $gl-border-radius-small;
+    border-bottom-right-radius: $gl-border-radius-small;
+  }
+
+  &::before {
+    background: var(--gray-10, $white);
+    left: -10px;
+    z-index: 1;
+  }
+
+  &::after {
+    z-index: 0;
+  }
+
+  .disclosure-hierarchy-item:first-child & {
+    padding-left: $gl-spacing-scale-3;
+    border-left: 1px solid var(--gray-100, $gray-100);
+    border-top-left-radius: $gl-border-radius-base;
+    border-bottom-left-radius: $gl-border-radius-base;
+
+    &::before {
+      display: none;
+    }
+
+    &:active,
+    &:focus,
+    &:focus:active {
+      // Custom focus
+      box-shadow:
+        1px 1px 0 1px $blue-400,
+        2px -1px 0 1px $blue-400,
+        -1px 1px 0 1px $blue-400,
+        -1px -1px 0 1px $blue-400 !important;
+    }
+  }
+
+  .disclosure-hierarchy-item:last-child & {
+    padding-right: $gl-spacing-scale-4;
+    border-right: 1px solid var(--gray-100, $gray-100);
+    border-top-right-radius: $gl-border-radius-base;
+    border-bottom-right-radius: $gl-border-radius-base;
+
+    &::after {
+      display: none;
+    }
+  }
+
+  &[disabled] {
+    color: $gl-text-color-disabled;
+    cursor: not-allowed;
+  }
+
+  &:not([disabled]):hover {
+    border-color: var(--gray-400, $gray-400);
+    @include hierarchy-active-item-color;
+    color: var(--gray-900, $gray-900);
+
+    &::after {
+      border-left: 1px solid var(--gray-50, $gray-50);
+      border-bottom: 1px solid var(--gray-50, $gray-50);
+      z-index: 3;
+    }
+  }
+
+  &:active,
+  &:focus,
+  &:focus:active {
+    // Custom focus
+    box-shadow:
+      1px 1px 0 1px $blue-400,
+      2px -1px 0 1px $blue-400 !important;
+    outline: none;
+    border-top: 1px solid var(--gray-400, $gray-400);
+    border-bottom: 1px solid var(--gray-400, $gray-400);
+    @include hierarchy-active-item-color;
+    z-index: 2;
+    border-radius: $gl-border-radius-small;
+
+    &::before,
+    &::after {
+      box-shadow: 2px -2px 0 1px $blue-400;
+    }
+  }
+}
+
+`````

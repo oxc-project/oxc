@@ -93,6 +93,7 @@ declare_oxc_lint!(
     RequireReturns,
     jsdoc,
     pedantic,
+    recommended,
     pending,
     config = RequireReturnsConfig,
     version = "0.4.0",

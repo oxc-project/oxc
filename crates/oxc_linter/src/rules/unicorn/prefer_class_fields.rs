@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentOperator, ClassElement, Expression, MemberExpression,
-        MethodDefinitionKind, PropertyDefinitionType, Statement,
+        Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -83,6 +83,7 @@ declare_oxc_lint!(
     PreferClassFields,
     unicorn,
     style,
+    recommended,
     conditional_fix_suggestion,
     version = "1.20.0",
     short_description = "Prefers class field declarations over `this` assignments in constructors for static values.",
@@ -97,7 +98,7 @@ impl Rule for PreferClassFields {
         // Find constructor
         let Some(constructor) = class.body.body.iter().find_map(|element| {
             if let ClassElement::MethodDefinition(method) = element
-                && method.kind == MethodDefinitionKind::Constructor
+                && method.kind.is_constructor()
                 && !method.r#static
                 && !method.computed
             {
@@ -145,7 +146,7 @@ impl Rule for PreferClassFields {
                     return false;
                 }
 
-                if prop.r#type == PropertyDefinitionType::PropertyDefinition {
+                if !prop.r#type.is_abstract() {
                     return prop.key.name().is_some_and(|name| name == property_name);
                 }
             }

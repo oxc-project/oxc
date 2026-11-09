@@ -69,6 +69,7 @@ declare_oxc_lint!(
     NoNamedAsDefault,
     import,
     suspicious,
+    recommended,
     version = "0.2.3",
     short_description = "Forbid using an exported name as the identifier of a default export.",
 );

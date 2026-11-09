@@ -4,7 +4,6 @@
 //! (all the same when the second item repeats `1`, "git-diff friendly").
 
 use oxc_formatter_core::{
-    Buffer,
     builders::{dedent, hard_line_break, mark_as_root, space_align, text, token},
     write,
 };

@@ -1,9 +1,9 @@
 use oxc_ast::{Comment, ast::Statement};
-use oxc_formatter_core::{Buffer, Format};
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::{
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     formatter::{
         JsFormatContext, JsFormatter, JsFormatterExt as _,
         prelude::{empty_line, format_once, hard_line_break, soft_line_indent_or_space, space},
@@ -119,9 +119,30 @@ pub fn write_trailing_comments_before(
     f: &mut JsFormatter<'_, '_>,
 ) -> bool {
     let comments = f.context().comments().comments_before_character(start, character);
+    write_trailing_comments(comments, f)
+}
+
+/// [`write_trailing_comments_before`] for an already bounded run of pending `comments`
+/// (e.g. an array hole's before its `,`).
+///
+/// Right after an opener (`(`, `[`) nothing precedes to trail, so every comment prints in place:
+/// same-line block comments glue to it (`for (/* c */;;)`, `[/* c */, a]`),
+/// and a same-line run ending in a line comment moves to its own line as a whole (the opener exception).
+#[must_use = "a riding line comment needs a line break right after the caller's token"]
+pub fn write_trailing_comments<'a>(comments: &'a [Comment], f: &mut JsFormatter<'_, 'a>) -> bool {
+    let Some(first) = comments.first() else { return false };
     let same_line_count =
         comments.iter().take_while(|comment| !comment.preceded_by_newline()).count();
-    let (same_line, own_line) = comments.split_at(same_line_count);
+    let after_opener =
+        matches!(f.source_text().previous_non_whitespace_byte(first.span.start), Some(b'(' | b'['));
+    let (same_line, in_place) = if after_opener {
+        if comments[..same_line_count].last().is_some_and(Comment::is_line) {
+            write!(f, hard_line_break());
+        }
+        (&[][..], comments)
+    } else {
+        comments.split_at(same_line_count)
+    };
 
     FormatTrailingComments::Comments(same_line).fmt(f);
     // Own-line comments print in place, never via `line_suffix`:
@@ -130,16 +151,21 @@ pub fn write_trailing_comments_before(
     // as the own-line invariant requires;
     // the caller's token follows a block comment directly (`/* c */;`),
     // the stable form its own broken output re-parses to.
-    for comment in own_line {
-        if f.lines_before(comment.span) > 1 {
+    for (index, comment) in in_place.iter().enumerate() {
+        if !comment.preceded_by_newline() {
+            // Glued to the opener, or continuing the previous comment's line (`/* a */ // b`)
+            if index > 0 {
+                write!(f, space());
+            }
+        } else if f.lines_before(comment.span) > 1 {
             write!(f, empty_line());
         } else {
             write!(f, hard_line_break());
         }
         write!(f, FormatCommentBeforeContent::new(comment));
     }
-    // The own-line loop's breaks have already flushed a pending same-line line comment
-    own_line.is_empty() && same_line.last().is_some_and(Comment::is_line)
+    // The in-place loop's breaks have already flushed a pending same-line line comment
+    in_place.is_empty() && same_line.last().is_some_and(Comment::is_line)
 }
 
 /// Comments between a block's `}` and a following keyword (`else`/`catch`/`finally`)
@@ -182,12 +208,12 @@ pub fn write_comments_between_blocks<'a>(
 }
 
 pub struct FormatStatementBody<'a, 'b> {
-    body: &'b AstNode<'a, Statement<'a>>,
+    body: &'b AstNode<'b, 'a, Statement<'a>>,
     force_space: bool,
 }
 
 impl<'a, 'b> FormatStatementBody<'a, 'b> {
-    pub fn new(body: &'b AstNode<'a, Statement<'a>>) -> Self {
+    pub fn new(body: &'b AstNode<'b, 'a, Statement<'a>>) -> Self {
         Self { body, force_space: false }
     }
 
@@ -201,14 +227,15 @@ impl<'a, 'b> FormatStatementBody<'a, 'b> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
+        let kind = self.body.as_kind();
+        if let AstNodeKind::EmptyStatement(empty) = &kind {
             // The `;` IS the body (content), so the head-body separator applies before it too;
             // without comments no separator is written (`while (x);`).
             if f.context().comments().has_comment_before(empty.span.start) {
                 write_head_body_separator(empty.span.start, f);
             }
             write!(f, empty);
-        } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
+        } else if let AstNodeKind::BlockStatement(block) = &kind {
             write_head_body_separator(block.span().start, f);
             write!(f, [block]);
         } else if self.force_space {

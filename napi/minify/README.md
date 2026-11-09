@@ -2,18 +2,19 @@
 
 See [usage instructions](https://oxc.rs/docs/guide/usage/minifier).
 
-This is alpha software and may yield incorrect results, feel free to [submit a bug report](https://github.com/oxc-project/oxc/issues/new?assignees=&labels=C-bug&projects=&template=bug_report.md).
+If you encounter incorrect output, [submit a bug report](https://github.com/oxc-project/oxc/issues/new?assignees=&labels=C-bug&projects=&template=bug_report.md).
 
 ### Performance and Compression Size
 
 See [minification-benchmarks](https://github.com/privatenumber/minification-benchmarks) for details.
 
-The current version already outperforms `esbuild`,
-but it still lacks a few key minification techniques
-such as constant inlining and dead code removal,
-which we plan to implement next.
+The minifier implements constant folding, variable inlining, dead code elimination,
+and name mangling. See the benchmarks for current speed and compression comparisons.
 
 ## Caveats
+
+Transform TypeScript, TSX, and JSX to JavaScript before minification. `oxc-minify` does not
+run those transforms for you.
 
 To maximize performance, `oxc-minify` assumes the input code is semantically correct.
 It uses `oxc-parser`'s fast mode to parse the input code,
@@ -112,7 +113,7 @@ host APIs must also be excluded or reserved.
 
 `oxc-minify` makes some assumptions about the source code.
 
-See https://github.com/oxc-project/oxc/blob/main/crates/oxc_minifier/README.md#assumptions for details.
+See https://github.com/oxc-project/oxc/blob/main/crates/oxc_minifier/docs/ASSUMPTIONS.md for details.
 
 ### Supports WASM
 

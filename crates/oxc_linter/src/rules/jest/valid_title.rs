@@ -1,10 +1,12 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use serde_json::Value;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
-    rules::{PossibleJestNode, shared::valid_title as SharedValidTitle},
+    rules::shared::valid_title as SharedValidTitle,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -14,6 +16,7 @@ declare_oxc_lint!(
     ValidTitle,
     jest,
     correctness,
+    recommended,
     conditional_fix,
     // TODO: Replace this with an actual config struct. This is a dummy value to
     // indicate that this rule has configuration and avoid errors.
@@ -28,12 +31,13 @@ impl Rule for ValidTitle {
             .map(|config| Self(Box::new(config)))
     }
 
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        SharedValidTitle::ValidTitleConfig::run_rule(&self.0, jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        SharedValidTitle::ValidTitleConfig::run_rule(&self.0, node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
@@ -44,6 +48,15 @@ fn test() {
     let pass = vec![
         ("describe('the correct way to properly handle all the things', () => {});", None),
         ("test('that all is as it should be', () => {});", None),
+        (r"test('\uD800', () => {});", None),
+        (r"test('foo \uD800 bar', () => {});", None),
+        (r"test('\uD800test foo', () => {});", None),
+        // A title with a lone surrogate matches no disallowed word or configured pattern.
+        (
+            r"test('\uD800 correct', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["correct"] }])),
+        ),
+        (r"test('\uD800 foo', () => {});", Some(serde_json::json!([{ "mustNotMatch": "^\\W" }]))),
         (
             "it('correctly sets the value', () => {});",
             Some(serde_json::json!([
@@ -240,6 +253,8 @@ fn test() {
     ];
 
     let fail = vec![
+        // A title with a lone surrogate matches no configured pattern.
+        (r"test('\uD800 foo', () => {});", Some(serde_json::json!([{ "mustMatch": "^\\W" }]))),
         ("const String = { raw: () => 'foo' }; it(String.raw`foo`, () => {})", None),
         (
             "test('the correct way to properly handle all things', () => {});",
@@ -650,6 +665,10 @@ fn test() {
         ("it(abc, function () {})", None),
         // Vitest-specific fail test with allowArguments: false
         ("test(bar, () => {});", Some(serde_json::json!([{ "allowArguments": false }]))),
+        (r"test(' \uD800 ', () => {});", None),
+        (r"describe(`\uDC00 `, () => {});", None),
+        (r"test('test \uD800', () => {});", None),
+        (r"it('it \uD800 foo', () => {});", None),
     ];
 
     let fix = vec![
@@ -782,6 +801,9 @@ fn test() {
             "test('test that it doesn\\'t break', () => {});",
             "test('that it doesn\\'t break', () => {});",
         ),
+        // Lone surrogates elsewhere in the title do not hide the space or prefix.
+        (r"test(' \uD800 ', () => {});", r"test('\uD800', () => {});"),
+        (r"test('test \uD800', () => {});", r"test('\uD800', () => {});"),
     ];
 
     let fix = fix

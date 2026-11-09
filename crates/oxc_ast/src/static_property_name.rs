@@ -34,6 +34,15 @@ impl StaticPropertyName<'_> {
     pub fn as_str(&self) -> Option<&str> {
         self.as_js_str().as_str()
     }
+
+    /// Display the name for diagnostics, escaping lone surrogates in the same lowercase spelling
+    /// as the Debug form and printed output.
+    ///
+    /// The output is not injective: `"\uD800"` and `"\\ud800"` both print as `\ud800`, so never
+    /// compare or key by it.
+    pub fn display(&self) -> impl fmt::Display + '_ {
+        self.as_js_str().display()
+    }
 }
 
 impl<'a> StaticPropertyName<'a> {
@@ -106,14 +115,6 @@ impl PartialEq<Ident<'_>> for StaticPropertyName<'_> {
     }
 }
 
-impl fmt::Display for StaticPropertyName<'_> {
-    /// Display a name for diagnostics, escaping lone surrogates in the same lowercase spelling as
-    /// the Debug form and printed output.
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&self.as_js_str().display(), f)
-    }
-}
-
 impl PartialEq<JSStr<'_>> for StaticPropertyName<'_> {
     fn eq(&self, other: &JSStr<'_>) -> bool {
         self.as_js_str() == *other
@@ -176,7 +177,7 @@ mod tests {
         for value in [1e21, 1e-7, -f64::MAX, -5e-324, -f64::MIN_POSITIVE, f64::NAN, -0.0] {
             let text = value.to_string();
             let name = StaticPropertyName::Owned(format_compact_str!("{value}"));
-            assert_eq!(name.to_string(), text);
+            assert_eq!(name.display().to_string(), text);
             assert_eq!(name, StaticPropertyName::from(text.as_str()));
         }
     }

@@ -1,5 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_ast::ast::{Declaration, VariableDeclarationKind};
+use oxc_ast::ast::Declaration;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -83,9 +83,7 @@ impl Rule for NoLoneBlocks {
         if is_lone_blocks {
             for child in &stmt.body {
                 match child.as_declaration() {
-                    Some(Declaration::VariableDeclaration(decl))
-                        if decl.kind != VariableDeclarationKind::Var =>
-                    {
+                    Some(Declaration::VariableDeclaration(decl)) if !decl.kind.is_var() => {
                         is_lone_blocks = false;
                     }
                     Some(
@@ -105,7 +103,7 @@ impl Rule for NoLoneBlocks {
 
         match parent_node.kind() {
             AstKind::FunctionBody(parent)
-                if parent.statements.len() == 1 && stmt.body.len() == 1 =>
+                if parent.directives.is_empty() && parent.statements.len() == 1 =>
             {
                 report(ctx, node, parent_node);
             }
@@ -122,7 +120,7 @@ impl Rule for NoLoneBlocks {
 
 fn report(ctx: &LintContext, node: &AstNode, parent_node: &AstNode) {
     match parent_node.kind() {
-        AstKind::BlockStatement(_) | AstKind::StaticBlock(_) => {
+        AstKind::BlockStatement(_) | AstKind::StaticBlock(_) | AstKind::FunctionBody(_) => {
             ctx.diagnostic(no_nested_lone_blocks_diagnostic(node.span()));
         }
         _ => ctx.diagnostic(no_lone_blocks_diagnostic(node.span())),
@@ -131,7 +129,10 @@ fn report(ctx: &LintContext, node: &AstNode, parent_node: &AstNode) {
 
 fn is_lone_block(node: &AstNode, parent_node: &AstNode) -> bool {
     match parent_node.kind() {
-        AstKind::BlockStatement(_) | AstKind::StaticBlock(_) | AstKind::Program(_) => true,
+        AstKind::BlockStatement(_)
+        | AstKind::StaticBlock(_)
+        | AstKind::Program(_)
+        | AstKind::FunctionBody(_) => true,
         AstKind::SwitchCase(parent_node) => {
             let consequent = &parent_node.consequent;
             if consequent.len() != 1 {
@@ -153,7 +154,6 @@ fn test() {
         "if (foo) { if (bar) { baz(); } }",
         "do { bar(); } while (foo)",
         "function foo() { while (bar) { baz() } }",
-        "function test() { { console.log(6); console.log(6) } }",
         "{ let x = 1; }",                      // { "ecmaVersion": 6 },
         "{ const x = 1; }",                    // { "ecmaVersion": 6 },
         "'use strict'; { function bar() {} }", // { "ecmaVersion": 6 },
@@ -224,6 +224,15 @@ fn test() {
                 // do nothing
             }
         ",
+        "function example() { before(); { let value = 1; consume(value); } }",
+        "function example() { { const value = 1; consume(value); } after(); }",
+        "function example() { before(); { class Local {} consume(Local); } }",
+        "function example() { before(); { function local() {} local(); } }",
+        "function example() { before(); { using value = resource(); consume(value); } }",
+        "async function example() { before(); { await using value = resource(); consume(value); } }",
+        "function example() { if (condition) { notify(); } }",
+        "function example() { label: { notify(); } }",
+        r#"function example() { "use strict"; { let value = 1; consume(value); } }"#,
     ];
 
     let fail = vec![
@@ -388,6 +397,17 @@ fn test() {
                 }
             }
         ", // { "ecmaVersion": 2022 }
+        "export function example() { before(); { notify(); } }",
+        "function example() { { notify(); } after(); }",
+        "function example() { before(); { var value = 1; notify(value); } after(); }",
+        "function test() { { console.log(6); console.log(6) } }",
+        "const example = function () { before(); { notify(); } };",
+        "const example = () => { before(); { notify(); } };",
+        "class Example { method() { before(); { notify(); } } }",
+        "const example = { method() { before(); { notify(); } } };",
+        "async function example() { before(); { await notify(); } }",
+        "function* example() { before(); { yield value; } }",
+        "function example() { { let value = 1; consume(value); } }",
     ];
 
     Tester::new(NoLoneBlocks::NAME, NoLoneBlocks::PLUGIN, pass, fail).test_and_snapshot();

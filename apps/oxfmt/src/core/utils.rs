@@ -7,7 +7,7 @@ use std::{
 /// Initialize global tracing subscriber for `oxfmt`.
 ///
 /// Safe to call multiple times from different NAPI entry points
-/// (`run_cli()` or `format()` -> `js_text_to_doc()`) and worker processes.
+/// (`run_cli()` or `format()` -> `js_text_to_doc()`) and worker threads.
 ///
 /// To debug `oxc_formatter`:
 /// `OXC_LOG=oxc_formatter oxfmt`

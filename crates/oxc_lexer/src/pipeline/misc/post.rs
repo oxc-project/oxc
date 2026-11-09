@@ -1,7 +1,10 @@
+use oxc_simd::{Cpu, cpu_multiversion};
+
 use crate::token::{KW_KIND_BASE, tk};
 
 use crate::pipeline::bitmap::{bm_clear, bm_get, bm_prev1};
 
+#[cpu_multiversion]
 #[inline]
 pub unsafe fn misc_post(
     src: *const u8,
@@ -11,12 +14,14 @@ pub unsafe fn misc_post(
     misc: *const u64,
     kind: *mut u8,
     nesc: usize,
+    cpu: impl Cpu,
 ) {
     if nesc != 0 {
-        misc_post_impl(src, n, st, word, misc, kind)
+        misc_post_impl(src, n, st, word, misc, kind, cpu)
     }
 }
 
+#[cpu_multiversion]
 #[inline(never)]
 unsafe fn misc_post_impl(
     src: *const u8,
@@ -25,6 +30,7 @@ unsafe fn misc_post_impl(
     word: *const u64,
     misc: *const u64,
     kind: *mut u8,
+    cpu: impl Cpu,
 ) {
     let nw = (n + 63) >> 6;
     for w in 0..nw {
@@ -36,17 +42,17 @@ unsafe fn misc_post_impl(
             if *src.add(p) != b'\\' || *src.add(p + 1) != b'u' {
                 continue;
             }
-            if !bm_get(st, p) {
+            if !bm_get(st, p, cpu) {
                 continue;
             }
-            if p == 0 || !bm_get(word, p - 1) {
+            if p == 0 || !bm_get(word, p - 1, cpu) {
                 continue;
             }
-            let tt = bm_prev1(st, p);
+            let tt = bm_prev1(st, p, cpu);
             let k = *kind.add(tt as usize);
             if k == tk!(Ident) || (k >= KW_KIND_BASE && k != tk!(Invalid)) {
                 *kind.add(tt as usize) = tk!(IdentEscaped);
-                bm_clear(st, p);
+                bm_clear(st, p, cpu);
             }
         }
     }

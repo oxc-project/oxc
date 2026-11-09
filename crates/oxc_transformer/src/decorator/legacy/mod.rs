@@ -516,18 +516,8 @@ impl<'a> LegacyDecorator<'a> {
                 scope_id,
                 SymbolFlags::FunctionScopedVariable,
             );
-            let param = FormalParameter::new(
-                SPAN,
-                [],
-                value_binding.create_binding_pattern(ctx),
-                None,
-                None,
-                false,
-                None,
-                false,
-                false,
-                ctx,
-            );
+            let param =
+                FormalParameter::new_plain(SPAN, value_binding.create_binding_pattern(ctx), ctx);
             let params = FormalParameters::boxed(
                 SPAN,
                 FormalParameterKind::FormalParameter,

@@ -59,6 +59,7 @@ declare_oxc_lint!(
     NewForBuiltins,
     unicorn,
     pedantic,
+    recommended,
     pending,
     version = "0.0.16",
     short_description = "Enforce the use of `new` for most builtins.",

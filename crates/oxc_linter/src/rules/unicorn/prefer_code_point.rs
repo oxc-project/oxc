@@ -42,6 +42,7 @@ declare_oxc_lint!(
     PreferCodePoint,
     unicorn,
     pedantic,
+    recommended,
     fix_dangerous,
     version = "0.0.16",
     short_description = "Prefer `String#codePointAt` over `String#charCodeAt` and `String.fromCodePoint` over `String.fromCharCode`.",

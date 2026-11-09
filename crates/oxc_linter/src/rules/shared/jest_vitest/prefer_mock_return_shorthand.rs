@@ -4,7 +4,6 @@ use oxc_ast::{
         AccessorProperty, Argument, CallExpression, Expression, FormalParameter,
         FormalParameterRest, Function, IdentifierReference, ImportExpression, NewExpression,
         PropertyDefinition, Statement, StaticBlock, TaggedTemplateExpression, ThisExpression,
-        VariableDeclarationKind,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -160,7 +159,7 @@ fn is_mutable(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
     if let AstKind::VariableDeclarator(_) = ctx.nodes().kind(decl_node_id)
         && let AstKind::VariableDeclaration(parent) = ctx.nodes().parent_kind(decl_node_id)
     {
-        return parent.kind != VariableDeclarationKind::Const;
+        return !parent.kind.is_const();
     }
 
     false

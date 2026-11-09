@@ -55,6 +55,7 @@ declare_oxc_lint!(
     NoDocumentImportInPage,
     nextjs,
     correctness,
+    recommended,
     version = "0.2.1",
     short_description = "Prevent importing `next/document` outside of `pages/_document.js`.",
 );

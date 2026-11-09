@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, MemberExpressionKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
@@ -99,13 +99,11 @@ impl Rule for NoConsole {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let object = match node.kind() {
-            AstKind::StaticMemberExpression(member_expr) => &member_expr.object,
-            AstKind::ComputedMemberExpression(member_expr) => &member_expr.object,
-            _ => return,
+        let Some(member_expr) = node.kind().as_member_expression_kind() else {
+            return;
         };
 
-        let Expression::Identifier(ident) = object else {
+        let Expression::Identifier(ident) = member_expr.object() else {
             return;
         };
 
@@ -114,15 +112,15 @@ impl Rule for NoConsole {
             return;
         }
 
-        let (mem_span, prop_name) = match node.kind() {
-            AstKind::StaticMemberExpression(member_expr) => member_expr.static_property_info(),
-            AstKind::ComputedMemberExpression(member_expr) => {
+        let (mem_span, prop_name) = match member_expr {
+            MemberExpressionKind::Static(member_expr) => member_expr.static_property_info(),
+            MemberExpressionKind::Computed(member_expr) => {
                 match member_expr.static_property_info() {
                     Some(info) => info,
                     None => return,
                 }
             }
-            _ => unreachable!(),
+            MemberExpressionKind::PrivateField(_) => return,
         };
 
         if self.allow.iter().any(|allowed_name| allowed_name.as_str() == prop_name) {

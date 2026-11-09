@@ -454,7 +454,12 @@ impl JsxCurlyBracePresence {
             Expression::JSXElement(el) => {
                 if parent_is_attribute {
                     if self.prop_element_values.is_never() && el.closing_element.is_none() {
-                        report_unnecessary_curly_for_attribute_value(ctx, container, inner.span());
+                        ctx.diagnostic_with_fix(
+                            jsx_curly_brace_presence_unnecessary_diagnostic(inner.span()),
+                            |fixer| {
+                                fixer.replace(container.span, ctx.source_range(el.span).to_owned())
+                            },
+                        );
                     }
                 } else if self.children.is_never()
                     && !has_adjacent_jsx_expression_containers(ctx, container, node.id())
@@ -474,7 +479,12 @@ impl JsxCurlyBracePresence {
                     return;
                 }
                 if parent_is_attribute {
-                    report_unnecessary_curly_for_attribute_value(ctx, container, string.span);
+                    report_unnecessary_curly_for_string_attribute_value(
+                        ctx,
+                        container.span,
+                        string.span,
+                        string.value,
+                    );
                 } else {
                     report_unnecessary_curly(ctx, container, string.span);
                 }
@@ -482,9 +492,10 @@ impl JsxCurlyBracePresence {
             Expression::TemplateLiteral(template)
                 if allowed.is_never() && template.is_no_substitution_template() =>
             {
-                let Some(string) = template.single_quasi().and_then(JSStr::as_str) else {
+                let Some(value) = template.single_quasi() else {
                     return;
                 };
+                let Some(string) = value.as_str() else { return };
                 if !parent_is_attribute && contains_quote_characters(string)
                     || is_allowed_string_like_in_container(
                         ctx,
@@ -497,7 +508,12 @@ impl JsxCurlyBracePresence {
                     return;
                 }
                 if parent_is_attribute {
-                    report_unnecessary_curly_for_attribute_value(ctx, container, template.span);
+                    report_unnecessary_curly_for_string_attribute_value(
+                        ctx,
+                        container.span,
+                        template.span,
+                        value,
+                    );
                 } else {
                     report_unnecessary_curly(ctx, container, template.span);
                 }
@@ -515,7 +531,7 @@ fn is_allowed_string_like_in_container<'a>(
     is_prop: bool,
 ) -> bool {
     is_whitespace(s)
-        || contains_line_break(s)
+        || s.contains(['\n', '\r'])
         || contains_html_entity(s)
         || is_prop && contains_both_quote_characters(s)
         || !is_prop && contains_disallowed_jsx_text_chars(s)
@@ -528,10 +544,6 @@ fn is_allowed_string_like_in_container<'a>(
 
 fn is_whitespace(s: &str) -> bool {
     !s.is_empty() && s.chars().all(char::is_whitespace)
-}
-
-fn contains_line_break(s: &str) -> bool {
-    s.chars().any(|c| matches!(c, '\n' | '\r'))
 }
 
 fn contains_line_break_literal(s: &str) -> bool {
@@ -613,24 +625,16 @@ fn report_unnecessary_curly<'a>(
     });
 }
 
-fn report_unnecessary_curly_for_attribute_value<'a>(
+fn report_unnecessary_curly_for_string_attribute_value<'a>(
     ctx: &LintContext<'a>,
-    container: &JSXExpressionContainer<'a>,
+    container_span: Span,
     inner_span: Span,
+    value: JSStr<'a>,
 ) {
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span), |fixer| {
-        let str = match &container.expression {
-            JSXExpression::TemplateLiteral(template_lit) => template_lit.single_quasi().unwrap(),
-            JSXExpression::StringLiteral(string_lit) => string_lit.value,
-            JSXExpression::JSXElement(el) => {
-                return fixer.replace(container.span, ctx.source_range(el.span).to_owned());
-            }
-            _ => unreachable!(),
-        };
-
         let mut fix = fixer.codegen();
 
-        let Some(str) = str.as_str() else {
+        let Some(str) = value.as_str() else {
             return fixer.noop();
         };
         if !contains_double_quote_characters(str) {
@@ -639,7 +643,7 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
 
         fix.print_string(str);
 
-        fixer.replace(container.span, fix.into_source_text())
+        fixer.replace(container_span, fix.into_source_text())
     });
 }
 

@@ -560,8 +560,7 @@ impl LayoutCalculator<'_> {
             "&str" => str_layout,
             "Str" => str_layout,
             // `JSStr` is a pointer, a u32 length, and a bool.
-            // `Option<JSStr>` uses the bool's niche, which has more invalid
-            // values than the pointer.
+            // `Option<JSStr>` uses the bool's niche, which has more invalid values than the pointer.
             "JSStr" => Layout {
                 layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(12, 1, 0, 254)),
                 layout_32: PlatformLayout::from_size_align_niche(12, 4, Niche::new(8, 1, 0, 254)),

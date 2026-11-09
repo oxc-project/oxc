@@ -1471,10 +1471,11 @@ impl GenExpr for NumericLiteral<'_> {
                 } else {
                     p.print_space_before_identifier();
                 }
+                // Not `Infinity`, a local binding can shadow the global
                 if p.options.minify {
                     p.print_str("1/0");
                 } else {
-                    p.print_str("Infinity");
+                    p.print_str("1e400");
                 }
             });
         } else if value.is_sign_positive() {
@@ -1669,32 +1670,54 @@ impl Gen for SpreadElement<'_> {
 
 impl Gen for ArrayExpression<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        let is_multi_line = self.elements.len() > 2;
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
-        if is_multi_line {
-            p.indent();
-        }
-        for (i, item) in self.elements.iter().enumerate() {
-            if i != 0 {
-                p.print_comma();
-            }
-            if is_multi_line {
+
+        if let Some((first, others)) = self.elements.split_first() {
+            let mut item = first;
+            if self.elements.len() > 2 {
+                // 3 or more elements, each on its own line
+                p.indent();
                 p.print_soft_newline();
                 p.print_indent();
-            } else if i != 0 {
-                p.print_soft_space();
-            }
-            item.print(p, ctx);
-            if i == self.elements.len() - 1 && matches!(item, ArrayExpressionElement::Elision(_)) {
-                p.print_comma();
+                item.print(p, ctx);
+
+                for item_ref in others {
+                    item = item_ref;
+
+                    p.print_comma();
+                    p.print_soft_newline();
+                    p.print_indent();
+
+                    item.print(p, ctx);
+                }
+
+                if matches!(item, ArrayExpressionElement::Elision(_)) {
+                    p.print_comma();
+                }
+
+                p.print_soft_newline();
+                p.dedent();
+                p.print_indent();
+            } else {
+                // 1 or 2 elements, on one line
+                item.print(p, ctx);
+
+                if let Some(item_ref) = others.first() {
+                    item = item_ref;
+
+                    p.print_comma();
+                    p.print_soft_space();
+
+                    item.print(p, ctx);
+                }
+
+                if matches!(item, ArrayExpressionElement::Elision(_)) {
+                    p.print_comma();
+                }
             }
         }
-        if is_multi_line {
-            p.print_soft_newline();
-            p.dedent();
-            p.print_indent();
-        }
+
         p.add_source_mapping_end(self.span);
         p.print_ascii_byte(b']');
     }
@@ -1986,18 +2009,7 @@ impl GenExpr for UnaryExpression<'_> {
                 p.prev_op = Some(self.operator.into());
                 p.prev_op_end = p.code().len();
             }
-            // Forbid `delete Infinity`, which is syntax error in strict mode.
-            let is_delete_infinity = self.operator == UnaryOperator::Delete
-                && !p.options.minify
-                && matches!(&self.argument, Expression::NumericLiteral(lit) if lit.value.is_sign_positive() && lit.value.is_infinite());
-            if is_delete_infinity {
-                p.print_str("(0,");
-                p.print_soft_space();
-            }
             self.argument.print_expr(p, Precedence::Exponentiation, ctx);
-            if is_delete_infinity{
-                p.print_ascii_byte(b')');
-            }
         });
     }
 }
@@ -2160,24 +2172,35 @@ impl Gen for ArrayAssignmentTarget<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
-        for (i, item) in self.elements.iter().enumerate() {
-            if i != 0 {
-                p.print_comma();
-                p.print_soft_space();
-            }
+
+        if let Some((first, others)) = self.elements.split_first() {
+            let mut item = first;
             if let Some(item) = item {
                 item.print(p, ctx);
             }
-            if i == self.elements.len() - 1 && (item.is_none() || self.rest.is_some()) {
+
+            for item_ref in others {
+                item = item_ref;
+
+                p.print_comma();
+                p.print_soft_space();
+
+                if let Some(item) = item {
+                    item.print(p, ctx);
+                }
+            }
+
+            if let Some(rest) = &self.rest {
+                p.print_comma();
+                p.print_soft_space();
+                rest.print(p, ctx);
+            } else if item.is_none() {
                 p.print_comma();
             }
+        } else if let Some(rest) = &self.rest {
+            rest.print(p, ctx);
         }
-        if let Some(target) = &self.rest {
-            if !self.elements.is_empty() {
-                p.print_soft_space();
-            }
-            target.print(p, ctx);
-        }
+
         p.print_ascii_byte(b']');
     }
 }
@@ -2764,11 +2787,18 @@ impl Gen for JSXAttributeValue<'_> {
                 if let Some(value) = lit.value.as_str() {
                     let quote = if value.contains('"') { b'\'' } else { b'"' };
                     p.print_ascii_byte(quote);
-                    p.print_str(value);
+                    // Parsed attributes retain their entity spelling. Generated values may contain
+                    // both quotes, so escape the delimiter without changing existing entities.
+                    let mut parts = value.split(char::from(quote));
+                    p.print_str(parts.next().unwrap());
+                    for part in parts {
+                        p.print_str(if quote == b'\'' { "&apos;" } else { "&quot;" });
+                        p.print_str(part);
+                    }
                     p.print_ascii_byte(quote);
                 } else {
-                    // A lone surrogate cannot be written directly as UTF-8.
-                    // Use a JavaScript string expression for this generated attribute value.
+                    // JSX strings have no backslash escapes. A JavaScript string expression
+                    // preserves lone surrogates without decoding any literal entity text.
                     p.print_ascii_byte(b'{');
                     p.print_string_literal(lit, false);
                     p.print_ascii_byte(b'}');
@@ -3206,24 +3236,35 @@ impl Gen for ArrayPattern<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
-        for (index, item) in self.elements.iter().enumerate() {
-            if index != 0 {
-                p.print_comma();
-                p.print_soft_space();
-            }
+
+        if let Some((first, others)) = self.elements.split_first() {
+            let mut item = first;
             if let Some(item) = item {
                 item.print(p, ctx);
             }
-            if index == self.elements.len() - 1 && (item.is_none() || self.rest.is_some()) {
+
+            for item_ref in others {
+                item = item_ref;
+
+                p.print_comma();
+                p.print_soft_space();
+
+                if let Some(item) = item {
+                    item.print(p, ctx);
+                }
+            }
+
+            if let Some(rest) = &self.rest {
+                p.print_comma();
+                p.print_soft_space();
+                rest.print(p, ctx);
+            } else if item.is_none() {
                 p.print_comma();
             }
-        }
-        if let Some(rest) = &self.rest {
-            if !self.elements.is_empty() {
-                p.print_soft_space();
-            }
+        } else if let Some(rest) = &self.rest {
             rest.print(p, ctx);
         }
+
         p.print_ascii_byte(b']');
     }
 }

@@ -72,6 +72,7 @@ declare_oxc_lint!(
     MediaHasCaption,
     jsx_a11y,
     correctness,
+    recommended,
     config = MediaHasCaptionConfig,
     version = "0.1.1",
     short_description = "Checks if `<audio>` and `<video>` elements have a `<track>` element for captions.",

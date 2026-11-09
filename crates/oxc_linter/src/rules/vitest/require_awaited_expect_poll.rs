@@ -6,7 +6,7 @@ use oxc_span::Span;
 
 use crate::{
     AstNode,
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     rules::PossibleJestNode,
     utils::{KnownMemberExpressionProperty, parse_expect_and_typeof_vitest_fn_call},
@@ -74,25 +74,28 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireAwaitedExpectPoll {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &crate::rules::PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        RequireAwaitedExpectPoll::run(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        RequireAwaitedExpectPoll::run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
 impl RequireAwaitedExpectPoll {
-    fn run<'a, 'c>(possible_jest_node: &PossibleJestNode<'a, 'c>, ctx: &'c LintContext<'a>) {
-        let node = possible_jest_node.node;
-
+    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
         let Some(expect) =
-            parse_expect_and_typeof_vitest_fn_call(call_expr, possible_jest_node, ctx)
+            parse_expect_and_typeof_vitest_fn_call(call_expr, &possible_jest_node, ctx)
         else {
             return;
         };

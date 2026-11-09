@@ -5,10 +5,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
-        AccessorProperty, ArrowFunctionBody, Expression, FunctionBody, PropertyDefinition,
-        TSAccessibility,
+        AccessorProperty, ArrowFunctionBody, Expression, Function, FunctionBody,
+        PropertyDefinition, StaticBlock, Super, TSAccessibility, ThisExpression,
     },
 };
 use oxc_ast_visit::Visit;
@@ -22,9 +22,9 @@ use crate::{LintContext, rule::Rule};
 
 fn class_methods_use_this_diagnostic(
     span: Span,
-    name: Option<oxc_ast::StaticPropertyName<'_>>,
+    name: Option<StaticPropertyName<'_>>,
 ) -> OxcDiagnostic {
-    let method_name_str = name.map_or(String::new(), |name| format!(" `{name}`"));
+    let method_name_str = name.map_or(String::new(), |name| format!(" `{}`", name.display()));
     OxcDiagnostic::warn(format!("Expected method{method_name_str} to have this."))
         .with_help(format!("Consider converting method{method_name_str} to a static method."))
         .with_label(span)
@@ -200,12 +200,15 @@ impl Rule for ClassMethodsUseThis {
                     return;
                 }
                 accessor.value.as_ref().and_then(|value| match value {
-                    Expression::ArrowFunctionExpression(arrow_function) => {
-                        Some((FunctionLikeBody::Arrow(&arrow_function.body), &accessor.key))
-                    }
+                    Expression::ArrowFunctionExpression(arrow_function) => Some((
+                        FunctionLikeBody::Arrow(&arrow_function.body),
+                        &accessor.key,
+                        &arrow_function.params,
+                    )),
                     Expression::FunctionExpression(function_expression) => Some((
                         FunctionLikeBody::Function(function_expression.body.as_deref()?),
                         &accessor.key,
+                        &function_expression.params,
                     )),
                     _ => None,
                 })
@@ -224,7 +227,11 @@ impl Rule for ClassMethodsUseThis {
                     return;
                 }
                 let Some(function_body) = method_definition.value.body.as_ref() else { return };
-                Some((FunctionLikeBody::Function(function_body), &method_definition.key))
+                Some((
+                    FunctionLikeBody::Function(function_body),
+                    &method_definition.key,
+                    &method_definition.value.params,
+                ))
             }
             AstKind::PropertyDefinition(property_definition) => {
                 if property_definition.r#static
@@ -243,17 +250,19 @@ impl Rule for ClassMethodsUseThis {
                     Expression::ArrowFunctionExpression(arrow_function) => Some((
                         FunctionLikeBody::Arrow(&arrow_function.body),
                         &property_definition.key,
+                        &arrow_function.params,
                     )),
                     Expression::FunctionExpression(function_expression) => Some((
                         FunctionLikeBody::Function(function_expression.body.as_deref()?),
                         &property_definition.key,
+                        &function_expression.params,
                     )),
                     _ => None,
                 })
             }
             _ => return,
         };
-        let Some((function_body, name)) = function_pair else { return };
+        let Some((function_body, name, params)) = function_pair else { return };
         if let Some(name_str) = name.name()
             && self.except_methods.iter().any(|method| {
                 name_str == method.name.as_str() && method.private == name.is_private_identifier()
@@ -262,6 +271,7 @@ impl Rule for ClassMethodsUseThis {
             return;
         }
         let mut finder = ThisFinder::new();
+        finder.visit_formal_parameters(params);
         match function_body {
             FunctionLikeBody::Function(body) => finder.visit_function_body(body),
             FunctionLikeBody::Arrow(body) => finder.visit_arrow_function_body(body),
@@ -313,22 +323,17 @@ impl ThisFinder {
 }
 
 impl Visit<'_> for ThisFinder {
-    fn visit_this_expression(&mut self, _it: &oxc_ast::ast::ThisExpression) {
+    fn visit_this_expression(&mut self, _it: &ThisExpression) {
         self.has_this = true;
     }
 
-    fn visit_super(&mut self, _it: &oxc_ast::ast::Super) {
+    fn visit_super(&mut self, _it: &Super) {
         self.has_this = true;
     }
 
-    fn visit_function(
-        &mut self,
-        _it: &oxc_ast::ast::Function<'_>,
-        _flags: oxc_semantic::ScopeFlags,
-    ) {
-    }
+    fn visit_function(&mut self, _it: &Function<'_>, _flags: oxc_semantic::ScopeFlags) {}
 
-    fn visit_static_block(&mut self, _it: &oxc_ast::ast::StaticBlock<'_>) {}
+    fn visit_static_block(&mut self, _it: &StaticBlock<'_>) {}
 
     fn visit_property_definition(&mut self, it: &PropertyDefinition<'_>) {
         self.visit_property_key(&it.key);
@@ -540,6 +545,14 @@ fn test() {
             "class Foo implements Bar { property = () => {} }",
             Some(serde_json::json!([{ "enforceForClassFields": false }])),
         ),
+        ("export class A { t(errors = this.errors) { return errors; } }", None),
+        ("class A { f = (x = this.y) => x; }", None),
+        ("class A { f = function(x = this.y) { return x; }; }", None),
+        ("class A { accessor f = (x = this.y) => x; }", None),
+        ("class A { accessor f = function(x = this.y) { return x; }; }", None),
+        ("class A extends B { f(x = super.y) { return x; } }", None),
+        ("class A { f({ x = this.y } = {}) { return x; } }", None),
+        ("class A { f(x = () => this.y) { return x; } }", None),
     ];
 
     let fail = vec![
@@ -639,6 +652,9 @@ fn test() {
             "class Foo implements Bar { protected property = () => {}; }",
             Some(serde_json::json!([{ "ignoreClassesWithImplements": "public-fields" }])),
         ),
+        ("class A { f(x = 1) { return x; } }", None),
+        ("class A { f(x = function() { return this.y; }) { return x; } }", None),
+        ("class A { f = (x = function() { return this.y; }) => x; }", None),
     ];
 
     Tester::new(ClassMethodsUseThis::NAME, ClassMethodsUseThis::PLUGIN, pass, fail)

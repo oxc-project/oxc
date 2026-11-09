@@ -1,0 +1,1 @@
+const A = <div className={a + ` p-4 flex ` + b} />;

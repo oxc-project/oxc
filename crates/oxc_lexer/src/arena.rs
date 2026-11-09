@@ -8,8 +8,8 @@ use crate::{
     token::{SPAN_SENTINELS, StringSpan, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
 };
 
-#[repr(C)]
 #[derive(Clone, Copy, Default, Debug)]
+#[repr(C)]
 pub struct LineEntry {
     pub off: u32,
     pub line: u32,
@@ -29,9 +29,9 @@ pub struct LexResult {
     pub strings_count: u32,
     pub templates_count: u32,
     pub regex_flags_count: u32,
-    pub comment_meta_count: u32,
     pub comments_count: u32,
     pub cooked_bytes_count: u32,
+    pub irregular_whitespaces_count: u32,
 }
 
 macro_rules! lane_accessor {
@@ -87,8 +87,12 @@ impl LexResult {
     lane_accessor!(templates, templates, templates_count, StringSpan);
     lane_accessor!(atoms, atoms, atoms_count, StringSpan);
     lane_accessor!(regex_flags, regex_flags, regex_flags_count, RegExpFlags);
-    lane_accessor!(comment_meta, comment_meta, comment_meta_count, u8);
     lane_accessor!(comments, comments, comments_count, Comment);
+
+    #[must_use]
+    pub fn irregular_whitespaces<'a>(&'a self, arena: &'a Arena) -> &'a [Span] {
+        arena.irregular_whitespaces.get(..self.irregular_whitespaces_count as usize).unwrap_or(&[])
+    }
 }
 
 #[derive(Debug)]
@@ -115,10 +119,9 @@ pub struct Arena {
     pub templates_capacity: u32,
     pub regex_flags: *mut RegExpFlags,
     pub regex_flags_capacity: u32,
-    pub comment_meta: *mut u8,
-    pub comment_meta_capacity: u32,
     pub comments: *mut Comment,
     pub comments_capacity: u32,
+    pub irregular_whitespaces: Vec<Span>,
 }
 
 impl Arena {
@@ -146,10 +149,9 @@ impl Arena {
             templates_capacity: 0,
             regex_flags: ptr::null_mut(),
             regex_flags_capacity: 0,
-            comment_meta: ptr::null_mut(),
-            comment_meta_capacity: 0,
             comments: ptr::null_mut(),
             comments_capacity: 0,
+            irregular_whitespaces: Vec::new(),
         }
     }
 
@@ -178,8 +180,6 @@ impl Arena {
         self.templates_capacity = (cap / 2) + 64;
         self.regex_flags = alloc_uninit::<RegExpFlags>((cap / 2) + 64);
         self.regex_flags_capacity = (cap / 2) + 64;
-        self.comment_meta = alloc_uninit::<u8>((cap / 2) + 64);
-        self.comment_meta_capacity = (cap / 2) + 64;
         self.comments = alloc_uninit::<Comment>((cap / 3) + 64);
         self.comments_capacity = (cap / 3) + 64;
     }
@@ -221,7 +221,6 @@ impl Drop for Arena {
             free_uninit(self.cooked_bytes, self.cooked_bytes_capacity);
             free_uninit(self.templates, self.templates_capacity);
             free_uninit(self.regex_flags, self.regex_flags_capacity);
-            free_uninit(self.comment_meta, self.comment_meta_capacity);
             free_uninit(self.comments, self.comments_capacity);
         }
         self.diags = ptr::null_mut();
@@ -234,7 +233,6 @@ impl Drop for Arena {
         self.cooked_bytes = ptr::null_mut();
         self.templates = ptr::null_mut();
         self.regex_flags = ptr::null_mut();
-        self.comment_meta = ptr::null_mut();
         self.comments = ptr::null_mut();
     }
 }

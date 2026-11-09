@@ -65,27 +65,30 @@ declare_oxc_lint!(
 
 impl Rule for NoUnassignedVars {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::VariableDeclarator(declarator) = node.kind() else {
+        let AstKind::VariableDeclaration(declaration) = node.kind() else {
             return;
         };
-        if declarator.init.is_some() {
+        if declaration.kind.is_const() || declaration.declare {
             return;
         }
-        let parent_node = ctx.nodes().parent_node(node.id());
-        let AstKind::VariableDeclaration(parent) = parent_node.kind() else {
-            return;
-        };
-        if parent.kind.is_const() || parent.declare {
+        let mut identifiers = declaration
+            .declarations
+            .iter()
+            .filter_map(|declarator| match (&declarator.id, &declarator.init) {
+                (BindingPattern::BindingIdentifier(ident), None) => Some(ident),
+                _ => None,
+            })
+            .peekable();
+        if identifiers.peek().is_none() {
             return;
         }
-        let grand_parent = ctx.nodes().parent_node(parent_node.id());
         if matches!(
-            grand_parent.kind(),
+            ctx.nodes().parent_kind(node.id()),
             AstKind::ForStatement(_) | AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
         ) {
             return;
         }
-        if ctx.nodes().ancestors(node.id()).skip(1).any(|ancestor| {
+        if ctx.nodes().ancestors(node.id()).any(|ancestor| {
             matches!(
                 ancestor.kind(),
                 AstKind::TSExternalModuleDeclaration(_)
@@ -95,21 +98,20 @@ impl Rule for NoUnassignedVars {
         }) {
             return;
         }
-        let BindingPattern::BindingIdentifier(ident) = &declarator.id else {
-            return;
-        };
-        let symbol_id = ident.symbol_id();
-        let mut has_read = false;
-        for reference in ctx.symbol_references(symbol_id) {
-            if reference.is_write() {
-                return;
+        for ident in identifiers {
+            let mut has_read = false;
+            for reference in ctx.symbol_references(ident.symbol_id()) {
+                if reference.is_write() {
+                    has_read = false;
+                    break;
+                }
+                if reference.is_read() {
+                    has_read = true;
+                }
             }
-            if reference.is_read() {
-                has_read = true;
+            if has_read {
+                ctx.diagnostic(no_unassigned_vars_diagnostic(ident.span, ident.name.as_str()));
             }
-        }
-        if has_read {
-            ctx.diagnostic(no_unassigned_vars_diagnostic(ident.span, ident.name.as_str()));
         }
     }
 
@@ -150,6 +152,8 @@ fn test() {
                         }
                     ",
         "for (let p of pathToRemove) { p.remove() }",
+        "for (let a, b; check(a, b);) { break; }",
+        "declare let a, b; log(a, b);",
     ];
 
     let fail = vec![
@@ -162,6 +166,9 @@ fn test() {
         "let config; function init() { return config?.enabled; }",
         "let x: number; log(x);",
         "let x: number | undefined; log(x);",
+        "let assigned, unassigned; assigned = 1; log(assigned, unassigned);",
+        "let a, b; log(a, b); a = 1;",
+        "let initialized = 1, unassigned; log(initialized, unassigned);",
         "const foo = (two: string): void => { let one: string | undefined; if (one === two) {} }",
         "
                             declare module 'module' {
