@@ -90,13 +90,19 @@ impl<'a> SourcemapBuilder<'a> {
     pub fn new(path: &Path, source_text: &'a str) -> Self {
         let line_offset_tables = Self::generate_line_offset_tables(source_text);
         // Estimate mapping and name counts from source length to reduce reallocations.
+        // Real-world JS/TS produces about one mapping per 20 source bytes (median),
+        // and fewer than one per 12 bytes for most files. Minified input produces up to
+        // one per 4 bytes and grows the buffer instead.
+        // Reserving `source_len / 12` leaves most buffers at least half full, which keeps the
+        // up-front reservation small, and lets allocators such as mimalloc shrink them in place
+        // in `into_sourcemap` instead of copying them.
         let source_len = source_text.len();
         Self {
             source_name: path.to_string_lossy().into_owned(),
             original_source: source_text,
             names: Vec::with_capacity(source_len / 64),
             names_map: FxHashMap::default(),
-            tokens: Vec::with_capacity(source_len / 4),
+            tokens: Vec::with_capacity(source_len / 12),
             last_generated_update: 0,
             last_position: None,
             last_token_has_name: false,
