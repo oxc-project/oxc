@@ -1172,20 +1172,25 @@ fn bind_temporary(
 /// twice, once for the load and once for the store. Codegen inlines
 /// temporaries at each use, so anything but a plain identifier or literal is
 /// first bound to a constant and evaluated once.
+///
+/// `capture_identifiers` snapshots identifier operands too. Logical assignment
+/// needs that: the reference (base + key) is fixed before `GetValue`, and
+/// codegen re-reads an unbound identifier at each use.
 fn lower_reused_operand<'a>(
     builder: &mut HirBuilder<'a, '_>,
     expr: &oxc::Expression<'a>,
+    capture_identifiers: bool,
 ) -> Result<Place, OxcDiagnostic> {
     let value = lower_expression_to_temporary(builder, expr)?;
-    if matches!(
+    let is_literal = matches!(
         expr,
-        oxc::Expression::Identifier(_)
-            | oxc::Expression::StringLiteral(_)
+        oxc::Expression::StringLiteral(_)
             | oxc::Expression::NumericLiteral(_)
             | oxc::Expression::BigIntLiteral(_)
             | oxc::Expression::BooleanLiteral(_)
             | oxc::Expression::NullLiteral(_)
-    ) {
+    );
+    if is_literal || (!capture_identifiers && matches!(expr, oxc::Expression::Identifier(_))) {
         return Ok(value);
     }
     let span = Some(expr.span());
@@ -1199,11 +1204,29 @@ fn lower_member_expression_for_update<'a>(
     builder: &mut HirBuilder<'a, '_>,
     target: &oxc::MemberExpression<'a>,
 ) -> Result<LoweredMemberExpression<'a>, OxcDiagnostic> {
+    lower_member_expression_for_read_write(builder, target, false)
+}
+
+/// Lower the target of a logical assignment. The base and computed key form a
+/// reference that must be fixed before `GetValue` (the initial property load):
+/// a getter may reassign an identifier operand before the conditional store.
+fn lower_member_expression_for_logical_assignment<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    target: &oxc::MemberExpression<'a>,
+) -> Result<LoweredMemberExpression<'a>, OxcDiagnostic> {
+    lower_member_expression_for_read_write(builder, target, true)
+}
+
+fn lower_member_expression_for_read_write<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    target: &oxc::MemberExpression<'a>,
+    capture_identifiers: bool,
+) -> Result<LoweredMemberExpression<'a>, OxcDiagnostic> {
     match target {
         oxc::MemberExpression::StaticMemberExpression(m) => {
             let span = Some(m.span);
             let property_span = Some(m.property.span);
-            let object = lower_reused_operand(builder, &m.object)?;
+            let object = lower_reused_operand(builder, &m.object, capture_identifiers)?;
             let prop_literal = PropertyLiteral::String(m.property.name);
             let value = InstructionValue::PropertyLoad {
                 object,
@@ -1222,7 +1245,7 @@ fn lower_member_expression_for_update<'a>(
         }
         oxc::MemberExpression::ComputedMemberExpression(m) => {
             let span = Some(m.span);
-            let object = lower_reused_operand(builder, &m.object)?;
+            let object = lower_reused_operand(builder, &m.object, capture_identifiers)?;
             if let oxc::Expression::NumericLiteral(lit) = &m.expression {
                 let property_span = Some(lit.span);
                 let prop_literal = PropertyLiteral::Number(FloatValue::new(lit.value));
@@ -1241,7 +1264,7 @@ fn lower_member_expression_for_update<'a>(
                     value,
                 });
             }
-            let property = lower_reused_operand(builder, &m.expression)?;
+            let property = lower_reused_operand(builder, &m.expression, capture_identifiers)?;
             let value = InstructionValue::ComputedLoad { object, property, span };
             Ok(LoweredMemberExpression {
                 object,
@@ -4717,6 +4740,11 @@ fn lower_assignment_expression<'a>(
 
 enum LogicalAssignmentTarget<'b, 'a> {
     Identifier(&'b oxc::IdentifierReference<'a>),
+    /// `const` binding. The conditional store is not emitted: lowering it as
+    /// a reassignment reports a false Syntax error when the store is dead,
+    /// and emitting the store rewrites `const` to `let`, which swallows the
+    /// runtime TypeError when the store is taken.
+    ConstIdentifier,
     Member {
         object: Place,
         property: MemberProperty<'a>,
@@ -4730,7 +4758,8 @@ enum LogicalAssignmentTarget<'b, 'a> {
 /// value blocks of `LogicalExpression` lowering so that the right side and the
 /// store only evaluate when the assignment is taken. The target, including the
 /// object and computed key of a member target, is evaluated once before the
-/// logical terminal.
+/// logical terminal. Identifier receivers and computed keys are snapshotted
+/// so the store keeps the reference created before the property load.
 ///
 /// Unlike the TS implementation, which reports logical assignment as a Todo
 /// and skips the function, this compiles it: the desugaring has the same
@@ -4757,11 +4786,27 @@ fn lower_logical_assignment_expression<'a>(
             } else {
                 InstructionValue::LoadLocal { place, span: ident_span }
             };
-            (LogicalAssignmentTarget::Identifier(ident), lower_value_to_temporary(builder, value)?)
+            let previous_value = lower_value_to_temporary(builder, value)?;
+            // A const target's store is conditional. `lower_identifier_for_assignment`
+            // would reject it as Syntax even when the store never executes
+            // (`const v = 1; v ??= 2`). Emitting the store anyway is also wrong:
+            // the pipeline treats the binding as reassigned and prints `let`,
+            // so `const v = null; v ??= 2` would assign instead of throwing.
+            let target = match builder.resolve_identifier(ident.name, ident.span, symbol)? {
+                VariableBinding::Identifier { binding_kind: BindingKind::Const, .. } => {
+                    builder.record_error(diagnostics::todo_logical_assignment_to_const(
+                        ident.name.as_str(),
+                        ident.span,
+                    ))?;
+                    LogicalAssignmentTarget::ConstIdentifier
+                }
+                _ => LogicalAssignmentTarget::Identifier(ident),
+            };
+            (target, previous_value)
         }
         Some(SimpleAssignmentTargetRef::Member(member)) => {
             let LoweredMemberExpression { object, property, computed, property_span, value } =
-                lower_member_expression_for_update(builder, member)?;
+                lower_member_expression_for_logical_assignment(builder, member)?;
             let target = LogicalAssignmentTarget::Member {
                 object,
                 property,
@@ -4814,6 +4859,8 @@ fn lower_logical_assignment_expression<'a>(
                 right,
             )?
             .unwrap_or(right),
+            // The Todo is already recorded. Do not store to the const binding.
+            LogicalAssignmentTarget::ConstIdentifier => right,
             LogicalAssignmentTarget::Member {
                 object,
                 property,

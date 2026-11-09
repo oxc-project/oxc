@@ -28,10 +28,13 @@ function Component(t0) {
 			calls.rhs = calls.rhs + 1;
 			return result;
 		};
-		obj.x ?? (obj.x = rhs("fallback"));
-		const t2 = key();
-		obj[t2] || (obj[t2] = rhs("updated"));
-		t1 = obj.full ?? (obj.full = rhs("skipped"));
+		const t2 = obj;
+		t2.x ?? (t2.x = rhs("fallback"));
+		const t3 = obj;
+		const t4 = key();
+		t3[t4] || (t3[t4] = rhs("updated"));
+		const t5 = obj;
+		t1 = t5.full ?? (t5.full = rhs("skipped"));
 		$[0] = value;
 		$[1] = calls;
 		$[2] = obj;

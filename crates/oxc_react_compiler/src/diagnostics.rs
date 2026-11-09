@@ -1532,6 +1532,22 @@ pub fn unsupported_implicit_arguments(span: Span) -> OxcDiagnostic {
         .with_label(span.primary_label("Implicit 'arguments' is not supported"))
 }
 
+/// Logical assignment to a `const` binding. The store is conditional, so this
+/// is not the unconditional [`const_reassignment`] Syntax error: `const v = 1;
+/// v ??= 2` never assigns. The compiler also cannot keep the binding `const`
+/// and still throw when the store is taken, so the function is skipped.
+#[cold]
+pub fn todo_logical_assignment_to_const(name: &str, span: Span) -> OxcDiagnostic {
+    diagnostic(
+        ErrorCategory::Todo,
+        format!("Logical assignment to `const` variable `{name}` is not supported"),
+    )
+    .with_help(format!(
+        "Declare `{name}` with `let` if it may be assigned, or write a nullish/logical expression instead of a logical assignment"
+    ))
+    .with_label(span.primary_label(format!("Cannot compile logical assignment to const `{name}`")))
+}
+
 #[cold]
 pub fn const_reassignment(
     name: &str,
