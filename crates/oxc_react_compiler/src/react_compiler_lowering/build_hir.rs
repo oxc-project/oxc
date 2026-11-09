@@ -4764,6 +4764,9 @@ enum LogicalAssignmentTarget<'b, 'a> {
 /// Unlike the TS implementation, which reports logical assignment as a Todo
 /// and skips the function, this compiles it: the desugaring has the same
 /// evaluation order and short-circuiting as the original expression.
+/// `ref.current ??=` is still treated as lazy initialization by
+/// `validate_no_ref_access_in_render` (the same allowance as
+/// `if (ref.current == null)`), not as a render-time ref access.
 fn lower_logical_assignment_expression<'a>(
     builder: &mut HirBuilder<'a, '_>,
     assign: &oxc::AssignmentExpression<'a>,
