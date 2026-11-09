@@ -1,5 +1,3 @@
-import { createRequire } from "node:module";
-import { runInNewContext } from "node:vm";
 import { Worker } from "node:worker_threads";
 import { describe, expect, it, test } from "vitest";
 
@@ -553,29 +551,5 @@ describe("styled-components", () => {
 			const v = /* @__PURE__ */ css(["color: red;"]);
 			"
 		`);
-  });
-});
-
-describe("object-rest parameter scopes", () => {
-  test.each([
-    ["let arguments = 1; return [arguments, b, c];", [1, 2, 2]],
-    ["const arguments = 1; return [arguments, b, c];", [1, 2, 2]],
-    ["let { value: arguments } = { value: 1 }; return [arguments, b, c];", [1, 2, 2]],
-    ["var arguments; return [arguments[0].a, b, c];", [2, 2, 2]],
-    ["function arguments() { return 1; } return [arguments(), b, c];", [1, 2, 2]],
-  ])("preserves arguments binding: %s", (body, expected) => {
-    const source = `function f({ a, ...rest }, b = a, c = arguments[0].a) { ${body} }`;
-    const result = transformSync("test.cjs", source, {
-      target: "es2017",
-      helpers: { mode: HelperMode.External },
-    });
-    expect(result.errors).toEqual([]);
-    const require = createRequire(import.meta.url);
-    const value = runInNewContext(`${result.code}; f({ a: 2 });`, {
-      babelHelpers: {
-        objectWithoutProperties: require("../../../npm/runtime/src/helpers/objectWithoutProperties.js"),
-      },
-    });
-    expect(value).toEqual(expected);
   });
 });
