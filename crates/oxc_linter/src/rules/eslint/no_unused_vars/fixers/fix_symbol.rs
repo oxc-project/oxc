@@ -15,6 +15,10 @@ impl<'a> Symbol<'_, 'a> {
         // Match by span rather than by symbol: when `own` is a destructuring
         // pattern (`const a = 1, { b } = obj;`), the symbol is not the
         // declarator's own binding identifier.
+        //
+        // Invariant: `own` must be an element of `list` (not a copy or a
+        // sub-node), so its span is unique within `list`. Declarators in one
+        // list never share a span, since they are disjoint source ranges.
         let own_span = own.span();
         let Some(own_position) = list.iter().position(|el| el.span() == own_span) else {
             return fixer.noop();

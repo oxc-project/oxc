@@ -96,6 +96,22 @@ fn test_vars_simple() {
         // all declarators unused: the whole declaration goes in one pass
         ("let a = 1, b = 2;", "", None, FixKind::DangerousSuggestion),
         ("let a = 1, b = 2, c = 3;", "", None, FixKind::DangerousSuggestion),
+        // each unused symbol reports the same whole-declaration fix; the
+        // fixer must apply it once and drop the identical overlapping copies
+        (
+            "let a = 1, b = 2, c = 3; let d = 4, e = 5; f();",
+            "  f();",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // partial deletions from one list overlap; only the first is applied
+        // in a single pass (`b` is removed by the next pass)
+        (
+            "let a = 1, b = 2, c = 3; f(c);",
+            "let b = 2, c = 3; f(c);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
         ("function f() { let a = 1, b; }", "function f() {  }", None, FixKind::DangerousSuggestion),
         ("const a = 1, { b } = obj;", "", None, FixKind::DangerousSuggestion),
         ("const a = 1, { b, c } = obj;", "", None, FixKind::DangerousSuggestion),
