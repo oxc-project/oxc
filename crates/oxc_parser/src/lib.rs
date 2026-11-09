@@ -291,6 +291,7 @@ pub struct Parser<'a, C: ParserConfig = NoTokensParserConfig> {
     source_type: SourceType,
     options: ParseOptions,
     config: C,
+    start: u32,
 }
 
 impl<'a> Parser<'a> {
@@ -302,7 +303,14 @@ impl<'a> Parser<'a> {
     /// - `source_type`: Source type (e.g. JavaScript, TypeScript, JSX, ESM Module, Script)
     pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
         let options = ParseOptions::default();
-        Self { allocator, source_text, source_type, options, config: NoTokensParserConfig }
+        Self {
+            allocator,
+            source_text,
+            source_type,
+            options,
+            config: NoTokensParserConfig,
+            start: 0,
+        }
     }
 }
 
@@ -325,7 +333,23 @@ impl<'a, C: ParserConfig> Parser<'a, C> {
             source_type: self.source_type,
             options: self.options,
             config,
+            start: self.start,
         }
+    }
+
+    /// Start parsing at byte offset `start` of the source text.
+    ///
+    /// [`Parser::parse`] then reads `source_text[start..]` as the program, and spans are offsets
+    /// into the whole source text. A language that embeds scripts (such as a `<script>` element)
+    /// can pass the text up to the end of the script and parse it in place.
+    ///
+    /// # Panics
+    /// When parsing, if `start` is past the end of the source text or not on a character
+    /// boundary.
+    #[must_use]
+    pub fn with_start(mut self, start: u32) -> Self {
+        self.start = start;
+        self
     }
 }
 
@@ -388,6 +412,7 @@ mod parser_parse {
                     self.source_text,
                     self.source_type,
                     self.options,
+                    self.start,
                 )
             } else if config.is::<TokensParserConfig>() {
                 parse_with_tokens_config(
@@ -395,6 +420,7 @@ mod parser_parse {
                     self.source_text,
                     self.source_type,
                     self.options,
+                    self.start,
                 )
             } else if let Some(&config) = config.downcast_ref::<RuntimeParserConfig>() {
                 parse_with_runtime_config(
@@ -403,6 +429,7 @@ mod parser_parse {
                     self.source_type,
                     self.options,
                     config,
+                    self.start,
                 )
             } else {
                 // User-defined `ParserConfig`. Generic codegen here, monomorphized per consuming crate.
@@ -415,7 +442,7 @@ mod parser_parse {
                     self.config,
                     UniquePromise::new(),
                 )
-                .parse()
+                .parse(self.start)
             }
         }
 
@@ -445,7 +472,8 @@ mod parser_parse {
         // # Implementation note
         // Dispatches via `Any`, same as `parse` does.
         pub fn parse_expression(self) -> Result<Expression<'a>, Diagnostics> {
-            self.parse_expression_from(0, true).map(|(expression, _)| expression)
+            let start = self.start;
+            self.parse_expression_from(start, true).map(|(expression, _)| expression)
         }
 
         /// Parse a single [`Expression`] that starts at byte offset `start` of the source text,
@@ -561,6 +589,7 @@ mod parser_parse {
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
+        start: u32,
     ) -> ParserReturn<'a> {
         ParserImpl::<NoTokensParserConfig>::new(
             allocator,
@@ -570,7 +599,7 @@ mod parser_parse {
             NoTokensParserConfig,
             UniquePromise::new(),
         )
-        .parse()
+        .parse(start)
     }
 
     #[inline(never)]
@@ -579,6 +608,7 @@ mod parser_parse {
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
+        start: u32,
     ) -> ParserReturn<'a> {
         ParserImpl::<TokensParserConfig>::new(
             allocator,
@@ -588,7 +618,7 @@ mod parser_parse {
             TokensParserConfig,
             UniquePromise::new(),
         )
-        .parse()
+        .parse(start)
     }
 
     #[inline(never)]
@@ -598,6 +628,7 @@ mod parser_parse {
         source_type: SourceType,
         options: ParseOptions,
         config: RuntimeParserConfig,
+        start: u32,
     ) -> ParserReturn<'a> {
         ParserImpl::<RuntimeParserConfig>::new(
             allocator,
@@ -607,7 +638,7 @@ mod parser_parse {
             config,
             UniquePromise::new(),
         )
-        .parse()
+        .parse(start)
     }
 
     #[inline(never)]
@@ -762,8 +793,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// Returns an empty `Program` on unrecoverable error,
     /// Recoverable errors are stored inside `errors`.
     #[inline]
-    pub fn parse(mut self) -> ParserReturn<'a> {
-        let mut program = self.parse_program();
+    pub fn parse(mut self, start: u32) -> ParserReturn<'a> {
+        let mut program = self.parse_program(start);
         let mut has_fatal_error = false;
 
         if let Some(fatal_error) = self.fatal_error.take() {
@@ -885,10 +916,15 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     }
 
     #[expect(clippy::cast_possible_truncation)]
-    fn parse_program(&mut self) -> Program<'a> {
+    fn parse_program(&mut self, start: u32) -> Program<'a> {
         // Initialize by moving onto the first token.
-        // Checks for hashbang comment.
-        self.token = self.lexer.first_token();
+        // Checks for hashbang comment, which can only start the source text.
+        self.token = if start == 0 {
+            self.lexer.first_token()
+        } else {
+            self.lexer.set_offset(start);
+            self.lexer.next_token()
+        };
 
         let hashbang = self.parse_hashbang();
         self.ctx |= Context::TopLevel;
@@ -908,7 +944,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self.reparse_potential_top_level_awaits(&mut statements);
         }
 
-        let span = Span::new(0, self.source_text.len() as u32);
+        let span = Span::new(start, self.source_text.len() as u32);
         Program::new(
             span,
             self.source_type,
@@ -1142,6 +1178,32 @@ mod test {
                 "{source}"
             );
         }
+    }
+
+    #[test]
+    fn with_start_parses_a_program_in_place() {
+        // `<script lang="ts">` ends at byte 26, `</script>` starts at byte 52.
+        let source = "<p>x</p><script lang=\"ts\">let a: number = 1; // one\n</script>";
+        let (start, end) = (26, 52);
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, &source[..end as usize], SourceType::ts())
+            .with_start(start)
+            .parse();
+        assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);
+        assert_eq!((ret.program.span.start, ret.program.span.end), (start, end));
+        let text = |span: Span| &source[span.start as usize..span.end as usize];
+        assert_eq!(text(ret.program.body[0].span()), "let a: number = 1;");
+        assert_eq!(text(ret.program.comments[0].span), "// one");
+    }
+
+    #[test]
+    fn with_start_reaches_parse_expression() {
+        let allocator = Allocator::default();
+        let expr = Parser::new(&allocator, "<p>{a + b", SourceType::default())
+            .with_start(4)
+            .parse_expression()
+            .unwrap();
+        assert_eq!((expr.span().start, expr.span().end), (4, 9));
     }
 
     #[test]
