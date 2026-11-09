@@ -57,11 +57,12 @@
 //! * Each has a private field, so code outside this module can't create them.
 //! * Only 3 places create them:
 //!   - `DynCpu::detect` only creates an [`Avx2`] if that feature set is available.
+//!     Otherwise it creates a [`Generic`], which guarantees nothing.
 //!   - [`BASELINE`] is only an [`Avx2`] or a [`Neon`] when that feature set is enabled
 //!     at compile time, which guarantees it's available.
 //!     Otherwise it's a [`Generic`], which guarantees nothing.
 //!   - `CpuPrivate::DYN_CPU` holds an instance of the type.
-//!     The trait is private, so only code in this file can read it.
+//!     The trait is private, so only code in this module can read it.
 //!     Only [`to_dyn`] reads it, and it takes an instance of the same type,
 //!     so it only gives one to code which already has one.
 //! * On a platform where a type is uninhabited, it can't be created at all.
@@ -84,6 +85,8 @@ use std::{
     mem,
 };
 
+mod detect;
+
 #[cfg(any(test, feature = "testing"))]
 mod testing;
 
@@ -105,12 +108,12 @@ pub trait Cpu: CpuPrivate + Copy {
     }
 }
 
-/// Private trait to guarantee that only types defined in this file can implement [`Cpu`].
+/// Private trait to guarantee that only types defined in this module can implement [`Cpu`].
 ///
 /// It also holds [`DYN_CPU`], for [`to_dyn`].
 ///
-/// [`DYN_CPU`] is on this trait, not on [`Cpu`], so code outside this file can't read it.
-/// It holds an instance of the type, so if code outside this file could read it,
+/// [`DYN_CPU`] is on this trait, not on [`Cpu`], so code outside this module can't read it.
+/// It holds an instance of the type, so if code outside this module could read it,
 /// that would allow bypassing CPU feature detection.
 ///
 /// [`DYN_CPU`]: Self::DYN_CPU
@@ -227,10 +230,28 @@ const _: () = {
 /// This also guarantees [`Generic`], [`Avx2`] and [`Neon`] have alignment 1.
 const _: () = assert!(align_of::<DynCpu>() == 1);
 
+impl DynCpu {
+    /// Name of the CPU feature set, e.g. `"Avx2"`.
+    pub fn name(self) -> &'static str {
+        match self {
+            DynCpu::Generic(_) => "Generic",
+            DynCpu::Avx2(_) => "Avx2",
+            DynCpu::Neon(_) => "Neon",
+        }
+    }
+}
+
 impl Cpu for DynCpu {}
 
 impl CpuPrivate for DynCpu {
     const DYN_CPU: Option<DynCpu> = None;
+}
+
+// Not derived, which would print the variant's field too, e.g. `Avx2(Avx2(()))`
+impl Debug for DynCpu {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 /// Get the [`DynCpu`] for a type implementing [`Cpu`].
@@ -404,82 +425,3 @@ pub const BASELINE: Neon = Neon(());
     all(target_arch = "aarch64", target_feature = "neon")
 )))]
 pub const BASELINE: Generic = Generic(());
-
-impl DynCpu {
-    /// Detect CPU feature set.
-    ///
-    /// The result is cached, so only the first call checks the CPU's features.
-    #[cfg(all(
-        target_arch = "x86_64",
-        not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
-    ))]
-    #[inline]
-    pub fn detect() -> Self {
-        use std::sync::atomic::{AtomicI8, Ordering};
-
-        /// Discriminant of the detected [`DynCpu`], or -1 if not detected yet.
-        static DETECTED: AtomicI8 = AtomicI8::new(-1);
-
-        /// Detect CPU feature set, and cache the result in [`DETECTED`].
-        ///
-        /// If threads race to call this, they each check the CPU and store the same value.
-        /// No thread blocks or sleeps.
-        #[cold]
-        #[inline(never)]
-        fn detect_uncached() -> DynCpu {
-            let cpu = if is_x86_feature_detected!("avx2")
-                && is_x86_feature_detected!("bmi2")
-                && is_x86_feature_detected!("popcnt")
-            {
-                Avx2(()).to_dyn()
-            } else {
-                BASELINE.to_dyn()
-            };
-
-            // SAFETY: `DynCpu` is `#[repr(u8)]` and its variants' fields are all zero-sized,
-            // so it's just its discriminant
-            let discriminant = unsafe { mem::transmute::<DynCpu, i8>(cpu) };
-            DETECTED.store(discriminant, Ordering::Relaxed);
-            cpu
-        }
-
-        let detected = DETECTED.load(Ordering::Relaxed);
-        if detected >= 0 {
-            // SAFETY: `DETECTED` only holds -1, or a `DynCpu` which `detect_uncached` stored
-            unsafe { mem::transmute::<i8, DynCpu>(detected) }
-        } else {
-            detect_uncached()
-        }
-    }
-
-    /// Detect CPU feature set.
-    #[cfg(not(all(
-        target_arch = "x86_64",
-        not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
-    )))]
-    #[expect(clippy::inline_always, reason = "folds to a constant")]
-    #[inline(always)]
-    pub fn detect() -> Self {
-        // No runtime feature check is required on:
-        // - x86_64 with AVX2, BMI2, and POPCNT enabled at compile time
-        // - aarch64
-        // - any other platform
-        BASELINE.to_dyn()
-    }
-
-    /// Name of the CPU feature set, e.g. `"Avx2"`.
-    pub fn name(self) -> &'static str {
-        match self {
-            DynCpu::Generic(_) => "Generic",
-            DynCpu::Avx2(_) => "Avx2",
-            DynCpu::Neon(_) => "Neon",
-        }
-    }
-}
-
-// Not derived, which would print the variant's field too, e.g. `Avx2(Avx2(()))`
-impl Debug for DynCpu {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
