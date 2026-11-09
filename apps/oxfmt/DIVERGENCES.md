@@ -117,6 +117,43 @@ Vue 3 removed Vue 2's filters (`@vue/compiler-dom` 3.5.45 compiles `{{ a | f }}`
 Prettier still reads `{{ }}`'s and a binding's `|` as filters, starting each line with `|`, and indents every `|` chain there.
 A migration build (`@vue/compat`'s `COMPILER_FILTERS`) still reads them as filters, which compile the same either way: only the line breaks differ.
 
+## js-in-vue-numeric-keys-unquoted
+
+- Why: uniform-rule (same construct, same output: an object key in the `<script>` of a JS file; prettier/prettier#10127)
+- Pin: `conformance/fixtures/js-in-vue/numeric-keys-unquoted.vue`
+
+```vue
+<!-- input -->
+<template>
+  <p :b="{ '1': 1, 'b': 2 }">{{ { '0': 'x' }[0] }}</p>
+</template>
+
+<script>
+const b = { '1': 1 };
+</script>
+
+<!-- ours -->
+<template>
+  <p :b="{ 1: 1, b: 2 }">{{ { 0: "x" }[0] }}</p>
+</template>
+
+<script>
+const b = { 1: 1 };
+</script>
+
+<!-- prettier -->
+<template>
+  <p :b="{ '1': 1, b: 2 }">{{ { "0": "x" }[0] }}</p>
+</template>
+
+<script>
+const b = { 1: 1 };
+</script>
+```
+
+A template expression of a JS file unquotes a numeric key under `quoteProps: "as-needed"`, as its `<script>` does;
+Prettier unquotes only an identifier key there, a numeric key only in the `<script>`.
+
 ## js-in-vue-removed-attributes-as-written
 
 - Why: semantics (Vue 3 passes `slot-scope` to the element as a string, which formatting changes)

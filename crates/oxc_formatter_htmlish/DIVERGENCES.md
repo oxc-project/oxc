@@ -833,7 +833,7 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
 
 ## interpolation-element-as-text
 
-- Why: uniform-rule (same construct, same output: an inline element holding text; prettier/prettier#20134)
+- Why: uniform-rule (same construct, same output: an inline element holding text; prettier/prettier#20134, prettier/prettier#9913, prettier/prettier#14315)
 - Pin: `tests/fixtures/vue/interpolation-element-as-text.vue`
 
 ```vue
