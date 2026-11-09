@@ -17,8 +17,10 @@ import {
   compiledVisitor,
   finalizeCompiledVisitor,
   resetCompiledVisitor,
+  PROGRAM_TYPE_ID,
   VISITOR_EMPTY,
   VISITOR_CFG,
+  VISITOR_PROGRAM_ONLY,
 } from "./visitor.ts";
 
 import { walkProgram, ancestors } from "../generated/walk.js";
@@ -273,7 +275,14 @@ export function lintFileImpl(
 
     debugAssert(ancestors.length === 0, "`ancestors` should be empty before walking AST");
 
-    if (visitorState === VISITOR_CFG) {
+    if (visitorState === VISITOR_PROGRAM_ONLY) {
+      // Only `Program` is visited, so call its visit functions directly, without walking the rest of the AST.
+      // This is equivalent to `walkProgram`, which calls `enter` and `exit` for `Program`
+      // with `ancestors` empty, and only differs in also walking the `Program`'s children.
+      const { enter, exit } = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
+      if (enter !== null) enter(ast);
+      if (exit !== null) exit(ast);
+    } else if (visitorState === VISITOR_CFG) {
       walkProgramWithCfg(ast, compiledVisitor);
     } else {
       walkProgram(ast, compiledVisitor as (VisitFn | EnterExit | null)[]);

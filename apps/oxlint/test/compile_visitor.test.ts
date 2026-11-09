@@ -11,8 +11,10 @@ import {
   compiledVisitor,
   finalizeCompiledVisitor,
   resetCompiledVisitor,
+  VISITOR_CFG,
   VISITOR_EMPTY,
   VISITOR_NOT_EMPTY,
+  VISITOR_PROGRAM_ONLY,
 } from "../src-js/plugins/visitor.ts";
 
 import type { Mock } from "vitest";
@@ -78,7 +80,7 @@ describe("compile visitor", () => {
     it("for non-leaf node", () => {
       const enter = () => {};
       addVisitorToCompiled({ Program: enter });
-      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_PROGRAM_ONLY);
 
       const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
       expect(enterExit).toEqual({ enter, exit: null });
@@ -97,7 +99,7 @@ describe("compile visitor", () => {
     it("for non-leaf node", () => {
       const exit = () => {};
       addVisitorToCompiled({ "Program:exit": exit });
-      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_PROGRAM_ONLY);
 
       const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
       expect(enterExit).toEqual({ enter: null, exit });
@@ -139,7 +141,7 @@ describe("compile visitor", () => {
         const enter = () => {};
         const exit = () => {};
         addVisitorToCompiled({ Program: enter, "Program:exit": exit });
-        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_PROGRAM_ONLY);
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
         expect(enterExit).toEqual({ enter, exit });
@@ -151,7 +153,7 @@ describe("compile visitor", () => {
         const enter = () => {};
         const exit = () => {};
         addVisitorToCompiled({ "Program:exit": exit, Program: enter });
-        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_PROGRAM_ONLY);
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
         expect(enterExit).toEqual({ enter, exit });
@@ -262,7 +264,7 @@ describe("compile visitor", () => {
         const exit2 = vi.fn(() => {});
         addVisitorToCompiled({ Program: enter2, "Program:exit": exit2 });
 
-        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_PROGRAM_ONLY);
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
@@ -286,7 +288,7 @@ describe("compile visitor", () => {
         const exit2 = vi.fn(() => {});
         addVisitorToCompiled({ "Program:exit": exit2, Program: enter2 });
 
-        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_PROGRAM_ONLY);
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
@@ -310,7 +312,7 @@ describe("compile visitor", () => {
         const exit2 = vi.fn(() => {});
         addVisitorToCompiled({ "Program:exit": exit2, Program: enter2 });
 
-        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_PROGRAM_ONLY);
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
@@ -334,7 +336,7 @@ describe("compile visitor", () => {
         const exit2 = vi.fn(() => {});
         addVisitorToCompiled({ Program: enter2, "Program:exit": exit2 });
 
-        expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
+        expect(finalizeCompiledVisitor()).toBe(VISITOR_PROGRAM_ONLY);
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
@@ -841,6 +843,66 @@ describe("compile visitor", () => {
       funcDeclEnterExit.exit!(funcDecl);
       expect(exit1).toHaveBeenCalledWith(funcDecl);
       expect(exit2).toHaveBeenCalledWith(funcDecl);
+    });
+  });
+
+  describe("`finalizeCompiledVisitor` returns `VISITOR_PROGRAM_ONLY` if only `Program` is visited", () => {
+    it("`Program` enter", () => {
+      addVisitorToCompiled({ Program() {} });
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_PROGRAM_ONLY);
+    });
+
+    it("`Program` exit", () => {
+      addVisitorToCompiled({ "Program:exit"() {} });
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_PROGRAM_ONLY);
+    });
+
+    it("`Program` enter and exit in multiple visitors, plus empty visitors", () => {
+      addVisitorToCompiled({ Program() {} });
+      addVisitorToCompiled({});
+      addVisitorToCompiled({ "Program:exit"() {} });
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_PROGRAM_ONLY);
+    });
+
+    it("`Program` with attribute selector", () => {
+      addVisitorToCompiled({ "Program[sourceType='module']"() {} });
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_PROGRAM_ONLY);
+    });
+
+    it("not if another non-leaf node is also visited", () => {
+      addVisitorToCompiled({ Program() {} });
+      addVisitorToCompiled({ FunctionDeclaration() {} });
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
+    });
+
+    it("not if a leaf node is also visited", () => {
+      addVisitorToCompiled({ Program() {}, "Identifier:exit"() {} });
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
+    });
+
+    it("not if a child selector targets a node below `Program`", () => {
+      addVisitorToCompiled({ "Program > ExpressionStatement"() {} });
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
+    });
+
+    it("not if `*` selector is used", () => {
+      addVisitorToCompiled({ Program() {} });
+      addVisitorToCompiled({ "*"() {} });
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
+    });
+
+    it("not if a CFG event listener is also present", () => {
+      addVisitorToCompiled({ Program() {}, onCodePathStart() {} });
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_CFG);
+    });
+
+    it("only `Program` is visited after a previous file visited other nodes", () => {
+      addVisitorToCompiled({ Program() {}, Identifier() {} });
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_NOT_EMPTY);
+      resetCompiledVisitor();
+
+      addVisitorToCompiled({ Program() {} });
+      expect(finalizeCompiledVisitor()).toBe(VISITOR_PROGRAM_ONLY);
     });
   });
 
