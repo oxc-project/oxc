@@ -70,7 +70,8 @@ pub struct JsFormatOptions {
     /// Enable Tailwind CSS class sorting in JSX class/className attributes.
     /// When enabled, class strings will be collected and passed to a callback for sorting.
     /// Defaults to None (disabled).
-    pub sort_tailwindcss: Option<SortTailwindcssOptions>,
+    /// Behind an `Arc`: the options are cloned per embedded part (each value of a Vue template), the lists need not be.
+    pub sort_tailwindcss: Option<Arc<SortTailwindcssOptions>>,
     /// Enable JSDoc comment formatting.
     /// When enabled, JSDoc comments will be normalized and reformatted.
     /// Defaults to None (disabled).
