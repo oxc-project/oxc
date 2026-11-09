@@ -16,6 +16,7 @@
 
 use oxc_allocator::CloneIn;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_str::Ident;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::diagnostics;
@@ -29,8 +30,8 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     AliasingEffect, BlockId, DeclarationId, Effect, EvaluationOrder, FunctionId, HirFunction,
-    IdentifierId, InstructionValue, MutationReason, ParamPattern, Place, Terminal, Type,
-    is_jsx_type, is_primitive_type,
+    IdentifierId, InstructionValue, MutationReason, ParamPattern, Place, PlaceOrSpread,
+    PropertyLiteral, Terminal, Type, is_jsx_type, is_primitive_type,
 };
 use oxc_span::Span;
 
@@ -92,6 +93,7 @@ struct Node {
     /// callback is mutated along with the closure that captures it, but is only
     /// called when that closure calls it directly.
     called: bool,
+    mutation_errors_recorded: bool,
 }
 
 impl Node {
@@ -109,6 +111,7 @@ impl Node {
             mutation_reason: None,
             value,
             called: false,
+            mutation_errors_recorded: false,
         }
     }
 }
@@ -198,7 +201,7 @@ impl AliasingState {
                 continue;
             }
             if let NodeValue::Function { function_id } = &node.value {
-                append_function_errors(env, *function_id);
+                append_function_errors(env, *function_id, true, !node.mutation_errors_recorded);
             }
             for (&alias, &when) in &node.created_from {
                 if when >= index {
@@ -233,6 +236,7 @@ impl AliasingState {
         reason: Option<MutationReason>,
         env: &mut Environment,
         should_record_errors: bool,
+        invokes: bool,
     ) {
         #[derive(Clone)]
         struct QueueEntry {
@@ -254,7 +258,7 @@ impl AliasingState {
             transitive,
             direction: Direction::Backwards,
             kind: start_kind,
-            may_call: true,
+            may_call: invokes,
         }];
 
         while let Some(entry) = queue.pop() {
@@ -289,11 +293,17 @@ impl AliasingState {
             }
 
             if let NodeValue::Function { function_id } = &node.value
-                && entry.may_call
-                && !node.called
                 && should_record_errors
             {
-                append_function_errors(env, *function_id);
+                // Unknown calls may still mutate globals or frozen captures.
+                // Only purity diagnostics require evidence that the callback runs.
+                append_function_errors(
+                    env,
+                    *function_id,
+                    entry.may_call && !node.called,
+                    !node.mutation_errors_recorded,
+                );
+                node.mutation_errors_recorded = true;
             }
             node.called |= entry.may_call;
 
@@ -431,6 +441,162 @@ impl AliasingState {
     }
 }
 
+/// Unlike the TS implementation, distinguish unknown calls from callbacks run during render.
+/// A transitive conditional mutation invokes `place` during render when `place` is
+/// the callee, or when this argument is a callback that actually runs then.
+///
+/// An unknown callee such as `form.handleSubmit(onSubmit)` mutates every operand.
+/// Passing a function there does not run it during render: event-handler props
+/// and the callbacks that produce them execute later (#29094). Iterator methods
+/// still do, including on untyped receivers (`items.map(fn)`), matching the
+/// signatures used for typed arrays.
+fn transitive_mutation_invokes_during_render<'a>(
+    func: &HirFunction<'a>,
+    value: &InstructionValue<'a>,
+    place: Place,
+    env: &Environment<'a>,
+    method_names: &mut Option<FxHashMap<IdentifierId, MethodName<'a>>>,
+) -> bool {
+    let Some((callee, args)) = invoked_call(value) else {
+        return true;
+    };
+    if callee.identifier == place.identifier {
+        return true;
+    }
+    // A known signature decides whether this argument runs. Untyped receivers
+    // (`items.map(fn)`) have none: prop method calls are rewritten to plain
+    // calls whose callee still loads the static name, so check that name.
+    if let Some(invokes) = signature_invokes_argument(env, callee, args, place.identifier) {
+        return invokes;
+    }
+    let Some(name) = method_property_name(func, callee, method_names) else {
+        return false;
+    };
+    let Some(index) = callback_argument_index(name.as_str()) else {
+        return false;
+    };
+    args.get(index).is_some_and(|arg| argument_identifier(arg) == place.identifier)
+}
+
+#[derive(Clone, Copy)]
+enum MethodName<'a> {
+    Property(Ident<'a>),
+    Alias(IdentifierId),
+    Unknown,
+}
+
+fn method_property_name<'a>(
+    func: &HirFunction<'a>,
+    property: &Place,
+    method_names: &mut Option<FxHashMap<IdentifierId, MethodName<'a>>>,
+) -> Option<Ident<'a>> {
+    // Build definitions only for untyped calls that need the fallback. Cache
+    // resolved aliases so many calls do not repeatedly scan the whole function.
+    let definitions = method_names.get_or_insert_with(|| {
+        let mut definitions = FxHashMap::default();
+        for instr in &func.instructions {
+            let definition = match &instr.value {
+                InstructionValue::PropertyLoad {
+                    property: PropertyLiteral::String(name), ..
+                } => MethodName::Property(*name),
+                InstructionValue::LoadLocal { place, .. }
+                | InstructionValue::LoadContext { place, .. }
+                | InstructionValue::StoreLocal { value: place, .. } => {
+                    MethodName::Alias(place.identifier)
+                }
+                _ => MethodName::Unknown,
+            };
+            definitions.entry(instr.lvalue.identifier).or_insert(definition);
+        }
+        definitions
+    });
+    let mut current = property.identifier;
+    let mut path = smallvec::SmallVec::<[_; 4]>::new();
+    let name = loop {
+        match definitions.get_mut(&current) {
+            Some(MethodName::Property(name)) => break Some(*name),
+            Some(definition @ MethodName::Alias(_)) => {
+                let MethodName::Alias(next) = *definition else { unreachable!() };
+                // A repeated alias now resolves to Unknown, terminating cycles.
+                *definition = MethodName::Unknown;
+                path.push(current);
+                current = next;
+            }
+            Some(MethodName::Unknown) | None => break None,
+        }
+    };
+    for identifier in path {
+        definitions.insert(identifier, name.map_or(MethodName::Unknown, MethodName::Property));
+    }
+    name
+}
+
+/// Argument index of the callback that runs during render, for iterator methods
+/// that may be untyped. `Array.from(items, mapFn)` takes the callback second.
+fn callback_argument_index(name: &str) -> Option<usize> {
+    match name {
+        "map" | "flatMap" | "forEach" | "filter" | "every" | "some" | "find" | "findIndex"
+        | "findLast" | "findLastIndex" | "reduce" | "reduceRight" | "sort" | "toSorted" => Some(0),
+        "from" => Some(1),
+        _ => None,
+    }
+}
+
+fn argument_identifier(arg: &PlaceOrSpread) -> IdentifierId {
+    match arg {
+        PlaceOrSpread::Place(arg) => arg.identifier,
+        PlaceOrSpread::Spread(arg) => arg.place.identifier,
+    }
+}
+
+fn invoked_call<'a>(value: &'a InstructionValue<'a>) -> Option<(&'a Place, &'a [PlaceOrSpread])> {
+    match value {
+        InstructionValue::CallExpression { callee, args, .. }
+        | InstructionValue::NewExpression { callee, args, .. } => Some((callee, args.as_slice())),
+        InstructionValue::MethodCall { property, args, .. } => Some((property, args.as_slice())),
+        _ => None,
+    }
+}
+
+/// `Some` when a signature covers `place_id` (or the type model is unusable).
+/// `None` when there is no signature, so the caller may fall back to the method name.
+fn signature_invokes_argument(
+    env: &Environment<'_>,
+    callee: &Place,
+    args: &[PlaceOrSpread],
+    place_id: IdentifierId,
+) -> Option<bool> {
+    let ty = &env.types[env.identifiers[callee.identifier].type_];
+    let sig = match env.get_function_signature(ty) {
+        Ok(Some(sig)) => sig,
+        Ok(None) => return None,
+        // Keep the previous, conservative report if the type model is unusable.
+        Err(_) => return Some(true),
+    };
+    for (i, arg) in args.iter().enumerate() {
+        let arg_id = argument_identifier(arg);
+        if arg_id != place_id {
+            continue;
+        }
+        let effect = if i < sig.positional_params.len() {
+            sig.positional_params[i]
+        } else if let Some(rest) = sig.rest_param {
+            rest
+        } else {
+            // Extra arguments of a legacy signature are conditionally mutated.
+            Effect::ConditionallyMutate
+        };
+        return Some(matches!(
+            effect,
+            Effect::ConditionallyMutate
+                | Effect::ConditionallyMutateIterator
+                | Effect::Mutate
+                | Effect::Store
+        ));
+    }
+    None
+}
+
 /// Declarations that `function_id` calls directly. A call's callee is the temporary
 /// that loads the binding, so resolve it through `LoadLocal`/`LoadContext`.
 fn directly_called_declarations(
@@ -464,16 +630,25 @@ fn directly_called_declarations(
 // Helper: append function errors
 // =============================================================================
 
-fn append_function_errors(env: &mut Environment, function_id: FunctionId) {
+fn append_function_errors(
+    env: &mut Environment,
+    function_id: FunctionId,
+    include_impure: bool,
+    include_mutations: bool,
+) {
     let func = &env.functions[function_id];
     // Collect diagnostic ids first to avoid borrow conflict, then resolve + record.
     let ids: Vec<_> = if let Some(ref effects) = func.aliasing_effects {
         effects
             .iter()
             .filter_map(|effect| match effect {
-                AliasingEffect::Impure { error, .. }
-                | AliasingEffect::MutateFrozen { error, .. }
-                | AliasingEffect::MutateGlobal { error, .. } => Some(*error),
+                AliasingEffect::Impure { error, .. } if include_impure => Some(*error),
+                AliasingEffect::MutateFrozen { error, .. }
+                | AliasingEffect::MutateGlobal { error, .. }
+                    if include_mutations =>
+                {
+                    Some(*error)
+                }
                 _ => None,
             })
             .collect()
@@ -522,8 +697,12 @@ pub fn infer_mutation_aliasing_ranges<'a>(
         kind: MutationKind,
         place: Place,
         reason: Option<MutationReason>,
+        /// When false, the mutation still updates ranges but does not mean the
+        /// mutated function runs during render.
+        invokes: bool,
     }
     let mut mutations: Vec<PendingMutation> = Vec::new();
+    let mut method_names = None;
 
     struct PendingRender {
         index: usize,
@@ -628,6 +807,17 @@ pub fn infer_mutation_aliasing_ranges<'a>(
                     | AliasingEffect::MutateTransitiveConditionally { value } => {
                         let is_transitive_conditional =
                             matches!(effect, AliasingEffect::MutateTransitiveConditionally { .. });
+                        // Unknown calls mutate every operand. That updates aliasing, but it
+                        // is not evidence a function argument runs during render (#29094).
+                        // `new Date()` became impure in #26894 and started taking this path.
+                        let invokes = !is_transitive_conditional
+                            || transitive_mutation_invokes_during_render(
+                                func,
+                                &instr.value,
+                                *value,
+                                env,
+                                &mut method_names,
+                            );
                         mutations.push(PendingMutation {
                             index,
                             id: instr_eval_order,
@@ -639,6 +829,7 @@ pub fn infer_mutation_aliasing_ranges<'a>(
                             },
                             reason: None,
                             place: *value,
+                            invokes,
                         });
                         index += 1;
                     }
@@ -650,6 +841,7 @@ pub fn infer_mutation_aliasing_ranges<'a>(
                             kind: MutationKind::Definite,
                             reason: *reason,
                             place: *value,
+                            invokes: true,
                         });
                         index += 1;
                     }
@@ -661,6 +853,7 @@ pub fn infer_mutation_aliasing_ranges<'a>(
                             kind: MutationKind::Conditional,
                             reason: None,
                             place: *value,
+                            invokes: true,
                         });
                         index += 1;
                     }
@@ -744,6 +937,7 @@ pub fn infer_mutation_aliasing_ranges<'a>(
             mutation.reason,
             env,
             should_record_errors,
+            mutation.invokes,
         );
     }
 
@@ -1099,6 +1293,7 @@ pub fn infer_mutation_aliasing_ranges<'a>(
             None,
             env,
             false, // never record errors for simulated mutations
+            true,
         );
 
         for from in &tracked {
