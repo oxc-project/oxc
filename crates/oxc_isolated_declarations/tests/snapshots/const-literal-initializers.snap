@@ -98,3 +98,13 @@ export declare const object: {
 	x: boolean;
 };
 export declare const nil: null;
+export declare const positive_plain = 1;
+export declare const positive_parenthesized = 1;
+export declare const positive_nested = 1;
+export declare let positive_mutable: number;
+export declare const positive_annotated: number;
+export declare class Positive {
+	readonly plain = 1;
+	readonly parenthesized = 1;
+	readonly negative = -1;
+}

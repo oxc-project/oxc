@@ -97,3 +97,14 @@ export { separate_true, separate_false, separate_parenthesized };
 export const asserted = (true as const);
 export const object = ({ x: true });
 export const nil = (null);
+
+export const positive_plain = +1;
+export const positive_parenthesized = (+1);
+export const positive_nested = (((+1)));
+export let positive_mutable = (+1);
+export const positive_annotated: number = (+1);
+export class Positive {
+    readonly plain = +1;
+    readonly parenthesized = (+1);
+    readonly negative = (-1);
+}

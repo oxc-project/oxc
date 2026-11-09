@@ -7,6 +7,7 @@ use oxc_ast::{
     match_expression,
 };
 use oxc_span::SPAN;
+use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     IsolatedDeclarations,
@@ -143,7 +144,11 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.transform_template_to_string(lit).map(Expression::StringLiteral)
             }
             Expression::UnaryExpression(expr) if Self::can_infer_unary_expression(expr) => {
-                Some(Expression::UnaryExpression(expr.clone_in(self.allocator())))
+                if expr.operator == UnaryOperator::UnaryPlus {
+                    Some(expr.argument.clone_in(self.allocator()))
+                } else {
+                    Some(Expression::UnaryExpression(expr.clone_in(self.allocator())))
+                }
             }
             Expression::ParenthesizedExpression(expr) => {
                 self.get_literal_initializer_without_const_assertion(&expr.expression)
