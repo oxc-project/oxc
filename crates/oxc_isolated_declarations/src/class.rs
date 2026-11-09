@@ -685,10 +685,22 @@ impl<'a> IsolatedDeclarations<'a> {
                         continue;
                     }
 
-                    let type_annotation = match property.accessibility {
-                        Some(TSAccessibility::Private) => None,
-                        _ => property.type_annotation.clone_in(self.allocator()),
-                    };
+                    let type_annotation =
+                        if property.accessibility.is_some_and(TSAccessibility::is_private) {
+                            None
+                        } else {
+                            let annotation =
+                                property.type_annotation.clone_in(self.allocator()).or_else(|| {
+                                    property.value.as_ref().and_then(|value| {
+                                        self.infer_type_from_expression(value)
+                                            .map(|ty| TSTypeAnnotation::boxed(SPAN, ty, self))
+                                    })
+                                });
+                            if annotation.is_none() {
+                                self.error(property_must_have_explicit_type(property.key.span()));
+                            }
+                            annotation
+                        };
 
                     // FIXME: missing many fields
                     let new_element = ClassElement::new_accessor_property(
