@@ -432,6 +432,12 @@ fn skip_markup_expression(source_text: &str, pointer: usize) -> Option<usize> {
         || expression.starts_with(":catch")
     {
         EmbeddedExpression::Binding
+    } else if ["const", "let"].iter().any(|keyword| {
+        expression
+            .strip_prefix(keyword)
+            .is_some_and(|rest| rest.chars().next().is_none_or(|ch| !is_identifier_part(ch)))
+    }) {
+        EmbeddedExpression::Declaration
     } else {
         EmbeddedExpression::Expression
     };
@@ -466,6 +472,7 @@ enum EmbeddedExpression {
     Await,
     Snippet,
     Binding,
+    Declaration,
 }
 
 fn skip_expression(source_text: &str, pointer: usize) -> Option<usize> {
@@ -510,6 +517,13 @@ fn validate_embedded_expression(
     kind: EmbeddedExpression,
     candidates: &mut Vec<usize>,
 ) -> bool {
+    if matches!(kind, EmbeddedExpression::Declaration) {
+        if validate_expression(source, "async () => {", ";}", 0, candidates) {
+            return true;
+        }
+        validate_expression(source, "", "", 0, candidates);
+        return false;
+    }
     if matches!(kind, EmbeddedExpression::Snippet) {
         return validate_expression(source, "function ", " {}", 0, candidates);
     }
@@ -1101,6 +1115,29 @@ let {json}: {json: string} = $props();
             assert_eq!(sources[0].source_text, "debugger;");
         }
     }
+    #[test]
+    fn test_script_after_declaration_tags() {
+        for markup in [
+            "{const x = '<textarea>'}<p>{x}</p>",
+            "{let x = '<textarea>'}<p>{x}</p>",
+            "{const {x = '<textarea>'} = value}<p>{x}</p>",
+            "{let x: string = '<textarea>', y = '<style>'}<p>{x}</p>",
+            "{const x = await Promise.resolve('<textarea>')}<p>{x}</p>",
+            "{const x = `text ${value as string} <script>ignored</script>`}<p>{x}</p>",
+            "{let x = /[}]/.test(value) ? '<textarea>' : ''}<p>{x}</p>",
+            "{const x = ( // } <script>ignored</script>\n'<textarea>')}<p>{x}</p>",
+            "{let x = '<textarea>';}<p>{x}</p>",
+            "{const/* } <script>ignored</script> */x = '<textarea>'}<p>{x}</p>",
+            "{constant('<textarea>')}<p>hi</p>",
+            "{letter('<textarea>')}<p>hi</p>",
+        ] {
+            let source_text = format!("{markup}<script lang='ts'>debugger;</script>");
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "debugger;", "{source_text}");
+        }
+    }
+
     #[test]
     fn test_script_after_svelte_binding_headers() {
         for markup in [
