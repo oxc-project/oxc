@@ -10,7 +10,7 @@ use oxc_allocator::ArenaVec;
 use crate::{
     Argument, Arguments, Format, FormatContext, FormatElement, FormatOptions, Formatter, GroupId,
     format_element::{
-        self, LineMode, PrintMode, TextWidth,
+        self, LineMode, PrintMode, TextWidth, ThinStr,
         tag::{self, Condition, DedentMode, GroupMode, LabelId, Tag},
     },
 };
@@ -244,7 +244,7 @@ impl<T> std::fmt::Debug for FormatOnce<T> {
 #[inline]
 pub fn token(text: &'static str) -> Token {
     debug_assert_token_ascii_only_and_no_linebreaks(text);
-    Token { text }
+    Token { text: ThinStr::new(text) }
 }
 
 fn debug_assert_token_ascii_only_and_no_linebreaks(text: &str) {
@@ -256,10 +256,11 @@ fn debug_assert_token_ascii_only_and_no_linebreaks(text: &str) {
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Token {
-    text: &'static str,
+    text: ThinStr<'static>,
 }
 
 impl<C> Format<'_, C> for Token {
+    #[inline]
     fn fmt(&self, f: &mut Formatter<'_, '_, C>) {
         f.write_element(FormatElement::Token { text: self.text });
     }
@@ -267,7 +268,7 @@ impl<C> Format<'_, C> for Token {
 
 impl std::fmt::Debug for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::write!(f, "Token({})", self.text)
+        std::write!(f, "Token({})", self.text.as_str())
     }
 }
 
@@ -314,12 +315,13 @@ impl<'a, C> Format<'a, C> for Text<'a>
 where
     C: FormatContext,
 {
+    #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
         let width = self
             .width
             .unwrap_or_else(|| TextWidth::from_text(self.text, f.options().indent_width()));
         let width = if self.expand_parent { width } else { width.without_expand_parent() };
-        f.write_element(FormatElement::Text { text: self.text, width });
+        f.write_element(FormatElement::Text { text: ThinStr::new(self.text), width });
     }
 }
 

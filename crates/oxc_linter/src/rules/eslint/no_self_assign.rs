@@ -297,7 +297,7 @@ impl NoSelfAssign {
                 else {
                     return;
                 };
-                if key.static_name().is_some_and(|name| name == id1.binding.name)
+                if key.is_specific_static_name(id1.binding.name.as_str())
                     && let Expression::Identifier(id2) = expr.without_parentheses()
                     && id1.binding.name == id2.name
                 {

@@ -491,7 +491,7 @@ impl<'a> AstKind<'a> {
 
             Self::ObjectProperty(p) => format!(
                 "ObjectProperty({})",
-                p.key.name().unwrap_or_else(|| StaticPropertyName::from(COMPUTED))
+                p.key.name().unwrap_or_else(|| StaticPropertyName::from(COMPUTED)).display()
             )
             .into(),
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),

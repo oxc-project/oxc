@@ -3,6 +3,20 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint(prefer-named-capture-group): Capture group should be named.
+   ╭─[prefer_named_capture_group.tsx:1:12]
+ 1 │ new RegExp("(a)[" + "\uD800" + "-" + "\uE000" + "]");
+   ·            ────────────────────────────────────────
+   ╰────
+  help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group.
+
+  ⚠ eslint(prefer-named-capture-group): Capture group should be named.
+   ╭─[prefer_named_capture_group.tsx:1:12]
+ 1 │ new RegExp("(a)[" + "\uD800" + "-" + "\uE000" + "]", "u");
+   ·            ────────────────────────────────────────
+   ╰────
+  help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group.
+
+  ⚠ eslint(prefer-named-capture-group): Capture group should be named.
    ╭─[prefer_named_capture_group.tsx:1:2]
  1 │ /([0-9]{4})/
    ·  ──────────
@@ -139,6 +153,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_named_capture_group.tsx:1:12]
  1 │ new RegExp("foo" + "(?:a)" + "(b)");
    ·            ───────────────────────
+   ╰────
+  help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group.
+
+  ⚠ eslint(prefer-named-capture-group): Capture group should be named.
+   ╭─[prefer_named_capture_group.tsx:1:12]
+ 1 │ new RegExp("(a)" + "\uD800");
+   ·            ────────────────
    ╰────
   help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group.
 

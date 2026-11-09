@@ -53,6 +53,13 @@ fn test_string_index_of() {
     test("x = `abcdef`.indexOf('b')", "x = 1");
     test_same("x = `Hello ${name}`.indexOf('a')");
     test_same("x = tag `Hello ${name}`.indexOf('a')");
+
+    // Indices count UTF-16 code units, and positions are not wrapped to 32 bits.
+    test("x = 'éx'.indexOf('x')", "x = 1");
+    test("x = '😀x'.indexOf('x', 1)", "x = 2");
+    test("x = 'abc'.indexOf('a', 4294967296)", "x = -1");
+    test("x = 'éb'.lastIndexOf('b')", "x = 1");
+    test("x = 'abab'.lastIndexOf('b', NaN)", "x = 3");
 }
 
 #[test]
@@ -220,6 +227,19 @@ fn test_fold_string_replace_all() {
 }
 
 #[test]
+fn test_fold_string_replace_all_empty_search_utf16() {
+    test(r"x = 'a😀z'.replaceAll('', '-')", r"x = '-a-\uD83D-\uDE00-z-'");
+    test(r"x = '😀😀'.replaceAll('', '-')", r"x = '-\uD83D-\uDE00-\uD83D-\uDE00-'");
+    test(r"x = '😀'.replaceAll('', '😁')", r"x = '😁\uD83D😁\uDE00😁'");
+    test("x = '😀'.replaceAll('', '')", "x = '😀'");
+    test("x = ''.replaceAll('', '-')", "x = '-'");
+    test(
+        r"x = (() => ((p) => 'a😀z'.replaceAll('', p))('-'))()",
+        r"x = ((p) => '-a-\uD83D-\uDE00-z-')('-')",
+    );
+}
+
+#[test]
 fn test_fold_string_substring() {
     test("x = 'abcde'.substring(0,2)", "x = 'ab'");
     test("x = 'abcde'.substring(1,2)", "x = 'b'");
@@ -239,6 +259,14 @@ fn test_fold_string_substring() {
     // Template strings
     test("x = `abcdef`.substring(0,2)", "x = 'ab'");
     test_same("x = `abcdef ${abc}`.substring(0,2)");
+
+    // Positions count UTF-16 code units, so a boundary may split a surrogate pair.
+    test("x = 'a😀b'.substring(1, 2)", "x = '\\ud83d'");
+    test("x = 'é😀b'.substring(1)", "x = '😀b'");
+    // An `undefined` end is not folded: its number value NaN would mean index 0.
+    test_same("x = 'abc'.substring(1, void 0)");
+    // A NaN start is index 0.
+    test("x = 'abc'.substring(NaN, 2)", "x = 'ab'");
 }
 
 #[test]
@@ -246,6 +274,8 @@ fn test_fold_string_slice() {
     test("x = 'abcde'.slice(0,2)", "x = 'ab'");
     test("x = 'abcde'.slice(1,2)", "x = 'b'");
     test("x = 'abcde'.slice(2)", "x = 'cde'");
+    // Positions count UTF-16 code units, so a boundary may split a surrogate pair.
+    test("x = '😀a'.slice(1)", "x = '\\ude00a'");
 
     // we should be leaving negative, out-of-bound, and inverted indices alone for now
     test_same("x = 'abcde'.slice(-1)");
@@ -253,6 +283,10 @@ fn test_fold_string_slice() {
     test_same("x = 'abcde'.slice(1, 2, 3)");
     test_same("x = 'abcde'.slice(2, 0)");
     test_same("x = 'a'.slice(0, 2)");
+    // A NaN or `undefined` end is not folded, and a NaN or `undefined` start is index 0.
+    test_same("x = 'abc'.slice(1, void 0)");
+    test_same("x = 'abc'.slice(0, NaN)");
+    test("x = 'abc'.slice(void 0, 1)", "x = 'a'");
 
     // Template strings
     test("x = `abcdef`.slice(0, 2)", "x = 'ab'");
@@ -276,8 +310,8 @@ fn test_fold_string_char_at() {
     test_same("x = 'abcde'.charAt(y)");
     test("x = 'abcde'.charAt(null)", "x = 'a'");
     test("x = 'abcde'.charAt(!0)", "x = 'b'");
-    test_same("x = '\\ud834\\udd1e'.charAt(0)"); // or x = '\\ud834'
-    test_same("x = '\\ud834\\udd1e'.charAt(1)"); // or x = '\\udd1e'
+    test("x = '\\ud834\\udd1e'.charAt(0)", "x = '\\ud834'");
+    test("x = '\\ud834\\udd1e'.charAt(1)", "x = '\\udd1e'");
 
     // Template strings
     test("x = `abcdef`.charAt(0)", "x = 'a'");
@@ -423,6 +457,12 @@ fn test_fold_string_trim() {
     test("x = '  abc  '.trimEnd()", "x = '  abc'");
     test("x = 'abc'.trimEnd()", "x = 'abc'");
     test_same("x = 'abc'.trimEnd(1)");
+
+    // `TrimString` removes `WhiteSpace` and `LineTerminator`: U+FEFF is one, U+0085 is not
+    test("x = '\\u{FEFF}a\\u{FEFF}'.trim()", "x = 'a'");
+    test("x = '\\u{FEFF}a'.trimStart()", "x = 'a'");
+    test("x = 'a\\u{FEFF}'.trimEnd()", "x = 'a'");
+    test("x = '\\u0085a\\u0085'.trim()", "x = '\\u0085a\\u0085'");
 }
 
 #[test]
@@ -440,7 +480,7 @@ fn test_fold_math_functions_abs() {
     test_value("Math.abs('')", "0");
     test_value("Math.abs(NaN)", "NaN");
     test_value("Math.abs(-0)", "0");
-    test_value("Math.abs(-Infinity)", "Infinity");
+    test_value("Math.abs(-Infinity)", "1e400");
     test_value("Math.abs([])", "0");
     test_value("Math.abs([2])", "2");
     test_value("Math.abs([1,2])", "NaN");
@@ -488,8 +528,8 @@ fn test_fold_math_functions_fround() {
     test_same_value("Math.fround(Math.random())");
 
     test_value("Math.fround(NaN)", "NaN");
-    test_value("Math.fround(Infinity)", "Infinity");
-    test_value("Math.fround(-Infinity)", "-Infinity");
+    test_value("Math.fround(Infinity)", "1e400");
+    test_value("Math.fround(-Infinity)", "-1e400");
     test_value("Math.fround(1)", "1");
     test_value("Math.fround(0)", "0");
     test_value("Math.fround(16777217)", "16777216");
@@ -569,7 +609,7 @@ fn test_fold_math_functions_clz32() {
 fn test_fold_math_functions_max() {
     test_same_value("Math.max(Math.random(), 1)");
 
-    test_value("Math.max()", "-Infinity");
+    test_value("Math.max()", "-1e400");
     test_value("Math.max(0)", "0");
     test_value("Math.max(0, 1)", "1");
     test_value("Math.max(0, 1, -1, 200)", "200");
@@ -584,11 +624,11 @@ fn test_fold_math_functions_max() {
 fn test_fold_math_functions_min() {
     test_same_value("Math.min(Math.random(), 1)");
 
-    test_value("Math.min()", "Infinity");
+    test_value("Math.min()", "1e400");
     test_value("Math.min(3)", "3");
     test_value("Math.min(0, 1)", "0");
     test_value("Math.min(0, 1, -1, 200)", "-1");
-    test_value("Math.min(0, -1, -Infinity)", "-Infinity");
+    test_value("Math.min(0, -1, -Infinity)", "-1e400");
     test_value("Math.min(0, -1, -Infinity, NaN)", "NaN");
     test_value("Math.min(0, -0)", "-0");
     test_value("Math.min(-0, 0)", "-0");
@@ -602,7 +642,7 @@ fn test_fold_math_functions_pow() {
     test_value("Math.pow(2, 2)", "4");
     test_value("Math.pow(2, 32)", "2 ** 32");
     test_value("Math.pow(Infinity, 0)", "1");
-    test_value("Math.pow(Infinity, 1)", "Infinity");
+    test_value("Math.pow(Infinity, 1)", "1e400");
     test_value("Math.pow('a', 33)", "NaN");
     test_value("Math.pow(2, 3)", "8");
     test_value("Math.pow(a, 3)", "a ** 3");
@@ -626,7 +666,7 @@ fn test_fold_math_functions_sqrt() {
     test_same_value("Math.sqrt(...a)");
     test_same_value("Math.sqrt(a)"); // a maybe -0
     test_same_value("Math.sqrt(2n)");
-    test_value("Math.sqrt(Infinity)", "Infinity");
+    test_value("Math.sqrt(Infinity)", "1e400");
     test_value("Math.sqrt(NaN)", "NaN");
     test_value("Math.sqrt(0)", "0");
     test_value("Math.sqrt(-0)", "-0");
@@ -652,9 +692,9 @@ fn test_fold_math_functions_cbrt() {
     // unlike `Math.sqrt`, `Math.cbrt` of a negative number is not NaN
     test_value("Math.cbrt(-1)", "-1");
     test_value("Math.cbrt(-8)", "-2");
-    test_value("Math.cbrt(-Infinity)", "-Infinity");
+    test_value("Math.cbrt(-Infinity)", "-1e400");
     test_value("Math.cbrt(NaN)", "NaN");
-    test_value("Math.cbrt(Infinity)", "Infinity");
+    test_value("Math.cbrt(Infinity)", "1e400");
     test_same_value("Math.cbrt(-2)");
 }
 
@@ -829,9 +869,14 @@ fn test_fold_parse_numbers_additional() {
     test_value("parseFloat('')", "NaN");
     test_value("parseFloat(' ')", "NaN");
     test_value("parseFloat('abc')", "NaN");
-    test_value("parseFloat('Infinity')", "Infinity");
-    test_value("parseFloat('-Infinity')", "-Infinity");
-    test_value("parseFloat('+Infinity')", "Infinity");
+    test_value("parseFloat('Infinity')", "1e400");
+    test_value("parseFloat('-Infinity')", "-1e400");
+    // `TrimString` removes `WhiteSpace` and `LineTerminator`: U+FEFF is one, U+0085 is not
+    test_value("parseFloat('\\u{FEFF}7')", "7");
+    test_value("parseInt('\\u{FEFF}7')", "7");
+    test_value("parseFloat('\\u00857')", "NaN");
+    test_value("parseInt('\\u00857')", "NaN");
+    test_value("parseFloat('+Infinity')", "1e400");
     test_same_value("parseInt(unknown)");
     test_same_value("parseInt((foo, '0'))"); // foo may have side effects
     test_same_value("parseFloat(unknown)");
@@ -900,6 +945,32 @@ fn test_fold_concat_chaining() {
     test("var y; [1].concat(x).concat(y)", "var y; [1].concat(x, y)"); // x might have a getter that updates y, but that side effect is preserved correctly
     test("var x; [1].concat(x.a).concat(x)", "var x; [1].concat(x.a, x)"); // x.a might have a getter that updates x, but that side effect is preserved correctly
     test_same("x = [].map(a => a + 1).concat(1)");
+    // Merging would read `arr` after `arr.pop()` runs.
+    test_same("function f(arr) { return [].concat(arr).concat(arr.pop()) }");
+    // The innermost call still folds its leading literals into the array it is called on.
+    test(
+        "function f(arr) { return [1].concat(1, [2], arr).concat(arr.pop()) }",
+        "function f(arr) { return [1, 1, 2].concat(arr).concat(arr.pop()) }",
+    );
+    test(
+        "function f(arr) { return [].concat(1, arr).concat(2).concat(arr.pop()) }",
+        "function f(arr) { return [1].concat(arr).concat(2).concat(arr.pop()) }",
+    );
+    test_same("x = [].concat(a).concat(b)"); // reading the global `b` may run a getter
+    // A spread runs an iterator, and the values it passes are read later.
+    test_same("function f(arr) { return [].concat(arr).concat(...arr) }");
+    test_same("function f(arr) { return [].concat(...arr).concat(arr.pop()) }");
+    // Primitives and array literals have no elements that a later argument can change.
+    test("var y; x = [].concat(1).concat(y, f())", "var y; x = [1].concat(y, f())");
+    test(
+        "function f(a) { return [].concat([a]).concat(a.pop()) }",
+        "function f(a) { return [a].concat(a.pop()) }",
+    );
+    // The read and the side effect are in the same call, so merging keeps their order.
+    test(
+        "function f(arr) { return [].concat(arr, arr.pop()).concat(1) }",
+        "function f(arr) { return [].concat(arr, arr.pop(), 1) }",
+    );
 
     // string
     test("x = '1'.concat(1).concat(2,['abc']).concat('abc')", "x = '112abcabc'");
@@ -1003,7 +1074,8 @@ fn test_fold_string_from_char_code() {
     test("x = String.fromCharCode(0)", "x = '\\0'");
     test("x = String.fromCharCode(120)", "x = 'x'");
     test("x = String.fromCharCode(120, 121)", "x = 'xy'");
-    test_same("x = String.fromCharCode(55358, 56768)");
+    test("x = String.fromCharCode(55358, 56768)", "x = '\u{1F9C0}'");
+    test("x = String.fromCharCode(55296)", "x = '\\ud800'");
     test("x = String.fromCharCode(0x10000)", "x = '\\0'");
     test("x = String.fromCharCode(0x10078, 0x10079)", "x = 'xy'");
     test("x = String.fromCharCode(0x1_0000_FFFF)", "x = '\u{ffff}'");
@@ -1021,11 +1093,57 @@ fn test_fold_string_from_char_code() {
 }
 
 #[test]
+fn string_concat_preserves_coercion_order() {
+    test_same(r#"x = "\uD800".concat(a, b())"#);
+    test_same(r#"x = "\uD800".concat(a, b()).concat("tail")"#);
+    // A primitive cannot observe a later argument's mutation through coercion.
+    test(r#"x = "\uD800".concat(1, b())"#, r"x = `\ud8001${b()}`");
+    // A local parameter read can cross an earlier coercion.
+    test(
+        r#"function f(a) { return "\uD800".concat(b(), a) }"#,
+        r"function f(a) { return `\ud800${b()}${a}` }",
+    );
+    test(
+        r#"function f(a, b) { return "\uD800".concat(a, b) }"#,
+        r"function f(a, b) { return `\ud800${a}${b}` }",
+    );
+}
+
+#[test]
+fn string_concat_chains_preserve_call_boundaries() {
+    test(
+        r#"x = "translate(".concat(origin.x, ", ").concat(origin.y, ")")"#,
+        "x = `translate(${origin.x}, ${origin.y})`",
+    );
+    test(r#"x = "\uD800".concat(a).concat(b())"#, r"x = `\ud800${a}${b()}`");
+    // A template must preserve the argument/coercion order within every call too.
+    test_same(r#"x = "\uD800".concat(a, b()).concat(c)"#);
+    test_same(r#"x = "\uD800".concat(a).concat(b, c())"#);
+    test_same(r#"x = "\uD800".concat(...a).concat(b())"#);
+    // When flattening is unsafe, compare against the cost of the whole chain.
+    test(
+        "function f(a,b,c,d,e) { return ''.concat(a).concat(b()).concat(c).concat(d).concat(e) }",
+        "function f(a,b,c,d,e) { return `${a}${b()}${c}${d}${e}` }",
+    );
+    // A single flattened call is still shorter when all arguments are local reads.
+    test(
+        "function f(a,b,c,d,e) { return ''.concat(a).concat(b).concat(c).concat(d).concat(e) }",
+        "function f(a,b,c,d,e) { return ''.concat(a,b,c,d,e) }",
+    );
+    test_target("x = ''.concat(a).concat(b())", "x = ''.concat(a).concat(b())", "chrome40");
+}
+
+#[test]
 fn test_fold_string_concat() {
+    // A lone surrogate is kept as an escape in the template's raw text.
+    test_same(r#"x = "\uD800".concat(a, b)"#);
+    test(r#"x = "\uD83D".concat(a, "\uDE00")"#, "x = `\\ud83d${a}\\ude00`");
+    test(r#"x = "\uD83D".concat("\uDE00", a)"#, "x = `\u{1F600}${a}`");
     test_same("x = ''.concat()");
-    test("x = ''.concat(a, b)", "x = `${a}${b}`");
-    test("x = ''.concat(a, b, c)", "x = `${a}${b}${c}`");
-    test("x = ''.concat(a, b, c, d)", "x = `${a}${b}${c}${d}`");
+    // Unresolved reads can invoke a global getter or throw, so they cannot cross coercion.
+    test_same("x = ''.concat(a, b)");
+    test_same("x = ''.concat(a, b, c)");
+    test_same("x = ''.concat(a, b, c, d)");
     test_same("x = ''.concat(a, b, c, d, e)");
     test("x = ''.concat('a')", "x = 'a'");
     test("x = ''.concat('a', 'b')", "x = 'ab'");
@@ -1034,11 +1152,10 @@ fn test_fold_string_concat() {
     test("x = ''.concat('a', 'b', 'c', 'd', 'e')", "x = 'abcde'");
     test("x = ''.concat(a, 'b')", "x = `${a}b`");
     test("x = ''.concat('a', b)", "x = `a${b}`");
-    test("x = ''.concat(a, 'b', c)", "x = `${a}b${c}`");
+    test_same("x = ''.concat(a, 'b', c)");
     test("x = ''.concat('a', b, 'c')", "x = `a${b}c`");
-    test(
+    test_same(
         "x = ''.concat('a', b, 'c', d, 'e', f, 'g', h, 'i', j, 'k', l, 'm', n, 'o', p, 'q', r, 's', t)",
-        "x = `a${b}c${d}e${f}g${h}i${j}k${l}m${n}o${p}q${r}s${t}`",
     );
     test("x = ''.concat(a, 1)", "x = `${a}1`");
 
@@ -1094,8 +1211,8 @@ fn test_to_string() {
 
 #[test]
 fn test_number_constants() {
-    test("v = Number.POSITIVE_INFINITY", "v = Infinity");
-    test("v = Number.NEGATIVE_INFINITY", "v = -Infinity");
+    test("v = Number.POSITIVE_INFINITY", "v = 1e400");
+    test("v = Number.NEGATIVE_INFINITY", "v = -1e400");
     test("v = Number.NaN", "v = NaN");
     test("v = Number.MAX_SAFE_INTEGER", "v = 2**53-1");
     test("v = Number.MIN_SAFE_INTEGER", "v = -(2**53-1)");
@@ -1115,16 +1232,33 @@ fn test_number_constants() {
 
 #[test]
 fn test_fold_integer_index_access() {
-    test_same("v = ''[0]");
+    // An index past the end reads `String.prototype`, which has no index properties.
+    test("v = ''[0]", "v = void 0");
     test_same("v = 'a'[-1]");
     test_same("v = 'a'[0.3]");
     test("v = 'a'[0]", "v = 'a'");
-    test_same("v = 'a'[1]");
+    test("v = 'a'[1]", "v = void 0");
+    test("v = 'a'['1']", "v = void 0");
+    test_same("v = 'a'['01']");
     test("v = 'あ'[0]", "v = 'あ'");
-    test_same("v = 'あ'[1]");
-    test_same("v = '😀'[0]"); // surrogate pairs cannot be represented by rust string
-    test_same("v = '😀'[1]"); // surrogate pairs cannot be represented by rust string
-    test_same("v = '😀'[2]");
+    test("v = 'あ'[1]", "v = void 0");
+    test("v = 'é'[1]", "v = void 0");
+    test("v = '😀'[0]", "v = '\\uD83D'");
+    test("v = '😀'[1]", "v = '\\uDE00'");
+    test("v = '😀'[2]", "v = void 0");
+    test("v = '😀x'[2]", "v = 'x'");
+    test_same("v = '😀'[0.5]");
+    test_same("v = '😀'['01']");
+    test_value("'😀'[1n]", "'\\uDE00'");
+    test("v = 'a\\uD800b'[0]", "v = 'a'");
+    test("v = 'b1$\\uD800'[1]", "v = '1'");
+    test("v = 'a\\uD800b'[1]", "v = '\\uD800'");
+    test("v = '\\uD800😀'[1]", "v = '\\uD83D'");
+    test("v = '\\uD800😀'[2]", "v = '\\uDE00'");
+    test("v = '😀\\uD800'[2]", "v = '\\uD800'");
+    test("v = '\\uDC00'[0]", "v = '\\uDC00'");
+    test("v = 'a\\uD800b'[3]", "v = void 0");
+    test_same("v = 'a'[1]()");
     test_same("v = (foo(), 'a')[1]"); // can be fold into `v = (foo(), 'a')`
 
     test_same("v = [][0]");
@@ -1145,6 +1279,16 @@ fn test_fold_integer_index_access() {
     test_value("['a', 'b'][1n]", "'b'");
     test_same_value("'abc'[-1n]");
     test_same_value("'abc'[9007199254740992n]");
+
+    // `delete` of a non-configurable property is false, or a TypeError in strict mode
+    test_same("v = delete 'a'[0]");
+    test_same("v = delete '😀'[0]");
+    test_same("v = delete 'abc'.length");
+    test("v = delete 'abc'['length']", "v = delete 'abc'.length");
+    test_same("v = delete [1, 2].length");
+    test_same("v = delete Number.MAX_SAFE_INTEGER");
+    test_same("v = delete Number.NaN");
+    test("v = delete Number['NaN']", "v = delete Number.NaN");
 
     // property access should be kept to keep `this` value
     test_same(

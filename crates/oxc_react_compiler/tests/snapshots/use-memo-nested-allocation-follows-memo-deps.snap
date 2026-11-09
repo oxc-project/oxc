@@ -1,0 +1,64 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/use-memo-nested-allocation-follows-memo-deps.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { useEffect, useMemo } from "react";
+// The `Map` is part of the `useMemo` result, so a new one is created whenever
+// `env` changes instead of once per mount.
+function Component(t0) {
+	const $ = _c(10);
+	const { env } = t0;
+	let t1;
+	if ($[0] !== env) {
+		t1 = {
+			builtFor: env,
+			entries: new Map()
+		};
+		$[0] = env;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	const cache = t1;
+	let t2;
+	if ($[2] !== cache.builtFor || $[3] !== cache.entries) {
+		t2 = () => {
+			cache.entries.set(cache.builtFor, true);
+		};
+		$[2] = cache.builtFor;
+		$[3] = cache.entries;
+		$[4] = t2;
+	} else {
+		t2 = $[4];
+	}
+	let t3;
+	if ($[5] !== cache) {
+		t3 = [cache];
+		$[5] = cache;
+		$[6] = t3;
+	} else {
+		t3 = $[6];
+	}
+	useEffect(t2, t3);
+	let t4;
+	if ($[7] !== cache.builtFor || $[8] !== cache.entries.size) {
+		t4 = <div>{cache.builtFor}:{cache.entries.size}</div>;
+		$[7] = cache.builtFor;
+		$[8] = cache.entries.size;
+		$[9] = t4;
+	} else {
+		t4 = $[9];
+	}
+	return t4;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{ env: "a" }],
+	sequentialRenders: [
+		{ env: "a" },
+		{ env: "a" },
+		{ env: "b" },
+		{ env: "b" }
+	]
+};

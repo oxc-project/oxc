@@ -449,9 +449,11 @@ pub enum JSXAttributeName<'a> {
 pub enum JSXAttributeValue<'a> {
     /// `<Component foo="bar" />`
     ///
-    /// JSX strings have no escape sequences, and the parser keeps the source characters
-    /// without decoding character references, so a parsed value is always UTF-8.
-    /// Only a value built by other means can contain a lone surrogate.
+    /// JSX strings have no escape sequences, but a character reference such as `&#xD800;` can
+    /// decode to a lone surrogate.
+    /// The parser keeps the source characters without decoding character references, so a parsed
+    /// value is UTF-8.
+    /// The JSX transform decodes them, so the value it produces can contain a lone surrogate.
     StringLiteral(Box<'a, StringLiteral<'a>>) = 0,
     /// `<Component foo={someExpr} />`
     ExpressionContainer(Box<'a, JSXExpressionContainer<'a>>) = 1,

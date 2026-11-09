@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression,
-        JSXOpeningElement, ObjectProperty, ObjectPropertyKind, PropertyKey,
+        JSXOpeningElement, ObjectProperty, ObjectPropertyKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -151,8 +151,7 @@ fn get_dangerously_set_inner_html_prop_value<'a>(
 
     object_expr.properties.iter().find_map(|prop| {
         if let ObjectPropertyKind::ObjectProperty(html_prop) = prop
-            && let PropertyKey::StaticIdentifier(html_prop_ident) = &html_prop.key
-            && html_prop_ident.name == "__html"
+            && html_prop.key.is_specific_id("__html")
         {
             Some(&**html_prop)
         } else {

@@ -2,10 +2,12 @@
 //!
 //! Implements the snapshot-test machinery shared by every formatter crate's `tests/fixtures/mod.rs`:
 //!
-//! - walks up to find an `options.json` and parses it into `OptionSet`s
+//! - walks up to find an `options.json` and parses it into typed options (a malformed file or an unknown key fails the test)
 //! - drives one format pass per option-set × per printWidth (80 + 100)
 //! - re-formats each output and pins any mismatch as a `Not idempotent` section
 //!   (idempotency violations are tracked in the snapshot, not asserted)
+//! - formats each [`InputVariant`] of the input and pins the names of any that formats differently
+//!   as an `Input variants differ` line, the same way
 //! - asserts the consumer's fingerprint of the input equals that of the output (lossless contract)
 //! - assembles the canonical `==== Input ==== ... ==== Output ==== ...` snapshot
 //! - returns the body for the consumer's `insta::assert_snapshot!`
@@ -13,26 +15,27 @@
 //! Each formatter crate provides language-specific behavior by implementing [`FixtureFormatter`].
 
 use std::{
+    borrow::Cow,
     env::current_dir,
     fs,
     path::{Path, PathBuf},
 };
+
+use cow_utils::CowUtils;
 
 use oxc_formatter_core::{
     CoreFormatOptions, FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth,
 };
 
 /// A single `options.json` entry: a JSON object of per-test format options.
-pub type OptionSet = serde_json::Map<String, serde_json::Value>;
+type OptionSet = serde_json::Map<String, serde_json::Value>;
 
-/// Applies the four core options from a fixture `OptionSet` onto `options`.
-///
-/// Covers `printWidth` / `tabWidth` / `useTabs` / `endOfLine`;
-/// language-specific keys are the caller's [`FixtureFormatter::parse_options`].
-/// Fixture files are hand-authored, so parsing is lenient: unknown or invalid values are ignored.
-/// Values already set on `options` survive when the `OptionSet` doesn't mention their key
-/// (the current values seed the bundle).
-pub fn apply_core_options<O: FormatOptions>(options: &mut O, json: &OptionSet) {
+/// The value of one `options.json` key.
+pub type OptionValue = serde_json::Value;
+
+/// Applies one core option (`printWidth` / `tabWidth` / `useTabs` / `endOfLine`) onto `options`, `false` for any other key.
+/// Invalid values are ignored.
+fn apply_core_option<O: FormatOptions>(options: &mut O, key: &str, value: &OptionValue) -> bool {
     let mut core = CoreFormatOptions {
         indent_style: options.indent_style(),
         indent_width: options.indent_width(),
@@ -40,52 +43,65 @@ pub fn apply_core_options<O: FormatOptions>(options: &mut O, json: &OptionSet) {
         line_ending: options.line_ending(),
     };
 
-    for (key, value) in json {
-        match key.as_str() {
-            "printWidth" => {
-                if let Some(width) = value
-                    .as_u64()
-                    .and_then(|n| u16::try_from(n).ok())
-                    .and_then(|n| LineWidth::try_from(n).ok())
-                {
-                    core.line_width = width;
-                }
+    match key {
+        "printWidth" => {
+            if let Some(width) = value
+                .as_u64()
+                .and_then(|n| u16::try_from(n).ok())
+                .and_then(|n| LineWidth::try_from(n).ok())
+            {
+                core.line_width = width;
             }
-            "tabWidth" => {
-                if let Some(width) = value
-                    .as_u64()
-                    .and_then(|n| u8::try_from(n).ok())
-                    .and_then(|n| IndentWidth::try_from(n).ok())
-                {
-                    core.indent_width = width;
-                }
-            }
-            "useTabs" => {
-                if let Some(b) = value.as_bool() {
-                    core.indent_style = if b { IndentStyle::Tab } else { IndentStyle::Space };
-                }
-            }
-            "endOfLine" => {
-                if let Some(s) = value.as_str() {
-                    core.line_ending = match s {
-                        "lf" => LineEnding::Lf,
-                        "crlf" => LineEnding::Crlf,
-                        "cr" => LineEnding::Cr,
-                        _ => LineEnding::default(),
-                    };
-                }
-            }
-            _ => {}
         }
+        "tabWidth" => {
+            if let Some(width) = value
+                .as_u64()
+                .and_then(|n| u8::try_from(n).ok())
+                .and_then(|n| IndentWidth::try_from(n).ok())
+            {
+                core.indent_width = width;
+            }
+        }
+        "useTabs" => {
+            if let Some(b) = value.as_bool() {
+                core.indent_style = if b { IndentStyle::Tab } else { IndentStyle::Space };
+            }
+        }
+        "endOfLine" => {
+            if let Some(s) = value.as_str() {
+                core.line_ending = match s {
+                    "lf" => LineEnding::Lf,
+                    "crlf" => LineEnding::Crlf,
+                    "cr" => LineEnding::Cr,
+                    _ => LineEnding::default(),
+                };
+            }
+        }
+        _ => return false,
     }
 
     options.apply_core(core);
+    true
+}
+
+/// Builds typed options from one `options.json` entry: the core keys here, the rest by [`FixtureFormatter::apply_option`].
+/// A key neither takes fails the test, so a typo'd or unmapped key never formats silently with the default.
+fn parse_options<F: FixtureFormatter>(json: &OptionSet) -> F::Options {
+    let mut options = F::Options::default();
+    for (key, value) in json {
+        assert!(
+            apply_core_option(&mut options, key, value)
+                || F::apply_option(&mut options, key, value),
+            "unknown option `{key}` in `options.json`"
+        );
+    }
+    options
 }
 
 /// Per-language hook for the fixture harness.
 pub trait FixtureFormatter {
     /// The typed format-option struct for this language.
-    type Options: Clone;
+    type Options: FormatOptions + Default + Clone;
 
     /// Source-derived value that formatting must leave unchanged;
     /// the harness compares the input's against the output's.
@@ -93,35 +109,117 @@ pub trait FixtureFormatter {
     /// (comment counts, an AST fingerprint, ...).
     type Fingerprint: PartialEq + std::fmt::Debug;
 
-    /// Build typed options from a parsed `options.json` fragment.
-    fn parse_options(json: &OptionSet) -> Self::Options;
+    /// Applies one language-specific `options.json` entry onto `options`, `false` when `key` is not this language's.
+    /// The harness applies the core ones itself, and fails the test on a key neither takes.
+    fn apply_option(options: &mut Self::Options, key: &str, value: &OptionValue) -> bool;
 
     /// Format `source` (the contents of the fixture file at `path`) using `options`.
     /// `path` is passed for variant detection (e.g. `.json` vs `.jsonc`).
-    fn format(source: &str, path: &Path, options: &Self::Options) -> String;
+    ///
+    /// # Errors
+    /// The formatter's error (a parse or print error), which fails the test for the fixture itself,
+    /// and is pinned for one of its [`InputVariant`]s.
+    fn format(
+        source: &str,
+        path: &Path,
+        options: &Self::Options,
+    ) -> Result<String, Box<dyn std::error::Error>>;
 
     /// [`Self::Fingerprint`] of `source`.
-    /// Take it from the formatter's own parse (`parse_for_format`), so no test re-implements the parser setup.
+    /// Take it from the formatter's own parse (`parse_for_format`) where the crate exposes one, so no test re-implements the parser setup.
     fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> Self::Fingerprint;
+
+    /// The [`InputVariant`]s to check for the fixture at `path`, all by default.
+    /// Exclude one the language or the entry point does not read as the same text
+    /// (e.g. TOML has no lone CR line break).
+    fn input_variants(_path: &Path) -> &'static [InputVariant] {
+        InputVariant::ALL
+    }
+}
+
+/// A rewrite of a fixture's input that is not content, so it must format the same as the input
+/// (the checks of `apps/oxfmt`'s `conformance:fixture`).
+#[derive(Debug, Clone, Copy)]
+pub enum InputVariant {
+    /// Every `\n` as `\r\n`
+    Crlf,
+    /// Every `\n` as a lone `\r`
+    Cr,
+    /// A leading BOM, kept in the output
+    Bom,
+}
+
+impl InputVariant {
+    pub const ALL: &'static [Self] = &[Self::Crlf, Self::Cr, Self::Bom];
+
+    fn name(self) -> &'static str {
+        match self {
+            Self::Crlf => "CRLF",
+            Self::Cr => "CR",
+            Self::Bom => "BOM",
+        }
+    }
+
+    /// This variant's input and expected output, or `None` when `source` has it already (a `\r`, or a BOM).
+    fn apply<'a>(
+        self,
+        source: &'a str,
+        formatted: &'a str,
+    ) -> Option<(Cow<'a, str>, Cow<'a, str>)> {
+        const BOM: char = '\u{feff}';
+        match self {
+            Self::Crlf | Self::Cr if source.contains('\r') => None,
+            Self::Crlf => Some((source.cow_replace('\n', "\r\n"), formatted.into())),
+            Self::Cr => Some((source.cow_replace('\n', "\r"), formatted.into())),
+            Self::Bom if source.starts_with(BOM) => None,
+            Self::Bom => {
+                Some((format!("{BOM}{source}").into(), format!("{BOM}{formatted}").into()))
+            }
+        }
+    }
+}
+
+/// Names of `path`'s input variants that do not format to `formatted` (a different output, or an error).
+fn input_variants_differ<F: FixtureFormatter>(
+    path: &Path,
+    source_text: &str,
+    formatted: &str,
+    options: &F::Options,
+) -> Vec<&'static str> {
+    F::input_variants(path)
+        .iter()
+        .filter(|variant| {
+            variant.apply(source_text, formatted).is_some_and(|(input, expected)| {
+                F::format(&input, path, options).ok().is_none_or(|output| output != expected)
+            })
+        })
+        .map(|variant| variant.name())
+        .collect()
+}
+
+/// Formats the fixture itself, whose error fails the test.
+fn format_fixture<F: FixtureFormatter>(source: &str, path: &Path, options: &F::Options) -> String {
+    F::format(source, path, options)
+        .unwrap_or_else(|err| panic!("cannot format {}: {err}", path.display()))
 }
 
 /// Resolves format options for `test_file` by walking up the directory tree looking for `options.json`.
 /// Stops at the first one found, or at the `fixtures` directory, whichever comes first.
 ///
 /// Returns a single empty option-set when no file is found.
-#[must_use]
-pub fn resolve_options(test_file: &Path) -> Vec<OptionSet> {
+///
+/// # Panics
+/// Panics when the `options.json` found cannot be read or is not an array of objects.
+fn resolve_options(test_file: &Path) -> Vec<OptionSet> {
     let mut current_dir = test_file.parent();
 
     while let Some(dir) = current_dir {
         let options_file = dir.join("options.json");
         if options_file.exists() {
-            if let Ok(content) = fs::read_to_string(&options_file)
-                && let Ok(option_sets) = serde_json::from_str::<Vec<OptionSet>>(&content)
-            {
-                return option_sets;
-            }
-            break;
+            let content = fs::read_to_string(&options_file)
+                .unwrap_or_else(|err| panic!("cannot read {}: {err}", options_file.display()));
+            return serde_json::from_str(&content)
+                .unwrap_or_else(|err| panic!("invalid {}: {err}", options_file.display()));
         }
 
         if dir.ends_with("fixtures") {
@@ -135,8 +233,7 @@ pub fn resolve_options(test_file: &Path) -> Vec<OptionSet> {
 }
 
 /// Renders an `OptionSet` as `{ key: value, ... }` for the snapshot header.
-#[must_use]
-pub fn format_options_display(json: &OptionSet) -> String {
+fn format_options_display(json: &OptionSet) -> String {
     if json.is_empty() {
         return "{}".to_string();
     }
@@ -227,8 +324,8 @@ fn generate_snapshot<F: FixtureFormatter>(path: &Path, source_text: &str) -> Str
             snapshot.push('\n');
         }
 
-        let options = F::parse_options(&option_json);
-        let formatted = F::format(source_text, path, &options);
+        let options = parse_options::<F>(&option_json);
+        let formatted = format_fixture::<F>(source_text, path, &options);
         assert_line_ending_applied(&option_json, &formatted, path);
         // Lossless contract (`FORMATTER_POLICY.md`, reason (2)): formatting drops nothing the user wrote.
         // What is measured is the consumer's `Fingerprint`.
@@ -247,12 +344,22 @@ fn generate_snapshot<F: FixtureFormatter>(path: &Path, source_text: &str) -> Str
         // A violation is pinned as an extra section rather than asserted,
         // so known non-idempotent fixtures stay visible in their own snapshots
         // (and fixing one shows up as this section disappearing).
-        let reformatted = F::format(&formatted, path, &options);
+        let reformatted = format_fixture::<F>(&formatted, path, &options);
         assert_line_ending_applied(&option_json, &reformatted, path);
         if reformatted != formatted {
             snapshot.push_str("---------- Not idempotent (second pass) ----------\n");
             snapshot.push_str(&reformatted);
             snapshot.push('\n');
+        }
+
+        // Input variants: line endings and a BOM are not content, so formatting must not depend on them.
+        // Pinned like idempotency.
+        // Only the names: a variant's output may carry `\r`, which a snapshot neither shows nor keeps reliably.
+        let differ = input_variants_differ::<F>(path, source_text, &formatted, &options);
+        if !differ.is_empty() {
+            snapshot.push_str("---------- Input variants differ: ");
+            snapshot.push_str(&differ.join(", "));
+            snapshot.push_str(" ----------\n");
         }
     }
 

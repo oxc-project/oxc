@@ -1,8 +1,5 @@
 use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::{
-    AstKind,
-    ast::{BindingPattern, VariableDeclarationKind},
-};
+use oxc_ast::{AstKind, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
@@ -133,7 +130,7 @@ impl Rule for BlockScopedVar {
         let AstKind::VariableDeclaration(decl) = node.kind() else {
             return;
         };
-        if decl.kind != VariableDeclarationKind::Var {
+        if !decl.kind.is_var() {
             return;
         }
         let node_scope_id = node.scope_id();

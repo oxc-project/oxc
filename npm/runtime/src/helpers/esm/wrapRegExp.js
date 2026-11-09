@@ -33,9 +33,10 @@ function _wrapRegExp() {
   }, BabelRegExp.prototype[Symbol.replace] = function (t, p) {
     if ("string" == typeof p) {
       var o = r.get(this);
-      return e[Symbol.replace].call(this, t, p.replace(/\$<([^>]+)>/g, function (e, r) {
-        var t = o[r];
-        return "$" + (Array.isArray(t) ? t.join("$") : t);
+      return e[Symbol.replace].call(this, t, p.replace(/\$<([^>]+)(>|$)/g, function (e, r, t) {
+        if ("" === t) return e;
+        var p = o[r];
+        return Array.isArray(p) ? "$" + p.join("$") : "number" == typeof p ? "$" + p : "";
       }));
     }
     if ("function" == typeof p) {

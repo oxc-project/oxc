@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentOperator, AssignmentTarget, ClassElement, Expression,
-        FormalParameter, Function, IdentifierReference, MethodDefinitionKind, Statement,
+        FormalParameter, Function, IdentifierReference, Statement,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -65,7 +65,7 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
         let AstKind::MethodDefinition(method) = node.kind() else {
             return;
         };
-        if method.kind != MethodDefinitionKind::Constructor {
+        if !method.kind.is_constructor() {
             return;
         }
 

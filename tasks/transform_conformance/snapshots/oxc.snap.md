@@ -1,6 +1,6 @@
-commit: 4f4ef5d4
+commit: 0372f7f1
 
-Passed: 302/431
+Passed: 314/443
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -34,7 +34,7 @@ after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
 
 
-# babel-plugin-transform-class-properties (31/35)
+# babel-plugin-transform-class-properties (36/40)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -210,7 +210,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (53/56)
+# babel-plugin-transform-react-jsx (55/58)
 * refresh/import-after-component/input.js
 Missing ScopeId
 Missing ReferenceId: "useFoo"

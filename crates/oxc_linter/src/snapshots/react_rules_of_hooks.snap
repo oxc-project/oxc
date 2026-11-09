@@ -637,6 +637,14 @@ source: crates/oxc_linter/src/tester.rs
  10 │             ({k = () => { useState(); }} = {});
     ╰────
 
+  ⚠ react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
+   ╭─[rules_of_hooks.tsx:1:22]
+ 1 │ ({"f\uDC00": () => { useState(); }});
+   ·              ──────────┬──────────┬
+   ·                        │          ╰── Hook is called here
+   ·                        ╰── Outer function
+   ╰────
+
   ⚠ react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:21]
  3 │                     if (a) return;

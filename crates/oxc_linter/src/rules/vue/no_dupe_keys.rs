@@ -174,7 +174,7 @@ fn check_define_props<'a>(node: &AstNode<'a>, call: &'a CallExpression<'a>, ctx:
             }
             _ => decl.kind().span(),
         };
-        ctx.diagnostic(duplicate_key_diagnostic(span, prop_name));
+        ctx.diagnostic(duplicate_key_diagnostic(span, prop_name.display()));
     }
 }
 
@@ -309,7 +309,7 @@ fn report_or_add<'a>(
     ctx: &LintContext<'a>,
 ) {
     if seen.contains(&name) {
-        ctx.diagnostic(duplicate_key_diagnostic(span, name));
+        ctx.diagnostic(duplicate_key_diagnostic(span, name.display()));
     } else {
         seen.insert(name);
     }

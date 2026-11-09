@@ -2,6 +2,7 @@ use oxc_formatter_core::{
     builders::{hard_line_break, space, text},
     write,
 };
+use oxc_span::Span;
 use oxc_yaml_parser::ast::{Content, Directive, Document, Node, Root};
 
 use crate::{
@@ -13,7 +14,7 @@ use crate::{
     print::{
         YamlFormatter,
         block::{ends_with_keep_chomped_block, item_gap_anchor, last_descendant_block_scalar},
-        source_starts_with_document_marker, to_span, write_node_or_suppressed,
+        column_of, source_starts_with_document_marker, to_span, write_node_or_suppressed,
     },
 };
 
@@ -138,15 +139,21 @@ fn write_document<'a>(document: &'a Document<'a>, f: &mut YamlFormatter<'_, 'a>)
 
     if let Some(node) = &document.body.content {
         let source = f.context().source_text();
-        if let Some(marker) = document.directives_end_marker {
-            // Content starting with `---`/`...` stays on the `---` line: on a line of its own it would become a marker
-            if source.all_bytes_match(marker.end, node.span.start, |b| matches!(b, b' ' | b'\t'))
-                && source_starts_with_document_marker(node.span.start, f)
-            {
-                needs_line = false;
-                write!(f, space());
-            }
-        } else if source.as_str()[first_key_start(node) as usize..].starts_with('\u{FEFF}') {
+        // A plain scalar starting with `---`/`...` never starts a line at column 0: it would become a marker
+        // (a root mapping key keeps its `?` instead, `print/mapping_item.rs`)
+        let starts_with_marker = matches!(node.content, Content::Plain(_))
+            && source_starts_with_document_marker(node.span.start, f);
+        let on_marker_line = starts_with_marker
+            && document.directives_end_marker.is_some_and(|marker| {
+                source.all_bytes_match(marker.end, node.span.start, |b| matches!(b, b' ' | b'\t'))
+            });
+        if on_marker_line {
+            // On the `---` line, it stays there
+            needs_line = false;
+            write!(f, space());
+        } else if document.directives_end_marker.is_none()
+            && source.as_str()[first_key_start(node) as usize..].starts_with('\u{FEFF}')
+        {
             // Content starting with U+FEFF needs a `---`: outside a document it would be read as a BOM
             write!(f, "---");
             needs_line = true;
@@ -156,7 +163,13 @@ fn write_document<'a>(document: &'a Document<'a>, f: &mut YamlFormatter<'_, 'a>)
         }
         // Whole-body suppression needs the explicit head form (`# oxfmt-ignore` above `---`);
         // an ignore right above the body is `write_node_or_suppressed`'s per-node rule.
-        let suppressed = if head_ignores_body {
+        let suppressed = if starts_with_marker && !on_marker_line {
+            // On a line of its own, it stays verbatim from its line start, indentation included:
+            // indented, a lenient parser (js-yaml) may still read it as a marker
+            let line_start = node.span.start - column_of(source.as_str(), node.span.start);
+            write_suppressed_node(Span::new(line_start, node.span.end), f);
+            false
+        } else if head_ignores_body {
             write_suppressed_node(to_span(node.span), f);
             true
         } else {

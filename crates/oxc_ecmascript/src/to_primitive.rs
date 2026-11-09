@@ -61,6 +61,10 @@ impl<'a> ToPrimitive<'a> for Expression<'a> {
                     Expression::RegExpLiteral(_) | Expression::ArrayExpression(_) => {
                         ToPrimitiveResult::String
                     }
+                    Expression::SequenceExpression(e) => e
+                        .expressions
+                        .last()
+                        .map_or(ToPrimitiveResult::Undetermined, |e| e.to_primitive(ctx)),
                     // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
                     // ToPrimitive for an object returns `"[object Object]"`
                     Expression::ObjectExpression(obj) => {

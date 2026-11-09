@@ -1,7 +1,7 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression, JSXOpeningElement},
+    ast::{JSXAttributeItem, JSXOpeningElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -14,7 +14,7 @@ use crate::{
     rule::Rule,
     utils::{
         get_element_type, get_jsx_attribute_name, get_string_literal_prop_value,
-        has_jsx_prop_ignore_case,
+        has_jsx_prop_ignore_case, is_nullish_jsx_attribute_value,
     },
 };
 
@@ -97,7 +97,10 @@ impl Rule for RoleSupportsAriaProps {
                     let name = get_jsx_attribute_name(&attr.name);
                     let name = name.cow_to_ascii_lowercase();
                     if let Ok(property) = AriaProperty::try_from(name.as_ref())
-                        && attr.value.as_ref().is_none_or(|value| !is_nullish_value(value))
+                        && attr
+                            .value
+                            .as_ref()
+                            .is_none_or(|value| !is_nullish_jsx_attribute_value(value))
                         && !supported_properties.contains(&property)
                     {
                         ctx.diagnostic(if is_implicit {
@@ -110,15 +113,6 @@ impl Rule for RoleSupportsAriaProps {
             }
         }
     }
-}
-
-fn is_nullish_value(value: &JSXAttributeValue) -> bool {
-    matches!(
-        value,
-        JSXAttributeValue::ExpressionContainer(container)
-            if matches!(container.expression, JSXExpression::NullLiteral(_))
-                || container.expression.is_undefined()
-    )
 }
 
 /// ref: <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/getImplicitRole.js>

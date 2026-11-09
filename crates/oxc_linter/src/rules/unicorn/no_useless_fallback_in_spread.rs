@@ -47,7 +47,12 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessFallbackInSpread {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::LogicalExpression(logical_expression) = node.kind() else {
+        let AstKind::SpreadElement(spread_element) = node.kind() else {
+            return;
+        };
+        let Expression::LogicalExpression(logical_expression) =
+            spread_element.argument.without_parentheses()
+        else {
             return;
         };
 
@@ -66,14 +71,6 @@ impl Rule for NoUselessFallbackInSpread {
         }
 
         let Some(parent) = outermost_paren_parent(node, ctx) else {
-            return;
-        };
-
-        let AstKind::SpreadElement(spread_element) = parent.kind() else {
-            return;
-        };
-
-        let Some(parent) = outermost_paren_parent(parent, ctx) else {
             return;
         };
 
@@ -130,6 +127,8 @@ fn test() {
         "const object = call({}, ...(foo || {}))",
         r#"const object = {...(foo || {not: "empty"})}"#,
         "const object = {...(foo || {...{}})}",
+        "const object = {...((foo || {}) as object)}",
+        "const object = {...(foo || ({} as object))}",
     ];
 
     let fail = vec![
@@ -162,6 +161,8 @@ fn test() {
     ];
 
     let fix = vec![
+        ("const object = {...((foo || {}))}", "const object = {...foo}"),
+        ("const object = {...(foo || {}), ...(bar ?? {})}", "const object = {...foo, ...bar}"),
         (r"const object = {...(foo || {})}", r"const object = {...foo}"),
         (r"const object = {...(foo?.bar || {})}", r"const object = {...foo?.bar}"),
         (r"const object = {...(foo() || {})}", r"const object = {...foo()}"),

@@ -285,7 +285,20 @@ fn build_object_fix<'a>(
         Cow::Borrowed(" ")
     };
 
-    let mut sorted_text = String::new();
+    let preserve_trailing_comma = matches!(
+        (props.last(), indices.last()),
+        (Some(orig_last), Some(&new_last))
+            if orig_last.consumed_trailing_comma && !props[new_last].consumed_trailing_comma
+    );
+    // Pre-compute the capacity we need for the string so we don't need to re-allocate as we build it.
+    let capacity = props.iter().map(|prop| prop.text.len()).sum::<usize>()
+        + canonical_ws.len() * (indices.len() - 1)
+        + indices[..indices.len() - 1]
+            .iter()
+            .filter(|&&idx| !props[idx].consumed_trailing_comma)
+            .count()
+        + usize::from(preserve_trailing_comma);
+    let mut sorted_text = String::with_capacity(capacity);
     for (slot, &idx) in indices.iter().enumerate() {
         sorted_text.push_str(&props[idx].text);
         if slot + 1 < indices.len() {
@@ -298,10 +311,7 @@ fn build_object_fix<'a>(
 
     // Preserve a trailing comma that was absorbed by the original last prop
     // when the new last prop wouldn't otherwise emit one.
-    if let (Some(orig_last), Some(&new_last)) = (props.last(), indices.last())
-        && orig_last.consumed_trailing_comma
-        && !props[new_last].consumed_trailing_comma
-    {
+    if preserve_trailing_comma {
         sorted_text.push(',');
     }
 

@@ -1,20 +1,28 @@
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::{PossibleJestNode, parse_general_jest_fn_call},
 };
 
-fn prefer_import_in_mock_diagnostic(span: Span, path: &str) -> OxcDiagnostic {
-    let help = format!(
-        "Dynamic import improves the type information and IntelliSense. Substitute `{path}` with `import('{path}')`"
-    );
+fn prefer_import_in_mock_diagnostic(span: Span, path: JSStr) -> OxcDiagnostic {
+    // Debug supplies a quoted, escaped spelling when the path has a lone surrogate.
+    let help = match path.as_str() {
+        Some(path) => format!(
+            "Dynamic import improves the type information and IntelliSense. Substitute `{path}` with `import('{path}')`"
+        ),
+        None => format!(
+            "Dynamic import improves the type information and IntelliSense. Substitute `{path:?}` with `import({path:?})`"
+        ),
+    };
 
     OxcDiagnostic::warn("Mocked modules must be dynamic imported.").with_help(help).with_label(span)
 }
@@ -83,21 +91,20 @@ impl Rule for PreferImportInMock {
         )))
     }
 
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        self.run(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        self.run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
 const MOCK_METHODS: [&str; 2] = ["mock", "doMock"];
 
 impl PreferImportInMock {
-    fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
-
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -110,7 +117,11 @@ impl PreferImportInMock {
             return;
         }
 
-        if parse_general_jest_fn_call(call_expr, possible_jest_node, ctx).is_none() {
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
+        if parse_general_jest_fn_call(call_expr, &possible_jest_node, ctx).is_none() {
             return;
         }
 
@@ -118,13 +129,18 @@ impl PreferImportInMock {
             return;
         };
 
-        let Some(value) = import_value.value.as_str() else { return };
+        let value = import_value.value;
         ctx.diagnostic_with_fix(
             prefer_import_in_mock_diagnostic(call_expr.arguments_span().unwrap(), value),
             |fixer| {
                 if !self.fixable {
                     return fixer.noop();
                 }
+                // The fix is built from `&str`, so a path with a lone surrogate is
+                // reported without it.
+                let Some(value) = value.as_str() else {
+                    return fixer.noop();
+                };
 
                 fixer.replace(import_value.span, format!("import('{value}')"))
             },
@@ -151,6 +167,10 @@ fn test() {
     ];
 
     let fail = vec![
+        // Lone surrogates are part of the value.
+        // A search or prefix check must still see the rest.
+        (r#"vi.mock("\uD800")"#, None),
+        (r#"vi.doMock("a\uDC00b", () => ({}))"#, None),
         ("vi.mock('foo', () => {})", Some(serde_json::json!([ { "fixable": false, }, ]))),
         (r#"vi.mock("node:fs/promises")"#, Some(serde_json::json!([ { "fixable": false, }, ]))),
         (
@@ -190,6 +210,8 @@ fn test() {
     ];
 
     let fix = vec![
+        // A path with a lone surrogate gets no fix.
+        (r#"vi.mock("\uD800")"#, r#"vi.mock("\uD800")"#),
         ("vi.mock('foo', () => {})", "vi.mock(import('foo'), () => {})"),
         (r#"vi.mock("node:fs/promises")"#, "vi.mock(import('node:fs/promises'))"),
         (

@@ -19,7 +19,7 @@ use crate::{
     fixer::{RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
     rule::Rule,
-    utils::{find_property, for_each_define_props_type_signature},
+    utils::for_each_define_props_type_signature,
 };
 
 fn no_required_prop_with_default_diagnostic(
@@ -308,7 +308,8 @@ fn handle_type_argument<'a>(
             && !optional
             && key_hash.contains(&key_name)
         {
-            let diagnostic = no_required_prop_with_default_diagnostic(item.span(), key_name);
+            let diagnostic =
+                no_required_prop_with_default_diagnostic(item.span(), key_name.display());
             // Check for comments around the key before applying fix
             let fix_span = Span::new(key.span().start, key.span().end + 1);
             if ctx.has_comments_between(fix_span) {
@@ -321,7 +322,7 @@ fn handle_type_argument<'a>(
 }
 
 fn handle_object_expression<'a>(ctx: &LintContext<'a>, obj: &ObjectExpression<'a>) {
-    let Some(prop_obj) = find_property(obj, "props") else {
+    let Some(prop_obj) = obj.find_property("props") else {
         return;
     };
     let Expression::ObjectExpression(prop_obj_expr) = prop_obj.value.get_inner_expression() else {
@@ -369,8 +370,10 @@ fn handle_prop_object<'a>(
                     }
 
                     if has_default_key && let Some(span) = required_true_span {
-                        let diagnostic =
-                            no_required_prop_with_default_diagnostic(inner_prop.span(), inner_key);
+                        let diagnostic = no_required_prop_with_default_diagnostic(
+                            inner_prop.span(),
+                            inner_key.display(),
+                        );
                         // Check for comments around the value before applying fix
                         if ctx.has_comments_between(span) {
                             ctx.diagnostic(diagnostic);

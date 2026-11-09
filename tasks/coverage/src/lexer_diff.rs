@@ -1,24 +1,33 @@
 //! Differential test of the incubating `oxc_lexer` crate against the parser's own lexer.
 //!
-//! Each fixture is lexed twice. The parser is the oracle: its token stream is what `oxc_lexer`
-//! must reproduce. Trivia and `Eof` are dropped from `oxc_lexer`'s output first, because the
-//! parser never surfaces them as tokens.
+//! Each fixture is lexed by the parser, and by `oxc_lexer` with each CPU feature set
+//! this CPU supports, one straight after the other (e.g. AVX2 then generic on x86_64).
+//! `oxc_lexer`'s output must be identical with every CPU feature set.
+//!
+//! The parser is the oracle. Its token stream and comments are what `oxc_lexer` must reproduce.
+//! Trivia and `Eof` are dropped from `oxc_lexer`'s tokens first, because the parser
+//! never surfaces them as tokens.
 //!
 //! Sources that both sides reject identically still count as a pass - see [`lex_diff`].
 
 use std::{
-    fmt::Write,
+    fmt::{Debug, Write},
     iter,
     panic::{AssertUnwindSafe, catch_unwind},
 };
 
 use oxc::{
     allocator::Allocator,
+    ast::{Comment, CommentContent, CommentPosition},
     diagnostics::{LabeledSpan, OxcDiagnostic},
     parser::{Parser, Token, config::TokensParserConfig},
     span::{SourceType, Span},
 };
-use oxc_lexer::{LexOptions, PAD, TokenKind, diagnostics::to_oxc_diagnostic};
+use oxc_lexer::{
+    Arena, LexOptions, LexResult, PAD, TokenKind, diagnostics::to_oxc_diagnostic,
+    testing::lex_utf8_with_cpu,
+};
+use oxc_simd::DynCpu;
 use rayon::prelude::*;
 
 use crate::{
@@ -96,17 +105,47 @@ pub fn run_lexer_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
 }
 
 fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
-    // If parser cannot parse `code`, there is nothing to compare against, so skip fixture
-    let Ok(Some((old_spans, old_error))) =
+    // If parser panics, there is nothing to compare against, so skip fixture
+    let Ok((old_spans, mut old_comments, mut old_ws, old_error, old_last_error_start)) =
         catch_unwind(AssertUnwindSafe(|| parser_stream(code, source_type)))
     else {
         return TestResult::Passed;
     };
 
-    let Ok((new_spans, new_error)) =
-        catch_unwind(AssertUnwindSafe(|| lexer_stream(code, source_type)))
-    else {
-        return TestResult::ParseError("`oxc_lexer` panicked".to_string(), true);
+    let (result, arena) = match lex_with_each_cpu(code, source_type) {
+        Ok(output) => output,
+        Err(failure) => return failure,
+    };
+    let (new_spans, mut new_comments, mut new_ws, new_error) = lexer_stream(code, &result, &arena);
+
+    // Only compare comments which start before the parser's last error.
+    //
+    // This isn't ideal, but the parser can stop lexing at an error without reporting a fatal error.
+    // A lexer error at a statement boundary, for example, ends parsing as if it was EOF,
+    // and `fatal_error` is `false`. The parser's output contains no comments after that point,
+    // and nothing in `ParserReturn` says that lexing stopped early.
+    // An unterminated block comment is a similar case. The parser doesn't record it at all.
+    //
+    // The cost is that comments after the last error are never checked,
+    // even when all errors are recoverable and the parser did lex to the end.
+    if let Some(end) = old_last_error_start {
+        old_comments.retain(|comment| comment.span.start < end);
+        new_comments.retain(|comment| comment.span.start < end);
+        old_ws.retain(|span| span.start < end);
+        new_ws.retain(|span| span.start < end);
+    }
+    let trivia_diff = || match comment_diff(code, &new_comments, &old_comments) {
+        TestResult::Passed if new_ws != old_ws => TestResult::Mismatch(
+            "IrregularWhitespaces",
+            fmt_spans(&new_ws, code),
+            fmt_spans(&old_ws, code),
+        ),
+        result => result,
+    };
+
+    // A fatal error discards the parser's tokens, so only comments can be compared
+    let Some(old_spans) = old_spans else {
+        return trivia_diff();
     };
 
     if new_spans == old_spans {
@@ -116,7 +155,7 @@ fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
                 format!("first error: {}\n", fmt_diagnostic(new_error)),
                 "(parser reported no errors)\n".to_string(),
             ),
-            _ => TestResult::Passed,
+            _ => trivia_diff(),
         };
     }
 
@@ -124,18 +163,55 @@ fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
         && diagnostic_key(new_error) == diagnostic_key(old_error)
         && prefix_matches(&new_spans, &old_spans, label_start(old_error))
     {
-        return TestResult::Passed;
+        return trivia_diff();
     }
 
     token_mismatch(code, &new_spans, &old_spans, new_error.as_ref(), old_error.as_ref())
 }
 
-/// Get token stream from `oxc_lexer`, plus the first error (if any).
-fn lexer_stream(code: &str, source_type: SourceType) -> (Vec<Span>, Option<OxcDiagnostic>) {
+/// Get token stream and comments from `oxc_lexer`'s output, plus the first error (if any).
+fn lexer_stream(
+    code: &str,
+    result: &LexResult,
+    arena: &Arena,
+) -> (Vec<Span>, Vec<Comment>, Vec<Span>, Option<OxcDiagnostic>) {
+    let kinds = result.tok_kinds(arena);
+    let token_spans = result.tok_spans(arena);
+    assert_eq!(kinds.len(), token_spans.len());
+
+    let spans = iter::zip(kinds, token_spans)
+        .filter_map(|(&kind, &span)| match kind {
+            TokenKind::Eof => None,
+            _ if kind.is_trivia() => None,
+            _ => Some(span),
+        })
+        .collect();
+
+    let comments = result.comments(arena).to_vec();
+    let irregular_whitespaces = result.irregular_whitespaces(arena).to_vec();
+
+    let error = result
+        .diagnostics()
+        .iter()
+        .min_by_key(|error| error.off)
+        .map(|error| to_oxc_diagnostic(error, code));
+
+    (spans, comments, irregular_whitespaces, error)
+}
+
+/// Lex `code` with `oxc_lexer`, with each CPU feature set this CPU supports,
+/// one straight after the other.
+///
+/// Returns the output from the first CPU feature set.
+/// Returns `Err` if lexing panicked, or the outputs from each CPU feature set differ.
+fn lex_with_each_cpu(
+    code: &str,
+    source_type: SourceType,
+) -> Result<(LexResult, Arena), TestResult> {
     let len = code.len();
     let len_u32 = u32::try_from(len).expect("source longer than `u32::MAX`");
 
-    // `lex_utf8` requires at least `PAD` bytes of zeroed padding past the end of the source
+    // `lex_utf8_with_cpu` requires at least `PAD` bytes of zeroed padding past the end of the source
     let mut buf = Vec::with_capacity(len + PAD);
     buf.extend_from_slice(code.as_bytes());
     buf.resize(len + PAD, 0);
@@ -147,43 +223,139 @@ fn lexer_stream(code: &str, source_type: SourceType) -> (Vec<Span>, Option<OxcDi
         ..Default::default()
     };
 
-    let (result, arena) = oxc_lexer::lex_utf8(&buf, len_u32, options);
-    let kinds = result.tok_kinds(&arena);
-    let token_spans = result.tok_spans(&arena);
-    assert_eq!(kinds.len(), token_spans.len());
+    let mut outputs = vec![];
+    let mut panicked = vec![];
+    DynCpu::for_each_supported(|cpu| {
+        match catch_unwind(AssertUnwindSafe(|| lex_utf8_with_cpu(&buf, len_u32, options, cpu))) {
+            Ok(output) => outputs.push((cpu, output)),
+            Err(_) => panicked.push(cpu.name()),
+        }
+    });
 
-    let spans = iter::zip(kinds, token_spans)
-        .filter_map(|(&kind, &span)| match kind {
-            TokenKind::Eof => None,
-            _ if kind.is_trivia() => None,
-            _ => Some(span),
-        })
-        .collect();
+    if !panicked.is_empty() {
+        let message = if outputs.is_empty() {
+            "`oxc_lexer` panicked".to_string()
+        } else {
+            let lexed = outputs.iter().map(|(cpu, _)| cpu.name()).collect::<Vec<_>>();
+            format!(
+                "`oxc_lexer` panicked with {}, but not with {}",
+                panicked.join(", "),
+                lexed.join(", ")
+            )
+        };
+        return Err(TestResult::ParseError(message, true));
+    }
 
-    let error = result
-        .diagnostics()
-        .iter()
-        .min_by_key(|error| error.off)
-        .map(|error| to_oxc_diagnostic(error, code));
+    let mut outputs = outputs.into_iter();
+    let (first_cpu, first) =
+        outputs.next().expect("`for_each_supported` calls its closure at least once");
+    for (cpu, output) in outputs {
+        if let Some((expected, actual)) = first_difference(&first, &output) {
+            return Err(TestResult::Mismatch(
+                "CPU feature sets",
+                format!("{}: {actual}", cpu.name()),
+                format!("{}: {expected}", first_cpu.name()),
+            ));
+        }
+    }
 
-    (spans, error)
+    Ok(first)
 }
 
-/// Get token stream from `oxc_parser`, plus the first error (if any).
-fn parser_stream(
-    code: &str,
-    source_type: SourceType,
-) -> Option<(Vec<Span>, Option<OxcDiagnostic>)> {
-    let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, code, source_type).with_config(TokensParserConfig).parse();
-    if ret.fatal_error {
+/// Find the first difference between 2 outputs from `oxc_lexer`.
+///
+/// Returns a description of the first entry which differs, from each output.
+fn first_difference(a: &(LexResult, Arena), b: &(LexResult, Arena)) -> Option<(String, String)> {
+    let ((a, a_arena), (b, b_arena)) = (a, b);
+    // Compare bits, so `NaN`s compare equal, and `0.0` and `-0.0` don't
+    let numbers = |result: &LexResult, arena: &Arena| {
+        result.numbers(arena).iter().map(|number| number.to_bits()).collect::<Vec<_>>()
+    };
+
+    lane_difference("tokens", a.tok_kinds(a_arena), b.tok_kinds(b_arena))
+        .or_else(|| lane_difference("spans", a.tok_spans(a_arena), b.tok_spans(b_arena)))
+        .or_else(|| lane_difference("diagnostics", a.diagnostics(), b.diagnostics()))
+        .or_else(|| lane_difference("numbers", &numbers(a, a_arena), &numbers(b, b_arena)))
+        .or_else(|| lane_difference("strings", a.strings(a_arena), b.strings(b_arena)))
+        .or_else(|| lane_difference("templates", a.templates(a_arena), b.templates(b_arena)))
+        .or_else(|| lane_difference("atoms", a.atoms(a_arena), b.atoms(b_arena)))
+        .or_else(|| {
+            lane_difference("cooked bytes", a.cooked_bytes(a_arena), b.cooked_bytes(b_arena))
+        })
+        .or_else(|| lane_difference("regex flags", a.regex_flags(a_arena), b.regex_flags(b_arena)))
+        .or_else(|| lane_difference("comments", a.comments(a_arena), b.comments(b_arena)))
+        .or_else(|| {
+            let (a_ws, b_ws) = (a.irregular_whitespaces(a_arena), b.irregular_whitespaces(b_arena));
+            lane_difference("irregular whitespaces", a_ws, b_ws)
+        })
+        .or_else(|| {
+            lane_difference("hit resource limit", &[a.hit_resource_limit], &[b.hit_resource_limit])
+        })
+}
+
+/// If lanes `a` and `b` differ, describe the first entry which differs, from each lane.
+fn lane_difference<T: PartialEq + Debug>(name: &str, a: &[T], b: &[T]) -> Option<(String, String)> {
+    if a == b {
         return None;
     }
 
-    let spans = ret.tokens.iter().map(Token::span).collect();
+    let index = iter::zip(a, b).position(|(a, b)| a != b).unwrap_or(a.len().min(b.len()));
+    let describe =
+        |lane: &[T]| format!("{name}[{index}] = {:?} ({} entries)\n", lane.get(index), lane.len());
+    Some((describe(a), describe(b)))
+}
+
+/// Token spans, comments, irregular whitespaces, first error and start of the last error.
+type ParserStream =
+    (Option<Vec<Span>>, Vec<Comment>, Vec<Span>, Option<OxcDiagnostic>, Option<u32>);
+
+/// Get token stream and comments from `oxc_parser`,
+/// plus the first error and the start of the last error (if any).
+/// Token stream is `None` if parser hit a fatal error.
+fn parser_stream(code: &str, source_type: SourceType) -> ParserStream {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, code, source_type).with_config(TokensParserConfig).parse();
+
+    let spans =
+        if ret.fatal_error { None } else { Some(ret.tokens.iter().map(Token::span).collect()) };
+    let comments = ret.program.comments.iter().map(conform_comment).collect();
+    let irregular_whitespaces = ret.irregular_whitespaces.to_vec();
+    let last_error_start = ret.diagnostics.iter().map(label_start).max();
     let error = ret.diagnostics.into_iter().min_by_key(label_start);
 
-    Some((spans, error))
+    (spans, comments, irregular_whitespaces, error, last_error_start)
+}
+
+/// Copy of a comment from the parser, with the fields which only the parser sets reset to the values
+/// `Comment::new` gives them. `oxc_lexer` creates its comments with `Comment::new`.
+/// All other fields are compared.
+#[expect(clippy::default_trait_access)]
+fn conform_comment(comment: &Comment) -> Comment {
+    let mut comment = comment.clone();
+    comment.attached_to = Default::default();
+    comment.node_id = Default::default();
+    comment.placement = Default::default();
+    // Not the default - `Comment::new` sets `Trailing`
+    comment.position = CommentPosition::Trailing;
+    // The parser marks `#__PURE__` and `#__NO_SIDE_EFFECTS__` comments "not applied",
+    // until it finds the call or function they annotate
+    match comment.content {
+        CommentContent::PureNotApplied => comment.content = CommentContent::Pure,
+        CommentContent::NoSideEffectsNotApplied => comment.content = CommentContent::NoSideEffects,
+        _ => {}
+    }
+    comment
+}
+
+fn comment_diff(code: &str, new_comments: &[Comment], old_comments: &[Comment]) -> TestResult {
+    if new_comments == old_comments {
+        return TestResult::Passed;
+    }
+    TestResult::Mismatch(
+        "Comments",
+        fmt_comments(new_comments, code),
+        fmt_comments(old_comments, code),
+    )
 }
 
 fn diagnostic_key(error: &OxcDiagnostic) -> (String, Vec<Span>) {
@@ -212,6 +384,33 @@ fn fmt_spans(spans: &[Span], code: &str) -> String {
     for &span in spans {
         let slice = code.get(span.start as usize..span.end as usize).unwrap_or("<out-of-bounds>");
         writeln!(out, "{}..{} {:?}", span.start, span.end, slice).unwrap();
+    }
+    out
+}
+
+fn fmt_comments(comments: &[Comment], code: &str) -> String {
+    const MAX_TEXT_LEN: usize = 60;
+
+    let mut out = String::new();
+    for comment in comments {
+        let Span { start, end, .. } = comment.span;
+        let mut text = code.get(start as usize..end as usize).unwrap_or("<out-of-bounds>");
+        if text.len() > MAX_TEXT_LEN {
+            let mut len = MAX_TEXT_LEN;
+            while !text.is_char_boundary(len) {
+                len -= 1;
+            }
+            text = &text[..len];
+        }
+        writeln!(
+            out,
+            "{start}..{end} {:?} {:?} newline_before={} newline_after={} {text:?}",
+            comment.kind,
+            comment.content,
+            comment.preceded_by_newline(),
+            comment.followed_by_newline(),
+        )
+        .unwrap();
     }
     out
 }

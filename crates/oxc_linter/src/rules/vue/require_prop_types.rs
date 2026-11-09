@@ -173,10 +173,7 @@ impl RequirePropTypes {
     }
 
     fn check_options_props(obj: &ObjectExpression, ctx: &LintContext) {
-        let Some(props_prop) = obj.properties.iter().find_map(|prop| {
-            let ObjectPropertyKind::ObjectProperty(p) = prop else { return None };
-            p.key.static_name().is_some_and(|k| k == "props").then_some(p)
-        }) else {
+        let Some(props_prop) = obj.find_property("props") else {
             return;
         };
 
@@ -236,7 +233,7 @@ impl RequirePropTypes {
             };
 
             if is_invalid {
-                ctx.diagnostic(require_type_diagnostic(p.span(), key));
+                ctx.diagnostic(require_type_diagnostic(p.span(), key.display()));
             }
         }
     }
@@ -247,9 +244,7 @@ impl RequirePropTypes {
             let name = match expr {
                 Expression::StringLiteral(lit) => lit.value.as_str(),
                 Expression::Identifier(id) => Some(id.name.as_str()),
-                Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
-                    lit.quasis.first().and_then(|q| q.value.cooked.and_then(JSStr::as_str))
-                }
+                Expression::TemplateLiteral(lit) => lit.single_quasi().and_then(JSStr::as_str),
                 _ => None,
             }
             .unwrap_or("Unknown prop");

@@ -8,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
-use oxc_str::static_ident;
+use oxc_str::{JSStr, static_ident};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -149,13 +149,17 @@ impl Rule for NoRequireImports {
                     && let Some(argument) = call_expr.arguments.first()
                 {
                     match argument {
-                        Argument::TemplateLiteral(template_literal) => {
-                            let Some(quasi) = template_literal.quasis.first() else {
-                                return;
-                            };
-                            if match_argument_value_with_regex(&self.allow, &quasi.value.raw) {
-                                return;
-                            }
+                        // Like typescript-eslint's `getStaticStringValue`, only a template
+                        // without expressions has a value, and it is the cooked one.
+                        Argument::TemplateLiteral(template_literal)
+                            if template_literal
+                                .single_quasi()
+                                .and_then(JSStr::as_str)
+                                .is_some_and(|value| {
+                                    match_argument_value_with_regex(&self.allow, value)
+                                }) =>
+                        {
+                            return;
                         }
                         Argument::StringLiteral(string_literal)
                             if string_literal.value.as_str().is_some_and(|value| {
@@ -321,6 +325,24 @@ fn test() {
     ];
 
     let fail = vec![
+        // A source with a lone surrogate matches no allow pattern.
+        (
+            r"const pkg = require('a\uD800b.json');",
+            Some(serde_json::json!([{ "allow": ["\\.json$"] }])),
+        ),
+        (
+            r"import pkg = require('a\uD800b.json');",
+            Some(serde_json::json!([{ "allow": ["\\.json$"] }])),
+        ),
+        (
+            r"const pkg = require(`a\uD800b.json`);",
+            Some(serde_json::json!([{ "allow": ["^a.b\\.json$"] }])),
+        ),
+        // A template with expressions has no static value.
+        (
+            "const pkg = require(`./${name}.json`);",
+            Some(serde_json::json!([{ "allow": ["^\\./"] }])),
+        ),
         ("var lib = require('lib');", None),
         ("let lib2 = require('lib2');", None),
         (

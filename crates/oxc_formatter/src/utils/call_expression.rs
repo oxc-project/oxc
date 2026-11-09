@@ -190,6 +190,13 @@ pub fn callee_name_iterator<'b>(expr: &'b Expression<'_>) -> Option<impl Iterato
 /// └─ Deno.test
 /// ```
 ///
+/// Names outside Prettier's list are DIVERGENCES.md#vitest-test-call.
+///
+/// NOTE: `skipIf`, `runIf` and `extend` match only a direct `(name, callback)` call,
+/// which is not how Vitest uses them.
+/// `it.skipIf(cond)("name", fn)` has a call as its callee, so it is not a test call here, same as Prettier.
+/// `test.extend` takes a fixtures object, not a test call either.
+///
 /// Implementation (trie-tree) is inspired by the article:
 /// <https://craftinginterpreters.com/scanning-on-demand.html#tries-and-state-machines>
 pub fn contains_a_test_pattern(expr: &Expression<'_>) -> bool {

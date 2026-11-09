@@ -135,6 +135,9 @@ impl Parse for LintRuleMeta {
                     is_recommended = true;
                 }
                 "fix" => {
+                    if fix.is_some() {
+                        return Err(Error::new_spanned(key, "fix capabilities already specified"));
+                    }
                     if input.peek(Token!(=)) {
                         // `fix = some-fix-kind`
                         input.parse::<Token!(=)>()?;
@@ -184,8 +187,11 @@ impl Parse for LintRuleMeta {
                     }
                 }
                 _ => {
-                    if input.peek(Token!(=)) || fix.is_some() {
+                    if input.peek(Token!(=)) {
                         return Err(Error::new_spanned(key, "unexpected key in rule declaration"));
+                    }
+                    if fix.is_some() {
+                        return Err(Error::new_spanned(key, "fix capabilities already specified"));
                     }
                     // fix kind shorthand, e.g. `dangerous-suggestion``
                     fix.replace(key);

@@ -321,7 +321,7 @@ comment's indent or the `*` line prefix. At top level the re-embedded line lands
 subtracts the comment indent and the `*` prefix — the same base every JS/TS snippet in the
 same position uses. Final lines never exceed `printWidth - 4 + prefix`. At top level this is
 3 chars narrower than upstream (content 93 vs 96 at printWidth=100); pinned by
-`apps/oxfmt/test/api/jsdoc.test.ts` ("effective width" case).
+`apps/oxfmt/conformance/fixtures/jsdoc/native-fence-width.ts`.
 
 ## 12. Wrapping moves list-marker-like words to line starts, breaking idempotency
 
@@ -372,3 +372,61 @@ and emphasis is always written `_x_` / `**x**` regardless of its neighbours.
 A bare URL with `__` (`http://x.io/__init__.py`) is strong per CommonMark, so it is still written `**init**` as upstream;
 code spans, `<...>` autolinks, links and `{@link}` keep the URL.
 Pinned by `descriptions/045-markdown-round-trip`.
+
+## 14. Wrapping moves an `@word` to a line start, turning prose into a block tag
+
+**Severity**: Medium — `--write` then `--check` fails, and the sentence is split into a new tag
+
+```js
+// Input
+/** Pass the value through the options bag as described in the docs for the big @foo plugin here. */
+
+// Upstream 1st pass
+/**
+ * Pass the value through the options bag as described in the docs for the big
+ * @foo plugin here.
+ */
+
+// Upstream 2nd pass
+/**
+ * Pass the value through the options bag as described in the docs for the big
+ *
+ * @foo plugin here.
+ */
+```
+
+**Root cause**: same as #12, `breakDescriptionToLines` ignores what a line start means to the next parse.
+comment-parser starts a tag at a line-start `@` (`/^@[^\s/]+(?=\s|$)/`).
+
+**oxfmt behavior**: `wrap_paragraph` never breaks before a word that starts a tag (same guard as #12),
+decided by `oxc_jsdoc::parser::starts_block_tag`.
+A tag name with `/` (an npm scope like `@scope/pkg`) is not a tag for comment-parser nor `oxc_jsdoc`,
+so it may wrap to a line start as upstream does (oxc-project/oxc#28808).
+
+Unlike comment-parser, the tag name ends at `{`:
+upstream reads `@param{import('./a').B} x` as prose and joins it into the description,
+so TypeScript loses the tag; oxfmt keeps it a tag.
+Pinned by `descriptions/047-at-word-never-wraps-to-line-start`.
+
+## 15. A multi-line `[name=default]` drops the name and the description
+
+**Severity**: High, the parameter name and its description are lost
+
+```js
+// Input
+/**
+ * @param {string[]} [list=[
+ *   "a",
+ *   "b",
+ * ]] The list.
+ */
+
+// Upstream
+/** @param {string[]} */
+```
+
+**Root cause**: comment-parser reads a tag name within its line,
+so `[list=[` is `spec:name:unpaired-brackets` and the tag keeps no name and no description.
+
+**oxfmt behavior**: the `*` prefixes are stripped and the lines are kept as written.
+Pinned by `main/031-multiline-default-value`.

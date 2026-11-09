@@ -308,7 +308,7 @@ impl VisitJs<'_> for ComplexityVisitor {
     }
 
     fn visit_switch_case(&mut self, it: &SwitchCase<'_>) {
-        if self.variant == Variant::Classic && it.test.is_some() {
+        if self.variant == Variant::Classic && !it.is_default_case() {
             self.complexity += 1;
         }
         walk_js::walk_switch_case(self, it);

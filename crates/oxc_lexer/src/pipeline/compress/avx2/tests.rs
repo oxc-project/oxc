@@ -1,14 +1,11 @@
 use std::iter;
 
-use crate::pipeline::cpu::DynCpu;
+use oxc_simd::{Avx2, test_cpus};
 
 use super::{compress_blocks_avx2, init_pair_luts_avx2};
 
-#[test]
-fn compress_blocks_matches_scalar_reference() {
-    // Skip this test unless the CPU supports AVX2
-    let DynCpu::Avx2(cpu) = DynCpu::detect() else { return };
-
+#[test_cpus]
+fn compress_blocks_matches_scalar_reference(cpu: Avx2) {
     // Required before calling `compress_blocks_avx2`
     init_pair_luts_avx2(cpu);
 

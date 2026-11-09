@@ -292,6 +292,7 @@ impl Rule for PreferDestructuring {
                                             |fixer| {
                                                 generate_fix(
                                                     &fixer,
+                                                    ctx,
                                                     string_literal.span.shrink(1),
                                                     get_object_span_without_redundant_parentheses(
                                                         &comp_expr.object,
@@ -318,6 +319,7 @@ impl Rule for PreferDestructuring {
                                         |fixer| {
                                             generate_fix(
                                                 &fixer,
+                                                ctx,
                                                 static_expr.property.span,
                                                 get_object_span_without_redundant_parentheses(
                                                     &static_expr.object,
@@ -375,10 +377,16 @@ fn get_object_span_without_redundant_parentheses(object: &Expression) -> Span {
 /// Generate the fix for object destructuring in a variable declaration.
 fn generate_fix(
     fixer: &crate::fixer::RuleFixer<'_, '_>,
+    ctx: &LintContext<'_>,
     prop_span: Span,
     object_span: Span,
     replacement_span: Span,
 ) -> crate::fixer::RuleFix {
+    if ctx.comments_range(replacement_span.start..object_span.start).next().is_some()
+        || ctx.comments_range(object_span.end..replacement_span.end).next().is_some()
+    {
+        return fixer.noop();
+    }
     let prop = fixer.source_range(prop_span);
     let object_text = fixer.source_range(object_span);
     let replacement = format!("{{{prop}}} = {object_text}");
@@ -823,6 +831,30 @@ fn test() {
         ),
         ("foo = object.foo;", "foo = object.foo;", None),
         ("foo = object['foo'];", "foo = object['foo'];", None),
+        ("const d = /* keep */ obj.d;", "const d = /* keep */ obj.d;", None),
+        ("const e = obj /* keep */ .e;", "const e = obj /* keep */ .e;", None),
+        ("const f = obj. /* keep */ f;", "const f = obj. /* keep */ f;", None),
+        ("const h = (/* in object */ obj).h;", "const h = (/* in object */ obj).h;", None),
+        ("var foo /* keep */ = object.foo;", "var foo /* keep */ = object.foo;", None),
+        ("var foo = (object /* keep */).foo;", "var foo = (object /* keep */).foo;", None),
+        ("var foo = (/* keep */ object.foo);", "var foo = (/* keep */ object.foo);", None),
+        ("var foo = (object.foo /* keep */);", "var foo = (object.foo /* keep */);", None),
+        ("var foo = /* keep */ object['foo'];", "var foo = /* keep */ object['foo'];", None),
+        ("var foo = object[/* keep */ 'foo'];", "var foo = object[/* keep */ 'foo'];", None),
+        ("var foo = object['foo' /* keep */];", "var foo = object['foo' /* keep */];", None),
+        ("var foo = (/* keep */ object)['foo'];", "var foo = (/* keep */ object)['foo'];", None),
+        (
+            "var foo = bar/* inside */.baz/* outside */.foo;",
+            "var foo = bar/* inside */.baz/* outside */.foo;",
+            None,
+        ),
+        (
+            "var foo // keep\n = bar(/* inside */).foo;",
+            "var foo // keep\n = bar(/* inside */).foo;",
+            None,
+        ),
+        ("const g = obj.g; // trailing", "const {g} = obj; // trailing", None),
+        ("var foo = bar(/* keep */)['foo'];", "var {foo} = bar(/* keep */);", None),
     ];
 
     Tester::new(PreferDestructuring::NAME, PreferDestructuring::PLUGIN, pass, fail)

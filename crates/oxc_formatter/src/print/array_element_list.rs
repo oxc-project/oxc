@@ -12,13 +12,13 @@ use crate::{
 };
 
 pub struct ArrayElementList<'a, 'b> {
-    elements: &'b AstNode<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+    elements: &'b AstNode<'b, 'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
     group_id: Option<GroupId>,
 }
 
 impl<'a, 'b> ArrayElementList<'a, 'b> {
     pub fn new(
-        elements: &'b AstNode<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+        elements: &'b AstNode<'b, 'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
         group_id: GroupId,
     ) -> Self {
         Self { elements, group_id: Some(group_id) }
@@ -117,8 +117,6 @@ pub fn can_concisely_print_array_list(
 
     let comments = f.comments();
 
-    let mut comments_iter = comments.comments_before_iter(array_expression_span.end);
-
     for item in list {
         match item {
             ArrayExpressionElement::NumericLiteral(_) => {}
@@ -128,7 +126,8 @@ pub fn can_concisely_print_array_list(
 
                 if !signed
                     || !matches!(argument, Expression::NumericLiteral(_))
-                    || has_comment_inside_unary(&mut comments_iter, unary_expr.span)
+                    // `-(/* comment */ 1)`
+                    || comments.has_any_comment_in_range(unary_expr.span.start, unary_expr.span.end)
                 {
                     return false;
                 }
@@ -146,26 +145,13 @@ pub fn can_concisely_print_array_list(
     //   // This is fine
     //   thats
     // ]
+    //
+    // [ // Also fine, it moves to its own line
+    //   a,
+    // ]
     // ```
 
     !comments
-        .comments_before_iter(array_expression_span.end)
+        .all_comments_in_range(list[0].span().start, array_expression_span.end)
         .any(|comment| comment.is_line() && !comment.preceded_by_newline())
-}
-
-// ```js
-// - (/* comment */ 1)
-//    ^^^^^^^^^^^^ // This is a unary expression with a comment inside
-// ```
-fn has_comment_inside_unary<'a>(
-    comments_iter: &mut impl Iterator<Item = &'a Comment>,
-    unary_expr_span: Span,
-) -> bool {
-    // `comments_iter` is avoid repeatedly iterating over the same comments from the start
-    for comment in comments_iter.by_ref() {
-        if comment.span.start > unary_expr_span.start {
-            return unary_expr_span.contains_inclusive(comment.span);
-        }
-    }
-    false
 }

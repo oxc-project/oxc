@@ -873,6 +873,8 @@ fn is_loop(kind: AstKind<'_>) -> bool {
 
 #[test]
 fn test() {
+    use cow_utils::CowUtils;
+
     use crate::tester::{TestCase, Tester};
 
     let loop_templates: &[&[&str]] = &[
@@ -1077,8 +1079,28 @@ fn test() {
             None,
         )
         .into(),
-        ("while (a) { try { for (const x of iterable) {} return; } catch { continue; } }", None).into()
+        ("while (a) { try { for (const x of iterable) {} return; } catch { continue; } }", None).into(),
+        ("function q1() { var n = 0; a: b: while (n < 3) { n++; continue a; } return n; }", None).into(),
+        ("function q3() { var n = 0; a: b: c: do { n++; continue b; } while (n < 3); return n; }", None).into(),
     ]);
+
+    pass.extend([
+        "while (condition) { a: b: { continue; } }".into(),
+        "while (condition) { a: b: if (other) continue; }".into(),
+        "a: b: while (condition) { c: d: { continue a; } }".into(),
+    ]);
+
+    for body in [
+        "while (condition) { continue LABEL; }",
+        "do { continue LABEL; } while (condition);",
+        "for (let i = 0; i < 3; i++) { continue LABEL; }",
+        "for (const key in object) { continue LABEL; }",
+        "for (const value of iterable) { continue LABEL; }",
+    ] {
+        for label in ["a", "b", "c"] {
+            pass.push(format!("a: b: c: {}", body.cow_replace("LABEL", label)).into());
+        }
+    }
 
     let mut fail = Vec::<TestCase>::new();
     for templates in loop_templates {

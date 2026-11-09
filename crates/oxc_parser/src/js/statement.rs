@@ -1,3 +1,5 @@
+use std::num::NonZeroU32;
+
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
@@ -198,16 +200,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => self.parse_expression_or_labeled_statement(),
         };
 
-        if let Some(comments) = no_side_effects_comments
-            && Self::set_pure_on_function_stmt(&mut stmt)
-        {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        if let Some(comments) = no_side_effects_comments {
+            self.apply_no_side_effects_comments_to_statement(comments, &mut stmt);
         }
 
         stmt
     }
 
-    pub(super) fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> bool {
+    #[cold]
+    #[inline(never)]
+    pub(super) fn apply_no_side_effects_comments_to_statement(
+        &mut self,
+        comments: (u32, NonZeroU32),
+        stmt: &mut Statement<'a>,
+    ) {
+        if Self::set_pure_on_function_stmt(stmt) {
+            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        }
+    }
+
+    fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> bool {
         match stmt {
             Statement::FunctionDeclaration(func) => {
                 func.pure = true;
@@ -251,7 +263,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    fn parse_expression_or_labeled_statement(&mut self) -> Statement<'a> {
+    pub(super) fn parse_expression_or_labeled_statement(&mut self) -> Statement<'a> {
         let start = self.cur_start();
         let expr = self.parse_expr();
         if let Expression::Identifier(ident) = &expr {
@@ -534,7 +546,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.context_remove(Context::In, |p| p.parse_using_declaration(StatementContext::For));
 
         if matches!(self.cur_kind(), Kind::In) {
-            if using_decl.kind.is_await() {
+            if using_decl.kind.is_await_using() {
                 self.error(diagnostics::await_using_declaration_not_allowed_in_for_in_statement(
                     using_decl.span,
                 ));
@@ -798,7 +810,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 // It is a Syntax Error if UsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
                 // It is a Syntax Error if AwaitUsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
-                self.error(if var_decl.kind.is_await() {
+                self.error(if var_decl.kind.is_await_using() {
                     diagnostics::await_using_declaration_not_allowed_in_switch_bare_case(
                         stmt.span(),
                     )

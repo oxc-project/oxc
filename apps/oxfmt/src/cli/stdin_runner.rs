@@ -50,14 +50,12 @@ impl StdinRunner {
         // Single threaded for stdin formatting
         let num_of_threads = 1;
 
-        // Read source code from stdin
         let mut source_text = String::new();
         if let Err(err) = io::stdin().read_to_string(&mut source_text) {
             utils::print_and_flush(stderr, &format!("Failed to read from stdin: {err}\n"));
             return CliRunResult::InvalidOptionConfig;
         }
 
-        // Load config
         let config_scopes = match ConfigScopes::load(
             &cwd,
             config_options.config.as_deref(),
@@ -131,7 +129,6 @@ impl StdinRunner {
             }
         };
 
-        // Create formatter and format
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_services(Some(self.external_services));
 

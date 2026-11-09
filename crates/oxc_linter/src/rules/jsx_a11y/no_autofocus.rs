@@ -150,13 +150,7 @@ fn is_false_attribute_value(value: &JSXAttributeValue) -> bool {
                 Expression::BooleanLiteral(bool_lit) => !bool_lit.value,
                 Expression::StringLiteral(string_lit) => string_lit.value == "false",
                 Expression::TemplateLiteral(template_lit) => {
-                    template_lit.quasis.len() == 1
-                        && template_lit.expressions.is_empty()
-                        && template_lit.quasis[0]
-                            .value
-                            .cooked
-                            .as_ref()
-                            .is_some_and(|cooked| cooked == "false")
+                    template_lit.single_quasi().is_some_and(|cooked| cooked == "false")
                 }
                 _ => false,
             }

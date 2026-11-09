@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### ⚡ Performance
+
+- 5d877b8 diagnostics: Speed up zero-context span lookups (#27770) (camc314)
+
 ## [0.154.0] - 2026-10-13
 
 ### ⚡ Performance

@@ -11,7 +11,6 @@ use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::JSStr;
 use oxc_syntax::scope::ScopeFlags;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -22,7 +21,7 @@ use crate::{
     rules::ContextHost,
     utils::{
         arrow_function_body_contains_jsx, expression_contains_jsx, function_contains_jsx,
-        is_hoc_call, is_react_component_name,
+        is_es6_component_class, is_hoc_call, is_react_component_name,
     },
 };
 
@@ -404,24 +403,6 @@ fn is_function_returning_null(expr: &Expression) -> bool {
         }),
         _ => false,
     }
-}
-
-/// Check if a class is an ES6 React component (extends React.Component or React.PureComponent)
-fn is_es6_component_class(class: &Class) -> bool {
-    class.heritage_expression().is_some_and(|super_class| {
-        if let Some(member_expr) = super_class.as_member_expression()
-            && let Expression::Identifier(ident) = member_expr.object()
-            && ident.name == "React"
-        {
-            return member_expr
-                .static_property_name()
-                .and_then(JSStr::as_str)
-                .is_some_and(|name| matches!(name, "Component" | "PureComponent"));
-        }
-        super_class
-            .get_identifier_reference()
-            .is_some_and(|id| matches!(id.name.as_str(), "Component" | "PureComponent"))
-    })
 }
 
 /// Check if a call expression is createReactClass
