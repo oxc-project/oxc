@@ -403,9 +403,8 @@ fn write_attribute_selector<'a>(attribute: &AttributeSelector<'a>, f: &mut CssFo
                 let span = to_span(istr.span());
                 value::write_requoted_verbatim(source.text_for(&span), f);
             }
-            // `[class^=~'...']`:
-            // postcss sees a plain string after the `~`,
-            // so it re-quotes per `singleQuote` like the value-position handler.
+            // `[class^=~'...']`: hugs and re-quotes like `value::write_less_escaped_str`
+            // (a comment in a selector takes the raw path, so none reaches here)
             AttributeSelectorValue::LessEscapedStr(escaped) => {
                 write!(f, "~");
                 value::write_attribute_str(&escaped.str, f);
