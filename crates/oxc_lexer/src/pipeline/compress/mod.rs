@@ -1,4 +1,4 @@
-use oxc_simd::{Cpu, DynCpu, cpu_multiversion, to_dyn};
+use oxc_simd::{Cpu, DynCpu, cpu_multiversion, cpu_version, to_dyn};
 use oxc_span::Span;
 
 use crate::token::{SPAN_SENTINELS, tk};
@@ -67,6 +67,7 @@ pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8, _cpu
 /// This function must be called before calling [`compress`].
 ///
 /// `PairLuts` is only used by AVX2 implementation, so this function is a no-op on other CPUs.
+#[cpu_version(Generic)]
 pub(super) fn init_pair_luts(cpu: DynCpu) {
     if let DynCpu::Avx2(cpu) = cpu {
         init_pair_luts_avx2(cpu);

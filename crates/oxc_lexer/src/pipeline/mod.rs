@@ -268,8 +268,9 @@ impl Lexer {
 
     /// Set the CPU feature set this [`Lexer`] lexes with, and return the previous one.
     ///
-    /// Only used in conformance testing.
+    /// Only used in testing.
     #[cfg(feature = "testing")]
+    #[cpu_version(Generic)]
     pub(crate) fn replace_cpu(&mut self, cpu: DynCpu) -> DynCpu {
         let previous = self.cpu;
         self.cpu = cpu;
