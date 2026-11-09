@@ -339,7 +339,7 @@ impl Token {
     ///
     /// Re-lexed tokens may not preserve this flag.
     #[inline]
-    pub fn follows_comment(&self) -> bool {
+    pub(crate) fn follows_comment(&self) -> bool {
         // SAFETY: 8 bits starting at `FOLLOWS_COMMENT_SHIFT` are only set in `Token::default` and
         // `Token::new`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
         unsafe { self.read_bool(FOLLOWS_COMMENT_SHIFT) }
