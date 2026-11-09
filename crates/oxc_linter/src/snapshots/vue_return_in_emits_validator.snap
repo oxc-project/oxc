@@ -80,15 +80,7 @@ source: crates/oxc_linter/src/tester.rs
   7 │ │                           return false
   8 │ │                         } else if (b) {
   9 │ │                           return 0
- 10 │ │                         } else if (c) {
- 11 │ │                           return null
- 12 │ │                         } else if (d) {
- 13 │ │                           return ''
- 14 │ │                         } else if (e) {
- 15 │ │                           return undefined
- 16 │ │                         } else if (f) {
- 17 │ │                           return NaN
- 18 │ │                         } else if (g) {
+... · │   
  19 │ │                           return 0n
  20 │ │                         } else if (h) {
  21 │ │                           return 0x0n

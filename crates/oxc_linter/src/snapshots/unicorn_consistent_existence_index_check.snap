@@ -121,9 +121,7 @@ source: crates/oxc_linter/src/tester.rs
   7 │ │                             index
   8 │ │                             /* comment 3 */
   9 │ │                         ))
- 10 │ │                         /* comment 4 */
- 11 │ │                         <
- 12 │ │                         /* comment 5 */
+... · │   
  13 │ │                         ((
  14 │ │                             /* comment 6 */
  15 │ │                             0

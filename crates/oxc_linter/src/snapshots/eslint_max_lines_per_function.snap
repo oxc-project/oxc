@@ -39,57 +39,7 @@ source: crates/oxc_linter/src/tester.rs
   3 │ │   foo
   4 │ │   foo
   5 │ │   foo
-  6 │ │   foo
-  7 │ │   foo
-  8 │ │   foo
-  9 │ │   foo
- 10 │ │   foo
- 11 │ │   foo
- 12 │ │   foo
- 13 │ │   foo
- 14 │ │   foo
- 15 │ │   foo
- 16 │ │   foo
- 17 │ │   foo
- 18 │ │   foo
- 19 │ │   foo
- 20 │ │   foo
- 21 │ │   foo
- 22 │ │   foo
- 23 │ │   foo
- 24 │ │   foo
- 25 │ │   foo
- 26 │ │   foo
- 27 │ │   foo
- 28 │ │   foo
- 29 │ │   foo
- 30 │ │   foo
- 31 │ │   foo
- 32 │ │   foo
- 33 │ │   foo
- 34 │ │   foo
- 35 │ │   foo
- 36 │ │   foo
- 37 │ │   foo
- 38 │ │   foo
- 39 │ │   foo
- 40 │ │   foo
- 41 │ │   foo
- 42 │ │   foo
- 43 │ │   foo
- 44 │ │   foo
- 45 │ │   foo
- 46 │ │   foo
- 47 │ │   foo
- 48 │ │   foo
- 49 │ │   foo
- 50 │ │   foo
- 51 │ │   foo
- 52 │ │   foo
- 53 │ │   foo
- 54 │ │   foo
- 55 │ │   foo
- 56 │ │   foo
+... · │   
  57 │ │   foo
  58 │ │   foo
  59 │ │   foo
