@@ -1,10 +1,9 @@
 //! Punctuation inside a type: type regions and how each kind of region ends, angle lists,
 //! and the `<` that may open one.
 
-use crate::{
-    cpu::{BASELINE, cpu_version},
-    token::{OP_KIND_BASE, matches_tk, tk},
-};
+use oxc_simd::{BASELINE, cpu_version};
+
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use crate::pipeline::disambiguate::{common::Tokens, type_context::type_args_at};
 

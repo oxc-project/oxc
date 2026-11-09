@@ -981,6 +981,21 @@ fn test() {
             None,
             Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
         ),
+        // https://github.com/oxc-project/oxc/issues/28859
+        (
+            r#"
+            /**
+             * For example, if the map looks like this `{ "domain1.com": "test.local" }
+             *
+             * @param p the param
+             */
+            export function f(p: string): void {
+                void p;
+            }
+            "#,
+            None,
+            Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
+        ),
     ];
 
     let fail = vec![
@@ -1643,6 +1658,22 @@ fn test() {
 				      ",
             Some(serde_json::json!([{ "interfaceExemptsParamsCheck": true }])),
             None,
+        ),
+        // https://github.com/oxc-project/oxc/issues/28859
+        (
+            "
+            /**
+             * Example { a
+             *
+             * @param p the param
+             */
+            export function f(p: string, q: string): void {
+                void p;
+                void q;
+            }
+            ",
+            None,
+            Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
         ),
     ];
 

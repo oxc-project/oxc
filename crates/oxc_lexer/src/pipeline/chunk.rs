@@ -1,6 +1,6 @@
 use std::ptr;
 
-use crate::cpu::cpu_version;
+use oxc_simd::cpu_version;
 
 /// Load 64 bits starting at byte `i` as a `u64`.
 ///

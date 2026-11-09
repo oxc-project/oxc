@@ -9,10 +9,9 @@
 //! - [`gt_follower`]: Can the token after the `>` follow type arguments?
 //!   A `(` can, as in `f<T>(x)`. An identifier can't, as in `a < b > c`.
 
-use crate::{
-    cpu::{Cpu, cpu_multiversion},
-    token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
-};
+use oxc_simd::{Cpu, cpu_multiversion};
+
+use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
 
 use crate::pipeline::{
     bytes::{is_digit, is_id_start, line_break_in},

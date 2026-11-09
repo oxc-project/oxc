@@ -19,9 +19,10 @@ use oxc_css_parser::{
     ast::{
         BracketBlock, Calc, CalcOperatorKind, ComponentValue, Delimiter, DelimiterKind, Dimension,
         Function, FunctionName, ImportantAnnotation, InterpolableIdent, InterpolableStr,
-        LessBinaryOperation, LessOperationOperatorKind, LessParenthesizedOperation, Number,
-        SassBinaryExpression, SassBinaryOperator, SassBinaryOperatorKind, SassInterpolatedIdent,
-        SassInterpolatedIdentElement, SassUnaryOperatorKind, Str, Url, UrlValue,
+        LessBinaryOperation, LessEscapedStr, LessOperationOperatorKind, LessParenthesizedOperation,
+        Number, SassBinaryExpression, SassBinaryOperator, SassBinaryOperatorKind,
+        SassInterpolatedIdent, SassInterpolatedIdentElement, SassUnaryOperatorKind, Str, Url,
+        UrlValue,
     },
     token::Token,
 };
@@ -41,7 +42,7 @@ use crate::{
     CssFormatOptions,
     comments::{self, BlockCommentAfter, FormatCommentBeforeContent, FormatLineCommentSuffix},
     format::to_span,
-    print::{CssFormatter, format_with, is_glued, less, scss, statement},
+    print::{CssFormatter, format_with, has_comments_between, is_glued, less, scss, statement},
 };
 
 /// Prettier's `printNumber` + `printCssNumber` (trailing `.0` removal included).
@@ -119,6 +120,29 @@ pub(super) fn quoted<'a>(quote: u8, content: &str, allocator: &'a Allocator) -> 
 
 pub(super) fn write_str<'a>(str: &Str<'a>, f: &mut CssFormatter<'_, 'a>) {
     write_str_raw(str.raw, f);
+}
+
+/// Less `~"..."`: the `~` hugs its re-quoted string (see DIVERGENCES.md#less-escape-hugs-string).
+/// Comments after the `~` hug it too, each followed by one space (like Prettier);
+/// with a `//` comment, the source after the `~` stays as written.
+pub(super) fn write_less_escaped_str<'a>(
+    escaped: &LessEscapedStr<'a>,
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    write!(f, "~");
+    let (tilde_end, str_start) = (escaped.span.start + 1, escaped.str.span.start);
+    if has_comments_between(tilde_end, str_start, f) {
+        let source = f.context().source_text();
+        let comments = f.context().comments().take_before(str_start);
+        if comments.iter().any(|c| c.inline) {
+            write!(f, text(source.slice_range(tilde_end, str_start).trim_start()));
+        } else {
+            for comment in comments {
+                write!(f, [text(source.text_for(&comment.span)), space()]);
+            }
+        }
+    }
+    write_str(&escaped.str, f);
 }
 
 /// [`write_str`] for a raw quoted-string slice
@@ -1821,12 +1845,7 @@ pub(super) fn write_component_value<'a>(
             let span = to_span(range.span());
             write!(f, text(source.text_for(&span)));
         }
-        // `~'...'`: postcss sees a plain string token after the `~`,
-        // so it re-quotes per `singleQuote` like any other string.
-        ComponentValue::LessEscapedStr(escaped) => {
-            write!(f, "~");
-            write_str(&escaped.str, f);
-        }
+        ComponentValue::LessEscapedStr(escaped) => write_less_escaped_str(escaped, f),
         // Less arithmetic: a flat operator fill (break after the operator), mirroring Prettier.
         // Safe to restructure because `oxc-css-parser` only ASTs a whitespace-followed
         // `+`/`-` as a binary operator (see `write_less_binary_operation`).
@@ -2468,6 +2487,7 @@ pub(super) fn write_url<'a>(url: &Url<'a>, f: &mut CssFormatter<'_, 'a>) {
             let span = to_span(istr.span());
             write_requoted_verbatim(source.text_for(&span), f);
         }
+        Some(UrlValue::LessEscapedStr(escaped)) => write_less_escaped_str(escaped, f),
         // Unquoted url contents are printed verbatim, including inner spaces
         _ => {
             let url_span = url.span();

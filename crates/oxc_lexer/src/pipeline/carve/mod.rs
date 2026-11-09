@@ -1,4 +1,4 @@
-use crate::cpu::{Cpu, cpu_multiversion};
+use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::pipeline::lanes::Lanes;
 

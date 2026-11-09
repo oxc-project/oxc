@@ -1,12 +1,11 @@
-use crate::{
-    cpu::{Neon, cpu_version},
-    simd::{Vec128, Vec256, VecData128},
-    token::tk,
-};
+use oxc_simd::{Neon, Vec128, Vec256, VecData128, cpu_version};
+
+use crate::token::tk;
 
 use super::{
     luts::{
-        DIGIT_MASK, DOT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, WORD_LUTS, WORD_MASK, WS_MASK,
+        DIGIT_MASK, DOT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, VT_FF_MASK, WORD_LUTS,
+        WORD_MASK, WS_MASK,
     },
     punct::{PUNCT_HASH_HI, PUNCT_HASH_KINDS, PUNCT_HASH_LO},
 };
@@ -124,7 +123,7 @@ fn chunk(v: Vec128<Neon>, l: &Luts) -> Classified {
     let word = tb.test_u8(WORD_MASK) | na;
     let ws = tb.test_u8(WS_MASK);
     let digit = tb.test_u8(DIGIT_MASK);
-    let misc = v.eq_u8(b'#') | v.eq_u8(b'\\') | na;
+    let misc = v.eq_u8(b'#') | v.eq_u8(b'\\') | na | tb.test_u8(VT_FF_MASK);
 
     let kind = punct_kinds(v, lo, hn, l)
         .blend(tk!(Whitespace), ws)

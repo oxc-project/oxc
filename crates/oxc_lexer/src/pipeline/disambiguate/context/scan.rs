@@ -1,10 +1,9 @@
 //! Bounded walks: the scan back from a query to an anchor, the jump plan it records for the
 //! walk, and the entry points every question goes through.
 
-use crate::{
-    cpu::{BASELINE, cpu_version},
-    token::{OP_KIND_BASE, matches_tk, tk},
-};
+use oxc_simd::{BASELINE, cpu_version};
+
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use crate::pipeline::disambiguate::{LOCAL_WALK_BUDGET, WALK_SCAN_CAP, common::Tokens};
 

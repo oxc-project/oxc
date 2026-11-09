@@ -1,7 +1,4 @@
-use crate::{
-    cpu::{Avx2, BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_version, to_dyn},
-    simd::Vec256,
-};
+use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version, to_dyn};
 
 use crate::pipeline::bitmap::{bm_clear, bm_get};
 

@@ -1,7 +1,7 @@
 //! The walk: its frame stack and flags, the operations the token steps use on them, the
 //! jump plan a bounded walk follows, and what a query reads off the state.
 
-use crate::cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
 use crate::pipeline::disambiguate::common::Tokens;
 

@@ -3,7 +3,7 @@ use std::{
     mem, slice,
 };
 
-use crate::cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
 macro_rules! define_token_kind {
     ($( $variant:ident = $value:literal => $name:literal ),+ $(,)?) => {
@@ -510,22 +510,24 @@ impl StringSpan {
 
 #[cfg(test)]
 mod tests {
-    use crate::{LexOptions, Lexer, PAD, cpu::BASELINE};
+    use oxc_simd::{BASELINE, Cpu, DynCpu, test_cpus};
+
+    use crate::{LexOptions, Lexer, PAD};
 
     use super::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
 
-    #[test]
-    fn from_u8_round_trips_every_variant() {
+    #[test_cpus]
+    fn from_u8_round_trips_every_variant(cpu: impl Cpu) {
         for &kind in TokenKind::VARIANTS {
-            assert_eq!(TokenKind::from_u8(kind as u8, BASELINE), Some(kind), "{}", kind.name());
+            assert_eq!(TokenKind::from_u8(kind as u8, cpu), Some(kind), "{}", kind.name());
         }
     }
 
-    #[test]
-    fn from_u8_agrees_with_the_discriminant_for_all_256_bytes() {
+    #[test_cpus]
+    fn from_u8_agrees_with_the_discriminant_for_all_256_bytes(cpu: impl Cpu) {
         let declared: Vec<u8> = TokenKind::VARIANTS.iter().map(|k| *k as u8).collect();
         for byte in 0..=u8::MAX {
-            match TokenKind::from_u8(byte, BASELINE) {
+            match TokenKind::from_u8(byte, cpu) {
                 Some(kind) => {
                     assert_eq!(kind as u8, byte);
                     assert!(declared.contains(&byte));
@@ -577,8 +579,8 @@ mod tests {
     /// the lexer never emits a byte outside the declared discriminants.
     ///
     /// [`kinds_from_bytes`]: super::kinds_from_bytes
-    #[test]
-    fn every_emitted_kind_is_declared() {
+    #[test_cpus]
+    fn every_emitted_kind_is_declared(cpu: DynCpu) {
         const SOURCES: [&str; 6] = [
             "#!/usr/bin/env node\nlet x = 0b1_0 + 0o7 + 0xFF + 1.5e3 + 9n;",
             "class A { #p = 1; static { this.#p ??= 2; } get x() { return `a${1}b${2}c`; } }",
@@ -593,7 +595,7 @@ mod tests {
             bytes.extend_from_slice(&[0u8; PAD]);
             for (jsx, ts) in [(false, false), (true, false), (false, true), (true, true)] {
                 let opts = LexOptions { jsx, ts, ..Default::default() };
-                let mut lexer = Lexer::new();
+                let mut lexer = Lexer::new_with_cpu(cpu);
                 lexer.lex(&bytes, n, opts);
                 for kind in lexer.kinds() {
                     assert_eq!(
