@@ -270,14 +270,14 @@ mod tests {
             let mut seed = 0x1234_5678_u32;
             for len in 0..=96 {
                 for _ in 0..32 {
-                    let bytes: Vec<_> = (0..len)
-                        .map(|_| {
-                            seed ^= seed << 13;
-                            seed ^= seed >> 17;
-                            seed ^= seed << 5;
-                            seed.to_le_bytes()[0]
-                        })
-                        .collect();
+                    let bytes: Vec<_> = std::iter::repeat_with(|| {
+                        seed ^= seed << 13;
+                        seed ^= seed >> 17;
+                        seed ^= seed << 5;
+                        seed.to_le_bytes()[0]
+                    })
+                    .take(len)
+                    .collect();
                     assert_eq!(find_comment_special::<BLOCK>(&bytes), expected(&bytes));
                 }
             }
