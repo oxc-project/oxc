@@ -102,11 +102,10 @@ pub fn parse_jsdoc(
                 // Mismatched count inside a backtick section: ignore
             }
             // Inside backtick-quoted sections (inline code / code fences),
-            // all bracket/quote tracking is suspended. Characters like `{`, `}`,
-            // `"`, etc. inside code literals are not syntactic and must not
-            // be tracked — otherwise a stray `{` in inline code
-            // (e.g. `` `{` ``) would prevent subsequent `@` tags from being
-            // recognized, causing them to merge into the description.
+            // all bracket/quote tracking is suspended. Characters like `{`, `}`, `"`, etc.
+            // inside code literals are not syntactic and must not be tracked,
+            // otherwise a stray `{` in inline code (e.g. `` `{` ``) would prevent subsequent `@` tags
+            // from being recognized, causing them to merge into the description.
             '"' if backtick_count == 0 && !in_single_quotes => {
                 in_double_quotes = !in_double_quotes;
             }
