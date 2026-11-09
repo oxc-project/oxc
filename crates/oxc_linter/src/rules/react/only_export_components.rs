@@ -747,6 +747,7 @@ impl OnlyExportComponents {
             Expression::ChainExpression(_) => "ChainExpression",
             Expression::ConditionalExpression(_) => "ConditionalExpression",
             Expression::LogicalExpression(_) => "LogicalExpression",
+            Expression::NewExpression(_) => "NewExpression",
             Expression::ObjectExpression(_) => "ObjectExpression",
             Expression::ThisExpression(_) => "ThisExpression",
             Expression::UpdateExpression(_) => "UpdateExpression",
@@ -814,6 +815,7 @@ const NOT_REACT_COMPONENT_EXPRESSION: phf::Set<&'static str> = phf::phf_set![
     "ConditionalExpression",
     "Literal",
     "LogicalExpression",
+    "NewExpression",
     "ObjectExpression",
     "TemplateLiteral",
     "ThisExpression",
@@ -1163,6 +1165,11 @@ export function Button(props: PropsWithChildren): ReactNode {
             None,
         ),
         ("const App = React.unknown(() => <div />);", None),
+        (
+            "export const MESH_TERMS = new Set(['a', 'b']);
+            export const formatTitle = (title: string) => title.trim();",
+            None,
+        ),
     ];
 
     let fail = vec![
