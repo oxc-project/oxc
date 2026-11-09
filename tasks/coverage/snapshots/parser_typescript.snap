@@ -1,9 +1,9 @@
-commit: 6161772c
+commit: f7973164
 
 parser_typescript Summary:
-AST Parsed     : 9888/9900 (99.88%)
-Positive Passed: 9876/9900 (99.76%)
-Negative Passed: 1716/2818 (60.89%)
+AST Parsed     : 9902/9915 (99.87%)
+Positive Passed: 9889/9915 (99.74%)
+Negative Passed: 1718/2822 (60.88%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -172,6 +172,10 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constEnumBadPropertyNames.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constEnumInitializerTypeErasure.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constEnumInitializerTypeErasureIsolated.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constWithNonNull.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constantEnumAssert.ts
@@ -229,6 +233,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitUnsafeImportSymbolName.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitUsingTypeAlias1.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declareAbstractModifierOrder.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/decoratorRestNoCrash1.ts
 
@@ -759,8 +765,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/multipleExports.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/multivar.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/mutuallyRecursiveInference.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/namespaceFunctionReservedDefaultParameter.ts
 
@@ -2248,6 +2252,89 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declara
  17 │ 
     ╰────
 
+Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:6:1]
+ 5 │ // Assertions must not hide an invalid left operand of **.
+ 6 │ -x ** 2;
+   · ──
+ 7 │ +x ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '+' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:7:1]
+ 6 │ -x ** 2;
+ 7 │ +x ** 2;
+   · ──
+ 8 │ ~x ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '~' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:8:1]
+ 7 │ +x ** 2;
+ 8 │ ~x ** 2;
+   · ──
+ 9 │ !x ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '!' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:9:1]
+  8 │ ~x ** 2;
+  9 │ !x ** 2;
+    · ──
+ 10 │ typeof x ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'typeof' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:10:1]
+  9 │ !x ** 2;
+ 10 │ typeof x ** 2;
+    · ────────
+ 11 │ void x ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'void' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:11:1]
+ 10 │ typeof x ** 2;
+ 11 │ void x ** 2;
+    · ──────
+ 12 │ delete obj.p ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'delete' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:12:1]
+ 11 │ void x ** 2;
+ 12 │ delete obj.p ** 2;
+    · ────────────
+ 13 │ <number>x ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A type assertion cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:13:1]
+ 12 │ delete obj.p ** 2;
+ 13 │ <number>x ** 2;
+    · ─────────
+ 14 │ 
+    ╰────
+  help: Wrap the type assertion in parentheses to make the precedence explicit
+
+  × A unary expression with the 'await' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:44:5]
+ 43 │ async function invalidAwait() {
+ 44 │     await x ** 2;
+    ·     ───────
+ 45 │     await x as number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentMerging1.ts
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
@@ -2351,6 +2438,16 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/inc
  5 │ }
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/indexSignatureMissingType.ts
+
+  × TS(1021): An index signature must have a type annotation.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/indexSignatureMissingType.ts:2:5]
+ 1 │ export interface I {
+ 2 │     [key: string];
+   ·     ─────────────
+ 3 │ }
+   ╰────
 
 Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsdocThisTagWithThisParameter.ts
 
@@ -13548,6 +13645,39 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  4 │         static m1() {} // ERROR
    ╰────
   help: Try inserting a semicolon here
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/strictModeEvalOrArgumentsInClassName.ts:1:7]
+ 1 │ class arguments {}
+   ·       ─────────
+ 2 │ class eval {}
+   ╰────
+  note: Classes are always strict mode code
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/strictModeEvalOrArgumentsInClassName.ts:2:7]
+ 1 │ class arguments {}
+ 2 │ class eval {}
+   ·       ────
+ 3 │ export {};
+   ╰────
+  note: Classes are always strict mode code
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/strictModeEvalOrArgumentsInNonStrictScript.ts:1:7]
+ 1 │ class arguments {}
+   ·       ─────────
+ 2 │ const C = class eval {};
+   ╰────
+  note: Classes are always strict mode code
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/strictModeEvalOrArgumentsInNonStrictScript.ts:2:17]
+ 1 │ class arguments {}
+ 2 │ const C = class eval {};
+   ·                 ────
+   ╰────
+  note: Classes are always strict mode code
 
   × `let` cannot be declared as a variable name inside of a `let` declaration
    ╭─[typescript/tsc/testdata/tests/cases/compiler/strictModeReservedWord.ts:1:5]
