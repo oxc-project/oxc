@@ -7,7 +7,8 @@
 ///
 /// See documentation for [`std::hint::assert_unchecked`] for further details.
 ///
-/// This macro can be used in const context.
+/// This macro can be used in const context, but only without format arguments,
+/// because `assert!` with format arguments is not const.
 ///
 /// # SAFETY
 /// It is undefined behaviour if the condition evaluates to `false`.
@@ -32,17 +33,21 @@
 /// ```
 #[macro_export]
 macro_rules! assert_unchecked {
-    ($cond:expr) => (assert_unchecked!($cond,));
+    ($cond:expr) => ($crate::assert_unchecked!($cond,));
     ($cond:expr, $($arg:tt)*) => ({
         #[cfg(debug_assertions)]
         {
-            const unsafe fn __needs_unsafe() {}
-            __needs_unsafe();
-            assert!($cond, $($arg)*);
+            // Own block so `needs_unsafe` can't shadow a name used in `$cond` or format args
+            {
+                #[inline(always)]
+                const unsafe fn needs_unsafe() {}
+                needs_unsafe();
+            }
+            ::std::assert!($cond, $($arg)*);
         }
         #[cfg(not(debug_assertions))]
         {
-            std::hint::assert_unchecked($cond);
+            ::std::hint::assert_unchecked($cond);
         }
     })
 }
@@ -72,7 +77,16 @@ mod test {
 
         #[test]
         fn fmt_string() {
-            unsafe { assert_unchecked!(0 == 0, "Format str {} {:?}", 123, 456) };
+            unsafe { assert_unchecked!(0 == 0, "Format str: {} {:?}", 123, 456) };
+        }
+
+        #[test]
+        fn const_context() {
+            const fn assert_is_zero(n: u32) {
+                unsafe { assert_unchecked!(n == 0, "String literal") }
+            }
+
+            const _: () = assert_is_zero(0);
         }
     }
 
@@ -95,6 +109,13 @@ mod test {
         #[should_panic(expected = "Format str: 123 456")]
         fn fmt_string() {
             unsafe { assert_unchecked!(0 == 1, "Format str: {} {:?}", 123, 456) };
+        }
+
+        #[test]
+        #[should_panic(expected = "Caller value: 123")]
+        fn caller_name_not_shadowed() {
+            let needs_unsafe = 123;
+            unsafe { assert_unchecked!(needs_unsafe == 0, "Caller value: {}", needs_unsafe) };
         }
     }
 }
