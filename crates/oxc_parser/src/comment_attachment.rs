@@ -107,6 +107,13 @@ pub struct ListComments {
 impl ListComments {
     /// Restart the list after a token at `start` which is not a list element. Comments before it
     /// are assigned by walking the list's parent.
+    ///
+    /// ```text
+    /// class C { a() {} /* x */ ; /* y */ b() {} }
+    ///                          ^ restart after this empty element
+    ///                  /* x */   | /* y */
+    ///                  parent walk   eligible to lead b() {}
+    /// ```
     pub(crate) fn restart(&mut self, start: u32) {
         self.start = start;
     }
@@ -127,6 +134,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Record comment state before parsing a list, which starts after the previous token.
+    ///
+    /// ```text
+    /// /* outer */ function f() { /* inner */ g(); }
+    ///                           ^ start of the body list
+    ///                            <---------- first element
+    /// outside counts earlier pending comments such as /* outer */.
+    /// ```
     #[inline]
     pub(crate) fn start_list_comments(&self) -> ListComments {
         ListComments { start: self.prev_token_end, outside: self.unassigned_comments() }
@@ -136,6 +150,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// nested statements or list elements. `previous` precedes it in its list, after `directives`
     /// in a statement list. There is nothing to do if every comment lexed is assigned, except
     /// those before the list.
+    ///
+    /// ```text
+    /// foo(); // x
+    /// /* y */ bar();
+    ///         ^^^^^^ completed element
+    ///
+    /// // x     -> Trailing on foo();
+    /// /* y */  -> Leading on bar();
+    /// ```
     #[inline]
     pub(crate) fn finish_list_element_comments<T: ListElement<'a>>(
         &mut self,
@@ -293,6 +316,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Assign comments between the last element of a list and the current token, a separator or
     /// closing token, as trailing on that element. The token is checked first, as it rarely follows
     /// a comment and this runs for every separator.
+    ///
+    /// ```text
+    /// f(a /* c */, b)            f(a /* c */)
+    ///   ^        ^                 ^        ^
+    ///   last     current token     last     current token
+    /// ```
+    ///
+    /// In both cases `/* c */` trails `a`. In `f(a, /* c */)`, the previous token at `)`
+    /// is the comma, so `a` no longer ends at `prev_token_end` and this helper skips the gap.
     #[inline]
     pub(crate) fn attach_comments_after_last<T: GetSpan + GetNodeId>(&mut self, list: &[T]) {
         if self.cur_token().follows_comment()
@@ -305,6 +337,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Assign comments between `node` and the current token as trailing on `node`, if `node` ends
     /// at the previous token. The current token must follow `node` in its parent without starting
     /// a node, e.g. a closing parenthesis or a binary operator.
+    ///
+    /// ```text
+    /// a /* x */ + b
+    /// ^         ^
+    /// node      current token
+    /// |_________|
+    ///    gap       /* x */ -> Trailing on a
+    /// ```
     #[inline]
     pub(crate) fn attach_comments_before_token<T: GetSpan + GetNodeId>(&mut self, node: &T) {
         if self.cur_token().follows_comment() && node.span().end == self.prev_token_end {
@@ -324,6 +364,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Assign comments after a list separator which trail the preceding element.
+    ///
+    /// ```text
+    /// f(a, // x          f(a, /* y */ b)
+    ///   b)
+    ///      // x ends the line   -> Trailing on a
+    ///      /* y */ precedes b   -> left for the next argument
+    /// ```
     #[cold]
     #[inline(never)]
     pub(crate) fn attach_comments_after_separator<T: GetSpan + GetNodeId>(&mut self, element: &T) {
@@ -332,6 +379,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Assign comments after a separator which trail the preceding element, if it is not an array
     /// pattern elision.
+    ///
+    /// ```text
+    /// const [a, // x         const [, // y
+    ///        b] = xs;               b] = xs;
+    ///        a has an ID            the empty slot has no ID
+    ///        // x trails a          this helper skips // y
+    /// ```
     #[cold]
     #[inline(never)]
     pub(crate) fn attach_comments_after_separated_element<T: SeparatedElement>(
@@ -360,6 +414,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Replace the owner of a statement's comments, when the statement is replaced by a node with
     /// a different ID.
+    ///
+    /// ```text
+    /// 'use strict';    ExpressionStatement -> Directive
+    ///                          old ID          new ID
+    ///
+    /// comment owned by old ID  -------------> same placement, new ID
+    /// comment owned by StringLiteral -------> same literal ID
+    /// ```
     pub(crate) fn replace_statement_comment_owner(&mut self, old: NodeId, new: NodeId, span: Span) {
         for comment in self.lexer.trivia_builder.comments.iter_mut().rev() {
             if comment.node_id.get() == old {
@@ -372,6 +434,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Parse a node which follows a token without a node of its own, such as an opening bracket
     /// or a separator. Comments after that token lead the node.
+    ///
+    /// ```text
+    /// f(/* x */ g(a))
+    ///   |       ^   ^
+    ///   |       g   end of g(a)
+    ///   save gap -> parse g(a) -> attach /* x */ to the completed call
+    /// ```
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub(crate) fn parse_after_delimiter<T: GetSpan + GetNodeId>(
@@ -387,6 +456,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Comments between the previous token, a delimiter, and the current token.
+    ///
+    /// ```text
+    /// f(/* x */ b)
+    ///   ^       ^
+    ///   from    to      source offsets delimiting the gap
+    ///
+    /// comments: [ /* x */ ]    end = 1 (exclusive comment index)
+    /// ```
     #[inline]
     #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32 offsets")]
     pub(crate) fn delimited_comments(&self) -> Option<DelimitedComments> {
@@ -398,6 +475,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         })
     }
 
+    /// Attach ordinary pending comments in the saved gap when the node starts at its far edge.
+    ///
+    /// ```text
+    /// f(/* x */ b)
+    ///           ^
+    ///           saved token start == start of b
+    /// /* x */ ---------------------> Leading on b
+    /// ```
     #[cold]
     #[inline(never)]
     pub(crate) fn attach_delimited_leading_comments(
@@ -441,6 +526,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Unassign comments in a node which is discarded, after it is converted to another node.
+    ///
+    /// ```text
+    /// new (this: (a: A, // x
+    ///             b: B) => void) => object
+    ///      |__________________|
+    ///       discarded parameter
+    ///
+    /// // x: owner a -> ROOT (pending) -> eligible for the enclosing walk
+    /// ```
     #[cold]
     #[inline(never)]
     pub(crate) fn unassign_comments(&mut self, span: Span) {
@@ -449,6 +543,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Unassign comments in a node which is discarded, except applied annotation comments, when
     /// the calls and functions which own them are kept.
+    ///
+    /// ```text
+    /// ({ a = /* @__PURE__ */ f() } = obj)
+    ///        |               |
+    ///        annotation      call survives conversion to a target
+    ///
+    /// applied annotation -> keeps the call ID
+    /// ordinary assigned comment in the converted span -> ROOT (pending)
+    /// ```
     #[cold]
     #[inline(never)]
     pub(crate) fn unassign_comments_keeping_annotations(&mut self, span: Span) {
@@ -478,6 +581,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Nodes completed after the checkpoint start at or after `token_start`, so they own comments
     /// after `prev_token_end` as leading or dangling comments. Comments between the tokens which
     /// trail a node were assigned before the checkpoint.
+    ///
+    /// ```text
+    /// previous token end     checkpoint token start
+    ///                   | gap |-------------------- reparsed region
+    /// trailing in gap   -> keep its earlier owner
+    /// leading in gap    -> release owner
+    /// assigned in reparsed region -> release owner
+    /// ```
     #[cold]
     #[inline(never)]
     pub(crate) fn rewind_comments(&mut self, prev_token_end: u32, token_start: u32) {
@@ -495,6 +606,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Assign comments to the node an annotation applies to.
+    ///
+    /// ```text
+    /// f(a, /* @__PURE__ */
+    ///      g())
+    ///      ^^^
+    ///      call receiving the annotation
+    /// /* @__PURE__ */ -> Leading on g()
+    /// ```
     pub(crate) fn attach_annotation_comments(&mut self, start: u32, end: u32, node_id: NodeId) {
         for index in start as usize..end as usize {
             let comment = &self.lexer.trivia_builder.comments[index];
@@ -524,6 +643,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Assign the remaining comments by walking Program.
+    ///
+    /// ```text
+    /// source: /* only */       assigned = 0, lexed = 1
+    ///               |
+    ///               v
+    ///           walk Program -> Dangling on Program
+    /// ```
     pub(crate) fn attach_remaining_comments(&mut self, program: &Program<'a>) {
         if !self.state.cover_initialized_name.is_empty() {
             self.unassign_cover_initialized_name_comments();
@@ -536,6 +662,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 }
 
 /// Assign every comment to Program after the parsed AST has been discarded.
+///
+/// ```text
+/// foo(/* x */               fatal parse error
+///     |                     parsed tree discarded
+///     +-------------------> Dangling on the replacement Program
+/// ```
 pub fn attach_comments_to_program(comments: &mut [Comment]) {
     for comment in comments {
         comment.node_id.set(NodeId::ROOT);
@@ -849,10 +981,24 @@ fn partition_before(comments: &[Comment], end: usize, pos: u32) -> usize {
 /// A node in a list without separators, which owns the comments before it.
 pub trait ListElement<'a>: GetSpan + GetNodeId {
     /// Visit the node with a walker.
+    ///
+    /// ```text
+    /// completed list element       walker entry point
+    /// Statement       -----------> visit_statement
+    /// ClassElement    -----------> visit_class_element
+    /// SwitchCase      -----------> visit_switch_case
+    /// ```
     fn visit(&self, walker: &mut Walker<'_, 'a>);
 
     /// Whether the node's first token is before its span, so comments before it are not next to
     /// it.
+    ///
+    /// ```text
+    /// /* doc */ @dec export class C {}
+    ///           ^    ^
+    ///           |    start of the export statement span
+    ///           first decorator -> starts_before_span() is true
+    /// ```
     fn starts_before_span(&self) -> bool {
         false
     }
@@ -908,6 +1054,15 @@ impl<'a> ListElement<'a> for SwitchCase<'a> {
 /// A list element which owns comments ending its line after the following separator.
 pub trait SeparatedElement {
     /// ID and end of the element, or `None` for an elision.
+    ///
+    /// ```text
+    /// const [a, , b] = xs;
+    ///        ^  ^
+    ///        a  empty slot
+    ///
+    /// Some(a) -> Some((ID of a, end offset of a))
+    /// None    -> None
+    /// ```
     fn id_and_end(&self) -> Option<(NodeId, u32)>;
 }
 
