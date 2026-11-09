@@ -4795,15 +4795,16 @@ fn lower_logical_assignment_expression<'a>(
             // (`const v = 1; v ??= 2`). Emitting the store anyway is also wrong:
             // the pipeline treats the binding as reassigned and prints `let`,
             // so `const v = null; v ??= 2` would assign instead of throwing.
-            let target = match builder.resolve_identifier(ident.name, ident.span, symbol)? {
-                VariableBinding::Identifier { binding_kind: BindingKind::Const, .. } => {
-                    builder.record_error(diagnostics::todo_logical_assignment_to_const(
-                        ident.name.as_str(),
-                        ident.span,
-                    ))?;
-                    LogicalAssignmentTarget::ConstIdentifier
-                }
-                _ => LogicalAssignmentTarget::Identifier(ident),
+            let target = if symbol
+                .is_some_and(|symbol| builder.scope().binding_kind(symbol) == AstBindingKind::Const)
+            {
+                builder.record_error(diagnostics::todo_logical_assignment_to_const(
+                    ident.name.as_str(),
+                    ident.span,
+                ))?;
+                LogicalAssignmentTarget::ConstIdentifier
+            } else {
+                LogicalAssignmentTarget::Identifier(ident)
             };
             (target, previous_value)
         }
