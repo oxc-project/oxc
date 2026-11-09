@@ -984,19 +984,6 @@ where
 }
 
 #[cold]
-pub fn todo_logical_assignment_operators_not_yet_supported<L, T>(labels: T) -> OxcDiagnostic
-where
-    L: Into<oxc_diagnostics::LabeledSpan>,
-    T: IntoIterator<Item = L>,
-{
-    diagnostic(
-        ErrorCategory::Todo,
-        "Logical assignment operators (||=, &&=, ??=) are not yet supported",
-    )
-    .with_labels(labels)
-}
-
-#[cold]
 pub fn todo_compound_assignment_complex_pattern_not_yet_supported<L, T>(labels: T) -> OxcDiagnostic
 where
     L: Into<oxc_diagnostics::LabeledSpan>,
