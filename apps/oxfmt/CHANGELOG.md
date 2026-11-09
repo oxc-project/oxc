@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.78.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 449e91f oxfmt: Format ts-in-astro as TSX (#29080) (leaysgur)
+- fd51bff jsdoc: Handle every line terminators as newline (#28902) (leaysgur)
+- 2f80765 formatter_toml: Format whitespace-only document to empty (#28899) (leaysgur)
+- 5e1e02c formatter_graphql: Allow empty document (#28898) (leaysgur)
+- 06e72c0 formatter/tailwind: Normalize CR in Tailwind template with `preserveWhitespace` (#28896) (leaysgur)
+
+### ⚡ Performance
+
+- 934ca98 formatter: Use `Arc` for tailwind options across embedding (#29079) (leaysgur)
+- dde9c5c formatter_htmlish: Skip `</script` escape if possible (#29078) (leaysgur)
+- dc4d918 formatter: Format embedded expr of one name without parsing (#29077) (leaysgur)
+
 ## [0.77.0] - 2026-11-06
 
 ### 💥 BREAKING CHANGES
