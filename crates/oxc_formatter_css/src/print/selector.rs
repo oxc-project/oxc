@@ -264,8 +264,9 @@ fn write_simple_selector<'a>(selector: &SimpleSelector<'a>, f: &mut CssFormatter
                 write_interpolable_ident(suffix, f);
             }
         }
-        SimpleSelector::SassPlaceholder(placeholder) => {
-            let span = to_span(placeholder.span());
+        // Sass `%placeholder` and Less `50%` (outside `@keyframes`): print as written, like Prettier
+        SimpleSelector::LessPercentage(_) | SimpleSelector::SassPlaceholder(_) => {
+            let span = to_span(selector.span());
             write!(f, text(source.text_for(&span)));
         }
     }
