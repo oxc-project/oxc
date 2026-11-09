@@ -16,8 +16,6 @@ pub struct FatalError<'a> {
     pub error: ParserDiagnostic<'a>,
     /// Length of `errors` at time fatal error is recorded
     pub errors_len: usize,
-    /// End of the current token when the fatal error was recorded, before lexer recovery.
-    pub token_end: u32,
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
@@ -84,9 +82,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[cold]
     pub(crate) fn set_fatal_error(&mut self, error: ParserDiagnostic<'a>) {
         if self.fatal_error.is_none() {
-            let token_end = self.cur_token().end();
             self.lexer.advance_to_end();
-            self.fatal_error = Some(FatalError { error, errors_len: self.errors.len(), token_end });
+            self.fatal_error = Some(FatalError { error, errors_len: self.errors.len() });
         }
     }
 

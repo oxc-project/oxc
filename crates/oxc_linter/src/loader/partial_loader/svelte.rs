@@ -1,10 +1,10 @@
 use memchr::{memchr2, memmem::Finder};
 
 use oxc_allocator::Allocator;
-use oxc_parser::{Kind, Parser, config::TokensParserConfig};
+use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_syntax::{
-    identifier::{is_identifier_start, is_white_space},
+    identifier::{is_identifier_part, is_identifier_start, is_white_space},
     line_terminator::is_line_terminator,
 };
 
@@ -421,6 +421,20 @@ fn skip_markup_expression(source_text: &str, pointer: usize) -> Option<usize> {
             return Some(source_text.len() - rest.len() + 1);
         }
     }
+    let kind = if expression.starts_with("#each") {
+        EmbeddedExpression::Each
+    } else if expression.starts_with("#await") {
+        EmbeddedExpression::Await
+    } else if expression.starts_with("#snippet") {
+        EmbeddedExpression::Snippet
+    } else if expression.starts_with("@const")
+        || expression.starts_with(":then")
+        || expression.starts_with(":catch")
+    {
+        EmbeddedExpression::Binding
+    } else {
+        EmbeddedExpression::Expression
+    };
     let is_else = expression.starts_with(":else");
     if expression.starts_with(['@', '#', ':']) {
         expression = expression[1..]
@@ -433,7 +447,7 @@ fn skip_markup_expression(source_text: &str, pointer: usize) -> Option<usize> {
             return Some(source_text.len() - expression.len() + 1);
         }
     }
-    skip_expression(source_text, source_text.len() - expression.len())
+    skip_embedded_expression(source_text, source_text.len() - expression.len(), kind)
 }
 
 fn skip_attribute_expression(source_text: &str, pointer: usize) -> Option<usize> {
@@ -445,53 +459,257 @@ fn skip_attribute_expression(source_text: &str, pointer: usize) -> Option<usize>
     skip_expression(source_text, source_text.len() - expression.len())
 }
 
-fn skip_expression(source_text: &str, mut pointer: usize) -> Option<usize> {
-    const INITIAL_CHUNK_LEN: usize = 128;
-    let mut depth: usize = 1;
-    let mut chunk_len = INITIAL_CHUNK_LEN;
+#[derive(Clone, Copy)]
+enum EmbeddedExpression {
+    Expression,
+    Each,
+    Await,
+    Snippet,
+    Binding,
+}
+
+fn skip_expression(source_text: &str, pointer: usize) -> Option<usize> {
+    skip_embedded_expression(source_text, pointer, EmbeddedExpression::Expression)
+}
+
+fn skip_embedded_expression(
+    source_text: &str,
+    pointer: usize,
+    kind: EmbeddedExpression,
+) -> Option<usize> {
+    let source = &source_text[pointer..];
+    let mut chunk_len = 128usize;
     loop {
-        let mut end = pointer.saturating_add(chunk_len).min(source_text.len());
-        while !source_text.is_char_boundary(end) {
+        let mut end = chunk_len.min(source.len());
+        while !source.is_char_boundary(end) {
             end -= 1;
         }
-        let allocator = Allocator::default();
-        let tokens = Parser::new(&allocator, &source_text[pointer..end], SourceType::ts())
-            .with_config(TokensParserConfig)
-            .tokenize_expression_prefix();
-        let mut next_depth = depth;
-        let mut consumed = 0;
-        let mut needs_more = false;
-        for token in &tokens {
-            match token.kind() {
-                Kind::Eof | Kind::Undetermined => {
-                    needs_more = true;
-                    break;
+        let mut candidates = Vec::new();
+        validate_embedded_expression(&source[..end], kind, &mut candidates);
+        candidates.sort_unstable();
+        candidates.dedup();
+        for candidate in candidates {
+            if source.as_bytes().get(candidate) == Some(&b'}')
+                && validate_embedded_expression(&source[..candidate], kind, &mut Vec::new())
+            {
+                return Some(pointer + candidate + 1);
+            }
+        }
+        if end == source.len() {
+            return memchr::memchr_iter(b'}', source.as_bytes()).find_map(|candidate| {
+                validate_embedded_expression(&source[..candidate], kind, &mut Vec::new())
+                    .then_some(pointer + candidate + 1)
+            });
+        }
+        chunk_len = chunk_len.saturating_mul(2);
+    }
+}
+
+fn validate_embedded_expression(
+    source: &str,
+    kind: EmbeddedExpression,
+    candidates: &mut Vec<usize>,
+) -> bool {
+    if matches!(kind, EmbeddedExpression::Snippet) {
+        return validate_expression(source, "function ", " {}", 0, candidates);
+    }
+    if matches!(kind, EmbeddedExpression::Binding) {
+        return validate_expression(source, "(", ") => 0", 0, candidates);
+    }
+    if validate_expression(source, "", "", 0, candidates) {
+        return true;
+    }
+    if has_expression_boundary(source, kind, candidates) {
+        return false;
+    }
+    let Some(first_error) = candidates.iter().copied().min() else {
+        return false;
+    };
+    if source.as_bytes().get(first_error).is_some_and(|byte| matches!(byte, b'\'' | b'"' | b'`')) {
+        return false;
+    }
+    let separators: &[&str] = match kind {
+        EmbeddedExpression::Each => &["as"],
+        EmbeddedExpression::Await => &["then", "catch"],
+        _ => return false,
+    };
+    for separator in separators {
+        let mut offsets: Vec<_> =
+            source.match_indices(separator).map(|(offset, _)| (offset, false)).collect();
+        offsets.sort_unstable_by_key(|&(offset, _)| {
+            (offset > first_error, offset.abs_diff(first_error))
+        });
+        let mut opaque_ranges = Vec::new();
+        let mut index = 0;
+        while let Some(offset) = next_header_candidate(&mut offsets, &mut index, &opaque_ranges, 0)
+        {
+            let after = &source[offset + separator.len()..];
+            if source[..offset].chars().next_back().is_some_and(is_identifier_part)
+                || !(after.starts_with(is_svelte_whitespace)
+                    || matches!(kind, EmbeddedExpression::Await)
+                        && (after.is_empty() || after.starts_with('}')))
+            {
+                continue;
+            }
+            let mut errors = Vec::new();
+            if !validate_expression(&source[..offset], "", "", 0, &mut errors) {
+                opaque_ranges.extend(
+                    errors
+                        .into_iter()
+                        .filter_map(|position| opaque_expression_range(source, position)),
+                );
+                if opaque_ranges.iter().any(|range| range.end == source.len()) {
+                    return false;
                 }
-                Kind::LCurly => next_depth += 1,
-                Kind::RCurly => {
-                    next_depth -= 1;
-                    if next_depth == 0 {
-                        return Some(pointer + token.end() as usize);
+                continue;
+            }
+            let binding_start = offset + separator.len();
+            let binding = &source[binding_start..];
+            let binding_error_start = candidates.len();
+            if validate_expression(binding, "(", ") => 0", binding_start, candidates) {
+                return true;
+            }
+            opaque_ranges.extend(
+                candidates[binding_error_start..]
+                    .iter()
+                    .filter_map(|&position| opaque_expression_range(source, position)),
+            );
+            if opaque_ranges.iter().any(|range| range.end == source.len()) {
+                return false;
+            }
+            if has_expression_boundary(source, kind, candidates) {
+                return false;
+            }
+            if matches!(kind, EmbeddedExpression::Each) {
+                let mut keys: Vec<_> =
+                    binding.match_indices('(').map(|(offset, _)| (offset, false)).collect();
+                keys.sort_unstable_by_key(|&(key_start, _)| {
+                    !candidates.contains(&(binding_start + key_start))
+                });
+                let mut key_index = 0;
+                while let Some(key_start) =
+                    next_header_candidate(&mut keys, &mut key_index, &opaque_ranges, binding_start)
+                {
+                    let mut errors = Vec::new();
+                    if !validate_expression(
+                        &binding[..key_start],
+                        "(",
+                        ") => 0",
+                        binding_start,
+                        &mut errors,
+                    ) {
+                        opaque_ranges.extend(
+                            errors
+                                .into_iter()
+                                .filter_map(|position| opaque_expression_range(source, position)),
+                        );
+                        if opaque_ranges.iter().any(|range| range.end == source.len()) {
+                            return false;
+                        }
+                        continue;
+                    }
+                    let key = &binding[key_start..];
+                    if validate_expression(key, "", "", binding_start + key_start, candidates) {
+                        return true;
+                    }
+                    if has_expression_boundary(source, kind, candidates) {
+                        return false;
                     }
                 }
-                _ => {}
             }
-            consumed = token.end() as usize;
-        }
-        if needs_more || consumed == end - pointer {
-            if end == source_text.len() {
-                return None;
-            }
-            chunk_len = chunk_len.saturating_mul(2);
-        } else {
-            if consumed == 0 {
-                return None;
-            }
-            pointer += consumed;
-            depth = next_depth;
-            chunk_len = INITIAL_CHUNK_LEN;
         }
     }
+    false
+}
+
+fn next_header_candidate(
+    offsets: &mut Vec<(usize, bool)>,
+    index: &mut usize,
+    opaque_ranges: &[std::ops::Range<usize>],
+    base: usize,
+) -> Option<usize> {
+    while let Some(&(offset, deferred)) = offsets.get(*index) {
+        *index += 1;
+        if !deferred && opaque_ranges.iter().any(|range| range.contains(&(base + offset))) {
+            offsets.push((offset, true));
+        } else {
+            return Some(offset);
+        }
+    }
+    None
+}
+
+fn opaque_expression_range(source: &str, pointer: usize) -> Option<std::ops::Range<usize>> {
+    let rest = source.get(pointer..)?;
+    if let Some(comment) = rest.strip_prefix("/*") {
+        return Some(pointer..comment.find("*/").map_or(source.len(), |end| pointer + 2 + end + 2));
+    }
+    let quote = *source.as_bytes().get(pointer)?;
+    if !matches!(quote, b'\'' | b'"') {
+        return None;
+    }
+    let mut end = pointer + 1;
+    while let Some(&byte) = source.as_bytes().get(end) {
+        if byte == b'\\' {
+            end += 2;
+        } else if byte == quote {
+            return Some(pointer..end + 1);
+        } else {
+            end += 1;
+        }
+    }
+    Some(pointer..source.len())
+}
+
+fn has_expression_boundary(source: &str, kind: EmbeddedExpression, candidates: &[usize]) -> bool {
+    candidates.iter().any(|&candidate| {
+        source.as_bytes().get(candidate) == Some(&b'}')
+            && validate_embedded_expression(&source[..candidate], kind, &mut Vec::new())
+    })
+}
+
+fn validate_expression(
+    source: &str,
+    prefix: &str,
+    suffix: &str,
+    offset: usize,
+    candidates: &mut Vec<usize>,
+) -> bool {
+    let allocator = Allocator::default();
+    let wrapped;
+    let input = if prefix.is_empty() && suffix.is_empty() {
+        source
+    } else {
+        wrapped = format!("{prefix}{source}{suffix}");
+        &wrapped
+    };
+    let diagnostics = if prefix.is_empty() && suffix.is_empty() {
+        match Parser::new(&allocator, input, SourceType::ts()).parse_expression() {
+            Ok(_) => return true,
+            Err(mut diagnostics) => {
+                diagnostics
+                    .extend(Parser::new(&allocator, input, SourceType::ts()).parse().diagnostics);
+                diagnostics
+            }
+        }
+    } else {
+        let parsed = Parser::new(&allocator, input, SourceType::ts()).parse();
+        // Svelte permits await in binding defaults, a recoverable error in parameter syntax.
+        if !parsed.fatal_error && parsed.program.body.len() == 1 {
+            return true;
+        }
+        parsed.diagnostics
+    };
+    for diagnostic in &diagnostics {
+        for label in &diagnostic.labels {
+            if let Some(position) = (label.offset() as usize).checked_sub(prefix.len())
+                && position < source.len()
+            {
+                candidates.push(offset + position);
+            }
+        }
+    }
+    false
 }
 
 #[cfg(test)]
@@ -884,7 +1102,45 @@ let {json}: {json: string} = $props();
         }
     }
     #[test]
-    fn test_expression_tokenization_chunk_boundaries() {
+    fn test_script_after_svelte_binding_headers() {
+        for markup in [
+            "{#await promise then}<p>done</p>{/await}",
+            "{#await promise catch }<p>failed</p>{/await}",
+            "{#await promise}{:then {x = '<textarea>'}}<p>done</p>{:catch {message = '<textarea>'}}<p>failed</p>{/await}",
+            "{@const {x = '<textarea>'} = value}",
+            "{#if true}{@const x = await Promise.resolve('<textarea>')}{/if}",
+            "{#each items as {x = await Promise.resolve('<textarea>')}}{/each}",
+            "{#await p then {x = await Promise.resolve('<textarea>')}}{/await}",
+            "{#await p}{:then {x = await Promise.resolve('<textarea>')}}{/await}",
+            "{#each (items)as {x = '<textarea>'}}<p>hi</p>{/each}",
+            "{#snippet content<T>(x: T)}<p>hi</p>{/snippet}",
+        ] {
+            let source_text = format!("{markup}<script lang='ts'>debugger;</script>");
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "debugger;", "{source_text}");
+        }
+    }
+
+    #[test]
+    fn test_script_after_large_header_literals_and_comments() {
+        let text = "as } ( ".repeat(4096);
+        for markup in [
+            format!("{{#each fn('{text}') as item}}<p>hi</p>{{/each}}"),
+            format!(
+                "{{#each fn((x: string) => x) as {{x /* {text} */ = '<textarea>'}}}}<p>hi</p>{{/each}}"
+            ),
+            format!("{{#each items as {{'{text}': x = '<textarea>'}}, i (i)}}<p>hi</p>{{/each}}"),
+        ] {
+            let source_text = format!("{markup}<script lang='ts'>debugger;</script>");
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1);
+            assert_eq!(sources[0].source_text, "debugger;");
+        }
+    }
+
+    #[test]
+    fn test_expression_parsing_chunk_boundaries() {
         for len in [120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 255, 256, 257] {
             for expression in [
                 format!("'{}<textarea>'", "a".repeat(len)),

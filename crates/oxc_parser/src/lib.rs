@@ -482,31 +482,6 @@ mod parser_parse {
         }
     }
 
-    impl<'a> Parser<'a, TokensParserConfig> {
-        /// Collect tokens read while parsing an expression prefix, including its next token.
-        ///
-        /// Fatal errors may stop tokenization before the expression ends. The final token may
-        /// be `Eof` or `Undetermined`. Syntax errors are not returned;
-        /// embedded-language scanners can resume after grammar that is not JavaScript.
-        pub fn tokenize_expression_prefix(self) -> ArenaVec<'a, Token> {
-            let mut parser = ParserImpl::<TokensParserConfig>::new(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                self.config,
-                UniquePromise::new(),
-            );
-            parser.bump_any();
-            let _ = parser.parse_expr();
-            let mut tokens = parser.lexer.take_tokens();
-            if let Some(error) = &parser.fatal_error {
-                tokens.retain(|token| token.end() <= error.token_end);
-            }
-            tokens
-        }
-    }
-
     // ===========================================================================
     // Non-generic parse helpers, one per known `ParserConfig`.
     //
@@ -1097,40 +1072,6 @@ mod test {
         let source_type = SourceType::default();
         for source in ["a b", "a;", "let x = 1"] {
             assert!(Parser::new(&allocator, source, source_type).parse_expression().is_err());
-        }
-    }
-
-    #[test]
-    fn expression_prefix_tokens_preserve_boundaries_and_errors() {
-        let allocator = Allocator::default();
-        for source in [
-            "value / 2}",
-            "count++ / 2}",
-            "object.in / 2}",
-            "值 / 2}",
-            "`<script>${`nested ${value as string}`}</script>`}",
-            "value /* } */}",
-            "value // comment\u{2028}}",
-            "value // comment\u{2029}}",
-        ] {
-            let tokens = Parser::new(&allocator, source, SourceType::ts())
-                .with_config(TokensParserConfig)
-                .tokenize_expression_prefix();
-            let last = tokens.last().unwrap();
-            assert_eq!(last.kind(), Kind::RCurly, "{source}");
-            assert_eq!(last.end() as usize, source.len(), "{source}");
-        }
-        for (source, expected) in [
-            ("items as {value = '<textarea>'}}", Kind::Eq),
-            ("if value}", Kind::If),
-            ("'unterminated", Kind::Undetermined),
-            ("value", Kind::Eof),
-            ("`a${value +   ", Kind::Eof),
-        ] {
-            let tokens = Parser::new(&allocator, source, SourceType::ts())
-                .with_config(TokensParserConfig)
-                .tokenize_expression_prefix();
-            assert_eq!(tokens.last().unwrap().kind(), expected, "{source}");
         }
     }
 
