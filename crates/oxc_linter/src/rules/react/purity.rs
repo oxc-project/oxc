@@ -45,6 +45,13 @@ declare_react_compiler_lint!(
     ///   return <button onClick={() => setRand(Math.random())}>{rand}</button>;
     /// }
     ///
+    /// function Component(form) {
+    ///   const onSubmit = (data) => {
+    ///     save({ ...data, createdAt: new Date() });
+    ///   };
+    ///   return <form onSubmit={form.handleSubmit(onSubmit)} />;
+    /// }
+    ///
     /// async function Posts({ posts }) {
     ///   return <ul>{posts.map(post => <li key={post.id}>{Date.now()}</li>)}</ul>;
     /// }
@@ -87,6 +94,53 @@ function Component(props) {
   return <div>{props.text}</div>;
 }
 ",
+        // Event handlers are not executed during render (#29094).
+        // Regression from #26894, which started treating `new Date()` as impure.
+        "
+function Component() {
+  return <form onSubmit={() => { new Date(); }} />;
+}
+",
+        "
+function Component() {
+  return <form onSubmit={() => { Date.now(); }} />;
+}
+",
+        "
+function Component() {
+  return <button onClick={() => Math.random()} />;
+}
+",
+        "
+function Component(form) {
+  const onSubmit = async (formData) => {
+    await create({
+      ...formData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    Date.now();
+  };
+  return <form onSubmit={form.handleSubmit(onSubmit)} />;
+}
+",
+        "
+function Component() {
+  function onSubmit() {
+    new Date();
+    Date.now();
+  }
+  return <form onSubmit={onSubmit} />;
+}
+",
+        "
+function Component({ items }) {
+  function handlePick(item) {
+    console.log(item, Date.now());
+  }
+  return <div>{items.map((item) => <button key={item} onClick={() => handlePick(item)} />)}</div>;
+}
+",
     ];
 
     let fail = vec![
@@ -107,6 +161,29 @@ function Component() {
   const time = new Date().getTime();
   const year = new Date().getFullYear();
   return <Foo date={date} time={time} year={year} />;
+}
+",
+        // Callbacks invoked during render are still impure.
+        "
+function Component(items) {
+  return <div>{items.map(() => Date.now())}</div>;
+}
+",
+        "
+function Component(items) {
+  return <div>{items.filter(() => new Date()).length}</div>;
+}
+",
+        "
+function Component(items) {
+  const getTime = () => new Date();
+  return <div>{items.map(() => getTime())}</div>;
+}
+",
+        "
+function Component() {
+  const getTime = () => Date.now();
+  return <div>{getTime()}</div>;
 }
 ",
     ];
