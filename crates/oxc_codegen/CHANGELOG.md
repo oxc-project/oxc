@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- c00dc61 codegen: Keep one source map mapping per generated position (#28844) (YT)
+- 1e57a4e codegen: Print infinite numeric literals as `1e400` instead of `Infinity` (#28812) (Dominic Elm)
+- 3fd78d7 codegen: Preserve names in duplicate source mappings (#26051) (camc314)
+
+### ⚡ Performance
+
+- 7761a39 codegen: Remove redundant sourcemap buffer shrinks (#28893) (Dunqing)
+- 4da1752 codegen: Use SWAR scanning and shared column tables (#28939) (Dunqing)
+- 732a8e4 codegen: Skip repeated word scans for sourcemap tails (#28869) (Dunqing)
+- 6972243 codegen: Accelerate sourcemap line scanning (#28400) (codspeed)
+
 ## [0.156.0] - 2026-10-27
 
 ### ⚡ Performance
