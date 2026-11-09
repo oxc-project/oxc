@@ -27,6 +27,10 @@ name = "parser"
 harness = false
 
 [[bench]]
+name = "comment_swar"
+harness = false
+
+[[bench]]
 name = "transformer"
 harness = false
 
@@ -143,6 +147,7 @@ react_compiler = [
 ]
 
 [dev-dependencies]
+codspeed-criterion-compat = { version = "=4.7.0", default-features = false, features = ["cargo_bench_support"] }
 rustc-hash = { workspace = true }
 
 [package.metadata.cargo-shear]
