@@ -61,7 +61,7 @@
 //!   - [`BASELINE`] is only an [`Avx2`] or a [`Neon`] when that feature set is enabled
 //!     at compile time, which guarantees it's available.
 //!     Otherwise it's a [`Generic`], which guarantees nothing.
-//!   - `CpuPrivate::DYN_CPU` holds an instance of the type.
+//!   - `CpuPrivate::DISPATCH` holds an instance of the type, on platforms where it can exist.
 //!     The trait is private, so only code in this module can read it.
 //!     Only [`DynCpu::from`] reads it, and it takes an instance of the same type,
 //!     so it only gives one to code which already has one.
@@ -84,6 +84,8 @@ use std::{
     fmt::{self, Debug},
     mem,
 };
+
+use oxc_data_structures::unreachable_unchecked;
 
 mod detect;
 
@@ -110,22 +112,51 @@ pub trait Cpu: CpuPrivate + Copy {
 
 /// Private trait to guarantee that only types defined in this module can implement [`Cpu`].
 ///
-/// It also holds [`DYN_CPU`], for [`DynCpu::from`].
+/// It also holds [`DISPATCH`], for [`DynCpu::from`].
 ///
-/// [`DYN_CPU`] is on this trait, not on [`Cpu`], so code outside this module can't read it.
+/// [`DISPATCH`] is on this trait, not on [`Cpu`], so code outside this module can't read it.
 /// It holds an instance of the type, so if code outside this module could read it,
 /// that would allow bypassing CPU feature detection.
 ///
-/// [`DYN_CPU`]: Self::DYN_CPU
-trait CpuPrivate {
-    /// The [`DynCpu`] which [`DynCpu::from`] returns for this type.
-    ///
-    /// [`Avx2`], [`Neon`] and [`Generic`] each have only one value, so this can hold it.
-    /// `None` for [`DynCpu`] itself, and for each of them on platforms where it's uninhabited.
-    const DYN_CPU: Option<DynCpu>;
+/// # SAFETY
+///
+/// The unsafe code in [`DynCpu::from`] relies on [`DISPATCH`] being correct.
+/// Each implementation must set it to:
+///
+/// - [`Dispatch::Dynamic`] only for [`DynCpu`].
+/// - [`Dispatch::Static`] only for a type which can exist on this platform,
+///   holding the [`DynCpu`] variant for that same type.
+/// - [`Dispatch::Never`] only for a type which is uninhabited on this platform.
+///
+/// For [`Avx2`], [`Neon`] and [`Generic`], that means the `cfg_select!` in the implementation
+/// must match the one on the type's field.
+///
+/// [`DISPATCH`]: Self::DISPATCH
+unsafe trait CpuPrivate {
+    /// How this type is dispatched on this platform. See [`Dispatch`].
+    const DISPATCH: Dispatch;
 }
 
-// `DynCpu`'s variants exist on all architectures, but variants impossible on each architecture
+/// How a [`Cpu`] type is dispatched on this platform.
+///
+/// [`DynCpu::from`] uses it to get the [`DynCpu`] for a value of the type.
+enum Dispatch {
+    /// [`DynCpu`], whose feature set is chosen at runtime.
+    ///
+    /// [`DynCpu::from`] returns the [`DynCpu`] it's given.
+    Dynamic,
+    /// A type which always means the same feature set, and which can exist on this platform.
+    ///
+    /// Holds the [`DynCpu`] for the type, which [`DynCpu::from`] returns.
+    /// [`Avx2`], [`Neon`] and [`Generic`] each have only one value, so this can hold it.
+    Static(DynCpu),
+    /// A type which is uninhabited on this platform, so is never dispatched.
+    ///
+    /// No value of the type can exist, so [`DynCpu::from`] can never be called with one.
+    Never,
+}
+
+// All `DynCpu`'s variants exist on all architectures, but variants impossible on each architecture
 // are uninhabited. This allows code for all architectures to be compiled and linted on any machine,
 // and Rust Analyzer sees all the code for all archs "as one".
 // But the uninhabited variants allow compiler to apply dead code removal to code paths
@@ -224,19 +255,26 @@ impl DynCpu {
     #[expect(clippy::inline_always, reason = "folds to a constant, except for `DynCpu`")]
     #[inline(always)]
     pub const fn from<C: Cpu>(cpu: C) -> DynCpu {
-        match C::DYN_CPU {
-            Some(dyn_cpu) => dyn_cpu,
-            // SAFETY: `DYN_CPU` is `None` only for `DynCpu`, and for CPU types which are uninhabited.
-            // No value of an uninhabited type exists, so `cpu` must be a `DynCpu`.
-            None => unsafe { mem::transmute_copy::<C, DynCpu>(&cpu) },
+        match C::DISPATCH {
+            Dispatch::Dynamic => {
+                // SAFETY: `C::DISPATCH` is only `Dynamic` when `C` is `DynCpu`
+                unsafe { mem::transmute_copy::<C, DynCpu>(&cpu) }
+            }
+            Dispatch::Static(dyn_cpu) => dyn_cpu,
+            Dispatch::Never => {
+                // SAFETY: `C::DISPATCH` is only `Never` when `C` is uninhabited,
+                // so `cpu` can't exist, and this can't be reached
+                unsafe { unreachable_unchecked!() };
+            }
         }
     }
 }
 
 impl Cpu for DynCpu {}
 
-impl CpuPrivate for DynCpu {
-    const DYN_CPU: Option<DynCpu> = None;
+// SAFETY: This is `DynCpu`, the only type which can be `Dispatch::Dynamic`
+unsafe impl CpuPrivate for DynCpu {
+    const DISPATCH: Dispatch = Dispatch::Dynamic;
 }
 
 // Not derived, which would print the variant's field too, e.g. `Avx2(Avx2(()))`
@@ -262,10 +300,12 @@ pub struct Avx2(
 
 impl Cpu for Avx2 {}
 
-impl CpuPrivate for Avx2 {
-    const DYN_CPU: Option<DynCpu> = cfg_select! {
-        target_arch = "x86_64" => Some(DynCpu::Avx2(Avx2(()))),
-        _ => None,
+// SAFETY: This `cfg_select!` matches the one on `Avx2`'s field, so `DISPATCH` is `Static`
+// (holding an `Avx2`) where `Avx2` can exist, and `Never` where it can't
+unsafe impl CpuPrivate for Avx2 {
+    const DISPATCH: Dispatch = cfg_select! {
+        target_arch = "x86_64" => Dispatch::Static(DynCpu::Avx2(Avx2(()))),
+        _ => Dispatch::Never,
     };
 }
 
@@ -300,10 +340,14 @@ pub struct Neon(
 
 impl Cpu for Neon {}
 
-impl CpuPrivate for Neon {
-    const DYN_CPU: Option<DynCpu> = cfg_select! {
-        all(target_arch = "aarch64", target_feature = "neon") => Some(DynCpu::Neon(Neon(()))),
-        _ => None,
+// SAFETY: This `cfg_select!` matches the one on `Neon`'s field, so `DISPATCH` is `Static`
+// (holding a `Neon`) where `Neon` can exist, and `Never` where it can't
+unsafe impl CpuPrivate for Neon {
+    const DISPATCH: Dispatch = cfg_select! {
+        all(target_arch = "aarch64", target_feature = "neon") => {
+            Dispatch::Static(DynCpu::Neon(Neon(())))
+        }
+        _ => Dispatch::Never,
     };
 }
 
@@ -346,8 +390,10 @@ pub struct Generic(
 
 impl Cpu for Generic {}
 
-impl CpuPrivate for Generic {
-    const DYN_CPU: Option<DynCpu> = cfg_select! {
+// SAFETY: This `cfg_select!` matches the one on `Generic`'s field, so `DISPATCH` is `Static`
+// (holding a `Generic`) where `Generic` can exist, and `Never` where it can't
+unsafe impl CpuPrivate for Generic {
+    const DISPATCH: Dispatch = cfg_select! {
         not(any(
             all(
                 target_arch = "x86_64",
@@ -355,9 +401,9 @@ impl CpuPrivate for Generic {
             ),
             all(target_arch = "aarch64", target_feature = "neon")
         )) => {
-            Some(DynCpu::Generic(Generic(())))
+            Dispatch::Static(DynCpu::Generic(Generic(())))
         }
-        _ => None,
+        _ => Dispatch::Never,
     };
 }
 

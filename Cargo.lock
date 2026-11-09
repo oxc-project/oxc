@@ -2660,6 +2660,7 @@ dependencies = [
 name = "oxc_simd"
 version = "0.0.0"
 dependencies = [
+ "oxc_data_structures",
  "oxc_simd_macros",
 ]
 
