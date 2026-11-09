@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 use oxc_str::JSStr;
 
 use crate::{
-    DetermineValueType, ToBigInt, ToIntegerIndex, ValueType,
+    DetermineValueType, ToBigInt, ToIntegerIndex, ToJsString, ValueType,
     to_numeric::ToNumeric,
     to_primitive::{ToPrimitive, ToPrimitiveResult},
 };
@@ -11,7 +11,8 @@ use super::known_globals::{
     is_error_constructor, is_known_global_constructor, is_known_global_identifier,
     is_known_global_property, is_known_global_property_deep, is_pure_callable_constructor,
     is_pure_collection_constructor, is_pure_global_function, is_pure_global_method_call,
-    is_typed_array_constructor, is_unconditionally_pure_constructor, is_valid_regexp,
+    is_typed_array_constructor, is_unconditionally_pure_constructor, is_valid_array_buffer,
+    is_valid_regexp,
 };
 use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEffectsContext};
 
@@ -649,6 +650,20 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
                 {
                     return true;
                 }
+                if matches!(
+                    name,
+                    "decodeURI" | "decodeURIComponent" | "encodeURI" | "encodeURIComponent"
+                ) {
+                    return self.arguments.first().is_some_and(|arg| {
+                        arg.as_expression().and_then(|expr| expr.to_js_string(ctx)).is_none_or(
+                            |value| {
+                                // Percent escapes need UTF-8 validation before decoding can be discarded.
+                                matches!(name, "decodeURI" | "decodeURIComponent")
+                                    && value.contains('%')
+                            },
+                        )
+                    });
+                }
                 return false;
             }
         }
@@ -851,7 +866,7 @@ fn new_expr_first_arg_may_be_symbol<'a>(
 /// Check that the first argument won't produce a Symbol or BigInt from `ToPrimitive`.
 ///
 /// Like [`new_expr_first_arg_may_be_symbol`], but also checks for BigInt because
-/// `ToNumber(BigInt)` throws TypeError. Used for `new Date(arg)`, `new ArrayBuffer(arg)`.
+/// `ToNumber(BigInt)` throws TypeError. Used for `new Date(arg)`.
 /// (`new String(0n)` and `new Number(0n)` do NOT throw — BigInt→String works and
 /// Number constructor converts BigInt→Number.)
 fn new_expr_first_arg_may_be_symbol_or_bigint<'a>(
@@ -884,9 +899,9 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
                 "String" | "Number" => {
                     return new_expr_first_arg_may_be_symbol(self, ctx);
                 }
+                "ArrayBuffer" => return !is_valid_array_buffer(&self.arguments, ctx),
                 // new Date(arg): ToPrimitive then ToNumber — both Symbol and BigInt throw.
-                // new ArrayBuffer(arg): ToIndex → ToNumber — same.
-                "Date" | "ArrayBuffer" => {
+                "Date" => {
                     return new_expr_first_arg_may_be_symbol_or_bigint(self, ctx);
                 }
                 // Error constructors: ToString(msg) throws on Symbol.

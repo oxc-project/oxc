@@ -11,7 +11,40 @@ use oxc_regular_expression::{
     has_unsupported_regular_expression_flags, has_unsupported_regular_expression_pattern,
 };
 
+use oxc_syntax::operator::UnaryOperator;
+
+use crate::{ToNumber, side_effects::MayHaveSideEffects};
+
 use super::context::MayHaveSideEffectsContext;
+
+/// Whether an ArrayBuffer constructor has a known valid length and no options.
+pub fn is_valid_array_buffer<'a>(
+    args: &[Argument<'a>],
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    let value = match args {
+        [] => return true,
+        [arg] => {
+            let Some(expr) = arg.as_expression() else { return false };
+            if expr.may_have_side_effects(ctx) {
+                return false;
+            }
+            match expr {
+                Expression::UnaryExpression(unary) if unary.operator.is_arithmetic() => {
+                    unary.argument.to_number(ctx).map(|value| {
+                        if unary.operator == UnaryOperator::UnaryNegation { -value } else { value }
+                    })
+                }
+                Expression::UnaryExpression(unary) if unary.operator.is_void() => Some(f64::NAN),
+                _ => expr.to_number(ctx),
+            }
+        }
+        _ => return false,
+    };
+    value.is_some_and(|value| {
+        value.is_nan() || (0.0..=9_007_199_254_740_991.0).contains(&value.trunc())
+    })
+}
 
 /// Validate that a RegExp constructor call cannot throw on the target engines.
 ///

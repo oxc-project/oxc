@@ -49,4 +49,20 @@ describe("isolated declaration", () => {
     expect(asyncResult.errors.length).toBe(syncResult.errors.length);
     expect(asyncResult.map).toMatchObject(syncResult.map!);
   });
+
+  it("evaluates enum template literal initializers", () => {
+    const source =
+      'export enum Ev { Prefix = "app", Click = `${Prefix}:click`, Multi = `line1\\nline2`, Num = `x${1}y` }';
+    const result = isolatedDeclarationSync("test.ts", source);
+
+    expect(result.errors).toEqual([]);
+    expect(result.code).toBe(
+      "export declare enum Ev {\n"
+        + '\tPrefix = "app",\n'
+        + '\tClick = "app:click",\n'
+        + '\tMulti = "line1\\nline2",\n'
+        + '\tNum = "x1y"\n'
+        + "}\n",
+    );
+  });
 });

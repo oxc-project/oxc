@@ -108,6 +108,18 @@ pub fn format_to_ir<'a>(
     embedded_in: JsEmbeddedIn,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
+
+    // Fast path: a name, about half of a Vue template's values, prints as written with no parse (`FormatName`)
+    if let Some(content) = print::FormatName::new(allocator, source_text, root) {
+        let js_context = JsFormatContext::new(content.name, source_type, &[], options);
+        let (ir, _) = formatter::build_ir(
+            js_context,
+            session,
+            oxc_formatter_core::Arguments::new(&[oxc_formatter_core::Argument::new(&content)]),
+        );
+        return Ok(EmbeddedIr { ir });
+    }
+
     let (prefix, suffix) = print::root_wrapper(root);
     let wrapped = allocator.alloc_concat_strs_array([prefix, source_text, suffix]);
     let program = parse(allocator, wrapped, source_type)?;

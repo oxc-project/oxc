@@ -12278,10 +12278,10 @@ after transform: ScopeId(10): ["_m_public", "c_public", "e_public", "f_public", 
 rebuilt        : ScopeId(7): ["_m_public", "c_public", "e_public", "f_public", "mi_public", "v_public"]
 Symbol reference IDs mismatch for "m_private":
 after transform: SymbolId(0): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(45), ReferenceId(46), ReferenceId(47), ReferenceId(48), ReferenceId(49), ReferenceId(50), ReferenceId(51), ReferenceId(100), ReferenceId(101)]
-rebuilt        : SymbolId(0): [ReferenceId(20), ReferenceId(21), ReferenceId(43), ReferenceId(44), ReferenceId(45), ReferenceId(46), ReferenceId(47), ReferenceId(85), ReferenceId(86), ReferenceId(87), ReferenceId(88), ReferenceId(89)]
+rebuilt        : SymbolId(0): [ReferenceId(21), ReferenceId(22), ReferenceId(45), ReferenceId(46), ReferenceId(47), ReferenceId(48), ReferenceId(49), ReferenceId(87), ReferenceId(88), ReferenceId(89), ReferenceId(90), ReferenceId(91)]
 Symbol reference IDs mismatch for "m_public":
 after transform: SymbolId(12): [ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(66), ReferenceId(67), ReferenceId(68), ReferenceId(69), ReferenceId(70), ReferenceId(71), ReferenceId(72), ReferenceId(115), ReferenceId(116)]
-rebuilt        : SymbolId(10): [ReferenceId(41), ReferenceId(42), ReferenceId(63), ReferenceId(64), ReferenceId(65), ReferenceId(66), ReferenceId(67), ReferenceId(105), ReferenceId(106), ReferenceId(107), ReferenceId(108), ReferenceId(109)]
+rebuilt        : SymbolId(10): [ReferenceId(43), ReferenceId(44), ReferenceId(65), ReferenceId(66), ReferenceId(67), ReferenceId(68), ReferenceId(69), ReferenceId(107), ReferenceId(108), ReferenceId(109), ReferenceId(110), ReferenceId(111)]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/privacyTopLevelInternalReferenceImportWithExport.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
