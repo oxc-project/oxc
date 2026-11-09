@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint(no-redeclare): 'b' is already defined.
-   ╭─[no_redeclare..cts:1:27]
+   ╭─[no_redeclare..cts:2:13]
  1 │ switch(foo) { case a: var b = 3;
    ·                           ┬
    ·                           ╰── 'b' is already defined.
@@ -14,7 +14,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare..cts:1:16]
  1 │ var a = 3; var a = 10;
    ·     ┬          ┬
    ·     │          ╰── It can not be redeclared here.
@@ -23,7 +23,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare..cts:1:17]
  1 │ var a = {}; var a = [];
    ·     ┬           ┬
    ·     │           ╰── It can not be redeclared here.
@@ -40,7 +40,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:10]
+   ╭─[no_redeclare..cts:1:26]
  1 │ function a() {} function a() {}
    ·          ┬               ┬
    ·          │               ╰── It can not be redeclared here.
@@ -49,7 +49,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare..cts:1:29]
  1 │ var a = function() { }; var a = function() { }
    ·     ┬                       ┬
    ·     │                       ╰── It can not be redeclared here.
@@ -58,7 +58,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare..cts:1:29]
  1 │ var a = function() { }; var a = new Date();
    ·     ┬                       ┬
    ·     │                       ╰── It can not be redeclared here.
@@ -67,7 +67,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare..cts:1:16]
  1 │ var a = 3; var a = 10; var a = 15;
    ·     ┬          ┬
    ·     │          ╰── It can not be redeclared here.
@@ -76,7 +76,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:16]
+   ╭─[no_redeclare..cts:1:28]
  1 │ var a = 3; var a = 10; var a = 15;
    ·                ┬           ┬
    ·                │           ╰── It can not be redeclared here.
@@ -85,7 +85,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare..cts:1:12]
  1 │ var a; var a;
    ·     ┬      ┬
    ·     │      ╰── It can not be redeclared here.
@@ -94,7 +94,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:12]
+   ╭─[no_redeclare..cts:1:19]
  1 │ export var a; var a;
    ·            ┬      ┬
    ·            │      ╰── It can not be redeclared here.
@@ -103,7 +103,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:24]
+   ╭─[no_redeclare..cts:1:31]
  1 │ class C { static { var a; var a; } }
    ·                        ┬      ┬
    ·                        │      ╰── It can not be redeclared here.
@@ -112,7 +112,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:24]
+   ╭─[no_redeclare..cts:1:33]
  1 │ class C { static { var a; { var a; } } }
    ·                        ┬        ┬
    ·                        │        ╰── It can not be redeclared here.
@@ -121,7 +121,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:26]
+   ╭─[no_redeclare..cts:1:35]
  1 │ class C { static { { var a; } var a; } }
    ·                          ┬        ┬
    ·                          │        ╰── It can not be redeclared here.
@@ -130,7 +130,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:26]
+   ╭─[no_redeclare..cts:1:37]
  1 │ class C { static { { var a; } { var a; } } }
    ·                          ┬          ┬
    ·                          │          ╰── It can not be redeclared here.
@@ -160,7 +160,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name to avoid shadowing the built-in global.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare..cts:1:13]
  1 │ var a; var {a = 0, b: Object = 0} = {};
    ·     ┬       ┬
    ·     │       ╰── It can not be redeclared here.
@@ -176,7 +176,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name to avoid shadowing the built-in global.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare..cts:1:13]
  1 │ var a; var {a = 0, b: globalThis = 0} = {};
    ·     ┬       ┬
    ·     │       ╰── It can not be redeclared here.
@@ -192,7 +192,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name to avoid shadowing the built-in global.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:20]
+   ╭─[no_redeclare..cts:1:27]
  1 │ function f() { var a; var a; }
    ·                    ┬      ┬
    ·                    │      ╰── It can not be redeclared here.
@@ -201,7 +201,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:12]
+   ╭─[no_redeclare..cts:1:28]
  1 │ function f(a, b = 1) { var a; var b;}
    ·            ┬               ┬
    ·            │               ╰── It can not be redeclared here.
@@ -210,7 +210,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'b' is already defined.
-   ╭─[no_redeclare..cts:1:15]
+   ╭─[no_redeclare..cts:1:35]
  1 │ function f(a, b = 1) { var a; var b;}
    ·               ┬                   ┬
    ·               │                   ╰── It can not be redeclared here.
@@ -219,7 +219,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:20]
+   ╭─[no_redeclare..cts:1:39]
  1 │ function f() { var a; if (test) { var a; } }
    ·                    ┬                  ┬
    ·                    │                  ╰── It can not be redeclared here.
@@ -228,7 +228,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:10]
+   ╭─[no_redeclare..cts:1:13]
  1 │ for (var a, a;;);
    ·          ┬  ┬
    ·          │  ╰── It can not be redeclared here.
@@ -251,7 +251,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name to avoid shadowing the built-in global.
 
   ⚠ eslint(no-redeclare): 'foo' is already defined.
-   ╭─[no_redeclare..cts:1:6]
+   ╭─[no_redeclare..cts:1:60]
  1 │ type foo = 1; export function foo(): void; export function foo() { }
    ·      ─┬─                                                   ─┬─
    ·       │                                                     ╰── It can not be redeclared here.
@@ -268,7 +268,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:10]
+   ╭─[no_redeclare..cts:1:26]
  1 │ function A() {} function A() {} namespace A {}
    ·          ┬               ┬
    ·          │               ╰── It can not be redeclared here.
@@ -277,7 +277,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:6]
+   ╭─[no_redeclare..cts:1:31]
  1 │ enum A {} namespace A {} enum A {}
    ·      ┬                        ┬
    ·      │                        ╰── It can not be redeclared here.
@@ -286,17 +286,8 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:10]
+   ╭─[no_redeclare..cts:1:23]
  1 │ function A() {} class A {}
-   ·          ┬            ┬
-   ·          │            ╰── It can not be redeclared here.
-   ·          ╰── 'A' is already defined.
-   ╰────
-  help: Use a different variable name or remove the duplicate declaration.
-
-  ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:10]
- 1 │ function A() {} class A {} namespace A {}
    ·          ┬            ┬
    ·          │            ╰── It can not be redeclared here.
    ·          ╰── 'A' is already defined.
@@ -306,6 +297,15 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-redeclare): 'A' is already defined.
    ╭─[no_redeclare..cts:1:23]
  1 │ function A() {} class A {} namespace A {}
+   ·          ┬            ┬
+   ·          │            ╰── It can not be redeclared here.
+   ·          ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:38]
+ 1 │ function A() {} class A {} namespace A {}
    ·                       ┬              ┬
    ·                       │              ╰── It can not be redeclared here.
    ·                       ╰── 'A' is already defined.
@@ -313,7 +313,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'something' is already defined.
-   ╭─[no_redeclare..cts:1:6]
+   ╭─[no_redeclare..cts:1:32]
  1 │ type something = string; const something = 2;
    ·      ────┬────                 ────┬────
    ·          │                         ╰── It can not be redeclared here.
@@ -322,7 +322,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:11]
+   ╭─[no_redeclare..cts:1:22]
  1 │ interface A {} const A = 2;
    ·           ┬          ┬
    ·           │          ╰── It can not be redeclared here.
@@ -339,7 +339,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:10]
+   ╭─[no_redeclare..cts:1:23]
  1 │ function A() {} class A {} namespace A {}
    ·          ┬            ┬
    ·          │            ╰── It can not be redeclared here.
@@ -348,7 +348,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:23]
+   ╭─[no_redeclare..cts:1:38]
  1 │ function A() {} class A {} namespace A {}
    ·                       ┬              ┬
    ·                       │              ╰── It can not be redeclared here.
@@ -387,7 +387,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:30]
+   ╭─[no_redeclare..cts:1:61]
  1 │ function A(): void; function A() {} namespace A {} function A() {}
    ·                              ┬                              ┬
    ·                              │                              ╰── It can not be redeclared here.
@@ -396,7 +396,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:11]
+   ╭─[no_redeclare..cts:1:26]
  1 │ interface A {} interface A {}
    ·           ┬              ┬
    ·           │              ╰── It can not be redeclared here.
@@ -405,7 +405,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:11]
+   ╭─[no_redeclare..cts:1:22]
  1 │ interface A {} class A {}
    ·           ┬          ┬
    ·           │          ╰── It can not be redeclared here.
@@ -414,7 +414,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:7]
+   ╭─[no_redeclare..cts:1:22]
  1 │ class A {} namespace A {}
    ·       ┬              ┬
    ·       │              ╰── It can not be redeclared here.
@@ -423,7 +423,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:11]
+   ╭─[no_redeclare..cts:1:22]
  1 │ interface A {} class A {} namespace A {}
    ·           ┬          ┬
    ·           │          ╰── It can not be redeclared here.
@@ -432,7 +432,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:22]
+   ╭─[no_redeclare..cts:1:37]
  1 │ interface A {} class A {} namespace A {}
    ·                      ┬              ┬
    ·                      │              ╰── It can not be redeclared here.
@@ -441,7 +441,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:6]
+   ╭─[no_redeclare..cts:1:21]
  1 │ enum A {} namespace A {}
    ·      ┬              ┬
    ·      │              ╰── It can not be redeclared here.
@@ -450,7 +450,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:10]
+   ╭─[no_redeclare..cts:1:27]
  1 │ function A() {} namespace A {}
    ·          ┬                ┬
    ·          │                ╰── It can not be redeclared here.
@@ -459,7 +459,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:11]
+   ╭─[no_redeclare..cts:1:26]
  1 │ namespace A {} namespace A {}
    ·           ┬              ┬
    ·           │              ╰── It can not be redeclared here.
@@ -468,7 +468,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:11]
+   ╭─[no_redeclare..cts:1:26]
  1 │ interface A {} namespace A {}
    ·           ┬              ┬
    ·           │              ╰── It can not be redeclared here.
@@ -477,7 +477,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:11]
+   ╭─[no_redeclare..cts:1:47]
  1 │ namespace A { export const a = 1; } namespace A { export const b = 2; }
    ·           ┬                                   ┬
    ·           │                                   ╰── It can not be redeclared here.
@@ -486,7 +486,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:11]
+   ╭─[no_redeclare..cts:1:22]
  1 │ namespace A {} class A {} interface A {}
    ·           ┬          ┬
    ·           │          ╰── It can not be redeclared here.
@@ -495,7 +495,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:22]
+   ╭─[no_redeclare..cts:1:37]
  1 │ namespace A {} class A {} interface A {}
    ·                      ┬              ┬
    ·                      │              ╰── It can not be redeclared here.
@@ -504,7 +504,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:11]
+   ╭─[no_redeclare..cts:1:25]
  1 │ namespace A {} function A() {}
    ·           ┬             ┬
    ·           │             ╰── It can not be redeclared here.
@@ -513,7 +513,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:11]
+   ╭─[no_redeclare..cts:1:21]
  1 │ namespace A {} enum A {}
    ·           ┬         ┬
    ·           │         ╰── It can not be redeclared here.
@@ -522,7 +522,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:15]
+   ╭─[no_redeclare..cts:1:30]
  1 │ declare class A {} interface A {}
    ·               ┬              ┬
    ·               │              ╰── It can not be redeclared here.
@@ -531,7 +531,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:16]
+   ╭─[no_redeclare..cts:1:33]
  1 │ async function A() {} namespace A {}
    ·                ┬                ┬
    ·                │                ╰── It can not be redeclared here.
@@ -540,7 +540,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'A' is already defined.
-   ╭─[no_redeclare..cts:1:54]
+   ╭─[no_redeclare..cts:1:71]
  1 │ function A(): string; function A(): number; function A() {} namespace A {}
    ·                                                      ┬                ┬
    ·                                                      │                ╰── It can not be redeclared here.
