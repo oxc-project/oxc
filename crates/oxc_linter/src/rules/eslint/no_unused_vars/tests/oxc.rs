@@ -544,6 +544,10 @@ fn test_vars_destructure() {
 #[test]
 fn test_vars_catch() {
     let pass = vec![
+        (
+            "try {} catch (x) { try {} catch (x) { var x = 1; console.log(x); } console.log(x); }",
+            Some(json!([{ "caughtErrors": "all" }])),
+        ),
         ("try {} catch (e) { throw e }", None),
         ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "none" }]))),
         (
@@ -563,6 +567,11 @@ fn test_vars_catch() {
     ];
 
     let fail = vec![
+        // https://github.com/oxc-project/oxc/issues/29076: only the outer catch is unused.
+        (
+            "try {} catch (x) { try {} catch (x) { var x = 1; console.log(x); } }",
+            Some(json!([{ "caughtErrors": "all" }])),
+        ),
         ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "all" }]))),
         ("try {} catch(_) { }", None),
         (
