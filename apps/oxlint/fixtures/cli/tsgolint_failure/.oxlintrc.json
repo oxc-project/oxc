@@ -1,0 +1,9 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "typescript/no-floating-promises": "error",
+    "no-debugger": "error"
+  }
+}

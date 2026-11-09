@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 📚 Documentation
+
+- 6448a54 napi/parser: Correct parser options and usage guidance (#29065) (camc314)
+- 6989796 parser: Update TS-ESTree import differences (#29061) (camc314)
+
 ## [0.157.0] - 2026-11-02
 
 ### 🐛 Bug Fixes
