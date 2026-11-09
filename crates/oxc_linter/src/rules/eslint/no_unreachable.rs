@@ -306,6 +306,21 @@ fn test() {
         "function f() { for (;;) { B: { break B; } return 'ok'; } }",
         "function f() { for (;;) { B: C: { continue; } } }",
         "function f() { do { continue; } while (condition); after(); }",
+        // `continue` in a do-while jumps to the condition, which can exit the loop (#28946).
+        "
+        export function retry(task, max) {
+            let attempt = 0;
+            do {
+                try {
+                    return task(attempt);
+                } catch {
+                    attempt++;
+                    continue;
+                }
+            } while (attempt < max);
+            throw new Error('gave up after ' + attempt + ' attempts');
+        }
+        ",
         "function f() { a: b: do { while (other) { continue a; } } while (condition); after(); }",
         "function q3() { var n = 0; a: b: c: do { n++; continue b; } while (n < 3); return n; }",
     ];
