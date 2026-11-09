@@ -9207,6 +9207,9 @@
         "unicorn/no-invalid-fetch-options": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-invalid-intl-options": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-invalid-remove-event-listener": {
           "$ref": "#/definitions/RuleNoConfig"
         },

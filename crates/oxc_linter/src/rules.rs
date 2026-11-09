@@ -599,6 +599,7 @@ pub(crate) mod unicorn {
     pub mod no_instanceof_array;
     pub mod no_instanceof_builtins;
     pub mod no_invalid_fetch_options;
+    pub mod no_invalid_intl_options;
     pub mod no_invalid_remove_event_listener;
     pub mod no_length_as_slice_end;
     pub mod no_lonely_if;
