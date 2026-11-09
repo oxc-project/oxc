@@ -1,7 +1,15 @@
 parser_misc Summary:
 AST Parsed     : 135/135 (100.00%)
 Positive Passed: 135/135 (100.00%)
-Negative Passed: 271/271 (100.00%)
+Negative Passed: 272/272 (100.00%)
+
+  × TS(1029): 'declare' modifier must precede 'abstract' modifier.
+   ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
+ 1 │ abstract class C {
+ 2 │     abstract declare p: string;
+   ·              ───────
+ 3 │ }
+   ╰────
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
