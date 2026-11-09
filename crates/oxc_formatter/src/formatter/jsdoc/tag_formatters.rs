@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use super::{
     embedded::{
@@ -9,7 +10,7 @@ use super::{
     mdast_serialize::{format_description_mdast, normalize_emphasis_markers},
     normalize::{
         capitalize_first, normalize_type, normalize_type_preserve_quotes, normalize_type_return,
-        strip_jsdoc_stars_preserve_newlines, strip_optional_type_suffix,
+        strip_jsdoc_star_prefixes, strip_optional_type_suffix,
     },
     serialize::{
         JsdocFormatter, format_default_value, is_known_tag, is_named_generic_tag,
@@ -21,7 +22,7 @@ use super::{
 
 /// Replace standalone JSDoc `*` type syntax with `any` in a multiline type string.
 ///
-/// After JSDoc `*` line prefixes have been stripped (via `strip_jsdoc_stars_preserve_newlines`),
+/// After JSDoc `*` line prefixes have been stripped (via `strip_jsdoc_star_prefixes`),
 /// remaining `*` characters represent the JSDoc "any" type (e.g., `"profileImageLink": *,`).
 /// This replaces them so the TS parser can handle the type expression.
 /// Matches the upstream behavior of `type.replace(/\*/g, " any ")` in `convertToModernType()`.
@@ -256,7 +257,7 @@ impl JsdocFormatter<'_, '_> {
             // `parsed()` calls `.trim()` which collapses `{\n\tfoo\n}` to `foo`.
             // Using raw() preserves the original structure for this check.
             let raw_inner = &tp.raw()[1..tp.raw().len() - 1];
-            let raw_was_multiline = raw_inner.contains('\n');
+            let raw_was_multiline = raw_inner.contains(is_line_terminator);
             if !raw_type.is_empty() {
                 let (type_to_normalize, type_optional) = strip_optional_type_suffix(raw_type);
                 is_type_optional = type_optional;
@@ -271,23 +272,21 @@ impl JsdocFormatter<'_, '_> {
                 // This matches upstream where comment-parser strips `*` prefixes but
                 // preserves newlines before passing to formatType().
                 if !preserve_quotes {
-                    let was_multiline = raw_was_multiline || type_to_normalize.contains('\n');
-                    // Use the untrimmed raw_inner for star-stripping when the type was
-                    // multiline — parsed()/trim() may have collapsed the newlines.
-                    let multiline_source = if raw_was_multiline && !type_to_normalize.contains('\n')
-                    {
-                        raw_inner
-                    } else {
-                        type_to_normalize
-                    };
                     // For multiline types, build a formatter input that preserves
                     // newlines but converts JSDoc-specific syntax (`*` → `any`) so
                     // the TS parser can handle it. For single-line types, use the
                     // normalized string directly.
-                    let formatter_input: Cow<'_, str> = if was_multiline {
+                    let formatter_input: Cow<'_, str> = if raw_was_multiline {
+                        // Use the untrimmed raw_inner for star-stripping
+                        // when parsed()/trim() collapsed the newlines.
+                        let multiline_source = if type_to_normalize.contains(is_line_terminator) {
+                            type_to_normalize
+                        } else {
+                            raw_inner
+                        };
                         // Strip JSDoc `*` line prefixes while preserving newlines,
                         // then replace standalone `*` type syntax with `any`.
-                        let star_stripped = strip_jsdoc_stars_preserve_newlines(multiline_source);
+                        let star_stripped = strip_jsdoc_star_prefixes(multiline_source, '\n');
                         Cow::Owned(replace_jsdoc_star_type(&star_stripped).into_owned())
                     } else {
                         Cow::Borrowed(normalized_type_str.as_ref())
@@ -303,7 +302,7 @@ impl JsdocFormatter<'_, '_> {
                         // collapsed type + tag prefix exceeds wrap_width. If so,
                         // keep the multi-line version to prevent overlong lines
                         // that merge with subsequent tags during wrapping.
-                        if was_multiline
+                        if raw_was_multiline
                             && !formatted.contains('\n')
                             && formatter_input.contains('\n')
                         {
@@ -318,7 +317,7 @@ impl JsdocFormatter<'_, '_> {
                         } else {
                             normalized_type_str = Cow::Owned(formatted);
                         }
-                    } else if was_multiline {
+                    } else if raw_was_multiline {
                         // Formatter failed (parse error) but type was multi-line;
                         // use the star-stripped version with newlines preserved.
                         // For types that are only "multiline" due to JSDoc formatting
@@ -338,6 +337,12 @@ impl JsdocFormatter<'_, '_> {
         let mut default_value: Option<&str> = None;
         if let Some(np) = &name_part {
             let name_raw = np.raw();
+            // A multi-line `[name=default]` keeps its lines as written (`tests/jsdoc/upstream-jsdoc-bugs.md` #15)
+            let name_raw = if name_raw.contains(is_line_terminator) {
+                self.session.allocator().alloc_str(&strip_jsdoc_star_prefixes(name_raw, '\n'))
+            } else {
+                name_raw
+            };
             if is_type_optional && !name_raw.starts_with('[') {
                 name_str = self.session.allocator().alloc_concat_strs_array(["[", name_raw, "]"]);
             } else if name_raw.starts_with('[') && name_raw.ends_with(']') {
@@ -393,8 +398,9 @@ impl JsdocFormatter<'_, '_> {
             tag_line.push_str(name_str);
         }
 
-        // Multi-line type: push each line of the tag separately, then handle
+        // Multi-line type or name: push each line of the tag separately, then handle
         // name + description on subsequent lines.
+        // TODO: Upstream still appends `Default is` and capitalizes the description here
         if tag_line.contains('\n') {
             let desc_raw = comment_part.parsed_preserving_whitespace();
             let desc_raw = desc_raw.trim();
@@ -735,9 +741,9 @@ impl JsdocFormatter<'_, '_> {
                     && has_no_space_before_type
                     && !normalized_type_str.starts_with('{');
                 if !skip_formatter {
-                    let was_multiline = raw_type.contains('\n');
+                    let was_multiline = raw_type.contains(is_line_terminator);
                     let star_stripped = if was_multiline {
-                        Some(strip_jsdoc_stars_preserve_newlines(raw_type))
+                        Some(strip_jsdoc_star_prefixes(raw_type, '\n'))
                     } else {
                         None
                     };

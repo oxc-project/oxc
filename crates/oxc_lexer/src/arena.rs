@@ -8,8 +8,8 @@ use crate::{
     token::{SPAN_SENTINELS, StringSpan, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
 };
 
-#[repr(C)]
 #[derive(Clone, Copy, Default, Debug)]
+#[repr(C)]
 pub struct LineEntry {
     pub off: u32,
     pub line: u32,
@@ -31,6 +31,7 @@ pub struct LexResult {
     pub regex_flags_count: u32,
     pub comments_count: u32,
     pub cooked_bytes_count: u32,
+    pub irregular_whitespaces_count: u32,
 }
 
 macro_rules! lane_accessor {
@@ -87,6 +88,11 @@ impl LexResult {
     lane_accessor!(atoms, atoms, atoms_count, StringSpan);
     lane_accessor!(regex_flags, regex_flags, regex_flags_count, RegExpFlags);
     lane_accessor!(comments, comments, comments_count, Comment);
+
+    #[must_use]
+    pub fn irregular_whitespaces<'a>(&'a self, arena: &'a Arena) -> &'a [Span] {
+        arena.irregular_whitespaces.get(..self.irregular_whitespaces_count as usize).unwrap_or(&[])
+    }
 }
 
 #[derive(Debug)]
@@ -115,6 +121,7 @@ pub struct Arena {
     pub regex_flags_capacity: u32,
     pub comments: *mut Comment,
     pub comments_capacity: u32,
+    pub irregular_whitespaces: Vec<Span>,
 }
 
 impl Arena {
@@ -144,6 +151,7 @@ impl Arena {
             regex_flags_capacity: 0,
             comments: ptr::null_mut(),
             comments_capacity: 0,
+            irregular_whitespaces: Vec::new(),
         }
     }
 

@@ -1,91 +1,37 @@
 ## js-in-vue
 
-### Option 1: 331/334 (99.10%)
+### Option 1: 320/322 (99.38%)
 
 ```json
 {"printWidth":80}
 ```
 
-- [edge-cases/js-in-vue/generic-trailing-comma.vue](diffs/js-in-vue/edge-cases__js-in-vue__generic-trailing-comma.vue.md)
-  - apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
 - [externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue](diffs/js-in-vue/externals__vue-vben-admin__@core__ui-kit__shadcn-ui__src__components__render-content__render-content.vue.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__common-ui__src__components__api-component__api-component.vue.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
   - apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
 
-### Option 2: 332/334 (99.40%)
+### Option 2: 320/322 (99.38%)
 
 ```json
-{"printWidth":100,"vueIndentScriptAndStyle":true,"singleQuote":true}
+{"printWidth":100,"vueIndentScriptAndStyle":true,"singleQuote":true,"semi":false}
 ```
 
-- [edge-cases/js-in-vue/generic-trailing-comma.vue](diffs/js-in-vue/edge-cases__js-in-vue__generic-trailing-comma.vue.md)
-  - apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
 - [externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__common-ui__src__components__api-component__api-component.vue.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
   - apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
-
-## gql-in-js
-
-### Option 1: 5/7 (71.43%)
-
-```json
-{"printWidth":80}
-```
-
-- [edge-cases/gql-in-js/embedded-template-invalid-content.js](diffs/gql-in-js/edge-cases__gql-in-js__embedded-template-invalid-content.js.md)
-  - apps/oxfmt/DIVERGENCES.md#embedded-template-invalid-content
-- [edge-cases/gql-in-js/embedded-template-short-argument.js](diffs/gql-in-js/edge-cases__gql-in-js__embedded-template-short-argument.js.md)
-  - apps/oxfmt/DIVERGENCES.md#embedded-template-short-argument
-
-### Option 2: 5/7 (71.43%)
-
-```json
-{"printWidth":100}
-```
-
-- [edge-cases/gql-in-js/embedded-template-invalid-content.js](diffs/gql-in-js/edge-cases__gql-in-js__embedded-template-invalid-content.js.md)
-  - apps/oxfmt/DIVERGENCES.md#embedded-template-invalid-content
-- [edge-cases/gql-in-js/embedded-template-short-argument.js](diffs/gql-in-js/edge-cases__gql-in-js__embedded-template-short-argument.js.md)
-  - apps/oxfmt/DIVERGENCES.md#embedded-template-short-argument
-
-## css-in-js
-
-### Option 1: 7/8 (87.50%)
-
-```json
-{"printWidth":80}
-```
-
-- [edge-cases/css-in-js/styled-extend-tag.js](diffs/css-in-js/edge-cases__css-in-js__styled-extend-tag.js.md)
-  - apps/oxfmt/DIVERGENCES.md#styled-extend-tag
-
-### Option 2: 7/8 (87.50%)
-
-```json
-{"printWidth":100}
-```
-
-- [edge-cases/css-in-js/styled-extend-tag.js](diffs/css-in-js/edge-cases__css-in-js__styled-extend-tag.js.md)
-  - apps/oxfmt/DIVERGENCES.md#styled-extend-tag
+- [externals/vue-vben-admin/effects/layouts/src/authentication/icons/slogan.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__layouts__src__authentication__icons__slogan.vue.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#text-display-width
 
 ## html-in-js
 
-### Option 1: 167/195 (85.64%)
+### Option 1: 160/184 (86.96%)
 
 ```json
 {"printWidth":80}
 ```
 
-- [edge-cases/html-in-js/dynamic-tag-name.js](diffs/html-in-js/edge-cases__html-in-js__dynamic-tag-name.js.md)
-  - apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
-- [edge-cases/html-in-js/placeholder-case-in-child.js](diffs/html-in-js/edge-cases__html-in-js__placeholder-case-in-child.js.md)
-  - apps/oxfmt/DIVERGENCES.md#placeholder-case-in-child
-- [edge-cases/html-in-js/pre-like-template-expression.js](diffs/html-in-js/edge-cases__html-in-js__pre-like-template-expression.js.md)
-  - apps/oxfmt/DIVERGENCES.md#pre-like-template-expression
-- [edge-cases/html-in-js/template-expression-indent.js](diffs/html-in-js/edge-cases__html-in-js__template-expression-indent.js.md)
-  - apps/oxfmt/DIVERGENCES.md#pre-like-template-expression
 - [externals/webawesome/badge/badge.ts](diffs/html-in-js/externals__webawesome__badge__badge.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/button/button.ts](diffs/html-in-js/externals__webawesome__button__button.ts.md)
@@ -137,20 +83,12 @@
 - [externals/webawesome/textarea/textarea.ts](diffs/html-in-js/externals__webawesome__textarea__textarea.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 
-### Option 2: 181/195 (92.82%)
+### Option 2: 174/184 (94.57%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
 ```
 
-- [edge-cases/html-in-js/dynamic-tag-name.js](diffs/html-in-js/edge-cases__html-in-js__dynamic-tag-name.js.md)
-  - apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
-- [edge-cases/html-in-js/placeholder-case-in-child.js](diffs/html-in-js/edge-cases__html-in-js__placeholder-case-in-child.js.md)
-  - apps/oxfmt/DIVERGENCES.md#placeholder-case-in-child
-- [edge-cases/html-in-js/pre-like-template-expression.js](diffs/html-in-js/edge-cases__html-in-js__pre-like-template-expression.js.md)
-  - apps/oxfmt/DIVERGENCES.md#pre-like-template-expression
-- [edge-cases/html-in-js/template-expression-indent.js](diffs/html-in-js/edge-cases__html-in-js__template-expression-indent.js.md)
-  - apps/oxfmt/DIVERGENCES.md#pre-like-template-expression
 - [externals/webawesome/button/button.ts](diffs/html-in-js/externals__webawesome__button__button.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
   - apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
@@ -173,48 +111,6 @@
 - [externals/webawesome/textarea/textarea.ts](diffs/html-in-js/externals__webawesome__textarea__textarea.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 
-## angular-in-js
-
-### Option 1: 3/3 (100.00%)
-
-```json
-{"printWidth":80}
-```
-
-### Option 2: 3/3 (100.00%)
-
-```json
-{"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
-```
-
-## md-in-js
-
-### Option 1: 4/4 (100.00%)
-
-```json
-{"printWidth":80}
-```
-
-### Option 2: 4/4 (100.00%)
-
-```json
-{"printWidth":100,"proseWrap":"always"}
-```
-
-## xxx-in-js-comment
-
-### Option 1: 3/3 (100.00%)
-
-```json
-{"printWidth":80}
-```
-
-### Option 2: 3/3 (100.00%)
-
-```json
-{"printWidth":100}
-```
-
 ## svelte
 
 ### Option 1: 79/79 (100.00%)
@@ -231,16 +127,14 @@
 
 ## astro
 
-### Option 1: 108/113 (95.58%)
+### Option 1: 108/112 (96.43%)
 
 ```json
 {"printWidth":80,"astro":{}}
 ```
 
 - [externals/plugin-astro/other/prettier-ignore-js/input.astro](diffs/astro/externals__plugin-astro__other__prettier-ignore-js__input.astro.md)
-  - ❓unclassified
-- [edge-cases/astro/style-lang-sass.astro](diffs/astro/edge-cases__astro__style-lang-sass.astro.md)
-  - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
+  - crates/oxc_formatter/DIVERGENCES.md#suppressed-terminator-per-semi
 - [externals/plugin-astro/styles/format-nested-sass-style-tag-content/input.astro](diffs/astro/externals__plugin-astro__styles__format-nested-sass-style-tag-content__input.astro.md)
   - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
 - [externals/plugin-astro/styles/with-indented-sass/input.astro](diffs/astro/externals__plugin-astro__styles__with-indented-sass__input.astro.md)
@@ -248,14 +142,12 @@
 - [externals/plugin-astro/styles/with-sass/input.astro](diffs/astro/externals__plugin-astro__styles__with-sass__input.astro.md)
   - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
 
-### Option 2: 109/113 (96.46%)
+### Option 2: 109/112 (97.32%)
 
 ```json
 {"printWidth":120,"singleQuote":true,"semi":false,"astroAllowShorthand":true,"astroCompressHTML":"html","astro":{"allowShorthand":true,"compressHTML":"html"}}
 ```
 
-- [edge-cases/astro/style-lang-sass.astro](diffs/astro/edge-cases__astro__style-lang-sass.astro.md)
-  - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
 - [externals/plugin-astro/styles/format-nested-sass-style-tag-content/input.astro](diffs/astro/externals__plugin-astro__styles__format-nested-sass-style-tag-content__input.astro.md)
   - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
 - [externals/plugin-astro/styles/with-indented-sass/input.astro](diffs/astro/externals__plugin-astro__styles__with-indented-sass__input.astro.md)
@@ -263,45 +155,9 @@
 - [externals/plugin-astro/styles/with-sass/input.astro](diffs/astro/externals__plugin-astro__styles__with-sass__input.astro.md)
   - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
 
-## xxx-in-md
-
-### Option 1: 3/8 (37.50%)
-
-```json
-{"printWidth":80}
-```
-
-- [edge-cases/xxx-in-md/front-matter-indented-delimiter.md](diffs/xxx-in-md/edge-cases__xxx-in-md__front-matter-indented-delimiter.md.md)
-  - apps/oxfmt/DIVERGENCES.md#front-matter-indented-delimiter
-- [edge-cases/xxx-in-md/line-ranged-code-block.md](diffs/xxx-in-md/edge-cases__xxx-in-md__line-ranged-code-block.md.md)
-  - apps/oxfmt/DIVERGENCES.md#line-ranged-code-block
-- [edge-cases/xxx-in-md/lwc-code-block.md](diffs/xxx-in-md/edge-cases__xxx-in-md__lwc-code-block.md.md)
-  - apps/oxfmt/DIVERGENCES.md#lwc-code-block
-- [edge-cases/xxx-in-md/nested-fence-length.md](diffs/xxx-in-md/edge-cases__xxx-in-md__nested-fence-length.md.md)
-  - apps/oxfmt/DIVERGENCES.md#nested-fence-length
-- [edge-cases/xxx-in-md/whitespace-only-code-block.md](diffs/xxx-in-md/edge-cases__xxx-in-md__whitespace-only-code-block.md.md)
-  - apps/oxfmt/DIVERGENCES.md#whitespace-only-code-block
-
-### Option 2: 3/8 (37.50%)
-
-```json
-{"printWidth":100,"proseWrap":"always"}
-```
-
-- [edge-cases/xxx-in-md/front-matter-indented-delimiter.md](diffs/xxx-in-md/edge-cases__xxx-in-md__front-matter-indented-delimiter.md.md)
-  - apps/oxfmt/DIVERGENCES.md#front-matter-indented-delimiter
-- [edge-cases/xxx-in-md/line-ranged-code-block.md](diffs/xxx-in-md/edge-cases__xxx-in-md__line-ranged-code-block.md.md)
-  - apps/oxfmt/DIVERGENCES.md#line-ranged-code-block
-- [edge-cases/xxx-in-md/lwc-code-block.md](diffs/xxx-in-md/edge-cases__xxx-in-md__lwc-code-block.md.md)
-  - apps/oxfmt/DIVERGENCES.md#lwc-code-block
-- [edge-cases/xxx-in-md/nested-fence-length.md](diffs/xxx-in-md/edge-cases__xxx-in-md__nested-fence-length.md.md)
-  - apps/oxfmt/DIVERGENCES.md#nested-fence-length
-- [edge-cases/xxx-in-md/whitespace-only-code-block.md](diffs/xxx-in-md/edge-cases__xxx-in-md__whitespace-only-code-block.md.md)
-  - apps/oxfmt/DIVERGENCES.md#whitespace-only-code-block
-
 ## markdown-mdn
 
-### Option 1: 357/362 (98.62%)
+### Option 1: 359/362 (99.17%)
 
 ```json
 {"printWidth":80,"bracketSameLine":true}
@@ -311,14 +167,10 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#value-semicolon-glue
 - [externals/mdn-css-guides/values_and_units/textual_data_types/index.md](diffs/markdown-mdn/externals__mdn-css-guides__values_and_units__textual_data_types__index.md.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#prelude-string-requote
-- [externals/mdn-learn/css_layout/multiple-column_layout/index.md](diffs/markdown-mdn/externals__mdn-learn__css_layout__multiple-column_layout__index.md.md)
-  - crates/oxc_formatter_htmlish/DIVERGENCES.md#doctype-case
-- [externals/mdn-learn/css_layout/positioning/index.md](diffs/markdown-mdn/externals__mdn-learn__css_layout__positioning__index.md.md)
-  - crates/oxc_formatter_htmlish/DIVERGENCES.md#doctype-case
 - [externals/mdn-learn/structuring_content/basic_html_syntax/index.md](diffs/markdown-mdn/externals__mdn-learn__structuring_content__basic_html_syntax__index.md.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unquoted-value-with-slash
 
-### Option 2: 357/362 (98.62%)
+### Option 2: 359/362 (99.17%)
 
 ```json
 {"printWidth":100}
@@ -328,45 +180,35 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#value-semicolon-glue
 - [externals/mdn-css-guides/values_and_units/textual_data_types/index.md](diffs/markdown-mdn/externals__mdn-css-guides__values_and_units__textual_data_types__index.md.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#prelude-string-requote
-- [externals/mdn-learn/css_layout/multiple-column_layout/index.md](diffs/markdown-mdn/externals__mdn-learn__css_layout__multiple-column_layout__index.md.md)
-  - crates/oxc_formatter_htmlish/DIVERGENCES.md#doctype-case
-- [externals/mdn-learn/css_layout/positioning/index.md](diffs/markdown-mdn/externals__mdn-learn__css_layout__positioning__index.md.md)
-  - crates/oxc_formatter_htmlish/DIVERGENCES.md#doctype-case
 - [externals/mdn-learn/structuring_content/basic_html_syntax/index.md](diffs/markdown-mdn/externals__mdn-learn__structuring_content__basic_html_syntax__index.md.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unquoted-value-with-slash
 
 ## html
 
-### Option 1: 488/490 (99.59%)
+### Option 1: 487/488 (99.80%)
 
 ```json
 {"printWidth":80}
 ```
 
-- [edge-cases/html/script-end-in-gql-template.html](diffs/html/edge-cases__html__script-end-in-gql-template.html.md)
-  - apps/oxfmt/DIVERGENCES.md#script-end-in-embedded-template
 - [externals/vite/html/valid.html](diffs/html/externals__vite__html__valid.html.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unquoted-value-with-slash
 
-### Option 2: 488/490 (99.59%)
+### Option 2: 487/488 (99.80%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore","singleAttributePerLine":true}
 ```
 
-- [edge-cases/html/script-end-in-gql-template.html](diffs/html/edge-cases__html__script-end-in-gql-template.html.md)
-  - apps/oxfmt/DIVERGENCES.md#script-end-in-embedded-template
 - [externals/vite/html/valid.html](diffs/html/externals__vite__html__valid.html.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unquoted-value-with-slash
 
-### Option 3: 488/490 (99.59%)
+### Option 3: 487/488 (99.80%)
 
 ```json
 {"printWidth":120,"htmlWhitespaceSensitivity":"strict","bracketSameLine":true}
 ```
 
-- [edge-cases/html/script-end-in-gql-template.html](diffs/html/edge-cases__html__script-end-in-gql-template.html.md)
-  - apps/oxfmt/DIVERGENCES.md#script-end-in-embedded-template
 - [externals/vite/html/valid.html](diffs/html/externals__vite__html__valid.html.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unquoted-value-with-slash
 

@@ -2,7 +2,7 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
-use oxc_formatter_yaml::{ProseWrap, YamlFormatOptions, format, parse_for_format};
+use oxc_formatter_yaml::{ProseWrap, SingleQuote, YamlFormatOptions, format, parse_for_format};
 
 struct YamlHarness;
 
@@ -27,18 +27,23 @@ impl FixtureFormatter for YamlHarness {
                     };
                 }
             }
+            "singleQuote" => {
+                if let Some(b) = value.as_bool() {
+                    options.single_quote = SingleQuote::from(b);
+                }
+            }
             _ => return false,
         }
         true
     }
 
-    fn format(source: &str, _path: &Path, options: &Self::Options) -> String {
+    fn format(
+        source: &str,
+        _path: &Path,
+        options: &Self::Options,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let allocator = Allocator::default();
-        format(&allocator, source, *options)
-            .expect("format should succeed")
-            .print()
-            .expect("print should succeed")
-            .into_code()
+        Ok(format(&allocator, source, *options)?.print()?.into_code())
     }
 
     fn fingerprint(source: &str, _path: &Path, _options: &Self::Options) -> Fingerprint {

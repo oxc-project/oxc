@@ -8,6 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
+use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
 use std::collections::BTreeMap;
 
 use crate::{
@@ -270,7 +271,7 @@ impl PreferCalledExactlyOnceWith {
                                 let statement_span = GetSpan::span(statement);
 
                                 expect.update_tracking_with_called_once_information(
-                                    get_source_code_line_span(statement_span, ctx),
+                                    get_statement_removal_span(statement_span, ctx),
                                 );
                             } else {
                                 variables_expected.insert(
@@ -306,7 +307,7 @@ impl PreferCalledExactlyOnceWith {
                                 let statement_span = GetSpan::span(statement);
 
                                 expect.update_tracking_with_called_with_information(
-                                    get_source_code_line_span(statement_span, ctx),
+                                    get_statement_removal_span(statement_span, ctx),
                                     variable_expected_name,
                                     to_be_arguments,
                                     type_notation,
@@ -419,22 +420,30 @@ fn is_mock_reset_call_expression(call_expr: &CallExpression<'_>) -> bool {
     call_expr.callee_name().is_some_and(|callee| MOCK_RESET_METHODS.contains(&callee))
 }
 
-/**
- * Eslint fix is based on deleting the complete line of code. Span currently ignores the
- * whitespaces, so the test were failing due the trailing whitespaces not being removed.
- * Currently the method is asumming after the end of the statement, the next span position is the following line.
- * Even doing it safely the end check, this fix will remain dangerous as it removes code.
- */
 #[expect(clippy::cast_possible_truncation)]
-fn get_source_code_line_span(statement_span: Span, ctx: &LintContext<'_>) -> Span {
-    let line_end = std::cmp::min(statement_span.end + 1, ctx.source_text().len() as u32);
+fn get_statement_removal_span(statement_span: Span, ctx: &LintContext<'_>) -> Span {
+    let source_text = ctx.source_text();
+    let start = statement_span.start as usize;
+    let end = statement_span.end as usize;
 
-    let column_0_span_index = (0..statement_span.start)
-        .rev()
-        .find(|&index| ctx.source_range(Span::new(index, line_end)).starts_with('\n'))
-        .map_or(statement_span.start, |index| index + 1);
+    let leading = source_text[..start].rsplit(is_line_terminator).next().unwrap();
+    if !leading.chars().all(is_white_space) {
+        return statement_span;
+    }
 
-    Span::new(column_0_span_index, line_end)
+    let trailing = &source_text[end..];
+    let after_whitespace = trailing.trim_start_matches(is_white_space);
+    let line_ending_len = match after_whitespace.chars().next() {
+        Some('\r') if after_whitespace.starts_with("\r\n") => 2,
+        Some(c) if is_line_terminator(c) => c.len_utf8(),
+        None => 0,
+        _ => return statement_span,
+    };
+
+    Span::new(
+        (start - leading.len()) as u32,
+        (end + trailing.len() - after_whitespace.len() + line_ending_len) as u32,
+    )
 }
 
 fn get_callback_body<'a>(callback: &'a Expression<'a>) -> Option<&'a FunctionBody<'a>> {
@@ -571,6 +580,8 @@ fn test() {
 			      expect(x).toHaveBeenCalledWith<[string]>('hoge');
 			      ",
         "expect(x).toHaveBeenCalledOnce();\nexpect(x).toHaveBeenCalledWith('hoge');",
+        r#"expect(x).toHaveBeenCalledWith("🍣"); expect(x).toHaveBeenCalledOnce();"#,
+        "expect(x).toHaveBeenCalledWith(1);\nexpect(x).toHaveBeenCalledOnce();\u{a0}",
     ];
 
     let fix = vec![
@@ -740,6 +751,81 @@ fn test() {
 			      expect(x).toHaveBeenCalledExactlyOnceWith<[string]>('hoge');
 			      y.mockClear();
 			      ",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\n\u{a0}expect(x).toHaveBeenCalledOnce();",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\n",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\nexpect(x).toHaveBeenCalledOnce();\u{a0}",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\n",
+            None,
+        ),
+        (
+            "f(); expect(x).toHaveBeenCalledWith(1);\ng(); expect(x).toHaveBeenCalledOnce();",
+            "f(); expect(x).toHaveBeenCalledExactlyOnceWith(1);\ng(); ",
+            None,
+        ),
+        (
+            "f(); expect(x).toHaveBeenCalledOnce();\ng(); expect(x).toHaveBeenCalledWith(1);",
+            "f(); expect(x).toHaveBeenCalledExactlyOnceWith(1);\ng(); ",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1); expect(x).toHaveBeenCalledOnce();",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1); ",
+            None,
+        ),
+        (
+            "\nexpect(x).toHaveBeenCalledOnce(); expect(x).toHaveBeenCalledWith(1);",
+            "\nexpect(x).toHaveBeenCalledExactlyOnceWith(1); ",
+            None,
+        ),
+        (
+            "\nexpect(x).toHaveBeenCalledWith(1);\nexpect(x).toHaveBeenCalledOnce();g();",
+            "\nexpect(x).toHaveBeenCalledExactlyOnceWith(1);\ng();",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\n/* keep */ expect(x).toHaveBeenCalledOnce(); // keep\n",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\n/* keep */  // keep\n",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\nexpect(x).toHaveBeenCalledOnce();// keep\n",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\n// keep\n",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\r\n  expect(x).toHaveBeenCalledOnce(); \r\ng();",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\r\ng();",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledOnce();\r\n  expect(x).toHaveBeenCalledWith(1);\r\n",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\r\n",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\n  expect(x).toHaveBeenCalledOnce();",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\n",
+            None,
+        ),
+        (
+            "test('example', () => {expect(x).toHaveBeenCalledWith(1); expect(x).toHaveBeenCalledOnce();});",
+            "test('example', () => {expect(x).toHaveBeenCalledExactlyOnceWith(1); });",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\u{2028}  expect(x).toHaveBeenCalledOnce();\u{2029}g();",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\u{2028}g();",
+            None,
+        ),
+        (
+            "expect(x).toHaveBeenCalledWith(1);\r  expect(x).toHaveBeenCalledOnce();\rg();",
+            "expect(x).toHaveBeenCalledExactlyOnceWith(1);\rg();",
             None,
         ),
     ];

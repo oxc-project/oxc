@@ -165,7 +165,6 @@ impl NativeLanguage {
 pub enum PrettierLanguage {
     Mdx,
     Angular,
-    Vue,
     /// Formatted only when `prettier-plugin-svelte` is enabled (`svelte` config key).
     Svelte,
     /// Formatted only when `prettier-plugin-astro` is enabled (`astro` config key).
@@ -187,7 +186,6 @@ impl PrettierLanguage {
         match self {
             Self::Mdx => "mdx",
             Self::Angular => "angular",
-            Self::Vue => "vue",
             Self::Svelte => "svelte",
             Self::Astro => "astro",
             Self::Mjml => "mjml",
@@ -395,6 +393,7 @@ fn html_variant(ext: &str) -> Option<HtmlishVariant> {
         "html" | "hta" | "htm" | "inc" => Some(HtmlishVariant::Html),
         // An XML parser may read XHTML
         "xhtml" | "xht" => Some(HtmlishVariant::Xhtml),
+        "vue" => Some(HtmlishVariant::Vue),
         _ => None,
     }
 }
@@ -409,7 +408,6 @@ fn prettier_language(file_name: &str, ext: &str) -> Option<PrettierLanguage> {
         return Some(PrettierLanguage::Angular);
     }
     Some(match ext {
-        "vue" => PrettierLanguage::Vue,
         // Formatting is gated by `ResolveOutcome::MissingPlugin` (requires `svelte` / `astro` config),
         // classified here so that each caller can surface a friendly error or skip.
         "svelte" => PrettierLanguage::Svelte,
@@ -547,8 +545,9 @@ mod tests {
             ("app.component.html", Some("angular")),
             // MJML
             ("email.mjml", Some("mjml")),
-            // Vue
-            ("App.vue", Some("vue")),
+            // Vue files are routed to `oxc_formatter_htmlish` in `classify_file`
+            // and excluded from this map.
+            ("App.vue", None),
             // CSS files are routed to `oxc_formatter_css` in `classify_file`
             // and excluded from this map.
             ("styles.css", None),
@@ -712,6 +711,7 @@ mod tests {
             ("header.inc", HtmlishVariant::Html),
             ("template.xhtml", HtmlishVariant::Xhtml),
             ("page.xht", HtmlishVariant::Xhtml),
+            ("App.vue", HtmlishVariant::Vue),
         ] {
             let result = classify_file(Path::new(file_name));
             assert!(

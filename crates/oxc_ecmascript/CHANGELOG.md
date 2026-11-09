@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 7243594 minifier: Preserve throwing ArrayBuffer and URI calls (#29012) (camc314)
+- 595f3c2 minifier: Preserve left-hand side effects in instanceof checks (#29011) (camc314)
+- 9e3b3d1 ecmascript: Reject signs after nondecimal prefixes (#29034) (camc314)
+- 43c5273 ecmascript: Round nondecimal strings to numbers once (#29026) (camc314)
+- 0b48483 minifier: Preserve UTF-16 boundaries in empty-search replaceAll folding (#28807) (huuya)
+
+### 📚 Documentation
+
+- a74b7cd ecmascript: Clarify test locations (#29072) (camc314)
+
+## [0.157.0] - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- eaa8e90 ecmascript: Avoid numeric `+` folding when an operand may be a string (#28544) (camc314)
+
+### ⚡ Performance
+
+- 444f24a ecmascript: Short-circuit simple parameter checks for rest (#28503) (Boshen)
+- 8239dac parser: Replace dragonbox_ecma with zmij_ecma (#28282) (Boshen)
+
 ## [0.156.0] - 2026-10-27
 
 ### 💥 BREAKING CHANGES

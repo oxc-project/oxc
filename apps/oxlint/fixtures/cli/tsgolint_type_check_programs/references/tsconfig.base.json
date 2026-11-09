@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "strict": true,
+    "target": "ES2022",
+    "module": "commonjs",
+    "strictNullChecks": false
+  }
+}

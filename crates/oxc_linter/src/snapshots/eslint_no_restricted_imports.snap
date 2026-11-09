@@ -1037,3 +1037,56 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import 'foo'; import { allowed } from 'foo'; import {} from 'foo';
    · ─────────────
    ╰────
+
+  ⚠ eslint(no-restricted-imports): 'z' import from 'zod' is restricted.
+   ╭─[no_restricted_imports.tsx:1:10]
+ 1 │ import { z } from 'zod'; export { z };
+   ·          ─
+   ╰────
+  help: Use 'util/zod' instead.
+
+  ⚠ eslint(no-restricted-imports): 'z' import from 'zod' is restricted.
+   ╭─[no_restricted_imports.tsx:1:10]
+ 1 │ import { z } from 'zod'; export { z as zz };
+   ·          ─
+   ╰────
+  help: Use 'util/zod' instead.
+
+  ⚠ eslint(no-restricted-imports): 'z' import from 'zod' is restricted.
+   ╭─[no_restricted_imports.tsx:1:10]
+ 1 │ import { z } from 'zod'; export { z, z as zz };
+   ·          ─
+   ╰────
+  help: Use 'util/zod' instead.
+
+  ⚠ eslint(no-restricted-imports): 'zod' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import { z } from 'zod'; export { z };
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'zod' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import { z } from 'zod'; export { z };
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'default' import from 'zod' is restricted.
+   ╭─[no_restricted_imports.tsx:1:8]
+ 1 │ import z from 'zod'; export { z };
+   ·        ─
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'z' import from 'zod' is restricted.
+   ╭─[no_restricted_imports.tsx:1:10]
+ 1 │ import { z } from 'zod'; export { z } from 'zod';
+   ·          ─
+   ╰────
+  help: Use 'util/zod' instead.
+
+  ⚠ eslint(no-restricted-imports): 'z' import from 'zod' is restricted.
+   ╭─[no_restricted_imports.tsx:1:35]
+ 1 │ import { z } from 'zod'; export { z } from 'zod';
+   ·                                   ─
+   ╰────
+  help: Use 'util/zod' instead.

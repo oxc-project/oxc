@@ -1210,6 +1210,43 @@ mod test {
     }
 
     #[test]
+    fn template_raw_normalizes_line_terminators() {
+        // `(raw, cooked)` of each quasi, as `strings.raw` and `strings` in a tag function (V8).
+        type Quasis = &'static [(&'static str, Option<&'static str>)];
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let cases: &[(&str, Quasis)] = &[
+            ("tag`\\unicode\r\n`", &[("\\unicode\n", None)]),
+            ("tag`\\xZ\r`", &[("\\xZ\n", None)]),
+            ("tag`\\xZ\r\r\n`", &[("\\xZ\n\n", None)]),
+            ("tag`a\r\n\\u{}`", &[("a\n\\u{}", None)]),
+            ("tag`\\\r\n\\8`", &[("\\\n\\8", None)]),
+            (
+                "tag`h\\xZ\r\n${0}m\\u{}\r${1}t\\8\r\n`",
+                &[("h\\xZ\n", None), ("m\\u{}\n", None), ("t\\8\n", None)],
+            ),
+            ("tag`\\n\r\n`", &[("\\n\n", Some("\n\n"))]),
+            ("tag`a\\\rb`", &[("a\\\nb", Some("ab"))]),
+            ("tag`ok\r\n`", &[("ok\n", Some("ok\n"))]),
+            ("tag`ok\rx`", &[("ok\nx", Some("ok\nx"))]),
+        ];
+        for &(source, expected) in cases {
+            let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
+            let Expression::TaggedTemplateExpression(tagged) = expr else { panic!("{source:?}") };
+            let values = tagged
+                .quasi
+                .quasis
+                .iter()
+                .map(|quasi| {
+                    let cooked = quasi.value.cooked.map(|cooked| cooked.as_str().unwrap());
+                    (quasi.value.raw.as_str(), cooked)
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(values, expected, "{source:?}");
+        }
+    }
+
+    #[test]
     fn directives() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();

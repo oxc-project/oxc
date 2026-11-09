@@ -26,6 +26,39 @@ static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
 impl<'a, C: Config> Lexer<'a, C> {
     /// Section 12.4 Single Line Comment
     pub(super) fn skip_single_line_comment(&mut self, kind: CommentKind) -> Kind {
+        let start = self.source.position();
+        let remaining = self.source.remaining().as_bytes();
+        let Some(index) = memchr::memchr3(b'\r', b'\n', LS_OR_PS_FIRST, remaining) else {
+            self.source.advance_to_end();
+            self.trivia_builder.add_line_comment(
+                self.token.start(),
+                self.offset(),
+                kind,
+                self.source.whole(),
+            );
+            return Kind::Skip;
+        };
+        // SAFETY: The match is an in-bounds ASCII byte or a UTF-8 leading byte.
+        let end = unsafe { start.add(index) };
+        if remaining[index] == LS_OR_PS_FIRST {
+            // Keep the scalar scanner for Unicode, where repeated matches can be very close.
+            self.source.set_position(end);
+            return self.skip_single_line_comment_unicode(kind);
+        }
+        self.trivia_builder.add_line_comment(
+            self.token.start(),
+            self.source.offset_of(end),
+            kind,
+            self.source.whole(),
+        );
+        // SAFETY: Consume the matching ASCII line break.
+        self.source.set_position(unsafe { end.add(1) });
+        self.token.set_is_on_new_line(true);
+        Kind::Skip
+    }
+
+    #[cold]
+    fn skip_single_line_comment_unicode(&mut self, kind: CommentKind) -> Kind {
         byte_search! {
             lexer: self,
             table: LINE_BREAK_TABLE,

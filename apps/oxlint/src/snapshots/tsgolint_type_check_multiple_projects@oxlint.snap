@@ -1,0 +1,54 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-check-only projects/strict/index.ts project/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[project/index.ts:3:33]
+ 2 | 
+ 3 | export const project: Value = { count: "project" };
+   :                                 ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+  x typescript(TS2322): Type 'null' is not assignable to type 'number'.
+   ,-[projects/strict/index.ts:1:14]
+ 1 | export const strict: number = null;
+   :              ^^^^^^
+ 2 | Promise.resolve(1);
+   `----
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 2 files using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-check-only project/index.ts project/nested/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[project/index.ts:3:33]
+ 2 | 
+ 3 | export const project: Value = { count: "project" };
+   :                                 ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+  x typescript(TS2322): Type 'null' is not assignable to type 'number'.
+   ,-[project/nested/index.ts:1:14]
+ 1 | export const nested: number = null;
+   :              ^^^^^^
+ 2 | Promise.resolve(1);
+   `----
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 2 files using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

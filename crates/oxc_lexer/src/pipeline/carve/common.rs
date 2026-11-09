@@ -1,3 +1,5 @@
+use oxc_simd::{Cpu, cpu_multiversion};
+
 use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
@@ -20,6 +22,7 @@ pub(super) const OPENER8_BYTES: [u8; 8] = [b'"', b'`', b'\'', b'/', b'{', b'}', 
 
 /// Lex the string literal opening at `s`. Returns the resume index. Shared
 /// by `carve` and `carve_jsx` JS mode.
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn lex_string(
     src: *const u8,
@@ -30,9 +33,10 @@ pub(super) unsafe fn lex_string(
     s: usize,
     c: u8,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) -> usize {
     let mut saw_nl = false;
-    let e = scan_quoted(src, n, s + 1, c, &mut saw_nl);
+    let e = scan_quoted(src, n, s + 1, c, &mut saw_nl, cpu);
     let end = if e < n { e + 1 } else { n };
     if saw_nl {
         // The terminator wins over unterminated-at-EOF, same as oxc_parser.
@@ -42,7 +46,7 @@ pub(super) unsafe fn lex_string(
     }
     *kind.add(s) = tk!(String);
     if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1);
+        bm_clear_range(st, s + 1, end - 1, cpu);
     }
     let be = if e < n {
         e
@@ -51,7 +55,7 @@ pub(super) unsafe fn lex_string(
     } else {
         n
     };
-    lanes.push_string(srcs, s + 1, be);
+    lanes.push_string(srcs, s + 1, be, cpu);
     end
 }
 
@@ -59,6 +63,7 @@ pub(super) unsafe fn lex_string(
 /// substitution-closing `}`): `head_kind` if it ends in `${`, `flat_kind` if
 /// it closes or runs to EOF. Returns `(resume index, substitution opened)`;
 /// the caller pushes its own nesting frame.
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn lex_template_segment(
     src: *const u8,
@@ -70,22 +75,24 @@ pub(super) unsafe fn lex_template_segment(
     head_kind: u8,
     flat_kind: u8,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) -> (usize, bool) {
     let mut term = 0i32;
-    let end = scan_tmpl_text(src, n, s + 1, &mut term);
+    let end = scan_tmpl_text(src, n, s + 1, &mut term, cpu);
     if term == 0 {
         lanes.push_diag(s as u32, (end - s) as u32, DiagCode::UnterminatedTemplate);
     }
     *kind.add(s) = if term == 2 { head_kind } else { flat_kind };
     if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1);
+        bm_clear_range(st, s + 1, end - 1, cpu);
     }
-    lanes.push_template(srcs, s + 1, end - [0usize, 1, 2][term as usize]);
+    lanes.push_template(srcs, s + 1, end - [0usize, 1, 2][term as usize], cpu);
     (end, term == 2)
 }
 
 /// The `/` dispatch shared by `carve` and `carve_jsx` JS mode: line comment,
 /// block comment, regex, `/=`, or a bare slash left for `coalesce`.
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn lex_slash(
     src: *const u8,
@@ -98,12 +105,13 @@ pub(super) unsafe fn lex_slash(
     ts: bool,
     s: usize,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) -> usize {
     let d = if s + 1 < n { *src.add(s + 1) } else { 0 };
     if d == b'/' {
-        lex_line_comment(src, srcs, n, st, kind, s, lanes)
+        lex_line_comment(src, srcs, n, st, kind, s, lanes, cpu)
     } else if d == b'*' {
-        lex_block_comment(src, srcs, n, st, kind, s, lanes)
+        lex_block_comment(src, srcs, n, st, kind, s, lanes, cpu)
     } else if not_operator_position(
         &token_view(
             src,
@@ -116,16 +124,18 @@ pub(super) unsafe fn lex_slash(
             lanes.module,
             &lanes.disambiguate.brackets,
             &lanes.disambiguate.closers,
+            cpu,
         ),
         &mut lanes.disambiguate.walks,
         s,
+        cpu,
     ) {
-        lex_regex(src, srcs, n, st, kind, word, s, lanes)
+        lex_regex(src, srcs, n, st, kind, word, s, lanes, cpu)
     } else if s + 1 < n && *src.add(s + 1) == b'=' {
         // `/=`: absorb the `=`.
         *kind.add(s) = tk!(SlashEq);
-        bm_clear(st, s + 1);
-        bm_clear(opch, s + 1);
+        bm_clear(st, s + 1, cpu);
+        bm_clear(opch, s + 1, cpu);
         s + 2
     } else {
         s + 1
@@ -134,6 +144,7 @@ pub(super) unsafe fn lex_slash(
 
 /// Lex the regex literal at `s` (the regex-vs-division decision is already
 /// made): body, flag run, diagnostics. Returns the resume index.
+#[cpu_multiversion]
 #[inline(always)]
 unsafe fn lex_regex(
     src: *const u8,
@@ -144,9 +155,10 @@ unsafe fn lex_regex(
     word: *const u64,
     s: usize,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) -> usize {
     let mut nl_at = usize::MAX;
-    let e = scan_regex(src, n, s + 1, &mut nl_at);
+    let e = scan_regex(src, n, s + 1, &mut nl_at, cpu);
     let fs = if e < n { e + 1 } else { n };
     if nl_at != usize::MAX {
         // oxc_parser reports a line terminator in the body as "unterminated"
@@ -157,24 +169,30 @@ unsafe fn lex_regex(
         lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedRegexp);
     }
     let mut end = fs;
-    if end < n && bm_get(word, end) {
-        end = bm_next0(word, end, n);
+    if end < n && bm_get(word, end, cpu) {
+        end = bm_next0(word, end, n, cpu);
     }
     *kind.add(s) = tk!(RegExp);
     if end > s + 1 {
-        bm_clear_range(st, s + 1, end - 1);
+        bm_clear_range(st, s + 1, end - 1, cpu);
     }
-    lanes.push_regex_flags(srcs, fs, end);
+    lanes.push_regex_flags(srcs, fs, end, cpu);
     end
 }
 
 /// Skip the payload of a brace-form unicode escape whose `{` is at `s`: the
 /// escape was already joined into its identifier by `misc_pre`, and its
 /// braces must not count toward substitution nesting.
+#[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn skip_unicode_brace_escape(src: *const u8, n: usize, s: usize) -> usize {
+pub(super) unsafe fn skip_unicode_brace_escape(
+    src: *const u8,
+    n: usize,
+    s: usize,
+    cpu: impl Cpu,
+) -> usize {
     let mut j = s + 1;
-    while j < n && hex_val(*src.add(j)) != 255 {
+    while j < n && hex_val(*src.add(j), cpu) != 255 {
         j += 1;
     }
     if j < n && *src.add(j) == b'}' {
@@ -187,10 +205,16 @@ pub(super) unsafe fn skip_unicode_brace_escape(src: *const u8, n: usize, s: usiz
 /// (U+2028/U+2029). Stops at LS/PS too, so the hashbang scan cannot run
 /// through one. A 0xE2 that isn't LS/PS keeps scanning; the 2-byte confirm
 /// past a trailing 0xE2 reads the pad, which can never match 0x80.
+#[cpu_multiversion]
 #[inline]
-pub(super) unsafe fn find_line_terminator(src: *const u8, n: usize, mut i: usize) -> usize {
+pub(super) unsafe fn find_line_terminator(
+    src: *const u8,
+    n: usize,
+    mut i: usize,
+    cpu: impl Cpu,
+) -> usize {
     loop {
-        let p = find(src, n, i, [b'\n', b'\r', 0xE2]);
+        let p = find(src, n, i, [b'\n', b'\r', 0xE2], cpu);
         if p >= n {
             return n;
         }

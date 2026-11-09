@@ -346,6 +346,45 @@ the `@warn` / `@error` prelude (a `SassExpr`) and a `@keyframes` name (`at_rule.
 Prettier keeps the at-rule params as a raw string verbatim.
 Every other string in a declaration value re-quotes per the same option in both formatters.
 
+## less-escape-hugs-string
+
+- Why: uniform-rule (same construct, same output: a declaration value)
+- Pin: `tests/fixtures/format/less/escaped-string.less`
+
+```less
+/* input */
+a { value: ~ 'x'; }
+@media (min-width: ~ '768px') {}
+[class^=~ 'col-'] {}
+@keyframes ~ 'name' {}
+
+/* ours */
+a {
+  value: ~"x";
+}
+@media (min-width: ~"768px") {
+}
+[class^=~"col-"] {
+}
+@keyframes ~"name" {
+}
+
+/* prettier */
+a {
+  value: ~"x";
+}
+@media (min-width: ~ "768px") {
+}
+[class^=~ "col-"] {
+}
+@keyframes ~ 'name' {
+}
+```
+
+A Less escape (`LessEscapedStr`) prints as `~` hugging its re-quoted string wherever it is typed (`value.rs` `write_less_escaped_str`);
+Prettier does so in a declaration value and `url()`, but keeps the space in a media feature and an attribute value, and the `@keyframes` name verbatim (see prelude-string-requote).
+The Prettier-compat raw paths keep the source as-is: a selector or at-rule prelude with a comment, and Less mixin call / definition arguments and `when` guards.
+
 ## call-after-line-comment-indent
 
 - Why: uniform-rule (comment presence never changes layout; prettier/prettier#19427)
@@ -1026,10 +1065,33 @@ our core `fill` (biome semantics) breaks only at the last fitting separator.
 Layout-only, the principled fix is the shared core-fill fit-check change (needs a JS-conformance impact experiment first).
 A spaced `/` is not part of this: it glues to its left operand and breaks after, as in Prettier (`tests/fixtures/format/css/fill-math-chunk-break.css`).
 
-## less-value-interpolation-rejected
+## grammar-owner-rejected
 
-- Why: uniform-rule (error semantics)
+- Why: uniform-rule (acceptance: the grammar owner decides)
 - Pin: `tests/fixtures/mod.rs::parse_error_is_err` (parser-level: the rejection is asserted directly)
+- Conformance:
+  - `externals/prettier/css/atrule/charset.css`
+  - `externals/prettier/css/atrule/import.css`
+  - `externals/prettier/css/attribute/quotes.css`
+  - `externals/prettier/css/combinator/combinator.css`
+  - `externals/prettier/css/comments/selectors.css`
+  - `externals/prettier/css/custom-properties/emoji.css`
+  - `externals/prettier/css/no-semicolon/url.css`
+  - `externals/prettier/css/postcss-plugins/postcss-mixins.css`
+  - `externals/prettier/css/postcss-plugins/postcss-simple-vars.css`
+  - `externals/prettier/css/quotes/quotes.css`
+  - `externals/prettier/css/selector-list/selectors.css`
+  - `externals/prettier/css/selector-string/string.css`
+  - `externals/prettier/scss/atrule/for.scss`
+  - `externals/prettier/scss/comments/CRLF.scss`
+  - `externals/prettier/scss/math/3945.scss`
+  - `externals/prettier/scss/no-semicolon/url.scss`
+  - `externals/prettier/scss/parens/parens.scss`
+  - `externals/prettier/less/case/case.less`
+  - `externals/prettier/less/comments/in-value.less`
+  - `externals/prettier/less/interpolation/interpolation.less`
+  - `externals/prettier/less/lookup/lookup-1.less`
+  - `externals/prettier/less/no-semicolon/url.less`
 
 ```less
 /* input */
@@ -1043,9 +1105,18 @@ A spaced `/` is not part of this: it glues to its left operand and breaks after,
 }
 ```
 
-Value-position `@{var}` interpolation: `oxc-css-parser` rejects it matching `lessc`;
-Prettier (postcss) accepts and prints verbatim. Per the policy's "Error semantics",
-we never format what the reference compiler rejects (a parse error is the SAFE failure).
+`oxc-css-parser` rejects what the variant's grammar owner rejects (oxc-css-parser AGENTS.md "Acceptance"),
+so per the policy's "Error semantics" we leave it as-is (a parse error is the SAFE failure);
+Prettier (postcss) accepts these and prints them, mostly verbatim.
+
+- CSS, a browser drops the rule (Chrome; lightningcss, built on `cssparser`):
+  - invalid selectors: `a[id=func("foo")]`, `-Option/root .a`, `>>>`, `.is-$(var)`, `:not(".a")`, `one "two" three`
+  - invalid `@import` preludes: `@import (multiple) "a";`, `@import "a" {}`
+  - root declarations, `--foo: { }` included (a custom property, not the raw-prelude `x: { }` rule)
+  - `@charset UTF-8;`: only the exact `@charset "...";` form means anything (css-syntax-3); a browser drops both forms, so this one rests on the spec
+- SCSS, dart-sass rejects: `@for $i from 1 end 3`, a Less variable (`@var`) in a value, root declarations
+- Less, lessc rejects: value-position `@{var}`, SCSS interpolation (`#{$var}`), `@IMPORT a;`, a spaced lookup (`@c [ a ]`), `++1`
+- Every owner rejects `@import ur l(a.css);`
 
 ## media-query-operator-spacing
 

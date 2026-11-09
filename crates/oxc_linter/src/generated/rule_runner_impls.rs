@@ -3605,8 +3605,11 @@ impl RuleRunner for crate::rules::unicorn::no_useless_switch_case::NoUselessSwit
 }
 
 impl RuleRunner for crate::rules::unicorn::no_useless_undefined::NoUselessUndefined {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::IdentifierReference]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ConditionalExpression,
+        AstType::IdentifierReference,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -4788,7 +4791,7 @@ impl RuleRunner for crate::rules::promise::prefer_await_to_then::PreferAwaitToTh
 
 impl RuleRunner for crate::rules::promise::prefer_catch::PreferCatch {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::ExpressionStatement]));
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

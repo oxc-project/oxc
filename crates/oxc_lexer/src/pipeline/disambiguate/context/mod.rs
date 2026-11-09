@@ -1,5 +1,6 @@
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
+
 use super::common::Tokens;
-use super::type_context::{keyword_type, lt_run_split, type_args_at};
 
 mod anchor;
 mod frame;
@@ -11,10 +12,8 @@ mod types;
 mod walker;
 mod words;
 
-use frame::*;
-use walker::{Expect, Jump, Walk};
-
 pub(super) use scan::{after, angles_before, before};
+use walker::Walk;
 
 #[cfg(test)]
 mod tests;
@@ -58,6 +57,7 @@ pub struct Walks {
 }
 
 impl Walks {
+    #[cpu_version(Generic)]
     pub(super) fn new() -> Walks {
         Walks {
             full: Walk::new(),
@@ -71,38 +71,48 @@ impl Walks {
     }
 
     #[cfg(test)]
+    #[cpu_version(Generic)]
     fn shortcuts(&self) -> bool {
         !self.full_walk_only
     }
 
     #[cfg(not(test))]
+    #[cpu_version(Generic)]
     fn shortcuts(&self) -> bool {
         true
     }
 
     #[cfg(test)]
-    pub(super) fn run_rules(&self) -> bool {
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) fn run_rules(&self, _cpu: impl Cpu) -> bool {
         !self.full_walk_only && !self.no_run_rules
     }
 
     #[cfg(not(test))]
-    pub(super) fn run_rules(&self) -> bool {
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) fn run_rules(&self, _cpu: impl Cpu) -> bool {
         true
     }
 
     /// A new lex, or a new pass over it by a stage that sees other token kinds: the full walk
     /// starts over and the bounded walks get a new budget.
-    pub(super) fn restart(&mut self, module: bool) {
-        self.full.reset(module);
+    #[cpu_multiversion]
+    pub(super) fn restart(&mut self, module: bool, cpu: impl Cpu) {
+        self.full.reset(module, cpu);
         self.spent = 0;
     }
 
     /// The full walk advanced to pos, restarted if it has passed the token there.
+    #[cpu_version(Generic)]
     fn full_to(&mut self, tokens: &Tokens, pos: usize) -> &mut Walk {
+        let cpu = BASELINE;
+
         let w = &mut self.full;
         let inside_last = pos < w.walked_to && pos >= w.last_start;
         if w.walked_to > pos && !inside_last {
-            w.reset(tokens.module);
+            w.reset(tokens.module, cpu);
         }
         w.advance(tokens, pos);
         w

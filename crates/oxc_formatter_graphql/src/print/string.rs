@@ -5,12 +5,16 @@
 //! `oxc-graphql-parser`'s `StringValue.value` is cooked too, but NOT to spec:
 //! no block-string dedent / blank-line trimming, no surrogate pairing, and
 //! invalid escapes are silently dropped.
-//! So this module cooks from `raw` itself (GraphQL spec string/block-string value algorithms)
-//! and then applies Prettier's re-encoding (`"`/`\` escaped, newline as `\n`, `"""` as `\"""`).
+//! So this module cooks them itself (GraphQL spec string/block-string value algorithms):
+//! a regular string from `raw`, a block string from `value`, which only has its line endings normalized.
+//! Then it applies Prettier's re-encoding (`"`/`\` escaped, newline as `\n`, `"""` as `\"""`).
+
+use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 
 use oxc_formatter_core::{
+    arena_cow_str,
     builders::{exact_line_breaks, hard_line_break, text},
     write,
 };
@@ -20,8 +24,8 @@ use super::GraphqlFormatter;
 
 pub(super) fn write_string_value<'a>(sv: &StringValue<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     let raw = sv.raw;
-    if let Some(body) = raw.strip_prefix("\"\"\"").and_then(|r| r.strip_suffix("\"\"\"")) {
-        write_block_string(body, f);
+    if sv.block {
+        write_block_string(sv.value, f);
     } else if let Some(body) = raw.strip_prefix('"').and_then(|r| r.strip_suffix('"')) {
         write_regular_string(body, f);
     } else {
@@ -32,21 +36,28 @@ pub(super) fn write_string_value<'a>(sv: &StringValue<'a>, f: &mut GraphqlFormat
 
 /// Block string: cook per the GraphQL `BlockStringValue` algorithm, re-escape `"""`,
 /// then print one line per hard line break (Prettier's shape).
-fn write_block_string(body: &str, f: &mut GraphqlFormatter<'_, '_>) {
-    // The only escape sequence in block strings.
-    let unescaped = body.cow_replace("\\\"\"\"", "\"\"\"");
-    let cooked_lines = cook_block_string_lines(&unescaped);
+fn write_block_string<'a>(body: &'a str, f: &mut GraphqlFormatter<'_, 'a>) {
+    // `\"""` is the only escape in block strings.
+    // Precheck its `\`: `cow_replace` builds a substring searcher per call
+    let unescaped = if body.contains('\\') {
+        body.cow_replace("\\\"\"\"", "\"\"\"")
+    } else {
+        Cow::Borrowed(body)
+    };
+    // Without one, no line holds a `"""` to re-escape: the lines print borrowed from the source.
+    // Re-escaping touches no whitespace, so it is done when printing
+    let escapes = matches!(unescaped, Cow::Owned(_));
+    let mut lines = cook_block_string_lines(arena_cow_str(&unescaped, f));
 
-    // Prettier: re-escape, then `lines.length === 1` → trim, all-blank → drop everything.
+    // Prettier: `lines.length === 1` → trim, all-blank → drop everything.
     // Trailing spaces/tabs are trimmed per line.
-    let mut lines: Vec<String> = cooked_lines
-        .iter()
-        .map(|l| l.trim_end_matches([' ', '\t']).cow_replace("\"\"\"", "\\\"\"\"").into_owned())
-        .collect();
-    if lines.len() == 1 {
-        lines[0] = lines[0].trim().to_string();
+    for line in &mut lines {
+        *line = line.trim_end_matches([' ', '\t']);
     }
-    if lines.iter().all(std::string::String::is_empty) {
+    if let [line] = lines.as_mut_slice() {
+        *line = line.trim();
+    }
+    if lines.iter().all(|line| line.is_empty()) {
         lines.clear();
     }
 
@@ -55,14 +66,16 @@ fn write_block_string(body: &str, f: &mut GraphqlFormatter<'_, '_>) {
     // blank lines inside a block string are part of its VALUE,
     // so a run of `k` blank lines is emitted as `exact_line_breaks(k + 1)`.
     let mut pending_blanks = 0usize;
-    for line in &lines {
+    for line in lines {
         if line.is_empty() {
             pending_blanks += 1;
             continue;
         }
         write_block_string_break(pending_blanks, f);
         pending_blanks = 0;
-        write!(f, text(f.allocator().alloc_str(line)));
+        let line =
+            if escapes { arena_cow_str(&line.cow_replace("\"\"\"", "\\\"\"\""), f) } else { line };
+        write!(f, text(line));
     }
     write_block_string_break(pending_blanks, f);
     write!(f, "\"\"\"");
@@ -79,7 +92,7 @@ fn write_block_string_break(blank_lines: usize, f: &mut GraphqlFormatter<'_, '_>
 /// GraphQL spec `BlockStringValue`: split lines, strip the common indentation of
 /// non-first lines, then drop leading/trailing blank lines.
 fn cook_block_string_lines(value: &str) -> Vec<&str> {
-    let mut lines: Vec<&str> = split_graphql_lines(value);
+    let mut lines: Vec<&str> = split_lines(value);
 
     // Common indent over non-blank lines after the first.
     let mut common_indent: Option<usize> = None;
@@ -107,26 +120,13 @@ fn cook_block_string_lines(value: &str) -> Vec<&str> {
     lines
 }
 
-/// Splits on GraphQL line terminators: `\r\n`, lone `\r`, `\n`.
-fn split_graphql_lines(value: &str) -> Vec<&str> {
-    let bytes = value.as_bytes();
+/// `value.split('\n')`, by the SIMD `memchr` rather than core's
+fn split_lines(value: &str) -> Vec<&str> {
     let mut lines = Vec::new();
     let mut start = 0;
-    let mut i = 0;
-    while i < bytes.len() {
-        match bytes[i] {
-            b'\n' => {
-                lines.push(&value[start..i]);
-                i += 1;
-                start = i;
-            }
-            b'\r' => {
-                lines.push(&value[start..i]);
-                i += if bytes.get(i + 1) == Some(&b'\n') { 2 } else { 1 };
-                start = i;
-            }
-            _ => i += 1,
-        }
+    for i in memchr::memchr_iter(b'\n', value.as_bytes()) {
+        lines.push(&value[start..i]);
+        start = i + 1;
     }
     lines.push(&value[start..]);
     lines

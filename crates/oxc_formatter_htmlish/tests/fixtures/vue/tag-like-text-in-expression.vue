@@ -1,0 +1,9 @@
+<template>
+  {{ "<this_is_a_tag_like string>" }}
+  <p>{{ '<b>bold</b>' }}</p>
+  <p :title="`<x y>`">{{ `<a href="z">` }}</p>
+  <p :title="String(Object.values<number>(foo))" v-if="Object.keys<string>(foo).length > 0" @click="fn<number>(1)">{{ a < b ? x : y }}</p>
+  <p :title="(obj as Record<string, string>).value" @click="go(obj as Map<string, number>)">{{ (obj as Array<number>)[0] }}</p>
+  <p v-for="(item, i) in (list as Array<{ id: number }>)" :key="item.id">{{ <string>item.name }}</p>
+  <Comp v-slot="{ x }: { x: Set<number> }">{{ x.size satisfies number }}</Comp>
+</template>

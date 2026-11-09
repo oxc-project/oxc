@@ -85,7 +85,7 @@ pub fn opening_start_marker<'a>(t: &'a Tree<'a>, id: NodeId) -> Marker<'a> {
         NodeKind::ConditionalStart(start) => Marker::two("<!--[if ", t.collapsed(start.condition)),
         NodeKind::ConditionalEnd => Marker::one("<!--<!"),
         NodeKind::Interpolation(_) => Marker::one("{{"),
-        // `<!doctype html>` but where an XML parser may read it, otherwise as written
+        // `<!doctype html>` where `DialectRules::lowercase_doctype`, otherwise as written
         // (DIVERGENCES.md#doctype-case, DIVERGENCES.md#doctype-html-in-one-pass)
         NodeKind::DocType(doctype) => {
             if t.rules().lowercase_doctype

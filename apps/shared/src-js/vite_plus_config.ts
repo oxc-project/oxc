@@ -7,11 +7,15 @@ import { isObject } from "./utils.ts";
 let vitePlusCache: Promise<typeof import("vite-plus")> | null = null;
 
 /**
- * Resolve a Vite+ config via `vite-plus`'s `resolveConfig` and extract the given field.
+ * Resolve a Vite+ config via `vite-plus` and extract the given field.
  *
  * `vite-plus` is loaded lazily and memoized for the process.
- * Consumers declare it as an optional peer dependency; tsdown leaves the specifier external
- * so the user-installed copy is used at runtime.
+ * Consumers declare it as an optional peer dependency;
+ * tsdown leaves the specifier external, so the user-installed copy is used at runtime.
+ *
+ * `resolveConfigFromFile` resolves an unset or relative `root` from the config file's directory,
+ * so plugins see the same `root` regardless of `process.cwd()`.
+ * (e.g. The LSP's cwd can be another folder of a multi-root workspace.)
  *
  * @param path - Absolute path to the Vite config file
  * @param fieldName - Field name to extract from the resolved config (e.g. `"fmt"`, `"lint"`)
@@ -23,12 +27,9 @@ export async function loadViteConfigField(
   fieldName: "lint" | "fmt",
 ): Promise<object | null> {
   vitePlusCache ??= import("vite-plus");
-  const { resolveConfig } = await vitePlusCache;
+  const { resolveConfigFromFile } = await vitePlusCache;
 
-  const config = (await resolveConfig({ configFile: path }, "build")) as unknown as Record<
-    string,
-    unknown
-  >;
+  const config = (await resolveConfigFromFile(path)) as unknown as Record<string, unknown>;
 
   // Signal "skip" when the field is missing
   if (!(fieldName in config)) return null;

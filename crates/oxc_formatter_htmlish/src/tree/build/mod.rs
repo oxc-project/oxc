@@ -32,9 +32,13 @@ impl<'a> Tree<'a> {
                 source,
                 facts,
                 merged_texts: ArenaVec::new_in(&allocator),
+                vue_script_language: "js",
             },
             sensitivity,
         };
+        if builder.tree.rules.vue_sfc {
+            builder.tree.vue_script_language = builder.vue_script_language();
+        }
         builder.facts(NodeId::DOCUMENT).display = builder.display(NodeId::DOCUMENT);
         builder.children(NodeId::DOCUMENT);
         builder.facts(NodeId::DOCUMENT).borrows = builder.borrows(NodeId::DOCUMENT);
@@ -50,6 +54,23 @@ struct Builder<'a> {
 }
 
 impl Builder<'_> {
+    /// See [`Tree::vue_script_language`].
+    fn vue_script_language(&self) -> &'static str {
+        let t = &self.tree;
+        let languages = t.root.children(NodeId::DOCUMENT).filter_map(|(id, _)| {
+            (t.is_sfc_block(id) && t.tag(id) == "script").then(|| t.lang(id))?
+        });
+        let mut language = "js";
+        for lang in languages {
+            match lang {
+                "ts" | "typescript" => language = "ts",
+                "tsx" => return "tsx",
+                _ => {}
+            }
+        }
+        language
+    }
+
     fn facts(&mut self, id: NodeId) -> &mut Facts {
         &mut self.tree.facts[id.index()]
     }
@@ -136,10 +157,12 @@ impl Builder<'_> {
                         && !comment.bogus
                     {
                         let content = comment.content.slice(self.tree.source);
-                        let facts = self.facts(id);
-                        facts.prettier_ignore = is_suppression_marker(content);
-                        if let Some(display) = display_comment(content) {
-                            facts.display = display;
+                        self.facts(id).prettier_ignore = is_suppression_marker(content);
+                        // Every block of a Vue file is a block
+                        if let Some(display) = display_comment(content)
+                            && !self.tree.is_sfc_block(id)
+                        {
+                            self.facts(id).display = display;
                         }
                     }
                     self.facts(prev).next = Some(id);
