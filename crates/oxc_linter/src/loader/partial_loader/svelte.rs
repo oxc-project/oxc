@@ -375,6 +375,13 @@ fn find_markup_tag_end(
     None
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum CssPosition {
+    ItemStart,
+    Selector,
+    Value,
+}
+
 fn skip_style(
     source_text: &str,
     mut pointer: usize,
@@ -397,8 +404,90 @@ fn skip_style(
     }
     let bytes = source_text.as_bytes();
     let mut braces = 0usize;
-    let mut parentheses = 0usize;
-    let mut brackets = 0usize;
+    let mut quote = None;
+    let mut attribute_selector = false;
+    let mut position = CssPosition::ItemStart;
+    while let Some(&byte) = bytes.get(pointer) {
+        if quote.is_none() && position == CssPosition::ItemStart {
+            let character = source_text[pointer..].chars().next()?;
+            if is_svelte_whitespace(character) {
+                pointer += character.len_utf8();
+                continue;
+            }
+            let rest = &source_text[pointer..];
+            if braces == 0
+                && let Some(closing) = rest.strip_prefix("</style")
+            {
+                let closing = closing.trim_start_matches(is_svelte_whitespace);
+                if closing.starts_with('>') {
+                    return Some(source_text.len() - closing.len() + 1);
+                }
+            }
+            if !rest.starts_with("/*") && !rest.starts_with(COMMENT_START) {
+                position = if byte == b'@' {
+                    CssPosition::Value
+                } else if braces == 0 || css_item_starts_block(source_text, pointer)? {
+                    CssPosition::Selector
+                } else {
+                    CssPosition::Value
+                };
+            }
+        }
+        if byte == b'\\' {
+            pointer = pointer.saturating_add(2);
+            continue;
+        }
+        if let Some(delimiter) = quote {
+            if byte == delimiter {
+                quote = None;
+            }
+        } else if attribute_selector {
+            match byte {
+                b'\'' | b'"' => quote = Some(byte),
+                b']' => attribute_selector = false,
+                _ => {}
+            }
+        } else {
+            match byte {
+                b'\'' | b'"' => quote = Some(byte),
+                b'/' if bytes.get(pointer + 1) == Some(&b'*') => {
+                    pointer += source_text[pointer + 2..].find("*/")? + 4;
+                    continue;
+                }
+                b'(' if pointer >= 3
+                    && bytes[pointer - 3..pointer].eq_ignore_ascii_case(b"url") =>
+                {
+                    pointer = skip_css_url(source_text, pointer + 1)?;
+                    continue;
+                }
+                b'{' => {
+                    braces += 1;
+                    position = CssPosition::ItemStart;
+                }
+                b'}' => {
+                    braces = braces.saturating_sub(1);
+                    position = CssPosition::ItemStart;
+                }
+                b';' => position = CssPosition::ItemStart,
+                b'[' if position == CssPosition::Selector => attribute_selector = true,
+                b'<' if position != CssPosition::Value
+                    && source_text[pointer..].starts_with(COMMENT_START) =>
+                {
+                    pointer += source_text[pointer + COMMENT_START.len()..].find(COMMENT_END)?
+                        + COMMENT_START.len()
+                        + COMMENT_END.len();
+                    continue;
+                }
+                _ => {}
+            }
+        }
+        pointer += 1;
+    }
+    None
+}
+
+fn css_item_starts_block(source_text: &str, mut pointer: usize) -> Option<bool> {
+    let bytes = source_text.as_bytes();
     let mut quote = None;
     while let Some(&byte) = bytes.get(pointer) {
         if byte == b'\\' {
@@ -422,26 +511,8 @@ fn skip_style(
                     pointer = skip_css_url(source_text, pointer + 1)?;
                     continue;
                 }
-                b'{' => braces += 1,
-                b'}' => braces = braces.saturating_sub(1),
-                b'(' => parentheses += 1,
-                b')' => parentheses = parentheses.saturating_sub(1),
-                b'[' => brackets += 1,
-                b']' => brackets = brackets.saturating_sub(1),
-                b'<' if source_text[pointer..].starts_with(COMMENT_START) => {
-                    pointer += source_text[pointer + COMMENT_START.len()..].find(COMMENT_END)?
-                        + COMMENT_START.len()
-                        + COMMENT_END.len();
-                    continue;
-                }
-                b'<' if braces == 0 && parentheses == 0 && brackets == 0 => {
-                    if let Some(rest) = source_text[pointer..].strip_prefix("</style") {
-                        let rest = rest.trim_start_matches(is_svelte_whitespace);
-                        if rest.starts_with('>') {
-                            return Some(source_text.len() - rest.len() + 1);
-                        }
-                    }
-                }
+                b'{' => return Some(true),
+                b';' | b'}' => return Some(false),
                 _ => {}
             }
         }
@@ -1410,6 +1481,27 @@ let {json}: {json: string} = $props();
         for element in ["<script/>", "<script />", "<script/\u{feff}>", "<script title={\"}\"}/>"] {
             let source_text =
                 format!("<svelte:head>{element}</svelte:head><script>debugger;</script>");
+            let sources = SveltePartialLoader::new(&source_text).parse();
+            assert_eq!(sources.len(), 1, "{source_text}");
+            assert_eq!(sources[0].source_text, "debugger;", "{source_text}");
+        }
+    }
+
+    #[test]
+    fn test_component_style_html_comment_positions() {
+        for css in [
+            ".a { --x: <!--; } /* --> */",
+            ".a { --x: <!--; }",
+            ".a { --x: <!-- } /* --> */",
+            ".a { color: red; <!-- } --> width: 1px; }",
+            ".a <!-- } --> { color: red; }",
+            ".a { .b <!-- { --> { color: red; } }",
+            ".a[data-x=<!--] { color: red; } /* --> */",
+            "@foo <!--; .a { color: red; } /* --> */",
+            "@foo </style><script>ignored</script>; .a { color: red; }",
+            "@media screen { <!-- { --> .a { color: red; } }",
+        ] {
+            let source_text = format!("<style>{css}</style><script>debugger;</script>");
             let sources = SveltePartialLoader::new(&source_text).parse();
             assert_eq!(sources.len(), 1, "{source_text}");
             assert_eq!(sources[0].source_text, "debugger;", "{source_text}");
