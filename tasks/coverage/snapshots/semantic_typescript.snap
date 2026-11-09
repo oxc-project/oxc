@@ -2,7 +2,7 @@ commit: 6161772c
 
 semantic_typescript Summary:
 AST Parsed     : 5743/5743 (100.00%)
-Positive Passed: 4161/5743 (72.45%)
+Positive Passed: 4162/5743 (72.47%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -24174,17 +24174,6 @@ rebuilt        : SymbolId(0): Span { start: 38, end: 39 }
 Symbol redeclarations mismatch for "f":
 after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 38, end: 39 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/functions/functionParameterObjectRestAndInitializers.ts
-Symbol reference IDs mismatch for "a":
-after transform: SymbolId(1): [ReferenceId(0)]
-rebuilt        : SymbolId(6): []
-Reference symbol mismatch for "a":
-after transform: SymbolId(1) "a"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["a", "require"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/generators/generatorYieldContextualType.ts
 Bindings mismatch:

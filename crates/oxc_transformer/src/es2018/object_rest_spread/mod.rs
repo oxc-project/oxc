@@ -27,6 +27,8 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-object-rest-spread>
 //! * Object rest/spread TC39 proposal: <https://github.com/tc39/proposal-object-rest-spread>
 
+mod parameters;
+
 use std::{iter, mem};
 
 use serde::Deserialize;
@@ -565,6 +567,23 @@ impl<'a> ObjectRestSpread<'a> {
     fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = func.scope_id();
         let Some(body) = func.body.as_mut() else { return };
+        let is_setter = match ctx.parent() {
+            Ancestor::MethodDefinitionValue(method) => *method.kind() == MethodDefinitionKind::Set,
+            Ancestor::ObjectPropertyValue(property) => *property.kind() == PropertyKind::Set,
+            _ => false,
+        };
+        if !func.generator
+            && !is_setter
+            && Self::lower_parameter_dependencies(
+                &mut func.params,
+                body,
+                scope_id,
+                func.r#async,
+                ctx,
+            )
+        {
+            return;
+        }
         for param in &mut func.params.items {
             if Self::has_nested_object_rest(&param.pattern) {
                 Self::replace_rest_element(
@@ -581,10 +600,16 @@ impl<'a> ObjectRestSpread<'a> {
     // Transform `(...x) => {}`.
     fn transform_arrow(arrow: &mut ArrowFunctionExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = arrow.scope_id();
+        if !arrow.params.items.iter().any(|param| Self::has_nested_object_rest(&param.pattern)) {
+            return;
+        }
+        let body = arrow_function_body_as_function_body_mut(&mut arrow.body, ctx);
+        if Self::lower_parameter_dependencies(&mut arrow.params, body, scope_id, arrow.r#async, ctx)
+        {
+            return;
+        }
         for param in &mut arrow.params.items {
             if Self::has_nested_object_rest(&param.pattern) {
-                // `({ ...args }) => { args }`
-                let body = arrow_function_body_as_function_body_mut(&mut arrow.body, ctx);
                 Self::replace_rest_element(
                     VariableDeclarationKind::Var,
                     &mut param.pattern,
