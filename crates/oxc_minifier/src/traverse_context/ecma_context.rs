@@ -432,11 +432,11 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         (options.class && is_class) || (options.function && !is_class)
     }
 
-    /// Construct a [`DroppedSubtreeCollector`] borrowing the per-pass change accumulator.
+    /// Construct a [`DroppedSubtreeCollector`] borrowing pass changes and scoping.
     /// Used by the `replace_*` / `drop_*` helpers.
     #[inline]
     fn dropped_subtree_collector(&mut self) -> DroppedSubtreeCollector<'a, '_> {
-        DroppedSubtreeCollector::new(&mut self.state.pass_changes)
+        DroppedSubtreeCollector::new(&mut self.state.pass_changes, self.scoping.scoping_mut())
     }
 
     /// Replace an expression slot. Marks the pass as having mutated the AST.

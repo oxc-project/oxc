@@ -93,6 +93,10 @@ pub struct SemanticBuilder<'a> {
     /// A single flat map avoids allocating a per-scope inner map for every hoisting scope.
     pub(crate) hoisting_variables: FxHashMap<(ScopeId, Ident<'a>), SymbolId>,
 
+    /// Temporary catch bindings retained when a same-named `var` hoists their symbol.
+    /// Removed after reference resolution so each symbol has a single owning scope.
+    pub(crate) hoisted_catch_bindings: SmallVec<[(ScopeId, Ident<'a>); 1]>,
+
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
     /// store or ancestry stack). See [`AstNodeStore`].
@@ -158,6 +162,7 @@ impl<'a> SemanticBuilder<'a> {
             module_instance_state_cache: FxHashMap::default(),
             node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
+            hoisted_catch_bindings: SmallVec::new(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unused_labels: UnusedLabels::default(),
@@ -669,6 +674,9 @@ impl<'a> SemanticBuilder<'a> {
                 self.scoping
                     .add_root_unresolved_reference(unresolved.name, unresolved.reference_id);
             }
+        }
+        for (scope_id, name) in self.hoisted_catch_bindings.drain(..) {
+            self.scoping.remove_binding(scope_id, name);
         }
     }
 
