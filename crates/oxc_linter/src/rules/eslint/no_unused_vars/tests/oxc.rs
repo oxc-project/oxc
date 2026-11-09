@@ -823,6 +823,34 @@ fn test_functions() {
 }
 
 #[test]
+fn test_annex_b() {
+    let pass = vec![
+        "function pick(x) { if (x) function impl() { return 1; } else function impl() { return 2; } return impl(); } pick(true);",
+        "function laterVar() { { function helper() { return 1; } } var helper; return helper(); } laterVar();",
+        "function laterFn() { { function helper() { return 1; } } function helper() { return 0; } return helper(); } laterFn();",
+        "function earlierVar() { var helper; { function helper() { return 1; } } return helper(); } earlierVar();",
+        "function pick(impl) { if (flag) function impl() {} return impl; } use(pick);",
+        "function pick(x) { var impl; if (x) { function impl() {} } else { function impl() {} } return impl; } use(pick);",
+    ];
+    let fail = vec![
+        // Reading the lexical blocker does not use the block function.
+        "function pick() { let impl = 1; { function impl() {} } return impl; } pick();",
+        "function pick() { for (let impl = 1;;) { if (flag) function impl() {} return impl; } } pick();",
+        // Recursive calls and discarded updates still do not count as uses.
+        "function pick() { var impl; { function impl() { impl(); } } } pick();",
+        "function pick() { var impl; { function impl() {} } impl++; } pick();",
+        // Strict functions do not create an Annex B assignment.
+        "function pick() { 'use strict'; var impl; { function impl() {} } return impl; } pick();",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .change_rule_path_extension("cjs")
+        .intentionally_allow_no_fix_tests()
+        .with_snapshot_suffix("oxc-annex-b")
+        .test_and_snapshot();
+}
+
+#[test]
 fn test_self_call() {
     let pass = vec![
         "const _thunk = (function createThunk(count) {

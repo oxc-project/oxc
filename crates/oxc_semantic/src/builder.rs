@@ -29,6 +29,7 @@ use oxc_syntax::{
 
 use crate::{
     Semantic,
+    annex_b::AnnexBFunction,
     binder::{Binder, ModuleInstanceState},
     checker,
     class::ClassTableBuilder,
@@ -87,11 +88,14 @@ pub struct SemanticBuilder<'a> {
     /// Nesting depth of TypeScript ambient contexts.
     ambient_depth: u32,
     /// Symbols that have been hoisted out of a scope (e.g. `var` declarations hoisted to
-    /// the enclosing function scope, or Annex B function declarations hoisted to the var scope).
+    /// the enclosing function scope).
     /// Keyed by the `(original scope, name)` the symbol was declared in, so that future
     /// declarations in that scope can still detect redeclarations via `check_redeclaration`.
     /// A single flat map avoids allocating a per-scope inner map for every hoisting scope.
     pub(crate) hoisting_variables: FxHashMap<(ScopeId, Ident<'a>), SymbolId>,
+    /// Function declarations in blocks of the var scopes being bound, in source order, whose
+    /// Annex B var binding is decided when their var scope has been bound. See [`crate::annex_b`].
+    pub(crate) annex_b_functions: Vec<AnnexBFunction>,
 
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
@@ -158,6 +162,7 @@ impl<'a> SemanticBuilder<'a> {
             module_instance_state_cache: FxHashMap::default(),
             node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
+            annex_b_functions: Vec::new(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unused_labels: UnusedLabels::default(),
@@ -928,6 +933,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             if self.scoping.scope_flags(self.current_scope_id).contains_direct_eval() {
                 self.scoping.scope_flags_mut(parent_id).insert(ScopeFlags::DirectEval);
             }
+            if self.has_annex_b_functions_in_current_scope() {
+                self.bind_annex_b_functions();
+            }
             self.current_scope_id = parent_id;
         }
     }
@@ -1020,6 +1028,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         control_flow!(self, |cfg| cfg.release_error_harness(error_harness));
         /* cfg */
+
+        if self.has_annex_b_functions_in_current_scope() {
+            self.bind_annex_b_functions();
+        }
+        debug_assert!(self.annex_b_functions.is_empty());
 
         // Resolve all remaining unresolved references by walking up the scope chain.
         // This replaces the old bubble-up approach where references were merged on every scope exit.
@@ -2132,6 +2145,25 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.enter_ambient_context(func.declare);
 
+        // Annex B.3.3: a bare function declaration in an `if` branch has an implicit block scope.
+        // The function node supplies its source range; traversal recovers the implicit scope
+        // as the function body scope's parent.
+        let has_annex_b_if_scope = func.is_declaration()
+            && func.id.is_some()
+            && !func.r#async
+            && !func.generator
+            && !self.source_type.is_typescript()
+            && checker::is_function_decl_part_of_if_statement(func, self);
+        if has_annex_b_if_scope {
+            let parent_scope_id = self.current_scope_id;
+            let flags = self.scoping.get_new_scope_flags(ScopeFlags::empty(), parent_scope_id);
+            self.current_scope_id = self.scoping.add_scope(
+                Some(parent_scope_id),
+                self.node_store.current_node_id,
+                flags,
+            );
+        }
+
         if func.is_declaration() {
             func.bind(self);
         }
@@ -2214,6 +2246,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.leave_scope();
+        if has_annex_b_if_scope {
+            self.leave_scope();
+        }
         self.leave_node(kind);
         self.leave_ambient_context(func.declare);
     }

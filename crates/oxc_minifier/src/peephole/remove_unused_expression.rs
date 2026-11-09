@@ -788,8 +788,11 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
         // Cannot remove writes to implicitly observable bindings, for example
-        // `export let foo; foo = 1;`.
-        if ctx.state.symbols.is_implicitly_observable(symbol_id) {
+        // `export let foo; foo = 1;`. An Annex B blocker may also be uninitialized when written
+        // from a different switch case, even when its only apparent observer is the block function.
+        if ctx.scoping().is_annex_b_blocker(symbol_id)
+            || ctx.state.symbols.is_implicitly_observable(symbol_id)
+        {
             return false;
         }
         let Some(symbol_value) = ctx.state.symbols.value(symbol_id) else {

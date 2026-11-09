@@ -422,6 +422,49 @@ fn readonly_var_reassigned_cross_function_read() {
 }
 
 #[test]
+fn readonly_var_annex_b_assignment() {
+    test_options_source_type(
+        "function t(q) { var g = 'v'; if (q) function g() { return 2; } return (() => typeof g)(); } console.log(t(1), t(0));",
+        "function t(q) { var g = 'v'; if (q) function g() { return 2; } return typeof g; } console.log(t(1), t(0));",
+        SourceType::script(),
+        &CompressOptions::smallest(),
+    );
+    // A lexical binding blocks the assignment even in the function's var scope.
+    test_options_source_type(
+        "function t(q) { let g = 'v'; if (q) function g() {} return (() => typeof g)(); } console.log(t(1), t(0));",
+        "function t(q) { let g = 'v'; if (q) function g() {} return 'string'; } console.log(t(1), t(0));",
+        SourceType::script(),
+        &CompressOptions::smallest(),
+    );
+    // A strict block function cannot assign to the outer variable.
+    test_options_source_type(
+        "function t(q) { 'use strict'; var g = 'v'; if (q) { function g() {} } return (() => typeof g)(); } console.log(t(1), t(0));",
+        "function t(q) { 'use strict'; return 'string'; } console.log(t(1), t(0));",
+        SourceType::script(),
+        &CompressOptions::smallest(),
+    );
+}
+
+#[test]
+fn falsy_var_annex_b_assignment() {
+    test_options_source_type(
+        "function t(q) { effect(); var g = 0; if (q) function g() {} return () => g ? 1 : 0; } use(t);",
+        "function t(q) { effect(); var g = 0; if (q) function g() {} return () => +!!g; } use(t);",
+        SourceType::script(),
+        &CompressOptions::smallest(),
+    );
+}
+
+#[test]
+fn iife_parameter_annex_b_assignment() {
+    test_same_options_source_type(
+        "use((g => { if (q) function g() {} return () => typeof g; })(1));",
+        SourceType::script(),
+        &CompressOptions::smallest(),
+    );
+}
+
+#[test]
 fn readonly_var_reader_declared_before_var() {
     // Known limitation: when the reading function is declared *before* the var,
     // the symbol's constant isn't recorded until `exit_variable_declarator` —

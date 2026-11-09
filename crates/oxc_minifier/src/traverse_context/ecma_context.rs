@@ -323,19 +323,25 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         // consume the first declaration's facts before a later declaration of
         // the same symbol is visited. Disable every declaration-derived fact
         // from the outset instead of trying to repair an already-consumed value.
-        let has_multiple_value_declarations = self
-            .scoping()
-            .symbol_redeclarations(symbol_id)
-            .iter()
-            .filter(|declaration| declaration.flags.is_value())
-            .nth(1)
-            .is_some();
+        // Annex B functions can assign to a var-scope binding without a write reference.
+        // Lexical blockers prevent that assignment and can still be tracked.
+        let has_annex_b_write = scope_flags.is_var()
+            && !self.scoping().symbol_flags(symbol_id).is_block_scoped()
+            && self.scoping().is_annex_b_blocker(symbol_id);
+        let has_multiple_value_sources = has_annex_b_write
+            || self
+                .scoping()
+                .symbol_redeclarations(symbol_id)
+                .iter()
+                .filter(|declaration| declaration.flags.is_value())
+                .nth(1)
+                .is_some();
 
         // `constant` is the value-context value, `None` when withheld (e.g. a hoisted
         // `var` past a dirty prelude). Capture before it's moved just below.
         let value_withheld = constant.is_none();
         let initialized_constant =
-            if has_multiple_value_declarations || scope_flags.contains(ScopeFlags::DirectEval) {
+            if has_multiple_value_sources || scope_flags.contains(ScopeFlags::DirectEval) {
                 None
             } else {
                 constant
@@ -345,7 +351,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         // one value declaration, no resolved writes, outside a direct-`eval` scope,
         // and not a script's top-level global (another script could reassign it, so
         // a 0 in-module write count doesn't prove write-once).
-        let boolean_falsy = if has_multiple_value_declarations {
+        let boolean_falsy = if has_multiple_value_sources {
             false
         } else {
             falsy_init
@@ -366,7 +372,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             allow_constant_inlining: true,
             implicit_undefined,
             references,
-            kind: if has_multiple_value_declarations { FreshValueKind::None } else { kind },
+            kind: if has_multiple_value_sources { FreshValueKind::None } else { kind },
             boolean_falsy,
         };
         self.state.symbols.init_value(symbol_id, symbol_value)
@@ -436,7 +442,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Used by the `replace_*` / `drop_*` helpers.
     #[inline]
     fn dropped_subtree_collector(&mut self) -> DroppedSubtreeCollector<'a, '_> {
-        DroppedSubtreeCollector::new(&mut self.state.pass_changes)
+        DroppedSubtreeCollector::new(&mut self.state.pass_changes, self.scoping.scoping_mut())
     }
 
     /// Replace an expression slot. Marks the pass as having mutated the AST.

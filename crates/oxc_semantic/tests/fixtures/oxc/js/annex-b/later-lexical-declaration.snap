@@ -1,0 +1,253 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/later-lexical-declaration.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(Function)",
+                "id": 3,
+                "node": "Function(g)",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 2,
+            "node": "BlockStatement",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(Function)",
+                "id": 1,
+                "name": "g",
+                "node": "Function(g)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 1,
+        "node": "Function(laterLet)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(BlockScopedVariable)",
+            "id": 2,
+            "name": "g",
+            "node": "VariableDeclarator(g)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 0,
+                "name": "g",
+                "node_id": 15,
+                "scope_id": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(Function)",
+                "id": 6,
+                "node": "Function(g)",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 5,
+            "node": "BlockStatement",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(Function)",
+                "id": 4,
+                "name": "g",
+                "node": "Function(g)",
+                "references": []
+              }
+            ]
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 7,
+            "node": "Class(g)",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 4,
+        "node": "Function(laterClass)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(Class)",
+            "id": 5,
+            "name": "g",
+            "node": "Class(g)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 1,
+                "name": "g",
+                "node_id": 29,
+                "scope_id": 4
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(Function)",
+                    "id": 11,
+                    "node": "Function(g)",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 10,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(Function)",
+                    "id": 7,
+                    "name": "g",
+                    "node": "Function(g)",
+                    "references": []
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 9,
+            "node": "BlockStatement",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(BlockScopedVariable)",
+                "id": 8,
+                "name": "g",
+                "node": "VariableDeclarator(g)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 8,
+        "node": "Function(laterInEnclosingBlock)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(Function)",
+                    "id": 15,
+                    "node": "Function(g)",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 14,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(Function)",
+                    "id": 10,
+                    "name": "g",
+                    "node": "Function(g)",
+                    "references": []
+                  }
+                ]
+              },
+              {
+                "children": [],
+                "flags": "ScopeFlags(Function)",
+                "id": 16,
+                "node": "Function(g)",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 13,
+            "node": "BlockStatement",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 12,
+        "node": "Function(laterBlockFunctionInEnclosingBlock)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(Function)",
+            "id": 11,
+            "name": "g",
+            "node": "Function(g)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 3,
+                "name": "g",
+                "node_id": 60,
+                "scope_id": 12
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 0,
+        "name": "laterLet",
+        "node": "Function(laterLet)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 3,
+        "name": "laterClass",
+        "node": "Function(laterClass)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 6,
+        "name": "laterInEnclosingBlock",
+        "node": "Function(laterInEnclosingBlock)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 9,
+        "name": "laterBlockFunctionInEnclosingBlock",
+        "node": "Function(laterBlockFunctionInEnclosingBlock)",
+        "references": []
+      }
+    ]
+  }
+]

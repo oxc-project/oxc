@@ -1,5 +1,10 @@
 use oxc_ast::ast::*;
-use oxc_ast_visit::{Visit, walk::walk_call_expression};
+use oxc_ast_visit::{
+    Visit,
+    walk::{walk_call_expression, walk_function},
+};
+use oxc_semantic::Scoping;
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::state::PassChanges;
 
@@ -38,11 +43,12 @@ pub fn as_direct_eval_call<'a, 'b>(
 /// `substitute_is_object_and_not_null`).
 pub struct DroppedSubtreeCollector<'a, 's> {
     pass_changes: &'s mut PassChanges<'a>,
+    scoping: &'s mut Scoping,
 }
 
 impl<'a, 's> DroppedSubtreeCollector<'a, 's> {
-    pub(crate) fn new(pass_changes: &'s mut PassChanges<'a>) -> Self {
-        Self { pass_changes }
+    pub(crate) fn new(pass_changes: &'s mut PassChanges<'a>, scoping: &'s mut Scoping) -> Self {
+        Self { pass_changes, scoping }
     }
 }
 
@@ -69,5 +75,12 @@ impl<'a> Visit<'a> for DroppedSubtreeCollector<'a, '_> {
         }
         // Recurse — eval may be nested inside another call's arguments.
         walk_call_expression(self, it);
+    }
+
+    fn visit_function(&mut self, it: &Function<'a>, flags: ScopeFlags) {
+        if let Some(symbol_id) = it.id.as_ref().and_then(|id| id.symbol_id.get()) {
+            self.scoping.remove_annex_b_blocker_for_function(symbol_id);
+        }
+        walk_function(self, it, flags);
     }
 }
