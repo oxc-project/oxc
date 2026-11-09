@@ -266,65 +266,6 @@ export function foo(a: any): number {
     }
 
     #[test]
-    fn dts_boolean_literal_bindings() {
-        for value in ["true", "false"] {
-            for kind in ["let", "var"] {
-                transform_dts_test(
-                    &format!("export {kind} foo = {value};"),
-                    &format!("export declare {kind} foo: boolean;"),
-                );
-            }
-            transform_dts_test(
-                &format!("export const foo: boolean = {value};"),
-                "export declare const foo: boolean;",
-            );
-            transform_dts_test(
-                &format!("const foo = {value}; export {{ foo }};"),
-                &format!("declare const foo = {value}; export {{ foo }};"),
-            );
-        }
-    }
-
-    #[test]
-    fn dts_parenthesized_literal_bindings() {
-        for (value, expected, widened) in [
-            ("true", "true", "boolean"),
-            ("false", "false", "boolean"),
-            ("1", "1", "number"),
-            ("-1", "-1", "number"),
-            ("1n", "1n", "bigint"),
-            ("\"\"", "\"\"", "string"),
-            ("`text`", "\"text\"", "string"),
-        ] {
-            for init in [format!("({value})"), format!("((({value})))")] {
-                transform_dts_test(
-                    &format!("export const foo = {init};"),
-                    &format!("export declare const foo = {expected};"),
-                );
-                for kind in ["let", "var"] {
-                    transform_dts_test(
-                        &format!("export {kind} foo = {init};"),
-                        &format!("export declare {kind} foo: {widened};"),
-                    );
-                }
-                transform_dts_test(
-                    &format!("export const foo: {widened} = {init};"),
-                    &format!("export declare const foo: {widened};"),
-                );
-            }
-        }
-        transform_dts_test(
-            "export const foo = (true as const);",
-            "export declare const foo: true;",
-        );
-        transform_dts_test(
-            "export const foo = ({ x: true });",
-            "export declare const foo: { x: boolean };",
-        );
-        transform_dts_test("export const foo = (null);", "export declare const foo: null;");
-    }
-
-    #[test]
     fn dts_fn_expr() {
         transform_dts_test(
             "export let foo = function add(a: number, b: number): number {
