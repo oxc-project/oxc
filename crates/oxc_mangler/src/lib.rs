@@ -6,7 +6,7 @@ use std::{
 use itertools::Itertools;
 use keep_names::collect_name_symbols;
 use oxc_index::IndexVec;
-use oxc_syntax::class::ClassId;
+use oxc_syntax::{class::ClassId, scope::ScopeId};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 pub use base54::base54;
@@ -589,12 +589,31 @@ impl<'a> SlotAssignment<'a> {
     /// each scope's bindings take the slots that aren't live in it, allocating fresh slots only
     /// when none are free. `slot_liveness[slot]` records the scopes a slot passes through live so
     /// descendant scopes can tell what's free. Invariant on the result: two symbols sharing a slot
-    /// never have overlapping live ranges, so giving them one name is always safe.
+    /// never have overlapping live ranges, so giving them one name is always safe. The exception
+    /// is an Annex B block function, which shares the slot of the binding that keeps it in its
+    /// block (see [`AnnexBBlockFunctions`]), as the two share a name in the original program.
     fn compute(
         allocator: &'a Allocator,
         scoping: &'a Scoping,
         ast_nodes: &AstNodes,
         constraints: &Constraints,
+    ) -> Self {
+        let annex_b = AnnexBBlockFunctions::collect(allocator, scoping, constraints);
+        // Most programs have no such functions (there are none in strict mode). Compile a
+        // separate loop without their bookkeeping for those.
+        if annex_b.functions.is_empty() {
+            Self::compute_impl::<false>(allocator, scoping, ast_nodes, constraints, &annex_b)
+        } else {
+            Self::compute_impl::<true>(allocator, scoping, ast_nodes, constraints, &annex_b)
+        }
+    }
+
+    fn compute_impl<const ANNEX_B: bool>(
+        allocator: &'a Allocator,
+        scoping: &'a Scoping,
+        ast_nodes: &AstNodes,
+        constraints: &Constraints,
+        annex_b: &AnnexBBlockFunctions<'a>,
     ) -> Self {
         // Names of bindings in direct-`eval` scopes — collected here, reserved in Phase 4.
         // TODO: eval reservation is conservative — ideally we'd reserve names per-slot.
@@ -613,10 +632,20 @@ impl<'a> SlotAssignment<'a> {
         let mut reusable_slots = ArenaVec::new_in(&allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
+        let mut annex_b_cursor = 0;
 
         // Walk down the scope tree and assign a slot number for each symbol. Doing it as a scope
         // walk (rather than a flat symbol loop) generates better code.
         for (scope_id, bindings) in scoping.iter_bindings() {
+            // Scopes are visited in increasing id order, so the functions of this scope come next.
+            let annex_b_start = annex_b_cursor;
+            if ANNEX_B {
+                while annex_b.functions.get(annex_b_cursor).is_some_and(|f| f.0 == scope_id) {
+                    annex_b_cursor += 1;
+                }
+            }
+            let annex_b_functions = &annex_b.functions[annex_b_start..annex_b_cursor];
+
             if bindings.is_empty() {
                 continue;
             }
@@ -631,13 +660,11 @@ impl<'a> SlotAssignment<'a> {
 
             // Sort `bindings` in declaration order.
             tmp_bindings.clear();
-            tmp_bindings.extend(
-                bindings
-                    .values()
-                    .copied()
-                    .filter(|&binding| constraints.is_mangle_candidate(binding, scoping)),
-            );
-            if tmp_bindings.is_empty() {
+            tmp_bindings.extend(bindings.values().copied().filter(|&binding| {
+                constraints.is_mangle_candidate(binding, scoping)
+                    && !(ANNEX_B && annex_b.is_excluded(binding))
+            }));
+            if tmp_bindings.is_empty() && annex_b_functions.is_empty() {
                 continue;
             }
             tmp_bindings.sort_unstable();
@@ -680,50 +707,34 @@ impl<'a> SlotAssignment<'a> {
                 ancestor_set.set_bit(ancestor_id.index());
             }
 
-            let scope_id_index = scope_id.index();
             for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
                 debug_assert!(constraints.is_mangle_candidate(symbol_id, scoping));
                 slots[symbol_id.index()] = assigned_slot;
+                mark_live_scopes(
+                    &mut slot_liveness[assigned_slot as usize],
+                    symbol_id,
+                    scope_id,
+                    &ancestor_set,
+                    scoping,
+                    ast_nodes,
+                );
+            }
 
-                // `var` is hoisted, so include the scope where it is declared
-                // (for cases like `function foo() { { var x; let y; } }`).
-                let declared_scope_id =
-                    ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
-                let redeclared_scope_ids = scoping
-                    .symbol_redeclarations(symbol_id)
-                    .iter()
-                    .map(|r| ast_nodes.get_node(r.declaration).scope_id());
-                let referenced_scope_ids =
-                    scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
-
-                // The scopes this symbol is alive in: for each use, walk up to (but not including)
-                // `scope_id`, marking the descendant scopes it passes through.
-                let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
-                for used_scope_id in referenced_scope_ids
-                    .chain(redeclared_scope_ids)
-                    .chain([scope_id, declared_scope_id])
+            // The binding was assigned its slot in this scope or, if it is a block function
+            // itself, in an ancestor scope.
+            for &(_, binding_id, function_id) in annex_b_functions {
+                let slot = slots[binding_id.index()];
+                if slot != SLOT_UNASSIGNED && constraints.is_mangle_candidate(function_id, scoping)
                 {
-                    for ancestor_id in scoping.scope_ancestors(used_scope_id) {
-                        let ancestor_index = ancestor_id.index();
-                        // Stop when we reach scope_id or any of its ancestors
-                        if ancestor_index == scope_id_index || ancestor_set.has_bit(ancestor_index)
-                        {
-                            break;
-                        }
-                        if slot_liveness_bitset.has_bit(ancestor_index) {
-                            debug_assert!(
-                                scoping.scope_ancestors(ancestor_id).skip(1).all(|a| {
-                                    let idx = a.index();
-                                    slot_liveness_bitset.has_bit(idx)
-                                        || idx == scope_id_index
-                                        || ancestor_set.has_bit(idx)
-                                }),
-                                "Invariant violated: ancestor chain should be fully marked live"
-                            );
-                            break;
-                        }
-                        slot_liveness_bitset.set_bit(ancestor_index);
-                    }
+                    slots[function_id.index()] = slot;
+                    mark_live_scopes(
+                        &mut slot_liveness[slot as usize],
+                        function_id,
+                        scope_id,
+                        &ancestor_set,
+                        scoping,
+                        ast_nodes,
+                    );
                 }
             }
 
@@ -749,6 +760,121 @@ impl<'a> SlotAssignment<'a> {
 
         let total_slots = slot_liveness.len();
         Self { slots, total_slots, eval_reserved_names }
+    }
+}
+
+/// Mark the scopes `symbol_id` is alive in below `scope_id`, the scope its slot is assigned in.
+///
+/// `ancestor_set` contains the ancestors of `scope_id`.
+#[expect(clippy::inline_always, reason = "hot path")]
+#[inline(always)]
+fn mark_live_scopes(
+    slot_liveness: &mut BitSet,
+    symbol_id: SymbolId,
+    scope_id: ScopeId,
+    ancestor_set: &BitSet,
+    scoping: &Scoping,
+    ast_nodes: &AstNodes,
+) {
+    // `var` is hoisted, so include the scope where it is declared
+    // (for cases like `function foo() { { var x; let y; } }`).
+    let declared_scope_id = ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
+    let redeclared_scope_ids = scoping
+        .symbol_redeclarations(symbol_id)
+        .iter()
+        .map(|r| ast_nodes.get_node(r.declaration).scope_id());
+    let referenced_scope_ids = scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
+
+    // The scopes this symbol is alive in: for each use, walk up to (but not including)
+    // `scope_id`, marking the descendant scopes it passes through.
+    let scope_id_index = scope_id.index();
+    for used_scope_id in
+        referenced_scope_ids.chain(redeclared_scope_ids).chain([scope_id, declared_scope_id])
+    {
+        for ancestor_id in scoping.scope_ancestors(used_scope_id) {
+            let ancestor_index = ancestor_id.index();
+            // Stop when we reach scope_id or any of its ancestors
+            if ancestor_index == scope_id_index || ancestor_set.has_bit(ancestor_index) {
+                break;
+            }
+            if slot_liveness.has_bit(ancestor_index) {
+                debug_assert!(
+                    scoping.scope_ancestors(ancestor_id).skip(1).all(|a| {
+                        let idx = a.index();
+                        slot_liveness.has_bit(idx)
+                            || idx == scope_id_index
+                            || ancestor_set.has_bit(idx)
+                    }),
+                    "Invariant violated: ancestor chain should be fully marked live"
+                );
+                break;
+            }
+            slot_liveness.set_bit(ancestor_index);
+        }
+    }
+}
+
+/// Rename constraints for Annex B block functions that were not bound in their var scope (see
+/// [`Scoping::annex_b_block_functions`]).
+///
+/// Renaming must keep each pair's names equal, so an inner symbol shares its binding's slot. The
+/// symbol gets that slot when the binding's scope is visited, so that the scopes in between are
+/// marked live before they are. If either of the two keeps its name, both do.
+struct AnnexBBlockFunctions<'a> {
+    /// `(scope of the binding, binding, function)`, sorted by scope.
+    functions: ArenaVec<'a, (ScopeId, SymbolId, SymbolId)>,
+    /// Symbols that get no slot with the other bindings of their scope: the functions, and the
+    /// bindings of functions that keep their names. `None` if there are no functions.
+    excluded: Option<BitSet<'a>>,
+}
+
+impl<'a> AnnexBBlockFunctions<'a> {
+    fn collect(allocator: &'a Allocator, scoping: &Scoping, constraints: &Constraints) -> Self {
+        let block_functions = scoping.annex_b_block_functions();
+        let mut functions = ArenaVec::with_capacity_in(block_functions.len(), &allocator);
+        if block_functions.is_empty() {
+            return Self { functions, excluded: None };
+        }
+        let mut excluded = BitSet::new_in(scoping.symbols_len(), allocator);
+        for (&function_id, &binding_id) in block_functions {
+            let binding_scope_id = scoping.symbol_scope_id(binding_id);
+            functions.push((binding_scope_id, binding_id, function_id));
+            excluded.set_bit(function_id.index());
+        }
+        functions.sort_unstable();
+
+        // Exclusion propagates through chains such as a block function kept by another block
+        // function, which is itself kept by a class whose name is preserved. Pairs are oriented
+        // from an outer binding to an inner symbol and sorted by the binding's scope, so a reverse
+        // pass propagates inner exclusions outwards and a forward pass propagates them inwards.
+        let mut kept_names = BitSet::new_in(scoping.symbols_len(), allocator);
+        for &(_, binding_id, function_id) in &functions {
+            if !constraints.is_mangle_candidate(function_id, scoping) {
+                kept_names.set_bit(function_id.index());
+            }
+            if !constraints.is_mangle_candidate(binding_id, scoping) {
+                kept_names.set_bit(binding_id.index());
+            }
+        }
+        for &(_, binding_id, function_id) in functions.iter().rev() {
+            if kept_names.has_bit(function_id.index()) {
+                kept_names.set_bit(binding_id.index());
+            }
+        }
+        for &(_, binding_id, function_id) in &functions {
+            if kept_names.has_bit(binding_id.index()) {
+                kept_names.set_bit(function_id.index());
+            }
+        }
+        for symbol_id in kept_names.ones() {
+            excluded.set_bit(symbol_id);
+        }
+        Self { functions, excluded: Some(excluded) }
+    }
+
+    #[inline]
+    fn is_excluded(&self, symbol_id: SymbolId) -> bool {
+        self.excluded.as_ref().is_some_and(|excluded| excluded.has_bit(symbol_id.index()))
     }
 }
 

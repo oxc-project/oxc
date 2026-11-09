@@ -99,6 +99,10 @@ impl Rule for NoUnassignedVars {
             return;
         }
         for ident in identifiers {
+            // Annex B assigns block functions to var bindings without a write reference.
+            if declaration.kind.is_var() && ctx.scoping().is_annex_b_blocker(ident.symbol_id()) {
+                continue;
+            }
             let mut has_read = false;
             for reference in ctx.symbol_references(ident.symbol_id()) {
                 if reference.is_write() {
@@ -180,6 +184,32 @@ fn test() {
     ];
 
     Tester::new(NoUnassignedVars::NAME, NoUnassignedVars::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn test_annex_b() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "function pick() { { function helper() {} } var helper; return helper; }",
+        "function pick() { var helper; { function helper() {} } return helper; }",
+        "function pick(x) { var helper; if (x) function helper() {} return helper; }",
+        "var helper; if (flag) { function helper() {} } use(helper);",
+    ];
+    let fail = vec![
+        // Lexical blockers prevent the implicit assignment.
+        "function pick() { let helper; { function helper() {} } return helper; }",
+        "function pick(x) { let helper; if (x) function helper() {} return helper; }",
+        "var helper; { let helper = 1; { function helper() {} } } use(helper);",
+        // Neither strict nor async block functions assign to the outer var.
+        "function pick() { 'use strict'; var helper; { function helper() {} } return helper; }",
+        "var helper; { async function helper() {} } use(helper);",
+    ];
+
+    Tester::new(NoUnassignedVars::NAME, NoUnassignedVars::PLUGIN, pass, fail)
+        .change_rule_path_extension("cjs")
+        .with_snapshot_suffix("annex-b")
+        .test_and_snapshot();
 }
 
 #[test]

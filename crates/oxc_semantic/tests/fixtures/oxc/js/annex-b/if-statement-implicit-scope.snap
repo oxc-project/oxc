@@ -1,0 +1,187 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/if-statement-implicit-scope.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(Function)",
+                        "id": 5,
+                        "node": "Function(g)",
+                        "symbols": []
+                      }
+                    ],
+                    "flags": "ScopeFlags(0x0)",
+                    "id": 4,
+                    "node": "Function(g)",
+                    "symbols": [
+                      {
+                        "annex_b_block_binding": 2,
+                        "flags": "SymbolFlags(Function)",
+                        "id": 3,
+                        "name": "g",
+                        "node": "Function(g)",
+                        "references": []
+                      }
+                    ]
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 3,
+                "node": "BlockStatement",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 2,
+            "node": "ForStatement",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(BlockScopedVariable)",
+                "id": 2,
+                "name": "g",
+                "node": "VariableDeclarator(g)",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Read)",
+                    "id": 1,
+                    "name": "g",
+                    "node_id": 20,
+                    "scope_id": 3
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 1,
+        "node": "Function(branchReadsEnclosingBinding)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 1,
+            "name": "a",
+            "node": "FormalParameter(a)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 0,
+                "name": "a",
+                "node_id": 14,
+                "scope_id": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(Function)",
+                "id": 8,
+                "node": "Function(g)",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 7,
+            "node": "Function(g)",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(Function)",
+                "id": 10,
+                "node": "Function(g)",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 9,
+            "node": "Function(g)",
+            "symbols": [
+              {
+                "annex_b_block_binding": 6,
+                "flags": "SymbolFlags(Function)",
+                "id": 7,
+                "name": "g",
+                "node": "Function(g)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 6,
+        "node": "Function(branchesHaveDistinctBindings)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 5,
+            "name": "a",
+            "node": "FormalParameter(a)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 2,
+                "name": "a",
+                "node_id": 28,
+                "scope_id": 6
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(Function)",
+            "id": 6,
+            "name": "g",
+            "node": "Function(g)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 3,
+                "name": "g",
+                "node_id": 42,
+                "scope_id": 6
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 0,
+        "name": "branchReadsEnclosingBinding",
+        "node": "Function(branchReadsEnclosingBinding)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 4,
+        "name": "branchesHaveDistinctBindings",
+        "node": "Function(branchesHaveDistinctBindings)",
+        "references": []
+      }
+    ]
+  }
+]

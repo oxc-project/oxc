@@ -78,6 +78,16 @@ impl<'s, 'a> Symbol<'s, 'a> {
         self.scoping().get_resolved_references(self.id)
     }
 
+    /// The var-scope binding assigned by this block function under Annex B.
+    pub fn annex_b_var_binding(&self) -> Option<Self> {
+        let &binding_id = self.scoping().annex_b_block_functions().get(&self.id)?;
+        let binding = Self::new(self.semantic, self.module_record, binding_id);
+        // A lexical or intermediate binding prevents the assignment instead.
+        (self.scoping().scope_flags(binding.scope_id()).is_var()
+            && !binding.flags().is_block_scoped())
+        .then_some(binding)
+    }
+
     /// Is this [`Symbol`] declared in the root scope?
     pub fn is_root(&self) -> bool {
         self.scoping().symbol_scope_id(self.id) == self.scoping().root_scope_id()

@@ -1578,7 +1578,7 @@ unsafe fn walk_if_statement<'a, State, Tr: Traverse<'a, State>>(
         ctx,
     );
     ctx.retag_stack(AncestorType::IfStatementConsequent);
-    walk_statement(
+    walk_if_statement_branch(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_IF_STATEMENT_CONSEQUENT) as *mut Statement,
         ctx,
@@ -1587,7 +1587,7 @@ unsafe fn walk_if_statement<'a, State, Tr: Traverse<'a, State>>(
         as *mut Option<Statement>)
     {
         ctx.retag_stack(AncestorType::IfStatementAlternate);
-        walk_statement(traverser, field as *mut _, ctx);
+        walk_if_statement_branch(traverser, field as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_if_statement(&mut *node, ctx);
@@ -5886,4 +5886,29 @@ unsafe fn walk_statements<'a, State, Tr: Traverse<'a, State>>(
         walk_statement(traverser, stmt, ctx);
     }
     traverser.exit_statements(&mut *stmts, ctx);
+}
+
+/// Walk the `consequent` or `alternate` of an `IfStatement`.
+///
+/// A function declaration directly in a branch has an implicit Annex B.3.3 block scope,
+/// which has no AST node. Enter it before statement callbacks, which may replace the branch.
+/// The block remains the branch's parent scope throughout traversal of that branch.
+unsafe fn walk_if_statement_branch<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut Statement<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    if let Statement::FunctionDeclaration(function) = &*node {
+        let body_scope_id = function.scope_id.get().unwrap();
+        let scope_id = ctx.scoping().scope_parent_id(body_scope_id).unwrap();
+        let previous_scope_id = ctx.current_scope_id();
+        let previous_block_scope_id = ctx.current_block_scope_id();
+        ctx.set_current_scope_id(scope_id);
+        ctx.set_current_block_scope_id(scope_id);
+        walk_statement(traverser, node, ctx);
+        ctx.set_current_scope_id(previous_scope_id);
+        ctx.set_current_block_scope_id(previous_block_scope_id);
+    } else {
+        walk_statement(traverser, node, ctx);
+    }
 }

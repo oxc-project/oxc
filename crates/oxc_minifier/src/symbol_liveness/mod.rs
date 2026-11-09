@@ -303,7 +303,7 @@ impl<'a> FunctionGraph<'a> {
             let target = SymbolId::from_usize(bit);
             // Implicitly observable candidates (e.g. exported functions) are
             // unconditionally live regardless of their references.
-            if implicitly_observable.contains(bit) {
+            if implicitly_observable.contains(bit) || scoping.is_annex_b_blocker(target) {
                 self.scratch.mark_live(target);
             }
             let mut has_registered_function_owner = false;
@@ -315,7 +315,9 @@ impl<'a> FunctionGraph<'a> {
                 };
 
                 has_registered_function_owner = true;
-                if implicitly_observable.contains(owner.index()) {
+                if implicitly_observable.contains(owner.index())
+                    || scoping.is_annex_b_blocker(owner)
+                {
                     // A reference owned by a permanently live function keeps
                     // its target live unconditionally. Avoid storing and
                     // sorting the common implicitly observable owner case; the

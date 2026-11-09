@@ -93,6 +93,9 @@ impl<'a> Symbol<'_, 'a> {
         if self.is_function_or_class_declaration_used() {
             return true;
         }
+        if self.annex_b_var_binding().is_some_and(|binding| binding.has_usages(options)) {
+            return true;
+        }
 
         // Use symbol flags to skip the usage checks we are certain don't need
         // to be run.

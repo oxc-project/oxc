@@ -1,0 +1,582 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/annex-b/enclosing-block-declaration.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(Function)",
+                    "id": 4,
+                    "node": "Function(g)",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 3,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "annex_b_block_binding": 1,
+                    "flags": "SymbolFlags(Function)",
+                    "id": 2,
+                    "name": "g",
+                    "node": "Function(g)",
+                    "references": []
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 2,
+            "node": "BlockStatement",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(BlockScopedVariable)",
+                "id": 1,
+                "name": "g",
+                "node": "VariableDeclarator(g)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 1,
+        "node": "Function(enclosingLet)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(Function)",
+                    "id": 8,
+                    "node": "Function(g)",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 7,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "annex_b_block_binding": 4,
+                    "flags": "SymbolFlags(Function)",
+                    "id": 5,
+                    "name": "g",
+                    "node": "Function(g)",
+                    "references": []
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 6,
+            "node": "ForStatement",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(BlockScopedVariable)",
+                "id": 4,
+                "name": "g",
+                "node": "VariableDeclarator(g)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 5,
+        "node": "Function(forHead)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 10,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(Function)",
+                        "id": 14,
+                        "node": "Function(g)",
+                        "symbols": []
+                      }
+                    ],
+                    "flags": "ScopeFlags(0x0)",
+                    "id": 13,
+                    "node": "BlockStatement",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 12,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                    "id": 7,
+                    "name": "g",
+                    "node": "CatchParameter",
+                    "references": []
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 11,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 9,
+        "node": "Function(simpleCatchParameter)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(Function)",
+            "id": 8,
+            "name": "g",
+            "node": "Function(g)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 2,
+                "name": "g",
+                "node_id": 47,
+                "scope_id": 9
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 16,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(Function)",
+                        "id": 20,
+                        "node": "Function(g)",
+                        "symbols": []
+                      }
+                    ],
+                    "flags": "ScopeFlags(0x0)",
+                    "id": 19,
+                    "node": "BlockStatement",
+                    "symbols": [
+                      {
+                        "annex_b_block_binding": 10,
+                        "flags": "SymbolFlags(Function)",
+                        "id": 11,
+                        "name": "g",
+                        "node": "Function(g)",
+                        "references": []
+                      }
+                    ]
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 18,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(BlockScopedVariable | CatchVariable)",
+                    "id": 10,
+                    "name": "g",
+                    "node": "CatchParameter",
+                    "references": []
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 17,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 15,
+        "node": "Function(destructuredCatchParameter)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 22,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(Function)",
+                        "id": 26,
+                        "node": "Function(g)",
+                        "symbols": []
+                      }
+                    ],
+                    "flags": "ScopeFlags(0x0)",
+                    "id": 25,
+                    "node": "Function(g)",
+                    "symbols": []
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(Function)",
+                        "id": 28,
+                        "node": "Function(g)",
+                        "symbols": []
+                      }
+                    ],
+                    "flags": "ScopeFlags(0x0)",
+                    "id": 27,
+                    "node": "Function(g)",
+                    "symbols": [
+                      {
+                        "annex_b_block_binding": 15,
+                        "flags": "SymbolFlags(Function)",
+                        "id": 16,
+                        "name": "g",
+                        "node": "Function(g)",
+                        "references": []
+                      }
+                    ]
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 24,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                    "id": 14,
+                    "name": "g",
+                    "node": "CatchParameter",
+                    "references": [
+                      {
+                        "flags": "ReferenceFlags(Read)",
+                        "id": 6,
+                        "name": "g",
+                        "node_id": 91,
+                        "scope_id": 24
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 23,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 21,
+        "node": "Function(simpleCatchParameterIfStatement)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 13,
+            "name": "x",
+            "node": "FormalParameter(x)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 4,
+                "name": "x",
+                "node_id": 79,
+                "scope_id": 24
+              },
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 5,
+                "name": "x",
+                "node_id": 85,
+                "scope_id": 24
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(Function)",
+            "id": 15,
+            "name": "g",
+            "node": "Function(g)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 7,
+                "name": "g",
+                "node_id": 93,
+                "scope_id": 21
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 30,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(Function)",
+                        "id": 34,
+                        "node": "Function(g)",
+                        "symbols": []
+                      }
+                    ],
+                    "flags": "ScopeFlags(0x0)",
+                    "id": 33,
+                    "node": "Function(g)",
+                    "symbols": [
+                      {
+                        "annex_b_block_binding": 19,
+                        "flags": "SymbolFlags(Function)",
+                        "id": 20,
+                        "name": "g",
+                        "node": "Function(g)",
+                        "references": []
+                      }
+                    ]
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 32,
+                "node": "BlockStatement",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 31,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 29,
+        "node": "Function(simpleCatchParameterVarIfStatement)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 18,
+            "name": "x",
+            "node": "FormalParameter(x)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 8,
+                "name": "x",
+                "node_id": 110,
+                "scope_id": 32
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+            "id": 19,
+            "name": "g",
+            "node": "CatchParameter",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 9,
+                "name": "g",
+                "node_id": 116,
+                "scope_id": 29
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 36,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(Function)",
+                        "id": 40,
+                        "node": "Function(g)",
+                        "symbols": []
+                      }
+                    ],
+                    "flags": "ScopeFlags(0x0)",
+                    "id": 39,
+                    "node": "Function(g)",
+                    "symbols": [
+                      {
+                        "annex_b_block_binding": 23,
+                        "flags": "SymbolFlags(Function)",
+                        "id": 24,
+                        "name": "g",
+                        "node": "Function(g)",
+                        "references": []
+                      }
+                    ]
+                  }
+                ],
+                "flags": "ScopeFlags(0x0)",
+                "id": 38,
+                "node": "BlockStatement",
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(BlockScopedVariable | CatchVariable)",
+                    "id": 23,
+                    "name": "g",
+                    "node": "CatchParameter",
+                    "references": []
+                  }
+                ]
+              }
+            ],
+            "flags": "ScopeFlags(CatchClause)",
+            "id": 37,
+            "node": "CatchClause",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 35,
+        "node": "Function(destructuredCatchParameterIfStatement)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 22,
+            "name": "x",
+            "node": "FormalParameter(x)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 10,
+                "name": "x",
+                "node_id": 131,
+                "scope_id": 38
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 0,
+        "name": "enclosingLet",
+        "node": "Function(enclosingLet)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 3,
+        "name": "forHead",
+        "node": "Function(forHead)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 6,
+        "name": "simpleCatchParameter",
+        "node": "Function(simpleCatchParameter)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 9,
+        "name": "destructuredCatchParameter",
+        "node": "Function(destructuredCatchParameter)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 12,
+        "name": "simpleCatchParameterIfStatement",
+        "node": "Function(simpleCatchParameterIfStatement)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 17,
+        "name": "simpleCatchParameterVarIfStatement",
+        "node": "Function(simpleCatchParameterVarIfStatement)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 21,
+        "name": "destructuredCatchParameterIfStatement",
+        "node": "Function(destructuredCatchParameterIfStatement)",
+        "references": []
+      }
+    ]
+  }
+]
