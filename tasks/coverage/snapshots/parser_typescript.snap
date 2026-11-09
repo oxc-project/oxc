@@ -1,9 +1,9 @@
 commit: f7973164
 
 parser_typescript Summary:
-AST Parsed     : 9902/9915 (99.87%)
-Positive Passed: 9889/9915 (99.74%)
-Negative Passed: 1719/2822 (60.91%)
+AST Parsed     : 9901/9914 (99.87%)
+Positive Passed: 9889/9914 (99.75%)
+Negative Passed: 1720/2823 (60.93%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -2249,89 +2249,6 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declara
     ·                    ──
  17 │ 
     ╰────
-
-Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts
-
-  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:6:1]
- 5 │ // Assertions must not hide an invalid left operand of **.
- 6 │ -x ** 2;
-   · ──
- 7 │ +x ** 2;
-   ╰────
-  help: Wrap the unary expression in parentheses to make the precedence explicit
-
-  × A unary expression with the '+' operator cannot be used as the left operand of an exponentiation expression
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:7:1]
- 6 │ -x ** 2;
- 7 │ +x ** 2;
-   · ──
- 8 │ ~x ** 2;
-   ╰────
-  help: Wrap the unary expression in parentheses to make the precedence explicit
-
-  × A unary expression with the '~' operator cannot be used as the left operand of an exponentiation expression
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:8:1]
- 7 │ +x ** 2;
- 8 │ ~x ** 2;
-   · ──
- 9 │ !x ** 2;
-   ╰────
-  help: Wrap the unary expression in parentheses to make the precedence explicit
-
-  × A unary expression with the '!' operator cannot be used as the left operand of an exponentiation expression
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:9:1]
-  8 │ ~x ** 2;
-  9 │ !x ** 2;
-    · ──
- 10 │ typeof x ** 2;
-    ╰────
-  help: Wrap the unary expression in parentheses to make the precedence explicit
-
-  × A unary expression with the 'typeof' operator cannot be used as the left operand of an exponentiation expression
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:10:1]
-  9 │ !x ** 2;
- 10 │ typeof x ** 2;
-    · ────────
- 11 │ void x ** 2;
-    ╰────
-  help: Wrap the unary expression in parentheses to make the precedence explicit
-
-  × A unary expression with the 'void' operator cannot be used as the left operand of an exponentiation expression
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:11:1]
- 10 │ typeof x ** 2;
- 11 │ void x ** 2;
-    · ──────
- 12 │ delete obj.p ** 2;
-    ╰────
-  help: Wrap the unary expression in parentheses to make the precedence explicit
-
-  × A unary expression with the 'delete' operator cannot be used as the left operand of an exponentiation expression
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:12:1]
- 11 │ void x ** 2;
- 12 │ delete obj.p ** 2;
-    · ────────────
- 13 │ <number>x ** 2;
-    ╰────
-  help: Wrap the unary expression in parentheses to make the precedence explicit
-
-  × A type assertion cannot be used as the left operand of an exponentiation expression
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:13:1]
- 12 │ delete obj.p ** 2;
- 13 │ <number>x ** 2;
-    · ─────────
- 14 │ 
-    ╰────
-  help: Wrap the type assertion in parentheses to make the precedence explicit
-
-  × A unary expression with the 'await' operator cannot be used as the left operand of an exponentiation expression
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:44:5]
- 43 │ async function invalidAwait() {
- 44 │     await x ** 2;
-    ·     ───────
- 45 │     await x as number ** 2;
-    ╰────
-  help: Wrap the unary expression in parentheses to make the precedence explicit
 
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentMerging1.ts
 
@@ -7828,6 +7745,303 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  1 │ export import "server";
    ·        ────────────────
    ╰────
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:6:1]
+ 5 │ // Assertions must not hide an invalid left operand of **.
+ 6 │ -x ** 2;
+   · ──
+ 7 │ +x ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '+' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:7:1]
+ 6 │ -x ** 2;
+ 7 │ +x ** 2;
+   · ──
+ 8 │ ~x ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '~' operator cannot be used as the left operand of an exponentiation expression
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:8:1]
+ 7 │ +x ** 2;
+ 8 │ ~x ** 2;
+   · ──
+ 9 │ !x ** 2;
+   ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '!' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:9:1]
+  8 │ ~x ** 2;
+  9 │ !x ** 2;
+    · ──
+ 10 │ typeof x ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'typeof' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:10:1]
+  9 │ !x ** 2;
+ 10 │ typeof x ** 2;
+    · ────────
+ 11 │ void x ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'void' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:11:1]
+ 10 │ typeof x ** 2;
+ 11 │ void x ** 2;
+    · ──────
+ 12 │ delete obj.p ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'delete' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:12:1]
+ 11 │ void x ** 2;
+ 12 │ delete obj.p ** 2;
+    · ────────────
+ 13 │ <number>x ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A type assertion cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:13:1]
+ 12 │ delete obj.p ** 2;
+ 13 │ <number>x ** 2;
+    · ─────────
+ 14 │ 
+    ╰────
+  help: Wrap the type assertion in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:15:1]
+ 14 │ 
+ 15 │ -x as any ** 2;
+    · ──
+ 16 │ +x as any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '+' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:16:1]
+ 15 │ -x as any ** 2;
+ 16 │ +x as any ** 2;
+    · ──
+ 17 │ ~x as any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '~' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:17:1]
+ 16 │ +x as any ** 2;
+ 17 │ ~x as any ** 2;
+    · ──
+ 18 │ !x as any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '!' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:18:1]
+ 17 │ ~x as any ** 2;
+ 18 │ !x as any ** 2;
+    · ──
+ 19 │ typeof x as any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'typeof' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:19:1]
+ 18 │ !x as any ** 2;
+ 19 │ typeof x as any ** 2;
+    · ────────
+ 20 │ void x as any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'void' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:20:1]
+ 19 │ typeof x as any ** 2;
+ 20 │ void x as any ** 2;
+    · ──────
+ 21 │ delete obj.p as any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'delete' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:21:1]
+ 20 │ void x as any ** 2;
+ 21 │ delete obj.p as any ** 2;
+    · ────────────
+ 22 │ 
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:23:1]
+ 22 │ 
+ 23 │ -x satisfies any ** 2;
+    · ──
+ 24 │ +x satisfies any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '+' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:24:1]
+ 23 │ -x satisfies any ** 2;
+ 24 │ +x satisfies any ** 2;
+    · ──
+ 25 │ ~x satisfies any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '~' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:25:1]
+ 24 │ +x satisfies any ** 2;
+ 25 │ ~x satisfies any ** 2;
+    · ──
+ 26 │ !x satisfies any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '!' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:26:1]
+ 25 │ ~x satisfies any ** 2;
+ 26 │ !x satisfies any ** 2;
+    · ──
+ 27 │ typeof x satisfies any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'typeof' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:27:1]
+ 26 │ !x satisfies any ** 2;
+ 27 │ typeof x satisfies any ** 2;
+    · ────────
+ 28 │ void x satisfies any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'void' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:28:1]
+ 27 │ typeof x satisfies any ** 2;
+ 28 │ void x satisfies any ** 2;
+    · ──────
+ 29 │ delete obj.p satisfies any ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the 'delete' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:29:1]
+ 28 │ void x satisfies any ** 2;
+ 29 │ delete obj.p satisfies any ** 2;
+    · ────────────
+ 30 │ 
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:31:1]
+ 30 │ 
+ 31 │ -x as any as number ** 2;
+    · ──
+ 32 │ -x satisfies any satisfies number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:32:1]
+ 31 │ -x as any as number ** 2;
+ 32 │ -x satisfies any satisfies number ** 2;
+    · ──
+ 33 │ -x as any satisfies number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:33:1]
+ 32 │ -x satisfies any satisfies number ** 2;
+ 33 │ -x as any satisfies number ** 2;
+    · ──
+ 34 │ -x satisfies any as number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:34:1]
+ 33 │ -x as any satisfies number ** 2;
+ 34 │ -x satisfies any as number ** 2;
+    · ──
+ 35 │ -(x) as number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:35:1]
+ 34 │ -x satisfies any as number ** 2;
+ 35 │ -(x) as number ** 2;
+    · ────
+ 36 │ -x! satisfies number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:36:1]
+ 35 │ -(x) as number ** 2;
+ 36 │ -x! satisfies number ** 2;
+    · ───
+ 37 │ <number>x as number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A type assertion cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:37:1]
+ 36 │ -x! satisfies number ** 2;
+ 37 │ <number>x as number ** 2;
+    · ─────────
+ 38 │ <number>-x satisfies number ** 2;
+    ╰────
+  help: Wrap the type assertion in parentheses to make the precedence explicit
+
+  × A type assertion cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:38:1]
+ 37 │ <number>x as number ** 2;
+ 38 │ <number>-x satisfies number ** 2;
+    · ──────────
+ 39 │ const negated = -x as any ** 2;
+    ╰────
+  help: Wrap the type assertion in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:39:17]
+ 38 │ <number>-x satisfies number ** 2;
+ 39 │ const negated = -x as any ** 2;
+    ·                 ──
+ 40 │ -x as any ** 2 ** 3;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:40:1]
+ 39 │ const negated = -x as any ** 2;
+ 40 │ -x as any ** 2 ** 3;
+    · ──
+ 41 │ 2 ** -x as number ** 2;
+    ╰────
+  help: Wrap the unary expression in parentheses to make the precedence explicit
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts:41:18]
+ 40 │ -x as any ** 2 ** 3;
+ 41 │ 2 ** -x as number ** 2;
+    ·                  ▲
+ 42 │ 
+    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/exportAlreadySeen.ts:2:12]

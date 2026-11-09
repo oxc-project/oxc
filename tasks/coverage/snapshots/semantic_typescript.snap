@@ -1,8 +1,8 @@
 commit: f7973164
 
 semantic_typescript Summary:
-AST Parsed     : 5751/5751 (100.00%)
-Positive Passed: 4164/5751 (72.40%)
+AST Parsed     : 5750/5750 (100.00%)
+Positive Passed: 4164/5750 (72.42%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -7144,143 +7144,6 @@ rebuilt        : SymbolId(0): SymbolFlags(Function)
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 9, end: 12 }, Span { start: 44, end: 47 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exponentiationWithErasedUnaryExpression.ts
-A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
-A unary expression with the '+' operator cannot be used as the left operand of an exponentiation expression
-A unary expression with the '~' operator cannot be used as the left operand of an exponentiation expression
-A unary expression with the '!' operator cannot be used as the left operand of an exponentiation expression
-A unary expression with the 'typeof' operator cannot be used as the left operand of an exponentiation expression
-A unary expression with the 'void' operator cannot be used as the left operand of an exponentiation expression
-A unary expression with the 'delete' operator cannot be used as the left operand of an exponentiation expression
-A type assertion cannot be used as the left operand of an exponentiation expression
-A unary expression with the 'await' operator cannot be used as the left operand of an exponentiation expression
-Bindings mismatch:
-after transform: ScopeId(0): ["_asyncToGenerator", "_invalidAwait", "invalidAwait", "negated", "obj", "x"]
-rebuilt        : ScopeId(0): ["_asyncToGenerator", "_invalidAwait", "invalidAwait", "negated"]
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "obj":
-after transform: SymbolId(1) "obj"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "obj":
-after transform: SymbolId(1) "obj"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "obj":
-after transform: SymbolId(1) "obj"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Math", "arguments"]
-rebuilt        : ["Math", "arguments", "obj", "x"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignValueAndType.ts
 Bindings mismatch:
