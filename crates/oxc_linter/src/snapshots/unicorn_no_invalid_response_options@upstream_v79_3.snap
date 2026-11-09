@@ -1,0 +1,96 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response("", {status: 204});
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response(`body ${1}`, {status: 204});
+   ·              ───────────
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response(1n, {status: 204});
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response(/body/, {status: 204});
+   ·              ──────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:118]
+ 1 │ const object = {}; Object.defineProperty(object, "toString", {get() { sideEffect(); return String; }}); new Response(`${object}`, {status: 204})
+   ·                                                                                                                      ───────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response({}, {status: 204})
+   ·              ──
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response([], {status: 204})
+   ·              ──
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response(new Blob([]), {status: 204})
+   ·              ────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response([sideEffect()], {status: 204})
+   ·              ──────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response({value: object.value}, {status: 204})
+   ·              ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response(`body ${object}`, {status: 204})
+   ·              ────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response({} as /* keep */ BodyInit, {status: 204})
+   ·              ─────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response({toString() { sideEffect(); return "body"; }}, {status: 204})
+   ·              ─────────────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response({get toString() { sideEffect(); return String; }}, {status: 204})
+   ·              ─────────────────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response([object], {status: 204})
+   ·              ────────
+   ╰────

@@ -9210,6 +9210,9 @@
         "unicorn/no-invalid-remove-event-listener": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-invalid-response-options": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-length-as-slice-end": {
           "$ref": "#/definitions/RuleNoConfig"
         },

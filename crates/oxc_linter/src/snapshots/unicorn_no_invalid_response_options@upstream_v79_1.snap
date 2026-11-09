@@ -1,0 +1,94 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response("" as string, {status: 204} as ResponseInit)
+   ·              ────────────
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response(<string>"", <ResponseInit>{status: <number>204})
+   ·              ──────────
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response("" satisfies string, {status: 204} satisfies ResponseInit)
+   ·              ───────────────────
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response(""!, {status: 204}!)
+   ·              ───
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response(("" as string)!, {status: (204 as number)!})
+   ·              ───────────────
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response("" as /* keep */ string, {status: 204})
+   ·              ───────────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 304 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:30]
+ 1 │ Response.json(data, {status: 304} as ResponseInit)
+   ·                              ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.ts:1:24]
+ 1 │ Response.redirect(url, 200 as number)
+   ·                        ─────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 304 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:44]
+ 1 │ Response.json(data, {["status" as string]: 304})
+   ·                                            ───
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:14]
+ 1 │ new Response("", {status: +(204 as number)})
+   ·              ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): Response status must be in the range 200 to 599.
+   ╭─[no_invalid_response_options.ts:1:30]
+ 1 │ Response.json(data, {status: -(1 as number)})
+   ·                              ──────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.ts:1:24]
+ 1 │ Response.redirect(url, `${200 as number}`)
+   ·                        ──────────────────
+   ╰────
+
+  ⚠ unicorn(no-invalid-response-options): A response with status 204 cannot have a body.
+   ╭─[no_invalid_response_options.ts:1:54]
+ 1 │ const status = +(204 satisfies number); new Response("", {status})
+   ·                                                      ──
+   ╰────
+  help: Replace the response body with `void 0`.
+
+  ⚠ unicorn(no-invalid-response-options): `Response.redirect()` status must be 301, 302, 303, 307, or 308.
+   ╭─[no_invalid_response_options.ts:1:24]
+ 1 │ Response.redirect(url, -(Infinity as number))
+   ·                        ─────────────────────
+   ╰────
