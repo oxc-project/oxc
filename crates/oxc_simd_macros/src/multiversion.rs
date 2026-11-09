@@ -90,11 +90,11 @@ impl Multiversion<'_> {
     ///     #[inline(never)]
     ///     unsafe fn __generic<'a, const N: usize, T>(arr: &'a [T; N], cpu: ::oxc_simd::Generic) -> bool {
     ///         #[cfg(any(
-    ///             all(target_arch = "aarch64", target_feature = "neon"),
     ///             all(
     ///                 target_arch = "x86_64",
     ///                 target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"
-    ///             )
+    ///             ),
+    ///             all(target_arch = "aarch64", target_feature = "neon")
     ///         ))]
     ///         unreachable!();
     ///         __impl::<N, T>(arr, cpu)
@@ -171,11 +171,11 @@ impl Multiversion<'_> {
     /// #[inline(never)]
     /// unsafe fn __foo_generic<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: ::oxc_simd::Generic) -> bool {
     ///     #[cfg(any(
-    ///         all(target_arch = "aarch64", target_feature = "neon"),
     ///         all(
     ///             target_arch = "x86_64",
     ///             target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"
-    ///         )
+    ///         ),
+    ///         all(target_arch = "aarch64", target_feature = "neon")
     ///     ))]
     ///     unreachable!();
     ///     Self::__foo_impl::<N, T>(self, arr, cpu)

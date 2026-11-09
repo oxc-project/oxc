@@ -334,11 +334,11 @@ impl Debug for Neon {
 pub struct Generic(
     cfg_select! {
         not(any(
-            all(target_arch = "aarch64", target_feature = "neon"),
             all(
                 target_arch = "x86_64",
                 all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
-            )
+            ),
+            all(target_arch = "aarch64", target_feature = "neon")
         )) => (),
         _ => Never,
     },
@@ -349,11 +349,11 @@ impl Cpu for Generic {}
 impl CpuPrivate for Generic {
     const DYN_CPU: Option<DynCpu> = cfg_select! {
         not(any(
-            all(target_arch = "aarch64", target_feature = "neon"),
             all(
                 target_arch = "x86_64",
                 all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
-            )
+            ),
+            all(target_arch = "aarch64", target_feature = "neon")
         )) => {
             Some(DynCpu::Generic(Generic(())))
         }

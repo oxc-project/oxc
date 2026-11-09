@@ -207,11 +207,11 @@ mod version;
 ///     unsafe fn __generic(src: &[u8], n: usize, cpu: Generic) -> usize {
 ///         // `Generic` is uninhabited where a SIMD feature set is enabled. See above.
 ///         #[cfg(any(
-///             all(target_arch = "aarch64", target_feature = "neon"),
 ///             all(
 ///                 target_arch = "x86_64",
 ///                 target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"
-///             )
+///             ),
+///             all(target_arch = "aarch64", target_feature = "neon")
 ///         ))]
 ///         unreachable!();
 ///         __impl(src, n, cpu)
