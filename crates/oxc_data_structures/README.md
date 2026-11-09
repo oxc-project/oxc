@@ -20,7 +20,7 @@ This crate provides specialized data structures and utilities that are used thro
 - **`StringExt` trait**: Add methods to `String` to push without capacity checks
 - **String utilities**: `const`-compatible string helpers (e.g. `const_str_eq` for comparing strings in a `const` context)
 - **Type utilities**: `implements!` macro to determine if a type implements a trait
-- **Unchecked assertion macros**: `assert_unchecked!` macros
+- **Unchecked assertion macros**: `assert_unchecked!` and `unreachable_unchecked!` macros
 
 ## Architecture
 
