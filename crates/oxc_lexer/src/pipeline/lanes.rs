@@ -1,7 +1,7 @@
 use std::{ptr, str};
 
 use oxc_ast::ast::{Comment, RegExpFlags};
-use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version, to_dyn};
+use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version};
 use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
@@ -479,7 +479,7 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
     diags: &mut Vec<Diagnostic>,
     cpu: impl Cpu,
 ) -> (u32, bool, bool) {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => {
             cook_short_avx2::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu)
         }
@@ -552,7 +552,7 @@ fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
 #[cpu_multiversion]
 #[inline(always)]
 fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => span_has_bs_avx2(src, bs, be, cpu),
         _ => span_has_bs_generic(src, bs, be),
     }
@@ -591,7 +591,7 @@ fn span_has_bs_generic(src: &[u8], bs: usize, be: usize) -> bool {
 #[cpu_multiversion]
 #[inline(always)]
 fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => span_has_bs_or_cr_avx2(src, bs, be, cpu),
         _ => span_has_bs_or_cr_generic(src, bs, be),
     }

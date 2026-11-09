@@ -100,7 +100,7 @@ impl Multiversion<'_> {
     ///         __impl::<N, T>(arr, cpu)
     ///     }
     ///
-    ///     match ::oxc_simd::to_dyn(cpu) {
+    ///     match ::oxc_simd::DynCpu::from(cpu) {
     ///         ::oxc_simd::DynCpu::Avx2(cpu) => unsafe { __avx2::<N, T>(arr, cpu) },
     ///         ::oxc_simd::DynCpu::Neon(cpu) => unsafe { __neon::<N, T>(arr, cpu) },
     ///         ::oxc_simd::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
@@ -134,7 +134,7 @@ impl Multiversion<'_> {
     /// /// Do some stuff.
     /// #[inline(always)]
     /// unsafe fn foo<'a, const N: usize, T>(&self, arr: &'a [T; N], cpu: impl Cpu) -> bool {
-    ///     match ::oxc_simd::to_dyn(cpu) {
+    ///     match ::oxc_simd::DynCpu::from(cpu) {
     ///         ::oxc_simd::DynCpu::Avx2(cpu) => unsafe { Self::__foo_avx2::<N, T>(self, arr, cpu) },
     ///         ::oxc_simd::DynCpu::Neon(cpu) => unsafe { Self::__foo_neon::<N, T>(self, arr, cpu) },
     ///         ::oxc_simd::DynCpu::Generic(cpu) => unsafe {
@@ -308,7 +308,7 @@ impl Multiversion<'_> {
     /// is uninhabited, so its arm can never run.
     ///
     /// ```ignore
-    /// match ::oxc_simd::to_dyn(cpu) {
+    /// match ::oxc_simd::DynCpu::from(cpu) {
     ///     ::oxc_simd::DynCpu::Avx2(cpu) => unsafe { __avx2::<N, T>(arr, cpu) },
     ///     ::oxc_simd::DynCpu::Neon(cpu) => unsafe { __neon::<N, T>(arr, cpu) },
     ///     ::oxc_simd::DynCpu::Generic(cpu) => unsafe { __generic::<N, T>(arr, cpu) },
@@ -329,7 +329,7 @@ impl Multiversion<'_> {
         });
 
         quote! {
-            match ::oxc_simd::to_dyn(#cpu_name) {
+            match ::oxc_simd::DynCpu::from(#cpu_name) {
                 #(#arms)*
             }
         }

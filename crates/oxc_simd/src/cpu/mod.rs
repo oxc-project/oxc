@@ -13,10 +13,10 @@
 //! It's the best one which is known at compile time to be available.
 //!
 //! Code which has SIMD implementations takes a type implementing [`Cpu`],
-//! and picks an implementation with a `match` on [`to_dyn`]:
+//! and picks an implementation with a `match` on [`DynCpu::from`]:
 //!
 //! ```ignore
-//! match to_dyn(cpu) {
+//! match DynCpu::from(cpu) {
 //!     DynCpu::Avx2(cpu) => classify_avx2(self, cpu),
 //!     DynCpu::Neon(cpu) => classify_neon(self, cpu),
 //!     DynCpu::Generic(_) => classify_generic(self),
@@ -28,9 +28,9 @@
 //! The arm is still needed, because the type's field is private, so outside this module
 //! rustc doesn't know that it's uninhabited.
 //!
-//! Use the [`to_dyn`] function, not the [`Cpu::to_dyn`] method. The method is an extra
-//! `#[inline(always)]` function around it, and that changes the code which some callers
-//! compile to, because rustc's MIR inliner treats them differently.
+//! Use [`DynCpu::from`], not the [`Cpu::to_dyn`] method. The method is an extra `#[inline(always)]`
+//! function around it, and that changes the code which some callers compile to, because rustc's
+//! MIR inliner treats them differently.
 //!
 //! [`#[cpu_version]`] marks each implementation with the CPU feature set it's for.
 //! [`#[cpu_multiversion]`] turns a function into one with a separate entry point for each CPU feature set.
@@ -63,7 +63,7 @@
 //!     Otherwise it's a [`Generic`], which guarantees nothing.
 //!   - `CpuPrivate::DYN_CPU` holds an instance of the type.
 //!     The trait is private, so only code in this module can read it.
-//!     Only [`to_dyn`] reads it, and it takes an instance of the same type,
+//!     Only [`DynCpu::from`] reads it, and it takes an instance of the same type,
 //!     so it only gives one to code which already has one.
 //! * On a platform where a type is uninhabited, it can't be created at all.
 //! * A [`DynCpu`] can only be built from one of these types, so it's unforgeable too.
@@ -100,17 +100,17 @@ mod tests;
 pub trait Cpu: CpuPrivate + Copy {
     /// Get the [`DynCpu`] for this type.
     ///
-    /// Same as the [`to_dyn`] function, which works in `const` code too.
-    #[expect(clippy::inline_always, reason = "only calls `to_dyn`, which folds to a constant")]
+    /// Same as [`DynCpu::from`], which works in `const` code too.
+    #[expect(clippy::inline_always)]
     #[inline(always)]
     fn to_dyn(self) -> DynCpu {
-        to_dyn(self)
+        DynCpu::from(self)
     }
 }
 
 /// Private trait to guarantee that only types defined in this module can implement [`Cpu`].
 ///
-/// It also holds [`DYN_CPU`], for [`to_dyn`].
+/// It also holds [`DYN_CPU`], for [`DynCpu::from`].
 ///
 /// [`DYN_CPU`] is on this trait, not on [`Cpu`], so code outside this module can't read it.
 /// It holds an instance of the type, so if code outside this module could read it,
@@ -118,7 +118,7 @@ pub trait Cpu: CpuPrivate + Copy {
 ///
 /// [`DYN_CPU`]: Self::DYN_CPU
 trait CpuPrivate {
-    /// The [`DynCpu`] which [`to_dyn`] returns for this type.
+    /// The [`DynCpu`] which [`DynCpu::from`] returns for this type.
     ///
     /// [`Avx2`], [`Neon`] and [`Generic`] each have only one value, so this can hold it.
     /// `None` for [`DynCpu`] itself, and for each of them on platforms where it's uninhabited.
@@ -208,6 +208,29 @@ impl DynCpu {
             DynCpu::Neon(_) => "Neon",
         }
     }
+
+    /// Get the [`DynCpu`] for a type implementing [`Cpu`].
+    ///
+    /// Same as [`Cpu::to_dyn`], but this works in `const` code too.
+    /// A `const fn` can't call a trait method on a generic type, so it can't call [`Cpu::to_dyn`].
+    /// [`#[cpu_multiversion]`] uses this function, so it works in `const` code.
+    /// Code which picks an implementation uses it too: `match DynCpu::from(cpu) { ... }`.
+    /// See the module docs for why it's preferred to [`Cpu::to_dyn`] there.
+    ///
+    /// Only [`DynCpu`] needs `cpu`. It's taken for all types so that this can only be called
+    /// by code which already has one of these types.
+    ///
+    /// [`#[cpu_multiversion]`]: macro@crate::cpu_multiversion
+    #[expect(clippy::inline_always, reason = "folds to a constant, except for `DynCpu`")]
+    #[inline(always)]
+    pub const fn from<C: Cpu>(cpu: C) -> DynCpu {
+        match C::DYN_CPU {
+            Some(dyn_cpu) => dyn_cpu,
+            // SAFETY: `DYN_CPU` is `None` only for `DynCpu`, and for CPU types which are uninhabited.
+            // No value of an uninhabited type exists, so `cpu` must be a `DynCpu`.
+            None => unsafe { mem::transmute_copy::<C, DynCpu>(&cpu) },
+        }
+    }
 }
 
 impl Cpu for DynCpu {}
@@ -220,29 +243,6 @@ impl CpuPrivate for DynCpu {
 impl Debug for DynCpu {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
-    }
-}
-
-/// Get the [`DynCpu`] for a type implementing [`Cpu`].
-///
-/// Same as [`Cpu::to_dyn`], but this works in `const` code too.
-/// A `const fn` can't call a trait method on a generic type, so it can't call [`Cpu::to_dyn`].
-/// [`#[cpu_multiversion]`] uses this function, so it works in `const` code.
-/// Code which picks an implementation uses it too: `match to_dyn(cpu) { ... }`.
-/// See the module docs for why it's preferred to [`Cpu::to_dyn`] there.
-///
-/// Only [`DynCpu`] needs `cpu`. It's taken for all types so that this can only be called
-/// by code which already has one of these types.
-///
-/// [`#[cpu_multiversion]`]: macro@crate::cpu_multiversion
-#[expect(clippy::inline_always, reason = "folds to a constant, except for `DynCpu`")]
-#[inline(always)]
-pub const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {
-    match C::DYN_CPU {
-        Some(dyn_cpu) => dyn_cpu,
-        // SAFETY: `DYN_CPU` is `None` only for `DynCpu`, and for CPU types which are uninhabited.
-        // No value of an uninhabited type exists, so `cpu` must be a `DynCpu`.
-        None => unsafe { mem::transmute_copy::<C, DynCpu>(&cpu) },
     }
 }
 

@@ -4,7 +4,7 @@ use crate::simd::{Vec128, Vec256};
 
 use crate::{cpu_multiversion, cpu_version};
 
-use super::{Avx2, BASELINE, Cpu, DynCpu, Neon, to_dyn};
+use super::{Avx2, BASELINE, Cpu, DynCpu, Neon};
 
 #[cpu_multiversion]
 const fn add_one(x: u32, _cpu: impl Cpu) -> u32 {
@@ -269,7 +269,7 @@ impl<W: Copy> Wrapper<W> {
 }
 
 /// [`BASELINE`] as a [`DynCpu`].
-const BASELINE_DYN: DynCpu = to_dyn(BASELINE);
+const BASELINE_DYN: DynCpu = DynCpu::from(BASELINE);
 
 /// Calls to `const` functions made with `#[cpu_multiversion]`, evaluated at compile time.
 const AT_COMPILE_TIME: [u32; 13] = {
@@ -326,7 +326,7 @@ fn const_fn_at_runtime() {
     assert_eq!(Counter::of(5, cpu).0, 5);
     assert_eq!(Counter::double_of(6, cpu), 12);
 
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => assert_eq!(add_one(1, cpu), 2),
         DynCpu::Neon(cpu) => assert_eq!(add_one(1, cpu), 2),
         DynCpu::Generic(cpu) => assert_eq!(add_one(1, cpu), 2),
@@ -397,7 +397,7 @@ fn double_generic(x: u32) -> u32 {
 /// `double_avx2` and `double_neon` have a parameter which proves the CPU supports the feature set,
 /// so calling them is safe.
 fn double(x: u32, cpu: impl Cpu) -> u32 {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => double_avx2(x, cpu),
         DynCpu::Neon(cpu) => double_neon(x, cpu),
         DynCpu::Generic(_) => double_generic(x),
@@ -421,7 +421,7 @@ fn triple_neon(x: u32, _cpu: Neon) -> u32 {
 /// `triple_avx2` and `triple_neon` are `#[inline(always)]`, so have no `#[target_feature]`,
 /// and calling them is safe.
 fn triple(x: u32, cpu: impl Cpu) -> u32 {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => triple_avx2(x, cpu),
         DynCpu::Neon(cpu) => triple_neon(x, cpu),
         DynCpu::Generic(_) => x * 3,
@@ -442,7 +442,7 @@ fn quadruple_neon(_cpu: Neon, x: u32) -> u32 {
 }
 
 fn quadruple(x: u32, cpu: impl Cpu) -> u32 {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => quadruple_avx2(cpu, x),
         DynCpu::Neon(cpu) => quadruple_neon(cpu, x),
         DynCpu::Generic(_) => x * 4,
@@ -463,7 +463,7 @@ fn is_zero_neon(v: Vec128<Neon>) -> bool {
 }
 
 fn is_zero(cpu: impl Cpu) -> bool {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => is_zero_avx2(Vec128::splat(0, cpu)),
         DynCpu::Neon(cpu) => is_zero_neon(Vec128::splat(0, cpu)),
         DynCpu::Generic(_) => true,
@@ -486,7 +486,7 @@ fn add_if_zero_neon(x: u32, v: Vec256<Neon>, y: u32) -> u32 {
 }
 
 fn add_if_zero(x: u32, y: u32, cpu: impl Cpu) -> u32 {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => add_if_zero_avx2(x, Vec256::splat(0, cpu), y),
         DynCpu::Neon(cpu) => add_if_zero_neon(x, Vec256::splat(0, cpu), y),
         DynCpu::Generic(_) => x + y,
@@ -507,7 +507,7 @@ unsafe fn halve_neon(x: u32, _cpu: Neon) -> u32 {
 }
 
 fn halve(x: u32, cpu: impl Cpu) -> u32 {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         // SAFETY: `Avx2` type guarantees the CPU supports the features `halve_avx2` uses
         DynCpu::Avx2(cpu) => unsafe { halve_avx2(x, cpu) },
         // SAFETY: `Neon` type guarantees the CPU supports the features `halve_neon` uses

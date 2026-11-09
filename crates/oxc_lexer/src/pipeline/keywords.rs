@@ -3,7 +3,7 @@ use std::{cmp::min, hint, ptr};
 use constcat::concat_slices;
 
 use oxc_data_structures::{assert_unchecked, branch_hints::unlikely, str::const_str_eq};
-use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Neon, Vec128, cpu_multiversion, cpu_version, to_dyn};
+use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Neon, Vec128, cpu_multiversion, cpu_version};
 
 use crate::token::{KW_KIND_BASE, TokenKind};
 
@@ -441,7 +441,7 @@ pub(super) unsafe fn kw_match<const IS_TS: bool>(
     cpu: impl Cpu,
 ) -> TokenKind {
     let (slot, is_match) = if IS_TS {
-        match to_dyn(cpu) {
+        match DynCpu::from(cpu) {
             DynCpu::Avx2(cpu) => ts_match_avx2(ptr, len, cpu),
             DynCpu::Neon(cpu) => ts_match_neon(ptr, len, cpu),
             DynCpu::Generic(_) => ts_match_generic(ptr, len),
@@ -450,7 +450,7 @@ pub(super) unsafe fn kw_match<const IS_TS: bool>(
         let slot = keyword_hash_js(ptr::read_unaligned(ptr as *const u16), len, cpu);
         // SAFETY: The JS hash is at most 63 + 16, as the caller guarantees len is at most 16.
         unsafe { assert_unchecked!(slot < JS_SLOT_COUNT) };
-        let is_match = match to_dyn(cpu) {
+        let is_match = match DynCpu::from(cpu) {
             DynCpu::Avx2(cpu) => js_match_avx2(ptr, slot, cpu),
             DynCpu::Neon(cpu) => js_match_neon(ptr, slot, cpu),
             DynCpu::Generic(_) => js_match_generic(ptr, slot),

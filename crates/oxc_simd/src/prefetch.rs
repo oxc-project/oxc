@@ -4,7 +4,7 @@
 use std::arch::x86_64::{_MM_HINT_T0, _mm_prefetch};
 
 use crate::{
-    cpu::{Cpu, DynCpu, to_dyn},
+    cpu::{Cpu, DynCpu},
     cpu_multiversion,
 };
 
@@ -17,7 +17,7 @@ use crate::{
 pub fn prefetch(p: *const u8, cpu: impl Cpu) {
     let _ = p; // Avoid clippy unused vars warning
 
-    if matches!(to_dyn(cpu), DynCpu::Avx2(_)) {
+    if matches!(DynCpu::from(cpu), DynCpu::Avx2(_)) {
         // SAFETY: `Avx2` type guarantees CPU supports AVX2
         #[cfg(target_arch = "x86_64")]
         unsafe {

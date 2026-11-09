@@ -69,14 +69,14 @@ mod runtime_x86_64 {
     not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
 )))]
 mod compile_time {
-    use crate::cpu::{BASELINE, Cpu, DynCpu};
+    use crate::cpu::{BASELINE, DynCpu};
 
     impl DynCpu {
         /// Detect CPU feature set.
         #[expect(clippy::inline_always, reason = "folds to a constant")]
         #[inline(always)]
         pub fn detect() -> Self {
-            BASELINE.to_dyn()
+            DynCpu::from(BASELINE)
         }
     }
 }
