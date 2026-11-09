@@ -36,10 +36,17 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>, comments: &Co
 
 /// The compact test call layout joins arguments with spaces, which breaks comment order.
 fn has_comment_around_arguments(call: &CallExpression, comments: &Comments) -> bool {
+    argument_gaps(call).any(|(start, end)| comments.has_any_comment_in_range(start, end))
+}
+
+/// The `(start, end)` ranges around the arguments of a call: from the callee (or its type
+/// arguments) to the first argument, between arguments, and from the last argument to the end of
+/// the call.
+pub fn argument_gaps<'a>(call: &'a CallExpression) -> impl Iterator<Item = (u32, u32)> + 'a {
     let first = call.type_arguments.as_ref().map_or(call.callee.span().end, |t| t.span.end);
     let starts = iter::once(first).chain(call.arguments.iter().map(|a| a.span().end));
     let ends = call.arguments.iter().map(|a| a.span().start).chain(iter::once(call.span.end));
-    starts.zip(ends).any(|(start, end)| comments.has_any_comment_in_range(start, end))
+    starts.zip(ends)
 }
 
 fn is_test_call_shape(call: &AstNode<CallExpression<'_>>, comments: &Comments) -> bool {
