@@ -1462,6 +1462,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // suffixes directly, keeping pure annotations inside the postfix update.
             let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
             let primary = self.parse_plain_identifier_expression();
+            if self.at_expression_delimiter() {
+                return primary;
+            }
             self.parse_primary_expression_rest(lhs_start, primary, pure_comments)
         } else if self.ctx.has_in() && kind == Kind::PrivateIdentifier {
             // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
@@ -1482,6 +1485,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return lhs;
         }
         self.parse_binary_expression_rest(lhs_start, lhs, lhs_parenthesized, lhs_precedence)
+    }
+
+    #[inline]
+    fn at_expression_delimiter(&self) -> bool {
+        matches!(
+            self.cur_kind(),
+            Kind::Comma
+                | Kind::RParen
+                | Kind::RBrack
+                | Kind::RCurly
+                | Kind::Semicolon
+                | Kind::Colon
+        )
     }
 
     #[expect(clippy::inline_always)]
@@ -1597,8 +1613,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.attach_comments_before_token(&lhs);
             self.bump_any(); // bump operator
             let rhs_start = self.cur_start();
-            let rhs = self
-                .parse_after_delimiter(|p| p.parse_binary_expression_or_higher(left_precedence));
+            let rhs = if let Some(leading) = self.delimited_comments() {
+                self.parse_binary_rhs_with_comments(left_precedence, leading)
+            } else {
+                self.parse_binary_expression_or_higher(left_precedence)
+            };
 
             lhs = if kind.is_logical_operator() {
                 let span = self.end_span(lhs_start);
@@ -1657,6 +1676,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         lhs
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn parse_binary_rhs_with_comments(
+        &mut self,
+        precedence: Precedence,
+        leading: crate::comment_attachment::DelimitedComments,
+    ) -> Expression<'a> {
+        let node = self.parse_binary_expression_or_higher(precedence);
+        self.attach_delimited_leading_comments(leading, node.span().start, node.node_id());
+        node
     }
 
     /// Section 13.14 Conditional Expression
@@ -1743,15 +1774,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 _ => self.parse_literal_expression(),
             };
             // The leaf is complete when the next token is an expression delimiter.
-            if matches!(
-                self.cur_kind(),
-                Kind::Comma
-                    | Kind::RParen
-                    | Kind::RBrack
-                    | Kind::RCurly
-                    | Kind::Semicolon
-                    | Kind::Colon
-            ) {
+            if self.at_expression_delimiter() {
                 return primary;
             }
             let lhs = self.parse_primary_expression_rest(start, primary, pure_comments);
