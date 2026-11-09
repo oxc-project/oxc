@@ -446,7 +446,6 @@ fn test() {
         "foo.subarray(foo.length - 3, foo.length - 6)",
         "Uint8Array.prototype.subarray.call(foo, foo.length - 3, foo.length - 6)",
         "Uint8Array.prototype.subarray.apply(foo, [foo.length - 3, foo.length - 6])",
-        // Non-ASCII whitespace after `.length` must not cause a panic.
         "foo.slice(foo.length\u{a0}- 1);",
         "foo.slice(foo.length\u{2028}- 1);",
     ];
@@ -658,7 +657,6 @@ fn test() {
                                     NOT_SUPPORTED.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
                                     NOT_SUPPORTED.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
                                 ", None),
-        // Non-ASCII whitespace after `.length` must not cause a panic.
         ("foo.slice(foo.length\u{a0}- 1);", "foo.slice(\u{a0}- 1);", None),
     ];
     Tester::new(PreferNegativeIndex::NAME, PreferNegativeIndex::PLUGIN, pass, fail)
