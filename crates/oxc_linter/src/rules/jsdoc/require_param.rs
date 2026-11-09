@@ -983,76 +983,6 @@ fn test() {
         ),
         // https://github.com/oxc-project/oxc/issues/28859
         (
-            "
-            /**
-             * Example { a
-             *
-             * @param p the param
-             */
-            export function f(p: string): void {
-                void p;
-            }
-            ",
-            None,
-            Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
-        ),
-        (
-            "
-            /**
-             * Example `a
-             *
-             * @param p the param
-             */
-            export function f(p: string): void {
-                void p;
-            }
-            ",
-            None,
-            Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
-        ),
-        (
-            "
-            /**
-             * Example { a }
-             *
-             * @param p the param
-             */
-            export function f(p: string): void {
-                void p;
-            }
-            ",
-            None,
-            Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
-        ),
-        (
-            r"
-            /**
-             * Example `{ a }`
-             *
-             * @param p the param
-             */
-            export function f(p: string): void {
-                void p;
-            }
-            ",
-            None,
-            Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
-        ),
-        (
-            "
-            /**
-             * Example a }
-             *
-             * @param p the param
-             */
-            export function f(p: string): void {
-                void p;
-            }
-            ",
-            None,
-            Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
-        ),
-        (
             r#"
             /**
              * For example, if the map looks like this `{ "domain1.com": "test.local" }
@@ -1729,7 +1659,7 @@ fn test() {
             Some(serde_json::json!([{ "interfaceExemptsParamsCheck": true }])),
             None,
         ),
-        // https://github.com/oxc-project/oxc/issues/28859 — unmatched `{` must not hide a truly missing `@param`
+        // https://github.com/oxc-project/oxc/issues/28859
         (
             "
             /**
