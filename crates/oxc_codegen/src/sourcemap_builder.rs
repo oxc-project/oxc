@@ -107,10 +107,7 @@ impl<'a> SourcemapBuilder<'a> {
         }
     }
 
-    pub fn into_sourcemap(mut self) -> oxc_sourcemap::SourceMap<'a> {
-        self.names.shrink_to_fit();
-        self.tokens.shrink_to_fit();
-
+    pub fn into_sourcemap(self) -> oxc_sourcemap::SourceMap<'a> {
         oxc_sourcemap::SourceMap::from_parts(oxc_sourcemap::SourceMapParts {
             file: None,
             names: self.names.into_iter().map(Cow::Borrowed).collect(),
