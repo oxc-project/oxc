@@ -36,6 +36,11 @@ impl NoUnusedVars {
         declaration_id: NodeId,
     ) -> RuleFix {
         let nodes = symbol.nodes();
+        // `infer R` declares a type parameter inside a conditional type; there
+        // is no parameter list to remove it from.
+        if matches!(nodes.parent_kind(declaration_id), AstKind::TSInferType(_)) {
+            return fixer.noop();
+        }
         let decl_id = nodes.parent_id(declaration_id);
         let AstKind::TSTypeParameterDeclaration(decl) = nodes.kind(decl_id) else {
             return fixer.noop();
@@ -64,6 +69,10 @@ impl NoUnusedVars {
             fixer.delete_range(Span::new(left.span().end, params[position].span.end))
         };
 
-        fix.with_message(format!("Remove unused type parameter '{}'", symbol.name())).dangerously()
+        fix.with_message(format!(
+            "Remove unused type parameter '{}' (call sites passing explicit type arguments will need updating)",
+            symbol.name()
+        ))
+        .dangerously()
     }
 }

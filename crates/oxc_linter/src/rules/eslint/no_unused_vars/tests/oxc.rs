@@ -1433,6 +1433,19 @@ fn test_type_parameter_remove_fix() {
             Some(json!([{ "fix": { "variables": "off" } }])),
             FixKind::None,
         ),
+        // removing a type parameter is dangerous, so it is not applied as a safe fix
+        (
+            "export type Foo<T> = {}",
+            "export type Foo<T> = {}",
+            Some(json!([{ "fix": { "variables": "safe-fix" } }])),
+            FixKind::SafeFix,
+        ),
+        (
+            "export type Foo<T> = {}",
+            "export type Foo = {}",
+            Some(json!([{ "fix": { "variables": "fix" } }])),
+            FixKind::DangerousFix,
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
