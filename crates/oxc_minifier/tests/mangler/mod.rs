@@ -286,6 +286,151 @@ fn shadowed_fn_expr_mangle_is_idempotent() {
     }
 }
 
+/// Catch-parameter defaults and computed keys are evaluated in the catch parameter
+/// environment, before those bindings are initialized. They must keep resolving to the
+/// outer binding, so a catch binding cannot reuse a name that is live there.
+///
+/// `catch ({ code: t = t() })` throws `ReferenceError: Cannot access 't' before
+/// initialization`. Giving an earlier catch binding that name instead
+/// (`catch ({ name: t, code: e = t() })`) throws `TypeError` when `t` is not the
+/// outer function. Function-parameter defaults already avoid this because the
+/// parameter and its initializer share a scope.
+///
+/// https://github.com/oxc-project/oxc/issues/29143
+#[test]
+fn catch_param_default_does_not_reuse_outer_name() {
+    let options = MangleOptions::default();
+
+    // Issue repro: `defaultCode` (`t`) and the catch binding `code` (`n`) stay distinct.
+    // `name` may still reuse `text` (`e`); that binding is not referenced by the default.
+    test(
+        "function parseConfig(text) {
+            const defaultCode = () => 'E_PARSE';
+            try {
+                return JSON.parse(text);
+            } catch ({ name, code = defaultCode() }) {
+                return name + ':' + code;
+            }
+        }",
+        "function parseConfig(e) {
+            const t = () => 'E_PARSE';
+            try {
+                return JSON.parse(e);
+            } catch ({ name: e, code: n = t() }) {
+                return e + ':' + n;
+            }
+        }",
+        &options,
+    );
+
+    // The outer name must not go to an earlier catch binding either, or
+    // `code = fallback()` calls `name` instead of `fallback`.
+    test(
+        "function parseConfig() {
+            const fallback = () => 'E_PARSE';
+            try {
+                throw new Error('x');
+            } catch ({ name, code = fallback() }) {
+                return name + ':' + code;
+            }
+        }",
+        "function parseConfig() {
+            const e = () => 'E_PARSE';
+            try {
+                throw new Error('x');
+            } catch ({ name: t, code: n = e() }) {
+                return t + ':' + n;
+            }
+        }",
+        &options,
+    );
+
+    // Computed keys are evaluated in that same environment.
+    test(
+        "function read(obj) {
+            const key = () => 'name';
+            try {
+                return obj();
+            } catch ({ [key()]: value }) {
+                return value;
+            }
+        }",
+        "function read(e) {
+            const t = () => 'name';
+            try {
+                return e();
+            } catch ({ [t()]: e }) {
+                return e;
+            }
+        }",
+        &options,
+    );
+
+    // A reference nested inside the default still sees the outer binding.
+    test(
+        "function f() {
+            const fallback = () => 'E';
+            try {
+                throw {};
+            } catch ({ code = (() => fallback())() }) {
+                return code;
+            }
+        }",
+        "function f() {
+            const e = () => 'E';
+            try {
+                throw {};
+            } catch ({ code: t = (() => e())() }) {
+                return t;
+            }
+        }",
+        &options,
+    );
+
+    // An earlier catch binding is still visible to a later default. The outer `a`
+    // is not referenced, so the catch binding may reuse its name.
+    test(
+        "function f() {
+            const a = 'outer';
+            try {
+                throw {};
+            } catch ({ a = 1, b = a }) {
+                return b;
+            }
+        }",
+        "function f() {
+            const e = 'outer';
+            try {
+                throw {};
+            } catch ({ a: e = 1, b: t = e }) {
+                return t;
+            }
+        }",
+        &options,
+    );
+
+    // No initializer reference: the catch binding may still shadow the outer name.
+    test(
+        "function f() {
+            const outer = 1;
+            try {
+                throw outer;
+            } catch (e) {
+                return e;
+            }
+        }",
+        "function f() {
+            const e = 1;
+            try {
+                throw e;
+            } catch (e) {
+                return e;
+            }
+        }",
+        &options,
+    );
+}
+
 /// Destructured bindings in `export const/let/var` define the module's export names —
 /// they must never be renamed (`export const { find } = x` exports `find`; renaming the
 /// binding renames the export). Surfaced by monitor-oxc: mangled `css-tree` lost its

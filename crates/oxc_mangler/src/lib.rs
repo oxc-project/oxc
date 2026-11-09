@@ -644,13 +644,36 @@ impl<'a> SlotAssignment<'a> {
 
             let mut slot = slot_liveness.len();
 
+            // Catch bindings are moved into this body scope, but their default
+            // initializers and computed keys are resolved in the parent
+            // catch-clause scope and must keep referring to outer bindings.
+            // Function parameters get that for free: the parameter and its
+            // default share one scope, so an outer slot used by the default is
+            // already live where the parameter is declared. A catch binding's
+            // scope is the body, one level below those references, so also
+            // reject slots that are live in the parent catch clause. Otherwise
+            // `catch ({ code: t = t() })` shadows the outer callee and throws
+            // a TDZ ReferenceError.
+            // https://github.com/oxc-project/oxc/issues/29143
+            let catch_param_scope = scoping.scope_parent_id(scope_id).filter(|&parent_id| {
+                scoping.scope_flags(parent_id).is_catch_clause()
+                    && tmp_bindings
+                        .iter()
+                        .any(|&symbol_id| scoping.symbol_flags(symbol_id).is_catch_variable())
+            });
+
             reusable_slots.clear();
             reusable_slots.extend(
                 // Slots already assigned to other symbols, but not live in the current scope.
+                // Catch bodies also skip slots live in the catch-parameter scope; see above.
                 slot_liveness
                     .iter()
                     .enumerate()
-                    .filter(|(_, slot_liveness)| !slot_liveness.has_bit(scope_id.index()))
+                    .filter(|(_, live)| {
+                        !live.has_bit(scope_id.index())
+                            && catch_param_scope
+                                .is_none_or(|parent_id| !live.has_bit(parent_id.index()))
+                    })
                     .map(
                         // `slot_liveness` is an arena `Vec`, so its indexes cannot exceed `u32::MAX`
                         #[expect(clippy::cast_possible_truncation)]
