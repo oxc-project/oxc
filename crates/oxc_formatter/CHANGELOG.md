@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.78.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 8d8845e formatter/jsdoc: Strip `*` prefixes from multiline default value (#28910) (leaysgur)
+- cdb1501 formatter/jsdoc: Handle every line terminator in multi-line JSDoc types (#28909) (leaysgur)
+- 06e72c0 formatter/tailwind: Normalize CR in Tailwind template with `preserveWhitespace` (#28896) (leaysgur)
+
+### ⚡ Performance
+
+- 934ca98 formatter: Use `Arc` for tailwind options across embedding (#29079) (leaysgur)
+- dc4d918 formatter: Format embedded expr of one name without parsing (#29077) (leaysgur)
+
+### 📚 Documentation
+
+- 0f4ec80 formatter/tailwind: Note Tailwind sorting tears escaped whitespace apart (#28900) (leaysgur)
+
 ## [0.77.0] - 2026-11-06
 
 ### 💥 BREAKING CHANGES

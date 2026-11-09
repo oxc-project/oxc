@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.93.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 6bbb92a linter: Remove unused `oxlint-disable` directives with `--fix` (#27698) (Ryan Tsao)
+- 3b35cb6 linter/disable-directives: Preserve separators and disable spans (#28921) (camc314)
+
 ## [1.92.0] - 2026-11-06
 
 ### 🚀 Features
