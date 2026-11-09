@@ -1521,16 +1521,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                     Expression::new_ts_satisfies_expression(span, lhs, type_annotation, self)
                 };
-                // When we have `a ## b as T` or `a ## b satisfies T`, where `##` is some binary
-                // operator, stop parsing on any following operator with higher precedence than `##`
-                // because continuing would make it impossible to erase the `as` or `satisfies`
-                // without changing the meaning of the expression.
+                // Assertions must be erasable without changing how the surrounding operators bind.
                 // See <https://github.com/microsoft/TypeScript/issues/63527>.
-                if let Some(last_precedence) = last_operand_precedence
-                    && let Some(next_precedence) = kind_to_precedence(self.re_lex_right_angle())
-                    && next_precedence > last_precedence
-                {
-                    break;
+                if let Some(last_precedence) = last_operand_precedence {
+                    let next_kind = self.re_lex_right_angle();
+                    if let Some(next_precedence) = kind_to_precedence(next_kind)
+                        && (next_precedence > last_precedence
+                            || (next_kind == Kind::Star2 && next_precedence == last_precedence))
+                    {
+                        break;
+                    }
                 }
                 continue;
             }
@@ -1563,18 +1563,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let span = self.end_span(lhs_start);
                 let op = map_binary_operator(kind);
                 if op == BinaryOperator::Exponential && !lhs_parenthesized {
-                    let diagnostic = match &lhs {
+                    let mut operand = &lhs;
+                    loop {
+                        operand = match operand {
+                            Expression::TSAsExpression(expr) => &expr.expression,
+                            Expression::TSSatisfiesExpression(expr) => &expr.expression,
+                            _ => break,
+                        };
+                    }
+                    let diagnostic = match operand {
                         Expression::AwaitExpression(_) => Some(
-                            diagnostics::unary_exponentiation_left_operand("await", lhs.span()),
+                            diagnostics::unary_exponentiation_left_operand("await", operand.span()),
                         ),
                         Expression::UnaryExpression(unary) => {
                             Some(diagnostics::unary_exponentiation_left_operand(
                                 unary.operator.as_str(),
-                                lhs.span(),
+                                operand.span(),
                             ))
                         }
                         Expression::TSTypeAssertion(_) => Some(
-                            diagnostics::type_assertion_exponentiation_left_operand(lhs.span()),
+                            diagnostics::type_assertion_exponentiation_left_operand(operand.span()),
                         ),
                         _ => None,
                     };
