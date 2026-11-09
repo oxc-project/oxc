@@ -1455,6 +1455,49 @@ fn test_type_parameter_remove_fix() {
 }
 
 #[test]
+fn test_type_parameter_remove_arrow_fix() {
+    for extension in ["ts", "tsx", "mts", "cts"] {
+        let fix = vec![
+            (
+                "export const foo = <T, U>(t: T) => t",
+                "export const foo = <T,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+            (
+                "export const foo = <U, T>(t: T) => t",
+                "export const foo = <T,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+            (
+                "export const foo = <T, U,>(t: T) => t",
+                "export const foo = <T,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+            (
+                "export const foo = <U, T,>(t: T) => t",
+                "export const foo = <T,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+            (
+                "export const foo = <T, U /* , */>(t: T) => t",
+                "export const foo = <T /* , */,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+        ];
+
+        Tester::new::<&str>(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, vec![], vec![])
+            .expect_fix(fix)
+            .change_rule_path_extension(extension)
+            .test();
+    }
+}
+
+#[test]
 fn test_enums() {
     let pass = vec![
         "export enum Foo { A, B }",

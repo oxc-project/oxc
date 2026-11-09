@@ -57,17 +57,21 @@ impl NoUnusedVars {
             return fixer.noop();
         };
 
-        let fix = if params.len() == 1 {
-            // `type Foo<T> = {}` -> `type Foo = {}`
+        let mut fix = if params.len() == 1 {
             fixer.delete_range(decl.span)
         } else if let Some(right) = params.get(position + 1) {
-            // `<T, U>` -> `<U>`
             fixer.delete_range(Span::new(params[position].span.start, right.span.start))
         } else {
-            // `<T, U>` -> `<T>`, also keeping a trailing comma: `<T, U,>` -> `<T,>`
             let left = &params[position - 1];
             fixer.delete_range(Span::new(left.span().end, params[position].span.end))
         };
+
+        if params.len() == 2
+            && matches!(nodes.parent_kind(decl_id), AstKind::ArrowFunctionExpression(_))
+            && fixer.find_next_token_within(params[1].span.end, decl.span.end, ",").is_none()
+        {
+            fix.push(fixer.insert_text_before_range(Span::empty(decl.span.end - 1), ","));
+        }
 
         fix.with_message(format!(
             "Remove unused type parameter '{}' (call sites passing explicit type arguments will need updating)",
