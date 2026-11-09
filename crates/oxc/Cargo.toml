@@ -80,5 +80,10 @@ serialize = [
 # Only for conformance tests
 conformance = ["oxc_ast_visit/conformance"]
 
+[[test]]
+name = "define_import_elision"
+path = "tests/define_import_elision.rs"
+required-features = ["full"]
+
 [package.metadata.docs.rs]
 all-features = true
