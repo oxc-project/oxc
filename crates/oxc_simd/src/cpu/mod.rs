@@ -37,8 +37,8 @@
 //!
 //! The attribute macros are in the `oxc_simd_macros` crate.
 //!
-//! * Given a specific type (e.g. `Avx2`): the choice is made at compile time.
-//! * Given a [`DynCpu`]: the choice is made at runtime.
+//! - Given a specific type (e.g. `Avx2`): the choice is made at compile time.
+//! - Given a [`DynCpu`]: the choice is made at runtime.
 //!
 //! Functions which pick an implementation typically take a generic `impl Cpu`.
 //! This compiles a separate version of the function for each [`Cpu`] type that callers use with it.
@@ -54,8 +54,8 @@
 //!
 //! These types are unforgeable.
 //!
-//! * Each has a private field, so code outside this module can't create them.
-//! * Only 3 places create them:
+//! - Each has a private field, so code outside this module can't create them.
+//! - Only 3 places create them:
 //!   - `DynCpu::detect` only creates an [`Avx2`] if that feature set is available.
 //!     Otherwise it creates a [`Generic`], which guarantees nothing.
 //!   - [`BASELINE`] is only an [`Avx2`] or a [`Neon`] when that feature set is enabled
@@ -65,9 +65,9 @@
 //!     The trait is private, so only code in this module can read it.
 //!     Only [`DynCpu::from`] reads it, and it takes an instance of the same type,
 //!     so it only gives one to code which already has one.
-//! * On a platform where a type is uninhabited, it can't be created at all.
-//! * A [`DynCpu`] can only be built from one of these types, so it's unforgeable too.
-//! * [`Cpu`] trait is sealed, so no other type can implement it.
+//! - On a platform where a type is uninhabited, it can't be created at all.
+//! - A [`DynCpu`] can only be built from one of these types, so it's unforgeable too.
+//! - [`Cpu`] trait is sealed, so no other type can implement it.
 //!
 //! Therefore, holding one of these types guarantees that the CPU supports that feature set.
 //!
