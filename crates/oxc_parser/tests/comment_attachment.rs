@@ -1,3 +1,8 @@
+//! Snapshot tests for how the parser attaches comments to AST nodes.
+//!
+//! Each case shows the input followed by one entry per comment. The arrow points
+//! to the comment's placement and the kind and source text of its target node.
+
 #![cfg(not(miri))]
 
 use std::fmt::Write;
