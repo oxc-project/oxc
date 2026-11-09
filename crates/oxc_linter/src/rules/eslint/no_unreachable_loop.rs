@@ -221,7 +221,7 @@ fn has_next_iteration_path(
                 EdgeType::Jump => {
                     let mut has_abrupt_jump = false;
                     let jump_can_complete =
-                        jump_can_complete_after_finalizer(source, ctx, unreachable);
+                        jump_can_complete_after_finalizer(source, loop_id, ctx, unreachable);
                     for instruction in cfg.basic_block(source).instructions() {
                         match instruction.kind {
                             InstructionKind::Continue(LabeledInstruction::Unlabeled)
@@ -412,6 +412,7 @@ fn finalizer_can_continue_to_loop(
 
 fn jump_can_complete_after_finalizer(
     block_id: BlockNodeId,
+    loop_id: NodeId,
     ctx: &LintContext<'_>,
     unreachable: Option<&[bool]>,
 ) -> bool {
@@ -421,6 +422,17 @@ fn jump_can_complete_after_finalizer(
         .edges_directed(block_id, Direction::Outgoing)
         .filter(|edge| matches!(edge.weight(), EdgeType::Finalize))
         .map(|edge| edge.target())
+        .filter(|finalizer| {
+            !ctx.nodes().ancestors(loop_id).any(|ancestor| {
+                let AstKind::TryStatement(stmt) = ancestor.kind() else { return false };
+                stmt.finalizer.as_ref().is_some_and(|block| {
+                    let start = ctx.nodes().cfg_id(block.node_id.get());
+                    graph.edges_directed(*finalizer, Direction::Outgoing).any(|edge| {
+                        matches!(edge.weight(), EdgeType::Normal) && edge.target() == start
+                    })
+                })
+            })
+        })
         .peekable();
 
     if finalizers.peek().is_none() {
@@ -1083,6 +1095,26 @@ fn test() {
         ("function q1() { var n = 0; a: b: while (n < 3) { n++; continue a; } return n; }", None).into(),
         ("function q3() { var n = 0; a: b: c: do { n++; continue b; } while (n < 3); return n; }", None).into(),
     ]);
+
+    pass.push(("function f(task, items) { try { task(); } catch { for (const x of items) { console.log(x); continue; } } finally { console.log('done'); } }", None).into());
+
+    for body in [
+        "while (a) { continue; }",
+        "do { continue; } while (a);",
+        "for (;;) { continue; }",
+        "for (const k in items) { continue; }",
+        "for (const x of items) { continue; }",
+        "outer: while (a) { continue outer; }",
+    ] {
+        for protected in [
+            format!("try {{ {body} }} finally {{ return; }}"),
+            format!("try {{ task(); }} catch {{ {body} }} finally {{ return; }}"),
+            format!("try {{ {body} }} catch {{}} finally {{ done(); }}"),
+            format!("try {{ {body} }} finally {{ done(); }}"),
+        ] {
+            pass.push(format!("function f() {{ {protected} }}").into());
+        }
+    }
 
     pass.extend([
         "while (condition) { a: b: { continue; } }".into(),
