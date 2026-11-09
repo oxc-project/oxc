@@ -1300,6 +1300,72 @@ mod test {
     }
 
     #[test]
+    fn test_fix_unused_disable_directives_inline() {
+        Tester::new().with_cwd("fixtures/cli/fix_argument".into()).test_fix_with_args(
+            "unused_disable_directives_inline.vue",
+            "<script>\nfunction f() { return/* oxlint-disable no-debugger */42; }\nfunction g() { return /* oxlint-disable no-console\n*/ 42; }\nconst/* oxlint-disable no-alert */x = 1;\n</script>\n",
+            "<script>\nfunction f() { return 42; }\nfunction g() { return \n 42; }\nconst x = 1;\n</script>\n",
+            &["--report-unused-disable-directives"],
+        );
+    }
+
+    #[test]
+    fn test_fix_unused_disable_directives_paired() {
+        Tester::new().with_cwd("fixtures/cli/fix_argument".into()).test_fix_with_args(
+            "unused_disable_directives_paired.vue",
+            "<script>\n/* oxlint-disable */\nconst a = 1;\n/* oxlint-enable */\ndebugger;\n/* oxlint-disable no-debugger, no-console */\ndebugger;\n/* oxlint-enable no-debugger, no-console */\nconsole.log(1);\n</script>\n",
+            "<script>\nconst a = 1;\n/* oxlint-enable */\ndebugger;\n/* oxlint-disable no-debugger */\ndebugger;\n/* oxlint-enable no-debugger, no-console */\nconsole.log(1);\n</script>\n",
+            &["--report-unused-disable-directives", "-D", "no-console"],
+        );
+    }
+
+    #[test]
+    fn test_fix_unused_disable_directives() {
+        let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());
+        let fix = &["--report-unused-disable-directives"];
+        let fix_suggestions = &["--report-unused-disable-directives", "--fix-suggestions"];
+
+        // `eslint-disable` directives may still be needed by ESLint, so only `oxlint-disable`
+        // directives are removed without `--fix-suggestions`.
+        let js = "// oxlint-disable-next-line no-debugger\nconst a = 1;\n// eslint-disable-next-line no-debugger\nconst b = 2;\n// oxlint-disable-next-line no-debugger, no-console\ndebugger;\n";
+        tester.test_fix_with_args(
+            "unused_disable_directives.js",
+            js,
+            "const a = 1;\n// eslint-disable-next-line no-debugger\nconst b = 2;\n// oxlint-disable-next-line no-debugger\ndebugger;\n",
+            fix,
+        );
+        tester.test_fix_with_args(
+            "unused_disable_directives.js",
+            js,
+            "const a = 1;\nconst b = 2;\n// oxlint-disable-next-line no-debugger\ndebugger;\n",
+            fix_suggestions,
+        );
+
+        let vue = "<script>\n// oxlint-disable-next-line no-debugger\nconst a = 1;\n// eslint-disable-next-line no-debugger\nconst b = 2;\n</script>\n";
+        tester.test_fix_with_args(
+            "unused_disable_directives.vue",
+            vue,
+            "<script>\nconst a = 1;\n// eslint-disable-next-line no-debugger\nconst b = 2;\n</script>\n",
+            fix,
+        );
+        tester.test_fix_with_args(
+            "unused_disable_directives.vue",
+            vue,
+            "<script>\nconst a = 1;\nconst b = 2;\n</script>\n",
+            fix_suggestions,
+        );
+
+        // Directive spans are stale once other fixes rewrite the file, so the directive is
+        // only removed by the next run.
+        tester.test_fix_with_args(
+            "unused_disable_directives_with_fix.js",
+            "// oxlint-disable-next-line no-debugger\nvar x = new String('Hello world');\n",
+            "// oxlint-disable-next-line no-debugger\nvar x = 'Hello world';\n",
+            fix_suggestions,
+        );
+    }
+
+    #[test]
     fn test_print_config_ban_all_rules() {
         let args = &["-A", "all", "--print-config"];
         Tester::new().with_cwd("fixtures".into()).test_and_snapshot(args);
@@ -1991,6 +2057,125 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_programs() {
+        let cases: &[(&str, &[&[&str]])] = &[
+            (
+                "inferred",
+                &[
+                    &["--type-check-only", "inferred/index.ts"],
+                    &["--type-check-only", "inferred/global.ts", "inferred/uses-global.ts"],
+                    &["--type-check-only", "inferred/clean.ts"],
+                    &["--type-check-only", "project/index.ts", "inferred/index.ts"],
+                ],
+            ),
+            (
+                "project",
+                &[
+                    &["--type-check-only", "project/index.ts", "project/other.ts"],
+                    &["--type-check-only", "project/index.ts"],
+                    &["--type-check-only", "project/clean.ts"],
+                    &["--type-check-only", "project/excluded/index.ts"],
+                ],
+            ),
+            (
+                "multiple_projects",
+                &[
+                    &["--type-check-only", "projects/strict/index.ts", "project/index.ts"],
+                    &["--type-check-only", "project/index.ts", "project/nested/index.ts"],
+                ],
+            ),
+            (
+                "references",
+                &[
+                    &["--type-check-only", "references/app/index.ts"],
+                    &["--type-check-only", "references"],
+                    &[
+                        "--type-check-only",
+                        "references/app/index.ts",
+                        "references/tool/index.ts",
+                        "references/lib/index.ts",
+                        "references/core/index.ts",
+                    ],
+                    &["--type-check-only", "overlapping/index.ts", "overlapping/child/index.ts"],
+                    // The pinned backend skips type errors in circular projects, so these snapshots show success.
+                    // Upstream: https://github.com/microsoft/TypeScript/issues/65358
+                    &["--type-check-only", "circular/a/index.ts"],
+                    &["--type-check-only", "circular/b/index.ts"],
+                    &["--type-check-only", "circular/a/index.ts", "circular/b/index.ts"],
+                ],
+            ),
+        ];
+
+        for (name, args) in cases {
+            Tester::new()
+                .with_cwd("fixtures/cli/tsgolint_type_check_programs".into())
+                .test_and_snapshot_named(&format!("tsgolint_type_check_{name}"), args);
+        }
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_rule_modes() {
+        let modes: &[&[&str]] = &[
+            &["--type-aware", "--type-check"],
+            &["--type-aware", "--type-check", "-A", "all"],
+            &["--type-aware", "--type-check", "-A", "all", "-D", "no-debugger"],
+        ];
+        let args: Vec<Vec<&str>> =
+            ["inferred/index.ts", "project/index.ts", "references/app/index.ts"]
+                .iter()
+                .flat_map(|path| modes.iter().map(move |mode| [*mode, &[*path]].concat()))
+                .collect();
+        let args: Vec<&[&str]> = args.iter().map(Vec::as_slice).collect();
+
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_type_check_programs".into())
+            .test_and_snapshot_named("tsgolint_type_check_rule_modes", &args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_with_mixed_rule_groups() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_type_check_programs".into())
+            .test_and_snapshot_named(
+                "tsgolint_type_check_mixed_rule_groups",
+                &[
+                    &[
+                        "--type-aware",
+                        "--type-check",
+                        "-c",
+                        "mixed-rules.json",
+                        "project/index.ts",
+                        "project/other.ts",
+                    ],
+                    &[
+                        "--type-check-only",
+                        "-c",
+                        "mixed-rules.json",
+                        "project/index.ts",
+                        "project/other.ts",
+                    ],
+                ],
+            );
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_tsconfig_is_for_import_resolution() {
+        Tester::new().test_and_snapshot_named(
+            "tsgolint_type_check_tsconfig",
+            &[&[
+                "--type-check-only",
+                "--tsconfig",
+                "fixtures/cli/tsgolint_type_check_programs/project/tsconfig.json",
+                "fixtures/cli/tsgolint_type_check_programs/projects/strict/index.ts",
+            ]],
+        );
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_false_via_config_file() {
         let args = &["-c", "config-type-check-false.json"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
@@ -2006,8 +2191,15 @@ mod test {
     #[test]
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_only_rejects_fix_flags() {
-        let args = &["--type-check-only", "--fix"];
-        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+        let tester = Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into());
+        tester.test_and_snapshot(&["--type-check-only", "--fix"]);
+        tester.test_and_snapshot_named(
+            "tsgolint_type_check_only_fix_flags",
+            &[
+                &["--type-check-only", "--fix-suggestions"],
+                &["--type-check-only", "--fix-dangerously"],
+            ],
+        );
     }
 
     #[test]
@@ -2346,43 +2538,22 @@ mod suppression {
     #[test]
     #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
     fn test_type_check_only_does_not_validate_regular_rule_suppressions() {
-        let cwd = "fixtures/suppression/type_check_only_with_regular_rule";
-
-        let (stdout, result) = Tester::new().with_cwd(cwd.into()).test_output(&["index.ts"]);
-        assert!(
-            matches!(result, CliRunResult::LintSucceeded),
-            "Expected the suppression fixture to pass regular lint, got {result:?}.\nOutput: {stdout}"
-        );
-
-        let (stdout, result) =
-            Tester::new().with_cwd(cwd.into()).test_output(&["--type-check-only", "index.ts"]);
-
-        assert!(
-            matches!(result, CliRunResult::LintSucceeded),
-            "Expected LintSucceeded, got {result:?}.\nOutput: {stdout}"
-        );
-        assert!(
-            !stdout.contains("suppressions that do not occur anymore"),
-            "Regular lint suppressions must not be validated when their rules did not run.\nOutput: {stdout}"
-        );
+        Tester::new()
+            .with_cwd("fixtures/suppression/type_check_only_with_regular_rule".into())
+            .test_and_snapshot_multiple(&[&["index.ts"], &["--type-check-only", "index.ts"]]);
     }
 
     #[test]
     fn test_type_check_only_rejects_suppression_update_flags() {
-        for flag in ["--suppress-all", "--prune-suppressions"] {
-            let (stdout, result) = Tester::new()
-                .with_cwd("fixtures/suppression/type_check_only_with_regular_rule".into())
-                .test_output(&["--type-check-only", flag, "index.ts"]);
-
-            assert!(
-                matches!(result, CliRunResult::InvalidOptionTypeCheckOnlyWithSuppressionUpdate),
-                "Expected {flag} to be rejected with --type-check-only, got {result:?}.\nOutput: {stdout}"
+        Tester::new()
+            .with_cwd("fixtures/suppression/type_check_only_with_regular_rule".into())
+            .test_and_snapshot_named(
+                "tsgolint_type_check_only_suppression_flags",
+                &[
+                    &["--type-check-only", "--suppress-all", "index.ts"],
+                    &["--type-check-only", "--prune-suppressions", "index.ts"],
+                ],
             );
-            assert!(
-                stdout.contains("cannot be used with suppression update flags"),
-                "Expected an invalid option message for {flag}.\nOutput: {stdout}"
-            );
-        }
     }
 
     #[test]

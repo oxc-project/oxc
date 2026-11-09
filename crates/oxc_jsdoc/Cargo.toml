@@ -22,5 +22,6 @@ doctest = false
 [dependencies]
 oxc_ast = { workspace = true }
 oxc_span = { workspace = true }
+oxc_syntax = { workspace = true }
 
 rustc-hash = { workspace = true }

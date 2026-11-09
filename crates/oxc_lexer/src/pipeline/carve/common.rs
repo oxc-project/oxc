@@ -1,8 +1,6 @@
-use crate::{
-    cpu::{Cpu, cpu_multiversion},
-    error::DiagCode,
-    token::tk,
-};
+use oxc_simd::{Cpu, cpu_multiversion};
+
+use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0},

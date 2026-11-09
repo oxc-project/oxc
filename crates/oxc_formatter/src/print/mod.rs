@@ -38,7 +38,7 @@ pub use arrow_function_expression::{
     FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
 pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
-pub use embedded::{FormatRoot, check_root, object_prints_double_brace, root_wrapper};
+pub use embedded::{FormatName, FormatRoot, check_root, object_prints_double_brace, root_wrapper};
 pub use semicolon::write_comments_before_closing_paren;
 pub use template::embed_hug;
 pub use union_type::{

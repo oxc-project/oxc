@@ -567,7 +567,8 @@ impl<'a> Constraints<'a> {
     ///
     /// Every symbol assigned a slot is a candidate, so the slot assignment becomes the final
     /// rename set.
-    #[inline]
+    #[expect(clippy::inline_always, reason = "per-symbol slot assignment hot path")]
+    #[inline(always)]
     fn is_mangle_candidate(&self, symbol_id: SymbolId, scoping: &Scoping) -> bool {
         let scope_id = scoping.symbol_scope_id(symbol_id);
 

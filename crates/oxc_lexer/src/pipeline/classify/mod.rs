@@ -1,4 +1,4 @@
-use crate::cpu::{Cpu, DynCpu, cpu_multiversion, to_dyn};
+use oxc_simd::{Cpu, DynCpu, cpu_multiversion, to_dyn};
 
 mod avx2;
 mod generic;

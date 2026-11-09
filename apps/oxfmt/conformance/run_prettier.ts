@@ -5,22 +5,25 @@ import { globSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, relative } from "node:path";
 import { parseArgs } from "node:util";
 import { format, type Language } from "../dist/index.js";
-import { assertDownloaded } from "./download-fixtures.ts";
+import { assertDownloaded } from "./download-externals.ts";
 import {
   PRETTIER_SUITE,
-  FIXTURES_DIR,
+  CONFORMANCE_DIR,
   SNAPSHOTS_DIR,
   collectDivergences,
   type Divergence,
   listDivergences,
   checkStaleDivergences,
+  inputVariants,
+  readLineEndings,
+  showLineEndings,
 } from "./shared.ts";
 
 // Compares oxfmt with the committed outputs of Prettier's own test suite (`tests/format/**/__snapshots__`),
 // so Prettier itself never runs here.
 // `--filter <substring>` runs only the matching paths and prints their diffs instead of writing the report.
 
-const SUITE_DIR = join(FIXTURES_DIR, PRETTIER_SUITE);
+const SUITE_DIR = join(CONFORMANCE_DIR, PRETTIER_SUITE);
 
 /** Extension of the filename oxfmt is given → its language (the `associations` name), in the report's order */
 const LANGUAGES: Record<string, Language> = {
@@ -222,10 +225,6 @@ const INPUT_SEPARATOR = `\n${separator("input")}\n`;
 const OUTPUT_SEPARATOR = `\n${separator("output")}\n`;
 const END_SEPARATOR = `\n${separator()}`;
 
-const BOM = "\uFEFF";
-const EOL_BY_NAME: Record<string, string> = { LF: "\n", CRLF: "\r\n", CR: "\r" };
-const NAME_BY_EOL: Record<string, string> = { "\n": "LF", "\r\n": "CRLF", "\r": "CR" };
-
 type Options = Record<string, unknown>;
 type Row = {
   total: number;
@@ -271,7 +270,7 @@ for (const snapPath of globSync("**/__snapshots__/format.test.js.snap", {
     const { parsers, options, expected } = section;
     const input = name.startsWith("snippet: ")
       ? "endOfLine" in options
-        ? section.input.replace(/<(CRLF|CR|LF)>\n/g, (_, eol: string) => EOL_BY_NAME[eol])
+        ? readLineEndings(section.input)
         : section.input
       : readFileSync(join(SUITE_DIR, path), "utf8");
 
@@ -376,22 +375,10 @@ async function runCase(filename: string, input: string, options: Options, expect
   const actual = first.code;
 
   // Prettier visualizes the line endings of both input and output when `endOfLine` is set
-  const compared =
-    "endOfLine" in options
-      ? actual.replace(/\r\n?|\n/g, (eol) => `<${NAME_BY_EOL[eol]}>\n`)
-      : actual;
+  const compared = "endOfLine" in options ? showLineEndings(actual) : actual;
   const passed = compared === expected;
 
-  // Line endings are normalized and a BOM is kept, so these must produce the same output.
-  // Inputs already containing `\r` or a BOM are skipped, their variants would not be equivalent.
-  const variants: [name: string, input: string, output: string][] = [];
-  if (!input.includes("\r")) {
-    variants.push(
-      ["CRLF", input.replaceAll("\n", "\r\n"), actual],
-      ["CR", input.replaceAll("\n", "\r"), actual],
-    );
-  }
-  if (!input.startsWith(BOM)) variants.push(["BOM", BOM + input, BOM + actual]);
+  const variants = inputVariants(input, actual);
 
   // The second pass (idempotency) and the variants are independent of each other
   const [second, ...outputs] = await Promise.all(

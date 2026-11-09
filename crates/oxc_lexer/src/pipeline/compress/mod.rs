@@ -1,9 +1,7 @@
+use oxc_simd::{Cpu, DynCpu, cpu_multiversion, to_dyn};
 use oxc_span::Span;
 
-use crate::{
-    cpu::{Cpu, DynCpu, cpu_multiversion, to_dyn},
-    token::{SPAN_SENTINELS, tk},
-};
+use crate::token::{SPAN_SENTINELS, tk};
 
 use crate::pipeline::lanes::Lanes;
 

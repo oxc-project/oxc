@@ -1,9 +1,8 @@
 use std::ptr;
 
-use crate::{
-    cpu::{BASELINE, cpu_version},
-    token::tk,
-};
+use oxc_simd::{BASELINE, cpu_version};
+
+use crate::token::tk;
 
 use crate::pipeline::{
     bytes::{is_digit, is_word, is_ws},
@@ -57,7 +56,7 @@ const fn cls_table(ts: bool) -> [u16; 256] {
         if (ts && is_kw_init_ts(b)) || (!ts && is_kw_init(b)) {
             f |= 1 << FL_KWINIT;
         }
-        if b == b'#' || b == b'\\' || b >= 0x80 {
+        if b == b'#' || b == b'\\' || b >= 0x80 || b == 0x0b || b == 0x0c {
             f |= 1 << FL_MISC;
         }
         let kd = if is_ws(b, cpu) {

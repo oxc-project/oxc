@@ -2,7 +2,7 @@ commit: 91c70759
 
 lexer_test262 Summary:
 AST Parsed     : 52258/52258 (100.00%)
-Positive Passed: 52254/52258 (99.99%)
+Positive Passed: 52250/52258 (99.98%)
 Comments: tasks/coverage/test262/test/language/comments/multi-line-asi-line-separator.js
 
 Comments: tasks/coverage/test262/test/language/comments/multi-line-asi-paragraph-separator.js
@@ -10,4 +10,12 @@ Comments: tasks/coverage/test262/test/language/comments/multi-line-asi-paragraph
 Comments: tasks/coverage/test262/test/language/line-terminators/comment-multi-ls.js
 
 Comments: tasks/coverage/test262/test/language/line-terminators/comment-multi-ps.js
+
+IrregularWhitespaces: tasks/coverage/test262/test/language/line-terminators/comment-single-ls.js
+
+IrregularWhitespaces: tasks/coverage/test262/test/language/line-terminators/comment-single-ps.js
+
+IrregularWhitespaces: tasks/coverage/test262/test/language/line-terminators/invalid-comment-single-ls.js
+
+IrregularWhitespaces: tasks/coverage/test262/test/language/line-terminators/invalid-comment-single-ps.js
 

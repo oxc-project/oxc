@@ -187,8 +187,7 @@ ascii_byte_handler!(ERR(lexer) {
 
 // <SPACE> <TAB> Normal Whitespace
 ascii_byte_handler!(SPS(lexer) {
-    lexer.consume_char();
-    Kind::Skip
+    lexer.whitespace_handler()
 });
 
 // <VT> <FF> Irregular Whitespace

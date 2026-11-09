@@ -12,10 +12,9 @@
 //!
 //! [`match_delim_back`]: crate::pipeline::disambiguate::common::Tokens::match_delim_back
 
-use crate::{
-    cpu::{Cpu, cpu_multiversion},
-    token::{OP_KIND_BASE, matches_tk, tk},
-};
+use oxc_simd::{Cpu, cpu_multiversion};
+
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use crate::pipeline::{
     bytes::{

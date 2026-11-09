@@ -1,7 +1,4 @@
-use crate::{
-    cpu::{Avx2, Cpu, DynCpu, cpu_multiversion, cpu_version, to_dyn},
-    simd::Vec256,
-};
+use oxc_simd::{Avx2, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version, to_dyn};
 
 /// Get bit `i`.
 ///

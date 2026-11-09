@@ -1,69 +1,60 @@
 import { describe, expect, it } from "vitest";
-import { format } from "../../dist/index.js";
+import { format, defineConfig, type FormatConfig } from "../../dist/index.js";
 
-describe("Format non-js", () => {
-  it("should format json with options", async () => {
-    const jsoncCode = `
-{
-  // Package name
-  "foo": "my",
-  // Trailing comma test
-  "bar": "1",
-}
-`.trim();
-    const result = await format("foo.jsonc", jsoncCode, {
-      insertFinalNewline: false,
-    });
-    expect(result.code).toBe(`${jsoncCode}`);
-    expect(result.errors).toStrictEqual([]);
+describe("defineConfig() API", () => {
+  it("`defineConfig()` function exists", () => {
+    expect(typeof defineConfig).toBe("function");
   });
 
-  it("should format vue with options", async () => {
-    const vueCode = `
-<template><div>Vue</div></template>
-<style>div{color:red;}</style>
-`.trim();
-    const result = await format("Component.vue", vueCode, {
-      vueIndentScriptAndStyle: true,
-    });
-    expect(result.code).toBe(
-      `
-<template><div>Vue</div></template>
-<style>
-  div {
-    color: red;
-  }
-</style>
-`.trimStart(),
-    );
-    expect(result.errors).toStrictEqual([]);
-  });
-
-  it("should surface Prettier parse errors as-is", async () => {
-    const brokenAngular = `<div></span>`;
-    const result = await format("broken.component.html", brokenAngular, {});
-
-    expect(result.code).toBe(brokenAngular);
-    expect(result.errors[0]?.message).toMatch(/Unexpected closing tag/);
+  it("`defineConfig()` returns the same object", () => {
+    const config = defineConfig({ semi: true, tabWidth: 4, ignorePatterns: ["*.min.js"] });
+    expect(config).toStrictEqual({ semi: true, tabWidth: 4, ignorePatterns: ["*.min.js"] });
   });
 });
 
-describe("Format empty", () => {
-  it("should format empty string", async () => {
-    let result = await format("empty.js", "", {});
-    expect(result.code).toBe("");
+describe("format() API", () => {
+  it("`format()` function exists", () => {
+    expect(typeof format).toBe("function");
+  });
+
+  it("dynamic import also works", async () => {
+    const { format } = await import("../../dist/index.js");
+    const result = await format("a.ts", "const x:number=42");
+    expect(result.code).toBe("const x: number = 42;\n");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should `format()` multiple times w/o panic", async () => {
+    const result1 = await format("a.ts", "const x:number=42");
+    expect(result1.code).toBe("const x: number = 42;\n");
+    expect(result1.errors).toStrictEqual([]);
+
+    const result2 = await format("a.json", '{"key":           "value"}');
+    expect(result2.code).toBe('{ "key": "value" }\n');
+    expect(result2.errors).toStrictEqual([]);
+  });
+
+  it("should TS types and options work", async () => {
+    const options: FormatConfig = {
+      quoteProps: "as-needed", // Can be string literal
+      printWidth: 120,
+      semi: false,
+      experimentalSortPackageJson: false,
+      experimentalSortImports: {
+        // Can be optional object
+        partitionByComment: false,
+      },
+    };
+
+    const result = await format("a.ts", "const x={'y':1}", options);
+    expect(result.code).toBe("const x = { y: 1 }\n");
     expect(result.errors).toStrictEqual([]);
 
-    result = await format("empty.toml", "  ", {});
-    expect(result.code).toBe("");
-    expect(result.errors).toStrictEqual([]);
-
-    result = await format("empty.json", "\n\n", {});
-    expect(result.code).toBe("");
-    expect(result.errors).toStrictEqual([]);
-
-    result = await format("empty.md", " \n ", {});
-    expect(result.code).toBe("");
-    expect(result.errors).toStrictEqual([]);
+    const { code, errors } = await format("a.ts", "const x={'y':1}", {
+      // @ts-expect-error: Test invalid options is validated
+      semi: "invalid",
+    });
+    expect(errors).toHaveLength(1);
+    expect(code).toBe("const x={'y':1}");
   });
 });

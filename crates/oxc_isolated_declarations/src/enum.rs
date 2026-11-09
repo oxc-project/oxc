@@ -34,6 +34,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
 
                 computed_value
+            } else if decl.declare && !decl.r#const {
+                None
             } else if let Some(ConstantValue::Number(v)) = prev_initializer_value {
                 Some(ConstantValue::Number(v + 1.0))
             } else {

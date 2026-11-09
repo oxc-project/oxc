@@ -833,7 +833,7 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
 
 ## interpolation-element-as-text
 
-- Why: uniform-rule (same construct, same output: an inline element holding text; prettier/prettier#20134)
+- Why: uniform-rule (same construct, same output: an inline element holding text; prettier/prettier#20134, prettier/prettier#9913, prettier/prettier#14315)
 - Pin: `tests/fixtures/vue/interpolation-element-as-text.vue`
 
 ```vue
@@ -845,6 +845,7 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
   <template #replacement>
     <span v-else><code>{{ replacement.id }}</code></span>
   </template>
+  <div><p>{{ a }}</p></div>
 </template>
 
 <!-- ours -->
@@ -856,6 +857,7 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
   <template #replacement>
     <span v-else><code>{{ replacement.id }}</code></span>
   </template>
+  <div><p>{{ a }}</p></div>
 </template>
 
 <!-- prettier -->
@@ -869,13 +871,18 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
       ><code>{{ replacement.id }}</code></span
     >
   </template>
+  <div>
+    <p>{{ a }}</p>
+  </div>
 </template>
 ```
 
 An inline element holding only `{{ }}` lays out with what is around it as one holding text (`<b>phoneInput</b>`), its `>` included:
-where the line fits, its closing `>` stays with the text right after it, and the line breaks in the text;
-and it puts no element holding it on lines of its own, as nested markup does.
-Counted as markup, it would break an inline parent where only a borrowed `>` can (`<span v-else` then `><code>` on the next line), as Prettier `main` still does.
+where the line fits, its closing `>` stays with the text right after it, and the line breaks in the text.
+An element holding text and `{{ }}` only, whatever its display, puts no element holding it on lines of its own,
+as one holding text does (`<div><p>a</p></div>`), not as nested markup does.
+Counted as markup, it would break an inline parent where only a borrowed `>` can (`<span v-else` then `><code>` on the next line), as Prettier `main` still does,
+and a block parent onto lines of its own (`<p>{{ a }}</p>` on its own line), as Prettier does, and not for `<p>a</p>`.
 Inside it, `{{ }}` hugs the tags and breaks within, as Prettier does: a word cannot.
 Prettier does both for `{{ }}`, not for text.
 Prettier `main` keeps the `>` with what follows an element holding only `{{ }}` after a space (prettier/prettier#20134), and not one holding text:
