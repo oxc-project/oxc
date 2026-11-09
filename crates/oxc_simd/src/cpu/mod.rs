@@ -125,34 +125,11 @@ trait CpuPrivate {
     const DYN_CPU: Option<DynCpu>;
 }
 
-// `DynCpu` is defined differently for each architecture.
-//
-// All variants exist on all architectures, but variants impossible on each architecture
-// are uninhabited. This allows code for all architectures to be compiled and linted
-// on any machine, and Rust Analyzer sees all the code for all archs "as one".
+// `DynCpu`'s variants exist on all architectures, but variants impossible on each architecture
+// are uninhabited. This allows code for all architectures to be compiled and linted on any machine,
+// and Rust Analyzer sees all the code for all archs "as one".
 // But the uninhabited variants allow compiler to apply dead code removal to code paths
-// which aren't for the architecture crate is being compiled for.
-
-/// Enum representing a CPU feature set.
-///
-/// Used for runtime feature detection.
-///
-/// Implements [`Cpu`] and also provides a [`detect`] method which initializes [`DynCpu`]
-/// via target feature detection.
-///
-/// [`detect`]: Self::detect
-#[cfg(all(
-    target_arch = "x86_64",
-    all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
-))]
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum DynCpu {
-    // Can never be created on x86_64 when AVX2, BMI2 and POPCNT are enabled at compile time.
-    // See `Generic`.
-    Generic(Generic),
-    Avx2(Avx2),
-    Neon(Neon),
-}
+// which aren't for the architecture code is being compiled for.
 
 /// Enum representing a CPU feature set.
 ///
@@ -163,7 +140,9 @@ pub enum DynCpu {
 ///
 /// [`detect`]: Self::detect
 //
-// This is the only circumstance in which runtime feature detection is necessary.
+// x86_64 without all of AVX2, BMI2 and POPCNT features enabled at compile time is
+// the only circumstance in which runtime feature detection is necessary,
+// and the only case where `DynCpu` has more than 1 inhabited variant, so isn't a ZST.
 // `Neon` is uninhabited, so `Generic` (0) and `Avx2` (1) are the only usable variants,
 // making this type equivalent to a `bool`.
 #[cfg(all(
@@ -178,23 +157,11 @@ pub enum DynCpu {
     Neon(Neon) = 2,
 }
 
-/// Enum representing a CPU feature set.
-///
-/// Used for runtime feature detection.
-///
-/// Implements [`Cpu`] and also provides a [`detect`] method which initializes [`DynCpu`]
-/// via target feature detection.
-///
-/// [`detect`]: Self::detect
-#[cfg(target_arch = "aarch64")]
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum DynCpu {
-    // Can never be created on aarch64 when Neon is enabled at compile time. See `Generic`.
-    Generic(Generic),
-    Avx2(Avx2),
-    // Can never be created on aarch64 when Neon is disabled at compile time. See `Neon`.
-    Neon(Neon),
-}
+#[cfg(all(
+    target_arch = "x86_64",
+    not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
+))]
+const _: () = assert!(size_of::<DynCpu>() == 1);
 
 /// Enum representing a CPU feature set.
 ///
@@ -204,7 +171,17 @@ pub enum DynCpu {
 /// via target feature detection.
 ///
 /// [`detect`]: Self::detect
-#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+//
+// Runtime feature detection is not required for either:
+// - x86_64 with AVX2, BMI2 and POPCNT all enabled at compile time
+// - any architecture other than x86_64
+//
+// Only one variant of `DynCpu` is inhabited, so we use standard Rust repr (no `#[repr(u8)]`)
+// so that `DynCpu` is a ZST.
+#[cfg(not(all(
+    target_arch = "x86_64",
+    not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
+)))]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum DynCpu {
     Generic(Generic),
@@ -212,19 +189,11 @@ pub enum DynCpu {
     Neon(Neon),
 }
 
-/// [`DynCpu`] has 2 inhabited variants on x86_64 when not all of AVX2, BMI2 and POPCNT
-/// are enabled at compile time (so runtime detection is required).
-/// On all other platforms it only has 1 inhabited variant, so is a ZST.
-const _: () = {
-    let expected_size = cfg_select! {
-        all(
-            target_arch = "x86_64",
-            not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
-        ) => 1,
-        _ => 0,
-    };
-    assert!(size_of::<DynCpu>() == expected_size);
-};
+#[cfg(not(all(
+    target_arch = "x86_64",
+    not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
+)))]
+const _: () = assert!(size_of::<DynCpu>() == 0);
 
 /// [`DynCpu`] always has alignment 1.
 /// This also guarantees [`Generic`], [`Avx2`] and [`Neon`] have alignment 1.
