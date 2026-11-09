@@ -7,44 +7,25 @@ use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 pub mod arena;
-#[cfg(feature = "oxc_diagnostics")]
-pub mod diagnostics;
 pub mod error;
 pub mod options;
 mod pipeline;
-pub mod token;
+mod token;
+
+#[cfg(feature = "oxc_diagnostics")]
+pub mod diagnostics;
+#[cfg(feature = "testing")]
+pub mod testing;
 
 pub use arena::{Arena, LexResult, LineEntry};
 pub use error::{DiagCode, DiagSeverity, Diagnostic};
 pub use options::LexOptions;
 pub use pipeline::Lexer;
-pub use token::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
+pub use token::{KW_KIND_BASE, SPAN_SENTINELS, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
 
 use pipeline::{Lanes, decode_char_at};
 
 pub const PAD: usize = 64;
-
-/// Which implementation of the lexer is compiled in.
-///
-/// - `"AVX2"`: x86_64 with `avx2`, `bmi2` and `popcnt` target features enabled.
-/// - `"Neon"`: aarch64 with `neon` target feature enabled.
-/// - `"generic"`: Everywhere else.
-///
-/// Parts of the pipeline which have no implementation for a platform use the generic one.
-///
-/// Used by CI to ensure it's testing the implementation it thinks it is.
-pub const IMPLEMENTATION: &str = if cfg!(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)) {
-    "AVX2"
-} else if cfg!(all(target_arch = "aarch64", target_feature = "neon")) {
-    "Neon"
-} else {
-    "generic"
-};
 
 thread_local! {
     static SCRATCH: RefCell<Lexer> = RefCell::new(Lexer::new());
@@ -139,6 +120,10 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
             copy_lane(&l.regex_flags, arena.regex_flags.cast::<u8>(), arena.regex_flags_capacity);
         let n_cr = copy_lane(&l.comments, arena.comments, arena.comments_capacity);
         let n_diag = copy_lane(&l.diags, arena.diags, arena.diags_capacity);
+        arena.irregular_whitespaces.clear();
+        arena.irregular_whitespaces.extend_from_slice(&l.irregular_whitespaces);
+        #[expect(clippy::cast_possible_truncation, reason = "bounded by MAX_SOURCE_LEN")]
+        let n_irr = l.irregular_whitespaces.len() as u32;
 
         #[expect(
             clippy::cast_possible_truncation,
@@ -160,6 +145,7 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
             regex_flags_count: n_rxf,
             comments_count: n_cr,
             cooked_bytes_count: n_cb,
+            irregular_whitespaces_count: n_irr,
         }
     })
 }
@@ -232,6 +218,7 @@ fn empty_result(arena: &Arena) -> LexResult {
         regex_flags_count: 0,
         comments_count: 0,
         cooked_bytes_count: 0,
+        irregular_whitespaces_count: 0,
     }
 }
 

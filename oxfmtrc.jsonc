@@ -45,6 +45,7 @@
     "napi/{parser,transform,transform-react,transform-relay,minify,playground}/**/wasi-worker.mjs",
     "napi/{parser,transform,transform-react,transform-relay,minify,playground}/**/browser.js",
     "npm/runtime/src",
+    "npm/runtime/upstream.json",
     "npm/oxc-types/types.d.ts",
     "npm/oxfmt/configuration_schema.json",
     "npm/oxlint/configuration_schema.json",

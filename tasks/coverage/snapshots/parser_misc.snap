@@ -1,7 +1,15 @@
 parser_misc Summary:
-AST Parsed     : 132/132 (100.00%)
-Positive Passed: 132/132 (100.00%)
-Negative Passed: 270/270 (100.00%)
+AST Parsed     : 135/135 (100.00%)
+Positive Passed: 135/135 (100.00%)
+Negative Passed: 272/272 (100.00%)
+
+  × TS(1029): 'declare' modifier must precede 'abstract' modifier.
+   ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
+ 1 │ abstract class C {
+ 2 │     abstract declare p: string;
+   ·              ───────
+ 3 │ }
+   ╰────
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -593,6 +601,12 @@ Negative Passed: 270/270 (100.00%)
  1 │ a
  2 │ \u{69}nstanceof b;
    · ───────────────
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-keyword-type.ts:1:23]
+ 1 │ type EscapedKeyword = n\u0075mber;
+   ·                       ───────────
    ╰────
 
   × Keywords cannot contain escape characters
@@ -4759,36 +4773,13 @@ Negative Passed: 270/270 (100.00%)
  3 │ }
    ╰────
 
-  × Keywords cannot contain escape characters
-   ╭─[misc/fail/oxc-27290-escaped.js:2:3]
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/oxc-27290-escaped.js:2:16]
  1 │ class A {
  2 │   pr\u0069vate x;
-   ·   ────────────
+   ·                ┬
+   ·                ╰── `;` expected
  3 │   publ\u0069c f() {}
-   ╰────
-
-  × TS(8009): The 'private' modifier can only be used in TypeScript files.
-   ╭─[misc/fail/oxc-27290-escaped.js:2:3]
- 1 │ class A {
- 2 │   pr\u0069vate x;
-   ·   ───────
- 3 │   publ\u0069c f() {}
-   ╰────
-
-  × Keywords cannot contain escape characters
-   ╭─[misc/fail/oxc-27290-escaped.js:3:3]
- 2 │   pr\u0069vate x;
- 3 │   publ\u0069c f() {}
-   ·   ───────────
- 4 │ }
-   ╰────
-
-  × TS(8009): The 'public' modifier can only be used in TypeScript files.
-   ╭─[misc/fail/oxc-27290-escaped.js:3:3]
- 2 │   pr\u0069vate x;
- 3 │   publ\u0069c f() {}
-   ·   ──────
- 4 │ }
    ╰────
 
   × TS(8009): The 'private' modifier can only be used in TypeScript files.

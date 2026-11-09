@@ -239,7 +239,9 @@ fn is_invalid_fetch_options<'a>(
                                 }
                             }
                         }
-                        _ => {}
+                        _ => {
+                            method_name = UNKNOWN_METHOD_NAME;
+                        }
                     }
                 }
                 _ => {
@@ -337,6 +339,14 @@ fn test() {
         (r#"new Request("/url", { method: (options).method, body: "some body" });"#),
         r#"enum M { A = "\uD800" } fetch(u, {method: M.A, body: "x"})"#,
         r#"enum M { A = "\uD800", B = "GET" } fetch(u, {method: M.A, body: "x"})"#,
+        r#"type Handler = (input: { body?: string; method: string }) => Promise<Response>;
+        export const contextual: Handler = ({ body, method }) => fetch("/", { body, method });"#,
+        r#"type Handler = (input: { body?: string; method: string }) => Request;
+        export const contextual: Handler = ({ body, method }) => new Request("/", { body, method });"#,
+        r#"function request({ body, method }) { return fetch("/", { body, method }); }"#,
+        r#"function request({ body, method }) { return new Request("/", { body, method }); }"#,
+        r#"function request(method) { return fetch("/", { method, body: "foo=bar" }); }"#,
+        r#"function request(method) { return new Request("/", { method, body: "foo=bar" }); }"#,
     ];
 
     let fail = vec![

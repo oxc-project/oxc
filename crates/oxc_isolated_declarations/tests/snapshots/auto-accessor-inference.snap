@@ -1,0 +1,46 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/auto-accessor-inference.ts
+---
+```
+==================== .D.TS ====================
+
+export declare class Store {
+	#private;
+	accessor count: number;
+	static accessor label: string;
+	accessor enabled: boolean;
+	accessor negative: number;
+	accessor bigint: bigint;
+	accessor typed: number | undefined;
+	protected accessor protectedValue: number;
+	private accessor hidden;
+}
+export declare class Unsupported {
+	accessor missing;
+	accessor unknown;
+}
+
+
+==================== Errors ====================
+
+  x TS9012: Property must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[16:12]
+ 15 | export class Unsupported {
+ 16 |   accessor missing;
+    :            ^^^^^^^
+ 17 |   accessor unknown = unavailable();
+    `----
+
+  x TS9012: Property must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[17:12]
+ 16 |   accessor missing;
+ 17 |   accessor unknown = unavailable();
+    :            ^^^^^^^
+ 18 | }
+    `----
+
+
+```

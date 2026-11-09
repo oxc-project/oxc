@@ -529,7 +529,19 @@ impl<C: Config> ParserImpl<'_, C> {
         Modifier::new(start, modifier_kind)
     }
 
+    #[inline]
     pub(crate) fn parse_modifiers(
+        &mut self,
+        permit_const_as_modifier: bool,
+        stop_on_start_of_class_static_block: bool,
+    ) -> Modifiers {
+        if self.at(Kind::Ident) {
+            return Modifiers::empty();
+        }
+        self.parse_modifiers_impl(permit_const_as_modifier, stop_on_start_of_class_static_block)
+    }
+
+    fn parse_modifiers_impl(
         &mut self,
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,
@@ -554,6 +566,12 @@ impl<C: Config> ParserImpl<'_, C> {
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,
     ) -> Option<Modifier> {
+        // A modifier spelled with a Unicode escape (`st\u0061tic`) cannot act as a modifier.
+        // Leave it for identifier or property name parsing, e.g. a class field named `static`.
+        if self.cur_token().escaped() {
+            return None;
+        }
+
         let start = self.cur_start();
         let kind = self.cur_kind();
 
@@ -592,7 +610,7 @@ impl<C: Config> ParserImpl<'_, C> {
     }
 
     pub(crate) fn parse_contextual_modifier(&mut self, kind: Kind) -> bool {
-        if self.at(kind) && self.next_token_can_follow_modifier() {
+        if self.at(kind) && !self.cur_token().escaped() && self.next_token_can_follow_modifier() {
             self.bump_any();
             true
         } else {
@@ -713,9 +731,11 @@ const fn get_illegal_preceding_modifiers(kind: ModifierKind) -> ModifierKinds {
             ModifierKind::Abstract,
             ModifierKind::Async,
         ]),
-        ModifierKind::Declare => {
-            ModifierKinds::new([ModifierKind::Declare, ModifierKind::Override])
-        }
+        ModifierKind::Declare => ModifierKinds::new([
+            ModifierKind::Declare,
+            ModifierKind::Override,
+            ModifierKind::Abstract,
+        ]),
         _ => ModifierKinds::new([kind]),
     }
 }

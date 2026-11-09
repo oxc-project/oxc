@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils as _;
 use lazy_regex::Regex;
+use oxc_syntax::module_record::RequestedModule;
 use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::{
     JsonSchema, SchemaGenerator,
@@ -1056,8 +1057,10 @@ impl Rule for NoRestrictedImports {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
+        let import_statement_spans: FxHashSet<Span> =
+            module_record.import_entries.iter().map(|entry| entry.statement_span).collect();
 
-        self.report_side_effects(ctx, module_record);
+        self.report_side_effects(ctx, module_record, &import_statement_spans);
 
         let mut reported_general_import_paths = FxHashSet::default();
         let mut reported_general_import_patterns = FxHashSet::default();
@@ -1084,6 +1087,12 @@ impl Rule for NoRestrictedImports {
         }
 
         for entry in &module_record.indirect_export_entries {
+            // `import { a } from 'foo'; export { a };` is recorded as an indirect export that
+            // keeps the span of the import statement. The import entry was already checked above.
+            if import_statement_spans.contains(&entry.statement_span) {
+                continue;
+            }
+
             self.report_export_name_allowed(
                 ctx,
                 entry,
@@ -1104,41 +1113,53 @@ impl Rule for NoRestrictedImports {
 }
 
 impl NoRestrictedImports {
-    fn report_side_effects(&self, ctx: &LintContext<'_>, module_record: &ModuleRecord) {
+    fn report_side_effects(
+        &self,
+        ctx: &LintContext<'_>,
+        module_record: &ModuleRecord,
+        import_statement_spans: &FxHashSet<Span>,
+    ) {
         if module_record.requested_modules.is_empty() {
             return;
         }
 
-        let import_statement_spans: FxHashSet<Span> =
-            module_record.import_entries.iter().map(|entry| entry.statement_span).collect();
-        let mut side_effect_import_map: FxHashMap<&CompactStr, Vec<Span>> = FxHashMap::default();
+        let mut side_effect_import_map: FxHashMap<&CompactStr, Vec<RequestedModule>> =
+            FxHashMap::default();
 
         for (source, requests) in &module_record.requested_modules {
             for request in requests {
                 if request.is_import && !import_statement_spans.contains(&request.statement_span) {
-                    side_effect_import_map.entry(source).or_default().push(request.statement_span);
+                    side_effect_import_map.entry(source).or_default().push(*request);
                 }
             }
         }
 
         for path in &self.paths {
-            for (source, spans) in &side_effect_import_map {
+            for (source, modules) in &side_effect_import_map {
                 if source.as_str() == path.name.as_str() && path.import_names.is_none() {
                     debug_assert!(
-                        !spans.is_empty(),
+                        !modules.is_empty(),
                         "all import entries must have at least one import entry"
                     );
-                    if let Some(span) = spans.first() {
-                        ctx.diagnostic(diagnostic_path(*span, path.message.clone(), source));
+                    if let Some(module) = modules.first() {
+                        ctx.diagnostic(diagnostic_path(
+                            module.statement_span,
+                            path.message.clone(),
+                            source,
+                        ));
                     }
                 }
             }
         }
 
-        for (source, spans) in &side_effect_import_map {
+        for (source, modules) in &side_effect_import_map {
             let mut whitelist_found = false;
             let mut err = None;
             for pattern in &self.patterns {
+                // Allow type imports when they are specifically allowed in the pattern
+                if pattern.allow_type_imports.is_some_and(|x| x) && modules[0].is_type {
+                    continue;
+                }
                 match pattern.get_group_glob_result(source) {
                     GlobResult::Whitelist => {
                         whitelist_found = true;
@@ -1146,7 +1167,7 @@ impl NoRestrictedImports {
                     }
                     GlobResult::Found => {
                         err = Some(get_diagnostic_from_import_name_result_pattern(
-                            spans[0],
+                            modules[0].statement_span,
                             source,
                             &ImportNameViolation::General,
                             pattern,
@@ -1157,7 +1178,7 @@ impl NoRestrictedImports {
 
                 if pattern.get_regex_result(source) && !pattern.is_side_effect_import_allowed() {
                     ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
-                        spans[0],
+                        modules[0].statement_span,
                         source,
                         &ImportNameViolation::General,
                         pattern,
@@ -3632,6 +3653,16 @@ fn test() {
             r"import 'foo'; import { bar } from 'foo'; export * from 'foo'; import('foo');",
             Some(serde_json::json!([{ "paths": [], "patterns": [] }])),
         ),
+        // https://github.com/oxc-project/oxc/issues/28780
+        (
+            r"
+            import type {} from '@mui/x-data-grid-pro/themeAugmentation/x';
+            import type { A } from '@mui/x-data-grid-pro/themeAugmentation/y';
+            ",
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["@mui/*/*/*"], "allowTypeImports": true }] }]),
+            ),
+        ),
     ]);
 
     fail.extend([
@@ -3647,6 +3678,31 @@ fn test() {
                 serde_json::json!([{ "patterns": [{ "regex": "^foo$", "allowImportNames": ["allowed"] }] }]),
             ),
         ),
+    ]);
+
+    let restricted_z_name = serde_json::json!([{
+        "paths": [{ "name": "zod", "importNames": ["z"], "message": "Use 'util/zod' instead." }]
+    }]);
+    pass.push((
+        "import type { z } from 'zod'; export { z };",
+        Some(serde_json::json!([{
+            "paths": [{ "name": "zod", "importNames": ["z"], "allowTypeImports": true }]
+        }])),
+    ));
+    fail.extend([
+        ("import { z } from 'zod'; export { z };", Some(restricted_z_name.clone())),
+        ("import { z } from 'zod'; export { z as zz };", Some(restricted_z_name.clone())),
+        ("import { z } from 'zod'; export { z, z as zz };", Some(restricted_z_name.clone())),
+        ("import { z } from 'zod'; export { z };", Some(serde_json::json!(["zod"]))),
+        (
+            "import { z } from 'zod'; export { z };",
+            Some(serde_json::json!([{ "patterns": [{ "group": ["zod"] }] }])),
+        ),
+        (
+            "import z from 'zod'; export { z };",
+            Some(serde_json::json!([{ "paths": [{ "name": "zod", "importNames": ["default"] }] }])),
+        ),
+        ("import { z } from 'zod'; export { z } from 'zod';", Some(restricted_z_name)),
     ]);
 
     Tester::new(NoRestrictedImports::NAME, NoRestrictedImports::PLUGIN, pass, fail)

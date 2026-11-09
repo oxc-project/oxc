@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 📚 Documentation
+
+- 844c28c syntax: Correct crate capabilities and module records (#29075) (camc314)
+
+## [0.157.0] - 2026-11-02
+
+### ⚡ Performance
+
+- 8239dac parser: Replace dragonbox_ecma with zmij_ecma (#28282) (Boshen)
+
 ## [0.155.0] - 2026-10-19
 
 ### 💥 BREAKING CHANGES

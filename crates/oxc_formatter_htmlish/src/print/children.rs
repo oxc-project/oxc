@@ -56,20 +56,14 @@ fn between(t: &Tree<'_>, prev: NodeId, next: NodeId) -> Between {
         };
     }
 
-    if n.borrows.prev_closing_end
-        && t.element(prev).is_some()
-        && p.only_child().is_some_and(|only| t.is_interpolation(only))
-        && p.has_leading_spaces
-    {
-        return Between::Nothing;
-    }
-
     if (p.borrows.next_opening_start
         && (n.prettier_ignore
             // 123<a
             //      ~
             //   ><b>
             || n.first_child.is_some()
+            // `{{ }}`, which holds its expression as an element holds its children
+            || t.is_interpolation(next)
             // 123<!--
             //        ~
             // -->
@@ -140,7 +134,13 @@ pub fn write_children<'a>(
             if let Some(prev) = t[child].prev {
                 write_between(between(t, prev, child), force_next_empty_line(t, prev), f);
             }
-            write_child(t, child, f);
+            // Its own group, or the parent's breaks put `{{ }}`'s expression on its own line
+            // (`apps/oxfmt/DIVERGENCES.md#js-in-vue-interpolation-in-broken-parent`)
+            if t.is_interpolation(child) {
+                write!(f, group(&format_with(|f| write_child(t, child, f))));
+            } else {
+                write_child(t, child, f);
+            }
         }
         return;
     }

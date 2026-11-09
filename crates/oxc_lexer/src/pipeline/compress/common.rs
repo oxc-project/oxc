@@ -1,9 +1,11 @@
+use oxc_simd::{Cpu, cpu_multiversion, cpu_version};
 use oxc_span::Span;
 
 use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::lanes::Lanes;
 
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn emit_value(
     src: &[u8],
@@ -11,21 +13,29 @@ pub(super) unsafe fn emit_value(
     out_spans: *const Span,
     j: usize,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) {
     let sp = *out_spans.add(j);
     let s = sp.start as usize;
     let e = sp.end as usize;
     let k = *out_kinds.add(j);
     if k < tk!(IdentEscaped) {
-        lanes.push_number(src, s, e);
+        lanes.push_number(src, s, e, cpu);
     } else if k == tk!(IdentEscaped) {
-        lanes.push_atom(src, s, e);
+        lanes.push_atom(src, s, e, cpu);
     } else {
-        lanes.push_atom(src, s + 1, e);
+        lanes.push_atom(src, s + 1, e, cpu);
     }
 }
 
+/// Push a diagnostic for each `Invalid` token.
+///
+/// As it's cold code, it's compiled only once, not separately for each CPU feature set,
+/// which keeps the binary smaller. `#[inline(never)]` stops it being inlined into
+/// the separate copies of its callers.
+#[cpu_version(Generic)]
 #[cold]
+#[inline(never)]
 pub(super) unsafe fn invalid_diags(
     src: &[u8],
     out_kinds: *const u8,

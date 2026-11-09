@@ -3,21 +3,23 @@
 use oxc_formatter_core::{
     Format,
     builders::{
-        dedent_to_root, expand_parent, group, if_group_breaks, indent, indent_if_group_breaks,
-        soft_line_break, soft_line_break_or_space, space, text,
+        dedent_to_root, expand_parent, group, hard_line_break, if_group_breaks, indent,
+        indent_if_group_breaks, soft_line_break, soft_line_break_or_space, space, text,
     },
-    write,
+    dispatch_fragment_ir, write,
 };
 use oxc_htmlish_parser::ast::{NodeId, NodeKind};
 
 use super::{
     HtmlishFormatter,
     children::{has_leading_line_break, has_trailing_line_break, write_children},
-    format_with,
+    embed::content_language,
+    format_ir, format_with,
     tag::{
         closing_end_borrowed, closing_end_marker, closing_start_borrowed, closing_start_marker,
         opening_end_borrowed, opening_end_marker, write_closing_tag, write_opening_tag,
     },
+    text::trim_preserving_indentation,
 };
 use crate::{
     HtmlishFormatOptions,
@@ -29,9 +31,22 @@ pub fn write_element<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'
     let item = &t[id];
 
     if should_preserve_content(t, id) {
+        let content = node_content(t, id);
+        // A Vue block that is no markup (`<i18n lang="json">`): its content formatted in its language,
+        // on lines of its own and not indented, as Prettier does
+        let formatted = (t.is_non_html_sfc_block(id) && !item.self_closing)
+            .then(|| content_language(t, id))
+            .flatten()
+            .and_then(|language| {
+                dispatch_fragment_ir(f, language, trim_preserving_indentation(content), None)
+            });
         // The opening tag prints the borrowed prefix, once (DIVERGENCES.md#pre-after-borrowed-closing-end)
         write!(f, group(&format_with(|f| write_opening_tag(t, id, f))));
-        write!(f, text(node_content(t, id)));
+        match formatted {
+            Some(ir) if ir.is_empty() => {}
+            Some(ir) => write!(f, [hard_line_break(), format_ir(ir), hard_line_break()]),
+            None => write!(f, text(content)),
+        }
         write_closing_tag(t, id, f);
         return;
     }
@@ -117,6 +132,11 @@ pub fn write_element<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'
             }
             if hug {
                 write!(f, indent_if_group_breaks(&children, attr_group_id));
+            } else if item.script_like
+                && t.is_sfc_block(id)
+                && !f.options().vue_indent_script_and_style
+            {
+                write!(f, children);
             } else {
                 write!(f, indent(&children));
             }
@@ -167,10 +187,10 @@ fn should_preserve_content(t: &Tree<'_>, id: NodeId) -> bool {
                 // `<!--[if lt IE 9]><html><![endif]-->`: an unclosed element inside
                 || item.last_child.is_some_and(|last| t.is_unclosed(last))
         }
-        // `<pre>` with markup inside
+        // `<pre>` with markup inside, a Vue block that is no markup
         _ => {
-            item.pre_like
-                && t.children(id).any(|child| !(t.is_text(child) || t.is_interpolation(child)))
+            (item.pre_like && t.children(id).any(|child| !t.is_text_content(child)))
+                || t.is_non_html_sfc_block(id)
         }
     }
 }
@@ -202,13 +222,14 @@ fn force_break_children(t: &Tree<'_>, id: NodeId) -> bool {
 
 /// Besides `force_break_children`:
 /// the content of `body`, `script`, `style`, nested markup, or a lone child on its own lines.
+/// `{{ }}` is no markup there, as text (DIVERGENCES.md#interpolation-element-as-text).
 fn force_break_content(t: &Tree<'_>, id: NodeId) -> bool {
     let item = &t[id];
     if t.element(id).is_some()
         && (item.script_like
             || t.tag(id) == "body"
             || t.children(id)
-                .any(|child| t.children(child).any(|grandchild| !t.is_text(grandchild))))
+                .any(|child| t.children(child).any(|grandchild| !t.is_text_content(grandchild))))
     {
         return true;
     }

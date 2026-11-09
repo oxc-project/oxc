@@ -235,10 +235,6 @@ pub struct FormatConfig {
     /// - Default: `"css"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub html_whitespace_sensitivity: Option<HtmlWhitespaceSensitivityConfig>,
-
-    // ============================================================================================
-    // Prettier compatible options and only used by Prettier
-    // ============================================================================================
     /// Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.
     ///
     /// - Languages: Vue

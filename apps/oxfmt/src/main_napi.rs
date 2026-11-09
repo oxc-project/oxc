@@ -173,7 +173,6 @@ pub async fn js_text_to_doc(
     source_ext: String,
     source_text: String,
     oxfmt_plugin_options_json: String,
-    parent_context: String,
     #[napi(
         ts_arg_type = "(options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>"
     )]
@@ -191,7 +190,6 @@ pub async fn js_text_to_doc(
         &source_ext,
         &source_text,
         &oxfmt_plugin_options_json,
-        &parent_context,
         format_file_cb,
         format_embedded_doc_cb,
         sort_tailwind_classes_cb,

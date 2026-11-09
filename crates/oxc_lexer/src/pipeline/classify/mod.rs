@@ -1,25 +1,16 @@
-use super::cpu::{Cpu, cpu_select};
+use oxc_simd::{Cpu, DynCpu, cpu_multiversion, to_dyn};
 
-#[cfg(target_arch = "x86_64")]
 mod avx2;
-#[cfg(target_arch = "x86_64")]
-use avx2::classify_avx2;
-
-#[cfg(target_arch = "aarch64")]
+mod generic;
+mod luts;
 mod neon;
-#[cfg(target_arch = "aarch64")]
+mod punct;
+
+use avx2::classify_avx2;
+use generic::classify_generic;
 use neon::classify_neon;
 
-mod generic;
-use generic::classify_generic;
-
-#[cfg(any(test, target_arch = "x86_64", target_arch = "aarch64"))]
-mod luts;
-#[cfg(any(test, target_arch = "x86_64", target_arch = "aarch64"))]
-mod punct1_luts;
-
-mod punct1;
-
+#[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn classify(
     ts: bool,
@@ -36,11 +27,17 @@ pub(super) unsafe fn classify(
     kind: *mut u8,
     cpu: impl Cpu,
 ) {
-    cpu_select!(cpu, {
-        Avx2(cpu) => classify_avx2(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu),
-        Neon(cpu) => classify_neon(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu),
-        Generic(_) => classify_generic(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind),
-    });
+    match to_dyn(cpu) {
+        DynCpu::Avx2(cpu) => {
+            classify_avx2(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu)
+        }
+        DynCpu::Neon(cpu) => {
+            classify_neon(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu)
+        }
+        DynCpu::Generic(_) => {
+            classify_generic(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind)
+        }
+    };
 
     *word.add(nb) = 0;
     *st.add(nb) = 0;
