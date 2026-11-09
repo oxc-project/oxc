@@ -44,7 +44,7 @@ use rewrite_extensions::TypeScriptRewriteExtensions;
 pub struct TypeScript<'a> {
     annotations: TypeScriptAnnotations<'a>,
     r#enum: TypeScriptEnum,
-    namespace: TypeScriptNamespace,
+    namespace: TypeScriptNamespace<'a>,
     module: TypeScriptModule,
     rewrite_extensions: Option<TypeScriptRewriteExtensions>,
     // Options
@@ -223,7 +223,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.r#enum.enter_statement(stmt, ctx);
+        self.r#enum.transform_statement(stmt, &self.namespace, ctx);
         self.module.enter_statement(stmt, ctx);
     }
 
