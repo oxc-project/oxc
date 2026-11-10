@@ -1,4 +1,5 @@
 import { Worker } from "node:worker_threads";
+import { runInNewContext } from "node:vm";
 import { describe, expect, it } from "vitest";
 
 import { minify, minifySync } from "../index";
@@ -78,6 +79,29 @@ describe("simple", () => {
     expect(ret.code).toBe("OTHER:baz();");
     expect(ret.errors.length).toBe(0);
   });
+});
+
+it.each([
+  ["test.js", false],
+  ["test.js", true],
+  ["test.cjs", false],
+  ["test.cjs", true],
+] as const)("preserves Annex B aliases with unused: false (%s, mangle: %s)", (filename, mangle) => {
+  const source = `
+    var r = {};
+    function main() {
+      var f;
+      {
+        function f() { return 1; }
+        r.f = f;
+      }
+      return f();
+    }
+    main();
+  `;
+  const ret = minifySync(filename, source, { compress: { unused: false }, mangle });
+  expect(ret.errors).toEqual([]);
+  expect(runInNewContext(ret.code)).toBe(1);
 });
 
 describe("treeshake options", () => {

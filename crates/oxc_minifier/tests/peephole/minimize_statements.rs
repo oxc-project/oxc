@@ -3,8 +3,8 @@ use std::fmt::Write;
 use oxc_span::SourceType;
 
 use crate::{
-    CompressOptions, default_options, test, test_options_source_type, test_same,
-    test_same_options_source_type, test_smallest,
+    CompressOptions, CompressOptionsUnused, default_options, test, test_options_source_type,
+    test_same, test_same_options_source_type, test_smallest,
 };
 
 #[test]
@@ -458,4 +458,24 @@ fn test_inline_single_use_function_declaration() {
         SourceType::script(),
         &CompressOptions::default(),
     );
+}
+
+#[test]
+fn test_inline_function_declaration_preserves_annex_b_aliases() {
+    let cases = [
+        "function main() { var f; { function f() { return 1; } r.f = f; } return f(); } main();",
+        "function main() { { function f() { return 1; } r.a = f; } { function f() { return 2; } r.b = f; } return f(); } main();",
+    ];
+    for unused in [
+        CompressOptionsUnused::Keep,
+        CompressOptionsUnused::KeepAssign,
+        CompressOptionsUnused::Remove,
+    ] {
+        let options = CompressOptions { unused, ..CompressOptions::smallest() };
+        for source_type in [SourceType::script(), SourceType::cjs()] {
+            for source in cases {
+                test_same_options_source_type(source, source_type, &options);
+            }
+        }
+    }
 }

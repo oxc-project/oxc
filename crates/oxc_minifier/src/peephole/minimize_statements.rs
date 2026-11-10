@@ -504,6 +504,19 @@ impl<'a> PeepholeOptimizations {
         };
         let Statement::FunctionDeclaration(function) = &result[index] else { unreachable!() };
 
+        // A sloppy block declaration can also initialize an enclosing var binding.
+        // Converting it to an expression loses that Annex B write. Check this even
+        // when `unused: false` disables function-liveness registration.
+        let binding_scope_flags =
+            ctx.scoping().scope_flags(ctx.scoping().symbol_scope_id(symbol_id));
+        if !function.r#async
+            && !function.generator
+            && !binding_scope_flags.is_var()
+            && !binding_scope_flags.is_strict_mode()
+        {
+            return;
+        }
+
         let Some(scope_id) = function.scope_id.get() else { return };
         if let Some(liveness) = ctx.state.symbols.liveness_mut() {
             liveness.unregister_function_declaration(scope_id, symbol_id);
@@ -513,6 +526,9 @@ impl<'a> PeepholeOptimizations {
             unreachable!();
         };
         function.r#type = FunctionType::FunctionExpression;
+        // After the sole reference is removed, the retained name's original outer
+        // symbol has no live uses. Compression can keep that metadata; mangling
+        // rebuilds the function-expression binding from the transformed AST.
         ctx.replace_expression(&mut assignment.right, Expression::FunctionExpression(function));
     }
 
