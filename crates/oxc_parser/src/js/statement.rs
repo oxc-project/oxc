@@ -7,9 +7,7 @@ use oxc_str::Str;
 
 use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, StatementContext,
-    buffered_vec::BufferedVec,
-    diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, Modifiers},
 };
@@ -797,23 +795,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         self.expect(Kind::Colon);
-        let mut consequent = BufferedVec::new_in(self);
-        loop {
-            let kind = self.cur_kind();
+        let consequent = self.collect_list(|p| {
+            let kind = p.cur_kind();
             if matches!(
                 kind,
                 Kind::Case | Kind::Default | Kind::RCurly | Kind::Eof | Kind::Undetermined
-            ) || self.fatal_error.is_some()
+            ) || p.fatal_error.is_some()
             {
-                break;
+                return None;
             }
-            let stmt = self.parse_statement_list_item(StatementContext::StatementList);
+            let stmt = p.parse_statement_list_item(StatementContext::StatementList);
             if let Statement::VariableDeclaration(var_decl) = &stmt
                 && var_decl.kind.is_using()
             {
                 // It is a Syntax Error if UsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
                 // It is a Syntax Error if AwaitUsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
-                self.error(if var_decl.kind.is_await_using() {
+                p.error(if var_decl.kind.is_await_using() {
                     diagnostics::await_using_declaration_not_allowed_in_switch_bare_case(
                         stmt.span(),
                     )
@@ -821,9 +818,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     diagnostics::using_declaration_not_allowed_in_switch_bare_case(stmt.span())
                 });
             }
-            consequent.push(stmt);
-        }
-        SwitchCase::new(self.end_span(start), test, consequent.into_vec(), self)
+            Some(stmt)
+        });
+        SwitchCase::new(self.end_span(start), test, consequent, self)
     }
 
     /// Section 14.14 Throw Statement
