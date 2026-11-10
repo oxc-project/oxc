@@ -3,6 +3,7 @@
 use std::{
     fmt,
     path::{Path, PathBuf},
+    sync::atomic::Ordering,
     sync::{Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak},
 };
 
@@ -13,7 +14,42 @@ use oxc_span::Span;
 use oxc_str::CompactStr;
 pub use oxc_syntax::module_record::RequestedModule;
 
+use crate::{module_graph_scc::ImportCycleGroup, rules::import::no_cycle::ImportCycleOptions};
+
 type SortedLoadedModules = Arc<[(CompactStr, Weak<ModuleRecord>)]>;
+
+/// One node's position in a completed group's shared component tables.
+#[derive(Debug)]
+struct ImportCycleComponents {
+    group: Arc<ImportCycleGroup>,
+    index: usize,
+}
+
+/// File-level SCC information for one import-filter policy.
+#[derive(Debug, Clone, Copy)]
+pub struct ImportCycleComponent<'a> {
+    group: &'a ImportCycleGroup,
+    options: ImportCycleOptions,
+    id: usize,
+    cyclic: bool,
+}
+
+impl ImportCycleComponent<'_> {
+    pub(crate) fn is_cyclic(&self) -> bool {
+        self.cyclic
+    }
+
+    pub(crate) fn excludes_module(&self, module: &ModuleRecord) -> bool {
+        module.import_cycle_component(self.options).is_some_and(|other| {
+            if std::ptr::eq(self.group, other.group) {
+                self.id != other.id
+            } else {
+                // A different completed group in this build cannot lead back to this one.
+                Arc::ptr_eq(&self.group.graph, &other.group.graph)
+            }
+        })
+    }
+}
 
 /// ESM Module Record
 ///
@@ -54,6 +90,9 @@ pub struct ModuleRecord {
     loaded_modules: RwLock<FxHashMap<CompactStr, Weak<ModuleRecord>>>,
 
     sorted_loaded_modules: RwLock<Option<SortedLoadedModules>>,
+
+    // Published after linking; all lint workers read the same labels.
+    import_cycle_components: OnceLock<ImportCycleComponents>,
 
     /// `[[ImportEntries]]`
     ///
@@ -110,6 +149,10 @@ impl fmt::Debug for ModuleRecord {
             .field("requested_modules", &self.requested_modules)
             .field("loaded_modules", &loaded_modules)
             .field("sorted_loaded_modules", &self.sorted_loaded_modules)
+            .field(
+                "import_cycle_components",
+                &self.import_cycle_components.get().map(|cache| cache.index),
+            )
             .field("import_entries", &self.import_entries)
             .field("local_export_entries", &self.local_export_entries)
             .field("indirect_export_entries", &self.indirect_export_entries)
@@ -549,7 +592,7 @@ impl ModuleRecord {
         }))
     }
 
-    /// Invalidates the sorted snapshot before granting write access.
+    /// Invalidates sorted snapshots and cached cycle components before granting write access.
     ///
     /// # Panics
     ///
@@ -558,8 +601,35 @@ impl ModuleRecord {
         &self,
     ) -> RwLockWriteGuard<'_, FxHashMap<CompactStr, Weak<ModuleRecord>>> {
         let loaded_modules = self.loaded_modules.write().unwrap();
+        if let Some(components) = self.import_cycle_components.get() {
+            components.group.graph.valid.store(false, Ordering::Release);
+        }
         *self.sorted_loaded_modules.write().unwrap() = None;
         loaded_modules
+    }
+
+    pub(crate) fn import_cycle_component(
+        &self,
+        options: ImportCycleOptions,
+    ) -> Option<ImportCycleComponent<'_>> {
+        let components = self.import_cycle_components.get()?;
+        let group = &components.group;
+        if !group.graph.valid.load(Ordering::Acquire) {
+            return None;
+        }
+        let (id, cyclic) = group.components[options.index()][components.index];
+        Some(ImportCycleComponent { group, options, id, cyclic })
+    }
+
+    pub(crate) fn set_import_cycle_components(&self, group: Arc<ImportCycleGroup>, index: usize) {
+        if let Err(components) =
+            self.import_cycle_components.set(ImportCycleComponents { group, index })
+        {
+            // Reused records cannot retain either graph's classifications.
+            components.group.graph.valid.store(false, Ordering::Release);
+            let existing = self.import_cycle_components.get().unwrap();
+            existing.group.graph.valid.store(false, Ordering::Release);
+        }
     }
 
     /// Get a loaded module by upgrading the weak reference to an Arc.

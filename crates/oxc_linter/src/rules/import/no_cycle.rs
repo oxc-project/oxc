@@ -82,6 +82,12 @@ pub struct NoCycle {
     allow_unsafe_dynamic_cyclic_dependency: bool,
 }
 
+/// Only options that change the edges followed by no-cycle's graph walks.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ImportCycleOptions {
+    ignore_types: bool,
+}
+
 impl Default for NoCycle {
     fn default() -> Self {
         Self {
@@ -152,11 +158,16 @@ impl Rule for NoCycle {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
 
-        // Gated on unbounded `max_depth` (the default), where the walks below explore the whole
-        // reachable subgraph anyway so the prefilter replaces their work. Under a shallow depth cap
-        // they are cheap and an unbounded prefilter could cost more than it saves.
-        if self.max_depth == u32::MAX && !self.can_be_in_cycle(module_record) {
-            return;
+        let graph_options = self.graph_options();
+        let unbounded = self.max_depth == u32::MAX;
+        let component = module_record.import_cycle_component(graph_options);
+
+        // The shared SCC labels say whether this file is in a cycle at all. Without them, check
+        // reachability once; bounded walks are cheap enough to skip that unbounded check.
+        match component {
+            Some(component) if !component.is_cyclic() => return,
+            None if unbounded && !self.can_be_in_cycle(module_record) => return,
+            _ => {}
         }
 
         let needle = &module_record.resolved_absolute_path;
@@ -164,9 +175,15 @@ impl Rule for NoCycle {
 
         let mut stack = Vec::new();
         let mut traversed = FxHashSet::default();
+        // Skip imports outside this file's SCC: they cannot lead back to it. Not under `maxDepth`,
+        // where the visitor ends the whole walk at the depth limit, so pruning could change results.
+        let component = component.filter(|_| unbounded);
         for (key, weak_module_record) in direct_imports.iter() {
             let loaded_module_record = weak_module_record.upgrade().unwrap();
-            if !self.should_traverse_module(key, &loaded_module_record, module_record) {
+            if component.is_some_and(|component| component.excludes_module(&loaded_module_record)) {
+                continue;
+            }
+            if !graph_options.should_traverse_module(key, &loaded_module_record, module_record) {
                 continue;
             }
 
@@ -183,7 +200,10 @@ impl Rule for NoCycle {
             let visitor_result = ModuleGraphVisitorBuilder::default()
                 .max_depth(self.max_depth.saturating_sub(1))
                 .reuse_traversed(traversed)
-                .filter(|(key, val), parent| self.should_traverse_module(key, val, parent))
+                .filter(|(key, val), parent| {
+                    !component.is_some_and(|component| component.excludes_module(val))
+                        && graph_options.should_traverse_module(key, val, parent)
+                })
                 .event(|event, (key, val), _| match event {
                     ModuleGraphVisitorEvent::Enter => {
                         stack.push((key.clone(), Arc::clone(val)));
@@ -213,6 +233,17 @@ impl Rule for NoCycle {
 }
 
 impl NoCycle {
+    pub(crate) fn graph_options(&self) -> ImportCycleOptions {
+        // Keep this exhaustive: new options must be classified as graph or diagnostic options.
+        let Self {
+            ignore_types,
+            max_depth: _,
+            ignore_external: _,
+            allow_unsafe_dynamic_cyclic_dependency: _,
+        } = *self;
+        ImportCycleOptions { ignore_types }
+    }
+
     /// Is `root` in a cycle at all? True iff some module reachable from it imports it back — one
     /// traversal answering for every direct import at once, instead of one walk per import.
     ///
@@ -245,9 +276,14 @@ impl NoCycle {
         visited: &mut FxHashSet<usize>,
         stack: &mut Vec<Arc<ModuleRecord>>,
     ) -> bool {
+        let graph_options = self.graph_options();
         for (specifier, weak_module_record) in module_record.loaded_modules().iter() {
             let loaded_module_record = weak_module_record.upgrade().unwrap();
-            if !self.should_traverse_module(specifier, &loaded_module_record, module_record) {
+            if !graph_options.should_traverse_module(
+                specifier,
+                &loaded_module_record,
+                module_record,
+            ) {
                 continue;
             }
             // By path, not pointer: that is what the walks report on, and one file can have
@@ -261,9 +297,20 @@ impl NoCycle {
         }
         false
     }
+}
 
-    fn should_traverse_module(
-        &self,
+impl ImportCycleOptions {
+    /// Every import filter, in [`Self::index`] order.
+    pub(crate) const ALL: [Self; 2] = [Self { ignore_types: false }, Self { ignore_types: true }];
+
+    pub(crate) fn index(self) -> usize {
+        // New graph options must also participate in the cache key.
+        let Self { ignore_types } = self;
+        usize::from(ignore_types)
+    }
+
+    pub(crate) fn should_traverse_module(
+        self,
         key: &CompactStr,
         module: &Arc<ModuleRecord>,
         parent: &ModuleRecord,

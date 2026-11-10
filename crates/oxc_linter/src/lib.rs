@@ -38,6 +38,7 @@ mod external_plugin_store;
 mod fixer;
 mod frameworks;
 mod globals;
+mod module_graph_scc;
 mod module_graph_visitor;
 mod module_record;
 mod options;
@@ -308,6 +309,11 @@ impl Linter {
     /// number of rules depends on which file is being linted.
     pub fn number_of_rules(&self, type_aware: bool) -> Option<usize> {
         self.config.number_of_rules(type_aware)
+    }
+
+    /// See [`ConfigStore::may_run_import_no_cycle`].
+    pub(crate) fn may_run_import_no_cycle(&self) -> bool {
+        self.config.may_run_import_no_cycle()
     }
 
     /// Return `true` if `Linter` has an external linter (JS plugins).
