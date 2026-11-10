@@ -1,3 +1,4 @@
+// `oxc_lexer` does not support big endian at present
 #![cfg(target_endian = "little")]
 
 use std::mem;
@@ -24,6 +25,7 @@ pub use tokens::Tokens;
 
 use pipeline::{Lanes, decode_char_at};
 
+/// Number of bytes of zeros that must follow source text in `src` param passed to [`Lexer::lex`].
 pub const PAD: usize = 64;
 
 fn resolve_unicode_leads(
