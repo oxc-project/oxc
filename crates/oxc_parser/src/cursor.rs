@@ -9,7 +9,6 @@ use oxc_str::JSStr;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl,
-    buffered_vec::BufferedVec,
     diagnostics::{self, ParserDiagnostic},
     error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
@@ -568,85 +567,58 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         R: Fn(&mut Self) -> ArenaBox<'a, BindingRestElement<'a>>,
         D: Fn(Span) -> ParserDiagnostic<'a>,
     {
-        let mut list = BufferedVec::new_in(self);
-        let rest = self.parse_delimited_list_with_rest_into(
-            &mut list,
-            close,
-            opening_span,
-            parse_element,
-            parse_rest,
-            rest_last_diagnostic,
-        );
-        (list.into_vec(), rest)
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn parse_delimited_list_with_rest_into<E, A, R, D>(
-        &mut self,
-        list: &mut BufferedVec<'a, A>,
-        close: Kind,
-        opening_span: Span,
-        parse_element: E,
-        parse_rest: R,
-        rest_last_diagnostic: D,
-    ) -> Option<ArenaBox<'a, BindingRestElement<'a>>>
-    where
-        E: Fn(&mut Self) -> A,
-        R: Fn(&mut Self) -> ArenaBox<'a, BindingRestElement<'a>>,
-        D: Fn(Span) -> ParserDiagnostic<'a>,
-    {
         let mut rest: Option<ArenaBox<'a, BindingRestElement<'a>>> = None;
         let mut first = true;
-        loop {
-            let kind = self.cur_kind();
-            if kind == close || self.has_fatal_error() {
-                break;
-            }
-
-            if first {
-                first = false;
-            } else {
-                let comma_span = self.cur_token().span();
-                if kind != Kind::Comma {
-                    let error = diagnostics::expect_closing_or_separator(
-                        close.to_str(),
-                        Kind::Comma.to_str(),
-                        kind.to_str(),
-                        comma_span,
-                        opening_span,
-                    );
-                    self.set_fatal_error(error);
-                    break;
+        let list = self.collect_list(|p| {
+            loop {
+                let kind = p.cur_kind();
+                if kind == close || p.has_fatal_error() {
+                    return None;
                 }
-                self.bump_any();
-                let kind = self.cur_kind();
-                if kind == close {
-                    if rest.is_some() && !self.ctx.has_ambient() {
-                        self.error(diagnostics::rest_element_trailing_comma(comma_span));
+
+                if first {
+                    first = false;
+                } else {
+                    let comma_span = p.cur_token().span();
+                    if kind != Kind::Comma {
+                        let error = diagnostics::expect_closing_or_separator(
+                            close.to_str(),
+                            Kind::Comma.to_str(),
+                            kind.to_str(),
+                            comma_span,
+                            opening_span,
+                        );
+                        p.set_fatal_error(error);
+                        return None;
                     }
-                    break;
+                    p.bump_any();
+                    let kind = p.cur_kind();
+                    if kind == close {
+                        if rest.is_some() && !p.ctx.has_ambient() {
+                            p.error(diagnostics::rest_element_trailing_comma(comma_span));
+                        }
+                        return None;
+                    }
+                    if matches!(kind, Kind::Eof | Kind::Undetermined) {
+                        return None;
+                    }
                 }
-                if matches!(kind, Kind::Eof | Kind::Undetermined) {
-                    break;
+
+                if let Some(r) = &rest {
+                    p.set_fatal_error(rest_last_diagnostic(r.span()));
+                    return None;
+                }
+
+                // Re-capture kind to get the current token (may have changed after else branch)
+                let kind = p.cur_kind();
+                if kind == Kind::Dot3 {
+                    rest.replace(parse_rest(p));
+                } else {
+                    return Some(parse_element(p));
                 }
             }
+        });
 
-            if let Some(r) = &rest {
-                self.set_fatal_error(rest_last_diagnostic(r.span()));
-                break;
-            }
-
-            // Re-capture kind to get the current token (may have changed after else branch)
-            let kind = self.cur_kind();
-            if kind == Kind::Dot3 {
-                rest.replace(parse_rest(self));
-            } else {
-                let element = parse_element(self);
-                list.push(element);
-            }
-        }
-
-        rest
+        (list, rest)
     }
 }
