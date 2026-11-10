@@ -200,7 +200,7 @@ struct VFor<'a> {
 
 /// `v-for`'s value split as Vue's `parseForExpression`:
 /// `alias in source` / `alias of source`, the alias in parens or not, up to three names.
-/// `None` for a value Vue does not read so, which prints as written.
+/// `None` for a value Vue does not read so, or one formatting would make it read otherwise, which prints as written.
 fn split_v_for(value: &str) -> Option<VFor<'_>> {
     // `/(.*?)\s+(in|of)\s+(.*)/s`: the first whitespace run with `in` / `of` and whitespace after it
     let bytes = value.as_bytes();
@@ -215,7 +215,13 @@ fn split_v_for(value: &str) -> Option<VFor<'_>> {
             .starts_with(|c: char| c.is_ascii_whitespace())
             .then(|| (&value[..i], operator, after.trim_ascii()))
     })?;
-    if source.is_empty() {
+    // A spaced `in` / `of` in the alias (`'k'in o` formats as `'k' in o`) would read as the operator.
+    // One in a string or a comment counts too, for nothing; an AST check needs a `v-for` marker on `JsRoot::FunctionParams`
+    if source.is_empty()
+        || alias
+            .split(|c: char| !(c.is_ascii_alphanumeric() || c == '_' || c == '$'))
+            .any(|word| word == "in" || word == "of")
+    {
         return None;
     }
 

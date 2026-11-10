@@ -61,6 +61,36 @@ Vue splits there too, and compiles neither (`@vue/compiler-dom` 3.5.45: `Error p
 The comment Prettier prints is not the user's (`/* a,b */`), which breaks the lossless contract;
 the string is uniform-rule (same construct, same output: a default value in `v-slot`'s params).
 
+## js-in-vue-for-alias-in-of-as-written
+
+- Why: semantics (Vue splits `v-for` at the first `in` / `of` with whitespace around it)
+- Pin: `conformance/fixtures/js-in-vue/for-alias-in-of.vue`
+
+```vue
+<!-- input -->
+<template>
+  <li v-for="({ a = 'k'in o }) in items">x</li>
+  <li v-for="({ a=of }) in items">x</li>
+</template>
+
+<!-- ours -->
+<template>
+  <li v-for="({ a = 'k'in o }) in items">x</li>
+  <li v-for="({ a=of }) in items">x</li>
+</template>
+
+<!-- prettier -->
+<template>
+  <li v-for="{ a = 'k' in o } in items">x</li>
+  <li v-for="{ a = of } in items">x</li>
+</template>
+```
+
+A `v-for` whose alias holds the word `in` or `of` prints as written.
+Formatting spaces an `in` operator or an `of` name in a default value, where Vue's split (`parseForExpression`) then reads the operator:
+Prettier's output reads as the alias `{ a = 'k'`, which does not compile (`@vue/compiler-dom` 3.5.45: `Error parsing JavaScript expression`).
+The word in a string or a comment counts too, and prints as written for nothing.
+
 ## js-in-vue-bitwise-or
 
 - Why: uniform-rule (same construct, same output: a `&&` chain in the same root)
@@ -264,7 +294,7 @@ Under `semi: false`, `;` still separates an event handler's top-level statements
 and ends a lone one that is no expression (`if (a) b();`); the statements in them follow `semi`.
 Vue's compiler reads a handler as statements when its value holds a `;` (`exp.content.includes(';')`), wrapped in braces, and as an expression otherwise:
 Prettier drops every `;`, and the statements no longer compile (`@vue/compiler-dom` 3.5.45: `Error parsing JavaScript expression`).
-Under `semi: true` both print every `;` between and after the statements.
+Under `semi: true` both print the statements' own `;` (a known gap: `crates/oxc_formatter/AGENTS.md` "js-in-xxx").
 
 ```vue
 <!-- input (any semi) -->
