@@ -18,7 +18,7 @@ App.tsx:
   sys peak growth: 2584 # 2.58 kB
   arena allocs: 618
   arena reallocs: 17
-  arena size: 2177976 # 2.18 MB
+  arena size: 2176216 # 2.18 MB
 
 RadixUIAdoptionSection.jsx:
   file size: 2520 # 2.52 kB
