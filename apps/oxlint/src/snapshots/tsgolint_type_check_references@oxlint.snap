@@ -1,0 +1,185 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-check-only references/app/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[references/app/index.ts:3:29]
+ 2 | 
+ 3 | export const app: Value = { count: "app" };
+   :                             ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-check-only references
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[references/app/index.ts:3:29]
+ 2 | 
+ 3 | export const app: Value = { count: "app" };
+   :                             ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[references/core/index.ts:2:14]
+ 1 | export interface Value { count: number; }
+ 2 | export const core: number = "core";
+   :              ^^^^
+ 3 | Promise.resolve(1);
+   `----
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[references/lib/index.ts:2:14]
+ 1 | export type { Value } from "../core";
+ 2 | export const lib: number = "lib";
+   :              ^^^
+ 3 | Promise.resolve(1);
+   `----
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[references/tool/index.ts:3:30]
+ 2 | 
+ 3 | export const tool: Value = { count: "tool" };
+   :                              ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[references/unmatched.ts:1:14]
+ 1 | export const unmatched: number = "unmatched";
+   :              ^^^^^^^^^
+ 2 | Promise.resolve(1);
+   `----
+
+  x typescript(TS2322): Type 'null' is not assignable to type 'number'.
+   ,-[references/unmatched.ts:4:14]
+ 3 | debugger;
+ 4 | export const nullableUnmatched: number = null;
+   :              ^^^^^^^^^^^^^^^^^
+   `----
+
+Found 0 warnings and 6 errors.
+Finished in <variable>ms on 5 files using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-check-only references/app/index.ts references/tool/index.ts references/lib/index.ts references/core/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[references/app/index.ts:3:29]
+ 2 | 
+ 3 | export const app: Value = { count: "app" };
+   :                             ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[references/core/index.ts:2:14]
+ 1 | export interface Value { count: number; }
+ 2 | export const core: number = "core";
+   :              ^^^^
+ 3 | Promise.resolve(1);
+   `----
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[references/lib/index.ts:2:14]
+ 1 | export type { Value } from "../core";
+ 2 | export const lib: number = "lib";
+   :              ^^^
+ 3 | Promise.resolve(1);
+   `----
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[references/tool/index.ts:3:30]
+ 2 | 
+ 3 | export const tool: Value = { count: "tool" };
+   :                              ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+Found 0 warnings and 4 errors.
+Finished in <variable>ms on 4 files using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-check-only overlapping/index.ts overlapping/child/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[overlapping/child/index.ts:2:14]
+ 1 | export interface Value { count: number; }
+ 2 | export const child: number = "child";
+   :              ^^^^^
+ 3 | Promise.resolve(1);
+   `----
+
+  x typescript(TS2322): Type 'null' is not assignable to type 'number'.
+   ,-[overlapping/child/index.ts:5:14]
+ 4 | debugger;
+ 5 | export const nullableChild: number = null;
+   :              ^^^^^^^^^^^^^
+   `----
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[overlapping/index.ts:3:32]
+ 2 | 
+ 3 | export const parent: Value = { count: "parent" };
+   :                                ^^^^^
+ 4 | Promise.resolve(1);
+   `----
+
+Found 0 warnings and 3 errors.
+Finished in <variable>ms on 2 files using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: --type-check-only circular/a/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
+
+########## 
+arguments: --type-check-only circular/b/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
+
+########## 
+arguments: --type-check-only circular/a/index.ts circular/b/index.ts
+working directory: fixtures/cli/tsgolint_type_check_programs
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 2 files using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

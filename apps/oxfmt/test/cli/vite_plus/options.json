@@ -43,5 +43,14 @@
     "cwd": "nested_ignored",
     "args": ["--check", "child/test.ts"],
     "env": { "VP_VERSION": "1", "NO_COLOR": "1" }
+  },
+  {
+    "args": [
+      "--check",
+      "--config",
+      "root_from_config_dir/vite.config.ts",
+      "root_from_config_dir/test.ts"
+    ],
+    "env": { "VP_VERSION": "1", "NO_COLOR": "1" }
   }
 ]

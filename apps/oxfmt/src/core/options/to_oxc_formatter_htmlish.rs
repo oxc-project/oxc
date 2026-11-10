@@ -5,8 +5,8 @@ use super::super::oxfmtrc::{FormatConfig, HtmlWhitespaceSensitivityConfig};
 
 /// Convert `FormatConfig` into `HtmlishFormatOptions` for `oxc_formatter_htmlish`.
 ///
-/// Prettier's `html` language consumes the shared layout options plus
-/// `htmlWhitespaceSensitivity`, `bracketSameLine` and `singleAttributePerLine`.
+/// Prettier's `html` and `vue` languages consume the shared layout options plus
+/// `htmlWhitespaceSensitivity`, `bracketSameLine`, `singleAttributePerLine` and `vueIndentScriptAndStyle`.
 ///
 /// NOTE: Pure field translation:
 /// `core` comes pre-validated from the config-resolution gate (`validate()`), so this cannot fail.
@@ -32,6 +32,10 @@ pub fn to_oxc_formatter_htmlish(
     // [Prettier] singleAttributePerLine: boolean
     if let Some(single_attribute_per_line) = config.single_attribute_per_line {
         options.single_attribute_per_line = single_attribute_per_line;
+    }
+    // [Prettier] vueIndentScriptAndStyle: boolean
+    if let Some(vue_indent_script_and_style) = config.vue_indent_script_and_style {
+        options.vue_indent_script_and_style = vue_indent_script_and_style;
     }
 
     // [Oxfmt] sortTailwindcss: collect `class` (and `attributes`) classes for batch sorting.

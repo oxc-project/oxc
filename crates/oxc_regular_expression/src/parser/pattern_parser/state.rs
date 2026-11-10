@@ -1,6 +1,8 @@
+use std::collections::hash_map::Entry;
+
 use oxc_allocator::Allocator;
 use oxc_str::Str;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::parser::{pattern_parser::group_name::capturing_group_name, reader::Reader};
 
@@ -84,8 +86,10 @@ fn parse_capturing_groups<'a>(
     //   (?=...), (?!...), (?<=...), (?<!...)
     let mut num_of_left_capturing_parens = 0;
 
-    // Track all named groups with their depth and alternative path
-    let mut named_groups: Vec<NamedGroupInfo<'a>> = Vec::new();
+    // The latest named group for each name.
+    // Earlier groups sharing a name are pairwise exclusive (or we already errored),
+    // so a new group conflicts with one of them only if it conflicts with the latest.
+    let mut named_groups: FxHashMap<Str<'a>, NamedGroupInfo> = FxHashMap::default();
     let mut group_names: FxHashSet<Str<'a>> = FxHashSet::default();
 
     // Track alternatives and depth
@@ -156,30 +160,26 @@ fn parse_capturing_groups<'a>(
                     let Some(group_name) = group_name else {
                         continue;
                     };
-                    let alternative_path = tracker.get_alternative_path();
-
-                    // A newly seen name cannot be a duplicate. Avoid scanning all prior
-                    // groups, which would be quadratic for many distinct names.
-                    if !group_names.insert(group_name) {
-                        for existing in &named_groups {
-                            if existing.name == group_name {
-                                // Check if they can participate together
-                                if AlternativeTracker::can_participate(
-                                    &existing.alternative_path,
-                                    &alternative_path,
-                                ) {
-                                    // True duplicate - return error
-                                    return Err(vec![existing.span, (span_start, span_end)]);
-                                }
+                    let info = NamedGroupInfo {
+                        span: (span_start, span_end),
+                        alternative_path: tracker.get_alternative_path(),
+                    };
+                    match named_groups.entry(group_name) {
+                        Entry::Occupied(mut entry) => {
+                            let existing = entry.get();
+                            if AlternativeTracker::can_participate(
+                                &existing.alternative_path,
+                                &info.alternative_path,
+                            ) {
+                                return Err(vec![existing.span, info.span]);
                             }
+                            entry.insert(info);
+                        }
+                        Entry::Vacant(entry) => {
+                            group_names.insert(group_name);
+                            entry.insert(info);
                         }
                     }
-
-                    named_groups.push(NamedGroupInfo {
-                        name: group_name,
-                        span: (span_start, span_end),
-                        alternative_path,
-                    });
                     continue;
                 }
             }
@@ -246,9 +246,8 @@ impl AlternativeTracker {
 }
 
 /// Tracks information about a named capturing group
-#[derive(Debug, Clone)]
-struct NamedGroupInfo<'a> {
-    name: Str<'a>,
+#[derive(Debug)]
+struct NamedGroupInfo {
     span: (u32, u32),
     alternative_path: AlternativePath,
 }
@@ -280,6 +279,9 @@ mod tests {
             // Nested groups with alternatives
             ("((?<a>x)|((?<a>y)))", (4, 1)), // 1 outer + 1 named + 1 inner + 1 named = 4 total
             ("(((?<a>x))|((?<b>y)))|(((?<a>z))|((?<b>w)))", (10, 2)), // Complex nesting
+            // Repeats in alternatives of a nested disjunction
+            ("(?:(?:(?<a>x))|(?:(?<a>y))|(?:(?<a>z)))", (3, 1)),
+            ("(?:(?<a>x)|(?<a>y))|(?<a>z)", (3, 1)),
         ] {
             let mut reader = Reader::initialize(source_text, true, false).unwrap();
 
@@ -302,6 +304,9 @@ mod tests {
             // Test consecutive groups with same name in same alternative (should be error)
             "((?<a>x))((?<a>y))((?<a>z))",
             "(?<n>a)((?<n>b))",
+            // Exclusive with each other, but not with a later group outside their disjunction
+            "(?:(?<a>x)|(?<a>y))(?<a>z)",
+            "(?:(?<a>x)|(?<b>y)|(?<a>z))(?<a>w)",
         ] {
             let mut reader = Reader::initialize(source_text, true, false).unwrap();
 
@@ -311,5 +316,13 @@ mod tests {
                 "{source_text}"
             );
         }
+
+        // Reports the latest earlier group with the same name, not the first one.
+        let mut reader = Reader::initialize("(?:(?<a>x)|(?<a>y))(?<a>z)", true, false).unwrap();
+        let allocator = Allocator::default();
+        assert_eq!(
+            parse_capturing_groups(&mut reader, true, false, &allocator).unwrap_err(),
+            vec![(14, 15), (22, 23)]
+        );
     }
 }

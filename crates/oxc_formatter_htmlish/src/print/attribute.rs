@@ -7,9 +7,9 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::{Allocator, StringBuilder};
 use oxc_formatter_core::{
-    Format, FormatElement, arena_cow_str,
+    FormatElement, arena_cow_str,
     builders::{
-        group, hard_line_break, if_group_breaks, if_group_fits_on_line, indent, soft_block_indent,
+        hard_line_break, if_group_breaks, if_group_fits_on_line, indent, soft_block_indent,
         soft_line_break, soft_line_break_or_space, space, text,
     },
     spec::is_suppression_marker,
@@ -21,14 +21,13 @@ use super::{
     HtmlishFormatter,
     embed::{
         CssInHtmlStyleAttribute, JsInHtmlEventHandler, is_event_handler, write_attribute_value,
+        write_quoted,
     },
     format_with,
     tag::opening_end_borrowed,
+    vue,
 };
-use crate::{
-    context::HtmlishFormatContext,
-    tree::{Tree, collapse_whitespace},
-};
+use crate::tree::{Tree, collapse_whitespace};
 
 /// `<!-- prettier-ignore-attribute -->` right before the element: the attribute names it lists (all when none),
 /// which print as written.
@@ -60,7 +59,8 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
     let force_not_to_break = t.tag(id) == "script"
         && matches!(el.attributes.as_slice(), [only] if t.attribute_is(only.name.slice(t.source()), "src"))
         && item.first_child.is_none();
-    let per_line = single_attribute_per_line && el.attributes.len() > 1;
+    // Not on a Vue block's own lines
+    let per_line = single_attribute_per_line && el.attributes.len() > 1 && !t.is_sfc_block(id);
     let ignored = ignored_attributes(t, id);
     let is_ignored = |name: &str| {
         ignored.is_some_and(|names| {
@@ -129,6 +129,15 @@ fn write_attribute<'a>(
         return;
     }
     let raw = unescaped(value, f);
+    // A Vue attribute whose value is JS prints as written where it does not format (as Prettier does)
+    if t.rules().vue_sfc
+        && let Some(kind) = vue::value_kind(t, element, attribute, f)
+    {
+        if !vue::write_attribute_value(t, kind, raw, f) {
+            write_quoted_value(raw, f);
+        }
+        return;
+    }
     let class = is("class");
     // A placeholder would hide in the sorted class list, out of the parent's reach
     let tailwind =
@@ -198,8 +207,15 @@ fn write_tailwind_classes<'a>(
 fn write_quoted_value<'a>(raw: &'a str, f: &mut HtmlishFormatter<'_, 'a>) {
     let doubles = raw.bytes().filter(|&b| b == b'"').count();
     let singles = raw.bytes().filter(|&b| b == b'\'').count();
-    let (quote, escaped) = if doubles > singles { ("'", "&apos;") } else { ("\"", "&quot;") };
-    let printed = arena_cow_str(&raw.cow_replace(quote, escaped), f);
+    // A `char` pattern: a 1-char `&str` would build a substring searcher per call
+    let (quote, pattern, escaped) =
+        if doubles > singles { ("'", '\'', "&apos;") } else { ("\"", '"', "&quot;") };
+    // The chosen quote is the rarer one, so most values have none to escape
+    let printed = if doubles.min(singles) == 0 {
+        raw
+    } else {
+        arena_cow_str(&raw.cow_replace(pattern, escaped), f)
+    };
     write!(f, [text(quote), text(printed), text(quote)]);
 }
 
@@ -220,14 +236,6 @@ pub(super) fn quoted_piece<'a>(piece: &'a str, f: &HtmlishFormatter<'_, 'a>) -> 
     arena_cow_str(&piece.cow_replace('"', "&quot;"), f)
 }
 
-/// `content` in quotes, on its own indented lines when the group breaks.
-pub(super) fn write_expanded<'a>(
-    content: &impl Format<'a, HtmlishFormatContext<'a>>,
-    f: &mut HtmlishFormatter<'_, 'a>,
-) {
-    write!(f, ["\"", group(&soft_block_indent(content)), "\""]);
-}
-
 struct Candidate<'a> {
     url: &'a str,
     /// The descriptor's number as printed, and its unit (`w` / `h` / `x`).
@@ -243,8 +251,8 @@ fn write_srcset<'a>(candidates: &[Candidate<'a>], f: &mut HtmlishFormatter<'_, '
     let mut padding = StringBuilder::new_in(f.allocator());
     padding.push_ascii_byte_repeat(b' ', max_url + 1 + max_left);
     let padding = padding.into_str();
-    write_expanded(
-        &format_with(|f| {
+    write_quoted(
+        &soft_block_indent(&format_with(|f| {
             for (i, c) in candidates.iter().enumerate() {
                 if i > 0 {
                     write!(f, [",", soft_line_break_or_space()]);
@@ -264,7 +272,7 @@ fn write_srcset<'a>(candidates: &[Candidate<'a>], f: &mut HtmlishFormatter<'_, '
                     );
                 }
             }
-        }),
+        })),
         f,
     );
 }
@@ -361,8 +369,8 @@ fn write_permissions_policy<'a>(value: &'a str, f: &mut HtmlishFormatter<'_, 'a>
         write!(f, "\"\"");
         return;
     }
-    write_expanded(
-        &format_with(|f| {
+    write_quoted(
+        &soft_block_indent(&format_with(|f| {
             for (i, directive) in directives.iter().enumerate() {
                 write!(f, text(directive));
                 if i + 1 == directives.len() {
@@ -371,7 +379,7 @@ fn write_permissions_policy<'a>(value: &'a str, f: &mut HtmlishFormatter<'_, 'a>
                     write!(f, [";", soft_line_break_or_space()]);
                 }
             }
-        }),
+        })),
         f,
     );
 }

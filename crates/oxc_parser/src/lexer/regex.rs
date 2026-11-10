@@ -1,8 +1,13 @@
-use oxc_syntax::line_terminator::is_line_terminator;
-
 use crate::{config::LexerConfig as Config, diagnostics};
 
-use super::{Kind, Lexer, RegExpFlags, Token};
+use super::{
+    Kind, Lexer, RegExpFlags, Token,
+    search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
+};
+
+// 0xE2 is the first byte of the Unicode line terminators U+2028 and U+2029.
+static REGEX_SPECIAL_TABLE: SafeByteMatchTable =
+    safe_byte_match_table!(|b| matches!(b, b'/' | b'[' | b']' | b'\\' | b'\r' | b'\n' | 0xE2));
 
 impl<C: Config> Lexer<'_, C> {
     /// Re-tokenize the current `/` or `/=` and return `RegExp`
@@ -27,35 +32,7 @@ impl<C: Config> Lexer<'_, C> {
 
     /// 12.9.5 Regular Expression Literals
     fn read_regex(&mut self) -> (u32, RegExpFlags) {
-        let mut in_escape = false;
-        let mut in_character_class = false;
-        loop {
-            match self.next_char() {
-                None => {
-                    self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
-                    self.advance_to_end();
-                    break;
-                }
-                Some(c) if is_line_terminator(c) => {
-                    self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
-                    self.advance_to_end();
-                    break;
-                }
-                Some(c) => {
-                    if in_escape {
-                        in_escape = false;
-                    } else if c == '/' && !in_character_class {
-                        break;
-                    } else if c == '[' {
-                        in_character_class = true;
-                    } else if c == '\\' {
-                        in_escape = true;
-                    } else if c == ']' {
-                        in_character_class = false;
-                    }
-                }
-            }
-        }
+        self.read_regex_pattern();
 
         let pattern_end = self.offset() - 1; // -1 to exclude `/`
         let mut flags = RegExpFlags::empty();
@@ -82,5 +59,77 @@ impl<C: Config> Lexer<'_, C> {
         }
 
         (pattern_end, flags)
+    }
+
+    /// Skip ordinary bytes in batches, interpreting only delimiters, escapes and line terminators.
+    fn read_regex_pattern(&mut self) {
+        let mut in_character_class = false;
+
+        byte_search! {
+            lexer: self,
+            table: REGEX_SPECIAL_TABLE,
+            continue_if: (byte, pos) {
+                match byte {
+                    b'/' if !in_character_class => {
+                        // SAFETY: `/` is ASCII, so the next byte is a UTF-8 boundary.
+                        pos = unsafe { pos.add(1) };
+                        false
+                    }
+                    b'[' => {
+                        in_character_class = true;
+                        true
+                    }
+                    b']' => {
+                        in_character_class = false;
+                        true
+                    }
+                    b'/' => true,
+                    b'\\' => {
+                        // Consume the escaped character without interpreting it as a delimiter.
+                        // SAFETY: `\\` is ASCII, so the next byte is a UTF-8 boundary.
+                        let after_backslash = unsafe { pos.add(1) };
+                        let next = self.source.str_from_pos_to_end(after_backslash).chars().next();
+                        if let Some(c) = next {
+                            // The macro advances one more byte after this block, placing `pos`
+                            // after the escaped character on a UTF-8 boundary.
+                            // SAFETY: The escaped character is present in the source.
+                            pos = unsafe { pos.add(c.len_utf8()) };
+                            if matches!(c, '\r' | '\n' | '\u{2028}' | '\u{2029}') {
+                                // SAFETY: This is just after the escaped character.
+                                self.source.set_position(unsafe { pos.add(1) });
+                                self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
+                                self.advance_to_end();
+                                return;
+                            }
+                        }
+                        true
+                    }
+                    _ => {
+                        let line_break_len = if byte == 0xE2 {
+                            // SAFETY: 0xE2 starts a three-byte UTF-8 character.
+                            let next2 = unsafe { pos.add(1).read2() };
+                            matches!(next2, [0x80, 0xA8 | 0xA9]).then_some(3)
+                        } else {
+                            Some(1)
+                        };
+                        if let Some(len) = line_break_len {
+                            // SAFETY: `len` is the length of this line terminator.
+                            self.source.set_position(unsafe { pos.add(len) });
+                            self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
+                            self.advance_to_end();
+                            return;
+                        }
+                        // SAFETY: This is a non-terminating three-byte UTF-8 character.
+                        // The macro skips its final byte, reaching the next UTF-8 boundary.
+                        pos = unsafe { pos.add(2) };
+                        true
+                    }
+                }
+            },
+            handle_eof: {
+                self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
+                return;
+            },
+        };
     }
 }

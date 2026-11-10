@@ -3,7 +3,11 @@
 use oxc_allocator::StringBuilder;
 use oxc_formatter_core::{
     FormatOptions,
-    builders::{align, dedent_to_root, exact_line_breaks, soft_line_break_or_space, text},
+    builders::{
+        align, dedent_to_root, exact_line_breaks, hard_line_break, soft_line_break_or_space, space,
+        text,
+    },
+    spec::cjk,
     text_width, write,
 };
 use oxc_htmlish_parser::ast::NodeId;
@@ -43,11 +47,19 @@ pub fn write_text<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 
 
     let mut words = words(value, t[id].has_cdata).peekable();
     let mut fill = f.fill();
-    let mut first = true;
-    while let Some(word) = words.next() {
-        let last = words.peek().is_none();
+    let mut prev_word = "";
+    while let Some((word, after_line_break)) = words.next() {
+        let (first, last) = (prev_word.is_empty(), words.peek().is_none());
+        // Between two Chinese / Japanese characters Firefox drops a line break, which other browsers render as a space:
+        // the whitespace keeps its kind (DIVERGENCES.md#cj-whitespace)
+        let between_cj = cjk::between_cj(prev_word, word);
+        prev_word = word;
         fill.entry(
-            &soft_line_break_or_space(),
+            &format_with(|f| match (between_cj, after_line_break) {
+                (false, _) => write!(f, soft_line_break_or_space()),
+                (true, true) => write!(f, hard_line_break()),
+                (true, false) => write!(f, space()),
+            }),
             &format_with(|f| {
                 if first {
                     write!(f, prefix);
@@ -58,7 +70,6 @@ pub fn write_text<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 
                 }
             }),
         );
-        first = false;
     }
     fill.finish();
 }
@@ -81,12 +92,14 @@ pub fn write_dedented_lines<'a>(value: &'a str, f: &mut HtmlishFormatter<'_, 'a>
 }
 
 /// Whitespace-separated words; with `cdata`, a CDATA section is part of one word, whatever it holds
-/// (DIVERGENCES.md#cdata-as-written).
-fn words(value: &str, cdata: bool) -> impl Iterator<Item = &str> {
+/// (DIVERGENCES.md#cdata-as-written); each with whether a line break precedes it.
+fn words(value: &str, cdata: bool) -> impl Iterator<Item = (&str, bool)> {
     let bytes = value.as_bytes();
     let mut pos = 0;
     std::iter::from_fn(move || {
-        pos += bytes[pos..].iter().take_while(|b| b.is_ascii_whitespace()).count();
+        let gap = bytes[pos..].iter().take_while(|b| b.is_ascii_whitespace()).count();
+        let after_line_break = bytes[pos..pos + gap].iter().any(|&b| matches!(b, b'\n' | b'\r'));
+        pos += gap;
         if pos == bytes.len() {
             return None;
         }
@@ -98,12 +111,12 @@ fn words(value: &str, cdata: bool) -> impl Iterator<Item = &str> {
                 pos + 1
             };
         }
-        Some(&value[start..pos])
+        Some((&value[start..pos], after_line_break))
     })
 }
 
 /// `value` without its trailing whitespace and leading blank lines.
-fn trim_preserving_indentation(value: &str) -> &str {
+pub fn trim_preserving_indentation(value: &str) -> &str {
     let value = value.trim_ascii_end();
     let mut start = 0;
     while let Some(newline) = value[start..].find('\n') {

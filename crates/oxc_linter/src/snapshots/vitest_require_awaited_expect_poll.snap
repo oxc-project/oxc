@@ -11,29 +11,11 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `await` to the `expect.poll` call.
 
-  ⚠ vitest(require-awaited-expect-poll): `expect.poll` must be awaited or returned
-   ╭─[require_awaited_expect_poll.tsx:3:23]
- 2 │                     test('should fail', () => {
- 3 │                       expect.poll(() => element).toBeInTheDocument();
-   ·                       ──────────────────────────
- 4 │                     });
-   ╰────
-  help: Add `await` to the `expect.poll` call.
-
   ⚠ vitest(require-awaited-expect-poll): `expect.element` must be awaited or returned
    ╭─[require_awaited_expect_poll.tsx:3:23]
  2 │                     test('should fail', () => {
  3 │                       expect.element(element).toBeInTheDocument();
    ·                       ───────────────────────────────────────────
- 4 │                     });
-   ╰────
-  help: Add `await` to the `expect.element` call.
-
-  ⚠ vitest(require-awaited-expect-poll): `expect.element` must be awaited or returned
-   ╭─[require_awaited_expect_poll.tsx:3:23]
- 2 │                     test('should fail', () => {
- 3 │                       expect.element(element).toBeInTheDocument();
-   ·                       ───────────────────────
  4 │                     });
    ╰────
   help: Add `await` to the `expect.element` call.
@@ -47,29 +29,11 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `await` to the `expect.poll` call.
 
-  ⚠ vitest(require-awaited-expect-poll): `expect.poll` must be awaited or returned
-   ╭─[require_awaited_expect_poll.tsx:3:23]
- 2 │                     test('should fail', () => {
- 3 │                       expect['poll'](() => element).toBeInTheDocument();
-   ·                       ─────────────────────────────
- 4 │                     });
-   ╰────
-  help: Add `await` to the `expect.poll` call.
-
   ⚠ vitest(require-awaited-expect-poll): `expect.element` must be awaited or returned
    ╭─[require_awaited_expect_poll.tsx:3:23]
  2 │                     test('should fail', () => {
  3 │                       expect['element'](element).toBeInTheDocument();
    ·                       ──────────────────────────────────────────────
- 4 │                     });
-   ╰────
-  help: Add `await` to the `expect.element` call.
-
-  ⚠ vitest(require-awaited-expect-poll): `expect.element` must be awaited or returned
-   ╭─[require_awaited_expect_poll.tsx:3:23]
- 2 │                     test('should fail', () => {
- 3 │                       expect['element'](element).toBeInTheDocument();
-   ·                       ──────────────────────────
  4 │                     });
    ╰────
   help: Add `await` to the `expect.element` call.
@@ -83,29 +47,11 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `await` to the `expect.poll` call.
 
-  ⚠ vitest(require-awaited-expect-poll): `expect.poll` must be awaited or returned
-   ╭─[require_awaited_expect_poll.tsx:3:24]
- 2 │                     test('should fail', () => {
- 3 │                       (expect.poll(() => element).toBeInTheDocument(), expect(true).toBe(true));
-   ·                        ──────────────────────────
- 4 │                     });
-   ╰────
-  help: Add `await` to the `expect.poll` call.
-
   ⚠ vitest(require-awaited-expect-poll): `expect.element` must be awaited or returned
    ╭─[require_awaited_expect_poll.tsx:3:24]
  2 │                     test('should fail', () => {
  3 │                       (expect.element(() => element).toBeInTheDocument(), expect(true).toBe(true));
    ·                        ─────────────────────────────────────────────────
- 4 │                     });
-   ╰────
-  help: Add `await` to the `expect.element` call.
-
-  ⚠ vitest(require-awaited-expect-poll): `expect.element` must be awaited or returned
-   ╭─[require_awaited_expect_poll.tsx:3:24]
- 2 │                     test('should fail', () => {
- 3 │                       (expect.element(() => element).toBeInTheDocument(), expect(true).toBe(true));
-   ·                        ─────────────────────────────
  4 │                     });
    ╰────
   help: Add `await` to the `expect.element` call.
@@ -120,10 +66,10 @@ source: crates/oxc_linter/src/tester.rs
   help: Add `await` to the `expect.poll` call.
 
   ⚠ vitest(require-awaited-expect-poll): `expect.poll` must be awaited or returned
-   ╭─[require_awaited_expect_poll.tsx:3:31]
+   ╭─[require_awaited_expect_poll.tsx:3:23]
  2 │                     test('should fail', () => {
- 3 │                       return (expect.poll(() => element).toBeInTheDocument(), expect(true).toBe(true));
-   ·                               ──────────────────────────
+ 3 │                       expect.poll(() => element).toBeInTheDocument().then;
+   ·                       ──────────────────────────────────────────────
  4 │                     });
    ╰────
   help: Add `await` to the `expect.poll` call.

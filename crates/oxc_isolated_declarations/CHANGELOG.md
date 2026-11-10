@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- de6ac92 isolated-declarations: Preserve object accessor mutability (#29039) (camc314)
+- 67ac6be isolated-declarations: Evaluate enum template literal initializers (#28997) (camc314)
+- f05b30e isolated-declarations: Infer auto-accessor initializer types (#29038) (camc314)
+- 030d410 isolated-declarations: Preserve computed ambient enum members (#29040) (camc314)
+
 ## [0.155.0] - 2026-10-19
 
 ### 💥 BREAKING CHANGES

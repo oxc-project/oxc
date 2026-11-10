@@ -6,25 +6,24 @@ use std::any::Any;
 
 use oxc_allocator::{ArenaVec, StringBuilder};
 use oxc_formatter_core::{
-    FormatElement, FormatOptions, builders::FormatOnce, dispatch_fragment_ir, map_text_in_ir, write,
+    Format, FormatElement, FormatOptions, builders::group, dispatch_fragment_ir, map_text_in_ir,
+    write,
 };
 use oxc_htmlish_parser::ast::NodeId;
 
-use super::{
-    HtmlishFormatter,
-    attribute::{quoted_piece, write_expanded},
-    text::dedent_string,
-};
-use crate::tree::Tree;
+use super::{HtmlishFormatter, attribute::quoted_piece, format_ir, text::dedent_string};
+use crate::{context::HtmlishFormatContext, tree::Tree};
 
-/// Parent→child context for CSS dispatched from an HTML `style` attribute's value (css-in-html).
+/// Parent→child context for CSS dispatched from a `style` attribute's value (css-in-html),
+/// in every dialect (HTML, and the plain attributes of Vue and Angular).
 ///
 /// The host translates it into CSS's `CssEmbeddedIn`.
 pub struct CssInHtmlStyleAttribute;
 
-/// Parent→child context for JS dispatched from an HTML event handler attribute's value (js-in-html, `onclick="..."`).
+/// Parent→child context for JS dispatched from an event handler attribute's value (js-in-html, `onclick="..."`),
+/// in every dialect (HTML, and the plain attributes of Vue and Angular).
 ///
-/// The host translates it into JS's `JsEmbeddedIn`.
+/// The host translates it into JS's `JsRoot::Program`, which lays out the value.
 pub struct JsInHtmlEventHandler;
 
 /// The event handler attributes, sorted (Prettier's `@prettier/html-event-attributes` 0.0.2).
@@ -129,29 +128,45 @@ pub fn is_event_handler(name: &str) -> bool {
 
 /// Writes an attribute's (unescaped) `value` formatted in `language`, quoted, a `"` in it as `&quot;`;
 /// `false` when the dispatcher leaves it as written.
+/// The child lays the value out, as `parent_context` asks: this only quotes it.
 pub fn write_attribute_value<'a>(
     language: &str,
     parent_context: &dyn Any,
     value: &'a str,
     f: &mut HtmlishFormatter<'_, 'a>,
 ) -> bool {
-    let Some(ir) = dispatch_fragment_ir(f, language, value, Some(parent_context)) else {
+    let Some(ir) = dispatch_attribute_value(language, parent_context, value, f) else {
         return false;
     };
-    if ir.is_empty() {
-        write!(f, "\"\"");
-        return true;
-    }
+    write_quoted(&format_ir(ir), f);
+    true
+}
+
+/// Writes a value its child laid out, quoted, in a group.
+pub fn write_quoted<'a>(
+    content: &impl Format<'a, HtmlishFormatContext<'a>>,
+    f: &mut HtmlishFormatter<'_, 'a>,
+) {
+    write!(f, ["\"", group(content), "\""]);
+}
+
+/// An attribute's (unescaped) `value` formatted in `language`, for `"` quotes: every `"` as `&quot;`;
+/// `None` when the dispatcher leaves it as written.
+pub fn dispatch_attribute_value<'a>(
+    language: &str,
+    parent_context: &dyn Any,
+    value: &str,
+    f: &HtmlishFormatter<'_, 'a>,
+) -> Option<ArenaVec<'a, FormatElement<'a>>> {
+    let ir = dispatch_fragment_ir(f, language, value, Some(parent_context))?;
     let indent_width = f.options().indent_width();
-    let ir = map_text_in_ir(ir, f.allocator(), &mut |text, out| {
+    Some(map_text_in_ir(ir, f.allocator(), &mut |text, out| {
         if !text.contains('"') {
             return false;
         }
         out.push(FormatElement::text(quoted_piece(text, f), indent_width));
         true
-    });
-    write_expanded(&FormatOnce::new(|f: &mut HtmlishFormatter<'_, 'a>| f.write_elements(ir)), f);
-    true
+    }))
 }
 
 /// Writes the body of `<script>` / `<style>` element `id` formatted in its language;
@@ -174,29 +189,43 @@ pub fn write_embedded_content<'a>(
         value
     };
     let Some(ir) = dispatch_fragment_ir(f, language, value, None) else { return false };
-    let ir = if t.tag(id) == "script" { escape_script_end(ir, f) } else { ir };
+    let ir = if t.tag(id) == "script" { escape_script_end(ir, value, f) } else { ir };
     f.write_elements(ir);
     true
 }
 
-/// The first `</script` ends a `<script>` body, so the source body holds none:
+/// The first `</script` ends a `<script>` body, so the source `body` holds none:
 /// one in the formatted body is the formatting's own (a template literal's re-cooked part, e.g. html-in-js),
 /// printed as `<\/script`, where `\/` means `/` (in a JS string or template, and in JSON).
+/// Its letters (in any case) are in the source body then, or an escape the template cooks spells them (`\x73`):
+/// a body with neither needs no walk over the IR.
 ///
 /// A nested HTML part prints its end tags as one text (`tag.rs`), so none is split across texts.
+/// A JSX closing tag is (`</ script>` prints `</script>`), left as is: rare, and JSX has no escape for it.
 fn escape_script_end<'a>(
     ir: ArenaVec<'a, FormatElement<'a>>,
+    body: &str,
     f: &HtmlishFormatter<'_, 'a>,
 ) -> ArenaVec<'a, FormatElement<'a>> {
+    let source = body.as_bytes();
+    let spells_script = memchr::memchr(b'\\', source).is_some()
+        || memchr::memchr2_iter(b's', b'S', source).any(|i| {
+            source.get(i + 1..i + 6).is_some_and(|rest| rest.eq_ignore_ascii_case(b"cript")) // spellchecker:disable-line
+        });
+    if !spells_script {
+        return ir;
+    }
+
     let allocator = f.allocator();
     let indent_width = f.options().indent_width();
     map_text_in_ir(ir, allocator, &mut |text, out| {
+        let bytes = text.as_bytes();
         let is_script_end = |i: usize| {
-            let bytes = &text.as_bytes()[i + 2..];
-            bytes.get(..6).is_some_and(|name| name.eq_ignore_ascii_case(b"script"))
-                && !bytes.get(6).is_some_and(|&b| b.is_ascii_alphanumeric() || b == b'_')
+            bytes.get(i + 1..i + 8).is_some_and(|tag| tag.eq_ignore_ascii_case(b"/script"))
+                && !bytes.get(i + 8).is_some_and(|&b| b.is_ascii_alphanumeric() || b == b'_')
         };
-        let mut ends = text.match_indices("</").filter(|&(i, _)| is_script_end(i)).peekable();
+        // Searched by `<`, which most texts lack: a `"</"` pattern builds a searcher per text
+        let mut ends = text.match_indices('<').filter(|&(i, _)| is_script_end(i)).peekable();
         if ends.peek().is_none() {
             return false;
         }
@@ -213,25 +242,22 @@ fn escape_script_end<'a>(
     })
 }
 
-/// The language of the body of `<script>` / `<style>` element `id`, a name the dispatcher resolves;
-/// `None` for none (`<script src>`, a template type).
-fn content_language<'a>(t: &'a Tree<'a>, id: NodeId) -> Option<&'a str> {
-    let el = t.element(id)?;
-    let attribute = |name: &str| {
-        el.attributes
-            .iter()
-            .find(|attribute| t.attribute_is(attribute.name.slice(t.source()), name))
+/// The language of the body of `<script>` / `<style>` element `id`, or of a Vue block that is no markup,
+/// a name the dispatcher resolves; `None` for none (`<script src>`, a template type, `<docs>`).
+pub fn content_language<'a>(t: &'a Tree<'a>, id: NodeId) -> Option<&'a str> {
+    let script = match t.tag(id) {
+        "style" => return Some(t.lang(id).unwrap_or("css")),
+        "script" => true,
+        _ if t.is_non_html_sfc_block(id) => false,
+        _ => return None,
     };
-    let value =
-        |name: &str| attribute(name).map(|a| a.value.map_or("", |v| v.span.slice(t.source())));
-    match t.tag(id) {
-        "style" => Some(value("lang").unwrap_or("css")),
-        "script" if attribute("src").is_none() => match (value("lang"), value("type")) {
-            (None, None) => Some("js"),
-            (Some(lang), _) => Some(lang),
-            (None, Some(kind)) => script_type_language(kind),
-        },
-        _ => None,
+    if t.attribute_value(id, "src").is_some() {
+        return None;
+    }
+    match (t.lang(id), t.attribute_value(id, "type")) {
+        (Some(lang), _) => Some(lang),
+        (None, Some(kind)) => script_type_language(kind),
+        (None, None) => script.then_some("js"),
     }
 }
 

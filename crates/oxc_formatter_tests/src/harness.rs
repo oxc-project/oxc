@@ -6,6 +6,8 @@
 //! - drives one format pass per option-set × per printWidth (80 + 100)
 //! - re-formats each output and pins any mismatch as a `Not idempotent` section
 //!   (idempotency violations are tracked in the snapshot, not asserted)
+//! - formats each [`InputVariant`] of the input and pins the names of any that formats differently
+//!   as an `Input variants differ` line, the same way
 //! - asserts the consumer's fingerprint of the input equals that of the output (lossless contract)
 //! - assembles the canonical `==== Input ==== ... ==== Output ==== ...` snapshot
 //! - returns the body for the consumer's `insta::assert_snapshot!`
@@ -13,10 +15,13 @@
 //! Each formatter crate provides language-specific behavior by implementing [`FixtureFormatter`].
 
 use std::{
+    borrow::Cow,
     env::current_dir,
     fs,
     path::{Path, PathBuf},
 };
+
+use cow_utils::CowUtils;
 
 use oxc_formatter_core::{
     CoreFormatOptions, FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth,
@@ -110,11 +115,92 @@ pub trait FixtureFormatter {
 
     /// Format `source` (the contents of the fixture file at `path`) using `options`.
     /// `path` is passed for variant detection (e.g. `.json` vs `.jsonc`).
-    fn format(source: &str, path: &Path, options: &Self::Options) -> String;
+    ///
+    /// # Errors
+    /// The formatter's error (a parse or print error), which fails the test for the fixture itself,
+    /// and is pinned for one of its [`InputVariant`]s.
+    fn format(
+        source: &str,
+        path: &Path,
+        options: &Self::Options,
+    ) -> Result<String, Box<dyn std::error::Error>>;
 
     /// [`Self::Fingerprint`] of `source`.
-    /// Take it from the formatter's own parse (`parse_for_format`), so no test re-implements the parser setup.
+    /// Take it from the formatter's own parse (`parse_for_format`) where the crate exposes one, so no test re-implements the parser setup.
     fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> Self::Fingerprint;
+
+    /// The [`InputVariant`]s to check for the fixture at `path`, all by default.
+    /// Exclude one the language or the entry point does not read as the same text
+    /// (e.g. TOML has no lone CR line break).
+    fn input_variants(_path: &Path) -> &'static [InputVariant] {
+        InputVariant::ALL
+    }
+}
+
+/// A rewrite of a fixture's input that is not content, so it must format the same as the input
+/// (the checks of `apps/oxfmt`'s `conformance:fixture`).
+#[derive(Debug, Clone, Copy)]
+pub enum InputVariant {
+    /// Every `\n` as `\r\n`
+    Crlf,
+    /// Every `\n` as a lone `\r`
+    Cr,
+    /// A leading BOM, kept in the output
+    Bom,
+}
+
+impl InputVariant {
+    pub const ALL: &'static [Self] = &[Self::Crlf, Self::Cr, Self::Bom];
+
+    fn name(self) -> &'static str {
+        match self {
+            Self::Crlf => "CRLF",
+            Self::Cr => "CR",
+            Self::Bom => "BOM",
+        }
+    }
+
+    /// This variant's input and expected output, or `None` when `source` has it already (a `\r`, or a BOM).
+    fn apply<'a>(
+        self,
+        source: &'a str,
+        formatted: &'a str,
+    ) -> Option<(Cow<'a, str>, Cow<'a, str>)> {
+        const BOM: char = '\u{feff}';
+        match self {
+            Self::Crlf | Self::Cr if source.contains('\r') => None,
+            Self::Crlf => Some((source.cow_replace('\n', "\r\n"), formatted.into())),
+            Self::Cr => Some((source.cow_replace('\n', "\r"), formatted.into())),
+            Self::Bom if source.starts_with(BOM) => None,
+            Self::Bom => {
+                Some((format!("{BOM}{source}").into(), format!("{BOM}{formatted}").into()))
+            }
+        }
+    }
+}
+
+/// Names of `path`'s input variants that do not format to `formatted` (a different output, or an error).
+fn input_variants_differ<F: FixtureFormatter>(
+    path: &Path,
+    source_text: &str,
+    formatted: &str,
+    options: &F::Options,
+) -> Vec<&'static str> {
+    F::input_variants(path)
+        .iter()
+        .filter(|variant| {
+            variant.apply(source_text, formatted).is_some_and(|(input, expected)| {
+                F::format(&input, path, options).ok().is_none_or(|output| output != expected)
+            })
+        })
+        .map(|variant| variant.name())
+        .collect()
+}
+
+/// Formats the fixture itself, whose error fails the test.
+fn format_fixture<F: FixtureFormatter>(source: &str, path: &Path, options: &F::Options) -> String {
+    F::format(source, path, options)
+        .unwrap_or_else(|err| panic!("cannot format {}: {err}", path.display()))
 }
 
 /// Resolves format options for `test_file` by walking up the directory tree looking for `options.json`.
@@ -239,7 +325,7 @@ fn generate_snapshot<F: FixtureFormatter>(path: &Path, source_text: &str) -> Str
         }
 
         let options = parse_options::<F>(&option_json);
-        let formatted = F::format(source_text, path, &options);
+        let formatted = format_fixture::<F>(source_text, path, &options);
         assert_line_ending_applied(&option_json, &formatted, path);
         // Lossless contract (`FORMATTER_POLICY.md`, reason (2)): formatting drops nothing the user wrote.
         // What is measured is the consumer's `Fingerprint`.
@@ -258,12 +344,22 @@ fn generate_snapshot<F: FixtureFormatter>(path: &Path, source_text: &str) -> Str
         // A violation is pinned as an extra section rather than asserted,
         // so known non-idempotent fixtures stay visible in their own snapshots
         // (and fixing one shows up as this section disappearing).
-        let reformatted = F::format(&formatted, path, &options);
+        let reformatted = format_fixture::<F>(&formatted, path, &options);
         assert_line_ending_applied(&option_json, &reformatted, path);
         if reformatted != formatted {
             snapshot.push_str("---------- Not idempotent (second pass) ----------\n");
             snapshot.push_str(&reformatted);
             snapshot.push('\n');
+        }
+
+        // Input variants: line endings and a BOM are not content, so formatting must not depend on them.
+        // Pinned like idempotency.
+        // Only the names: a variant's output may carry `\r`, which a snapshot neither shows nor keeps reliably.
+        let differ = input_variants_differ::<F>(path, source_text, &formatted, &options);
+        if !differ.is_empty() {
+            snapshot.push_str("---------- Input variants differ: ");
+            snapshot.push_str(&differ.join(", "));
+            snapshot.push_str(" ----------\n");
         }
     }
 

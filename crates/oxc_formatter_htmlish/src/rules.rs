@@ -1,5 +1,3 @@
-use oxc_htmlish_parser::Dialect;
-
 use crate::HtmlishVariant;
 
 /// What the variant changes in the shared rules, resolved once per document.
@@ -12,12 +10,17 @@ pub struct DialectRules {
     pub keeps_element_gap_kind: bool,
     /// Angular: control flow blocks can occur (checked before looking at a node's kind).
     pub has_blocks: bool,
-    /// `<!DOCTYPE html>` prints `<!doctype html>`: everywhere but XHTML, where an XML parser needs `<!DOCTYPE`
+    /// Vue: the root's elements but `html` are single-file component blocks (`<template>`, `<script>`, `<i18n>`),
+    /// and `{{ }}` and directive values are JS.
+    pub vue_sfc: bool,
+    /// `<!DOCTYPE html>` prints `<!doctype html>` in a standalone HTML document, whose reader is an HTML parser
+    /// (a Vue file read as HTML too), and an Angular template (a `.html` file to Prettier);
+    /// as written where embedded, in XHTML and a Vue single-file component
     /// (DIVERGENCES.md#doctype-case).
     pub lowercase_doctype: bool,
     /// A known HTML element's name and its known attributes print lowercase, as Prettier's HTML parser reads them:
-    /// in a `.html` file, whose reader is an HTML parser; as written where embedded, in XHTML, Vue and Angular
-    /// (DIVERGENCES.md#tag-name-case).
+    /// in a `.html` file and a Vue file read as HTML, whose reader is an HTML parser;
+    /// as written where embedded, in XHTML, a Vue SFC and Angular (DIVERGENCES.md#tag-name-case).
     pub lowercase_known_names: bool,
 }
 
@@ -25,13 +28,17 @@ impl DialectRules {
     /// `sfc`: a Vue file read as a single-file component, not as HTML.
     /// `standalone`: a file of its own, not a part embedded in another language.
     pub fn new(variant: HtmlishVariant, sfc: bool, standalone: bool) -> Self {
-        let dialect = variant.to_dialect();
         Self {
-            names_ignore_case: dialect == Dialect::Html || (dialect == Dialect::Vue && !sfc),
-            keeps_element_gap_kind: dialect == Dialect::Vue,
-            has_blocks: dialect == Dialect::Angular,
-            lowercase_doctype: variant != HtmlishVariant::Xhtml,
-            lowercase_known_names: standalone && variant == HtmlishVariant::Html,
+            names_ignore_case: matches!(variant, HtmlishVariant::Html | HtmlishVariant::Xhtml)
+                || (variant == HtmlishVariant::Vue && !sfc),
+            keeps_element_gap_kind: variant == HtmlishVariant::Vue,
+            has_blocks: variant == HtmlishVariant::Angular,
+            vue_sfc: variant == HtmlishVariant::Vue,
+            lowercase_doctype: standalone
+                && (matches!(variant, HtmlishVariant::Html | HtmlishVariant::Angular)
+                    || (variant == HtmlishVariant::Vue && !sfc)),
+            lowercase_known_names: standalone
+                && (variant == HtmlishVariant::Html || (variant == HtmlishVariant::Vue && !sfc)),
         }
     }
 }

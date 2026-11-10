@@ -300,7 +300,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 transformed_stmts[idx] =
                                     Some(Statement::ExportDeclaration(new_decl));
                             } else {
-                                // Declaration couldn't be transformed; preserve as-is
+                                self.scope.visit_export_declaration(decl);
                                 transformed_stmts[idx] = Some(stmt.clone_in(self.allocator()));
                             }
                             transformed_count += 1;

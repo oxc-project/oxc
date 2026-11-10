@@ -18,6 +18,7 @@ use oxc_ast::ast as oxc;
 use oxc_ast::ast::BinaryOperator;
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, JSChar, JSStr, JSStrBuilder, Str, format_ident, static_ident};
 use oxc_syntax::xml_entities::{decode_entities, decode_entity};
@@ -168,32 +169,11 @@ fn collect_binding_names_from_pattern(
     scope: &ScopeResolver<'_, '_>,
     out: &mut FxHashSet<SymbolId>,
 ) {
-    match pattern {
-        oxc::BindingPattern::BindingIdentifier(id) => {
-            if let Some(symbol_id) = resolve_declared_binding(id, scope_id, scope) {
-                out.insert(symbol_id);
-            }
+    pattern.bound_names(&mut |id| {
+        if let Some(symbol_id) = resolve_declared_binding(id, scope_id, scope) {
+            out.insert(symbol_id);
         }
-        oxc::BindingPattern::ObjectPattern(obj) => {
-            for prop in &obj.properties {
-                collect_binding_names_from_pattern(&prop.value, scope_id, scope, out);
-            }
-            if let Some(rest) = &obj.rest {
-                collect_binding_names_from_pattern(&rest.argument, scope_id, scope, out);
-            }
-        }
-        oxc::BindingPattern::ArrayPattern(arr) => {
-            for elem in arr.elements.iter().flatten() {
-                collect_binding_names_from_pattern(elem, scope_id, scope, out);
-            }
-            if let Some(rest) = &arr.rest {
-                collect_binding_names_from_pattern(&rest.argument, scope_id, scope, out);
-            }
-        }
-        oxc::BindingPattern::AssignmentPattern(assign) => {
-            collect_binding_names_from_pattern(&assign.left, scope_id, scope, out);
-        }
-    }
+    });
 }
 
 // =============================================================================
@@ -1192,20 +1172,25 @@ fn bind_temporary(
 /// twice, once for the load and once for the store. Codegen inlines
 /// temporaries at each use, so anything but a plain identifier or literal is
 /// first bound to a constant and evaluated once.
+///
+/// `capture_identifiers` snapshots identifier operands too. Logical assignment
+/// needs that: the reference (base + key) is fixed before `GetValue`, and
+/// codegen re-reads an unbound identifier at each use.
 fn lower_reused_operand<'a>(
     builder: &mut HirBuilder<'a, '_>,
     expr: &oxc::Expression<'a>,
+    capture_identifiers: bool,
 ) -> Result<Place, OxcDiagnostic> {
     let value = lower_expression_to_temporary(builder, expr)?;
-    if matches!(
+    let is_literal = matches!(
         expr,
-        oxc::Expression::Identifier(_)
-            | oxc::Expression::StringLiteral(_)
+        oxc::Expression::StringLiteral(_)
             | oxc::Expression::NumericLiteral(_)
             | oxc::Expression::BigIntLiteral(_)
             | oxc::Expression::BooleanLiteral(_)
             | oxc::Expression::NullLiteral(_)
-    ) {
+    );
+    if is_literal || (!capture_identifiers && matches!(expr, oxc::Expression::Identifier(_))) {
         return Ok(value);
     }
     let span = Some(expr.span());
@@ -1219,11 +1204,29 @@ fn lower_member_expression_for_update<'a>(
     builder: &mut HirBuilder<'a, '_>,
     target: &oxc::MemberExpression<'a>,
 ) -> Result<LoweredMemberExpression<'a>, OxcDiagnostic> {
+    lower_member_expression_for_read_write(builder, target, false)
+}
+
+/// Lower the target of a logical assignment. The base and computed key form a
+/// reference that must be fixed before `GetValue` (the initial property load):
+/// a getter may reassign an identifier operand before the conditional store.
+fn lower_member_expression_for_logical_assignment<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    target: &oxc::MemberExpression<'a>,
+) -> Result<LoweredMemberExpression<'a>, OxcDiagnostic> {
+    lower_member_expression_for_read_write(builder, target, true)
+}
+
+fn lower_member_expression_for_read_write<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    target: &oxc::MemberExpression<'a>,
+    capture_identifiers: bool,
+) -> Result<LoweredMemberExpression<'a>, OxcDiagnostic> {
     match target {
         oxc::MemberExpression::StaticMemberExpression(m) => {
             let span = Some(m.span);
             let property_span = Some(m.property.span);
-            let object = lower_reused_operand(builder, &m.object)?;
+            let object = lower_reused_operand(builder, &m.object, capture_identifiers)?;
             let prop_literal = PropertyLiteral::String(m.property.name);
             let value = InstructionValue::PropertyLoad {
                 object,
@@ -1242,7 +1245,7 @@ fn lower_member_expression_for_update<'a>(
         }
         oxc::MemberExpression::ComputedMemberExpression(m) => {
             let span = Some(m.span);
-            let object = lower_reused_operand(builder, &m.object)?;
+            let object = lower_reused_operand(builder, &m.object, capture_identifiers)?;
             if let oxc::Expression::NumericLiteral(lit) = &m.expression {
                 let property_span = Some(lit.span);
                 let prop_literal = PropertyLiteral::Number(FloatValue::new(lit.value));
@@ -1261,7 +1264,7 @@ fn lower_member_expression_for_update<'a>(
                     value,
                 });
             }
-            let property = lower_reused_operand(builder, &m.expression)?;
+            let property = lower_reused_operand(builder, &m.expression, capture_identifiers)?;
             let value = InstructionValue::ComputedLoad { object, property, span };
             Ok(LoweredMemberExpression {
                 object,
@@ -2080,18 +2083,7 @@ fn simple_assignment_target_ref_from_simple<'b, 'a>(
         | oxc::SimpleAssignmentTarget::PrivateFieldExpression(_) => {
             Some(SimpleAssignmentTargetRef::Member(target.to_member_expression()))
         }
-        oxc::SimpleAssignmentTarget::TSAsExpression(node) => {
-            simple_assignment_target_expression_ref(&node.expression)
-        }
-        oxc::SimpleAssignmentTarget::TSSatisfiesExpression(node) => {
-            simple_assignment_target_expression_ref(&node.expression)
-        }
-        oxc::SimpleAssignmentTarget::TSNonNullExpression(node) => {
-            simple_assignment_target_expression_ref(&node.expression)
-        }
-        oxc::SimpleAssignmentTarget::TSTypeAssertion(node) => {
-            simple_assignment_target_expression_ref(&node.expression)
-        }
+        _ => target.get_expression().and_then(simple_assignment_target_expression_ref),
     }
 }
 
@@ -4605,36 +4597,27 @@ fn lower_assignment_expression<'a>(
                 }
             }
         }
+    } else if let Some(operator) = assign.operator.to_logical_operator() {
+        lower_logical_assignment_expression(builder, assign, operator)
     } else {
         // Compound assignment operators
         let binary_op = match assign.operator {
-            oxc::AssignmentOperator::Addition => Some(BinaryOperator::Addition),
-            oxc::AssignmentOperator::Subtraction => Some(BinaryOperator::Subtraction),
-            oxc::AssignmentOperator::Multiplication => Some(BinaryOperator::Multiplication),
-            oxc::AssignmentOperator::Division => Some(BinaryOperator::Division),
-            oxc::AssignmentOperator::Remainder => Some(BinaryOperator::Remainder),
-            oxc::AssignmentOperator::Exponential => Some(BinaryOperator::Exponential),
-            oxc::AssignmentOperator::ShiftLeft => Some(BinaryOperator::ShiftLeft),
-            oxc::AssignmentOperator::ShiftRight => Some(BinaryOperator::ShiftRight),
-            oxc::AssignmentOperator::ShiftRightZeroFill => Some(BinaryOperator::ShiftRightZeroFill),
-            oxc::AssignmentOperator::BitwiseOR => Some(BinaryOperator::BitwiseOR),
-            oxc::AssignmentOperator::BitwiseXOR => Some(BinaryOperator::BitwiseXOR),
-            oxc::AssignmentOperator::BitwiseAnd => Some(BinaryOperator::BitwiseAnd),
+            oxc::AssignmentOperator::Addition => BinaryOperator::Addition,
+            oxc::AssignmentOperator::Subtraction => BinaryOperator::Subtraction,
+            oxc::AssignmentOperator::Multiplication => BinaryOperator::Multiplication,
+            oxc::AssignmentOperator::Division => BinaryOperator::Division,
+            oxc::AssignmentOperator::Remainder => BinaryOperator::Remainder,
+            oxc::AssignmentOperator::Exponential => BinaryOperator::Exponential,
+            oxc::AssignmentOperator::ShiftLeft => BinaryOperator::ShiftLeft,
+            oxc::AssignmentOperator::ShiftRight => BinaryOperator::ShiftRight,
+            oxc::AssignmentOperator::ShiftRightZeroFill => BinaryOperator::ShiftRightZeroFill,
+            oxc::AssignmentOperator::BitwiseOR => BinaryOperator::BitwiseOR,
+            oxc::AssignmentOperator::BitwiseXOR => BinaryOperator::BitwiseXOR,
+            oxc::AssignmentOperator::BitwiseAnd => BinaryOperator::BitwiseAnd,
             oxc::AssignmentOperator::LogicalOr
             | oxc::AssignmentOperator::LogicalAnd
-            | oxc::AssignmentOperator::LogicalNullish => {
-                builder.record_error(
-                    diagnostics::todo_logical_assignment_operators_not_yet_supported(span),
-                )?;
-                return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span });
-            }
-            oxc::AssignmentOperator::Assign => unreachable!(),
-        };
-        let binary_op = match binary_op {
-            Some(op) => op,
-            None => {
-                return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span });
-            }
+            | oxc::AssignmentOperator::LogicalNullish
+            | oxc::AssignmentOperator::Assign => unreachable!(),
         };
 
         match simple_assignment_target_ref(&assign.left) {
@@ -4755,6 +4738,207 @@ fn lower_assignment_expression<'a>(
     }
 }
 
+enum LogicalAssignmentTarget<'b, 'a> {
+    Identifier(&'b oxc::IdentifierReference<'a>),
+    /// `const` binding. The conditional store is not emitted: lowering it as
+    /// a reassignment reports a false Syntax error when the store is dead,
+    /// and emitting the store rewrites `const` to `let`, which swallows the
+    /// runtime TypeError when the store is taken.
+    ConstIdentifier,
+    Member {
+        object: Place,
+        property: MemberProperty<'a>,
+        computed: bool,
+        property_span: Option<Span>,
+        span: Option<Span>,
+    },
+}
+
+/// Lower `a ??= b` as `a ?? (a = b)`, and likewise `&&=` and `||=`, with the
+/// value blocks of `LogicalExpression` lowering so that the right side and the
+/// store only evaluate when the assignment is taken. The target, including the
+/// object and computed key of a member target, is evaluated once before the
+/// logical terminal. Identifier receivers and computed keys are snapshotted
+/// so the store keeps the reference created before the property load.
+///
+/// Unlike the TS implementation, which reports logical assignment as a Todo
+/// and skips the function, this compiles it: the desugaring has the same
+/// evaluation order and short-circuiting as the original expression.
+/// `ref.current ??=` is still treated as lazy initialization by
+/// `validate_no_ref_access_in_render` (the same allowance as
+/// `if (ref.current == null)`), not as a render-time ref access.
+fn lower_logical_assignment_expression<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    assign: &oxc::AssignmentExpression<'a>,
+    operator: oxc::LogicalOperator,
+) -> Result<InstructionValue<'a>, OxcDiagnostic> {
+    let span = Some(assign.span);
+    let left_span = Some(assign.left.span());
+
+    let (target, previous_value) = match simple_assignment_target_ref(&assign.left) {
+        Some(SimpleAssignmentTargetRef::Identifier(ident)) => {
+            let ident_span = Some(ident.span);
+            let symbol = builder.scope().resolve_reference(ident);
+            let place = lower_identifier(builder, ident.name, ident.span, symbol)?;
+            let value = if builder.is_context_identifier(symbol) {
+                InstructionValue::LoadContext {
+                    place,
+                    span: ident_span,
+                    is_compound_assignment_result: false,
+                }
+            } else {
+                InstructionValue::LoadLocal { place, span: ident_span }
+            };
+            let previous_value = lower_value_to_temporary(builder, value)?;
+            // A const target's store is conditional. `lower_identifier_for_assignment`
+            // would reject it as Syntax even when the store never executes
+            // (`const v = 1; v ??= 2`). Emitting the store anyway is also wrong:
+            // the pipeline treats the binding as reassigned and prints `let`,
+            // so `const v = null; v ??= 2` would assign instead of throwing.
+            let target = if symbol
+                .is_some_and(|symbol| builder.scope().binding_kind(symbol) == AstBindingKind::Const)
+            {
+                builder.record_error(diagnostics::todo_logical_assignment_to_const(
+                    ident.name.as_str(),
+                    ident.span,
+                ))?;
+                LogicalAssignmentTarget::ConstIdentifier
+            } else {
+                LogicalAssignmentTarget::Identifier(ident)
+            };
+            (target, previous_value)
+        }
+        Some(SimpleAssignmentTargetRef::Member(member)) => {
+            let LoweredMemberExpression { object, property, computed, property_span, value } =
+                lower_member_expression_for_logical_assignment(builder, member)?;
+            let target = LogicalAssignmentTarget::Member {
+                object,
+                property,
+                computed,
+                property_span,
+                span: Some(member.span()),
+            };
+            (target, lower_value_to_temporary(builder, value)?)
+        }
+        None => {
+            builder.record_error(
+                diagnostics::todo_compound_assignment_complex_pattern_not_yet_supported(span),
+            )?;
+            return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span });
+        }
+    };
+
+    let continuation_block = builder.reserve(builder.current_block_kind());
+    let continuation_id = continuation_block.id;
+    let test_block = builder.reserve(BlockKind::Value);
+    let test_block_id = test_block.id;
+    let place = build_temporary_place(builder, span);
+    let previous_value_place = build_temporary_place(builder, left_span);
+
+    let consequent_block = builder.try_enter(BlockKind::Value, |builder, _block_id| {
+        lower_value_to_temporary(
+            builder,
+            InstructionValue::StoreLocal {
+                lvalue: LValue { kind: InstructionKind::Const, place },
+                value: previous_value_place,
+                span: left_span,
+            },
+        )?;
+        Ok(Terminal::Goto {
+            block: continuation_id,
+            variant: GotoVariant::Break,
+            id: EvaluationOrder::UNSET,
+            span: left_span,
+        })
+    });
+
+    let alternate_block = builder.try_enter(BlockKind::Value, |builder, _block_id| {
+        let right = lower_expression_to_temporary(builder, &assign.right)?;
+        let assigned_value = match target {
+            LogicalAssignmentTarget::Identifier(ident) => lower_identifier_assignment_target(
+                builder,
+                ident.span,
+                InstructionKind::Reassign,
+                ident,
+                right,
+            )?
+            .unwrap_or(right),
+            // The Todo is already recorded. Do not store to the const binding.
+            LogicalAssignmentTarget::ConstIdentifier => right,
+            LogicalAssignmentTarget::Member {
+                object,
+                property,
+                computed,
+                property_span,
+                span: member_span,
+            } => {
+                let store = match property {
+                    MemberProperty::Literal(property) => InstructionValue::PropertyStore {
+                        object,
+                        property,
+                        computed,
+                        property_span,
+                        value: right,
+                        span: member_span,
+                    },
+                    MemberProperty::Computed(property) => InstructionValue::ComputedStore {
+                        object,
+                        property,
+                        value: right,
+                        span: member_span,
+                    },
+                };
+                lower_value_to_temporary(builder, store)?
+            }
+        };
+        lower_value_to_temporary(
+            builder,
+            InstructionValue::StoreLocal {
+                lvalue: LValue { kind: InstructionKind::Const, place },
+                value: assigned_value,
+                span,
+            },
+        )?;
+        Ok(Terminal::Goto {
+            block: continuation_id,
+            variant: GotoVariant::Break,
+            id: EvaluationOrder::UNSET,
+            span,
+        })
+    });
+
+    builder.terminate_with_continuation(
+        Terminal::Logical {
+            operator,
+            test: test_block_id,
+            fallthrough: continuation_id,
+            id: EvaluationOrder::UNSET,
+            span,
+        },
+        test_block,
+    );
+    builder.push(Instruction {
+        id: EvaluationOrder::UNSET,
+        lvalue: previous_value_place,
+        value: InstructionValue::LoadLocal { place: previous_value, span: left_span },
+        effects: None,
+        span: left_span,
+    });
+    builder.terminate_with_continuation(
+        Terminal::Branch {
+            test: previous_value_place,
+            consequent: consequent_block?,
+            alternate: alternate_block?,
+            fallthrough: continuation_id,
+            id: EvaluationOrder::UNSET,
+            span,
+        },
+        continuation_block,
+    );
+
+    Ok(InstructionValue::LoadLocal { place, span: place.span })
+}
+
 /// Lower a JSX element expression. Faithful translation of the original Babel
 /// `Expression::JSXElement` arm, adapted to oxc's JSX shapes.
 ///
@@ -4871,15 +5055,10 @@ fn lower_jsx_element_expr<'a>(
             _ => Ident::from("fbt"),
         };
         // Get the opening element's name identifier and resolve any local binding.
-        let jsx_id_name = match &jsx_element.opening_element.name {
-            oxc::JSXElementName::Identifier(id) => Some((id.name.as_str(), id.span)),
-            oxc::JSXElementName::IdentifierReference(id) => Some((id.name.as_str(), id.span)),
-            _ => None,
-        };
-        if let Some((name, span)) = jsx_id_name {
-            let id_span = Some(span);
+        if let Some(name) = jsx_element.opening_element.name.get_identifier_name() {
+            let id_span = Some(jsx_element.opening_element.name.span());
             // JSX identifiers have no semantic reference, so resolve by name.
-            if builder.resolve_local_binding_by_name(name, id_span)?.is_some() {
+            if builder.resolve_local_binding_by_name(name.as_str(), id_span)?.is_some() {
                 return Err(diagnostics::local_fbt_tag(&tag_name, id_span));
             }
         }

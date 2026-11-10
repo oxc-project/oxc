@@ -8,13 +8,10 @@ This crate provides shared syntax definitions, constants, and utilities used acr
 
 ## Key Features
 
-- **Syntax constants**: Keywords, operators, and language tokens
-- **AST utilities**: Common patterns and helper functions for AST manipulation
+- **Syntax constants**: Keywords, operators, and language character definitions
 - **Identifier validation**: ECMAScript identifier checking and utilities
 - **Operator precedence**: Precedence tables for expression parsing
 - **Module records**: Import/export relationship tracking
-
-## Key Components
 
 ## Architecture
 
@@ -31,25 +28,19 @@ This crate provides shared syntax definitions, constants, and utilities used acr
 
 - **Keywords**: All JavaScript/TypeScript reserved words
 - **Operators**: Binary, unary, and assignment operators
-- **Tokens**: Punctuation and special symbols
-
-#### AST Utilities
-
-- **Node flags**: Metadata about AST nodes (computed properties, etc.)
-- **Traversal helpers**: Common patterns for walking AST trees
-- **Type guards**: Runtime type checking for AST nodes
+- **Character definitions**: Line terminators and JSX XML entities
 
 #### Semantic Types
 
 - **IDs**: Type-safe identifiers for nodes, symbols, scopes, references
-- **Flags**: Bitfield metadata for semantic entities
-- **Relationships**: Parent-child and reference relationships
+- **Flags**: Classify node, scope, symbol, and reference behavior
 
 #### Module System
 
-- **Import/Export tracking**: Comprehensive module dependency analysis
-- **Resolution**: Module specifier resolution utilities
-- **Metadata**: Module type and format information
+- **Module records**: Describe ESM imports, exports, and requested modules
+- **Source positions**: Track the spans of import/export entries
+
+Module path resolution is provided separately by `oxc_resolver`.
 
 ### Integration
 

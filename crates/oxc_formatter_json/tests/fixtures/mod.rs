@@ -105,13 +105,13 @@ impl FixtureFormatter for JsonHarness {
         true
     }
 
-    fn format(source: &str, _path: &Path, options: &Self::Options) -> String {
+    fn format(
+        source: &str,
+        _path: &Path,
+        options: &Self::Options,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let allocator = Allocator::default();
-        format(&allocator, source, options.clone())
-            .expect("format should succeed")
-            .print()
-            .expect("print should succeed")
-            .into_code()
+        Ok(format(&allocator, source, options.clone())?.print()?.into_code())
     }
 
     fn fingerprint(source: &str, _path: &Path, options: &Self::Options) -> Fingerprint {

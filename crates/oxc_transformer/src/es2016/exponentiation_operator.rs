@@ -237,6 +237,7 @@ impl<'a> ExponentiationOperator<'a> {
         let mut temp_var_inits = ArenaVec::new_in(ctx);
         let obj = self.get_second_member_expression_object(
             &mut member_expr.object,
+            true,
             &mut temp_var_inits,
             ctx,
         );
@@ -275,11 +276,9 @@ impl<'a> ExponentiationOperator<'a> {
 
     /// Convert `AssignmentExpression` where assignee is a computed member expression.
     ///
-    /// `obj[prop] **= right` transformed to:
-    /// * If `obj` is a bound symbol:
-    ///   -> `var _prop; _prop = prop, obj[_prop] = Math.pow(obj[_prop], 2)`
-    /// * If `obj` is unbound:
-    ///   -> `var _obj, _prop; _obj = obj, _prop = prop, _obj[_prop] = Math.pow(_obj[_prop], 2)`
+    /// `obj[prop] **= right` is transformed to:
+    /// `var _obj, _prop; _obj = obj, _prop = prop, _obj[_prop] = Math.pow(_obj[_prop], right)`.
+    /// Primitive literal keys can be duplicated without capturing a bound object.
     ///
     /// `obj.foo.bar[qux] **= right` transformed to:
     /// ```js
@@ -290,8 +289,7 @@ impl<'a> ExponentiationOperator<'a> {
     /// Temporary variables are to avoid side-effects of getting `obj` / `obj.foo.bar` or `prop` being run twice.
     ///
     /// TODO(improve-on-babel):
-    /// 1. If `prop` is bound, it doesn't need a temp variable `_prop`.
-    /// 2. Temp var initializations could be inlined:
+    /// Temp var initializations could be inlined:
     ///    * Current: `(_obj = obj, _prop = prop, _obj[_prop] = Math.pow(_obj[_prop], 2))`
     ///    * Could be: `(_obj = obj)[_prop = prop] = Math.pow(_obj[_prop], 2)`
     //
@@ -332,6 +330,14 @@ impl<'a> ExponentiationOperator<'a> {
         let mut temp_var_inits = ArenaVec::new_in(ctx);
         let obj = self.get_second_member_expression_object(
             &mut member_expr.object,
+            matches!(
+                member_expr.expression,
+                Expression::BooleanLiteral(_)
+                    | Expression::NullLiteral(_)
+                    | Expression::NumericLiteral(_)
+                    | Expression::BigIntLiteral(_)
+                    | Expression::StringLiteral(_)
+            ),
             &mut temp_var_inits,
             ctx,
         );
@@ -415,6 +421,7 @@ impl<'a> ExponentiationOperator<'a> {
         let mut temp_var_inits = ArenaVec::new_in(ctx);
         let obj = self.get_second_member_expression_object(
             &mut field_expr.object,
+            true,
             &mut temp_var_inits,
             ctx,
         );
@@ -448,13 +455,13 @@ impl<'a> ExponentiationOperator<'a> {
     ///
     /// is transformed to:
     ///
-    /// If `obj` is a bound symbol:
+    /// If `obj` is a bound symbol and identifier duplication is allowed:
     /// ```js
     /// obj["prop"] = Math.pow(obj["prop"], 2)
     /// ^^^ not updated        ^^^ returned
     /// ```
     ///
-    /// If `obj` is unbound:
+    /// If `obj` is unbound or identifier duplication is disallowed:
     /// ```js
     /// var _obj;
     /// _obj = obj, _obj["prop"] = Math.pow(_obj["prop"], 2)
@@ -477,19 +484,15 @@ impl<'a> ExponentiationOperator<'a> {
     fn get_second_member_expression_object(
         &self,
         obj: &mut Expression<'a>,
+        can_duplicate_identifier: bool,
         temp_var_inits: &mut ArenaVec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        // If the object reference that we need to save is locally declared, evaluating it multiple times
-        // will not trigger getters or setters. `super` cannot be directly assigned, so use it directly too.
-        // TODO(improve-on-babel): We could also skip creating a temp var for `this.x **= 2`.
         match obj {
             Expression::Super(super_) => return Expression::new_super(super_.span, ctx),
-            Expression::Identifier(ident) => {
+            Expression::Identifier(ident) if can_duplicate_identifier => {
                 let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
                 if let Some(symbol_id) = symbol_id {
-                    // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
-                    // No need for a temp var.
                     return ctx.create_bound_ident_expr(
                         SPAN,
                         ident.name,
@@ -497,12 +500,8 @@ impl<'a> ExponentiationOperator<'a> {
                         ReferenceFlags::Read,
                     );
                 }
-                // Unbound reference. Could possibly trigger a getter so we need to only evaluate it once.
-                // Assign to a temp var.
             }
-            _ => {
-                // Other expression. Assign to a temp var.
-            }
+            _ => {}
         }
 
         let binding = self.create_temp_var(obj.take_in(ctx), temp_var_inits, ctx);

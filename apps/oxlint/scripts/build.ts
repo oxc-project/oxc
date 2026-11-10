@@ -11,7 +11,6 @@ const oxlintDirPath = join(import.meta.dirname, ".."),
   distPkgPluginsDirPath = join(oxlintDirPath, "dist-pkg-plugins"),
   distPkgPluginEslintDirPath = join(oxlintDirPath, "dist-pkg-plugin-eslint");
 
-// Delete `dist-pkg-plugins` directory
 console.log("Deleting `dist-pkg-plugins` directory...");
 rmSync(distPkgPluginsDirPath, { recursive: true, force: true });
 
@@ -23,11 +22,9 @@ rmSync(distPkgPluginEslintDirPath, { recursive: true, force: true });
 console.log("Generating oxlint-plugin-eslint files...");
 generatePluginEslint();
 
-// Build with tsdown
 console.log("Building with tsdown...");
 execSync("pnpm tsdown", { stdio: "inherit", cwd: oxlintDirPath });
 
-// Delete `cli.d.ts`
 console.log("Deleting cli.d.ts...");
 rmSync(join(distDirPath, "cli.d.ts"));
 

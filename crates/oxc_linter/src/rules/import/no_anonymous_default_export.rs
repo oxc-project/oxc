@@ -149,41 +149,45 @@ impl Rule for NoAnonymousDefaultExport {
                     "Unexpected default export of anonymous class",
                 ));
             }
-            ExportDefaultDeclarationKind::ArrowFunctionExpression(_)
-                if !self.allow_arrow_function =>
-            {
+            _ => {}
+        }
+        let Some(expr) = export_decl.declaration.as_expression() else {
+            return;
+        };
+        let expr = expr.without_parentheses();
+        match expr {
+            Expression::ArrowFunctionExpression(_) if !self.allow_arrow_function => {
                 ctx.diagnostic(no_anonymous_default_export_diagnostic(
                     export_decl.span,
                     "Assign arrow function to a variable before exporting as module default",
                 ));
             }
-            ExportDefaultDeclarationKind::ObjectExpression(_) if !self.allow_object => {
+            Expression::ObjectExpression(_) if !self.allow_object => {
                 ctx.diagnostic(no_anonymous_default_export_diagnostic(
                     export_decl.span,
                     "Assign object to a variable before exporting as module default",
                 ));
             }
-            ExportDefaultDeclarationKind::CallExpression(_) if !self.allow_call_expression => {
+            Expression::CallExpression(_) if !self.allow_call_expression => {
                 ctx.diagnostic(no_anonymous_default_export_diagnostic(
                     export_decl.span,
                     "Assign call result to a variable before exporting as module default",
                 ));
             }
-            ExportDefaultDeclarationKind::NewExpression(_) if !self.allow_new => {
+            Expression::NewExpression(_) if !self.allow_new => {
                 ctx.diagnostic(no_anonymous_default_export_diagnostic(
                     export_decl.span,
                     "Assign instance to a variable before exporting as module default",
                 ));
             }
-            ExportDefaultDeclarationKind::ArrayExpression(_) if !self.allow_array => {
+            Expression::ArrayExpression(_) if !self.allow_array => {
                 ctx.diagnostic(no_anonymous_default_export_diagnostic(
                     export_decl.span,
                     "Assign array to a variable before exporting as module default",
                 ));
             }
             _ => {
-                if let Some(expr) = export_decl.declaration.as_expression()
-                    && !self.allow_literal
+                if !self.allow_literal
                     && (expr.is_literal() || matches!(expr, Expression::TemplateLiteral(_)))
                 {
                     ctx.diagnostic(no_anonymous_default_export_diagnostic(
@@ -233,6 +237,19 @@ fn test() {
         ),
         ("const foo = 4; export { foo }", None),
         ("export * from './foo'", None),
+        ("export default (function () {});", None),
+        ("export default (class {});", None),
+        ("export default (foo);", None),
+        ("export default ({} as object);", None),
+        ("export default (({}) satisfies object);", None),
+        ("export default ((foo())!);", Some(json!([{ "allowCallExpression": false }]))),
+        ("export default ([]);", Some(json!([{ "allowArray": true }]))),
+        ("export default (1);", Some(json!([{ "allowLiteral": true }]))),
+        ("export default (`x`);", Some(json!([{ "allowLiteral": true }]))),
+        ("export default (() => 1);", Some(json!([{ "allowArrowFunction": true }]))),
+        ("export default ({});", Some(json!([{ "allowObject": true }]))),
+        ("export default (new Foo());", Some(json!([{ "allowNew": true }]))),
+        ("export default (foo());", None),
     ];
 
     let fail = vec![
@@ -246,6 +263,14 @@ fn test() {
         ("export default new Foo()", None),
         (r"export default `foo`", None),
         (r"export default /^123/", None),
+        ("export default (() => 1);", None),
+        ("export default ({});", None),
+        ("export default (foo());", Some(json!([{ "allowCallExpression": false }]))),
+        ("export default (new Foo());", Some(json!([{ "allowNew": false }]))),
+        ("export default ([]);", None),
+        ("export default (1);", None),
+        ("export default (`x`);", None),
+        ("export default ((({})));", None),
     ];
 
     Tester::new(NoAnonymousDefaultExport::NAME, NoAnonymousDefaultExport::PLUGIN, pass, fail)

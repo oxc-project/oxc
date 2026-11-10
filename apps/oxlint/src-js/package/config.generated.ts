@@ -831,7 +831,7 @@ export interface OxlintOptions {
    */
   typeAware?: boolean;
   /**
-   * Enable experimental type checking (includes TypeScript compiler diagnostics).
+   * Enable type checking (includes TypeScript compiler diagnostics).
    *
    * Equivalent to passing `--type-check` on the CLI.
    *
@@ -3869,6 +3869,11 @@ export interface NoRedeclare {
    * When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
    */
   builtinGlobals?: boolean;
+  /**
+   * When `true`, automatically merged declarations like namespace, class, etc. will be
+   * ignored when checking for redeclarations.
+   */
+  ignoreDeclarationMerge?: boolean;
 }
 export interface NoRestrictedExportsConfig {
   /**

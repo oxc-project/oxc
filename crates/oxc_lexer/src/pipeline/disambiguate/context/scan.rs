@@ -1,16 +1,30 @@
 //! Bounded walks: the scan back from a query to an anchor, the jump plan it records for the
 //! walk, and the entry points every question goes through.
 
+use oxc_simd::{BASELINE, cpu_version};
+
 use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
-use super::anchor::{Anchor, anchor_at, paren_anchor};
-use super::*;
-use crate::pipeline::disambiguate::{LOCAL_WALK_BUDGET, WALK_SCAN_CAP};
+use crate::pipeline::disambiguate::{LOCAL_WALK_BUDGET, WALK_SCAN_CAP, common::TokensView};
+
+use super::{
+    After, Site, Walks,
+    anchor::{Anchor, anchor_at, paren_anchor},
+    walker::{Expect, Jump, Walk},
+};
 
 /// Scan back to the anchor of a query, recording the groups the walk skips; None past the cap.
-fn scan(tokens: &Tokens, jumps: &mut Vec<Jump>, from: usize, steps: &mut u32) -> Option<Anchor> {
+#[cpu_version(Generic)]
+fn scan(
+    tokens: &TokensView,
+    jumps: &mut Vec<Jump>,
+    from: usize,
+    steps: &mut u32,
+) -> Option<Anchor> {
+    let cpu = BASELINE;
+
     jumps.clear();
-    let mut q = tokens.prev_sig(from);
+    let mut q = tokens.prev_sig(from, cpu);
     loop {
         let Some(p) = q else {
             return Some(Anchor::Stmt(0));
@@ -19,13 +33,13 @@ fn scan(tokens: &Tokens, jumps: &mut Vec<Jump>, from: usize, steps: &mut u32) ->
         if *steps > WALK_SCAN_CAP {
             return None;
         }
-        let k = tokens.base_kind(p);
+        let k = tokens.base_kind(p, cpu);
         if k >= OP_KIND_BASE {
             match tokens.src[p] {
                 b')' | b']' | b'}' => {
-                    let o = tokens.match_delim_back(p)?;
+                    let o = tokens.match_delim_back(p, cpu)?;
                     jumps.push(Jump { at: o as u32, to: p as u32 });
-                    q = tokens.prev_sig(o);
+                    q = tokens.prev_sig(o, cpu);
                     continue;
                 }
                 b'(' => {
@@ -44,16 +58,17 @@ fn scan(tokens: &Tokens, jumps: &mut Vec<Jump>, from: usize, steps: &mut u32) ->
             // A template: skip back to its head.
             let head = tokens.template_head(p, steps, WALK_SCAN_CAP)?;
             jumps.push(Jump { at: head as u32, to: p as u32 });
-            q = tokens.prev_sig(head);
+            q = tokens.prev_sig(head, cpu);
             continue;
         }
-        q = tokens.prev_sig(p);
+        q = tokens.prev_sig(p, cpu);
     }
 }
 
 /// Read a bounded walk scanned back from from and walked to to; None if the full walk must answer.
+#[cpu_version(Generic)]
 fn local_walk<R>(
-    tokens: &Tokens,
+    tokens: &TokensView,
     walks: &mut Walks,
     from: usize,
     to: usize,
@@ -72,7 +87,14 @@ fn local_walk<R>(
 }
 
 /// Context at the token starting at `pos` (not through it).
-pub fn before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> Site {
+///
+/// Level 3 runs rarely, so this entry point to it, and the Level 3 code it calls,
+/// is compiled only once, not separately for each CPU feature set.
+/// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+/// Level 3 code uses [`BASELINE`] for functions it calls.
+#[cpu_version(Generic)]
+#[inline(never)]
+pub fn before(tokens: &TokensView, walks: &mut Walks, pos: usize) -> Site {
     if let Some(s) = local_walk(tokens, walks, pos, pos, Walk::site) {
         return s;
     }
@@ -80,7 +102,14 @@ pub fn before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> Site {
 }
 
 /// Open < lists a > run at pos would close.
-pub fn angles_before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> usize {
+///
+/// Level 3 runs rarely, so this entry point to it, and the Level 3 code it calls,
+/// is compiled only once, not separately for each CPU feature set.
+/// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+/// Level 3 code uses [`BASELINE`] for functions it calls.
+#[cpu_version(Generic)]
+#[inline(never)]
+pub fn angles_before(tokens: &TokensView, walks: &mut Walks, pos: usize) -> usize {
     if let Some(n) = local_walk(tokens, walks, pos, pos, Walk::open_angles) {
         return n;
     }
@@ -88,9 +117,18 @@ pub fn angles_before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> usize {
 }
 
 /// What the significant token at `pos` leaves behind.
-pub fn after(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
+///
+/// Level 3 runs rarely, so this entry point to it, and the Level 3 code it calls,
+/// is compiled only once, not separately for each CPU feature set.
+/// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+/// Level 3 code uses [`BASELINE`] for functions it calls.
+#[cpu_version(Generic)]
+#[inline(never)]
+pub fn after(tokens: &TokensView, walks: &mut Walks, pos: usize) -> After {
+    let cpu = BASELINE;
+
     // The scan takes in the token, skipping a closer's group whole; a word here is never an anchor.
-    let from = if tokens.base_kind(pos) == tk!(Ident) { pos } else { pos + 1 };
+    let from = if tokens.base_kind(pos, cpu) == tk!(Ident) { pos } else { pos + 1 };
     if let Some(a) = local_walk(tokens, walks, from, pos + 1, Walk::classify_after) {
         return a;
     }
@@ -99,10 +137,13 @@ pub fn after(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
 
 impl Walk {
     /// Seed the walk at the anchor, putting the scan's jumps (nearest first) in source order.
-    fn start(&mut self, tokens: &Tokens, anchor: Anchor) {
+    #[cpu_version(Generic)]
+    fn start(&mut self, tokens: &TokensView, anchor: Anchor) {
+        let cpu = BASELINE;
+
         self.jumps.reverse();
         let (Anchor::Stmt(at) | Anchor::Expr(at)) = anchor;
-        self.reset(tokens.module);
+        self.reset(tokens.module, cpu);
         self.walked_to = at;
         self.prev_end = at;
         // An operand anchor is certain only inside the construct it opens.

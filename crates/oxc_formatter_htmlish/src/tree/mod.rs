@@ -119,6 +119,8 @@ pub struct Tree<'a> {
     /// Texts whose merged value differs from their source
     /// (an element merged in had whitespace in a tag), sorted by `NodeId`.
     merged_texts: ArenaVec<'a, (NodeId, &'a str)>,
+    /// See [`Self::vue_script_language`].
+    vue_script_language: &'static str,
 }
 
 impl std::ops::Index<NodeId> for Tree<'_> {
@@ -142,6 +144,44 @@ impl<'a> Tree<'a> {
         self.rules
     }
 
+    /// A Vue single-file component block: an element of the root but `html`.
+    pub fn is_sfc_block(&self, id: NodeId) -> bool {
+        self.rules.vue_sfc
+            && self.root[id].parent == Some(NodeId::DOCUMENT)
+            && self.element(id).is_some_and(|el| !el.key.eq_ignore_ascii_case("html"))
+    }
+
+    /// A Vue block whose content is no markup: a custom block (`<i18n>`), or a `<template lang="pug">`.
+    pub fn is_non_html_sfc_block(&self, id: NodeId) -> bool {
+        self.is_sfc_block(id)
+            && match self.tag(id) {
+                "script" | "style" => false,
+                "template" => self.lang(id).is_some_and(|lang| lang != "html"),
+                _ => true,
+            }
+    }
+
+    /// Element `id`'s `lang`; `lang=""` names none.
+    pub fn lang(&self, id: NodeId) -> Option<&'a str> {
+        self.attribute_value(id, "lang").filter(|lang| !lang.is_empty())
+    }
+
+    /// The value of element `id`'s attribute `name` (empty for one without a value).
+    pub fn attribute_value(&self, id: NodeId, name: &str) -> Option<&'a str> {
+        let attribute = self
+            .element(id)?
+            .attributes
+            .iter()
+            .find(|attribute| self.attribute_is(attribute.name.slice(self.source), name))?;
+        Some(attribute.value.map_or("", |value| value.span.slice(self.source)))
+    }
+
+    /// The language a Vue file's template expressions are in: TS when one of its `<script>` blocks is,
+    /// TSX for `lang="tsx"` (`apps/oxfmt/DIVERGENCES.md#tsx-in-vue-template-expressions`).
+    pub fn vue_script_language(&self) -> &'static str {
+        self.vue_script_language
+    }
+
     /// An Angular control flow block: transparent, its markers print no box (`@if (a) {` … `}`).
     pub fn is_block(&self, id: NodeId) -> bool {
         self.rules.has_blocks && matches!(self.kind(id), NodeKind::Block(_))
@@ -158,6 +198,11 @@ impl<'a> Tree<'a> {
 
     pub fn is_interpolation(&self, id: NodeId) -> bool {
         matches!(self.kind(id), NodeKind::Interpolation(_))
+    }
+
+    /// A text, a CDATA section or `{{ }}`: what renders as text, no markup.
+    pub fn is_text_content(&self, id: NodeId) -> bool {
+        self.is_text(id) || self.is_interpolation(id)
     }
 
     /// A text or a CDATA section, which print as one text next to each other.

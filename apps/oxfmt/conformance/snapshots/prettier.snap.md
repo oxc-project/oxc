@@ -294,32 +294,32 @@
 
 ### Error
 
-- externals/prettier/css/atrule/charset.css: Syntax error: expect token `<string>`, but found `<ident>`
-  - ❓unclassified
-- externals/prettier/css/atrule/import.css: Syntax error: expect token `<ident>`, but found `(`
-  - ❓unclassified
 - externals/prettier/css/atrule/supports.css: Syntax error: expect token `)`, but found `<`
   - ❓unclassified
+- externals/prettier/css/atrule/charset.css: Syntax error: expect token `<string>`, but found `<ident>`
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
+- externals/prettier/css/atrule/import.css: Syntax error: expect token `<ident>`, but found `(`
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/css/attribute/quotes.css: Syntax error: expect token `]`, but found `(`
-  - ❓unclassified
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/css/combinator/combinator.css: Syntax error: expect token `{`, but found `/`
-  - ❓unclassified
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/css/comments/selectors.css: Syntax error: simple selector is expected
-  - ❓unclassified
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/css/custom-properties/emoji.css: Syntax error: declaration at top level is disallowed
-  - ❓unclassified
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/css/no-semicolon/url.css: Syntax error: URL is expected
-  - ❓unclassified
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/css/postcss-plugins/postcss-mixins.css: Syntax error: expect token `{`, but found `<unknown>`
-  - ❓unclassified
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/css/postcss-plugins/postcss-simple-vars.css: Syntax error: declaration at top level is disallowed
-  - ❓unclassified
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/css/quotes/quotes.css: Syntax error: expect token `{`, but found `<string>`
-  - ❓unclassified
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/css/selector-list/selectors.css: Syntax error: simple selector is expected
-  - ❓unclassified
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/css/selector-string/string.css: Syntax error: simple selector is expected
-  - ❓unclassified
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 
 ## scss
 
@@ -366,20 +366,20 @@
 
 ### Error
 
-- externals/prettier/css/custom-properties/emoji.css: Syntax error: declaration at top level is disallowed
-  - ❓unclassified
-- externals/prettier/scss/atrule/for.scss: Syntax error: Sass keyword `to` is expected
-  - ❓unclassified
 - externals/prettier/scss/case/case.scss: Syntax error: expect token `<string>`, but found `<ident>`
   - ❓unclassified
+- externals/prettier/css/custom-properties/emoji.css: Syntax error: declaration at top level is disallowed
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
+- externals/prettier/scss/atrule/for.scss: Syntax error: Sass keyword `to` is expected
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/scss/comments/CRLF.scss: Syntax error: component value is expected
-  - ❓unclassified
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/scss/math/3945.scss: Syntax error: declaration at top level is disallowed
-  - ❓unclassified
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/scss/no-semicolon/url.scss: Syntax error: expect token `<string>`, but found `<ident>`
-  - ❓unclassified
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/scss/parens/parens.scss: Syntax error: component value is expected
-  - ❓unclassified
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 
 ## less
 
@@ -423,20 +423,20 @@
 
 ### Error
 
-- externals/prettier/less/case/case.less: Syntax error: expect token `(`, but found `<ident>`
-  - ❓unclassified
-- externals/prettier/less/comments/in-value.less: Syntax error: expect token `;`, but found `{`
-  - ❓unclassified
-- externals/prettier/less/interpolation/interpolation.less: Syntax error: expect token `<ident>`, but found `@{`
-  - ❓unclassified
 - externals/prettier/less/less/less.less: Syntax error: expect one of `<ident>` or `@{`, but found `(`
-  - ❓unclassified
-- externals/prettier/less/lookup/lookup-1.less: Syntax error: expect token `;`, but found `<ident>`
-  - ❓unclassified
-- externals/prettier/less/no-semicolon/url.less: Syntax error: expect token `(`, but found `<ident>`
   - ❓unclassified
 - externals/prettier/less/parens/parens.less: Syntax error: expect token `;`, but found `{`
   - ❓unclassified
+- externals/prettier/less/case/case.less: Syntax error: expect token `(`, but found `<ident>`
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
+- externals/prettier/less/comments/in-value.less: Syntax error: expect token `;`, but found `{`
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
+- externals/prettier/less/interpolation/interpolation.less: Syntax error: expect token `<ident>`, but found `@{`
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
+- externals/prettier/less/lookup/lookup-1.less: Syntax error: expect token `;`, but found `<ident>`
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
+- externals/prettier/less/no-semicolon/url.less: Syntax error: expect token `(`, but found `<ident>`
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 
 ## graphql
 
@@ -631,7 +631,7 @@
 
 ## markdown
 
-1529/1548 (98.77%)
+1527/1548 (98.64%)
 
 ### Failed
 
@@ -663,14 +663,18 @@
   - crates/oxc_formatter/DIVERGENCES.md#suppressed-terminator-per-semi
 - externals/prettier/markdown/paragraph/cjk.md (💥💥✨, 93.33%)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#container-directive
-- externals/prettier/markdown/splitCjkText/symbolSpaceNewLine.md (💥, 20.25%)
+- externals/prettier/markdown/splitCjkText/chinese-japanese.md (💥, 88.89%)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#cj-adjacent-space-wraps
+- externals/prettier/markdown/splitCjkText/space.md (💥, 0.00%)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#cj-adjacent-space-wraps
+- externals/prettier/markdown/splitCjkText/symbolSpaceNewLine.md (💥, 23.88%)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#cj-line-break
 - externals/prettier/markdown/thematicBreak/simple.md (💥, 0.00%)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break
 
 ## html
 
-221/228 (96.93%)
+222/228 (97.37%)
 
 ### Failed
 
@@ -685,26 +689,29 @@
 - externals/prettier/html/tags/tags2.html (💥💥✨✨, 97.17%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#dialog-out-of-flow
 
-### Error
-
-- externals/prettier/misc/filename-matters/html-doctype/xhtml-doctype.xhtml: Syntax error: missing end tag of raw text element at 16..74
-  - ❓unclassified
-
 ## vue
 
-175/184 (95.11%)
+169/184 (91.85%)
 
 ### Failed
 
-- externals/prettier/vue/bracket-same-line/vue.html (💥💥, 98.22%)
-  - ❓unclassified
-- externals/prettier/vue/html-vue/elastic-header.html (💥, 99.18%)
-  - ❓unclassified
-- externals/prettier/vue/html-vue/hello-world.html (💥, 95.45%)
-  - ❓unclassified
-- externals/prettier/vue/html-vue/upper-case-2.html (💥, 90.91%)
-  - ❓unclassified
-- externals/prettier/vue/html-vue/upper-case-html-tag-2.html (💥, 88.89%)
-  - ❓unclassified
-- externals/prettier/vue/vue/template-dom.html (💥💥💥, 88.89%)
-  - ❓unclassified
+- externals/prettier/vue/event-binding/function-expression-ts.vue (💥, 64.29%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-handler-statements
+- externals/prettier/vue/interpolation/bitwise-or-operator.vue (💥, 68.75%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-bitwise-or
+- externals/prettier/vue/multiparser/snippet: non-space (💥, 0.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#vue-block-unicode-whitespace
+- externals/prettier/vue/ts-expression/filter.vue (💥, 64.29%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-bitwise-or
+- externals/prettier/vue/vue-3/script-setup.vue (💥, 71.43%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-removed-attributes-as-written
+- externals/prettier/vue/vue-3/style-variables.vue (💥, 71.43%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-removed-attributes-as-written
+- externals/prettier/vue/vue/attributes.vue (💥💥💥, 97.40%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-removed-attributes-as-written
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-handler-statements
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-trailing-line-comment
+- externals/prettier/vue/vue/filter.vue (💥💥💥, 60.53%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-bitwise-or
+- externals/prettier/vue/vue/slot-ts.vue (💥💥💥, 92.31%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-removed-attributes-as-written
