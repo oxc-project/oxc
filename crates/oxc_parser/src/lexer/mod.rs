@@ -319,9 +319,29 @@ impl<'a, C: Config> Lexer<'a, C> {
             // SAFETY: The cursor remains before the end.
             byte = unsafe { pos.read() };
         }
+        if matches!(byte, b'\n' | b'\r') {
+            return self.advance_after_line_break(current);
+        }
         state.set_start(self.source.offset_of(pos));
         // SAFETY: `byte` is at the source cursor, which is before the end.
         unsafe { self.advance_at(state.start(), current, byte) };
+    }
+
+    /// Keep newline scanning out of ordinary token dispatch so it can remain a tail call.
+    #[inline(never)]
+    fn advance_after_line_break(&mut self, current: &mut Token) {
+        let mut state = ScanState::default();
+        // No comment boundary has started. This consumes ordinary line breaks and
+        // indentation together and retains the newline flag for ASI and comments.
+        self.line_break_handler(&mut state);
+        state.set_start(self.offset());
+        let kind = if let Some(byte) = self.source.peek_byte() {
+            // SAFETY: `peek_byte` returned the byte at the non-exhausted cursor.
+            unsafe { self.handle_byte(&mut state, current, byte) }
+        } else {
+            Kind::Eof
+        };
+        self.complete_or_continue(state, kind, current);
     }
 
     /// Read the next token after `=` in a JSX attribute.
