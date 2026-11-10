@@ -29,3 +29,14 @@ impl<'a, T> BufferedVec<'a, T> {
         self.vec
     }
 }
+
+impl<'a, T> IntoIterator for BufferedVec<'a, T> {
+    type Item = T;
+    type IntoIter =
+        std::iter::Chain<std::option::IntoIter<T>, <ArenaVec<'a, T> as IntoIterator>::IntoIter>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.first.into_iter().chain(self.vec)
+    }
+}
