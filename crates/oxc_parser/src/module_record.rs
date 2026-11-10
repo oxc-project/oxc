@@ -182,6 +182,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         let module_request = NameSpan::new(source.into(), decl.source.span);
 
         if let Some(specifiers) = &decl.specifiers {
+            reserve_entries(&mut self.module_record.import_entries, specifiers.len());
             for specifier in specifiers {
                 let local = specifier.local();
                 let local_name = NameSpan::new(local.name.into(), local.span);
@@ -319,6 +320,7 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
+        reserve_entries(&mut self.export_entries, decl.specifiers.len());
         for specifier in &decl.specifiers {
             let export_name = ExportExportName::Name(NameSpan::new(
                 specifier.exported.name(),
@@ -370,6 +372,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             },
         );
 
+        reserve_entries(&mut self.export_entries, decl.specifiers.len());
         for specifier in &decl.specifiers {
             let export_name = ExportExportName::Name(NameSpan::new(
                 specifier.exported.name(),
@@ -394,6 +397,16 @@ impl<'a> ModuleRecordBuilder<'a> {
 
     pub fn set_module_syntax(&mut self) {
         self.module_record.has_module_syntax = true;
+    }
+}
+
+fn reserve_entries<T>(entries: &mut ArenaVec<'_, T>, additional: usize) {
+    let len = entries.len();
+    let required = len + additional;
+    if required > entries.capacity() {
+        // Match normal push growth so reserving a batch does not change later capacities.
+        let capacity = required.next_power_of_two();
+        entries.reserve(capacity - len);
     }
 }
 
