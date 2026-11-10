@@ -49,6 +49,13 @@ fn test() {
         "const thing = 123;\n\n/**\n * JSDoc attached to afterAll\n */\nafterAll(() => {});",
         "const thing = 123; /* trailing on prev */\n\nafterAll(() => {});",
         "describe('foo', () => {\nafterAll(() => {});\n\nafterAll(() => {});\n});",
+        // Issue: <https://github.com/oxc-project/oxc/issues/25590>
+        "afterAll(() => {});
+
+describe('suite', () => {});",
+        "afterAll(() => {}); // trailing
+
+describe('suite', () => {});",
     ];
 
     let fail = vec![
@@ -61,6 +68,12 @@ fn test() {
         "const thing = 123;\n/**\n * JSDoc comment\n */\nafterAll(() => {});",
         "describe('foo', () => {\nafterAll(() => {});\nafterAll(() => {});\n});",
         "import { afterAll } from 'vitest';\n/* setup notes */\nafterAll(() => {});",
+        // Issue: <https://github.com/oxc-project/oxc/issues/25590>
+        "afterAll(() => {});
+describe('suite', () => {});",
+        "afterAll(() => {});
+/* one */
+describe('suite', () => {});",
     ];
 
     let fix = vec![
@@ -85,6 +98,22 @@ fn test() {
         (
             "describe('foo', () => {\nafterAll(() => {});\nafterAll(() => {});\n});",
             "describe('foo', () => {\nafterAll(() => {});\n\nafterAll(() => {});\n});",
+        ),
+        (
+            "afterAll(() => {});
+describe('suite', () => {});",
+            "afterAll(() => {});
+
+describe('suite', () => {});",
+        ),
+        (
+            "afterAll(() => {});
+/* one */
+describe('suite', () => {});",
+            "afterAll(() => {});
+
+/* one */
+describe('suite', () => {});",
         ),
     ];
 

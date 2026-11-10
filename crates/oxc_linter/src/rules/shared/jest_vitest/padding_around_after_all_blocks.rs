@@ -5,7 +5,7 @@ use crate::{
     context::LintContext,
     utils::{
         JestGeneralFnKind, ParsedGeneralJestFnCall, PossibleJestNode, parse_general_jest_fn_call,
-        report_missing_padding_before_jest_block,
+        report_missing_padding_after_jest_block, report_missing_padding_before_jest_block,
     },
 };
 
@@ -59,4 +59,5 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         return;
     }
     report_missing_padding_before_jest_block(node, ctx, name);
+    report_missing_padding_after_jest_block(node, ctx, name);
 }
