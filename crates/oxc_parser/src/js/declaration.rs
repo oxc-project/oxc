@@ -9,7 +9,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let start = self.cur_start();
 
-        let next = self.lexer.peek_token();
+        let next = self.lexer.peek_token_after(&self.token);
         let peeked = next.kind();
 
         // `let [` cannot start an expression statement, even in a single-statement
@@ -30,9 +30,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn is_using_statement(&mut self) -> bool {
         // Inspect both declaration tokens under one lexer checkpoint.
         let checkpoint = self.lexer.checkpoint();
-        let next = self.lexer.next_token();
+        let mut next = self.token;
+        self.lexer.advance_normal(&mut next);
         let is_using = next.kind() == Kind::Using && !next.is_on_new_line() && {
-            let binding = self.lexer.next_token();
+            let mut binding = next;
+            self.lexer.advance_normal(&mut binding);
             // Also recognize object patterns so invalid declarations can recover.
             (binding.kind().is_binding_identifier() || binding.kind() == Kind::LCurly)
                 && !binding.is_on_new_line()

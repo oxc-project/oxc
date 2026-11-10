@@ -75,6 +75,16 @@ impl ScanState {
     }
 
     #[inline]
+    pub fn has_trivia(self) -> bool {
+        self.flags.0 & 1 != 0
+    }
+
+    #[inline]
+    pub fn set_has_trivia(&mut self) {
+        self.flags.0 |= 1;
+    }
+
+    #[inline]
     pub fn new_on_new_line() -> Self {
         Self { start: 0, flags: TokenFlags(1 << 8) }
     }
@@ -144,6 +154,10 @@ impl fmt::Debug for Token {
 }
 
 impl Token {
+    pub(super) fn undetermined() -> Self {
+        Self((Kind::Undetermined as u128) << KIND_SHIFT)
+    }
+
     #[inline]
     pub(super) fn from_parts(start: u32, end: u32, kind: Kind, flags: TokenFlags) -> Self {
         debug_assert!(end >= start);
@@ -454,6 +468,8 @@ mod test {
                 state.set_is_on_new_line(flags & 1 != 0);
                 state.set_escaped(flags & 2 != 0);
                 state.set_has_separator(flags & 4 != 0);
+                // Boundary bookkeeping must never leak into the token kind or unused bits.
+                state.set_has_trivia();
                 let token = state.finish(kind, u32::MAX);
                 assert_eq!(token.kind(), kind);
                 assert_eq!(token.span(), Span::new(u32::MAX - 2, u32::MAX));
@@ -462,6 +478,7 @@ mod test {
                 assert_eq!(token.has_separator(), flags & 4 != 0);
                 assert_eq!(token.0 >> 96, 0);
                 let rescanned = ScanState::from_token(token);
+                assert!(!rescanned.has_trivia());
                 assert_eq!(rescanned.finish(kind, u32::MAX), token);
             }
         }

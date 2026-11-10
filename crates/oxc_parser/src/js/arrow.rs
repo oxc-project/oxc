@@ -4,7 +4,10 @@ use oxc_span::{FileExtension, GetSpan, Span};
 use oxc_syntax::precedence::Precedence;
 
 use super::{FunctionKind, Tristate, grammar::CoverGrammar};
-use crate::{Context, ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
+use crate::{
+    Context, ParserConfig as Config, ParserImpl, diagnostics,
+    lexer::{Kind, Token},
+};
 
 struct ArrowFunctionHead<'a> {
     type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
@@ -52,8 +55,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // This check only reads lexer tokens. Keep one checkpoint for both the
                 // literal fast path and the remaining lookahead, so the first token is read once.
                 let checkpoint = self.lexer.checkpoint();
-                let second = self.lexer.next_token().kind();
-                let result = if second.is_literal() {
+                let mut second = self.token;
+                self.lexer.advance_normal(&mut second);
+                let result = if second.kind().is_literal() {
                     Tristate::False
                 } else {
                     self.is_parenthesized_arrow_function_expression_after_lparen(second, false)
@@ -115,16 +119,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     // callers must rewind their checkpoint before parsing the expression.
     fn is_parenthesized_arrow_function_expression_after_lparen(
         &mut self,
-        second: Kind,
+        mut lookahead: Token,
         is_async: bool,
     ) -> Tristate {
+        let second = lookahead.kind();
         match second {
             // Simple cases: "() =>", "(): ", and "() {".
             // This is an arrow function with no parameters.
             // The last one is not actually an arrow function,
             // but this is probably what the user intended.
             Kind::RParen => {
-                let third = self.lexer.next_token().kind();
+                let third = {
+                    self.lexer.advance_normal(&mut lookahead);
+                    lookahead
+                }
+                .kind();
                 match third {
                     // `async()` can be a call on the true side of a conditional.
                     Kind::Colon if self.is_ts && is_async => Tristate::Maybe,
@@ -145,7 +154,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // Simple case: "(..."
             // This is an arrow function with a rest parameter.
             Kind::Dot3 => {
-                let third = self.lexer.next_token().kind();
+                let third = {
+                    self.lexer.advance_normal(&mut lookahead);
+                    lookahead
+                }
+                .kind();
                 match third {
                     // '(...ident' is a lambda
                     Kind::Ident => Tristate::True,
@@ -155,7 +168,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
             _ => {
-                let third = self.lexer.next_token().kind();
+                let third = {
+                    self.lexer.advance_normal(&mut lookahead);
+                    lookahead
+                }
+                .kind();
 
                 // Check for "(xxx yyy", where xxx is a modifier and yyy is an identifier. This
                 // isn't actually allowed, but we want to treat it as a lambda so we can provide
@@ -183,7 +200,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     Kind::Colon => Tristate::True,
                     // If we have "(a?:" or "(a?," or "(a?=" or "(a?)" then it is definitely a lambda.
                     Kind::Question => {
-                        let fourth = self.lexer.next_token().kind();
+                        let fourth = {
+                            self.lexer.advance_normal(&mut lookahead);
+                            lookahead
+                        }
+                        .kind();
                         if matches!(fourth, Kind::Colon | Kind::Comma | Kind::Eq | Kind::RParen) {
                             return Tristate::True;
                         }
@@ -193,7 +214,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     // `yield`, and `this` on the existing contextual/error-recovery paths.
                     // A TS return type can still be ambiguous with a conditional's colon.
                     Kind::RParen if second.is_identifier() => {
-                        match self.lexer.next_token().kind() {
+                        match {
+                            self.lexer.advance_normal(&mut lookahead);
+                            lookahead
+                        }
+                        .kind()
+                        {
                             Kind::Arrow => Tristate::True,
                             Kind::Colon if self.is_ts => Tristate::Maybe,
                             _ => Tristate::False,
@@ -216,7 +242,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         match first {
             Kind::LParen => {
-                self.is_parenthesized_arrow_function_expression_after_lparen(second, is_async)
+                self.is_parenthesized_arrow_function_expression_after_lparen(self.token, is_async)
             }
             Kind::LAngle => {
                 // If we have "<" not followed by an identifier,

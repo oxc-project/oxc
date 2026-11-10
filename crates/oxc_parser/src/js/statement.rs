@@ -136,7 +136,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
         let no_side_effects_comments =
-            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments(self.cur_start());
 
         let mut stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
@@ -422,7 +422,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // `for (let`
                 let decl_start = self.cur_start();
                 // disallow `for (let in ...`
-                if self.lexer.peek_token().kind().is_after_let() {
+                if self.lexer.peek_token_after(&self.token).kind().is_after_let() {
                     self.bump_any(); // bump `let`
                     return self.parse_variable_declaration_for_statement(
                         for_start,
@@ -531,7 +531,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn is_using_declaration(&mut self) -> bool {
-        let token = self.lexer.peek_token();
+        let token = self.lexer.peek_token_after(&self.token);
         let kind = token.kind();
         (kind.is_binding_identifier() || kind == Kind::LCurly) && !token.is_on_new_line()
     }
@@ -906,7 +906,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Parse import statement or import expression.
     fn parse_import_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let start = self.cur_start();
-        if matches!(self.lexer.peek_token().kind(), Kind::Dot | Kind::LParen) {
+        if matches!(self.lexer.peek_token_after(&self.token).kind(), Kind::Dot | Kind::LParen) {
             // Parse the whole expression `import.meta.url`.
             self.parse_expression_or_labeled_statement()
         } else {
@@ -918,7 +918,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Parse statements that start with `sync`.
     fn parse_async_statement(&mut self, start: u32, stmt_ctx: StatementContext) -> Statement<'a> {
-        let token = self.lexer.peek_token();
+        let token = self.lexer.peek_token_after(&self.token);
         if token.kind() == Kind::Function && !token.is_on_new_line() {
             self.bump_any(); // bump `async`
             return self.parse_function_declaration(start, /* async */ true, stmt_ctx);

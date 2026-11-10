@@ -509,7 +509,7 @@ impl<C: Config> ParserImpl<'_, C> {
         // modifier (e.g. distinguish `static x` from `static` used as an identifier).
         // `peek_token` performs a single lexer-level re-lex, avoiding the heavier parser-level
         // `lookahead` (checkpoint + `bump_any` + rewind) that this previously used.
-        let next = self.lexer.peek_token();
+        let next = self.lexer.peek_token_after(&self.token);
         let next_kind = next.kind();
         let is_modifier = match cur_kind {
             Kind::Const => next_kind == Kind::Enum,
@@ -594,7 +594,7 @@ impl<C: Config> ParserImpl<'_, C> {
             //
             // Peek once and reuse it — `peek_token` is not cached, so checking `== LCurly` separately
             // from the peek inside `next_token_can_follow_modifier` re-lexed this token twice.
-            let next_kind = self.lexer.peek_token().kind();
+            let next_kind = self.lexer.peek_token_after(&self.token).kind();
             if (stop_on_start_of_class_static_block && next_kind == Kind::LCurly)
                 || seen_modifier_kinds.contains(ModifierKind::Static)
                 || !Self::can_follow_modifier(next_kind)
@@ -637,7 +637,7 @@ impl<C: Config> ParserImpl<'_, C> {
     /// non-speculative bump performed by the caller once this returns `true`.
     pub(crate) fn next_token_can_follow_modifier(&mut self) -> bool {
         let cur_kind = self.cur_kind();
-        let next = self.lexer.peek_token();
+        let next = self.lexer.peek_token_after(&self.token);
         let next_kind = next.kind();
         match cur_kind {
             Kind::Const => next_kind == Kind::Enum,
@@ -649,7 +649,7 @@ impl<C: Config> ParserImpl<'_, C> {
     }
 
     fn next_token_is_on_same_line_and_can_follow_modifier(&mut self) -> bool {
-        let next = self.lexer.peek_token();
+        let next = self.lexer.peek_token_after(&self.token);
         !next.is_on_new_line() && Self::can_follow_modifier(next.kind())
     }
 

@@ -362,7 +362,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         if kind == Kind::New
-            && matches!(self.lexer.peek_token().kind(), Kind::LParen | Kind::LAngle)
+            && matches!(
+                self.lexer.peek_token_after(&self.token).kind(),
+                Kind::LParen | Kind::LAngle
+            )
         {
             return self.parse_signature_member(CallOrConstructorSignature::Constructor);
         }
@@ -887,22 +890,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Var | Kind::Let | Kind::Const | Kind::Function | Kind::Class | Kind::Enum => true,
             // `interface I`  `type T = …`  (keyword + binding ident on the same line)
             Kind::Interface | Kind::Type => {
-                let next = self.lexer.peek_token();
+                let next = self.lexer.peek_token_after(&self.token);
                 next.kind().is_binding_identifier() && !next.is_on_new_line()
             }
             // `module M`  `module "m"`  `namespace N`  (keyword + binding ident or string)
             Kind::Module | Kind::Namespace => {
-                let next = self.lexer.peek_token();
+                let next = self.lexer.peek_token_after(&self.token);
                 !next.is_on_new_line()
                     && (next.kind().is_binding_identifier() || next.kind() == Kind::Str)
             }
             // `global { … }`  `global export …`  (`global` + `{` / `export` / ident)
             Kind::Global => {
-                matches!(self.lexer.peek_token().kind(), Kind::Ident | Kind::LCurly | Kind::Export)
+                matches!(
+                    self.lexer.peek_token_after(&self.token).kind(),
+                    Kind::Ident | Kind::LCurly | Kind::Export
+                )
             }
             // `import x`  `import "m"`  `import *`  `import {`  (`import` + string / `*` / `{` / ident)
             Kind::Import => {
-                let next = self.lexer.peek_token().kind();
+                let next = self.lexer.peek_token_after(&self.token).kind();
                 matches!(next, Kind::Str | Kind::Star | Kind::LCurly) || next.is_identifier()
             }
             // Multi-token modifier chains (`declare const x`, `abstract class C`, `export type T`,

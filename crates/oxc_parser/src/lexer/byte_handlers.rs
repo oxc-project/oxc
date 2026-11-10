@@ -3,7 +3,7 @@ use oxc_data_structures::assert_unchecked;
 
 use crate::{config::LexerConfig as Config, diagnostics};
 
-use super::{Kind, Lexer, ScanState};
+use super::{Kind, Lexer, ScanState, Token};
 
 impl<C: Config> Lexer<'_, C> {
     /// Handle next byte of source.
@@ -16,10 +16,15 @@ impl<C: Config> Lexer<'_, C> {
     // `#[inline(always)]` to ensure is inlined into `read_next_token`
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub(super) unsafe fn handle_byte(&mut self, state: &mut ScanState, byte: u8) -> Kind {
+    pub(super) unsafe fn handle_byte(
+        &mut self,
+        state: &mut ScanState,
+        previous: &Token,
+        byte: u8,
+    ) -> Kind {
         match byte {
             b'(' | b')' | b';' => self.read_fixed_punctuation(byte),
-            _ => Self::STATEFUL_HANDLERS[byte as usize](self, state),
+            _ => Self::STATEFUL_HANDLERS[byte as usize](self, state, previous),
         }
     }
 
@@ -65,11 +70,15 @@ macro_rules! byte_handlers {
 }
 
 macro_rules! stateful_handler {
-    ([$($handler:ident),* $(,)?]) => { [$(|lexer, state| $handler(lexer, state)),*] };
+    ([$($handler:ident),* $(,)?]) => { [$(stateful_handler!(@one $handler)),*] };
+    (@one SLH) => { |lexer, state, previous| SLH(lexer, state, previous) };
+    (@one MIN) => { |lexer, state, previous| MIN(lexer, state, previous) };
+    (@one LSS) => { |lexer, state, previous| LSS(lexer, state, previous) };
+    (@one $handler:ident) => { |lexer, state, _| $handler(lexer, state) };
 }
 
 impl<C: Config> Lexer<'_, C> {
-    const STATEFUL_HANDLERS: [fn(&mut Self, &mut ScanState) -> Kind; 256] =
+    const STATEFUL_HANDLERS: [fn(&mut Self, &mut ScanState, &Token) -> Kind; 256] =
         byte_handlers!(stateful_handler);
 }
 
@@ -113,9 +122,9 @@ impl<C: Config> Lexer<'_, C> {
 /// }
 /// ```
 macro_rules! ascii_byte_handler {
-    ($id:ident($lex:ident, $state:ident) $body:expr) => {
+    ($id:ident($lex:ident, $state:ident $(, $previous:ident)?) $body:expr) => {
         #[expect(non_snake_case)]
-        fn $id<C: Config>($lex: &mut Lexer<'_, C>, $state: &mut ScanState) -> Kind {
+        fn $id<C: Config>($lex: &mut Lexer<'_, C>, $state: &mut ScanState $(, $previous: &Token)?) -> Kind {
             // SAFETY: This macro is only used for ASCII characters
             unsafe {
                 assert_unchecked!(!$lex.source.is_eof());
@@ -302,9 +311,9 @@ ascii_byte_handler!(COM(lexer, _state) {
 });
 
 // -
-ascii_byte_handler!(MIN(lexer, state) {
+ascii_byte_handler!(MIN(lexer, state, previous) {
     lexer.consume_char();
-    lexer.read_minus(*state).unwrap_or_else(|| { lexer.skip_single_line_comment(state, CommentKind::HtmlClose) })
+    lexer.read_minus(*state).unwrap_or_else(|| { lexer.begin_comment(state, previous); lexer.skip_single_line_comment(state, CommentKind::HtmlClose) })
 });
 
 // .
@@ -314,15 +323,17 @@ ascii_byte_handler!(PRD(lexer, state) {
 });
 
 // /
-ascii_byte_handler!(SLH(lexer, state) {
+ascii_byte_handler!(SLH(lexer, state, previous) {
     lexer.consume_char();
     match lexer.peek_byte() {
         Some(b'/') => {
             lexer.consume_char();
+            lexer.begin_comment(state, previous);
             lexer.skip_single_line_comment(state, CommentKind::Line)
         }
         Some(b'*') => {
             lexer.consume_char();
+            lexer.begin_comment(state, previous);
             lexer.skip_multi_line_comment(state)
         }
         _ => {
@@ -355,9 +366,9 @@ ascii_byte_handler!(COL(lexer, _state) {
 });
 
 // <
-ascii_byte_handler!(LSS(lexer, state) {
+ascii_byte_handler!(LSS(lexer, state, previous) {
     lexer.consume_char();
-    lexer.read_left_angle(*state).unwrap_or_else(|| { lexer.skip_single_line_comment(state, CommentKind::HtmlOpen) })
+    lexer.read_left_angle(*state).unwrap_or_else(|| { lexer.begin_comment(state, previous); lexer.skip_single_line_comment(state, CommentKind::HtmlOpen) })
 });
 
 // =
@@ -776,7 +787,7 @@ mod tests {
     }
 
     #[test]
-    fn checkpoint_restores_replaced_token() {
+    fn checkpoint_restores_replaced_token_and_standalone_cursor() {
         let allocator = Allocator::default();
         let mut lexer = Lexer::new(
             &allocator,
@@ -794,7 +805,9 @@ mod tests {
         lexer.next_token();
         lexer.rewind(checkpoint);
         assert_eq!(lexer.tokens.last().copied(), Some(shift));
+        assert_eq!(lexer.standalone_previous, shift);
         assert_eq!(lexer.peek_token().kind(), Kind::Ident);
+        assert_eq!(lexer.standalone_previous, shift);
         assert_eq!(lexer.next_token().kind(), Kind::Ident);
     }
 

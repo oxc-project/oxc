@@ -29,7 +29,9 @@ impl<C: Config> Lexer<'_, C> {
 
     pub(super) fn line_break_handler(&mut self, state: &mut ScanState) -> Kind {
         state.set_is_on_new_line(true);
-        self.trivia_builder.handle_newline();
+        if state.has_trivia() {
+            self.trivia_builder.handle_newline();
+        }
 
         // Indentation is common after a line break.
         // Consume it, along with any further line breaks.

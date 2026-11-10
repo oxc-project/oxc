@@ -55,6 +55,7 @@ pub struct LexerCheckpoint<'a> {
     annotation_comments: AnnotationComments,
     last_token: Token,
     deferred_module_errors_len: usize,
+    standalone_previous: Token,
 }
 
 #[derive(Debug)]
@@ -80,6 +81,10 @@ pub struct Lexer<'a, C: Config> {
     source: Source<'a>,
 
     source_type: SourceType,
+
+    /// Previous token for standalone lexer entrypoints.
+    /// Parser advancement supplies its current token directly instead.
+    standalone_previous: Token,
 
     pub(crate) errors: Vec<ParserDiagnostic<'a>>,
 
@@ -145,6 +150,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             allocator,
             source,
             source_type,
+            standalone_previous: Token::undetermined(),
             errors: vec![],
             deferred_module_errors: vec![],
             trivia_builder: TriviaBuilder::new_in(allocator),
@@ -197,6 +203,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             annotation_comments: self.trivia_builder.annotation_comments,
             last_token: self.tokens.last().copied().unwrap_or_default(),
             deferred_module_errors_len: self.deferred_module_errors.len(),
+            standalone_previous: self.standalone_previous,
         }
     }
 
@@ -216,6 +223,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             annotation_comments: self.trivia_builder.annotation_comments,
             last_token: self.tokens.last().copied().unwrap_or_default(),
             deferred_module_errors_len: self.deferred_module_errors.len(),
+            standalone_previous: self.standalone_previous,
         }
     }
 
@@ -232,10 +240,12 @@ impl<'a, C: Config> Lexer<'a, C> {
             *last = checkpoint.last_token;
         }
         self.deferred_module_errors.truncate(checkpoint.deferred_module_errors_len);
+        self.standalone_previous = checkpoint.standalone_previous;
         self.source.set_position(checkpoint.source_position);
         self.trivia_builder.annotation_comments = checkpoint.annotation_comments;
     }
 
+    #[cfg(any(test, feature = "benchmarking"))]
     pub fn peek_token(&mut self) -> Token {
         let checkpoint = self.checkpoint();
         let token = self.next_token();
@@ -243,35 +253,67 @@ impl<'a, C: Config> Lexer<'a, C> {
         token
     }
 
+    pub(crate) fn peek_token_after(&mut self, previous: &Token) -> Token {
+        let checkpoint = self.checkpoint();
+        let mut token = *previous;
+        self.advance_normal(&mut token);
+        self.rewind(checkpoint);
+        token
+    }
+
+    /// Initialize comment attachment only when this token boundary contains a comment.
+    fn begin_comment(&mut self, state: &mut ScanState, previous: &Token) {
+        if !state.has_trivia() {
+            self.trivia_builder.begin_boundary(*previous, state.is_on_new_line());
+            state.set_has_trivia();
+        }
+    }
+
     /// Read first token in file.
     pub fn first_token(&mut self) -> Token {
+        let previous = self.standalone_previous;
+        let previous = &previous;
         // The first token is at the start of the file, so it is always on a new line.
         let state = &mut ScanState::new_on_new_line();
         // HashbangComment ::
         //     `#!` SingleLineCommentChars?
-        if let Some([b'#', b'!']) = self.peek_2_bytes() {
+        let token = if let Some([b'#', b'!']) = self.peek_2_bytes() {
             // SAFETY: Next 2 bytes are `#!`
             let kind = unsafe { self.read_hashbang_comment() };
             // Hashbangs are not included in tokens
             self.finish_next_inner(*state, kind, FinishTokenMode::Discard)
         } else {
-            let kind = self.read_next_token(state);
+            let kind = self.read_next_token(state, previous);
             self.finish_next(*state, kind)
-        }
+        };
+        self.standalone_previous = token;
+        token
     }
 
     /// Read next token in file.
     /// Use `first_token` for first token, and this method for all further tokens.
+    #[cfg(any(test, feature = "benchmarking"))]
     pub fn next_token(&mut self) -> Token {
+        let previous = self.standalone_previous;
+        let previous = &previous;
         let state = &mut ScanState::default();
-        let kind = self.read_next_token(state);
-        self.finish_next(*state, kind)
+        let kind = self.read_next_token(state, previous);
+        let token = self.finish_next(*state, kind);
+        self.standalone_previous = token;
+        token
+    }
+
+    /// Advance the parser's current token without storing a second copy in the lexer.
+    pub(crate) fn advance_normal(&mut self, current: &mut Token) {
+        let state = &mut ScanState::default();
+        let kind = self.read_next_token(state, current);
+        *current = self.finish_next(*state, kind);
     }
 
     /// Read the next token after `=` in a JSX attribute.
-    pub(crate) fn next_jsx_attribute_value(&mut self) -> Token {
+    pub(crate) fn next_jsx_attribute_value(&mut self, previous: &Token) -> Token {
         let state = &mut ScanState::default();
-        let kind = self.read_next_jsx_attribute_value(state);
+        let kind = self.read_next_jsx_attribute_value(state, previous);
         self.finish_next(*state, kind)
     }
 
@@ -281,9 +323,13 @@ impl<'a, C: Config> Lexer<'a, C> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn next_token_for_benchmarks(&mut self) -> Token {
+        let previous = self.standalone_previous;
+        let previous = &previous;
         let state = &mut ScanState::default();
-        let kind = self.read_next_token(state);
-        self.finish_next(*state, kind)
+        let kind = self.read_next_token(state, previous);
+        let token = self.finish_next(*state, kind);
+        self.standalone_previous = token;
+        token
     }
 
     #[inline]
@@ -319,7 +365,9 @@ impl<'a, C: Config> Lexer<'a, C> {
                 FinishTokenMode::Discard => {}
             }
         }
-        self.trivia_builder.handle_token(token);
+        if state.has_trivia() {
+            self.trivia_builder.handle_token(token);
+        }
         token
     }
 
@@ -481,9 +529,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Read each char and set the current token
     /// Whitespace and line terminators are skipped
     #[inline]
-    fn read_next_token(&mut self, state: &mut ScanState) -> Kind {
-        self.trivia_builder.clear_annotation_comments();
-
+    fn read_next_token(&mut self, state: &mut ScanState, previous: &Token) -> Kind {
         let end_pos = self.source.end();
         loop {
             // Single spaces between tokens are common, so consume a space before processing the next token.
@@ -511,14 +557,14 @@ impl<'a, C: Config> Lexer<'a, C> {
                 state.set_start(offset);
 
                 // SAFETY: `byte` is byte value at current position in source
-                let kind = unsafe { self.handle_byte(state, byte) };
+                let kind = unsafe { self.handle_byte(state, previous, byte) };
                 if kind != Kind::Skip {
                     return kind;
                 }
             } else {
                 // Only 0 or 1 bytes left in source.
                 // Delegate to `#[cold]` function as this is a very rare case.
-                return self.read_next_token_at_end(state);
+                return self.read_next_token_at_end(state, previous);
             }
         }
     }
@@ -526,13 +572,13 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Cold path for reading next token where only 0 or 1 bytes are left in source.
     #[inline(never)]
     #[cold]
-    fn read_next_token_at_end(&mut self, state: &mut ScanState) -> Kind {
+    fn read_next_token_at_end(&mut self, state: &mut ScanState, previous: &Token) -> Kind {
         let offset = self.offset();
         state.set_start(offset);
 
         if let Some(byte) = self.peek_byte() {
             // SAFETY: `byte` is byte value at current position in source
-            let kind = unsafe { self.handle_byte(state, byte) };
+            let kind = unsafe { self.handle_byte(state, previous, byte) };
             if kind != Kind::Skip {
                 return kind;
             }
@@ -544,9 +590,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     #[inline]
-    fn read_next_jsx_attribute_value(&mut self, state: &mut ScanState) -> Kind {
-        self.trivia_builder.clear_annotation_comments();
-
+    fn read_next_jsx_attribute_value(&mut self, state: &mut ScanState, previous: &Token) -> Kind {
         let end_pos = self.source.end();
         loop {
             let mut pos = self.source.position();
@@ -575,19 +619,23 @@ impl<'a, C: Config> Lexer<'a, C> {
                 }
 
                 // SAFETY: `byte` is byte value at current position in source.
-                let kind = unsafe { self.handle_byte(state, byte) };
+                let kind = unsafe { self.handle_byte(state, previous, byte) };
                 if kind != Kind::Skip {
                     return kind;
                 }
             } else {
-                return self.read_next_jsx_attribute_value_at_end(state);
+                return self.read_next_jsx_attribute_value_at_end(state, previous);
             }
         }
     }
 
     #[inline(never)]
     #[cold]
-    fn read_next_jsx_attribute_value_at_end(&mut self, state: &mut ScanState) -> Kind {
+    fn read_next_jsx_attribute_value_at_end(
+        &mut self,
+        state: &mut ScanState,
+        previous: &Token,
+    ) -> Kind {
         let offset = self.offset();
         state.set_start(offset);
 
@@ -598,7 +646,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             }
 
             // SAFETY: `byte` is byte value at current position in source.
-            let kind = unsafe { self.handle_byte(state, byte) };
+            let kind = unsafe { self.handle_byte(state, previous, byte) };
             if kind != Kind::Skip {
                 return kind;
             }

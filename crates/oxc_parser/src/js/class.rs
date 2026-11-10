@@ -75,7 +75,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let id = if self.cur_kind().is_binding_identifier()
             && !(self.at(Kind::Implements)
-                && self.lexer.peek_token().kind().is_identifier_or_keyword())
+                && self.lexer.peek_token_after(&self.token).kind().is_identifier_or_keyword())
         {
             Some(self.parse_known_binding_identifier())
         } else {
@@ -292,7 +292,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         );
 
         // static { block }
-        if self.at(Kind::Static) && self.lexer.peek_token().kind() == Kind::LCurly {
+        if self.at(Kind::Static) && self.lexer.peek_token_after(&self.token).kind() == Kind::LCurly
+        {
             for decorator in decorators {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
@@ -607,7 +608,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         if self.at(Kind::Str)
             && self.cur_js_string() == "constructor"
-            && self.lexer.peek_token().kind() == Kind::LParen
+            && self.lexer.peek_token_after(&self.token).kind() == Kind::LParen
         {
             let string_literal = self.parse_known_literal_string();
             return Some(PropertyKey::StringLiteral(self.alloc(string_literal)));

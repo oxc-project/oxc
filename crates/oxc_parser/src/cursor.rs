@@ -109,7 +109,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.report_escaped_keyword(self.token.span());
         }
         self.prev_token_end = self.token.end();
-        self.token = self.lexer.next_token();
+        self.lexer.advance_normal(&mut self.token);
     }
 
     /// Move to the next `JSXChild`
@@ -234,7 +234,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Move to the next token, lexing it as a JSX attribute value.
     pub(crate) fn advance_for_jsx_attribute_value(&mut self) {
         self.prev_token_end = self.token.end();
-        self.token = self.lexer.next_jsx_attribute_value();
+        self.token = self.lexer.next_jsx_attribute_value(&self.token);
     }
 
     /// Tell lexer to read a regex
