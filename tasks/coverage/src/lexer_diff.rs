@@ -24,8 +24,7 @@ use oxc::{
     span::{SourceType, Span},
 };
 use oxc_lexer::{
-    Arena, LexOptions, LexResult, PAD, TokenKind, diagnostics::to_oxc_diagnostic,
-    testing::lex_utf8_with_cpu,
+    LexOptions, PAD, TokenKind, Tokens, diagnostics::to_oxc_diagnostic, testing::lex_with_cpu,
 };
 use oxc_simd::DynCpu;
 use rayon::prelude::*;
@@ -112,11 +111,11 @@ fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
         return TestResult::Passed;
     };
 
-    let (result, arena) = match lex_with_each_cpu(code, source_type) {
+    let tokens = match lex_with_each_cpu(code, source_type) {
         Ok(output) => output,
         Err(failure) => return failure,
     };
-    let (new_spans, mut new_comments, mut new_ws, new_error) = lexer_stream(code, &result, &arena);
+    let (new_spans, mut new_comments, mut new_ws, new_error) = lexer_stream(code, &tokens);
 
     // Only compare comments which start before the parser's last error.
     //
@@ -172,11 +171,10 @@ fn lex_diff(code: &str, source_type: SourceType) -> TestResult {
 /// Get token stream and comments from `oxc_lexer`'s output, plus the first error (if any).
 fn lexer_stream(
     code: &str,
-    result: &LexResult,
-    arena: &Arena,
+    tokens: &Tokens,
 ) -> (Vec<Span>, Vec<Comment>, Vec<Span>, Option<OxcDiagnostic>) {
-    let kinds = result.tok_kinds(arena);
-    let token_spans = result.tok_spans(arena);
+    let kinds = tokens.kinds();
+    let token_spans = tokens.spans();
     assert_eq!(kinds.len(), token_spans.len());
 
     let spans = iter::zip(kinds, token_spans)
@@ -187,10 +185,10 @@ fn lexer_stream(
         })
         .collect();
 
-    let comments = result.comments(arena).to_vec();
-    let irregular_whitespaces = result.irregular_whitespaces(arena).to_vec();
+    let comments = tokens.comments().to_vec();
+    let irregular_whitespaces = tokens.irregular_whitespaces().to_vec();
 
-    let error = result
+    let error = tokens
         .diagnostics()
         .iter()
         .min_by_key(|error| error.off)
@@ -204,14 +202,11 @@ fn lexer_stream(
 ///
 /// Returns the output from the first CPU feature set.
 /// Returns `Err` if lexing panicked, or the outputs from each CPU feature set differ.
-fn lex_with_each_cpu(
-    code: &str,
-    source_type: SourceType,
-) -> Result<(LexResult, Arena), TestResult> {
+fn lex_with_each_cpu(code: &str, source_type: SourceType) -> Result<Tokens, TestResult> {
     let len = code.len();
     let len_u32 = u32::try_from(len).expect("source longer than `u32::MAX`");
 
-    // `lex_utf8_with_cpu` requires at least `PAD` bytes of zeroed padding past the end of the source
+    // lex_with_cpu requires at least PAD bytes of zeroed padding past the end of the source
     let mut buf = Vec::with_capacity(len + PAD);
     buf.extend_from_slice(code.as_bytes());
     buf.resize(len + PAD, 0);
@@ -226,7 +221,7 @@ fn lex_with_each_cpu(
     let mut outputs = vec![];
     let mut panicked = vec![];
     DynCpu::for_each_supported(|cpu| {
-        match catch_unwind(AssertUnwindSafe(|| lex_utf8_with_cpu(&buf, len_u32, options, cpu))) {
+        match catch_unwind(AssertUnwindSafe(|| lex_with_cpu(&buf, len_u32, options, cpu))) {
             Ok(output) => outputs.push((cpu, output)),
             Err(_) => panicked.push(cpu.name()),
         }
@@ -265,31 +260,25 @@ fn lex_with_each_cpu(
 /// Find the first difference between 2 outputs from `oxc_lexer`.
 ///
 /// Returns a description of the first entry which differs, from each output.
-fn first_difference(a: &(LexResult, Arena), b: &(LexResult, Arena)) -> Option<(String, String)> {
-    let ((a, a_arena), (b, b_arena)) = (a, b);
+fn first_difference(a: &Tokens, b: &Tokens) -> Option<(String, String)> {
     // Compare bits, so `NaN`s compare equal, and `0.0` and `-0.0` don't
-    let numbers = |result: &LexResult, arena: &Arena| {
-        result.numbers(arena).iter().map(|number| number.to_bits()).collect::<Vec<_>>()
+    let numbers = |tokens: &Tokens| {
+        tokens.numbers().iter().map(|number| number.to_bits()).collect::<Vec<_>>()
     };
 
-    lane_difference("tokens", a.tok_kinds(a_arena), b.tok_kinds(b_arena))
-        .or_else(|| lane_difference("spans", a.tok_spans(a_arena), b.tok_spans(b_arena)))
+    lane_difference("tokens", a.kinds(), b.kinds())
+        .or_else(|| lane_difference("spans", a.spans(), b.spans()))
         .or_else(|| lane_difference("diagnostics", a.diagnostics(), b.diagnostics()))
-        .or_else(|| lane_difference("numbers", &numbers(a, a_arena), &numbers(b, b_arena)))
-        .or_else(|| lane_difference("strings", a.strings(a_arena), b.strings(b_arena)))
-        .or_else(|| lane_difference("templates", a.templates(a_arena), b.templates(b_arena)))
-        .or_else(|| lane_difference("atoms", a.atoms(a_arena), b.atoms(b_arena)))
+        .or_else(|| lane_difference("numbers", &numbers(a), &numbers(b)))
+        .or_else(|| lane_difference("strings", a.strings(), b.strings()))
+        .or_else(|| lane_difference("templates", a.templates(), b.templates()))
+        .or_else(|| lane_difference("atoms", a.atoms(), b.atoms()))
+        .or_else(|| lane_difference("cooked bytes", a.cooked_bytes(), b.cooked_bytes()))
+        .or_else(|| lane_difference("regex flags", a.regex_flags(), b.regex_flags()))
+        .or_else(|| lane_difference("comments", a.comments(), b.comments()))
         .or_else(|| {
-            lane_difference("cooked bytes", a.cooked_bytes(a_arena), b.cooked_bytes(b_arena))
-        })
-        .or_else(|| lane_difference("regex flags", a.regex_flags(a_arena), b.regex_flags(b_arena)))
-        .or_else(|| lane_difference("comments", a.comments(a_arena), b.comments(b_arena)))
-        .or_else(|| {
-            let (a_ws, b_ws) = (a.irregular_whitespaces(a_arena), b.irregular_whitespaces(b_arena));
+            let (a_ws, b_ws) = (a.irregular_whitespaces(), b.irregular_whitespaces());
             lane_difference("irregular whitespaces", a_ws, b_ws)
-        })
-        .or_else(|| {
-            lane_difference("hit resource limit", &[a.hit_resource_limit], &[b.hit_resource_limit])
         })
 }
 
