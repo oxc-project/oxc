@@ -7,7 +7,7 @@ use oxc_syntax::line_terminator::is_line_terminator;
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer,
+    Kind, Lexer, ScanState,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
     source::SourcePosition,
 };
@@ -25,13 +25,17 @@ static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
 
 impl<'a, C: Config> Lexer<'a, C> {
     /// Section 12.4 Single Line Comment
-    pub(super) fn skip_single_line_comment(&mut self, kind: CommentKind) -> Kind {
+    pub(super) fn skip_single_line_comment(
+        &mut self,
+        state: &mut ScanState,
+        kind: CommentKind,
+    ) -> Kind {
         let start = self.source.position();
         let remaining = self.source.remaining().as_bytes();
         let Some(index) = memchr::memchr3(b'\r', b'\n', LS_OR_PS_FIRST, remaining) else {
             self.source.advance_to_end();
             self.trivia_builder.add_line_comment(
-                self.token.start(),
+                state.start(),
                 self.offset(),
                 kind,
                 self.source.whole(),
@@ -43,22 +47,26 @@ impl<'a, C: Config> Lexer<'a, C> {
         if remaining[index] == LS_OR_PS_FIRST {
             // Keep the scalar scanner for Unicode, where repeated matches can be very close.
             self.source.set_position(end);
-            return self.skip_single_line_comment_unicode(kind);
+            return self.skip_single_line_comment_unicode(state, kind);
         }
         self.trivia_builder.add_line_comment(
-            self.token.start(),
+            state.start(),
             self.source.offset_of(end),
             kind,
             self.source.whole(),
         );
         // SAFETY: Consume the matching ASCII line break.
         self.source.set_position(unsafe { end.add(1) });
-        self.token.set_is_on_new_line(true);
+        state.set_is_on_new_line(true);
         Kind::Skip
     }
 
     #[cold]
-    fn skip_single_line_comment_unicode(&mut self, kind: CommentKind) -> Kind {
+    fn skip_single_line_comment_unicode(
+        &mut self,
+        state: &mut ScanState,
+        kind: CommentKind,
+    ) -> Kind {
         byte_search! {
             lexer: self,
             table: LINE_BREAK_TABLE,
@@ -71,7 +79,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                 if next_byte != LS_OR_PS_FIRST {
                     // `\r` or `\n`
                     self.trivia_builder
-                        .add_line_comment(self.token.start(), self.source.offset_of(pos), kind, self.source.whole());
+                        .add_line_comment(state.start(), self.source.offset_of(pos), kind, self.source.whole());
                     // SAFETY: Safe to consume `\r` or `\n` as both are ASCII
                     pos = unsafe { pos.add(1) };
                     // We've found the end. Do not continue searching.
@@ -86,7 +94,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                     if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
                         // Irregular line break
                         self.trivia_builder
-                            .add_line_comment(self.token.start(), self.source.offset_of(pos), kind, self.source.whole());
+                            .add_line_comment(state.start(), self.source.offset_of(pos), kind, self.source.whole());
                         // Advance `pos` to after this char.
                         // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
                         // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
@@ -104,17 +112,17 @@ impl<'a, C: Config> Lexer<'a, C> {
                 }
             },
             handle_eof: {
-                self.trivia_builder.add_line_comment(self.token.start(), self.offset(), kind, self.source.whole());
+                self.trivia_builder.add_line_comment(state.start(), self.offset(), kind, self.source.whole());
                 return Kind::Skip;
             },
         };
 
-        self.token.set_is_on_new_line(true);
+        state.set_is_on_new_line(true);
         Kind::Skip
     }
 
     /// Section 12.4 Multi Line Comment
-    pub(super) fn skip_multi_line_comment(&mut self) -> Kind {
+    pub(super) fn skip_multi_line_comment(&mut self, state: &mut ScanState) -> Kind {
         // We need to identify if comment contains line breaks or not
         // (`CommentKind::SingleLineBlock` or `CommentKind::MultiLineBlock`).
         // So we have to use the loop below for the first line of the comment even if
@@ -157,10 +165,10 @@ impl<'a, C: Config> Lexer<'a, C> {
                     let next2 = unsafe { pos.add(1).read2() };
                     if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
                         // Irregular line break
-                        self.token.set_is_on_new_line(true);
+                        state.set_is_on_new_line(true);
                         // SAFETY: Consuming this 3-byte UTF-8 char leaves a UTF-8 char boundary.
                         let after_line_break = unsafe { pos.add(3) };
-                        return self.skip_multi_line_comment_after_line_break(after_line_break);
+                        return self.skip_multi_line_comment_after_line_break(*state, after_line_break);
                     }
                     // Some other Unicode char beginning with `0xE2`.
                     // Skip 3 bytes (macro skips 1 already, so skip 2 here), and continue searching.
@@ -171,20 +179,20 @@ impl<'a, C: Config> Lexer<'a, C> {
                 } else {
                     // Regular line break.
                     // No need to look for more line breaks, so switch to faster search just for `*/`.
-                    self.token.set_is_on_new_line(true);
+                    state.set_is_on_new_line(true);
                     // SAFETY: Regular line breaks are ASCII, so skipping 1 byte is a UTF-8 char boundary.
                     let after_line_break = unsafe { pos.add(1) };
-                    return self.skip_multi_line_comment_after_line_break(after_line_break);
+                    return self.skip_multi_line_comment_after_line_break(*state, after_line_break);
                 }
             },
             handle_eof: {
-                self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range()));
+                self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range(*state)));
                 return Kind::Eof;
             },
         };
 
         self.trivia_builder.add_block_comment(
-            self.token.start(),
+            state.start(),
             self.offset(),
             CommentKind::SingleLineBlock,
             self.source.whole(),
@@ -192,7 +200,11 @@ impl<'a, C: Config> Lexer<'a, C> {
         Kind::Skip
     }
 
-    fn skip_multi_line_comment_after_line_break(&mut self, pos: SourcePosition<'a>) -> Kind {
+    fn skip_multi_line_comment_after_line_break(
+        &mut self,
+        state: ScanState,
+        pos: SourcePosition<'a>,
+    ) -> Kind {
         // Can use `memchr` here as only searching for 1 pattern.
         // Cache `Finder` instance on `Lexer` as there's a significant cost to creating it.
         // `Finder::new` isn't a const function, so can't make it a `static`, and `lazy_static!`
@@ -206,7 +218,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             // SAFETY: `pos + index + 2` is end of `*/`, so a valid `SourcePosition`
             self.source.set_position(unsafe { pos.add(index + 2) });
             self.trivia_builder.add_block_comment(
-                self.token.start(),
+                state.start(),
                 self.offset(),
                 CommentKind::MultiLineBlock,
                 self.source.whole(),
@@ -214,7 +226,9 @@ impl<'a, C: Config> Lexer<'a, C> {
             Kind::Skip
         } else {
             self.source.advance_to_end();
-            self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range()));
+            self.error(diagnostics::unterminated_multi_line_comment(
+                self.unterminated_range(state),
+            ));
             Kind::Eof
         }
     }

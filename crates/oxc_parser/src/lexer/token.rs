@@ -53,6 +53,83 @@ const _: () = {
 #[repr(transparent)]
 pub struct Token(u128);
 
+/// Flags accumulated while scanning, in their final positions above the token kind.
+#[derive(Clone, Copy, Debug, Default)]
+pub(super) struct TokenFlags(u32);
+
+/// State belonging to one scan, rather than to the lexer between calls.
+#[derive(Clone, Copy, Debug, Default)]
+pub(super) struct ScanState {
+    start: u32,
+    flags: TokenFlags,
+}
+
+impl ScanState {
+    #[inline]
+    pub fn new(start: u32) -> Self {
+        Self { start, flags: TokenFlags::default() }
+    }
+
+    #[inline]
+    #[expect(clippy::cast_possible_truncation)] // Extract the flag word from the packed token.
+    pub fn from_token(token: Token) -> Self {
+        Self {
+            start: token.start(),
+            flags: TokenFlags(((token.0 >> KIND_SHIFT) as u32) & 0xFFFF_FF00),
+        }
+    }
+
+    #[inline]
+    pub fn has_trivia(self) -> bool {
+        self.flags.0 & 1 != 0
+    }
+
+    #[inline]
+    pub fn set_has_trivia(&mut self) {
+        self.flags.0 |= 1;
+    }
+
+    #[inline]
+    pub fn new_on_new_line() -> Self {
+        Self { start: 0, flags: TokenFlags(1 << 8) }
+    }
+
+    #[inline]
+    pub fn start(self) -> u32 {
+        self.start
+    }
+
+    #[inline]
+    pub fn set_start(&mut self, start: u32) {
+        self.start = start;
+    }
+
+    #[inline]
+    pub fn is_on_new_line(self) -> bool {
+        self.flags.0 & (1 << 8) != 0
+    }
+
+    #[inline]
+    pub fn set_is_on_new_line(&mut self, value: bool) {
+        self.flags.0 = (self.flags.0 & !(1 << 8)) | (u32::from(value) << 8);
+    }
+
+    #[inline]
+    pub fn set_escaped(&mut self, value: bool) {
+        self.flags.0 = (self.flags.0 & !(1 << 16)) | (u32::from(value) << 16);
+    }
+
+    #[inline]
+    pub fn set_has_separator(&mut self, value: bool) {
+        self.flags.0 = (self.flags.0 & !(1 << 24)) | (u32::from(value) << 24);
+    }
+
+    #[inline]
+    pub fn finish(self, kind: Kind, end: u32) -> Token {
+        Token::from_parts(self.start, end, kind, self.flags)
+    }
+}
+
 impl Default for Token {
     #[inline]
     fn default() -> Self {
@@ -82,15 +159,22 @@ impl fmt::Debug for Token {
 }
 
 impl Token {
-    /// Finish the lexer's scratch token without writing its fields back to memory first.
-    pub(super) fn finish(self, kind: Kind, end: u32) -> Self {
-        debug_assert_eq!(self.kind(), Kind::Eof);
-        debug_assert_eq!(self.end(), 0);
-        debug_assert!(end >= self.start());
-        Self(self.0 | (u128::from(end) << END_SHIFT) | ((kind as u128) << KIND_SHIFT))
+    pub(super) fn undetermined() -> Self {
+        Self((Kind::Undetermined as u128) << KIND_SHIFT)
     }
 
     #[inline]
+    pub(super) fn from_parts(start: u32, end: u32, kind: Kind, flags: TokenFlags) -> Self {
+        debug_assert!(end >= start);
+        Self(
+            u128::from(start)
+                | (u128::from(end) << END_SHIFT)
+                | (u128::from((flags.0 & 0xFFFF_FF00) | u32::from(kind as u8)) << KIND_SHIFT),
+        )
+    }
+
+    #[inline]
+    #[cfg(test)]
     pub(super) fn new_on_new_line() -> Self {
         // Start with a default token, then set the flag
         let mut token = Self::default();
@@ -228,6 +312,7 @@ impl Token {
     }
 
     #[inline]
+    #[cfg(test)]
     pub(super) fn set_is_on_new_line(&mut self, value: bool) {
         /*
         // Original version. Perf regressed in Rust 1.95.0.
@@ -248,6 +333,7 @@ impl Token {
     }
 
     #[inline]
+    #[cfg(test)]
     pub(super) fn set_escaped(&mut self, escaped: bool) {
         /*
         // Original version. Perf regressed in Rust 1.95.0.
@@ -268,6 +354,7 @@ impl Token {
     }
 
     #[inline]
+    #[cfg(test)]
     pub(super) fn set_has_separator(&mut self, value: bool) {
         /*
         // Original version. Perf regressed in Rust 1.95.0.
@@ -341,6 +428,7 @@ impl Token {
     /// This implementation produces `mov byte ptr [rdi + N], sil` on both affected and unaffected Rust versions.
     #[expect(clippy::inline_always)]
     #[inline(always)] // So `shift` is statically known
+    #[cfg(test)]
     unsafe fn write_bool(&mut self, shift: usize, value: bool) {
         // Byte offset depends on endianness of the system
         let offset = if cfg!(target_endian = "little") { shift / 8 } else { 15 - (shift / 8) };
@@ -374,7 +462,32 @@ impl Token {
 
 #[cfg(test)]
 mod test {
-    use super::{Kind, Span, Token};
+    use super::{Kind, ScanState, Span, Token};
+
+    #[test]
+    fn scan_state_constructs_every_kind_and_flag_combination() {
+        for kind in Kind::VARIANTS {
+            for flags in 0..8 {
+                let mut state = ScanState::default();
+                state.set_start(u32::MAX - 2);
+                state.set_is_on_new_line(flags & 1 != 0);
+                state.set_escaped(flags & 2 != 0);
+                state.set_has_separator(flags & 4 != 0);
+                // Boundary bookkeeping must never leak into the token kind or unused bits.
+                state.set_has_trivia();
+                let token = state.finish(kind, u32::MAX);
+                assert_eq!(token.kind(), kind);
+                assert_eq!(token.span(), Span::new(u32::MAX - 2, u32::MAX));
+                assert_eq!(token.is_on_new_line(), flags & 1 != 0);
+                assert_eq!(token.escaped(), flags & 2 != 0);
+                assert_eq!(token.has_separator(), flags & 4 != 0);
+                assert_eq!(token.0 >> 96, 0);
+                let rescanned = ScanState::from_token(token);
+                assert!(!rescanned.has_trivia());
+                assert_eq!(rescanned.finish(kind, u32::MAX), token);
+            }
+        }
+    }
 
     // Test size of `Token`
     const _: () = assert!(size_of::<Token>() == 16);

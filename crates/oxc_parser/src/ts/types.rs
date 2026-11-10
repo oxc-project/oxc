@@ -91,22 +91,32 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn is_start_of_function_type_or_constructor_type(&mut self) -> bool {
         match self.cur_kind() {
             Kind::LAngle | Kind::New => true,
-            Kind::Abstract => self.lexer.peek_token().kind() == Kind::New,
+            Kind::Abstract => self.lexer.peek_token_after(&self.token).kind() == Kind::New,
             Kind::LParen => {
                 // Ordinary parameter names need only token lookahead. Patterns and modifiers
                 // still use the parser below, including its error checks.
                 let checkpoint = self.lexer.checkpoint();
-                let second = self.lexer.next_token().kind();
+                let mut lookahead = self.token;
+                self.lexer.advance_normal(&mut lookahead);
+                let second = lookahead.kind();
                 let simple = if matches!(second, Kind::RParen | Kind::Dot3) {
                     Some(true)
                 } else if (second.is_binding_identifier() && !second.is_modifier_kind())
                     || second == Kind::This
                 {
-                    let third = self.lexer.next_token().kind();
+                    let third = {
+                        self.lexer.advance_normal(&mut lookahead);
+                        lookahead
+                    }
+                    .kind();
                     Some(
                         matches!(third, Kind::Colon | Kind::Comma | Kind::Question | Kind::Eq)
-                            || (third == Kind::RParen
-                                && self.lexer.next_token().kind() == Kind::Arrow),
+                            || (third == Kind::RParen && {
+                                self.lexer.advance_normal(&mut lookahead);
+                                lookahead
+                            }
+                            .kind()
+                                == Kind::Arrow),
                     )
                 } else {
                     None
@@ -492,7 +502,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 TSType::new_ts_literal_type(span, TSLiteral::TemplateLiteral(self.alloc(literal)), self)
             }
             Kind::Minus => {
-                if self.lexer.peek_token().kind().is_number() {
+                if self.lexer.peek_token_after(&self.token).kind().is_number() {
                     let minus_start = self.cur_start();
                     self.bump_any(); // bump `-`
                     self.parse_literal_type_negative(minus_start)
@@ -532,7 +542,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
             Kind::Asserts => {
                 // Peek the token after `asserts` to check if this is an asserts type predicate.
-                let next = self.lexer.peek_token();
+                let next = self.lexer.peek_token_after(&self.token);
                 if next.kind().is_identifier_name() && !next.is_on_new_line() {
                     let asserts_start = self.cur_start();
                     self.bump_any(); // bump `asserts`
@@ -550,7 +560,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let token = self.cur_token();
         // Escaped keywords are allowed as the first part of a qualified type name,
         // but not as keyword types. Keep lookahead only for this uncommon case.
-        if token.escaped() && self.lexer.peek_token().kind() == Kind::Dot {
+        if token.escaped() && self.lexer.peek_token_after(&self.token).kind() == Kind::Dot {
             return self.parse_type_reference();
         }
         self.bump_any();
@@ -617,7 +627,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             | Kind::NoSubstitutionTemplate
             | Kind::TemplateHead => true,
             Kind::Function => !in_start_of_parameter,
-            Kind::Minus => !in_start_of_parameter && self.lexer.peek_token().kind().is_number(),
+            Kind::Minus => {
+                !in_start_of_parameter
+                    && self.lexer.peek_token_after(&self.token).kind().is_number()
+            }
             Kind::LParen => {
                 !in_start_of_parameter
                     && self.lookahead(Self::is_start_of_parenthesized_or_function_type)
@@ -1064,7 +1077,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let label = if self.at(Kind::Ident) {
             let ident = self.parse_known_identifier_name();
             if self.at(Kind::Colon)
-                || (self.at(Kind::Question) && self.lexer.peek_token().kind() == Kind::Colon)
+                || (self.at(Kind::Question)
+                    && self.lexer.peek_token_after(&self.token).kind() == Kind::Colon)
             {
                 Some(ident)
             } else {
@@ -1436,7 +1450,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.cur_kind().is_identifier_name() {
             return None;
         }
-        let next = self.lexer.peek_token();
+        let next = self.lexer.peek_token_after(&self.token);
         if next.kind() != Kind::Is || next.is_on_new_line() {
             return None;
         }
@@ -1764,7 +1778,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             | Kind::Slash
             | Kind::SlashEq => true,
             Kind::Import => {
-                matches!(self.lexer.peek_token().kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
+                matches!(
+                    self.lexer.peek_token_after(&self.token).kind(),
+                    Kind::LParen | Kind::LAngle | Kind::Dot
+                )
             }
             _ => false,
         }

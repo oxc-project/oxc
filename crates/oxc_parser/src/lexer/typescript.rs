@@ -1,6 +1,6 @@
 use crate::config::LexerConfig as Config;
 
-use super::{Kind, Lexer, Token};
+use super::{Kind, Lexer, ScanState, Token};
 
 impl<C: Config> Lexer<'_, C> {
     /// Re-tokenize `<<`, `<=`, or `<<=` to `<`.
@@ -23,10 +23,11 @@ impl<C: Config> Lexer<'_, C> {
     /// If the speculative parse fails and `try_parse` rewinds, `truncate` leaves this `<`
     /// as the last collected token, and the caller (`expression.rs`) restores the original
     /// compound token over it via `rewrite_last_collected_token`.
-    pub(crate) fn re_lex_as_typescript_l_angle(&mut self, offset: u32) -> Token {
-        self.token.set_start(self.offset() - offset);
+    pub(crate) fn re_lex_as_typescript_l_angle(&mut self, current: Token, offset: u32) -> Token {
+        let state = &mut ScanState::from_token(current);
+        state.set_start(self.offset() - offset);
         self.source.back(offset as usize - 1);
-        let token = self.finish_re_lex(Kind::LAngle);
+        let token = self.finish_re_lex(*state, Kind::LAngle);
         self.rewrite_last_collected_token(token);
         token
     }
@@ -45,9 +46,10 @@ impl<C: Config> Lexer<'_, C> {
     /// and the `>` being replaced is the closing bracket, encountered later during
     /// the parse. Since both the original push and the Replace are at a post-checkpoint
     /// position, `truncate(checkpoint.tokens_len)` on rewind removes it automatically.
-    pub(crate) fn re_lex_as_typescript_r_angle(&mut self, offset: u32) -> Token {
-        self.token.set_start(self.offset() - offset);
+    pub(crate) fn re_lex_as_typescript_r_angle(&mut self, current: Token, offset: u32) -> Token {
+        let state = &mut ScanState::from_token(current);
+        state.set_start(self.offset() - offset);
         self.source.back(offset as usize - 1);
-        self.finish_re_lex(Kind::RAngle)
+        self.finish_re_lex(*state, Kind::RAngle)
     }
 }

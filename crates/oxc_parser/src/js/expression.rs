@@ -211,7 +211,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             // It is a Syntax Error if this production has a [Yield] parameter.
             Kind::Yield if ctx.has_yield() => {
-                let next_token = self.lexer.peek_token();
+                let next_token = self.lexer.peek_token_after(&self.token);
                 let looks_like_yield_expression =
                     !next_token.is_on_new_line() && next_token.kind().is_after_await_or_yield();
                 self.error(diagnostics::identifier_generator(
@@ -284,7 +284,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Function => self.parse_function_expression(self.cur_start(), false),
             Kind::Async
                 if {
-                    let token = self.lexer.peek_token();
+                    let token = self.lexer.peek_token_after(&self.token);
                     token.kind() == Kind::Function && !token.is_on_new_line()
                 } =>
             {
@@ -328,7 +328,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         // Capture annotation flags before bumping `(` since bump resets them
         let no_side_effects_comments =
-            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments(self.cur_start());
         self.bump_any(); // `bump` `(`
         let expr_start = self.cur_start();
         let (expression, comma_start) = self.context(Context::In, Context::Decorator, |p| {
@@ -859,7 +859,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         parse: impl FnOnce(&mut Self) -> Expression<'a>,
     ) -> Expression<'a> {
-        let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
+        let pure_comments =
+            self.lexer.trivia_builder.previous_token_pure_comments(self.cur_start());
         let mut expr = parse(self);
         if let Some(comments) = pure_comments {
             self.apply_pure_comments_to_call(comments, &mut expr);
@@ -948,7 +949,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 Kind::QuestionDot if allow_optional_chain => {
                     // Fast check to avoid checkpoint/rewind in common cases
-                    let next_kind = self.lexer.peek_token().kind();
+                    let next_kind = self.lexer.peek_token_after(&self.token).kind();
                     if next_kind == Kind::LBrack
                         || next_kind.is_identifier_or_keyword()
                         || next_kind.is_template_start_of_tagged_template()
@@ -1401,7 +1402,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let lhs = if kind == Kind::Ident {
             // Identifiers cannot start a unary or prefix-update expression. Parse their
             // suffixes directly, keeping pure annotations inside the postfix update.
-            let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
+            let pure_comments =
+                self.lexer.trivia_builder.previous_token_pure_comments(self.cur_start());
             let primary = self.parse_plain_identifier_expression();
             self.parse_primary_expression_rest(lhs_start, primary, pure_comments)
         } else if self.ctx.has_in() && kind == Kind::PrivateIdentifier {
@@ -1414,7 +1416,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.parse_unary_expression_or_higher(lhs_start)
         } else {
             // Most operands start with a primary expression. Skip unary/update dispatch.
-            let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
+            let pure_comments =
+                self.lexer.trivia_builder.previous_token_pure_comments(self.cur_start());
             let primary = self.parse_primary_expression();
             self.parse_primary_expression_rest(lhs_start, primary, pure_comments)
         };
@@ -1643,12 +1646,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
         let no_side_effects_comments =
-            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments(self.cur_start());
         let start = self.cur_start();
         let lhs_parenthesized = self.at(Kind::LParen);
         let kind = self.cur_kind();
         let lhs = if matches!(kind, Kind::Ident | Kind::This) || kind.is_literal() {
-            let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
+            let pure_comments =
+                self.lexer.trivia_builder.previous_token_pure_comments(self.cur_start());
             let primary = match kind {
                 Kind::Ident => {
                     let (span, name) = self.parse_identifier_kind(Kind::Ident);
@@ -1704,8 +1708,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // `() => {}`, `(x) => {}`, `async x => {}`
                 let arrow_expr = match kind {
                     Kind::LParen if !self.is_ts && !self.ctx.has_decorator() => {
-                        let pure_comments =
-                            self.lexer.trivia_builder.previous_token_pure_comments();
+                        let pure_comments = self
+                            .lexer
+                            .trivia_builder
+                            .previous_token_pure_comments(self.cur_start());
                         match self.try_parse_arrow_function_expression::<true>(
                             allow_return_type_in_arrow_function,
                         ) {
@@ -1939,7 +1945,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// - Next token is `/` (division or regex literal)
     /// - Next token cannot start an expression (`)`, `}`, `;`, etc.)
     fn is_unambiguous_await(&mut self) -> bool {
-        let token = self.lexer.peek_token();
+        let token = self.lexer.peek_token_after(&self.token);
 
         // Line break after await makes it ambiguous (could be ASI)
         if token.is_on_new_line() {
@@ -2054,7 +2060,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // same line) can start the operand of a `YieldExpression`. That is a single-token
             // decision, so peek instead of running a full `lookahead` checkpoint/rewind. With
             // `is_await = false` the worker reduces to exactly this (mirrors `is_unambiguous_await`).
-            let token = self.lexer.peek_token();
+            let token = self.lexer.peek_token_after(&self.token);
             return !token.is_on_new_line() && token.kind().is_after_await_or_yield();
         }
         false

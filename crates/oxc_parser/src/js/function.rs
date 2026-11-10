@@ -23,7 +23,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn at_function_with_async(&mut self) -> bool {
         self.at(Kind::Function)
             || self.at(Kind::Async) && {
-                let token = self.lexer.peek_token();
+                let token = self.lexer.peek_token_after(&self.token);
                 token.kind() == Kind::Function && !token.is_on_new_line()
             }
     }

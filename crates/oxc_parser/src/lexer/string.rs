@@ -5,7 +5,7 @@ use oxc_str::{JSStr, JSStrBuilder};
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, Span, Token, cold_branch,
+    Kind, Lexer, ScanState, Span, Token, cold_branch,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -50,7 +50,7 @@ fn find_string_chunk_end<const DELIMITER: u8>(
 /// `$table` must be a `SafeByteMatchTable`.
 /// `$table` must only match `$delimiter`, '\', '\r' or '\n'.
 macro_rules! handle_string_literal {
-    ($lexer:ident, $delimiter:literal, $table:ident) => {{
+    ($lexer:ident, $state:ident, $delimiter:literal, $table:ident) => {{
         debug_assert!($delimiter.is_ascii());
 
         // Skip opening quote.
@@ -67,7 +67,7 @@ macro_rules! handle_string_literal {
                 // out-of-line keeps the `OxcDiagnostic` return buffer out of this handler's
                 // stack frame (matching the sibling `\\` and line-break arms below).
                 return cold_branch(|| {
-                    $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
+                    $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range(*$state)));
                     Kind::Undetermined
                 });
             },
@@ -83,14 +83,14 @@ macro_rules! handle_string_literal {
                 Kind::Str
             }
             b'\\' => cold_branch(|| {
-                handle_string_literal_escape!($lexer, $delimiter, $table, after_opening_quote)
+                handle_string_literal_escape!($lexer, $state, $delimiter, $table, after_opening_quote)
             }),
             _ => {
                 // Line break. This is impossible in valid JS, so cold path.
                 cold_branch(|| {
                     debug_assert!(matches!(next_byte, b'\r' | b'\n'));
                     $lexer.consume_char();
-                    $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
+                    $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range(*$state)));
                     Kind::Undetermined
                 })
             }
@@ -99,7 +99,7 @@ macro_rules! handle_string_literal {
 }
 
 macro_rules! handle_string_literal_escape {
-    ($lexer:ident, $delimiter:literal, $table:ident, $after_opening_quote:ident) => {{
+    ($lexer:ident, $state:ident, $delimiter:literal, $table:ident, $after_opening_quote:ident) => {{
         // Create arena string to hold unescaped string.
         // We don't know how long string will end up being. Take a guess that total length
         // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
@@ -117,7 +117,7 @@ macro_rules! handle_string_literal_escape {
 
             // Consume escape sequence and add char to `str`
             let mut is_valid_escape_sequence = true;
-            $lexer.read_string_escape_sequence(&mut str, false, &mut is_valid_escape_sequence);
+            $lexer.read_string_escape_sequence(*$state, &mut str, false, &mut is_valid_escape_sequence);
             if !is_valid_escape_sequence {
                 let range = Span::new(escape_start_offset, $lexer.offset());
                 $lexer.error(diagnostics::invalid_escape_sequence(range));
@@ -128,7 +128,7 @@ macro_rules! handle_string_literal_escape {
             let remaining = $lexer.source.remaining().as_bytes();
             let Some(end) = find_string_chunk_end::<$delimiter>(remaining, &$table) else {
                 $lexer.source.advance_to_end();
-                $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
+                $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range(*$state)));
                 return Kind::Undetermined;
             };
             let b = remaining[end];
@@ -156,14 +156,14 @@ macro_rules! handle_string_literal_escape {
                     return cold_branch(|| {
                         debug_assert!(matches!(b, b'\r' | b'\n'));
                         $lexer.consume_char();
-                        $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
+                        $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range(*$state)));
                         Kind::Undetermined
                     });
                 }
             }
         }
 
-        $lexer.save_js_string(str.into_js_str());
+        $lexer.save_js_string($state, str.into_js_str());
 
         Kind::Str
     }};
@@ -174,24 +174,30 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Read string literal delimited with `"`.
     /// # SAFETY
     /// Next character must be `"`.
-    pub(super) unsafe fn read_string_literal_double_quote(&mut self) -> Kind {
+    pub(super) unsafe fn read_string_literal_double_quote(
+        &mut self,
+        state: &mut ScanState,
+    ) -> Kind {
         // SAFETY: Caller guarantees next char is `"`, which is ASCII.
         // b'"' is an ASCII byte. `DOUBLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
-        unsafe { handle_string_literal!(self, b'"', DOUBLE_QUOTE_STRING_END_TABLE) }
+        unsafe { handle_string_literal!(self, state, b'"', DOUBLE_QUOTE_STRING_END_TABLE) }
     }
 
     /// Read string literal delimited with `'`.
     /// # SAFETY
     /// Next character must be `'`.
-    pub(super) unsafe fn read_string_literal_single_quote(&mut self) -> Kind {
+    pub(super) unsafe fn read_string_literal_single_quote(
+        &mut self,
+        state: &mut ScanState,
+    ) -> Kind {
         // SAFETY: Caller guarantees next char is `'`, which is ASCII.
         // b'\'' is an ASCII byte. `SINGLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
-        unsafe { handle_string_literal!(self, b'\'', SINGLE_QUOTE_STRING_END_TABLE) }
+        unsafe { handle_string_literal!(self, state, b'\'', SINGLE_QUOTE_STRING_END_TABLE) }
     }
 
-    fn save_js_string(&mut self, value: JSStr<'a>) {
-        self.escaped_strings.insert(self.token.start(), value);
-        self.token.set_escaped(true);
+    fn save_js_string(&mut self, state: &mut ScanState, value: JSStr<'a>) {
+        self.escaped_strings.insert(state.start(), value);
+        state.set_escaped(true);
     }
 
     pub(crate) fn get_js_string(&self, token: Token) -> JSStr<'a> {
@@ -209,16 +215,16 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Save the string if it is escaped
     /// This reduces the overall memory consumption while keeping the `Token` size small
     /// Strings without escaped values can be retrieved as is from the token span
-    pub(super) fn save_string(&mut self, has_escape: bool, s: &'a str) {
+    pub(super) fn save_string(&mut self, state: &mut ScanState, has_escape: bool, s: &'a str) {
         if has_escape {
-            self.save_escaped_string(s);
+            self.save_escaped_string(state, s);
         }
     }
 
     #[cold]
-    fn save_escaped_string(&mut self, s: &'a str) {
-        self.escaped_strings.insert(self.token.start(), s.into());
-        self.token.set_escaped(true);
+    fn save_escaped_string(&mut self, state: &mut ScanState, s: &'a str) {
+        self.escaped_strings.insert(state.start(), s.into());
+        state.set_escaped(true);
     }
 
     pub(crate) fn get_string(&self, token: Token) -> &'a str {

@@ -474,7 +474,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any(); // bump `export`
         // export /* @__NO_SIDE_EFFECTS__ */ ...
         let no_side_effects_comments =
-            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments(self.cur_start());
         // `export` is unambiguously module syntax (ECMA-262 §16.2.3): commit to the
         // Module goal so the declaration parses under `Await` on the first pass and
         // isn't reparsed. e.g. `@foo export default class C { x = await + 1 }`
@@ -524,7 +524,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Eq if self.is_ts => ModuleDeclaration::TSExportAssignment(
                 self.parse_ts_export_assignment_declaration(start),
             ),
-            Kind::As if self.is_ts && self.lexer.peek_token().kind() == Kind::Namespace => {
+            Kind::As
+                if self.is_ts
+                    && self.lexer.peek_token_after(&self.token).kind() == Kind::Namespace =>
+            {
                 // `export as namespace ...`
                 ModuleDeclaration::TSNamespaceExportDeclaration(
                     self.parse_ts_export_namespace(start),
@@ -538,7 +541,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ),
             Kind::LCurly => self.parse_export_named_specifiers(start, ImportOrExportKind::Value),
             Kind::Type if self.is_ts => {
-                let next_kind = self.lexer.peek_token().kind();
+                let next_kind = self.lexer.peek_token_after(&self.token).kind();
 
                 match next_kind {
                     // `export type { ...`
@@ -720,7 +723,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         // export default /* @__NO_SIDE_EFFECTS__ */ ...
         let no_side_effects_comments =
-            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments(self.cur_start());
 
         // export default @decorator ...
         if self.at(Kind::At) {
@@ -750,7 +753,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let kind = self.cur_kind();
         if matches!(kind, Kind::Abstract | Kind::Async | Kind::Interface) {
             let modifier_start = self.cur_start();
-            let next = self.lexer.peek_token();
+            let next = self.lexer.peek_token_after(&self.token);
             if !next.is_on_new_line() {
                 // export default abstract class C {}
                 if self.is_ts && kind == Kind::Abstract && next.kind() == Kind::Class {

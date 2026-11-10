@@ -2,42 +2,42 @@ use oxc_syntax::identifier::{is_identifier_part_ascii, is_identifier_start};
 
 use crate::{config::LexerConfig as Config, diagnostics};
 
-use super::{Kind, Lexer, Span, cold_branch};
+use super::{Kind, Lexer, ScanState, Span, cold_branch};
 
 impl<C: Config> Lexer<'_, C> {
     /// 12.9.3 Numeric Literals with `0` prefix
-    pub(super) fn read_zero(&mut self) -> Kind {
+    pub(super) fn read_zero(&mut self, state: &mut ScanState) -> Kind {
         match self.peek_byte() {
-            Some(b'b' | b'B') => self.read_non_decimal(Kind::Binary),
-            Some(b'o' | b'O') => self.read_non_decimal(Kind::Octal),
-            Some(b'x' | b'X') => self.read_non_decimal(Kind::Hex),
+            Some(b'b' | b'B') => self.read_non_decimal(state, Kind::Binary),
+            Some(b'o' | b'O') => self.read_non_decimal(state, Kind::Octal),
+            Some(b'x' | b'X') => self.read_non_decimal(state, Kind::Hex),
             Some(b'e' | b'E') => {
                 self.consume_char();
-                let kind = self.read_decimal_exponent();
+                let kind = self.read_decimal_exponent(state);
                 self.check_after_numeric_literal(kind)
             }
             Some(b'.') => {
                 self.consume_char();
-                self.decimal_literal_after_decimal_point_after_digits()
+                self.decimal_literal_after_decimal_point_after_digits(state)
             }
             Some(b'n') => {
                 self.consume_char();
                 self.check_after_numeric_literal(Kind::DecimalBigInt)
             }
-            Some(n) if n.is_ascii_digit() => self.read_legacy_octal(),
+            Some(n) if n.is_ascii_digit() => self.read_legacy_octal(state),
             _ => self.check_after_numeric_literal(Kind::Decimal),
         }
     }
 
-    pub(super) fn decimal_literal_after_first_digit(&mut self) -> Kind {
-        self.read_decimal_digits_after_first_digit();
+    pub(super) fn decimal_literal_after_first_digit(&mut self, state: &mut ScanState) -> Kind {
+        self.read_decimal_digits_after_first_digit(state);
         if self.next_ascii_byte_eq(b'.') {
-            return self.decimal_literal_after_decimal_point_after_digits();
+            return self.decimal_literal_after_decimal_point_after_digits(state);
         } else if self.next_ascii_byte_eq(b'n') {
             return self.check_after_numeric_literal(Kind::DecimalBigInt);
         }
 
-        let kind = self.optional_exponent().unwrap_or(Kind::Decimal);
+        let kind = self.optional_exponent(state).unwrap_or(Kind::Decimal);
         self.check_after_numeric_literal(kind)
     }
 
@@ -50,7 +50,7 @@ impl<C: Config> Lexer<'_, C> {
     // arm. Forcing inlining monomorphizes each `0x`/`0o`/`0b` call site on its constant `kind`.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn read_non_decimal(&mut self, kind: Kind) -> Kind {
+    fn read_non_decimal(&mut self, state: &mut ScanState, kind: Kind) -> Kind {
         self.consume_char();
 
         if self.peek_byte().is_some_and(|b| kind.matches_number_byte(b)) {
@@ -69,7 +69,7 @@ impl<C: Config> Lexer<'_, C> {
                     // This seems to be a waste. It also requires us to put this
                     // call here instead of after we ensure the next character
                     // is a number character
-                    self.token.set_has_separator(true);
+                    state.set_has_separator(true);
                     if self.peek_byte().is_some_and(|b| kind.matches_number_byte(b)) {
                         self.consume_char();
                     } else {
@@ -100,7 +100,7 @@ impl<C: Config> Lexer<'_, C> {
         self.check_after_numeric_literal(final_kind)
     }
 
-    fn read_legacy_octal(&mut self) -> Kind {
+    fn read_legacy_octal(&mut self, state: &mut ScanState) -> Kind {
         let mut kind = Kind::Octal;
         loop {
             match self.peek_byte() {
@@ -119,19 +119,19 @@ impl<C: Config> Lexer<'_, C> {
             // allow 08.5 and 09.5
             Some(b'.') if kind == Kind::Decimal => {
                 self.consume_char();
-                self.decimal_literal_after_decimal_point_after_digits()
+                self.decimal_literal_after_decimal_point_after_digits(state)
             }
             // allow 08e1, 09e1, and their uppercase exponent forms
             Some(b'e' | b'E') if kind == Kind::Decimal => {
                 self.consume_char();
-                let kind = self.read_decimal_exponent();
+                let kind = self.read_decimal_exponent(state);
                 self.check_after_numeric_literal(kind)
             }
             _ => self.check_after_numeric_literal(kind),
         }
     }
 
-    fn read_decimal_exponent(&mut self) -> Kind {
+    fn read_decimal_exponent(&mut self, state: &mut ScanState) -> Kind {
         let kind = match self.peek_byte() {
             Some(b'-') => {
                 self.consume_char();
@@ -143,11 +143,11 @@ impl<C: Config> Lexer<'_, C> {
             }
             _ => Kind::PositiveExponential,
         };
-        self.read_decimal_digits();
+        self.read_decimal_digits(state);
         kind
     }
 
-    fn read_decimal_digits(&mut self) {
+    fn read_decimal_digits(&mut self, state: &mut ScanState) {
         if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
             self.consume_char();
         } else {
@@ -155,10 +155,10 @@ impl<C: Config> Lexer<'_, C> {
             return;
         }
 
-        self.read_decimal_digits_after_first_digit();
+        self.read_decimal_digits_after_first_digit(state);
     }
 
-    fn read_decimal_digits_after_first_digit(&mut self) {
+    fn read_decimal_digits_after_first_digit(&mut self, state: &mut ScanState) {
         while let Some(b) = self.peek_byte() {
             match b {
                 b'_' => {
@@ -167,7 +167,7 @@ impl<C: Config> Lexer<'_, C> {
                     // This seems to be a waste. It also requires us to put this
                     // call here instead of after we ensure the next character
                     // is an ASCII digit
-                    self.token.set_has_separator(true);
+                    state.set_has_separator(true);
                     if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
                         self.consume_char();
                     } else {
@@ -186,32 +186,32 @@ impl<C: Config> Lexer<'_, C> {
         }
     }
 
-    pub(super) fn decimal_literal_after_decimal_point(&mut self) -> Kind {
+    pub(super) fn decimal_literal_after_decimal_point(&mut self, state: &mut ScanState) -> Kind {
         // `read_dot` has already established the required first decimal digit.
         debug_assert!(self.peek_byte().is_some_and(|b| b.is_ascii_digit()));
         self.consume_char();
-        self.read_decimal_digits_after_first_digit();
-        self.optional_exponent();
+        self.read_decimal_digits_after_first_digit(state);
+        self.optional_exponent(state);
         self.check_after_numeric_literal(Kind::Float)
     }
 
-    fn decimal_literal_after_decimal_point_after_digits(&mut self) -> Kind {
-        self.optional_decimal_digits();
-        self.optional_exponent();
+    fn decimal_literal_after_decimal_point_after_digits(&mut self, state: &mut ScanState) -> Kind {
+        self.optional_decimal_digits(state);
+        self.optional_exponent(state);
         self.check_after_numeric_literal(Kind::Float)
     }
 
-    fn optional_decimal_digits(&mut self) {
+    fn optional_decimal_digits(&mut self, state: &mut ScanState) {
         if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
             self.consume_char();
-            self.read_decimal_digits_after_first_digit();
+            self.read_decimal_digits_after_first_digit(state);
         }
     }
 
-    fn optional_exponent(&mut self) -> Option<Kind> {
+    fn optional_exponent(&mut self, state: &mut ScanState) -> Option<Kind> {
         if matches!(self.peek_byte(), Some(b'e' | b'E')) {
             self.consume_char();
-            return Some(self.read_decimal_exponent());
+            return Some(self.read_decimal_exponent(state));
         }
         None
     }

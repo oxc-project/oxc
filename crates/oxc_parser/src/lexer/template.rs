@@ -6,7 +6,7 @@ use oxc_str::{JSStr, JSStrBuilder};
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, SourcePosition, Token, cold_branch,
+    Kind, Lexer, ScanState, SourcePosition, Token, cold_branch,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -23,7 +23,12 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// and so does not require saving to `lexer.escaped_templates`.
     /// If an escape or `\r` is found, control is passed to `template_literal_escaped` which builds
     /// the unescaped string. This division keeps the path for common case as fast as possible.
-    pub(super) fn read_template_literal(&mut self, substitute: Kind, tail: Kind) -> Kind {
+    pub(super) fn read_template_literal(
+        &mut self,
+        state: &mut ScanState,
+        substitute: Kind,
+        tail: Kind,
+    ) -> Kind {
         let mut ret = substitute;
 
         byte_search! {
@@ -63,19 +68,19 @@ impl<'a, C: Config> Lexer<'a, C> {
                     b'\r' => {
                         // SAFETY: Byte at `pos` is `\r`.
                         // `pos` has only been advanced relative to `self.source.position()`.
-                        return unsafe { self.template_literal_carriage_return(pos, substitute, tail) };
+                        return unsafe { self.template_literal_carriage_return(state, pos, substitute, tail) };
                     }
                     _ => {
                         // `TEMPLATE_LITERAL_TABLE` only matches `$`, '`', `\r` and `\`
                         debug_assert_eq!(next_byte, b'\\');
                         // SAFETY: Byte at `pos` is `\`.
                         // `pos` has only been advanced relative to `self.source.position()`.
-                        return unsafe { self.template_literal_backslash(pos, substitute, tail) };
+                        return unsafe { self.template_literal_backslash(state, pos, substitute, tail) };
                     }
                 }
             },
             handle_eof: {
-                self.error(diagnostics::unterminated_string(self.unterminated_range()));
+                self.error(diagnostics::unterminated_string(self.unterminated_range(*state)));
                 return Kind::Undetermined;
             },
         };
@@ -90,6 +95,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// * `pos` must not be before `self.source.position()`.
     unsafe fn template_literal_carriage_return(
         &mut self,
+        state: &mut ScanState,
         mut pos: SourcePosition<'a>,
         substitute: Kind,
         tail: Kind,
@@ -106,7 +112,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         if pos.is_end_of(&self.source) {
             return cold_branch(|| {
                 self.source.advance_to_end();
-                self.error(diagnostics::unterminated_string(self.unterminated_range()));
+                self.error(diagnostics::unterminated_string(self.unterminated_range(*state)));
                 Kind::Undetermined
             });
         }
@@ -133,7 +139,9 @@ impl<'a, C: Config> Lexer<'a, C> {
         }
 
         // SAFETY: `chunk_start` is not after `pos`
-        unsafe { self.template_literal_escaped(str, pos, chunk_start, true, substitute, tail) }
+        unsafe {
+            self.template_literal_escaped(state, str, pos, chunk_start, true, substitute, tail)
+        }
     }
 
     /// Consume rest of template literal after a `\` escape is found.
@@ -143,6 +151,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// * `pos` must not be before `self.source.position()`.
     unsafe fn template_literal_backslash(
         &mut self,
+        state: &mut ScanState,
         pos: SourcePosition<'a>,
         substitute: Kind,
         tail: Kind,
@@ -158,13 +167,14 @@ impl<'a, C: Config> Lexer<'a, C> {
         self.source.set_position(after_backslash);
 
         let mut is_valid_escape_sequence = true;
-        self.read_string_escape_sequence(&mut str, true, &mut is_valid_escape_sequence);
+        self.read_string_escape_sequence(*state, &mut str, true, &mut is_valid_escape_sequence);
 
         // Continue search after escape
         let after_escape = self.source.position();
         // SAFETY: `pos` and `chunk_start` are the same
         unsafe {
             self.template_literal_escaped(
+                state,
                 str,
                 after_escape,
                 after_escape,
@@ -197,6 +207,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// `chunk_start` must not be after `pos`.
     unsafe fn template_literal_escaped(
         &mut self,
+        state: &mut ScanState,
         mut str: JSStrBuilder<'a>,
         pos: SourcePosition<'a>,
         mut chunk_start: SourcePosition<'a>,
@@ -304,7 +315,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                             // SAFETY: Next byte is `\`, which is ASCII, so `pos + 1` is UTF-8 char boundary.
                             let after_backslash = unsafe {pos.add(1)};
                             self.source.set_position(after_backslash);
-                            self.read_string_escape_sequence(&mut str, true, &mut is_valid_escape_sequence);
+                            self.read_string_escape_sequence(*state, &mut str, true, &mut is_valid_escape_sequence);
 
                             // Start next chunk after escape sequence
                             chunk_start = self.source.position();
@@ -325,28 +336,34 @@ impl<'a, C: Config> Lexer<'a, C> {
                 }
             },
             handle_eof: {
-                self.error(diagnostics::unterminated_string(self.unterminated_range()));
+                self.error(diagnostics::unterminated_string(self.unterminated_range(*state)));
                 return Kind::Undetermined;
             },
         };
 
-        self.save_template_string(is_valid_escape_sequence, str.into_js_str());
+        self.save_template_string(state, is_valid_escape_sequence, str.into_js_str());
 
         ret
     }
 
     /// Re-tokenize the current `}` token for `TemplateSubstitutionTail`
     /// See Section 12, the parser needs to re-tokenize on `TemplateSubstitutionTail`,
-    pub(crate) fn next_template_substitution_tail(&mut self) -> Token {
-        self.token.set_start(self.offset() - 1);
-        let kind = self.read_template_literal(Kind::TemplateMiddle, Kind::TemplateTail);
-        self.finish_next_retokenized(kind)
+    pub(crate) fn next_template_substitution_tail(&mut self, current: Token) -> Token {
+        let state = &mut ScanState::from_token(current);
+        state.set_start(self.offset() - 1);
+        let kind = self.read_template_literal(state, Kind::TemplateMiddle, Kind::TemplateTail);
+        self.finish_next_retokenized(*state, kind)
     }
 
     /// Save escaped template string
-    fn save_template_string(&mut self, is_valid_escape_sequence: bool, s: JSStr<'a>) {
-        self.escaped_templates.insert(self.token.start(), is_valid_escape_sequence.then_some(s));
-        self.token.set_escaped(true);
+    fn save_template_string(
+        &mut self,
+        state: &mut ScanState,
+        is_valid_escape_sequence: bool,
+        s: JSStr<'a>,
+    ) {
+        self.escaped_templates.insert(state.start(), is_valid_escape_sequence.then_some(s));
+        state.set_escaped(true);
     }
 
     pub(crate) fn get_template_string(&self, start: u32) -> Option<JSStr<'a>> {
