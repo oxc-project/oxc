@@ -430,25 +430,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.parse_normal_list_breakable(open, close, |p| Some(f(p)))
     }
 
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    pub(crate) fn parse_normal_list_into<F, T>(
-        &mut self,
-        list: &mut BufferedVec<'a, T>,
-        close: Kind,
-        mut parse_element: F,
-    ) where
-        F: FnMut(&mut Self) -> T,
-    {
-        loop {
-            if self.at(close) || self.has_fatal_error() {
-                break;
-            }
-            let element = parse_element(self);
-            list.push(element);
-        }
-    }
-
     pub(crate) fn parse_normal_list_breakable<F, T>(
         &mut self,
         open: Kind,
