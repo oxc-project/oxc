@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, MemberExpression, StaticMemberExpression},
+    ast::{Expression, MemberExpression, StaticMemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -124,7 +124,7 @@ fn verify(node: &AstNode<'_>, report_span: Span, ctx: &LintContext<'_>) {
         }
         // `children = this.$slots.foo` — follow references of `children`
         AstKind::AssignmentExpression(assign) if assign.right.span() == node.kind().span() => {
-            if let AssignmentTarget::AssignmentTargetIdentifier(target) = &assign.left
+            if let Some(target) = assign.left.identifier()
                 && let Some(symbol_id) =
                     ctx.scoping().get_reference(target.reference_id()).symbol_id()
             {

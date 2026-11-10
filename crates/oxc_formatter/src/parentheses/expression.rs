@@ -620,12 +620,12 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, AssignmentExpression<'_>> {
             // - `a = b` = no parens
             // - `{ x } = obj` -> `({ x } = obj)` = needed to prevent parsing as block statement
             AstNodes::ExpressionStatement(_) => {
-                matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_))
+                matches!(self.left, AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(_))
             }
             // An embedded expression's root too, where it starts one (`starts_statement`)
             parent if f.context().is_embedded_root(parent) => {
                 starts_statement(parent, f)
-                    && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_))
+                    && matches!(self.left, AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(_))
             }
             // Concise arrow bodies always need parens,
             // otherwise the `{` of an object pattern would parse as a block body

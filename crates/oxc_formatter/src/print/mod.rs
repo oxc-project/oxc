@@ -428,6 +428,13 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, AssignmentTargetWithDefault<'a>> {
     }
 }
 
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ParenthesizedIdentifierAssignmentTarget<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // Prettier removes the parentheses
+        write!(f, self.target());
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, AssignmentTargetPropertyIdentifier<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, self.binding());
@@ -621,10 +628,10 @@ fn expression_statement_needs_semicolon<'a>(
         ExpressionLeftSide::AssignmentTarget(assignment) => {
             matches!(
                 assignment.as_ref(),
-                AssignmentTarget::ArrayAssignmentTarget(_)
-                    | AssignmentTarget::TSTypeAssertion(_)
-                    | AssignmentTarget::TSAsExpression(_)
-                    | AssignmentTarget::TSSatisfiesExpression(_)
+                AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(_)
+                    | AssignmentTargetMaybeParenthesized::TSTypeAssertion(_)
+                    | AssignmentTargetMaybeParenthesized::TSAsExpression(_)
+                    | AssignmentTargetMaybeParenthesized::TSSatisfiesExpression(_)
             )
         }
         ExpressionLeftSide::SimpleAssignmentTarget(assignment) => {

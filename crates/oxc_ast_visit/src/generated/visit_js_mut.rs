@@ -230,6 +230,22 @@ pub trait VisitJsMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_assignment_target_maybe_parenthesized(
+        &mut self,
+        it: &mut AssignmentTargetMaybeParenthesized<'a>,
+    ) {
+        walk_assignment_target_maybe_parenthesized(self, it);
+    }
+
+    #[inline]
+    fn visit_parenthesized_identifier_assignment_target(
+        &mut self,
+        it: &mut ParenthesizedIdentifierAssignmentTarget<'a>,
+    ) {
+        walk_parenthesized_identifier_assignment_target(self, it);
+    }
+
+    #[inline]
     fn visit_assignment_target(&mut self, it: &mut AssignmentTarget<'a>) {
         walk_assignment_target(self, it);
     }
@@ -1495,8 +1511,36 @@ pub mod walk_js_mut {
         let kind = AstType::AssignmentExpression;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_assignment_target(&mut it.left);
+        visitor.visit_assignment_target_maybe_parenthesized(&mut it.left);
         visitor.visit_expression(&mut it.right);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_assignment_target_maybe_parenthesized<'a, V: VisitJsMut<'a>>(
+        visitor: &mut V,
+        it: &mut AssignmentTargetMaybeParenthesized<'a>,
+    ) {
+        // No `AstType` for this type
+        match it {
+            AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(it) => {
+                visitor.visit_parenthesized_identifier_assignment_target(it)
+            }
+            match_assignment_target!(AssignmentTargetMaybeParenthesized) => {
+                visitor.visit_assignment_target(it.to_assignment_target_mut())
+            }
+        }
+    }
+
+    #[inline]
+    pub fn walk_parenthesized_identifier_assignment_target<'a, V: VisitJsMut<'a>>(
+        visitor: &mut V,
+        it: &mut ParenthesizedIdentifierAssignmentTarget<'a>,
+    ) {
+        let kind = AstType::ParenthesizedIdentifierAssignmentTarget;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_identifier_reference(&mut it.target);
         visitor.leave_node(kind);
     }
 
@@ -1623,7 +1667,7 @@ pub mod walk_js_mut {
         let kind = AstType::AssignmentTargetWithDefault;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_assignment_target(&mut it.binding);
+        visitor.visit_assignment_target_maybe_parenthesized(&mut it.binding);
         visitor.visit_expression(&mut it.init);
         visitor.leave_node(kind);
     }

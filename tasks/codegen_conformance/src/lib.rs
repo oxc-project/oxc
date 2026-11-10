@@ -16,10 +16,10 @@ use std::{
 
 use napi_derive::napi;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Box as ArenaBox, CloneIn};
 use oxc_ast::ast::{
-    ArrowFunctionExpression, AssignmentExpression, AssignmentTargetWithDefault,
-    ExportAllDeclaration, ExportFromDeclaration, Function, ImportDeclaration, WithClauseKeyword,
+    ArrowFunctionExpression, AssignmentTargetMaybeParenthesized, ExportAllDeclaration,
+    ExportFromDeclaration, Function, ImportDeclaration, WithClauseKeyword,
 };
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
@@ -116,7 +116,7 @@ fn codegen_impl(
     }
 
     let mut program = ret.program;
-    Normalize { preserve_parens }.visit_program(&mut program);
+    Normalize { allocator: &allocator, preserve_parens }.visit_program(&mut program);
 
     let codegen_options = CodegenOptions {
         comments: CommentOptions::disabled(),
@@ -137,12 +137,13 @@ fn codegen_impl(
 ///
 /// Each case below is a real difference in what the two representations can express,
 /// not a workaround for a printer bug.
-struct Normalize {
+struct Normalize<'a> {
+    allocator: &'a Allocator,
     /// `true` when the AST keeps its `ParenthesizedExpression` / `TSParenthesizedType` wrappers.
     preserve_parens: bool,
 }
 
-impl<'a> VisitMut<'a> for Normalize {
+impl<'a> VisitMut<'a> for Normalize<'a> {
     /// ESTree has no way to record that a function expression was parenthesized,
     /// which is what Oxc's `pife` flag tracks (and prints parentheses for).
     ///
@@ -165,23 +166,23 @@ impl<'a> VisitMut<'a> for Normalize {
         walk_mut::walk_arrow_function_expression(self, arrow);
     }
 
-    /// ESTree has no way to record that an identifier assignment target was parenthesized,
-    /// which is what Oxc's `left_parenthesized` flag tracks (and prints parentheses for).
+    /// ESTree has no way to record that an identifier assignment target was parenthesized
+    /// (`(a) = 1`, `[(a) = 1] = []`), which Oxc's `ParenthesizedIdentifierAssignmentTarget` does
+    /// (and prints parentheses for). ESTree serializes it as just the identifier.
     ///
     /// Unlike `pife`, `preserve_parens` does not help here - an assignment target never holds
     /// a `ParenthesizedExpression`, so the parentheses are gone from the ESTree AST either way.
-    fn visit_assignment_expression(&mut self, expr: &mut AssignmentExpression<'a>) {
-        expr.left_parenthesized = false;
-        walk_mut::walk_assignment_expression(self, expr);
-    }
-
-    /// As `visit_assignment_expression`, for `binding_parenthesized` in `[(a) = 1] = []`.
-    fn visit_assignment_target_with_default(
+    fn visit_assignment_target_maybe_parenthesized(
         &mut self,
-        target: &mut AssignmentTargetWithDefault<'a>,
+        target: &mut AssignmentTargetMaybeParenthesized<'a>,
     ) {
-        target.binding_parenthesized = false;
-        walk_mut::walk_assignment_target_with_default(self, target);
+        if let AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(paren) = target {
+            let ident = paren.target.clone_in(self.allocator);
+            *target = AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(
+                ArenaBox::new_in(ident, &self.allocator),
+            );
+        }
+        walk_mut::walk_assignment_target_maybe_parenthesized(self, target);
     }
 
     /// ESTree cannot distinguish `import "m"` from `import {} from "m"` - `specifiers` is `[]` for both.

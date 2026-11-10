@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget, BindingPattern,
-        CallExpression, Declaration, Expression, ObjectPropertyKind, PropertyKey, match_expression,
+        Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTargetMaybeParenthesized,
+        BindingPattern, CallExpression, Declaration, Expression, ObjectPropertyKind, PropertyKey,
+        match_expression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -146,12 +147,14 @@ impl Rule for NoThenable {
             AstKind::CallExpression(expr) => check_call_expression(expr, ctx),
             // foo.then = ...
             AstKind::AssignmentExpression(AssignmentExpression { left, .. }) => match left {
-                AssignmentTarget::ComputedMemberExpression(expr) => {
+                AssignmentTargetMaybeParenthesized::ComputedMemberExpression(expr) => {
                     if let Some(span) = check_expression(&expr.expression, ctx) {
                         ctx.diagnostic(class(span));
                     }
                 }
-                AssignmentTarget::StaticMemberExpression(expr) if expr.property.name == "then" => {
+                AssignmentTargetMaybeParenthesized::StaticMemberExpression(expr)
+                    if expr.property.name == "then" =>
+                {
                     ctx.diagnostic(class(expr.span));
                 }
                 _ => {}

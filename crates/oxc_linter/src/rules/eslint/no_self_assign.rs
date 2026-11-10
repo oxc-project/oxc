@@ -2,8 +2,9 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayExpressionElement, AssignmentTarget, AssignmentTargetMaybeDefault,
-        AssignmentTargetProperty, Expression, MemberExpression, ObjectProperty, ObjectPropertyKind,
-        SimpleAssignmentTarget, match_assignment_target, match_simple_assignment_target,
+        AssignmentTargetMaybeParenthesized, AssignmentTargetProperty, Expression, MemberExpression,
+        ObjectProperty, ObjectPropertyKind, SimpleAssignmentTarget, match_assignment_target,
+        match_simple_assignment_target,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -123,7 +124,18 @@ impl Rule for NoSelfAssign {
                 | AssignmentOperator::LogicalOr
                 | AssignmentOperator::LogicalNullish
         ) {
-            self.each_self_assignment(&assignment.left, &assignment.right, ctx);
+            match &assignment.left {
+                AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(left) => {
+                    if let Expression::Identifier(right) = assignment.right.without_parentheses()
+                        && left.target.name == right.name
+                    {
+                        ctx.diagnostic(no_self_assign_diagnostic(assignment.right.span()));
+                    }
+                }
+                left => {
+                    self.each_self_assignment(left.to_assignment_target(), &assignment.right, ctx);
+                }
+            }
         }
     }
 }

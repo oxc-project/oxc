@@ -3,9 +3,9 @@ use std::ops::Deref;
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, Class, ClassBody,
-        ClassElement, Expression, Function, MethodDefinition, PropertyDefinition, PropertyKey,
-        Statement, TSAccessibility,
+        ArrowFunctionExpression, AssignmentExpression, AssignmentTargetMaybeParenthesized, Class,
+        ClassBody, ClassElement, Expression, Function, MethodDefinition, PropertyDefinition,
+        PropertyKey, Statement, TSAccessibility,
     },
 };
 use oxc_ast_visit::VisitJs;
@@ -327,18 +327,26 @@ fn property_keys_match(a: &PropertyKey<'_>, b: &PropertyKey<'_>) -> bool {
     }
 }
 
-fn assigned_this_property_name<'a>(left: &AssignmentTarget<'a>) -> Option<JSStr<'a>> {
+fn assigned_this_property_name<'a>(
+    left: &AssignmentTargetMaybeParenthesized<'a>,
+) -> Option<JSStr<'a>> {
     let is_this_object =
         |expr: &Expression<'_>| matches!(expr.without_parentheses(), Expression::ThisExpression(_));
 
     match left {
-        AssignmentTarget::StaticMemberExpression(expr) if is_this_object(&expr.object) => {
+        AssignmentTargetMaybeParenthesized::StaticMemberExpression(expr)
+            if is_this_object(&expr.object) =>
+        {
             Some(expr.property.name.as_js_str())
         }
-        AssignmentTarget::ComputedMemberExpression(expr) if is_this_object(&expr.object) => {
+        AssignmentTargetMaybeParenthesized::ComputedMemberExpression(expr)
+            if is_this_object(&expr.object) =>
+        {
             expr.static_property_name()
         }
-        AssignmentTarget::PrivateFieldExpression(expr) if is_this_object(&expr.object) => {
+        AssignmentTargetMaybeParenthesized::PrivateFieldExpression(expr)
+            if is_this_object(&expr.object) =>
+        {
             Some(expr.field.name.as_js_str())
         }
         _ => None,

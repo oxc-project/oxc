@@ -1003,16 +1003,11 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     ///
     /// - returns `b` when called on `a: b = 1` in `({a: b = 1} = obj)`
     /// - returns `b` when called on `a: b` in `({a: b} = obj)`
+    /// - returns `b` when called on `a: (b) = 1` in `({a: (b) = 1} = obj)`
     pub fn identifier(&self) -> Option<&IdentifierReference<'a>> {
         match self {
             AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),
-            Self::AssignmentTargetWithDefault(target) => {
-                if let AssignmentTarget::AssignmentTargetIdentifier(id) = &target.binding {
-                    Some(id)
-                } else {
-                    None
-                }
-            }
+            Self::AssignmentTargetWithDefault(target) => target.binding.identifier(),
             _ => None,
         }
     }
@@ -1021,15 +1016,65 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     pub fn identifier_mut(&mut self) -> Option<&mut IdentifierReference<'a>> {
         match self {
             AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),
-            Self::AssignmentTargetWithDefault(target) => {
-                if let AssignmentTarget::AssignmentTargetIdentifier(id) = &mut target.binding {
-                    Some(id)
-                } else {
-                    None
-                }
-            }
+            Self::AssignmentTargetWithDefault(target) => target.binding.identifier_mut(),
             _ => None,
         }
+    }
+}
+
+impl<'a> AssignmentTargetMaybeParenthesized<'a> {
+    /// Returns the identifier being assigned to, whether parenthesized or not.
+    ///
+    /// ## Example
+    ///
+    /// - returns `a` when called on the left-hand side of `a = b`
+    /// - returns `a` when called on the left-hand side of `(a) = b`
+    /// - returns `None` when called on the left-hand side of `a.b = c`
+    pub fn identifier(&self) -> Option<&IdentifierReference<'a>> {
+        match self {
+            Self::AssignmentTargetIdentifier(ident) => Some(ident),
+            Self::ParenthesizedIdentifier(paren) => Some(&paren.target),
+            _ => None,
+        }
+    }
+
+    /// Returns the identifier being assigned to, whether parenthesized or not, as a mutable reference.
+    ///
+    /// See [`AssignmentTargetMaybeParenthesized::identifier`].
+    pub fn identifier_mut(&mut self) -> Option<&mut IdentifierReference<'a>> {
+        match self {
+            Self::AssignmentTargetIdentifier(ident) => Some(ident),
+            Self::ParenthesizedIdentifier(paren) => Some(&mut paren.target),
+            _ => None,
+        }
+    }
+
+    /// Returns the identifier name of this assignment target when it is simple like `a = b`.
+    ///
+    /// ## Example
+    ///
+    /// - returns `a` when called on the left-hand side of `a = b` or `(a) = b`
+    /// - returns `b` when called on the left-hand side of `a.b = b`
+    /// - returns `None` when called on the left-hand side of `a[b] = b`
+    pub fn get_identifier_name(&self) -> Option<&'a str> {
+        match self {
+            Self::ParenthesizedIdentifier(paren) => Some(paren.target.name.as_str()),
+            _ => self.as_assignment_target().and_then(AssignmentTarget::get_identifier_name),
+        }
+    }
+
+    /// Returns the expression inside of this assignment target, if applicable, and returns a reference to it.
+    ///
+    /// See [`AssignmentTarget::get_expression`].
+    pub fn get_expression(&self) -> Option<&Expression<'a>> {
+        self.as_assignment_target().and_then(AssignmentTarget::get_expression)
+    }
+
+    /// Returns the expression inside of this assignment target, if applicable, and returns a mutable reference to it.
+    ///
+    /// See [`AssignmentTarget::get_expression_mut`].
+    pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        self.as_assignment_target_mut().and_then(AssignmentTarget::get_expression_mut)
     }
 }
 

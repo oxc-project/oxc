@@ -463,6 +463,15 @@ impl<'a> GatherNodeParts<'a> for AssignmentTarget<'a> {
     }
 }
 
+impl<'a> GatherNodeParts<'a> for AssignmentTargetMaybeParenthesized<'a> {
+    fn gather<F: FnMut(&str)>(&self, f: &mut F) {
+        match self {
+            Self::ParenthesizedIdentifier(paren) => paren.target.gather(f),
+            match_assignment_target!(Self) => self.to_assignment_target().gather(f),
+        }
+    }
+}
+
 impl<'a> GatherNodeParts<'a> for SimpleAssignmentTarget<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
         match self {

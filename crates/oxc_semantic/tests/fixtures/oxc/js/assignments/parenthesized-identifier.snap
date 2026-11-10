@@ -1,0 +1,122 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/parenthesized-identifier.js
+---
+[
+  {
+    "children": [],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 0,
+        "name": "write",
+        "node": "VariableDeclarator(write)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Write)",
+            "id": 0,
+            "name": "write",
+            "node_id": 12,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Write)",
+            "id": 2,
+            "name": "write",
+            "node_id": 17,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Write)",
+            "id": 8,
+            "name": "write",
+            "node_id": 34,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Write)",
+            "id": 10,
+            "name": "write",
+            "node_id": 45,
+            "scope_id": 0
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 1,
+        "name": "readWrite",
+        "node": "VariableDeclarator(readWrite)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 4,
+            "name": "readWrite",
+            "node_id": 22,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 6,
+            "name": "readWrite",
+            "node_id": 27,
+            "scope_id": 0
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 2,
+        "name": "read",
+        "node": "VariableDeclarator(read)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 1,
+            "name": "read",
+            "node_id": 13,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 3,
+            "name": "read",
+            "node_id": 18,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 5,
+            "name": "read",
+            "node_id": 23,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 7,
+            "name": "read",
+            "node_id": 28,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 9,
+            "name": "read",
+            "node_id": 35,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 11,
+            "name": "read",
+            "node_id": 46,
+            "scope_id": 0
+          }
+        ]
+      }
+    ]
+  }
+]

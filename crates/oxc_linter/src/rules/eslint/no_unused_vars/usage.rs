@@ -252,6 +252,7 @@ impl<'a> Symbol<'_, 'a> {
         for parent in self.nodes().ancestor_kinds(reference.node_id()) {
             match parent {
                 AstKind::IdentifierReference(_)
+                | AstKind::ParenthesizedIdentifierAssignmentTarget(_)
                 | AstKind::StaticMemberExpression(_)
                 | AstKind::PrivateFieldExpression(_)
                 | AstKind::ComputedMemberExpression(_)
@@ -509,7 +510,7 @@ impl<'a> Symbol<'_, 'a> {
                 // others
                 AstKind::AssignmentExpression(AssignmentExpression { left, .. }) => {
                     match left {
-                        AssignmentTarget::AssignmentTargetIdentifier(id) => {
+                        _ if let Some(id) = left.identifier() => {
                             if self.scoping().get_reference(id.reference_id()).symbol_id()
                                 == Some(self.id())
                             {
@@ -540,22 +541,22 @@ impl<'a> Symbol<'_, 'a> {
                                 return false;
                             }
                         }
-                        AssignmentTarget::TSAsExpression(v)
+                        AssignmentTargetMaybeParenthesized::TSAsExpression(v)
                             if v.expression.is_member_expression() =>
                         {
                             return false;
                         }
-                        AssignmentTarget::TSSatisfiesExpression(v)
+                        AssignmentTargetMaybeParenthesized::TSSatisfiesExpression(v)
                             if v.expression.is_member_expression() =>
                         {
                             return false;
                         }
-                        AssignmentTarget::TSNonNullExpression(v)
+                        AssignmentTargetMaybeParenthesized::TSNonNullExpression(v)
                             if v.expression.is_member_expression() =>
                         {
                             return false;
                         }
-                        AssignmentTarget::TSTypeAssertion(v)
+                        AssignmentTargetMaybeParenthesized::TSTypeAssertion(v)
                             if v.expression.is_member_expression() =>
                         {
                             return false;
@@ -564,7 +565,7 @@ impl<'a> Symbol<'_, 'a> {
                         // variable is being used to index another variable, this is
                         // always a usage
                         // todo: check self index?
-                        match_member_expression!(AssignmentTarget) => return false,
+                        match_member_expression!(AssignmentTargetMaybeParenthesized) => return false,
                         _ => {}
                     }
                 }
@@ -1041,12 +1042,10 @@ impl<'a> Symbol<'_, 'a> {
                 // variable declarator. Keep scanning after a direct self-assignment because the
                 // assignment expression itself may escape.
                 AstKind::AssignmentExpression(assignment) if needs_variable_identifier => {
-                    let symbol_id = match &assignment.left {
-                        AssignmentTarget::AssignmentTargetIdentifier(id) => {
-                            self.scoping().get_reference(id.reference_id()).symbol_id()
-                        }
-                        _ => None,
-                    };
+                    let symbol_id = assignment
+                        .left
+                        .identifier()
+                        .and_then(|id| self.scoping().get_reference(id.reference_id()).symbol_id());
                     if symbol_id != Some(self.id()) {
                         return symbol_id;
                     }

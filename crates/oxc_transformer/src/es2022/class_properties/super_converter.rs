@@ -180,10 +180,14 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
     ) {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
         match &assign_expr.left {
-            AssignmentTarget::StaticMemberExpression(member) if member.object.is_super() => {
+            AssignmentTargetMaybeParenthesized::StaticMemberExpression(member)
+                if member.object.is_super() =>
+            {
                 self.transform_assignment_expression_for_super_static_member_expr(expr, ctx);
             }
-            AssignmentTarget::ComputedMemberExpression(member) if member.object.is_super() => {
+            AssignmentTargetMaybeParenthesized::ComputedMemberExpression(member)
+                if member.object.is_super() =>
+            {
                 self.transform_assignment_expression_for_super_computed_member_expr(expr, ctx);
             }
             _ => {}
@@ -211,7 +215,9 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
             let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
             let AssignmentExpression { span, operator, right: value, left, .. } =
                 assign_expr.unbox();
-            let AssignmentTarget::StaticMemberExpression(member) = left else { unreachable!() };
+            let AssignmentTargetMaybeParenthesized::StaticMemberExpression(member) = left else {
+                unreachable!()
+            };
             let property = Expression::new_string_literal(
                 member.property.span,
                 member.property.name,
@@ -243,7 +249,9 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
             let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
             let AssignmentExpression { span, operator, right: value, left, .. } =
                 assign_expr.unbox();
-            let AssignmentTarget::ComputedMemberExpression(member) = left else { unreachable!() };
+            let AssignmentTargetMaybeParenthesized::ComputedMemberExpression(member) = left else {
+                unreachable!()
+            };
             let property = member.unbox().expression.into_inner_expression();
             self.transform_super_assignment_expression_impl(span, operator, property, value, ctx)
         });

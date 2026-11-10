@@ -244,7 +244,7 @@ impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
 
     fn visit_assignment_expression(&mut self, it: &AssignmentExpression<'a>) {
         let current_scope = self.current_scope();
-        self.walk_assignment_target_for_reassignment(&it.left, current_scope);
+        self.walk_assignment_target_maybe_parenthesized_for_reassignment(&it.left, current_scope);
         oxc_ast_visit::walk_js::walk_assignment_expression(self, it);
     }
 
@@ -290,6 +290,22 @@ impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
 impl<'a> ContextIdentifierVisitor<'a> {
     /// Recursively walk an assignment target to find all reassignment target
     /// identifiers, mirroring the original `walk_lval_for_reassignment`.
+    fn walk_assignment_target_maybe_parenthesized_for_reassignment(
+        &mut self,
+        target: &AssignmentTargetMaybeParenthesized<'a>,
+        current_scope: ScopeId,
+    ) {
+        match target {
+            AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(paren) => {
+                self.handle_reassignment_identifier(&paren.target.name, current_scope);
+            }
+            _ => self.walk_assignment_target_for_reassignment(
+                target.to_assignment_target(),
+                current_scope,
+            ),
+        }
+    }
+
     fn walk_assignment_target_for_reassignment(
         &mut self,
         target: &AssignmentTarget<'a>,
@@ -400,7 +416,10 @@ impl<'a> ContextIdentifierVisitor<'a> {
     ) {
         match target {
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(node) => {
-                self.walk_assignment_target_for_reassignment(&node.binding, current_scope);
+                self.walk_assignment_target_maybe_parenthesized_for_reassignment(
+                    &node.binding,
+                    current_scope,
+                );
             }
             inner @ match_assignment_target!(AssignmentTargetMaybeDefault) => {
                 self.walk_assignment_target_for_reassignment(

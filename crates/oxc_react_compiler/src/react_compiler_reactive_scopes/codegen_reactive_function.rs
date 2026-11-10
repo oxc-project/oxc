@@ -789,11 +789,9 @@ fn ox_codegen_reactive_scope<'a>(
         let store = oxc_ast::ast::Expression::new_assignment_expression(
             SPAN,
             oxc::AssignmentOperator::Assign,
-            oxc::AssignmentTarget::from(oxc::SimpleAssignmentTarget::from(ast_member_target(
-                &cx.ast,
-                &cache_name,
-                index,
-            ))),
+            oxc::AssignmentTargetMaybeParenthesized::from(oxc::SimpleAssignmentTarget::from(
+                ast_member_target(&cx.ast, &cache_name, index),
+            )),
             dep_value,
             &cx.ast,
         );
@@ -874,11 +872,9 @@ fn ox_codegen_reactive_scope<'a>(
         let store = oxc_ast::ast::Expression::new_assignment_expression(
             SPAN,
             oxc::AssignmentOperator::Assign,
-            oxc::AssignmentTarget::from(oxc::SimpleAssignmentTarget::from(ast_member_target(
-                &cx.ast,
-                &cache_name,
-                *index,
-            ))),
+            oxc::AssignmentTargetMaybeParenthesized::from(oxc::SimpleAssignmentTarget::from(
+                ast_member_target(&cx.ast, &cache_name, *index),
+            )),
             oxc_ast::ast::Expression::new_identifier(SPAN, ox_str(&cx.ast, name), &cx.ast),
             &cx.ast,
         );
@@ -888,7 +884,7 @@ fn ox_codegen_reactive_scope<'a>(
         let load = oxc_ast::ast::Expression::new_assignment_expression(
             SPAN,
             oxc::AssignmentOperator::Assign,
-            oxc::AssignmentTarget::AssignmentTargetIdentifier(
+            oxc::AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(
                 oxc_ast::ast::IdentifierReference::boxed(SPAN, ox_str(&cx.ast, name), &cx.ast),
             ),
             ox_cache_index(&cx.ast, &cache_name, *index),
@@ -1386,8 +1382,9 @@ fn ox_codegen_for_init<'a>(
             if let oxc::Statement::ExpressionStatement(ref expr_stmt) = stmt
                 && let oxc::Expression::AssignmentExpression(ref assign) = expr_stmt.expression
                 && matches!(assign.operator, oxc::AssignmentOperator::Assign)
-                && let oxc::AssignmentTarget::AssignmentTargetIdentifier(ref left_ident) =
-                    assign.left
+                && let oxc::AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(
+                    ref left_ident,
+                ) = assign.left
                 && let Some(top) = declarators.last_mut()
                 && let oxc::BindingPattern::BindingIdentifier(ref top_ident) = top.id
                 && top_ident.name == left_ident.name
@@ -1645,7 +1642,7 @@ fn ox_emit_store<'a>(
             let expr = oxc_ast::ast::Expression::new_assignment_expression(
                 instr.span.unwrap_or_default(),
                 oxc::AssignmentOperator::Assign,
-                target,
+                target.into(),
                 rhs,
                 &cx.ast,
             );
@@ -1725,7 +1722,7 @@ fn ox_codegen_instruction<'a>(
         let expr = oxc_ast::ast::Expression::new_assignment_expression(
             span,
             oxc::AssignmentOperator::Assign,
-            target,
+            target.into(),
             expr_value,
             &cx.ast,
         );
@@ -2052,7 +2049,7 @@ fn ox_codegen_base_instruction_value<'a>(
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_assignment_expression(
                 span,
                 oxc::AssignmentOperator::Assign,
-                target,
+                target.into(),
                 val,
                 &cx.ast,
             )))
@@ -2086,7 +2083,7 @@ fn ox_codegen_base_instruction_value<'a>(
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_assignment_expression(
                 span,
                 oxc::AssignmentOperator::Assign,
-                target,
+                target.into(),
                 val,
                 &cx.ast,
             )))
@@ -2171,7 +2168,7 @@ fn ox_codegen_base_instruction_value<'a>(
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_assignment_expression(
                 span,
                 oxc::AssignmentOperator::Assign,
-                target,
+                target.into(),
                 rhs,
                 &cx.ast,
             )))
@@ -2184,7 +2181,7 @@ fn ox_codegen_base_instruction_value<'a>(
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_assignment_expression(
                 span,
                 oxc::AssignmentOperator::Assign,
-                target,
+                target.into(),
                 rhs,
                 &cx.ast,
             )))
@@ -2796,7 +2793,7 @@ fn ox_binding_pattern_to_maybe_default<'a>(
             let binding = ox_binding_pattern_to_assignment_target(cx, assign.left)?;
             Ok(oxc::AssignmentTargetMaybeDefault::new_assignment_target_with_default(
                 span,
-                binding,
+                binding.into(),
                 assign.right,
                 &cx.ast,
             ))

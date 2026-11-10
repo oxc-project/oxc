@@ -683,8 +683,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
                 Statement::ExpressionStatement(stmt) => {
                     if let Expression::AssignmentExpression(assignment) = &stmt.expression
-                        && let AssignmentTarget::StaticMemberExpression(static_member_expr) =
-                            &assignment.left
+                        && let AssignmentTargetMaybeParenthesized::StaticMemberExpression(
+                            static_member_expr,
+                        ) = &assignment.left
                         && let Expression::Identifier(ident) = &static_member_expr.object
                         && can_expando_function_names.contains(ident.name.as_str())
                         && ![true, false].into_iter().any(|namespace_is_exported| {

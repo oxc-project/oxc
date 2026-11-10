@@ -5,9 +5,9 @@ use serde_json::Value;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentExpression, AssignmentTarget, BinaryExpression, BinaryOperator,
-        CallExpression, Expression, IfStatement, LogicalExpression, LogicalOperator,
-        SimpleAssignmentTarget, Statement,
+        Argument, AssignmentExpression, AssignmentTargetMaybeParenthesized, BinaryExpression,
+        BinaryOperator, CallExpression, Expression, IfStatement, LogicalExpression,
+        LogicalOperator, SimpleAssignmentTarget, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -309,10 +309,13 @@ fn is_reference(expression: &Expression) -> bool {
 }
 
 fn is_same_assignment_reference(
-    left: &AssignmentTarget,
+    left: &AssignmentTargetMaybeParenthesized,
     right: &Expression,
     ctx: &LintContext,
 ) -> bool {
+    if let AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(left) = left {
+        return matches!(right.get_inner_expression(), Expression::Identifier(right) if left.target.name == right.name);
+    }
     let Some(left) = left.as_simple_assignment_target() else {
         return false;
     };

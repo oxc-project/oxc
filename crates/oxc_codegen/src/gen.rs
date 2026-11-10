@@ -2104,16 +2104,10 @@ impl GenExpr for AssignmentExpression<'_> {
         let n = p.code_len();
         // Destructuring assignments must be parenthesized
         let wrap = (p.start_of_stmt == n || p.start_of_arrow_expr == n)
-            && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_));
+            && matches!(self.left, AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(_));
         p.wrap(wrap || precedence >= self.precedence(), |p| {
             p.add_source_mapping(self.span);
-            if self.left_parenthesized
-                && let AssignmentTarget::AssignmentTargetIdentifier(ident) = &self.left
-            {
-                p.print_ascii_byte(b'(');
-                ident.print(p, ctx);
-                p.print_ascii_byte(b')');
-            } else if !cjs_module_lexer::try_print_exports_computed_target(p, &self.left, ctx) {
+            if !cjs_module_lexer::try_print_exports_computed_target(p, &self.left, ctx) {
                 self.left.print(p, ctx);
             }
             // `a! = b`: keep a separator so the non-null `!` doesn't glue to `=` as `!=`.
@@ -2129,6 +2123,24 @@ impl GenExpr for AssignmentExpression<'_> {
             p.print_soft_space();
             self.right.print_expr(p, Precedence::Comma, ctx);
         });
+    }
+}
+
+impl Gen for AssignmentTargetMaybeParenthesized<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        match self {
+            Self::ParenthesizedIdentifier(target) => target.print(p, ctx),
+            match_assignment_target!(Self) => self.to_assignment_target().print(p, ctx),
+        }
+    }
+}
+
+impl Gen for ParenthesizedIdentifierAssignmentTarget<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.add_source_mapping(self.span);
+        p.print_ascii_byte(b'(');
+        self.target.print(p, ctx);
+        p.print_ascii_byte(b')');
     }
 }
 
@@ -2236,20 +2248,9 @@ impl Gen for AssignmentTargetMaybeDefault<'_> {
     }
 }
 
-fn is_parenthesized_identifier_binding(target: &AssignmentTargetWithDefault<'_>) -> bool {
-    target.binding_parenthesized
-        && matches!(target.binding, AssignmentTarget::AssignmentTargetIdentifier(_))
-}
-
 impl Gen for AssignmentTargetWithDefault<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        if is_parenthesized_identifier_binding(self) {
-            p.print_ascii_byte(b'(');
-            self.binding.print(p, ctx);
-            p.print_ascii_byte(b')');
-        } else {
-            self.binding.print(p, ctx);
-        }
+        self.binding.print(p, ctx);
         p.print_soft_space();
         p.print_equal();
         p.print_soft_space();
@@ -2294,10 +2295,13 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
                 PropertyKey::StaticIdentifier(ident) => Some(&ident.name),
                 _ => None,
             };
-            // `{a: (a) = f}` cannot be shortened to `{(a) = f}`.
+            // `{a: (a) = f}` cannot be shortened to `{(a) = f}`
             let value_name = match &self.binding {
                 AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(target)
-                    if is_parenthesized_identifier_binding(target) =>
+                    if matches!(
+                        target.binding,
+                        AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(_)
+                    ) =>
                 {
                     None
                 }

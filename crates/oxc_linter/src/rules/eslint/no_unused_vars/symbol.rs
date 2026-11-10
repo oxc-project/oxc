@@ -5,8 +5,8 @@ use rustc_hash::FxHashSet;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, BindingIdentifier, BindingPattern, IdentifierReference,
-        ImportDeclarationSpecifier, VariableDeclarator,
+        AssignmentTarget, AssignmentTargetMaybeParenthesized, BindingIdentifier, BindingPattern,
+        IdentifierReference, ImportDeclarationSpecifier, VariableDeclarator,
     },
 };
 use oxc_semantic::{
@@ -259,6 +259,12 @@ impl<'a> PartialEq<AssignmentTarget<'a>> for Symbol<'_, 'a> {
             AssignmentTarget::AssignmentTargetIdentifier(id) => self == id.as_ref(),
             _ => false,
         }
+    }
+}
+
+impl<'a> PartialEq<AssignmentTargetMaybeParenthesized<'a>> for Symbol<'_, 'a> {
+    fn eq(&self, target: &AssignmentTargetMaybeParenthesized<'a>) -> bool {
+        target.identifier().is_some_and(|id| self == id)
     }
 }
 

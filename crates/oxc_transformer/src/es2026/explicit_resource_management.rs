@@ -1048,7 +1048,7 @@ impl<'a> ExplicitResourceManagement<'a> {
             Expression::new_assignment_expression(
                 SPAN,
                 AssignmentOperator::Assign,
-                AssignmentTarget::new_static_member_expression(
+                AssignmentTargetMaybeParenthesized::new_static_member_expression(
                     SPAN,
                     using_ctx.create_read_expression(ctx),
                     IdentifierName::new(SPAN, "e", ctx),

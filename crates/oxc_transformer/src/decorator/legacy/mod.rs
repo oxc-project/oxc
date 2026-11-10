@@ -528,7 +528,7 @@ impl<'a> LegacyDecorator<'a> {
             let assign = Expression::new_assignment_expression(
                 SPAN,
                 AssignmentOperator::Assign,
-                AssignmentTarget::new_private_field_expression(
+                AssignmentTargetMaybeParenthesized::new_private_field_expression(
                     SPAN,
                     create_object(ctx),
                     PrivateIdentifier::new(SPAN, storage_name, ctx),
@@ -1121,7 +1121,8 @@ impl<'a> LegacyDecorator<'a> {
         let operator = AssignmentOperator::Assign;
         let left = class_binding.create_write_target(ctx);
         let right = Self::get_class_initializer(helper, class_alias_binding, ctx);
-        let assignment = Expression::new_assignment_expression(SPAN, operator, left, right, ctx);
+        let assignment =
+            Expression::new_assignment_expression(SPAN, operator, left.into(), right, ctx);
         Statement::new_expression_statement(SPAN, assignment, ctx)
     }
 
@@ -1302,7 +1303,13 @@ impl<'a> LegacyDecorator<'a> {
     ) -> Expression<'a> {
         if let Some(class_alias_binding) = class_alias_binding {
             let left = class_alias_binding.create_write_target(ctx);
-            Expression::new_assignment_expression(SPAN, AssignmentOperator::Assign, left, expr, ctx)
+            Expression::new_assignment_expression(
+                SPAN,
+                AssignmentOperator::Assign,
+                left.into(),
+                expr,
+                ctx,
+            )
         } else {
             expr
         }
@@ -1397,7 +1404,7 @@ impl<'a> LegacyDecorator<'a> {
                 let operator = AssignmentOperator::Assign;
                 let left = binding.create_write_target(ctx);
                 key.replace_with(|right| {
-                    Expression::new_assignment_expression(SPAN, operator, left, right, ctx)
+                    Expression::new_assignment_expression(SPAN, operator, left.into(), right, ctx)
                 });
                 binding.create_read_expression(ctx)
             }

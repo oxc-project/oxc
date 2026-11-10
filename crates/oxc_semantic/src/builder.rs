@@ -1303,7 +1303,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if expr.operator.is_logical() {
             self.record_ast_nodes();
         }
-        self.visit_assignment_target(&expr.left);
+        self.visit_assignment_target_maybe_parenthesized(&expr.left);
         #[cfg(feature = "cfg")]
         let target_node_id =
             if expr.operator.is_logical() { self.retrieve_recorded_ast_node() } else { None };
@@ -2416,6 +2416,21 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 self.visit_member_expression(it.to_member_expression());
             }
         }
+    }
+
+    fn visit_parenthesized_identifier_assignment_target(
+        &mut self,
+        it: &ParenthesizedIdentifierAssignmentTarget<'a>,
+    ) {
+        let kind = AstKind::ParenthesizedIdentifierAssignmentTarget(self.alloc(it));
+        self.enter_node(kind);
+        // Same as `visit_simple_assignment_target`
+        if !self.current_reference_flags.is_write() {
+            self.current_reference_flags = ReferenceFlags::Write;
+        }
+        self.visit_span(&it.span);
+        self.visit_identifier_reference(&it.target);
+        self.leave_node(kind);
     }
 
     fn visit_assignment_target_property_identifier(

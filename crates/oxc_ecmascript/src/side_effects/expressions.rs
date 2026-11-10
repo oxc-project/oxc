@@ -978,6 +978,18 @@ impl<'a> MayHaveSideEffects<'a> for AssignmentTarget<'a> {
     }
 }
 
+impl<'a> MayHaveSideEffects<'a> for AssignmentTargetMaybeParenthesized<'a> {
+    /// See [`AssignmentTarget::may_have_side_effects`].
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        match self {
+            AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(_) => false,
+            match_assignment_target!(AssignmentTargetMaybeParenthesized) => {
+                self.to_assignment_target().may_have_side_effects(ctx)
+            }
+        }
+    }
+}
+
 impl<'a> MayHaveSideEffects<'a> for SimpleAssignmentTarget<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
@@ -1116,15 +1128,15 @@ impl<'a> MayHaveSideEffects<'a> for AssignmentExpression<'a> {
         // When property_write_side_effects is false, member expression writes are considered free.
         // Other writes (to variables, destructuring targets) still have side effects.
         match &self.left {
-            AssignmentTarget::StaticMemberExpression(e) => {
+            AssignmentTargetMaybeParenthesized::StaticMemberExpression(e) => {
                 e.object.may_have_side_effects(ctx) || self.right.may_have_side_effects(ctx)
             }
-            AssignmentTarget::ComputedMemberExpression(e) => {
+            AssignmentTargetMaybeParenthesized::ComputedMemberExpression(e) => {
                 e.object.may_have_side_effects(ctx)
                     || e.expression.may_have_side_effects(ctx)
                     || self.right.may_have_side_effects(ctx)
             }
-            AssignmentTarget::PrivateFieldExpression(e) => {
+            AssignmentTargetMaybeParenthesized::PrivateFieldExpression(e) => {
                 e.object.may_have_side_effects(ctx) || self.right.may_have_side_effects(ctx)
             }
             _ => true,

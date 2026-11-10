@@ -9,7 +9,7 @@ use crate::ast_nodes::{AstNode, AstNodeKind, AstNodes};
 #[derive(Debug, Clone, Copy)]
 pub enum ExpressionLeftSide<'a, 'b> {
     Expression(AstNode<'b, 'a, Expression<'a>>),
-    AssignmentTarget(AstNode<'b, 'a, AssignmentTarget<'a>>),
+    AssignmentTarget(AstNode<'b, 'a, AssignmentTargetMaybeParenthesized<'a>>),
     SimpleAssignmentTarget(AstNode<'b, 'a, SimpleAssignmentTarget<'a>>),
 }
 
@@ -19,8 +19,10 @@ impl<'a, 'b> From<AstNode<'b, 'a, Expression<'a>>> for ExpressionLeftSide<'a, 'b
     }
 }
 
-impl<'a, 'b> From<AstNode<'b, 'a, AssignmentTarget<'a>>> for ExpressionLeftSide<'a, 'b> {
-    fn from(value: AstNode<'b, 'a, AssignmentTarget<'a>>) -> Self {
+impl<'a, 'b> From<AstNode<'b, 'a, AssignmentTargetMaybeParenthesized<'a>>>
+    for ExpressionLeftSide<'a, 'b>
+{
+    fn from(value: AstNode<'b, 'a, AssignmentTargetMaybeParenthesized<'a>>) -> Self {
         Self::AssignmentTarget(value)
     }
 }
@@ -124,7 +126,7 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
 #[derive(Debug, Clone, Copy)]
 pub enum LeftSide<'a> {
     Expression(&'a Expression<'a>),
-    AssignmentTarget(&'a AssignmentTarget<'a>),
+    AssignmentTarget(&'a AssignmentTargetMaybeParenthesized<'a>),
     SimpleAssignmentTarget(&'a SimpleAssignmentTarget<'a>),
 }
 

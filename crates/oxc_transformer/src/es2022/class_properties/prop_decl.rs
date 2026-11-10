@@ -311,7 +311,7 @@ impl<'a> ClassProperties<'a> {
         Expression::new_assignment_expression(
             prop.span,
             AssignmentOperator::Assign,
-            AssignmentTarget::from(left),
+            left.into(),
             value,
             ctx,
         )

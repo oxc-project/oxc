@@ -162,14 +162,12 @@ impl<'a> PeepholeOptimizations {
     /// - `a["b"]`, `a["b"]`
     /// - `a[0]`, `a[0]`
     pub fn has_no_side_effect_for_evaluation_same_target(
-        assignment_target: &AssignmentTarget<'a>,
+        assignment_target: &AssignmentTargetMaybeParenthesized<'a>,
         expr: &Expression,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        if let (
-            AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
-            Expression::Identifier(read_id_ref),
-        ) = (assignment_target, expr)
+        if let (Some(write_id_ref), Expression::Identifier(read_id_ref)) =
+            (assignment_target.identifier(), expr)
         {
             return write_id_ref.name == read_id_ref.name;
         }
@@ -215,7 +213,7 @@ impl<'a> PeepholeOptimizations {
     /// object (e.g. `x.y || (x.y = 3)` where the getter of `x.y` sets `x`).
     /// <https://github.com/oxc-project/oxc/issues/16647>
     pub fn can_compress_to_logical_assignment(
-        assignment_target: &AssignmentTarget<'a>,
+        assignment_target: &AssignmentTargetMaybeParenthesized<'a>,
         read_expr: &Expression,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
@@ -306,18 +304,18 @@ impl<'a> PeepholeOptimizations {
     /// and the default-mode drop of write-only property assignments must not
     /// remove a sibling plain write whose value the formed read observes.
     pub fn mark_assignment_target_as_read(
-        assign_target: &AssignmentTarget,
+        assign_target: &AssignmentTargetMaybeParenthesized,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let object = match assign_target {
-            AssignmentTarget::AssignmentTargetIdentifier(id) => {
+            _ if let Some(id) = assign_target.identifier() => {
                 let reference = ctx.scoping_mut().get_reference_mut(id.reference_id());
                 reference.flags_mut().insert(ReferenceFlags::Read);
                 return;
             }
-            AssignmentTarget::StaticMemberExpression(e) => &e.object,
-            AssignmentTarget::ComputedMemberExpression(e) => &e.object,
-            AssignmentTarget::PrivateFieldExpression(e) => &e.object,
+            AssignmentTargetMaybeParenthesized::StaticMemberExpression(e) => &e.object,
+            AssignmentTargetMaybeParenthesized::ComputedMemberExpression(e) => &e.object,
+            AssignmentTargetMaybeParenthesized::PrivateFieldExpression(e) => &e.object,
             _ => return,
         };
         if let Expression::Identifier(ident) = object

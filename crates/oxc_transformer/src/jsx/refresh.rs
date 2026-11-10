@@ -551,7 +551,7 @@ impl<'a> ReactRefresh<'a> {
                 Expression::new_assignment_expression(
                     SPAN,
                     AssignmentOperator::Assign,
-                    self.create_registration(Str::from_str_in(inferred_name, ctx), ctx),
+                    self.create_registration(Str::from_str_in(inferred_name, ctx), ctx).into(),
                     expr,
                     ctx,
                 )
@@ -573,7 +573,7 @@ impl<'a> ReactRefresh<'a> {
         let expr = Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
-            left,
+            left.into(),
             right,
             ctx,
         );

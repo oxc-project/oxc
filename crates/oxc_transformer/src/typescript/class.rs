@@ -576,7 +576,7 @@ impl<'a> TypeScript<'a> {
             Expression::new_assignment_expression(
                 SPAN,
                 AssignmentOperator::Assign,
-                target,
+                target.into(),
                 value,
                 ctx,
             ),

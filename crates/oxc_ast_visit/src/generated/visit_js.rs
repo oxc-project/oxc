@@ -238,6 +238,22 @@ pub trait VisitJs<'a>: Sized {
     }
 
     #[inline]
+    fn visit_assignment_target_maybe_parenthesized(
+        &mut self,
+        it: &AssignmentTargetMaybeParenthesized<'a>,
+    ) {
+        walk_assignment_target_maybe_parenthesized(self, it);
+    }
+
+    #[inline]
+    fn visit_parenthesized_identifier_assignment_target(
+        &mut self,
+        it: &ParenthesizedIdentifierAssignmentTarget<'a>,
+    ) {
+        walk_parenthesized_identifier_assignment_target(self, it);
+    }
+
+    #[inline]
     fn visit_assignment_target(&mut self, it: &AssignmentTarget<'a>) {
         walk_assignment_target(self, it);
     }
@@ -1464,8 +1480,36 @@ pub mod walk_js {
         let kind = AstKind::AssignmentExpression(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_assignment_target(&it.left);
+        visitor.visit_assignment_target_maybe_parenthesized(&it.left);
         visitor.visit_expression(&it.right);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_assignment_target_maybe_parenthesized<'a, V: VisitJs<'a>>(
+        visitor: &mut V,
+        it: &AssignmentTargetMaybeParenthesized<'a>,
+    ) {
+        // No `AstKind` for this type
+        match it {
+            AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(it) => {
+                visitor.visit_parenthesized_identifier_assignment_target(it)
+            }
+            match_assignment_target!(AssignmentTargetMaybeParenthesized) => {
+                visitor.visit_assignment_target(it.to_assignment_target())
+            }
+        }
+    }
+
+    #[inline]
+    pub fn walk_parenthesized_identifier_assignment_target<'a, V: VisitJs<'a>>(
+        visitor: &mut V,
+        it: &ParenthesizedIdentifierAssignmentTarget<'a>,
+    ) {
+        let kind = AstKind::ParenthesizedIdentifierAssignmentTarget(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_span(&it.span);
+        visitor.visit_identifier_reference(&it.target);
         visitor.leave_node(kind);
     }
 
@@ -1589,7 +1633,7 @@ pub mod walk_js {
         let kind = AstKind::AssignmentTargetWithDefault(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_assignment_target(&it.binding);
+        visitor.visit_assignment_target_maybe_parenthesized(&it.binding);
         visitor.visit_expression(&it.init);
         visitor.leave_node(kind);
     }

@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        Argument, AssignmentTarget, BindingIdentifier, BindingPattern, BindingProperty,
-        CallExpression, Expression, FormalParameters, JSXAttributeItem, JSXElementName,
+        Argument, BindingIdentifier, BindingPattern, BindingProperty, CallExpression, Expression,
+        FormalParameters, JSXAttributeItem, JSXElementName,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -368,12 +368,15 @@ fn is_function_reassigned(function_id: &BindingIdentifier, ctx: &LintContext) ->
         let reference_node = ctx.nodes().get_node(reference.node_id());
 
         // Check if this reference is on the left side of an assignment
-        let AstKind::AssignmentExpression(assignment) =
-            ctx.nodes().parent_kind(reference.node_id())
-        else {
+        let mut parent_id = ctx.nodes().parent_id(reference.node_id());
+        // `(foo) = bar`
+        if let AstKind::ParenthesizedIdentifierAssignmentTarget(_) = ctx.nodes().kind(parent_id) {
+            parent_id = ctx.nodes().parent_id(parent_id);
+        }
+        let AstKind::AssignmentExpression(assignment) = ctx.nodes().kind(parent_id) else {
             return false;
         };
-        let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assignment.left else {
+        let Some(ident) = assignment.left.identifier() else {
             return false;
         };
         ident.span == reference_node.span()

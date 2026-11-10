@@ -339,15 +339,16 @@ impl<'a> PeepholeOptimizations {
         if assign_expr.operator != AssignmentOperator::Assign {
             return false;
         }
-        let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left else {
-            return false;
+        let id = match &assign_expr.left {
+            AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(id) => id.as_ref(),
+            // `var a; (a) = function() {}` leaves the function anonymous, `var a = function() {}` does not
+            AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(paren)
+                if !ctx.is_expression_whose_name_needs_to_be_kept(&assign_expr.right) =>
+            {
+                &paren.target
+            }
+            _ => return false,
         };
-        // `var a; (a) = function() {}` leaves the function anonymous, `var a = function() {}` does not.
-        if assign_expr.left_parenthesized
-            && ctx.is_expression_whose_name_needs_to_be_kept(&assign_expr.right)
-        {
-            return false;
-        }
         let Some(Statement::VariableDeclaration(var_decl)) = result.last_mut() else {
             return false;
         };
@@ -1437,26 +1438,27 @@ impl<'a> PeepholeOptimizations {
                     // foo.bar = a;
                     // ```
                     let may_depend_on_side_effect = match &assign_expr.left {
-                        AssignmentTarget::AssignmentTargetIdentifier(_) => false,
-                        AssignmentTarget::ComputedMemberExpression(member_expr) => {
+                        AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(_)
+                        | AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(_) => false,
+                        AssignmentTargetMaybeParenthesized::ComputedMemberExpression(member_expr) => {
                             Self::member_part_blocks_reorder(&member_expr.object, ctx)
                                 || Self::computed_key_blocks_reorder(
                                     &member_expr.expression,
                                     ctx,
                                 )
                         }
-                        AssignmentTarget::PrivateFieldExpression(member_expr) => {
+                        AssignmentTargetMaybeParenthesized::PrivateFieldExpression(member_expr) => {
                             Self::member_part_blocks_reorder(&member_expr.object, ctx)
                         }
-                        AssignmentTarget::StaticMemberExpression(member_expr) => {
+                        AssignmentTargetMaybeParenthesized::StaticMemberExpression(member_expr) => {
                             Self::member_part_blocks_reorder(&member_expr.object, ctx)
                         }
-                        AssignmentTarget::ArrayAssignmentTarget(_)
-                        | AssignmentTarget::ObjectAssignmentTarget(_)
-                        | AssignmentTarget::TSAsExpression(_)
-                        | AssignmentTarget::TSNonNullExpression(_)
-                        | AssignmentTarget::TSSatisfiesExpression(_)
-                        | AssignmentTarget::TSTypeAssertion(_) => true,
+                        AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(_)
+                        | AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(_)
+                        | AssignmentTargetMaybeParenthesized::TSAsExpression(_)
+                        | AssignmentTargetMaybeParenthesized::TSNonNullExpression(_)
+                        | AssignmentTargetMaybeParenthesized::TSSatisfiesExpression(_)
+                        | AssignmentTargetMaybeParenthesized::TSTypeAssertion(_) => true,
                     };
                     if may_depend_on_side_effect {
                         return Some(false);

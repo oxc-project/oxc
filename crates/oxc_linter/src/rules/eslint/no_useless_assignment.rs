@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, AssignmentTarget as AstAssignmentTarget, BindingPattern, Expression,
+        AssignmentExpression, AssignmentTargetMaybeParenthesized, BindingPattern, Expression,
         VariableDeclarator,
     },
 };
@@ -671,8 +671,8 @@ impl NoUselessAssignment {
             let AstKind::AssignmentExpression(assignment) = ancestor.kind() else { continue };
             if matches!(
                 &assignment.left,
-                AstAssignmentTarget::ArrayAssignmentTarget(_)
-                    | AstAssignmentTarget::ObjectAssignmentTarget(_)
+                AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(_)
+                    | AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(_)
             ) {
                 enclosing = Some(assignment);
             }
@@ -731,8 +731,8 @@ impl NoUselessAssignment {
                                 AstKind::AssignmentExpression(assignment)
                                     if matches!(
                                         &assignment.left,
-                                        AstAssignmentTarget::ArrayAssignmentTarget(_)
-                                            | AstAssignmentTarget::ObjectAssignmentTarget(_)
+                                        AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(_)
+                                            | AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(_)
                                     )
                             )
                         });

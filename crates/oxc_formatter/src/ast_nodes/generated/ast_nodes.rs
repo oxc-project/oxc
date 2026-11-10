@@ -48,6 +48,9 @@ pub enum AstNodes<'parent, 'a> {
     LogicalExpression(&'parent AstNode<'parent, 'a, LogicalExpression<'a>>),
     ConditionalExpression(&'parent AstNode<'parent, 'a, ConditionalExpression<'a>>),
     AssignmentExpression(&'parent AstNode<'parent, 'a, AssignmentExpression<'a>>),
+    ParenthesizedIdentifierAssignmentTarget(
+        &'parent AstNode<'parent, 'a, ParenthesizedIdentifierAssignmentTarget<'a>>,
+    ),
     ArrayAssignmentTarget(&'parent AstNode<'parent, 'a, ArrayAssignmentTarget<'a>>),
     ObjectAssignmentTarget(&'parent AstNode<'parent, 'a, ObjectAssignmentTarget<'a>>),
     AssignmentTargetRest(&'parent AstNode<'parent, 'a, AssignmentTargetRest<'a>>),
@@ -254,6 +257,9 @@ pub enum AstNodeKind<'parent, 'a> {
     LogicalExpression(AstNode<'parent, 'a, LogicalExpression<'a>>),
     ConditionalExpression(AstNode<'parent, 'a, ConditionalExpression<'a>>),
     AssignmentExpression(AstNode<'parent, 'a, AssignmentExpression<'a>>),
+    ParenthesizedIdentifierAssignmentTarget(
+        AstNode<'parent, 'a, ParenthesizedIdentifierAssignmentTarget<'a>>,
+    ),
     ArrayAssignmentTarget(AstNode<'parent, 'a, ArrayAssignmentTarget<'a>>),
     ObjectAssignmentTarget(AstNode<'parent, 'a, ObjectAssignmentTarget<'a>>),
     AssignmentTargetRest(AstNode<'parent, 'a, AssignmentTargetRest<'a>>),
@@ -455,6 +461,9 @@ impl<'a> AstNodeKind<'_, 'a> {
             Self::LogicalExpression(n) => AstNodes::LogicalExpression(n),
             Self::ConditionalExpression(n) => AstNodes::ConditionalExpression(n),
             Self::AssignmentExpression(n) => AstNodes::AssignmentExpression(n),
+            Self::ParenthesizedIdentifierAssignmentTarget(n) => {
+                AstNodes::ParenthesizedIdentifierAssignmentTarget(n)
+            }
             Self::ArrayAssignmentTarget(n) => AstNodes::ArrayAssignmentTarget(n),
             Self::ObjectAssignmentTarget(n) => AstNodes::ObjectAssignmentTarget(n),
             Self::AssignmentTargetRest(n) => AstNodes::AssignmentTargetRest(n),
@@ -661,6 +670,7 @@ impl GetSpan for AstNodeKind<'_, '_> {
             Self::LogicalExpression(n) => n.span(),
             Self::ConditionalExpression(n) => n.span(),
             Self::AssignmentExpression(n) => n.span(),
+            Self::ParenthesizedIdentifierAssignmentTarget(n) => n.span(),
             Self::ArrayAssignmentTarget(n) => n.span(),
             Self::ObjectAssignmentTarget(n) => n.span(),
             Self::AssignmentTargetRest(n) => n.span(),
@@ -867,6 +877,7 @@ impl<'parent, 'a> AstNodes<'parent, 'a> {
             Self::LogicalExpression(n) => n.span(),
             Self::ConditionalExpression(n) => n.span(),
             Self::AssignmentExpression(n) => n.span(),
+            Self::ParenthesizedIdentifierAssignmentTarget(n) => n.span(),
             Self::ArrayAssignmentTarget(n) => n.span(),
             Self::ObjectAssignmentTarget(n) => n.span(),
             Self::AssignmentTargetRest(n) => n.span(),
@@ -1070,6 +1081,7 @@ impl<'parent, 'a> AstNodes<'parent, 'a> {
             Self::LogicalExpression(n) => n.parent(),
             Self::ConditionalExpression(n) => n.parent(),
             Self::AssignmentExpression(n) => n.parent(),
+            Self::ParenthesizedIdentifierAssignmentTarget(n) => n.parent(),
             Self::ArrayAssignmentTarget(n) => n.parent(),
             Self::ObjectAssignmentTarget(n) => n.parent(),
             Self::AssignmentTargetRest(n) => n.parent(),
@@ -1268,6 +1280,9 @@ impl<'parent, 'a> AstNodes<'parent, 'a> {
             Self::LogicalExpression(_) => "LogicalExpression",
             Self::ConditionalExpression(_) => "ConditionalExpression",
             Self::AssignmentExpression(_) => "AssignmentExpression",
+            Self::ParenthesizedIdentifierAssignmentTarget(_) => {
+                "ParenthesizedIdentifierAssignmentTarget"
+            }
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget",
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget",
             Self::AssignmentTargetRest(_) => "AssignmentTargetRest",
@@ -2740,12 +2755,7 @@ impl<'parent, 'a> AstNode<'parent, 'a, AssignmentExpression<'a>> {
     }
 
     #[inline]
-    pub fn left_parenthesized(&self) -> bool {
-        self.inner.left_parenthesized
-    }
-
-    #[inline]
-    pub fn left(&self) -> AstNode<'_, 'a, AssignmentTarget<'a>> {
+    pub fn left(&self) -> AstNode<'_, 'a, AssignmentTargetMaybeParenthesized<'a>> {
         let following_span_start = self.inner.right.span().start;
         AstNode {
             inner: &self.inner.left,
@@ -2760,6 +2770,53 @@ impl<'parent, 'a> AstNode<'parent, 'a, AssignmentExpression<'a>> {
         AstNode {
             inner: &self.inner.right,
             parent: AstNodes::AssignmentExpression(self),
+            following_span_start,
+        }
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'parent, 'a> AstNode<'parent, 'a, AssignmentTargetMaybeParenthesized<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
+    #[inline]
+    pub fn as_kind(&self) -> AstNodeKind<'parent, 'a> {
+        let parent = self.parent;
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(s) => {
+                AstNodeKind::ParenthesizedIdentifierAssignmentTarget(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    following_span_start,
+                })
+            }
+            it @ match_assignment_target!(AssignmentTargetMaybeParenthesized) => {
+                AstNode { inner: it.to_assignment_target(), parent, following_span_start }.as_kind()
+            }
+        }
+    }
+}
+
+impl<'parent, 'a> AstNode<'parent, 'a, ParenthesizedIdentifierAssignmentTarget<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn target(&self) -> AstNode<'_, 'a, IdentifierReference<'a>> {
+        let following_span_start = self.following_span_start;
+        AstNode {
+            inner: &self.inner.target,
+            parent: AstNodes::ParenthesizedIdentifierAssignmentTarget(self),
             following_span_start,
         }
     }
@@ -2991,12 +3048,7 @@ impl<'parent, 'a> AstNode<'parent, 'a, AssignmentTargetWithDefault<'a>> {
     }
 
     #[inline]
-    pub fn binding_parenthesized(&self) -> bool {
-        self.inner.binding_parenthesized
-    }
-
-    #[inline]
-    pub fn binding(&self) -> AstNode<'_, 'a, AssignmentTarget<'a>> {
+    pub fn binding(&self) -> AstNode<'_, 'a, AssignmentTargetMaybeParenthesized<'a>> {
         let following_span_start = self.inner.init.span().start;
         AstNode {
             inner: &self.inner.binding,

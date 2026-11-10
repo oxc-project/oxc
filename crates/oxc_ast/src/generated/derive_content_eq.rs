@@ -484,9 +484,37 @@ impl ContentEq for ConditionalExpression<'_> {
 impl ContentEq for AssignmentExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.operator, &other.operator)
-            && ContentEq::content_eq(&self.left_parenthesized, &other.left_parenthesized)
             && ContentEq::content_eq(&self.left, &other.left)
             && ContentEq::content_eq(&self.right, &other.right)
+    }
+}
+
+impl ContentEq for AssignmentTargetMaybeParenthesized<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::ParenthesizedIdentifier(a), Self::ParenthesizedIdentifier(b)) => a.content_eq(b),
+            (Self::AssignmentTargetIdentifier(a), Self::AssignmentTargetIdentifier(b)) => {
+                a.content_eq(b)
+            }
+            (Self::TSAsExpression(a), Self::TSAsExpression(b)) => a.content_eq(b),
+            (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
+            (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
+            (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
+            (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::StaticMemberExpression(a), Self::StaticMemberExpression(b)) => a.content_eq(b),
+            (Self::PrivateFieldExpression(a), Self::PrivateFieldExpression(b)) => a.content_eq(b),
+            (Self::ArrayAssignmentTarget(a), Self::ArrayAssignmentTarget(b)) => a.content_eq(b),
+            (Self::ObjectAssignmentTarget(a), Self::ObjectAssignmentTarget(b)) => a.content_eq(b),
+            _ => false,
+        }
+    }
+}
+
+impl ContentEq for ParenthesizedIdentifierAssignmentTarget<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.target, &other.target)
     }
 }
 
@@ -589,8 +617,7 @@ impl ContentEq for AssignmentTargetMaybeDefault<'_> {
 
 impl ContentEq for AssignmentTargetWithDefault<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.binding_parenthesized, &other.binding_parenthesized)
-            && ContentEq::content_eq(&self.binding, &other.binding)
+        ContentEq::content_eq(&self.binding, &other.binding)
             && ContentEq::content_eq(&self.init, &other.init)
     }
 }

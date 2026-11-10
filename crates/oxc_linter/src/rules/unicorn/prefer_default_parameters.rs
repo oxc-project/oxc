@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentOperator, AssignmentTarget, BindingPattern, Expression, FormalParameter,
-        LogicalOperator, PropertyKind, Statement, UnaryOperator,
+        AssignmentOperator, BindingPattern, Expression, FormalParameter, LogicalOperator,
+        PropertyKind, Statement, UnaryOperator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -71,8 +71,7 @@ impl Rule for PreferDefaultParameters {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::AssignmentExpression(assign_expr) => {
-                if let AssignmentTarget::AssignmentTargetIdentifier(left_ident) = &assign_expr.left
-                {
+                if let Some(left_ident) = assign_expr.left.identifier() {
                     let statement_span = ctx
                         .nodes()
                         .parent_node(node.id())
@@ -447,12 +446,8 @@ fn is_side_effect_free_expression(expr: &Expression, param_name: &str) -> bool {
         | Expression::ArrowFunctionExpression(_) => true,
         Expression::Identifier(ident) => ident.name.as_str() != param_name,
         Expression::AssignmentExpression(assign) => {
-            let target_ok = match &assign.left {
-                AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                    ident.name.as_str() != param_name
-                }
-                _ => false,
-            };
+            let target_ok =
+                assign.left.identifier().is_some_and(|ident| ident.name.as_str() != param_name);
             target_ok && is_side_effect_free_expression(&assign.right, param_name)
         }
         Expression::BinaryExpression(bin) => {

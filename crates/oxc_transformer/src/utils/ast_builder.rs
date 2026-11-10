@@ -158,7 +158,7 @@ pub fn create_assignment<'a>(
     Expression::new_assignment_expression(
         span,
         AssignmentOperator::Assign,
-        binding.create_target(ReferenceFlags::Write, ctx),
+        binding.create_target(ReferenceFlags::Write, ctx).into(),
         value,
         ctx,
     )

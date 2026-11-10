@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, AssignmentOperator, AssignmentTarget, ClassElement, Expression,
-        FormalParameter, Function, IdentifierReference, Statement,
+        AssignmentExpression, AssignmentOperator, AssignmentTargetMaybeParenthesized, ClassElement,
+        Expression, FormalParameter, Function, IdentifierReference, Statement,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -282,15 +282,17 @@ fn is_unnecessary_assignment_operator(operator: AssignmentOperator) -> bool {
     )
 }
 
-fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Str<'a>> {
+fn get_property_name<'a>(
+    assignment_target: &AssignmentTargetMaybeParenthesized<'a>,
+) -> Option<Str<'a>> {
     match assignment_target {
-        AssignmentTarget::StaticMemberExpression(expr)
+        AssignmentTargetMaybeParenthesized::StaticMemberExpression(expr)
             if matches!(&expr.object, Expression::ThisExpression(_)) =>
         {
             // this.property
             Some(expr.property.name.into())
         }
-        AssignmentTarget::ComputedMemberExpression(expr)
+        AssignmentTargetMaybeParenthesized::ComputedMemberExpression(expr)
             if matches!(&expr.object, Expression::ThisExpression(_)) =>
         {
             // this["property"]

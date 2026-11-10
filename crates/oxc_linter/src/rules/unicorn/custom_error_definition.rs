@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Class, ClassElement, Expression, PropertyDefinition, Statement},
+    ast::{
+        AssignmentTargetMaybeParenthesized, Class, ClassElement, Expression, PropertyDefinition,
+        Statement,
+    },
     match_member_expression,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -277,7 +280,7 @@ fn get_export_assignment_info<'a>(
         return None;
     };
 
-    let AssignmentTarget::StaticMemberExpression(member) = &assign.left else {
+    let AssignmentTargetMaybeParenthesized::StaticMemberExpression(member) = &assign.left else {
         return None;
     };
 
@@ -366,7 +369,7 @@ fn is_this_assignment(stmt: &Statement, prop_name: &str) -> bool {
     let Statement::ExpressionStatement(expr_stmt) = stmt else { return false };
     let Expression::AssignmentExpression(assign) = &expr_stmt.expression else { return false };
 
-    if let AssignmentTarget::StaticMemberExpression(member) = &assign.left {
+    if let AssignmentTargetMaybeParenthesized::StaticMemberExpression(member) = &assign.left {
         matches!(&member.object, Expression::ThisExpression(_))
             && member.property.name.as_str() == prop_name
     } else {

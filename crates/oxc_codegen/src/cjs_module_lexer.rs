@@ -33,7 +33,7 @@
 //!
 //! [cjs-module-lexer]: https://github.com/nodejs/cjs-module-lexer
 
-use oxc_ast::ast::{Argument, AssignmentTarget, CallExpression, Expression};
+use oxc_ast::ast::{Argument, AssignmentTargetMaybeParenthesized, CallExpression, Expression};
 use oxc_syntax::precedence::Precedence;
 
 use crate::{
@@ -103,13 +103,13 @@ pub fn try_print_define_property_call(
 /// the export.
 pub fn try_print_exports_computed_target(
     p: &mut Codegen<'_>,
-    target: &AssignmentTarget<'_>,
+    target: &AssignmentTargetMaybeParenthesized<'_>,
     ctx: Context,
 ) -> bool {
     if !p.options.minify {
         return false;
     }
-    let AssignmentTarget::ComputedMemberExpression(member) = target else {
+    let AssignmentTargetMaybeParenthesized::ComputedMemberExpression(member) = target else {
         return false;
     };
     let Expression::StringLiteral(key) = &member.expression else {

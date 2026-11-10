@@ -717,7 +717,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_, '_> {
                 let binding = if let Some(init) = init {
                     AssignmentTargetMaybeDefault::new_assignment_target_with_default(
                         span,
-                        assignment_target,
+                        assignment_target.into(),
                         init,
                         &self.ast,
                     )

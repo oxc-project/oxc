@@ -453,14 +453,11 @@ impl<'a> ClassStaticBlock<'a> {
                     Some(param.pattern().get_identifier_name().map(Str::from))
                 }
                 Ancestor::AssignmentExpressionRight(assign)
-                    if !*assign.left_parenthesized()
-                        && (assign.operator().is_assign() || assign.operator().is_logical()) =>
+                    if assign.operator().is_assign() || assign.operator().is_logical() =>
                 {
                     Some(Self::assignment_name(assign.left()))
                 }
-                Ancestor::AssignmentTargetWithDefaultInit(target)
-                    if !*target.binding_parenthesized() =>
-                {
+                Ancestor::AssignmentTargetWithDefaultInit(target) => {
                     Some(Self::assignment_name(target.binding()))
                 }
                 Ancestor::AssignmentTargetPropertyIdentifierInit(target) => {
@@ -687,9 +684,12 @@ impl<'a> ClassStaticBlock<'a> {
         class.body.body = captures;
     }
 
-    fn assignment_name(target: &AssignmentTarget<'a>) -> Option<Str<'a>> {
+    /// `(a) = class {}` does not name the class, so `ParenthesizedIdentifier` is excluded.
+    fn assignment_name(target: &AssignmentTargetMaybeParenthesized<'a>) -> Option<Str<'a>> {
         match target {
-            AssignmentTarget::AssignmentTargetIdentifier(ident) => Some(ident.name.into()),
+            AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(ident) => {
+                Some(ident.name.into())
+            }
             _ => None,
         }
     }

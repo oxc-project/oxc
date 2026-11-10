@@ -101,21 +101,38 @@ impl<'a> LogicalAssignmentOperators {
         // TODO: Add tests, cover private identifier
         let (left_expr, assign_target) = match &mut assignment_expr.left {
             // `a &&= c` -> `a && (a = c)`
-            AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                Self::convert_identifier(ident, ctx)
+            AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(ident) => {
+                let (left_expr, ident) = Self::convert_identifier(ident, ctx);
+                let assign_target = AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(
+                    ctx.alloc(ident),
+                );
+                (left_expr, assign_target)
+            }
+            // `(a) &&= c` -> `a && ((a) = c)`
+            AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(paren) => {
+                let (left_expr, ident) = Self::convert_identifier(&paren.target, ctx);
+                let assign_target =
+                    AssignmentTargetMaybeParenthesized::new_parenthesized_identifier(
+                        SPAN, ident, ctx,
+                    );
+                (left_expr, assign_target)
             }
             // `a.b &&= c` -> `var _a; (_a = a).b && (_a.b = c)`
-            AssignmentTarget::StaticMemberExpression(static_expr) => {
-                self.convert_static_member_expression(static_expr, ctx)
+            AssignmentTargetMaybeParenthesized::StaticMemberExpression(static_expr) => {
+                let (left_expr, assign_target) =
+                    self.convert_static_member_expression(static_expr, ctx);
+                (left_expr, assign_target.into())
             }
             // `a[b.y] &&= c;` ->
             // `var _a, _b$y; (_a = a)[_b$y = b.y] && (_a[_b$y] = c);`
-            AssignmentTarget::ComputedMemberExpression(computed_expr) => {
-                self.convert_computed_member_expression(computed_expr, ctx)
+            AssignmentTargetMaybeParenthesized::ComputedMemberExpression(computed_expr) => {
+                let (left_expr, assign_target) =
+                    self.convert_computed_member_expression(computed_expr, ctx);
+                (left_expr, assign_target.into())
             }
             // TODO
             #[expect(clippy::match_same_arms)]
-            AssignmentTarget::PrivateFieldExpression(_) => return,
+            AssignmentTargetMaybeParenthesized::PrivateFieldExpression(_) => return,
             // All other are TypeScript syntax.
 
             // It is a Syntax Error if AssignmentTargetType of LeftHandSideExpression is not simple.
@@ -126,14 +143,8 @@ impl<'a> LogicalAssignmentOperators {
         let span = assignment_expr.span;
         let assign_op = AssignmentOperator::Assign;
         let right = assignment_expr.right.take_in(ctx);
-        let right = Expression::new_assignment_expression_with_left_parenthesized(
-            SPAN,
-            assign_op,
-            assignment_expr.left_parenthesized,
-            assign_target,
-            right,
-            ctx,
-        );
+        let right =
+            Expression::new_assignment_expression(SPAN, assign_op, assign_target, right, ctx);
 
         let logical_expr =
             Expression::new_logical_expression(span, left_expr, operator, right, ctx);
@@ -144,7 +155,7 @@ impl<'a> LogicalAssignmentOperators {
     fn convert_identifier(
         ident: &IdentifierReference<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> (Expression<'a>, AssignmentTarget<'a>) {
+    ) -> (Expression<'a>, IdentifierReference<'a>) {
         let reference_id = ident.reference_id();
         let reference = ctx.scoping_mut().get_reference_mut(reference_id);
         *reference.flags_mut() = ReferenceFlags::Read;
@@ -153,8 +164,7 @@ impl<'a> LogicalAssignmentOperators {
             Expression::new_identifier_with_reference_id(ident.span, ident.name, reference_id, ctx);
 
         let ident = ctx.create_ident_reference(SPAN, ident.name, symbol_id, ReferenceFlags::Write);
-        let assign_target = AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(ident));
-        (left_expr, assign_target)
+        (left_expr, ident)
     }
 
     #[expect(clippy::unused_self)]

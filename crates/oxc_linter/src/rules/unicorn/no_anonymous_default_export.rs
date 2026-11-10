@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentExpression, AssignmentTarget, ExportDefaultDeclarationKind, Expression},
+    ast::{
+        AssignmentExpression, AssignmentTargetMaybeParenthesized, ExportDefaultDeclarationKind,
+        Expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -114,8 +117,10 @@ fn is_anonymous_class_or_function(expr: &Expression) -> Option<(Span, ErrorNodeK
 
 fn is_common_js_export(expr: &AssignmentExpression) -> bool {
     match &expr.left {
-        AssignmentTarget::AssignmentTargetIdentifier(id) => id.name == "exports",
-        AssignmentTarget::StaticMemberExpression(mem_expr) if !mem_expr.optional => {
+        _ if let Some(id) = expr.left.identifier() => id.name == "exports",
+        AssignmentTargetMaybeParenthesized::StaticMemberExpression(mem_expr)
+            if !mem_expr.optional =>
+        {
             mem_expr.object.is_specific_id("module") && mem_expr.property.name == "exports"
         }
         _ => false,

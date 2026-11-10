@@ -169,7 +169,7 @@ fn layout<'a>(
             StaticMemberLayout::NoBreak
         }
         AstNodes::AssignmentExpression(assignment) => {
-            if matches!(assignment.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
+            if assignment.left.identifier().is_some() {
                 StaticMemberLayout::BreakAfterObject
             } else {
                 StaticMemberLayout::NoBreak

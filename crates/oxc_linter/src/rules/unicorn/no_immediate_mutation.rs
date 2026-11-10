@@ -1,9 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget, CallExpression,
-        Expression, NewExpression, ObjectPropertyKind, SimpleAssignmentTarget, Statement,
-        VariableDeclaration, VariableDeclarator,
+        Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTargetMaybeParenthesized,
+        CallExpression, Expression, NewExpression, ObjectPropertyKind, SimpleAssignmentTarget,
+        Statement, VariableDeclaration, VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -261,8 +261,10 @@ fn check_property_assignment<'a>(
 
     // Get the member expression from the assignment target
     let member = match &assign.left {
-        AssignmentTarget::StaticMemberExpression(m) => Some(m.object.get_inner_expression()),
-        AssignmentTarget::ComputedMemberExpression(m) => {
+        AssignmentTargetMaybeParenthesized::StaticMemberExpression(m) => {
+            Some(m.object.get_inner_expression())
+        }
+        AssignmentTargetMaybeParenthesized::ComputedMemberExpression(m) => {
             // Check if the computed property references the object itself
             let obj = m.object.get_inner_expression();
             if let Expression::Identifier(id) = obj
@@ -391,7 +393,7 @@ fn get_assignment_info<'a>(
     }
 
     // Only simple identifier targets
-    let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign.left else {
+    let Some(id) = assign.left.identifier() else {
         return None;
     };
 
@@ -538,15 +540,14 @@ fn expression_references_variable(expr: &Expression<'_>, var_name: &str) -> bool
         Expression::AssignmentExpression(assign) => {
             // Check both sides of the assignment
             let left_refs = match &assign.left {
-                AssignmentTarget::StaticMemberExpression(m) => {
+                AssignmentTargetMaybeParenthesized::StaticMemberExpression(m) => {
                     expression_references_variable(&m.object, var_name)
                 }
-                AssignmentTarget::ComputedMemberExpression(m) => {
+                AssignmentTargetMaybeParenthesized::ComputedMemberExpression(m) => {
                     expression_references_variable(&m.object, var_name)
                         || expression_references_variable(&m.expression, var_name)
                 }
-                AssignmentTarget::AssignmentTargetIdentifier(id) => id.name == var_name,
-                _ => false,
+                left => left.identifier().is_some_and(|id| id.name == var_name),
             };
             left_refs || expression_references_variable(&assign.right, var_name)
         }

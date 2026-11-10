@@ -213,7 +213,7 @@ impl<'a> TaggedTemplateTransform {
         let right = Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
-            binding.create_write_target(ctx),
+            binding.create_write_target(ctx).into(),
             expr,
             ctx,
         );

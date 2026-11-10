@@ -148,7 +148,9 @@ impl<'a> ClassProperties<'a> {
         {
             let PropertyKey::AssignmentExpression(assign_expr) = &prop.key else { unreachable!() };
             assert!(assign_expr.span.is_empty());
-            let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assign_expr.left else {
+            let AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(ident) =
+                &assign_expr.left
+            else {
                 unreachable!();
             };
             assert!(ident.name.starts_with('_'));

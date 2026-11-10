@@ -849,7 +849,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         let expression = Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
-            bound.create_write_target(ctx),
+            bound.create_write_target(ctx).into(),
             right,
             ctx,
         );

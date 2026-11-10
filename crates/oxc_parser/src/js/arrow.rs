@@ -520,7 +520,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Option<Expression<'a>> {
         let left = self.cover_binding_as_expression(param.pattern)?;
         Some(if let Some(initializer) = param.initializer {
-            let left = AssignmentTarget::cover(left, self);
+            let left = AssignmentTarget::cover(left, self).into();
             Expression::new_assignment_expression(
                 param.span,
                 AssignmentOperator::Assign,
@@ -547,7 +547,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             BindingPattern::AssignmentPattern(pattern) => {
                 let pattern = pattern.unbox();
                 let left = self.cover_binding_as_expression(pattern.left)?;
-                let left = AssignmentTarget::cover(left, self);
+                let left = AssignmentTarget::cover(left, self).into();
                 Expression::new_assignment_expression(
                     pattern.span,
                     AssignmentOperator::Assign,

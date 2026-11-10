@@ -434,6 +434,31 @@ impl GetSpanMut for AssignmentExpression<'_> {
     }
 }
 
+impl GetSpanMut for AssignmentTargetMaybeParenthesized<'_> {
+    fn span_mut(&mut self) -> &mut Span {
+        match self {
+            Self::ParenthesizedIdentifier(it) => GetSpanMut::span_mut(&mut **it),
+            Self::AssignmentTargetIdentifier(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ArrayAssignmentTarget(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ObjectAssignmentTarget(it) => GetSpanMut::span_mut(&mut **it),
+        }
+    }
+}
+
+impl GetSpanMut for ParenthesizedIdentifierAssignmentTarget<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl GetSpanMut for AssignmentTarget<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {

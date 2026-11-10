@@ -1135,13 +1135,13 @@ function walkAssignmentExpression(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkAssignmentTarget(pos + 16, ast, visitors);
+  walkAssignmentTargetMaybeParenthesized(pos + 16, ast, visitors);
   walkExpression(pos + 32, ast, visitors);
 
   if (exit !== null) exit(node);
 }
 
-function walkAssignmentTarget(pos, ast, visitors) {
+function walkAssignmentTargetMaybeParenthesized(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
       walkBoxIdentifierReference(pos + 8, ast, visitors);
@@ -1164,6 +1164,9 @@ function walkAssignmentTarget(pos, ast, visitors) {
     case 9:
       walkBoxObjectAssignmentTarget(pos + 8, ast, visitors);
       return;
+    case 17:
+      walkBoxParenthesizedIdentifierAssignmentTarget(pos + 8, ast, visitors);
+      return;
     case 48:
       walkBoxComputedMemberExpression(pos + 8, ast, visitors);
       return;
@@ -1174,8 +1177,14 @@ function walkAssignmentTarget(pos, ast, visitors) {
       walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
       return;
     default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AssignmentTarget`);
+      throw new Error(
+        `Unexpected discriminant ${ast.buffer[pos]} for AssignmentTargetMaybeParenthesized`,
+      );
   }
+}
+
+function walkParenthesizedIdentifierAssignmentTarget(pos, ast, visitors) {
+  walkIdentifierReference(pos + 16, ast, visitors);
 }
 
 function walkSimpleAssignmentTarget(pos, ast, visitors) {
@@ -1294,7 +1303,7 @@ function walkAssignmentTargetWithDefault(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkAssignmentTarget(pos + 16, ast, visitors);
+  walkAssignmentTargetMaybeParenthesized(pos + 16, ast, visitors);
   walkExpression(pos + 32, ast, visitors);
 
   if (exit !== null) exit(node);
@@ -5198,6 +5207,10 @@ function walkVecArgument(pos, ast, visitors) {
     walkArgument(pos, ast, visitors);
     pos += 16;
   }
+}
+
+function walkBoxParenthesizedIdentifierAssignmentTarget(pos, ast, visitors) {
+  return walkParenthesizedIdentifierAssignmentTarget(ast.buffer.int32[pos >> 2], ast, visitors);
 }
 
 function walkBoxArrayAssignmentTarget(pos, ast, visitors) {

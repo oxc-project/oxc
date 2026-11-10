@@ -137,7 +137,7 @@ pub fn duplicate_expression_multiple<'a, const N: usize>(
     let assignment = Expression::new_assignment_expression(
         SPAN,
         AssignmentOperator::Assign,
-        temp_var_binding.create_target(ReferenceFlags::Write, ctx),
+        temp_var_binding.create_target(ReferenceFlags::Write, ctx).into(),
         expr,
         ctx,
     );

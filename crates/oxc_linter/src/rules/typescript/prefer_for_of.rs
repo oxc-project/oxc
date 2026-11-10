@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, BindingPattern, Expression, ForStatementInit, SimpleAssignmentTarget,
+        BindingPattern, Expression, ForStatementInit, SimpleAssignmentTarget,
         match_member_expression,
     },
 };
@@ -72,10 +72,7 @@ impl ExpressionExt for Expression<'_> {
                 _ => false,
             },
             Expression::AssignmentExpression(expr) => {
-                if !matches!(&expr.left,
-                    AssignmentTarget::AssignmentTargetIdentifier(id)
-                    if id.name == var_name
-                ) {
+                if !expr.left.identifier().is_some_and(|id| id.name == var_name) {
                     return false;
                 }
 

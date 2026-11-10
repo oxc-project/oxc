@@ -1,10 +1,10 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, CallExpression,
-        Class, ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression, Function,
-        JSXAttributeItem, JSXElementName, ObjectProperty, PropertyKey, Statement,
-        VariableDeclarator,
+        Argument, ArrowFunctionExpression, AssignmentExpression,
+        AssignmentTargetMaybeParenthesized, CallExpression, Class, ExportDefaultDeclaration,
+        ExportDefaultDeclarationKind, Expression, Function, JSXAttributeItem, JSXElementName,
+        ObjectProperty, PropertyKey, Statement, VariableDeclarator,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -237,7 +237,7 @@ impl<'a> VisitJs<'a> for ComponentFinder<'a, '_> {
         // exports.Foo = function() { return <div/> }
         // We increment depth after recording to prevent the inner function from being
         // detected again when visiting the function expression.
-        if let AssignmentTarget::StaticMemberExpression(member) = &assign.left {
+        if let AssignmentTargetMaybeParenthesized::StaticMemberExpression(member) = &assign.left {
             let prop_name = member.property.name.as_str();
             if is_react_component_name(prop_name) {
                 let is_component = expression_contains_jsx(&assign.right)

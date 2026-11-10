@@ -84,7 +84,7 @@ impl<'a> TypeScriptModule {
         let assignment_expr = Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
-            left,
+            left.into(),
             right,
             ctx,
         );

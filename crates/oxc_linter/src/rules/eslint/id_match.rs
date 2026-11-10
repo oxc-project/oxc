@@ -8,10 +8,10 @@ use serde_json::Value;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetPropertyProperty,
-        BindingIdentifier, BindingPattern, BindingProperty, ExportSpecifier, FunctionType,
-        IdentifierName, IdentifierReference, LabelIdentifier, ModuleExportName, ObjectProperty,
-        PrivateIdentifier, PropertyKey,
+        AssignmentTargetMaybeDefault, AssignmentTargetMaybeParenthesized,
+        AssignmentTargetPropertyProperty, BindingIdentifier, BindingPattern, BindingProperty,
+        ExportSpecifier, FunctionType, IdentifierName, IdentifierReference, LabelIdentifier,
+        ModuleExportName, ObjectProperty, PrivateIdentifier, PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -738,12 +738,9 @@ fn assignment_target_identifier_name<'a>(
 }
 
 fn assignment_target_identifier_name_from_target<'a>(
-    target: &'a AssignmentTarget<'a>,
+    target: &'a AssignmentTargetMaybeParenthesized<'a>,
 ) -> Option<&'a str> {
-    match target {
-        AssignmentTarget::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
-        _ => None,
-    }
+    target.identifier().map(|ident| ident.name.as_str())
 }
 
 #[test]

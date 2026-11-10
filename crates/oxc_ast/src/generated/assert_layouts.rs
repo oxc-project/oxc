@@ -261,15 +261,24 @@ const _: () = {
     assert!(offset_of!(ConditionalExpression, consequent) == 32);
     assert!(offset_of!(ConditionalExpression, alternate) == 48);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<AssignmentExpression>() == 48);
     assert!(align_of::<AssignmentExpression>() == 8);
     assert!(offset_of!(AssignmentExpression, span) == 0);
     assert!(offset_of!(AssignmentExpression, node_id) == 8);
     assert!(offset_of!(AssignmentExpression, operator) == 12);
-    assert!(offset_of!(AssignmentExpression, left_parenthesized) == 13);
     assert!(offset_of!(AssignmentExpression, left) == 16);
     assert!(offset_of!(AssignmentExpression, right) == 32);
+
+    assert!(size_of::<AssignmentTargetMaybeParenthesized>() == 16);
+    assert!(align_of::<AssignmentTargetMaybeParenthesized>() == 8);
+
+    // Padding: 4 bytes
+    assert!(size_of::<ParenthesizedIdentifierAssignmentTarget>() == 48);
+    assert!(align_of::<ParenthesizedIdentifierAssignmentTarget>() == 8);
+    assert!(offset_of!(ParenthesizedIdentifierAssignmentTarget, span) == 0);
+    assert!(offset_of!(ParenthesizedIdentifierAssignmentTarget, node_id) == 8);
+    assert!(offset_of!(ParenthesizedIdentifierAssignmentTarget, target) == 16);
 
     assert!(size_of::<AssignmentTarget>() == 16);
     assert!(align_of::<AssignmentTarget>() == 8);
@@ -306,12 +315,11 @@ const _: () = {
     assert!(size_of::<AssignmentTargetMaybeDefault>() == 16);
     assert!(align_of::<AssignmentTargetMaybeDefault>() == 8);
 
-    // Padding: 3 bytes
+    // Padding: 4 bytes
     assert!(size_of::<AssignmentTargetWithDefault>() == 48);
     assert!(align_of::<AssignmentTargetWithDefault>() == 8);
     assert!(offset_of!(AssignmentTargetWithDefault, span) == 0);
     assert!(offset_of!(AssignmentTargetWithDefault, node_id) == 8);
-    assert!(offset_of!(AssignmentTargetWithDefault, binding_parenthesized) == 12);
     assert!(offset_of!(AssignmentTargetWithDefault, binding) == 16);
     assert!(offset_of!(AssignmentTargetWithDefault, init) == 32);
 
@@ -2108,15 +2116,24 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(ConditionalExpression, consequent) == 20);
     assert!(offset_of!(ConditionalExpression, alternate) == 28);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<AssignmentExpression>() == 32);
     assert!(align_of::<AssignmentExpression>() == 4);
     assert!(offset_of!(AssignmentExpression, span) == 0);
     assert!(offset_of!(AssignmentExpression, node_id) == 8);
     assert!(offset_of!(AssignmentExpression, operator) == 12);
-    assert!(offset_of!(AssignmentExpression, left_parenthesized) == 13);
     assert!(offset_of!(AssignmentExpression, left) == 16);
     assert!(offset_of!(AssignmentExpression, right) == 24);
+
+    assert!(size_of::<AssignmentTargetMaybeParenthesized>() == 8);
+    assert!(align_of::<AssignmentTargetMaybeParenthesized>() == 4);
+
+    // Padding: 0 bytes
+    assert!(size_of::<ParenthesizedIdentifierAssignmentTarget>() == 40);
+    assert!(align_of::<ParenthesizedIdentifierAssignmentTarget>() == 4);
+    assert!(offset_of!(ParenthesizedIdentifierAssignmentTarget, span) == 0);
+    assert!(offset_of!(ParenthesizedIdentifierAssignmentTarget, node_id) == 8);
+    assert!(offset_of!(ParenthesizedIdentifierAssignmentTarget, target) == 12);
 
     assert!(size_of::<AssignmentTarget>() == 8);
     assert!(align_of::<AssignmentTarget>() == 4);
@@ -2153,14 +2170,13 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<AssignmentTargetMaybeDefault>() == 8);
     assert!(align_of::<AssignmentTargetMaybeDefault>() == 4);
 
-    // Padding: 3 bytes
-    assert!(size_of::<AssignmentTargetWithDefault>() == 32);
+    // Padding: 0 bytes
+    assert!(size_of::<AssignmentTargetWithDefault>() == 28);
     assert!(align_of::<AssignmentTargetWithDefault>() == 4);
     assert!(offset_of!(AssignmentTargetWithDefault, span) == 0);
     assert!(offset_of!(AssignmentTargetWithDefault, node_id) == 8);
-    assert!(offset_of!(AssignmentTargetWithDefault, binding_parenthesized) == 12);
-    assert!(offset_of!(AssignmentTargetWithDefault, binding) == 16);
-    assert!(offset_of!(AssignmentTargetWithDefault, init) == 24);
+    assert!(offset_of!(AssignmentTargetWithDefault, binding) == 12);
+    assert!(offset_of!(AssignmentTargetWithDefault, init) == 20);
 
     assert!(size_of::<AssignmentTargetProperty>() == 8);
     assert!(align_of::<AssignmentTargetProperty>() == 4);

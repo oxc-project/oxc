@@ -506,6 +506,22 @@ impl AssignmentExpression<'_> {
     }
 }
 
+impl ParenthesizedIdentifierAssignmentTarget<'_> {
+    /// Get [`NodeId`] of [`ParenthesizedIdentifierAssignmentTarget`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ParenthesizedIdentifierAssignmentTarget`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
 impl ArrayAssignmentTarget<'_> {
     /// Get [`NodeId`] of [`ArrayAssignmentTarget`].
     ///
@@ -4008,6 +4024,45 @@ impl Argument<'_> {
             Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
             Self::StaticMemberExpression(it) => it.set_node_id(node_id),
             Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
+        }
+    }
+}
+
+impl AssignmentTargetMaybeParenthesized<'_> {
+    /// Get [`NodeId`] of [`AssignmentTargetMaybeParenthesized`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn node_id(&self) -> NodeId {
+        match self {
+            Self::ParenthesizedIdentifier(it) => it.node_id(),
+            Self::AssignmentTargetIdentifier(it) => it.node_id(),
+            Self::TSAsExpression(it) => it.node_id(),
+            Self::TSSatisfiesExpression(it) => it.node_id(),
+            Self::TSNonNullExpression(it) => it.node_id(),
+            Self::TSTypeAssertion(it) => it.node_id(),
+            Self::ComputedMemberExpression(it) => it.node_id(),
+            Self::StaticMemberExpression(it) => it.node_id(),
+            Self::PrivateFieldExpression(it) => it.node_id(),
+            Self::ArrayAssignmentTarget(it) => it.node_id(),
+            Self::ObjectAssignmentTarget(it) => it.node_id(),
+        }
+    }
+    /// Set [`NodeId`] of [`AssignmentTargetMaybeParenthesized`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::ParenthesizedIdentifier(it) => it.set_node_id(node_id),
+            Self::AssignmentTargetIdentifier(it) => it.set_node_id(node_id),
+            Self::TSAsExpression(it) => it.set_node_id(node_id),
+            Self::TSSatisfiesExpression(it) => it.set_node_id(node_id),
+            Self::TSNonNullExpression(it) => it.set_node_id(node_id),
+            Self::TSTypeAssertion(it) => it.set_node_id(node_id),
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
+            Self::ArrayAssignmentTarget(it) => it.set_node_id(node_id),
+            Self::ObjectAssignmentTarget(it) => it.set_node_id(node_id),
         }
     }
 }

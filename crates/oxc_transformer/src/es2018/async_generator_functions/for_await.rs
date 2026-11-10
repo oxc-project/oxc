@@ -133,7 +133,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 let expression = Expression::new_assignment_expression(
                     SPAN,
                     AssignmentOperator::Assign,
-                    target,
+                    target.into(),
                     step_value,
                     ctx,
                 );
@@ -303,7 +303,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 Some(Expression::new_assignment_expression(
                     SPAN,
                     AssignmentOperator::Assign,
-                    iterator_abrupt_completion.create_write_target(ctx),
+                    iterator_abrupt_completion.create_write_target(ctx).into(),
                     Expression::new_unary_expression(
                         SPAN,
                         UnaryOperator::LogicalNot,
@@ -314,7 +314,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                                 Expression::new_assignment_expression(
                                     SPAN,
                                     AssignmentOperator::Assign,
-                                    step_key.create_write_target(ctx),
+                                    step_key.create_write_target(ctx).into(),
                                     Expression::new_await_expression(
                                         SPAN,
                                         Expression::new_call_expression(
@@ -348,7 +348,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 Some(Expression::new_assignment_expression(
                     SPAN,
                     AssignmentOperator::Assign,
-                    iterator_abrupt_completion.create_write_target(ctx),
+                    iterator_abrupt_completion.create_write_target(ctx).into(),
                     Expression::new_boolean_literal(SPAN, false, ctx),
                     ctx,
                 )),
@@ -391,7 +391,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                                 Expression::new_assignment_expression(
                                     SPAN,
                                     AssignmentOperator::Assign,
-                                    iterator_had_error_key.create_write_target(ctx),
+                                    iterator_had_error_key.create_write_target(ctx).into(),
                                     Expression::new_boolean_literal(SPAN, true, ctx),
                                     ctx,
                                 ),
@@ -402,7 +402,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                                 Expression::new_assignment_expression(
                                     SPAN,
                                     AssignmentOperator::Assign,
-                                    iterator_error_key.create_write_target(ctx),
+                                    iterator_error_key.create_write_target(ctx).into(),
                                     err_ident.create_read_expression(ctx),
                                     ctx,
                                 ),

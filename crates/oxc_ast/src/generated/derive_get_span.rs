@@ -435,6 +435,31 @@ impl GetSpan for AssignmentExpression<'_> {
     }
 }
 
+impl GetSpan for AssignmentTargetMaybeParenthesized<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::ParenthesizedIdentifier(it) => GetSpan::span(&**it),
+            Self::AssignmentTargetIdentifier(it) => GetSpan::span(&**it),
+            Self::TSAsExpression(it) => GetSpan::span(&**it),
+            Self::TSSatisfiesExpression(it) => GetSpan::span(&**it),
+            Self::TSNonNullExpression(it) => GetSpan::span(&**it),
+            Self::TSTypeAssertion(it) => GetSpan::span(&**it),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
+            Self::ArrayAssignmentTarget(it) => GetSpan::span(&**it),
+            Self::ObjectAssignmentTarget(it) => GetSpan::span(&**it),
+        }
+    }
+}
+
+impl GetSpan for ParenthesizedIdentifierAssignmentTarget<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl GetSpan for AssignmentTarget<'_> {
     fn span(&self) -> Span {
         match self {

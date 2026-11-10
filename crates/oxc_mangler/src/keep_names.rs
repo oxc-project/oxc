@@ -115,23 +115,16 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
         let parent_node_id = self.ast_nodes.parent_id(node_id);
         match self.ast_nodes.kind(parent_node_id) {
             // Check for direct assignment: foo = function() {}
-            // `(foo) = function() {}` does not name the function.
             AstKind::AssignmentExpression(assign_expr) => {
-                !assign_expr.left_parenthesized
-                    && Self::is_assignment_target_id_of_specific_reference(
-                        &assign_expr.left,
-                        reference_id,
-                    )
+                Self::is_assignment_target_id_of_specific_reference(&assign_expr.left, reference_id)
                     && self.is_expression_whose_name_needs_to_be_kept(&assign_expr.right)
             }
             // Check for assignments within assignment targets with defaults: [foo = function() {}] = []
             AstKind::AssignmentTargetWithDefault(assign_target) => {
-                !assign_target.binding_parenthesized
-                    && Self::is_assignment_target_id_of_specific_reference(
-                        &assign_target.binding,
-                        reference_id,
-                    )
-                    && self.is_expression_whose_name_needs_to_be_kept(&assign_target.init)
+                Self::is_assignment_target_id_of_specific_reference(
+                    &assign_target.binding,
+                    reference_id,
+                ) && self.is_expression_whose_name_needs_to_be_kept(&assign_target.init)
             }
             AstKind::IdentifierReference(_)
             | AstKind::TSAsExpression(_)
@@ -215,10 +208,11 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
     }
 
     fn is_assignment_target_id_of_specific_reference(
-        target_kind: &AssignmentTarget,
+        target_kind: &AssignmentTargetMaybeParenthesized,
         reference_id: ReferenceId,
     ) -> bool {
-        if let AssignmentTarget::AssignmentTargetIdentifier(id) = target_kind {
+        // `(foo) = function() {}` does not name the function, so `ParenthesizedIdentifier` is excluded
+        if let AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(id) = target_kind {
             id.reference_id() == reference_id
         } else {
             false

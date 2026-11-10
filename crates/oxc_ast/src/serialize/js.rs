@@ -979,3 +979,21 @@ impl ESTree for ParenthesizedExpressionConverter<'_, '_> {
         state.end();
     }
 }
+
+/// Converter for [`ParenthesizedIdentifierAssignmentTarget`].
+///
+/// ESTree has no node for a parenthesized assignment target, so serialize as just the identifier.
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierReference",
+    raw_deser = "DESER[IdentifierReference](POS_OFFSET.target)"
+)]
+pub struct ParenthesizedIdentifierAssignmentTargetConverter<'a, 'b>(
+    pub &'b ParenthesizedIdentifierAssignmentTarget<'a>,
+);
+
+impl ESTree for ParenthesizedIdentifierAssignmentTargetConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.target.serialize(serializer);
+    }
+}

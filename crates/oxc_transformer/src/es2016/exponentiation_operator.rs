@@ -78,19 +78,20 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a> {
                 }
 
                 match &assign_expr.left {
-                    AssignmentTarget::AssignmentTargetIdentifier(_) => {
+                    AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(_)
+                    | AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(_) => {
                         self.convert_identifier_assignment(expr, ctx);
                     }
-                    AssignmentTarget::StaticMemberExpression(_) => {
+                    AssignmentTargetMaybeParenthesized::StaticMemberExpression(_) => {
                         self.convert_static_member_expression_assignment(expr, ctx);
                     }
-                    AssignmentTarget::ComputedMemberExpression(_) => {
+                    AssignmentTargetMaybeParenthesized::ComputedMemberExpression(_) => {
                         self.convert_computed_member_expression_assignment(expr, ctx);
                     }
                     // Babel refuses to transform this: "We can't generate property ref for private name,
                     // please install `@babel/plugin-transform-class-properties`".
                     // But there's no reason not to.
-                    AssignmentTarget::PrivateFieldExpression(_) => {
+                    AssignmentTargetMaybeParenthesized::PrivateFieldExpression(_) => {
                         self.convert_private_field_assignment(expr, ctx);
                     }
                     _ => {}
@@ -133,9 +134,7 @@ impl<'a> ExponentiationOperator<'a> {
     fn convert_identifier_assignment(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
         let span = assign_expr.span;
-        let AssignmentTarget::AssignmentTargetIdentifier(ident) = &mut assign_expr.left else {
-            unreachable!()
-        };
+        let Some(ident) = assign_expr.left.identifier() else { unreachable!() };
 
         let (pow_left, temp_var_inits) = self.get_pow_left_identifier(ident, ctx);
         Self::convert_assignment(assign_expr, pow_left, ctx);
@@ -204,13 +203,15 @@ impl<'a> ExponentiationOperator<'a> {
     ) {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
         let span = assign_expr.span;
-        let AssignmentTarget::StaticMemberExpression(member_expr) = &mut assign_expr.left else {
+        let AssignmentTargetMaybeParenthesized::StaticMemberExpression(member_expr) =
+            &mut assign_expr.left
+        else {
             unreachable!()
         };
 
         let (replacement_left, pow_left, temp_var_inits) =
             self.get_pow_left_static_member(member_expr, ctx);
-        assign_expr.left = replacement_left;
+        assign_expr.left = replacement_left.into();
         Self::convert_assignment(assign_expr, pow_left, ctx);
         Self::revise_expression(expr, temp_var_inits, span, ctx);
     }
@@ -304,7 +305,9 @@ impl<'a> ExponentiationOperator<'a> {
     ) {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
         let span = assign_expr.span;
-        let AssignmentTarget::ComputedMemberExpression(member_expr) = &mut assign_expr.left else {
+        let AssignmentTargetMaybeParenthesized::ComputedMemberExpression(member_expr) =
+            &mut assign_expr.left
+        else {
             unreachable!()
         };
 
@@ -386,7 +389,9 @@ impl<'a> ExponentiationOperator<'a> {
     ) {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
         let span = assign_expr.span;
-        let AssignmentTarget::PrivateFieldExpression(member_expr) = &mut assign_expr.left else {
+        let AssignmentTargetMaybeParenthesized::PrivateFieldExpression(member_expr) =
+            &mut assign_expr.left
+        else {
             unreachable!()
         };
 
@@ -571,7 +576,7 @@ impl<'a> ExponentiationOperator<'a> {
         temp_var_inits.push(Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
-            binding.create_write_target(ctx),
+            binding.create_write_target(ctx).into(),
             expr,
             ctx,
         ));

@@ -1,4 +1,4 @@
-use oxc_ast::ast::{AssignmentTarget, IdentifierReference, MemberExpression};
+use oxc_ast::ast::{AssignmentTargetMaybeParenthesized, IdentifierReference, MemberExpression};
 use oxc_semantic::IsGlobalReference;
 use oxc_str::static_ident;
 
@@ -13,8 +13,11 @@ pub fn is_global_module_reference(ident: &IdentifierReference, ctx: &LintContext
 ///
 /// This respects an explicit `globals.exports = off` override, matching rules that should ignore
 /// CommonJS globals when users have disabled them.
-pub fn is_global_exports_assignment_target(node: &AssignmentTarget, ctx: &LintContext) -> bool {
-    let AssignmentTarget::AssignmentTargetIdentifier(id) = node else {
+pub fn is_global_exports_assignment_target(
+    node: &AssignmentTargetMaybeParenthesized,
+    ctx: &LintContext,
+) -> bool {
+    let Some(id) = node.identifier() else {
         return false;
     };
     id.is_global_reference_name(static_ident!("exports"), ctx.scoping())

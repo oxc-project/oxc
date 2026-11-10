@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, AssignmentTarget, BinaryOperator, Expression, MemberExpression,
-        SimpleAssignmentTarget, UnaryOperator, UpdateOperator,
+        AssignmentExpression, AssignmentTargetMaybeParenthesized, BinaryOperator, Expression,
+        MemberExpression, UnaryOperator, UpdateOperator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -256,13 +256,11 @@ operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str(), true),
     }
 }
 
-fn can_be_fixed(target: &AssignmentTarget) -> bool {
-    let Some(simple_assignment_target) = target.as_simple_assignment_target() else { return false };
-
-    if matches!(simple_assignment_target, SimpleAssignmentTarget::AssignmentTargetIdentifier(_)) {
+fn can_be_fixed(target: &AssignmentTargetMaybeParenthesized) -> bool {
+    if target.identifier().is_some() {
         return true;
     }
-    let Some(expr) = simple_assignment_target.as_member_expression() else {
+    let Some(expr) = target.as_member_expression() else {
         return false;
     };
     match expr {
@@ -288,13 +286,16 @@ fn get_operator_span(search_span: Span, operator: &str, ctx: &LintContext) -> Sp
     Span::sized(search_span.start + offset, operator.len() as u32)
 }
 
-fn check_is_same_reference(left: &AssignmentTarget, right: &Expression, ctx: &LintContext) -> bool {
-    let Some(simple_assignment_target) = left.as_simple_assignment_target() else { return false };
-    if let SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) = simple_assignment_target {
+fn check_is_same_reference(
+    left: &AssignmentTargetMaybeParenthesized,
+    right: &Expression,
+    ctx: &LintContext,
+) -> bool {
+    if let Some(id1) = left.identifier() {
         return matches!(right, Expression::Identifier(id2) if id2.name == id1.name);
     }
 
-    let Some(left_member_expr) = simple_assignment_target.as_member_expression() else {
+    let Some(left_member_expr) = left.as_member_expression() else {
         return false;
     };
     let Some(right_member_expr) = right.without_parentheses().get_member_expr() else {

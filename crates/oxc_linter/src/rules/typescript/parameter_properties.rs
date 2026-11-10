@@ -5,8 +5,9 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, AssignmentTarget, Class, ClassElement, Expression, FormalParameter,
-        MethodDefinition, PropertyDefinition, PropertyKey, Statement, TSAccessibility,
+        AssignmentExpression, AssignmentTargetMaybeParenthesized, Class, ClassElement, Expression,
+        FormalParameter, MethodDefinition, PropertyDefinition, PropertyKey, Statement,
+        TSAccessibility,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -280,7 +281,9 @@ fn constructor_assignment<'a>(
     let Expression::AssignmentExpression(assignment) = &expression_statement.expression else {
         return None;
     };
-    let AssignmentTarget::StaticMemberExpression(member_expression) = &assignment.left else {
+    let AssignmentTargetMaybeParenthesized::StaticMemberExpression(member_expression) =
+        &assignment.left
+    else {
         return None;
     };
     if !matches!(member_expression.object.get_inner_expression(), Expression::ThisExpression(_)) {

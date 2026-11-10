@@ -369,6 +369,36 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_assignment_target_maybe_parenthesized(
+        &mut self,
+        node: &mut AssignmentTargetMaybeParenthesized<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_assignment_target_maybe_parenthesized(
+        &mut self,
+        node: &mut AssignmentTargetMaybeParenthesized<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_parenthesized_identifier_assignment_target(
+        &mut self,
+        node: &mut ParenthesizedIdentifierAssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_parenthesized_identifier_assignment_target(
+        &mut self,
+        node: &mut ParenthesizedIdentifierAssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_assignment_target(
         &mut self,
         node: &mut AssignmentTarget<'a>,

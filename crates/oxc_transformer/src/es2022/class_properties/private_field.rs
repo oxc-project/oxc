@@ -470,7 +470,10 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
-        if matches!(&assign_expr.left, AssignmentTarget::PrivateFieldExpression(_)) {
+        if matches!(
+            &assign_expr.left,
+            AssignmentTargetMaybeParenthesized::PrivateFieldExpression(_)
+        ) {
             if !self.private_fields_as_properties
                 && assign_expr.operator.to_logical_operator().is_some()
                 && ctx
@@ -502,7 +505,9 @@ impl<'a> ClassProperties<'a> {
         // This function is much too large to inline, because `transform_static_assignment_expression`
         // and `transform_instance_assignment_expression` are inlined into it.
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
-        let AssignmentTarget::PrivateFieldExpression(field_expr) = &mut assign_expr.left else {
+        let AssignmentTargetMaybeParenthesized::PrivateFieldExpression(field_expr) =
+            &mut assign_expr.left
+        else {
             unreachable!()
         };
 
@@ -520,7 +525,8 @@ impl<'a> ClassProperties<'a> {
             // `object.#prop = value` -> `_classPrivateFieldLooseBase(object, _prop)[_prop] = value`
             // Same for all other assignment operators e.g. `+=`, `&&=`, `??=`.
             assign_expr.left.replace_with(|left| {
-                let AssignmentTarget::PrivateFieldExpression(field_expr) = left else {
+                let AssignmentTargetMaybeParenthesized::PrivateFieldExpression(field_expr) = left
+                else {
                     unreachable!()
                 };
 
@@ -532,7 +538,7 @@ impl<'a> ClassProperties<'a> {
                     field_expr.span,
                     ctx,
                 );
-                AssignmentTarget::from(replacement)
+                replacement.into()
             });
             return;
         }
@@ -622,7 +628,9 @@ impl<'a> ClassProperties<'a> {
     ) {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
         let operator = assign_expr.operator;
-        let AssignmentTarget::PrivateFieldExpression(field_expr) = &mut assign_expr.left else {
+        let AssignmentTargetMaybeParenthesized::PrivateFieldExpression(field_expr) =
+            &mut assign_expr.left
+        else {
             unreachable!()
         };
 
@@ -641,10 +649,12 @@ impl<'a> ClassProperties<'a> {
         if let Some((class_symbol_id, object_reference_id)) = object_reference {
             // Replace left side of assignment with `_prop._`
             let field_expr_span = field_expr.span;
-            assign_expr.left = Self::create_underscore_member_expr_target(
-                prop_binding.create_read_expression(ctx),
-                field_expr_span,
-                ctx,
+            assign_expr.left = AssignmentTargetMaybeParenthesized::from(
+                Self::create_underscore_member_expr_target(
+                    prop_binding.create_read_expression(ctx),
+                    field_expr_span,
+                    ctx,
+                ),
             );
 
             // Delete reference for `object` as `object.#prop` has been removed
@@ -686,9 +696,11 @@ impl<'a> ClassProperties<'a> {
                 SPAN,
                 ctx,
             );
-            let old_assignee = mem::replace(&mut assign_expr.left, assignee);
+            let old_assignee = mem::replace(&mut assign_expr.left, assignee.into());
             let field_expr = match old_assignee {
-                AssignmentTarget::PrivateFieldExpression(field_expr) => field_expr.unbox(),
+                AssignmentTargetMaybeParenthesized::PrivateFieldExpression(field_expr) => {
+                    field_expr.unbox()
+                }
                 _ => unreachable!(),
             };
             let object = field_expr.object.into_inner_expression();
@@ -801,7 +813,10 @@ impl<'a> ClassProperties<'a> {
             };
             let AssignmentExpression { span, operator, right: value, left, .. } =
                 assign_expr.unbox();
-            let AssignmentTarget::PrivateFieldExpression(field_expr) = left else { unreachable!() };
+            let AssignmentTargetMaybeParenthesized::PrivateFieldExpression(field_expr) = left
+            else {
+                unreachable!()
+            };
             let PrivateFieldExpression { field, object, .. } = field_expr.unbox();
 
             if operator == AssignmentOperator::Assign {
@@ -1101,7 +1116,7 @@ impl<'a> ClassProperties<'a> {
                     Expression::new_assignment_expression(
                         span,
                         AssignmentOperator::Assign,
-                        Self::create_underscore_member_expr_target(prop_ident2, SPAN, ctx),
+                        Self::create_underscore_member_expr_target(prop_ident2, SPAN, ctx).into(),
                         value,
                         ctx,
                     )
@@ -1130,7 +1145,7 @@ impl<'a> ClassProperties<'a> {
                     let assignment3 = Expression::new_assignment_expression(
                         SPAN,
                         AssignmentOperator::Assign,
-                        Self::create_underscore_member_expr_target(prop_ident2, SPAN, ctx),
+                        Self::create_underscore_member_expr_target(prop_ident2, SPAN, ctx).into(),
                         value,
                         ctx,
                     );
@@ -2294,7 +2309,7 @@ impl<'a> ClassProperties<'a> {
                 return Expression::new_assignment_expression(
                     span,
                     AssignmentOperator::Assign,
-                    AssignmentTarget::from(target.into_member_expression()),
+                    target.into_member_expression().into(),
                     value,
                     ctx,
                 );

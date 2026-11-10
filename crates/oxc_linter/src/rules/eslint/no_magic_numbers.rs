@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, BigIntLiteral, Expression, NumericLiteral},
+    ast::{BigIntLiteral, Expression, NumericLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -540,7 +540,7 @@ impl NoMagicNumbers {
                 None
             }
             AstKind::AssignmentExpression(expression) => {
-                if matches!(expression.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
+                if expression.left.identifier().is_some() {
                     return Some(NoMagicNumberReportReason::NoMagicNumber);
                 }
 

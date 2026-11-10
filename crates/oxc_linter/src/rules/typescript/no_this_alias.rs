@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, BindingPattern, match_simple_assignment_target},
+    ast::{AssignmentTargetMaybeParenthesized, BindingPattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -137,21 +137,20 @@ impl Rule for NoThisAlias {
                     return;
                 }
                 match &assignment.left {
-                    left @ (AssignmentTarget::ArrayAssignmentTarget(_)
-                    | AssignmentTarget::ObjectAssignmentTarget(_)) => {
+                    left @ (AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(_)
+                    | AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(_)) => {
                         if self.allow_destructuring {
                             return;
                         }
                         ctx.diagnostic(no_this_destructure_diagnostic(left.span()));
                     }
-                    AssignmentTarget::AssignmentTargetIdentifier(id) => {
+                    _ if let Some(id) = assignment.left.identifier() => {
                         if !self.is_allowed(&id.name) {
                             ctx.diagnostic(no_this_alias_diagnostic(id.span));
                         }
                     }
-                    left @ match_simple_assignment_target!(AssignmentTarget) => {
-                        let pat = left.to_simple_assignment_target();
-                        let Some(expr) = pat.get_expression() else {
+                    left => {
+                        let Some(expr) = left.get_expression() else {
                             return;
                         };
                         let Some(id) = expr.get_identifier_reference() else {

@@ -159,13 +159,19 @@ impl<'a> PeepholeOptimizations {
     /// The `||=` operator evaluates `x.y` (capturing `x`) before the RHS reassigns `x`,
     /// which would change the semantics.
     pub fn member_object_may_be_mutated(
-        assignment_target: &AssignmentTarget<'a>,
+        assignment_target: &AssignmentTargetMaybeParenthesized<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         let object = match assignment_target {
-            AssignmentTarget::ComputedMemberExpression(member_expr) => &member_expr.object,
-            AssignmentTarget::PrivateFieldExpression(member_expr) => &member_expr.object,
-            AssignmentTarget::StaticMemberExpression(member_expr) => &member_expr.object,
+            AssignmentTargetMaybeParenthesized::ComputedMemberExpression(member_expr) => {
+                &member_expr.object
+            }
+            AssignmentTargetMaybeParenthesized::PrivateFieldExpression(member_expr) => {
+                &member_expr.object
+            }
+            AssignmentTargetMaybeParenthesized::StaticMemberExpression(member_expr) => {
+                &member_expr.object
+            }
             _ => return false,
         };
 

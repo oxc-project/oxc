@@ -164,7 +164,8 @@ impl<'a> PeepholeOptimizations {
             Expression::Identifier(id) => Some(id),
             Expression::AssignmentExpression(assign_expr) => {
                 if assign_expr.operator.is_assign()
-                    && let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left
+                    && let AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(id) =
+                        &assign_expr.left
                 {
                     return Some(id);
                 }
@@ -194,7 +195,7 @@ impl<'a> PeepholeOptimizations {
         // we do this compression even if `keep_names` is enabled.
 
         let (
-            AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
+            AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(write_id_ref),
             Expression::Identifier(read_id_ref),
         ) = (&expr.left, &logical_expr.left)
         else {

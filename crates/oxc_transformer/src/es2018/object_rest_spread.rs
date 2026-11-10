@@ -195,12 +195,12 @@ impl<'a> ObjectRestSpread<'a> {
     ) {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
         // Allow `{...x} = {}` and `[{...x}] = []`.
-        if !Self::has_nested_target_rest(&assign_expr.left) {
+        if !assign_expr.left.as_assignment_target().is_some_and(Self::has_nested_target_rest) {
             return;
         }
 
         // If not an top `({ ...y })`, walk the pattern and create references for all the objects with a rest.
-        if !matches!(&assign_expr.left, AssignmentTarget::ObjectAssignmentTarget(t) if t.rest.is_some())
+        if !matches!(&assign_expr.left, AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(t) if t.rest.is_some())
         {
             self.walk_and_replace_nested_object_target(expr, ctx);
             return;
@@ -219,7 +219,12 @@ impl<'a> ObjectRestSpread<'a> {
             new_decls.push(VariableDeclarator::new(SPAN, id, None, None, false, ctx));
         }
 
-        let data = Self::walk_assignment_target(&mut assign_expr.left, &mut new_decls, state, ctx);
+        let data = Self::walk_assignment_target(
+            assign_expr.left.to_assignment_target_mut(),
+            &mut new_decls,
+            state,
+            ctx,
+        );
 
         Self::insert_var_declaration_before_containing_statement(new_decls, ctx);
 
@@ -232,7 +237,7 @@ impl<'a> ObjectRestSpread<'a> {
             expressions.push(Expression::new_assignment_expression(
                 SPAN,
                 op,
-                reference_builder.maybe_bound_identifier.create_write_target(ctx),
+                reference_builder.maybe_bound_identifier.create_write_target(ctx).into(),
                 expr,
                 ctx,
             ));
@@ -255,7 +260,13 @@ impl<'a> ObjectRestSpread<'a> {
                 ctx,
             );
             if let BindingPatternOrAssignmentTarget::AssignmentTarget(lhs) = lhs {
-                expressions.push(Expression::new_assignment_expression(SPAN, op, lhs, rhs, ctx));
+                expressions.push(Expression::new_assignment_expression(
+                    SPAN,
+                    op,
+                    lhs.into(),
+                    rhs,
+                    ctx,
+                ));
             }
         }
 
@@ -285,7 +296,12 @@ impl<'a> ObjectRestSpread<'a> {
                     if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) = prop {
                         data.extend(match &mut p.binding {
                             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(t) => {
-                                Self::walk_assignment_target(&mut t.binding, new_decls, state, ctx)
+                                match t.binding.as_assignment_target_mut() {
+                                    Some(binding) => {
+                                        Self::walk_assignment_target(binding, new_decls, state, ctx)
+                                    }
+                                    None => vec![],
+                                }
                             }
                             _ => Self::walk_assignment_target(
                                 p.binding.to_assignment_target_mut(),
@@ -352,9 +368,10 @@ impl<'a> ObjectRestSpread<'a> {
                         AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => false,
                         AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
                             match &p.binding {
-                                AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(t) => {
-                                    Self::has_nested_target_rest(&t.binding)
-                                }
+                                AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(t) => t
+                                    .binding
+                                    .as_assignment_target()
+                                    .is_some_and(Self::has_nested_target_rest),
                                 _ => Self::has_nested_target_rest(p.binding.to_assignment_target()),
                             }
                         }
@@ -363,7 +380,7 @@ impl<'a> ObjectRestSpread<'a> {
             AssignmentTarget::ArrayAssignmentTarget(t) => {
                 t.elements.iter().flatten().any(|e| match e {
                     AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(t) => {
-                        Self::has_nested_target_rest(&t.binding)
+                        t.binding.as_assignment_target().is_some_and(Self::has_nested_target_rest)
                     }
                     _ => Self::has_nested_target_rest(e.to_assignment_target()),
                 }) || t.rest.as_ref().is_some_and(|r| Self::has_nested_target_rest(&r.target))
@@ -381,9 +398,12 @@ impl<'a> ObjectRestSpread<'a> {
         let Expression::AssignmentExpression(assign_expr) = expr else {
             return;
         };
+        let Some(left) = assign_expr.left.as_assignment_target_mut() else {
+            return;
+        };
         let mut decls = vec![];
         let mut exprs = vec![];
-        Self::recursive_walk_assignment_target(&mut assign_expr.left, &mut decls, &mut exprs, ctx);
+        Self::recursive_walk_assignment_target(left, &mut decls, &mut exprs, ctx);
         Self::insert_var_declaration_before_containing_statement(decls, ctx);
         expr.replace_with(|expr| {
             let expressions = ArenaVec::from_iter_in(iter::chain([expr], exprs), ctx);
@@ -461,7 +481,7 @@ impl<'a> ObjectRestSpread<'a> {
                 exprs.push(Expression::new_assignment_expression(
                     SPAN,
                     AssignmentOperator::Assign,
-                    pat.take_in(ctx),
+                    pat.take_in(ctx).into(),
                     bound_identifier.create_read_expression(ctx),
                     ctx,
                 ));
@@ -479,7 +499,9 @@ impl<'a> ObjectRestSpread<'a> {
     ) {
         match target {
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(d) => {
-                Self::recursive_walk_assignment_target(&mut d.binding, decls, exprs, ctx);
+                if let Some(binding) = d.binding.as_assignment_target_mut() {
+                    Self::recursive_walk_assignment_target(binding, decls, exprs, ctx);
+                }
             }
             _ => Self::recursive_walk_assignment_target(
                 target.to_assignment_target_mut(),
@@ -683,7 +705,8 @@ impl<'a> ObjectRestSpread<'a> {
         };
         let operator = AssignmentOperator::Assign;
         let right = bound_identifier.create_read_expression(ctx);
-        let expr = Expression::new_assignment_expression(SPAN, operator, assign_left, right, ctx);
+        let expr =
+            Expression::new_assignment_expression(SPAN, operator, assign_left.into(), right, ctx);
         let stmt = Statement::new_expression_statement(SPAN, expr, ctx);
         block.body.insert(0, stmt);
     }

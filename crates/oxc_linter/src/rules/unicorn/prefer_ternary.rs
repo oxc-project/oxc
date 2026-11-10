@@ -5,7 +5,9 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, IfStatement, MemberExpression, Statement},
+    ast::{
+        AssignmentTargetMaybeParenthesized, Expression, IfStatement, MemberExpression, Statement,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -286,15 +288,11 @@ fn is_ternary_expression(expression: &Expression<'_>) -> bool {
 }
 
 fn is_same_assignment_target<'a>(
-    left: &AssignmentTarget<'a>,
-    right: &AssignmentTarget<'a>,
+    left: &AssignmentTargetMaybeParenthesized<'a>,
+    right: &AssignmentTargetMaybeParenthesized<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    if let (
-        AssignmentTarget::AssignmentTargetIdentifier(left),
-        AssignmentTarget::AssignmentTargetIdentifier(right),
-    ) = (left, right)
-    {
+    if let (Some(left), Some(right)) = (left.identifier(), right.identifier()) {
         return left.name == right.name;
     }
 
