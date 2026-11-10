@@ -103,6 +103,10 @@ The markers say how it reads (`JsEmbeddedIn`, `ExpressionRoot`'s flags, `Program
   Left as is for the cost: which code prints a `}` last is every node kind ending in one (a body, a class, a TS type literal), or the printed text,
   and whether a `}` follows it without bracket spacing is the printer's breaks; an object is the common case, and the one Prettier keeps (a property's value).
   It is loud, not wrong: the host fails to compile the output, nothing reads otherwise unnoticed
+- Known gap: under `ProgramSemicolons::MarksStatements` with `semi: true`, code whose only `;` are empty statements can print none (`if (a) {};` prints `if (a) {}`),
+  which the host reads as an expression (Vue's `@click` fails to compile it).
+  Left as is for the cost: `semi: true` adds nested statements' `;` (`if (a) { b() };` prints `b();`), so telling it is a walk of every statement, function bodies included,
+  for code that runs next to nothing. Loud, not wrong, as above
 
 Each kind's wrapper, checks and printing live in `print/embedded/`, one module per kind;
 a host's new use is a new policy of a kind (Astro's frontmatter is a `Program`), or a new `JsRoot` variant and module there (Svelte's `{@const}`).

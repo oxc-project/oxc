@@ -1,4 +1,4 @@
-use oxc_simd::{Cpu, DynCpu, cpu_multiversion, to_dyn};
+use oxc_simd::{Cpu, DynCpu, cpu_multiversion, cpu_version};
 use oxc_span::Span;
 
 use crate::token::{SPAN_SENTINELS, tk};
@@ -67,6 +67,7 @@ pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8, _cpu
 /// This function must be called before calling [`compress`].
 ///
 /// `PairLuts` is only used by AVX2 implementation, so this function is a no-op on other CPUs.
+#[cpu_version(Generic)]
 pub(super) fn init_pair_luts(cpu: DynCpu) {
     if let DynCpu::Avx2(cpu) = cpu {
         init_pair_luts_avx2(cpu);
@@ -84,7 +85,7 @@ unsafe fn compress_blocks(
     kinds: *mut u8,
     cpu: impl Cpu,
 ) -> usize {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => compress_blocks_avx2(st, kind, b0, b1, starts, kinds, cpu),
         _ => compress_blocks_generic(st, kind, b0, b1, starts, kinds),
     }
@@ -100,7 +101,7 @@ unsafe fn build_spans(
     sig_kinds: *mut u8,
     cpu: impl Cpu,
 ) -> usize {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => build_spans_avx2(stage_kind, stage_pos, m, spans, sig_kinds, cpu),
         _ => build_spans_generic(stage_kind, stage_pos, m, spans, sig_kinds),
     }
@@ -117,7 +118,7 @@ unsafe fn lanes_post(
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => lanes_post_avx2(src, out_kinds, out_spans, m, nn, lanes, cpu),
         _ => lanes_post_generic(src, out_kinds, out_spans, m, nn, lanes),
     };

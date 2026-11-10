@@ -56,6 +56,7 @@ Prerequisites: Rust (MSRV: 1.97), Node.js, pnpm, just
 - Rust components already installed (`clippy`, `rust-docs`, `rustfmt`)
 - Use Conventional Commits for commit messages; `.github/workflows/pr.yml` requires a scoped title like `fix(parser): handle trailing comma`
 - Choose verification from the changed code; reserve `just ready` for an optional broad integration checkpoint as described below.
+- Do not add extra benchmarks to a PR unless explicitly requested.
 - You run in an environment where `ast-grep` is available; whenever a search requires syntax-aware or structural matching, default to `ast-grep --lang rust -p '<pattern>'` (or set `--lang` appropriately) and avoid falling back to text-only tools like `rg` or `grep` unless I explicitly request a plain-text search.
 
 ### Essential Commands
@@ -121,14 +122,6 @@ Modify examples in `crates/<crate_name>/examples/` to test specific scenarios.
 - Performance-critical: avoid unnecessary allocations
 
 ## Common Tasks
-
-### Adding Linting Rule
-
-1. Use rule generator: `just new-rule <name>` (ESLint rules)
-   - Or plugin-specific: `just new-ts-rule`, `just new-jest-rule`, etc.
-2. Implement using visitor pattern
-3. Add tests in same module
-4. Register in appropriate category
 
 ### Parser Changes
 

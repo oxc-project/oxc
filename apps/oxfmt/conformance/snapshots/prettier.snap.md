@@ -631,7 +631,7 @@
 
 ## markdown
 
-1529/1548 (98.77%)
+1527/1548 (98.64%)
 
 ### Failed
 
@@ -663,7 +663,11 @@
   - crates/oxc_formatter/DIVERGENCES.md#suppressed-terminator-per-semi
 - externals/prettier/markdown/paragraph/cjk.md (💥💥✨, 93.33%)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#container-directive
-- externals/prettier/markdown/splitCjkText/symbolSpaceNewLine.md (💥, 20.25%)
+- externals/prettier/markdown/splitCjkText/chinese-japanese.md (💥, 88.89%)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#cj-adjacent-space-wraps
+- externals/prettier/markdown/splitCjkText/space.md (💥, 0.00%)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#cj-adjacent-space-wraps
+- externals/prettier/markdown/splitCjkText/symbolSpaceNewLine.md (💥, 23.88%)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#cj-line-break
 - externals/prettier/markdown/thematicBreak/simple.md (💥, 0.00%)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break

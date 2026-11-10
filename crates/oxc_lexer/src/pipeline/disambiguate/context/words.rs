@@ -5,7 +5,7 @@ use oxc_simd::{BASELINE, cpu_version};
 
 use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
-use crate::pipeline::disambiguate::{common::Tokens, type_context::keyword_type};
+use crate::pipeline::disambiguate::{common::TokensView, type_context::keyword_type};
 
 use super::{
     frame::{Declarator, FrameKind, MOD_ASYNC, MOD_STATIC, Member, RegionRule, StmtReg},
@@ -16,7 +16,7 @@ use super::{
 impl Walk {
     /// Step the word at `pos`; returns its end.
     #[cpu_version(Generic)]
-    pub(super) fn step_word(&mut self, tokens: &Tokens, pos: usize) -> usize {
+    pub(super) fn step_word(&mut self, tokens: &TokensView, pos: usize) -> usize {
         let cpu = BASELINE;
 
         let end = tokens.next_start(pos + 1, cpu);
@@ -81,7 +81,7 @@ impl Walk {
     /// `satisfies`, `static`, `implements`, `from`) is a plain name (0) unless its position and
     /// the token after it say otherwise; every other code stands.
     #[cpu_version(Generic)]
-    fn resolve_keyword(&mut self, tokens: &Tokens, end: usize, kw: u8) -> u8 {
+    fn resolve_keyword(&mut self, tokens: &TokensView, end: usize, kw: u8) -> u8 {
         let cpu = BASELINE;
 
         let keyword = match kw {
@@ -164,7 +164,7 @@ impl Walk {
 
     /// The transition of the keyword `kw` (0: a plain name) in expression or statement position.
     #[cpu_version(Generic)]
-    fn keyword_word(&mut self, tokens: &Tokens, end: usize, kw: u8) {
+    fn keyword_word(&mut self, tokens: &TokensView, end: usize, kw: u8) {
         let cpu = BASELINE;
 
         match kw {
@@ -311,7 +311,7 @@ impl Walk {
 
     /// A word at member-key position of an object literal or class body.
     #[cpu_version(Generic)]
-    fn member_word(&mut self, tokens: &Tokens, pos: usize, end: usize, kw: u8) -> usize {
+    fn member_word(&mut self, tokens: &TokensView, pos: usize, end: usize, kw: u8) -> usize {
         let cpu = BASELINE;
 
         let is_class = self.top_kind() == FrameKind::ClassBody;

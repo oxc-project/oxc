@@ -102,7 +102,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                     if p + len < n {
                         bm_set(st, p + len, cpu);
                     }
-                    lanes.irregular_whitespaces.push(Span::new(p as u32, (p + len) as u32));
+                    lanes.out.irregular_whitespaces.push(Span::new(p as u32, (p + len) as u32));
                 } else if (0xC2..=0xF4).contains(&c) {
                     // Non-whitespace lead: record the position only. The
                     // identifier-char check is deferred to drain, where leads
@@ -113,7 +113,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
             }
             // Vertical tab or form feed, the only misc bytes below 0x20.
             if c < 0x20 {
-                lanes.irregular_whitespaces.push(Span::new(p as u32, p as u32 + 1));
+                lanes.out.irregular_whitespaces.push(Span::new(p as u32, p as u32 + 1));
                 continue;
             }
             if !bm_get(st, p, cpu) {

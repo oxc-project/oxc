@@ -5,11 +5,10 @@ use crate::{error::DiagCode, token::tk};
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
     bytes::{is_digit, is_id_start, is_word},
-    disambiguate::{not_operator_position, prev_sig},
+    disambiguate::{TokensView, not_operator_position, prev_sig},
     find::find,
     lanes::Lanes,
     scan::scan_ident_esc,
-    token_view,
 };
 
 use super::{
@@ -234,7 +233,7 @@ pub(super) unsafe fn carve_jsx(
                             // `<=` / `a<5`: leave for coalesce.
                             i = s + 1;
                         } else if not_operator_position(
-                            &token_view(
+                            &TokensView::new(
                                 src,
                                 st,
                                 opch,
@@ -315,7 +314,7 @@ pub(super) unsafe fn carve_jsx(
                 }
                 let c = *src.add(s);
                 if c == b'<' {
-                    let tokens = token_view(
+                    let tokens = TokensView::new(
                         src,
                         st,
                         opch,

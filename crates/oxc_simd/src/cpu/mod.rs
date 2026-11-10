@@ -13,10 +13,10 @@
 //! It's the best one which is known at compile time to be available.
 //!
 //! Code which has SIMD implementations takes a type implementing [`Cpu`],
-//! and picks an implementation with a `match` on [`to_dyn`]:
+//! and picks an implementation with a `match` on [`DynCpu::from`]:
 //!
 //! ```ignore
-//! match to_dyn(cpu) {
+//! match DynCpu::from(cpu) {
 //!     DynCpu::Avx2(cpu) => classify_avx2(self, cpu),
 //!     DynCpu::Neon(cpu) => classify_neon(self, cpu),
 //!     DynCpu::Generic(_) => classify_generic(self),
@@ -28,17 +28,17 @@
 //! The arm is still needed, because the type's field is private, so outside this module
 //! rustc doesn't know that it's uninhabited.
 //!
-//! Use the [`to_dyn`] function, not the [`Cpu::to_dyn`] method. The method is an extra
-//! `#[inline(always)]` function around it, and that changes the code which some callers
-//! compile to, because rustc's MIR inliner treats them differently.
+//! Use [`DynCpu::from`], not the [`Cpu::to_dyn`] method. The method is an extra `#[inline(always)]`
+//! function around it, and that changes the code which some callers compile to, because rustc's
+//! MIR inliner treats them differently.
 //!
 //! [`#[cpu_version]`] marks each implementation with the CPU feature set it's for.
 //! [`#[cpu_multiversion]`] turns a function into one with a separate entry point for each CPU feature set.
 //!
 //! The attribute macros are in the `oxc_simd_macros` crate.
 //!
-//! * Given a specific type (e.g. `Avx2`): the choice is made at compile time.
-//! * Given a [`DynCpu`]: the choice is made at runtime.
+//! - Given a specific type (e.g. `Avx2`): the choice is made at compile time.
+//! - Given a [`DynCpu`]: the choice is made at runtime.
 //!
 //! Functions which pick an implementation typically take a generic `impl Cpu`.
 //! This compiles a separate version of the function for each [`Cpu`] type that callers use with it.
@@ -54,19 +54,20 @@
 //!
 //! These types are unforgeable.
 //!
-//! * Each has a private field, so code outside this module can't create them.
-//! * Only 3 places create them:
+//! - Each has a private field, so code outside this module can't create them.
+//! - Only 3 places create them:
 //!   - `DynCpu::detect` only creates an [`Avx2`] if that feature set is available.
+//!     Otherwise it creates a [`Generic`], which guarantees nothing.
 //!   - [`BASELINE`] is only an [`Avx2`] or a [`Neon`] when that feature set is enabled
 //!     at compile time, which guarantees it's available.
 //!     Otherwise it's a [`Generic`], which guarantees nothing.
-//!   - `CpuPrivate::DYN_CPU` holds an instance of the type.
-//!     The trait is private, so only code in this file can read it.
-//!     Only [`to_dyn`] reads it, and it takes an instance of the same type,
+//!   - `CpuPrivate::DISPATCH` holds an instance of the type, on platforms where it can exist.
+//!     The trait is private, so only code in this module can read it.
+//!     Only [`DynCpu::from`] reads it, and it takes an instance of the same type,
 //!     so it only gives one to code which already has one.
-//! * On a platform where a type is uninhabited, it can't be created at all.
-//! * A [`DynCpu`] can only be built from one of these types, so it's unforgeable too.
-//! * [`Cpu`] trait is sealed, so no other type can implement it.
+//! - On a platform where a type is uninhabited, it can't be created at all.
+//! - A [`DynCpu`] can only be built from one of these types, so it's unforgeable too.
+//! - [`Cpu`] trait is sealed, so no other type can implement it.
 //!
 //! Therefore, holding one of these types guarantees that the CPU supports that feature set.
 //!
@@ -84,6 +85,10 @@ use std::{
     mem,
 };
 
+use oxc_data_structures::unreachable_unchecked;
+
+mod detect;
+
 #[cfg(any(test, feature = "testing"))]
 mod testing;
 
@@ -97,59 +102,65 @@ mod tests;
 pub trait Cpu: CpuPrivate + Copy {
     /// Get the [`DynCpu`] for this type.
     ///
-    /// Same as the [`to_dyn`] function, which works in `const` code too.
-    #[expect(clippy::inline_always, reason = "only calls `to_dyn`, which folds to a constant")]
+    /// Same as [`DynCpu::from`], which works in `const` code too.
+    #[expect(clippy::inline_always)]
     #[inline(always)]
     fn to_dyn(self) -> DynCpu {
-        to_dyn(self)
+        DynCpu::from(self)
     }
 }
 
-/// Private trait to guarantee that only types defined in this file can implement [`Cpu`].
+/// Private trait to guarantee that only types defined in this module can implement [`Cpu`].
 ///
-/// It also holds [`DYN_CPU`], for [`to_dyn`].
+/// It also holds [`DISPATCH`], for [`DynCpu::from`].
 ///
-/// [`DYN_CPU`] is on this trait, not on [`Cpu`], so code outside this file can't read it.
-/// It holds an instance of the type, so if code outside this file could read it,
+/// [`DISPATCH`] is on this trait, not on [`Cpu`], so code outside this module can't read it.
+/// It holds an instance of the type, so if code outside this module could read it,
 /// that would allow bypassing CPU feature detection.
 ///
-/// [`DYN_CPU`]: Self::DYN_CPU
-trait CpuPrivate {
-    /// The [`DynCpu`] which [`to_dyn`] returns for this type.
+/// # SAFETY
+///
+/// The unsafe code in [`DynCpu::from`] relies on [`DISPATCH`] being correct.
+/// Each implementation must set it to:
+///
+/// - [`Dispatch::Dynamic`] only for [`DynCpu`].
+/// - [`Dispatch::Static`] only for a type which can exist on this platform,
+///   holding the [`DynCpu`] variant for that same type.
+/// - [`Dispatch::Never`] only for a type which is uninhabited on this platform.
+///
+/// For [`Avx2`], [`Neon`] and [`Generic`], that means the `cfg_select!` in the implementation
+/// must match the one on the type's field.
+///
+/// [`DISPATCH`]: Self::DISPATCH
+unsafe trait CpuPrivate {
+    /// How this type is dispatched on this platform. See [`Dispatch`].
+    const DISPATCH: Dispatch;
+}
+
+/// How a [`Cpu`] type is dispatched on this platform.
+///
+/// [`DynCpu::from`] uses it to get the [`DynCpu`] for a value of the type.
+enum Dispatch {
+    /// [`DynCpu`], whose feature set is chosen at runtime.
     ///
+    /// [`DynCpu::from`] returns the [`DynCpu`] it's given.
+    Dynamic,
+    /// A type which always means the same feature set, and which can exist on this platform.
+    ///
+    /// Holds the [`DynCpu`] for the type, which [`DynCpu::from`] returns.
     /// [`Avx2`], [`Neon`] and [`Generic`] each have only one value, so this can hold it.
-    /// `None` for [`DynCpu`] itself, and for each of them on platforms where it's uninhabited.
-    const DYN_CPU: Option<DynCpu>;
+    Static(DynCpu),
+    /// A type which is uninhabited on this platform, so is never dispatched.
+    ///
+    /// No value of the type can exist, so [`DynCpu::from`] can never be called with one.
+    Never,
 }
 
-// `DynCpu` is defined differently for each architecture.
-//
-// All variants exist on all architectures, but variants impossible on each architecture
-// are uninhabited. This allows code for all architectures to be compiled and linted
-// on any machine, and Rust Analyzer sees all the code for all archs "as one".
+// All `DynCpu`'s variants exist on all architectures, but variants impossible on each architecture
+// are uninhabited. This allows code for all architectures to be compiled and linted on any machine,
+// and Rust Analyzer sees all the code for all archs "as one".
 // But the uninhabited variants allow compiler to apply dead code removal to code paths
-// which aren't for the architecture crate is being compiled for.
-
-/// Enum representing a CPU feature set.
-///
-/// Used for runtime feature detection.
-///
-/// Implements [`Cpu`] and also provides a [`detect`] method which initializes [`DynCpu`]
-/// via target feature detection.
-///
-/// [`detect`]: Self::detect
-#[cfg(all(
-    target_arch = "x86_64",
-    all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
-))]
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum DynCpu {
-    // Can never be created on x86_64 when AVX2, BMI2 and POPCNT are enabled at compile time.
-    // See `Generic`.
-    Generic(Generic),
-    Avx2(Avx2),
-    Neon(Neon),
-}
+// which aren't for the architecture code is being compiled for.
 
 /// Enum representing a CPU feature set.
 ///
@@ -160,7 +171,9 @@ pub enum DynCpu {
 ///
 /// [`detect`]: Self::detect
 //
-// This is the only circumstance in which runtime feature detection is necessary.
+// x86_64 without all of AVX2, BMI2 and POPCNT features enabled at compile time is
+// the only circumstance in which runtime feature detection is necessary,
+// and the only case where `DynCpu` has more than 1 inhabited variant, so isn't a ZST.
 // `Neon` is uninhabited, so `Generic` (0) and `Avx2` (1) are the only usable variants,
 // making this type equivalent to a `bool`.
 #[cfg(all(
@@ -175,23 +188,11 @@ pub enum DynCpu {
     Neon(Neon) = 2,
 }
 
-/// Enum representing a CPU feature set.
-///
-/// Used for runtime feature detection.
-///
-/// Implements [`Cpu`] and also provides a [`detect`] method which initializes [`DynCpu`]
-/// via target feature detection.
-///
-/// [`detect`]: Self::detect
-#[cfg(target_arch = "aarch64")]
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum DynCpu {
-    // Can never be created on aarch64 when Neon is enabled at compile time. See `Generic`.
-    Generic(Generic),
-    Avx2(Avx2),
-    // Can never be created on aarch64 when Neon is disabled at compile time. See `Neon`.
-    Neon(Neon),
-}
+#[cfg(all(
+    target_arch = "x86_64",
+    not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
+))]
+const _: () = assert!(size_of::<DynCpu>() == 1);
 
 /// Enum representing a CPU feature set.
 ///
@@ -201,7 +202,17 @@ pub enum DynCpu {
 /// via target feature detection.
 ///
 /// [`detect`]: Self::detect
-#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+//
+// Runtime feature detection is not required for either:
+// - x86_64 with AVX2, BMI2 and POPCNT all enabled at compile time
+// - any architecture other than x86_64
+//
+// Only one variant of `DynCpu` is inhabited, so we use standard Rust repr (no `#[repr(u8)]`)
+// so that `DynCpu` is a ZST.
+#[cfg(not(all(
+    target_arch = "x86_64",
+    not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
+)))]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum DynCpu {
     Generic(Generic),
@@ -209,50 +220,67 @@ pub enum DynCpu {
     Neon(Neon),
 }
 
-/// [`DynCpu`] has 2 inhabited variants on x86_64 when not all of AVX2, BMI2 and POPCNT
-/// are enabled at compile time (so runtime detection is required).
-/// On all other platforms it only has 1 inhabited variant, so is a ZST.
-const _: () = {
-    let expected_size = cfg_select! {
-        all(
-            target_arch = "x86_64",
-            not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
-        ) => 1,
-        _ => 0,
-    };
-    assert!(size_of::<DynCpu>() == expected_size);
-};
+#[cfg(not(all(
+    target_arch = "x86_64",
+    not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
+)))]
+const _: () = assert!(size_of::<DynCpu>() == 0);
 
 /// [`DynCpu`] always has alignment 1.
 /// This also guarantees [`Generic`], [`Avx2`] and [`Neon`] have alignment 1.
 const _: () = assert!(align_of::<DynCpu>() == 1);
 
-impl Cpu for DynCpu {}
+impl DynCpu {
+    /// Name of the CPU feature set, e.g. `"Avx2"`.
+    pub fn name(self) -> &'static str {
+        match self {
+            DynCpu::Generic(_) => "Generic",
+            DynCpu::Avx2(_) => "Avx2",
+            DynCpu::Neon(_) => "Neon",
+        }
+    }
 
-impl CpuPrivate for DynCpu {
-    const DYN_CPU: Option<DynCpu> = None;
+    /// Get the [`DynCpu`] for a type implementing [`Cpu`].
+    ///
+    /// Same as [`Cpu::to_dyn`], but this works in `const` code too.
+    /// A `const fn` can't call a trait method on a generic type, so it can't call [`Cpu::to_dyn`].
+    /// [`#[cpu_multiversion]`] uses this function, so it works in `const` code.
+    /// Code which picks an implementation uses it too: `match DynCpu::from(cpu) { ... }`.
+    /// See the module docs for why it's preferred to [`Cpu::to_dyn`] there.
+    ///
+    /// Only [`DynCpu`] needs `cpu`. It's taken for all types so that this can only be called
+    /// by code which already has one of these types.
+    ///
+    /// [`#[cpu_multiversion]`]: macro@crate::cpu_multiversion
+    #[expect(clippy::inline_always, reason = "folds to a constant, except for `DynCpu`")]
+    #[inline(always)]
+    pub const fn from<C: Cpu>(cpu: C) -> DynCpu {
+        match C::DISPATCH {
+            Dispatch::Dynamic => {
+                // SAFETY: `C::DISPATCH` is only `Dynamic` when `C` is `DynCpu`
+                unsafe { mem::transmute_copy::<C, DynCpu>(&cpu) }
+            }
+            Dispatch::Static(dyn_cpu) => dyn_cpu,
+            Dispatch::Never => {
+                // SAFETY: `C::DISPATCH` is only `Never` when `C` is uninhabited,
+                // so `cpu` can't exist, and this can't be reached
+                unsafe { unreachable_unchecked!() };
+            }
+        }
+    }
 }
 
-/// Get the [`DynCpu`] for a type implementing [`Cpu`].
-///
-/// Same as [`Cpu::to_dyn`], but this works in `const` code too.
-/// A `const fn` can't call a trait method on a generic type, so it can't call [`Cpu::to_dyn`].
-/// [`#[cpu_multiversion]`] uses this function, so it works in `const` code.
-/// Code which picks an implementation uses it too: `match to_dyn(cpu) { ... }`.
-/// See the module docs for why it's preferred to [`Cpu::to_dyn`] there.
-///
-/// Only [`DynCpu`] needs `cpu`. It's taken for all types so that this can only be called
-/// by code which already has one of these types.
-///
-/// [`#[cpu_multiversion]`]: macro@crate::cpu_multiversion
-#[expect(clippy::inline_always, reason = "folds to a constant, except for `DynCpu`")]
-#[inline(always)]
-pub const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {
-    match C::DYN_CPU {
-        Some(dyn_cpu) => dyn_cpu,
-        // SAFETY: `DYN_CPU` is `None` only for `DynCpu`, and for CPU types which are uninhabited.
-        // No value of an uninhabited type exists, so `cpu` must be a `DynCpu`.
-        None => unsafe { mem::transmute_copy::<C, DynCpu>(&cpu) },
+impl Cpu for DynCpu {}
+
+// SAFETY: This is `DynCpu`, the only type which can be `Dispatch::Dynamic`
+unsafe impl CpuPrivate for DynCpu {
+    const DISPATCH: Dispatch = Dispatch::Dynamic;
+}
+
+// Not derived, which would print the variant's field too, e.g. `Avx2(Avx2(()))`
+impl Debug for DynCpu {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
     }
 }
 
@@ -272,10 +300,12 @@ pub struct Avx2(
 
 impl Cpu for Avx2 {}
 
-impl CpuPrivate for Avx2 {
-    const DYN_CPU: Option<DynCpu> = cfg_select! {
-        target_arch = "x86_64" => Some(DynCpu::Avx2(Avx2(()))),
-        _ => None,
+// SAFETY: This `cfg_select!` matches the one on `Avx2`'s field, so `DISPATCH` is `Static`
+// (holding an `Avx2`) where `Avx2` can exist, and `Never` where it can't
+unsafe impl CpuPrivate for Avx2 {
+    const DISPATCH: Dispatch = cfg_select! {
+        target_arch = "x86_64" => Dispatch::Static(DynCpu::Avx2(Avx2(()))),
+        _ => Dispatch::Never,
     };
 }
 
@@ -310,10 +340,14 @@ pub struct Neon(
 
 impl Cpu for Neon {}
 
-impl CpuPrivate for Neon {
-    const DYN_CPU: Option<DynCpu> = cfg_select! {
-        all(target_arch = "aarch64", target_feature = "neon") => Some(DynCpu::Neon(Neon(()))),
-        _ => None,
+// SAFETY: This `cfg_select!` matches the one on `Neon`'s field, so `DISPATCH` is `Static`
+// (holding a `Neon`) where `Neon` can exist, and `Never` where it can't
+unsafe impl CpuPrivate for Neon {
+    const DISPATCH: Dispatch = cfg_select! {
+        all(target_arch = "aarch64", target_feature = "neon") => {
+            Dispatch::Static(DynCpu::Neon(Neon(())))
+        }
+        _ => Dispatch::Never,
     };
 }
 
@@ -344,11 +378,11 @@ impl Debug for Neon {
 pub struct Generic(
     cfg_select! {
         not(any(
-            all(target_arch = "aarch64", target_feature = "neon"),
             all(
                 target_arch = "x86_64",
                 all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
-            )
+            ),
+            all(target_arch = "aarch64", target_feature = "neon")
         )) => (),
         _ => Never,
     },
@@ -356,18 +390,20 @@ pub struct Generic(
 
 impl Cpu for Generic {}
 
-impl CpuPrivate for Generic {
-    const DYN_CPU: Option<DynCpu> = cfg_select! {
+// SAFETY: This `cfg_select!` matches the one on `Generic`'s field, so `DISPATCH` is `Static`
+// (holding a `Generic`) where `Generic` can exist, and `Never` where it can't
+unsafe impl CpuPrivate for Generic {
+    const DISPATCH: Dispatch = cfg_select! {
         not(any(
-            all(target_arch = "aarch64", target_feature = "neon"),
             all(
                 target_arch = "x86_64",
                 all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt")
-            )
+            ),
+            all(target_arch = "aarch64", target_feature = "neon")
         )) => {
-            Some(DynCpu::Generic(Generic(())))
+            Dispatch::Static(DynCpu::Generic(Generic(())))
         }
-        _ => None,
+        _ => Dispatch::Never,
     };
 }
 
@@ -404,82 +440,3 @@ pub const BASELINE: Neon = Neon(());
     all(target_arch = "aarch64", target_feature = "neon")
 )))]
 pub const BASELINE: Generic = Generic(());
-
-impl DynCpu {
-    /// Detect CPU feature set.
-    ///
-    /// The result is cached, so only the first call checks the CPU's features.
-    #[cfg(all(
-        target_arch = "x86_64",
-        not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
-    ))]
-    #[inline]
-    pub fn detect() -> Self {
-        use std::sync::atomic::{AtomicI8, Ordering};
-
-        /// Discriminant of the detected [`DynCpu`], or -1 if not detected yet.
-        static DETECTED: AtomicI8 = AtomicI8::new(-1);
-
-        /// Detect CPU feature set, and cache the result in [`DETECTED`].
-        ///
-        /// If threads race to call this, they each check the CPU and store the same value.
-        /// No thread blocks or sleeps.
-        #[cold]
-        #[inline(never)]
-        fn detect_uncached() -> DynCpu {
-            let cpu = if is_x86_feature_detected!("avx2")
-                && is_x86_feature_detected!("bmi2")
-                && is_x86_feature_detected!("popcnt")
-            {
-                Avx2(()).to_dyn()
-            } else {
-                BASELINE.to_dyn()
-            };
-
-            // SAFETY: `DynCpu` is `#[repr(u8)]` and its variants' fields are all zero-sized,
-            // so it's just its discriminant
-            let discriminant = unsafe { mem::transmute::<DynCpu, i8>(cpu) };
-            DETECTED.store(discriminant, Ordering::Relaxed);
-            cpu
-        }
-
-        let detected = DETECTED.load(Ordering::Relaxed);
-        if detected >= 0 {
-            // SAFETY: `DETECTED` only holds -1, or a `DynCpu` which `detect_uncached` stored
-            unsafe { mem::transmute::<i8, DynCpu>(detected) }
-        } else {
-            detect_uncached()
-        }
-    }
-
-    /// Detect CPU feature set.
-    #[cfg(not(all(
-        target_arch = "x86_64",
-        not(all(target_feature = "avx2", target_feature = "bmi2", target_feature = "popcnt"))
-    )))]
-    #[expect(clippy::inline_always, reason = "folds to a constant")]
-    #[inline(always)]
-    pub fn detect() -> Self {
-        // No runtime feature check is required on:
-        // - x86_64 with AVX2, BMI2, and POPCNT enabled at compile time
-        // - aarch64
-        // - any other platform
-        BASELINE.to_dyn()
-    }
-
-    /// Name of the CPU feature set, e.g. `"Avx2"`.
-    pub fn name(self) -> &'static str {
-        match self {
-            DynCpu::Generic(_) => "Generic",
-            DynCpu::Avx2(_) => "Avx2",
-            DynCpu::Neon(_) => "Neon",
-        }
-    }
-}
-
-// Not derived, which would print the variant's field too, e.g. `Avx2(Avx2(()))`
-impl Debug for DynCpu {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}

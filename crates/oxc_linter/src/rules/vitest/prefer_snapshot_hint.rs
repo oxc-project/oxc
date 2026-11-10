@@ -613,6 +613,51 @@ fn test() {
                  ",
             Some(serde_json::json!(["multi"])),
         ),
+        (
+            "import { test, expect } from 'vitest';
+            describe('foo', () => {
+              test.skipIf(foo)('foo1', () => {
+                expect('').toMatchSnapshot();
+              });
+              test.skipIf(foo)('foo2', () => {
+                expect('').toMatchSnapshot();
+              });
+            });",
+            None,
+        ),
+        (
+            "import { test, expect } from 'vitest';
+            describe('foo', () => {
+              test.runIf(foo)('foo1', function () {
+                expect('').toMatchSnapshot();
+              });
+              test.runIf(foo)('foo2', function () {
+                expect('').toMatchSnapshot();
+              });
+            });",
+            Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "import { test as check, expect } from 'vitest';
+            describe('foo', () => {
+              check.skipIf(foo)('foo1', () => {
+                expect('').toMatchSnapshot();
+              });
+              check.skipIf(foo)('foo2', () => {
+                expect('').toMatchSnapshot();
+              });
+            });",
+            Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "import { test as base, expect, describe } from 'vitest';
+            const test = base.extend({});
+            describe('suite', () => {
+              test('one', () => expect(1).toMatchSnapshot());
+              test('two', () => expect(2).toMatchSnapshot());
+            });",
+            None,
+        ),
     ];
 
     pass.extend(vitest_pass);
@@ -761,6 +806,25 @@ fn test() {
                   });
                    ",
             Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "import { test, expect } from 'vitest';
+            describe('foo', () => {
+              test.skipIf(foo)('foo1', () => {
+                const inner = () => expect('').toMatchSnapshot();
+                expect('').toMatchSnapshot();
+              });
+            });",
+            None,
+        ),
+        (
+            "import { test, expect } from 'vitest';
+            describe('foo', () => {
+              test.runIf(foo)('foo1', () => {
+                expect('').toMatchSnapshot();
+              });
+            });",
+            Some(serde_json::json!(["always"])),
         ),
     ];
 

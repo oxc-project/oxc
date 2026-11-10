@@ -280,3 +280,117 @@ pub fn create_class_method<'a>(
         ctx,
     )
 }
+
+/// Create a getter or setter method that accesses a private backing field.
+///
+/// Instance: `get <key>() { return this.#<storage_name>; }`
+/// Static:   `get <key>() { return ClassName.#<storage_name>; }`
+pub fn create_accessor_method<'a>(
+    decorators: ArenaVec<'a, Decorator<'a>>,
+    key: PropertyKey<'a>,
+    kind: MethodDefinitionKind,
+    computed: bool,
+    is_static: bool,
+    storage_name: Str<'a>,
+    object_binding: Option<&BoundIdentifier<'a>>,
+    class_scope_id: ScopeId,
+    return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+    ctx: &mut TraverseCtx<'a>,
+) -> ClassElement<'a> {
+    let is_getter = kind == MethodDefinitionKind::Get;
+    let scope_flags = ScopeFlags::Function
+        | ScopeFlags::StrictMode
+        | if is_getter { ScopeFlags::GetAccessor } else { ScopeFlags::SetAccessor };
+    let scope_id = ctx.create_child_scope(class_scope_id, scope_flags);
+
+    // For static accessors use class name, for instance accessors use `this`.
+    let create_object = |ctx: &mut TraverseCtx<'a>| -> Expression<'a> {
+        if let Some(binding) = object_binding {
+            binding.create_read_expression(ctx)
+        } else {
+            Expression::new_this_expression(SPAN, ctx)
+        }
+    };
+
+    let (params, body_stmt) = if is_getter {
+        let params =
+            FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], None, ctx);
+        let field_expr = Expression::new_private_field_expression(
+            SPAN,
+            create_object(ctx),
+            PrivateIdentifier::new(SPAN, storage_name, ctx),
+            false,
+            ctx,
+        );
+        let stmt = Statement::new_return_statement(SPAN, Some(field_expr), ctx);
+        (params, stmt)
+    } else {
+        let value_binding = ctx.generate_binding(
+            static_ident!("value"),
+            scope_id,
+            SymbolFlags::FunctionScopedVariable,
+        );
+        let param =
+            FormalParameter::new_plain(SPAN, value_binding.create_binding_pattern(ctx), ctx);
+        let params =
+            FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [param], None, ctx);
+        let assign = Expression::new_assignment_expression(
+            SPAN,
+            AssignmentOperator::Assign,
+            AssignmentTarget::new_private_field_expression(
+                SPAN,
+                create_object(ctx),
+                PrivateIdentifier::new(SPAN, storage_name, ctx),
+                false,
+                ctx,
+            ),
+            value_binding.create_read_expression(ctx),
+            ctx,
+        );
+        let stmt = Statement::new_expression_statement(SPAN, assign, ctx);
+        (params, stmt)
+    };
+
+    create_class_method(
+        decorators,
+        key,
+        kind,
+        params,
+        return_type,
+        ArenaVec::from_value_in(body_stmt, ctx),
+        computed,
+        is_static,
+        scope_id,
+        ctx,
+    )
+}
+
+/// `export default Class`
+pub fn create_export_default_class_reference<'a>(
+    class_binding: &BoundIdentifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) -> Statement<'a> {
+    let export_default_class_reference = ModuleDeclaration::new_export_default_declaration(
+        SPAN,
+        ExportDefaultDeclarationKind::Identifier(ArenaBox::new_in(
+            class_binding.create_read_reference(ctx),
+            ctx,
+        )),
+        ctx,
+    );
+    Statement::from(export_default_class_reference)
+}
+
+/// `export { Class }`
+pub fn create_export_named_class_reference<'a>(
+    class_binding: &BoundIdentifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) -> Statement<'a> {
+    let kind = ImportOrExportKind::Value;
+    let local = ModuleExportName::IdentifierReference(class_binding.create_read_reference(ctx));
+    let exported = ModuleExportName::new_identifier_name(SPAN, class_binding.name, ctx);
+    let specifiers = [ExportSpecifier::new(SPAN, local, exported, kind, ctx)];
+    let export_class_reference =
+        ModuleDeclaration::new_export_named_declaration(SPAN, specifiers, kind, ctx);
+    Statement::from(export_class_reference)
+}

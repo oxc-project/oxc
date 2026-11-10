@@ -4,7 +4,7 @@
 
 #![cfg(target_endian = "little")]
 
-use oxc_lexer::{LexOptions, PAD, TokenKind, testing::lex_utf8_with_cpu};
+use oxc_lexer::{LexOptions, PAD, TokenKind, testing::lex_with_cpu};
 use oxc_simd::{DynCpu, test_cpus};
 
 /// All 35 TS-mode additions, mirroring `KEYWORDS_TS_EXTRA` (kept literal so
@@ -53,9 +53,9 @@ fn kinds(code: &str, ts: bool, jsx: bool, cpu: DynCpu) -> Vec<TokenKind> {
     let n = buf.len();
     buf.resize(n + PAD, 0);
     let opts = LexOptions { jsx, ts, ..Default::default() };
-    let (res, arena) = lex_utf8_with_cpu(&buf, u32::try_from(n).unwrap(), opts, cpu);
-    let count = res.token_count as usize;
-    res.tok_kinds(&arena)[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
+    let res = lex_with_cpu(&buf, u32::try_from(n).unwrap(), opts, cpu);
+    let count = res.token_count();
+    res.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
 }
 
 fn first_kind(code: &str, ts: bool, cpu: DynCpu) -> TokenKind {
