@@ -796,7 +796,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         self.expect(Kind::Colon);
-        let mut consequent = ArenaVec::new_in(self);
+        let mut consequent = BufferedVec::new_in(self);
         loop {
             let kind = self.cur_kind();
             if matches!(
@@ -822,7 +822,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             consequent.push(stmt);
         }
-        SwitchCase::new(self.end_span(start), test, consequent, self)
+        SwitchCase::new(self.end_span(start), test, consequent.into_vec(), self)
     }
 
     /// Section 14.14 Throw Statement

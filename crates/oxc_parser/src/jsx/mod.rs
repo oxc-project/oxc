@@ -1,11 +1,16 @@
 //! [JSX](https://facebook.github.io/jsx)
 
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
 
-use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
+use crate::{
+    ParserConfig as Config, ParserImpl,
+    buffered_vec::{BufferedVec, collect_list},
+    diagnostics,
+    lexer::Kind,
+};
 
 /// Represents either a closing JSX element or fragment.
 enum JSXClosing<'a> {
@@ -252,16 +257,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         in_jsx_child: bool,
     ) -> (ArenaVec<'a, JSXChild<'a>>, JSXClosing<'a>) {
-        let mut children = ArenaVec::new_in(self);
+        let mut children = BufferedVec::new_in(self);
         let closing = self.parse_jsx_children_and_closing_into(&mut children, in_jsx_child);
-        (children, closing)
+        (children.into_vec(), closing)
     }
 
     #[expect(clippy::inline_always)]
     #[inline(always)]
     fn parse_jsx_children_and_closing_into(
         &mut self,
-        children: &mut ArenaVec<'a, JSXChild<'a>>,
+        children: &mut BufferedVec<'a, JSXChild<'a>>,
         in_jsx_child: bool,
     ) -> JSXClosing<'a> {
         loop {
@@ -415,13 +420,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///   `JSXSpreadAttribute` `JSXAttributes_opt`
     ///   `JSXAttribute` `JSXAttributes_opt`
     fn parse_jsx_attributes(&mut self) -> ArenaVec<'a, JSXAttributeItem<'a>> {
-        let mut attributes = ArenaVec::new_in(self);
-        loop {
+        let allocator = self.allocator();
+        collect_list(&allocator, || {
             let kind = self.cur_kind();
             if matches!(kind, Kind::LAngle | Kind::RAngle | Kind::Slash)
                 || self.fatal_error.is_some()
             {
-                break;
+                return None;
             }
             let attribute = match kind {
                 Kind::LCurly => {
@@ -429,9 +434,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 _ => JSXAttributeItem::Attribute(self.parse_jsx_attribute()),
             };
-            attributes.push(attribute);
-        }
-        attributes
+            Some(attribute)
+        })
     }
 
     /// `JSXAttribute` :

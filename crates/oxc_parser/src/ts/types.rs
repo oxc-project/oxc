@@ -5,7 +5,9 @@ use oxc_str::Ident;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl,
+    buffered_vec::BufferedVec,
+    diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
@@ -724,10 +726,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_type_literal(&mut self, opening_span: Span) -> TSType<'a> {
-        let mut member_list = ArenaVec::new_in(self);
+        let mut member_list = BufferedVec::new_in(self);
         self.parse_normal_list_into(&mut member_list, Kind::RCurly, Self::parse_ts_type_signature);
         self.expect_closing(Kind::RCurly, opening_span);
-        TSType::new_ts_type_literal(self.end_span(opening_span.start), member_list, self)
+        TSType::new_ts_type_literal(self.end_span(opening_span.start), member_list.into_vec(), self)
     }
 
     fn parse_type_query(&mut self) -> TSType<'a> {
