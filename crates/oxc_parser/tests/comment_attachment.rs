@@ -12,7 +12,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::Allocator;
 use oxc_ast::{AstKind, AstType};
 use oxc_ast_visit::Visit;
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_span::{GetSpan, SourceType, Span};
 use oxc_syntax::node::NodeId;
 
@@ -236,4 +236,35 @@ fn comment_attachment() {
     cases.add("await /x/u; y = /* @__PURE__ */ f().x; import 'z';", SourceType::unambiguous());
     cases.add("await /* @__PURE__ */ f().x; import 'z';", SourceType::unambiguous());
     insta::assert_snapshot!(cases.0);
+}
+
+#[test]
+fn comment_owners_of_rebuilt_nodes_are_in_ast() {
+    let cases = [
+        ("x = ((/* c */ a)) => 0;", SourceType::mjs()),
+        ("x = ((a /* c */)) => 0;", SourceType::mjs()),
+        ("(/* c */ [a]) = b;", SourceType::mjs()),
+        ("({ a } /* c */) = b;", SourceType::mjs()),
+        ("x = ((/* c */ [a])) = b;", SourceType::mjs()),
+        ("for ((/* c */ { a }) in b);", SourceType::mjs()),
+        ("for (([a] /* c */) of b);", SourceType::mjs()),
+    ];
+    let mut missing = Vec::new();
+    for (source, source_type) in cases {
+        for preserve_parens in [true, false] {
+            let allocator = Allocator::default();
+            let options = ParseOptions { preserve_parens, ..ParseOptions::default() };
+            let parsed = Parser::new(&allocator, source, source_type).with_options(options).parse();
+            let mut nodes = Nodes::default();
+            nodes.visit_program(&parsed.program);
+            for comment in &parsed.program.comments {
+                if !nodes.0.contains_key(&comment.node_id.get()) {
+                    let comment = comment.span.source_text(source);
+                    missing
+                        .push(format!("{source} (preserve_parens: {preserve_parens}): {comment}"));
+                }
+            }
+        }
+    }
+    assert!(missing.is_empty(), "Comment owners are not in the AST:\n{}", missing.join("\n"));
 }

@@ -104,6 +104,7 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
         if p.assigned_comments != 0 {
             p.unassign_comments_keeping_annotations(expr.span);
         }
+        let node_id = expr.node_id();
         let len = expr.elements.len();
         // A final spread becomes `rest`, so it needs no slot in `elements`.
         let capacity = len
@@ -150,7 +151,9 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
             }
         }
 
-        ArrayAssignmentTarget::new(expr.span, elements, rest, p)
+        let target = ArrayAssignmentTarget::new(expr.span, elements, rest, p);
+        target.set_node_id(node_id);
+        target
     }
 }
 
@@ -192,6 +195,7 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
         if p.assigned_comments != 0 {
             p.unassign_comments_keeping_annotations(expr.span);
         }
+        let node_id = expr.node_id();
         let len = expr.properties.len();
         // A final spread becomes `rest`, so it needs no slot in `properties`.
         let capacity = len
@@ -233,7 +237,9 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
             }
         }
 
-        ObjectAssignmentTarget::new(expr.span, properties, rest, p)
+        let target = ObjectAssignmentTarget::new(expr.span, properties, rest, p);
+        target.set_node_id(node_id);
+        target
     }
 }
 

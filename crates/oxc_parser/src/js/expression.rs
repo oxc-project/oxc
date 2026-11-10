@@ -1895,6 +1895,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && let Expression::Identifier(ident) = &lhs
         {
             let binding = BindingIdentifier::new(ident.span, ident.name, self);
+            binding.set_node_id(ident.node_id());
             let mut arrow_expr = self.parse_simple_arrow_function_expression(
                 start,
                 binding,
