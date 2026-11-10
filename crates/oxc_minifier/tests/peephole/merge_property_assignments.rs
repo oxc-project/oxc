@@ -92,6 +92,44 @@ fn existing_key() {
 }
 
 #[test]
+fn long_run() {
+    // a run reuses one key analysis, and indexes the keys once the object has more than
+    // a few candidates, with the same results as a scan
+    test(
+        "function f(a, s) {
+            var o = { x: 0, ...s, a, p1: 1, p2: 2, p1: 3, 1: 4, 0: 5, '-1': 6, p3: 7, m() {}, g: g() };
+            o.y = 1; o.x = 2; o.a = 3; o.p1 = 4; o['1'] = 5; o[-0] = 6; o[-1] = 7;
+            o.m = 8; o.m = 9; o.g = 10; o.y = 11; o.x = 12;
+            return o;
+        }",
+        "function f(a, s) {
+            return { x: 0, ...s, a: 3, p1: 1, p2: 2, p1: 4, 1: 5, 0: 6, '-1': 7, p3: 7, m() {}, g: g(), y: 11, x: 12, m: 9, g: 10 };
+        }",
+    );
+    test(
+        "function f(a, s) {
+            var o = { x: 0, ...s, a, p1: 1, p2: 2, p1: 3, 1: 4, 0: 5, '-1': 6, p3: 7, m() {}, g: g() };
+            return o.y = 1, o.x = 2, o.a = 3, o.p1 = 4, o['1'] = 5, o[-0] = 6, o[-1] = 7,
+                o.m = 8, o.m = 9, o.g = 10, o.y = 11, o.x = 12, o;
+        }",
+        "function f(a, s) {
+            return { x: 0, ...s, a: 3, p1: 1, p2: 2, p1: 4, 1: 5, 0: 6, '-1': 7, p3: 7, m() {}, g: g(), y: 11, x: 12, m: 9, g: 10 };
+        }",
+    );
+    // the run's own properties pass the scan limit
+    test(
+        "var o = {}; o.p0 = 0; o.p1 = 1; o.p2 = 2; o.p3 = 3; o.p4 = 4; o.p5 = 5; o.p6 = 6;
+            o.p7 = 7; o.p8 = 8; o.p9 = 9; o.p10 = 10; o.p0 = 11; o.p10 = 12; o.p11 = 13",
+        "var o = { p0: 11, p1: 1, p2: 2, p3: 3, p4: 4, p5: 5, p6: 6, p7: 7, p8: 8, p9: 9, p10: 12, p11: 13 }",
+    );
+    // an accessor blocks every assignment of the run, not only the first
+    test(
+        "var o = { b: 1, get a() {} }; o.c = 1; o.d = 2; o.e = 3",
+        "var o = { b: 1, get a() {} }; o.c = 1, o.d = 2, o.e = 3",
+    );
+}
+
+#[test]
 fn bail() {
     // not a plain `=` write to a static key of the declared binding
     test_same("var o = {}; o.a += 1");
