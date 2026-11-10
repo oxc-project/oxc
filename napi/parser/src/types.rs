@@ -54,6 +54,13 @@ pub struct ParserOptions {
     ///
     /// @default false
     pub show_semantic_errors: Option<bool>,
+
+    /// Build import/export metadata in `result.module`.
+    /// When false, only `hasModuleSyntax` is populated; all module metadata arrays are empty.
+    /// Syntax errors, including duplicate exports, are still reported.
+    ///
+    /// @default true
+    pub module_record: Option<bool>,
 }
 
 #[napi]

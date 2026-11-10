@@ -184,6 +184,14 @@ export interface ParserOptions {
    * @default false
    */
   showSemanticErrors?: boolean
+  /**
+   * Build import/export metadata in `result.module`.
+   * When false, only `hasModuleSyntax` is populated; all module metadata arrays are empty.
+   * Syntax errors, including duplicate exports, are still reported.
+   *
+   * @default true
+   */
+  moduleRecord?: boolean
 }
 
 /**

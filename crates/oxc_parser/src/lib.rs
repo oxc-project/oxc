@@ -267,6 +267,14 @@ pub struct ParseOptions {
     ///
     /// Default: `true`
     pub enable_ident_hashes: bool,
+
+    /// Build import/export metadata in [`ParserReturn::module_record`].
+    ///
+    /// When disabled, only [`ModuleRecord::has_module_syntax`] is populated.
+    /// Syntax errors, including duplicate exports, are still reported.
+    ///
+    /// Default: `true`
+    pub build_module_record: bool,
 }
 
 impl Default for ParseOptions {
@@ -278,6 +286,7 @@ impl Default for ParseOptions {
             preserve_parens: true,
             allow_v8_intrinsics: false,
             enable_ident_hashes: true,
+            build_module_record: true,
         }
     }
 }
@@ -700,7 +709,11 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
             ast: ParserAstBuilder::new(allocator),
-            module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
+            module_record_builder: ModuleRecordBuilder::new(
+                allocator,
+                source_type,
+                options.build_module_record,
+            ),
             is_ts: source_type.is_typescript(),
         }
     }

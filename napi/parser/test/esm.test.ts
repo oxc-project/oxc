@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
-import { parseSync } from "../src-js/index.js";
+import { rawTransferSupported } from "../src-js/index.js";
+import { parse, parseSync } from "./parser.ts";
 
 describe("esm", () => {
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax
@@ -108,5 +109,68 @@ describe("export type", () => {
     expect(ret.module.staticExports.length).toBe(1);
     expect(ret.module.staticExports[0].entries.length).toBe(1);
     expect(ret.module.staticExports[0].entries[0].isType).toBe(isType);
+  });
+});
+
+describe.each([
+  ["JSON", {}],
+  ...(rawTransferSupported()
+    ? ([
+        ["raw transfer", { experimentalRawTransfer: true }],
+        ["lazy", { experimentalLazy: true }],
+      ] as const)
+    : []),
+] as const)("moduleRecord: false (%s)", (_name, mode) => {
+  test.each([
+    ["sync", parseSync],
+    ["async", parse],
+  ] as const)("preserves the AST and skips module metadata (%s)", async (_name, parseFn) => {
+    const source = `// 😀\nimport d from 'dep'; export { d }; export * from 'other';
+      export default 1; import.meta; import('lazy');`;
+    const full = await parseFn("test.js", source, { ...mode, sourceType: "unambiguous" });
+    const skipped = await parseFn("test.js", source, {
+      ...mode,
+      sourceType: "unambiguous",
+      moduleRecord: false,
+    });
+    const program = JSON.parse(JSON.stringify(skipped.program));
+    expect(program).toEqual(JSON.parse(JSON.stringify(full.program)));
+    expect(JSON.stringify(skipped.comments)).toBe(JSON.stringify(full.comments));
+    expect(skipped.errors).toEqual([]);
+    expect(program.sourceType.sourceType ?? program.sourceType).toBe("module");
+    expect(JSON.parse(JSON.stringify(skipped.module))).toEqual({
+      hasModuleSyntax: true,
+      staticImports: [],
+      staticExports: [],
+      dynamicImports: [],
+      importMetas: [],
+    });
+    expect(full.module.staticImports).toHaveLength(1);
+    expect(full.module.staticExports).toHaveLength(3);
+  });
+
+  test.each([
+    "export const x = 1; export { x }",
+    "export default 1; export default 2",
+    "export * as default from 'dep'; export { x as default } from 'other'",
+    "<!-- comment\nexport {}",
+  ])("preserves syntax errors: %s", (source) => {
+    const full = parseSync("test.js", source, { ...mode, sourceType: "unambiguous" });
+    const skipped = parseSync("test.js", source, {
+      ...mode,
+      sourceType: "unambiguous",
+      moduleRecord: false,
+    });
+    expect(full.errors.length).toBeGreaterThan(0);
+    expect(skipped.errors).toEqual(full.errors);
+  });
+
+  test("preserves semantic errors", () => {
+    const options = { ...mode, showSemanticErrors: true };
+    const source = "export const x = 1; const x = 2";
+    const full = parseSync("test.js", source, options);
+    const skipped = parseSync("test.js", source, { ...options, moduleRecord: false });
+    expect(full.errors.length).toBeGreaterThan(0);
+    expect(skipped.errors).toEqual(full.errors);
   });
 });

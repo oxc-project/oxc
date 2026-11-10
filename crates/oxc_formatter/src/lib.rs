@@ -208,6 +208,7 @@ pub fn parse_for_format<'a>(
         allow_return_outside_function: true, // accept all syntax the formatter may be handed
         allow_v8_intrinsics: true,
         preserve_parens: false, // MUST be false: the formatter panics otherwise
+        build_module_record: true,
         // The formatter does not use `Ident` hashes, but `detect_code_removal` runs semantic
         // analysis on this AST, and semantic requires hashed `Ident`s.
         enable_ident_hashes: cfg!(feature = "detect_code_removal"),

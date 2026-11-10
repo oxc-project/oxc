@@ -87,6 +87,7 @@ fn parse_impl<'a>(
         // Ident hashes are only consumed by semantic analysis, which this crate runs solely when
         // semantic errors are requested. Skip hashing otherwise to speed up parse-and-serialize.
         enable_ident_hashes: options.show_semantic_errors == Some(true),
+        build_module_record: options.module_record.unwrap_or(true),
         ..ParseOptions::default()
     });
 

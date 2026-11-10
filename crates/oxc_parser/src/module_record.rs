@@ -10,19 +10,25 @@ use crate::diagnostics;
 pub struct ModuleRecordBuilder<'a> {
     allocator: &'a Allocator,
     source_type: SourceType,
+    build_module_record: bool,
     module_record: ModuleRecord<'a>,
     export_entries: ArenaVec<'a, ExportEntry<'a>>,
     exported_bindings_duplicated: ArenaVec<'a, NameSpan<'a>>,
-    /// `default` exports of declarations skipped because their module request is not UTF-8.
+    /// `default` exports skipped because module records are disabled or their request is not UTF-8.
     /// They still count towards the duplicate default export check.
     skipped_default_exports: ArenaVec<'a, Span>,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
-    pub fn new(allocator: &'a Allocator, source_type: SourceType) -> Self {
+    pub fn new(
+        allocator: &'a Allocator,
+        source_type: SourceType,
+        build_module_record: bool,
+    ) -> Self {
         Self {
             allocator,
             source_type,
+            build_module_record,
             module_record: ModuleRecord::new(allocator),
             export_entries: ArenaVec::new_in(&allocator),
             exported_bindings_duplicated: ArenaVec::new_in(&allocator),
@@ -33,8 +39,15 @@ impl<'a> ModuleRecordBuilder<'a> {
     pub fn build(mut self) -> (ModuleRecord<'a>, Vec<OxcDiagnostic>) {
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
         // resolved before resolving export entries.
-        self.resolve_export_entries();
+        if self.build_module_record {
+            self.resolve_export_entries();
+        }
         let errors = self.errors();
+        if !self.build_module_record {
+            let mut module_record = ModuleRecord::new(self.allocator);
+            module_record.has_module_syntax = self.has_module_syntax();
+            return (module_record, errors);
+        }
         (self.module_record, errors)
     }
 
@@ -111,6 +124,15 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     fn add_export_binding(&mut self, name: Str<'a>, span: Span) {
+        if !self.build_module_record {
+            // TypeScript permits duplicate exports, so no binding metadata is needed.
+            if self.source_type.is_typescript() {
+                return;
+            }
+            if name == "default" {
+                self.skipped_default_exports.push(span);
+            }
+        }
         if let Some(old_node) = self.module_record.exported_bindings.insert(name, span) {
             self.exported_bindings_duplicated.push(NameSpan::new(name, old_node));
         }
@@ -191,6 +213,9 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_import_expression(&mut self, e: &ImportExpression<'a>) {
+        if !self.build_module_record {
+            return;
+        }
         self.module_record
             .dynamic_imports
             .push(DynamicImport { span: e.span, module_request: e.source.span() });
@@ -198,11 +223,16 @@ impl<'a> ModuleRecordBuilder<'a> {
 
     pub fn visit_import_meta(&mut self, span: Span) {
         self.module_record.has_module_syntax = true;
-        self.module_record.import_metas.push(span);
+        if self.build_module_record {
+            self.module_record.import_metas.push(span);
+        }
     }
 
     pub fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
         self.module_record.has_module_syntax = true;
+        if !self.build_module_record {
+            return;
+        }
         // Module records still require UTF-8 module specifiers. Keep other values in the AST only.
         let Some(source) = decl.source.value.as_str() else { return };
         let module_request = NameSpan::new(source.into(), decl.source.span);
@@ -254,6 +284,9 @@ impl<'a> ModuleRecordBuilder<'a> {
         if let Some(exported) = &exported {
             self.add_export_binding(exported.name, exported.span);
         }
+        if !self.build_module_record {
+            return;
+        }
         // Module records still require UTF-8 module specifiers. Keep other values in the AST only.
         let Some(source) = decl.source.value.as_str() else {
             if let Some(exported) = exported.filter(|exported| exported.name == "default") {
@@ -291,6 +324,13 @@ impl<'a> ModuleRecordBuilder<'a> {
         decl: &ExportDefaultDeclaration<'a>,
         default_keyword_span: Span,
     ) {
+        self.module_record.has_module_syntax = true;
+        if !self.build_module_record {
+            if !self.source_type.is_typescript() {
+                self.skipped_default_exports.push(default_keyword_span);
+            }
+            return;
+        }
         let local_name = match &decl.declaration {
             ExportDefaultDeclarationKind::Identifier(ident) => {
                 ExportLocalName::Default(NameSpan::new(ident.name.into(), ident.span))
@@ -320,13 +360,17 @@ impl<'a> ModuleRecordBuilder<'a> {
             is_type: decl.is_typescript_syntax(),
         };
         self.add_export_entry(export_entry);
-        self.module_record.has_module_syntax = true;
     }
 
     pub fn visit_export_declaration(&mut self, decl: &ExportDeclaration<'a>) {
+        self.module_record.has_module_syntax = true;
         let export_kind = decl.export_kind();
         let declaration = &decl.declaration;
         iter_binding_identifiers_of_declaration(declaration, &mut |ident| {
+            if !self.build_module_record {
+                self.add_export_binding(ident.name.into(), ident.span);
+                return;
+            }
             let export_name = ExportExportName::Name(NameSpan::new(ident.name.into(), ident.span));
             let local_name = ExportLocalName::Name(NameSpan::new(ident.name.into(), ident.span));
             let export_entry = ExportEntry {
@@ -341,11 +385,15 @@ impl<'a> ModuleRecordBuilder<'a> {
             self.add_export_entry(export_entry);
             self.add_export_binding(ident.name.into(), ident.span);
         });
-        self.module_record.has_module_syntax = true;
     }
 
     pub fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
+        self.module_record.has_module_syntax = true;
         for specifier in &decl.specifiers {
+            if !self.build_module_record {
+                self.add_export_binding(specifier.exported.name(), specifier.exported.span());
+                continue;
+            }
             let export_name = ExportExportName::Name(NameSpan::new(
                 specifier.exported.name(),
                 specifier.exported.span(),
@@ -365,7 +413,6 @@ impl<'a> ModuleRecordBuilder<'a> {
             self.add_export_entry(export_entry);
             self.add_export_binding(specifier.exported.name(), specifier.exported.span());
         }
-        self.module_record.has_module_syntax = true;
     }
 
     pub fn visit_export_from_declaration(&mut self, decl: &ExportFromDeclaration<'a>) {
@@ -374,6 +421,9 @@ impl<'a> ModuleRecordBuilder<'a> {
         // so exported names are registered before the request is examined.
         for specifier in &decl.specifiers {
             self.add_export_binding(specifier.exported.name(), specifier.exported.span());
+        }
+        if !self.build_module_record {
+            return;
         }
         // Module records still require UTF-8 module specifiers. Keep other values in the AST only.
         let Some(source) = decl.source.value.as_str() else {
@@ -440,13 +490,77 @@ mod module_record_tests {
     use oxc_span::{SourceType, Span};
     use oxc_syntax::module_record::*;
 
-    use crate::Parser;
+    use crate::{ParseOptions, Parser};
 
     fn build<'a>(allocator: &'a Allocator, source_text: &'a str) -> ModuleRecord<'a> {
         let source_type = SourceType::ts();
         let ret = Parser::new(allocator, source_text, source_type).parse();
         assert!(ret.diagnostics.is_empty());
         ret.module_record
+    }
+
+    #[test]
+    fn skip_module_record() {
+        let sources = [
+            "import d, { n } from 'dep'; export { d, n }; export * from 'other';",
+            "export * as ns from 'dep'; export { x as y } from 'other';",
+            "export const { nested: { value } } = data; export default function f() {}",
+            "import.meta; import('lazy')",
+            "import('lazy')",
+            "const script = true",
+            "await 0; export {}",
+            "await 0",
+            "with ({}) {} export {}",
+            "export const x = 1; export { x }",
+            "export default 1; export default 2",
+            "import d from 'dep'; export { d as default }; export default 2",
+            "export * as default from 'dep'; export { x as default } from 'other'",
+            r"export { x as default } from '\uD800'; export default 2",
+            "export interface T {}; export type { T }",
+        ];
+        for source_type in [SourceType::unambiguous(), SourceType::ts()] {
+            for source in sources {
+                let allocator = Allocator::default();
+                let full = Parser::new(&allocator, source, source_type).parse();
+                let skipped = Parser::new(&allocator, source, source_type)
+                    .with_options(ParseOptions {
+                        build_module_record: false,
+                        ..ParseOptions::default()
+                    })
+                    .parse();
+                assert_eq!(skipped.program.source_type, full.program.source_type, "{source}");
+                assert_eq!(skipped.fatal_error, full.fatal_error, "{source}");
+                // Default export labels may be grouped differently without resolving re-exports.
+                let errors = |diagnostics: oxc_diagnostics::Diagnostics| {
+                    diagnostics
+                        .into_iter()
+                        .map(|diagnostic| {
+                            let mut labels = diagnostic
+                                .labels
+                                .iter()
+                                .map(|label| (label.offset(), label.len()))
+                                .collect::<Vec<_>>();
+                            labels.sort_unstable();
+                            (diagnostic.message.to_string(), labels)
+                        })
+                        .collect::<Vec<_>>()
+                };
+                assert_eq!(errors(skipped.diagnostics), errors(full.diagnostics), "{source}");
+                let record = skipped.module_record;
+                assert_eq!(
+                    record.has_module_syntax, full.module_record.has_module_syntax,
+                    "{source}"
+                );
+                assert!(record.requested_modules.is_empty());
+                assert!(record.import_entries.is_empty());
+                assert!(record.local_export_entries.is_empty());
+                assert!(record.indirect_export_entries.is_empty());
+                assert!(record.star_export_entries.is_empty());
+                assert!(record.exported_bindings.is_empty());
+                assert!(record.dynamic_imports.is_empty());
+                assert!(record.import_metas.is_empty());
+            }
+        }
     }
 
     // Table 55 gives examples of ImportEntry records fields used to represent the syntactic import forms:
