@@ -152,7 +152,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                 entry.module_request = Some(import.module_request.clone());
                 entry.import_name = import_name;
                 entry.local_name = ExportLocalName::default();
-                entry.is_type = import.is_type;
+                entry.is_type |= import.is_type;
             }
 
             // b. Else if ee.[[ImportName]] is all-but-default, then
@@ -713,6 +713,25 @@ mod module_record_tests {
             assert_eq!(name.name, exported);
             assert_eq!(entry.module_request.as_ref().unwrap().name, "mod");
             assert!(matches!(entry.local_name, ExportLocalName::Null));
+        }
+    }
+
+    #[test]
+    fn reexported_import_preserves_type_only_flags() {
+        let allocator = Allocator::default();
+        for (source, is_type) in [
+            ("import { T } from 'mod'; export { T };", false),
+            ("import { T } from 'mod'; export type { T };", true),
+            ("import { T } from 'mod'; export { type T };", true),
+            ("import type { T } from 'mod'; export { T };", true),
+            ("import { type T } from 'mod'; export { T };", true),
+            ("import type { T } from 'mod'; export type { T };", true),
+            ("import T from 'mod'; export type { T as default };", true),
+        ] {
+            let record = build(&allocator, source);
+            assert!(record.local_export_entries.is_empty(), "{source}");
+            assert_eq!(record.indirect_export_entries.len(), 1, "{source}");
+            assert_eq!(record.indirect_export_entries[0].is_type, is_type, "{source}");
         }
     }
 
