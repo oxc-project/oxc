@@ -23544,8 +23544,8 @@ rebuilt        : ["value"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/expressions/optionalChaining/callChain/parentheses.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["_o4$b", "o1", "o2", "o3", "o4"]
-rebuilt        : ScopeId(0): ["_o4$b"]
+after transform: ScopeId(0): ["_o", "_o4$b", "o1", "o2", "o3", "o4"]
+rebuilt        : ScopeId(0): ["_o", "_o4$b"]
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
 rebuilt        : <None>
@@ -23567,9 +23567,6 @@ rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(2) "o2"
 rebuilt        : <None>
-Reference symbol mismatch for "o2":
-after transform: SymbolId(2) "o2"
-rebuilt        : <None>
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
 rebuilt        : <None>
@@ -23578,9 +23575,6 @@ after transform: SymbolId(0) "o1"
 rebuilt        : <None>
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
-rebuilt        : <None>
-Reference symbol mismatch for "o3":
-after transform: SymbolId(4) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(4) "o3"
