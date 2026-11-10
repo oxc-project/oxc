@@ -125,6 +125,11 @@ pub struct ReactRefresh<'a> {
     non_builtin_hooks_callee: FxHashMap<ScopeId, Vec<Option<Expression<'a>>>>,
     /// Used to determine which bindings are used in JSX calls.
     used_in_jsx_bindings: FxHashSet<SymbolId>,
+    /// File contains a comment with `@refresh reset`, so every signature passes `forceReset = true`.
+    ///
+    /// Babel and SWC treat that comment as a file-level directive and remount the file's components.
+    /// <https://github.com/facebook/react/blob/main/packages/react-refresh/src/ReactFreshBabelPlugin.js>
+    has_force_reset_comment: bool,
 }
 
 impl<'a> ReactRefresh<'a> {
@@ -140,12 +145,20 @@ impl<'a> ReactRefresh<'a> {
             function_signature_keys: FxHashMap::default(),
             non_builtin_hooks_callee: FxHashMap::default(),
             used_in_jsx_bindings: FxHashSet::default(),
+            has_force_reset_comment: false,
         }
     }
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        // `// @refresh reset` anywhere in the file forces remounts, matching Babel's
+        // `hasForceResetComment` (`cmt.value.indexOf('@refresh reset')`).
+        let source_text = ctx.state.source_text;
+        self.has_force_reset_comment = program.comments.iter().any(|comment| {
+            comment.content_span().source_text(source_text).contains("@refresh reset")
+        });
+
         self.used_in_jsx_bindings = UsedInJSXBindingsCollector::collect(program, ctx);
 
         let mut new_statements = ArenaVec::with_capacity_in(program.body.len() * 2, ctx);
@@ -636,7 +649,8 @@ impl<'a> ReactRefresh<'a> {
             ctx,
         );
 
-        let force_reset = custom_hooks_in_scope.len() != callee_len;
+        // Out-of-scope custom hooks may have changed, and `@refresh reset` remounts the file.
+        let force_reset = self.has_force_reset_comment || custom_hooks_in_scope.len() != callee_len;
 
         let mut arguments = ArenaVec::new_in(ctx);
         arguments.push(Argument::new_string_literal(SPAN, key, None, ctx));
@@ -708,8 +722,8 @@ impl<'a> ReactRefresh<'a> {
         body.statements.insert(0, call_expression);
 
         // Following is the signature call expression, will be generated in call site.
-        // _s(App, signature_key, false, function() { return [] });
-        //                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ custom hooks only
+        // _s(App, signature_key, forceReset, function() { return [] });
+        //                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ omitted when unused
         let binding_identifier = binding.create_binding_identifier(ctx);
         Some((binding_identifier, arguments))
     }
