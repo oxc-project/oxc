@@ -25,8 +25,6 @@ pub use padding_around_block::report_missing_padding_before_jest_block;
 mod padding_around_block;
 mod parse_jest_fn;
 
-use parse_jest_fn::resolve_first_ident;
-
 const JEST_METHOD_NAMES: [&str; 19] = [
     "afterAll",
     "afterEach",
@@ -169,11 +167,12 @@ pub fn parse_expect_jest_fn_call<'a>(
 
 pub struct PossibleJestNode<'a, 'b> {
     pub node: &'b AstNode<'a>,
-    pub original: Option<&'a str>, // if this node is imported from 'jest/globals', this field will be Some(original_name), otherwise None
+    /// Canonical imported name, like `Some("test")`, otherwise `None`.
+    pub original: Option<&'a str>,
 }
 
 impl<'a, 'b> PossibleJestNode<'a, 'b> {
-    /// Resolve a call rooted in a Jest/Vitest global or import, preserving imported aliases.
+    /// Resolve a call rooted in a Jest/Vitest global, import, or extended Vitest `test`.
     ///
     /// This does not allocate or scan other calls in the file. Rules using `Rule::run` should
     /// apply their syntactic checks before resolving a potential test-framework call.
@@ -197,7 +196,10 @@ impl<'a, 'b> PossibleJestNode<'a, 'b> {
         let reference = ctx.scoping().get_reference(ident.reference_id());
         let original = if let Some(symbol_id) = reference.symbol_id() {
             if !ctx.scoping().symbol_flags(symbol_id).is_import() {
-                return None;
+                return Some(Self {
+                    node,
+                    original: Some(resolve_extended_vitest_test(ctx.semantic(), symbol_id)?),
+                });
             }
             let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
             let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id)
@@ -285,7 +287,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
         .enumerate()
         .filter_map(|(symbol_id, reference_ids)| {
             let symbol_id = SymbolId::from_usize(symbol_id);
-            if semantic.scoping().symbol_flags(symbol_id).is_import() {
+            let original = if semantic.scoping().symbol_flags(symbol_id).is_import() {
                 let id = semantic.scoping().symbol_declaration(symbol_id);
                 let AstKind::ImportDeclaration(import_decl) = semantic.nodes().parent_kind(id)
                 else {
@@ -293,31 +295,27 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if matches!(
+                if !matches!(
                     import_decl.source.value.as_str(),
                     Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
                 ) {
-                    let original = find_original_name(import_decl, name);
-                    return Some(
-                        reference_ids.iter().map(move |&reference_id| (reference_id, original)),
-                    );
+                    return None;
                 }
-            }
+                find_original_name(import_decl, name)
+            } else {
+                Some(resolve_extended_vitest_test(semantic, symbol_id)?)
+            };
 
-            None
+            Some(reference_ids.iter().map(move |&reference_id| (reference_id, original)))
         })
         .flatten()
 }
 
-/// Trace a test-like call like `myOwnTest(...)` back to the original import declaration from Vitest
-/// or another library that provides test-like functions. Then, returns the name it was originally imported
-/// as `Some("test")` or None if no original import was found.
-pub fn resolve_extended_vitest_test<'a>(
-    callee: &'a Expression<'a>,
+/// Resolve a derived test binding to its original Vitest import name.
+fn resolve_extended_vitest_test<'a>(
     semantic: &Semantic<'a>,
+    mut symbol_id: SymbolId,
 ) -> Option<&'a str> {
-    let ident = resolve_first_ident(callee)?;
-    let mut symbol_id = get_symbol_id_of_variable(ident, semantic)?;
     // Arbitrarily bound iterations to 100 to prevent infinite loops in cyclical cases
     for _ in 0..100 {
         let declarator = semantic.symbol_declaration(symbol_id).kind().as_variable_declarator()?;
