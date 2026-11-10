@@ -156,6 +156,27 @@ impl<'a> SourcemapBuilder<'a> {
         self.original_source.get(span.start as usize..span.end as usize)
     }
 
+    /// End the preceding source range before emitting generated code.
+    pub fn add_unmapped_source_mapping(&mut self, output: &[u8]) {
+        if self.last_position.is_none() {
+            return;
+        }
+        self.update_generated_line_and_column(output);
+        let token =
+            oxc_sourcemap::Token::new(self.generated_line, self.generated_column, 0, 0, None, None);
+        match self.tokens.last_mut() {
+            Some(last)
+                if last.get_dst_line() == self.generated_line
+                    && last.get_dst_col() == self.generated_column =>
+            {
+                *last = token;
+            }
+            _ => self.tokens.push(token),
+        }
+        self.last_position = None;
+        self.last_token_has_name = false;
+    }
+
     pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&'a str>) {
         if self.last_position == Some(position) {
             if let Some(name) = name

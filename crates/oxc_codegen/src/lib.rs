@@ -1141,6 +1141,18 @@ impl<'a> Codegen<'a> {
     }
 
     #[cfg(feature = "sourcemap")]
+    fn add_unmapped_source_mapping(&mut self) {
+        if let Some(builder) = self.sourcemap_builder.as_mut() {
+            builder.add_unmapped_source_mapping(self.code.as_bytes());
+        }
+    }
+
+    #[cfg(not(feature = "sourcemap"))]
+    #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
+    fn add_unmapped_source_mapping(&mut self) {}
+
+    #[cfg(feature = "sourcemap")]
     fn add_source_mapping(&mut self, span: Span) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
             && !span.is_empty()

@@ -232,12 +232,26 @@ impl Gen for IfStatement<'_> {
 
 fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
     p.print_space_before_identifier();
+    // A synthetic condition can contain source expressions, such as the props
+    // compared by React Compiler cache checks. Mapping those expressions makes
+    // coverage tools attribute the generated branches to the original source.
+    #[cfg(feature = "sourcemap")]
+    let synthetic_sourcemap = if if_stmt.span.is_empty() {
+        p.add_unmapped_source_mapping();
+        p.sourcemap_builder.take()
+    } else {
+        None
+    };
     p.add_source_mapping(if_stmt.span);
     p.print_str("if");
     p.print_soft_space();
     p.print_ascii_byte(b'(');
     p.print_expression(&if_stmt.test);
     p.print_ascii_byte(b')');
+    #[cfg(feature = "sourcemap")]
+    if let Some(builder) = synthetic_sourcemap {
+        p.sourcemap_builder = Some(builder);
+    }
 
     match &if_stmt.consequent {
         Statement::BlockStatement(block) => {
@@ -271,6 +285,9 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
     if let Some(alternate) = if_stmt.alternate.as_ref() {
         p.print_semicolon_if_needed();
         p.print_space_before_identifier();
+        if if_stmt.span.is_empty() {
+            p.add_unmapped_source_mapping();
+        }
         p.print_str("else");
         match alternate {
             Statement::BlockStatement(block) => {

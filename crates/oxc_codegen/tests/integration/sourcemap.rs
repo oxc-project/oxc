@@ -111,6 +111,43 @@ fn incorrect_ast() {
     assert!(ret.map.is_some(), "sourcemap exists");
 }
 
+#[test]
+fn generated_if_conditions_are_unmapped() {
+    let source = "before(); if (first || second) { body(); } else { other(); } after();";
+    for minify in [false, true] {
+        for synthetic in [false, true] {
+            let allocator = Allocator::default();
+            let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+            assert!(parsed.diagnostics.is_empty());
+            let mut program = parsed.program;
+            if synthetic {
+                let Statement::IfStatement(statement) = &mut program.body[1] else {
+                    unreachable!();
+                };
+                // Generated cache checks retain source spans on their operands.
+                statement.span = Span::default();
+            }
+            let output = Codegen::new()
+                .with_options(CodegenOptions { minify, ..default_options() })
+                .build(&program);
+            let map = output.map.unwrap();
+            let table = map.generate_lookup_table();
+            for name in ["before", "first", "second", "body", "other", "after"] {
+                let offset = output.code.find(name).unwrap();
+                let prefix = &output.code[..offset];
+                let line =
+                    u32::try_from(prefix.bytes().filter(|&byte| byte == b'\n').count()).unwrap();
+                let column = u32::try_from(prefix.rsplit('\n').next().unwrap().len()).unwrap();
+                let source_id =
+                    map.lookup_token(&table, line, column).and_then(|token| token.get_source_id());
+                let expected =
+                    if synthetic && matches!(name, "first" | "second") { None } else { Some(0) };
+                assert_eq!(source_id, expected, "{name}, minify={minify}, synthetic={synthetic}");
+            }
+        }
+    }
+}
+
 /// Test that sourcemaps don't contain invalid tokens for positions beyond source content.
 /// This addresses the issue where oxc_codegen adds semicolons/newlines and creates tokens
 /// for positions that don't exist in the original source.
