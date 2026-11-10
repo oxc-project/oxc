@@ -49,15 +49,13 @@ use std::borrow::Cow;
 use std::mem;
 
 use oxc_allocator::{
-    Address, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator, ReplaceWith, TakeIn,
-    UnstableAddress,
+    Address, ArenaVec, CloneIn, GetAddress, GetAllocator, ReplaceWith, TakeIn, UnstableAddress,
 };
 use oxc_ast::{StaticPropertyName, ast::*};
 use oxc_ast_visit::{VisitJs, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
-use oxc_str::static_ident;
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, ast_operations::get_var_name_from_node};
 use rustc_hash::FxHashMap;
@@ -71,7 +69,10 @@ use crate::{
     context::TraverseCtx,
     decorator::DecoratorOptions,
     state::TransformState,
-    utils::ast_builder::{create_assignment, create_class_method, create_prototype_member},
+    utils::ast_builder::{
+        create_accessor_method, create_assignment, create_export_default_class_reference,
+        create_export_named_class_reference, create_prototype_member,
+    },
 };
 use metadata::LegacyDecoratorMetadata;
 
@@ -428,7 +429,7 @@ impl<'a> LegacyDecorator<'a> {
             ));
 
             // 2. Getter: `get <name>() { return <object>.#<name>_accessor_storage; }`
-            new_body.push(Self::create_accessor_method(
+            new_body.push(create_accessor_method(
                 decorators,
                 getter_key,
                 MethodDefinitionKind::Get,
@@ -442,7 +443,7 @@ impl<'a> LegacyDecorator<'a> {
             ));
 
             // 3. Setter: `set <name>(value) { <object>.#<name>_accessor_storage = value; }`
-            new_body.push(Self::create_accessor_method(
+            new_body.push(create_accessor_method(
                 ArenaVec::new_in(ctx),
                 setter_key,
                 MethodDefinitionKind::Set,
@@ -465,95 +466,6 @@ impl<'a> LegacyDecorator<'a> {
         }
 
         class.body.body = new_body;
-    }
-
-    /// Create a getter or setter method that accesses a private backing field.
-    ///
-    /// Instance: `get <key>() { return this.#<storage_name>; }`
-    /// Static:   `get <key>() { return ClassName.#<storage_name>; }`
-    fn create_accessor_method(
-        decorators: ArenaVec<'a, Decorator<'a>>,
-        key: PropertyKey<'a>,
-        kind: MethodDefinitionKind,
-        computed: bool,
-        is_static: bool,
-        storage_name: Str<'a>,
-        object_binding: Option<&BoundIdentifier<'a>>,
-        class_scope_id: ScopeId,
-        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> ClassElement<'a> {
-        let is_getter = kind == MethodDefinitionKind::Get;
-        let scope_flags = ScopeFlags::Function
-            | ScopeFlags::StrictMode
-            | if is_getter { ScopeFlags::GetAccessor } else { ScopeFlags::SetAccessor };
-        let scope_id = ctx.create_child_scope(class_scope_id, scope_flags);
-
-        // For static accessors use class name, for instance accessors use `this`.
-        let create_object = |ctx: &mut TraverseCtx<'a>| -> Expression<'a> {
-            if let Some(binding) = object_binding {
-                binding.create_read_expression(ctx)
-            } else {
-                Expression::new_this_expression(SPAN, ctx)
-            }
-        };
-
-        let (params, body_stmt) = if is_getter {
-            let params =
-                FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], None, ctx);
-            let field_expr = Expression::new_private_field_expression(
-                SPAN,
-                create_object(ctx),
-                PrivateIdentifier::new(SPAN, storage_name, ctx),
-                false,
-                ctx,
-            );
-            let stmt = Statement::new_return_statement(SPAN, Some(field_expr), ctx);
-            (params, stmt)
-        } else {
-            let value_binding = ctx.generate_binding(
-                static_ident!("value"),
-                scope_id,
-                SymbolFlags::FunctionScopedVariable,
-            );
-            let param =
-                FormalParameter::new_plain(SPAN, value_binding.create_binding_pattern(ctx), ctx);
-            let params = FormalParameters::boxed(
-                SPAN,
-                FormalParameterKind::FormalParameter,
-                [param],
-                None,
-                ctx,
-            );
-            let assign = Expression::new_assignment_expression(
-                SPAN,
-                AssignmentOperator::Assign,
-                AssignmentTarget::new_private_field_expression(
-                    SPAN,
-                    create_object(ctx),
-                    PrivateIdentifier::new(SPAN, storage_name, ctx),
-                    false,
-                    ctx,
-                ),
-                value_binding.create_read_expression(ctx),
-                ctx,
-            );
-            let stmt = Statement::new_expression_statement(SPAN, assign, ctx);
-            (params, stmt)
-        };
-
-        create_class_method(
-            decorators,
-            key,
-            kind,
-            params,
-            return_type,
-            ArenaVec::from_value_in(body_stmt, ctx),
-            computed,
-            is_static,
-            scope_id,
-            ctx,
-        )
     }
 
     /// Helper method to handle a decorated class element (method, property, or accessor).
@@ -681,8 +593,7 @@ impl<'a> LegacyDecorator<'a> {
             Self::transform_class_decorated(class, &binding, alias_binding.as_ref(), ctx);
 
         // `export default Class`
-        let export_default_class_reference =
-            Self::create_export_default_class_reference(&binding, ctx);
+        let export_default_class_reference = create_export_default_class_reference(&binding, ctx);
         ctx.state.statement_injector.move_insertions(stmt, &new_stmt);
         ctx.state.statement_injector.insert_after(&new_stmt, export_default_class_reference);
         *stmt = new_stmt;
@@ -733,7 +644,7 @@ impl<'a> LegacyDecorator<'a> {
             Self::transform_class_decorated(class, &binding, alias_binding.as_ref(), ctx);
 
         // `export { Class }`
-        let export_class_reference = Self::create_export_named_class_reference(&binding, ctx);
+        let export_class_reference = create_export_named_class_reference(&binding, ctx);
         ctx.state.statement_injector.move_insertions(stmt, &new_stmt);
         ctx.state.statement_injector.insert_after(&new_stmt, export_class_reference);
         *stmt = new_stmt;
@@ -1425,36 +1336,6 @@ impl<'a> LegacyDecorator<'a> {
         );
         let helper = helper_call_expr(Helper::Decorate, arguments, ctx);
         Statement::new_expression_statement(SPAN, helper, ctx)
-    }
-
-    /// `export default Class`
-    fn create_export_default_class_reference(
-        class_binding: &BoundIdentifier<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Statement<'a> {
-        let export_default_class_reference = ModuleDeclaration::new_export_default_declaration(
-            SPAN,
-            ExportDefaultDeclarationKind::Identifier(ArenaBox::new_in(
-                class_binding.create_read_reference(ctx),
-                ctx,
-            )),
-            ctx,
-        );
-        Statement::from(export_default_class_reference)
-    }
-
-    /// `export { Class }`
-    fn create_export_named_class_reference(
-        class_binding: &BoundIdentifier<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Statement<'a> {
-        let kind = ImportOrExportKind::Value;
-        let local = ModuleExportName::IdentifierReference(class_binding.create_read_reference(ctx));
-        let exported = ModuleExportName::new_identifier_name(SPAN, class_binding.name, ctx);
-        let specifiers = [ExportSpecifier::new(SPAN, local, exported, kind, ctx)];
-        let export_class_reference =
-            ModuleDeclaration::new_export_named_declaration(SPAN, specifiers, kind, ctx);
-        Statement::from(export_class_reference)
     }
 }
 
