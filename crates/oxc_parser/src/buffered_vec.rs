@@ -13,11 +13,6 @@ impl<'a, T> BufferedVec<'a, T> {
     }
 
     #[inline]
-    pub fn len(&self) -> usize {
-        usize::from(self.first.is_some()) + self.vec.len()
-    }
-
-    #[inline]
     pub fn push(&mut self, value: T) {
         if let Some(first) = self.first.take() {
             self.vec.extend([first, value]);
