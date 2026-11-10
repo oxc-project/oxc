@@ -1,7 +1,7 @@
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, RegExpFlags, Token,
+    Kind, Lexer, RegExpFlags, ScanState, Token,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -16,8 +16,10 @@ impl<C: Config> Lexer<'_, C> {
     ///   where a `RegularExpressionLiteral` is permitted
     /// Which means the parser needs to re-tokenize on `PrimaryExpression`,
     /// `RegularExpressionLiteral` only appear on the right hand side of `PrimaryExpression`
-    pub(crate) fn next_regex(&mut self, kind: Kind) -> (Token, u32, RegExpFlags) {
-        self.token.set_start(
+    pub(crate) fn next_regex(&mut self, current: Token) -> (Token, u32, RegExpFlags) {
+        let kind = current.kind();
+        let state = &mut ScanState::from_token(current);
+        state.set_start(
             self.offset()
                 - match kind {
                     Kind::Slash => 1,
@@ -25,14 +27,14 @@ impl<C: Config> Lexer<'_, C> {
                     _ => unreachable!(),
                 },
         );
-        let (pattern_end, flags) = self.read_regex();
-        let token = self.finish_next_retokenized(Kind::RegExp);
+        let (pattern_end, flags) = self.read_regex(*state);
+        let token = self.finish_next_retokenized(*state, Kind::RegExp);
         (token, pattern_end, flags)
     }
 
     /// 12.9.5 Regular Expression Literals
-    fn read_regex(&mut self) -> (u32, RegExpFlags) {
-        self.read_regex_pattern();
+    fn read_regex(&mut self, state: ScanState) -> (u32, RegExpFlags) {
+        self.read_regex_pattern(state);
 
         let pattern_end = self.offset() - 1; // -1 to exclude `/`
         let mut flags = RegExpFlags::empty();
@@ -62,7 +64,7 @@ impl<C: Config> Lexer<'_, C> {
     }
 
     /// Skip ordinary bytes in batches, interpreting only delimiters, escapes and line terminators.
-    fn read_regex_pattern(&mut self) {
+    fn read_regex_pattern(&mut self, state: ScanState) {
         let mut in_character_class = false;
 
         byte_search! {
@@ -97,7 +99,7 @@ impl<C: Config> Lexer<'_, C> {
                             if matches!(c, '\r' | '\n' | '\u{2028}' | '\u{2029}') {
                                 // SAFETY: This is just after the escaped character.
                                 self.source.set_position(unsafe { pos.add(1) });
-                                self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
+                                self.error(diagnostics::unterminated_reg_exp(self.unterminated_range(state)));
                                 self.advance_to_end();
                                 return;
                             }
@@ -115,7 +117,7 @@ impl<C: Config> Lexer<'_, C> {
                         if let Some(len) = line_break_len {
                             // SAFETY: `len` is the length of this line terminator.
                             self.source.set_position(unsafe { pos.add(len) });
-                            self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
+                            self.error(diagnostics::unterminated_reg_exp(self.unterminated_range(state)));
                             self.advance_to_end();
                             return;
                         }
@@ -127,7 +129,7 @@ impl<C: Config> Lexer<'_, C> {
                 }
             },
             handle_eof: {
-                self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
+                self.error(diagnostics::unterminated_reg_exp(self.unterminated_range(state)));
                 return;
             },
         };

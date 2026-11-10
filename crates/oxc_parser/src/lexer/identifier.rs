@@ -10,7 +10,7 @@ use oxc_syntax::identifier::{
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, SourcePosition, cold_branch,
+    Kind, Lexer, ScanState, SourcePosition, cold_branch,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -47,7 +47,9 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// # SAFETY
     /// * `self.source` must not be exhausted (at least 1 char remaining).
     /// * Next char must be ASCII.
-    pub(super) unsafe fn identifier_name_handler(&mut self) -> &'a str {
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(super) unsafe fn identifier_name_handler(&mut self, state: &mut ScanState) -> &'a str {
         // Advance past 1st byte.
         // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
         let after_first = unsafe { self.source.position().add(1) };
@@ -74,14 +76,14 @@ impl<'a, C: Config> Lexer<'a, C> {
             // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
             // makes `start_pos` `source`'s position as it was at start of this function
             let start_pos = unsafe { after_first.sub(1) };
-            return &self.identifier_tail_unicode(start_pos)[1..];
+            return &self.identifier_tail_unicode(state, start_pos)[1..];
         }
         if next_byte == b'\\' {
             cold_path();
             // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
             // makes `start_pos` `source`'s position as it was at start of this function
             let start_pos = unsafe { after_first.sub(1) };
-            return &self.identifier_backslash(start_pos, false)[1..];
+            return &self.identifier_backslash(state, start_pos, false)[1..];
         }
 
         // Return identifier minus its first char.
@@ -94,10 +96,14 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Handle rest of identifier after first byte of a multi-byte Unicode char found.
     /// Any number of characters can have already been consumed from `self.source` prior to it.
     /// `self.source` should be positioned at start of Unicode character.
-    fn identifier_tail_unicode(&mut self, start_pos: SourcePosition<'a>) -> &'a str {
+    fn identifier_tail_unicode(
+        &mut self,
+        state: &mut ScanState,
+        start_pos: SourcePosition<'a>,
+    ) -> &'a str {
         let c = self.peek_char().unwrap();
         if is_identifier_part_unicode(c) {
-            self.identifier_tail_after_unicode(start_pos, c)
+            self.identifier_tail_after_unicode(state, start_pos, c)
         } else {
             // Reached end of identifier. Return identifier.
             self.source.str_from_pos_to_current(start_pos)
@@ -110,6 +116,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// `start_pos` must be the position of the start of the identifier.
     pub(super) fn identifier_tail_after_unicode(
         &mut self,
+        state: &mut ScanState,
         start_pos: SourcePosition<'a>,
         first_char: char,
     ) -> &'a str {
@@ -125,7 +132,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             self.source.set_position(unsafe { start.add(first_char_len + offset) });
             if c == '\\' {
                 cold_path();
-                return self.identifier_backslash(start_pos, false);
+                return self.identifier_backslash(state, start_pos, false);
             }
             return self.source.str_from_pos_to_current(start_pos);
         }
@@ -136,13 +143,13 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     /// Handle identifier starting with `\` escape.
-    pub fn identifier_backslash_handler(&mut self) -> Kind {
+    pub(super) fn identifier_backslash_handler(&mut self, state: &mut ScanState) -> Kind {
         // Create arena string to hold unescaped identifier.
         // We don't know how long identifier will end up being, so guess.
         let str = ArenaStringBuilder::with_capacity_in(MIN_ESCAPED_STR_LEN, self.allocator);
 
         // Process escape and get rest of identifier
-        let id = self.identifier_on_backslash(str, true);
+        let id = self.identifier_on_backslash(state, str, true);
         Kind::match_keyword(id)
     }
 
@@ -150,7 +157,12 @@ impl<'a, C: Config> Lexer<'a, C> {
     ///
     /// The `\` must not have be consumed from `lexer.source`.
     /// `start_pos` must be position of start of identifier.
-    fn identifier_backslash(&mut self, start_pos: SourcePosition<'a>, is_start: bool) -> &'a str {
+    fn identifier_backslash(
+        &mut self,
+        state: &mut ScanState,
+        start_pos: SourcePosition<'a>,
+        is_start: bool,
+    ) -> &'a str {
         // Create arena string to hold unescaped identifier.
         // We don't know how long identifier will end up being. Take a guess that total length
         // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
@@ -162,7 +174,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         str.push_str(so_far);
 
         // Process escape and get rest of identifier
-        self.identifier_on_backslash(str, is_start)
+        self.identifier_on_backslash(state, str, is_start)
     }
 
     /// Process rest of identifier after a `\` found.
@@ -172,6 +184,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// `is_start` should be `true` if this is first char in the identifier, `false` otherwise.
     fn identifier_on_backslash(
         &mut self,
+        state: &mut ScanState,
         mut str: ArenaStringBuilder<'a>,
         mut is_start: bool,
     ) -> &'a str {
@@ -209,7 +222,7 @@ impl<'a, C: Config> Lexer<'a, C> {
 
         // Convert `str` to arena slice and save to `escaped_strings`
         let id = str.into_str();
-        self.save_string(true, id);
+        self.save_string(state, true, id);
         id
     }
 
@@ -219,7 +232,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Like `identifier_name_handler`, this contains a fast path for identifiers which are pure ASCII.
     /// Unicode characters and escapes are handled on paths marked `#[cold]` to keep the common ASCII
     /// fast path as fast as possible.
-    pub fn private_identifier(&mut self) -> Kind {
+    pub(super) fn private_identifier(&mut self, state: &mut ScanState) -> Kind {
         // Handle EOF directly after `#`
         let start_pos = self.source.position();
         if start_pos.is_end_of(&self.source) {
@@ -234,7 +247,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         // SAFETY: Not at EOF, so safe to read a byte.
         let b = unsafe { start_pos.read() };
         if !is_identifier_start_ascii_byte(b) {
-            return self.private_identifier_not_ascii_id();
+            return self.private_identifier_not_ascii_id(state);
         }
 
         // SAFETY: Not at EOF, so can advance 1 byte without going out of bounds
@@ -259,7 +272,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
             // makes `start_pos` `source`'s position as it was at start of this function
             let start_pos = unsafe { after_first.sub(1) };
-            self.identifier_tail_unicode(start_pos);
+            self.identifier_tail_unicode(state, start_pos);
             return Kind::PrivateIdentifier;
         }
         if next_byte == b'\\' {
@@ -267,7 +280,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
             // makes `start_pos` `source`'s position as it was at start of this function
             let start_pos = unsafe { after_first.sub(1) };
-            self.identifier_backslash(start_pos, false);
+            self.identifier_backslash(state, start_pos, false);
             return Kind::PrivateIdentifier;
         }
 
@@ -276,19 +289,19 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Handle private identifier whose first byte is not an ASCII identifier start byte.
     #[cold]
-    fn private_identifier_not_ascii_id(&mut self) -> Kind {
+    fn private_identifier_not_ascii_id(&mut self, state: &mut ScanState) -> Kind {
         let b = self.peek_byte().unwrap();
         if !b.is_ascii() {
             let c = self.peek_char().unwrap();
             if is_identifier_start_unicode(c) {
                 let start_pos = self.source.position();
-                self.identifier_tail_after_unicode(start_pos, c);
+                self.identifier_tail_after_unicode(state, start_pos, c);
                 return Kind::PrivateIdentifier;
             }
         } else if b == b'\\' {
             // Assume Unicode characters are more common than `\` escapes, so this branch as cold
             cold_path();
-            self.identifier_backslash_handler();
+            self.identifier_backslash_handler(state);
             return Kind::PrivateIdentifier;
         }
 

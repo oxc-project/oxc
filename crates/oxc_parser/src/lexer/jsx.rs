@@ -7,7 +7,7 @@ use oxc_syntax::identifier::is_identifier_part;
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, Token, cold_branch,
+    Kind, Lexer, ScanState, Token, cold_branch,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -32,7 +32,11 @@ impl<C: Config> Lexer<'_, C> {
     /// # SAFETY
     /// * `delimiter` must be an ASCII character.
     /// * Next char in `lexer.source` must be ASCII.
-    pub(super) unsafe fn read_jsx_string_literal(&mut self, delimiter: u8) -> Kind {
+    pub(super) unsafe fn read_jsx_string_literal(
+        &mut self,
+        state: &mut ScanState,
+        delimiter: u8,
+    ) -> Kind {
         debug_assert!(delimiter.is_ascii());
 
         // Skip opening quote
@@ -49,15 +53,16 @@ impl<C: Config> Lexer<'_, C> {
             Kind::Str
         } else {
             self.source.advance_to_end();
-            self.error(diagnostics::unterminated_string(self.unterminated_range()));
+            self.error(diagnostics::unterminated_string(self.unterminated_range(*state)));
             Kind::Eof
         }
     }
 
     pub(crate) fn next_jsx_child(&mut self) -> Token {
-        self.token.set_start(self.offset());
+        let state = &mut ScanState::default();
+        state.set_start(self.offset());
         let kind = self.read_jsx_child();
-        self.finish_next(kind)
+        self.finish_next(*state, kind)
     }
 
     /// [`JSXChild`](https://facebook.github.io/jsx/#prod-JSXChild)
@@ -111,11 +116,13 @@ impl<C: Config> Lexer<'_, C> {
     ///   `IdentifierStart`
     ///   `JSXIdentifier` `IdentifierPart`
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
-    pub(crate) fn continue_lex_jsx_identifier(&mut self, start: u32) -> Option<Token> {
+    pub(crate) fn continue_lex_jsx_identifier(&mut self, current: Token) -> Option<Token> {
+        let start = current.start();
+        let state = &mut ScanState::from_token(current);
         if self.peek_byte() != Some(b'-') {
             return None;
         }
-        self.token.set_start(start);
+        state.set_start(start);
         self.consume_char();
 
         // Consume bytes which are part of identifier tail
@@ -123,7 +130,7 @@ impl<C: Config> Lexer<'_, C> {
             lexer: self,
             table: NOT_ASCII_JSX_ID_CONTINUE_TABLE,
             handle_eof: {
-                return Some(self.finish_next_retokenized(Kind::Ident));
+                return Some(self.finish_next_retokenized(*state, Kind::Ident));
             },
         };
 
@@ -142,6 +149,6 @@ impl<C: Config> Lexer<'_, C> {
             }
         }
 
-        Some(self.finish_next_retokenized(Kind::Ident))
+        Some(self.finish_next_retokenized(*state, Kind::Ident))
     }
 }

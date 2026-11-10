@@ -1,7 +1,7 @@
 use crate::config::LexerConfig as Config;
 
 use super::{
-    Kind, Lexer,
+    Kind, Lexer, ScanState,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
@@ -27,9 +27,11 @@ impl<C: Config> Lexer<'_, C> {
         Kind::Skip
     }
 
-    pub(super) fn line_break_handler(&mut self) -> Kind {
-        self.token.set_is_on_new_line(true);
-        self.trivia_builder.handle_newline();
+    pub(super) fn line_break_handler(&mut self, state: &mut ScanState) -> Kind {
+        state.set_is_on_new_line(true);
+        if state.has_trivia() {
+            self.trivia_builder.handle_newline();
+        }
 
         // Indentation is common after a line break.
         // Consume it, along with any further line breaks.

@@ -38,10 +38,12 @@ pub struct TriviaBuilder<'a> {
 
 #[derive(Clone, Copy, Debug, Default)]
 pub(super) struct AnnotationComments {
+    // Token start to which these ranges belong. Unrelated tokens leave them untouched.
+    owner: Option<u32>,
     // Pure and no-side-effects comment ranges, respectively.
     starts: [u32; 2],
     // Exclusive ends, or `None` when no annotation is present. Keeping the ends
-    // together allows both ranges to be reset with one store for each token.
+    // together allows both ranges to be reset together at the next comment boundary.
     // Starts are read only when an end is present, so they need not be cleared.
     ends: [Option<NonZeroU32>; 2],
 }
@@ -61,16 +63,32 @@ impl<'a> TriviaBuilder<'a> {
         }
     }
 
-    pub fn previous_token_pure_comments(&self) -> Option<(u32, NonZeroU32)> {
+    pub fn previous_token_pure_comments(&self, token_start: u32) -> Option<(u32, NonZeroU32)> {
+        if self.annotation_comments.owner.is_some_and(|owner| owner != token_start) {
+            return None;
+        }
         self.annotation_comments.ends[0].map(|end| (self.annotation_comments.starts[0], end))
     }
 
-    pub fn previous_token_no_side_effects_comments(&self) -> Option<(u32, NonZeroU32)> {
+    pub fn previous_token_no_side_effects_comments(
+        &self,
+        token_start: u32,
+    ) -> Option<(u32, NonZeroU32)> {
+        if self.annotation_comments.owner.is_some_and(|owner| owner != token_start) {
+            return None;
+        }
         self.annotation_comments.ends[1].map(|end| (self.annotation_comments.starts[1], end))
     }
 
     pub(super) fn clear_annotation_comments(&mut self) {
-        self.annotation_comments.ends = [None; 2];
+        self.annotation_comments = AnnotationComments::default();
+    }
+
+    pub(super) fn begin_boundary(&mut self, previous: Token, on_new_line: bool) {
+        self.previous_token = previous;
+        self.saw_newline = on_new_line;
+        self.saw_newline_for_comment = on_new_line;
+        self.clear_annotation_comments();
     }
 
     pub fn mark_pure_comments_applied(&mut self, (start, end): (u32, NonZeroU32)) {
@@ -140,6 +158,7 @@ impl<'a> TriviaBuilder<'a> {
 
     #[inline]
     pub fn handle_token(&mut self, token: Token) {
+        self.annotation_comments.owner = Some(token.start());
         self.saw_newline = false;
         self.saw_newline_for_comment = false;
         // Cold path: attach any unprocessed comments between the previous token and this one.
@@ -581,8 +600,8 @@ mod test {
                         );
                     }
 
-                    let pure = builder.previous_token_pure_comments();
-                    let no_side_effects = builder.previous_token_no_side_effects_comments();
+                    let pure = builder.previous_token_pure_comments(0);
+                    let no_side_effects = builder.previous_token_no_side_effects_comments(0);
                     if applied {
                         if let Some(range) = pure {
                             builder.mark_pure_comments_applied(range);
@@ -602,8 +621,8 @@ mod test {
                         CommentKind::SingleLineBlock,
                         &source,
                     );
-                    assert_eq!(builder.previous_token_pure_comments(), pure);
-                    assert_eq!(builder.previous_token_no_side_effects_comments(), no_side_effects);
+                    assert_eq!(builder.previous_token_pure_comments(0), pure);
+                    assert_eq!(builder.previous_token_no_side_effects_comments(0), no_side_effects);
                     assert_eq!(builder.comments[0].content, content);
                     assert_eq!(builder.comments.len(), 1 + usize::from(!suffix.is_empty()));
                 }

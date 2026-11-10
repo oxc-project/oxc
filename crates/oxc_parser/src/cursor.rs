@@ -112,7 +112,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.report_escaped_keyword(self.token.span());
         }
         self.prev_token_end = self.token.end();
-        self.token = self.lexer.next_token();
+        self.lexer.advance_normal(&mut self.token);
     }
 
     /// Move to the next `JSXChild`
@@ -237,12 +237,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Move to the next token, lexing it as a JSX attribute value.
     pub(crate) fn advance_for_jsx_attribute_value(&mut self) {
         self.prev_token_end = self.token.end();
-        self.token = self.lexer.next_jsx_attribute_value();
+        self.token = self.lexer.next_jsx_attribute_value(&self.token);
     }
 
     /// Tell lexer to read a regex
     pub(crate) fn read_regex(&mut self) -> (u32, RegExpFlags) {
-        let (token, pattern_end, flags) = self.lexer.next_regex(self.cur_kind());
+        let (token, pattern_end, flags) = self.lexer.next_regex(self.token);
         self.token = token;
         (pattern_end, flags)
     }
@@ -253,7 +253,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return;
         }
         if self.at(Kind::RCurly) {
-            self.token = self.lexer.next_template_substitution_tail();
+            self.token = self.lexer.next_template_substitution_tail(self.token);
         }
     }
 
@@ -261,7 +261,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///
     /// Returns `true` if was continued.
     pub(crate) fn continue_lex_jsx_identifier(&mut self) -> bool {
-        if let Some(token) = self.lexer.continue_lex_jsx_identifier(self.token.start()) {
+        if let Some(token) = self.lexer.continue_lex_jsx_identifier(self.token) {
             self.token = token;
             true
         } else {
@@ -276,7 +276,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let kind = self.cur_kind();
         if kind == Kind::RAngle {
-            self.token = self.lexer.re_lex_right_angle();
+            self.token = self.lexer.re_lex_right_angle(self.token);
             self.token.kind()
         } else {
             kind
@@ -289,10 +289,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let kind = self.cur_kind();
         if kind == Kind::ShiftLeft || kind == Kind::LtEq {
-            self.token = self.lexer.re_lex_as_typescript_l_angle(2);
+            self.token = self.lexer.re_lex_as_typescript_l_angle(self.token, 2);
             true
         } else if kind == Kind::ShiftLeftEq {
-            self.token = self.lexer.re_lex_as_typescript_l_angle(3);
+            self.token = self.lexer.re_lex_as_typescript_l_angle(self.token, 3);
             true
         } else {
             kind == Kind::LAngle
@@ -305,10 +305,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let kind = self.cur_kind();
         if kind == Kind::ShiftRight {
-            self.token = self.lexer.re_lex_as_typescript_r_angle(2);
+            self.token = self.lexer.re_lex_as_typescript_r_angle(self.token, 2);
             true
         } else if kind == Kind::ShiftRight3 {
-            self.token = self.lexer.re_lex_as_typescript_r_angle(3);
+            self.token = self.lexer.re_lex_as_typescript_r_angle(self.token, 3);
             true
         } else {
             kind == Kind::RAngle
