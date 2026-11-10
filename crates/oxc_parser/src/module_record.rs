@@ -4,6 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::module_record::*;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::diagnostics;
 
@@ -107,6 +108,7 @@ impl<'a> ModuleRecordBuilder<'a> {
     /// [ParseModule](https://tc39.es/ecma262/#sec-parsemodule)
     /// Step 10.
     fn resolve_export_entries(&mut self) {
+        let import_index = self.import_entry_index();
         let mut export_entries =
             std::mem::replace(&mut self.export_entries, ArenaVec::new_in(&self.allocator));
         let module_record = &mut self.module_record;
@@ -121,11 +123,15 @@ impl<'a> ModuleRecordBuilder<'a> {
                     // 1. Append ee to localExportEntries.
                     return true;
                 };
-                let Some(import) = module_record
-                    .import_entries
-                    .iter()
-                    .find(|import| import.local_name.name == local_name.name)
-                else {
+                let import = if let Some(index) = &import_index {
+                    index.get(&local_name.name).map(|&index| &module_record.import_entries[index])
+                } else {
+                    module_record
+                        .import_entries
+                        .iter()
+                        .find(|import| import.local_name.name == local_name.name)
+                };
+                let Some(import) = import else {
                     // i. If ee.[[LocalName]] is not an element of importedBoundNames, then
                     // 1. Append ee to localExportEntries.
                     return true;
@@ -168,6 +174,37 @@ impl<'a> ModuleRecordBuilder<'a> {
             false
         });
         module_record.local_export_entries = export_entries;
+    }
+
+    /// Index imports when repeated local-export lookups would outweigh building the index.
+    fn import_entry_index(&self) -> Option<FxHashMap<Str<'a>, usize>> {
+        let imports = &self.module_record.import_entries;
+        // Small import lists are cheaper to scan, even when there are many exports.
+        if imports.len() < 16 {
+            return None;
+        }
+        let min_lookups = 65_536_usize.div_ceil(imports.len()).max(8);
+        if self.export_entries.len() < min_lookups
+            || self
+                .export_entries
+                .iter()
+                .filter(|entry| {
+                    entry.module_request.is_none()
+                        && matches!(entry.local_name, ExportLocalName::Name(_))
+                })
+                .take(min_lookups)
+                .count()
+                < min_lookups
+        {
+            return None;
+        }
+
+        let mut index = FxHashMap::with_capacity_and_hasher(imports.len(), FxBuildHasher);
+        for (i, import) in imports.iter().enumerate() {
+            // Preserve the first match when recovering from duplicate local import names.
+            index.entry(import.local_name.name).or_insert(i);
+        }
+        Some(index)
     }
 
     pub fn visit_import_expression(&mut self, e: &ImportExpression<'a>) {
@@ -793,6 +830,40 @@ mod module_record_tests {
                 .collect::<Vec<_>>(),
             ["star1", "star2"]
         );
+    }
+
+    #[test]
+    fn indexed_import_resolution_preserves_export_records() {
+        use std::fmt::Write as _;
+
+        let allocator = Allocator::default();
+        let source = "
+            import { original as named } from 'first';
+            import { other as named } from 'second';
+            import def from 'default';
+            import * as ns from 'namespace';
+            import type { T } from 'types';
+            const local = 0;
+            export { named as a, def as b, ns, local, missing, named as c };
+            export type { T };
+            export { named as d };
+            export { direct } from 'direct';
+            export * from 'star';
+        ";
+        let linear = build(&allocator, source);
+        let mut indexed_source = source.to_string();
+        // Appending unused imports activates the index without changing the spans of
+        // the original entries. Duplicate local names must still use the first import.
+        for index in 0..8192 {
+            writeln!(indexed_source, "import {{ padding{index} }} from 'padding';").unwrap();
+        }
+        let indexed = build(&allocator, &indexed_source);
+        assert_eq!(linear.local_export_entries.len(), 3);
+        assert_eq!(linear.indirect_export_entries.len(), 6);
+        assert_eq!(linear.star_export_entries.len(), 1);
+        assert_eq!(indexed.local_export_entries, linear.local_export_entries);
+        assert_eq!(indexed.indirect_export_entries, linear.indirect_export_entries);
+        assert_eq!(indexed.star_export_entries, linear.star_export_entries);
     }
 
     #[test]
