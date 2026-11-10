@@ -2,14 +2,14 @@
 
 use std::ops::ControlFlow;
 
-use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::{BindingRestElement, RegExpFlags};
 use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl,
-    buffered_vec::collect_list,
+    buffered_vec::BufferedVec,
     diagnostics::{self, ParserDiagnostic},
     error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
@@ -392,6 +392,32 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         result
     }
 
+    /// Collect a parser list with one exact allocation for up to four elements.
+    /// Longer lists spill directly into an arena vector with capacity eight.
+    #[inline]
+    pub(crate) fn collect_list<T>(
+        &mut self,
+        mut next: impl FnMut(&mut Self) -> Option<T>,
+    ) -> ArenaVec<'a, T> {
+        let Some(first) = next(self) else { return ArenaVec::new_in(self) };
+        let Some(second) = next(self) else { return ArenaVec::from_value_in(first, self) };
+        let Some(third) = next(self) else {
+            return ArenaVec::from_array_in([first, second], self);
+        };
+        let Some(fourth) = next(self) else {
+            return ArenaVec::from_array_in([first, second, third], self);
+        };
+        let Some(fifth) = next(self) else {
+            return ArenaVec::from_array_in([first, second, third, fourth], self);
+        };
+        let mut list = ArenaVec::with_capacity_in(8, self);
+        list.extend([first, second, third, fourth, fifth]);
+        while let Some(element) = next(self) {
+            list.push(element);
+        }
+        list
+    }
+
     pub(crate) fn parse_normal_list<F, T>(
         &mut self,
         open: Kind,
@@ -408,7 +434,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline(always)]
     pub(crate) fn parse_normal_list_into<F, T>(
         &mut self,
-        list: &mut ArenaVec<'a, T>,
+        list: &mut BufferedVec<'a, T>,
         close: Kind,
         mut parse_element: F,
     ) where
@@ -434,9 +460,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        let allocator = self.allocator();
-        let list = collect_list(&allocator, || {
-            if self.at(close) || self.has_fatal_error() { None } else { parse_element(self) }
+        let list = self.collect_list(|p| {
+            if p.at(close) || p.has_fatal_error() { None } else { parse_element(p) }
         });
         self.expect_closing(close, opening_span);
         list
@@ -455,16 +480,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.at(close) || self.has_fatal_error() {
             return (ArenaVec::new_in(self), None);
         }
-        let allocator = self.allocator();
         let mut finished = false;
         let mut trailing_separator = None;
-        let list = collect_list(&allocator, || {
+        let list = self.collect_list(|p| {
             if finished {
                 return None;
             }
-            let element = parse_element(self);
+            let element = parse_element(p);
             if let ControlFlow::Break(trailing) =
-                self.parse_delimited_list_separator(close, separator, opening_span)
+                p.parse_delimited_list_separator(close, separator, opening_span)
             {
                 trailing_separator = trailing;
                 finished = true;
@@ -563,7 +587,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         R: Fn(&mut Self) -> ArenaBox<'a, BindingRestElement<'a>>,
         D: Fn(Span) -> ParserDiagnostic<'a>,
     {
-        let mut list = ArenaVec::new_in(self);
+        let mut list = BufferedVec::new_in(self);
         let rest = self.parse_delimited_list_with_rest_into(
             &mut list,
             close,
@@ -572,14 +596,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             parse_rest,
             rest_last_diagnostic,
         );
-        (list, rest)
+        (list.into_vec(), rest)
     }
 
     #[expect(clippy::inline_always)]
     #[inline(always)]
     fn parse_delimited_list_with_rest_into<E, A, R, D>(
         &mut self,
-        list: &mut ArenaVec<'a, A>,
+        list: &mut BufferedVec<'a, A>,
         close: Kind,
         opening_span: Span,
         parse_element: E,

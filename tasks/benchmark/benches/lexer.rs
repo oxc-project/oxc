@@ -7,7 +7,7 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_parser::{
-    Parser,
+    ParseOptions, Parser,
     config::{LexerConfig, NoTokensLexerConfig},
     lexer::{Kind, Lexer},
 };
@@ -104,7 +104,9 @@ fn lex_whole_file<'a, C: LexerConfig>(
 /// * `JSXText`
 fn clean<'a>(source_text: &'a str, source_type: SourceType, allocator: &'a Allocator) -> String {
     // Parse
-    let parser_ret = Parser::new(allocator, source_text, source_type).parse();
+    let parser_ret = Parser::new(allocator, source_text, source_type)
+        .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
+        .parse();
     assert!(parser_ret.diagnostics.is_empty());
     let program = parser_ret.program;
 

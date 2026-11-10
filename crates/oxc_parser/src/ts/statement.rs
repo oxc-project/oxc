@@ -236,7 +236,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
         }
-        let (extends, implements) = self.parse_ts_interface_heritage_clause();
+        let (extends, implements) =
+            self.parse_heritage_clause(Self::parse_ts_interface_extends_clause);
         let body = self.parse_ts_interface_body();
         let extends = extends.unwrap_or_else(|| ArenaVec::new_in(self));
         self.verify_modifiers(
@@ -260,16 +261,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains_declare(),
             self,
         )
-    }
-
-    #[expect(clippy::type_complexity)]
-    fn parse_ts_interface_heritage_clause(
-        &mut self,
-    ) -> (
-        Option<ArenaVec<'a, TSInterfaceHeritage<'a>>>,
-        Option<(Span, ArenaVec<'a, TSClassImplements<'a>>)>,
-    ) {
-        self.parse_heritage_clause(Self::parse_ts_interface_extends_clause)
     }
 
     fn parse_ts_interface_extends_clause(&mut self) -> ArenaVec<'a, TSInterfaceHeritage<'a>> {

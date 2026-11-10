@@ -200,6 +200,8 @@ unsafe fn parse_raw_impl(
             .with_options(ParseOptions {
                 parse_regular_expression: true,
                 allow_return_outside_function: true,
+                // Semantic analysis is skipped when non-fatal errors are ignored.
+                enable_ident_hashes: !ignore_non_fatal_errors,
                 ..ParseOptions::default()
             })
             .with_config(RuntimeParserConfig::new(true))
