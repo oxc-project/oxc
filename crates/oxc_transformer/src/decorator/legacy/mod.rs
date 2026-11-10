@@ -825,7 +825,7 @@ impl<'a> LegacyDecorator<'a> {
             ctx,
         );
 
-        let class_alias_with_this_assignment = if ctx.state.is_class_properties_plugin_enabled {
+        let class_alias_with_this_assignment = if ctx.state.class_transform.transforms_fields() {
             None
         } else {
             // If we're emitting to ES2022 or later then we need to reassign the class alias before
