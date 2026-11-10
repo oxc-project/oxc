@@ -477,3 +477,15 @@ source: crates/oxc_linter/src/tester.rs
  10 │                    })}
     ╰────
   help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ react(jsx-key): Missing "key" prop for element in array.
+   ╭─[jsx_key.tsx:1:4]
+ 1 │ [(<App />)];
+   ·    ───
+   ╰────
+
+  ⚠ react(jsx-key): Missing "key" prop for element in array.
+   ╭─[jsx_key.tsx:1:10]
+ 1 │ cond ? [<App />] : null;
+   ·          ───
+   ╰────
