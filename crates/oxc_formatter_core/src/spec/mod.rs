@@ -14,6 +14,7 @@
 //! never `oxc_*` crates or engine IR types via `crate::`.
 
 mod bom;
+pub mod cjk;
 mod front_matter;
 mod gap;
 mod number;

@@ -1,7 +1,7 @@
-//! Word kinds for the CJK line-breaking rules (Prettier's `splitText` / `printWhitespace`).
+//! Whitespace between two Chinese / Japanese characters.
 //!
-//! Only the characters at the ends of a whitespace-delimited word matter to the printer
-//! (a variation selector stays with its base).
+//! Read from the characters at the ends of the words around it (a variation selector stays with its base);
+//! CJ is a letter or a CJK punctuation, not Korean.
 //!
 //! The tables are Prettier's own character classes
 //! (`constants.evaluate.js`: `cjk-regex` + Script_Extensions / General_Category for CJK,
@@ -9,54 +9,27 @@
 //! enumerated with Node 26 (Unicode 17).
 //! Regenerate by testing every code point against those regexes and collapsing the hits into ranges.
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Kind {
-    NonCjk,
-    /// Chinese or Japanese letter: no spaces between words, a line break next to it is kept.
-    CjLetter,
-    /// Korean letter: words are space-separated, as in Latin script.
-    KLetter,
-    CjkPunctuation,
+/// `prev` ends and `next` starts with a Chinese / Japanese character.
+pub fn between_cj(prev: &str, next: &str) -> bool {
+    let mut chars = prev.chars();
+    let Some(last) = chars.next_back() else { return false };
+    let last = match chars.next_back() {
+        Some(base) if is_variation_selector(last) && is_cjk(base) => base,
+        _ => last,
+    };
+    is_cj(last) && next.chars().next().is_some_and(is_cj)
 }
 
-impl Kind {
-    pub fn is_cj(self) -> bool {
-        matches!(self, Kind::CjLetter | Kind::CjkPunctuation)
-    }
-}
-
-/// The kind of the word's first character.
-pub fn first_kind(word: &str) -> Option<Kind> {
-    word.chars().next().map(kind)
-}
-
-/// The kind of the word's last character; a trailing variation selector stays with its base.
-pub fn last_kind(word: &str) -> Option<Kind> {
-    let mut chars = word.chars();
-    let last = chars.next_back()?;
-    Some(match chars.next_back() {
-        Some(base) if is_variation_selector(last) && is_cjk(base) => kind(base),
-        _ => kind(last),
-    })
-}
-
-fn kind(c: char) -> Kind {
-    if !is_cjk(c) {
-        Kind::NonCjk
-    } else if is_punctuation(c) {
-        Kind::CjkPunctuation
-    } else if is_hangul(c) {
-        Kind::KLetter
-    } else {
-        Kind::CjLetter
-    }
+/// A Chinese / Japanese letter or a CJK punctuation; a Korean letter is no CJ (its words are space-separated).
+fn is_cj(c: char) -> bool {
+    is_cjk(c) && (is_punctuation(c) || !is_hangul(c))
 }
 
 fn is_variation_selector(c: char) -> bool {
     matches!(u32::from(c), 0xFE00..=0xFE0F | 0xE0100..=0xE01EF)
 }
 
-pub fn is_cjk(c: char) -> bool {
+fn is_cjk(c: char) -> bool {
     !c.is_ascii() && in_ranges(CJK, c)
 }
 
