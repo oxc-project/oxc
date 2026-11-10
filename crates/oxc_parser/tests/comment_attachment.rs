@@ -252,6 +252,11 @@ fn comment_owners_of_rebuilt_nodes_are_in_ast() {
         ("((a.b) /* c */)--;", SourceType::mjs()),
         ("(/* c */ (a)) = b;", SourceType::mjs()),
         ("class C { #p; m() { ((/* c */ (this.#p as number))) = 1; } }", SourceType::ts()),
+        ("interface I extends a + /* c */ b {}", SourceType::ts()),
+        ("interface I extends (/* c */ a) {}", SourceType::ts()),
+        ("interface I extends f(a /* c */, /* @__PURE__ */ g()) {}", SourceType::ts()),
+        ("interface I extends a, /* @__PURE__ */ f() {}", SourceType::ts()),
+        ("interface I { [a: string, b: Foo<A /* c */, B>]: T }", SourceType::ts()),
     ];
     let mut missing = Vec::new();
     for (source, source_type) in cases {

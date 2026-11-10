@@ -1640,7 +1640,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     break;
                 }
                 parameter_count += 1;
+                let checkpoint = self.comment_checkpoint();
                 let _ = self.parse_ts_index_signature_name();
+                self.discard_comments(checkpoint);
             }
             parameter
         };

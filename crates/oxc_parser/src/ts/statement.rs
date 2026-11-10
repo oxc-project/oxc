@@ -332,9 +332,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_invalid_ts_interface_heritage_type_name(&mut self) -> TSTypeName<'a> {
+        let checkpoint = self.comment_checkpoint();
         let expression = self.parse_assignment_expression_or_higher();
         let expression_span = expression.span();
         self.error(diagnostics::interface_extend(expression_span));
+        self.discard_comments(checkpoint);
         TSTypeName::new_this_expression(SPAN, self)
     }
 
