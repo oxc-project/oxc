@@ -452,17 +452,32 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         close: Kind,
         separator: Kind,
         opening_span: Span,
+        parse_element: F,
+    ) -> (ArenaVec<'a, T>, Option<u32>)
+    where
+        F: FnMut(&mut Self) -> T,
+    {
+        self.parse_delimited_list_with_prefix(None, close, separator, opening_span, parse_element)
+    }
+
+    /// Include an already parsed prefix without consuming a separator for it.
+    pub(crate) fn parse_delimited_list_with_prefix<F, T>(
+        &mut self,
+        mut first: Option<T>,
+        close: Kind,
+        separator: Kind,
+        opening_span: Span,
         mut parse_element: F,
     ) -> (ArenaVec<'a, T>, Option<u32>)
     where
         F: FnMut(&mut Self) -> T,
     {
-        if self.at(close) || self.has_fatal_error() {
-            return (ArenaVec::new_in(self), None);
-        }
-        let mut finished = false;
+        let mut finished = self.at(close) || self.has_fatal_error();
         let mut trailing_separator = None;
         let list = self.collect_list(|p| {
+            if let Some(first) = first.take() {
+                return Some(first);
+            }
             if finished {
                 return None;
             }
@@ -476,49 +491,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Some(element)
         });
         (list, trailing_separator)
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    pub(crate) fn parse_delimited_list_into<F, T>(
-        &mut self,
-        list: &mut ArenaVec<'a, T>,
-        close: Kind,
-        separator: Kind,
-        opening_span: Span,
-        mut parse_element: F,
-    ) -> Option<u32>
-    where
-        F: FnMut(&mut Self) -> T,
-    {
-        if self.at(close) || self.has_fatal_error() {
-            return None;
-        }
-        let element = parse_element(self);
-        list.push(element);
-        self.parse_delimited_list_rest(list, close, separator, opening_span, parse_element)
-    }
-
-    pub(crate) fn parse_delimited_list_rest<F, T>(
-        &mut self,
-        list: &mut ArenaVec<'a, T>,
-        close: Kind,
-        separator: Kind,
-        opening_span: Span,
-        mut parse_element: F,
-    ) -> Option<u32>
-    where
-        F: FnMut(&mut Self) -> T,
-    {
-        loop {
-            if let ControlFlow::Break(trailing_separator) =
-                self.parse_delimited_list_separator(close, separator, opening_span)
-            {
-                return trailing_separator;
-            }
-            let element = parse_element(self);
-            list.push(element);
-        }
     }
 
     #[inline]
