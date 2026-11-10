@@ -290,6 +290,12 @@ fn is_in_array_or_iter<'a, 'b>(
                     return None;
                 }
 
+                // Like eslint-plugin-react, only check elements that are direct members of
+                // the array literal, not JSX nested in e.g. `[cond ? <Foo /> : null]`.
+                if !is_same_node_without_parentheses(node, jsx_node) {
+                    return None;
+                }
+
                 return Some(InsideArrayOrIterator::Array);
             }
             AstKind::CallExpression(v) => {
@@ -326,6 +332,16 @@ fn is_in_array_or_iter<'a, 'b>(
     }
 
     None
+}
+
+/// Whether `node` is `target`, possibly wrapped in parentheses.
+fn is_same_node_without_parentheses(node: &AstNode<'_>, target: &AstNode<'_>) -> bool {
+    match node.kind() {
+        AstKind::ParenthesizedExpression(paren) => {
+            paren.expression.without_parentheses().span() == target.kind().span()
+        }
+        _ => node.id() == target.id(),
+    }
 }
 
 fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
@@ -614,7 +630,15 @@ fn test() {
         ("[1, 2, 3].map((item) => {
             return item === 'bar' ? <div key={item}>{item}</div> : <span key={item}>{item}</span>;
           })", None, None
-        )
+        ),
+        // Only direct members of an array literal are checked, like eslint-plugin-react.
+        (
+            r"export const useCount = (needed, set) => [needed ? 1 : undefined, needed ? <Counter onCount={set} /> : null] as const;",
+            None,
+            None,
+        ),
+        (r"[cond ? <App /> : null];", None, None),
+        (r"[cond && <App />];", None, None),
     ];
 
     let fail = vec![
@@ -839,6 +863,9 @@ fn test() {
             None,
             None,
         ),
+        // Parenthesized elements are still direct members of the array.
+        ("[(<App />)];", None, None),
+        ("cond ? [<App />] : null;", None, None),
     ];
 
     Tester::new(JsxKey::NAME, JsxKey::PLUGIN, pass, fail).test_and_snapshot();
