@@ -776,7 +776,7 @@ impl<'a> PeepholeOptimizations {
         else {
             unreachable!()
         };
-        if Self::is_script_root_scope(ctx) || ctx.current_scope_flags().contains_direct_eval() {
+        if Self::is_script_root_scope(ctx) {
             return false;
         }
         let reference_id = ident.reference_id();

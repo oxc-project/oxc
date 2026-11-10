@@ -421,6 +421,18 @@ impl Scoping {
         )
     }
 
+    /// Iterate symbols with redeclaration metadata, including their first declaration.
+    /// Symbols declared only once are omitted.
+    pub fn iter_symbol_redeclarations(
+        &self,
+    ) -> impl Iterator<Item = (SymbolId, &[Redeclaration])> + '_ {
+        self.cell
+            .borrow_dependent()
+            .symbol_redeclarations
+            .iter()
+            .map(|(&symbol, declarations)| (symbol, declarations.as_slice()))
+    }
+
     /// Get the enclosing var binding declared by a `var` that redeclares this catch parameter.
     /// The declarator carries the catch symbol because its initializer assigns to that binding.
     #[inline]
@@ -436,6 +448,23 @@ impl Scoping {
     /// Iterate `(catch parameter, enclosing var binding)` pairs in unspecified order.
     pub fn catch_var_bindings(&self) -> impl Iterator<Item = (SymbolId, SymbolId)> + '_ {
         self.catch_var_bindings.iter().map(|(&catch, &outer)| (catch, outer))
+    }
+
+    /// Iterate all symbols that must be renamed together with `symbol_id`.
+    ///
+    /// A catch parameter and the enclosing binding declared by a same-named `var`
+    /// have distinct identities, but their declarations must print the same name.
+    /// The enclosing binding is yielded first, followed by its linked catch parameters
+    /// in unspecified order. An unlinked symbol yields only itself.
+    pub fn symbol_ids_with_shared_name(
+        &self,
+        symbol_id: SymbolId,
+    ) -> impl Iterator<Item = SymbolId> + '_ {
+        let outer = self.catch_var_binding(symbol_id).unwrap_or(symbol_id);
+        std::iter::once(outer).chain(
+            self.catch_var_bindings()
+                .filter_map(move |(catch, binding)| (binding == outer).then_some(catch)),
+        )
     }
 
     #[inline]

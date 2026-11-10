@@ -17,6 +17,7 @@ use oxc_cfg::{
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_index::IndexVec;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{NodeId, Reference, ScopeId, SymbolId};
@@ -156,6 +157,7 @@ impl Rule for NoUselessAssignment {
         let mut cfg_ops: CfgOps = IndexVec::with_capacity(num_blocks);
         cfg_ops.resize_with(num_blocks, Vec::new);
         let mut tracked_symbols: Vec<TrackedSymbol> = Vec::new();
+        let has_linked_bindings = ctx.scoping().catch_var_bindings().next().is_some();
 
         for symbol_id in ctx.scoping().symbol_ids() {
             let decl_node = ctx.symbol_declaration(symbol_id);
@@ -195,7 +197,22 @@ impl Rule for NoUselessAssignment {
             });
 
             // Collect ops for this symbol (formerly Pass 2)
-            if var_decl.is_some_and(|var_decl| var_decl.init.is_some()) {
+            if var_decl.is_some_and(|var_decl| {
+                if var_decl.init.is_none() {
+                    return false;
+                }
+                if !has_linked_bindings {
+                    return true;
+                }
+                // A hoisted var binding can be declared by an identifier attached
+                // to a catch parameter. Its initializer writes to the catch,
+                // not to the hoisted symbol being analyzed here.
+                let mut writes_symbol = false;
+                var_decl.id.bound_names(&mut |ident| {
+                    writes_symbol |= ident.symbol_id() == symbol_id;
+                });
+                writes_symbol
+            }) {
                 Self::push_op(
                     ctx,
                     graph,
@@ -923,6 +940,9 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        "function f() { try {} catch (e) { var e = 1; use(e); } e = 2; use(e); }",
+        "function f() { try {} catch (e) { var e = 1; use(e); } return e; }",
+        "function f() { try {} catch (e) { var { value: e } = obj; use(e); } e = 2; use(e); }",
         "let v = 'used';
                     console.log(v);
                     v = 'used-2'
@@ -1550,6 +1570,7 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
     ];
 
     let fail = vec![
+        "function f() { try {} catch (e) { var e = 1; use(e); } e = 2; e = 3; use(e); }",
         "let v = 'used';
                         console.log(v);
                         v = 'unused'",

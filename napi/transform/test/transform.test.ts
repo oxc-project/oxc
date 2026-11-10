@@ -1,3 +1,4 @@
+import { runInNewContext } from "node:vm";
 import { Worker } from "node:worker_threads";
 import { describe, expect, it, test } from "vitest";
 
@@ -46,6 +47,27 @@ describe("simple", () => {
 });
 
 describe("transform", () => {
+  it("preserves linked catch bindings when lowering class fields to es2021", () => {
+    const code = `
+      const x = "field";
+      class C {
+        field = x;
+        constructor() {
+          try { throw "caught"; } catch (x) { var x = "local"; this.caught = x; }
+          this.outer = x;
+        }
+      }
+      const c = new C();
+      [c.field, c.caught, c.outer];
+    `;
+    const result = transformSync("test.js", code, {
+      target: "es2021",
+      assumptions: { setPublicClassFields: true },
+    });
+    expect(result.errors).toEqual([]);
+    expect(runInNewContext(result.code)).toEqual(["field", "local", undefined]);
+  });
+
   it("should produce the same result as sync transform", async () => {
     const sourceCode = `
       const add = (a, b) => a + b;

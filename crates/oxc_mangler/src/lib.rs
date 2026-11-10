@@ -604,6 +604,21 @@ impl<'a> SlotAssignment<'a> {
         ast_nodes: &AstNodes,
         constraints: &Constraints,
     ) -> Self {
+        if scoping.catch_var_bindings().next().is_some() {
+            Self::compute_impl::<true>(allocator, scoping, ast_nodes, constraints)
+        } else {
+            Self::compute_impl::<false>(allocator, scoping, ast_nodes, constraints)
+        }
+    }
+
+    // Specialize once per file so ordinary files do no linked-binding work in
+    // the scope/symbol loops below.
+    fn compute_impl<const HAS_LINKED_BINDINGS: bool>(
+        allocator: &'a Allocator,
+        scoping: &'a Scoping,
+        ast_nodes: &AstNodes,
+        constraints: &Constraints,
+    ) -> Self {
         // Names of bindings in direct-`eval` scopes — collected here, reserved in Phase 4.
         // TODO: eval reservation is conservative — ideally we'd reserve names per-slot.
         let mut eval_reserved_names = ArenaIdentHashSet::new_in(allocator);
@@ -622,11 +637,12 @@ impl<'a> SlotAssignment<'a> {
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
         // `(enclosing var binding, catch parameter)` pairs, sorted to look up by binding.
-        let mut catch_var_bindings = ArenaVec::from_iter_in(
-            scoping.catch_var_bindings().map(|(catch, outer)| (outer, catch)),
-            &allocator,
-        );
-        catch_var_bindings.sort_unstable();
+        let mut catch_var_bindings = ArenaVec::new_in(&allocator);
+        if HAS_LINKED_BINDINGS {
+            catch_var_bindings
+                .extend(scoping.catch_var_bindings().map(|(catch, outer)| (outer, catch)));
+            catch_var_bindings.sort_unstable();
+        }
 
         // Walk down the scope tree and assign a slot number for each symbol. Doing it as a scope
         // walk (rather than a flat symbol loop) generates better code.
@@ -647,7 +663,7 @@ impl<'a> SlotAssignment<'a> {
             tmp_bindings.clear();
             tmp_bindings.extend(bindings.values().copied().filter(|&binding| {
                 // A linked catch parameter shares the enclosing binding's slot (see the end).
-                (catch_var_bindings.is_empty() || scoping.catch_var_binding(binding).is_none())
+                (!HAS_LINKED_BINDINGS || scoping.catch_var_binding(binding).is_none())
                     && constraints.is_mangle_candidate(binding, scoping)
             }));
             if tmp_bindings.is_empty() {
@@ -698,14 +714,8 @@ impl<'a> SlotAssignment<'a> {
                 debug_assert!(constraints.is_mangle_candidate(symbol_id, scoping));
                 slots[symbol_id.index()] = assigned_slot;
 
-                // Catch parameters redeclared by a `var` of this binding print its name too,
-                // so their uses keep this slot live as well.
-                let linked_catches = catch_var_bindings
-                    [catch_var_bindings.partition_point(|&(outer, _)| outer < symbol_id)..]
-                    .iter()
-                    .take_while(|&&(outer, _)| outer == symbol_id)
-                    .map(|&(_, catch)| catch);
-                let used_scope_ids = iter::once(symbol_id).chain(linked_catches).flat_map(|id| {
+                let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
+                let mut mark_symbol_live = |id| {
                     // `var` is hoisted, so include the scope where it is declared
                     // (for cases like `function foo() { { var x; let y; } }`).
                     let declared_scope_id =
@@ -714,37 +724,49 @@ impl<'a> SlotAssignment<'a> {
                         .symbol_redeclarations(id)
                         .iter()
                         .map(|r| ast_nodes.get_node(r.declaration).scope_id());
-                    scoping
+                    let used_scope_ids = scoping
                         .get_resolved_references(id)
                         .map(Reference::scope_id)
                         .chain(redeclared_scope_ids)
-                        .chain([declared_scope_id])
-                });
+                        .chain([declared_scope_id]);
 
-                // The scopes this symbol is alive in: for each use, walk up to (but not including)
-                // `scope_id`, marking the descendant scopes it passes through.
-                let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
-                for used_scope_id in used_scope_ids.chain([scope_id]) {
-                    for ancestor_id in scoping.scope_ancestors(used_scope_id) {
-                        let ancestor_index = ancestor_id.index();
-                        // Stop when we reach scope_id or any of its ancestors
-                        if ancestor_index == scope_id_index || ancestor_set.has_bit(ancestor_index)
-                        {
+                    // The scopes this symbol is alive in: for each use, walk up to (but not including)
+                    // `scope_id`, marking the descendant scopes it passes through.
+                    for used_scope_id in used_scope_ids {
+                        for ancestor_id in scoping.scope_ancestors(used_scope_id) {
+                            let ancestor_index = ancestor_id.index();
+                            // Stop when we reach scope_id or any of its ancestors
+                            if ancestor_index == scope_id_index
+                                || ancestor_set.has_bit(ancestor_index)
+                            {
+                                break;
+                            }
+                            if slot_liveness_bitset.has_bit(ancestor_index) {
+                                debug_assert!(
+                                    scoping.scope_ancestors(ancestor_id).skip(1).all(|a| {
+                                        let idx = a.index();
+                                        slot_liveness_bitset.has_bit(idx)
+                                            || idx == scope_id_index
+                                            || ancestor_set.has_bit(idx)
+                                    }),
+                                    "Invariant violated: ancestor chain should be fully marked live"
+                                );
+                                break;
+                            }
+                            slot_liveness_bitset.set_bit(ancestor_index);
+                        }
+                    }
+                };
+                mark_symbol_live(symbol_id);
+                if HAS_LINKED_BINDINGS {
+                    // Linked catch declarations print this binding's name too.
+                    for &(outer, catch) in &catch_var_bindings
+                        [catch_var_bindings.partition_point(|&(outer, _)| outer < symbol_id)..]
+                    {
+                        if outer != symbol_id {
                             break;
                         }
-                        if slot_liveness_bitset.has_bit(ancestor_index) {
-                            debug_assert!(
-                                scoping.scope_ancestors(ancestor_id).skip(1).all(|a| {
-                                    let idx = a.index();
-                                    slot_liveness_bitset.has_bit(idx)
-                                        || idx == scope_id_index
-                                        || ancestor_set.has_bit(idx)
-                                }),
-                                "Invariant violated: ancestor chain should be fully marked live"
-                            );
-                            break;
-                        }
-                        slot_liveness_bitset.set_bit(ancestor_index);
+                        mark_symbol_live(catch);
                     }
                 }
             }

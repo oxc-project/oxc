@@ -1,0 +1,137 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/issue-29076-4.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(0x0)",
+        "id": 1,
+        "node": "BlockStatement",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(0x0)",
+                "id": 4,
+                "node": "BlockStatement",
+                "symbols": []
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(Function | Arrow)",
+                        "id": 7,
+                        "node": "ArrowFunctionExpression",
+                        "symbols": []
+                      },
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(0x0)",
+                        "id": 8,
+                        "node": "BlockStatement",
+                        "symbols": []
+                      }
+                    ],
+                    "flags": "ScopeFlags(0x0)",
+                    "id": 6,
+                    "node": "BlockStatement",
+                    "symbols": [
+                      {
+                        "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                        "id": 1,
+                        "name": "x",
+                        "node": "CatchParameter",
+                        "references": [
+                          {
+                            "flags": "ReferenceFlags(Read)",
+                            "id": 0,
+                            "name": "x",
+                            "node_id": 22,
+                            "scope_id": 7
+                          },
+                          {
+                            "flags": "ReferenceFlags(Read)",
+                            "id": 3,
+                            "name": "x",
+                            "node_id": 41,
+                            "scope_id": 6
+                          }
+                        ],
+                        "var_binding": 3
+                      },
+                      {
+                        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+                        "id": 2,
+                        "name": "read",
+                        "node": "VariableDeclarator(read)",
+                        "references": [
+                          {
+                            "flags": "ReferenceFlags(Read)",
+                            "id": 2,
+                            "name": "read",
+                            "node_id": 40,
+                            "scope_id": 6
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "flags": "ScopeFlags(CatchClause)",
+                "id": 5,
+                "node": "CatchClause",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 3,
+            "node": "BlockStatement",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                "id": 0,
+                "name": "x",
+                "node": "CatchParameter",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Read)",
+                    "id": 5,
+                    "name": "x",
+                    "node_id": 47,
+                    "scope_id": 3
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(CatchClause)",
+        "id": 2,
+        "node": "CatchClause",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(FunctionScopedVariable)",
+        "id": 3,
+        "name": "x",
+        "node": "VariableDeclarator(<destructure>)",
+        "references": []
+      }
+    ]
+  }
+]
