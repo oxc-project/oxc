@@ -8,7 +8,7 @@ use oxc_simd::DynCpu;
 
 use crate::{LexOptions, Lexer, Tokens};
 
-/// Same as Lexer::lex, but lexes with CPU feature set cpu,
+/// Same as [`Lexer::lex`], but lexes with CPU feature set `cpu`,
 /// instead of the best one this CPU supports.
 ///
 /// # Panics
