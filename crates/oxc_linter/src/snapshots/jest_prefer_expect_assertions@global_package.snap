@@ -9,9 +9,11 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `e.hasAssertions()` or `e.assertions(<number>)` as the first statement in the test.
 
-  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
-   ╭─[prefer_expect_assertions.tsx:1:46]
- 1 │ import { expect as e } from '@jest/globals'; it("it1", () => {})
-   ·                                              ───────────────────
+  ⚠ jest(prefer-expect-assertions): Every test should have either `e.assertions(<number of assertions>)` or `e.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │     import { expect as e } from 'bun:test';
+ 2 │ ╭─▶             test("aliased import", () => {
+ 3 │ │                   [1].forEach(() => { e(1).toBe(1); });
+ 4 │ ╰─▶               });
    ╰────
-  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+  help: Add `e.hasAssertions()` or `e.assertions(<number>)` as the first statement in the test.

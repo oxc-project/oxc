@@ -1617,21 +1617,38 @@ fn test_global_package() {
     let settings =
         Some(serde_json::json!({ "settings": { "jest": { "globalPackage": "bun:test" } } }));
 
-    let pass = vec![(
-        r#"import { expect as e } from 'bun:test';
+    let only_with_expect_in_callback =
+        Some(serde_json::json!([{ "onlyFunctionsWithExpectInCallback": true }]));
+
+    let pass = vec![
+        (
+            r#"import { expect as e } from 'bun:test';
             test("aliased import", () => {
                 e.assertions(1);
                 e(true).toBe(true);
               });"#,
-        None,
-        settings.clone(),
-    )];
+            None,
+            settings.clone(),
+        ),
+        // `e` is not `expect`, because `@jest/globals` is not the global package.
+        (
+            r#"import { expect as e } from '@jest/globals';
+            test("aliased import", () => {
+                [1].forEach(() => { e(1).toBe(1); });
+              });"#,
+            only_with_expect_in_callback.clone(),
+            settings.clone(),
+        ),
+    ];
 
     let fail = vec![
         (r#"import { expect as e } from 'bun:test'; it("it1", () => {})"#, None, settings.clone()),
         (
-            r#"import { expect as e } from '@jest/globals'; it("it1", () => {})"#,
-            None,
+            r#"import { expect as e } from 'bun:test';
+            test("aliased import", () => {
+                [1].forEach(() => { e(1).toBe(1); });
+              });"#,
+            only_with_expect_in_callback,
             settings.clone(),
         ),
     ];

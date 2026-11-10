@@ -45,7 +45,8 @@
       "typecheck": false
     },
     "jest": {
-      "version": null
+      "version": null,
+      "globalPackage": null
     }
   },
   "env": {

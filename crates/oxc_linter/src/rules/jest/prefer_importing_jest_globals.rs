@@ -98,6 +98,9 @@ declare_oxc_lint!(
     /// Prefer importing Jest globals (`describe`, `test`, `expect`, etc.) from
     /// `@jest/globals` rather than relying on ambient globals.
     ///
+    /// If `settings.jest.globalPackage` is set, that package is used instead of
+    /// `@jest/globals`.
+    ///
     /// ### Why is this bad?
     ///
     /// Using global Jest functions without explicit imports makes dependencies
@@ -191,12 +194,12 @@ fn build_fix<'a>(
     let program = ctx.nodes().program();
     let is_module = ctx.source_type().is_module();
 
-    // 1. Merge with existing `import ... from '@jest/globals'`
+    // 1. Merge with existing `import ... from '<global package>'`
     if let Some(fix) = try_merge_esm_import(ctx, fixer, functions_to_import) {
         return fix;
     }
 
-    // 2. Merge with existing `const { ... } = require('@jest/globals')`
+    // 2. Merge with existing `const { ... } = require('<global package>')`
     if let Some(fix) = try_merge_cjs_require(ctx, fixer, functions_to_import) {
         return fix;
     }
@@ -223,7 +226,7 @@ fn create_import_text(ctx: &LintContext, is_module: bool, functions: &FxHashSet<
     }
 }
 
-/// Merge with existing `import ... from '@jest/globals'` and replace it entirely.
+/// Merge with existing `import ... from '<global package>'` and replace it entirely.
 /// Uses `module_record` to find import entries and their statement span.
 fn try_merge_esm_import<'a>(
     ctx: &LintContext<'a>,
@@ -232,7 +235,7 @@ fn try_merge_esm_import<'a>(
 ) -> Option<RuleFix> {
     let module_record = ctx.module_record();
 
-    // Find the first `@jest/globals` import statement span
+    // Find the first global package import statement span
     let first_span = module_record
         .import_entries
         .iter()
@@ -265,7 +268,7 @@ fn try_merge_esm_import<'a>(
     Some(fixer.replace(first_span, create_import_text(ctx, true, functions_to_import)))
 }
 
-/// Merge with existing `const { ... } = require('@jest/globals')` and replace it entirely.
+/// Merge with existing `const { ... } = require('<global package>')` and replace it entirely.
 /// Uses semantic analysis to find `require` references instead of iterating the AST.
 fn try_merge_cjs_require<'a>(
     ctx: &LintContext<'a>,
@@ -1120,6 +1123,19 @@ describe("suite", () => {
               test("foo");
             })"#,
             None,
+            None,
+            settings.clone(),
+        ),
+        (
+            r#"describe("suite", () => {
+              test("foo");
+            })"#,
+            r#"import { describe, test } from 'bun:test';
+describe("suite", () => {
+              test("foo");
+            })"#,
+            None,
+            Some(PathBuf::from("test.mjs")),
             settings.clone(),
         ),
         (
@@ -1131,6 +1147,7 @@ describe("suite", () => {
             describe("suite", () => {
               test("foo");
             })"#,
+            None,
             None,
             settings.clone(),
         ),
@@ -1144,7 +1161,8 @@ describe("suite", () => {
               test("foo");
             })"#,
             None,
-            settings.clone(),
+            None,
+            settings,
         ),
     ];
 
@@ -1153,27 +1171,4 @@ describe("suite", () => {
         .with_jest_plugin(true)
         .with_snapshot_suffix("global_package")
         .test_and_snapshot();
-
-    let fix_esm = vec![(
-        r#"describe("suite", () => {
-              test("foo");
-            })"#,
-        r#"import { describe, test } from 'bun:test';
-describe("suite", () => {
-              test("foo");
-            })"#,
-        None,
-        Some(PathBuf::from("test.mjs")),
-        settings,
-    )];
-
-    Tester::new(
-        PreferImportingJestGlobals::NAME,
-        PreferImportingJestGlobals::PLUGIN,
-        Vec::<&str>::new(),
-        Vec::<&str>::new(),
-    )
-    .expect_fix(fix_esm)
-    .with_jest_plugin(true)
-    .test();
 }

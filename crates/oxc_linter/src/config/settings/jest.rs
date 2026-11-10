@@ -22,8 +22,9 @@ pub struct JestPluginSettings {
 
     /// The package that Jest globals are imported from. Defaults to `@jest/globals`.
     ///
-    /// When set, only imports from this package are recognized as Jest globals,
-    /// and `jest/prefer-importing-jest-globals` imports from it.
+    /// When set, imports from this package are recognized as Jest globals
+    /// instead of imports from `@jest/globals`, and
+    /// `jest/prefer-importing-jest-globals` imports from it.
     ///
     /// Example:
     ///
@@ -38,7 +39,6 @@ pub struct JestPluginSettings {
     /// ```
     #[serde(default)]
     #[serde(rename = "globalPackage")]
-    #[schemars(with = "Option<String>")]
     global_package: Option<CompactStr>,
 }
 
