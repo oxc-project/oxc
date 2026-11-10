@@ -104,31 +104,50 @@ impl<'a> ModuleRecordBuilder<'a> {
         }
     }
 
-    /// Classify exports after resolving imports, following [ParseModule](https://tc39.es/ecma262/#sec-parsemodule).
+    /// [ParseModule](https://tc39.es/ecma262/#sec-parsemodule)
+    /// Step 10.
     fn resolve_export_entries(&mut self) {
         let mut export_entries =
             std::mem::replace(&mut self.export_entries, ArenaVec::new_in(&self.allocator));
         let module_record = &mut self.module_record;
 
         // Retain local exports in their original buffer, avoiding a second arena allocation.
+        // 10. For each ExportEntry Record ee of exportEntries, do
         export_entries.retain_mut(|entry| {
+            // a. If ee.[[ModuleRequest]] is null, then
             if entry.module_request.is_none() {
-                let ExportLocalName::Name(local_name) = &entry.local_name else { return true };
+                let ExportLocalName::Name(local_name) = &entry.local_name else {
+                    // i. If ee.[[LocalName]] is not an element of importedBoundNames, then
+                    // 1. Append ee to localExportEntries.
+                    return true;
+                };
                 let Some(import) = module_record
                     .import_entries
                     .iter()
                     .find(|import| import.local_name.name == local_name.name)
                 else {
+                    // i. If ee.[[LocalName]] is not an element of importedBoundNames, then
+                    // 1. Append ee to localExportEntries.
                     return true;
                 };
+                // ii. Else,
+                // 1. Let ie be the element of importEntries whose [[LocalName]] is the same as ee.[[LocalName]].
                 let import_name = match &import.import_name {
                     ImportImportName::Name(name) => ExportImportName::Name(name.clone()),
                     ImportImportName::Default(span) => {
                         ExportImportName::Name(NameSpan::new("default".into(), *span))
                     }
-                    // Re-exported namespace bindings remain local exports.
-                    ImportImportName::NamespaceObject => return true,
+                    // 2. If ie.[[ImportName]] is namespace-object, then
+                    ImportImportName::NamespaceObject => {
+                        // a. NOTE: This is a re-export of an imported module namespace object.
+                        // b. Append ee to localExportEntries.
+                        return true;
+                    }
                 };
+                // 3. Else,
+                // a. NOTE: This is a re-export of a single name.
+                // Append the ExportEntry Record { [[ModuleRequest]]: ie.[[ModuleRequest]], [[ImportName]]: ie.[[ImportName]], [[LocalName]]: null, [[ExportName]]: ee.[[ExportName]] }
+                // to indirectExportEntries.
                 entry.statement_span = import.statement_span;
                 entry.module_request = Some(import.module_request.clone());
                 entry.import_name = import_name;
@@ -136,10 +155,14 @@ impl<'a> ModuleRecordBuilder<'a> {
                 entry.is_type = import.is_type;
             }
 
+            // b. Else if ee.[[ImportName]] is all-but-default, then
             if entry.import_name.is_all_but_default() {
+                // i. Assert: ee.[[ExportName]] is null.
                 debug_assert!(entry.export_name.is_null());
                 module_record.star_export_entries.push(std::mem::take(entry));
             } else {
+                // c. Else,
+                // i. Append ee to indirectExportEntries.
                 module_record.indirect_export_entries.push(std::mem::take(entry));
             }
             false
