@@ -25,6 +25,32 @@ A whitespace-only `<pre>` or `<textarea>` keeps its content.
 Prettier drops a lone whitespace-only text in `pre` (as in every element) and collapses one in `textarea` to a single space,
 which changes what `pre` renders and what `textarea` submits.
 
+## comment-only-element-edges
+
+- Why: semantics (an element of comments only and no whitespace matches `:empty`)
+- Pin: `tests/fixtures/html/comment-only-element-edges.html`
+
+```html
+<!-- input -->
+<div id="app"><!-- the client renders the app here, replacing this placeholder comment --></div>
+
+<!-- ours -->
+<div id="app"
+  ><!-- the client renders the app here, replacing this placeholder comment --></div
+>
+
+<!-- prettier -->
+<div id="app">
+  <!-- the client renders the app here, replacing this placeholder comment -->
+</div>
+```
+
+An element holding only comments and no whitespace gets no line breaks at its edges, as under `htmlWhitespaceSensitivity: strict` (`ignore` aside).
+`:empty` skips comments but not whitespace: Prettier's line breaks stop it matching (`#app:empty::before` showing a loading state).
+An element with whitespace in it formats as in Prettier, even where dropping that whitespace makes it match `:empty` (`<div> <!-- c --> </div>`, `<div> </div>`):
+the rule keeps an empty element as written, not whitespace. A `template` always matches `:empty` (its content is no child of it), so the rule skips it.
+It applies in every dialect, one template one layout, though Vue's and (by default) Angular's and Svelte's compilers drop that whitespace themselves.
+
 ## doctype-case
 
 - Why: uniform-rule (same construct, same output: the doctype of a `.html` file, which Prettier lowercases)
