@@ -353,13 +353,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         self.advance(Kind::LCurly);
         self.context_remove(self.ctx, |p| {
-            let _ = p.parse_delimited_list_into(
-                specifiers,
-                Kind::RCurly,
-                Kind::Comma,
-                opening_span,
-                |parser| parser.parse_import_specifier(import_kind),
-            );
+            if specifiers.is_empty() {
+                (*specifiers, _) =
+                    p.parse_delimited_list(Kind::RCurly, Kind::Comma, opening_span, |parser| {
+                        parser.parse_import_specifier(import_kind)
+                    });
+            } else {
+                let _ = p.parse_delimited_list_into(
+                    specifiers,
+                    Kind::RCurly,
+                    Kind::Comma,
+                    opening_span,
+                    |parser| parser.parse_import_specifier(import_kind),
+                );
+            }
         });
         self.expect(Kind::RCurly);
     }
