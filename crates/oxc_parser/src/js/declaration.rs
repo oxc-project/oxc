@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, GetAllocator};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
@@ -71,20 +71,34 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decl_parent: VariableDeclarationParent,
         declare: bool,
     ) -> ArenaBox<'a, VariableDeclaration<'a>> {
-        let allocator = self.allocator();
-        let mut first = true;
-        let declarations = collect_list(&allocator, || {
-            if !first && !self.eat(Kind::Comma) {
-                return None;
-            }
-            first = false;
-            Some(self.parse_variable_declarator(decl_parent, kind))
-        });
+        let declarations = self.parse_variable_declarators(decl_parent, kind);
 
         if matches!(decl_parent, VariableDeclarationParent::Statement) {
             self.asi();
         }
         VariableDeclaration::boxed(self.end_span(start), kind, declarations, declare, self)
+    }
+
+    fn parse_variable_declarators(
+        &mut self,
+        decl_parent: VariableDeclarationParent,
+        kind: VariableDeclarationKind,
+    ) -> ArenaVec<'a, VariableDeclarator<'a>> {
+        let allocator = self.allocator();
+        let mut first = true;
+        collect_list(&allocator, || {
+            if !first && !self.eat(Kind::Comma) {
+                return None;
+            }
+            first = false;
+            let declaration = self.parse_variable_declarator(decl_parent, kind);
+            if kind.is_using() && !declaration.id.is_binding_identifier() {
+                self.error(diagnostics::invalid_identifier_in_using_declaration(
+                    declaration.id.span(),
+                ));
+            }
+            Some(declaration)
+        })
     }
 
     fn parse_variable_declarator(
@@ -204,28 +218,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let allocator = self.allocator();
-        let mut first = true;
-        let declarations = collect_list(&allocator, || {
-            if !first && !self.eat(Kind::Comma) {
-                return None;
-            }
-            first = false;
-            let decl_parent = if matches!(statement_ctx, StatementContext::For) {
-                VariableDeclarationParent::For
-            } else {
-                VariableDeclarationParent::Statement
-            };
-            let declaration = self.parse_variable_declarator(decl_parent, kind);
-
-            if !matches!(declaration.id, BindingPattern::BindingIdentifier(_)) {
-                self.error(diagnostics::invalid_identifier_in_using_declaration(
-                    declaration.id.span(),
-                ));
-            }
-
-            Some(declaration)
-        });
+        let decl_parent = if matches!(statement_ctx, StatementContext::For) {
+            VariableDeclarationParent::For
+        } else {
+            VariableDeclarationParent::Statement
+        };
+        let declarations = self.parse_variable_declarators(decl_parent, kind);
 
         VariableDeclaration::boxed(self.end_span(start), kind, declarations, false, self)
     }
