@@ -96,6 +96,14 @@ pub struct DelimitedComments {
     to: u32,
 }
 
+/// Comment state before parsing nodes which are discarded without rewinding.
+#[derive(Clone, Copy)]
+pub struct CommentCheckpoint {
+    prev_token_end: u32,
+    token_start: u32,
+    assigned_comments: u32,
+}
+
 /// Comment state of a list without separators: statements, class elements or switch cases.
 pub struct ListComments {
     /// Start of the list. Comments after it and before the first element lead that element.
@@ -602,6 +610,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 comment.node_id.set(NodeId::ROOT);
                 self.assigned_comments -= 1;
             }
+        }
+    }
+
+    pub(crate) fn comment_checkpoint(&self) -> CommentCheckpoint {
+        CommentCheckpoint {
+            prev_token_end: self.prev_token_end,
+            token_start: self.cur_token().start(),
+            assigned_comments: self.assigned_comments,
+        }
+    }
+
+    /// Unassign comments owned by nodes parsed after `checkpoint`, which are discarded, as when
+    /// rewinding to it.
+    ///
+    /// ```text
+    /// interface I extends a, /* @__PURE__ */ f() {}
+    ///                       ^                ^^^
+    ///                       checkpoint       invalid heritage, discarded
+    /// /* @__PURE__ */ -> ROOT (pending) -> eligible for the enclosing walk
+    /// ```
+    pub(crate) fn discard_comments(&mut self, checkpoint: CommentCheckpoint) {
+        if self.assigned_comments != checkpoint.assigned_comments {
+            self.rewind_comments(checkpoint.prev_token_end, checkpoint.token_start);
         }
     }
 
