@@ -51,7 +51,7 @@ antd.js:
   sys peak growth: 5441278 # 5.44 MB
   arena allocs: 0
   arena reallocs: 0
-  arena size: 28997416 # 29.00 MB
+  arena size: 28921192 # 28.92 MB
 
 binder.ts:
   file size: 193077 # 193.08 kB

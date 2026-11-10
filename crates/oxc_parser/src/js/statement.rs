@@ -73,7 +73,33 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 None
             };
 
-            let stmt = self.parse_statement_list_item(stmt_ctx);
+            // Section 11.2.1 Directive Prologue
+            // Parse the complete expression statement before recognizing a directive:
+            // a string followed by an operator or member access is not a directive.
+            // See babel's core/categorized/not-directive fixture.
+            // Starting at a string token also excludes parenthesized strings when
+            // `preserve_parens = false`.
+            let stmt = if expecting_directives && self.at(Kind::Str) {
+                let start = self.cur_start();
+                let expression = self.parse_expr();
+                self.asi();
+                match ExpressionStatement::new(self.end_span(start), expression, self) {
+                    ExpressionStatement {
+                        span,
+                        expression: Expression::StringLiteral(string),
+                        ..
+                    } => {
+                        let string = string.unbox();
+                        let src = &self.source_text
+                            [string.span.start as usize + 1..string.span.end as usize - 1];
+                        directives.push(Directive::new(span, string, Str::from(src), self));
+                        continue;
+                    }
+                    statement => Statement::ExpressionStatement(self.alloc(statement)),
+                }
+            } else {
+                self.parse_statement_list_item(stmt_ctx)
+            };
 
             // Don't reparse a module declaration: `export` already committed to the
             // Module goal while parsing, so reparsing would record the export twice.
@@ -85,32 +111,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.state.potential_await_reparse.push((stmt_index, checkpoint));
             }
 
-            // Section 11.2.1 Directive Prologue
-            // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
-            // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
-            let stmt = if expecting_directives {
-                match stmt {
-                    // span start will mismatch if they are parenthesized when `preserve_parens = false`
-                    Statement::ExpressionStatement(expr)
-                        if matches!(&expr.expression, Expression::StringLiteral(string)
-                            if expr.span.start == string.span.start) =>
-                    {
-                        let ExpressionStatement { span, expression, .. } = expr.unbox();
-                        let Expression::StringLiteral(string) = expression else { unreachable!() };
-                        let string = string.unbox();
-                        let src = &self.source_text
-                            [string.span.start as usize + 1..string.span.end as usize - 1];
-                        directives.push(Directive::new(span, string, Str::from(src), self));
-                        continue;
-                    }
-                    stmt => {
-                        expecting_directives = false;
-                        stmt
-                    }
-                }
-            } else {
-                stmt
-            };
+            expecting_directives = false;
             // In an internal namespace body, module-referencing `import`/`export` statements are
             // not permitted. Validated here as each direct statement is parsed (no second pass).
             if in_ts_namespace_body {
