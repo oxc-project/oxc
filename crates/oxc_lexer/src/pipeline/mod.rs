@@ -30,15 +30,18 @@ mod lanes;
 mod misc;
 mod operators;
 mod scan;
+mod unicode_leads;
 
-pub(crate) use lanes::{Lanes, TokenLanes, decode_char_at};
+pub(crate) use lanes::TokenLanes;
 
 use carve::carve;
 use classify::classify;
 use coalesce::{KWB, coalesce};
 use compress::{STAGE_CAP, compress, init_pair_luts, write_sentinels};
 use disambiguate::{Brackets, Closers, Tokens};
+use lanes::Lanes;
 use misc::{misc_post, misc_pre, retain_code_whitespace};
+use unicode_leads::resolve_unicode_leads;
 
 pub struct Lexer {
     word: Vec<u64>,
@@ -53,7 +56,7 @@ pub struct Lexer {
     nb_cap: usize,
     stage_pos: Vec<u32>,
     stage_kind: Vec<u8>,
-    pub(crate) lanes: Lanes,
+    lanes: Lanes,
     cpu: DynCpu,
 }
 
@@ -130,7 +133,7 @@ impl Lexer {
         };
         if !self.lanes.unicode_leads.is_empty() && count > 0 {
             let (kinds, spans) = (&tokens.kinds[..count], &tokens.spans[..count]);
-            crate::resolve_unicode_leads(&mut self.lanes, &src[..n], kinds, spans);
+            resolve_unicode_leads(&mut self.lanes, &src[..n], kinds, spans);
         }
         if !self.lanes.diag_suppress.is_empty() {
             let (diags, sup) = (&mut self.lanes.out.diags, &self.lanes.diag_suppress);
