@@ -1,12 +1,9 @@
-use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use super::VariableDeclarationParent;
-use crate::{
-    ParserConfig as Config, ParserImpl, StatementContext, buffered_vec::collect_list, diagnostics,
-    lexer::Kind,
-};
+use crate::{ParserConfig as Config, ParserImpl, StatementContext, diagnostics, lexer::Kind};
 
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
@@ -84,16 +81,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decl_parent: VariableDeclarationParent,
         kind: VariableDeclarationKind,
     ) -> ArenaVec<'a, VariableDeclarator<'a>> {
-        let allocator = self.allocator();
         let mut first = true;
-        collect_list(&allocator, || {
-            if !first && !self.eat(Kind::Comma) {
+        self.collect_list(|p| {
+            if !first && !p.eat(Kind::Comma) {
                 return None;
             }
             first = false;
-            let declaration = self.parse_variable_declarator(decl_parent, kind);
+            let declaration = p.parse_variable_declarator(decl_parent, kind);
             if kind.is_using() && !declaration.id.is_binding_identifier() {
-                self.error(diagnostics::invalid_identifier_in_using_declaration(
+                p.error(diagnostics::invalid_identifier_in_using_declaration(
                     declaration.id.span(),
                 ));
             }

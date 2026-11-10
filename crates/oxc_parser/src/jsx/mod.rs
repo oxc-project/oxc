@@ -1,15 +1,12 @@
 //! [JSX](https://facebook.github.io/jsx)
 
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
 
 use crate::{
-    ParserConfig as Config, ParserImpl,
-    buffered_vec::{BufferedVec, collect_list},
-    diagnostics,
-    lexer::Kind,
+    ParserConfig as Config, ParserImpl, buffered_vec::BufferedVec, diagnostics, lexer::Kind,
 };
 
 /// Represents either a closing JSX element or fragment.
@@ -420,19 +417,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///   `JSXSpreadAttribute` `JSXAttributes_opt`
     ///   `JSXAttribute` `JSXAttributes_opt`
     fn parse_jsx_attributes(&mut self) -> ArenaVec<'a, JSXAttributeItem<'a>> {
-        let allocator = self.allocator();
-        collect_list(&allocator, || {
-            let kind = self.cur_kind();
-            if matches!(kind, Kind::LAngle | Kind::RAngle | Kind::Slash)
-                || self.fatal_error.is_some()
+        self.collect_list(|p| {
+            let kind = p.cur_kind();
+            if matches!(kind, Kind::LAngle | Kind::RAngle | Kind::Slash) || p.fatal_error.is_some()
             {
                 return None;
             }
             let attribute = match kind {
-                Kind::LCurly => {
-                    JSXAttributeItem::SpreadAttribute(self.parse_jsx_spread_attribute())
-                }
-                _ => JSXAttributeItem::Attribute(self.parse_jsx_attribute()),
+                Kind::LCurly => JSXAttributeItem::SpreadAttribute(p.parse_jsx_spread_attribute()),
+                _ => JSXAttributeItem::Attribute(p.parse_jsx_attribute()),
             };
             Some(attribute)
         })
