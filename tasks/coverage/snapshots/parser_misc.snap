@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 135/135 (100.00%)
-Positive Passed: 135/135 (100.00%)
-Negative Passed: 273/273 (100.00%)
+AST Parsed     : 138/138 (100.00%)
+Positive Passed: 138/138 (100.00%)
+Negative Passed: 275/275 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -5421,3 +5421,161 @@ Negative Passed: 273/273 (100.00%)
  1 │ class A extends B<C> {}
    ·                  ───
    ╰────
+
+  × HTML comments are not allowed in modules
+   ╭─[misc/fail/unambiguous-html-comment-lookahead.js:1:5]
+ 1 │ let <!-- comment
+   ·     ────
+ 2 │ x = 0;
+   ╰────
+
+  × HTML comments are not allowed in modules
+   ╭─[misc/fail/unambiguous-html-comment-lookahead.js:4:7]
+ 3 │ 
+ 4 │ async <!-- comment
+   ·       ────
+ 5 │ x => x;
+   ╰────
+
+  × HTML comments are not allowed in modules
+   ╭─[misc/fail/unambiguous-html-comment-lookahead.js:7:2]
+ 6 │ 
+ 7 │ (<!-- comment
+   ·  ────
+ 8 │ x);
+   ╰────
+
+  × HTML comments are not allowed in modules
+    ╭─[misc/fail/unambiguous-html-comment-lookahead.js:11:1]
+ 10 │ (
+ 11 │ --> comment
+    · ───
+ 12 │ x);
+    ╰────
+
+  × HTML comments are not allowed in modules
+    ╭─[misc/fail/unambiguous-html-comment-lookahead.js:14:2]
+ 13 │ 
+ 14 │ (<!-- first
+    ·  ────
+ 15 │ x <!-- second
+    ╰────
+
+  × HTML comments are not allowed in modules
+    ╭─[misc/fail/unambiguous-html-comment-lookahead.js:15:3]
+ 14 │ (<!-- first
+ 15 │ x <!-- second
+    ·   ────
+ 16 │ );
+    ╰────
+
+  × HTML comments are not allowed in modules
+    ╭─[misc/fail/unambiguous-html-comment-lookahead.js:18:1]
+ 17 │ 
+ 18 │ <!-- first
+    · ────
+ 19 │ (<!-- second
+    ╰────
+
+  × HTML comments are not allowed in modules
+    ╭─[misc/fail/unambiguous-html-comment-lookahead.js:19:2]
+ 18 │ <!-- first
+ 19 │ (<!-- second
+    ·  ────
+ 20 │ x);
+    ╰────
+
+  × HTML comments are not allowed in modules
+    ╭─[misc/fail/unambiguous-html-comment-lookahead.js:22:1]
+ 21 │ 
+ 22 │ <!-- first
+    · ────
+ 23 │ async <!-- second
+    ╰────
+
+  × HTML comments are not allowed in modules
+    ╭─[misc/fail/unambiguous-html-comment-lookahead.js:23:7]
+ 22 │ <!-- first
+ 23 │ async <!-- second
+    ·       ────
+ 24 │ x => x;
+    ╰────
+
+  × HTML comments are not allowed in modules
+   ╭─[misc/fail/unambiguous-html-comment-lookahead.ts:1:5]
+ 1 │ let <!-- comment
+   ·     ────
+ 2 │ x = 0;
+   ╰────
+
+  × HTML comments are not allowed in modules
+   ╭─[misc/fail/unambiguous-html-comment-lookahead.ts:4:7]
+ 3 │ 
+ 4 │ async <!-- comment
+   ·       ────
+ 5 │ x => x;
+   ╰────
+
+  × HTML comments are not allowed in modules
+   ╭─[misc/fail/unambiguous-html-comment-lookahead.ts:7:2]
+ 6 │ 
+ 7 │ (<!-- comment
+   ·  ────
+ 8 │ x);
+   ╰────
+
+  × HTML comments are not allowed in modules
+    ╭─[misc/fail/unambiguous-html-comment-lookahead.ts:11:1]
+ 10 │ (
+ 11 │ --> comment
+    · ───
+ 12 │ x);
+    ╰────
+
+  × HTML comments are not allowed in modules
+    ╭─[misc/fail/unambiguous-html-comment-lookahead.ts:14:2]
+ 13 │ 
+ 14 │ (<!-- first
+    ·  ────
+ 15 │ x <!-- second
+    ╰────
+
+  × HTML comments are not allowed in modules
+    ╭─[misc/fail/unambiguous-html-comment-lookahead.ts:15:3]
+ 14 │ (<!-- first
+ 15 │ x <!-- second
+    ·   ────
+ 16 │ );
+    ╰────
+
+  × HTML comments are not allowed in modules
+    ╭─[misc/fail/unambiguous-html-comment-lookahead.ts:18:1]
+ 17 │ 
+ 18 │ <!-- first
+    · ────
+ 19 │ (<!-- second
+    ╰────
+
+  × HTML comments are not allowed in modules
+    ╭─[misc/fail/unambiguous-html-comment-lookahead.ts:19:2]
+ 18 │ <!-- first
+ 19 │ (<!-- second
+    ·  ────
+ 20 │ x);
+    ╰────
+
+  × HTML comments are not allowed in modules
+    ╭─[misc/fail/unambiguous-html-comment-lookahead.ts:22:1]
+ 21 │ 
+ 22 │ <!-- first
+    · ────
+ 23 │ async <!-- second
+    ╰────
+
+  × HTML comments are not allowed in modules
+    ╭─[misc/fail/unambiguous-html-comment-lookahead.ts:23:7]
+ 22 │ <!-- first
+ 23 │ async <!-- second
+    ·       ────
+ 24 │ x => x;
+    ╰────

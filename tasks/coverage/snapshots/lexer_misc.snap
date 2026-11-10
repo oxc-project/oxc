@@ -1,3 +1,7 @@
 lexer_misc Summary:
-AST Parsed     : 406/406 (100.00%)
-Positive Passed: 406/406 (100.00%)
+AST Parsed     : 411/411 (100.00%)
+Positive Passed: 409/411 (99.51%)
+Tokens: tasks/coverage/misc/pass/unambiguous-html-comment-speculation.js
+
+Tokens: tasks/coverage/misc/pass/unambiguous-html-comment-speculation.ts
+

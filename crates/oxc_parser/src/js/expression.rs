@@ -1000,8 +1000,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         // `re_lex_as_typescript_l_angle` may have overwritten the original `<<`
                         // in the collected token stream with the single `<` it re-lexed.
                         // Rewind restored the parser's current token, so write it back over that `<`.
-                        // This is a no-op when tokens are statically disabled (`NoTokensLexerConfig`).
-                        self.lexer.rewrite_last_collected_token(self.token);
+                        self.lexer.replace_current_token(self.token);
                         return lhs;
                     }
                 }
@@ -1201,8 +1200,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         // `re_lex_as_typescript_l_angle` may have overwritten the original `<<`
                         // in the collected token stream with the single `<` it re-lexed.
                         // Rewind restored the parser's current token, so write it back over that `<`.
-                        // This is a no-op when tokens are statically disabled (`NoTokensLexerConfig`).
-                        self.lexer.rewrite_last_collected_token(self.token);
+                        self.lexer.replace_current_token(self.token);
                     }
                 }
                 if self.cur_kind().is_template_start_of_tagged_template() {

@@ -47,7 +47,6 @@ impl<C: Config> Lexer<'_, C> {
                         Some(Kind::LAngle)
                     }
                 } else {
-                    self.defer_html_comment_error(4);
                     None
                 }
             }),
@@ -65,7 +64,6 @@ impl<C: Config> Lexer<'_, C> {
                     && !self.source_type.is_strict()
                     && self.next_ascii_byte_eq(b'>')
                 {
-                    self.defer_html_comment_error(3);
                     None
                 } else {
                     Some(Kind::Minus2)
@@ -76,14 +74,6 @@ impl<C: Config> Lexer<'_, C> {
                 Some(Kind::MinusEq)
             }
             _ => Some(Kind::Minus),
-        }
-    }
-
-    /// Defer HTML comment error for unambiguous mode (emitted if file resolves to module)
-    fn defer_html_comment_error(&mut self, len: u32) {
-        if self.source_type.is_unambiguous() {
-            let span = Span::sized(self.token.start(), len);
-            self.deferred_module_errors.push(diagnostics::html_comment_in_module(span));
         }
     }
 

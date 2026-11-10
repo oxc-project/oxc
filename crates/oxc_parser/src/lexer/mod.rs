@@ -95,13 +95,6 @@ pub struct Lexer<'a, C: Config> {
 
     pub(crate) errors: Vec<ParserDiagnostic<'a>>,
 
-    /// Errors that are only emitted if the file is determined to be a Module.
-    /// For `ModuleKind::Unambiguous`, HTML-like comments are allowed during lexing,
-    /// but if ESM syntax is found later, these comments become invalid.
-    /// If resolved to Module → emit these errors.
-    /// If resolved to Script → discard these errors.
-    pub(crate) deferred_module_errors: Vec<ParserDiagnostic<'a>>,
-
     pub(crate) trivia_builder: TriviaBuilder<'a>,
 
     /// Decoded identifiers and string literals, indexed by [Token::start] when
@@ -161,7 +154,6 @@ impl<'a, C: Config> Lexer<'a, C> {
             source_type,
             token,
             errors: vec![],
-            deferred_module_errors: vec![],
             trivia_builder: TriviaBuilder::new_in(allocator),
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
@@ -313,22 +305,13 @@ impl<'a, C: Config> Lexer<'a, C> {
     #[inline(always)]
     fn finish_next_inner(&mut self, kind: Kind, mode: FinishTokenMode) -> Token {
         let token = self.token.finish(kind, self.offset());
-        if self.config.tokens() {
-            match mode {
-                FinishTokenMode::Push => {
-                    // We allocated sufficient capacity in the `Vec` for all tokens at the start.
-                    // `push_fast` is optimized for the "doesn't need to grow" case.
-                    self.tokens.push_fast(token);
-                }
-                FinishTokenMode::Replace => {
-                    debug_assert!(
-                        self.tokens.last().is_some_and(|last| last.start() == token.start())
-                    );
-                    let last = self.tokens.last_mut().unwrap();
-                    *last = token;
-                }
-                FinishTokenMode::Discard => {}
+        match mode {
+            FinishTokenMode::Push if self.config.tokens() => {
+                // Capacity was reserved for every token when the lexer was created.
+                self.tokens.push_fast(token);
             }
+            FinishTokenMode::Replace => self.replace_current_token(token),
+            FinishTokenMode::Push | FinishTokenMode::Discard => {}
         }
         self.trivia_builder.handle_token(token);
         self.token = Token::default();
@@ -343,14 +326,16 @@ impl<'a, C: Config> Lexer<'a, C> {
         token
     }
 
-    /// Overwrite the last token in the collected token stream.
+    /// Replace the current token and discard trivia from its previous lexical interpretation.
+    /// A source character cannot belong to both a token and trivia (ECMA-262 §12).
     ///
     /// Used by `re_lex_as_typescript_l_angle` to replace a compound token (`<<`, `<=` or `<<=`)
     /// with the single `<` it re-lexed, and to restore the compound token when `try_parse`
     /// fails and rewinds.
     #[inline]
-    pub(crate) fn rewrite_last_collected_token(&mut self, token: Token) {
-        // Make this function a no-op when tokens are statically disabled (`NoTokensLexerConfig`)
+    pub(crate) fn replace_current_token(&mut self, token: Token) {
+        self.trivia_builder.remove_trivia_in_token(token);
+        // Skip the token collection update when tokens are statically disabled.
         if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() {
             return;
         }
@@ -365,6 +350,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         // So checking `self.config.tokens()` too here would be redundant,
         // and would be an extra branch with runtime config (`RuntimeLexerConfig`).
         if let Some(last) = self.tokens.last_mut() {
+            debug_assert_eq!(last.start(), token.start());
             *last = token;
         } else {
             // When tokens are enabled, this should be unreachable

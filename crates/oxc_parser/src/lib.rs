@@ -90,7 +90,7 @@ pub mod lexer;
 
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
-    ast::{Expression, Program, Statement},
+    ast::{CommentKind, Expression, Program, Statement},
     builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_diagnostics::Diagnostics;
@@ -761,17 +761,16 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         if source_type.is_unambiguous() {
             if module_record.has_module_syntax {
                 // Resolved to Module - discard deferred script errors (TLA is valid in ESM)
-                // but emit deferred module errors (HTML comments are invalid in ESM)
+                // and reject HTML comments, which are invalid in ESM.
                 program.source_type = source_type.with_module(true);
-                errors.extend(
-                    self.lexer
-                        .deferred_module_errors
-                        .drain(..)
-                        .map(ParserDiagnostic::into_diagnostic),
-                );
+                for comment in &self.lexer.trivia_builder.comments {
+                    if matches!(comment.kind, CommentKind::HtmlOpen | CommentKind::HtmlClose) {
+                        let span = Span::sized(comment.span.start, comment.kind as u32);
+                        errors.push(diagnostics::html_comment_in_module(span).into_diagnostic());
+                    }
+                }
             } else {
                 // Resolved to Script - emit deferred script errors
-                // discard deferred module errors (HTML comments are valid in scripts)
                 program.source_type = source_type.with_script(true);
                 errors.extend(
                     self.deferred_script_errors.into_iter().map(ParserDiagnostic::into_diagnostic),

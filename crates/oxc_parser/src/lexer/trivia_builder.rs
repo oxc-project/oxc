@@ -61,6 +61,23 @@ impl<'a> TriviaBuilder<'a> {
         }
     }
 
+    /// Remove trivia found under a different lexical goal inside a replacement token.
+    pub fn remove_trivia_in_token(&mut self, token: Token) {
+        if self.comments.last().is_some_and(|comment| comment.span.start >= token.start()) {
+            let end = self.comments.partition_point(|comment| comment.span.start < token.end());
+            let start =
+                self.comments[..end].partition_point(|comment| comment.span.start < token.start());
+            self.comments.drain(start..end);
+            self.processed -= self.processed.min(end) - self.processed.min(start);
+        }
+        if self.irregular_whitespaces.last().is_some_and(|span| span.start >= token.start()) {
+            let end = self.irregular_whitespaces.partition_point(|span| span.start < token.end());
+            let start = self.irregular_whitespaces[..end]
+                .partition_point(|span| span.start < token.start());
+            self.irregular_whitespaces.drain(start..end);
+        }
+    }
+
     pub fn previous_token_pure_comments(&self) -> Option<(u32, NonZeroU32)> {
         self.annotation_comments.ends[0].map(|end| (self.annotation_comments.starts[0], end))
     }
