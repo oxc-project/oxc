@@ -137,15 +137,9 @@ impl<'a> ModuleRecordBuilder<'a> {
                     ImportImportName::Default(span) => {
                         ExportImportName::Name(NameSpan::new("default".into(), *span))
                     }
-                    // 2. If ie.[[ImportName]] is namespace-object, then
-                    ImportImportName::NamespaceObject => {
-                        // a. NOTE: This is a re-export of an imported module namespace object.
-                        // b. Append ee to localExportEntries.
-                        return true;
-                    }
+                    // ParseModule 10.a.ii.3: normalize to `export * as name from 'mod'`.
+                    ImportImportName::NamespaceObject => ExportImportName::All,
                 };
-                // 3. Else,
-                // a. NOTE: This is a re-export of a single name.
                 // Append the ExportEntry Record { [[ModuleRequest]]: ie.[[ModuleRequest]], [[ImportName]]: ie.[[ImportName]], [[LocalName]]: null, [[ExportName]]: ee.[[ExportName]] }
                 // to indirectExportEntries.
                 entry.statement_span = import.statement_span;
@@ -736,6 +730,37 @@ mod module_record_tests {
     }
 
     #[test]
+    fn reexported_namespace_is_indirect() {
+        let allocator = Allocator::default();
+        for (source, exported, is_type) in [
+            ("import * as ns from 'mod'; export { ns };", "ns", false),
+            ("export { ns as renamed }; import * as ns from 'mod';", "renamed", false),
+            ("import * as ns from 'mod'; export { ns as default };", "default", false),
+            ("import * as ns from 'mod'; export type { ns };", "ns", true),
+            ("import * as ns from 'mod'; export { type ns };", "ns", true),
+            ("import type * as ns from 'mod'; export { ns };", "ns", true),
+        ] {
+            let record = build(&allocator, source);
+            assert!(record.local_export_entries.is_empty(), "{source}");
+            assert_eq!(record.indirect_export_entries.len(), 1, "{source}");
+            let import = &record.import_entries[0];
+            let entry = &record.indirect_export_entries[0];
+            assert_eq!(entry.statement_span, import.statement_span);
+            assert_eq!(entry.module_request.as_ref(), Some(&import.module_request));
+            assert_eq!(entry.import_name, ExportImportName::All);
+            assert_eq!(entry.local_name, ExportLocalName::Null);
+            let ExportExportName::Name(name) = &entry.export_name else { panic!() };
+            assert_eq!(name.name, exported);
+            assert_eq!(entry.is_type, is_type);
+        }
+
+        // A default export expression creates a local binding, unlike `export { ns as default }`.
+        let record = build(&allocator, "import * as ns from 'mod'; export default ns;");
+        assert_eq!(record.local_export_entries.len(), 1);
+        assert!(record.indirect_export_entries.is_empty());
+    }
+
+    #[test]
     fn indirect_export_entries() {
         let allocator = Allocator::default();
         let module_record =
@@ -791,7 +816,7 @@ mod module_record_tests {
                 .iter()
                 .map(|entry| entry.local_name.name().unwrap())
                 .collect::<Vec<_>>(),
-            ["first", "second", "ns", "third"]
+            ["first", "second", "third"]
         );
         assert_eq!(
             module_record
@@ -802,7 +827,7 @@ mod module_record_tests {
                     name.name
                 })
                 .collect::<Vec<_>>(),
-            ["indirect1", "indirect2"]
+            ["indirect1", "indirect2", "ns"]
         );
         assert_eq!(
             module_record
