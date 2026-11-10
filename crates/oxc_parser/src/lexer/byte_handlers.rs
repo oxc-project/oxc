@@ -69,10 +69,12 @@ macro_rules! byte_handlers {
     };
 }
 
-// Low byte: the one-byte token kind. Bit 8: a following byte may extend it.
+// Low byte: the token kind. Bit 8: a following byte may extend an operator.
+// Bit 9: an ASCII identifier start that cannot begin a keyword.
 // `>` is always scanned separately; the parser explicitly rescans shifts and comparisons.
 const OPERATOR_MASK: u16 = 1 << 8;
-const SINGLE_BYTE_KINDS: [u16; 256] = {
+const IDENTIFIER_MASK: u16 = 1 << 9;
+const BYTE_KINDS: [u16; 256] = {
     let mut kinds = [Kind::Undetermined as u16; 256];
     kinds[b'(' as usize] = Kind::LParen as u16;
     kinds[b')' as usize] = Kind::RParen as u16;
@@ -99,6 +101,14 @@ const SINGLE_BYTE_KINDS: [u16; 256] = {
     kinds[b'?' as usize] = Kind::Question as u16 | OPERATOR_MASK;
     kinds[b'^' as usize] = Kind::Caret as u16 | OPERATOR_MASK;
     kinds[b'|' as usize] = Kind::Pipe as u16 | OPERATOR_MASK;
+    // These ASCII starts cannot begin a keyword, even when the tail contains escapes.
+    let mut byte = 0_u8;
+    while byte < 128 {
+        if matches!(byte, b'A'..=b'Z' | b'$' | b'_' | b'h' | b'j' | b'q' | b'x' | b'z') {
+            kinds[byte as usize] = Kind::Ident as u16 | IDENTIFIER_MASK;
+        }
+        byte += 1;
+    }
     kinds
 };
 
@@ -155,6 +165,15 @@ impl<C: Config> Lexer<'_, C> {
         *current = self.finish_next(state, kind);
     }
 
+    /// Scan known non-keyword starts without the byte-handler function pointer.
+    /// Keeping the scan out of `advance_at` lets ordinary tokens avoid its stack frame.
+    #[inline(never)]
+    fn complete_non_keyword_identifier(&mut self, start: u32, current: &mut Token) {
+        let mut state = ScanState::new(start);
+        let kind = IDT(self, &mut state);
+        *current = self.finish_next_inner::<false>(state, kind, super::FinishTokenMode::Push);
+    }
+
     /// Dispatch once, tail-calling handlers which construct the complete token.
     /// Trivia handlers continue from their current cursor without rescanning a prefix.
     ///
@@ -163,7 +182,10 @@ impl<C: Config> Lexer<'_, C> {
     #[inline]
     pub(super) unsafe fn advance_at(&mut self, start: u32, current: &mut Token, byte: u8) {
         let state = ScanState::new(start);
-        let entry = SINGLE_BYTE_KINDS[byte as usize];
+        let entry = BYTE_KINDS[byte as usize];
+        if entry & IDENTIFIER_MASK != 0 {
+            return self.complete_non_keyword_identifier(start, current);
+        }
         if entry != Kind::Undetermined as u16 {
             let extends = entry & OPERATOR_MASK != 0
                 && self.peek_2_bytes().is_some_and(|[_, next]| {
