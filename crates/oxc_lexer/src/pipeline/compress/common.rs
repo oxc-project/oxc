@@ -1,10 +1,7 @@
+use oxc_simd::{Cpu, cpu_multiversion, cpu_version};
 use oxc_span::Span;
 
-use crate::{
-    cpu::{Cpu, cpu_multiversion, cpu_version},
-    error::DiagCode,
-    token::tk,
-};
+use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::lanes::Lanes;
 

@@ -1,7 +1,6 @@
-use crate::{
-    cpu::{Cpu, cpu_multiversion},
-    error::DiagCode,
-};
+use oxc_simd::{Cpu, cpu_multiversion};
+
+use crate::error::DiagCode;
 
 use crate::pipeline::{
     bitmap::bm_get,

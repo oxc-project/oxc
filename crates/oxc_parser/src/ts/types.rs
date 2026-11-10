@@ -5,7 +5,9 @@ use oxc_str::Ident;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl,
+    buffered_vec::BufferedVec,
+    diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
@@ -189,16 +191,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.parse_ts_type_parameters_impl(false)
     }
 
+    #[inline]
     fn parse_ts_type_parameters_impl(
         &mut self,
         allow_variance: bool,
     ) -> (Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>, bool) {
-        if !self.is_ts {
+        if !self.is_ts || !self.at(Kind::LAngle) {
             return (None, false);
         }
-        if !self.at(Kind::LAngle) {
-            return (None, false);
-        }
+        self.parse_ts_type_parameters_worker(allow_variance)
+    }
+
+    fn parse_ts_type_parameters_worker(
+        &mut self,
+        allow_variance: bool,
+    ) -> (Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>, bool) {
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.advance(Kind::LAngle);
@@ -303,11 +310,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     where
         F: Fn(&mut Self) -> TSType<'a>,
     {
-        let mut types = ArenaVec::from_value_in(ty, self);
-        while self.eat(kind) {
-            let ty = parse_constituent_type(self);
-            types.push(ty);
-        }
+        let mut first = Some(ty);
+        let types = self.collect_list(|p| {
+            first.take().or_else(|| p.eat(kind).then(|| parse_constituent_type(p)))
+        });
         let span = self.end_span(start);
         match kind {
             Kind::Pipe => TSType::new_ts_union_type(span, types, self),
@@ -719,8 +725,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_type_literal(&mut self, opening_span: Span) -> TSType<'a> {
-        let mut member_list = ArenaVec::new_in(self);
-        self.parse_normal_list_into(&mut member_list, Kind::RCurly, Self::parse_ts_type_signature);
+        let member_list = self.collect_list(|p| {
+            if p.at(Kind::RCurly) || p.has_fatal_error() {
+                None
+            } else {
+                Some(p.parse_ts_type_signature())
+            }
+        });
         self.expect_closing(Kind::RCurly, opening_span);
         TSType::new_ts_type_literal(self.end_span(opening_span.start), member_list, self)
     }
@@ -785,8 +796,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_template_type(&mut self, tagged: bool) -> TSType<'a> {
         let start = self.cur_start();
-        let mut types = ArenaVec::new_in(self);
-        let mut quasis = ArenaVec::new_in(self);
+        let mut types = BufferedVec::new_in(self);
+        let mut quasis = BufferedVec::new_in(self);
         match self.cur_kind() {
             Kind::NoSubstitutionTemplate => {
                 quasis.push(self.parse_template_element(tagged));
@@ -818,7 +829,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => unreachable!("parse_template_literal"),
         }
 
-        TSType::new_ts_template_literal_type(self.end_span(start), quasis, types, self)
+        TSType::new_ts_template_literal_type(
+            self.end_span(start),
+            quasis.into_vec(),
+            types.into_vec(),
+            self,
+        )
     }
 
     fn parse_asserts_type_predicate(&mut self, asserts_start: u32) -> TSType<'a> {
@@ -917,10 +933,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         None
     }
 
+    #[inline]
     pub(crate) fn parse_type_arguments_of_type_reference(
         &mut self,
     ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
-        if !self.cur_token().is_on_new_line() && self.re_lex_ts_l_angle() {
+        if self.cur_token().is_on_new_line()
+            || !matches!(
+                self.cur_kind(),
+                Kind::LAngle | Kind::ShiftLeft | Kind::LtEq | Kind::ShiftLeftEq
+            )
+        {
+            return None;
+        }
+        self.parse_type_arguments_of_type_reference_impl()
+    }
+
+    fn parse_type_arguments_of_type_reference_impl(
+        &mut self,
+    ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
+        if self.re_lex_ts_l_angle() {
             let start = self.cur_start();
             let opening_span = self.cur_token().span();
             debug_assert!(self.at(Kind::LAngle));

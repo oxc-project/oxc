@@ -21,10 +21,9 @@
 //! - In TypeScript, a `>` which may close type arguments, a `void` which is a type rather than
 //!   the operator, and the line breaks after which a declaration ends without a semicolon.
 
-use crate::{
-    cpu::{Cpu, cpu_multiversion},
-    token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
-};
+use oxc_simd::{Cpu, cpu_multiversion};
+
+use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
 
 use crate::pipeline::keywords::is_regex_keyword;
 

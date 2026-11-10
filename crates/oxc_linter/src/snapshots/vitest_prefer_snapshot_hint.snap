@@ -693,3 +693,30 @@ source: crates/oxc_linter/src/tester.rs
  10 │                    expect(2).toMatchSnapshot('hello world');
     ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
+
+  ⚠ vitest(prefer-snapshot-hint): Snapshot is missing a hint.
+   ╭─[prefer_snapshot_hint.tsx:4:37]
+ 3 │               test.skipIf(foo)('foo1', () => {
+ 4 │                 const inner = () => expect('').toMatchSnapshot();
+   ·                                     ────────────────────────────
+ 5 │                 expect('').toMatchSnapshot();
+   ╰────
+  help: Include a hint string to identify this snapshot in the snapshot file.
+
+  ⚠ vitest(prefer-snapshot-hint): Snapshot is missing a hint.
+   ╭─[prefer_snapshot_hint.tsx:5:17]
+ 4 │                 const inner = () => expect('').toMatchSnapshot();
+ 5 │                 expect('').toMatchSnapshot();
+   ·                 ────────────────────────────
+ 6 │               });
+   ╰────
+  help: Include a hint string to identify this snapshot in the snapshot file.
+
+  ⚠ vitest(prefer-snapshot-hint): Snapshot is missing a hint.
+   ╭─[prefer_snapshot_hint.tsx:4:17]
+ 3 │               test.runIf(foo)('foo1', () => {
+ 4 │                 expect('').toMatchSnapshot();
+   ·                 ────────────────────────────
+ 5 │               });
+   ╰────
+  help: Include a hint string to identify this snapshot in the snapshot file.

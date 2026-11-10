@@ -346,6 +346,45 @@ the `@warn` / `@error` prelude (a `SassExpr`) and a `@keyframes` name (`at_rule.
 Prettier keeps the at-rule params as a raw string verbatim.
 Every other string in a declaration value re-quotes per the same option in both formatters.
 
+## less-escape-hugs-string
+
+- Why: uniform-rule (same construct, same output: a declaration value)
+- Pin: `tests/fixtures/format/less/escaped-string.less`
+
+```less
+/* input */
+a { value: ~ 'x'; }
+@media (min-width: ~ '768px') {}
+[class^=~ 'col-'] {}
+@keyframes ~ 'name' {}
+
+/* ours */
+a {
+  value: ~"x";
+}
+@media (min-width: ~"768px") {
+}
+[class^=~"col-"] {
+}
+@keyframes ~"name" {
+}
+
+/* prettier */
+a {
+  value: ~"x";
+}
+@media (min-width: ~ "768px") {
+}
+[class^=~ "col-"] {
+}
+@keyframes ~ 'name' {
+}
+```
+
+A Less escape (`LessEscapedStr`) prints as `~` hugging its re-quoted string wherever it is typed (`value.rs` `write_less_escaped_str`);
+Prettier does so in a declaration value and `url()`, but keeps the space in a media feature and an attribute value, and the `@keyframes` name verbatim (see prelude-string-requote).
+The Prettier-compat raw paths keep the source as-is: a selector or at-rule prelude with a comment, and Less mixin call / definition arguments and `when` guards.
+
 ## call-after-line-comment-indent
 
 - Why: uniform-rule (comment presence never changes layout; prettier/prettier#19427)

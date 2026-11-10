@@ -1,7 +1,4 @@
-use crate::{
-    cpu::{Avx2, BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_version, to_dyn},
-    simd::Vec256,
-};
+use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version};
 
 use crate::pipeline::bitmap::{bm_clear, bm_get};
 
@@ -25,7 +22,7 @@ pub(super) unsafe fn jsx_glue_hyphens(
     b: usize,
     cpu: impl Cpu,
 ) {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => jsx_glue_hyphens_avx2(src, n, st, opch, word, a, b, cpu),
         _ => jsx_glue_hyphens_generic(src, n, st, opch, word, a, b),
     }

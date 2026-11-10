@@ -61,6 +61,36 @@ Vue splits there too, and compiles neither (`@vue/compiler-dom` 3.5.45: `Error p
 The comment Prettier prints is not the user's (`/* a,b */`), which breaks the lossless contract;
 the string is uniform-rule (same construct, same output: a default value in `v-slot`'s params).
 
+## js-in-vue-for-alias-in-of-as-written
+
+- Why: semantics (Vue splits `v-for` at the first `in` / `of` with whitespace around it)
+- Pin: `conformance/fixtures/js-in-vue/for-alias-in-of.vue`
+
+```vue
+<!-- input -->
+<template>
+  <li v-for="({ a = 'k'in o }) in items">x</li>
+  <li v-for="({ a=of }) in items">x</li>
+</template>
+
+<!-- ours -->
+<template>
+  <li v-for="({ a = 'k'in o }) in items">x</li>
+  <li v-for="({ a=of }) in items">x</li>
+</template>
+
+<!-- prettier -->
+<template>
+  <li v-for="{ a = 'k' in o } in items">x</li>
+  <li v-for="{ a = of } in items">x</li>
+</template>
+```
+
+A `v-for` whose alias holds the word `in` or `of` prints as written.
+Formatting spaces an `in` operator or an `of` name in a default value, where Vue's split (`parseForExpression`) then reads the operator:
+Prettier's output reads as the alias `{ a = 'k'`, which does not compile (`@vue/compiler-dom` 3.5.45: `Error parsing JavaScript expression`).
+The word in a string or a comment counts too, and prints as written for nothing.
+
 ## js-in-vue-bitwise-or
 
 - Why: uniform-rule (same construct, same output: a `&&` chain in the same root)
@@ -116,6 +146,43 @@ each `|` ends its line, and its chain does not indent under the host's delimiter
 Vue 3 removed Vue 2's filters (`@vue/compiler-dom` 3.5.45 compiles `{{ a | f }}` to `a | f`);
 Prettier still reads `{{ }}`'s and a binding's `|` as filters, starting each line with `|`, and indents every `|` chain there.
 A migration build (`@vue/compat`'s `COMPILER_FILTERS`) still reads them as filters, which compile the same either way: only the line breaks differ.
+
+## js-in-vue-numeric-keys-unquoted
+
+- Why: uniform-rule (same construct, same output: an object key in the `<script>` of a JS file; prettier/prettier#10127)
+- Pin: `conformance/fixtures/js-in-vue/numeric-keys-unquoted.vue`
+
+```vue
+<!-- input -->
+<template>
+  <p :b="{ '1': 1, 'b': 2 }">{{ { '0': 'x' }[0] }}</p>
+</template>
+
+<script>
+const b = { '1': 1 };
+</script>
+
+<!-- ours -->
+<template>
+  <p :b="{ 1: 1, b: 2 }">{{ { 0: "x" }[0] }}</p>
+</template>
+
+<script>
+const b = { 1: 1 };
+</script>
+
+<!-- prettier -->
+<template>
+  <p :b="{ '1': 1, b: 2 }">{{ { "0": "x" }[0] }}</p>
+</template>
+
+<script>
+const b = { 1: 1 };
+</script>
+```
+
+A template expression of a JS file unquotes a numeric key under `quoteProps: "as-needed"`, as its `<script>` does;
+Prettier unquotes only an identifier key there, a numeric key only in the `<script>`.
 
 ## js-in-vue-removed-attributes-as-written
 
@@ -227,7 +294,7 @@ Under `semi: false`, `;` still separates an event handler's top-level statements
 and ends a lone one that is no expression (`if (a) b();`); the statements in them follow `semi`.
 Vue's compiler reads a handler as statements when its value holds a `;` (`exp.content.includes(';')`), wrapped in braces, and as an expression otherwise:
 Prettier drops every `;`, and the statements no longer compile (`@vue/compiler-dom` 3.5.45: `Error parsing JavaScript expression`).
-Under `semi: true` both print every `;` between and after the statements.
+Under `semi: true` both print the statements' own `;` (a known gap: `crates/oxc_formatter/AGENTS.md` "js-in-xxx").
 
 ```vue
 <!-- input (any semi) -->

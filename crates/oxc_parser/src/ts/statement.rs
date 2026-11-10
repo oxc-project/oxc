@@ -236,7 +236,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
         }
-        let (extends, implements) = self.parse_ts_interface_heritage_clause();
+        let (extends, implements) =
+            self.parse_heritage_clause(Self::parse_ts_interface_extends_clause);
         let body = self.parse_ts_interface_body();
         let extends = extends.unwrap_or_else(|| ArenaVec::new_in(self));
         self.verify_modifiers(
@@ -260,16 +261,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains_declare(),
             self,
         )
-    }
-
-    #[expect(clippy::type_complexity)]
-    fn parse_ts_interface_heritage_clause(
-        &mut self,
-    ) -> (
-        Option<ArenaVec<'a, TSInterfaceHeritage<'a>>>,
-        Option<(Span, ArenaVec<'a, TSClassImplements<'a>>)>,
-    ) {
-        self.parse_heritage_clause(Self::parse_ts_interface_extends_clause)
     }
 
     fn parse_ts_interface_extends_clause(&mut self) -> ArenaVec<'a, TSInterfaceHeritage<'a>> {
@@ -465,7 +456,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let body = if self.at(Kind::LCurly) {
             // External module body (`declare module "x" {}`); `import`/`export` are allowed here.
-            Some(self.parse_ts_module_block(/* in_ts_namespace_body */ false))
+            let block = self.parse_ts_module_block(/* in_ts_namespace_body */ false);
+            Some(self.alloc(block))
         } else {
             self.asi();
             None
@@ -536,10 +528,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    fn parse_ts_module_block(
-        &mut self,
-        in_ts_namespace_body: bool,
-    ) -> ArenaBox<'a, TSModuleBlock<'a>> {
+    fn parse_ts_module_block(&mut self, in_ts_namespace_body: bool) -> TSModuleBlock<'a> {
         let start = self.cur_start();
         self.expect(Kind::LCurly);
         // Remove TopLevel context for module block
@@ -547,7 +536,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             p.parse_directives_and_statements(in_ts_namespace_body)
         });
         self.expect(Kind::RCurly);
-        TSModuleBlock::boxed(self.end_span(start), directives, statements, self)
+        TSModuleBlock::new(self.end_span(start), directives, statements, self)
     }
 
     fn parse_module_or_namespace_declaration(
@@ -565,7 +554,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // Internal namespace body — validate each statement inline as it is parsed
             // (see `check_namespace_body_statement`), avoiding a second pass over the body.
             let block = self.parse_ts_module_block(/* in_ts_namespace_body */ true);
-            TSNamespaceDeclarationBody::TSModuleBlock(block)
+            TSNamespaceDeclarationBody::TSModuleBlock(self.alloc(block))
         };
         self.verify_modifiers(
             modifiers,
@@ -592,7 +581,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::Global);
         let keyword_span = self.end_span(keyword_start);
 
-        let body = self.parse_ts_module_block(/* in_ts_namespace_body */ false).unbox();
+        let body = self.parse_ts_module_block(/* in_ts_namespace_body */ false);
 
         self.verify_modifiers(
             modifiers,

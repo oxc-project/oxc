@@ -272,16 +272,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self,
         );
 
-        if self.cur_token().is_on_new_line() {
-            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
-        }
-
-        self.expect(Kind::Arrow);
-
+        self.expect_arrow();
         self.parse_arrow_function_expression_body(
             ArrowFunctionHead { type_parameters: None, params, return_type: None, r#async, start },
             allow_return_type_in_arrow_function,
         )
+    }
+
+    fn expect_arrow(&mut self) {
+        if self.cur_token().is_on_new_line() {
+            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
+        }
+        self.expect(Kind::Arrow);
     }
 
     fn parse_parenthesized_arrow_function_head(&mut self) -> ArrowFunctionHead<'a> {
@@ -316,11 +318,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let return_type = if self.is_ts { self.parse_ts_return_type_annotation() } else { None };
 
         self.ctx = self.ctx.and_await(has_await);
-
-        if self.cur_token().is_on_new_line() {
-            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
-        }
-        self.expect(Kind::Arrow);
 
         ArrowFunctionHead { type_parameters, params, return_type, r#async, start }
     }
@@ -373,6 +370,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
         let head = self.parse_parenthesized_arrow_function_head();
+        self.expect_arrow();
         self.parse_arrow_function_expression_body(head, allow_return_type_in_arrow_function)
     }
 
@@ -395,6 +393,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let checkpoint = self.checkpoint_with_error_recovery();
 
         let head = self.parse_parenthesized_arrow_function_head();
+        // Rejected heads are rewound, so do not construct an error for the missing arrow.
+        if !self.at(Kind::Arrow) {
+            self.state.not_parenthesized_arrow.insert(pos);
+            self.rewind(checkpoint);
+            return None;
+        }
+        self.expect_arrow();
         if self.has_fatal_error() {
             self.state.not_parenthesized_arrow.insert(pos);
             self.rewind(checkpoint);
@@ -450,22 +455,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let checkpoint = self.checkpoint_with_error_recovery();
         let errors_len = self.errors.len();
         let (params, has_trailing_comma) = self.parse_cover_arrow_parameters();
-        let head = ArrowFunctionHead {
-            type_parameters: None,
-            params,
-            return_type: None,
-            r#async: false,
-            start: pos,
-        };
         if !self.at(Kind::Arrow) {
             // Reuse the successful parameter parse, including its initializers and property
             // keys, when it also represents an ordinary parenthesized expression.
             if !self.has_fatal_error()
                 && self.errors.len() == errors_len
                 && !has_trailing_comma
-                && head.params.rest.is_none()
-                && !head.params.items.is_empty()
-                && let Some(expression) = self.cover_arrow_head_as_expression(head)
+                && params.rest.is_none()
+                && !params.items.is_empty()
+                && let Some(expression) = self.cover_arrow_parameters_as_expression(params)
             {
                 return Some(expression);
             }
@@ -473,6 +471,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.rewind(checkpoint);
             return None;
         }
+        let head = ArrowFunctionHead {
+            type_parameters: None,
+            params: self.alloc(params),
+            return_type: None,
+            r#async: false,
+            start: pos,
+        };
         self.expect_arrow_after_head();
         if self.has_fatal_error() {
             self.state.not_parenthesized_arrow.insert(pos);
@@ -483,12 +488,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     #[inline(never)]
-    fn cover_arrow_head_as_expression(
+    fn cover_arrow_parameters_as_expression(
         &mut self,
-        head: ArrowFunctionHead<'a>,
+        params: FormalParameters<'a>,
     ) -> Option<Expression<'a>> {
-        let span = head.params.span;
-        let params = head.params.unbox();
+        let span = params.span;
         let len = params.items.len();
         let mut items = params.items.into_iter();
         let first = self.cover_parameter_as_expression(items.next().unwrap())?;

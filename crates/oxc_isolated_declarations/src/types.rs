@@ -5,7 +5,7 @@ use oxc_ast::ast::{
     TSMethodSignatureKind, TSSignature, TSTupleElement, TSType, TSTypeAnnotation,
     TSTypeOperatorOperator,
 };
-use oxc_span::{ContentEq, GetSpan, SPAN, Span};
+use oxc_span::{GetSpan, SPAN, Span};
 use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
@@ -158,7 +158,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
                     let type_annotation = match object.kind {
                         PropertyKind::Get => {
-                            if accessor_inferred.iter().any(|k| k.content_eq(key)) {
+                            if accessor_inferred.iter().any(|k| Self::accessor_keys_match(k, key)) {
                                 return None;
                             }
 
@@ -178,7 +178,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             annotation
                         }
                         PropertyKind::Set => {
-                            if accessor_inferred.iter().any(|k| k.content_eq(key)) {
+                            if accessor_inferred.iter().any(|k| Self::accessor_keys_match(k, key)) {
                                 return None;
                             }
 
@@ -217,13 +217,19 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     };
 
+                    let readonly = object.kind == PropertyKind::Get
+                        && !expr.properties.iter().any(|property| {
+                            matches!(property, ObjectPropertyKind::ObjectProperty(property)
+                                if property.kind == PropertyKind::Set && Self::accessor_keys_match(&property.key, key))
+                        })
+                        || object.kind == PropertyKind::Init && is_const;
                     let key = self.transform_property_key(key);
                     let property_signature = TSSignature::new_ts_property_signature(
                         object.span,
                         key.as_expression()
                             .is_some_and(|k| !k.is_string_literal() && !k.is_number_literal()),
                         false,
-                        is_const,
+                        readonly,
                         key,
                         type_annotation,
                         self,
@@ -240,7 +246,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         // Report an error if the type of neither the setter nor the getter is inferred.
         for (key, span) in accessor_spans {
-            if !accessor_inferred.iter().any(|k| k.content_eq(key)) {
+            if !accessor_inferred.iter().any(|k| Self::accessor_keys_match(k, key)) {
                 self.error(inferred_type_of_expression(span));
             }
         }

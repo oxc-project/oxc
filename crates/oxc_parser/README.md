@@ -4,14 +4,14 @@ High-performance JavaScript and TypeScript parser with comprehensive language su
 
 ## Overview
 
-This crate provides a fast, spec-compliant parser for JavaScript and TypeScript that produces a complete Abstract Syntax Tree (AST). It supports all modern language features including JSX, TSX, and the latest ECMAScript proposals.
+This crate provides a fast, spec-compliant parser for JavaScript and TypeScript that produces a complete Abstract Syntax Tree (AST). It supports JavaScript, TypeScript, JSX, TSX, and selected ECMAScript proposals.
 
 ## Key Features
 
 - **Complete language support**: JavaScript, TypeScript, JSX, and TSX
-- **Latest ECMAScript**: All stable ECMAScript features plus stage 3+ proposals
+- **Latest ECMAScript**: Stable ECMAScript syntax plus selected Stage 3 proposals
 - **High performance**: Significantly faster than traditional parsers
-- **Error recovery**: Continues parsing after errors to provide complete AST
+- **Error recovery**: Recovers from some syntax errors; fatal errors return an empty program
 - **Comprehensive AST**: Detailed node information with accurate source positions
 
 ## Architecture
@@ -21,7 +21,7 @@ This crate provides a fast, spec-compliant parser for JavaScript and TypeScript 
 - **Recursive descent**: Traditional recursive descent parser architecture
 - **Error recovery**: Sophisticated error recovery for IDE-friendly parsing
 - **Memory efficient**: Uses arena allocation for optimal performance
-- **Streaming**: Processes source text in a single pass
+- **Source input**: Parses a complete UTF-8 source string, with lookahead where needed
 
 ### Language Support
 
@@ -35,7 +35,7 @@ This crate provides a fast, spec-compliant parser for JavaScript and TypeScript 
 The parser produces an AST that closely follows ECMAScript specifications:
 
 - **Accurate positions**: Every node has precise source location information
-- **Complete information**: Preserves all syntactic details including trivia
+- **Comments and source text**: Records comments and source spans; whitespace is available through the original source text
 - **Type-safe**: Leverages Rust's type system for correctness
 - **Visitor-friendly**: Designed for easy traversal and transformation
 

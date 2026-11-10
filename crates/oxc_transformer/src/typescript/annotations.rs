@@ -261,9 +261,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         if expr.is_typescript_syntax() {
             expr.replace_with(Expression::into_inner_expression);
         }
-        if let Expression::ChainExpression(chain) = expr {
-            // Other transforms inspect the chain before traversal reaches `enter_chain_element`.
-            self.enter_chain_element(&mut chain.expression, ctx);
+        match expr {
+            Expression::AssignmentExpression(assignment) => {
+                if let Some(target) = assignment.left.as_simple_assignment_target_mut() {
+                    self.enter_simple_assignment_target(target, ctx);
+                }
+            }
+            Expression::ChainExpression(chain) => {
+                // Other transforms inspect the chain before traversal reaches `enter_chain_element`.
+                self.enter_chain_element(&mut chain.expression, ctx);
+            }
+            _ => {}
         }
     }
 

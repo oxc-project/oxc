@@ -98,18 +98,6 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.export_entries.push(entry);
     }
 
-    fn append_local_export_entry(&mut self, entry: ExportEntry<'a>) {
-        self.module_record.local_export_entries.push(entry);
-    }
-
-    fn append_indirect_export_entry(&mut self, entry: ExportEntry<'a>) {
-        self.module_record.indirect_export_entries.push(entry);
-    }
-
-    fn append_star_export_entry(&mut self, entry: ExportEntry<'a>) {
-        self.module_record.star_export_entries.push(entry);
-    }
-
     fn add_export_binding(&mut self, name: Str<'a>, span: Span) {
         if let Some(old_node) = self.module_record.exported_bindings.insert(name, span) {
             self.exported_bindings_duplicated.push(NameSpan::new(name, old_node));
@@ -119,75 +107,61 @@ impl<'a> ModuleRecordBuilder<'a> {
     /// [ParseModule](https://tc39.es/ecma262/#sec-parsemodule)
     /// Step 10.
     fn resolve_export_entries(&mut self) {
-        // let export_entries = self.export_entries.drain(..).collect::<Vec<_>>();
-        let export_entries =
+        let mut export_entries =
             std::mem::replace(&mut self.export_entries, ArenaVec::new_in(&self.allocator));
+        let module_record = &mut self.module_record;
+
+        // Retain local exports in their original buffer, avoiding a second arena allocation.
         // 10. For each ExportEntry Record ee of exportEntries, do
-        for ee in export_entries {
+        export_entries.retain_mut(|entry| {
             // a. If ee.[[ModuleRequest]] is null, then
-            if ee.module_request.is_none() {
-                let found_import_entry = match &ee.local_name {
-                    ExportLocalName::Name(name) => self
-                        .module_record
-                        .import_entries
-                        .iter()
-                        .find(|entry| entry.local_name.name == name.name),
-                    _ => None,
-                };
-                match found_import_entry {
+            if entry.module_request.is_none() {
+                let ExportLocalName::Name(local_name) = &entry.local_name else {
                     // i. If ee.[[LocalName]] is not an element of importedBoundNames, then
-                    None => {
-                        // 1. Append ee to localExportEntries.
-                        self.append_local_export_entry(ee);
+                    // 1. Append ee to localExportEntries.
+                    return true;
+                };
+                let Some(import) = module_record
+                    .import_entries
+                    .iter()
+                    .find(|import| import.local_name.name == local_name.name)
+                else {
+                    // i. If ee.[[LocalName]] is not an element of importedBoundNames, then
+                    // 1. Append ee to localExportEntries.
+                    return true;
+                };
+                // ii. Else,
+                // 1. Let ie be the element of importEntries whose [[LocalName]] is the same as ee.[[LocalName]].
+                let import_name = match &import.import_name {
+                    ImportImportName::Name(name) => ExportImportName::Name(name.clone()),
+                    ImportImportName::Default(span) => {
+                        ExportImportName::Name(NameSpan::new("default".into(), *span))
                     }
-                    // ii. Else,
-                    // 1. Let ie be the element of importEntries whose [[LocalName]] is the same as ee.[[LocalName]].
-                    Some(ie) => {
-                        match &ie.import_name {
-                            // 2. If ie.[[ImportName]] is namespace-object, then
-                            ImportImportName::NamespaceObject => {
-                                // a. NOTE: This is a re-export of an imported module namespace object.
-                                // b. Append ee to localExportEntries.
-                                self.append_local_export_entry(ee);
-                            }
-                            // 3. Else,
-                            // a. NOTE: This is a re-export of a single name.
-                            // Append the ExportEntry Record { [[ModuleRequest]]: ie.[[ModuleRequest]], [[ImportName]]: ie.[[ImportName]], [[LocalName]]: null, [[ExportName]]: ee.[[ExportName]] }
-                            // to indirectExportEntries.
-                            ImportImportName::Name(_) | ImportImportName::Default(_) => {
-                                let export_entry = ExportEntry {
-                                    statement_span: ie.statement_span,
-                                    span: ee.span,
-                                    module_request: Some(ie.module_request.clone()),
-                                    import_name: match &ie.import_name {
-                                        ImportImportName::Name(name) => {
-                                            ExportImportName::Name(name.clone())
-                                        }
-                                        ImportImportName::Default(span) => ExportImportName::Name(
-                                            NameSpan::new("default".into(), *span),
-                                        ),
-                                        ImportImportName::NamespaceObject => unreachable!(),
-                                    },
-                                    export_name: ee.export_name.clone(),
-                                    local_name: ExportLocalName::default(),
-                                    is_type: ie.is_type,
-                                };
-                                self.append_indirect_export_entry(export_entry);
-                            }
-                        }
-                    }
-                }
-                // b. Else if ee.[[ImportName]] is all-but-default, then
-            } else if ee.import_name.is_all_but_default() {
-                // i. Assert: ee.[[ExportName]] is null.
-                debug_assert!(ee.export_name.is_null());
-                self.append_star_export_entry(ee);
-                // c. Else,
-            } else {
-                // i. Append ee to indirectExportEntries.
-                self.append_indirect_export_entry(ee);
+                    // ParseModule 10.a.ii.3: normalize to `export * as name from 'mod'`.
+                    ImportImportName::NamespaceObject => ExportImportName::All,
+                };
+                // Append the ExportEntry Record { [[ModuleRequest]]: ie.[[ModuleRequest]], [[ImportName]]: ie.[[ImportName]], [[LocalName]]: null, [[ExportName]]: ee.[[ExportName]] }
+                // to indirectExportEntries.
+                entry.statement_span = import.statement_span;
+                entry.module_request = Some(import.module_request.clone());
+                entry.import_name = import_name;
+                entry.local_name = ExportLocalName::default();
+                entry.is_type |= import.is_type;
             }
-        }
+
+            // b. Else if ee.[[ImportName]] is all-but-default, then
+            if entry.import_name.is_all_but_default() {
+                // i. Assert: ee.[[ExportName]] is null.
+                debug_assert!(entry.export_name.is_null());
+                module_record.star_export_entries.push(std::mem::take(entry));
+            } else {
+                // c. Else,
+                // i. Append ee to indirectExportEntries.
+                module_record.indirect_export_entries.push(std::mem::take(entry));
+            }
+            false
+        });
+        module_record.local_export_entries = export_entries;
     }
 
     pub fn visit_import_expression(&mut self, e: &ImportExpression<'a>) {
@@ -208,6 +182,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         let module_request = NameSpan::new(source.into(), decl.source.span);
 
         if let Some(specifiers) = &decl.specifiers {
+            reserve_entries(&mut self.module_record.import_entries, specifiers.len());
             for specifier in specifiers {
                 let local = specifier.local();
                 let local_name = NameSpan::new(local.name.into(), local.span);
@@ -345,6 +320,7 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
+        reserve_entries(&mut self.export_entries, decl.specifiers.len());
         for specifier in &decl.specifiers {
             let export_name = ExportExportName::Name(NameSpan::new(
                 specifier.exported.name(),
@@ -396,6 +372,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             },
         );
 
+        reserve_entries(&mut self.export_entries, decl.specifiers.len());
         for specifier in &decl.specifiers {
             let export_name = ExportExportName::Name(NameSpan::new(
                 specifier.exported.name(),
@@ -420,6 +397,16 @@ impl<'a> ModuleRecordBuilder<'a> {
 
     pub fn set_module_syntax(&mut self) {
         self.module_record.has_module_syntax = true;
+    }
+}
+
+fn reserve_entries<T>(entries: &mut ArenaVec<'_, T>, additional: usize) {
+    let len = entries.len();
+    let required = len + additional;
+    if required > entries.capacity() {
+        // Match normal push growth so reserving a batch does not change later capacities.
+        let capacity = required.next_power_of_two();
+        entries.reserve(capacity - len);
     }
 }
 
@@ -737,6 +724,56 @@ mod module_record_tests {
     }
 
     #[test]
+    fn reexported_import_preserves_type_only_flags() {
+        let allocator = Allocator::default();
+        for (source, is_type) in [
+            ("import { T } from 'mod'; export { T };", false),
+            ("import { T } from 'mod'; export type { T };", true),
+            ("import { T } from 'mod'; export { type T };", true),
+            ("import type { T } from 'mod'; export { T };", true),
+            ("import { type T } from 'mod'; export { T };", true),
+            ("import type { T } from 'mod'; export type { T };", true),
+            ("import T from 'mod'; export type { T as default };", true),
+        ] {
+            let record = build(&allocator, source);
+            assert!(record.local_export_entries.is_empty(), "{source}");
+            assert_eq!(record.indirect_export_entries.len(), 1, "{source}");
+            assert_eq!(record.indirect_export_entries[0].is_type, is_type, "{source}");
+        }
+    }
+
+    #[test]
+    fn reexported_namespace_is_indirect() {
+        let allocator = Allocator::default();
+        for (source, exported, is_type) in [
+            ("import * as ns from 'mod'; export { ns };", "ns", false),
+            ("export { ns as renamed }; import * as ns from 'mod';", "renamed", false),
+            ("import * as ns from 'mod'; export { ns as default };", "default", false),
+            ("import * as ns from 'mod'; export type { ns };", "ns", true),
+            ("import * as ns from 'mod'; export { type ns };", "ns", true),
+            ("import type * as ns from 'mod'; export { ns };", "ns", true),
+        ] {
+            let record = build(&allocator, source);
+            assert!(record.local_export_entries.is_empty(), "{source}");
+            assert_eq!(record.indirect_export_entries.len(), 1, "{source}");
+            let import = &record.import_entries[0];
+            let entry = &record.indirect_export_entries[0];
+            assert_eq!(entry.statement_span, import.statement_span);
+            assert_eq!(entry.module_request.as_ref(), Some(&import.module_request));
+            assert_eq!(entry.import_name, ExportImportName::All);
+            assert_eq!(entry.local_name, ExportLocalName::Null);
+            let ExportExportName::Name(name) = &entry.export_name else { panic!() };
+            assert_eq!(name.name, exported);
+            assert_eq!(entry.is_type, is_type);
+        }
+
+        // A default export expression creates a local binding, unlike `export { ns as default }`.
+        let record = build(&allocator, "import * as ns from 'mod'; export default ns;");
+        assert_eq!(record.local_export_entries.len(), 1);
+        assert!(record.indirect_export_entries.is_empty());
+    }
+
+    #[test]
     fn indirect_export_entries() {
         let allocator = Allocator::default();
         let module_record =
@@ -765,6 +802,53 @@ mod module_record_tests {
                 local_name: ExportLocalName::Null,
                 is_type: false
             }
+        );
+    }
+
+    #[test]
+    fn mixed_export_entries_preserve_source_order() {
+        let allocator = Allocator::default();
+        let source = "
+            export const first = 1;
+            export * from 'star1';
+            export { imported as indirect1 };
+            export const second = 2;
+            export { value as indirect2 } from 'other';
+            export * from 'star2';
+            export { ns };
+            export const third = 3;
+            import { imported } from 'mod';
+            import * as ns from 'namespace';
+        ";
+        let ret = Parser::new(&allocator, source, SourceType::mjs()).parse();
+        assert!(ret.diagnostics.is_empty());
+        let module_record = ret.module_record;
+        assert_eq!(
+            module_record
+                .local_export_entries
+                .iter()
+                .map(|entry| entry.local_name.name().unwrap())
+                .collect::<Vec<_>>(),
+            ["first", "second", "third"]
+        );
+        assert_eq!(
+            module_record
+                .indirect_export_entries
+                .iter()
+                .map(|entry| {
+                    let ExportExportName::Name(name) = &entry.export_name else { panic!() };
+                    name.name
+                })
+                .collect::<Vec<_>>(),
+            ["indirect1", "indirect2", "ns"]
+        );
+        assert_eq!(
+            module_record
+                .star_export_entries
+                .iter()
+                .map(|entry| entry.module_request.as_ref().unwrap().name)
+                .collect::<Vec<_>>(),
+            ["star1", "star2"]
         );
     }
 

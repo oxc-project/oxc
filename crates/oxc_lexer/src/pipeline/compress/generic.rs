@@ -1,9 +1,7 @@
+use oxc_simd::{BASELINE, cpu_version};
 use oxc_span::Span;
 
-use crate::{
-    cpu::{BASELINE, cpu_version},
-    token::{is_trivia_byte, matches_tk, tk},
-};
+use crate::token::{is_trivia_byte, matches_tk, tk};
 
 use crate::pipeline::{
     chunk::{eqm, load64},

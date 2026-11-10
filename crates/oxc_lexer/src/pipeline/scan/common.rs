@@ -1,6 +1,6 @@
 use std::slice;
 
-use crate::cpu::{Cpu, cpu_multiversion};
+use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::pipeline::{
     bytes::{hex_val, is_digit, is_word, unicode_ws_len_at_unchecked},

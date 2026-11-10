@@ -1,23 +1,24 @@
 #![cfg(target_endian = "little")]
 #![expect(clippy::cast_possible_truncation, reason = "test helpers: lengths fit u32")]
 
-use oxc_lexer::{LexOptions, PAD, lex_utf8};
+use oxc_lexer::{LexOptions, PAD, testing::lex_with_cpu};
+use oxc_simd::{DynCpu, test_cpus};
 
-fn comment_flags(source: &str) -> Vec<(bool, bool)> {
+fn comment_flags(source: &str, cpu: DynCpu) -> Vec<(bool, bool)> {
     let mut buf = source.as_bytes().to_vec();
     buf.resize(source.len() + PAD, 0);
-    let (result, arena) = lex_utf8(&buf, source.len() as u32, LexOptions::default());
+    let result = lex_with_cpu(&buf, source.len() as u32, LexOptions::default(), cpu);
     assert!(result.diagnostics().is_empty(), "{source:?}");
     result
-        .comments(&arena)
+        .comments()
         .iter()
         .map(|comment| (comment.preceded_by_newline(), comment.followed_by_newline()))
         .collect()
 }
 
 // Cases from https://github.com/oxc-project/oxc/issues/28318, plus a leading BOM.
-#[test]
-fn comment_newline_flags_ls_ps_and_unicode_ws() {
+#[test_cpus]
+fn comment_newline_flags_ls_ps_and_unicode_ws(cpu: DynCpu) {
     let cases: &[(&str, bool, bool)] = &[
         ("x;\u{2029}/* a */ y;", true, false),
         ("x;\n\u{00A0}/* a */ y;", true, false),
@@ -28,7 +29,7 @@ fn comment_newline_flags_ls_ps_and_unicode_ws() {
     ];
     let mut mismatches = Vec::new();
     for &(source, preceded, followed) in cases {
-        let actual = comment_flags(source);
+        let actual = comment_flags(source, cpu);
         if actual != [(preceded, followed)] {
             mismatches.push(format!("{source:?}: got {actual:?}, want [({preceded}, {followed})]"));
         }
@@ -36,9 +37,9 @@ fn comment_newline_flags_ls_ps_and_unicode_ws() {
     assert!(mismatches.is_empty(), "{}", mismatches.join("\n"));
 }
 
-#[test]
-fn comment_newline_flags_ascii_still_work() {
-    assert_eq!(comment_flags("x;\n/* a */ y;"), [(true, false)]);
-    assert_eq!(comment_flags("x; /* a */\ny;"), [(false, true)]);
-    assert_eq!(comment_flags("x; /* a */ y;"), [(false, false)]);
+#[test_cpus]
+fn comment_newline_flags_ascii_still_work(cpu: DynCpu) {
+    assert_eq!(comment_flags("x;\n/* a */ y;", cpu), [(true, false)]);
+    assert_eq!(comment_flags("x; /* a */\ny;", cpu), [(false, true)]);
+    assert_eq!(comment_flags("x; /* a */ y;", cpu), [(false, false)]);
 }

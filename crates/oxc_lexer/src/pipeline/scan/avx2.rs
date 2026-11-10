@@ -1,7 +1,4 @@
-use crate::{
-    cpu::{Avx2, cpu_version},
-    simd::Vec256,
-};
+use oxc_simd::{Avx2, Vec256, cpu_version};
 
 use super::common::lic_verify_at;
 

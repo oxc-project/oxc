@@ -1,6 +1,7 @@
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn, GetAllocator};
-use oxc_ast::ast::*;
+use oxc_ast::{StaticPropertyName, ast::*};
 use oxc_span::{ContentEq, GetSpan, SPAN};
+use oxc_syntax::number::ToJsString;
 
 use crate::{
     IsolatedDeclarations,
@@ -35,13 +36,42 @@ impl<'a> AccessorAnnotation<'a> {
 impl<'a> IsolatedDeclarations<'a> {
     /// Check whether two accessor keys refer to the same property.
     ///
-    /// Accessor pairing follows JavaScript property-key semantics, so an identifier,
-    /// string literal, numeric literal, or no-substitution template literal with the
-    /// same static name identifies the same property. Keep structural equality as a
-    /// fallback for supported non-static keys such as `Symbol.iterator`.
-    fn accessor_keys_match(left: &PropertyKey<'a>, right: &PropertyKey<'a>) -> bool {
-        left.static_name().zip(right.static_name()).is_some_and(|(left, right)| left == right)
-            || left.content_eq(right)
+    /// Follow TypeScript's binder (`getDeclarationName`), including the sign of
+    /// signed numeric literals: `[-1]` matches `"-1"`, but `[-0]` does not match `0`.
+    /// Keep structural equality as a fallback for supported non-static keys such
+    /// as `Symbol.iterator`.
+    pub(crate) fn accessor_keys_match(left: &PropertyKey<'a>, right: &PropertyKey<'a>) -> bool {
+        match (left, right) {
+            #[expect(clippy::float_cmp, reason = "Numeric property keys require exact equality.")]
+            (PropertyKey::NumericLiteral(left), PropertyKey::NumericLiteral(right)) => {
+                left.value == right.value
+            }
+            _ => {
+                Self::accessor_key_name(left)
+                    .zip(Self::accessor_key_name(right))
+                    .is_some_and(|(left, right)| left == right)
+                    || left.content_eq(right)
+            }
+        }
+    }
+
+    fn accessor_key_name(key: &PropertyKey<'a>) -> Option<StaticPropertyName<'a>> {
+        match key {
+            PropertyKey::NumericLiteral(number) => {
+                Some(StaticPropertyName::Owned(number.value.to_js_string().into()))
+            }
+            PropertyKey::UnaryExpression(expr)
+                if expr.operator.is_arithmetic()
+                    && let Expression::NumericLiteral(number) = &expr.argument =>
+            {
+                // Normalize the operand, but retain both `-` and `+`, just as
+                // TypeScript's binder does for computed signed numeric names.
+                Some(StaticPropertyName::Owned(
+                    format!("{}{}", expr.operator.as_str(), number.value.to_js_string()).into(),
+                ))
+            }
+            _ => key.static_name(),
+        }
     }
 
     pub(crate) fn is_literal_key(key: &PropertyKey<'a>) -> bool {
@@ -685,10 +715,22 @@ impl<'a> IsolatedDeclarations<'a> {
                         continue;
                     }
 
-                    let type_annotation = match property.accessibility {
-                        Some(TSAccessibility::Private) => None,
-                        _ => property.type_annotation.clone_in(self.allocator()),
-                    };
+                    let type_annotation =
+                        if property.accessibility.is_some_and(TSAccessibility::is_private) {
+                            None
+                        } else {
+                            let annotation =
+                                property.type_annotation.clone_in(self.allocator()).or_else(|| {
+                                    property.value.as_ref().and_then(|value| {
+                                        self.infer_type_from_expression(value)
+                                            .map(|ty| TSTypeAnnotation::boxed(SPAN, ty, self))
+                                    })
+                                });
+                            if annotation.is_none() {
+                                self.error(property_must_have_explicit_type(property.key.span()));
+                            }
+                            annotation
+                        };
 
                     // FIXME: missing many fields
                     let new_element = ClassElement::new_accessor_property(

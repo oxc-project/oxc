@@ -47,6 +47,7 @@ declare_oxc_lint!(
     BadReplaceAllArg,
     oxc,
     correctness,
+    recommended,
     version = "0.0.22",
     short_description = "This rule warns when the `replaceAll` method is called with a regular expression that does not have the global flag (g).",
 );

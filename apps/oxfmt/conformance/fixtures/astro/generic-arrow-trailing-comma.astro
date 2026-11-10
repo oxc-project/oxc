@@ -1,0 +1,9 @@
+---
+// Astro parses the frontmatter as TSX: the comma is required
+const identity = <T,>(value: T) => value
+---
+
+<script>
+  // Same in `<script>`
+  const identity = <T,>(value: T) => value
+</script>
