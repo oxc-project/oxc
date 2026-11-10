@@ -2,7 +2,6 @@
 //! `*_never_flagged` counterpart: valid input must emit nothing.
 
 #![cfg(target_endian = "little")]
-#![expect(clippy::unreadable_literal, reason = "test helpers: the fuzz PRNG uses raw constants")]
 
 use std::str;
 
@@ -441,6 +440,7 @@ fn utf8_fuzz_against_std(cpu: DynCpu) {
     // Deterministic LCG fuzz against std::str::from_utf8: a diag iff std
     // errors, offset == valid_up_to(), len == error_len() when std has one.
     let mut s: u64 = 0x243F_6A88_85A3_08D3;
+    #[expect(clippy::unreadable_literal)]
     for _ in 0..4000 {
         let mut buf = vec![b' ']; // keep offset 0 clear of hashbang/BOM handling
         s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
