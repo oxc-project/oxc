@@ -2063,15 +2063,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_decorators(&mut self) -> ArenaVec<'a, Decorator<'a>> {
-        if self.at(Kind::At) {
-            let mut decorators = ArenaVec::with_capacity_in(1, self);
-            while self.at(Kind::At) {
-                decorators.push(self.parse_decorator());
-            }
-            decorators
-        } else {
-            ArenaVec::new_in(self)
-        }
+        self.collect_list(|p| p.at(Kind::At).then(|| p.parse_decorator()))
     }
 
     /// `Decorator`[Yield, Await]:
