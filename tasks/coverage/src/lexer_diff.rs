@@ -20,7 +20,7 @@ use oxc::{
     allocator::Allocator,
     ast::{Comment, CommentContent, CommentPosition},
     diagnostics::{LabeledSpan, OxcDiagnostic},
-    parser::{Parser, Token, config::TokensParserConfig},
+    parser::{ParseOptions, Parser, Token, config::TokensParserConfig},
     span::{SourceType, Span},
 };
 use oxc_lexer::{
@@ -314,7 +314,10 @@ type ParserStream =
 /// Token stream is `None` if parser hit a fatal error.
 fn parser_stream(code: &str, source_type: SourceType) -> ParserStream {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, code, source_type).with_config(TokensParserConfig).parse();
+    let ret = Parser::new(&allocator, code, source_type)
+        .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
+        .with_config(TokensParserConfig)
+        .parse();
 
     let spans =
         if ret.fatal_error { None } else { Some(ret.tokens.iter().map(Token::span).collect()) };

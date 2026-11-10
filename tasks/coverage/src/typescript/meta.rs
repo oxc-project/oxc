@@ -10,7 +10,7 @@ use oxc::{
     allocator::Allocator,
     codegen::Codegen,
     diagnostics::{Diagnostics, NamedSource},
-    parser::Parser,
+    parser::{ParseOptions, Parser},
     span::{SourceType, Span},
 };
 
@@ -447,7 +447,9 @@ impl Baseline {
     pub fn print_oxc(&mut self) {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(Path::new(&self.name)).unwrap_or_default();
-        let ret = Parser::new(&allocator, &self.original, source_type).parse();
+        let ret = Parser::new(&allocator, &self.original, source_type)
+            .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
+            .parse();
         let printed = Codegen::new().build(&ret.program).code;
         self.oxc_printed = printed;
     }

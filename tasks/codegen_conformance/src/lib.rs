@@ -105,6 +105,7 @@ fn codegen_impl(
             // Parse the same way, or the two printers would be given different ASTs,
             // and the comparison would be measuring the parse, not the print.
             preserve_parens,
+            enable_ident_hashes: false,
             ..ParseOptions::default()
         })
         .parse();

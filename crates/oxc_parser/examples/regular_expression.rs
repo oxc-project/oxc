@@ -19,7 +19,11 @@ fn main() {
     let source_type = SourceType::from_path(path).unwrap();
 
     let allocator = Allocator::default();
-    let options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
+    let options = ParseOptions {
+        parse_regular_expression: true,
+        enable_ident_hashes: false,
+        ..ParseOptions::default()
+    };
 
     let parser_ret =
         Parser::new(&allocator, source_text.as_ref(), source_type).with_options(options).parse();
