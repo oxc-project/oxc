@@ -340,15 +340,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if p.at(Kind::RParen) || p.has_fatal_error() {
                 return (Some(first), None);
             }
-            let mut expressions = ArenaVec::with_capacity_in(2, p);
-            expressions.push(first);
-            let comma_start = p.parse_delimited_list_rest(
-                &mut expressions,
-                Kind::RParen,
-                Kind::Comma,
-                opening_span,
-                Self::parse_assignment_expression_or_higher,
-            );
+            let mut first = Some(first);
+            let (mut expressions, comma_start) =
+                p.parse_delimited_list(Kind::RParen, Kind::Comma, opening_span, |p| {
+                    first.take().unwrap_or_else(|| p.parse_assignment_expression_or_higher())
+                });
             let expression = if expressions.len() == 1 {
                 expressions.remove(0)
             } else {
@@ -1910,12 +1906,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         first_expression: Expression<'a>,
     ) -> Expression<'a> {
-        let mut expressions = ArenaVec::with_capacity_in(2, self);
-        expressions.push(first_expression);
-        while self.eat(Kind::Comma) {
-            let expression = self.parse_assignment_expression_or_higher();
-            expressions.push(expression);
-        }
+        let mut first = Some(first_expression);
+        let expressions = self.collect_list(|p| {
+            first
+                .take()
+                .or_else(|| p.eat(Kind::Comma).then(|| p.parse_assignment_expression_or_higher()))
+        });
         Expression::new_sequence_expression(self.end_span(start), expressions, self)
     }
 
