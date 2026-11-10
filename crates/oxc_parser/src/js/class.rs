@@ -93,7 +93,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let type_parameters =
             if self.is_ts { self.parse_ts_type_parameters_with_variance() } else { None };
-        let (extends, implements) = self.parse_class_heritage_clause();
+        let (extends, implements) = self.parse_heritage_clause(Self::parse_class_extends_clause);
         let mut extends = extends.into_iter().flatten();
         let heritage = extends.next().map(|(expression, type_arguments)| {
             ClassHeritage::new(expression, type_arguments, self)
@@ -180,21 +180,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         (extends, implements)
-    }
-
-    #[expect(clippy::type_complexity)]
-    fn parse_class_heritage_clause(
-        &mut self,
-    ) -> (
-        Option<
-            BufferedVec<
-                'a,
-                (Expression<'a>, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>),
-            >,
-        >,
-        Option<ImplementsWithKeywordSpan<'a>>,
-    ) {
-        self.parse_heritage_clause(Self::parse_class_extends_clause)
     }
 
     /// `ClassHeritage`
