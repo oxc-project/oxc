@@ -111,6 +111,22 @@ impl<'a> ModuleRecordBuilder<'a> {
             std::mem::replace(&mut self.export_entries, ArenaVec::new_in(&self.allocator));
         let module_record = &mut self.module_record;
 
+        if let Some(first) = export_entries.first() {
+            let is_star = first.import_name.is_all_but_default();
+            if export_entries.iter().all(|entry| {
+                entry.module_request.is_some() && entry.import_name.is_all_but_default() == is_star
+            }) {
+                // Reuse the original buffer when every export has the same non-local destination.
+                if is_star {
+                    debug_assert!(export_entries.iter().all(|entry| entry.export_name.is_null()));
+                    module_record.star_export_entries = export_entries;
+                } else {
+                    module_record.indirect_export_entries = export_entries;
+                }
+                return;
+            }
+        }
+
         // Retain local exports in their original buffer, avoiding a second arena allocation.
         // 10. For each ExportEntry Record ee of exportEntries, do
         export_entries.retain_mut(|entry| {
