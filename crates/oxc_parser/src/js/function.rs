@@ -4,7 +4,9 @@ use oxc_span::{GetSpan, Span};
 
 use super::FunctionKind;
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext,
+    buffered_vec::BufferedVec,
+    diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
@@ -98,19 +100,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         func_kind: FunctionKind,
         opening_span: Span,
     ) -> (ArenaVec<'a, FormalParameter<'a>>, Option<ArenaBox<'a, FormalParameterRest<'a>>>) {
-        let mut list = ArenaVec::new_in(self);
-        let rest = self.parse_formal_parameters_list_into(&mut list, func_kind, opening_span);
-        (list, rest)
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn parse_formal_parameters_list_into(
-        &mut self,
-        list: &mut ArenaVec<'a, FormalParameter<'a>>,
-        func_kind: FunctionKind,
-        opening_span: Span,
-    ) -> Option<ArenaBox<'a, FormalParameterRest<'a>>> {
+        let mut list = BufferedVec::new_in(self);
         let mut rest: Option<ArenaBox<'a, FormalParameterRest<'a>>> = None;
         let mut first = true;
         let mut has_optional = false;
@@ -197,7 +187,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        rest
+        (list.into_vec(), rest)
     }
 
     fn parse_formal_parameter_with_decorators(

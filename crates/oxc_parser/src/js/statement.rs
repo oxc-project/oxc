@@ -7,7 +7,9 @@ use oxc_str::Str;
 
 use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext,
+    buffered_vec::BufferedVec,
+    diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, Modifiers},
 };
@@ -37,7 +39,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         in_ts_namespace_body: bool,
     ) -> (ArenaVec<'a, Directive<'a>>, ArenaVec<'a, Statement<'a>>) {
         let mut directives = ArenaVec::new_in(self);
-        let mut statements = ArenaVec::new_in(self);
+        let mut statements = BufferedVec::new_in(self);
 
         let is_top_level = self.ctx.has_top_level();
         let stmt_ctx =
@@ -125,7 +127,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             statements.push(stmt);
         }
 
-        (directives, statements)
+        (directives, statements.into_vec())
     }
 
     /// `StatementListItem`[Yield, Await, Return] :
