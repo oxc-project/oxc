@@ -150,9 +150,10 @@ impl<'a> ModuleRecordBuilder<'a> {
                 // 1. Let ie be the element of importEntries whose [[LocalName]] is the same as ee.[[LocalName]].
                 let import_name = match &import.import_name {
                     ImportImportName::Name(name) => ExportImportName::Name(name.clone()),
-                    ImportImportName::Default(span) => {
-                        ExportImportName::Name(NameSpan::new("default".into(), *span))
-                    }
+                    ImportImportName::Default(span) => ExportImportName::Name(NameSpan::new(
+                        self.allocator.alloc_str("default").into(),
+                        *span,
+                    )),
                     // ParseModule 10.a.ii.3: normalize to `export * as name from 'mod'`.
                     ImportImportName::NamespaceObject => ExportImportName::All,
                 };
