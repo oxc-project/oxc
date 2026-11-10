@@ -248,6 +248,10 @@ fn comment_owners_of_rebuilt_nodes_are_in_ast() {
         ("x = ((/* c */ [a])) = b;", SourceType::mjs()),
         ("for ((/* c */ { a }) in b);", SourceType::mjs()),
         ("for (([a] /* c */) of b);", SourceType::mjs()),
+        ("++(/* c */ (a.b));", SourceType::mjs()),
+        ("((a.b) /* c */)--;", SourceType::mjs()),
+        ("(/* c */ (a)) = b;", SourceType::mjs()),
+        ("class C { #p; m() { ((/* c */ (this.#p as number))) = 1; } }", SourceType::ts()),
     ];
     let mut missing = Vec::new();
     for (source, source_type) in cases {

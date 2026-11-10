@@ -38,6 +38,9 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
             }
             Expression::ParenthesizedExpression(expr) => {
                 let span = expr.span;
+                if p.assigned_comments != 0 {
+                    p.unassign_comments_keeping_annotations(span);
+                }
                 match expr.unbox().expression {
                     Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
                         p.fatal_error(diagnostics::invalid_assignment(span))
