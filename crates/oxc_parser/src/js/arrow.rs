@@ -97,7 +97,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let Expression::Identifier(ident) = &expr else {
                 return self.unexpected();
             };
-            BindingIdentifier::new(ident.span, ident.name, self)
+            let binding = BindingIdentifier::new(ident.span, ident.name, self);
+            binding.set_node_id(ident.node_id());
+            binding
         };
         // It is a Syntax Error if ArrowParameters Contains AwaitExpression is true.
         if ident.name == "await" {
