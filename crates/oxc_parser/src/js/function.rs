@@ -69,9 +69,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Parse an ambiguous JS arrow head, retaining whether its final comma prevents it
     /// from also being a parenthesized expression.
-    pub(super) fn parse_cover_arrow_parameters(
-        &mut self,
-    ) -> (ArenaBox<'a, FormalParameters<'a>>, bool) {
+    pub(super) fn parse_cover_arrow_parameters(&mut self) -> (FormalParameters<'a>, bool) {
         debug_assert!(!self.is_ts);
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
@@ -81,7 +79,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let has_trailing_comma =
             list.last().is_some_and(|param| param.span.end < self.prev_token_end);
         self.expect(Kind::RParen);
-        let params = FormalParameters::boxed(
+        let params = FormalParameters::new(
             self.end_span(start),
             FormalParameterKind::ArrowFormalParameters,
             list,
