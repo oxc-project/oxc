@@ -255,7 +255,12 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Initialize comment attachment only when this token boundary contains a comment.
     fn begin_comment(&mut self, state: &mut ScanState, previous: &Token) {
         if !state.has_trivia() {
-            self.trivia_builder.begin_boundary(*previous, state.is_on_new_line());
+            let mut previous = *previous;
+            // IdentifierName mode defers keyword classification until comments need it.
+            if previous.kind() == Kind::Ident {
+                previous.set_kind(Kind::match_keyword(self.get_string(previous)));
+            }
+            self.trivia_builder.begin_boundary(previous, state.is_on_new_line());
             state.set_has_trivia();
         }
     }

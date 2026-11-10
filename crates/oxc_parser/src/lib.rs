@@ -1524,6 +1524,46 @@ mod test {
         assert_eq!(ret.program.body.len(), 2);
     }
 
+    #[test]
+    fn property_name_comments_across_token_configs() {
+        for (property, kind) in [
+            ("return", Kind::Return),
+            (r"r\u0065turn", Kind::Return),
+            ("default", Kind::Default),
+            ("in", Kind::In),
+            ("name", Kind::Ident),
+        ] {
+            for suffix in ["/* comment */ ()", "/* comment */ .next", "// comment\n.next"] {
+                let source = format!("object.{property} {suffix}");
+                let allocator = Allocator::default();
+                let parser = || Parser::new(&allocator, &source, SourceType::default());
+                let expected = parser().with_config(config::TokensParserConfig).parse();
+                assert!(expected.diagnostics.is_empty(), "{source}");
+                assert_eq!(expected.program.comments.len(), 1, "{source}");
+                assert_eq!(expected.tokens[2].kind(), kind, "{source}");
+                for actual in [
+                    parser().parse(),
+                    parser().with_config(config::RuntimeParserConfig::new(false)).parse(),
+                    parser().with_config(config::RuntimeParserConfig::new(true)).parse(),
+                ] {
+                    assert!(actual.diagnostics.is_empty(), "{source}");
+                    assert_eq!(
+                        format!("{:?}", actual.program),
+                        format!("{:?}", expected.program),
+                        "{source}"
+                    );
+                    if !actual.tokens.is_empty() {
+                        assert_eq!(
+                            actual.tokens.as_slice(),
+                            expected.tokens.as_slice(),
+                            "{source}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
     // Where the lexer cannot lex any further it emits `Undetermined`, and no `Eof` follows.
     // That final token ends the input just as `Eof` does, so it is discarded, and discarding it
     // must not take the real token before it with it.

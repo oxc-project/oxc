@@ -28,6 +28,28 @@ fn is_identifier_start_ascii_byte(byte: u8) -> bool {
 }
 
 impl<'a, C: Config> Lexer<'a, C> {
+    /// Advance after a member dot, where keywords are valid identifier names.
+    /// Keep ordinary keyword classification when collecting the public token stream.
+    #[inline]
+    pub(crate) fn advance_identifier_name(&mut self, current: &mut super::Token) {
+        if !self.config.tokens() && self.peek_byte().is_some_and(is_identifier_start_ascii_byte) {
+            self.complete_identifier_name(current);
+        } else {
+            self.advance_normal(current);
+        }
+    }
+
+    #[inline(never)]
+    fn complete_identifier_name(&mut self, current: &mut super::Token) {
+        let mut state = ScanState::new(self.offset());
+        // SAFETY: The caller checked that the first byte exists and starts an ASCII identifier.
+        unsafe {
+            self.identifier_name_handler(&mut state);
+        }
+        *current =
+            self.finish_next_inner::<false>(state, Kind::Ident, super::FinishTokenMode::Push);
+    }
+
     /// Handle identifier with ASCII start character.
     /// Returns text of the identifier, minus its first char.
     ///

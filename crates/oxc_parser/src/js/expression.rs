@@ -943,7 +943,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             match self.cur_kind() {
                 Kind::Dot => {
-                    self.bump_any();
+                    self.prev_token_end = self.token.end();
+                    self.lexer.advance_identifier_name(&mut self.token);
                     self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_start);
                     lhs = self.parse_static_member_expression(lhs_start, lhs, false);
                 }
