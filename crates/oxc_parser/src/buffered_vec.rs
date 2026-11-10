@@ -22,6 +22,12 @@ impl<'a, T> BufferedVec<'a, T> {
             self.vec.push(value);
         }
     }
+
+    #[inline]
+    pub fn into_vec(mut self) -> ArenaVec<'a, T> {
+        self.vec.extend(self.first);
+        self.vec
+    }
 }
 
 impl<'a, T> IntoIterator for BufferedVec<'a, T> {

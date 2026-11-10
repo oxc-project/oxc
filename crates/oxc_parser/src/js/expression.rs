@@ -20,7 +20,9 @@ use super::{
     },
 };
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl,
+    buffered_vec::BufferedVec,
+    diagnostics,
     lexer::{Kind, parse_big_int, parse_float, parse_int},
     modifiers::Modifiers,
 };
@@ -625,35 +627,42 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 (quasis, ArenaVec::new_in(self))
             }
             Kind::TemplateHead => {
-                let mut expressions = ArenaVec::with_capacity_in(1, self);
-                let mut quasis = ArenaVec::with_capacity_in(2, self);
-
-                quasis.push(self.parse_template_element(tagged));
+                let mut expressions = BufferedVec::new_in(self);
+                let mut first = Some(self.parse_template_element(tagged));
                 // TemplateHead Expression[+In, ?Yield, ?Await]
                 let expr = self.context_add(Context::In, Self::parse_expr);
                 expressions.push(expr);
                 self.re_lex_template_substitution_tail();
-                while self.fatal_error.is_none() {
-                    match self.cur_kind() {
+                let mut finished = false;
+                let quasis = self.collect_list(|p| {
+                    if let Some(first) = first.take() {
+                        return Some(first);
+                    }
+                    if finished || p.fatal_error.is_some() {
+                        return None;
+                    }
+                    match p.cur_kind() {
                         Kind::TemplateTail => {
-                            quasis.push(self.parse_template_element(tagged));
-                            break;
+                            let quasi = p.parse_template_element(tagged);
+                            finished = true;
+                            Some(quasi)
                         }
                         Kind::TemplateMiddle => {
-                            quasis.push(self.parse_template_element(tagged));
+                            let quasi = p.parse_template_element(tagged);
                             // TemplateMiddle Expression[+In, ?Yield, ?Await]
-                            let expr = self.context_add(Context::In, Self::parse_expr);
+                            let expr = p.context_add(Context::In, Self::parse_expr);
                             expressions.push(expr);
-                            self.re_lex_template_substitution_tail();
+                            p.re_lex_template_substitution_tail();
+                            Some(quasi)
                         }
                         _ => {
-                            self.expect(Kind::TemplateTail);
-                            break;
+                            p.expect(Kind::TemplateTail);
+                            None
                         }
                     }
-                }
+                });
 
-                (quasis, expressions)
+                (quasis, expressions.into_vec())
             }
             _ => unreachable!("parse_template_literal"),
         };

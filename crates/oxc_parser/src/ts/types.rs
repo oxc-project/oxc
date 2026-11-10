@@ -5,7 +5,9 @@ use oxc_str::Ident;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl,
+    buffered_vec::BufferedVec,
+    diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
@@ -794,8 +796,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_template_type(&mut self, tagged: bool) -> TSType<'a> {
         let start = self.cur_start();
-        let mut types = ArenaVec::new_in(self);
-        let mut quasis = ArenaVec::new_in(self);
+        let mut types = BufferedVec::new_in(self);
+        let mut quasis = BufferedVec::new_in(self);
         match self.cur_kind() {
             Kind::NoSubstitutionTemplate => {
                 quasis.push(self.parse_template_element(tagged));
@@ -827,7 +829,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => unreachable!("parse_template_literal"),
         }
 
-        TSType::new_ts_template_literal_type(self.end_span(start), quasis, types, self)
+        TSType::new_ts_template_literal_type(
+            self.end_span(start),
+            quasis.into_vec(),
+            types.into_vec(),
+            self,
+        )
     }
 
     fn parse_asserts_type_predicate(&mut self, asserts_start: u32) -> TSType<'a> {
