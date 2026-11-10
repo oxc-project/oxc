@@ -1,12 +1,9 @@
 use oxc_ast::CommentKind;
 use oxc_data_structures::assert_unchecked;
 
-use crate::{
-    config::{LexerConfig as Config, NoTokensLexerConfig, RuntimeLexerConfig, TokensLexerConfig},
-    diagnostics,
-};
+use crate::{config::LexerConfig as Config, diagnostics};
 
-use super::{Kind, Lexer};
+use super::{Kind, Lexer, ScanState};
 
 impl<C: Config> Lexer<'_, C> {
     /// Handle next byte of source.
@@ -19,38 +16,33 @@ impl<C: Config> Lexer<'_, C> {
     // `#[inline(always)]` to ensure is inlined into `read_next_token`
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub(super) unsafe fn handle_byte(&mut self, byte: u8) -> Kind {
-        // Bypass indirect dispatch for these common one-byte tokens.
-        // Keep this match small: adding other handlers regressed ARM64 parser benchmarks
-        // through extra dispatch work and reduced inlining into parser callers.
-        // Re-benchmark before extending this set.
+    pub(super) unsafe fn handle_byte(&mut self, state: &mut ScanState, byte: u8) -> Kind {
+        match byte {
+            b'(' | b')' | b';' => self.read_fixed_punctuation(byte),
+            _ => Self::STATEFUL_HANDLERS[byte as usize](self, state),
+        }
+    }
+
+    #[inline]
+    fn read_fixed_punctuation(&mut self, byte: u8) -> Kind {
         let kind = match byte {
             b'(' => Kind::LParen,
             b')' => Kind::RParen,
             b';' => Kind::Semicolon,
-            _ => {
-                let byte_handlers = self.config.byte_handlers();
-                // SAFETY: Caller guarantees to uphold safety invariants.
-                return unsafe { byte_handlers[byte as usize](self) };
-            }
+            _ => unreachable!(),
         };
-
-        // SAFETY: Caller guarantees `byte` is the current source byte, and these are single-byte ASCII characters.
-        let next = unsafe { self.source.position().add(1) };
-        self.source.set_position(next);
+        // SAFETY: The caller classified a single-byte ASCII punctuation token.
+        self.source.set_position(unsafe { self.source.position().add(1) });
         kind
     }
 }
-
-pub type ByteHandler<C> = unsafe fn(&mut Lexer<'_, C>) -> Kind;
-pub type ByteHandlers<C> = [ByteHandler<C>; 256];
 
 /// Macro to create a lookup table mapping any incoming byte to a handler function defined below.
 /// <https://github.com/ratel-rust/ratel-core/blob/e55a1310ba69a3f5ce2a9a6eef643feced02ac08/ratel/src/lexer/mod.rs>
 #[rustfmt::skip]
 macro_rules! byte_handlers {
-    () => {
-        [
+    ($adapter:ident) => {
+        $adapter!([
         //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F    //
             ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, ISP, ISP, LIN, ERR, ERR, // 0
             ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, // 1
@@ -68,16 +60,17 @@ macro_rules! byte_handlers {
             UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // D
             UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // E
             UNI, UNI, UNI, UNI, UNI, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // F
-        ]
+        ])
     };
 }
 
-pub mod byte_handler_tables {
-    use super::*;
+macro_rules! stateful_handler {
+    ([$($handler:ident),* $(,)?]) => { [$(|lexer, state| $handler(lexer, state)),*] };
+}
 
-    pub static NO_TOKENS: ByteHandlers<NoTokensLexerConfig> = byte_handlers!();
-    pub static WITH_TOKENS: ByteHandlers<TokensLexerConfig> = byte_handlers!();
-    pub static RUNTIME_TOKENS: ByteHandlers<RuntimeLexerConfig> = byte_handlers!();
+impl<C: Config> Lexer<'_, C> {
+    const STATEFUL_HANDLERS: [fn(&mut Self, &mut ScanState) -> Kind; 256] =
+        byte_handlers!(stateful_handler);
 }
 
 /// Macro for defining byte handler for an ASCII character.
@@ -97,7 +90,7 @@ pub mod byte_handler_tables {
 /// Only use this macro to define byte handlers for ASCII characters.
 ///
 /// ```rust,ignore
-/// ascii_byte_handler!(SPS(lexer) {
+/// ascii_byte_handler!(SPS(lexer, state) {
 ///     lexer.consume_char();
 ///     Kind::WhiteSpace
 /// });
@@ -107,7 +100,7 @@ pub mod byte_handler_tables {
 ///
 /// ```rust,ignore
 /// #[expect(non_snake_case)]
-/// fn SPS<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+/// fn SPS<C: Config>(lexer: &mut Lexer<'_, C>, state: &mut ScanState) -> Kind {
 ///     // SAFETY: This macro is only used for ASCII characters
 ///     unsafe {
 ///         assert_unchecked!(!lexer.source.is_eof());
@@ -120,9 +113,9 @@ pub mod byte_handler_tables {
 /// }
 /// ```
 macro_rules! ascii_byte_handler {
-    ($id:ident($lex:ident) $body:expr) => {
+    ($id:ident($lex:ident, $state:ident) $body:expr) => {
         #[expect(non_snake_case)]
-        fn $id<C: Config>($lex: &mut Lexer<'_, C>) -> Kind {
+        fn $id<C: Config>($lex: &mut Lexer<'_, C>, $state: &mut ScanState) -> Kind {
             // SAFETY: This macro is only used for ASCII characters
             unsafe {
                 assert_unchecked!(!$lex.source.is_eof());
@@ -146,7 +139,7 @@ macro_rules! ascii_byte_handler {
 /// Only use this macro to define byte handlers for ASCII characters.
 ///
 /// ```rust,ignore
-/// ascii_identifier_handler!(L_G(id_without_first_char) match id_without_first_char.as_bytes() {
+/// ascii_identifier_handler!(L_G(id_without_first_char, state) match id_without_first_char.as_bytes() {
 ///     b"et" => Kind::Get,
 ///     b"lobal" => Kind::Global,
 ///     _ => Kind::Ident,
@@ -157,9 +150,9 @@ macro_rules! ascii_byte_handler {
 ///
 /// ```rust,ignore
 /// #[expect(non_snake_case)]
-/// fn L_G<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+/// fn L_G<C: Config>(lexer: &mut Lexer<'_, C>, state: &mut ScanState) -> Kind {
 ///     // SAFETY: This macro is only used for ASCII characters
-///     let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+///     let id_without_first_char = unsafe { lexer.identifier_name_handler(state) };
 ///     match id_without_first_char.as_bytes() {
 ///         b"et" => Kind::Get,
 ///         b"lobal" => Kind::Global,
@@ -168,43 +161,44 @@ macro_rules! ascii_byte_handler {
 /// }
 /// ```
 macro_rules! ascii_identifier_handler {
-    ($id:ident($str:ident) $body:expr) => {
+    ($id:ident($str:ident, $state:ident) $body:expr) => {
         #[expect(non_snake_case)]
-        fn $id<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
-            // SAFETY: This macro is only used for ASCII characters
-            let $str = unsafe { lexer.identifier_name_handler() };
+        #[inline]
+        fn $id<C: Config>(lexer: &mut Lexer<'_, C>, $state: &mut ScanState) -> Kind {
+            // SAFETY: The table only calls identifier handlers for ASCII identifier starts.
+            let $str = unsafe { lexer.identifier_name_handler($state) };
             $body
         }
     };
 }
 
 // `\0` `\1` etc
-ascii_byte_handler!(ERR(lexer) {
+ascii_byte_handler!(ERR(lexer, state) {
     let c = lexer.consume_char();
-    lexer.error(diagnostics::invalid_character(c, lexer.unterminated_range()));
+    lexer.error(diagnostics::invalid_character(c, lexer.unterminated_range(*state)));
     Kind::Undetermined
 });
 
 // <SPACE> <TAB> Normal Whitespace
-ascii_byte_handler!(SPS(lexer) {
+ascii_byte_handler!(SPS(lexer, _state) {
     lexer.whitespace_handler()
 });
 
 // <VT> <FF> Irregular Whitespace
-ascii_byte_handler!(ISP(lexer) {
+ascii_byte_handler!(ISP(lexer, state) {
     lexer.consume_char();
-    lexer.trivia_builder.add_irregular_whitespace(lexer.token.start(), lexer.offset());
+    lexer.trivia_builder.add_irregular_whitespace(state.start(), lexer.offset());
     Kind::Skip
 });
 
 // '\r' '\n'
-ascii_byte_handler!(LIN(lexer) {
+ascii_byte_handler!(LIN(lexer, state) {
     lexer.consume_char();
-    lexer.line_break_handler()
+    lexer.line_break_handler(state)
 });
 
 // !
-ascii_byte_handler!(EXL(lexer) {
+ascii_byte_handler!(EXL(lexer, _state) {
     lexer.consume_char();
     // Try to peek at next byte for common case first
     match lexer.peek_byte() {
@@ -223,30 +217,32 @@ ascii_byte_handler!(EXL(lexer) {
 });
 
 // "
-ascii_byte_handler!(QOD(lexer) {
+ascii_byte_handler!(QOD(lexer, state) {
     // SAFETY: This function is only called for `"`
-    unsafe { lexer.read_string_literal_double_quote() }
+    unsafe { lexer.read_string_literal_double_quote(state) }
 });
 
 // '
-ascii_byte_handler!(QOS(lexer) {
+ascii_byte_handler!(QOS(lexer, state) {
     // SAFETY: This function is only called for `'`
-    unsafe { lexer.read_string_literal_single_quote() }
+    unsafe { lexer.read_string_literal_single_quote(state) }
 });
 
 // #
-ascii_byte_handler!(HAS(lexer) {
+ascii_byte_handler!(HAS(lexer, state) {
     lexer.consume_char();
-    lexer.private_identifier()
+    lexer.private_identifier(state)
 });
 
 // `A..=Z`, `a..=z` (except special cases below), `_`, `$`
-ascii_identifier_handler!(IDT(_id_without_first_char) {
+ascii_byte_handler!(IDT(lexer, state) {
+    // SAFETY: This handler is only called for ASCII identifier starts.
+    unsafe { lexer.identifier_name_handler(state) };
     Kind::Ident
 });
 
 // %
-ascii_byte_handler!(PRC(lexer) {
+ascii_byte_handler!(PRC(lexer, _state) {
     lexer.consume_char();
     if lexer.next_ascii_byte_eq(b'=') {
         Kind::PercentEq
@@ -256,7 +252,7 @@ ascii_byte_handler!(PRC(lexer) {
 });
 
 // &
-ascii_byte_handler!(AMP(lexer) {
+ascii_byte_handler!(AMP(lexer, _state) {
     lexer.consume_char();
     if lexer.next_ascii_byte_eq(b'&') {
         if lexer.next_ascii_byte_eq(b'=') {
@@ -272,7 +268,7 @@ ascii_byte_handler!(AMP(lexer) {
 });
 
 // *
-ascii_byte_handler!(ATR(lexer) {
+ascii_byte_handler!(ATR(lexer, _state) {
     lexer.consume_char();
     if lexer.next_ascii_byte_eq(b'*') {
         if lexer.next_ascii_byte_eq(b'=') {
@@ -288,7 +284,7 @@ ascii_byte_handler!(ATR(lexer) {
 });
 
 // +
-ascii_byte_handler!(PLS(lexer) {
+ascii_byte_handler!(PLS(lexer, _state) {
     lexer.consume_char();
     if lexer.next_ascii_byte_eq(b'+') {
         Kind::Plus2
@@ -300,34 +296,34 @@ ascii_byte_handler!(PLS(lexer) {
 });
 
 // ,
-ascii_byte_handler!(COM(lexer) {
+ascii_byte_handler!(COM(lexer, _state) {
     lexer.consume_char();
     Kind::Comma
 });
 
 // -
-ascii_byte_handler!(MIN(lexer) {
+ascii_byte_handler!(MIN(lexer, state) {
     lexer.consume_char();
-    lexer.read_minus().unwrap_or_else(|| lexer.skip_single_line_comment(CommentKind::HtmlClose))
+    lexer.read_minus(*state).unwrap_or_else(|| { lexer.skip_single_line_comment(state, CommentKind::HtmlClose) })
 });
 
 // .
-ascii_byte_handler!(PRD(lexer) {
+ascii_byte_handler!(PRD(lexer, state) {
     lexer.consume_char();
-    lexer.read_dot()
+    lexer.read_dot(state)
 });
 
 // /
-ascii_byte_handler!(SLH(lexer) {
+ascii_byte_handler!(SLH(lexer, state) {
     lexer.consume_char();
     match lexer.peek_byte() {
         Some(b'/') => {
             lexer.consume_char();
-            lexer.skip_single_line_comment(CommentKind::Line)
+            lexer.skip_single_line_comment(state, CommentKind::Line)
         }
         Some(b'*') => {
             lexer.consume_char();
-            lexer.skip_multi_line_comment()
+            lexer.skip_multi_line_comment(state)
         }
         _ => {
             // regex is handled separately, see `next_regex`
@@ -341,31 +337,31 @@ ascii_byte_handler!(SLH(lexer) {
 });
 
 // 0
-ascii_byte_handler!(ZER(lexer) {
+ascii_byte_handler!(ZER(lexer, state) {
     lexer.consume_char();
-    lexer.read_zero()
+    lexer.read_zero(state)
 });
 
 // 1 to 9
-ascii_byte_handler!(DIG(lexer) {
+ascii_byte_handler!(DIG(lexer, state) {
     lexer.consume_char();
-    lexer.decimal_literal_after_first_digit()
+    lexer.decimal_literal_after_first_digit(state)
 });
 
 // :
-ascii_byte_handler!(COL(lexer) {
+ascii_byte_handler!(COL(lexer, _state) {
     lexer.consume_char();
     Kind::Colon
 });
 
 // <
-ascii_byte_handler!(LSS(lexer) {
+ascii_byte_handler!(LSS(lexer, state) {
     lexer.consume_char();
-    lexer.read_left_angle().unwrap_or_else(|| lexer.skip_single_line_comment(CommentKind::HtmlOpen))
+    lexer.read_left_angle(*state).unwrap_or_else(|| { lexer.skip_single_line_comment(state, CommentKind::HtmlOpen) })
 });
 
 // =
-ascii_byte_handler!(EQL(lexer) {
+ascii_byte_handler!(EQL(lexer, _state) {
     lexer.consume_char();
     if lexer.next_ascii_byte_eq(b'=') {
         if lexer.next_ascii_byte_eq(b'=') {
@@ -381,14 +377,14 @@ ascii_byte_handler!(EQL(lexer) {
 });
 
 // >
-ascii_byte_handler!(GTR(lexer) {
+ascii_byte_handler!(GTR(lexer, _state) {
     lexer.consume_char();
     // `>=` is re-lexed with [Lexer::next_jsx_child]
     Kind::RAngle
 });
 
 // ?
-ascii_byte_handler!(QST(lexer) {
+ascii_byte_handler!(QST(lexer, _state) {
     lexer.consume_char();
 
     match lexer.peek_byte() {
@@ -416,30 +412,30 @@ ascii_byte_handler!(QST(lexer) {
 });
 
 // @
-ascii_byte_handler!(AT_(lexer) {
+ascii_byte_handler!(AT_(lexer, _state) {
     lexer.consume_char();
     Kind::At
 });
 
 // [
-ascii_byte_handler!(BTO(lexer) {
+ascii_byte_handler!(BTO(lexer, _state) {
     lexer.consume_char();
     Kind::LBrack
 });
 
 // \
-ascii_byte_handler!(ESC(lexer) {
-    lexer.identifier_backslash_handler()
+ascii_byte_handler!(ESC(lexer, state) {
+    lexer.identifier_backslash_handler(state)
 });
 
 // ]
-ascii_byte_handler!(BTC(lexer) {
+ascii_byte_handler!(BTC(lexer, _state) {
     lexer.consume_char();
     Kind::RBrack
 });
 
 // ^
-ascii_byte_handler!(CRT(lexer) {
+ascii_byte_handler!(CRT(lexer, _state) {
     lexer.consume_char();
     if lexer.next_ascii_byte_eq(b'=') {
         Kind::CaretEq
@@ -449,19 +445,19 @@ ascii_byte_handler!(CRT(lexer) {
 });
 
 // `
-ascii_byte_handler!(TPL(lexer) {
+ascii_byte_handler!(TPL(lexer, state) {
     lexer.consume_char();
-    lexer.read_template_literal(Kind::TemplateHead, Kind::NoSubstitutionTemplate)
+    lexer.read_template_literal(state, Kind::TemplateHead, Kind::NoSubstitutionTemplate)
 });
 
 // {
-ascii_byte_handler!(BEO(lexer) {
+ascii_byte_handler!(BEO(lexer, _state) {
     lexer.consume_char();
     Kind::LCurly
 });
 
 // |
-ascii_byte_handler!(PIP(lexer) {
+ascii_byte_handler!(PIP(lexer, _state) {
     lexer.consume_char();
 
     match lexer.peek_byte() {
@@ -482,20 +478,20 @@ ascii_byte_handler!(PIP(lexer) {
 });
 
 // }
-ascii_byte_handler!(BEC(lexer) {
+ascii_byte_handler!(BEC(lexer, _state) {
     lexer.consume_char();
     Kind::RCurly
 });
 
 // ~
-ascii_byte_handler!(TLD(lexer) {
+ascii_byte_handler!(TLD(lexer, _state) {
     lexer.consume_char();
     Kind::Tilde
 });
 
 // Byte patterns let the compiler compare fixed-size chunks without calling a string comparison
 // routine for keyword lengths that are not a power of two.
-ascii_identifier_handler!(L_A(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_A(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"wait" => Kind::Await,
     b"sync" => Kind::Async,
     b"bstract" => Kind::Abstract,
@@ -507,14 +503,14 @@ ascii_identifier_handler!(L_A(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_B(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_B(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"reak" => Kind::Break,
     b"oolean" => Kind::Boolean,
     b"igint" => Kind::BigInt,
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_C(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_C(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"onst" => Kind::Const,
     b"lass" => Kind::Class,
     b"ontinue" => Kind::Continue,
@@ -524,7 +520,7 @@ ascii_identifier_handler!(L_C(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_D(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_D(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"o" => Kind::Do,
     b"elete" => Kind::Delete,
     b"eclare" => Kind::Declare,
@@ -534,7 +530,7 @@ ascii_identifier_handler!(L_D(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_E(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_E(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"lse" => Kind::Else,
     b"num" => Kind::Enum,
     b"xport" => Kind::Export,
@@ -542,7 +538,7 @@ ascii_identifier_handler!(L_E(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_F(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_F(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"unction" => Kind::Function,
     b"alse" => Kind::False,
     b"or" => Kind::For,
@@ -551,13 +547,13 @@ ascii_identifier_handler!(L_F(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_G(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_G(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"et" => Kind::Get,
     b"lobal" => Kind::Global,
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_I(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_I(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"f" => Kind::If,
     b"nstanceof" => Kind::Instanceof,
     b"n" => Kind::In,
@@ -570,23 +566,23 @@ ascii_identifier_handler!(L_I(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_K(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_K(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"eyof" => Kind::KeyOf,
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_L(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_L(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"et" => Kind::Let,
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_M(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_M(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"eta" => Kind::Meta,
     b"odule" => Kind::Module,
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_N(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_N(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"ull" => Kind::Null,
     b"ew" => Kind::New,
     b"umber" => Kind::Number,
@@ -595,7 +591,7 @@ ascii_identifier_handler!(L_N(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_O(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_O(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"f" => Kind::Of,
     b"bject" => Kind::Object,
     b"ut" => Kind::Out,
@@ -603,7 +599,7 @@ ascii_identifier_handler!(L_O(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_P(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_P(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"ackage" => Kind::Package,
     b"rivate" => Kind::Private,
     b"rotected" => Kind::Protected,
@@ -611,14 +607,14 @@ ascii_identifier_handler!(L_P(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_R(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_R(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"eturn" => Kind::Return,
     b"equire" => Kind::Require,
     b"eadonly" => Kind::Readonly,
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_S(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_S(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"et" => Kind::Set,
     b"uper" => Kind::Super,
     b"witch" => Kind::Switch,
@@ -630,7 +626,7 @@ ascii_identifier_handler!(L_S(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_T(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_T(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"his" => Kind::This,
     b"rue" => Kind::True,
     b"hrow" => Kind::Throw,
@@ -641,7 +637,7 @@ ascii_identifier_handler!(L_T(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_U(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_U(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"ndefined" => Kind::Undefined,
     b"sing" => Kind::Using,
     b"nique" => Kind::Unique,
@@ -649,19 +645,19 @@ ascii_identifier_handler!(L_U(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_V(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_V(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"ar" => Kind::Var,
     b"oid" => Kind::Void,
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_W(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_W(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"hile" => Kind::While,
     b"ith" => Kind::With,
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_Y(id_without_first_char) match id_without_first_char.as_bytes() {
+ascii_identifier_handler!(L_Y(id_without_first_char, state) match id_without_first_char.as_bytes() {
     b"ield" => Kind::Yield,
     _ => Kind::Ident,
 });
@@ -670,8 +666,8 @@ ascii_identifier_handler!(L_Y(id_without_first_char) match id_without_first_char
 //
 // Note: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII chars.
 #[expect(non_snake_case)]
-fn UNI<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
-    lexer.unicode_char_handler()
+fn UNI<C: Config>(lexer: &mut Lexer<'_, C>, state: &mut ScanState) -> Kind {
+    lexer.unicode_char_handler(state)
 }
 
 // Punctuation dispatched directly in `handle_byte`, and invalid UTF-8 start bytes.
@@ -684,7 +680,7 @@ fn UNI<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
 //
 // Note: Must not use `ascii_byte_handler!` macro, as this handler also covers non-ASCII bytes.
 #[expect(non_snake_case)]
-fn UER<C: Config>(_lexer: &mut Lexer<'_, C>) -> Kind {
+fn UER<C: Config>(_lexer: &mut Lexer<'_, C>, _state: &mut ScanState) -> Kind {
     unreachable!();
 }
 
@@ -694,7 +690,90 @@ mod tests {
     use oxc_span::SourceType;
 
     use super::*;
-    use crate::{UniquePromise, config::TokensLexerConfig};
+    use crate::{
+        Parser, UniquePromise,
+        config::{ParserConfig, RuntimeParserConfig, TokensLexerConfig, TokensParserConfig},
+    };
+
+    #[derive(Clone, Copy, Default)]
+    struct CustomConfig(bool);
+
+    impl Config for CustomConfig {
+        const TOKENS_METHOD_IS_STATIC: bool = false;
+
+        fn tokens(&self) -> bool {
+            self.0
+        }
+    }
+
+    impl ParserConfig for CustomConfig {
+        type LexerConfig = Self;
+        fn lexer_config(&self) -> Self {
+            *self
+        }
+    }
+
+    #[test]
+    fn parser_configs_agree_on_tokens_flags_diagnostics_and_comments() {
+        // Exercise the configuration boundary and retokenization, including failed speculation.
+        let cases = [
+            ("/* @__PURE__ */ f(); g(); (a /* trailing */ + b);", SourceType::mjs()),
+            ("function f(){return/*\n*/ /[[]/g;} a / b;", SourceType::mjs()),
+            ("let a\\u0062 = 'x\\n'; let π = 1_000; let z = 3;", SourceType::mjs()),
+            ("const x = `a${b}c${d}e`; tag`\\u{}`;", SourceType::mjs()),
+            ("type X = A<B<C>>; f<<T>() => T>(); a << b; a >>> b;", SourceType::ts()),
+            (
+                "const f = <T,>(x:T) => x; const x = <x-y a=\"\\q\">text{v}</x-y>;",
+                SourceType::tsx(),
+            ),
+            ("async (a /* comment */ + b); (a /* comment */ + b);", SourceType::ts()),
+            ("<!-- comment\nlet x = 1;", SourceType::default().with_unambiguous(true)),
+            ("let\u{85}x = 1; let\u{200b}y = 2;", SourceType::mjs()),
+            ("const x = 3in y;", SourceType::mjs()),
+            ("const x = 'unterminated", SourceType::mjs()),
+            ("`bad${1", SourceType::mjs()),
+            ("", SourceType::mjs()),
+            ("#!/usr/bin/env node\n/* tail */", SourceType::mjs()),
+        ];
+        for (source, source_type) in cases {
+            let expected_allocator = Allocator::default();
+            let expected = Parser::new(&expected_allocator, source, source_type)
+                .with_config(TokensParserConfig)
+                .parse();
+            for tokens in [false, true] {
+                let custom_allocator = Allocator::default();
+                let custom = Parser::new(&custom_allocator, source, source_type)
+                    .with_config(CustomConfig(tokens))
+                    .parse();
+                let runtime_allocator = Allocator::default();
+                let runtime = Parser::new(&runtime_allocator, source, source_type)
+                    .with_config(RuntimeParserConfig::new(tokens))
+                    .parse();
+                for result in [&custom, &runtime] {
+                    assert_eq!(
+                        format!("{:?}", result.program),
+                        format!("{:?}", expected.program),
+                        "{source}"
+                    );
+                    assert_eq!(
+                        format!("{:?}", result.diagnostics),
+                        format!("{:?}", expected.diagnostics),
+                        "{source}"
+                    );
+                    assert_eq!(
+                        result.irregular_whitespaces, expected.irregular_whitespaces,
+                        "{source}"
+                    );
+                    assert_eq!(result.fatal_error, expected.fatal_error, "{source}");
+                    if tokens {
+                        assert_eq!(result.tokens, expected.tokens, "{source}");
+                    } else {
+                        assert!(result.tokens.is_empty());
+                    }
+                }
+            }
+        }
+    }
 
     #[test]
     fn checkpoint_restores_replaced_token() {
@@ -709,7 +788,7 @@ mod tests {
         lexer.first_token();
         let shift = lexer.next_token();
         let checkpoint = lexer.checkpoint();
-        assert_eq!(lexer.re_lex_as_typescript_l_angle(2).kind(), Kind::LAngle);
+        assert_eq!(lexer.re_lex_as_typescript_l_angle(shift, 2).kind(), Kind::LAngle);
         lexer.next_token();
         lexer.next_token();
         lexer.next_token();
@@ -717,5 +796,21 @@ mod tests {
         assert_eq!(lexer.tokens.last().copied(), Some(shift));
         assert_eq!(lexer.peek_token().kind(), Kind::Ident);
         assert_eq!(lexer.next_token().kind(), Kind::Ident);
+    }
+
+    #[test]
+    fn rescans_preserve_line_breaks_without_appending_tokens() {
+        let allocator = Allocator::default();
+        let mut lexer = Lexer::new(
+            &allocator,
+            "\n/abc/g",
+            SourceType::mjs(),
+            TokensLexerConfig,
+            UniquePromise::new_for_tests_and_benchmarks(),
+        );
+        let slash = lexer.first_token();
+        let (regexp, _, _) = lexer.next_regex(slash);
+        assert!(regexp.is_on_new_line());
+        assert_eq!(lexer.tokens.as_slice(), &[regexp]);
     }
 }

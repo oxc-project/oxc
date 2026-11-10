@@ -1,10 +1,6 @@
 // All methods are `#[inline(always)]` to ensure compiler removes dead code resulting from static values
 #![expect(clippy::inline_always)]
 
-use std::ops::Index;
-
-use crate::lexer::{ByteHandler, ByteHandlers, byte_handler_tables};
-
 /// Parser config.
 ///
 /// The purpose of parser config (as opposed to `ParseOptions`) is to allow setting options at either
@@ -105,22 +101,8 @@ impl ParserConfig for RuntimeParserConfig {
 ///
 /// See [`ParserConfig`] for more details.
 ///
-/// We have to define a different byte handler table for each config, as byte handler functions
-/// are generic over the [`LexerConfig`].
-///
-/// Byte handler tables are defined within lexer (`lexer/byte_handlers.rs`).
-/// We need them to be defined as `static` items, for performance.
-/// 1. `static` ensures that only 1 copy of each byte handler table appears in the binary
-///    (even if `Lexer::handle_byte` is inlined in multiple places).
-/// 2. Indexing into byte handlers table is an extremely hot path, and even 1 extra indirection (pointer chasing)
-///    has a sizeable impact on performance.
-///
-/// An associated type and `byte_handlers` method is the only way to make this work with Rust's type system
-/// and borrow checker.
+/// All configurations use the same scanner. The lexer specializes token collection for each config.
 pub trait LexerConfig: Default {
-    /// Byte handlers table type.
-    type ByteHandlers: Index<usize, Output = ByteHandler<Self>>;
-
     /// `true` if [`tokens`] method returns a static value.
     ///
     /// This const is useful in situations where code can be more efficient
@@ -133,9 +115,6 @@ pub trait LexerConfig: Default {
 
     /// Returns `true` if tokens are enabled.
     fn tokens(&self) -> bool;
-
-    /// Get byte handlers table to use in lexer with this config.
-    fn byte_handlers(&self) -> &Self::ByteHandlers;
 }
 
 /// Lexer config for lexing without tokens.
@@ -143,18 +122,11 @@ pub trait LexerConfig: Default {
 pub struct NoTokensLexerConfig;
 
 impl LexerConfig for NoTokensLexerConfig {
-    type ByteHandlers = ByteHandlers<Self>;
-
     const TOKENS_METHOD_IS_STATIC: bool = true;
 
     #[inline(always)]
     fn tokens(&self) -> bool {
         false
-    }
-
-    #[inline(always)]
-    fn byte_handlers(&self) -> &Self::ByteHandlers {
-        &byte_handler_tables::NO_TOKENS
     }
 }
 
@@ -163,18 +135,11 @@ impl LexerConfig for NoTokensLexerConfig {
 pub struct TokensLexerConfig;
 
 impl LexerConfig for TokensLexerConfig {
-    type ByteHandlers = ByteHandlers<Self>;
-
     const TOKENS_METHOD_IS_STATIC: bool = true;
 
     #[inline(always)]
     fn tokens(&self) -> bool {
         true
-    }
-
-    #[inline(always)]
-    fn byte_handlers(&self) -> &Self::ByteHandlers {
-        &byte_handler_tables::WITH_TOKENS
     }
 }
 
@@ -193,17 +158,10 @@ impl RuntimeLexerConfig {
 }
 
 impl LexerConfig for RuntimeLexerConfig {
-    type ByteHandlers = ByteHandlers<Self>;
-
     const TOKENS_METHOD_IS_STATIC: bool = false;
 
     #[inline(always)]
     fn tokens(&self) -> bool {
         self.tokens
-    }
-
-    #[inline(always)]
-    fn byte_handlers(&self) -> &Self::ByteHandlers {
-        &byte_handler_tables::RUNTIME_TOKENS
     }
 }

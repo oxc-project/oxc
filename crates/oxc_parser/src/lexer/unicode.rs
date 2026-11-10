@@ -10,7 +10,7 @@ use oxc_syntax::{
 
 use crate::{config::LexerConfig as Config, diagnostics};
 
-use super::{Kind, Lexer, Span};
+use super::{Kind, Lexer, ScanState, Span};
 
 /// A Unicode escape sequence.
 ///
@@ -28,7 +28,7 @@ enum UnicodeEscape {
 }
 
 impl<'a, C: Config> Lexer<'a, C> {
-    pub(super) fn unicode_char_handler(&mut self) -> Kind {
+    pub(super) fn unicode_char_handler(&mut self, state: &mut ScanState) -> Kind {
         let c = self.peek_char().unwrap();
         match c {
             // U+FFFD (replacement character) appears when a binary file is decoded as UTF-8.
@@ -37,12 +37,12 @@ impl<'a, C: Config> Lexer<'a, C> {
             '\u{FFFD}' => self.handle_binary_file(),
             c if is_identifier_start_unicode(c) => {
                 let start_pos = self.source.position();
-                self.identifier_tail_after_unicode(start_pos, c);
+                self.identifier_tail_after_unicode(state, start_pos, c);
                 Kind::Ident
             }
-            c if is_irregular_whitespace(c) => self.handle_irregular_whitespace(c),
-            c if is_irregular_line_terminator(c) => self.handle_irregular_line_terminator(c),
-            _ => self.handle_invalid_unicode_char(c),
+            c if is_irregular_whitespace(c) => self.handle_irregular_whitespace(*state, c),
+            c if is_irregular_line_terminator(c) => self.handle_irregular_line_terminator(state, c),
+            _ => self.handle_invalid_unicode_char(*state, c),
         }
     }
 
@@ -54,25 +54,25 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     #[cold]
-    fn handle_irregular_whitespace(&mut self, _c: char) -> Kind {
+    fn handle_irregular_whitespace(&mut self, state: ScanState, _c: char) -> Kind {
         self.consume_char();
-        self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
+        self.trivia_builder.add_irregular_whitespace(state.start(), self.offset());
         Kind::Skip
     }
 
     #[cold]
-    fn handle_irregular_line_terminator(&mut self, _c: char) -> Kind {
+    fn handle_irregular_line_terminator(&mut self, state: &mut ScanState, _c: char) -> Kind {
         self.consume_char();
-        self.token.set_is_on_new_line(true);
+        state.set_is_on_new_line(true);
         self.trivia_builder.handle_newline();
-        self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
+        self.trivia_builder.add_irregular_whitespace(state.start(), self.offset());
         Kind::Skip
     }
 
     #[cold]
-    fn handle_invalid_unicode_char(&mut self, c: char) -> Kind {
+    fn handle_invalid_unicode_char(&mut self, state: ScanState, c: char) -> Kind {
         self.consume_char();
-        self.error(diagnostics::invalid_character(c, self.unterminated_range()));
+        self.error(diagnostics::invalid_character(c, self.unterminated_range(state)));
         Kind::Undetermined
     }
 
@@ -293,13 +293,14 @@ impl<'a, C: Config> Lexer<'a, C> {
     // EscapeSequence ::
     pub(super) fn read_string_escape_sequence(
         &mut self,
+        state: ScanState,
         text: &mut JSStrBuilder<'a>,
         in_template: bool,
         is_valid_escape_sequence: &mut bool,
     ) {
         match self.next_char() {
             None => {
-                self.error(diagnostics::unterminated_string(self.unterminated_range()));
+                self.error(diagnostics::unterminated_string(self.unterminated_range(state)));
             }
             Some(c) => match c {
                 // \ LineTerminatorSequence
