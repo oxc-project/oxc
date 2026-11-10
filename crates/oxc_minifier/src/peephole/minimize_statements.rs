@@ -1,6 +1,9 @@
-use std::iter;
+use std::{
+    hash::{Hash, Hasher},
+    iter,
+};
 
-use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
+use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{
@@ -10,6 +13,7 @@ use oxc_ecmascript::{
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
 use oxc_syntax::number::ToJsString;
+use rustc_hash::FxHashMap;
 
 use crate::{
     TraverseCtx, generated::ancestor::Ancestor, is_terminated::IsTerminated, keep_var::KeepVar,
@@ -52,6 +56,8 @@ impl<'a> PeepholeOptimizations {
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        // Traversal can rewrite object keys between two calls, so no key analysis carries over.
+        ctx.state.object_merge_target = ObjectMergeTarget::default();
         let mut new_stmts = ArenaVec::with_capacity_in(stmts.len(), ctx);
         let mut old_stmts = stmts.take_in(ctx).into_iter();
         let mut is_control_flow_dead = false;
@@ -443,26 +449,11 @@ impl<'a> PeepholeOptimizations {
         if !assign_expr.right.is_literal_value(true, ctx) {
             return false;
         }
-        // The last property with this key, if nothing after it can define the key again.
-        let mut existing_index = None;
-        for (index, property) in object_expr.properties.iter().enumerate() {
-            let ObjectPropertyKind::ObjectProperty(property) = property else {
-                existing_index = None;
-                continue;
-            };
-            // An accessor runs on assignment, and so can a setter on a `__proto__: p` prototype.
-            if property.kind != PropertyKind::Init
-                || property.key.is_specific_static_name("__proto__")
-            {
-                return false;
-            }
-            match KeyName::from_property_key(&property.key) {
-                Some(name) if name.same_as(key) => existing_index = Some(index),
-                Some(_) => {}
-                None => existing_index = None,
-            }
+        let target = &mut ctx.state.object_merge_target;
+        if !target.analyze(object_expr) {
+            return false;
         }
-        if let Some(index) = existing_index
+        if let Some(index) = target.find(key, &object_expr.properties)
             && let ObjectPropertyKind::ObjectProperty(property) = &mut object_expr.properties[index]
             && !property.method
             && !property.value.may_have_side_effects(ctx)
@@ -494,6 +485,7 @@ impl<'a> PeepholeOptimizations {
                 false,
                 ctx,
             ));
+            ctx.state.object_merge_target.push(key);
         }
         true
     }
@@ -2060,15 +2052,15 @@ impl<'a> VisitJs<'a> for FindNestedBreak {
 /// `PropertyKey::static_name` names numbers with Rust's `Display` (`1e21` is not `1e+21`),
 /// and `static_property_name` has no name for numbers, so neither fits key equality.
 #[derive(Clone, Copy)]
-enum KeyName<'k> {
-    Str(&'k str),
+enum KeyName<'a> {
+    Str(&'a str),
     /// A finite number, which names the property `ToString(n)`.
     Num(f64),
 }
 
-impl<'k> KeyName<'k> {
+impl<'a> KeyName<'a> {
     /// The name of a string or finite number literal key.
-    fn from_literal(expr: &'k Expression<'_>) -> Option<Self> {
+    fn from_literal(expr: &Expression<'a>) -> Option<Self> {
         match expr {
             Expression::StringLiteral(s) => s.value.as_str().map(Self::Str),
             Expression::NumericLiteral(n) if n.value.is_finite() => Some(Self::Num(n.value)),
@@ -2077,7 +2069,7 @@ impl<'k> KeyName<'k> {
     }
 
     /// The property name of a member expression, or `None` if it is not known statically.
-    fn from_member_expression(member: &'k MemberExpression<'_>) -> Option<Self> {
+    fn from_member_expression(member: &MemberExpression<'a>) -> Option<Self> {
         match member {
             MemberExpression::StaticMemberExpression(e) => {
                 Some(Self::Str(e.property.name.as_str()))
@@ -2088,10 +2080,18 @@ impl<'k> KeyName<'k> {
     }
 
     /// The name of a property key, or `None` if it is not known statically.
-    fn from_property_key(key: &'k PropertyKey<'_>) -> Option<Self> {
+    fn from_property_key(key: &PropertyKey<'a>) -> Option<Self> {
         match key {
             PropertyKey::StaticIdentifier(id) => Some(Self::Str(id.name.as_str())),
             _ => key.as_expression().and_then(Self::from_literal),
+        }
+    }
+
+    /// The key name of a property, or `None` for a spread or a key not known statically.
+    fn from_object_property(property: &ObjectPropertyKind<'a>) -> Option<Self> {
+        match property {
+            ObjectPropertyKind::ObjectProperty(property) => Self::from_property_key(&property.key),
+            ObjectPropertyKind::SpreadProperty(_) => None,
         }
     }
 
@@ -2106,5 +2106,134 @@ impl<'k> KeyName<'k> {
                 s.starts_with(|c: char| c.is_ascii_digit() || c == '-') && s == n.to_js_string()
             }
         }
+    }
+}
+
+impl PartialEq for KeyName<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.same_as(*other)
+    }
+}
+
+impl Eq for KeyName<'_> {}
+
+impl Hash for KeyName<'_> {
+    /// Names that are `same_as` each other hash the same: a string that parses as a finite
+    /// number hashes as that number, because `ToString(n)` parses back to `n`.
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let n = match *self {
+            Self::Str(s) => match s.parse::<f64>() {
+                Ok(n) if n.is_finite() => n,
+                _ => return s.hash(state),
+            },
+            Self::Num(n) => n,
+        };
+        // `0` and `-0` are the same key.
+        (if n == 0.0 { 0.0 } else { n }).to_bits().hash(state);
+    }
+}
+
+/// The key analysis of the object literal that the last property assignment was checked
+/// against. The next assignment in a run of merges into the same object reuses it, so the
+/// run reads each property a few times in total instead of once per assignment.
+#[derive(Default)]
+pub struct ObjectMergeTarget<'a> {
+    /// The object literal and its property count when it was last analyzed or merged into.
+    /// Within one statement list, only these merges change an object literal that is already
+    /// in `result`, so the same address and count mean that the analysis is current.
+    object: Option<(Address, usize)>,
+    /// The index after the last spread or unknown computed key, which may define any key again,
+    /// or `None` if an accessor or a `__proto__` key may run code on every assignment.
+    first_candidate: Option<usize>,
+    /// The last index of each key from `first_candidate` on, built once a run of merges
+    /// outgrows a scan.
+    last_index: Option<FxHashMap<KeyName<'a>, usize>>,
+}
+
+impl<'a> ObjectMergeTarget<'a> {
+    /// A reused analysis indexes its candidates once there are more than this many.
+    /// Scanning a few keys is cheaper than hashing them, and allocates nothing.
+    const MAX_SCANNED: usize = 8;
+
+    /// Analyze `object` unless this analysis is still current, and return whether a property
+    /// assignment may merge into it.
+    fn analyze(&mut self, object: &ArenaBox<'a, ObjectExpression<'a>>) -> bool {
+        let properties = object.properties.as_slice();
+        let current = Some((object.address(), properties.len()));
+        if self.object == current {
+            debug_assert_eq!(self.first_candidate, Self::first_candidate_in(properties));
+            if self.last_index.is_none()
+                && let Some(first) = self.first_candidate
+                && properties.len() - first > Self::MAX_SCANNED
+            {
+                self.last_index = Some(
+                    (first..)
+                        .zip(&properties[first..])
+                        .filter_map(|(index, property)| {
+                            Some((KeyName::from_object_property(property)?, index))
+                        })
+                        .collect(),
+                );
+            }
+        } else {
+            *self = Self {
+                object: current,
+                first_candidate: Self::first_candidate_in(properties),
+                last_index: None,
+            };
+        }
+        self.first_candidate.is_some()
+    }
+
+    /// The index of the last property named `key` that no later property may define again,
+    /// in the object that `analyze` accepted.
+    fn find(&self, key: KeyName<'a>, properties: &[ObjectPropertyKind<'a>]) -> Option<usize> {
+        let first = self.first_candidate?;
+        let scan = || {
+            properties[first..]
+                .iter()
+                .rposition(|property| {
+                    KeyName::from_object_property(property).is_some_and(|name| name.same_as(key))
+                })
+                .map(|index| first + index)
+        };
+        match &self.last_index {
+            Some(last_index) => {
+                let found = last_index.get(&key).copied();
+                debug_assert_eq!(found, scan());
+                found
+            }
+            None => scan(),
+        }
+    }
+
+    /// Record that a property named `key` was appended to the object that `analyze` accepted.
+    fn push(&mut self, key: KeyName<'a>) {
+        let Some((_, len)) = &mut self.object else { unreachable!() };
+        if let Some(last_index) = &mut self.last_index {
+            last_index.insert(key, *len);
+        }
+        *len += 1;
+    }
+
+    /// The index after the last spread or unknown computed key, or `None` if an accessor or a
+    /// `__proto__` key means that assigning any property may run code.
+    fn first_candidate_in(properties: &[ObjectPropertyKind<'a>]) -> Option<usize> {
+        let mut first = 0;
+        for (index, property) in properties.iter().enumerate() {
+            if let ObjectPropertyKind::ObjectProperty(property) = property {
+                // An accessor runs on assignment, and so can a setter on a `__proto__: p` prototype.
+                if property.kind != PropertyKind::Init
+                    || property.key.is_specific_static_name("__proto__")
+                {
+                    return None;
+                }
+                if KeyName::from_property_key(&property.key).is_some() {
+                    continue;
+                }
+            }
+            first = index + 1;
+        }
+        Some(first)
     }
 }
