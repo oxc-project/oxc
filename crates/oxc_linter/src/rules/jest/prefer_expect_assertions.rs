@@ -60,7 +60,8 @@ impl Rule for PreferExpectAssertions {
         // Resolve the file-level expect local name once (e.g. `"expect"` or `"e"`
         // for `import { expect as e }`). Per-callback vitest fixture overrides
         // are handled in `resolve_expect_source`.
-        let file_expect_prefix = resolve_expect_local_name(ctx, &["@jest/globals"]);
+        let file_expect_prefix =
+            resolve_expect_local_name(ctx, &[ctx.settings().jest.global_package()]);
 
         let mut covered_describe_ids: Vec<NodeId> = Vec::new();
 
@@ -1606,5 +1607,62 @@ fn test() {
         .expect_fix(fix_multi_statement)
         .expect_fix(fix_has_assertions_callback_arg)
         .expect_fix(fix_remove_args)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_global_package() {
+    use crate::tester::Tester;
+
+    let settings =
+        Some(serde_json::json!({ "settings": { "jest": { "globalPackage": "bun:test" } } }));
+
+    let only_with_expect_in_callback =
+        Some(serde_json::json!([{ "onlyFunctionsWithExpectInCallback": true }]));
+
+    let pass = vec![
+        (
+            r#"import { expect as e } from 'bun:test';
+            test("aliased import", () => {
+                e.assertions(1);
+                e(true).toBe(true);
+              });"#,
+            None,
+            settings.clone(),
+        ),
+        // `e` is not `expect`, because `@jest/globals` is not the global package.
+        (
+            r#"import { expect as e } from '@jest/globals';
+            test("aliased import", () => {
+                [1].forEach(() => { e(1).toBe(1); });
+              });"#,
+            only_with_expect_in_callback.clone(),
+            settings.clone(),
+        ),
+    ];
+
+    let fail = vec![
+        (r#"import { expect as e } from 'bun:test'; it("it1", () => {})"#, None, settings.clone()),
+        (
+            r#"import { expect as e } from 'bun:test';
+            test("aliased import", () => {
+                [1].forEach(() => { e(1).toBe(1); });
+              });"#,
+            only_with_expect_in_callback,
+            settings.clone(),
+        ),
+    ];
+
+    let fix = vec![(
+        r#"import { expect as e } from 'bun:test'; it("it1", () => {})"#,
+        r#"import { expect as e } from 'bun:test'; it("it1", () => {e.hasAssertions();})"#,
+        None,
+        settings,
+    )];
+
+    Tester::new(PreferExpectAssertions::NAME, PreferExpectAssertions::PLUGIN, pass, fail)
+        .with_jest_plugin(true)
+        .expect_fix(fix)
+        .with_snapshot_suffix("global_package")
         .test_and_snapshot();
 }

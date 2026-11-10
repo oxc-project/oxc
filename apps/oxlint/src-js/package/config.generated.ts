@@ -7286,6 +7286,28 @@ export interface OxlintPluginSettings {
  */
 export interface JestPluginSettings {
   /**
+   * The package that Jest globals are imported from. Defaults to `@jest/globals`.
+   *
+   * When set, imports from this package are recognized as Jest globals
+   * instead of imports from `@jest/globals`, and
+   * `jest/prefer-importing-jest-globals` imports from it.
+   *
+   * This setting does not apply to Vitest rules.
+   *
+   * Example:
+   *
+   * ```json
+   * {
+   *   "settings": {
+   *     "jest": {
+   *       "globalPackage": "bun:test"
+   *     }
+   *   }
+   * }
+   * ```
+   */
+  globalPackage?: string;
+  /**
    * Jest version — accepts a number (`29`) or a semver string (`"29.1.0"` or `"v29.1.0"`),
    * storing only the major version.
    * ::: warning

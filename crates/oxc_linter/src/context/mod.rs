@@ -163,6 +163,12 @@ impl<'a> LintContext<'a> {
         self.parent.file_extension()
     }
 
+    /// Name of the plugin the current rule belongs to. Example: `eslint`, `jest`, `vitest`
+    #[inline]
+    pub fn plugin_name(&self) -> &'static str {
+        self.current_plugin_name
+    }
+
     /// Plugin settings
     #[inline]
     pub fn settings(&self) -> &OxlintSettings {

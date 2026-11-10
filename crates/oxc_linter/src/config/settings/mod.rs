@@ -371,6 +371,25 @@ mod test {
     }
 
     #[test]
+    fn test_jest_global_package_settings() {
+        let settings = OxlintSettings::deserialize(&serde_json::json!({})).unwrap();
+        assert_eq!(settings.jest.global_package(), "@jest/globals");
+
+        let json_value = serde_json::json!({
+            "jest": {
+                "globalPackage": "bun:test"
+            }
+        });
+
+        let settings = OxlintSettings::deserialize(&json_value).unwrap();
+
+        assert_eq!(settings.jest.global_package(), "bun:test");
+
+        let raw_json = settings.json.unwrap();
+        assert_eq!(raw_json["jest"]["globalPackage"], "bun:test");
+    }
+
+    #[test]
     fn test_negative_integer_jest_version_fail() {
         let json_value = serde_json::json!({
             "jest": {
