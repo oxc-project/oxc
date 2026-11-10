@@ -8,8 +8,11 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule,
-    utils::is_logical_expression,
+    AstNode,
+    ast_util::{get_symbol_id_of_variable, outermost_paren_parent},
+    context::LintContext,
+    rule::Rule,
+    utils::{is_logical_expression, is_regexp_callee},
 };
 
 fn prefer_regexp_test_diagnostic(span: Span) -> OxcDiagnostic {
@@ -51,7 +54,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     recommended,
-    fix,
+    fix_suggestion,
     version = "0.0.16",
     short_description = "Prefers `RegExp#test()` over `String#match()` and `String#exec()`.",
 );
@@ -145,7 +148,12 @@ impl Rule for PreferRegexpTest {
             return;
         }
 
-        ctx.diagnostic_with_fix(prefer_regexp_test_diagnostic(span), |fixer| {
+        let fix_kind = if !is_match || is_known_regexp(&call_expr.arguments[0], ctx) {
+            FixKind::Fix
+        } else {
+            FixKind::Suggestion
+        };
+        ctx.diagnostic_with_fix_of_kind(prefer_regexp_test_diagnostic(span), fix_kind, |fixer| {
             if !is_match {
                 return fixer.replace(span, "test");
             }
@@ -157,6 +165,38 @@ impl Rule for PreferRegexpTest {
 
             fix.with_message("Replace with `RegExp.test()`")
         });
+    }
+}
+
+fn is_known_regexp<'a>(argument: &oxc_ast::ast::Argument<'a>, ctx: &LintContext<'a>) -> bool {
+    let Some(mut expr) = argument.as_expression().map(Expression::get_inner_expression) else {
+        return false;
+    };
+    if let Expression::Identifier(ident) = expr {
+        let Some(symbol) = get_symbol_id_of_variable(ident, ctx) else { return false };
+        if ctx.scoping().symbol_is_mutated(symbol)
+            || !ctx.scoping().symbol_redeclarations(symbol).is_empty()
+        {
+            return false;
+        }
+        let AstKind::VariableDeclarator(declaration) =
+            ctx.nodes().kind(ctx.scoping().symbol_declaration(symbol))
+        else {
+            return false;
+        };
+        if !declaration.id.is_binding_identifier()
+            || matches!(ctx.nodes().parent_kind(ctx.scoping().symbol_declaration(symbol)), AstKind::VariableDeclaration(declaration) if declaration.kind.is_var())
+        {
+            return false;
+        }
+        let Some(init) = &declaration.init else { return false };
+        expr = init.get_inner_expression();
+    }
+    match expr {
+        Expression::RegExpLiteral(_) => true,
+        Expression::NewExpression(constructor) => is_regexp_callee(&constructor.callee, ctx),
+        Expression::CallExpression(call) => !call.optional && is_regexp_callee(&call.callee, ctx),
+        _ => false,
     }
 }
 
@@ -351,4 +391,49 @@ fn test() {
     Tester::new(PreferRegexpTest::NAME, PreferRegexpTest::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_fix_requires_regexp() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let unchanged = [
+        r#"const query = "a"; if (title.match(query)) {}"#,
+        "if (glob.match(file)) {}",
+        r#"let pattern = /a/; pattern = "a"; if (title.match(pattern)) {}"#,
+        "function f(RegExp) { if (title.match(new RegExp('a'))) {} }",
+        "if (title.match(getPattern())) {}",
+        "if (title.match(RegExp?.('a'))) {}",
+        "const title = 'a'; if (title.match(re)) {} var re = /a/;",
+        "if (false) { var re = /a/; } if (title.match(re)) {}",
+        "var re = /a/; var re = 'a'; if (title.match(re)) {}",
+    ];
+    let mut fixes: Vec<_> =
+        unchanged.into_iter().map(|source| (source, source, None, FixKind::Fix)).collect();
+    fixes.extend([
+        ("if (glob.match(file)) {}", "if (file.test(glob)) {}", None, FixKind::Suggestion),
+        ("if (title.match((/a/))) {}", "if ((/a/).test(title)) {}", None, FixKind::Fix),
+        ("if (title.match(RegExp('a'))) {}", "if (RegExp('a').test(title)) {}", None, FixKind::Fix),
+        (
+            "const re = new RegExp('a'); if (title.match(re)) {}",
+            "const re = new RegExp('a'); if (re.test(title)) {}",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "const re = /a/; if (title.match((re))) {}",
+            "const re = /a/; if ((re).test(title)) {}",
+            None,
+            FixKind::Fix,
+        ),
+        ("if (/a/.exec(title)) {}", "if (/a/.test(title)) {}", None, FixKind::Fix),
+    ]);
+    Tester::new(
+        PreferRegexpTest::NAME,
+        PreferRegexpTest::PLUGIN,
+        Vec::<&str>::new(),
+        unchanged.to_vec(),
+    )
+    .expect_fix(fixes)
+    .test();
 }

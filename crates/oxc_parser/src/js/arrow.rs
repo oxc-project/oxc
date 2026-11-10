@@ -466,22 +466,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let checkpoint = self.checkpoint_with_error_recovery();
         let errors_len = self.errors.len();
         let (params, has_trailing_comma) = self.parse_cover_arrow_parameters();
-        let head = ArrowFunctionHead {
-            type_parameters: None,
-            params,
-            return_type: None,
-            r#async: false,
-            start: pos,
-        };
         if !self.at(Kind::Arrow) {
             // Reuse the successful parameter parse, including its initializers and property
             // keys, when it also represents an ordinary parenthesized expression.
             if !self.has_fatal_error()
                 && self.errors.len() == errors_len
                 && !has_trailing_comma
-                && head.params.rest.is_none()
-                && !head.params.items.is_empty()
-                && let Some(expression) = self.cover_arrow_head_as_expression(head)
+                && params.rest.is_none()
+                && !params.items.is_empty()
+                && let Some(expression) = self.cover_arrow_parameters_as_expression(params)
             {
                 return Some(expression);
             }
@@ -489,6 +482,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.rewind(checkpoint);
             return None;
         }
+        let head = ArrowFunctionHead {
+            type_parameters: None,
+            params: self.alloc(params),
+            return_type: None,
+            r#async: false,
+            start: pos,
+        };
         self.expect_arrow_after_head();
         if self.has_fatal_error() {
             self.state.not_parenthesized_arrow.insert(pos);
@@ -499,12 +499,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     #[inline(never)]
-    fn cover_arrow_head_as_expression(
+    fn cover_arrow_parameters_as_expression(
         &mut self,
-        head: ArrowFunctionHead<'a>,
+        params: FormalParameters<'a>,
     ) -> Option<Expression<'a>> {
-        let span = head.params.span;
-        let params = head.params.unbox();
+        let span = params.span;
         let len = params.items.len();
         let mut items = params.items.into_iter();
         let first = self.cover_parameter_as_expression(items.next().unwrap())?;
@@ -520,9 +519,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let end = expressions.last().unwrap().span().end;
             Expression::new_sequence_expression(Span::new(start, end), expressions, self)
         };
-        // Keep the wrapper until the caller distinguishes this from an arrow. The caller
-        // removes it when `preserve_parens` is disabled.
-        Some(Expression::new_parenthesized_expression(span, expression, self))
+        // Preserve the node ID sequence even when the wrapper is omitted.
+        let parenthesized = ParenthesizedExpression::new(span, expression, self);
+        Some(if self.options.preserve_parens {
+            Expression::ParenthesizedExpression(self.alloc(parenthesized))
+        } else {
+            parenthesized.expression
+        })
     }
 
     fn cover_parameter_as_expression(

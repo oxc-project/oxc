@@ -65,6 +65,8 @@ use crate::{
     },
 };
 
+use super::class_name::contextual_class_name;
+
 pub struct ClassStaticBlock<'a> {
     classes: Vec<ClassState<'a>>,
     pending_classes: FxHashMap<Address, PendingClass<'a>>,
@@ -441,34 +443,8 @@ impl<'a> ClassStaticBlock<'a> {
         }
         let name = ctx
             .ancestors()
-            .find_map(|ancestor| match ancestor {
-                Ancestor::ParenthesizedExpressionExpression(_) => None,
-                Ancestor::VariableDeclaratorInit(decl) => {
-                    Some(decl.id().get_identifier_name().map(Str::from))
-                }
-                Ancestor::AssignmentPatternRight(pattern) => {
-                    Some(pattern.left().get_identifier_name().map(Str::from))
-                }
-                Ancestor::FormalParameterInitializer(param) => {
-                    Some(param.pattern().get_identifier_name().map(Str::from))
-                }
-                Ancestor::AssignmentExpressionRight(assign)
-                    if assign.operator().is_assign() || assign.operator().is_logical() =>
-                {
-                    Some(Self::assignment_name(assign.left()))
-                }
-                Ancestor::AssignmentTargetWithDefaultInit(target) => {
-                    Some(Self::assignment_name(target.binding()))
-                }
-                Ancestor::AssignmentTargetPropertyIdentifierInit(target) => {
-                    Some(Some(Str::from(target.binding().name)))
-                }
-                Ancestor::ExportDefaultDeclarationDeclaration(_) => {
-                    Some(Some(Str::from("default")))
-                }
-                _ => Some(None),
-            })
-            .flatten();
+            .find(|ancestor| !matches!(ancestor, Ancestor::ParenthesizedExpressionExpression(_)))
+            .and_then(|ancestor| contextual_class_name(&ancestor));
         if let Some(name) = name {
             self.pending_classes.entry(class.body.address()).or_default().inferred_name =
                 Some(InferredName::Static(JSStr::from(name)));
@@ -682,13 +658,6 @@ impl<'a> ClassStaticBlock<'a> {
         }
         captures.append(&mut class.body.body);
         class.body.body = captures;
-    }
-
-    fn assignment_name(target: &AssignmentTarget<'a>) -> Option<Str<'a>> {
-        match target {
-            AssignmentTarget::AssignmentTargetIdentifier(ident) => Some(ident.name.into()),
-            _ => None,
-        }
     }
 
     fn has_trailing_blocks(class: &Class<'_>) -> bool {

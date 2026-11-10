@@ -7,9 +7,9 @@
 //!
 //! [`context`]: crate::pipeline::disambiguate::context
 
-use crate::cpu::{Cpu, cpu_multiversion};
+use oxc_simd::{Cpu, cpu_multiversion};
 
-use crate::pipeline::disambiguate::{Tokens, Walks, context};
+use crate::pipeline::disambiguate::{TokensView, Walks, context};
 
 use super::bytes::arrow_after_params;
 
@@ -17,7 +17,7 @@ use super::bytes::arrow_after_params;
 #[cpu_multiversion]
 #[inline(never)]
 pub fn jsx_over_generic(
-    tokens: &Tokens,
+    tokens: &TokensView,
     walks: &mut Walks,
     lt: usize,
     lp: usize,

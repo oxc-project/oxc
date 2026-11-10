@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 3dbf140 parser: Treat escaped contextual keywords as names, not modifiers (#28748) (Dominic Elm)
+
+### ⚡ Performance
+
+- 6611cf9 parser: Specialize quoted string value access (#28965) (Boshen)
+- 5038ba6 parser: Avoid repeated await-using lookahead (#28960) (Boshen)
+- ecc807b parser: Skip discarded arrow diagnostics (#28940) (Boshen)
+- c880368 parser: Fast-path absent TypeScript type lists (#28959) (Boshen)
+- dee6cf4 parser: Skip repeated optional call lookahead (#28876) (Boshen)
+- a524e17 parser: Reuse successful parenthesized arrow heads (#28862) (Boshen)
+- 296b12a parser: Accelerate line comment scanning (#28878) (Boshen)
+- c4fc21e parser: Accelerate escaped string scanning (#28907) (Boshen)
+- f7726b6 parser: Accelerate regex literal scanning (#28911) (Boshen)
+- a8aff38 parser: Scan whitespace in runs (#28953) (Boshen)
+- b1c137c parser: Avoid lookahead for TypeScript keyword types (#28954) (Boshen)
+- 6a8a2a7 parser: Fast-path plain identifiers (#28955) (Boshen)
+- 00deb87 parser: Initialize declaration lists with their first item (#28956) (Boshen)
+- 71dd877 parser: Specialize binary operator associativity (#28957) (Boshen)
+- 027eb7e parser: Combine async arrow lookahead (#28431) (Boshen)
+- 7b933d5 lexer: Directly dispatch common punctuation (#28792) (Boshen)
+- 45d86c3 lexer: Combine per-token annotation resets (#28492) (Boshen)
+- d497fbf lexer: Match keywords with byte patterns (#28494) (Boshen)
+
 ## [0.157.0] - 2026-11-02
 
 ### 🚀 Features

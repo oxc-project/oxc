@@ -1,7 +1,4 @@
-use crate::{
-    cpu::{Avx2, Cpu, DynCpu, cpu_multiversion, cpu_version, to_dyn},
-    simd::Vec256,
-};
+use oxc_simd::{Avx2, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version};
 
 /// Get bit `i`.
 ///
@@ -149,7 +146,7 @@ pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize, _cpu: impl
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn bm_any(bm: *const u64, nw: usize, cpu: impl Cpu) -> bool {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => bm_any_avx2(bm, nw, cpu),
         _ => bm_any_generic(bm, nw),
     }

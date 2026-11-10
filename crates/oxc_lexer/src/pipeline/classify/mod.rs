@@ -1,4 +1,4 @@
-use crate::cpu::{Cpu, DynCpu, cpu_multiversion, to_dyn};
+use oxc_simd::{Cpu, DynCpu, cpu_multiversion};
 
 mod avx2;
 mod generic;
@@ -27,7 +27,7 @@ pub(super) unsafe fn classify(
     kind: *mut u8,
     cpu: impl Cpu,
 ) {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => {
             classify_avx2(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu)
         }

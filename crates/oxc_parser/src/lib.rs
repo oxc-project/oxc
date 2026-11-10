@@ -67,6 +67,7 @@
 use std::any::Any;
 
 mod ast_builder;
+mod buffered_vec;
 pub mod config;
 mod context;
 mod cursor;
@@ -1076,6 +1077,42 @@ mod test {
     }
 
     #[test]
+    fn asserted_exponentiation_preserve_parens() {
+        for preserve_parens in [true, false] {
+            for source in [
+                "(-value) as number ** 2",
+                "(-value as number) ** 2",
+                "(-value) as any satisfies number ** 2",
+                "(<number>value) satisfies number ** 2",
+                "async () => (await value) as number ** 2",
+            ] {
+                let allocator = Allocator::default();
+                let result = Parser::new(&allocator, source, SourceType::ts())
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse_expression();
+                assert!(result.is_ok(), "{source}, preserve_parens={preserve_parens}");
+            }
+
+            for (source, operand) in [
+                ("-value as any satisfies number ** 2", "-value"),
+                ("<number>value as number ** 2", "<number>value"),
+                ("async () => await value as number ** 2", "await value"),
+            ] {
+                let allocator = Allocator::default();
+                let diagnostics = Parser::new(&allocator, source, SourceType::ts())
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse_expression()
+                    .unwrap_err();
+                assert_eq!(diagnostics.len(), 1, "{source}, preserve_parens={preserve_parens}");
+                let label = &diagnostics[0].labels[0];
+                let start = label.offset() as usize;
+                let end = start + label.len() as usize;
+                assert_eq!(&source[start..end], operand);
+            }
+        }
+    }
+
+    #[test]
     fn simple_arrow_no_side_effects_annotations() {
         for source in [
             "/*#__NO_SIDE_EFFECTS__*/ value => value",
@@ -1254,11 +1291,16 @@ mod test {
             ("import x from 'foo'; 'use strict';", 2),
             ("export {x} from 'foo'; 'use strict';", 2),
             (";'use strict';", 2),
+            ("('use strict'); 'use strict';", 2),
         ];
-        for (source, body_length) in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
-            assert!(ret.program.directives.is_empty(), "{source}");
-            assert_eq!(ret.program.body.len(), body_length, "{source}");
+        for preserve_parens in [true, false] {
+            for (source, body_length) in sources {
+                let ret = Parser::new(&allocator, source, source_type)
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse();
+                assert!(ret.program.directives.is_empty(), "{source}");
+                assert_eq!(ret.program.body.len(), body_length, "{source}");
+            }
         }
     }
 

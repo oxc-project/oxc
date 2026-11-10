@@ -529,7 +529,7 @@ Prettier prints it as written (the leading blank line that kept it out of front 
 
 ## cj-line-break
 
-- Why: semantics (prettier/prettier#20143)
+- Why: semantics (prettier/prettier#20143, prettier/prettier#16805)
 - Pin: `tests/fixtures/markdown/prose-wrap/cj-line-break.md`
 - Conformance:
   - `externals/prettier/markdown/splitCjkText/symbolSpaceNewLine.md`
@@ -540,6 +540,12 @@ Prettier prints it as written (the leading blank line that kept it out of front 
 改行しても
 そのままです。
 
+営業時間は月〜
+金の9時〜18時です。
+
+中文！
+한국어
+
 見て http://x.y2.
 。次
 
@@ -548,21 +554,53 @@ Prettier prints it as written (the leading blank line that kept it out of front 
 改行しても
 そのままです。
 
-見て http://x.y2.
-。次
+営業時間は月〜
+金の9時〜18時です。
+
+中文！ 한국어
+
+見て http://x.y2. 。次
 
 <!-- prettier -->
 日本語の文章は改行してもそのままです。
 
+営業時間は月〜金の9時〜18時です。
+
+中文！한국어
+
 見て http://x.y2.。次
 ```
 
-A line break next to Chinese / Japanese text is kept under every `proseWrap`,
-except between a Korean and a CJ letter, where it is a space.
-Browsers disagree on such a break (Firefox drops it, Chrome and Safari render a space),
-so removing it or making it a space changes the rendered text in some of them.
-Joined, an autolink literal also takes the CJ punctuation after it (`http://x.y2.。次`).
-Prettier `main` keeps the break since #20143; the pin (3.9.10) removes it or makes it a space.
+A line break between two Chinese / Japanese characters (letters or CJK punctuation) is kept under every `proseWrap`, and a space there never becomes one:
+Firefox 159 drops such a break and Chrome 138 renders a space. Next to one only, every browser renders a space, so a line break there is one.
+
+- The pin (3.9.10) removes some of these breaks, next to one CJ character only too (`中文！한국어`);
+  joined, an autolink literal also takes the CJ punctuation after it (`http://x.y2.。次`)
+- Prettier `main` keeps every break next to a CJ character (#20143)
+- Prettier 4 is to treat a break next to one only as a space, as here (#16805)
+
+## cj-adjacent-space-wraps
+
+- Why: uniform-rule (whitespace keeps its kind only between two CJ characters; prettier/prettier#16805)
+- Pin: `tests/fixtures/markdown/prose-wrap/cjk.md`
+- Conformance:
+  - `externals/prettier/markdown/splitCjkText/chinese-japanese.md`
+  - `externals/prettier/markdown/splitCjkText/space.md`
+
+```markdown
+<!-- input, proseWrap always, printWidth 80 -->
+漢字と English の間に空白を置く文書では、その空白で折り返せますが、漢字 と 漢字 の間の空白では折り返さずに一行のまま続きます。
+
+<!-- ours -->
+漢字と English
+の間に空白を置く文書では、その空白で折り返せますが、漢字 と 漢字 の間の空白では折り返さずに一行のまま続きます。
+
+<!-- prettier -->
+漢字と English の間に空白を置く文書では、その空白で折り返せますが、漢字 と 漢字 の間の空白では折り返さずに一行のまま続きます。
+```
+
+Under `proseWrap: always`, a space next to one Chinese / Japanese character only may wrap, as between Latin words (DIVERGENCES.md#cj-line-break).
+The rule applies in HTML too (`oxc_formatter_htmlish`'s DIVERGENCES.md#cj-whitespace), and Prettier itself wraps a space between a Korean and a CJ letter.
 
 ## wiki-link-risk-link-text
 

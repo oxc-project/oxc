@@ -1,7 +1,6 @@
-use crate::{
-    cpu::{Cpu, cpu_multiversion},
-    token::tk,
-};
+use oxc_simd::{Cpu, cpu_multiversion};
+
+use crate::token::tk;
 
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},

@@ -182,12 +182,17 @@ fn unnecessary_outer_scope_dependency_diagnostic(
     hook_name: &str,
     dep_name: &str,
     span: Span,
+    is_mutable: bool,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "React Hook {hook_name} has an unnecessary dependency: {dep_name}."
     ))
     .with_label(span)
-    .with_help("Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.")
+    .with_help(if is_mutable {
+        "Consider removing it from the dependency array. Mutable values aren't valid dependencies because mutating them doesn't re-render the component."
+    } else {
+        "Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component."
+    })
     .with_error_code_scope(SCOPE)
 }
 
@@ -570,6 +575,7 @@ impl Rule for ExhaustiveDeps {
             declared_dependencies
         };
 
+        let mut unnecessary_dependencies = Vec::new();
         for dependency in &declared_dependencies {
             if let Some(symbol_id) = dependency.symbol_id {
                 let dependency_scope_id = ctx.scoping().symbol_scope_id(symbol_id);
@@ -592,13 +598,28 @@ impl Rule for ExhaustiveDeps {
                 }
             }
 
+            if !ctx.disable_directives().contains(ExhaustiveDeps::NAME, dependency.span) {
+                unnecessary_dependencies.push(dependency);
+            }
+        }
+
+        unnecessary_dependencies.sort_unstable_by_key(|dep| dep.span.start);
+        for dependency in &unnecessary_dependencies {
             ctx.diagnostic_with_dangerous_suggestion(
                 unnecessary_outer_scope_dependency_diagnostic(
                     hook_name,
-                    &dependency.name,
+                    &dependency.to_string(),
                     dependency.span,
+                    dependency.chain.last().is_some_and(|part| part == "current"),
                 ),
-                |fixer| fix::remove_dependency(fixer, dependency, dependencies_node),
+                |fixer| {
+                    fix::remove_dependencies(
+                        fixer,
+                        unnecessary_dependencies.iter().map(|dep| dep.span),
+                        dependencies_node,
+                        ctx,
+                    )
+                },
             );
         }
 
@@ -736,7 +757,7 @@ impl Rule for ExhaustiveDeps {
                     dependency_changes_on_every_render_diagnostic(
                         hook_name, dep.span, name, decl_span,
                     ),
-                    |fixer| fix::remove_dependency(fixer, &dep, dependencies_node),
+                    |fixer| fix::remove_dependencies(fixer, [dep.span], dependencies_node, ctx),
                 );
             }
         }
@@ -1470,17 +1491,17 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 
 mod fix {
     use super::Name;
-    use oxc_allocator::{Allocator, ArenaVec, CloneIn};
+    use oxc_allocator::{Allocator, CloneIn};
     use oxc_ast::{
         ast::{ArrayExpression, Expression},
         builder::AstBuilder,
     };
-    use oxc_span::{GetSpan, SPAN};
+    use oxc_span::{GetSpan, SPAN, Span};
     use oxc_str::Str;
 
     use crate::{
+        context::LintContext,
         fixer::{RuleFix, RuleFixer},
-        rules::react::exhaustive_deps::Dependency,
     };
 
     pub fn append_dependencies<'c, 'a: 'c>(
@@ -1511,28 +1532,51 @@ mod fix {
         fixer.replace(deps.span, codegen.into_source_text())
     }
 
-    pub fn remove_dependency<'c, 'a: 'c>(
+    /// Dependencies must be ordered by their position in the source.
+    pub fn remove_dependencies<'c, 'a: 'c>(
         fixer: RuleFixer<'c, 'a>,
-        dependency: &Dependency,
+        dependencies: impl IntoIterator<Item = Span>,
         deps: &ArrayExpression<'a>,
+        ctx: &LintContext<'a>,
     ) -> RuleFix {
-        let mut codegen = fixer.codegen();
-
-        let alloc = Allocator::default();
-        let ast_builder = AstBuilder::new(&alloc);
-
-        let new_deps = deps
-            .elements
-            .iter()
-            .filter(|el| (*el).span() != dependency.span)
-            .map(|el| el.clone_in(&alloc));
-
-        codegen.print_expression(&Expression::new_array_expression(
-            deps.span,
-            ArenaVec::from_iter_in(new_deps, &ast_builder),
-            &ast_builder,
-        ));
-        fixer.replace(deps.span, codegen.into_source_text())
+        let fixer = fixer.for_multifix();
+        let mut fix = fixer.new_fix_with_capacity(2);
+        let mut elements = deps.elements.iter().peekable();
+        for dependency in dependencies {
+            let Some(element) =
+                elements.by_ref().find(|element| element.span().contains_inclusive(dependency))
+            else {
+                continue;
+            };
+            let span = element.span();
+            if ctx.has_comments_between(span) {
+                let mut replacement = String::new();
+                let mut start = span.start;
+                for comment in ctx.comments_range(span.start..span.end) {
+                    replacement.extend(
+                        ctx.source_range(Span::new(start, comment.span.start))
+                            .chars()
+                            .filter(|ch| ch.is_whitespace()),
+                    );
+                    replacement.push_str(ctx.source_range(comment.span));
+                    start = comment.span.end;
+                }
+                replacement.extend(
+                    ctx.source_range(Span::new(start, span.end))
+                        .chars()
+                        .filter(|ch| ch.is_whitespace()),
+                );
+                fix.push(fixer.replace(span, replacement));
+            } else {
+                fix.push(fixer.delete_range(span));
+            }
+            let end = elements.peek().map_or(deps.span.end - 1, |el| el.span().start);
+            if let Some(offset) = ctx.find_next_token_within(span.end, end, ",") {
+                let start = span.end + offset;
+                fix.push(fixer.delete_range(Span::new(start, start + 1)));
+            }
+        }
+        fix.with_message("Remove unnecessary dependencies.")
     }
 }
 
@@ -1555,17 +1599,66 @@ fn invalid_configs_error_in_from_configuration() {
 }
 
 #[test]
+fn test_dependency_removals_preserve_source() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let cases = [
+        ("[section, OUTER]", "[section, ]"),
+        ("[OUTER, section]", "[ section]"),
+        ("[section, OUTER,]", "[section, ]"),
+        ("[OUTER]", "[]"),
+        ("[OUTER,]", "[]"),
+        ("[OUTER,OTHER]", "[]"),
+        ("[OUTER,OTHER,section]", "[section]"),
+        ("[section,ref.current,OUTER,OTHER]", "[section,]"),
+        ("[section, (OUTER)]", "[section, ]"),
+        ("[section, (OUTER as number)]", "[section, ]"),
+        ("[section, ref /* keep */ .current]", "[section,  /* keep */ ]"),
+        (
+            "[\n OUTER, // eslint-disable-line react-hooks/exhaustive-deps\n OTHER, section]",
+            "[\n OUTER, // eslint-disable-line react-hooks/exhaustive-deps\n  section]",
+        ),
+        ("[section, (/* keep */ OUTER)]", "[section, /* keep */ ]"),
+        ("[section, (// keep\n OUTER)]", "[section, // keep\n ]"),
+        ("[OUTER,, section]", "[, section]"),
+        ("[section, OUTER /* keep, this */ , OTHER]", "[section,  /* keep, this */  ]"),
+        ("[section, OUTER // keep, this\n, OTHER]", "[section,  // keep, this\n ]"),
+        (
+            "[\n  section, // re-run when the tab changes\n  OUTER,\n  OTHER,\n]",
+            "[\n  section, // re-run when the tab changes\n  \n  \n]",
+        ),
+        ("[section, OUTER /* 注释 , */, OTHER]", "[section,  /* 注释 , */ ]"),
+        ("[section, OUTER\u{2028}, OTHER]", "[section, \u{2028} ]"),
+    ];
+    let fix = cases
+        .into_iter()
+        .flat_map(|(before, after)| {
+            let source = |deps| format!("const OUTER = 1; const OTHER = 2; function Comp({{ section }}) {{ const ref = useRef(null); useEffect(() => {{}}, {deps}); }}");
+            [
+                (source(before), source(before), None, FixKind::SafeFix),
+                (source(before), source(before), None, FixKind::SafeFixOrSuggestion),
+                (source(before), source(after), None, FixKind::DangerousSuggestion),
+            ]
+        })
+        .collect();
+
+    Tester::new::<&str>(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, vec![], vec![])
+        .expect_fix(fix)
+        .test();
+}
+
+#[test]
 fn test_unnecessary_dependency_suggestions() {
     use crate::{fixer::FixKind, tester::Tester};
 
     let cases = [
         (
             "function A({ section }) { const ref = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section, ref.current]); }",
-            "function A({ section }) { const ref = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section]); }",
+            "function A({ section }) { const ref = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section, ]); }",
         ),
         (
             "const OUTER = 1; function B({ section }) { useEffect(() => { console.log(section, OUTER); }, [section, OUTER]); }",
-            "const OUTER = 1; function B({ section }) { useEffect(() => { console.log(section, OUTER); }, [section]); }",
+            "const OUTER = 1; function B({ section }) { useEffect(() => { console.log(section, OUTER); }, [section, ]); }",
         ),
     ];
 
@@ -4471,7 +4564,7 @@ const Component = ({ filter }) => {
         // Test duplicate dependency removal
         (
             "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [local, local]); }",
-            "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [local]); }",
+            "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [ local]); }",
         ),
         (
             "const x = {}; function Comp() { useEffect(() => {}, [x]) }",

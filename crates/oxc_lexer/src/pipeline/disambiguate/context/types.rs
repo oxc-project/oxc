@@ -1,12 +1,11 @@
 //! Punctuation inside a type: type regions and how each kind of region ends, angle lists,
 //! and the `<` that may open one.
 
-use crate::{
-    cpu::{BASELINE, cpu_version},
-    token::{OP_KIND_BASE, matches_tk, tk},
-};
+use oxc_simd::{BASELINE, cpu_version};
 
-use crate::pipeline::disambiguate::{common::Tokens, type_context::type_args_at};
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
+
+use crate::pipeline::disambiguate::{common::TokensView, type_context::type_args_at};
 
 use super::{
     frame::{AngleList, FrameKind, MOD_ASYNC, RegionRule},
@@ -42,7 +41,7 @@ impl Walk {
 
     /// Can the token at pos, of base kind k, continue the type the region on top completed?
     #[cpu_version(Generic)]
-    pub(super) fn continues_type(&self, tokens: &Tokens, pos: usize, k: u8) -> bool {
+    pub(super) fn continues_type(&self, tokens: &TokensView, pos: usize, k: u8) -> bool {
         let cpu = BASELINE;
 
         if k == tk!(Ident) {
@@ -166,7 +165,7 @@ impl Walk {
     }
 
     #[cpu_version(Generic)]
-    pub(super) fn less_than(&mut self, tokens: &Tokens, pos: usize) {
+    pub(super) fn less_than(&mut self, tokens: &TokensView, pos: usize) {
         let cpu = BASELINE;
 
         // Declaration type parameters, an assertion or generic arrow, type arguments, or less-than.

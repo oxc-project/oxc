@@ -18,11 +18,11 @@
 //! - [`type_context`]: Is an angle bracket part of a TypeScript type?
 //!   `coalesce` asks this for runs like `>>` and `<<`, and `carve` for some `<` in `.tsx` files.
 //!
-//! Every question reads the lex through a [`Tokens`] view, which the asking stage builds over its
+//! Every question reads the lex through a [`TokensView`], which the asking stage builds over its
 //! buffers, and keeps what it learns across the lex in a [`DisambiguateState`] the lexer owns.
 //! [`common`] holds the parts both questions need.
 
-use crate::cpu::{Cpu, cpu_multiversion, cpu_version};
+use oxc_simd::{Cpu, cpu_multiversion, cpu_version};
 
 mod common;
 mod context;
@@ -32,7 +32,7 @@ mod type_context;
 #[cfg(test)]
 mod tests;
 
-pub(super) use common::{Brackets, Closers, Tokens, prev_sig};
+pub(super) use common::{Brackets, Closers, TokensView, prev_sig};
 pub(super) use context::Walks;
 pub(super) use operator::not_operator_position;
 pub(super) use type_context::{gt_run_split, jsx_over_generic, lt_run_split};

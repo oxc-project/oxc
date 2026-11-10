@@ -1,6 +1,6 @@
-use crate::cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
-use super::common::Tokens;
+use super::common::TokensView;
 
 mod anchor;
 mod frame;
@@ -106,7 +106,7 @@ impl Walks {
 
     /// The full walk advanced to pos, restarted if it has passed the token there.
     #[cpu_version(Generic)]
-    fn full_to(&mut self, tokens: &Tokens, pos: usize) -> &mut Walk {
+    fn full_to(&mut self, tokens: &TokensView, pos: usize) -> &mut Walk {
         let cpu = BASELINE;
 
         let w = &mut self.full;

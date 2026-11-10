@@ -1,4 +1,4 @@
-use crate::cpu::cpu_version;
+use oxc_simd::cpu_version;
 
 use crate::pipeline::chunk::{eqm, load64};
 

@@ -831,7 +831,7 @@ export interface OxlintOptions {
    */
   typeAware?: boolean;
   /**
-   * Enable experimental type checking (includes TypeScript compiler diagnostics).
+   * Enable type checking (includes TypeScript compiler diagnostics).
    *
    * Equivalent to passing `--type-check` on the CLI.
    *

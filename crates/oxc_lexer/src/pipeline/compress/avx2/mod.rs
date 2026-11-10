@@ -1,10 +1,7 @@
+use oxc_simd::{Avx2, Vec128, Vec256, VecData128, VecData256, cpu_version};
 use oxc_span::Span;
 
-use crate::{
-    cpu::{Avx2, cpu_version},
-    simd::{Vec128, Vec256, VecData128, VecData256},
-    token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk},
-};
+use crate::token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk};
 
 use crate::pipeline::lanes::Lanes;
 

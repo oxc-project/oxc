@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- a791a5b cfg: Resolve continues through stacked loop labels (#29016) (camc314)
+- ec327aa semantic: Keep block type bindings separate from hoisted vars (#28601) (YT)
+
 ## [0.157.0] - 2026-11-02
 
 ### 🐛 Bug Fixes

@@ -15,14 +15,13 @@
 //! [`type_list`]: super::type_list
 //! [`context`]: crate::pipeline::disambiguate::context
 
-use crate::{
-    cpu::{Cpu, cpu_multiversion},
-    token::{OP_KIND_BASE, matches_tk, tk},
-};
+use oxc_simd::{Cpu, cpu_multiversion};
+
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use crate::pipeline::disambiguate::{
     RULE_SCAN_CAP,
-    common::{Prev, Tokens},
+    common::{Prev, TokensView},
     context::{self, Walks},
 };
 
@@ -33,7 +32,7 @@ use super::type_list::type_args_at;
 #[cpu_multiversion]
 #[inline(never)]
 pub fn gt_run_split(
-    tokens: &Tokens,
+    tokens: &TokensView,
     walks: &mut Walks,
     p: usize,
     run: usize,
@@ -51,7 +50,7 @@ pub fn gt_run_split(
 /// closes no list on its level, or the list that would take the whole run opens in every context
 /// ([`list_in_any_context`]). None when the context matters (the walk decides).
 #[cpu_multiversion]
-fn run_shortcut(tokens: &Tokens, pos: usize, run: usize, cpu: impl Cpu) -> Option<usize> {
+fn run_shortcut(tokens: &TokensView, pos: usize, run: usize, cpu: impl Cpu) -> Option<usize> {
     let mut pending = 0i32;
     let mut found = 0usize;
     let mut lt = 0usize;
@@ -123,7 +122,7 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize, cpu: impl Cpu) -> Optio
 ///   line (a type reference takes no arguments across a line break), or after `function` or
 ///   `class`.
 #[cpu_multiversion]
-fn list_in_any_context(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
+fn list_in_any_context(tokens: &TokensView, lt: usize, cpu: impl Cpu) -> bool {
     let t = tokens.peek(lt + 1, cpu);
     if t.kind == tk!(Ident) {
         let x = tokens.peek(t.pos + 1, cpu);
@@ -145,7 +144,7 @@ fn list_in_any_context(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
 /// Is the name at `head` (the last part of a dotted name) a type reference by the tokens before
 /// it: a keyword only a type follows on the same line, or the `:` of a return type?
 #[cpu_multiversion]
-fn type_reference_head(tokens: &Tokens, head: usize, cpu: impl Cpu) -> bool {
+fn type_reference_head(tokens: &TokensView, head: usize, cpu: impl Cpu) -> bool {
     let mut h = head;
     let mut prev = tokens.prev_token(h, cpu);
     while let Prev::Op(d, b'.') = prev {
@@ -176,7 +175,7 @@ fn type_reference_head(tokens: &Tokens, head: usize, cpu: impl Cpu) -> bool {
 /// expression follows.
 #[cpu_multiversion]
 #[rustfmt::skip::macros(tk)]
-fn return_type_colon(tokens: &Tokens, c: usize, cpu: impl Cpu) -> bool {
+fn return_type_colon(tokens: &TokensView, c: usize, cpu: impl Cpu) -> bool {
     let Prev::Op(rp, b')') = tokens.prev_token(c, cpu) else {
         return false;
     };

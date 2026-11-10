@@ -9,14 +9,13 @@
 //! - [`gt_follower`]: Can the token after the `>` follow type arguments?
 //!   A `(` can, as in `f<T>(x)`. An identifier can't, as in `a < b > c`.
 
-use crate::{
-    cpu::{Cpu, cpu_multiversion},
-    token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
-};
+use oxc_simd::{Cpu, cpu_multiversion};
+
+use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
 
 use crate::pipeline::{
     bytes::{is_digit, is_id_start, line_break_in},
-    disambiguate::common::{Tokens, bits, word_len},
+    disambiguate::common::{TokensView, bits, word_len},
     keywords::kw_match_at,
 };
 
@@ -25,7 +24,7 @@ use super::bytes::{
 };
 
 #[cpu_multiversion]
-fn gt_follower(tokens: &Tokens, i: usize, cpu: impl Cpu) -> bool {
+fn gt_follower(tokens: &TokensView, i: usize, cpu: impl Cpu) -> bool {
     let (src, n) = (tokens.src, tokens.n);
     let (i, broke) = skip_trivia_nl(src, n, i, cpu);
     if i >= n {
@@ -59,8 +58,8 @@ fn gt_follower(tokens: &Tokens, i: usize, cpu: impl Cpu) -> bool {
 
 #[cpu_multiversion]
 #[rustfmt::skip::macros(matches_tk)]
-fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool {
-    let Tokens { src, st, kind, .. } = *tokens;
+fn type_list_legal(tokens: &TokensView, lo: usize, hi: usize, cpu: impl Cpu) -> bool {
+    let TokensView { src, st, kind, .. } = *tokens;
     let mut start = true;
     let mut braces: i32 = 0;
     let mut angle_bits: u64 = 0;
@@ -388,7 +387,7 @@ fn type_illegal_kind(k: u8, _cpu: impl Cpu) -> bool {
 /// accepts opens one in any context.
 #[cpu_multiversion]
 #[inline(never)]
-pub fn type_args_at(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
+pub fn type_args_at(tokens: &TokensView, lt: usize, cpu: impl Cpu) -> bool {
     let closers = tokens.closers;
     if let Some(yes) = closers.get(lt, cpu).and_then(|r| r.args) {
         return yes;
@@ -399,7 +398,7 @@ pub fn type_args_at(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
 }
 
 #[cpu_multiversion]
-fn list_is_type_args(tokens: &Tokens, lt: usize, gt: usize, cpu: impl Cpu) -> bool {
+fn list_is_type_args(tokens: &TokensView, lt: usize, gt: usize, cpu: impl Cpu) -> bool {
     !matches!(tokens.src[gt + 1], b'=' | b'>')
         && gt_follower(tokens, gt + 1, cpu)
         && type_list_legal(tokens, lt + 1, gt, cpu)

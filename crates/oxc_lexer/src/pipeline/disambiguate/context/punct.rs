@@ -1,13 +1,12 @@
 //! Punctuation in expression context: operators, arrows, separators, and the brackets that
 //! open and close frames.
 
-use crate::{
-    cpu::{BASELINE, cpu_version},
-    token::{OP_KIND_BASE, matches_tk, tk},
-};
+use oxc_simd::{BASELINE, cpu_version};
+
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use crate::pipeline::{
-    disambiguate::{common::Tokens, type_context::lt_run_split},
+    disambiguate::{common::TokensView, type_context::lt_run_split},
     operators::is_op_char,
 };
 
@@ -20,7 +19,7 @@ use super::{
 
 impl Walk {
     #[cpu_version(Generic)]
-    pub(super) fn step_op(&mut self, tokens: &Tokens, pos: usize, newline: bool) -> usize {
+    pub(super) fn step_op(&mut self, tokens: &TokensView, pos: usize, newline: bool) -> usize {
         let cpu = BASELINE;
 
         let c = tokens.src[pos];
@@ -119,7 +118,7 @@ impl Walk {
     }
 
     #[cpu_version(Generic)]
-    pub(super) fn arrow(&mut self, tokens: &Tokens, pos: usize) {
+    pub(super) fn arrow(&mut self, tokens: &TokensView, pos: usize) {
         let cpu = BASELINE;
 
         let is_async = if self.closed_group { self.closed_group_async } else { self.arrow_async };
@@ -152,7 +151,7 @@ impl Walk {
     }
 
     #[cpu_version(Generic)]
-    pub(super) fn question(&mut self, tokens: &Tokens, pos: usize) {
+    pub(super) fn question(&mut self, tokens: &TokensView, pos: usize) {
         let cpu = BASELINE;
 
         // Optional marker (`a?: T`, `a?,`, `a?)`) vs conditional.
@@ -171,7 +170,7 @@ impl Walk {
     }
 
     #[cpu_version(Generic)]
-    fn colon(&mut self, tokens: &Tokens) {
+    fn colon(&mut self, tokens: &TokensView) {
         // A concise arrow body without a pending `?` of its own ends at a `:` (the `?` belongs to
         // the frame below).
         while self.top_kind() == FrameKind::Concise && self.top().open_questions == 0 {

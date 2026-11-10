@@ -11,6 +11,7 @@ use crate::{EnvOptions, context::TraverseCtx, state::TransformState};
 use module_imports::ModuleImportsStore;
 
 pub mod arrow_function_converter;
+pub mod class_transform;
 pub mod computed_key;
 pub mod duplicate;
 pub mod helper_loader;

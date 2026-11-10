@@ -1423,12 +1423,13 @@ fn write_raw_str<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) {
 }
 
 fn write_keyframes_name<'a>(name: &KeyframesName<'a>, f: &mut CssFormatter<'_, 'a>) {
-    let source = f.context().source_text();
-    if let KeyframesName::Str(InterpolableStr::Literal(str)) = name {
-        value::write_str(str, f);
-    } else {
-        let span = to_span(name.span());
-        write!(f, text(source.text_for(&span)));
+    match name {
+        KeyframesName::Str(InterpolableStr::Literal(str)) => value::write_str(str, f),
+        KeyframesName::LessEscapedStr(escaped) => value::write_less_escaped_str(escaped, f),
+        _ => {
+            let span = to_span(name.span());
+            write!(f, text(f.context().source_text().text_for(&span)));
+        }
     }
 }
 
