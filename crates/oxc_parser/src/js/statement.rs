@@ -54,11 +54,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut expecting_directives = true;
         let allocator = self.allocator();
         let statements = collect_list(&allocator, || {
-            while !self.has_fatal_error() {
-                if !is_top_level && self.at(Kind::RCurly) {
-                    break;
-                }
-
+            while !self.has_fatal_error() && (is_top_level || !self.at(Kind::RCurly)) {
                 // Commit once module syntax is detected (`export` commits eagerly in
                 // `parse_export_declaration`; `has_module_syntax()` excludes TS's
                 // script-compatible `import x = ns.foo`). Until committed, checkpoint each
@@ -69,7 +65,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         None
                     } else {
                         self.state.encountered_await_identifier = false;
-                        Some((statement_index, self.checkpoint()))
+                        Some(self.checkpoint())
                     }
                 } else {
                     None
@@ -106,11 +102,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // Don't reparse a module declaration: `export` already committed to the
                 // Module goal while parsing, so reparsing would record the export twice.
                 // e.g. `@foo export default class C { x = await + 1 }`
-                if let Some((stmt_index, checkpoint)) = checkpoint
+                if let Some(checkpoint) = checkpoint
                     && self.state.encountered_await_identifier
                     && !stmt.is_module_declaration()
                 {
-                    self.state.potential_await_reparse.push((stmt_index, checkpoint));
+                    self.state.potential_await_reparse.push((statement_index, checkpoint));
                 }
 
                 expecting_directives = false;
