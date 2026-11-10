@@ -90,7 +90,7 @@ pub mod lexer;
 
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
-    ast::{Expression, Program, Statement},
+    ast::{Comment, Expression, Program, Statement},
     builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_diagnostics::Diagnostics;
@@ -213,6 +213,29 @@ pub struct ParserReturn<'a> {
 
     /// Whether the file is [flow](https://flow.org).
     pub is_flow_language: bool,
+}
+
+/// Return value of [`Parser::parse_expression_at`]: the expression, where it ends, and the
+/// comments and tokens read on the way.
+#[non_exhaustive]
+pub struct ExpressionReturn<'a> {
+    /// The parsed expression.
+    pub expression: Expression<'a>,
+
+    /// The byte offset where the expression ends.
+    pub end: u32,
+
+    /// Comments in source order, up to the token after the expression.
+    ///
+    /// The parser reads that token, so a comment between the expression's end and it
+    /// (`{a /* c */}`) is included.
+    pub comments: ArenaVec<'a, Comment>,
+
+    /// The expression's tokens in source order.
+    ///
+    /// Tokens are only collected when tokens are enabled in [`ParserConfig`].
+    /// The token after the expression is not included.
+    pub tokens: ArenaVec<'a, Token>,
 }
 
 /// Parse options
@@ -473,16 +496,16 @@ mod parser_parse {
         // Dispatches via `Any`, same as `parse` does.
         pub fn parse_expression(self) -> Result<Expression<'a>, Diagnostics> {
             let start = self.start;
-            self.parse_expression_from(start, true).map(|(expression, _)| expression)
+            self.parse_expression_from(start, true).map(|ret| ret.expression)
         }
 
         /// Parse a single [`Expression`] that starts at byte offset `start` of the source text,
         /// and stop where it ends, like acorn's `parseExpressionAt`.
         ///
-        /// Returns the expression and the byte offset where it ends. The text after the
-        /// expression is not parsed, but the token right after it is read. Spans are offsets
-        /// into the whole source text, so a language that embeds expressions (such as a
-        /// template) can parse each one in place.
+        /// Returns the expression, the byte offset where it ends, and its comments and tokens.
+        /// The text after the expression is not parsed, but the token right after it is read.
+        /// Spans are offsets into the whole source text, so a language that embeds expressions
+        /// (such as a template) can parse each one in place.
         ///
         /// # Example
         ///
@@ -491,11 +514,12 @@ mod parser_parse {
         /// use oxc_parser::Parser;
         /// use oxc_span::{GetSpan, SourceType};
         ///
-        /// let src = "<p>{a + b}</p>";
+        /// let src = "<p>{a + b /* sum */}</p>";
         /// let allocator = Allocator::new();
-        /// let (expr, end) =
+        /// let ret =
         ///     Parser::new(&allocator, src, SourceType::default()).parse_expression_at(4).unwrap();
-        /// assert_eq!((expr.span().start, expr.span().end, end), (4, 9, 9));
+        /// assert_eq!((ret.expression.span().start, ret.expression.span().end, ret.end), (4, 9, 9));
+        /// assert_eq!(ret.comments[0].span.start, 10);
         /// ```
         ///
         /// # Errors
@@ -503,7 +527,7 @@ mod parser_parse {
         ///
         /// # Panics
         /// If `start` is past the end of the source text or not on a character boundary.
-        pub fn parse_expression_at(self, start: u32) -> Result<(Expression<'a>, u32), Diagnostics> {
+        pub fn parse_expression_at(self, start: u32) -> Result<ExpressionReturn<'a>, Diagnostics> {
             self.parse_expression_from(start, false)
         }
 
@@ -512,7 +536,7 @@ mod parser_parse {
             self,
             start: u32,
             whole: bool,
-        ) -> Result<(Expression<'a>, u32), Diagnostics> {
+        ) -> Result<ExpressionReturn<'a>, Diagnostics> {
             let config: &dyn Any = &self.config;
             if config.is::<NoTokensParserConfig>() {
                 parse_expression_with_no_tokens_config(
@@ -649,7 +673,7 @@ mod parser_parse {
         options: ParseOptions,
         start: u32,
         whole: bool,
-    ) -> Result<(Expression<'a>, u32), Diagnostics> {
+    ) -> Result<ExpressionReturn<'a>, Diagnostics> {
         ParserImpl::<NoTokensParserConfig>::new(
             allocator,
             source_text,
@@ -669,7 +693,7 @@ mod parser_parse {
         options: ParseOptions,
         start: u32,
         whole: bool,
-    ) -> Result<(Expression<'a>, u32), Diagnostics> {
+    ) -> Result<ExpressionReturn<'a>, Diagnostics> {
         ParserImpl::<TokensParserConfig>::new(
             allocator,
             source_text,
@@ -690,7 +714,7 @@ mod parser_parse {
         config: RuntimeParserConfig,
         start: u32,
         whole: bool,
-    ) -> Result<(Expression<'a>, u32), Diagnostics> {
+    ) -> Result<ExpressionReturn<'a>, Diagnostics> {
         ParserImpl::<RuntimeParserConfig>::new(
             allocator,
             source_text,
@@ -882,12 +906,12 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     }
 
     /// Parse an expression from byte offset `start`. With `whole`, it must reach the end of the
-    /// source text. Returns the expression and the offset where it ends.
+    /// source text.
     pub fn parse_expression(
         mut self,
         start: u32,
         whole: bool,
-    ) -> Result<(Expression<'a>, u32), Diagnostics> {
+    ) -> Result<ExpressionReturn<'a>, Diagnostics> {
         if start != 0 {
             self.lexer.set_offset(start);
         }
@@ -902,6 +926,10 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             return Err(error.into_diagnostic().into());
         }
         self.check_unfinished_errors();
+        // The token after the expression has been read, but is not one of its tokens.
+        let mut tokens = self.lexer.take_tokens();
+        let len = tokens.partition_point(|token| token.start() < end);
+        tokens.truncate(len);
         let errors = self
             .lexer
             .errors
@@ -912,7 +940,12 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         if !errors.is_empty() {
             return Err(errors);
         }
-        Ok((expr, end))
+        Ok(ExpressionReturn {
+            expression: expr,
+            end,
+            comments: self.lexer.trivia_builder.comments,
+            tokens,
+        })
     }
 
     #[expect(clippy::cast_possible_truncation)]
@@ -1169,11 +1202,11 @@ mod test {
         ];
         for (source, start, source_type, (expr_start, end)) in cases {
             let allocator = Allocator::default();
-            let (expr, expr_end) = Parser::new(&allocator, source, source_type)
+            let ret = Parser::new(&allocator, source, source_type)
                 .parse_expression_at(start)
                 .unwrap_or_else(|errors| panic!("{source}: {errors:?}"));
             assert_eq!(
-                (expr.span().start, expr.span().end, expr_end),
+                (ret.expression.span().start, ret.expression.span().end, ret.end),
                 (expr_start, end, end),
                 "{source}"
             );
@@ -1204,6 +1237,33 @@ mod test {
             .parse_expression()
             .unwrap();
         assert_eq!((expr.span().start, expr.span().end), (4, 9));
+    }
+
+    #[test]
+    fn parse_expression_at_returns_comments_up_to_the_next_token() {
+        let source = "<p>{/* a */ x /* b */}</p><!-- c -->";
+        let allocator = Allocator::default();
+        let ret =
+            Parser::new(&allocator, source, SourceType::default()).parse_expression_at(4).unwrap();
+        let text = |span: Span| &source[span.start as usize..span.end as usize];
+        let comments = ret.comments.iter().map(|comment| text(comment.span)).collect::<Vec<_>>();
+        assert_eq!(comments, ["/* a */", "/* b */"]);
+    }
+
+    #[test]
+    fn parse_expression_at_returns_the_expression_tokens() {
+        let source = "{a + b}";
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, source, SourceType::default())
+            .with_config(TokensParserConfig)
+            .parse_expression_at(1)
+            .unwrap();
+        let kinds = ret.tokens.iter().map(Token::kind).collect::<Vec<_>>();
+        assert_eq!(kinds, [Kind::Ident, Kind::Plus, Kind::Ident]);
+
+        let ret =
+            Parser::new(&allocator, source, SourceType::default()).parse_expression_at(1).unwrap();
+        assert!(ret.tokens.is_empty());
     }
 
     #[test]
