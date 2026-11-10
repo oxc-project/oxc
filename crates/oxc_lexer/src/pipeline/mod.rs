@@ -31,7 +31,7 @@ mod unicode_leads;
 pub(crate) use lanes::TokenLanes;
 pub use lexer::Lexer;
 
-use disambiguate::{Brackets, Closers, Tokens};
+use disambiguate::{Brackets, Closers, TokensView};
 
 /// The lex in progress as `disambiguate` reads it, over the buffers [`Lexer::ensure`] sized.
 ///
@@ -57,9 +57,9 @@ unsafe fn token_view<'a>(
     brackets: &'a Brackets,
     closers: &'a Closers,
     _cpu: impl Cpu,
-) -> Tokens<'a> {
+) -> TokensView<'a> {
     let nb = n.div_ceil(64) + 1;
-    Tokens {
+    TokensView {
         src: slice::from_raw_parts(src, n + PAD),
         st: slice::from_raw_parts(st, nb),
         opch: slice::from_raw_parts(opch, nb),

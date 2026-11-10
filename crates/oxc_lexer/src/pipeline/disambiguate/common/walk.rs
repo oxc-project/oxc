@@ -24,12 +24,12 @@ use crate::pipeline::{
     find::bracket_bits,
 };
 
-use super::{Tokens, bits};
+use super::{TokensView, bits};
 
 /// The source's bracket bytes (`(){}[]`) as a bitmap, built per lex a 64-byte word at a time
 /// as the matches reach it: crossing a group costs a step per bracket, not per token, and a file
 /// whose queries stay local never has the whole bitmap built. Owned by the lexer and shared with
-/// every [`Tokens`] view of the lex, so the words are cells.
+/// every [`TokensView`] of the lex, so the words are cells.
 #[derive(Default)]
 pub struct Brackets {
     /// Bracket bytes of the source. `st` is applied when a word is read, not stored, because
@@ -100,7 +100,7 @@ fn bracket_word(src: &[u8], base: usize, n: usize, cpu: impl Cpu) -> u64 {
 #[cpu_multiversion]
 #[inline]
 pub(super) fn match_delim_back(
-    tokens: &Tokens,
+    tokens: &TokensView,
     from: usize,
     open: u8,
     close: u8,
@@ -142,7 +142,7 @@ pub(super) fn match_delim_back(
 
 #[cpu_multiversion]
 #[inline(never)]
-fn delim_memo_opener(tokens: &Tokens, from: usize, cpu: impl Cpu) -> Option<usize> {
+fn delim_memo_opener(tokens: &TokensView, from: usize, cpu: impl Cpu) -> Option<usize> {
     let (src, st, kind, n, b) = (tokens.src, tokens.st, tokens.kind, tokens.n, tokens.brackets);
     let mut m = b.pairs.borrow_mut();
     if from >= m.built_to {

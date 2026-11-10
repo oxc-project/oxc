@@ -5,7 +5,7 @@ use oxc_simd::{BASELINE, cpu_version};
 
 use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
-use crate::pipeline::disambiguate::{LOCAL_WALK_BUDGET, WALK_SCAN_CAP, common::Tokens};
+use crate::pipeline::disambiguate::{LOCAL_WALK_BUDGET, WALK_SCAN_CAP, common::TokensView};
 
 use super::{
     After, Site, Walks,
@@ -15,7 +15,12 @@ use super::{
 
 /// Scan back to the anchor of a query, recording the groups the walk skips; None past the cap.
 #[cpu_version(Generic)]
-fn scan(tokens: &Tokens, jumps: &mut Vec<Jump>, from: usize, steps: &mut u32) -> Option<Anchor> {
+fn scan(
+    tokens: &TokensView,
+    jumps: &mut Vec<Jump>,
+    from: usize,
+    steps: &mut u32,
+) -> Option<Anchor> {
     let cpu = BASELINE;
 
     jumps.clear();
@@ -63,7 +68,7 @@ fn scan(tokens: &Tokens, jumps: &mut Vec<Jump>, from: usize, steps: &mut u32) ->
 /// Read a bounded walk scanned back from from and walked to to; None if the full walk must answer.
 #[cpu_version(Generic)]
 fn local_walk<R>(
-    tokens: &Tokens,
+    tokens: &TokensView,
     walks: &mut Walks,
     from: usize,
     to: usize,
@@ -89,7 +94,7 @@ fn local_walk<R>(
 /// Level 3 code uses [`BASELINE`] for functions it calls.
 #[cpu_version(Generic)]
 #[inline(never)]
-pub fn before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> Site {
+pub fn before(tokens: &TokensView, walks: &mut Walks, pos: usize) -> Site {
     if let Some(s) = local_walk(tokens, walks, pos, pos, Walk::site) {
         return s;
     }
@@ -104,7 +109,7 @@ pub fn before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> Site {
 /// Level 3 code uses [`BASELINE`] for functions it calls.
 #[cpu_version(Generic)]
 #[inline(never)]
-pub fn angles_before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> usize {
+pub fn angles_before(tokens: &TokensView, walks: &mut Walks, pos: usize) -> usize {
     if let Some(n) = local_walk(tokens, walks, pos, pos, Walk::open_angles) {
         return n;
     }
@@ -119,7 +124,7 @@ pub fn angles_before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> usize {
 /// Level 3 code uses [`BASELINE`] for functions it calls.
 #[cpu_version(Generic)]
 #[inline(never)]
-pub fn after(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
+pub fn after(tokens: &TokensView, walks: &mut Walks, pos: usize) -> After {
     let cpu = BASELINE;
 
     // The scan takes in the token, skipping a closer's group whole; a word here is never an anchor.
@@ -133,7 +138,7 @@ pub fn after(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
 impl Walk {
     /// Seed the walk at the anchor, putting the scan's jumps (nearest first) in source order.
     #[cpu_version(Generic)]
-    fn start(&mut self, tokens: &Tokens, anchor: Anchor) {
+    fn start(&mut self, tokens: &TokensView, anchor: Anchor) {
         let cpu = BASELINE;
 
         self.jumps.reverse();

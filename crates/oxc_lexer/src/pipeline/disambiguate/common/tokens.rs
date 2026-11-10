@@ -17,7 +17,7 @@ use super::{Brackets, Closers, bits, walk};
 /// The pipeline builds one at each question, over the buffers the asking stage is filling, and
 /// drops it when the question is answered. The bitmaps have one bit per source byte.
 #[derive(Clone, Copy)]
-pub struct Tokens<'a> {
+pub struct TokensView<'a> {
     /// The source, followed by at least `PAD` zero bytes.
     pub src: &'a [u8],
     /// Token starts.
@@ -61,14 +61,14 @@ pub struct Peek {
 
 impl Prev {
     #[cpu_version(Generic)]
-    pub fn is_member_dot(self, tokens: &Tokens) -> bool {
+    pub fn is_member_dot(self, tokens: &TokensView) -> bool {
         let cpu = BASELINE;
 
         matches!(self, Prev::Op(q, _) if tokens.member_dot(q, cpu))
     }
 }
 
-impl Tokens<'_> {
+impl TokensView<'_> {
     /// Base kind: keywords back to `tk!(Ident)`, escaped names to their plain kind.
     #[cpu_multiversion]
     #[inline(always)]
