@@ -125,10 +125,6 @@ test-estree *args='':
 test-estree-tokens *args='':
   cargo run -p oxc_coverage --profile coverage -- estree_tokens {{args}}
 
-# Get code coverage
-codecov:
-  cargo codecov --html
-
 # ==================== AST & CODEGEN ====================
 
 # Generate AST related boilerplate code.
