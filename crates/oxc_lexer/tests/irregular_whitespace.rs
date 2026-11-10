@@ -1,19 +1,20 @@
 #![cfg(target_endian = "little")]
 
-use oxc_lexer::{LexOptions, Lexer, PAD, Tokens};
+use oxc_lexer::{LexOptions, PAD, testing::lex_with_cpu};
+use oxc_simd::{DynCpu, test_cpus};
 
-fn irregular_whitespaces(source: &str, jsx: bool) -> Vec<(u32, u32)> {
+fn irregular_whitespaces(source: &str, jsx: bool, cpu: DynCpu) -> Vec<(u32, u32)> {
     let mut buf = source.as_bytes().to_vec();
     buf.resize(source.len() + PAD, 0);
     let options = LexOptions { jsx, ..LexOptions::default() };
-    let mut tokens = Tokens::new();
-    Lexer::new().lex(&buf, source.len(), options, &mut tokens);
+    #[expect(clippy::cast_possible_truncation, reason = "lengths fit u32")]
+    let tokens = lex_with_cpu(&buf, source.len() as u32, options, cpu);
     assert!(tokens.diagnostics().is_empty(), "{source:?}");
     tokens.irregular_whitespaces().iter().map(|span| (span.start, span.end)).collect()
 }
 
-#[test]
-fn irregular_whitespace_between_tokens() {
+#[test_cpus]
+fn irregular_whitespace_between_tokens(cpu: DynCpu) {
     let cases: &[(&str, &[(u32, u32)])] = &[
         ("a\u{b}=\u{c}b;", &[(1, 2), (3, 4)]),
         ("a \u{b}\t= b;", &[(2, 3)]),
@@ -27,7 +28,7 @@ fn irregular_whitespace_between_tokens() {
     ];
     let mut mismatches = Vec::new();
     for &(source, want) in cases {
-        let actual = irregular_whitespaces(source, false);
+        let actual = irregular_whitespaces(source, false, cpu);
         if actual != want {
             mismatches.push(format!("{source:?}: got {actual:?}, want {want:?}"));
         }
@@ -35,8 +36,8 @@ fn irregular_whitespace_between_tokens() {
     assert!(mismatches.is_empty(), "{}", mismatches.join("\n"));
 }
 
-#[test]
-fn irregular_whitespace_inside_literals_and_comments() {
+#[test_cpus]
+fn irregular_whitespace_inside_literals_and_comments(cpu: DynCpu) {
     for source in [
         "'\u{b}\u{a0}';",
         "`\u{c}\u{3000}`;",
@@ -46,12 +47,12 @@ fn irregular_whitespace_inside_literals_and_comments() {
         "/* \u{2028}\u{b} */",
         "#!/usr/bin/env\u{a0}node\na;",
     ] {
-        assert_eq!(irregular_whitespaces(source, false), [], "{source:?}");
+        assert_eq!(irregular_whitespaces(source, false, cpu), [], "{source:?}");
     }
 }
 
-#[test]
-fn irregular_whitespace_in_jsx() {
-    assert_eq!(irregular_whitespaces("<a\u{a0}b='\u{a0}'>\u{a0}c\u{a0}</a>;", true), [(2, 4)]);
-    assert_eq!(irregular_whitespaces("<a>{\u{a0}b}</a>;", true), [(4, 6)]);
+#[test_cpus]
+fn irregular_whitespace_in_jsx(cpu: DynCpu) {
+    assert_eq!(irregular_whitespaces("<a\u{a0}b='\u{a0}'>\u{a0}c\u{a0}</a>;", true, cpu), [(2, 4)]);
+    assert_eq!(irregular_whitespaces("<a>{\u{a0}b}</a>;", true, cpu), [(4, 6)]);
 }
