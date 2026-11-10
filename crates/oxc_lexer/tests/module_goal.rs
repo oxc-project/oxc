@@ -1,7 +1,6 @@
 #![cfg(target_endian = "little")]
-#![expect(clippy::cast_possible_truncation, reason = "test helpers: lengths fit u32")]
 
-use oxc_lexer::{DiagCode, LexOptions, PAD, TokenKind, testing::lex_with_cpu};
+use oxc_lexer::{DiagCode, LexOptions, TokenKind, testing::lex_with_cpu};
 use oxc_simd::{DynCpu, test_cpus};
 
 fn kinds_of(code: &str, module: bool, cpu: DynCpu) -> Vec<TokenKind> {
@@ -9,10 +8,7 @@ fn kinds_of(code: &str, module: bool, cpu: DynCpu) -> Vec<TokenKind> {
 }
 
 fn kinds_with(code: &str, opts: LexOptions, cpu: DynCpu) -> Vec<TokenKind> {
-    let mut buf = code.as_bytes().to_vec();
-    let n = buf.len();
-    buf.resize(n + PAD, 0);
-    let res = lex_with_cpu(&buf, n as u32, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     let count = res.token_count();
     res.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
 }
@@ -22,10 +18,7 @@ fn diag_codes(code: &str, module: bool, cpu: DynCpu) -> Vec<DiagCode> {
 }
 
 fn diag_codes_with(code: &str, opts: LexOptions, cpu: DynCpu) -> Vec<DiagCode> {
-    let mut buf = code.as_bytes().to_vec();
-    let n = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0);
-    let res = lex_with_cpu(&buf, n, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     res.diagnostics().iter().map(|d| d.code).collect()
 }
 
@@ -42,10 +35,8 @@ fn script_html_open_comment_anywhere(cpu: DynCpu) {
 #[test_cpus]
 fn html_comment_content(cpu: DynCpu) {
     let source = "<!--a\n-->\n<!--";
-    let mut buf = source.as_bytes().to_vec();
-    buf.resize(buf.len() + PAD, 0);
     let options = LexOptions { source_type_module: false, ..Default::default() };
-    let result = lex_with_cpu(&buf, source.len() as u32, options, cpu);
+    let result = lex_with_cpu(source, options, cpu);
     assert_eq!(result.diagnostics(), []);
     let comments = result.comments();
     assert_eq!(comments.len(), 3);

@@ -2,22 +2,15 @@
 //! `*_never_flagged` counterpart: valid input must emit nothing.
 
 #![cfg(target_endian = "little")]
-#![expect(
-    clippy::cast_possible_truncation,
-    clippy::unreadable_literal,
-    reason = "test helpers: lengths fit u32; the fuzz PRNG uses raw constants"
-)]
+#![expect(clippy::unreadable_literal, reason = "test helpers: the fuzz PRNG uses raw constants")]
 
 use std::str;
 
-use oxc_lexer::{DiagCode, Diagnostic, LexOptions, PAD, TokenKind, testing::lex_with_cpu};
+use oxc_lexer::{DiagCode, Diagnostic, LexOptions, TokenKind, testing::lex_with_cpu};
 use oxc_simd::{DynCpu, test_cpus};
 
 fn diags(code: &str, cpu: DynCpu) -> Vec<Diagnostic> {
-    let mut buf = code.as_bytes().to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0); // lexer over-reads up to PAD bytes past `len`
-    let res = lex_with_cpu(&buf, len, LexOptions::default(), cpu);
+    let res = lex_with_cpu(code, LexOptions::default(), cpu);
     res.diagnostics().to_vec()
 }
 
@@ -26,20 +19,14 @@ fn codes(code: &str, cpu: DynCpu) -> Vec<DiagCode> {
 }
 
 fn codes_jsx(code: &str, cpu: DynCpu) -> Vec<DiagCode> {
-    let mut buf = code.as_bytes().to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { jsx: true, ..Default::default() };
-    let res = lex_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     res.diagnostics().iter().map(|d| d.code).collect()
 }
 
 fn codes_tsx(code: &str, cpu: DynCpu) -> Vec<DiagCode> {
-    let mut buf = code.as_bytes().to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { jsx: true, ts: true, ..Default::default() };
-    let res = lex_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     res.diagnostics().iter().map(|d| d.code).collect()
 }
 
@@ -398,11 +385,8 @@ fn valid_unicode_never_flagged(cpu: DynCpu) {
 }
 
 fn diags_bytes(code: &[u8], cpu: DynCpu) -> Vec<Diagnostic> {
-    let mut buf = code.to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { validate_utf8: true, ..Default::default() };
-    let res = lex_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     res.diagnostics().to_vec()
 }
 
@@ -463,6 +447,7 @@ fn utf8_fuzz_against_std(cpu: DynCpu) {
         let len = 3 + (s >> 59) as usize;
         for _ in 0..len {
             s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            #[expect(clippy::cast_possible_truncation)]
             let r = (s >> 33) as u8;
             buf.push(if r & 1 == 0 { 0x40 + (r >> 3) } else { r });
         }
@@ -650,10 +635,7 @@ fn template_cooked_invalid_marker(cpu: DynCpu) {
     // A NotEscapeSequence makes the cooked value None; legality depends on
     // tagged-ness, so the span carries a marker bit, not a diagnostic.
     let get = |code: &str| -> Vec<bool> {
-        let mut buf = code.as_bytes().to_vec();
-        let len = buf.len() as u32;
-        buf.resize(buf.len() + PAD, 0);
-        let res = lex_with_cpu(&buf, len, LexOptions::default(), cpu);
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
         res.templates().iter().map(|t| t.cooked_invalid()).collect()
     };
     assert_eq!(get(r"t = `\uZZ`;"), [true]); // bad unicode escape
@@ -751,11 +733,8 @@ fn valid_jsx_never_flagged(cpu: DynCpu) {
 }
 
 fn diags_jsx(code: &str, cpu: DynCpu) -> Vec<Diagnostic> {
-    let mut buf = code.as_bytes().to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { jsx: true, ..Default::default() };
-    let res = lex_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     res.diagnostics().to_vec()
 }
 
@@ -871,11 +850,8 @@ fn value_lanes_hold_exactly_one_entry_per_value_token(cpu: DynCpu) {
             9,
         ),
     ] {
-        let mut buf = code.as_bytes().to_vec();
-        let len = buf.len() as u32;
-        buf.resize(buf.len() + PAD, 0);
         let opts = LexOptions { ts, ..Default::default() };
-        let res = lex_with_cpu(&buf, len, opts, cpu);
+        let res = lex_with_cpu(code, opts, cpu);
         assert_eq!(res.numbers().len(), numbers, "numbers lane for {code:?}");
         assert_eq!(res.atoms().len(), atoms, "atoms lane for {code:?}");
         assert_eq!(res.diagnostics().len(), 0, "diagnostics for {code:?}: {:?}", res.diagnostics());
@@ -895,10 +871,7 @@ fn block_comment_star_plus_slash_is_not_a_terminator(cpu: DynCpu) {
             1,
         ),
     ] {
-        let mut buf = code.as_bytes().to_vec();
-        let len = buf.len() as u32;
-        buf.resize(buf.len() + PAD, 0);
-        let res = lex_with_cpu(&buf, len, LexOptions::default(), cpu);
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
         let kinds = res.kinds();
         let non_trivia = kinds.iter().filter(|k| !k.is_trivia() && **k != TokenKind::Eof).count();
         assert_eq!(non_trivia, tokens, "{code:?}: {kinds:?}");
