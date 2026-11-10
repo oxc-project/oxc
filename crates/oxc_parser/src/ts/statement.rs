@@ -3,7 +3,9 @@ use oxc_ast::ast::*;
 use oxc_span::{FileExtension, GetSpan, SPAN};
 
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext,
+    buffered_vec::BufferedVec,
+    diagnostics,
     js::{FunctionKind, VariableDeclarationParent},
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
@@ -267,10 +269,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let extends_span = self.cur_token().span();
         self.bump_any(); // bump `extends`
 
-        let mut extends = ArenaVec::with_capacity_in(1, self);
+        let mut extends = BufferedVec::new_in(self);
         if self.at(Kind::LCurly) {
             self.error(diagnostics::empty_extends_clause(extends_span));
-            return extends;
+            return extends.into_vec();
         }
         loop {
             let start = self.cur_start();
@@ -316,7 +318,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        extends
+        extends.into_vec()
     }
 
     fn parse_ts_interface_heritage_type_name(&mut self, start: u32) -> TSTypeName<'a> {

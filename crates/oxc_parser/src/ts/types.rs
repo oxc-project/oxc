@@ -223,12 +223,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_ts_implements_clause(&mut self) -> ArenaVec<'a, TSClassImplements<'a>> {
         self.expect(Kind::Implements);
-        let first = self.parse_ts_implement_name();
-        let mut implements = ArenaVec::from_value_in(first, self);
-        while self.eat(Kind::Comma) {
-            implements.push(self.parse_ts_implement_name());
-        }
-        implements
+        let mut first = Some(self.parse_ts_implement_name());
+        self.collect_list(|p| {
+            first.take().or_else(|| p.eat(Kind::Comma).then(|| p.parse_ts_implement_name()))
+        })
     }
 
     fn parse_ts_type_parameter(&mut self, allow_variance: bool) -> TSTypeParameter<'a> {
