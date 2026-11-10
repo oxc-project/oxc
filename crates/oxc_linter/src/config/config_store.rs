@@ -8,8 +8,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{
     AllowWarnDeny,
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
-    rule::RuleMeta,
-    rules::{RULES, RuleEnum, import::no_cycle::NoCycle},
+    rules::{RULES, RuleEnum},
 };
 
 use super::{
@@ -358,24 +357,6 @@ impl ConfigStore {
         &self.base.base.rules
     }
 
-    /// Whether `import/no-cycle` may be enabled for some file, ignoring override globs and
-    /// plugins. Over-approximating only costs the cycle pre-analysis, which is linear.
-    pub(crate) fn may_run_import_no_cycle(&self) -> bool {
-        std::iter::once(&self.base).chain(self.nested_configs.values()).any(|config| {
-            config
-                .categories
-                .get(&NoCycle::CATEGORY)
-                .is_some_and(|severity| severity.is_warn_deny())
-                || config
-                    .base_rules
-                    .iter()
-                    .chain(config.overrides.iter().flat_map(|entry| &entry.rules.builtin_rules))
-                    .any(|(rule, severity)| {
-                        matches!(rule, RuleEnum::ImportNoCycle(_)) && severity.is_warn_deny()
-                    })
-        })
-    }
-
     pub fn plugins(&self) -> LintPlugins {
         self.base.base.config.plugins
     }
@@ -482,38 +463,6 @@ mod test {
         ($json:tt) => {
             serde_json::from_value(serde_json::json!($json)).unwrap()
         };
-    }
-
-    #[test]
-    fn may_run_import_no_cycle_scans_rules_overrides_categories_and_nested_configs() {
-        let config = |value: Value, external: &mut ExternalPluginStore| {
-            ConfigStoreBuilder::from_oxlintrc(true, from_json!(value), None, external, None)
-                .unwrap()
-                .build(external)
-                .unwrap()
-        };
-        let no_cycle = serde_json::json!({"import/no-cycle": "error"});
-        for (extra, expected) in [
-            (serde_json::json!({}), false),
-            (serde_json::json!({"rules": {"import/no-cycle": "off"}}), false),
-            (serde_json::json!({"rules": no_cycle}), true),
-            (serde_json::json!({"overrides": [{"files": ["*.ts"], "rules": no_cycle}]}), true),
-            (serde_json::json!({"categories": {"restriction": "warn"}}), true),
-        ] {
-            let mut value = serde_json::json!({"categories": {}, "plugins": ["import"]});
-            value.as_object_mut().unwrap().extend(extra.as_object().unwrap().clone());
-            let mut external = ExternalPluginStore::default();
-            let store =
-                ConfigStore::new(config(value, &mut external), FxHashMap::default(), external);
-            assert_eq!(store.may_run_import_no_cycle(), expected, "{extra}");
-        }
-
-        let mut external = ExternalPluginStore::default();
-        let base = config(serde_json::json!({"categories": {}}), &mut external);
-        let nested =
-            config(serde_json::json!({"plugins": ["import"], "rules": no_cycle}), &mut external);
-        let nested = FxHashMap::from_iter([(PathBuf::from("nested"), nested)]);
-        assert!(ConfigStore::new(base, nested, external).may_run_import_no_cycle());
     }
 
     #[expect(clippy::default_trait_access)]

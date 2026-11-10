@@ -311,11 +311,6 @@ impl Linter {
         self.config.number_of_rules(type_aware)
     }
 
-    /// See [`ConfigStore::may_run_import_no_cycle`].
-    pub(crate) fn may_run_import_no_cycle(&self) -> bool {
-        self.config.may_run_import_no_cycle()
-    }
-
     /// Return `true` if `Linter` has an external linter (JS plugins).
     pub fn has_external_linter(&self) -> bool {
         self.external_linter.is_some()

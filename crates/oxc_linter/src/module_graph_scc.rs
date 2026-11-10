@@ -1,26 +1,25 @@
 use std::sync::{Arc, atomic::AtomicBool};
 
-/// One lint run's cycle analysis. Labels from different runs never match, and clearing `valid`
-/// disables every label of this run, e.g. if a labeled record is relinked.
+/// One run's strongly connected components of the import graph. Labels from different runs never
+/// match, and clearing `valid` disables every label of this run, e.g. if a labeled record is
+/// relinked.
 #[derive(Debug)]
-pub struct ImportCycleGraph {
+pub struct ImportGraphRun {
     pub valid: AtomicBool,
 }
 
-impl Default for ImportCycleGraph {
+impl Default for ImportGraphRun {
     fn default() -> Self {
         Self { valid: AtomicBool::new(true) }
     }
 }
 
-/// Component labels shared by every record in one linked group, one table per import filter
-/// (indexed by [`ImportCycleOptions::index`]). Component IDs are local to the group.
-///
-/// [`ImportCycleOptions::index`]: crate::rules::import::no_cycle::ImportCycleOptions::index
+/// Component labels shared by every record in one linked module group, indexed by each file's
+/// position in the group. Component IDs are local to the group.
 #[derive(Debug)]
-pub struct ImportCycleGroup {
-    pub graph: Arc<ImportCycleGraph>,
-    pub components: [Vec<(usize, bool)>; 2],
+pub struct ImportGraphGroup {
+    pub run: Arc<ImportGraphRun>,
+    pub components: Vec<(usize, bool)>,
 }
 
 /// Returns `(component_id, is_cyclic)` for each node, in input order.

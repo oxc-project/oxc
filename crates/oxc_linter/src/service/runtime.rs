@@ -31,9 +31,8 @@ use crate::{
     context::{ContextSubHost, ContextSubHostOptions},
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
-    module_graph_scc::{ImportCycleGraph, ImportCycleGroup, cyclic_components},
+    module_graph_scc::{ImportGraphGroup, ImportGraphRun, cyclic_components},
     module_record::ModuleRecord,
-    rules::import::no_cycle::ImportCycleOptions,
     suppression::DiffManager,
     utils::read_to_arena_str,
 };
@@ -43,36 +42,36 @@ use super::LintServiceOptions;
 type ModulesByPath =
     papaya::HashMap<Arc<OsStr>, SmallVec<[Arc<ModuleRecord>; 1]>, BuildHasherDefault<FxHasher>>;
 
-/// A module path compared as a [`Path`], like `import/no-cycle` compares files.
-struct CyclePath(Arc<OsStr>);
+/// A module path compared as a [`Path`], so one file under two spellings is caught.
+struct NodePath(Arc<OsStr>);
 
-impl PartialEq for CyclePath {
+impl PartialEq for NodePath {
     fn eq(&self, other: &Self) -> bool {
         Path::new(&self.0) == Path::new(&other.0)
     }
 }
 
-impl Eq for CyclePath {}
+impl Eq for NodePath {}
 
-impl Hash for CyclePath {
+impl Hash for NodePath {
     fn hash<H: Hasher>(&self, state: &mut H) {
         Path::new(&self.0).hash(state);
     }
 }
 
-/// Cycle analysis for `import/no-cycle` in one run of [`Runtime::resolve_modules`].
+/// Import-graph SCC labeling in one run of [`Runtime::resolve_modules`].
 #[derive(Default)]
-struct CycleGraphState {
-    graph: Arc<ImportCycleGraph>,
-    paths: FxHashSet<CyclePath>,
+struct ImportGraphState {
+    run: Arc<ImportGraphRun>,
+    paths: FxHashSet<NodePath>,
 }
 
-impl CycleGraphState {
+impl ImportGraphState {
     /// `false` if `path` equals an earlier path as a [`Path`] but not as a key, so one file would
     /// be two graph nodes, or if a labeled record was relinked. Either way, stop labeling. Labels
     /// of finished groups stay valid: they cannot reach modules discovered later.
     fn register_path(&mut self, path: &Arc<OsStr>) -> bool {
-        self.graph.valid.load(Ordering::Acquire) && self.paths.insert(CyclePath(Arc::clone(path)))
+        self.run.valid.load(Ordering::Acquire) && self.paths.insert(NodePath(Arc::clone(path)))
     }
 }
 
@@ -245,13 +244,13 @@ impl<'alloc_pool> ModuleGroups<'alloc_pool> {
 
 /// Writes `loaded_modules` for the records of a finished group.
 ///
-/// With cycle analysis on, it also labels every file of the group with its SCC under each import
-/// filter, from the edges seen while linking. A finished group never imports a later one, so its
-/// SCCs are complete, and imports into earlier groups cannot lead back into it.
+/// With `import_graph`, it also labels every file of the group with its strongly connected
+/// component in the import graph, from the edges seen while linking. A finished group never
+/// imports a later one, so its SCCs are complete, and imports into earlier groups cannot lead back.
 fn link_group(
     modules_by_path: &ModulesByPath,
     requests_by_path: Vec<(Arc<OsStr>, ModuleResolvedRequests)>,
-    cycle_graph: Option<&CycleGraphState>,
+    import_graph: Option<&ImportGraphState>,
 ) {
     let modules = modules_by_path.pin();
     // Borrow the graph's keys, so request specifiers can still move into `loaded_modules`.
@@ -262,9 +261,8 @@ fn link_group(
             (path, records, sections)
         })
         .collect();
-    let cycle_graph = cycle_graph.filter(|state| state.graph.valid.load(Ordering::Acquire));
-    let mut edges =
-        cycle_graph.map(|_| ImportCycleOptions::ALL.map(|_| vec![Vec::new(); nodes.len()]));
+    let import_graph = import_graph.filter(|state| state.run.valid.load(Ordering::Acquire));
+    let mut edges = import_graph.map(|_| vec![Vec::new(); nodes.len()]);
     let indices: FxHashMap<&OsStr, usize> = if edges.is_some() {
         nodes.iter().enumerate().map(|(index, (path, _, _))| ((*path).as_ref(), index)).collect()
     } else {
@@ -288,27 +286,21 @@ fn link_group(
                 if let Some(edges) = &mut edges
                     && let Some(&dependency) = indices.get(request.resolved_requested_path.as_ref())
                 {
-                    for (options, table) in
-                        ImportCycleOptions::ALL.into_iter().zip(edges.iter_mut())
-                    {
-                        if options.should_traverse_module(&request.specifier, target, record) {
-                            table[index].push(dependency);
-                        }
-                    }
+                    edges[index].push(dependency);
                 }
                 loaded_modules.insert(request.specifier, Arc::downgrade(target));
             }
         }
     }
 
-    let (Some(cycle_graph), Some(edges)) = (cycle_graph, edges) else {
+    let (Some(import_graph), Some(edges)) = (import_graph, edges) else {
         return;
     };
-    let components = edges.map(|edges| cyclic_components(&edges));
-    let group = Arc::new(ImportCycleGroup { graph: Arc::clone(&cycle_graph.graph), components });
+    let components = cyclic_components(&edges);
+    let group = Arc::new(ImportGraphGroup { run: Arc::clone(&import_graph.run), components });
     for (index, (_, records, _)) in nodes.into_iter().enumerate() {
         for record in records {
-            record.set_import_cycle_components(Arc::clone(&group), index);
+            record.set_import_graph_component(Arc::clone(&group), index);
         }
     }
 }
@@ -699,8 +691,8 @@ impl Runtime {
         // This channel is for posting `ModuleProcessOutput` from module threads to the graph thread.
         let (tx_process_output, rx_process_output) = mpsc::channel::<ModuleProcessOutput>();
 
-        // Labels files with their import cycles while linking; see `link_group`.
-        let mut cycle_graph = self.linter.may_run_import_no_cycle().then(CycleGraphState::default);
+        // Labels files with their import-graph SCCs while linking; see `link_group`.
+        let mut import_graph = Some(ImportGraphState::default());
 
         // Whether the graph thread is one of rayon's worker threads. It's not when `scope` was created by
         // `rayon::in_place_scope` outside of the thread pool.
@@ -772,8 +764,8 @@ impl Runtime {
                 rx_process_output.recv().unwrap()
             };
 
-            if cycle_graph.as_mut().is_some_and(|state| !state.register_path(&path)) {
-                cycle_graph = None;
+            if import_graph.as_mut().is_some_and(|state| !state.register_path(&path)) {
+                import_graph = None;
             }
 
             let mut group_id = groups.find(encountered_paths[&path]);
@@ -858,7 +850,7 @@ impl Runtime {
             link_group(
                 &self.modules_by_path,
                 take(&mut group.module_paths_and_resolved_requests),
-                cycle_graph.as_ref(),
+                import_graph.as_ref(),
             );
 
             // From a non-worker these land on rayon's FIFO injector, behind parses already queued.
@@ -1623,23 +1615,19 @@ mod module_groups {
 }
 
 #[cfg(test)]
-mod cycle_component_tests {
+mod import_graph_tests {
     use std::{ffi::OsStr, sync::Arc};
 
-    use oxc_span::Span;
     use smallvec::SmallVec;
 
     use super::{
-        CycleGraphState, ModuleResolvedRequests, ModulesByPath, ResolvedModuleRequest, link_group,
+        ImportGraphState, ModuleResolvedRequests, ModulesByPath, ResolvedModuleRequest, link_group,
     };
-    use crate::{
-        module_record::{ImportEntry, ImportImportName, ModuleRecord, NameSpan},
-        rules::import::no_cycle::ImportCycleOptions,
-    };
+    use crate::module_record::ModuleRecord;
 
     type Requests = Vec<(Arc<OsStr>, ModuleResolvedRequests)>;
-    /// A file's path and its sections' imports, each `(target path, is_type)`.
-    type File<'a> = (&'a str, &'a [&'a [(&'a str, bool)]]);
+    /// A file's path and the imports of each of its sections.
+    type File<'a> = (&'a str, &'a [&'a [&'a str]]);
 
     /// Adds `files` to `modules`, one record per section. Specifiers are the targets' paths.
     fn add(modules: &ModulesByPath, files: &[File]) -> Requests {
@@ -1649,24 +1637,16 @@ mod cycle_component_tests {
             for imports in sections {
                 let mut record = ModuleRecord::default();
                 record.resolved_absolute_path.push(path);
-                let mut section = Vec::new();
-                for &(target, is_type) in *imports {
-                    let name = NameSpan::new(target.into(), Span::default());
-                    record.import_entries.push(ImportEntry {
-                        statement_span: Span::default(),
-                        module_request: name.clone(),
-                        import_name: ImportImportName::NamespaceObject,
-                        local_name: name,
-                        is_type,
-                    });
-                    let resolved_requested_path = Arc::from(OsStr::new(target));
-                    section.push(ResolvedModuleRequest {
-                        specifier: target.into(),
-                        resolved_requested_path,
-                    });
-                }
                 records.push(Arc::new(record));
-                resolved.push(section);
+                resolved.push(
+                    imports
+                        .iter()
+                        .map(|&target| ResolvedModuleRequest {
+                            specifier: target.into(),
+                            resolved_requested_path: Arc::from(OsStr::new(target)),
+                        })
+                        .collect(),
+                );
             }
             let path = Arc::<OsStr>::from(OsStr::new(path));
             modules.pin().insert(Arc::clone(&path), records);
@@ -1680,42 +1660,37 @@ mod cycle_component_tests {
     }
 
     #[test]
-    fn labels_follow_each_import_filter_across_sections() {
-        let [include_types, ignore_types] = ImportCycleOptions::ALL;
+    fn sections_of_a_file_share_its_component() {
         let modules = ModulesByPath::default();
-        // `a.vue` reaches `b.ts` only through a type-only import in its second section.
+        // `a.vue` reaches `b.ts` only from its second section; `c.ts` is outside the cycle.
         let requests = add(
             &modules,
-            &[("a.vue", &[&[], &[("b.ts", true)]]), ("b.ts", &[&[("a.vue", false)]])],
+            &[("a.vue", &[&[], &["b.ts"]]), ("b.ts", &[&["a.vue"]]), ("c.ts", &[&["a.vue"]])],
         );
-        link_group(&modules, requests, Some(&CycleGraphState::default()));
-        let (a, a_script_setup, b) = (
-            record(&modules, "a.vue", 0),
-            record(&modules, "a.vue", 1),
-            record(&modules, "b.ts", 0),
-        );
-
-        let component = a.import_cycle_component(include_types).unwrap();
+        link_group(&modules, requests, Some(&ImportGraphState::default()));
+        let a = record(&modules, "a.vue", 0);
+        let component = a.import_graph_component().unwrap();
         assert!(component.is_cyclic());
-        assert!(a_script_setup.import_cycle_component(include_types).unwrap().is_cyclic());
-        assert!(!component.excludes_module(&b));
-
-        let component = a.import_cycle_component(ignore_types).unwrap();
-        assert!(!component.is_cyclic());
-        assert!(component.excludes_module(&b));
+        assert!(record(&modules, "a.vue", 1).import_graph_component().unwrap().is_cyclic());
+        assert!(!component.excludes_module(&record(&modules, "a.vue", 1)));
+        assert!(!component.excludes_module(&record(&modules, "b.ts", 0)));
+        let c = record(&modules, "c.ts", 0);
+        assert!(!c.import_graph_component().unwrap().is_cyclic());
+        assert!(component.excludes_module(&c));
     }
 
     #[test]
     fn earlier_groups_are_excluded_but_other_runs_and_unlabeled_links_are_not() {
-        let [_, ignore_types] = ImportCycleOptions::ALL;
         let modules = ModulesByPath::default();
-        let state = CycleGraphState::default();
-        let first =
-            add(&modules, &[("a.ts", &[&[("b.ts", false)]]), ("b.ts", &[&[("a.ts", false)]])]);
-        link_group(&modules, first, Some(&state));
-        link_group(&modules, add(&modules, &[("c.ts", &[&[("a.ts", false)]])]), Some(&state));
+        let state = ImportGraphState::default();
+        link_group(
+            &modules,
+            add(&modules, &[("a.ts", &[&["b.ts"]]), ("b.ts", &[&["a.ts"]])]),
+            Some(&state),
+        );
+        link_group(&modules, add(&modules, &[("c.ts", &[&["a.ts"]])]), Some(&state));
         let c = record(&modules, "c.ts", 0);
-        let c = c.import_cycle_component(ignore_types).unwrap();
+        let c = c.import_graph_component().unwrap();
         assert!(!c.is_cyclic());
         // Group-local IDs may collide, but a finished group never imports a later one.
         assert!(c.excludes_module(&record(&modules, "a.ts", 0)));
@@ -1724,32 +1699,30 @@ mod cycle_component_tests {
         link_group(
             &other_run,
             add(&other_run, &[("a.ts", &[&[]])]),
-            Some(&CycleGraphState::default()),
+            Some(&ImportGraphState::default()),
         );
         assert!(!c.excludes_module(&record(&other_run, "a.ts", 0)));
 
         let unlabeled = ModulesByPath::default();
-        link_group(&unlabeled, add(&unlabeled, &[("a.ts", &[&[("a.ts", false)]])]), None);
+        link_group(&unlabeled, add(&unlabeled, &[("a.ts", &[&["a.ts"]])]), None);
         let a = record(&unlabeled, "a.ts", 0);
-        assert!(a.import_cycle_component(ignore_types).is_none());
+        assert!(a.import_graph_component().is_none());
         assert_eq!(a.loaded_modules().len(), 1);
     }
 
     #[test]
     fn relinking_a_labeled_record_disables_the_whole_run() {
-        let [_, ignore_types] = ImportCycleOptions::ALL;
         let modules = ModulesByPath::default();
-        let requests =
-            add(&modules, &[("a.ts", &[&[("b.ts", false)]]), ("b.ts", &[&[("a.ts", false)]])]);
-        link_group(&modules, requests, Some(&CycleGraphState::default()));
-        assert!(record(&modules, "a.ts", 0).import_cycle_component(ignore_types).is_some());
+        let requests = add(&modules, &[("a.ts", &[&["b.ts"]]), ("b.ts", &[&["a.ts"]])]);
+        link_group(&modules, requests, Some(&ImportGraphState::default()));
+        assert!(record(&modules, "a.ts", 0).import_graph_component().is_some());
         drop(record(&modules, "b.ts", 0).write_loaded_modules());
-        assert!(record(&modules, "a.ts", 0).import_cycle_component(ignore_types).is_none());
+        assert!(record(&modules, "a.ts", 0).import_graph_component().is_none());
     }
 
     #[test]
-    fn path_equivalent_aliases_stop_cycle_analysis() {
-        let mut state = CycleGraphState::default();
+    fn path_equivalent_aliases_stop_labeling() {
+        let mut state = ImportGraphState::default();
         assert!(state.register_path(&Arc::from(OsStr::new("dir/a.ts"))));
         assert!(state.register_path(&Arc::from(OsStr::new("dir/b.ts"))));
         // The same file under another spelling would become a second graph node.
