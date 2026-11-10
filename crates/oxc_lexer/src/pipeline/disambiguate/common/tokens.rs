@@ -82,8 +82,8 @@ impl<'a> TokensView<'a> {
     /// # SAFETY
     ///
     /// - `src` must be valid for reads of `n + PAD` bytes.
-    /// - `st` and `opch` must be valid for reads of `n / 64 + 1` words.
-    /// - `kind` must be valid for reads of `(n / 64 + 1) * 64` bytes.
+    /// - `st` and `opch` must be valid for reads of `n.div_ceil(64) + 1` words.
+    /// - `kind` must be valid for reads of `(n.div_ceil(64) + 1) * 64` bytes.
     /// - Nothing may write to them while the view is alive.
     ///   A question reads, answers and returns before the stage writes again.
     ///
