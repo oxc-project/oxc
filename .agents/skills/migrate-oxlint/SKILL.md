@@ -1,9 +1,13 @@
 ---
 name: migrate-oxlint
-description: Guide for migrating a project from ESLint to Oxlint. Use when asked to migrate, convert, or switch a JavaScript/TypeScript project's linter from ESLint to Oxlint.
+description: Guide for migrating a project from ESLint to Oxlint or upgrading legacy React Compiler lint configuration. Use when asked to switch a JavaScript/TypeScript project's linter to Oxlint or replace the removed react/react-compiler rule.
 ---
 
 This skill guides you through migrating a JavaScript/TypeScript project from ESLint to [Oxlint](https://oxc.rs/docs/guide/usage/linter/).
+
+For an existing Oxlint or Vite+ configuration using `react/react-compiler`, follow
+[React Compiler rule migration](references/react-compiler.md). That upgrade does
+not require running the ESLint migration tool.
 
 ## Overview
 
