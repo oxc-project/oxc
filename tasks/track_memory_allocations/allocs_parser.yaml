@@ -17,8 +17,8 @@ App.tsx:
   sys alloc bytes: 4348 # 4.35 kB
   sys peak growth: 1868 # 1.87 kB
   arena allocs: 43823
-  arena reallocs: 300
-  arena size: 2147072 # 2.15 MB
+  arena reallocs: 276
+  arena size: 2145920 # 2.15 MB
 
 RadixUIAdoptionSection.jsx:
   file size: 2520 # 2.52 kB
@@ -28,7 +28,7 @@ RadixUIAdoptionSection.jsx:
   sys alloc bytes: 108 # 108 B
   sys peak growth: 108 # 108 B
   arena allocs: 365
-  arena reallocs: 23
+  arena reallocs: 7
   arena size: 19960 # 19.96 kB
 
 pdf.mjs:
@@ -72,5 +72,5 @@ kitchen-sink.tsx:
   sys alloc bytes: 34053 # 34.05 kB
   sys peak growth: 3892 # 3.89 kB
   arena allocs: 135678
-  arena reallocs: 1170
-  arena size: 6090984 # 6.09 MB
+  arena reallocs: 897
+  arena size: 6077880 # 6.08 MB
