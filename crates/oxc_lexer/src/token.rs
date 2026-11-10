@@ -1,6 +1,6 @@
 use std::{
     fmt::{self, Display},
-    mem, slice,
+    mem,
 };
 
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
@@ -390,23 +390,6 @@ impl Display for TokenKind {
     }
 }
 
-/// Reinterpret raw kind bytes written by the pipeline as [`TokenKind`]s.
-///
-/// # SAFETY
-///
-/// Every byte in `bytes` must be a declared [`TokenKind`] discriminant. The
-/// pipeline only ever writes kinds that came from `opmap`'s tables or
-/// from the named constants in `pipeline`, so this holds for any range the
-/// lexer has written; it does *not* hold for uninitialised arena memory.
-#[cpu_version(Generic)]
-#[inline]
-pub const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
-    // SAFETY: `TokenKind` is `#[repr(u8)]` so it has the same size and
-    // alignment as `u8`, and the caller guarantees every byte is a declared
-    // discriminant.
-    unsafe { slice::from_raw_parts(bytes.as_ptr().cast::<TokenKind>(), bytes.len()) }
-}
-
 #[cpu_version(Generic)]
 #[inline]
 pub fn debug_assert_kind_bytes(bytes: &[u8]) {
@@ -512,7 +495,7 @@ impl StringSpan {
 mod tests {
     use oxc_simd::{BASELINE, Cpu, DynCpu, test_cpus};
 
-    use crate::{LexOptions, Lexer, PAD};
+    use crate::{LexOptions, Lexer, PAD, Tokens};
 
     use super::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
 
@@ -575,10 +558,6 @@ mod tests {
         assert!(!TokenKind::String.is_numeric());
     }
 
-    /// Backs the safety invariant of [`kinds_from_bytes`] -
-    /// the lexer never emits a byte outside the declared discriminants.
-    ///
-    /// [`kinds_from_bytes`]: super::kinds_from_bytes
     #[test_cpus]
     fn every_emitted_kind_is_declared(cpu: DynCpu) {
         const SOURCES: [&str; 6] = [
@@ -595,9 +574,9 @@ mod tests {
             bytes.extend_from_slice(&[0u8; PAD]);
             for (jsx, ts) in [(false, false), (true, false), (false, true), (true, true)] {
                 let opts = LexOptions { jsx, ts, ..Default::default() };
-                let mut lexer = Lexer::new_with_cpu(cpu);
-                lexer.lex(&bytes, n, opts);
-                for kind in lexer.kinds() {
+                let mut tokens = Tokens::new();
+                Lexer::new_with_cpu(cpu).lex(&bytes, n, opts, &mut tokens);
+                for kind in tokens.kinds() {
                     assert_eq!(
                         TokenKind::from_u8(*kind as u8, BASELINE),
                         Some(*kind),

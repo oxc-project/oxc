@@ -12,17 +12,24 @@ use crate::{
 
 use crate::pipeline::disambiguate::DisambiguateState;
 
-#[derive(Default)]
-pub(crate) struct Lanes {
+#[derive(Debug, Default)]
+pub(crate) struct TokenLanes {
     pub numbers: Vec<f64>,
     pub strings: Vec<StringSpan>,
     pub templates: Vec<StringSpan>,
     pub atoms: Vec<StringSpan>,
-    pub regex_flags: Vec<u8>,
+    pub regex_flags: Vec<RegExpFlags>,
     pub cooked: Vec<u8>,
     pub comments: Vec<Comment>,
     /// Lexer diagnostics, pushed only on cold error paths; empty for valid input.
     pub diags: Vec<Diagnostic>,
+    /// Code-level whitespace chars other than space, tab, LF and CR, one span per char.
+    pub irregular_whitespaces: Vec<Span>,
+}
+
+#[derive(Default)]
+pub(crate) struct Lanes {
+    pub out: TokenLanes,
     /// Byte ranges lexed content-blind (the `.tsx` type-argument skip): diagnostics landing in one are dropped at drain time.
     pub diag_suppress: Vec<(u32, u32)>,
     /// Positions of non-whitespace non-ASCII lead bytes, recorded by
@@ -31,8 +38,6 @@ pub(crate) struct Lanes {
     /// code-level survivors pay the identifier-char check. Empty for
     /// pure-ASCII input.
     pub unicode_leads: Vec<u32>,
-    /// Code-level whitespace chars other than space, tab, LF and CR, one span per char.
-    pub irregular_whitespaces: Vec<Span>,
     pub(super) module: bool,
     /// What the disambiguation questions keep across the lex: the context walks,
     /// the bracket bitmap and the closers the forward scans resolved.
@@ -42,17 +47,17 @@ pub(crate) struct Lanes {
 impl Lanes {
     #[cpu_multiversion]
     pub(super) fn clear(&mut self, _cpu: impl Cpu) {
-        self.numbers.clear();
-        self.strings.clear();
-        self.templates.clear();
-        self.atoms.clear();
-        self.regex_flags.clear();
-        self.cooked.clear();
-        self.comments.clear();
-        self.diags.clear();
+        self.out.numbers.clear();
+        self.out.strings.clear();
+        self.out.templates.clear();
+        self.out.atoms.clear();
+        self.out.regex_flags.clear();
+        self.out.cooked.clear();
+        self.out.comments.clear();
+        self.out.diags.clear();
         self.diag_suppress.clear();
         self.unicode_leads.clear();
-        self.irregular_whitespaces.clear();
+        self.out.irregular_whitespaces.clear();
     }
 
     #[cpu_multiversion]
@@ -79,7 +84,7 @@ impl Lanes {
             }
             f |= bit;
         }
-        self.regex_flags.push(f);
+        self.out.regex_flags.push(RegExpFlags::from_bits_retain(f));
     }
 
     /// Record a diagnostic. Cold and non-inlined so the push stays out of
@@ -91,7 +96,7 @@ impl Lanes {
     #[cold]
     #[inline(never)]
     pub(super) fn push_diag(&mut self, off: u32, len: u32, code: DiagCode) {
-        self.diags.push(Diagnostic { off, len, code, severity: DiagSeverity::Error });
+        self.out.diags.push(Diagnostic { off, len, code, severity: DiagSeverity::Error });
     }
 
     /// Line terminator in a string, with oxc_parser's exact span: opener
@@ -176,14 +181,14 @@ impl Lanes {
         be: u32,
         cpu: impl Cpu,
     ) -> (StringSpan, bool) {
-        let ss = self.cooked.len() as u32;
+        let ss = self.out.cooked.len() as u32;
         if be <= bs {
             return (StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu), false);
         }
         let body_len = (be - bs) as usize;
 
-        self.cooked.reserve(body_len.max(32) + 8);
-        let base = self.cooked.as_mut_ptr();
+        self.out.cooked.reserve(body_len.max(32) + 8);
+        let base = self.out.cooked.as_mut_ptr();
 
         let needs_decode = if body_len < 32 {
             return self.cook_short_dispatch::<EMIT, CRLF>(src, bs, be, base, ss, body_len, cpu);
@@ -194,7 +199,7 @@ impl Lanes {
         };
         let (wi, lone, nes) = if needs_decode {
             unsafe {
-                cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.diags, cpu)
+                cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.out.diags, cpu)
             }
         } else {
             unsafe {
@@ -206,7 +211,7 @@ impl Lanes {
             }
             (ss + (be - bs), false, false)
         };
-        unsafe { self.cooked.set_len(wi as usize) };
+        unsafe { self.out.cooked.set_len(wi as usize) };
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
     }
 
@@ -223,8 +228,8 @@ impl Lanes {
         cpu: impl Cpu,
     ) -> (StringSpan, bool) {
         let (wi, lone, nes) =
-            cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.diags, cpu);
-        unsafe { self.cooked.set_len(wi as usize) };
+            cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.out.diags, cpu);
+        unsafe { self.out.cooked.set_len(wi as usize) };
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone, cpu), nes)
     }
 
@@ -232,7 +237,7 @@ impl Lanes {
     #[inline(always)]
     pub(super) fn push_string(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         let (sp, _) = self.cook::<true, false>(src, bs as u32, be as u32, cpu);
-        self.strings.push(sp);
+        self.out.strings.push(sp);
     }
 
     #[cpu_multiversion]
@@ -242,7 +247,7 @@ impl Lanes {
         // A NotEscapeSequence means cooked = None per the grammar; legality
         // depends on tagged-ness (parser context), so the span carries a
         // marker instead of a diagnostic.
-        self.templates.push(if nes { sp.with_cooked_invalid(cpu) } else { sp });
+        self.out.templates.push(if nes { sp.with_cooked_invalid(cpu) } else { sp });
     }
 
     /// Push a string value verbatim. JSX attribute strings have no backslash
@@ -250,20 +255,20 @@ impl Lanes {
     #[cpu_multiversion]
     #[inline]
     pub(super) fn push_string_raw(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
-        let ss = self.cooked.len() as u32;
+        let ss = self.out.cooked.len() as u32;
         if be <= bs {
-            self.strings.push(StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu));
+            self.out.strings.push(StringSpan::new(ss, ss & StringSpan::END_MASK, false, cpu));
             return;
         }
         let body_len = be - bs;
-        self.cooked.reserve(body_len + 8);
+        self.out.cooked.reserve(body_len + 8);
         unsafe {
-            let base = self.cooked.as_mut_ptr();
+            let base = self.out.cooked.as_mut_ptr();
             ptr::copy_nonoverlapping(src.as_ptr().add(bs), base.add(ss as usize), body_len);
-            self.cooked.set_len(ss as usize + body_len);
+            self.out.cooked.set_len(ss as usize + body_len);
         }
         let we = ss + body_len as u32;
-        self.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu));
+        self.out.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu));
     }
 
     #[cpu_multiversion]
@@ -273,7 +278,7 @@ impl Lanes {
         // identifier escape passes through, so validation rides here.
         self.validate_ident_escapes(src, bs, be);
         let (sp, _) = self.cook::<false, false>(src, bs as u32, be as u32, cpu);
-        self.atoms.push(sp);
+        self.out.atoms.push(sp);
     }
 
     /// A well-formed escape decoding to a non-identifier char (`var \u0020 = 1`):
@@ -442,7 +447,7 @@ impl Lanes {
                 d = ((d & 0x0f00_0f00_0f00_0f00) >> 8) + (d & 0x000f_000f_000f_000f) * 10;
                 d = ((d & 0x00ff_0000_00ff_0000) >> 16) + (d & 0x0000_00ff_0000_00ff) * 100;
                 d = ((d & 0x0000_ffff_0000_0000) >> 32) + (d & 0x0000_0000_0000_ffff) * 10000;
-                self.numbers.push(d as f64);
+                self.out.numbers.push(d as f64);
                 return;
             }
         }
@@ -451,7 +456,7 @@ impl Lanes {
         if code != DiagCode::Ok {
             self.push_diag(s as u32, (e - s) as u32, code);
         }
-        self.numbers.push(parse_number(src, s, e, cpu));
+        self.out.numbers.push(parse_number(src, s, e, cpu));
     }
 }
 
@@ -1229,10 +1234,10 @@ mod tests {
         padded.extend_from_slice(&[0u8; 64]);
         let mut l = Lanes::default();
         l.push_template(&padded, 0, body.len(), cpu);
-        let sp = l.templates[0];
+        let sp = l.out.templates[0];
         let s = (sp.start & StringSpan::START_MASK) as usize;
         let e = (sp.end_and_flags & StringSpan::END_MASK) as usize;
-        l.cooked[s..e].to_vec()
+        l.out.cooked[s..e].to_vec()
     }
 
     #[test_cpus]
