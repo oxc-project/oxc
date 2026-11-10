@@ -39,7 +39,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         in_ts_namespace_body: bool,
     ) -> (ArenaVec<'a, Directive<'a>>, ArenaVec<'a, Statement<'a>>) {
         let mut directives = ArenaVec::new_in(self);
-        let mut statements = BufferedVec::new_in(self);
+        let mut statement_index = 0;
 
         let is_top_level = self.ctx.has_top_level();
         let stmt_ctx =
@@ -52,83 +52,83 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let track_await_reparse = is_top_level && self.source_type.is_unambiguous();
 
         let mut expecting_directives = true;
-        while !self.has_fatal_error() {
-            if !is_top_level && self.at(Kind::RCurly) {
-                break;
-            }
-
-            // Commit once module syntax is detected (`export` commits eagerly in
-            // `parse_export_declaration`; `has_module_syntax()` excludes TS's
-            // script-compatible `import x = ns.foo`). Until committed, checkpoint each
-            // statement so an `await` identifier in it can be reparsed.
-            let checkpoint = if track_await_reparse && !self.ctx.has_await() {
-                if self.module_record_builder.has_module_syntax() {
-                    self.ctx = self.ctx.and_await(true);
-                    None
-                } else {
-                    self.state.encountered_await_identifier = false;
-                    Some((statements.len(), self.checkpoint()))
-                }
-            } else {
-                None
-            };
-
-            // Section 11.2.1 Directive Prologue
-            // Parse the complete expression statement before recognizing a directive:
-            // a string followed by an operator or member access is not a directive.
-            // See babel's core/categorized/not-directive fixture.
-            // Starting at a string token also excludes parenthesized strings when
-            // `preserve_parens = false`.
-            let stmt = if expecting_directives && self.at(Kind::Str) {
-                let start = self.cur_start();
-                let expression = self.parse_expr();
-                self.asi();
-                match ExpressionStatement::new(self.end_span(start), expression, self) {
-                    ExpressionStatement {
-                        span,
-                        expression: Expression::StringLiteral(string),
-                        ..
-                    } => {
-                        let string = string.unbox();
-                        let src = &self.source_text
-                            [string.span.start as usize + 1..string.span.end as usize - 1];
-                        directives.push(Directive::new(span, string, Str::from(src), self));
-                        continue;
+        let statements = self.collect_list(|p| {
+            while !p.has_fatal_error() && (is_top_level || !p.at(Kind::RCurly)) {
+                // Commit once module syntax is detected (`export` commits eagerly in
+                // `parse_export_declaration`; `has_module_syntax()` excludes TS's
+                // script-compatible `import x = ns.foo`). Until committed, checkpoint each
+                // statement so an `await` identifier in it can be reparsed.
+                let checkpoint = if track_await_reparse && !p.ctx.has_await() {
+                    if p.module_record_builder.has_module_syntax() {
+                        p.ctx = p.ctx.and_await(true);
+                        None
+                    } else {
+                        p.state.encountered_await_identifier = false;
+                        Some(p.checkpoint())
                     }
-                    statement => Statement::ExpressionStatement(self.alloc(statement)),
+                } else {
+                    None
+                };
+
+                // Section 11.2.1 Directive Prologue
+                // Parse the complete expression statement before recognizing a directive:
+                // a string followed by an operator or member access is not a directive.
+                // See babel's core/categorized/not-directive fixture.
+                // Starting at a string token also excludes parenthesized strings when
+                // `preserve_parens = false`.
+                let stmt = if expecting_directives && p.at(Kind::Str) {
+                    let start = p.cur_start();
+                    let expression = p.parse_expr();
+                    p.asi();
+                    match ExpressionStatement::new(p.end_span(start), expression, p) {
+                        ExpressionStatement {
+                            span,
+                            expression: Expression::StringLiteral(string),
+                            ..
+                        } => {
+                            let string = string.unbox();
+                            let src = &p.source_text
+                                [string.span.start as usize + 1..string.span.end as usize - 1];
+                            directives.push(Directive::new(span, string, Str::from(src), p));
+                            continue;
+                        }
+                        statement => Statement::ExpressionStatement(p.alloc(statement)),
+                    }
+                } else {
+                    p.parse_statement_list_item(stmt_ctx)
+                };
+
+                // Don't reparse a module declaration: `export` already committed to the
+                // Module goal while parsing, so reparsing would record the export twice.
+                // e.g. `@foo export default class C { x = await + 1 }`
+                if let Some(checkpoint) = checkpoint
+                    && p.state.encountered_await_identifier
+                    && !stmt.is_module_declaration()
+                {
+                    p.state.potential_await_reparse.push((statement_index, checkpoint));
                 }
-            } else {
-                self.parse_statement_list_item(stmt_ctx)
-            };
 
-            // Don't reparse a module declaration: `export` already committed to the
-            // Module goal while parsing, so reparsing would record the export twice.
-            // e.g. `@foo export default class C { x = await + 1 }`
-            if let Some((stmt_index, checkpoint)) = checkpoint
-                && self.state.encountered_await_identifier
-                && !stmt.is_module_declaration()
-            {
-                self.state.potential_await_reparse.push((stmt_index, checkpoint));
+                expecting_directives = false;
+                // In an internal namespace body, module-referencing `import`/`export` statements are
+                // not permitted. Validated here as each direct statement is parsed (no second pass).
+                if in_ts_namespace_body {
+                    p.check_namespace_body_statement(&stmt);
+                }
+                if is_ambient_block
+                    && !reported_ambient_statement
+                    && !stmt.is_declaration()
+                    && !stmt.is_module_declaration()
+                {
+                    p.error(diagnostics::statement_in_ambient_context(stmt.span()));
+                    reported_ambient_statement = true;
+                }
+                statement_index += 1;
+                return Some(stmt);
             }
+            None
+        });
 
-            expecting_directives = false;
-            // In an internal namespace body, module-referencing `import`/`export` statements are
-            // not permitted. Validated here as each direct statement is parsed (no second pass).
-            if in_ts_namespace_body {
-                self.check_namespace_body_statement(&stmt);
-            }
-            if is_ambient_block
-                && !reported_ambient_statement
-                && !stmt.is_declaration()
-                && !stmt.is_module_declaration()
-            {
-                self.error(diagnostics::statement_in_ambient_context(stmt.span()));
-                reported_ambient_statement = true;
-            }
-            statements.push(stmt);
-        }
-
-        (directives, statements.into_vec())
+        (directives, statements)
     }
 
     /// `StatementListItem`[Yield, Await, Return] :
