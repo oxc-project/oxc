@@ -119,6 +119,9 @@ pub struct ExpressionRoot {
     /// The host puts the code in parens (Vue's `v-if`, an event handler's `$event => (…)`):
     /// a top-level sequence reads as one value there, and prints in parens as anywhere.
     pub in_parens: bool,
+    /// Prettier prints the expression with no parent node (prettier-plugin-svelte's `{…}`), not under a
+    /// `JsExpressionRoot`: a broken binary chain indents its lines after the first, as anywhere.
+    pub without_parent: bool,
 }
 
 /// The layout an expression prints in, inside its host's delimiters.

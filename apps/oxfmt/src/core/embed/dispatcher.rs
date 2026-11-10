@@ -413,6 +413,7 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
         ends_at_double_brace: false,
         reads_as_statements: false,
         in_parens: false,
+        without_parent: false,
     };
     if let Some(&part) = request.parent_context_as::<JsInVueTemplate>() {
         let root = match part {

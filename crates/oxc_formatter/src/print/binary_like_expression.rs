@@ -168,7 +168,9 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     ) -> bool {
         match parent {
             // An embedded expression's root, which the host's delimiters indent (apps/oxfmt/DIVERGENCES.md#js-in-vue-bitwise-or)
-            parent if f.context().is_embedded_root(parent) => true,
+            parent if f.context().is_embedded_root(parent) => {
+                !f.context().expression_root().is_some_and(|root| root.without_parent)
+            }
             AstNodes::ReturnStatement(_)
             | AstNodes::ThrowStatement(_)
             | AstNodes::ForStatement(_)
