@@ -282,17 +282,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Section 14.2 Block Statement
-    pub(crate) fn parse_block(&mut self) -> ArenaBox<'a, BlockStatement<'a>> {
+    pub(crate) fn parse_block(&mut self) -> BlockStatement<'a> {
         let start = self.cur_start();
         let body = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
             p.parse_statement_list_item(StatementContext::StatementList)
         });
-        BlockStatement::boxed(self.end_span(start), body, self)
+        BlockStatement::new(self.end_span(start), body, self)
     }
 
     pub(crate) fn parse_block_statement(&mut self) -> Statement<'a> {
         let block = self.parse_block();
-        Statement::BlockStatement(block)
+        Statement::BlockStatement(self.alloc(block))
     }
 
     /// Section 14.3.2 Variable Statement
@@ -848,10 +848,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any(); // bump `try`
 
         let block = self.parse_block();
+        let block = self.alloc(block);
 
         let handler = self.at(Kind::Catch).then(|| self.parse_catch_clause());
 
-        let finalizer = self.eat(Kind::Finally).then(|| self.parse_block());
+        let finalizer = self.eat(Kind::Finally).then(|| {
+            let block = self.parse_block();
+            self.alloc(block)
+        });
 
         if handler.is_none() && finalizer.is_none() {
             let range = Span::empty(block.span.end);
@@ -872,6 +876,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             None
         };
         let body = self.parse_block();
+        let body = self.alloc(body);
         let param = pattern.map(|(pattern, type_annotation)| {
             CatchParameter::new(
                 Span::new(
