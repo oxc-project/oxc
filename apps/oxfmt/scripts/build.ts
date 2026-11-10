@@ -7,11 +7,9 @@ import { join } from "node:path";
 const oxfmtDirPath = join(import.meta.dirname, ".."),
   distDirPath = join(oxfmtDirPath, "dist");
 
-// Build with tsdown
 console.log("Building with tsdown...");
 execSync("pnpm tsdown", { stdio: "inherit", cwd: oxfmtDirPath });
 
-// Copy native `.node` files from `src-js`
 console.log("Copying `.node` files...");
 
 for (const filename of readdirSync(join(oxfmtDirPath, "src-js"))) {
@@ -21,13 +19,7 @@ for (const filename of readdirSync(join(oxfmtDirPath, "src-js"))) {
 
 console.log("Build complete!");
 
-/**
- * Copy a file, creating parent directories if needed.
- * @param {string} srcPath - Source file path, absolute
- * @param {string} destPath - Destination file path, absolute
- * @returns {void}
- */
-function copyFile(srcPath, destPath) {
+function copyFile(srcPath: string, destPath: string): void {
   mkdirSync(join(destPath, ".."), { recursive: true });
   copyFileSync(srcPath, destPath);
   console.log(`- Copied ${srcPath.split("/").pop()}`);
