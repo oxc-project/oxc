@@ -1,9 +1,12 @@
-use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_allocator::{ArenaBox, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use super::VariableDeclarationParent;
-use crate::{ParserConfig as Config, ParserImpl, StatementContext, diagnostics, lexer::Kind};
+use crate::{
+    ParserConfig as Config, ParserImpl, StatementContext, buffered_vec::collect_list, diagnostics,
+    lexer::Kind,
+};
 
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
@@ -68,11 +71,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decl_parent: VariableDeclarationParent,
         declare: bool,
     ) -> ArenaBox<'a, VariableDeclaration<'a>> {
-        let first = self.parse_variable_declarator(decl_parent, kind);
-        let mut declarations = ArenaVec::from_value_in(first, self);
-        while self.eat(Kind::Comma) {
-            declarations.push(self.parse_variable_declarator(decl_parent, kind));
-        }
+        let allocator = self.allocator();
+        let mut first = true;
+        let declarations = collect_list(&allocator, || {
+            if !first && !self.eat(Kind::Comma) {
+                return None;
+            }
+            first = false;
+            Some(self.parse_variable_declarator(decl_parent, kind))
+        });
 
         if matches!(decl_parent, VariableDeclarationParent::Statement) {
             self.asi();
@@ -197,8 +204,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations = ArenaVec::new_in(self);
-        loop {
+        let allocator = self.allocator();
+        let mut first = true;
+        let declarations = collect_list(&allocator, || {
+            if !first && !self.eat(Kind::Comma) {
+                return None;
+            }
+            first = false;
             let decl_parent = if matches!(statement_ctx, StatementContext::For) {
                 VariableDeclarationParent::For
             } else {
@@ -212,11 +224,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 ));
             }
 
-            declarations.push(declaration);
-            if !self.eat(Kind::Comma) {
-                break;
-            }
-        }
+            Some(declaration)
+        });
 
         VariableDeclaration::boxed(self.end_span(start), kind, declarations, false, self)
     }

@@ -6,7 +6,7 @@ checker.ts:
   sys alloc bytes: 4820 # 4.82 kB
   sys peak growth: 2432 # 2.43 kB
   arena allocs: 259306
-  arena reallocs: 4441
+  arena reallocs: 4437
   arena size: 12452728 # 12.45 MB
 
 App.tsx:
@@ -39,8 +39,8 @@ pdf.mjs:
   sys alloc bytes: 24020 # 24.02 kB
   sys peak growth: 12140 # 12.14 kB
   arena allocs: 88873
-  arena reallocs: 2057
-  arena size: 4342272 # 4.34 MB
+  arena reallocs: 1946
+  arena size: 4334376 # 4.33 MB
 
 antd.js:
   file size: 6686316 # 6.69 MB
@@ -50,8 +50,8 @@ antd.js:
   sys alloc bytes: 94120 # 94.12 kB
   sys peak growth: 38896 # 38.90 kB
   arena allocs: 517022
-  arena reallocs: 14995
-  arena size: 28921192 # 28.92 MB
+  arena reallocs: 11909
+  arena size: 28597120 # 28.60 MB
 
 binder.ts:
   file size: 193077 # 193.08 kB
@@ -72,5 +72,5 @@ kitchen-sink.tsx:
   sys alloc bytes: 34053 # 34.05 kB
   sys peak growth: 3892 # 3.89 kB
   arena allocs: 135710
-  arena reallocs: 3057
-  arena size: 6185888 # 6.19 MB
+  arena reallocs: 3038
+  arena size: 6184368 # 6.18 MB
