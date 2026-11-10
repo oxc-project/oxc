@@ -54,7 +54,7 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub type_aware: bool,
 
-    /// Enable experimental type checking (includes TypeScript compiler diagnostics)
+    /// Enable type checking (includes TypeScript compiler diagnostics)
     #[bpaf(switch, hide_usage)]
     pub type_check: bool,
 
