@@ -54,6 +54,8 @@ pub struct LexerCheckpoint<'a> {
     errors_snapshot: ErrorSnapshot<'a>,
     tokens_len: usize,
     annotation_comments: AnnotationComments,
+    last_token: Token,
+    deferred_module_errors_len: usize,
 }
 
 #[derive(Debug)]
@@ -213,6 +215,8 @@ impl<'a, C: Config> Lexer<'a, C> {
             errors_snapshot,
             tokens_len: self.tokens.len(),
             annotation_comments: self.trivia_builder.annotation_comments,
+            last_token: self.tokens.last().copied().unwrap_or_default(),
+            deferred_module_errors_len: self.deferred_module_errors.len(),
         }
     }
 
@@ -233,6 +237,8 @@ impl<'a, C: Config> Lexer<'a, C> {
             errors_snapshot,
             tokens_len: self.tokens.len(),
             annotation_comments: self.trivia_builder.annotation_comments,
+            last_token: self.tokens.last().copied().unwrap_or_default(),
+            deferred_module_errors_len: self.deferred_module_errors.len(),
         }
     }
 
@@ -248,6 +254,10 @@ impl<'a, C: Config> Lexer<'a, C> {
         }
 
         self.tokens.truncate(checkpoint.tokens_len);
+        if let Some(last) = self.tokens.last_mut() {
+            *last = checkpoint.last_token;
+        }
+        self.deferred_module_errors.truncate(checkpoint.deferred_module_errors_len);
         self.source.set_position(checkpoint.source_position);
         self.trivia_builder.annotation_comments = checkpoint.annotation_comments;
     }

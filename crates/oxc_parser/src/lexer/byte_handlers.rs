@@ -687,3 +687,35 @@ fn UNI<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
 fn UER<C: Config>(_lexer: &mut Lexer<'_, C>) -> Kind {
     unreachable!();
 }
+
+#[cfg(test)]
+mod tests {
+    use oxc_allocator::Allocator;
+    use oxc_span::SourceType;
+
+    use super::*;
+    use crate::{UniquePromise, config::TokensLexerConfig};
+
+    #[test]
+    fn checkpoint_restores_replaced_token() {
+        let allocator = Allocator::default();
+        let mut lexer = Lexer::new(
+            &allocator,
+            "a << T /* annotation */ > c",
+            SourceType::ts(),
+            TokensLexerConfig,
+            UniquePromise::new_for_tests_and_benchmarks(),
+        );
+        lexer.first_token();
+        let shift = lexer.next_token();
+        let checkpoint = lexer.checkpoint();
+        assert_eq!(lexer.re_lex_as_typescript_l_angle(2).kind(), Kind::LAngle);
+        lexer.next_token();
+        lexer.next_token();
+        lexer.next_token();
+        lexer.rewind(checkpoint);
+        assert_eq!(lexer.tokens.last().copied(), Some(shift));
+        assert_eq!(lexer.peek_token().kind(), Kind::Ident);
+        assert_eq!(lexer.next_token().kind(), Kind::Ident);
+    }
+}
