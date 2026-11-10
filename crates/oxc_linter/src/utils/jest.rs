@@ -202,7 +202,7 @@ impl<'a, 'b> PossibleJestNode<'a, 'b> {
             else {
                 return None;
             };
-            let global_package = ctx.settings().jest.global_package();
+            let global_package = jest_global_package(ctx);
             if !import_decl
                 .source
                 .value
@@ -246,7 +246,7 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
     // });
     // ```
     let reference_id_with_original_list =
-        collect_ids_referenced_to_import(semantic, ctx.settings().jest.global_package()).chain(
+        collect_ids_referenced_to_import(semantic, jest_global_package(ctx)).chain(
             collect_ids_referenced_to_global(semantic)
                 // set the original of global test function to None
                 .map(|id| (id, None)),
@@ -315,7 +315,18 @@ fn collect_ids_referenced_to_import<'a, 'c>(
         .flatten()
 }
 
-/// Whether `source` is the configured Jest global package or a Vitest package.
+/// The package that Jest globals are imported from, for the rule being run.
+///
+/// `settings.jest.globalPackage` does not apply to rules of the `vitest` plugin.
+fn jest_global_package<'c>(ctx: &'c LintContext) -> &'c str {
+    if ctx.plugin_name() == "vitest" {
+        "@jest/globals"
+    } else {
+        ctx.settings().jest.global_package()
+    }
+}
+
+/// Whether `source` is the Jest global package or a Vitest package.
 fn is_test_framework_import_source(source: &str, global_package: &str) -> bool {
     source == global_package || is_vitest_import_source(source)
 }

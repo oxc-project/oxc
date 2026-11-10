@@ -7292,6 +7292,8 @@ export interface JestPluginSettings {
    * instead of imports from `@jest/globals`, and
    * `jest/prefer-importing-jest-globals` imports from it.
    *
+   * This setting does not apply to Vitest rules.
+   *
    * Example:
    *
    * ```json

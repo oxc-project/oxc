@@ -12284,10 +12284,10 @@
       "type": "object",
       "properties": {
         "globalPackage": {
-          "description": "The package that Jest globals are imported from. Defaults to `@jest/globals`.\n\nWhen set, imports from this package are recognized as Jest globals\ninstead of imports from `@jest/globals`, and\n`jest/prefer-importing-jest-globals` imports from it.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"jest\": {\n\"globalPackage\": \"bun:test\"\n}\n}\n}\n```",
+          "description": "The package that Jest globals are imported from. Defaults to `@jest/globals`.\n\nWhen set, imports from this package are recognized as Jest globals\ninstead of imports from `@jest/globals`, and\n`jest/prefer-importing-jest-globals` imports from it.\n\nThis setting does not apply to Vitest rules.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"jest\": {\n\"globalPackage\": \"bun:test\"\n}\n}\n}\n```",
           "default": null,
           "type": "string",
-          "markdownDescription": "The package that Jest globals are imported from. Defaults to `@jest/globals`.\n\nWhen set, imports from this package are recognized as Jest globals\ninstead of imports from `@jest/globals`, and\n`jest/prefer-importing-jest-globals` imports from it.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"jest\": {\n\"globalPackage\": \"bun:test\"\n}\n}\n}\n```"
+          "markdownDescription": "The package that Jest globals are imported from. Defaults to `@jest/globals`.\n\nWhen set, imports from this package are recognized as Jest globals\ninstead of imports from `@jest/globals`, and\n`jest/prefer-importing-jest-globals` imports from it.\n\nThis setting does not apply to Vitest rules.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"jest\": {\n\"globalPackage\": \"bun:test\"\n}\n}\n}\n```"
         },
         "version": {
           "description": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::",
