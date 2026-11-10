@@ -9,7 +9,7 @@ use oxc_str::JSStr;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl,
-    buffered_vec::collect_list,
+    buffered_vec::{BufferedVec, collect_list},
     diagnostics::{self, ParserDiagnostic},
     error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
@@ -408,7 +408,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline(always)]
     pub(crate) fn parse_normal_list_into<F, T>(
         &mut self,
-        list: &mut ArenaVec<'a, T>,
+        list: &mut BufferedVec<'a, T>,
         close: Kind,
         mut parse_element: F,
     ) where
@@ -563,7 +563,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         R: Fn(&mut Self) -> ArenaBox<'a, BindingRestElement<'a>>,
         D: Fn(Span) -> ParserDiagnostic<'a>,
     {
-        let mut list = ArenaVec::new_in(self);
+        let mut list = BufferedVec::new_in(self);
         let rest = self.parse_delimited_list_with_rest_into(
             &mut list,
             close,
@@ -572,14 +572,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             parse_rest,
             rest_last_diagnostic,
         );
-        (list, rest)
+        (list.into_vec(), rest)
     }
 
     #[expect(clippy::inline_always)]
     #[inline(always)]
     fn parse_delimited_list_with_rest_into<E, A, R, D>(
         &mut self,
-        list: &mut ArenaVec<'a, A>,
+        list: &mut BufferedVec<'a, A>,
         close: Kind,
         opening_span: Span,
         parse_element: E,
