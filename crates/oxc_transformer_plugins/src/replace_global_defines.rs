@@ -33,7 +33,7 @@ use oxc_allocator::{Address, Allocator, GetAddress, ReplaceWith, UnstableAddress
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJsMut, walk_js_mut};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping};
 use oxc_span::{SPAN, SourceType};
 use oxc_str::CompactStr;
@@ -287,7 +287,10 @@ impl ReplaceGlobalDefinesConfig {
     }
 
     fn check_value(allocator: &Allocator, source_text: &str) -> Result<(), Diagnostics> {
-        Parser::new(allocator, source_text, SourceType::default()).parse_expression()?;
+        // This expression is only validated, then discarded.
+        Parser::new(allocator, source_text, SourceType::default())
+            .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
+            .parse_expression()?;
         Ok(())
     }
 }

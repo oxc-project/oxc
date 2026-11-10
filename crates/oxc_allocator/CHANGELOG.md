@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 📚 Documentation
+
+- 261c4a2 allocator: Clarify arena storage and memory reclamation (#29066) (camc314)
+
 ## [0.149.0] - 2026-09-07
 
 ### 🚀 Features

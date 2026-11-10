@@ -73,7 +73,10 @@ impl<C: Config> Lexer<'_, C> {
                     if self.peek_byte().is_some_and(|b| kind.matches_number_byte(b)) {
                         self.consume_char();
                     } else {
-                        self.unexpected_err();
+                        self.error(diagnostics::invalid_numeric_separator(Span::new(
+                            self.offset() - 1,
+                            self.offset(),
+                        )));
                         self.advance_to_end();
                         return Kind::Eof;
                     }
@@ -168,7 +171,10 @@ impl<C: Config> Lexer<'_, C> {
                     if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
                         self.consume_char();
                     } else {
-                        self.unexpected_err();
+                        self.error(diagnostics::invalid_numeric_separator(Span::new(
+                            self.offset() - 1,
+                            self.offset(),
+                        )));
                         return;
                     }
                 }

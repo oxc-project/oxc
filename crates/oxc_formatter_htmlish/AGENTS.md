@@ -34,13 +34,13 @@ the browser build, which reads some code otherwise (`isFnExpression` is a regex 
 
 Vue reads a value by its AST, but for its text in these places (`@vue/compiler-core` 3.5.45), the only ones formatting can change what it reads by:
 
-| Where       | What of the text                                                      | Kept by                                                                                                                    |
-| ----------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `{{ }}`     | the first `}}` ends it                                                | parens around an object (`oxc_formatter`'s AGENTS.md "js-in-xxx" names the known gap)                                      |
-| `v-on`      | but for a reference or a function, a `;` anywhere makes it statements | the handler's `;` (`ProgramSemicolons::MarksStatements`), parens around a leading `function` / `{` (`reads_as_statements`) |
-| `v-for`     | split at `in` / `of` and the last commas                              | the alias printed as the params Vue splits (`JsRoot::FunctionParams { parens_when_many }`)                                 |
-| `:style`    | a leading `[`                                                         | no rule: no formatting moves the first token                                                                               |
-| every value | put in the render function as written                                 | a line comment closed, a top-level sequence in no parens as written (`JsEmbeddedIn::inlines_code`)                         |
+| Where       | What of the text                                                      | Kept by                                                                                                                                                                                 |
+| ----------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{{ }}`     | the first `}}` ends it                                                | parens around an object (`oxc_formatter`'s AGENTS.md "js-in-xxx" names the known gap)                                                                                                   |
+| `v-on`      | but for a reference or a function, a `;` anywhere makes it statements | the handler's `;` (`ProgramSemicolons::MarksStatements`), parens around a leading `function` / `{` (`reads_as_statements`); `oxc_formatter`'s AGENTS.md "js-in-xxx" names the known gap |
+| `v-for`     | split at `in` / `of` and the last commas                              | the alias printed as the params Vue splits (`JsRoot::FunctionParams { parens_when_many }`), as written holding `in` / `of`                                                              |
+| `:style`    | a leading `[`                                                         | no rule: no formatting moves the first token                                                                                                                                            |
+| every value | put in the render function as written                                 | a line comment closed, a top-level sequence in no parens as written (`JsEmbeddedIn::inlines_code`)                                                                                      |
 
 A Vue release reading more of the text adds a row here, and its rule.
 

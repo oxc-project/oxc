@@ -5,8 +5,8 @@ use smallvec::SmallVec;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, AssignmentTargetMaybeParenthesized, BindingPattern, Expression,
-        VariableDeclarator,
+        AssignmentExpression, AssignmentTargetMaybeParenthesized, BindingPattern, ClassElement,
+        Expression, VariableDeclarator,
     },
 };
 use oxc_cfg::{
@@ -278,10 +278,11 @@ impl Rule for NoUselessAssignment {
                         pending_assignment_lhs = Some((lhs, true));
                     }
                     if reference.is_read()
-                        && !Self::has_same_parent_variable_scope(
+                        && Self::is_captured_reference(
                             ctx,
                             tracked_symbols[compact_idx as usize].scope_id,
-                            ctx.nodes().get_node(reference.node_id()).scope_id(),
+                            decl_node.id(),
+                            reference.node_id(),
                         )
                     {
                         tracked_symbols[compact_idx as usize].has_captured_read = true;
@@ -472,10 +473,11 @@ impl Rule for NoUselessAssignment {
                                     && !*is_in_try_block.get_or_insert_with(|| {
                                         Self::is_in_try_block(graph, block_node_id)
                                     })
-                                    && Self::has_same_parent_variable_scope(
+                                    && !Self::is_captured_reference(
                                         ctx,
                                         tracked_symbol.scope_id,
-                                        ctx.nodes().get_node(op.node).scope_id(),
+                                        ctx.scoping().symbol_declaration(tracked_symbol.symbol_id),
+                                        op.node,
                                     )
                                 {
                                     let symbol_id = tracked_symbol.symbol_id;
@@ -552,10 +554,11 @@ impl NoUselessAssignment {
             Self::push_op(ctx, graph, cfg_ops, op_node, Operation::Read, compact_idx);
             tracked_symbol.is_used = true;
             if !tracked_symbol.has_captured_read
-                && !Self::has_same_parent_variable_scope(
+                && Self::is_captured_reference(
                     ctx,
                     tracked_symbol.scope_id,
-                    ctx.nodes().get_node(op_node).scope_id(),
+                    decl_node.id(),
+                    op_node,
                 )
             {
                 tracked_symbol.has_captured_read = true;
@@ -791,6 +794,48 @@ impl NoUselessAssignment {
             .scope_ancestors(scope_id)
             .find_or_last(|scope_id| ctx.scoping().scope_flags(*scope_id).is_var())
             .expect("scope iterator will always contain at least one element")
+    }
+
+    fn is_captured_reference(
+        ctx: &LintContext,
+        symbol_scope: ScopeId,
+        declaration: NodeId,
+        reference: NodeId,
+    ) -> bool {
+        let reference_node = ctx.nodes().get_node(reference);
+        let reference_scope = reference_node.scope_id();
+        if symbol_scope == reference_scope {
+            return false;
+        }
+        if !Self::has_same_parent_variable_scope(ctx, symbol_scope, reference_scope) {
+            return true;
+        }
+        let reference_span = reference_node.span();
+        let declaration_span = ctx.nodes().get_node(declaration).span();
+        ctx.scoping().scope_ancestors(reference_scope).take_while(|&id| id != symbol_scope).any(
+            |id| {
+                let AstKind::Class(class) = ctx.nodes().kind(ctx.scoping().get_node_id(id)) else {
+                    return false;
+                };
+                let elements = &class.body.body;
+                let index =
+                    elements.partition_point(|element| element.span().end <= reference_span.start);
+                let value = match elements.get(index) {
+                    Some(ClassElement::PropertyDefinition(property)) if !property.r#static => {
+                        property.value.as_ref()
+                    }
+                    Some(ClassElement::AccessorProperty(property)) if !property.r#static => {
+                        property.value.as_ref()
+                    }
+                    _ => None,
+                };
+                value.is_some_and(|value| {
+                    let span = value.span();
+                    span.contains_inclusive(reference_span)
+                        && !span.contains_inclusive(declaration_span)
+                })
+            },
+        )
     }
 
     fn has_same_parent_variable_scope(
@@ -1535,6 +1580,20 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
                         published = (local = 1);
                         continue;
                     }",
+        "let sequence = 0; export class Node { id = ++sequence; }",
+        "let x = 0; export class C { id = x++; }",
+        "let x = 0; export class C { id = ++x; } x = 1;",
+        "let x = 0; x = 1; x = 2; export class C { id = ++x; }",
+        "let x = 0; export class C { id = x; } x = 1;",
+        "let x = 0; export class C { a=0;b=++x; }",
+        "let x = 0; export class C { id = (x = x + 1); }",
+        "let x = 0; export class C { id = (x++, x = 2); }",
+        "let x = 0; use(x); export class C { id = (x = 1, x = 2); } use(x);",
+        "function f() { let x = 0; return class { id = ++x; }; }",
+        "let x = 0; export class C { id = class { [x++] = 1; }; }",
+        "let x = 0; export class C { id = class { static id = ++x; }; }",
+        "let x = 0; export class C { accessor id = ++x; }",
+
         "function f(p) { p = 1; return p; }",
         "function f(p) { p = 1; }",
         "function f(p = 0) { p = 1; return p; }",
@@ -1906,6 +1965,11 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f({a, ...p}) { p = {}; p = {a}; return p; }",
         "export const p = 0; function f(p) { p = 1; p = 2; return p; }",
         "function f(p) { p++; p = 2; return p; }",
+        "let x = 0; export class C { static id = ++x; } x = 2; use(x);",
+        "let x = 0; export class C { [x++] = 0; } x = 2; use(x);",
+        "function f() { let x = 0; use(x); class C { [x = 1] = 0; } x = 2; return x; }",
+        "class C { a = () => { let x = 0; x++; x = 1; return x; }; }",
+        "class C { static a = () => { let x = 0; x = 1; x = 2; return x; }; }",
         "function f(p) { use(p); p = 1; }",
         "function f(p, q = p) { p = 1; return q; }",
         "function f(cb = p => { p = 1; p = 2; return p; }) { return cb; }",

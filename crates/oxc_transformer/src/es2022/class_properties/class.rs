@@ -6,9 +6,7 @@ use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
-    node::NodeId,
     reference::ReferenceFlags,
-    scope::ScopeFlags,
     symbol::{SymbolFlags, SymbolId},
 };
 use oxc_traverse::{Ancestor, BoundIdentifier};
@@ -21,7 +19,6 @@ use crate::{
 
 use super::{
     ClassBindings, ClassDetails, ClassProperties, IdentIndexMap, PrivateProp,
-    constructor::InstanceInitsInsertLocation,
     utils::{create_variable_declaration, exprs_into_stmts},
 };
 
@@ -265,8 +262,8 @@ impl<'a> ClassProperties<'a> {
             instance_inits.push(self.create_class_private_method_init_spec(ctx));
         }
 
-        let mut constructor = None;
-        for element in &mut body.body {
+        let mut constructor_index = None;
+        for (index, element) in body.body.iter_mut().enumerate() {
             #[expect(clippy::match_same_arms)]
             match element {
                 ClassElement::PropertyDefinition(prop) => {
@@ -280,7 +277,7 @@ impl<'a> ClassProperties<'a> {
                     if method.kind == MethodDefinitionKind::Constructor
                         && method.value.body.is_some()
                     {
-                        constructor = Some(method.value.as_mut());
+                        constructor_index = Some(index);
                     }
                 }
                 ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
@@ -290,101 +287,14 @@ impl<'a> ClassProperties<'a> {
             }
         }
 
-        // When `self.set_public_class_fields` and `self.remove_class_fields_without_initializer` are both true,
-        // we don't need to convert properties without initializers, that means `instance_prop_count != 0` but `instance_inits` may be empty.
-        if instance_inits.is_empty() {
-            return;
-        }
-
-        // Scope that instance property initializers will be inserted into.
-        // This is usually class constructor, but can also be a `_super` function which is created.
-        let instance_inits_scope_id;
-        // Scope of class constructor, if instance property initializers will be inserted into constructor.
-        // Used for checking for variable name clashes.
-        // e.g. `class C { prop = x(); constructor(x) {} }`
-        // - `x` in constructor needs to be renamed when `x()` is moved into constructor body.
-        // `None` if class has no existing constructor, as then there can't be any clashes.
-        let mut instance_inits_constructor_scope_id = None;
-
-        // Determine where to insert instance property initializers in constructor
-        let instance_inits_insert_location = if let Some(constructor) = constructor.as_deref_mut() {
-            if has_super_class {
-                let (insert_scopes, insert_location) =
-                    Self::replace_super_in_constructor(constructor, ctx);
-                instance_inits_scope_id = insert_scopes.insert_in_scope_id;
-                instance_inits_constructor_scope_id = insert_scopes.constructor_scope_id;
-                insert_location
-            } else {
-                let constructor_scope_id = constructor.scope_id();
-                instance_inits_scope_id = constructor_scope_id;
-                // Only record `constructor_scope_id` if constructor's scope has some bindings.
-                // If it doesn't, no need to check for shadowed symbols in instance prop initializers,
-                // because no bindings to clash with.
-                instance_inits_constructor_scope_id =
-                    if ctx.scoping().get_bindings(constructor_scope_id).is_empty() {
-                        None
-                    } else {
-                        Some(constructor_scope_id)
-                    };
-                InstanceInitsInsertLocation::ExistingConstructor(0)
-            }
-        } else {
-            // No existing constructor - create scope for one
-            let constructor_scope_id = ctx.scoping_mut().add_scope(
-                Some(class_scope_id),
-                NodeId::DUMMY,
-                ScopeFlags::Function | ScopeFlags::Constructor | ScopeFlags::StrictMode,
-            );
-            instance_inits_scope_id = constructor_scope_id;
-            InstanceInitsInsertLocation::NewConstructor
-        };
-
-        // Reparent property initializers scope to `instance_inits_scope_id`.
-        self.reparent_initializers_scope(
-            instance_inits.as_slice(),
-            instance_inits_scope_id,
-            instance_inits_constructor_scope_id,
+        self.insert_instance_initializers(
+            body,
+            instance_inits,
+            constructor_index,
+            class_scope_id,
+            has_super_class,
             ctx,
         );
-
-        // Insert instance initializers into constructor.
-        // Create a constructor if there isn't one.
-        match instance_inits_insert_location {
-            InstanceInitsInsertLocation::NewConstructor => {
-                Self::insert_constructor(
-                    body,
-                    instance_inits,
-                    has_super_class,
-                    instance_inits_scope_id,
-                    ctx,
-                );
-            }
-            InstanceInitsInsertLocation::ExistingConstructor(stmt_index) => {
-                self.insert_inits_into_constructor_as_statements(
-                    constructor.as_mut().unwrap(),
-                    instance_inits,
-                    stmt_index,
-                    ctx,
-                );
-            }
-            InstanceInitsInsertLocation::SuperFnInsideConstructor(super_binding) => {
-                self.create_super_function_inside_constructor(
-                    constructor.as_mut().unwrap(),
-                    instance_inits,
-                    &super_binding,
-                    instance_inits_scope_id,
-                    ctx,
-                );
-            }
-            InstanceInitsInsertLocation::SuperFnOutsideClass(super_binding) => {
-                self.create_super_function_outside_constructor(
-                    instance_inits,
-                    &super_binding,
-                    instance_inits_scope_id,
-                    ctx,
-                );
-            }
-        }
     }
 
     /// Transform class declaration on exit.

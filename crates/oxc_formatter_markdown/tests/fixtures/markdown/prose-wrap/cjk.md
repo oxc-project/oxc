@@ -1,7 +1,7 @@
-<!-- Whitespace around Chinese / Japanese: a space next to CJ text never breaks, Korean behaves like Latin
-     (a line break next to CJ text: DIVERGENCES.md#cj-line-break) -->
+<!-- Whitespace around Chinese / Japanese: a space between two CJ characters never breaks, next to one only it may,
+     Korean behaves like Latin (a line break: DIVERGENCES.md#cj-line-break) -->
 
-漢字と English の間に空白を置く文書でも、その空白では折り返さずに、段落の終わりまで一行のまま続きます。
+漢字と English の間に空白を置く文書では、その空白で折り返せますが、漢字 と 漢字 の間の空白では折り返さずに一行のまま続きます。
 
 한국어는 라틴 문자처럼
 띄어쓰기로 단어를 나눕니다.

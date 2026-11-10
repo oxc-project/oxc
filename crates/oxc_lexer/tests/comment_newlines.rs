@@ -1,16 +1,16 @@
 #![cfg(target_endian = "little")]
 #![expect(clippy::cast_possible_truncation, reason = "test helpers: lengths fit u32")]
 
-use oxc_lexer::{LexOptions, PAD, testing::lex_utf8_with_cpu};
+use oxc_lexer::{LexOptions, PAD, testing::lex_with_cpu};
 use oxc_simd::{DynCpu, test_cpus};
 
 fn comment_flags(source: &str, cpu: DynCpu) -> Vec<(bool, bool)> {
     let mut buf = source.as_bytes().to_vec();
     buf.resize(source.len() + PAD, 0);
-    let (result, arena) = lex_utf8_with_cpu(&buf, source.len() as u32, LexOptions::default(), cpu);
+    let result = lex_with_cpu(&buf, source.len() as u32, LexOptions::default(), cpu);
     assert!(result.diagnostics().is_empty(), "{source:?}");
     result
-        .comments(&arena)
+        .comments()
         .iter()
         .map(|comment| (comment.preceded_by_newline(), comment.followed_by_newline()))
         .collect()

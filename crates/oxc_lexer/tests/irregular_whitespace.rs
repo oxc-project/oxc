@@ -1,15 +1,15 @@
 #![cfg(target_endian = "little")]
-#![expect(clippy::cast_possible_truncation, reason = "test helpers: lengths fit u32")]
 
-use oxc_lexer::{LexOptions, PAD, lex_utf8};
+use oxc_lexer::{LexOptions, Lexer, PAD, Tokens};
 
 fn irregular_whitespaces(source: &str, jsx: bool) -> Vec<(u32, u32)> {
     let mut buf = source.as_bytes().to_vec();
     buf.resize(source.len() + PAD, 0);
     let options = LexOptions { jsx, ..LexOptions::default() };
-    let (result, arena) = lex_utf8(&buf, source.len() as u32, options);
-    assert!(result.diagnostics().is_empty(), "{source:?}");
-    result.irregular_whitespaces(&arena).iter().map(|span| (span.start, span.end)).collect()
+    let mut tokens = Tokens::new();
+    Lexer::new().lex(&buf, source.len(), options, &mut tokens);
+    assert!(tokens.diagnostics().is_empty(), "{source:?}");
+    tokens.irregular_whitespaces().iter().map(|span| (span.start, span.end)).collect()
 }
 
 #[test]

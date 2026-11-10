@@ -731,9 +731,11 @@ const fn get_illegal_preceding_modifiers(kind: ModifierKind) -> ModifierKinds {
             ModifierKind::Abstract,
             ModifierKind::Async,
         ]),
-        ModifierKind::Declare => {
-            ModifierKinds::new([ModifierKind::Declare, ModifierKind::Override])
-        }
+        ModifierKind::Declare => ModifierKinds::new([
+            ModifierKind::Declare,
+            ModifierKind::Override,
+            ModifierKind::Abstract,
+        ]),
         _ => ModifierKinds::new([kind]),
     }
 }

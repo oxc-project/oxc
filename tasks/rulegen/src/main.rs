@@ -20,7 +20,7 @@ use oxc_ast::ast::{
     StringLiteral, TaggedTemplateExpression, TemplateLiteral,
 };
 use oxc_ast_visit::VisitJs;
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_span::{GetSpan, SourceType, Span};
 use oxc_str::JSStr;
 use oxc_tasks_common::project_root;
@@ -1524,7 +1524,12 @@ fn main() {
         Ok(Ok(body)) => {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_test_path).unwrap();
-            let ret = Parser::new(&allocator, &body, source_type).parse();
+            let ret = Parser::new(&allocator, &body, source_type)
+                .with_options(ParseOptions {
+                    enable_ident_hashes: false,
+                    ..ParseOptions::default()
+                })
+                .parse();
             if !ret.diagnostics.is_empty() {
                 let first_error = ret.diagnostics.first().map_or_else(
                     || "unknown parse error".to_string(),
@@ -1624,7 +1629,12 @@ fn main() {
         Ok(Ok(body)) => {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_src_path).unwrap();
-            let ret = Parser::new(&allocator, &body, source_type).parse();
+            let ret = Parser::new(&allocator, &body, source_type)
+                .with_options(ParseOptions {
+                    enable_ident_hashes: false,
+                    ..ParseOptions::default()
+                })
+                .parse();
             if !ret.diagnostics.is_empty() {
                 eprintln!(
                     "Warning: {} parse error(s) in rule source file (possibly due to Flow types). Attempting to extract rule config anyway.",

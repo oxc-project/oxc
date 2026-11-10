@@ -10,14 +10,14 @@
 
 use std::str;
 
-use oxc_lexer::{DiagCode, Diagnostic, LexOptions, PAD, TokenKind, testing::lex_utf8_with_cpu};
+use oxc_lexer::{DiagCode, Diagnostic, LexOptions, PAD, TokenKind, testing::lex_with_cpu};
 use oxc_simd::{DynCpu, test_cpus};
 
 fn diags(code: &str, cpu: DynCpu) -> Vec<Diagnostic> {
     let mut buf = code.as_bytes().to_vec();
     let len = buf.len() as u32;
     buf.resize(buf.len() + PAD, 0); // lexer over-reads up to PAD bytes past `len`
-    let (res, _arena) = lex_utf8_with_cpu(&buf, len, LexOptions::default(), cpu);
+    let res = lex_with_cpu(&buf, len, LexOptions::default(), cpu);
     res.diagnostics().to_vec()
 }
 
@@ -30,7 +30,7 @@ fn codes_jsx(code: &str, cpu: DynCpu) -> Vec<DiagCode> {
     let len = buf.len() as u32;
     buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { jsx: true, ..Default::default() };
-    let (res, _arena) = lex_utf8_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(&buf, len, opts, cpu);
     res.diagnostics().iter().map(|d| d.code).collect()
 }
 
@@ -39,7 +39,7 @@ fn codes_tsx(code: &str, cpu: DynCpu) -> Vec<DiagCode> {
     let len = buf.len() as u32;
     buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { jsx: true, ts: true, ..Default::default() };
-    let (res, _arena) = lex_utf8_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(&buf, len, opts, cpu);
     res.diagnostics().iter().map(|d| d.code).collect()
 }
 
@@ -213,6 +213,11 @@ fn regex_flags(cpu: DynCpu) {
     assert_eq!(codes("r = /x/gg;", cpu), [DiagCode::DuplicateRegexpFlag]); // duplicate
     assert_eq!(codes("r = /x/gimsuydv;", cpu), []); // all valid flags, once each
     assert_eq!(codes("r = /x/;", cpu), []); // no flags
+}
+
+#[test_cpus]
+fn diagnostics_are_not_capped(cpu: DynCpu) {
+    assert_eq!(codes(&"r = /x/q;\n".repeat(2000), cpu).len(), 2000);
 }
 
 #[test_cpus]
@@ -397,7 +402,7 @@ fn diags_bytes(code: &[u8], cpu: DynCpu) -> Vec<Diagnostic> {
     let len = buf.len() as u32;
     buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { validate_utf8: true, ..Default::default() };
-    let (res, _arena) = lex_utf8_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(&buf, len, opts, cpu);
     res.diagnostics().to_vec()
 }
 
@@ -648,8 +653,8 @@ fn template_cooked_invalid_marker(cpu: DynCpu) {
         let mut buf = code.as_bytes().to_vec();
         let len = buf.len() as u32;
         buf.resize(buf.len() + PAD, 0);
-        let (res, arena) = lex_utf8_with_cpu(&buf, len, LexOptions::default(), cpu);
-        res.templates(&arena).iter().map(|t| t.cooked_invalid()).collect()
+        let res = lex_with_cpu(&buf, len, LexOptions::default(), cpu);
+        res.templates().iter().map(|t| t.cooked_invalid()).collect()
     };
     assert_eq!(get(r"t = `\uZZ`;"), [true]); // bad unicode escape
     assert_eq!(get(r"t = `\xG`;"), [true]); // bad hex escape
@@ -750,7 +755,7 @@ fn diags_jsx(code: &str, cpu: DynCpu) -> Vec<Diagnostic> {
     let len = buf.len() as u32;
     buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { jsx: true, ..Default::default() };
-    let (res, _arena) = lex_utf8_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(&buf, len, opts, cpu);
     res.diagnostics().to_vec()
 }
 
@@ -870,10 +875,10 @@ fn value_lanes_hold_exactly_one_entry_per_value_token(cpu: DynCpu) {
         let len = buf.len() as u32;
         buf.resize(buf.len() + PAD, 0);
         let opts = LexOptions { ts, ..Default::default() };
-        let (res, _arena) = lex_utf8_with_cpu(&buf, len, opts, cpu);
-        assert_eq!(res.numbers_count, numbers, "numbers lane for {code:?}");
-        assert_eq!(res.atoms_count, atoms, "atoms lane for {code:?}");
-        assert_eq!(res.diagnostic_count, 0, "diagnostics for {code:?}: {:?}", res.diagnostics());
+        let res = lex_with_cpu(&buf, len, opts, cpu);
+        assert_eq!(res.numbers().len(), numbers, "numbers lane for {code:?}");
+        assert_eq!(res.atoms().len(), atoms, "atoms lane for {code:?}");
+        assert_eq!(res.diagnostics().len(), 0, "diagnostics for {code:?}: {:?}", res.diagnostics());
     }
 }
 
@@ -893,10 +898,10 @@ fn block_comment_star_plus_slash_is_not_a_terminator(cpu: DynCpu) {
         let mut buf = code.as_bytes().to_vec();
         let len = buf.len() as u32;
         buf.resize(buf.len() + PAD, 0);
-        let (res, arena) = lex_utf8_with_cpu(&buf, len, LexOptions::default(), cpu);
-        let kinds = res.tok_kinds(&arena);
+        let res = lex_with_cpu(&buf, len, LexOptions::default(), cpu);
+        let kinds = res.kinds();
         let non_trivia = kinds.iter().filter(|k| !k.is_trivia() && **k != TokenKind::Eof).count();
         assert_eq!(non_trivia, tokens, "{code:?}: {kinds:?}");
-        assert_eq!(res.diagnostic_count, 0, "{code:?}: {:?}", res.diagnostics());
+        assert_eq!(res.diagnostics().len(), 0, "{code:?}: {:?}", res.diagnostics());
     }
 }

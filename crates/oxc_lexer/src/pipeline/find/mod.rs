@@ -1,4 +1,4 @@
-use oxc_simd::{Cpu, DynCpu, cpu_multiversion, to_dyn};
+use oxc_simd::{Cpu, DynCpu, cpu_multiversion};
 
 mod avx2;
 mod generic;
@@ -18,7 +18,7 @@ pub(super) unsafe fn find<const K: usize>(
     needles: [u8; K],
     cpu: impl Cpu,
 ) -> usize {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => find_avx2(src, n, i, needles, cpu),
         _ => find_generic(src, n, i, needles),
     }
@@ -28,7 +28,7 @@ pub(super) unsafe fn find<const K: usize>(
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) fn bracket_bits(src: &[u8], base: usize, cpu: impl Cpu) -> u64 {
-    match to_dyn(cpu) {
+    match DynCpu::from(cpu) {
         DynCpu::Avx2(cpu) => bracket_bits_avx2(src, base, cpu),
         _ => bracket_bits_generic(src, base),
     }

@@ -4,6 +4,41 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ vitest(expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
+ 1 │ test.each([{ bench: () => {} }])('row', ({ bench }) => { bench(); });
+   · ────────────────────────────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ vitest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('unused', ({ bench }) => {});
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ vitest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('unrelated', () => bench('sum', () => {}));
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ vitest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('shadowed', ({ bench }) => { function other(bench) { bench('x', () => {}); } other(() => {}); });
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ vitest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('shadowed context', (ctx) => { function other(ctx) { ctx.bench('x', () => {}); } other({}); });
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ vitest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
  1 │ it("should fail", () => {});
    · ──
    ╰────

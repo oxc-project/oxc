@@ -244,7 +244,19 @@ impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
 
     fn visit_assignment_expression(&mut self, it: &AssignmentExpression<'a>) {
         let current_scope = self.current_scope();
-        self.walk_assignment_target_maybe_parenthesized_for_reassignment(&it.left, current_scope);
+        // `const v = 1; () => { v ??= 2 }` never assigns, but marking `v`
+        // reassigned makes it a context identifier and the declaration is then
+        // rejected as a Syntax error. Logical assignment to a const is a
+        // lowering Todo instead (the store may be dead, and compiling it would
+        // rewrite `const` to `let`). `let` targets are still reassignments.
+        if !(it.operator.to_logical_operator().is_some()
+            && logical_assignment_target_is_const(self.scope, current_scope, &it.left))
+        {
+            self.walk_assignment_target_maybe_parenthesized_for_reassignment(
+                &it.left,
+                current_scope,
+            );
+        }
         oxc_ast_visit::walk_js::walk_assignment_expression(self, it);
     }
 
@@ -429,6 +441,31 @@ impl<'a> ContextIdentifierVisitor<'a> {
             }
         }
     }
+}
+
+/// Whether `target` is a simple assignment to a `const` binding.
+fn logical_assignment_target_is_const(
+    scope: &ScopeResolver<'_, '_>,
+    current_scope: ScopeId,
+    target: &AssignmentTargetMaybeParenthesized<'_>,
+) -> bool {
+    // `(v) ??= 2` targets the same binding as `v ??= 2`
+    let name = if let Some(ident) = target.identifier() {
+        ident.name.as_str()
+    } else {
+        let Some(expression) =
+            target.as_simple_assignment_target().and_then(|t| t.get_expression())
+        else {
+            return false;
+        };
+        let Expression::Identifier(ident) = expression.get_inner_expression() else {
+            return false;
+        };
+        ident.name.as_str()
+    };
+    scope
+        .find_binding(current_scope, name)
+        .is_some_and(|symbol_id| scope.binding_kind(symbol_id) == crate::scope::BindingKind::Const)
 }
 
 /// Check if a binding declared at `binding_scope` is captured by a function at `function_scope`.

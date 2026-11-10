@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.93.0] - 2026-11-09
+
+### 🚀 Features
+
+- 6195265 linter/promise/prefer-catch: Implement suggestion (#28919) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 9c62d2a linter/eslint/no-unreachable-loop: Ignore enclosing finalizers for continues (#29004) (camc314)
+- 6303df1 jsdoc: Preserve param tags after unmatched description delimiters (#28923) (Vishal Punjabi)
+- fe66fa7 linter/eslint/no-lone-blocks: Report redundant blocks in function bodies (#29043) (camc314)
+- e1694bd linter/unicorn/no-useless-undefined: Preserve shadowed bindings (#29046) (camc314)
+- 791b5f5 linter/unicorn/prefer-regexp-test: Restrict automatic argument swaps (#29045) (camc314)
+- e7654f6 linter/react/display-name: Ignore unrelated memo and forwardRef calls (#29005) (camc314)
+- 2487360 linter/unicorn/no-useless-undefined: Report guarded indexed access (#29014) (camc314)
+- a791a5b cfg: Resolve continues through stacked loop labels (#29016) (camc314)
+- 287ba19 linter/eslint/id-length: Ignore TypeScript qualified references (#29037) (camc314)
+- b71234f cfg: Skip labeled contexts for unlabeled jumps (#29001) (camc314)
+- bb21a3c linter/import/no-anonymous-default-export: Report parenthesized exports (#29002) (camc314)
+- f38f738 linter/eslint/prefer-destructuring: Skip fixes that remove comments (#29003) (camc314)
+- bf11006 linter/react/exhaustive-deps: Suggest dependency removals (#28925) (camc314)
+- 6bbb92a linter: Remove unused `oxlint-disable` directives with `--fix` (#27698) (Ryan Tsao)
+- 3b35cb6 linter/disable-directives: Preserve separators and disable spans (#28921) (camc314)
+- 1253445 linter/eslint/no-restricted-imports: Report re-exported imports once (#28920) (Ramy Akin Saidi)
+
+### ⚡ Performance
+
+- da620e6 linter: Start tsgolint before the regular lint pass (#28824) (Max Schwenk)
+
 ## [1.92.0] - 2026-11-06
 
 ### 🚀 Features

@@ -5,7 +5,9 @@ use oxc_str::Ident;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl,
+    buffered_vec::BufferedVec,
+    diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
@@ -221,12 +223,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_ts_implements_clause(&mut self) -> ArenaVec<'a, TSClassImplements<'a>> {
         self.expect(Kind::Implements);
-        let first = self.parse_ts_implement_name();
-        let mut implements = ArenaVec::from_value_in(first, self);
-        while self.eat(Kind::Comma) {
-            implements.push(self.parse_ts_implement_name());
-        }
-        implements
+        let mut first = Some(self.parse_ts_implement_name());
+        self.collect_list(|p| {
+            first.take().or_else(|| p.eat(Kind::Comma).then(|| p.parse_ts_implement_name()))
+        })
     }
 
     fn parse_ts_type_parameter(&mut self, allow_variance: bool) -> TSTypeParameter<'a> {
@@ -308,11 +308,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     where
         F: Fn(&mut Self) -> TSType<'a>,
     {
-        let mut types = ArenaVec::from_value_in(ty, self);
-        while self.eat(kind) {
-            let ty = parse_constituent_type(self);
-            types.push(ty);
-        }
+        let mut first = Some(ty);
+        let types = self.collect_list(|p| {
+            first.take().or_else(|| p.eat(kind).then(|| parse_constituent_type(p)))
+        });
         let span = self.end_span(start);
         match kind {
             Kind::Pipe => TSType::new_ts_union_type(span, types, self),
@@ -724,8 +723,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_type_literal(&mut self, opening_span: Span) -> TSType<'a> {
-        let mut member_list = ArenaVec::new_in(self);
-        self.parse_normal_list_into(&mut member_list, Kind::RCurly, Self::parse_ts_type_signature);
+        let member_list = self.collect_list(|p| {
+            if p.at(Kind::RCurly) || p.has_fatal_error() {
+                None
+            } else {
+                Some(p.parse_ts_type_signature())
+            }
+        });
         self.expect_closing(Kind::RCurly, opening_span);
         TSType::new_ts_type_literal(self.end_span(opening_span.start), member_list, self)
     }
@@ -790,8 +794,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_template_type(&mut self, tagged: bool) -> TSType<'a> {
         let start = self.cur_start();
-        let mut types = ArenaVec::new_in(self);
-        let mut quasis = ArenaVec::new_in(self);
+        let mut types = BufferedVec::new_in(self);
+        let mut quasis = BufferedVec::new_in(self);
         match self.cur_kind() {
             Kind::NoSubstitutionTemplate => {
                 quasis.push(self.parse_template_element(tagged));
@@ -823,7 +827,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => unreachable!("parse_template_literal"),
         }
 
-        TSType::new_ts_template_literal_type(self.end_span(start), quasis, types, self)
+        TSType::new_ts_template_literal_type(
+            self.end_span(start),
+            quasis.into_vec(),
+            types.into_vec(),
+            self,
+        )
     }
 
     fn parse_asserts_type_predicate(&mut self, asserts_start: u32) -> TSType<'a> {

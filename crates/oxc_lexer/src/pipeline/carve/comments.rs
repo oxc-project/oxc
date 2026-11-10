@@ -471,7 +471,7 @@ fn push_comment_record(
     c.set_preceded_by_newline(preceded_by_newline);
     c.set_followed_by_newline(followed_by_newline);
 
-    lanes.comments.push(c);
+    lanes.out.comments.push(c);
 }
 
 #[cpu_multiversion]

@@ -20,6 +20,7 @@ workspace = true
 doctest = false
 
 [dependencies]
+oxc_data_structures = { workspace = true, features = ["assert_unchecked"] }
 oxc_simd_macros = { workspace = true }
 
 [features]

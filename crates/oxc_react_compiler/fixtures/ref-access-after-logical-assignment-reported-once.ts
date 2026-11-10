@@ -5,7 +5,8 @@ const clearOwned = (owner: symbol): void => {
   console.log(owner);
 };
 
-// The read of `ownerRef.current` during render is reported once.
+// `??=` is lazy initialization (allowed). The later read of
+// `ownerRef.current` during render is reported once.
 export const useOwner = (items: number[], index: number, count: number): void => {
   const ownerRef = useRef<symbol | null>(null);
   ownerRef.current ??= Symbol('owner');

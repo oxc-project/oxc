@@ -6,6 +6,10 @@ expect([assigned.name, assigned.seen]).toEqual(["assigned", "assigned"]);
 let logical;
 logical ||= class { static { this.seen = this.name; } };
 expect([logical.name, logical.seen]).toEqual(["logical", "logical"]);
+let compoundName;
+let compound = 0;
+compound += class { static { compoundName = this.name; } };
+expect(compoundName).toBe("");
 function defaults(Param = class { static { this.seen = this.name; } }) {
   return [Param.name, Param.seen];
 }

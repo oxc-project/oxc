@@ -376,7 +376,6 @@ Correctness and reliability are taken extremely seriously in Oxc. We spend signi
 - **Snapshot Testing**: Linter diagnostic snapshots for regression prevention
 - **Ecosystem CI**: Testing against real-world codebases
 - **Idempotency Testing**: Ensuring transformations are stable
-- **Code Coverage**: Comprehensive coverage tracking
 - **End-to-End Testing**: Testing against top 3000 npm packages
 
 ### Build and Development Tools

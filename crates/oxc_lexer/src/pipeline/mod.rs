@@ -5,15 +5,15 @@
 #![allow(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::needless_range_loop, clippy::manual_range_contains)]
 
-use std::slice;
+use std::{mem, slice};
 
-use oxc_simd::{BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_version};
+use oxc_simd::{Cpu, DynCpu, cpu_multiversion, cpu_version};
 use oxc_span::Span;
 
 use crate::{
     PAD,
     options::LexOptions,
-    token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
+    token::{SPAN_SENTINELS, debug_assert_kind_bytes},
 };
 
 mod bitmap;
@@ -31,7 +31,7 @@ mod misc;
 mod operators;
 mod scan;
 
-pub(crate) use lanes::{Lanes, decode_char_at};
+pub(crate) use lanes::{Lanes, TokenLanes, decode_char_at};
 
 use carve::carve;
 use classify::classify;
@@ -53,10 +53,6 @@ pub struct Lexer {
     nb_cap: usize,
     stage_pos: Vec<u32>,
     stage_kind: Vec<u8>,
-    pub spans: Vec<Span>,
-    sig_kinds: Vec<u8>,
-    pub sig_len: usize,
-    out_cap: usize,
     pub(crate) lanes: Lanes,
     cpu: DynCpu,
 }
@@ -92,48 +88,55 @@ impl Lexer {
             nb_cap: 0,
             stage_pos: vec![0; STAGE_CAP],
             stage_kind: vec![0; STAGE_CAP],
-            spans: Vec::new(),
-            sig_kinds: Vec::new(),
-            sig_len: 0,
-            out_cap: 0,
             lanes: Lanes::default(),
             cpu,
         }
     }
 
-    /// Lex `src[..n]` into the internal `spans`/`sig_kinds` buffers (mode from
-    /// `options`), returning the significant token count. Test/bench entry;
-    /// the arena API is [`lex_utf8`].
-    ///
     /// # Panics
     ///
     /// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `n`.
-    ///
-    /// [`lex_utf8`]: crate::lex_utf8
     #[cpu_version(Generic)]
-    pub fn lex(&mut self, src: &[u8], n: usize, options: LexOptions) -> usize {
-        let cpu = BASELINE;
-
+    pub fn lex(&mut self, src: &[u8], n: usize, options: LexOptions, tokens: &mut crate::Tokens) {
         assert!(
             src.len() >= n + PAD,
             "lexer: src must have >= {PAD} bytes of padding past len {n} (got {})",
             src.len()
         );
-        self.ensure(n, cpu);
-        let kinds = self.sig_kinds.as_mut_ptr();
-        let spans = self.spans.as_mut_ptr();
-        unsafe {
-            self.lex_raw(
+        let capacity = n + PAD + SPAN_SENTINELS;
+        tokens.kinds.clear();
+        tokens.kinds.reserve(capacity);
+        tokens.spans.clear();
+        tokens.spans.reserve(capacity);
+        // Lend the caller's lane buffers to the stages, so they fill them in place.
+        self.lanes.out = mem::take(&mut tokens.lanes);
+        // SAFETY: lex_raw writes count + SPAN_SENTINELS valid kinds and spans into reserved space.
+        let count = unsafe {
+            let count = self.lex_raw(
                 src,
                 n,
-                kinds,
-                spans,
+                tokens.kinds.as_mut_ptr().cast::<u8>(),
+                tokens.spans.as_mut_ptr(),
                 options.jsx,
                 options.ts,
                 options.source_type_module,
                 options.validate_utf8,
-            )
+            );
+            let len = count + SPAN_SENTINELS;
+            debug_assert_kind_bytes(slice::from_raw_parts(tokens.kinds.as_ptr().cast::<u8>(), len));
+            tokens.kinds.set_len(len);
+            tokens.spans.set_len(len);
+            count
+        };
+        if !self.lanes.unicode_leads.is_empty() && count > 0 {
+            let (kinds, spans) = (&tokens.kinds[..count], &tokens.spans[..count]);
+            crate::resolve_unicode_leads(&mut self.lanes, &src[..n], kinds, spans);
         }
+        if !self.lanes.diag_suppress.is_empty() {
+            let (diags, sup) = (&mut self.lanes.out.diags, &self.lanes.diag_suppress);
+            diags.retain(|d| !sup.iter().any(|&(a, b)| d.off >= a && d.off < b));
+        }
+        tokens.lanes = mem::take(&mut self.lanes.out);
     }
 
     /// Run the full pipeline over `src[..n]`, writing the trivia-free token
@@ -150,7 +153,7 @@ impl Lexer {
     ///   stores full 4-lane groups past the last token, and the sentinels
     ///   follow it.
     #[cpu_version(Generic)]
-    pub unsafe fn lex_raw(
+    unsafe fn lex_raw(
         &mut self,
         src: &[u8],
         n: usize,
@@ -184,7 +187,6 @@ impl Lexer {
         self.lanes.disambiguate.begin(n, module, cpu);
         if n == 0 {
             write_sentinels(0, out_spans, out_kinds, cpu);
-            self.sig_len = 0;
             return 0;
         }
 
@@ -208,10 +210,10 @@ impl Lexer {
         carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes, cpu);
         coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes, cpu);
         misc_post(sp, n, st, word, misc, kind, nesc, cpu);
-        if !self.lanes.irregular_whitespaces.is_empty() {
-            retain_code_whitespace(&self.st, &self.kind, &mut self.lanes.irregular_whitespaces);
+        if !self.lanes.out.irregular_whitespaces.is_empty() {
+            retain_code_whitespace(&self.st, &self.kind, &mut self.lanes.out.irregular_whitespaces);
         }
-        let sig_len = compress(
+        compress(
             src,
             n,
             nb,
@@ -223,9 +225,7 @@ impl Lexer {
             out_spans,
             &mut self.lanes,
             cpu,
-        );
-        self.sig_len = sig_len;
-        sig_len
+        )
     }
 
     #[cpu_multiversion]
@@ -246,34 +246,6 @@ impl Lexer {
         if self.kwpos.is_empty() {
             self.kwpos.resize(KWB * 64 + 8, 0);
         }
-        let need = n + PAD;
-        if self.out_cap < need {
-            self.spans.resize(need + SPAN_SENTINELS, Span::new(0, 0));
-            self.sig_kinds.resize(need + SPAN_SENTINELS, 0);
-            self.out_cap = need;
-        }
-    }
-
-    /// The kinds written by the last [`Lexer::lex`], including the trailing
-    /// [`SPAN_SENTINELS`] EOF entries.
-    #[cpu_version(Generic)]
-    #[must_use]
-    pub fn kinds(&self) -> &[TokenKind] {
-        let bytes = &self.sig_kinds[..self.sig_len + SPAN_SENTINELS];
-        debug_assert_kind_bytes(bytes);
-        // SAFETY: `lex_raw` wrote `sig_len` kinds plus the sentinels, all of
-        // them declared discriminants.
-        unsafe { kinds_from_bytes(bytes) }
-    }
-
-    /// Set the CPU feature set this [`Lexer`] lexes with, and return the previous one.
-    ///
-    /// Only used in conformance testing.
-    #[cfg(feature = "testing")]
-    pub(crate) fn replace_cpu(&mut self, cpu: DynCpu) -> DynCpu {
-        let previous = self.cpu;
-        self.cpu = cpu;
-        previous
     }
 }
 

@@ -1,6 +1,6 @@
 use oxc_simd::{DynCpu, test_cpus};
 
-use crate::{LexOptions, Lexer, PAD, error::DiagCode, token::TokenKind};
+use crate::{LexOptions, Lexer, PAD, Tokens, error::DiagCode, token::TokenKind};
 
 /// Minimal version of `SourceType` just for tests.
 ///
@@ -47,46 +47,46 @@ use FileType::*;
 
 /// Lex `code` as `file_type`, with walk settings `full_walk_only` and `no_run_rules`,
 /// and CPU feature set `cpu`.
-///
-/// Returns the [`Lexer`] and the token count.
 fn lex(
     code: &str,
     file_type: FileType,
     full_walk_only: bool,
     no_run_rules: bool,
     cpu: DynCpu,
-) -> (Lexer, usize) {
+) -> Tokens {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len();
     buf.resize(n + PAD, 0);
     let mut lx = Lexer::new_with_cpu(cpu);
     lx.lanes.disambiguate.walks.full_walk_only = full_walk_only;
     lx.lanes.disambiguate.walks.no_run_rules = no_run_rules;
-    let count = lx.lex(&buf, n, file_type.options());
-    (lx, count)
+    let mut tokens = Tokens::new();
+    lx.lex(&buf, n, file_type.options(), &mut tokens);
+    tokens
 }
 
 /// Lex with the bounded walks and shortcuts, then with the full walk alone: both must agree.
 #[track_caller]
-fn lex_checked(code: &str, file_type: FileType, cpu: DynCpu) -> (Lexer, usize) {
-    let (lx, count) = lex(code, file_type, false, false, cpu);
-    let (walk, walk_count) = lex(code, file_type, false, true, cpu);
-    let (full, full_count) = lex(code, file_type, true, false, cpu);
-    let tokens = |lx: &Lexer, count: usize| {
-        let kinds = lx.kinds()[..count].iter().zip(&lx.spans).map(|(k, s)| (*k, s.start, s.end));
-        let diags = lx.lanes.diags.iter().map(|d| (d.code, d.off, d.len));
+fn lex_checked(code: &str, file_type: FileType, cpu: DynCpu) -> Tokens {
+    let lx = lex(code, file_type, false, false, cpu);
+    let walk = lex(code, file_type, false, true, cpu);
+    let full = lex(code, file_type, true, false, cpu);
+    let tokens = |lx: &Tokens| {
+        let kinds = lx.kinds()[..lx.token_count()].iter().zip(lx.spans());
+        let kinds = kinds.map(|(k, s)| (*k, s.start, s.end));
+        let diags = lx.diagnostics().iter().map(|d| (d.code, d.off, d.len));
         (kinds.collect::<Vec<_>>(), diags.collect::<Vec<_>>())
     };
-    assert_eq!(tokens(&lx, count), tokens(&full, full_count), "full walk disagrees on {code:?}");
+    assert_eq!(tokens(&lx), tokens(&full), "full walk disagrees on {code:?}");
     // The run rules must not hide a walk that answers differently.
-    assert_eq!(tokens(&walk, walk_count), tokens(&full, full_count), "walk disagrees on {code:?}");
-    (lx, count)
+    assert_eq!(tokens(&walk), tokens(&full), "walk disagrees on {code:?}");
+    lx
 }
 
 #[track_caller]
 pub(super) fn kinds_of(code: &str, file_type: FileType, cpu: DynCpu) -> Vec<TokenKind> {
-    let (lx, count) = lex_checked(code, file_type, cpu);
-    lx.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
+    let lx = lex_checked(code, file_type, cpu);
+    lx.kinds()[..lx.token_count()].iter().copied().filter(|kk| !kk.is_trivia()).collect()
 }
 
 /// Assert that the token stream for `code` contains at least one `RegExp` token
@@ -203,8 +203,8 @@ fn jsx_self_close_allows_whitespace(cpu: DynCpu) {
 
 #[track_caller]
 pub(super) fn diag_codes_of(code: &str, file_type: FileType, cpu: DynCpu) -> Vec<DiagCode> {
-    let (lx, _) = lex_checked(code, file_type, cpu);
-    lx.lanes.diags.iter().map(|d| d.code).collect()
+    let lx = lex_checked(code, file_type, cpu);
+    lx.diagnostics().iter().map(|d| d.code).collect()
 }
 
 pub(super) fn is_fused_gt(k: TokenKind) -> bool {
@@ -276,13 +276,12 @@ fn names_of(code: &str, file_type: FileType, cpu: DynCpu) -> String {
 }
 
 fn spans_of(code: &str, file_type: FileType, cpu: DynCpu) -> Vec<(u32, u32)> {
-    let (lx, count) = lex_checked(code, file_type, cpu);
-    let kinds = &lx.kinds()[..count];
-    assert!(lx.spans.len() >= count);
+    let lx = lex_checked(code, file_type, cpu);
+    let kinds = &lx.kinds()[..lx.token_count()];
 
     kinds
         .iter()
-        .zip(&lx.spans)
+        .zip(lx.spans())
         .filter(|(kind, _)| !kind.is_trivia())
         .map(|(_, &span)| (span.start, span.end))
         .collect()

@@ -1,8 +1,8 @@
-commit: 0372f7f1
+commit: d7a0cccb
 
 node: v26.12.1
 
-Passed: 326 of 419 (77.80%)
+Passed: 329 of 419 (78.52%)
 
 Failures:
 
@@ -160,24 +160,6 @@ ReferenceError: Cannot access 'a' before initialization
 ./fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-declaration-shadowed-block-scoped-bindings-exec.test.js
 ReferenceError: Cannot access 'a' before initialization
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-declaration-shadowed-block-scoped-bindings-exec.test.js:8:13
-
-./fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js
-TypeError: Cannot read properties of undefined (reading 'x')
-    at m (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js:10:18)
-    at Foo.test (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js:25:65)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js:68:12
-
-./fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js
-TypeError: Cannot read properties of undefined (reading 'x')
-    at m (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js:10:18)
-    at Foo.test (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js:25:65)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js:68:12
-
-./fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js
-TypeError: Cannot read properties of undefined (reading 'x')
-    at m (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:10:18)
-    at Foo.test (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:25:65)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:68:12
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-basic-exec.test.js
 ReferenceError: _Cl_brand is not defined
