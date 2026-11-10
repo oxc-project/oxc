@@ -135,8 +135,8 @@ pub trait LexerConfig: Default {
     ///
     /// Opting in allows the lexer to bypass `byte_handlers`, its indexing, and its
     /// handlers for ASCII identifier starts, digits, quotes, common punctuation,
-    /// and CR/LF. Custom configurations inherit `false`, preserving the original
-    /// three-punctuation bypass and all other byte-table effects.
+    /// spaces, tabs, and CR/LF. Custom configurations inherit `false`, preserving
+    /// the original three-punctuation bypass and all other byte-table effects.
     const COMMON_TOKEN_DISPATCH: bool = false;
 
     /// Returns `true` if tokens are enabled.

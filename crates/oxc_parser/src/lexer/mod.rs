@@ -539,6 +539,17 @@ impl<'a, C: Config> Lexer<'a, C> {
                 byte = unsafe { pos.read() };
             }
 
+            if C::COMMON_TOKEN_DISPATCH && matches!(byte, b' ' | b'\t') {
+                // Consume regular whitespace here to avoid entering the cold trivia retry.
+                self.whitespace_handler();
+                pos = self.source.position();
+                if pos.is_end_of(&self.source) {
+                    return Some(self.read_next_token_at_end());
+                }
+                // SAFETY: The whitespace scanner stopped at a UTF-8 boundary before EOF.
+                byte = unsafe { pos.read() };
+            }
+
             if C::COMMON_TOKEN_DISPATCH && matches!(byte, b'\r' | b'\n') {
                 // Keep the same scratch start as the original LIN table handler.
                 self.token.set_start(self.source.offset_of(pos));

@@ -12,6 +12,7 @@ static NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| !matches!(b, b' ' | b'\t' | b'\r' | b'\n'));
 
 impl<C: Config> Lexer<'_, C> {
+    #[inline]
     pub(super) fn whitespace_handler(&mut self) -> Kind {
         // Single spaces between tokens are consumed directly by `read_next_token`.
         // Scan additional spaces and tabs in one pass to avoid repeated token-loop
