@@ -115,6 +115,37 @@ impl PartialEq for RefFnType {
 }
 
 impl RefAccessType {
+    // Unlike the TS implementation, ignore growth of ref-free structures for
+    // convergence while retaining their nullable return types for ref guards.
+    fn is_ref_free_structure(&self) -> bool {
+        let Self::Structure { value, fn_type } = self else {
+            return false;
+        };
+        let mut pending: SmallVec<[_; 4]> = smallvec::smallvec![(value, fn_type)];
+        while let Some((value, fn_type)) = pending.pop() {
+            if let Some(fn_type) = fn_type {
+                if fn_type.read_ref_effect {
+                    return false;
+                }
+                match &*fn_type.return_type {
+                    Self::None | Self::Nullable => {}
+                    Self::Structure { value, fn_type } => pending.push((value, fn_type)),
+                    Self::Guard { .. } | Self::Ref { .. } | Self::RefValue { .. } => return false,
+                }
+            }
+            match value.as_deref() {
+                None => {}
+                Some(RefAccessRefType::Structure { value, fn_type }) => {
+                    pending.push((value, fn_type));
+                }
+                Some(RefAccessRefType::Ref { .. } | RefAccessRefType::RefValue { .. }) => {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+
     /// Try to convert a `RefAccessType` to a `RefAccessRefType` (the Ref/RefValue/Structure subset).
     fn to_ref_type(&self) -> Option<RefAccessRefType> {
         match self {
@@ -260,7 +291,10 @@ impl Env {
         let widened_value = join_ref_access_types(&value, current.unwrap_or(&RefAccessType::None));
         if current.is_none() && widened_value == RefAccessType::None {
             // No change needed
-        } else if current != Some(&widened_value) {
+        } else if current != Some(&widened_value)
+            && !(current.is_some_and(RefAccessType::is_ref_free_structure)
+                && widened_value.is_ref_free_structure())
+        {
             self.changed = true;
         }
         self.data.insert(operand_id, widened_value);
