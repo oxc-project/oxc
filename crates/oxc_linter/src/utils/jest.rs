@@ -14,12 +14,12 @@ use oxc_ast::{
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
 use oxc_str::CompactStr;
 
-use crate::LintContext;
 pub use crate::utils::jest::parse_jest_fn::{
     ExpectError, KnownMemberExpressionParentKind, KnownMemberExpressionProperty,
     MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
     ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
 };
+use crate::{LintContext, utils::is_vitest_import_source};
 pub use padding_around_block::report_missing_padding_before_jest_block;
 
 mod padding_around_block;
@@ -202,10 +202,13 @@ impl<'a, 'b> PossibleJestNode<'a, 'b> {
             else {
                 return None;
             };
-            if !matches!(
-                import_decl.source.value.as_str(),
-                Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
-            ) {
+            let global_package = ctx.settings().jest.global_package();
+            if !import_decl
+                .source
+                .value
+                .as_str()
+                .is_some_and(|source| is_test_framework_import_source(source, global_package))
+            {
                 return None;
             }
             find_original_name(import_decl, ident.name.as_str())
@@ -225,14 +228,15 @@ impl<'a, 'b> PossibleJestNode<'a, 'b> {
 pub fn collect_possible_jest_call_node<'a, 'c>(
     ctx: &'c LintContext<'a>,
 ) -> Vec<PossibleJestNode<'a, 'c>> {
-    iter_possible_jest_call_node(ctx.semantic()).collect()
+    iter_possible_jest_call_node(ctx).collect()
 }
 
 /// Iterate over all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be an iter over node `expect(1)` and node `expect(1).toBe(1)`.
 pub fn iter_possible_jest_call_node<'a, 'c>(
-    semantic: &'c Semantic<'a>,
+    ctx: &'c LintContext<'a>,
 ) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
+    let semantic = ctx.semantic();
     // Some people may write codes like below, we need lookup imported test function and global test function.
     // ```
     // import { jest as Jest } from '@jest/globals';
@@ -241,11 +245,12 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
     //     expect(1 + 2).toEqual(3);
     // });
     // ```
-    let reference_id_with_original_list = collect_ids_referenced_to_import(semantic).chain(
-        collect_ids_referenced_to_global(semantic)
-            // set the original of global test function to None
-            .map(|id| (id, None)),
-    );
+    let reference_id_with_original_list =
+        collect_ids_referenced_to_import(semantic, ctx.settings().jest.global_package()).chain(
+            collect_ids_referenced_to_global(semantic)
+                // set the original of global test function to None
+                .map(|id| (id, None)),
+        );
 
     // get the longest valid chain of Jest Call Expression
     reference_id_with_original_list.flat_map(move |(reference_id, original)| {
@@ -276,6 +281,7 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
 
 fn collect_ids_referenced_to_import<'a, 'c>(
     semantic: &'c Semantic<'a>,
+    global_package: &'c str,
 ) -> impl Iterator<Item = (ReferenceId, Option<&'a str>)> + 'c {
     semantic
         .scoping()
@@ -291,10 +297,12 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if matches!(
-                    import_decl.source.value.as_str(),
-                    Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
-                ) {
+                if import_decl
+                    .source
+                    .value
+                    .as_str()
+                    .is_some_and(|source| is_test_framework_import_source(source, global_package))
+                {
                     let original = find_original_name(import_decl, name);
                     return Some(
                         reference_ids.iter().map(move |&reference_id| (reference_id, original)),
@@ -305,6 +313,11 @@ fn collect_ids_referenced_to_import<'a, 'c>(
             None
         })
         .flatten()
+}
+
+/// Whether `source` is the configured Jest global package or a Vitest package.
+fn is_test_framework_import_source(source: &str, global_package: &str) -> bool {
+    source == global_package || is_vitest_import_source(source)
 }
 
 /// Find name in the Import Declaration, not use name because of lifetime not long enough.

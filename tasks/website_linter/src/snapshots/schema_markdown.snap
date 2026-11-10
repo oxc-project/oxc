@@ -740,6 +740,30 @@ See [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s
 configuration for a full reference.
 
 
+#### settings.jest.globalPackage
+
+type: `string`
+
+default: `null`
+
+The package that Jest globals are imported from. Defaults to `@jest/globals`.
+
+When set, only imports from this package are recognized as Jest globals,
+and `jest/prefer-importing-jest-globals` imports from it.
+
+Example:
+
+```json
+{
+  "settings": {
+    "jest": {
+      "globalPackage": "bun:test"
+    }
+  }
+}
+```
+
+
 #### settings.jest.version
 
 type: `integer | string`

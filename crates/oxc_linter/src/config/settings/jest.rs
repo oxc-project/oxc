@@ -1,5 +1,6 @@
 use std::fmt;
 
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::de::Visitor;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -18,6 +19,34 @@ pub struct JestPluginSettings {
     #[serde(default, deserialize_with = "jest_version_deserialize")]
     #[schemars(with = "Option<JestVersionSchema>")]
     pub version: Option<usize>,
+
+    /// The package that Jest globals are imported from. Defaults to `@jest/globals`.
+    ///
+    /// When set, only imports from this package are recognized as Jest globals,
+    /// and `jest/prefer-importing-jest-globals` imports from it.
+    ///
+    /// Example:
+    ///
+    /// ```json
+    /// {
+    ///   "settings": {
+    ///     "jest": {
+    ///       "globalPackage": "bun:test"
+    ///     }
+    ///   }
+    /// }
+    /// ```
+    #[serde(default)]
+    #[serde(rename = "globalPackage")]
+    #[schemars(with = "Option<String>")]
+    global_package: Option<CompactStr>,
+}
+
+impl JestPluginSettings {
+    /// The package that Jest globals are imported from.
+    pub fn global_package(&self) -> &str {
+        self.global_package.as_deref().unwrap_or("@jest/globals")
+    }
 }
 
 #[derive(JsonSchema)]

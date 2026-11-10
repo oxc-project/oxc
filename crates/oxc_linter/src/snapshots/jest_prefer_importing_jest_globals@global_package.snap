@@ -1,0 +1,23 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `bun:test`: describe, expect, test
+   ╭─[prefer_importing_jest_globals.tsx:2:15]
+ 1 │ describe("suite", () => {
+ 2 │               test("foo");
+   ·               ────
+ 3 │               expect(true).toBeDefined();
+   ╰────
+  help: Insert `const { describe, expect, test } = require('bun:test');
+        `
+
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `bun:test`: test
+   ╭─[prefer_importing_jest_globals.tsx:3:15]
+ 2 │             describe("suite", () => {
+ 3 │               test("foo");
+   ·               ────
+ 4 │             })
+   ╰────
+  help: Insert `import { test } from 'bun:test';
+        `

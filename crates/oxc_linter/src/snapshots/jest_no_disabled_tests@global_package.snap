@@ -1,0 +1,10 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jest(no-disabled-tests): Disabled test
+   ╭─[no_disabled_tests.tsx:1:39]
+ 1 │ import { test as t } from 'bun:test'; t.skip('foo', () => {});
+   ·                                       ──────
+   ╰────
+  help: Remove the appending `.skip`
