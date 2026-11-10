@@ -5,9 +5,7 @@ use oxc_str::Ident;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    Context, ParserConfig as Config, ParserImpl,
-    buffered_vec::BufferedVec,
-    diagnostics,
+    Context, ParserConfig as Config, ParserImpl, diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
@@ -310,11 +308,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     where
         F: Fn(&mut Self) -> TSType<'a>,
     {
-        let mut types = ArenaVec::from_value_in(ty, self);
-        while self.eat(kind) {
-            let ty = parse_constituent_type(self);
-            types.push(ty);
-        }
+        let mut first = Some(ty);
+        let types = self.collect_list(|p| {
+            first.take().or_else(|| p.eat(kind).then(|| parse_constituent_type(p)))
+        });
         let span = self.end_span(start);
         match kind {
             Kind::Pipe => TSType::new_ts_union_type(span, types, self),
@@ -726,10 +723,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_type_literal(&mut self, opening_span: Span) -> TSType<'a> {
-        let mut member_list = BufferedVec::new_in(self);
-        self.parse_normal_list_into(&mut member_list, Kind::RCurly, Self::parse_ts_type_signature);
+        let member_list = self.collect_list(|p| {
+            if p.at(Kind::RCurly) || p.has_fatal_error() {
+                None
+            } else {
+                Some(p.parse_ts_type_signature())
+            }
+        });
         self.expect_closing(Kind::RCurly, opening_span);
-        TSType::new_ts_type_literal(self.end_span(opening_span.start), member_list.into_vec(), self)
+        TSType::new_ts_type_literal(self.end_span(opening_span.start), member_list, self)
     }
 
     fn parse_type_query(&mut self) -> TSType<'a> {
