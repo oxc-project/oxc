@@ -1,8 +1,13 @@
 //! The token stream as the disambiguation questions read it.
 
+use std::slice;
+
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
-use crate::token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk};
+use crate::{
+    PAD,
+    token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk},
+};
 
 use crate::pipeline::{
     bytes::{is_digit, line_break_in},
@@ -68,7 +73,51 @@ impl Prev {
     }
 }
 
-impl TokensView<'_> {
+impl<'a> TokensView<'a> {
+    /// Create a [`TokensView`], as a view over the buffers [`Lexer::ensure`] sized.
+    ///
+    /// `brackets` is the lex's bracket cache, `lanes.disambiguate.brackets`.
+    /// `closers` is the lex's closer cache, `lanes.disambiguate.closers`.
+    ///
+    /// # SAFETY
+    ///
+    /// - `src` must be valid for reads of `n + PAD` bytes.
+    /// - `st` and `opch` must be valid for reads of `n / 64 + 1` words.
+    /// - `kind` must be valid for reads of `(n / 64 + 1) * 64` bytes.
+    /// - Nothing may write to them while the view is alive.
+    ///   A question reads, answers and returns before the stage writes again.
+    ///
+    /// [`Lexer::ensure`]: crate::pipeline::lexer::Lexer::ensure
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub unsafe fn new(
+        src: *const u8,
+        st: *const u64,
+        opch: *const u64,
+        kind: *const u8,
+        n: usize,
+        ts: bool,
+        kw_final: usize,
+        module: bool,
+        brackets: &'a Brackets,
+        closers: &'a Closers,
+        _cpu: impl Cpu,
+    ) -> Self {
+        let nb = n.div_ceil(64) + 1;
+        Self {
+            src: slice::from_raw_parts(src, n + PAD),
+            st: slice::from_raw_parts(st, nb),
+            opch: slice::from_raw_parts(opch, nb),
+            kind: slice::from_raw_parts(kind, nb * 64),
+            n,
+            ts,
+            module,
+            kw_final,
+            brackets,
+            closers,
+        }
+    }
+
     /// Base kind: keywords back to `tk!(Ident)`, escaped names to their plain kind.
     #[cpu_multiversion]
     #[inline(always)]

@@ -5,9 +5,8 @@ use crate::error::DiagCode;
 use crate::pipeline::{
     bitmap::bm_get,
     bytes::{is_id_start, is_word, line_break_in},
-    disambiguate::jsx_over_generic,
+    disambiguate::{TokensView, jsx_over_generic},
     lanes::Lanes,
-    token_view,
 };
 
 use super::names::jsx_skip_trivia_fast;
@@ -42,7 +41,7 @@ pub(super) unsafe fn jsx_over_type_params(
         AngleVerdict::TypeParams => false,
         AngleVerdict::Jsx => true,
         AngleVerdict::Ambiguous { gt, lp } => {
-            let tokens = token_view(
+            let tokens = TokensView::new(
                 src,
                 st,
                 opch,
