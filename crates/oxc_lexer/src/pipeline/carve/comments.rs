@@ -1,10 +1,7 @@
 use oxc_ast::{Comment, CommentContent, CommentKind};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
-use crate::{
-    cpu::{BASELINE, Cpu, cpu_multiversion, cpu_version},
-    error::DiagCode,
-    token::tk,
-};
+use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
@@ -564,13 +561,12 @@ fn preceded_by_line_terminator(src: &[u8], mut q: usize) -> bool {
 #[cfg(test)]
 mod tests {
     use oxc_ast::ast::CommentContent;
-
-    use crate::cpu::BASELINE;
+    use oxc_simd::{Cpu, test_cpus};
 
     use super::classify;
 
-    #[test]
-    fn coverage_ignore_file() {
+    #[test_cpus]
+    fn coverage_ignore_file(cpu: impl Cpu) {
         for (source, is_block) in [
             (b"v8 ignore file".as_slice(), true),
             (b"v8 ignore file".as_slice(), false),
@@ -578,10 +574,7 @@ mod tests {
             (b"istanbul ignore file".as_slice(), true),
             (b"istanbul ignore file -- generated".as_slice(), false),
         ] {
-            assert_eq!(
-                classify(source, is_block, false, BASELINE),
-                CommentContent::CoverageIgnoreFile
-            );
+            assert_eq!(classify(source, is_block, false, cpu), CommentContent::CoverageIgnoreFile);
         }
 
         for source in [
@@ -590,44 +583,44 @@ mod tests {
             b"c8 ignore file",
             b"istanbul ignore next",
         ] {
-            assert_eq!(classify(source, true, false, BASELINE), CommentContent::CoverageIgnore);
+            assert_eq!(classify(source, true, false, cpu), CommentContent::CoverageIgnore);
         }
     }
 
-    #[test]
-    fn property_key_annotation() {
+    #[test_cpus]
+    fn property_key_annotation(cpu: impl Cpu) {
         for source in [
             b"@__KEY__".as_slice(),
             b" #__KEY__ ",
             b"\t@__KEY__\n",
             "\u{a0}@__KEY__\u{a0}".as_bytes(),
         ] {
-            assert_eq!(classify(source, true, false, BASELINE), CommentContent::PropertyKey);
+            assert_eq!(classify(source, true, false, cpu), CommentContent::PropertyKey);
         }
 
         for source in
             [b"__KEY__".as_slice(), b"@ __KEY__", b"@__key__", b"@__KEY___", b"@__KEY__ extra"]
         {
-            assert_eq!(classify(source, true, false, BASELINE), CommentContent::None);
+            assert_eq!(classify(source, true, false, cpu), CommentContent::None);
         }
     }
 
-    #[test]
-    fn turbopack() {
+    #[test_cpus]
+    fn turbopack(cpu: impl Cpu) {
         for (source, is_block) in [
             (b" turbopackChunkName: \"x\" ".as_slice(), true),
             (b"turbopackOptional: true".as_slice(), true),
             (b"\tturbopackIgnore: true\n".as_slice(), true),
             (b" turbopackIgnore: true".as_slice(), false),
         ] {
-            assert_eq!(classify(source, is_block, false, BASELINE), CommentContent::Turbopack);
+            assert_eq!(classify(source, is_block, false, cpu), CommentContent::Turbopack);
         }
 
         for source in [b" turbopack ".as_slice(), b" turbopack", b" turbopackignore: true"] {
-            assert_eq!(classify(source, true, false, BASELINE), CommentContent::None);
+            assert_eq!(classify(source, true, false, cpu), CommentContent::None);
         }
 
         // Without a magic comment, @license or @preserve still makes it legal
-        assert_eq!(classify(b" turbopack @license ", true, true, BASELINE), CommentContent::Legal);
+        assert_eq!(classify(b" turbopack @license ", true, true, cpu), CommentContent::Legal);
     }
 }

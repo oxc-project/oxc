@@ -28,10 +28,9 @@
 //! that they produce no collisions. If a change to the operator list breaks that,
 //! the test's failure message gives a replacement.
 
-use crate::{
-    cpu::{BASELINE, Cpu, cpu_multiversion},
-    token::TokenKind,
-};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion};
+
+use crate::token::TokenKind;
 
 use crate::pipeline::bytes::is_digit;
 
@@ -376,12 +375,14 @@ const fn first_4_bytes(txt: &[u8]) -> [u8; 4] {
 
 #[cfg(test)]
 mod tests {
+    use oxc_simd::test_cpus;
+
     use crate::token::{OP_KIND_BASE, OP_KIND_MAX};
 
     use super::*;
 
-    #[test]
-    fn test_is_op_char() {
+    #[test_cpus]
+    fn test_is_op_char(cpu: impl Cpu) {
         const OPCHARS: &[u8] = b"=!<>+-*&|^%?.";
 
         let mut in_set = [false; 256];
@@ -390,10 +391,7 @@ mod tests {
         }
 
         for c in 0..256usize {
-            assert!(
-                is_op_char(c as u8, BASELINE) == in_set[c],
-                "OPCH_LO/HI wrong at byte {c:#04x}"
-            );
+            assert!(is_op_char(c as u8, cpu) == in_set[c], "OPCH_LO/HI wrong at byte {c:#04x}");
         }
     }
 
@@ -433,14 +431,14 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_optable_lookup_correct_kinds() {
+    #[test_cpus]
+    fn test_optable_lookup_correct_kinds(cpu: impl Cpu) {
         for op_def in &OPMAP_OPS {
             let bytes = op_def.bytes();
             let lookup_kind = if op_def.len() == 2 {
-                OP2_TABLE.lookup(bytes, BASELINE)
+                OP2_TABLE.lookup(bytes, cpu)
             } else {
-                OP3_TABLE.lookup(bytes, BASELINE)
+                OP3_TABLE.lookup(bytes, cpu)
             };
             assert!(
                 lookup_kind == Some(op_def.kind),
@@ -450,8 +448,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_optable_lookup_returns_zero_on_no_match() {
+    #[test_cpus]
+    fn test_optable_lookup_returns_zero_on_no_match(cpu: impl Cpu) {
         let cases = [
             // Not operators
             "..", "=/", "<<<", "&&&", "?..",
@@ -466,26 +464,29 @@ mod tests {
         for txt in cases {
             let bytes = first_4_bytes(txt.as_bytes());
             let kind = if txt.len() == 2 {
-                OP2_TABLE.lookup(bytes, BASELINE)
+                OP2_TABLE.lookup(bytes, cpu)
             } else {
-                OP3_TABLE.lookup(bytes, BASELINE)
+                OP3_TABLE.lookup(bytes, cpu)
             };
             assert!(kind.is_none(), "`lookup` should return `None` for {txt:?}");
         }
     }
 
-    #[test]
-    fn test_perfect_hash() {
-        check_table(&OP2_TABLE);
-        check_table(&OP3_TABLE);
+    #[test_cpus]
+    fn test_perfect_hash(cpu: impl Cpu) {
+        check_table(&OP2_TABLE, cpu);
+        check_table(&OP3_TABLE, cpu);
     }
 
-    fn check_table<const TABLE_SIZE: usize>(table: &OpTable<TABLE_SIZE>) {
+    /// Check `table` has no collisions with CPU feature set `cpu`.
+    /// If it has, panic with a multiplier which has none, if there is one.
+    #[cpu_multiversion]
+    fn check_table<const TABLE_SIZE: usize>(table: &OpTable<TABLE_SIZE>, cpu: impl Cpu) {
         let len = table.len;
         let operator_count = OPMAP_OPS.iter().filter(|op_def| op_def.len() == len).count();
 
         // If table has no collisions, all good
-        if is_collision_free(table.data, table.mul, operator_count) {
+        if is_collision_free(table.data, table.mul, operator_count, cpu) {
             return;
         }
 
@@ -493,7 +494,7 @@ mod tests {
         let mut mul = (1u32 << 24) | 1;
         while mul < (1u32 << 28) {
             let table_data = OpTableData::<TABLE_SIZE>::new(len, mul);
-            if is_collision_free(&table_data, mul, operator_count) {
+            if is_collision_free(&table_data, mul, operator_count, cpu) {
                 panic!(
                     "Current value for `OP{len}_MUL` produces collisions. Set it to 0x{:04X}_{:04X}.",
                     mul >> 16,
@@ -508,13 +509,17 @@ mod tests {
         );
     }
 
+    /// Whether `table_data`, built with multiplier `mul`, has `operator_count` filled slots,
+    /// and `\0\0` and `\0\0\0` hash to a filled slot, with CPU feature set `cpu`.
+    #[cpu_multiversion]
     fn is_collision_free<const TABLE_SIZE: usize>(
         table_data: &OpTableData<TABLE_SIZE>,
         mul: u32,
         operator_count: usize,
+        cpu: impl Cpu,
     ) -> bool {
         // Ensure `\0\0` and `\0\0\0` hash to a filled slot. `OpTable::lookup` requires this.
-        let slot_for_zero = table_data.slot(0, mul, BASELINE);
+        let slot_for_zero = table_data.slot(0, mul, cpu);
         if table_data.values[slot_for_zero] == 0 {
             return false;
         }

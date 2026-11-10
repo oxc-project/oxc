@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### ⚡ Performance
+
+- cc84126 mangler: Inline candidate checks during slot assignment (#28881) (Dunqing)
+
+### 📚 Documentation
+
+- 7acaa4e mangler: Correct naming strategy and pipeline order (#29073) (camc314)
+
 ## [0.154.0] - 2026-10-13
 
 ### 📚 Documentation

@@ -67,6 +67,7 @@
 use std::any::Any;
 
 mod ast_builder;
+mod buffered_vec;
 pub mod config;
 mod context;
 mod cursor;
@@ -1072,6 +1073,42 @@ mod test {
         let source_type = SourceType::default();
         for source in ["a b", "a;", "let x = 1"] {
             assert!(Parser::new(&allocator, source, source_type).parse_expression().is_err());
+        }
+    }
+
+    #[test]
+    fn asserted_exponentiation_preserve_parens() {
+        for preserve_parens in [true, false] {
+            for source in [
+                "(-value) as number ** 2",
+                "(-value as number) ** 2",
+                "(-value) as any satisfies number ** 2",
+                "(<number>value) satisfies number ** 2",
+                "async () => (await value) as number ** 2",
+            ] {
+                let allocator = Allocator::default();
+                let result = Parser::new(&allocator, source, SourceType::ts())
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse_expression();
+                assert!(result.is_ok(), "{source}, preserve_parens={preserve_parens}");
+            }
+
+            for (source, operand) in [
+                ("-value as any satisfies number ** 2", "-value"),
+                ("<number>value as number ** 2", "<number>value"),
+                ("async () => await value as number ** 2", "await value"),
+            ] {
+                let allocator = Allocator::default();
+                let diagnostics = Parser::new(&allocator, source, SourceType::ts())
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse_expression()
+                    .unwrap_err();
+                assert_eq!(diagnostics.len(), 1, "{source}, preserve_parens={preserve_parens}");
+                let label = &diagnostics[0].labels[0];
+                let start = label.offset() as usize;
+                let end = start + label.len() as usize;
+                assert_eq!(&source[start..end], operand);
+            }
         }
     }
 

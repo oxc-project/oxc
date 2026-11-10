@@ -1,0 +1,47 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div id="app"><!-- the client renders the app here, replacing this placeholder comment --></div>
+<div class="slots"><!-- first comment that is fairly long --><!-- second comment that is long too --></div>
+<div class="spaced"> <!-- c --> </div>
+<div class="whitespace-only"> </div>
+<div class="conditional"><!--[if IE]><p>an old browser, reading this message and taking it to heart</p><![endif]--></div>
+<template><!-- the content of a template element is a fragment, never a child of it --></template>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div id="app"
+  ><!-- the client renders the app here, replacing this placeholder comment --></div
+>
+<div class="slots"
+  ><!-- first comment that is fairly long --><!-- second comment that is long too --></div
+>
+<div class="spaced"><!-- c --></div>
+<div class="whitespace-only"></div>
+<div class="conditional"
+  ><!--[if IE
+    ]><p>an old browser, reading this message and taking it to heart</p><!
+  [endif]--></div
+>
+<template
+  ><!-- the content of a template element is a fragment, never a child of it --></template
+>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div id="app"><!-- the client renders the app here, replacing this placeholder comment --></div>
+<div class="slots"
+  ><!-- first comment that is fairly long --><!-- second comment that is long too --></div
+>
+<div class="spaced"><!-- c --></div>
+<div class="whitespace-only"></div>
+<div class="conditional"
+  ><!--[if IE]><p>an old browser, reading this message and taking it to heart</p><![endif]--></div
+>
+<template><!-- the content of a template element is a fragment, never a child of it --></template>
+
+===================== End =====================

@@ -1,12 +1,15 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_allocator::{ArenaBox, ArenaVec};
+use std::ops::ControlFlow;
+
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::ast::{BindingRestElement, RegExpFlags};
 use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl,
+    buffered_vec::collect_list,
     diagnostics::{self, ParserDiagnostic},
     error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
@@ -393,17 +396,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         open: Kind,
         close: Kind,
-        f: F,
+        mut f: F,
     ) -> ArenaVec<'a, T>
     where
         F: FnMut(&mut Self) -> T,
     {
-        let opening_span = self.cur_token().span();
-        self.expect(open);
-        let mut list = ArenaVec::new_in(self);
-        self.parse_normal_list_into(&mut list, close, f);
-        self.expect_closing(close, opening_span);
-        list
+        self.parse_normal_list_breakable(open, close, |p| Some(f(p)))
     }
 
     #[expect(clippy::inline_always)]
@@ -429,39 +427,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         open: Kind,
         close: Kind,
-        f: F,
+        mut parse_element: F,
     ) -> ArenaVec<'a, T>
     where
-        F: Fn(&mut Self) -> Option<T>,
+        F: FnMut(&mut Self) -> Option<T>,
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        let mut list = ArenaVec::new_in(self);
-        self.parse_normal_list_breakable_into(&mut list, close, f);
+        let allocator = self.allocator();
+        let list = collect_list(&allocator, || {
+            if self.at(close) || self.has_fatal_error() { None } else { parse_element(self) }
+        });
         self.expect_closing(close, opening_span);
         list
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn parse_normal_list_breakable_into<F, T>(
-        &mut self,
-        list: &mut ArenaVec<'a, T>,
-        close: Kind,
-        parse_element: F,
-    ) where
-        F: Fn(&mut Self) -> Option<T>,
-    {
-        loop {
-            if self.at(close) || self.has_fatal_error() {
-                break;
-            }
-            if let Some(element) = parse_element(self) {
-                list.push(element);
-            } else {
-                break;
-            }
-        }
     }
 
     pub(crate) fn parse_delimited_list<F, T>(
@@ -477,21 +455,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.at(close) || self.has_fatal_error() {
             return (ArenaVec::new_in(self), None);
         }
-        let first = parse_element(self);
-        if self.at(close) || self.has_fatal_error() {
-            let mut list = ArenaVec::with_capacity_in(1, self);
-            list.push(first);
-            return (list, None);
-        }
-        let mut list = ArenaVec::with_capacity_in(2, self);
-        list.push(first);
-        let trailing_separator = self.parse_delimited_list_rest(
-            &mut list,
-            close,
-            separator,
-            opening_span,
-            parse_element,
-        );
+        let allocator = self.allocator();
+        let mut finished = false;
+        let mut trailing_separator = None;
+        let list = collect_list(&allocator, || {
+            if finished {
+                return None;
+            }
+            let element = parse_element(self);
+            if let ControlFlow::Break(trailing) =
+                self.parse_delimited_list_separator(close, separator, opening_span)
+            {
+                trailing_separator = trailing;
+                finished = true;
+            }
+            Some(element)
+        });
         (list, trailing_separator)
     }
 
@@ -528,32 +507,47 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         F: FnMut(&mut Self) -> T,
     {
         loop {
-            let kind = self.cur_kind();
-            if kind == close || self.has_fatal_error() {
-                return None;
-            }
-            if kind != separator {
-                self.set_fatal_error(diagnostics::expect_closing_or_separator(
-                    close.to_str(),
-                    separator.to_str(),
-                    kind.to_str(),
-                    self.cur_token().span(),
-                    opening_span,
-                ));
-                return None;
-            }
-            self.advance(separator);
-            let kind = self.cur_kind();
-            if kind == close {
-                let trailing_separator = self.prev_token_end - 1;
-                return Some(trailing_separator);
-            }
-            if matches!(kind, Kind::Eof | Kind::Undetermined) {
-                return None;
+            if let ControlFlow::Break(trailing_separator) =
+                self.parse_delimited_list_separator(close, separator, opening_span)
+            {
+                return trailing_separator;
             }
             let element = parse_element(self);
             list.push(element);
         }
+    }
+
+    #[inline]
+    fn parse_delimited_list_separator(
+        &mut self,
+        close: Kind,
+        separator: Kind,
+        opening_span: Span,
+    ) -> ControlFlow<Option<u32>> {
+        let kind = self.cur_kind();
+        if kind == close || self.has_fatal_error() {
+            return ControlFlow::Break(None);
+        }
+        if kind != separator {
+            self.set_fatal_error(diagnostics::expect_closing_or_separator(
+                close.to_str(),
+                separator.to_str(),
+                kind.to_str(),
+                self.cur_token().span(),
+                opening_span,
+            ));
+            return ControlFlow::Break(None);
+        }
+        self.advance(separator);
+        let kind = self.cur_kind();
+        if kind == close {
+            let trailing_separator = self.prev_token_end - 1;
+            return ControlFlow::Break(Some(trailing_separator));
+        }
+        if matches!(kind, Kind::Eof | Kind::Undetermined) {
+            return ControlFlow::Break(None);
+        }
+        ControlFlow::Continue(())
     }
 
     pub(crate) fn parse_delimited_list_with_rest<E, A, R, D>(

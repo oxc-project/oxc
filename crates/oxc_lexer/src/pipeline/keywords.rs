@@ -3,12 +3,9 @@ use std::{cmp::min, hint, ptr};
 use constcat::concat_slices;
 
 use oxc_data_structures::{assert_unchecked, branch_hints::unlikely, str::const_str_eq};
+use oxc_simd::{Avx2, BASELINE, Cpu, DynCpu, Neon, Vec128, cpu_multiversion, cpu_version};
 
-use crate::{
-    cpu::{Avx2, BASELINE, Cpu, DynCpu, Neon, cpu_multiversion, cpu_version, to_dyn},
-    simd::Vec128,
-    token::{KW_KIND_BASE, TokenKind},
-};
+use crate::token::{KW_KIND_BASE, TokenKind};
 
 const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
 const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -444,7 +441,7 @@ pub(super) unsafe fn kw_match<const IS_TS: bool>(
     cpu: impl Cpu,
 ) -> TokenKind {
     let (slot, is_match) = if IS_TS {
-        match to_dyn(cpu) {
+        match DynCpu::from(cpu) {
             DynCpu::Avx2(cpu) => ts_match_avx2(ptr, len, cpu),
             DynCpu::Neon(cpu) => ts_match_neon(ptr, len, cpu),
             DynCpu::Generic(_) => ts_match_generic(ptr, len),
@@ -453,7 +450,7 @@ pub(super) unsafe fn kw_match<const IS_TS: bool>(
         let slot = keyword_hash_js(ptr::read_unaligned(ptr as *const u16), len, cpu);
         // SAFETY: The JS hash is at most 63 + 16, as the caller guarantees len is at most 16.
         unsafe { assert_unchecked!(slot < JS_SLOT_COUNT) };
-        let is_match = match to_dyn(cpu) {
+        let is_match = match DynCpu::from(cpu) {
             DynCpu::Avx2(cpu) => js_match_avx2(ptr, slot, cpu),
             DynCpu::Neon(cpu) => js_match_neon(ptr, slot, cpu),
             DynCpu::Generic(_) => js_match_generic(ptr, slot),
@@ -556,7 +553,7 @@ static LEN_MASK_WINDOW: Aligned32<[u8; 32]> = {
 
 #[cfg(test)]
 mod tests {
-    use crate::cpu::BASELINE;
+    use oxc_simd::test_cpus;
 
     use super::*;
 
@@ -570,27 +567,24 @@ mod tests {
         list.iter().filter(|kw| kw.kind != TokenKind::Ident)
     }
 
-    /// Run [`kw_match`] on `word`, followed by `after` (which is not part of the word).
-    fn kw_match_str(word: &[u8], after: &[u8], is_ts: bool) -> TokenKind {
+    /// Run [`kw_match`] on `word`, followed by `after` (which is not part of the word),
+    /// with CPU feature set `cpu`.
+    #[cpu_multiversion]
+    fn kw_match_str(word: &[u8], after: &[u8], is_ts: bool, cpu: impl Cpu) -> TokenKind {
         assert!((1..=16).contains(&word.len()));
 
         let mut buf = [0u8; 48];
         buf[..word.len()].copy_from_slice(word);
         buf[word.len()..word.len() + after.len()].copy_from_slice(after);
 
-        let cpu = DynCpu::detect();
         // SAFETY: `buf` is 48 bytes. `word.len()` is between 1-16 bytes.
-        let (baseline, detected) = unsafe {
+        unsafe {
             if is_ts {
-                let baseline = kw_match::<true>(buf.as_ptr(), word.len(), BASELINE);
-                (baseline, kw_match::<true>(buf.as_ptr(), word.len(), cpu))
+                kw_match::<true>(buf.as_ptr(), word.len(), cpu)
             } else {
-                let baseline = kw_match::<false>(buf.as_ptr(), word.len(), BASELINE);
-                (baseline, kw_match::<false>(buf.as_ptr(), word.len(), cpu))
+                kw_match::<false>(buf.as_ptr(), word.len(), cpu)
             }
-        };
-        assert_eq!(baseline, detected, "baseline and detected CPU disagree");
-        baseline
+        }
     }
 
     #[test]
@@ -656,20 +650,21 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_kw_match_keywords() {
+    #[test_cpus]
+    fn test_kw_match_keywords(cpu: impl Cpu) {
         for &KeywordDef { word, kind } in keywords(&KEYWORDS_TS) {
             let is_js_keyword = keywords(&KEYWORDS_JS).any(|kw| kw.word == word);
             let js_kind = if is_js_keyword { kind } else { TokenKind::Ident };
             for after in AFTERS {
-                assert_eq!(kw_match_str(word.as_bytes(), after, true), kind, "TS `{word}`");
-                assert_eq!(kw_match_str(word.as_bytes(), after, false), js_kind, "JS `{word}`");
+                let bytes = word.as_bytes();
+                assert_eq!(kw_match_str(bytes, after, true, cpu), kind, "TS `{word}`");
+                assert_eq!(kw_match_str(bytes, after, false, cpu), js_kind, "JS `{word}`");
             }
         }
     }
 
-    #[test]
-    fn test_kw_match_non_keywords() {
+    #[test_cpus]
+    fn test_kw_match_non_keywords(cpu: impl Cpu) {
         let words: &[&[u8]] = &[
             // spellchecker:off
             b"lets",
@@ -715,13 +710,13 @@ mod tests {
         for word in &words {
             for after in AFTERS {
                 assert_eq!(
-                    kw_match_str(word, after, true),
+                    kw_match_str(word, after, true, cpu),
                     TokenKind::Ident,
                     "TS `{}`",
                     String::from_utf8_lossy(word)
                 );
                 assert_eq!(
-                    kw_match_str(word, after, false),
+                    kw_match_str(word, after, false, cpu),
                     TokenKind::Ident,
                     "JS `{}`",
                     String::from_utf8_lossy(word)
@@ -732,8 +727,8 @@ mod tests {
 
     /// Check `kw_match` gives the same result as a linear search of the keyword lists,
     /// for all 1-3 letter lowercase words, and for every keyword with each byte replaced.
-    #[test]
-    fn test_kw_match_same_as_linear_search() {
+    #[test_cpus]
+    fn test_kw_match_same_as_linear_search(cpu: impl Cpu) {
         let linear_search = |word: &[u8], is_ts: bool| -> TokenKind {
             let list: &'static [KeywordDef] = if is_ts { &KEYWORDS_TS } else { &KEYWORDS_JS };
             keywords(list)
@@ -768,13 +763,13 @@ mod tests {
         for word in &words {
             for after in AFTERS {
                 assert_eq!(
-                    kw_match_str(word, after, true),
+                    kw_match_str(word, after, true, cpu),
                     linear_search(word, true),
                     "TS `{}`",
                     String::from_utf8_lossy(word)
                 );
                 assert_eq!(
-                    kw_match_str(word, after, false),
+                    kw_match_str(word, after, false, cpu),
                     linear_search(word, false),
                     "JS `{}`",
                     String::from_utf8_lossy(word)
@@ -783,22 +778,22 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_kw_match_at() {
+    #[test_cpus]
+    fn test_kw_match_at(cpu: impl Cpu) {
         let mut src = [0u8; 64];
         src[..36].copy_from_slice(b"instanceofabcdefghijklmnopqrstuvwxyz");
         // Length taken from the caller, not the source
-        assert_eq!(kw_match_at(false, &src, 0, 10, BASELINE), TokenKind::KwInstanceof);
-        assert_eq!(kw_match_at(false, &src, 0, 2, BASELINE), TokenKind::KwIn);
-        assert_eq!(kw_match_at(true, &src, 0, 9, BASELINE), TokenKind::Ident);
+        assert_eq!(kw_match_at(false, &src, 0, 10, cpu), TokenKind::KwInstanceof);
+        assert_eq!(kw_match_at(false, &src, 0, 2, cpu), TokenKind::KwIn);
+        assert_eq!(kw_match_at(true, &src, 0, 9, cpu), TokenKind::Ident);
         // Longer than 16 bytes, and 0 bytes
-        assert_eq!(kw_match_at(false, &src, 0, 36, BASELINE), TokenKind::Ident);
-        assert_eq!(kw_match_at(true, &src, 0, 36, BASELINE), TokenKind::Ident);
-        assert_eq!(kw_match_at(false, &src, 0, 0, BASELINE), TokenKind::Ident);
-        assert_eq!(kw_match_at(true, &src, 0, 0, BASELINE), TokenKind::Ident);
+        assert_eq!(kw_match_at(false, &src, 0, 36, cpu), TokenKind::Ident);
+        assert_eq!(kw_match_at(true, &src, 0, 36, cpu), TokenKind::Ident);
+        assert_eq!(kw_match_at(false, &src, 0, 0, cpu), TokenKind::Ident);
+        assert_eq!(kw_match_at(true, &src, 0, 0, cpu), TokenKind::Ident);
         // Mode
         src[..6].copy_from_slice(b"string");
-        assert_eq!(kw_match_at(true, &src, 0, 6, BASELINE), TokenKind::KwString);
-        assert_eq!(kw_match_at(false, &src, 0, 6, BASELINE), TokenKind::Ident);
+        assert_eq!(kw_match_at(true, &src, 0, 6, cpu), TokenKind::KwString);
+        assert_eq!(kw_match_at(false, &src, 0, 6, cpu), TokenKind::Ident);
     }
 }

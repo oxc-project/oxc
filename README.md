@@ -17,7 +17,6 @@
 
 [![MIT licensed][license-badge]][license-url]
 [![Build Status][ci-badge]][ci-url]
-[![Code Coverage][code-coverage-badge]][code-coverage-url]
 [![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/oxc-project/oxc)
 
 [![Discord chat][discord-badge]][discord-url]
@@ -99,8 +98,6 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [license-url]: https://github.com/oxc-project/oxc/blob/main/LICENSE
 [ci-badge]: https://github.com/oxc-project/oxc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
 [ci-url]: https://github.com/oxc-project/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
-[code-coverage-badge]: https://codecov.io/gh/oxc-project/oxc/graph/badge.svg?token=FVHEH0BQLJ
-[code-coverage-url]: https://codecov.io/gh/oxc-project/oxc
 [playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0
 [playground-url]: https://playground.oxc.rs/
 [website-badge]: https://img.shields.io/badge/Website-blue

@@ -8,7 +8,7 @@ This crate provides sophisticated AST traversal capabilities that allow visitors
 
 ## Key Features
 
-- **Parent context access**: Read parent nodes during traversal
+- **Parent context access**: Read ancestor fields outside the branch currently being visited
 - **Efficient navigation**: Navigate up and down the AST tree
 - **Memory safety**: Statically prevents aliasing violations
 - **Traverse context**: Rich context information during traversal
@@ -20,7 +20,7 @@ This crate provides sophisticated AST traversal capabilities that allow visitors
 
 The `TraverseCtx` provides rich information during traversal:
 
-- **Parent stack**: Complete chain of parent nodes
+- **Parent stack**: Ancestor views that exclude the branch containing the current node
 - **Scope context**: Current scope and scope hierarchy
 - **Symbol information**: Access to semantic analysis results
 - **AST utilities**: Helper methods for common operations
@@ -31,7 +31,7 @@ The traversal system prevents Rust aliasing violations through:
 
 - **Controlled access**: Only safe references are provided to visitors
 - **Stack-based parents**: Parent information without direct references
-- **Immutable ancestors**: Read-only access to ancestor nodes
+- **Immutable ancestor views**: Read-only access to non-overlapping ancestor fields
 - **Mutable current**: Safe mutable access to current node
 
 ### Code Generation

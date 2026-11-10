@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use rustc_hash::FxHashMap;
 
-use crate::cpu::{Cpu, cpu_multiversion};
+use oxc_simd::{Cpu, cpu_multiversion};
 
 #[derive(Clone, Copy)]
 pub struct Resolved {

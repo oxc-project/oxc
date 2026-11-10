@@ -14,10 +14,9 @@
 
 use std::cell::{Cell, RefCell};
 
-use crate::{
-    cpu::{Cpu, cpu_multiversion},
-    token::{OP_KIND_BASE, is_trivia_byte},
-};
+use oxc_simd::{Cpu, cpu_multiversion};
+
+use crate::token::{OP_KIND_BASE, is_trivia_byte};
 
 use crate::pipeline::{
     bytes::{is_word, unicode_ws_len_at},

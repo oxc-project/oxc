@@ -15,10 +15,9 @@
 //! [`type_list`]: super::type_list
 //! [`context`]: crate::pipeline::disambiguate::context
 
-use crate::{
-    cpu::{Cpu, cpu_multiversion},
-    token::{OP_KIND_BASE, matches_tk, tk},
-};
+use oxc_simd::{Cpu, cpu_multiversion};
+
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use crate::pipeline::disambiguate::{
     RULE_SCAN_CAP,

@@ -7,11 +7,11 @@
 
 use std::slice;
 
+use oxc_simd::{BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_version};
 use oxc_span::Span;
 
 use crate::{
     PAD,
-    cpu::{BASELINE, Cpu, DynCpu, cpu_multiversion, cpu_version},
     options::LexOptions,
     token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
 };
@@ -38,7 +38,7 @@ use classify::classify;
 use coalesce::{KWB, coalesce};
 use compress::{STAGE_CAP, compress, init_pair_luts, write_sentinels};
 use disambiguate::{Brackets, Closers, Tokens};
-use misc::{misc_post, misc_pre};
+use misc::{misc_post, misc_pre, retain_code_whitespace};
 
 pub struct Lexer {
     word: Vec<u64>,
@@ -62,10 +62,21 @@ pub struct Lexer {
 }
 
 impl Lexer {
+    /// Create a new [`Lexer`].
     #[cpu_version(Generic)]
     pub fn new() -> Lexer {
         let cpu = DynCpu::detect();
+        Self::new_with_cpu(cpu)
+    }
 
+    /// Create a new [`Lexer`] with specified CPU feature set.
+    ///
+    /// Should only be called directly by tests. Use [`new`] for production code.
+    ///
+    /// [`new`]: Self::new
+    #[cpu_version(Generic)]
+    #[inline]
+    pub(crate) fn new_with_cpu(cpu: DynCpu) -> Lexer {
         init_pair_luts(cpu);
 
         Lexer {
@@ -197,6 +208,9 @@ impl Lexer {
         carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes, cpu);
         coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes, cpu);
         misc_post(sp, n, st, word, misc, kind, nesc, cpu);
+        if !self.lanes.irregular_whitespaces.is_empty() {
+            retain_code_whitespace(&self.st, &self.kind, &mut self.lanes.irregular_whitespaces);
+        }
         let sig_len = compress(
             src,
             n,
@@ -250,6 +264,17 @@ impl Lexer {
         // SAFETY: `lex_raw` wrote `sig_len` kinds plus the sentinels, all of
         // them declared discriminants.
         unsafe { kinds_from_bytes(bytes) }
+    }
+
+    /// Set the CPU feature set this [`Lexer`] lexes with, and return the previous one.
+    ///
+    /// Only used in testing.
+    #[cfg(feature = "testing")]
+    #[cpu_version(Generic)]
+    pub(crate) fn replace_cpu(&mut self, cpu: DynCpu) -> DynCpu {
+        let previous = self.cpu;
+        self.cpu = cpu;
+        previous
     }
 }
 
