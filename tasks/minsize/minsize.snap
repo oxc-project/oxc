@@ -1,7 +1,7 @@
             | Oxc props   | ESBuild     | Oxc props   | ESBuild     |
 Original    | minified    | minified    | gzip        | gzip        | Iterations  | File
 ------------------------------------------------------------------------------------------
-72.14 kB    | 22,479 B    | 23.70 kB    | 8,193 B     | 8.54 kB     |           2 | react.development.js
+72.14 kB    | 22,479 B    | 23.70 kB    | 8,192 B     | 8.54 kB     |           2 | react.development.js
 
 173.90 kB   | 55,492 B    | 59.82 kB    | 18,776 B    | 19.33 kB    |           2 | moment.js
 
@@ -17,11 +17,11 @@ Original    | minified    | minified    | gzip        | gzip        | Iterations
 
 1.25 MB     | 634,147 B   | 646.76 kB   | 158,360 B   | 163.73 kB   |           2 | three.js
 
-2.14 MB     | 707,516 B   | 724.14 kB   | 160,010 B   | 181.07 kB   |           2 | victory.js
+2.14 MB     | 707,506 B   | 724.14 kB   | 160,017 B   | 181.07 kB   |           2 | victory.js
 
-3.20 MB     | 958,220 B   | 1.01 MB     | 316,893 B   | 331.56 kB   |           2 | echarts.js
+3.20 MB     | 958,220 B   | 1.01 MB     | 316,891 B   | 331.56 kB   |           2 | echarts.js
 
-6.69 MB     | 2,120,005 B | 2.31 MB     | 453,318 B   | 488.28 kB   |           4 | antd.js
+6.69 MB     | 2,119,896 B | 2.31 MB     | 453,309 B   | 488.28 kB   |           4 | antd.js
 
-10.95 MB    | 3,310,096 B | 3.49 MB     | 849,283 B   | 915.50 kB   |           4 | typescript.js
+10.95 MB    | 3,310,069 B | 3.49 MB     | 849,287 B   | 915.50 kB   |           4 | typescript.js
 

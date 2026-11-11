@@ -361,15 +361,31 @@ fn test_inline_into_call_arguments() {
         "function f(o, g) { var a = o.a; return g(...a) }",
         "function f(o, g) { return g(...o.a) }",
     );
-    test(
-        "function f(o) { var c = o.m, a = o.a; return c(a) }",
-        "function f(o) { var c = o.m; return c(o.a) }",
-    );
     // Earlier member reads could run getters that change `o.a`.
     test_same("function f(o, g) { var a = o.a; return g(o.b, a) }");
     test_same("function f(o, g) { var a = o.a; return g.h(a) }");
     // An optional call can skip evaluating its arguments.
     test_same("function f(o, g) { var a = o.a; return g?.(a) }");
+}
+
+#[test]
+fn test_inline_into_callee_keeps_this() {
+    test("function f(o) { var c = o.m; return c(1) }", "function f(o) { return (0, o.m)(1) }");
+    test("function f(o) { var c = o?.m; return c(1) }", "function f(o) { return (0, o?.m)(1) }");
+    test("function f(o) { var c = o.m; return c?.(1) }", "function f(o) { return (0, o.m)?.(1) }");
+    test("function f(o) { var c = o?.(); return c(1) }", "function f(o) { return (o?.())(1) }");
+    test(
+        "function f(o) { var c = o.m; return c.call(o, 1) }",
+        "function f(o) { return o.m.call(o, 1) }",
+    );
+    test(
+        "function f(o) { var c = o.m, a = o.a; return c(a) }",
+        "function f(o) { return (0, o.m)(o.a) }",
+    );
+    test(
+        "function f(o) { var a = o.a, c = o.m; return c(a) }",
+        "function f(o) { var a = o.a; return (0, o.m)(a) }",
+    );
 }
 
 #[test]
