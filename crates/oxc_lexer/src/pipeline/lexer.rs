@@ -41,6 +41,15 @@ impl Lexer {
     /// Create a new [`Lexer`].
     #[cpu_version(Generic)]
     pub fn new() -> Lexer {
+        // Tests and conformance must use `Lexer::new_with_cpu` so that they test both AVX2
+        // and generic implementations on x86_64, using the `DynCpu` provided by `#[test_cpus]`
+        if cfg!(any(test, feature = "testing")) {
+            panic!(
+                "Tests must use `Lexer::new_with_cpu` or `testing::lex_with_cpu`, not `Lexer::new`"
+            );
+        }
+
+        #[expect(clippy::disallowed_methods, reason = "tests call `new_with_cpu` instead")]
         let cpu = DynCpu::detect();
         Self::new_with_cpu(cpu)
     }

@@ -6,17 +6,29 @@
 
 use oxc_simd::DynCpu;
 
-use crate::{LexOptions, Lexer, Tokens};
+use crate::{LexOptions, Lexer, PAD, Tokens};
 
 /// Same as [`Lexer::lex`], but lexes with CPU feature set `cpu`,
 /// instead of the best one this CPU supports.
 ///
-/// # Panics
-/// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `len`.
+/// Unlike [`Lexer::lex`], `src` does not need padding after it.
+/// It is copied into a buffer with [`PAD`] zeroed bytes after it.
 ///
-/// [`PAD`]: crate::PAD
-pub fn lex_with_cpu(src: &[u8], len: u32, options: LexOptions, cpu: DynCpu) -> Tokens {
+/// `src` can be a `&str`, or bytes which may not be valid UTF-8
+/// (for testing [`LexOptions::validate_utf8`]).
+#[inline]
+pub fn lex_with_cpu(src: impl AsRef<[u8]>, options: LexOptions, cpu: DynCpu) -> Tokens {
+    lex_with_cpu_impl(src.as_ref(), options, cpu)
+}
+
+/// Implementation of [`lex_with_cpu`], taking a slice so it's not generic.
+fn lex_with_cpu_impl(src: &[u8], options: LexOptions, cpu: DynCpu) -> Tokens {
+    let len = src.len();
+    let mut buf = Vec::with_capacity(len + PAD);
+    buf.extend_from_slice(src);
+    buf.resize(len + PAD, 0);
+
     let mut tokens = Tokens::new();
-    Lexer::new_with_cpu(cpu).lex(src, len as usize, options, &mut tokens);
+    Lexer::new_with_cpu(cpu).lex(&buf, len, options, &mut tokens);
     tokens
 }

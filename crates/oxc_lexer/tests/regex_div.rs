@@ -1,15 +1,11 @@
 #![cfg(target_endian = "little")]
-#![expect(clippy::cast_possible_truncation, reason = "test helpers: lengths fit u32")]
 
-use oxc_lexer::{LexOptions, PAD, TokenKind, testing::lex_with_cpu};
+use oxc_lexer::{LexOptions, TokenKind, testing::lex_with_cpu};
 use oxc_simd::{DynCpu, test_cpus};
 
 fn kinds_of(code: &str, ts: bool, jsx: bool, cpu: DynCpu) -> Vec<TokenKind> {
-    let mut buf = code.as_bytes().to_vec();
-    let n = buf.len();
-    buf.resize(n + PAD, 0);
     let opts = LexOptions { jsx, ts, ..Default::default() };
-    let res = lex_with_cpu(&buf, n as u32, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     let count = res.token_count();
     res.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
 }
@@ -39,10 +35,7 @@ fn one_probe_per_family(cpu: DynCpu) {
 #[test_cpus]
 fn tokens_api_matches_and_stays_clean(cpu: DynCpu) {
     let code = "x = /a/g / /b/g; if (y) /re/.test(z); var yield = 1; var r = yield /2/g;";
-    let mut buf = code.as_bytes().to_vec();
-    let n = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0);
-    let res = lex_with_cpu(&buf, n, LexOptions::default(), cpu);
+    let res = lex_with_cpu(code, LexOptions::default(), cpu);
     assert!(res.diagnostics().is_empty(), "{:?}", res.diagnostics());
     let count = res.token_count();
     let kinds = res.kinds()[..count].to_vec();
