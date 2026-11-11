@@ -1588,7 +1588,7 @@ impl<'a> PeepholeOptimizations {
                 // Don't substitute something into a call target that could change "this"
                 if !((replacement.is_member_expression()
                     || matches!(replacement, Expression::ChainExpression(_)))
-                    && call_expr.callee.is_identifier_reference())
+                    && call_expr.callee.is_specific_id(search_for))
                 => {
                     if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                         &mut call_expr.callee,

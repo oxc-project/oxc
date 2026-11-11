@@ -331,6 +331,36 @@ fn test_inline_into_tag_keeps_this() {
 }
 
 #[test]
+fn test_inline_into_call_arguments() {
+    test("function f(o, g) { var a = o.a; return g(a) }", "function f(o, g) { return g(o.a) }");
+    test(
+        "function f(o, g) { var a = o.a; return g(a, o.c) }",
+        "function f(o, g) { return g(o.a, o.c) }",
+    );
+    test(
+        "function f(o, g) { var a = o.a, b = o.b; return g(a, b) }",
+        "function f(o, g) { return g(o.a, o.b) }",
+    );
+    test(
+        "function f(o, g) { let a = o.a; return g(a, o.c) }",
+        "function f(o, g) { return g(o.a, o.c) }",
+    );
+    test(
+        "function f(o, g) { var a = o.a; return g(...a) }",
+        "function f(o, g) { return g(...o.a) }",
+    );
+    test(
+        "function f(o) { var c = o.m, a = o.a; return c(a) }",
+        "function f(o) { var c = o.m; return c(o.a) }",
+    );
+    // Earlier member reads could run getters that change `o.a`.
+    test_same("function f(o, g) { var a = o.a; return g(o.b, a) }");
+    test_same("function f(o, g) { var a = o.a; return g.h(a) }");
+    // An optional call can skip evaluating its arguments.
+    test_same("function f(o, g) { var a = o.a; return g?.(a) }");
+}
+
+#[test]
 fn test_inline_read_before_await_tdz() {
     // https://github.com/rolldown/rolldown/issues/9959
     // Merging `let num = await foo(); bar(v, num)` into `bar(v, await foo())`
