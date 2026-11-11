@@ -149,6 +149,11 @@ each node's generated `fmt` prints its leading and trailing runs (`formatter/tri
   - the cursor-based ones (`comments_before` and friends, the unprinted view) are for PRINTING
   - the position-based ones (`all_comments_*`) are for LAYOUT DECISIONS
 - A decision evaluated more than once for a node (cached bodies, a re-entered `fmt`) must not depend on the cursor
+  - A range inside the node's own span (between its members, before its closer) reads the same in both views
+  - Whether the node prints a comment before it itself (no parent printed it first) is derived from the tree, not read off the cursor:
+    a parent starting after the comment prints it as its leading comment, kept parentheses print those outside them
+    (`leading_comments` in `print/union_type.rs`, a coupling to list below)
+  - Or the parent asks only when it prints nothing between its decision and the node's print, so both asks see the same cursor (a coupling to list below)
 - A parent hands a decision to a node by a position-keyed mark when the cursor cannot carry it (`mark_as_type_cast_node`, `mark_suppressed_after_operator`);
   marks are never cleared, node starts are unique
 
@@ -232,6 +237,28 @@ the `semi: false` ASI guard is decided from the guarded statement alone, never f
 Sound because no statement leaves its own trailing `;` (a suppressed one hands it back to the formatter),
 except a verbatim empty-statement body (`with (1) ;`, that `;` IS the body, i.e. content), where guard plus verbatim `;` re-parse as one extra inert `EmptyStatement`.
 
+### Comments and layout
+
+`uniform-rule (comment presence never changes layout)` (FORMATTER_POLICY, reason (3)) is about which layout rule applies, not about identical output:
+
+- A line comment rides a `line_suffix` and takes no width;
+  an inline block comment takes width like any token, so it can change what fits
+- Where Prettier lets a comment switch the rule and we follow it, the sites are a compat table (FORMATTER_POLICY "Comment placement invariants")
+
+Hugging (content glued to its opener, a union printed inline) is such a table.
+A same-line block comment right before the hugged content, pinned in `tests/fixtures/ts/comments/hug-block-comment.ts`:
+
+- stops the hug: a sole object or array argument, a last-argument arrow, a sole object-pattern parameter
+- keeps the hug: an object type after a `:` (parameter, return type), a sole type argument, the right side of `=`
+
+A union that hugs (`{ ... } | null`), pinned in `tests/fixtures/ts/union/hug-comments.ts`:
+
+- a member's comment stops the hug, and the union expands like any other (DIVERGENCES.md#union-annotation-flat-retry)
+- a single-line block comment right before the union, on its line, is the first member's
+  (`| /* c */ A`, DIVERGENCES.md#union-leading-pipe-comment-normalization),
+  with a dropped `(` in between too (DIVERGENCES.md#union-hug-comment-before-dropped-paren)
+- a line-ending or multiline comment before the union stays before it, and keeps the hug
+
 ### Couplings to keep in step
 
 Each item pairs a decision with the site that acts on it, on purpose.
@@ -256,6 +283,13 @@ The second line of each item is the drift symptom.
   - the right-hand side after `= // prettier-ignore` is reformatted
 - `union_prints_itself` (the layout arms of `AssignmentLike` and the cast site) ⇄ the union's generated `fmt` suppression check
   - a suppressed union prints from column 0, its leading comment hoisted onto the operator's line
+- the union's leading comments derived from the tree (`leading_comments` in `print/union_type.rs`) ⇄ what its parents print before it
+  (their generated `fmt`'s leading pass, kept parentheses, `AssignmentLike`'s operator line run);
+  `TSUnionType::write` asserts in debug builds that the first member's comment is the one left to print
+  - a new parent that prints the comments before a union another way (no leading pass of its own, a claim of its own) fires the assertion
+- `alias_union_hugs` and `alias_union_breaks_after_operator` asked by `AssignmentLike::layout` ⇄ asked again by `TSUnionType::write`:
+  the layout returns `BreakAfterOperator` before asking when it prints the operator's line run, the only comments it prints in between
+  - the `=` is laid out for one answer and the union prints the other (hug or expand, who indents)
 - `Comments::is_quiet` (the generated `fmt` fast path) ⇄ the bound of `get_trailing_comments` (the parent's end), `is_span_suppressed`, `classify_type_cast`
   - a comment near no other one is dropped or misplaced
 
@@ -276,6 +310,14 @@ Behavior our own rules want otherwise, mostly where it follows Prettier. Not acc
   Bounding them also moves a same-line comment right after the `(` own-line (`f<T>( // eslint-disable-line`), so it waits for the opener exception (FORMATTER_POLICY) to be revisited
 - A line comment right after the `<` of a hugged single type argument keeps the unbreakable hug: `f<// c` + break + `T>()` prints `T` at column 0.
   Breaking the hug also decides whether the comment goes own-line or stays on the `<` line, so it waits for the same revisit
+- A same-line block comment after a line-ending one stays before the union's `|` (`// a` + break + `/* b */ | A`),
+  where DIVERGENCES.md#union-leading-pipe-comment-normalization wants `| /* b */ A` (Prettier prints that):
+  the all-or-nothing split in `union_type.rs` keeps the whole list before the `|`
+- An own-line comment right after a kept union's `(` prints outside it (`keyof (` + break + `/* c */ X | null)` -> `keyof /* c */ (X | null)`),
+  crossing the `(` onto the previous line (`outer_leading_comments_len`); Prettier keeps it inside, behind the first `|`.
+  The hug decision follows that placement (`first_member_comment`), so a fix changes both
+- A type predicate's object type is not a fixpoint: `function f(x: unknown): x is { ... } {}` breaks the parameters on the first pass
+  and rejoins them on the second (Prettier too); a plain return type (`): { ... } {}`) is stable
 
 The flat JSX arrow body is a limitation, not a debt: the paren decision is a group fit, unknowable at comment time (DIVERGENCES.md#paren-comment-fixpoint).
 

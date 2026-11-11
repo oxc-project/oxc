@@ -457,10 +457,6 @@ fn diagnostic_name<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> Option<&
     match expr {
         Expression::CallExpression(call) => diagnostic_name(ctx, &call.callee),
         Expression::AwaitExpression(expr) => diagnostic_name(ctx, &expr.argument),
-        Expression::SequenceExpression(expr) => {
-            let span_with_parens = expr.span().expand(1);
-            pretty_snippet(ctx.source_range(span_with_parens))
-        }
         _ => pretty_snippet(ctx.source_range(expr.span())),
     }
 }
@@ -766,6 +762,9 @@ fn test() {
                 )]",
         "[...(foo ? x.map(x => x) : await Promise.all(foo))]",
         "[...((0, []))]",
+        "[...(\u{00A0}0, [])]",
+        "[...(0, []\u{00A0})]",
+        "[...(\u{2003}0, []\u{2003})]",
         "[...arr.reduce((a, b) => a.push(b), [])]",
         // wait on non-promise value `v` produces `v` itself
         "[...arr.reduce((a, b) => a.push(b), await [])]",
@@ -777,6 +776,7 @@ fn test() {
         // useless object clones with complex expressions
         r"const obj = { ...(foo ? { a: 1 } : { a: 2 }) }",
         r"const obj = { ...(foo ? Object.entries(obj).reduce(fn, {}) : { a: 2 }) }",
+        "const obj = { ...(\u{00A0}0, {}\u{00A0}) }",
     ];
 
     let fix = vec![
@@ -805,6 +805,10 @@ fn test() {
         (r"[...await Promise.all(foo)]", r"await Promise.all(foo)"),
         (r"[...Array.from(iterable)]", r"Array.from(iterable)"),
         ("[...((0, []))]", "((0, []))"),
+        ("[...(\u{00A0}0, [])]", "(\u{00A0}0, [])"),
+        ("[...(0, []\u{00A0})]", "(0, []\u{00A0})"),
+        ("[...(\u{2003}0, []\u{2003})]", "(\u{2003}0, []\u{2003})"),
+        ("const obj = { ...(\u{00A0}0, {}\u{00A0}) }", "const obj = (\u{00A0}0, {}\u{00A0})"),
         ("[...arr.reduce((a, b) => a.push(b), [])]", "arr.reduce((a, b) => a.push(b), [])"),
         // Issue: <https://github.com/oxc-project/oxc/issues/8115>
         ("setupServer(...[...importHandlers])", "setupServer(...importHandlers)"),

@@ -85,8 +85,6 @@ use std::{
     mem,
 };
 
-use oxc_data_structures::unreachable_unchecked;
-
 mod detect;
 
 #[cfg(any(test, feature = "testing"))]
@@ -262,9 +260,12 @@ impl DynCpu {
             }
             Dispatch::Static(dyn_cpu) => dyn_cpu,
             Dispatch::Never => {
+                if cfg!(debug_assertions) {
+                    unreachable!();
+                }
                 // SAFETY: `C::DISPATCH` is only `Never` when `C` is uninhabited,
                 // so `cpu` can't exist, and this can't be reached
-                unsafe { unreachable_unchecked!() };
+                unsafe { std::hint::unreachable_unchecked() }
             }
         }
     }
