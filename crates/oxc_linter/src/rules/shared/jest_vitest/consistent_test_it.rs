@@ -11,7 +11,7 @@ use crate::{
     context::LintContext,
     utils::{
         JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode,
-        collect_possible_jest_call_node, parse_jest_fn_call,
+        collect_possible_jest_call_node, parse_jest_fn_call, test_framework_imported_name,
     },
 };
 
@@ -133,6 +133,24 @@ impl ConsistentTestItConfig {
     }
 }
 
+/// Whether renaming the call to `name` (`test`, `xit`, `test.only`...) keeps it the test framework's
+/// function of that name (#29181):
+/// - nothing in scope is called that: the global function, which only a call to a global may rely on
+///   (renaming an imported `it` to `test` would leave it unbound when Vitest globals are off);
+/// - something is: only when it is the framework's own function by that name, imported from it, not
+///   a local, nor another import aliased to that name.
+fn rename_keeps_binding(
+    possible_jest_node: &PossibleJestNode,
+    name: &str,
+    ctx: &LintContext,
+) -> bool {
+    let root = name.split_once('.').map_or(name, |(root, _)| root);
+    match ctx.scoping().find_binding(possible_jest_node.node.scope_id(), root.into()) {
+        None => possible_jest_node.original.is_none(),
+        Some(symbol_id) => test_framework_imported_name(ctx, symbol_id) == Some(root),
+    }
+}
+
 impl ConsistentTestItConfig {
     fn run<'a>(
         self,
@@ -171,10 +189,14 @@ impl ConsistentTestItConfig {
                 &jest_fn_call.name,
                 fn_to_str,
             ) {
-                ctx.diagnostic_with_fix(
-                    consistent_method(fn_to_str, opposite_test_keyword, span),
-                    |fixer| fixer.replace(span, prefer_test_name),
-                );
+                let diagnostic = consistent_method(fn_to_str, opposite_test_keyword, span);
+                if rename_keeps_binding(possible_jest_node, &prefer_test_name, ctx) {
+                    ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                        fixer.replace(span, prefer_test_name)
+                    });
+                } else {
+                    ctx.diagnostic(diagnostic);
+                }
             }
         }
 
@@ -187,10 +209,15 @@ impl ConsistentTestItConfig {
                 &jest_fn_call.name,
                 describe_to_str,
             ) {
-                ctx.diagnostic_with_fix(
-                    consistent_method_within_describe(describe_to_str, opposite_test_keyword, span),
-                    |fixer| fixer.replace(span, prefer_test_name),
-                );
+                let diagnostic =
+                    consistent_method_within_describe(describe_to_str, opposite_test_keyword, span);
+                if rename_keeps_binding(possible_jest_node, &prefer_test_name, ctx) {
+                    ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                        fixer.replace(span, prefer_test_name)
+                    });
+                } else {
+                    ctx.diagnostic(diagnostic);
+                }
             }
         }
     }

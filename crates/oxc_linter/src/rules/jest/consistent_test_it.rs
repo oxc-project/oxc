@@ -23,7 +23,7 @@ declare_oxc_lint!(
     ConsistentTestIt,
     jest,
     style,
-    fix,
+    conditional_fix,
     config = ConsistentTestItConfig,
     version = "0.5.3",
     short_description = "Enforce consistent use of either the `it` or `test` keyword for defining tests.",
@@ -298,7 +298,20 @@ fn test() {
         ),
     ];
 
+    // An imported test function is renamed only when the new name is imported from a test
+    // framework too; otherwise the call would be left unbound, so it is reported without a fix
+    // (#29181).
     let fix = vec![
+        (
+            "
+                import { it, test } from '@jest/globals';
+                it(\"foo\")
+            ",
+            "
+                import { it, test } from '@jest/globals';
+                test(\"foo\")
+            ",
+        ),
         // consistent-test-it with fn=test
         ("it(\"foo\")", "test(\"foo\")"),
         (
@@ -308,7 +321,7 @@ fn test() {
             ",
             "
                 import { it } from '@jest/globals';
-                test(\"foo\")
+                it(\"foo\")
             ",
         ),
         (
@@ -318,7 +331,7 @@ fn test() {
             ",
             "
                 import { it as testThisThing } from '@jest/globals';
-                test(\"foo\")
+                testThisThing(\"foo\")
             ",
         ),
         ("xit(\"foo\")", "xtest(\"foo\")"),
@@ -408,7 +421,7 @@ fn test() {
             ",
             "
                 import { xtest as dontTestThis } from '@jest/globals';
-                describe(\"suite\", () => { xit(\"foo\") });
+                describe(\"suite\", () => { dontTestThis(\"foo\") });
             ",
         ),
         (
@@ -418,7 +431,7 @@ fn test() {
             ",
             "
                 import { describe as context, xtest as dontTestThis } from '@jest/globals';
-                context(\"suite\", () => { xit(\"foo\") });
+                context(\"suite\", () => { dontTestThis(\"foo\") });
             ",
         ),
         (
@@ -449,7 +462,7 @@ fn test() {
             ",
             "
                 import { xtest as dontTestThis } from '@jest/globals';
-                describe(\"suite\", () => { xit(\"foo\") });
+                describe(\"suite\", () => { dontTestThis(\"foo\") });
             ",
         ),
         (
@@ -459,7 +472,7 @@ fn test() {
             ",
             "
                 import { describe as context, xtest as dontTestThis } from '@jest/globals';
-                context(\"suite\", () => { xit(\"foo\") });
+                context(\"suite\", () => { dontTestThis(\"foo\") });
             ",
         ),
         (
