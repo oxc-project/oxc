@@ -1,6 +1,6 @@
 const _excluded = ["a"], _excluded2 = ["a"], _excluded3 = ["a"];
 for (var _ref of []) {
-	let { a } = _ref, b = babelHelpers.objectWithoutProperties(_ref, _excluded);
+	var { a } = _ref, b = babelHelpers.objectWithoutProperties(_ref, _excluded);
 }
 for (var _ref2 of []) {
 	var _ref3;
