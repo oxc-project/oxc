@@ -3,7 +3,6 @@ import { copyFile, mkdir, readdir, rm, stat, writeFile } from "node:fs/promises"
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { verifyCorpus } from "./corpus.mjs";
-import { packPackage } from "./pack.mjs";
 import {
   git,
   largeStackWorker,
@@ -139,7 +138,7 @@ for (const name of command === "all" ? packages : [command]) {
     const result = JSON.parse(
       await run(
         process.execPath,
-        [join(root, "tasks/pgo/train.mjs"), name, directory, instrumented, shard.file],
+        [join(root, "tasks/pgo/train.mjs"), name, instrumented, directory, shard.file],
         {
           env: { ...process.env, LLVM_PROFILE_FILE: join(raw, "%m-%p.profraw") },
           capture: true,
@@ -191,7 +190,7 @@ for (const name of command === "all" ? packages : [command]) {
       2,
     ) + "\n",
   );
-  await packPackage(name, target);
+  await run(process.execPath, [join(root, "tasks/pgo/train.mjs"), name, optimized]);
   await copyFile(optimized, destination);
-  console.log(`Validated PGO package and binding: ${destination}`);
+  console.log(`Validated PGO binding: ${destination}`);
 }

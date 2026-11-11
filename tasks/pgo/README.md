@@ -61,75 +61,16 @@ Preparation and training use a worker with a 512 MiB stack reservation so deeply
 nested generated inputs remain part of the corpus. Stack pages are committed on
 demand. Async NAPI calls use small inputs because libuv uses fixed-size stacks.
 
-The optimized binding is packed with pnpm, installed offline into an isolated
-consumer, and checked through its native binding and public API before replacing
-the package's normal artifact. Parser packages also verify their bundled types.
-Existing project CI owns the full binding suites; release builds do not rerun them.
-Staged bindings, raw profiles, merged data, provenance, and installable tarballs are
-stored in `target/pgo/<package>/<target>/`. There are no benchmarks or performance
-gates.
+The optimized binding is loaded and checked through the public API before replacing
+the package's normal release artifact. Existing project CI owns the full binding
+suites; release builds do not rerun them. Staged bindings, raw profiles, merged data,
+and provenance are stored in `target/pgo/<package>/<target>/`.
 
-## Download installable packages from CI
-
-Releases use the original corpus. Optional expanded preparation preserves every
-original shard and adds pnpm-lockfile-pinned npm package
-files (including generated SDK/protobuf code), Vue scripts and client/server render
-modules, Svelte RealWorld client/server modules, and development/production,
-formatted/minified bundles built from real React and Preact application entries.
-The framework and bundler outputs are training inputs; their application code is
-never executed. Duplicate added inputs are removed by source and parser options.
-The manifest records package versions, source revisions, compiler lockfile hash,
-generated source hashes, and category counts. Framework compilation failures fail
-preparation. Input, output, and preparation directories must not overlap. Existing
-unrelated output directories are preserved.
-
-Prepare these additions locally after preparing the original corpus:
-
-```sh
-pnpm node tasks/pgo/expand.mjs --original target/pgo/corpus --output target/pgo/corpus-expanded
-just pgo parser --corpus target/pgo/corpus-expanded
-```
-
-Added inputs primarily use the default parser AST settings. A subset also trains
-`preserveParens: false` and alternate `astType` settings through the JSON API. These
-are explicit option variants, not captured production request frequencies. Existing
-source/conformance collection and release workflows keep their original behavior.
+## Release dry runs
 
 Run **Release NAPI** in GitHub Actions, select the branch/tag, and choose a
 package. Manual runs build the complete release matrix, assemble the normal
 platform packages, and pack them with pnpm without publishing or requiring a
-version bump. Automatic releases retain their version check and trusted publishing.
-
-Download the `napi-pgo-<package>-<target>` artifact for your machine and extract it.
-It contains a `.tgz` npm package and the build's `profile.json`. Install the tarball:
-
-```sh
-pnpm add ./oxc-parser-<version>-aarch64-apple-darwin.tgz
-```
-
-The package keeps its public name (`oxc-parser`, `oxc-transform`, or `oxc-minify`)
-and Node API. Its version is `<base>-pgo.<run_id>.<run_attempt>.g<sha8>`. It includes
-the JS wrappers, declarations, and validated native binary; parser also bundles
-the matching `@oxc-project/types`. These packages target native Node only, with
-matching OS/CPU/libc metadata. Browser routing and registry binding dependencies
-are omitted. No install-time build is required.
-
-For a transitive dependency, point your project's override at the downloaded
-tarball so nested consumers use the candidate too. With pnpm, add this to the
-project's `pnpm-workspace.yaml`, then run `pnpm install`:
-
-```yaml
-overrides:
-  oxc-parser: file:./downloads/oxc-parser-<version>-aarch64-apple-darwin.tgz
-```
-
-To package an existing local PGO build without regenerating its profile:
-
-```sh
-pnpm node tasks/pgo/pack.mjs --package parser --target aarch64-apple-darwin
-```
-
-The tarball is written under `target/pgo/<package>/<target>/npm/`. Packaging uses
-temporary manifests, checks the binary against its PGO provenance, installs the
-archive offline into a clean consumer project, and exercises its public API before
-retaining the archive. Tracked npm manifests remain unchanged.
+version bump. Download the normal package tarballs from `release-<package>` and
+PGO provenance from `pgo-<package>-<target>`. Automatic releases retain their version
+check and trusted publishing.

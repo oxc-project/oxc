@@ -27,7 +27,6 @@ export async function trainRecord(name, binding, record, index) {
           ...options,
           range: index % 2 === 0,
           showSemanticErrors: index % 16 === 0,
-          ...record.parserOptions,
         }),
       )[3] > 0;
     if (binding.rawTransferSupported()) {
@@ -80,7 +79,7 @@ export async function trainRecord(name, binding, record, index) {
 }
 
 async function trainShard() {
-  const [name, directory, library, shardFile] = process.argv.slice(2);
+  const [name, library, directory, shardFile] = process.argv.slice(2);
   // Loading the precise .node first prevents a loader fallback from disguising a
   // broken instrumented library as a successful WASM training run.
   createRequire(import.meta.url)(library);
@@ -88,6 +87,22 @@ async function trainShard() {
   process.env.NAPI_RS_FORCE_WASI = "false";
   const entry = name === "parser" ? "napi/parser/src-js/index.js" : `napi/${name}/index.js`;
   const binding = await import(pathToFileURL(join(root, entry)));
+  // Without corpus arguments, smoke-test the optimized binding through its public API.
+  if (directory === undefined) {
+    const result = await trainRecord(
+      name,
+      binding,
+      {
+        filename: "smoke.ts",
+        code: "export const answer: number = 42;",
+        options: { lang: "ts", sourceType: "module" },
+        minify: "export const answer = 42;",
+      },
+      0,
+    );
+    if (result !== "trained") throw new Error(`${name}: optimized binding smoke test failed`);
+    return;
+  }
   const { readFile } = await import("node:fs/promises");
   const manifest = JSON.parse(await readFile(join(directory, "manifest.json"), "utf8"));
   const shard = manifest.shards.find((item) => item.file === shardFile);

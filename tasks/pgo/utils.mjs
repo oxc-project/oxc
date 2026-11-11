@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { basename, dirname, resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Worker } from "node:worker_threads";
 
@@ -21,18 +21,6 @@ export const targets = [
   "aarch64-apple-darwin",
   "x86_64-pc-windows-msvc",
 ];
-
-export function pnpm(args, options) {
-  // `pnpm node` supplies the actual executable or JS entry point, including on
-  // Windows where spawning the pnpm.cmd shim without a shell is unsupported.
-  const executable = process.env.npm_execpath;
-  if (!executable || !basename(executable).startsWith("pnpm")) {
-    throw new Error("Run PGO tooling with pnpm node (or just pgo)");
-  }
-  return /\.[cm]?js$/.test(executable)
-    ? run(process.execPath, [executable, ...args], options)
-    : run(executable, args, options);
-}
 
 export function largeStackWorker(url, options = {}) {
   // The full corpus contains generated inputs with hundreds of thousands of
