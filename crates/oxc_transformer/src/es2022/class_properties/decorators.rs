@@ -460,6 +460,17 @@ impl<'a> ClassProperties<'a> {
         inferred_name
     }
 
+    pub(super) fn get_or_init_original_class_for_super(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<&BoundIdentifier<'a>> {
+        if !self.decorator_state.has_class_decorators() {
+            return None;
+        }
+        let state = self.current_class_mut().decorators.as_mut().unwrap();
+        Some(state.get_or_init_original_class_for_super(ctx))
+    }
+
     pub(super) fn push_decorate_element(
         &mut self,
         kind: DecoratorElementKind,

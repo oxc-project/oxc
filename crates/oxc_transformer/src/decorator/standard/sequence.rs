@@ -223,6 +223,10 @@ impl<'a> StandardDecoratorState<'a> {
         let static_method_extras = state.static_method_extras;
 
         let mut exprs = Vec::new();
+        if let Some(original_class) = &state.original_class {
+            let class = bindings.target.create_read_expression(ctx);
+            exprs.push(create_assignment(original_class, class, SPAN, ctx));
+        }
 
         // `_init = __decoratorStart(base)`
         let base = match &self.exit.super_class.take() {
@@ -236,13 +240,17 @@ impl<'a> StandardDecoratorState<'a> {
         );
         exprs.push(create_assignment(&init, start, SPAN, ctx));
 
+        let static_brand = bindings.static_brand.cloned();
+        if let Some(brand) = &static_brand {
+            let weakset = create_new_weakset(ctx);
+            exprs.push(create_assignment(brand, weakset, SPAN, ctx));
+        }
+
         for bucket in &mut self.exit.elements {
             exprs.append(bucket);
         }
 
-        if let Some(brand) = bindings.static_brand {
-            let weakset = create_new_weakset(ctx);
-            exprs.insert(1, create_assignment(brand, weakset, SPAN, ctx));
+        if let Some(brand) = static_brand {
             let target = bindings.target.create_read_expression(ctx);
             let callee = crate::utils::ast_builder::create_property_access(
                 SPAN,
@@ -324,6 +332,22 @@ fn number<'a>(value: u32, ctx: &TraverseCtx<'a>) -> Argument<'a> {
 }
 
 impl<'a> ClassDecoratorState<'a> {
+    /// Preserve the original constructor if a class decorator can replace it.
+    pub(crate) fn get_or_init_original_class_for_super(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> &BoundIdentifier<'a> {
+        self.original_class.get_or_insert_with(|| {
+            let binding = ctx.generate_uid(
+                "originalClass",
+                ctx.current_block_scope_id(),
+                SymbolFlags::BlockScopedVariable,
+            );
+            ctx.state.var_declarations.insert_let(&binding, None, &ctx.ast);
+            binding
+        })
+    }
+
     /// `__runInitializers(_init, ((5 + 2 * index) << 1) | 1, this)`
     pub(crate) fn decorated_field_extra_initializers(
         &self,

@@ -256,7 +256,13 @@ impl<'a> StandardDecoratorState<'a> {
             SymbolFlags::BlockScopedVariable,
         );
         ctx.state.var_declarations.insert_let(&init, None, &ctx.ast);
-        ClassDecoratorState { init, instance_method_extras, static_method_extras, tables }
+        ClassDecoratorState {
+            init,
+            instance_method_extras,
+            static_method_extras,
+            original_class: None,
+            tables,
+        }
     }
 
     /// Exit phase: evaluate class decorators into `_Class_decorators = [...]` before class,
