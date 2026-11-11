@@ -432,6 +432,7 @@ impl Tester {
     }
 
     /// Add cases that should fix problems found in the source code.
+    /// Calling this method again appends to the existing cases.
     ///
     /// These cases will fail if no fixes are produced or if the fixed source
     /// code does not match the expected result.
@@ -464,8 +465,7 @@ impl Tester {
             "You must provide at least one fixer test case to `expect_fix`"
         );
 
-        self.expect_fix =
-            Some(expect_fix.into_iter().map(std::convert::Into::into).collect::<Vec<_>>());
+        self.expect_fix.get_or_insert_with(Vec::new).extend(expect_fix.into_iter().map(Into::into));
         self
     }
 
@@ -895,4 +895,21 @@ fn format_fix_failures(failures: &[FixFailure]) -> String {
         let _ = writeln!(output);
     }
     output
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Tester;
+
+    #[test]
+    fn expect_fix_appends_cases() {
+        let tester = Tester::new::<&str>("prefer-expect-assertions", "jest", vec![], vec![])
+            .expect_fix(vec![("first input", "first output", None)])
+            .expect_fix(vec![("second input", "second output", None)]);
+
+        let cases = tester.expect_fix.unwrap();
+        assert_eq!(cases.len(), 2);
+        assert_eq!(cases[0].source, "first input");
+        assert_eq!(cases[1].source, "second input");
+    }
 }
