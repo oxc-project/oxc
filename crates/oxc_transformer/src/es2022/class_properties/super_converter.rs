@@ -611,9 +611,13 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         &mut self,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Argument<'a>, Argument<'a>) {
+        let original_class = self
+            .class_properties
+            .get_or_init_original_class_for_super(ctx)
+            .map(|binding| binding.create_read_expression(ctx));
         let temp_binding =
             self.class_properties.current_class_mut().bindings.get_or_init_static_binding(ctx);
-        let mut class = temp_binding.create_read_expression(ctx);
+        let mut class = original_class.unwrap_or_else(|| temp_binding.create_read_expression(ctx));
         let receiver = match self.mode {
             ClassPropertiesSuperConverterMode::Static => temp_binding.create_read_expression(ctx),
             ClassPropertiesSuperConverterMode::PrivateMethod => {

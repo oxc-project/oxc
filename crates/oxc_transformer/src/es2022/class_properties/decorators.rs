@@ -61,6 +61,8 @@ pub(super) struct ClassDecoratorState<'a> {
     pub instance_method_extras: bool,
     /// Class contains a decorated static method / getter / setter.
     pub static_method_extras: bool,
+    /// Original constructor used by `super` in moved class elements.
+    original_class: Option<BoundIdentifier<'a>>,
 }
 
 /// Bucket indexes for `__decorateElement` calls, in the order they are evaluated.
@@ -454,7 +456,30 @@ impl<'a> ClassProperties<'a> {
             oxc_syntax::symbol::SymbolFlags::BlockScopedVariable,
         );
         ctx.state.var_declarations.insert_let(&init, None, &ctx.ast);
-        ClassDecoratorState { init, instance_method_extras, static_method_extras }
+        ClassDecoratorState {
+            init,
+            instance_method_extras,
+            static_method_extras,
+            original_class: None,
+        }
+    }
+
+    /// Preserve the original constructor if a class decorator can replace it.
+    pub(super) fn get_or_init_original_class_for_super(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<&BoundIdentifier<'a>> {
+        self.decorator_class_decorators.as_ref()?;
+        let state = self.current_class_mut().decorators.as_mut().unwrap();
+        Some(state.original_class.get_or_insert_with(|| {
+            let binding = ctx.generate_uid(
+                "originalClass",
+                ctx.current_block_scope_id(),
+                oxc_syntax::symbol::SymbolFlags::BlockScopedVariable,
+            );
+            ctx.state.var_declarations.insert_let(&binding, None, &ctx.ast);
+            binding
+        }))
     }
 
     /// Capture a decorated instance field's key before it is moved into the constructor.
@@ -892,6 +917,10 @@ impl<'a> ClassProperties<'a> {
         let static_method_extras = state.static_method_extras;
 
         let mut exprs = Vec::new();
+        if let Some(original_class) = &state.original_class {
+            let class = self.decorated_class_ref(ctx);
+            exprs.push(create_assignment(original_class, class, SPAN, ctx));
+        }
 
         // `_init = __decoratorStart(base)`
         let base = match &self.decorator_super_class.take() {
@@ -905,13 +934,17 @@ impl<'a> ClassProperties<'a> {
         );
         exprs.push(create_assignment(&init, start, SPAN, ctx));
 
+        let static_brand = self.current_class().bindings.decorator_static_brand.clone();
+        if let Some(brand) = &static_brand {
+            let weakset = super::class::create_new_weakset(ctx);
+            exprs.push(create_assignment(brand, weakset, SPAN, ctx));
+        }
+
         for bucket in &mut self.decorator_elements {
             exprs.append(bucket);
         }
 
-        if let Some(brand) = self.current_class().bindings.decorator_static_brand.clone() {
-            let weakset = super::class::create_new_weakset(ctx);
-            exprs.insert(1, create_assignment(&brand, weakset, SPAN, ctx));
+        if let Some(brand) = static_brand {
             let target = self.decorated_class_ref(ctx);
             let callee = crate::utils::ast_builder::create_property_access(
                 SPAN,
