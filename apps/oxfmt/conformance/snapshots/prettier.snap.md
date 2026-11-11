@@ -689,6 +689,10 @@
 - externals/prettier/html/tags/tags2.html (💥💥✨✨, 97.17%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#dialog-out-of-flow
 
+## angular-html
+
+104/104 (100.00%)
+
 ## vue
 
 169/184 (91.85%)

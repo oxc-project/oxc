@@ -11,7 +11,7 @@ use cow_utils::CowUtils;
 
 use oxc_htmlish_parser::ast::{Namespace, NodeId, NodeKind, Root};
 
-/// `fold_names`: a `.html` file, where known names print lowercase (DIVERGENCES.md#tag-name-case).
+/// `fold_names`: a `.html` file or a Vue file read as HTML, where known names print lowercase (DIVERGENCES.md#tag-name-case).
 pub fn fingerprint(source: &str, root: &Root<'_>, fold_names: bool) -> String {
     let mut out = String::new();
     walk(source, root, NodeId::DOCUMENT, Text::Words, fold_names, &mut out);

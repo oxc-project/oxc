@@ -59,11 +59,10 @@ impl FixtureFormatter for HtmlishHarness {
         let options = HtmlishFormatOptions { variant: variant_of(path), ..options.clone() };
         let allocator = Allocator::default();
         let parsed = parse_for_format(&allocator, source, &options).expect("source should parse");
-        fingerprint::fingerprint(
-            parsed.source,
-            parsed.root,
-            options.variant == HtmlishVariant::Html,
-        )
+        // As `DialectRules::lowercase_known_names`, for a file of its own
+        let fold_names = options.variant == HtmlishVariant::Html
+            || (options.variant == HtmlishVariant::Vue && !parsed.root.sfc);
+        fingerprint::fingerprint(parsed.source, parsed.root, fold_names)
     }
 }
 

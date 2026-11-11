@@ -528,6 +528,26 @@ The shapes, each pinned by its fixture:
 - Why: style-hold (oxc#25841)
 - Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts`
 - Conformance:
+  - `externals/ng-zorro-antd/components/button/button.component.ts`
+  - `externals/ng-zorro-antd/components/cdk/overflow/overflow-container.component.ts`
+  - `externals/ng-zorro-antd/components/date-picker/date-picker.component.ts`
+  - `externals/ng-zorro-antd/components/date-picker/date-range-popup.component.ts`
+  - `externals/ng-zorro-antd/components/date-picker/inner-popup.component.ts`
+  - `externals/ng-zorro-antd/components/drawer/drawer.component.ts`
+  - `externals/ng-zorro-antd/components/dropdown/dropdown-menu.component.ts`
+  - `externals/ng-zorro-antd/components/empty/embed-empty.component.ts`
+  - `externals/ng-zorro-antd/components/empty/empty.component.ts`
+  - `externals/ng-zorro-antd/components/form/form-control.component.ts`
+  - `externals/ng-zorro-antd/components/form/form-item.component.ts`
+  - `externals/ng-zorro-antd/components/modal/modal.component.ts`
+  - `externals/ng-zorro-antd/components/resizable/resize-handle.component.ts`
+  - `externals/ng-zorro-antd/components/slider/handle.component.ts`
+  - `externals/ng-zorro-antd/components/slider/slider.component.ts`
+  - `externals/ng-zorro-antd/components/steps/steps.component.ts`
+  - `externals/ng-zorro-antd/components/tabs/tab-body.component.ts`
+  - `externals/ng-zorro-antd/components/time-picker/time-picker-panel.component.ts`
+  - `externals/ng-zorro-antd/components/tree-select/tree-select.component.ts`
+  - `externals/ng-zorro-antd/components/upload/upload.component.ts`
   - `externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue`
   - `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`
   - `externals/webawesome/badge/badge.ts`
@@ -582,6 +602,8 @@ ours deliberately matches Prettier 3.8's output for this construct.
 
 - Why: uniform-rule (same construct, same output: arrow with a non-conditional body)
 - Pin: `tests/fixtures/js/arrow-function/exact-fill-signature.js`
+- Conformance:
+  - `externals/ng-zorro-antd/components/auto-complete/autocomplete.component.ts`
 
 ```js
 /* input (printWidth 80) */
