@@ -22,9 +22,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         self.advance(Kind::LCurly);
         let (object_expression_properties, comma_start) = self.context_add(Context::In, |p| {
-            p.parse_delimited_list(Kind::RCurly, Kind::Comma, opening_span, |p| {
-                p.parse_after_delimiter(Self::parse_object_expression_property)
-            })
+            p.parse_delimited_list(
+                Kind::RCurly,
+                Kind::Comma,
+                opening_span,
+                Self::parse_object_expression_property,
+            )
         });
         if let Some(comma_start) = comma_start
             && matches!(
