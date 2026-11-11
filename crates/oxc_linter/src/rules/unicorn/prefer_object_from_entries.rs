@@ -102,132 +102,56 @@ impl Rule for PreferObjectFromEntries {
             )
         {
             ctx.diagnostic(prefer_object_from_entries_diagnostic(call_expr.callee.span()));
-            return;
-        }
-
-        if !is_method_call(call_expr, None, Some(&["reduce"]), Some(2), Some(2)) {
-            return;
-        }
-
-        if call_expr.optional
-            || call_expr.callee.get_member_expr().is_none_or(MemberExpression::optional)
+        } else if is_method_call(call_expr, None, Some(&["reduce"]), Some(2), Some(2))
+            && !call_expr.optional
+            && let Some(member_expr) = call_expr.callee.get_member_expr()
+            && !member_expr.optional()
+            && let [reducer, accumulator] = call_expr.arguments.as_slice()
+            && let Some(accumulator) =
+                accumulator.as_expression().map(Expression::get_inner_expression)
+            && is_empty_object(accumulator)
+            && let Some(Expression::ArrowFunctionExpression(reducer)) =
+                reducer.as_expression().map(Expression::get_inner_expression)
+            && reducer.is_expression()
+            && !reducer.r#async
+            && let Some(stmt) = reducer.get_expression()
+            && let Some(accumulator_ident) =
+                reducer.params.items.first().and_then(|arg| arg.pattern.get_binding_identifier())
+            && ctx.symbol_references(accumulator_ident.symbol_id()).count() == 1
         {
-            return;
-        }
+            let stmt = stmt.get_inner_expression();
 
-        let Some(accumulator) = call_expr
-            .arguments
-            .get(1)
-            .expect("call expr must have exactly 2 arguments")
-            .as_expression()
-            .map(Expression::get_inner_expression)
-        else {
-            return;
-        };
-
-        if !is_empty_object(accumulator) {
-            return;
-        }
-
-        let Some(Expression::ArrowFunctionExpression(reducer)) = call_expr
-            .arguments
-            .first()
-            .expect("call expr must have exactly 2 arguments")
-            .as_expression()
-            .map(Expression::get_inner_expression)
-        else {
-            return;
-        };
-
-        if !reducer.is_expression() || reducer.r#async {
-            return;
-        }
-
-        let Some(stmt) = reducer.get_expression() else { return };
-        let stmt = stmt.get_inner_expression();
-
-        let Some(accumulator_ident) =
-            reducer.params.items.first().and_then(|arg| arg.pattern.get_binding_identifier())
-        else {
-            return;
-        };
-
-        if ctx.symbol_references(accumulator_ident.symbol_id()).count() != 1 {
-            return;
-        }
-
-        // `() => Object.assign(object, {key})`
-        if let Expression::CallExpression(call_expr) = &stmt {
-            if !is_method_call(call_expr, Some(&["Object"]), Some(&["assign"]), Some(2), Some(2)) {
-                return;
-            }
-
-            let Some(Expression::Identifier(target)) = call_expr
-                .arguments
-                .first()
-                .expect("call expression should have 2 arguments")
-                .as_expression()
-                .map(Expression::get_inner_expression)
-            else {
-                return;
-            };
-
-            if ctx.scoping().get_reference(target.reference_id()).symbol_id()
-                != Some(accumulator_ident.symbol_id())
+            if let Expression::CallExpression(call_expr) = stmt
+                && is_method_call(call_expr, Some(&["Object"]), Some(&["assign"]), Some(2), Some(2))
+                && let [target, source] = call_expr.arguments.as_slice()
+                && let Some(Expression::Identifier(target)) =
+                    target.as_expression().map(Expression::get_inner_expression)
+                && ctx.scoping().get_reference(target.reference_id()).symbol_id()
+                    == Some(accumulator_ident.symbol_id())
+                && let Some(Expression::ObjectExpression(source)) =
+                    source.as_expression().map(Expression::get_inner_expression)
+                && let [ObjectPropertyKind::ObjectProperty(property)] = source.properties.as_slice()
+                && property.kind == PropertyKind::Init
+                && !property.method
             {
-                return;
+                ctx.diagnostic(prefer_object_from_entries_diagnostic(
+                    call_expr_member_expr_property_span(call_expr),
+                ));
+            } else if let Expression::ObjectExpression(object_expr) = stmt
+                && let [
+                    ObjectPropertyKind::SpreadProperty(spread),
+                    ObjectPropertyKind::ObjectProperty(property),
+                ] = object_expr.properties.as_slice()
+                && let Expression::Identifier(spread_ident) = spread.argument.get_inner_expression()
+                && ctx.scoping().get_reference(spread_ident.reference_id()).symbol_id()
+                    == Some(accumulator_ident.symbol_id())
+                && property.kind == PropertyKind::Init
+                && !property.method
+            {
+                ctx.diagnostic(prefer_object_from_entries_diagnostic(
+                    call_expr_member_expr_property_span(call_expr),
+                ));
             }
-
-            let Some(Expression::ObjectExpression(source)) = call_expr
-                .arguments
-                .get(1)
-                .expect("call expression should have 2 arguments")
-                .as_expression()
-                .map(Expression::get_inner_expression)
-            else {
-                return;
-            };
-
-            if source.properties.len() != 1 {
-                return;
-            }
-
-            let ObjectPropertyKind::ObjectProperty(k) = &source.properties[0] else { return };
-            if k.kind != PropertyKind::Init || k.method {
-                return;
-            }
-
-            ctx.diagnostic(prefer_object_from_entries_diagnostic(
-                call_expr_member_expr_property_span(call_expr),
-            ));
-        }
-
-        // `() => ({...object, key})`
-        if let Expression::ObjectExpression(object_expr) = &stmt
-            && object_expr.properties.len() == 2
-            && let ObjectPropertyKind::SpreadProperty(spread) = &object_expr.properties[0]
-            && let Expression::Identifier(spread_ident) = spread.argument.get_inner_expression()
-        {
-            let Some(spread_symbol_id) =
-                ctx.scoping().get_reference(spread_ident.reference_id()).symbol_id()
-            else {
-                return;
-            };
-
-            if spread_symbol_id != accumulator_ident.symbol_id() {
-                return;
-            }
-            let ObjectPropertyKind::ObjectProperty(object_prop) = &object_expr.properties[1] else {
-                return;
-            };
-
-            if object_prop.kind != PropertyKind::Init || object_prop.method {
-                return;
-            }
-
-            ctx.diagnostic(prefer_object_from_entries_diagnostic(
-                call_expr_member_expr_property_span(call_expr),
-            ));
         }
     }
 
