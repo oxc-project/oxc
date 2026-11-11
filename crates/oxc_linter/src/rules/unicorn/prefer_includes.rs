@@ -131,8 +131,9 @@ impl Rule for PreferIncludes {
             return;
         };
 
-        let callee_info = call_expr_method_callee_info(left_call_expr).unwrap();
-        let callee_span = callee_info.0;
+        let Some((callee_span, _)) = call_expr_method_callee_info(left_call_expr) else {
+            return;
+        };
 
         // Get the object (receiver) text.
         let Some(member_expr) = left_call_expr.callee.get_inner_expression().as_member_expression()
@@ -198,6 +199,10 @@ fn test() {
         r"null.indexOf('foo') !== 1",
         r"f(0) < 0",
         r"something.indexOf(foo, 0, another) !== -1",
+        r"(obj?.indexOf)('x') !== -1;",
+        r"((obj?.['indexOf']))('x') === -1;",
+        r"(obj?.indexOf)?.('x') >= 0;",
+        r"((obj?.indexOf)!)('x') < 0;",
     ];
 
     let fail = vec![
@@ -237,6 +242,9 @@ fn test() {
         (r"foo?.indexOf('x') > -1", r"foo?.includes('x') === true"),
         (r"foo?.indexOf('x') >= 0", r"foo?.includes('x') === true"),
         (r"foo?.indexOf('x') < 0", r"foo?.includes('x') === false"),
+        (r"(str.indexOf)('foo') !== -1", r"str.includes('foo')"),
+        (r"((str['indexOf']))('foo') === -1", r"!str.includes('foo')"),
+        (r"(foo.indexOf)?.('x') === -1", r"foo.includes?.('x') === false"),
     ];
 
     Tester::new(PreferIncludes::NAME, PreferIncludes::PLUGIN, pass, fail)
