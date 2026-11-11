@@ -3,17 +3,23 @@ import { copyFile, mkdir, readdir, rm, stat, writeFile } from "node:fs/promises"
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { verifyCorpus } from "./corpus.mjs";
-import {
-  git,
-  largeStackWorker,
-  packages,
-  pgoRustflags,
-  profileEnvironment,
-  root,
-  run,
-  sha256,
-  targets,
-} from "./utils.mjs";
+import { git, largeStackWorker, profileEnvironment, root, run, sha256 } from "./utils.mjs";
+
+const packages = ["parser", "transform", "minify"];
+const platforms = {
+  "x86_64-unknown-linux-gnu": "linux-x64-gnu",
+  "aarch64-unknown-linux-gnu": "linux-arm64-gnu",
+  "x86_64-apple-darwin": "darwin-x64",
+  "aarch64-apple-darwin": "darwin-arm64",
+  "x86_64-pc-windows-msvc": "win32-x64-msvc",
+};
+const pgoRustflags = [
+  // LLVM 23 can add uninitialized enum payloads to select counters. Until the
+  // pinned toolchain includes the fix, collect branch counts without selects.
+  // https://github.com/rust-lang/rust/issues/163616
+  "-Cllvm-args=-pgo-instr-select=false",
+  "-Cllvm-args=-vp-counters-per-site=16",
+];
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -55,11 +61,12 @@ if (command === "prepare" || values["ecosystem-root"] || values.fetch) {
 }
 if (command === "prepare") process.exit(0);
 const revision = await git(root, ["rev-parse", "HEAD"]);
-const manifest = await verifyCorpus(directory, { revision });
+const manifest = await verifyCorpus(directory, revision);
 const rustc = await run("rustc", ["-vV"], { capture: true });
 const host = /^host: (.+)$/m.exec(rustc)?.[1];
 const target = values.target ?? host;
-if (!targets.includes(target) || target !== host) {
+const platform = platforms[target];
+if (!platform || target !== host) {
   throw new Error(`PGO requires a matching native host/target; host=${host}, target=${target}`);
 }
 const sysroot = await run("rustc", ["--print", "sysroot"], { capture: true });
@@ -75,13 +82,6 @@ try {
 } catch {
   throw new Error("Missing llvm-profdata; run rustup component add llvm-tools-preview");
 }
-const platform = {
-  "x86_64-unknown-linux-gnu": "linux-x64-gnu",
-  "aarch64-unknown-linux-gnu": "linux-arm64-gnu",
-  "x86_64-apple-darwin": "darwin-x64",
-  "aarch64-apple-darwin": "darwin-arm64",
-  "x86_64-pc-windows-msvc": "win32-x64-msvc",
-}[target];
 // Invoke the CLI with Node rather than a shell shim, including on Windows.
 const napi = join(root, "node_modules/@napi-rs/cli/dist/cli.js");
 for (const name of command === "all" ? packages : [command]) {

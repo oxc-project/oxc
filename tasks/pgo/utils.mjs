@@ -6,21 +6,6 @@ import { fileURLToPath } from "node:url";
 import { Worker } from "node:worker_threads";
 
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-export const packages = ["parser", "transform", "minify"];
-export const pgoRustflags = [
-  // LLVM 23 can add uninitialized enum payloads to select counters. Until the
-  // pinned toolchain includes the fix, collect branch counts without selects.
-  // https://github.com/rust-lang/rust/issues/163616
-  "-Cllvm-args=-pgo-instr-select=false",
-  "-Cllvm-args=-vp-counters-per-site=16",
-];
-export const targets = [
-  "x86_64-unknown-linux-gnu",
-  "aarch64-unknown-linux-gnu",
-  "x86_64-apple-darwin",
-  "aarch64-apple-darwin",
-  "x86_64-pc-windows-msvc",
-];
 
 export function largeStackWorker(url, options = {}) {
   // The full corpus contains generated inputs with hundreds of thousands of
@@ -72,22 +57,7 @@ export async function sha256(path) {
   return hash.digest("hex");
 }
 
-export function language(filename) {
-  if (/\.d\.[cm]?ts$/i.test(filename)) return "dts";
-  if (/\.tsx$/i.test(filename)) return "tsx";
-  if (/\.[cm]?ts$/i.test(filename)) return "ts";
-  return /\.jsx$/i.test(filename) ? "jsx" : "js";
-}
-
-export function sourceType(filename) {
-  if (/\.[cm][jt]s$/i.test(filename)) {
-    return /\.c[jt]s$/i.test(filename) ? "commonjs" : "module";
-  }
-  return "unambiguous";
-}
-
 export function profileEnvironment(target, flags, configPath, base = process.env) {
-  if (typeof flags === "string") flags = [flags];
   const env = { ...base };
   if (target.endsWith("apple-darwin") || target.endsWith("linux-gnu")) {
     // cc-rs forwards Rust's PGO flags to C/C++ dependencies. Their compiler may
@@ -104,27 +74,15 @@ export function profileEnvironment(target, flags, configPath, base = process.env
   // Respect Cargo's precedence. If no environment override exists, use a Cargo
   // config overlay so its array is appended to the repository's target flags.
   const targetKey = `CARGO_TARGET_${target.toUpperCase().replaceAll("-", "_")}_RUSTFLAGS`;
-  if (env.CARGO_ENCODED_RUSTFLAGS !== undefined) {
-    env.CARGO_ENCODED_RUSTFLAGS += `\x1f${flags.join("\x1f")}`;
-  } else if (env.RUSTFLAGS !== undefined) {
-    // Encoded flags avoid splitting absolute paths containing spaces.
-    if (flags.some((flag) => /\s/.test(flag))) {
-      throw new Error("PGO paths cannot contain whitespace with RUSTFLAGS set");
-    }
-    env.RUSTFLAGS += ` ${flags.join(" ")}`;
-  } else if (env.CARGO_BUILD_RUSTFLAGS !== undefined) {
-    // napi-rs promotes this variable to RUSTFLAGS before invoking Cargo.
-    if (flags.some((flag) => /\s/.test(flag))) {
-      throw new Error("PGO paths cannot contain whitespace with CARGO_BUILD_RUSTFLAGS set");
-    }
-    env.CARGO_BUILD_RUSTFLAGS += ` ${flags.join(" ")}`;
-  } else if (env[targetKey] !== undefined) {
-    if (flags.some((flag) => /\s/.test(flag))) {
-      throw new Error("PGO paths cannot contain whitespace with target RUSTFLAGS set");
-    }
-    env[targetKey] += ` ${flags.join(" ")}`;
-  } else {
-    return { env, cargoOptions: ["--config", configPath] };
+  // napi-rs promotes CARGO_BUILD_RUSTFLAGS to RUSTFLAGS before invoking Cargo.
+  const flagKey = ["CARGO_ENCODED_RUSTFLAGS", "RUSTFLAGS", "CARGO_BUILD_RUSTFLAGS", targetKey].find(
+    (key) => env[key] !== undefined,
+  );
+  if (!flagKey) return { env, cargoOptions: ["--config", configPath] };
+  const separator = flagKey === "CARGO_ENCODED_RUSTFLAGS" ? "\x1f" : " ";
+  if (separator === " " && flags.some((flag) => /\s/.test(flag))) {
+    throw new Error(`PGO paths cannot contain whitespace with ${flagKey} set`);
   }
+  env[flagKey] += separator + flags.join(separator);
   return { env, cargoOptions: [] };
 }

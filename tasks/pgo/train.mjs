@@ -1,5 +1,6 @@
 // oxlint-disable no-console, no-await-in-loop -- Complete native calls before reusing their input and profile buffers.
 import { createRequire } from "node:module";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { isMainThread } from "node:worker_threads";
@@ -14,7 +15,7 @@ function consumeParse(result) {
   return [errors ? 0 : result.program.body.length, result.module, result.comments.length, errors];
 }
 
-export async function trainRecord(name, binding, record, index) {
+async function trainRecord(name, binding, record, index) {
   const { filename, code, options } = record;
   // Async NAPI tasks run on libuv's fixed-size stacks, rather than our large
   // worker stack. Keep pathological generated inputs on the synchronous path.
@@ -78,7 +79,7 @@ export async function trainRecord(name, binding, record, index) {
   return result.errors.length ? "diagnostics" : "trained";
 }
 
-async function trainShard() {
+async function runBinding() {
   const [name, library, directory, shardFile] = process.argv.slice(2);
   // Loading the precise .node first prevents a loader fallback from disguising a
   // broken instrumented library as a successful WASM training run.
@@ -103,7 +104,6 @@ async function trainShard() {
     if (result !== "trained") throw new Error(`${name}: optimized binding smoke test failed`);
     return;
   }
-  const { readFile } = await import("node:fs/promises");
   const manifest = JSON.parse(await readFile(join(directory, "manifest.json"), "utf8"));
   const shard = manifest.shards.find((item) => item.file === shardFile);
   if (!shard) throw new Error(`Unknown shard: ${shardFile}`);
@@ -127,10 +127,8 @@ async function trainShard() {
   console.log(JSON.stringify({ processed, skipped, diagnostics, downlevelSkipped }));
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  if (isMainThread) {
-    await largeStackWorker(new URL(import.meta.url), { argv: process.argv.slice(2) });
-  } else {
-    await trainShard();
-  }
+if (isMainThread) {
+  await largeStackWorker(new URL(import.meta.url), { argv: process.argv.slice(2) });
+} else {
+  await runBinding();
 }
