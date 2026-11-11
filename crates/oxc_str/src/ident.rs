@@ -642,9 +642,9 @@ mod test {
     #[test]
     fn ident_size() {
         #[cfg(target_pointer_width = "64")]
-        assert_eq!(std::mem::size_of::<Ident<'_>>(), 16);
+        assert_eq!(size_of::<Ident<'_>>(), 16);
         #[cfg(target_pointer_width = "32")]
-        assert_eq!(std::mem::size_of::<Ident<'_>>(), 12);
+        assert_eq!(size_of::<Ident<'_>>(), 12);
     }
 
     #[test]

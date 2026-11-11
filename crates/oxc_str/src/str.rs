@@ -1,6 +1,7 @@
 use std::{
     borrow::{Borrow, Cow},
-    fmt, hash,
+    fmt::{self, Debug, Display},
+    hash::{Hash, Hasher},
     ops::Deref,
 };
 
@@ -274,22 +275,22 @@ impl PartialEq<Str<'_>> for Cow<'_, str> {
     }
 }
 
-impl hash::Hash for Str<'_> {
+impl Hash for Str<'_> {
     #[inline]
-    fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
         self.as_str().hash(hasher);
     }
 }
 
-impl fmt::Debug for Str<'_> {
+impl Debug for Str<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Debug::fmt(self.as_str(), f)
+        Debug::fmt(self.as_str(), f)
     }
 }
 
-impl fmt::Display for Str<'_> {
+impl Display for Str<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(self.as_str(), f)
+        Display::fmt(self.as_str(), f)
     }
 }
 
