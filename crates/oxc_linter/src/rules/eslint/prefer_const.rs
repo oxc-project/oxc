@@ -2,8 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayAssignmentTarget, AssignmentTarget, AssignmentTargetMaybeDefault,
-        AssignmentTargetProperty, ObjectAssignmentTarget, VariableDeclaration,
-        VariableDeclarationKind,
+        AssignmentTargetMaybeParenthesized, AssignmentTargetProperty, ObjectAssignmentTarget,
+        VariableDeclaration, VariableDeclarationKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -253,9 +253,10 @@ impl PreferConst {
             AssignmentTargetMaybeDefault::ComputedMemberExpression(_)
             | AssignmentTargetMaybeDefault::StaticMemberExpression(_)
             | AssignmentTargetMaybeDefault::PrivateFieldExpression(_) => true,
-            AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(t) => {
-                Self::has_member_expression_in_assignment_target(&t.binding)
-            }
+            AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(t) => t
+                .binding
+                .as_assignment_target()
+                .is_some_and(Self::has_member_expression_in_assignment_target),
             AssignmentTargetMaybeDefault::ArrayAssignmentTarget(array) => {
                 array
                     .elements
@@ -363,10 +364,13 @@ impl PreferConst {
                 return false;
             }
         }
-        array_target
-            .rest
-            .as_ref()
-            .is_none_or(|rest| self.can_assignment_target_be_const(&rest.target, symbol_table, ctx))
+        array_target.rest.as_ref().is_none_or(|rest| {
+            self.can_assignment_target_be_const(
+                rest.target.as_assignment_target_maybe_parenthesized(),
+                symbol_table,
+                ctx,
+            )
+        })
     }
 
     fn can_assignment_target_maybe_default_be_const(
@@ -399,12 +403,12 @@ impl PreferConst {
 
     fn can_assignment_target_be_const(
         &self,
-        target: &AssignmentTarget,
+        target: &AssignmentTargetMaybeParenthesized,
         symbol_table: &oxc_semantic::Scoping,
         ctx: &LintContext<'_>,
     ) -> bool {
         match target {
-            AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+            _ if let Some(ident) = target.identifier() => {
                 if let Some(symbol_id) =
                     ctx.semantic().scoping().get_reference(ident.reference_id()).symbol_id()
                 {
@@ -412,10 +416,10 @@ impl PreferConst {
                 }
                 true
             }
-            AssignmentTarget::ArrayAssignmentTarget(array_target) => {
+            AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(array_target) => {
                 self.can_all_destructuring_identifiers_be_const(array_target, symbol_table, ctx)
             }
-            AssignmentTarget::ObjectAssignmentTarget(obj_target) => {
+            AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(obj_target) => {
                 self.can_all_destructuring_identifiers_be_const_obj(obj_target, symbol_table, ctx)
             }
             _ => true,
@@ -460,10 +464,13 @@ impl PreferConst {
                 }
             }
         }
-        obj_target
-            .rest
-            .as_ref()
-            .is_none_or(|rest| self.can_assignment_target_be_const(&rest.target, symbol_table, ctx))
+        obj_target.rest.as_ref().is_none_or(|rest| {
+            self.can_assignment_target_be_const(
+                rest.target.as_assignment_target_maybe_parenthesized(),
+                symbol_table,
+                ctx,
+            )
+        })
     }
 
     /// Check if a variable should be declared as const
@@ -643,23 +650,29 @@ impl PreferConst {
                 }
 
                 AstKind::AssignmentExpression(assign) => {
-                    if Self::has_member_expression_in_assignment_target(&assign.left) {
+                    if assign
+                        .left
+                        .as_assignment_target()
+                        .is_some_and(Self::has_member_expression_in_assignment_target)
+                    {
                         is_invalid_destructuring = true;
                         break;
                     }
                     let can_be_const = match &assign.left {
-                        AssignmentTarget::ArrayAssignmentTarget(array_target) => self
-                            .can_all_destructuring_identifiers_be_const(
+                        AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(array_target) => {
+                            self.can_all_destructuring_identifiers_be_const(
                                 array_target,
                                 symbol_table,
                                 ctx,
-                            ),
-                        AssignmentTarget::ObjectAssignmentTarget(obj_target) => self
-                            .can_all_destructuring_identifiers_be_const_obj(
+                            )
+                        }
+                        AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(obj_target) => {
+                            self.can_all_destructuring_identifiers_be_const_obj(
                                 obj_target,
                                 symbol_table,
                                 ctx,
-                            ),
+                            )
+                        }
                         _ => true,
                     };
                     if !can_be_const {

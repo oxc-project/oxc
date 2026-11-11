@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, IdentifierReference, MemberExpression},
+    ast::{Expression, IdentifierReference, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -181,7 +181,7 @@ fn find_latest_assignment<'a>(
         // The node is before the variable declaration, skip it
         if node.span().start > start_index
             && let AstKind::AssignmentExpression(assign_expr) = node.kind()
-            && let AssignmentTarget::AssignmentTargetIdentifier(assigned_id) = &assign_expr.left
+            && let Some(assigned_id) = assign_expr.left.identifier()
             && assigned_id.name == identifier_name
         {
             result = Some(&assign_expr.right);

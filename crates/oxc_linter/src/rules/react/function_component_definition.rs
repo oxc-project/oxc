@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind, FunctionKind,
-    ast::{AssignmentTarget, FunctionType, VariableDeclaration, VariableDeclarator},
+    ast::{
+        AssignmentTargetMaybeParenthesized, FunctionType, VariableDeclaration, VariableDeclarator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -196,12 +198,8 @@ fn is_component_expression_position<'a>(node: &AstNode<'a>, ctx: &LintContext<'a
         | AstKind::ReturnStatement(_)
         | AstKind::ArrowFunctionExpression(_) => true,
         AstKind::AssignmentExpression(assignment) => match &assignment.left {
-            AssignmentTarget::AssignmentTargetIdentifier(id)
-                if is_react_component_name(&id.name) =>
-            {
-                true
-            }
-            AssignmentTarget::StaticMemberExpression(member) => {
+            _ if let Some(id) = assignment.left.identifier() => is_react_component_name(&id.name),
+            AssignmentTargetMaybeParenthesized::StaticMemberExpression(member) => {
                 is_react_component_name(&member.property.name)
                     || member.object.is_specific_id("module") && member.property.name == "exports"
             }

@@ -440,8 +440,56 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_assignment_expression(&mut self, it: &AssignmentExpression<'a>) {
-        self.visit_assignment_target(&it.left);
+        self.visit_assignment_target_maybe_parenthesized(&it.left);
         self.visit_expression(&it.right);
+    }
+
+    fn visit_assignment_target_maybe_parenthesized(
+        &mut self,
+        it: &AssignmentTargetMaybeParenthesized<'a>,
+    ) {
+        match it {
+            AssignmentTargetMaybeParenthesized::TSAsExpression(it) => {
+                self.visit_ts_as_expression(it)
+            }
+            AssignmentTargetMaybeParenthesized::TSSatisfiesExpression(it) => {
+                self.visit_ts_satisfies_expression(it)
+            }
+            AssignmentTargetMaybeParenthesized::TSNonNullExpression(it) => {
+                self.visit_ts_non_null_expression(it)
+            }
+            AssignmentTargetMaybeParenthesized::TSTypeAssertion(it) => {
+                self.visit_ts_type_assertion(it)
+            }
+            AssignmentTargetMaybeParenthesized::ComputedMemberExpression(it) => {
+                self.visit_computed_member_expression(it)
+            }
+            AssignmentTargetMaybeParenthesized::StaticMemberExpression(it) => {
+                self.visit_static_member_expression(it)
+            }
+            AssignmentTargetMaybeParenthesized::PrivateFieldExpression(it) => {
+                self.visit_private_field_expression(it)
+            }
+            AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(it) => {
+                self.visit_array_assignment_target(it)
+            }
+            AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(it) => {
+                self.visit_object_assignment_target(it)
+            }
+            _ => {
+                // Remaining variants do not contain scopes:
+                // `ParenthesizedIdentifier`
+                // `AssignmentTargetIdentifier`
+            }
+        }
+    }
+
+    #[inline(always)]
+    fn visit_parenthesized_identifier_assignment_target(
+        &mut self,
+        it: &ParenthesizedIdentifierAssignmentTarget<'a>,
+    ) {
+        // Struct does not contain a scope. Halt traversal.
     }
 
     fn visit_assignment_target(&mut self, it: &AssignmentTarget<'a>) {
@@ -550,7 +598,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_assignment_target_with_default(&mut self, it: &AssignmentTargetWithDefault<'a>) {
-        self.visit_assignment_target(&it.binding);
+        self.visit_assignment_target_maybe_parenthesized(&it.binding);
         self.visit_expression(&it.init);
     }
 

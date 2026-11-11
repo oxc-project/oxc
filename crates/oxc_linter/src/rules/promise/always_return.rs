@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, Statement},
+    ast::{AssignmentTargetMaybeParenthesized, Expression, Statement},
 };
 use oxc_cfg::{
     EdgeType, ErrorEdgeKind, InstructionKind,
@@ -413,13 +413,15 @@ fn has_ignored_assignment(
     })
 }
 
-fn get_root_object_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<&'a str> {
+fn get_root_object_name<'a>(
+    assignment_target: &AssignmentTargetMaybeParenthesized<'a>,
+) -> Option<&'a str> {
     match assignment_target {
-        AssignmentTarget::AssignmentTargetIdentifier(id) => Some(id.name.as_str()),
-        AssignmentTarget::StaticMemberExpression(member_expr) => {
+        _ if let Some(id) = assignment_target.identifier() => Some(id.name.as_str()),
+        AssignmentTargetMaybeParenthesized::StaticMemberExpression(member_expr) => {
             get_member_expr_root_object_name(&member_expr.object)
         }
-        AssignmentTarget::ComputedMemberExpression(member_expr) => {
+        AssignmentTargetMaybeParenthesized::ComputedMemberExpression(member_expr) => {
             get_member_expr_root_object_name(&member_expr.object)
         }
         _ => None,

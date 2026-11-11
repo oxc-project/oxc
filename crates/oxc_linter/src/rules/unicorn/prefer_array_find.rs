@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BindingPattern, CallExpression, Expression,
+        Argument, AssignmentTargetMaybeParenthesized, BindingPattern, CallExpression, Expression,
         SimpleAssignmentTarget, UnaryOperator,
     },
 };
@@ -177,8 +177,9 @@ impl Rule for PreferArrayFind {
                             }
                             AstKind::AssignmentExpression(assignment_expr) => {
                                 // Check for array destructuring: [foo] = items
-                                if let AssignmentTarget::ArrayAssignmentTarget(target) =
-                                    &assignment_expr.left
+                                if let AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(
+                                    target,
+                                ) = &assignment_expr.left
                                 {
                                     if target.elements.len() == 1
                                         && target.elements[0].is_some()
@@ -213,8 +214,9 @@ impl Rule for PreferArrayFind {
             }
             AstKind::AssignmentExpression(assignment_expr) => {
                 // `[foo] = array.filter()`
-                if let AssignmentTarget::ArrayAssignmentTarget(array_assignment_target) =
-                    &assignment_expr.left
+                if let AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(
+                    array_assignment_target,
+                ) = &assignment_expr.left
                     && array_assignment_target.elements.len() == 1
                     && array_assignment_target.elements[0].is_some()
                     && array_assignment_target.rest.is_none()

@@ -29,7 +29,7 @@ use std::sync::Arc;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{Address, Allocator, ArenaBox, GetAddress, ReplaceWith, UnstableAddress};
+use oxc_allocator::{Address, Allocator, GetAddress, ReplaceWith, UnstableAddress};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJsMut, walk_js_mut};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
@@ -592,7 +592,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
     fn replace_identifier_define_impl(
         &mut self,
-        ident: &ArenaBox<'_, IdentifierReference<'_>>,
+        ident: &IdentifierReference<'_>,
     ) -> Option<Expression<'a>> {
         if !Self::is_global_or_ambient_reference(self.scoping(), ident) {
             return None;
@@ -603,10 +603,11 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_define_with_assignment_expr(&mut self, node: &mut AssignmentExpression<'a>) -> bool {
-        let new_left = node
-            .left
-            .as_simple_assignment_target_mut()
-            .and_then(|item| match item {
+        let new_left = match &mut node.left {
+            AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(paren) => {
+                self.replace_identifier_define_impl(&paren.target)
+            }
+            left => left.as_simple_assignment_target_mut().and_then(|item| match item {
                 SimpleAssignmentTarget::ComputedMemberExpression(computed_member_expr) => {
                     self.replace_dot_computed_member_expr(computed_member_expr)
                 }
@@ -617,10 +618,11 @@ impl<'a> ReplaceGlobalDefines<'a> {
                     self.replace_identifier_define_impl(ident)
                 }
                 _ => None,
-            })
-            .and_then(assignment_target_from_expr);
+            }),
+        }
+        .and_then(assignment_target_from_expr);
         if let Some(new_left) = new_left {
-            node.left = new_left;
+            node.left = new_left.into();
             return true;
         }
         false

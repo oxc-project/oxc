@@ -615,7 +615,8 @@ impl<'a> PeepholeOptimizations {
 
         let is_safe = if consequent.operator == AssignmentOperator::Assign {
             match &consequent.left {
-                AssignmentTarget::AssignmentTargetIdentifier(_) => true,
+                AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(_)
+                | AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(_) => true,
                 // For member expression targets, this transform moves the evaluation of the
                 // object (and the computed key) before `x`. That reordering is unobservable
                 // only when neither side can affect the other:
@@ -627,7 +628,7 @@ impl<'a> PeepholeOptimizations {
                 //   (e.g. `f() ? a.b = 0 : a.b = 1` where `f` reassigns `a`)
                 // All hold when the object/key are `this`, literals, or identifiers that
                 // are never reassigned and cannot be read in their TDZ.
-                match_member_expression!(AssignmentTarget) => {
+                match_member_expression!(AssignmentTargetMaybeParenthesized) => {
                     let member = consequent.left.to_member_expression();
                     !Self::member_part_blocks_reorder(member.object(), ctx)
                         && match member {
@@ -651,10 +652,10 @@ impl<'a> PeepholeOptimizations {
             // side effects from the object/key evaluation for a member expression).
             !expr.test.may_have_side_effects(ctx)
                 && match &consequent.left {
-                    AssignmentTarget::AssignmentTargetIdentifier(id) => {
+                    _ if let Some(id) = consequent.left.identifier() => {
                         !id.may_have_side_effects(ctx)
                     }
-                    match_member_expression!(AssignmentTarget) => {
+                    match_member_expression!(AssignmentTargetMaybeParenthesized) => {
                         !consequent.left.to_member_expression().may_have_side_effects(ctx)
                     }
                     _ => false,

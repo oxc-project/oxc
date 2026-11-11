@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, AssignmentTargetMaybeDefault, Expression, ImportDeclarationSpecifier},
+    ast::{
+        AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetMaybeParenthesized,
+        Expression, ImportDeclarationSpecifier,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -251,10 +254,10 @@ fn is_assignment_condition_met(
             _ => false,
         },
         AstKind::AssignmentTargetWithDefault(with_default) => match &with_default.binding {
-            AssignmentTarget::StaticMemberExpression(expr) if is_static => {
+            AssignmentTargetMaybeParenthesized::StaticMemberExpression(expr) if is_static => {
                 expr.span == parent_node_span
             }
-            AssignmentTarget::ComputedMemberExpression(expr) if !is_static => {
+            AssignmentTargetMaybeParenthesized::ComputedMemberExpression(expr) if !is_static => {
                 expr.span == parent_node_span
             }
             _ => false,

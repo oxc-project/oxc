@@ -1,4 +1,7 @@
-use crate::{test, test_same};
+use crate::{
+    CompressOptions, CompressOptionsKeepNames, default_options, test, test_options, test_same,
+    test_same_options,
+};
 
 #[test]
 fn merge_assignments_to_declarations_var() {
@@ -38,6 +41,17 @@ fn merge_assignments_to_declarations_let() {
     test_same("let a; a = foo(a)"); // `let a = foo(a)` will cause TDZ error
     test("let a; a = (() => a)()", "let a; a = a;"); // `let a = (() => a)()` will cause TDZ error
     test("let a; a = () => a", "let a = () => a");
+}
+
+#[test]
+fn merge_parenthesized_assignment_to_declaration() {
+    // `(a)` leaves the function anonymous, `var a = function() {}` would name it `a`.
+    let keep_names =
+        CompressOptions { keep_names: CompressOptionsKeepNames::all_true(), ..default_options() };
+    test_same_options("var a; (a) = function() {}", &keep_names);
+    test_same_options("var a; (a) = class {}", &keep_names);
+    test_options("var a; (a) = 0", "var a = 0", &keep_names);
+    test("var a; (a) = function() {}", "var a = function() {}");
 }
 
 #[test]

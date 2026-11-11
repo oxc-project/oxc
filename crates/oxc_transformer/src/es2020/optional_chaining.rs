@@ -290,7 +290,13 @@ impl<'a> OptionalChaining<'a> {
         right: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        Expression::new_assignment_expression(SPAN, AssignmentOperator::Assign, left, right, ctx)
+        Expression::new_assignment_expression(
+            SPAN,
+            AssignmentOperator::Assign,
+            left.into(),
+            right,
+            ctx,
+        )
     }
 
     /// Transform chain expression

@@ -325,6 +325,9 @@ impl<'a> AstKind<'a> {
             // `[...ident] = arr`, `({ ...ident } = obj)`
             // `AssignmentTargetRest` has only 1 field containing child node - `target`.
             AstKind::AssignmentTargetRest(_) => true,
+            // `(ident) = value`, `[(ident) = value] = arr`
+            // `ParenthesizedIdentifierAssignmentTarget` has only 1 field containing child node - `target`.
+            AstKind::ParenthesizedIdentifierAssignmentTarget(_) => true,
             // `ident = value`
             // Only match if ident is on left
             // - not on right e.g. `assignee = ident`.
@@ -497,6 +500,9 @@ impl<'a> AstKind<'a> {
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget".into(),
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),
+            Self::ParenthesizedIdentifierAssignmentTarget(_) => {
+                "ParenthesizedIdentifierAssignmentTarget".into()
+            }
             Self::SpreadElement(_) => "SpreadElement".into(),
             Self::Elision(_) => "Elision".into(),
             Self::BindingRestElement(_) => "BindingRestElement".into(),

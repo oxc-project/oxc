@@ -2066,8 +2066,11 @@ enum SimpleAssignmentTargetRef<'b, 'a> {
 /// Unwrap TypeScript-only assignment-target wrappers while retaining the
 /// underlying identifier or member reference used at runtime.
 fn simple_assignment_target_ref<'b, 'a>(
-    target: &'b oxc::AssignmentTarget<'a>,
+    target: &'b oxc::AssignmentTargetMaybeParenthesized<'a>,
 ) -> Option<SimpleAssignmentTargetRef<'b, 'a>> {
+    if let oxc::AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(paren) = target {
+        return Some(SimpleAssignmentTargetRef::Identifier(&paren.target));
+    }
     target.as_simple_assignment_target().and_then(simple_assignment_target_ref_from_simple)
 }
 
@@ -2094,6 +2097,33 @@ fn simple_assignment_target_expression_ref<'b, 'a>(
     match expression {
         oxc::Expression::Identifier(id) => Some(SimpleAssignmentTargetRef::Identifier(id)),
         _ => expression.as_member_expression().map(SimpleAssignmentTargetRef::Member),
+    }
+}
+
+/// [`lower_assignment_target`], also accepting a parenthesized identifier (`[(x) = 1] = arr`).
+///
+/// Unlike Babel, Oxc keeps these parentheses in the AST. They only affect function naming,
+/// so `(x)` is lowered the same as `x`.
+fn lower_assignment_target_maybe_parenthesized<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    span: Span,
+    kind: InstructionKind,
+    target: &oxc::AssignmentTargetMaybeParenthesized<'a>,
+    value: Place,
+    assignment_style: AssignmentStyle,
+) -> Result<Option<Place>, OxcDiagnostic> {
+    match target {
+        oxc::AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(paren) => {
+            lower_identifier_assignment_target(builder, span, kind, &paren.target, value)
+        }
+        _ => lower_assignment_target(
+            builder,
+            span,
+            kind,
+            target.to_assignment_target(),
+            value,
+            assignment_style,
+        ),
     }
 }
 
@@ -2590,7 +2620,7 @@ enum FollowupTarget<'b, 'a> {
 
 enum FollowupBinding<'b, 'a> {
     Identifier(&'b oxc::IdentifierReference<'a>),
-    Target(&'b oxc::AssignmentTarget<'a>),
+    Target(&'b oxc::AssignmentTargetMaybeParenthesized<'a>),
 }
 
 /// Store `value` into the identifier-target `id` (a bare destructuring binding).
@@ -2799,9 +2829,14 @@ fn lower_assignment_target_default<'a>(
 
     // Recursively assign the resolved value to the inner binding.
     match binding {
-        FollowupBinding::Target(t) => {
-            lower_assignment_target(builder, span, kind, t, temp, assignment_style)
-        }
+        FollowupBinding::Target(t) => lower_assignment_target_maybe_parenthesized(
+            builder,
+            span,
+            kind,
+            t,
+            temp,
+            assignment_style,
+        ),
         FollowupBinding::Identifier(id) => {
             // `{foo = d}` shorthand: the binding is the identifier `foo` itself.
             lower_identifier_followup_store(builder, span, kind, id, temp)
@@ -4519,8 +4554,8 @@ fn lower_assignment_expression<'a>(
         {
             return lower_member_assignment_expression(builder, member, &assign.right);
         }
-        match &assign.left {
-            oxc::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+        match assign.left.identifier() {
+            Some(ident) => {
                 let symbol = builder.scope().resolve_reference(ident);
                 let right = lower_expression_to_temporary(builder, &assign.right)?;
                 let ident_span = ident.span;
@@ -4580,14 +4615,14 @@ fn lower_assignment_expression<'a>(
                     }
                 }
             }
-            _ => {
+            None => {
                 // Destructuring assignment
                 let right = lower_expression_to_temporary(builder, &assign.right)?;
                 let result = lower_assignment_target(
                     builder,
                     assign.left.span(),
                     InstructionKind::Reassign,
-                    &assign.left,
+                    assign.left.to_assignment_target(),
                     right,
                     AssignmentStyle::Destructure,
                 )?;

@@ -158,7 +158,7 @@ pub fn create_assignment<'a>(
     Expression::new_assignment_expression(
         span,
         AssignmentOperator::Assign,
-        binding.create_target(ReferenceFlags::Write, ctx),
+        binding.create_target(ReferenceFlags::Write, ctx).into(),
         value,
         ctx,
     )
@@ -337,7 +337,7 @@ pub fn create_accessor_method<'a>(
         let assign = Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
-            AssignmentTarget::new_private_field_expression(
+            AssignmentTargetMaybeParenthesized::new_private_field_expression(
                 SPAN,
                 create_object(ctx),
                 PrivateIdentifier::new(SPAN, storage_name, ctx),

@@ -926,9 +926,10 @@ unsafe fn walk_assignment_expression<'a, Tr: Traverse<'a>>(
     let pop_token = ctx.push_stack(Ancestor::AssignmentExpressionLeft(
         ancestor::AssignmentExpressionWithoutLeft(node, PhantomData),
     ));
-    walk_assignment_target(
+    walk_assignment_target_maybe_parenthesized(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_EXPRESSION_LEFT) as *mut AssignmentTarget,
+        (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_EXPRESSION_LEFT)
+            as *mut AssignmentTargetMaybeParenthesized,
         ctx,
     );
     ctx.retag_stack(AncestorType::AssignmentExpressionRight);
@@ -939,6 +940,51 @@ unsafe fn walk_assignment_expression<'a, Tr: Traverse<'a>>(
     );
     ctx.pop_stack(pop_token);
     traverser.exit_assignment_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_assignment_target_maybe_parenthesized<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut AssignmentTargetMaybeParenthesized<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_assignment_target_maybe_parenthesized(&mut *node, ctx);
+    match &mut *node {
+        AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(node) => {
+            walk_parenthesized_identifier_assignment_target(traverser, (&mut **node) as *mut _, ctx)
+        }
+        AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(_)
+        | AssignmentTargetMaybeParenthesized::TSAsExpression(_)
+        | AssignmentTargetMaybeParenthesized::TSSatisfiesExpression(_)
+        | AssignmentTargetMaybeParenthesized::TSNonNullExpression(_)
+        | AssignmentTargetMaybeParenthesized::TSTypeAssertion(_)
+        | AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(_)
+        | AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(_)
+        | AssignmentTargetMaybeParenthesized::ComputedMemberExpression(_)
+        | AssignmentTargetMaybeParenthesized::StaticMemberExpression(_)
+        | AssignmentTargetMaybeParenthesized::PrivateFieldExpression(_) => {
+            walk_assignment_target(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_assignment_target_maybe_parenthesized(&mut *node, ctx);
+}
+
+unsafe fn walk_parenthesized_identifier_assignment_target<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ParenthesizedIdentifierAssignmentTarget<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_parenthesized_identifier_assignment_target(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ParenthesizedIdentifierAssignmentTargetTarget(
+        ancestor::ParenthesizedIdentifierAssignmentTargetWithoutTarget(node, PhantomData),
+    ));
+    walk_identifier_reference(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_PARENTHESIZED_IDENTIFIER_ASSIGNMENT_TARGET_TARGET)
+            as *mut IdentifierReference,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_parenthesized_identifier_assignment_target(&mut *node, ctx);
 }
 
 unsafe fn walk_assignment_target<'a, Tr: Traverse<'a>>(
@@ -1119,10 +1165,10 @@ unsafe fn walk_assignment_target_with_default<'a, Tr: Traverse<'a>>(
     let pop_token = ctx.push_stack(Ancestor::AssignmentTargetWithDefaultBinding(
         ancestor::AssignmentTargetWithDefaultWithoutBinding(node, PhantomData),
     ));
-    walk_assignment_target(
+    walk_assignment_target_maybe_parenthesized(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_BINDING)
-            as *mut AssignmentTarget,
+            as *mut AssignmentTargetMaybeParenthesized,
         ctx,
     );
     ctx.retag_stack(AncestorType::AssignmentTargetWithDefaultInit);

@@ -79,15 +79,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
             match ancestor {
                 // `foo = React.createClass({})`
                 Ancestor::AssignmentExpressionRight(assign_expr) => match assign_expr.left() {
-                    AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                    left if let Some(ident) = left.identifier() => {
                         break ident.name.into();
                     }
-                    AssignmentTarget::StaticMemberExpression(expr) => {
+                    AssignmentTargetMaybeParenthesized::StaticMemberExpression(expr) => {
                         break expr.property.name.as_js_str();
                     }
                     // Babel does not handle computed member expressions e.g. `foo["bar"]`,
                     // so we diverge from Babel here, but that's probably an improvement
-                    AssignmentTarget::ComputedMemberExpression(expr) => {
+                    AssignmentTargetMaybeParenthesized::ComputedMemberExpression(expr) => {
                         if let Some(name) = expr.static_property_name() {
                             break name;
                         }

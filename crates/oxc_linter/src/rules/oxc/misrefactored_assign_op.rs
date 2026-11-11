@@ -1,7 +1,10 @@
 // Based on https://github.com/rust-lang/rust-clippy//blob/c9a43b18f11219fa70fe632b29518581fcd589c8/clippy_lints/src/operators/misrefactored_assign_op.rs
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, SimpleAssignmentTarget, match_member_expression},
+    ast::{
+        AssignmentTargetMaybeParenthesized, Expression, SimpleAssignmentTarget,
+        match_member_expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -106,20 +109,16 @@ impl Rule for MisrefactoredAssignOp {
 }
 
 fn assignment_target_eq_expr<'a>(
-    assignment_target: &AssignmentTarget<'a>,
+    assignment_target: &AssignmentTargetMaybeParenthesized<'a>,
     right_expr: &Expression<'_>,
     ctx: &LintContext<'a>,
 ) -> bool {
     let right_expr = right_expr.get_inner_expression();
+    if let Some(ident) = assignment_target.identifier() {
+        return matches!(right_expr, Expression::Identifier(right_ident) if ident.name == right_ident.name);
+    }
     if let Some(simple_assignment_target) = assignment_target.as_simple_assignment_target() {
         return match simple_assignment_target {
-            SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                if let Expression::Identifier(right_ident) = right_expr {
-                    ident.name == right_ident.name
-                } else {
-                    false
-                }
-            }
             match_member_expression!(SimpleAssignmentTarget) => {
                 let member_expr = simple_assignment_target.to_member_expression();
                 if let Some(right_member_expr) = right_expr.as_member_expression() {

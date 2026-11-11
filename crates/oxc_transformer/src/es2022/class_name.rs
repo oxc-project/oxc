@@ -1,6 +1,6 @@
 //! Contextual name inference shared by class transforms.
 
-use oxc_ast::ast::AssignmentTarget;
+use oxc_ast::ast::AssignmentTargetMaybeParenthesized;
 use oxc_str::Str;
 use oxc_traverse::Ancestor;
 
@@ -30,9 +30,12 @@ pub(super) fn contextual_class_name<'a>(ancestor: &Ancestor<'a, '_>) -> Option<S
     }
 }
 
-fn assignment_name<'a>(target: &AssignmentTarget<'a>) -> Option<Str<'a>> {
+/// `(a) = class {}` does not name the class, so `ParenthesizedIdentifier` is excluded.
+fn assignment_name<'a>(target: &AssignmentTargetMaybeParenthesized<'a>) -> Option<Str<'a>> {
     match target {
-        AssignmentTarget::AssignmentTargetIdentifier(ident) => Some(ident.name.into()),
+        AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(ident) => {
+            Some(ident.name.into())
+        }
         _ => None,
     }
 }

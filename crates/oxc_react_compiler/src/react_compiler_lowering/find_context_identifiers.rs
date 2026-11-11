@@ -252,7 +252,10 @@ impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
         if !(it.operator.to_logical_operator().is_some()
             && logical_assignment_target_is_const(self.scope, current_scope, &it.left))
         {
-            self.walk_assignment_target_for_reassignment(&it.left, current_scope);
+            self.walk_assignment_target_maybe_parenthesized_for_reassignment(
+                &it.left,
+                current_scope,
+            );
         }
         oxc_ast_visit::walk_js::walk_assignment_expression(self, it);
     }
@@ -299,6 +302,22 @@ impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
 impl<'a> ContextIdentifierVisitor<'a> {
     /// Recursively walk an assignment target to find all reassignment target
     /// identifiers, mirroring the original `walk_lval_for_reassignment`.
+    fn walk_assignment_target_maybe_parenthesized_for_reassignment(
+        &mut self,
+        target: &AssignmentTargetMaybeParenthesized<'a>,
+        current_scope: ScopeId,
+    ) {
+        match target {
+            AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(paren) => {
+                self.handle_reassignment_identifier(&paren.target.name, current_scope);
+            }
+            _ => self.walk_assignment_target_for_reassignment(
+                target.to_assignment_target(),
+                current_scope,
+            ),
+        }
+    }
+
     fn walk_assignment_target_for_reassignment(
         &mut self,
         target: &AssignmentTarget<'a>,
@@ -409,7 +428,10 @@ impl<'a> ContextIdentifierVisitor<'a> {
     ) {
         match target {
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(node) => {
-                self.walk_assignment_target_for_reassignment(&node.binding, current_scope);
+                self.walk_assignment_target_maybe_parenthesized_for_reassignment(
+                    &node.binding,
+                    current_scope,
+                );
             }
             inner @ match_assignment_target!(AssignmentTargetMaybeDefault) => {
                 self.walk_assignment_target_for_reassignment(
@@ -425,21 +447,21 @@ impl<'a> ContextIdentifierVisitor<'a> {
 fn logical_assignment_target_is_const(
     scope: &ScopeResolver<'_, '_>,
     current_scope: ScopeId,
-    target: &AssignmentTarget<'_>,
+    target: &AssignmentTargetMaybeParenthesized<'_>,
 ) -> bool {
-    let name = match target {
-        AssignmentTarget::AssignmentTargetIdentifier(ident) => ident.name.as_str(),
-        _ => {
-            let Some(expression) =
-                target.as_simple_assignment_target().and_then(|t| t.get_expression())
-            else {
-                return false;
-            };
-            let Expression::Identifier(ident) = expression.get_inner_expression() else {
-                return false;
-            };
-            ident.name.as_str()
-        }
+    // `(v) ??= 2` targets the same binding as `v ??= 2`
+    let name = if let Some(ident) = target.identifier() {
+        ident.name.as_str()
+    } else {
+        let Some(expression) =
+            target.as_simple_assignment_target().and_then(|t| t.get_expression())
+        else {
+            return false;
+        };
+        let Expression::Identifier(ident) = expression.get_inner_expression() else {
+            return false;
+        };
+        ident.name.as_str()
     };
     scope
         .find_binding(current_scope, name)

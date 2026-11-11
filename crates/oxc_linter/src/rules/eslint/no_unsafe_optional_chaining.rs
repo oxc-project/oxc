@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, match_assignment_target_pattern},
+    ast::{AssignmentTargetMaybeParenthesized, match_assignment_target_pattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -179,7 +179,10 @@ impl NoUnsafeOptionalChaining {
                     return Some(ErrorType::Usage);
                 }
                 AstKind::AssignmentExpression(expr) if expr.right.node_id() == current_id => {
-                    if matches!(expr.left, match_assignment_target_pattern!(AssignmentTarget)) {
+                    if matches!(
+                        expr.left,
+                        match_assignment_target_pattern!(AssignmentTargetMaybeParenthesized)
+                    ) {
                         return Some(ErrorType::Usage);
                     }
                     if self.disallow_arithmetic_operators && expr.operator.is_arithmetic() {
@@ -233,7 +236,7 @@ impl NoUnsafeOptionalChaining {
                 AstKind::AssignmentTargetWithDefault(target)
                     if matches!(
                         target.binding,
-                        match_assignment_target_pattern!(AssignmentTarget)
+                        match_assignment_target_pattern!(AssignmentTargetMaybeParenthesized)
                     ) && target.init.node_id() == current_id =>
                 {
                     return Some(ErrorType::Usage);

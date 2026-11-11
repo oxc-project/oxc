@@ -14,10 +14,10 @@ use serde::Serialize;
 
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::{
-    Argument, ArrayExpression, ArrayExpressionElement, AssignmentTarget, CallExpression,
-    Expression, ExpressionStatement, IdentifierName, ObjectExpression, ObjectProperty,
-    ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
-    TaggedTemplateExpression, TemplateLiteral,
+    Argument, ArrayExpression, ArrayExpressionElement, AssignmentTargetMaybeParenthesized,
+    CallExpression, Expression, ExpressionStatement, IdentifierName, ObjectExpression,
+    ObjectProperty, ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression,
+    StringLiteral, TaggedTemplateExpression, TemplateLiteral,
 };
 use oxc_ast_visit::VisitJs;
 use oxc_parser::{ParseOptions, Parser};
@@ -1175,7 +1175,7 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
         else {
             return;
         };
-        let AssignmentTarget::StaticMemberExpression(static_member_expression) =
+        let AssignmentTargetMaybeParenthesized::StaticMemberExpression(static_member_expression) =
             &assignment_expression.left
         else {
             return;

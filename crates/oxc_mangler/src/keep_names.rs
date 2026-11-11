@@ -208,10 +208,11 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
     }
 
     fn is_assignment_target_id_of_specific_reference(
-        target_kind: &AssignmentTarget,
+        target_kind: &AssignmentTargetMaybeParenthesized,
         reference_id: ReferenceId,
     ) -> bool {
-        if let AssignmentTarget::AssignmentTargetIdentifier(id) = target_kind {
+        // `(foo) = function() {}` does not name the function, so `ParenthesizedIdentifier` is excluded
+        if let AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(id) = target_kind {
             id.reference_id() == reference_id
         } else {
             false
@@ -316,6 +317,16 @@ mod test {
             collect(function_only(), "var foo; ({ foo = function() {} } = {})"),
             data("foo")
         );
+    }
+
+    #[test]
+    fn test_parenthesized_assign() {
+        let none = FxHashSet::default();
+        assert_eq!(collect(function_only(), "var foo; (foo) = function() {}"), none);
+        assert_eq!(collect(function_only(), "var foo; (foo) ||= () => {}"), none);
+        assert_eq!(collect(class_only(), "var Foo; (Foo) = class {}"), none);
+        assert_eq!(collect(function_only(), "var foo; [(foo) = function() {}] = []"), none);
+        assert_eq!(collect(function_only(), "var foo; ({ a: (foo) = () => {} } = {})"), none);
     }
 
     #[test]

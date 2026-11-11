@@ -777,8 +777,48 @@ pub struct AssignmentExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     pub operator: AssignmentOperator,
-    pub left: AssignmentTarget<'a>,
+    #[estree(ts_type = "AssignmentTarget")]
+    pub left: AssignmentTargetMaybeParenthesized<'a>,
     pub right: Expression<'a>,
+}
+
+/// Target of an [`AssignmentExpression`] or [`AssignmentTargetWithDefault`].
+///
+/// Inherits variants from [`AssignmentTarget`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetAddress, GetNodeId, GetSpan, GetSpanMut)]
+#[estree(no_ts_def)]
+pub enum AssignmentTargetMaybeParenthesized<'a> {
+    /// `(x)` in `(x) = whatever`
+    ParenthesizedIdentifier(Box<'a, ParenthesizedIdentifierAssignmentTarget<'a>>) = 17,
+
+    // `AssignmentTarget` variants added here by `#[ast]` macro
+    INHERIT(AssignmentTarget<'a>),
+}
+
+/// `(x)` in `(x) = function() {}` or `[(x) = function() {}] = arr`.
+///
+/// Unlike `x`, a parenthesized identifier is not an *IdentifierRef*, so an anonymous function or
+/// class on the right is not named after it (`x.name` is `""`).
+///
+/// Only identifiers are represented with this node. Parentheses around other assignment targets
+/// (e.g. `(x.y) = 1`) have no effect, and are discarded.
+///
+/// In ESTree AST, serialized as just the identifier.
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(no_type, no_ts_def, via = ParenthesizedIdentifierAssignmentTargetConverter)]
+pub struct ParenthesizedIdentifierAssignmentTarget<'a> {
+    pub node_id: Cell<NodeId>,
+    /// Span including the parentheses
+    pub span: Span,
+    pub target: IdentifierReference<'a>,
 }
 
 /// Destructuring Assignment
@@ -913,8 +953,8 @@ pub enum AssignmentTargetMaybeDefault<'a> {
 pub struct AssignmentTargetWithDefault<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    #[estree(rename = "left")]
-    pub binding: AssignmentTarget<'a>,
+    #[estree(rename = "left", ts_type = "AssignmentTarget")]
+    pub binding: AssignmentTargetMaybeParenthesized<'a>,
     #[estree(rename = "right")]
     pub init: Expression<'a>,
 }

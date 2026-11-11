@@ -1955,6 +1955,58 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AssignmentExpressio
     }
 }
 
+impl<'a> Format<'a, JsFormatContext<'a>>
+    for AstNode<'_, 'a, AssignmentTargetMaybeParenthesized<'a>>
+{
+    #[inline]
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let parent = self.parent;
+        match self.inner {
+            AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(inner) => {
+                AstNode::<ParenthesizedIdentifierAssignmentTarget> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
+            it @ match_assignment_target!(AssignmentTargetMaybeParenthesized) => {
+                let inner = it.to_assignment_target();
+                AstNode::<AssignmentTarget> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
+        }
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>>
+    for AstNode<'_, 'a, ParenthesizedIdentifierAssignmentTarget<'a>>
+{
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
+        self.format_leading_comments(f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AssignmentTarget<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {

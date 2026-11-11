@@ -128,7 +128,7 @@ impl<'a> NullishCoalescingOperator {
         let assignment = Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
-            binding.create_write_target(ctx),
+            binding.create_write_target(ctx).into(),
             logical_expr.left,
             ctx,
         );

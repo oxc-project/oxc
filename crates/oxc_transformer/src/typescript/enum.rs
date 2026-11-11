@@ -296,7 +296,8 @@ impl<'a> TypeScriptEnum {
                 ReferenceFlags::Write,
             );
             let left = AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(left));
-            let expr = Expression::new_assignment_expression(span, op, left, call_expression, ctx);
+            let expr =
+                Expression::new_assignment_expression(span, op, left.into(), call_expression, ctx);
             return Some(Statement::new_expression_statement(span, expr, ctx));
         }
 

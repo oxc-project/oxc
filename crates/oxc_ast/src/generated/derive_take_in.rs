@@ -80,6 +80,10 @@ impl<'a> TakeIn<'a> for ConditionalExpression<'a> {}
 
 impl<'a> TakeIn<'a> for AssignmentExpression<'a> {}
 
+impl<'a> TakeIn<'a> for AssignmentTargetMaybeParenthesized<'a> {}
+
+impl<'a> TakeIn<'a> for ParenthesizedIdentifierAssignmentTarget<'a> {}
+
 impl<'a> TakeIn<'a> for AssignmentTarget<'a> {}
 
 impl<'a> TakeIn<'a> for SimpleAssignmentTarget<'a> {}

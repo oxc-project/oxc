@@ -1316,6 +1316,627 @@ impl<'a> From<MemberExpression<'a>> for Argument<'a> {
     }
 }
 
+impl<'a> AssignmentTargetMaybeParenthesized<'a> {
+    /// Return if an [`AssignmentTargetMaybeParenthesized`] is an [`AssignmentTarget`].
+    #[inline]
+    pub fn is_assignment_target(&self) -> bool {
+        matches!(
+            self,
+            Self::AssignmentTargetIdentifier(_)
+                | Self::TSAsExpression(_)
+                | Self::TSSatisfiesExpression(_)
+                | Self::TSNonNullExpression(_)
+                | Self::TSTypeAssertion(_)
+                | Self::ComputedMemberExpression(_)
+                | Self::StaticMemberExpression(_)
+                | Self::PrivateFieldExpression(_)
+                | Self::ArrayAssignmentTarget(_)
+                | Self::ObjectAssignmentTarget(_)
+        )
+    }
+
+    /// Convert an [`AssignmentTargetMaybeParenthesized`] to an [`AssignmentTarget`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    #[inline]
+    pub fn into_assignment_target(self) -> AssignmentTarget<'a> {
+        AssignmentTarget::try_from(self).unwrap()
+    }
+
+    /// Convert an [`&AssignmentTargetMaybeParenthesized`] to an [`&AssignmentTarget`].
+    ///
+    /// [`&AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&AssignmentTarget`]: AssignmentTarget
+    #[inline]
+    pub fn as_assignment_target(&self) -> Option<&AssignmentTarget<'a>> {
+        if self.is_assignment_target() {
+            // SAFETY: Transmute is safe because discriminants + types are identical between
+            // `parent` and `child` for the shared variants
+            Some(unsafe { NonNull::from_ref(self).cast::<AssignmentTarget>().as_ref() })
+        } else {
+            None
+        }
+    }
+
+    /// Convert an [`&mut AssignmentTargetMaybeParenthesized`] to an [`&mut AssignmentTarget`].
+    ///
+    /// [`&mut AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&mut AssignmentTarget`]: AssignmentTarget
+    #[inline]
+    pub fn as_assignment_target_mut(&mut self) -> Option<&mut AssignmentTarget<'a>> {
+        if self.is_assignment_target() {
+            // SAFETY: Transmute is safe because discriminants + types are identical between
+            // `parent` and `child` for the shared variants
+            Some(unsafe { NonNull::from_mut(self).cast::<AssignmentTarget>().as_mut() })
+        } else {
+            None
+        }
+    }
+
+    /// Convert an [`&AssignmentTargetMaybeParenthesized`] to an [`&AssignmentTarget`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&AssignmentTarget`]: AssignmentTarget
+    #[inline]
+    pub fn to_assignment_target(&self) -> &AssignmentTarget<'a> {
+        self.as_assignment_target().unwrap()
+    }
+
+    /// Convert an [`&mut AssignmentTargetMaybeParenthesized`] to an [`&mut AssignmentTarget`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&mut AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&mut AssignmentTarget`]: AssignmentTarget
+    #[inline]
+    pub fn to_assignment_target_mut(&mut self) -> &mut AssignmentTarget<'a> {
+        self.as_assignment_target_mut().unwrap()
+    }
+}
+
+impl<'a> AssignmentTarget<'a> {
+    /// Convert an [`&AssignmentTarget`] to an [`&AssignmentTargetMaybeParenthesized`].
+    ///
+    /// [`&AssignmentTarget`]: AssignmentTarget
+    /// [`&AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    #[inline]
+    pub fn as_assignment_target_maybe_parenthesized(
+        &self,
+    ) -> &AssignmentTargetMaybeParenthesized<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeParenthesized>().as_ref() }
+    }
+}
+
+impl<'a> TryFrom<AssignmentTargetMaybeParenthesized<'a>> for AssignmentTarget<'a> {
+    type Error = ();
+
+    /// Convert an [`AssignmentTargetMaybeParenthesized`] to an [`AssignmentTarget`].
+    ///
+    /// # Errors
+    /// Returns `Err` if not convertible.
+    #[inline]
+    fn try_from(value: AssignmentTargetMaybeParenthesized<'a>) -> Result<Self, Self::Error> {
+        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
+        // as discriminants for `parent` and `child` are aligned
+        match value {
+            AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(o) => {
+                Ok(AssignmentTarget::AssignmentTargetIdentifier(o))
+            }
+            AssignmentTargetMaybeParenthesized::TSAsExpression(o) => {
+                Ok(AssignmentTarget::TSAsExpression(o))
+            }
+            AssignmentTargetMaybeParenthesized::TSSatisfiesExpression(o) => {
+                Ok(AssignmentTarget::TSSatisfiesExpression(o))
+            }
+            AssignmentTargetMaybeParenthesized::TSNonNullExpression(o) => {
+                Ok(AssignmentTarget::TSNonNullExpression(o))
+            }
+            AssignmentTargetMaybeParenthesized::TSTypeAssertion(o) => {
+                Ok(AssignmentTarget::TSTypeAssertion(o))
+            }
+            AssignmentTargetMaybeParenthesized::ComputedMemberExpression(o) => {
+                Ok(AssignmentTarget::ComputedMemberExpression(o))
+            }
+            AssignmentTargetMaybeParenthesized::StaticMemberExpression(o) => {
+                Ok(AssignmentTarget::StaticMemberExpression(o))
+            }
+            AssignmentTargetMaybeParenthesized::PrivateFieldExpression(o) => {
+                Ok(AssignmentTarget::PrivateFieldExpression(o))
+            }
+            AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(o) => {
+                Ok(AssignmentTarget::ArrayAssignmentTarget(o))
+            }
+            AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(o) => {
+                Ok(AssignmentTarget::ObjectAssignmentTarget(o))
+            }
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'a> From<AssignmentTarget<'a>> for AssignmentTargetMaybeParenthesized<'a> {
+    /// Convert an [`AssignmentTarget`] to an [`AssignmentTargetMaybeParenthesized`].
+    #[inline]
+    fn from(value: AssignmentTarget<'a>) -> Self {
+        // Compiler should implement this as zero-cost transmute as discriminants
+        // for `child` and `parent` are aligned
+        match value {
+            AssignmentTarget::AssignmentTargetIdentifier(o) => {
+                AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(o)
+            }
+            AssignmentTarget::TSAsExpression(o) => {
+                AssignmentTargetMaybeParenthesized::TSAsExpression(o)
+            }
+            AssignmentTarget::TSSatisfiesExpression(o) => {
+                AssignmentTargetMaybeParenthesized::TSSatisfiesExpression(o)
+            }
+            AssignmentTarget::TSNonNullExpression(o) => {
+                AssignmentTargetMaybeParenthesized::TSNonNullExpression(o)
+            }
+            AssignmentTarget::TSTypeAssertion(o) => {
+                AssignmentTargetMaybeParenthesized::TSTypeAssertion(o)
+            }
+            AssignmentTarget::ComputedMemberExpression(o) => {
+                AssignmentTargetMaybeParenthesized::ComputedMemberExpression(o)
+            }
+            AssignmentTarget::StaticMemberExpression(o) => {
+                AssignmentTargetMaybeParenthesized::StaticMemberExpression(o)
+            }
+            AssignmentTarget::PrivateFieldExpression(o) => {
+                AssignmentTargetMaybeParenthesized::PrivateFieldExpression(o)
+            }
+            AssignmentTarget::ArrayAssignmentTarget(o) => {
+                AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(o)
+            }
+            AssignmentTarget::ObjectAssignmentTarget(o) => {
+                AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(o)
+            }
+        }
+    }
+}
+
+impl<'a> AssignmentTargetMaybeParenthesized<'a> {
+    /// Return if an [`AssignmentTargetMaybeParenthesized`] is a [`SimpleAssignmentTarget`].
+    #[inline]
+    pub fn is_simple_assignment_target(&self) -> bool {
+        matches!(
+            self,
+            Self::AssignmentTargetIdentifier(_)
+                | Self::TSAsExpression(_)
+                | Self::TSSatisfiesExpression(_)
+                | Self::TSNonNullExpression(_)
+                | Self::TSTypeAssertion(_)
+                | Self::ComputedMemberExpression(_)
+                | Self::StaticMemberExpression(_)
+                | Self::PrivateFieldExpression(_)
+        )
+    }
+
+    /// Convert an [`AssignmentTargetMaybeParenthesized`] to a [`SimpleAssignmentTarget`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    #[inline]
+    pub fn into_simple_assignment_target(self) -> SimpleAssignmentTarget<'a> {
+        SimpleAssignmentTarget::try_from(self).unwrap()
+    }
+
+    /// Convert an [`&AssignmentTargetMaybeParenthesized`] to a [`&SimpleAssignmentTarget`].
+    ///
+    /// [`&AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    #[inline]
+    pub fn as_simple_assignment_target(&self) -> Option<&SimpleAssignmentTarget<'a>> {
+        if self.is_simple_assignment_target() {
+            // SAFETY: Transmute is safe because discriminants + types are identical between
+            // `parent` and `child` for the shared variants
+            Some(unsafe { NonNull::from_ref(self).cast::<SimpleAssignmentTarget>().as_ref() })
+        } else {
+            None
+        }
+    }
+
+    /// Convert an [`&mut AssignmentTargetMaybeParenthesized`] to a [`&mut SimpleAssignmentTarget`].
+    ///
+    /// [`&mut AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&mut SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    #[inline]
+    pub fn as_simple_assignment_target_mut(&mut self) -> Option<&mut SimpleAssignmentTarget<'a>> {
+        if self.is_simple_assignment_target() {
+            // SAFETY: Transmute is safe because discriminants + types are identical between
+            // `parent` and `child` for the shared variants
+            Some(unsafe { NonNull::from_mut(self).cast::<SimpleAssignmentTarget>().as_mut() })
+        } else {
+            None
+        }
+    }
+
+    /// Convert an [`&AssignmentTargetMaybeParenthesized`] to a [`&SimpleAssignmentTarget`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    #[inline]
+    pub fn to_simple_assignment_target(&self) -> &SimpleAssignmentTarget<'a> {
+        self.as_simple_assignment_target().unwrap()
+    }
+
+    /// Convert an [`&mut AssignmentTargetMaybeParenthesized`] to a [`&mut SimpleAssignmentTarget`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&mut AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&mut SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    #[inline]
+    pub fn to_simple_assignment_target_mut(&mut self) -> &mut SimpleAssignmentTarget<'a> {
+        self.as_simple_assignment_target_mut().unwrap()
+    }
+}
+
+impl<'a> SimpleAssignmentTarget<'a> {
+    /// Convert a [`&SimpleAssignmentTarget`] to an [`&AssignmentTargetMaybeParenthesized`].
+    ///
+    /// [`&SimpleAssignmentTarget`]: SimpleAssignmentTarget
+    /// [`&AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    #[inline]
+    pub fn as_assignment_target_maybe_parenthesized(
+        &self,
+    ) -> &AssignmentTargetMaybeParenthesized<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeParenthesized>().as_ref() }
+    }
+}
+
+impl<'a> TryFrom<AssignmentTargetMaybeParenthesized<'a>> for SimpleAssignmentTarget<'a> {
+    type Error = ();
+
+    /// Convert an [`AssignmentTargetMaybeParenthesized`] to a [`SimpleAssignmentTarget`].
+    ///
+    /// # Errors
+    /// Returns `Err` if not convertible.
+    #[inline]
+    fn try_from(value: AssignmentTargetMaybeParenthesized<'a>) -> Result<Self, Self::Error> {
+        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
+        // as discriminants for `parent` and `child` are aligned
+        match value {
+            AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(o) => {
+                Ok(SimpleAssignmentTarget::AssignmentTargetIdentifier(o))
+            }
+            AssignmentTargetMaybeParenthesized::TSAsExpression(o) => {
+                Ok(SimpleAssignmentTarget::TSAsExpression(o))
+            }
+            AssignmentTargetMaybeParenthesized::TSSatisfiesExpression(o) => {
+                Ok(SimpleAssignmentTarget::TSSatisfiesExpression(o))
+            }
+            AssignmentTargetMaybeParenthesized::TSNonNullExpression(o) => {
+                Ok(SimpleAssignmentTarget::TSNonNullExpression(o))
+            }
+            AssignmentTargetMaybeParenthesized::TSTypeAssertion(o) => {
+                Ok(SimpleAssignmentTarget::TSTypeAssertion(o))
+            }
+            AssignmentTargetMaybeParenthesized::ComputedMemberExpression(o) => {
+                Ok(SimpleAssignmentTarget::ComputedMemberExpression(o))
+            }
+            AssignmentTargetMaybeParenthesized::StaticMemberExpression(o) => {
+                Ok(SimpleAssignmentTarget::StaticMemberExpression(o))
+            }
+            AssignmentTargetMaybeParenthesized::PrivateFieldExpression(o) => {
+                Ok(SimpleAssignmentTarget::PrivateFieldExpression(o))
+            }
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'a> From<SimpleAssignmentTarget<'a>> for AssignmentTargetMaybeParenthesized<'a> {
+    /// Convert a [`SimpleAssignmentTarget`] to an [`AssignmentTargetMaybeParenthesized`].
+    #[inline]
+    fn from(value: SimpleAssignmentTarget<'a>) -> Self {
+        // Compiler should implement this as zero-cost transmute as discriminants
+        // for `child` and `parent` are aligned
+        match value {
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(o) => {
+                AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(o)
+            }
+            SimpleAssignmentTarget::TSAsExpression(o) => {
+                AssignmentTargetMaybeParenthesized::TSAsExpression(o)
+            }
+            SimpleAssignmentTarget::TSSatisfiesExpression(o) => {
+                AssignmentTargetMaybeParenthesized::TSSatisfiesExpression(o)
+            }
+            SimpleAssignmentTarget::TSNonNullExpression(o) => {
+                AssignmentTargetMaybeParenthesized::TSNonNullExpression(o)
+            }
+            SimpleAssignmentTarget::TSTypeAssertion(o) => {
+                AssignmentTargetMaybeParenthesized::TSTypeAssertion(o)
+            }
+            SimpleAssignmentTarget::ComputedMemberExpression(o) => {
+                AssignmentTargetMaybeParenthesized::ComputedMemberExpression(o)
+            }
+            SimpleAssignmentTarget::StaticMemberExpression(o) => {
+                AssignmentTargetMaybeParenthesized::StaticMemberExpression(o)
+            }
+            SimpleAssignmentTarget::PrivateFieldExpression(o) => {
+                AssignmentTargetMaybeParenthesized::PrivateFieldExpression(o)
+            }
+        }
+    }
+}
+
+impl<'a> AssignmentTargetMaybeParenthesized<'a> {
+    /// Return if an [`AssignmentTargetMaybeParenthesized`] is a [`MemberExpression`].
+    #[inline]
+    pub fn is_member_expression(&self) -> bool {
+        matches!(
+            self,
+            Self::ComputedMemberExpression(_)
+                | Self::StaticMemberExpression(_)
+                | Self::PrivateFieldExpression(_)
+        )
+    }
+
+    /// Convert an [`AssignmentTargetMaybeParenthesized`] to a [`MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    #[inline]
+    pub fn into_member_expression(self) -> MemberExpression<'a> {
+        MemberExpression::try_from(self).unwrap()
+    }
+
+    /// Convert an [`&AssignmentTargetMaybeParenthesized`] to a [`&MemberExpression`].
+    ///
+    /// [`&AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
+        if self.is_member_expression() {
+            // SAFETY: Transmute is safe because discriminants + types are identical between
+            // `parent` and `child` for the shared variants
+            Some(unsafe { NonNull::from_ref(self).cast::<MemberExpression>().as_ref() })
+        } else {
+            None
+        }
+    }
+
+    /// Convert an [`&mut AssignmentTargetMaybeParenthesized`] to a [`&mut MemberExpression`].
+    ///
+    /// [`&mut AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&mut MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn as_member_expression_mut(&mut self) -> Option<&mut MemberExpression<'a>> {
+        if self.is_member_expression() {
+            // SAFETY: Transmute is safe because discriminants + types are identical between
+            // `parent` and `child` for the shared variants
+            Some(unsafe { NonNull::from_mut(self).cast::<MemberExpression>().as_mut() })
+        } else {
+            None
+        }
+    }
+
+    /// Convert an [`&AssignmentTargetMaybeParenthesized`] to a [`&MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn to_member_expression(&self) -> &MemberExpression<'a> {
+        self.as_member_expression().unwrap()
+    }
+
+    /// Convert an [`&mut AssignmentTargetMaybeParenthesized`] to a [`&mut MemberExpression`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&mut AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&mut MemberExpression`]: MemberExpression
+    #[inline]
+    pub fn to_member_expression_mut(&mut self) -> &mut MemberExpression<'a> {
+        self.as_member_expression_mut().unwrap()
+    }
+}
+
+impl<'a> MemberExpression<'a> {
+    /// Convert a [`&MemberExpression`] to an [`&AssignmentTargetMaybeParenthesized`].
+    ///
+    /// [`&MemberExpression`]: MemberExpression
+    /// [`&AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    #[inline]
+    pub fn as_assignment_target_maybe_parenthesized(
+        &self,
+    ) -> &AssignmentTargetMaybeParenthesized<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeParenthesized>().as_ref() }
+    }
+}
+
+impl<'a> TryFrom<AssignmentTargetMaybeParenthesized<'a>> for MemberExpression<'a> {
+    type Error = ();
+
+    /// Convert an [`AssignmentTargetMaybeParenthesized`] to a [`MemberExpression`].
+    ///
+    /// # Errors
+    /// Returns `Err` if not convertible.
+    #[inline]
+    fn try_from(value: AssignmentTargetMaybeParenthesized<'a>) -> Result<Self, Self::Error> {
+        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
+        // as discriminants for `parent` and `child` are aligned
+        match value {
+            AssignmentTargetMaybeParenthesized::ComputedMemberExpression(o) => {
+                Ok(MemberExpression::ComputedMemberExpression(o))
+            }
+            AssignmentTargetMaybeParenthesized::StaticMemberExpression(o) => {
+                Ok(MemberExpression::StaticMemberExpression(o))
+            }
+            AssignmentTargetMaybeParenthesized::PrivateFieldExpression(o) => {
+                Ok(MemberExpression::PrivateFieldExpression(o))
+            }
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'a> From<MemberExpression<'a>> for AssignmentTargetMaybeParenthesized<'a> {
+    /// Convert a [`MemberExpression`] to an [`AssignmentTargetMaybeParenthesized`].
+    #[inline]
+    fn from(value: MemberExpression<'a>) -> Self {
+        // Compiler should implement this as zero-cost transmute as discriminants
+        // for `child` and `parent` are aligned
+        match value {
+            MemberExpression::ComputedMemberExpression(o) => {
+                AssignmentTargetMaybeParenthesized::ComputedMemberExpression(o)
+            }
+            MemberExpression::StaticMemberExpression(o) => {
+                AssignmentTargetMaybeParenthesized::StaticMemberExpression(o)
+            }
+            MemberExpression::PrivateFieldExpression(o) => {
+                AssignmentTargetMaybeParenthesized::PrivateFieldExpression(o)
+            }
+        }
+    }
+}
+
+impl<'a> AssignmentTargetMaybeParenthesized<'a> {
+    /// Return if an [`AssignmentTargetMaybeParenthesized`] is an [`AssignmentTargetPattern`].
+    #[inline]
+    pub fn is_assignment_target_pattern(&self) -> bool {
+        matches!(self, Self::ArrayAssignmentTarget(_) | Self::ObjectAssignmentTarget(_))
+    }
+
+    /// Convert an [`AssignmentTargetMaybeParenthesized`] to an [`AssignmentTargetPattern`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    #[inline]
+    pub fn into_assignment_target_pattern(self) -> AssignmentTargetPattern<'a> {
+        AssignmentTargetPattern::try_from(self).unwrap()
+    }
+
+    /// Convert an [`&AssignmentTargetMaybeParenthesized`] to an [`&AssignmentTargetPattern`].
+    ///
+    /// [`&AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&AssignmentTargetPattern`]: AssignmentTargetPattern
+    #[inline]
+    pub fn as_assignment_target_pattern(&self) -> Option<&AssignmentTargetPattern<'a>> {
+        if self.is_assignment_target_pattern() {
+            // SAFETY: Transmute is safe because discriminants + types are identical between
+            // `parent` and `child` for the shared variants
+            Some(unsafe { NonNull::from_ref(self).cast::<AssignmentTargetPattern>().as_ref() })
+        } else {
+            None
+        }
+    }
+
+    /// Convert an [`&mut AssignmentTargetMaybeParenthesized`] to an [`&mut AssignmentTargetPattern`].
+    ///
+    /// [`&mut AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&mut AssignmentTargetPattern`]: AssignmentTargetPattern
+    #[inline]
+    pub fn as_assignment_target_pattern_mut(&mut self) -> Option<&mut AssignmentTargetPattern<'a>> {
+        if self.is_assignment_target_pattern() {
+            // SAFETY: Transmute is safe because discriminants + types are identical between
+            // `parent` and `child` for the shared variants
+            Some(unsafe { NonNull::from_mut(self).cast::<AssignmentTargetPattern>().as_mut() })
+        } else {
+            None
+        }
+    }
+
+    /// Convert an [`&AssignmentTargetMaybeParenthesized`] to an [`&AssignmentTargetPattern`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&AssignmentTargetPattern`]: AssignmentTargetPattern
+    #[inline]
+    pub fn to_assignment_target_pattern(&self) -> &AssignmentTargetPattern<'a> {
+        self.as_assignment_target_pattern().unwrap()
+    }
+
+    /// Convert an [`&mut AssignmentTargetMaybeParenthesized`] to an [`&mut AssignmentTargetPattern`].
+    ///
+    /// # Panics
+    /// Panics if not convertible.
+    ///
+    /// [`&mut AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    /// [`&mut AssignmentTargetPattern`]: AssignmentTargetPattern
+    #[inline]
+    pub fn to_assignment_target_pattern_mut(&mut self) -> &mut AssignmentTargetPattern<'a> {
+        self.as_assignment_target_pattern_mut().unwrap()
+    }
+}
+
+impl<'a> AssignmentTargetPattern<'a> {
+    /// Convert an [`&AssignmentTargetPattern`] to an [`&AssignmentTargetMaybeParenthesized`].
+    ///
+    /// [`&AssignmentTargetPattern`]: AssignmentTargetPattern
+    /// [`&AssignmentTargetMaybeParenthesized`]: AssignmentTargetMaybeParenthesized
+    #[inline]
+    pub fn as_assignment_target_maybe_parenthesized(
+        &self,
+    ) -> &AssignmentTargetMaybeParenthesized<'a> {
+        // SAFETY: Transmute is safe because discriminants + types are identical between
+        // `parent` and `child` for the shared variants
+        unsafe { NonNull::from_ref(self).cast::<AssignmentTargetMaybeParenthesized>().as_ref() }
+    }
+}
+
+impl<'a> TryFrom<AssignmentTargetMaybeParenthesized<'a>> for AssignmentTargetPattern<'a> {
+    type Error = ();
+
+    /// Convert an [`AssignmentTargetMaybeParenthesized`] to an [`AssignmentTargetPattern`].
+    ///
+    /// # Errors
+    /// Returns `Err` if not convertible.
+    #[inline]
+    fn try_from(value: AssignmentTargetMaybeParenthesized<'a>) -> Result<Self, Self::Error> {
+        // Compiler should implement this as a check of discriminant and then zero-cost transmute,
+        // as discriminants for `parent` and `child` are aligned
+        match value {
+            AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(o) => {
+                Ok(AssignmentTargetPattern::ArrayAssignmentTarget(o))
+            }
+            AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(o) => {
+                Ok(AssignmentTargetPattern::ObjectAssignmentTarget(o))
+            }
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'a> From<AssignmentTargetPattern<'a>> for AssignmentTargetMaybeParenthesized<'a> {
+    /// Convert an [`AssignmentTargetPattern`] to an [`AssignmentTargetMaybeParenthesized`].
+    #[inline]
+    fn from(value: AssignmentTargetPattern<'a>) -> Self {
+        // Compiler should implement this as zero-cost transmute as discriminants
+        // for `child` and `parent` are aligned
+        match value {
+            AssignmentTargetPattern::ArrayAssignmentTarget(o) => {
+                AssignmentTargetMaybeParenthesized::ArrayAssignmentTarget(o)
+            }
+            AssignmentTargetPattern::ObjectAssignmentTarget(o) => {
+                AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(o)
+            }
+        }
+    }
+}
+
 impl<'a> AssignmentTarget<'a> {
     /// Return if an [`AssignmentTarget`] is a [`SimpleAssignmentTarget`].
     #[inline]

@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, CallExpression, Expression, Function, ObjectProperty,
-        PropertyDefinition, PropertyKey,
+        Argument, AssignmentTargetMaybeParenthesized, CallExpression, Expression, Function,
+        ObjectProperty, PropertyDefinition, PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -436,20 +436,20 @@ fn function_name<'a>(function: &'a Function<'a>) -> Option<FunctionName<'a>> {
     Some(FunctionName { name: id.name.as_str(), span: id.span })
 }
 
-fn assignment_target_name<'a>(target: &'a AssignmentTarget<'a>) -> Option<(&'a str, bool)> {
-    match target {
-        AssignmentTarget::AssignmentTargetIdentifier(identifier) => {
-            Some((identifier.name.as_str(), false))
-        }
-        target => target
-            .as_member_expression()?
-            .static_property_name()
-            .and_then(JSStr::as_str)
-            .map(|name| (name, true)),
+fn assignment_target_name<'a>(
+    target: &'a AssignmentTargetMaybeParenthesized<'a>,
+) -> Option<(&'a str, bool)> {
+    if let Some(identifier) = target.identifier() {
+        return Some((identifier.name.as_str(), false));
     }
+    target
+        .as_member_expression()?
+        .static_property_name()
+        .and_then(JSStr::as_str)
+        .map(|name| (name, true))
 }
 
-fn is_module_exports(target: &AssignmentTarget) -> bool {
+fn is_module_exports(target: &AssignmentTargetMaybeParenthesized) -> bool {
     let Some(member_expr) = target.as_member_expression() else {
         return false;
     };

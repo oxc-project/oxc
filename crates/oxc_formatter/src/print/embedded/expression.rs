@@ -86,7 +86,7 @@ fn starts_declaration_as_statements(
         | Expression::ClassExpression(_)
         | Expression::ObjectExpression(_) => true,
         Expression::AssignmentExpression(assignment) => {
-            matches!(assignment.left, AssignmentTarget::ObjectAssignmentTarget(_))
+            matches!(assignment.left, AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(_))
         }
         Expression::Identifier(identifier) if identifier.name == "let" => program.source_text
             [skip_trivia(program, &source, identifier.span.end as usize)..]

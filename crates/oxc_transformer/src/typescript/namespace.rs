@@ -410,8 +410,13 @@ impl<'a> TypeScriptNamespace<'a> {
 
                 let assign_right = Expression::new_object_expression(SPAN, [], ctx);
                 let op = AssignmentOperator::Assign;
-                let assign_expr =
-                    Expression::new_assignment_expression(SPAN, op, assign_left, assign_right, ctx);
+                let assign_expr = Expression::new_assignment_expression(
+                    SPAN,
+                    op,
+                    assign_left.into(),
+                    assign_right,
+                    ctx,
+                );
                 Expression::new_parenthesized_expression(SPAN, assign_expr, ctx)
             };
 
@@ -437,8 +442,13 @@ impl<'a> TypeScriptNamespace<'a> {
                     )
                 };
                 let op = AssignmentOperator::Assign;
-                logical_right =
-                    Expression::new_assignment_expression(SPAN, op, assign_left, assign_right, ctx);
+                logical_right = Expression::new_assignment_expression(
+                    SPAN,
+                    op,
+                    assign_left.into(),
+                    assign_right,
+                    ctx,
+                );
                 logical_right = Expression::new_parenthesized_expression(SPAN, logical_right, ctx);
             }
 
@@ -483,7 +493,7 @@ impl<'a> TypeScriptNamespace<'a> {
         let left = AssignmentTarget::from(left);
         let right = value_binding.create_read_expression(ctx);
         let op = AssignmentOperator::Assign;
-        Expression::new_assignment_expression(SPAN, op, left, right, ctx)
+        Expression::new_assignment_expression(SPAN, op, left.into(), right, ctx)
     }
 
     /// Convert `export const foo = 1` to `Namespace.foo = 1`;

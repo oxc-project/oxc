@@ -1111,10 +1111,43 @@ function deserializeAssignmentExpression(pos) {
       (node$0.range = [start, end]),
       (node$0.parent = parent),
       node$0));
-  node.left = deserializeAssignmentTarget(pos + 16);
+  node.left = deserializeAssignmentTargetMaybeParenthesized(pos + 16);
   node.right = deserializeExpression(pos + 32);
   parent = previousParent;
   return node;
+}
+
+function deserializeAssignmentTargetMaybeParenthesized(pos) {
+  switch (uint8[pos]) {
+    case 0:
+      return deserializeBoxIdentifierReference(pos + 8);
+    case 1:
+      return deserializeBoxTSAsExpression(pos + 8);
+    case 2:
+      return deserializeBoxTSSatisfiesExpression(pos + 8);
+    case 3:
+      return deserializeBoxTSNonNullExpression(pos + 8);
+    case 4:
+      return deserializeBoxTSTypeAssertion(pos + 8);
+    case 8:
+      return deserializeBoxArrayAssignmentTarget(pos + 8);
+    case 9:
+      return deserializeBoxObjectAssignmentTarget(pos + 8);
+    case 17:
+      return deserializeBoxParenthesizedIdentifierAssignmentTarget(pos + 8);
+    case 48:
+      return deserializeBoxComputedMemberExpression(pos + 8);
+    case 49:
+      return deserializeBoxStaticMemberExpression(pos + 8);
+    case 50:
+      return deserializeBoxPrivateFieldExpression(pos + 8);
+    default:
+      throw Error(`Unexpected discriminant ${uint8[pos]} for AssignmentTargetMaybeParenthesized`);
+  }
+}
+
+function deserializeParenthesizedIdentifierAssignmentTarget(pos) {
+  return deserializeIdentifierReference(pos + 16);
 }
 
 function deserializeAssignmentTarget(pos) {
@@ -1287,7 +1320,7 @@ function deserializeAssignmentTargetWithDefault(pos) {
       (node$0.range = [start, end]),
       (node$0.parent = parent),
       node$0));
-  node.left = deserializeAssignmentTarget(pos + 16);
+  node.left = deserializeAssignmentTargetMaybeParenthesized(pos + 16);
   node.right = deserializeExpression(pos + 32);
   parent = previousParent;
   return node;
@@ -6601,6 +6634,10 @@ function deserializeVecArgument(pos) {
     pos += 16;
   }
   return arr;
+}
+
+function deserializeBoxParenthesizedIdentifierAssignmentTarget(pos) {
+  return deserializeParenthesizedIdentifierAssignmentTarget(int32[pos >> 2]);
 }
 
 function deserializeBoxArrayAssignmentTarget(pos) {

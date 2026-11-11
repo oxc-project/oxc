@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentExpression, AssignmentTarget, BindingIdentifier, CallExpression,
-        Expression, ForInStatement, ForOfStatement, ForStatement, VariableDeclarationKind,
+        Argument, AssignmentExpression, AssignmentTargetMaybeParenthesized, BindingIdentifier,
+        CallExpression, Expression, ForInStatement, ForOfStatement, ForStatement,
+        VariableDeclarationKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -266,11 +267,11 @@ fn find_assignment_expression<'a>(
 
 /// Check if the assignment target is our referenced symbol
 fn is_assignment_to_symbol(
-    assignment_target: &AssignmentTarget,
+    assignment_target: &AssignmentTargetMaybeParenthesized,
     referenced_symbol_id: SymbolId,
     ctx: &LintContext,
 ) -> bool {
-    if let AssignmentTarget::AssignmentTargetIdentifier(ident) = assignment_target {
+    if let Some(ident) = assignment_target.identifier() {
         let scoping = ctx.semantic().scoping();
         let reference = scoping.get_reference(ident.reference_id());
         reference.symbol_id() == Some(referenced_symbol_id)

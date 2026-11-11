@@ -2104,7 +2104,7 @@ impl GenExpr for AssignmentExpression<'_> {
         let n = p.code_len();
         // Destructuring assignments must be parenthesized
         let wrap = (p.start_of_stmt == n || p.start_of_arrow_expr == n)
-            && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_));
+            && matches!(self.left, AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(_));
         p.wrap(wrap || precedence >= self.precedence(), |p| {
             p.add_source_mapping(self.span);
             if !cjs_module_lexer::try_print_exports_computed_target(p, &self.left, ctx) {
@@ -2123,6 +2123,24 @@ impl GenExpr for AssignmentExpression<'_> {
             p.print_soft_space();
             self.right.print_expr(p, Precedence::Comma, ctx);
         });
+    }
+}
+
+impl Gen for AssignmentTargetMaybeParenthesized<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        match self {
+            Self::ParenthesizedIdentifier(target) => target.print(p, ctx),
+            match_assignment_target!(Self) => self.to_assignment_target().print(p, ctx),
+        }
+    }
+}
+
+impl Gen for ParenthesizedIdentifierAssignmentTarget<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.add_source_mapping(self.span);
+        p.print_ascii_byte(b'(');
+        self.target.print(p, ctx);
+        p.print_ascii_byte(b')');
     }
 }
 
@@ -2277,8 +2295,18 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
                 PropertyKey::StaticIdentifier(ident) => Some(&ident.name),
                 _ => None,
             };
-            let value_name =
-                self.binding.identifier().map(|id| p.get_identifier_reference_name(id));
+            // `{a: (a) = f}` cannot be shortened to `{(a) = f}`
+            let value_name = match &self.binding {
+                AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(target)
+                    if matches!(
+                        target.binding,
+                        AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(_)
+                    ) =>
+                {
+                    None
+                }
+                binding => binding.identifier().map(|id| p.get_identifier_reference_name(id)),
+            };
             match (key_name, value_name) {
                 (Some(key_name), Some(value_name)) => key_name == value_name,
                 _ => false,

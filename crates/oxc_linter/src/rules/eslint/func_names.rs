@@ -3,8 +3,8 @@ use std::borrow::Cow;
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        AssignmentTarget, AssignmentTargetProperty, BindingPattern, Expression, Function,
-        FunctionType, ObjectAssignmentTarget,
+        AssignmentTargetMaybeParenthesized, AssignmentTargetProperty, BindingPattern, Expression,
+        Function, FunctionType, ObjectAssignmentTarget,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -362,12 +362,16 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
             definition.value.as_ref().is_some_and(|value| is_same_function(value, function))
         }
         AstKind::AssignmentExpression(expression) => {
-            matches!(expression.left, AssignmentTarget::AssignmentTargetIdentifier(_))
-                && is_same_function(&expression.right, function)
+            matches!(
+                expression.left,
+                AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(_)
+            ) && is_same_function(&expression.right, function)
         }
         AstKind::AssignmentTargetWithDefault(target) => {
-            matches!(target.binding, AssignmentTarget::AssignmentTargetIdentifier(_))
-                && is_same_function(&target.init, function)
+            matches!(
+                target.binding,
+                AssignmentTargetMaybeParenthesized::AssignmentTargetIdentifier(_)
+            ) && is_same_function(&target.init, function)
         }
         AstKind::FormalParameter(pattern) => {
             matches!(pattern.pattern, BindingPattern::BindingIdentifier(_))

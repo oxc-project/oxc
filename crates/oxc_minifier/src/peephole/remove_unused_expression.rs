@@ -894,12 +894,12 @@ impl<'a> PeepholeOptimizations {
     /// that throws a `TypeError` unless `o` is an instance of the class that
     /// declares `#x`, which a fresh object / function / class / array literal
     /// never is — so the write always throws and must be kept.
-    fn member_write_shape_is_safe(target: &AssignmentTarget<'a>) -> bool {
+    fn member_write_shape_is_safe(target: &AssignmentTargetMaybeParenthesized<'a>) -> bool {
         match target {
-            AssignmentTarget::StaticMemberExpression(e) => {
+            AssignmentTargetMaybeParenthesized::StaticMemberExpression(e) => {
                 matches!(e.object, Expression::Identifier(_)) && e.property.name != "__proto__"
             }
-            AssignmentTarget::ComputedMemberExpression(e) => {
+            AssignmentTargetMaybeParenthesized::ComputedMemberExpression(e) => {
                 matches!(e.object, Expression::Identifier(_))
                     && Self::member_key_is_safe(&e.expression)
             }
@@ -911,13 +911,19 @@ impl<'a> PeepholeOptimizations {
     /// static identifier (`o.length`) or a computed string literal (`o["length"]`).
     /// `None` for a numeric computed key (`o[0]`), whose `ToString` can never
     /// equal one of the denied names. Used by the kind-aware key denylist.
-    fn member_write_key_name<'k>(target: &'k AssignmentTarget<'a>) -> Option<&'k str> {
+    fn member_write_key_name<'k>(
+        target: &'k AssignmentTargetMaybeParenthesized<'a>,
+    ) -> Option<&'k str> {
         match target {
-            AssignmentTarget::StaticMemberExpression(e) => Some(e.property.name.as_str()),
-            AssignmentTarget::ComputedMemberExpression(e) => match &e.expression {
-                Expression::StringLiteral(s) => s.value.as_str(),
-                _ => None,
-            },
+            AssignmentTargetMaybeParenthesized::StaticMemberExpression(e) => {
+                Some(e.property.name.as_str())
+            }
+            AssignmentTargetMaybeParenthesized::ComputedMemberExpression(e) => {
+                match &e.expression {
+                    Expression::StringLiteral(s) => s.value.as_str(),
+                    _ => None,
+                }
+            }
             _ => None,
         }
     }
@@ -933,7 +939,10 @@ impl<'a> PeepholeOptimizations {
     ///   `valueOf` coercion (`a.length = { valueOf() {...} }`).
     ///
     /// `Object` literals have ordinary writable properties, so nothing is denied.
-    fn member_write_key_denied(target: &AssignmentTarget<'a>, kind: FreshValueKind) -> bool {
+    fn member_write_key_denied(
+        target: &AssignmentTargetMaybeParenthesized<'a>,
+        kind: FreshValueKind,
+    ) -> bool {
         let Some(key) = Self::member_write_key_name(target) else { return false };
         match kind {
             FreshValueKind::Function => {
@@ -967,9 +976,9 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<SymbolId> {
         // Only handle single-level member expressions (A.foo, not a.b.c).
         let object = match &assign_expr.left {
-            AssignmentTarget::StaticMemberExpression(e) => &e.object,
-            AssignmentTarget::ComputedMemberExpression(e) => &e.object,
-            AssignmentTarget::PrivateFieldExpression(e) => &e.object,
+            AssignmentTargetMaybeParenthesized::StaticMemberExpression(e) => &e.object,
+            AssignmentTargetMaybeParenthesized::ComputedMemberExpression(e) => &e.object,
+            AssignmentTargetMaybeParenthesized::PrivateFieldExpression(e) => &e.object,
             _ => return None,
         };
         let Expression::Identifier(ident) = object else { return None };

@@ -1945,7 +1945,7 @@ export class AssignmentExpression {
 
   get left() {
     const internal = this.#internal;
-    return constructAssignmentTarget(internal.pos + 16, internal.ast);
+    return constructAssignmentTargetMaybeParenthesized(internal.pos + 16, internal.ast);
   }
 
   get right() {
@@ -1970,6 +1970,84 @@ export class AssignmentExpression {
 }
 
 const DebugAssignmentExpression = class AssignmentExpression {};
+
+function constructAssignmentTargetMaybeParenthesized(pos, ast) {
+  switch (ast.buffer[pos]) {
+    case 0:
+      return constructBoxIdentifierReference(pos + 8, ast);
+    case 1:
+      return constructBoxTSAsExpression(pos + 8, ast);
+    case 2:
+      return constructBoxTSSatisfiesExpression(pos + 8, ast);
+    case 3:
+      return constructBoxTSNonNullExpression(pos + 8, ast);
+    case 4:
+      return constructBoxTSTypeAssertion(pos + 8, ast);
+    case 8:
+      return constructBoxArrayAssignmentTarget(pos + 8, ast);
+    case 9:
+      return constructBoxObjectAssignmentTarget(pos + 8, ast);
+    case 17:
+      return constructBoxParenthesizedIdentifierAssignmentTarget(pos + 8, ast);
+    case 48:
+      return constructBoxComputedMemberExpression(pos + 8, ast);
+    case 49:
+      return constructBoxStaticMemberExpression(pos + 8, ast);
+    case 50:
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
+    default:
+      throw new Error(
+        `Unexpected discriminant ${ast.buffer[pos]} for AssignmentTargetMaybeParenthesized`,
+      );
+  }
+}
+
+export class ParenthesizedIdentifierAssignmentTarget {
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get target() {
+    const internal = this.#internal;
+    return new IdentifierReference(internal.pos + 16, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      start: this.start,
+      end: this.end,
+      target: this.target,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(
+      this.toJSON(),
+      DebugParenthesizedIdentifierAssignmentTarget.prototype,
+    );
+  }
+}
+
+const DebugParenthesizedIdentifierAssignmentTarget = class ParenthesizedIdentifierAssignmentTarget {};
 
 function constructAssignmentTarget(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -2238,7 +2316,7 @@ export class AssignmentTargetWithDefault {
 
   get left() {
     const internal = this.#internal;
-    return constructAssignmentTarget(internal.pos + 16, internal.ast);
+    return constructAssignmentTargetMaybeParenthesized(internal.pos + 16, internal.ast);
   }
 
   get right() {
@@ -13246,6 +13324,10 @@ function constructVecArgument(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructArgument, ast);
+}
+
+function constructBoxParenthesizedIdentifierAssignmentTarget(pos, ast) {
+  return new ParenthesizedIdentifierAssignmentTarget(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxArrayAssignmentTarget(pos, ast) {

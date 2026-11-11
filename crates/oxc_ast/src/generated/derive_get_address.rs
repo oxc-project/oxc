@@ -194,6 +194,26 @@ impl GetAddress for Argument<'_> {
     }
 }
 
+impl GetAddress for AssignmentTargetMaybeParenthesized<'_> {
+    // `#[inline]` because compiler should boil this down to a single assembly instruction
+    #[inline]
+    fn address(&self) -> Address {
+        match self {
+            Self::ParenthesizedIdentifier(it) => GetAddress::address(it),
+            Self::AssignmentTargetIdentifier(it) => GetAddress::address(it),
+            Self::TSAsExpression(it) => GetAddress::address(it),
+            Self::TSSatisfiesExpression(it) => GetAddress::address(it),
+            Self::TSNonNullExpression(it) => GetAddress::address(it),
+            Self::TSTypeAssertion(it) => GetAddress::address(it),
+            Self::ComputedMemberExpression(it) => GetAddress::address(it),
+            Self::StaticMemberExpression(it) => GetAddress::address(it),
+            Self::PrivateFieldExpression(it) => GetAddress::address(it),
+            Self::ArrayAssignmentTarget(it) => GetAddress::address(it),
+            Self::ObjectAssignmentTarget(it) => GetAddress::address(it),
+        }
+    }
+}
+
 impl GetAddress for AssignmentTarget<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]

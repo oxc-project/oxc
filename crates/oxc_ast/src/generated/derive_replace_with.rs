@@ -78,6 +78,10 @@ impl<'a> ReplaceWith<'a> for ConditionalExpression<'a> {}
 
 impl<'a> ReplaceWith<'a> for AssignmentExpression<'a> {}
 
+impl<'a> ReplaceWith<'a> for AssignmentTargetMaybeParenthesized<'a> {}
+
+impl<'a> ReplaceWith<'a> for ParenthesizedIdentifierAssignmentTarget<'a> {}
+
 impl<'a> ReplaceWith<'a> for AssignmentTarget<'a> {}
 
 impl<'a> ReplaceWith<'a> for SimpleAssignmentTarget<'a> {}

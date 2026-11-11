@@ -4,9 +4,9 @@ use serde::Deserialize;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, AssignmentTarget, CallExpression, Class, ClassElement,
-        ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression, ObjectExpression,
-        ObjectPropertyKind, PropertyKey, Statement,
+        AssignmentExpression, AssignmentTargetMaybeParenthesized, CallExpression, Class,
+        ClassElement, ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression,
+        ObjectExpression, ObjectPropertyKind, PropertyKey, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -722,7 +722,7 @@ fn is_module_exports_component(
     check_context_objects: bool,
     ctx: &LintContext,
 ) -> Option<ReactComponentInfo> {
-    if let AssignmentTarget::StaticMemberExpression(member) = &assign.left
+    if let AssignmentTargetMaybeParenthesized::StaticMemberExpression(member) = &assign.left
         && let Expression::Identifier(ident) = &member.object
         && ident.name == "module"
         && member.property.name == "exports"

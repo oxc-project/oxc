@@ -475,6 +475,28 @@ impl<'a> Dummy<'a> for AssignmentExpression<'a> {
     }
 }
 
+impl<'a> Dummy<'a> for AssignmentTargetMaybeParenthesized<'a> {
+    /// Create a dummy [`AssignmentTargetMaybeParenthesized`].
+    ///
+    /// Has cost of making 1 allocation (32 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::AssignmentTargetIdentifier(Dummy::dummy(allocator))
+    }
+}
+
+impl<'a> Dummy<'a> for ParenthesizedIdentifierAssignmentTarget<'a> {
+    /// Create a dummy [`ParenthesizedIdentifierAssignmentTarget`].
+    ///
+    /// Does not allocate any data into arena.
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
+            target: Dummy::dummy(allocator),
+        }
+    }
+}
+
 impl<'a> Dummy<'a> for AssignmentTarget<'a> {
     /// Create a dummy [`AssignmentTarget`].
     ///

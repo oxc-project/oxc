@@ -988,7 +988,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             init = Expression::new_assignment_expression(
                 SPAN,
                 AssignmentOperator::Assign,
-                left,
+                left.into(),
                 right,
                 ctx,
             );
@@ -1396,7 +1396,7 @@ impl<'a> ConstructorBodyThisAfterSuperInserter<'a, '_> {
         Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
-            self.this_var_binding.create_write_target(self.ctx),
+            self.this_var_binding.create_write_target(self.ctx).into(),
             Expression::new_this_expression(SPAN, self.ctx),
             self.ctx,
         )

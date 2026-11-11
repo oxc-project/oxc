@@ -780,7 +780,9 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                     .any(|property| !property.shorthand || property.value.is_assignment_pattern())
             }
             AssignmentLike::AssignmentExpression(assignment) => {
-                let AssignmentTarget::ObjectAssignmentTarget(object) = &assignment.left else {
+                let AssignmentTargetMaybeParenthesized::ObjectAssignmentTarget(object) =
+                    &assignment.left
+                else {
                     return false;
                 };
 

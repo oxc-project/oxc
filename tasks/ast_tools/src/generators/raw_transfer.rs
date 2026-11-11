@@ -11,10 +11,10 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, ReplaceWith};
 use oxc_ast::{
     ast::{
-        Argument, AssignmentOperator, AssignmentTarget, BindingIdentifier, BindingPattern,
-        Expression, Function, IdentifierName, LogicalExpression, LogicalOperator, ObjectExpression,
-        ObjectProperty, ObjectPropertyKind, Program, PropertyKey, PropertyKind, Statement,
-        VariableDeclarationKind, VariableDeclarator,
+        Argument, AssignmentOperator, AssignmentTargetMaybeParenthesized, BindingIdentifier,
+        BindingPattern, Expression, Function, IdentifierName, LogicalExpression, LogicalOperator,
+        ObjectExpression, ObjectProperty, ObjectPropertyKind, Program, PropertyKey, PropertyKind,
+        Statement, VariableDeclarationKind, VariableDeclarator,
     },
     builder::AstBuilder,
 };
@@ -1893,7 +1893,9 @@ impl<'a> LocFieldAdder<'a> {
             false,
             &self.ast,
         );
-        let target = AssignmentTarget::new_assignment_target_identifier(SPAN, temp, &self.ast);
+        let target = AssignmentTargetMaybeParenthesized::new_assignment_target_identifier(
+            SPAN, temp, &self.ast,
+        );
         exprs.push(Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
@@ -1967,7 +1969,7 @@ impl<'a> LocFieldAdder<'a> {
             PropertyKind::Init => {
                 let ObjectProperty { key, value, .. } = prop.unbox();
                 let PropertyKey::StaticIdentifier(key) = key else { unreachable!() };
-                let target = AssignmentTarget::new_static_member_expression(
+                let target = AssignmentTargetMaybeParenthesized::new_static_member_expression(
                     SPAN,
                     Expression::new_identifier(SPAN, temp, &self.ast),
                     key.unbox(),

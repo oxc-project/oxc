@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, TSAsExpression, TSType, TSTypeAssertion, TSTypeName, TSTypeReference},
+    ast::{
+        AssignmentTargetMaybeParenthesized, TSAsExpression, TSType, TSTypeAssertion, TSTypeName,
+        TSTypeReference,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -153,7 +156,10 @@ fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 }
 
 /// Check if the current node is the left-hand side of an assignment expression
-fn is_left_hand_side_of_assignment(assignment_target: &AssignmentTarget, node: &AstNode) -> bool {
+fn is_left_hand_side_of_assignment(
+    assignment_target: &AssignmentTargetMaybeParenthesized,
+    node: &AstNode,
+) -> bool {
     assignment_target.span() == node.span()
 }
 

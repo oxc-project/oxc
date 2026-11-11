@@ -968,6 +968,54 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentExpression<'_> {
     }
 }
 
+impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTargetMaybeParenthesized<'_> {
+    type Cloned = AssignmentTargetMaybeParenthesized<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        match self {
+            Self::ParenthesizedIdentifier(it) => {
+                AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(CloneIn::clone_in_impl(
+                    it,
+                    with_semantic_ids,
+                    allocator,
+                ))
+            }
+            Self::AssignmentTargetIdentifier(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_)
+            | Self::ArrayAssignmentTarget(_)
+            | Self::ObjectAssignmentTarget(_) => AssignmentTargetMaybeParenthesized::from(
+                CloneIn::clone_in_impl(self.to_assignment_target(), with_semantic_ids, allocator),
+            ),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ParenthesizedIdentifierAssignmentTarget<'_> {
+    type Cloned = ParenthesizedIdentifierAssignmentTarget<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ParenthesizedIdentifierAssignmentTarget {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            target: CloneIn::clone_in_impl(&self.target, with_semantic_ids, allocator),
+        }
+    }
+}
+
 impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTarget<'_> {
     type Cloned = AssignmentTarget<'new_alloc>;
 

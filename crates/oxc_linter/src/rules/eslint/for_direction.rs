@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        AssignmentExpression, AssignmentTarget, Expression, IdentifierReference,
-        SimpleAssignmentTarget,
-    },
+    ast::{AssignmentExpression, Expression, IdentifierReference, SimpleAssignmentTarget},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -224,12 +221,11 @@ fn get_update_direction(
             _ => None,
         },
         // match add assign or subtract assign
-        Expression::AssignmentExpression(assign) => match &assign.left {
-            AssignmentTarget::AssignmentTargetIdentifier(id) if id.name == counter.name => {
-                get_assignment_direction(assign)
-            }
-            _ => None,
-        },
+        Expression::AssignmentExpression(assign)
+            if assign.left.identifier().is_some_and(|id| id.name == counter.name) =>
+        {
+            get_assignment_direction(assign)
+        }
         // can't determine other kinds of updates
         _ => None,
     }

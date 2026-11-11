@@ -14,13 +14,13 @@ function assignments(value) {
   value = Math.pow(value, 2);
   value = Math.pow(value, 2);
   value = Math.pow(value, 2);
-  value = Math.pow(value, 2);
+  (value) = Math.pow(value, 2);
   _unbound = unbound, unbound = Math.pow(_unbound, 2);
   _unbound2 = unbound, unbound = Math.pow(_unbound2, 2);
   _unbound3 = unbound, unbound = Math.pow(_unbound3, 2);
   _unbound4 = unbound, unbound = Math.pow(_unbound4, 2);
   _unbound5 = unbound, unbound = Math.pow(_unbound5, 2);
-  _unbound6 = unbound, unbound = Math.pow(_unbound6, 2);
+  _unbound6 = unbound, (unbound) = Math.pow(_unbound6, 2);
   _getObject = getObject(), _getObject["x"] = Math.pow(_getObject["x"], 2);
   _getObject2 = getObject(), _getObject2["x"] = Math.pow(_getObject2["x"], 2);
   _getObject3 = getObject(), _getObject3["x"] = Math.pow(_getObject3["x"], 2);

@@ -489,6 +489,35 @@ impl ContentEq for AssignmentExpression<'_> {
     }
 }
 
+impl ContentEq for AssignmentTargetMaybeParenthesized<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::ParenthesizedIdentifier(a), Self::ParenthesizedIdentifier(b)) => a.content_eq(b),
+            (Self::AssignmentTargetIdentifier(a), Self::AssignmentTargetIdentifier(b)) => {
+                a.content_eq(b)
+            }
+            (Self::TSAsExpression(a), Self::TSAsExpression(b)) => a.content_eq(b),
+            (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
+            (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
+            (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
+            (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::StaticMemberExpression(a), Self::StaticMemberExpression(b)) => a.content_eq(b),
+            (Self::PrivateFieldExpression(a), Self::PrivateFieldExpression(b)) => a.content_eq(b),
+            (Self::ArrayAssignmentTarget(a), Self::ArrayAssignmentTarget(b)) => a.content_eq(b),
+            (Self::ObjectAssignmentTarget(a), Self::ObjectAssignmentTarget(b)) => a.content_eq(b),
+            _ => false,
+        }
+    }
+}
+
+impl ContentEq for ParenthesizedIdentifierAssignmentTarget<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.target, &other.target)
+    }
+}
+
 impl ContentEq for AssignmentTarget<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         match (self, other) {

@@ -3,7 +3,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayAssignmentTarget, AssignmentTarget, AssignmentTargetMaybeDefault,
-        AssignmentTargetProperty, BindingPattern, ClassElement, ObjectAssignmentTarget,
+        AssignmentTargetMaybeParenthesized, AssignmentTargetProperty, BindingPattern, ClassElement,
+        ObjectAssignmentTarget,
     },
 };
 
@@ -215,9 +216,11 @@ impl NoUnusedVars {
     pub(super) fn is_ignored_assignment_target<'a>(
         &self,
         symbol: &Symbol<'_, 'a>,
-        assignment: &AssignmentTarget<'a>,
+        assignment: &AssignmentTargetMaybeParenthesized<'a>,
     ) -> Ignored {
-        if self.should_search_destructures() {
+        if self.should_search_destructures()
+            && let Some(assignment) = assignment.as_assignment_target()
+        {
             self.search_assignment_target(symbol, assignment).into()
         } else {
             Ignored::not_ignored()

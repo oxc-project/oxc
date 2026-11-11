@@ -101,6 +101,17 @@ impl<'a> PeepholeOptimizations {
             prop
         {
             let Some(prop_name) = assign_target_prop_prop.name.static_name() else { return };
+            // `a: (a) = function() {}` leaves the function anonymous, `a = function() {}` does not
+            if let AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(target) =
+                &assign_target_prop_prop.binding
+                && matches!(
+                    target.binding,
+                    AssignmentTargetMaybeParenthesized::ParenthesizedIdentifier(_)
+                )
+                && ctx.is_expression_whose_name_needs_to_be_kept(&target.init)
+            {
+                return;
+            }
             let Some(ident) = assign_target_prop_prop.binding.identifier_mut() else {
                 return;
             };
@@ -757,7 +768,7 @@ impl<'a> PeepholeOptimizations {
         let mut e_ref_count = 0;
 
         let (r_id_name, a_id_name, offset) = {
-            let AssignmentTarget::ComputedMemberExpression(lhs_member_expr) =
+            let AssignmentTargetMaybeParenthesized::ComputedMemberExpression(lhs_member_expr) =
                 &body_assign_expr.left
             else {
                 return;

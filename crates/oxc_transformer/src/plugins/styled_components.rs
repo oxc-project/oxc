@@ -559,10 +559,8 @@ impl<'a> StyledComponents<'a> {
                         // want to pick the outer name because react-refresh will add HMR variables
                         // like this: X = _a = styled. We could also consider only doing this if the
                         // name starts with an underscore.
-                        AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                            Some(ident.name.into())
-                        }
-                        AssignmentTarget::StaticMemberExpression(member) => {
+                        left if let Some(ident) = left.identifier() => Some(ident.name.into()),
+                        AssignmentTargetMaybeParenthesized::StaticMemberExpression(member) => {
                             Some(member.property.name.into())
                         }
                         _ => return None,

@@ -581,6 +581,31 @@ impl ESTree for AssignmentExpression<'_> {
     }
 }
 
+impl ESTree for AssignmentTargetMaybeParenthesized<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::ParenthesizedIdentifier(it) => it.serialize(serializer),
+            Self::AssignmentTargetIdentifier(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_)
+            | Self::ArrayAssignmentTarget(_)
+            | Self::ObjectAssignmentTarget(_) => self.to_assignment_target().serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for ParenthesizedIdentifierAssignmentTarget<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::js::ParenthesizedIdentifierAssignmentTargetConverter(self)
+            .serialize(serializer)
+    }
+}
+
 impl ESTree for AssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {

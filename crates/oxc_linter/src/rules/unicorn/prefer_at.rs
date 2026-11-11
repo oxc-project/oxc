@@ -6,7 +6,7 @@ use serde_json::Value;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BinaryOperator, CallExpression, ChainElement,
+        Argument, AssignmentTargetMaybeParenthesized, BinaryOperator, CallExpression, ChainElement,
         ComputedMemberExpression, Expression, MemberExpression, StaticMemberExpression,
         UnaryOperator, VariableDeclarationKind,
     },
@@ -517,7 +517,7 @@ fn is_assignment_target<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         AstKind::UpdateExpression(_) | AstKind::ArrayPattern(_) | AstKind::ArrayAssignmentTarget(_)
     ) || matches!(parent_kind, AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::Delete)
         || matches!(parent_kind, AstKind::AssignmentTargetWithDefault(target) if target.binding.span() == node.span())
-        || matches!(parent_kind, AstKind::AssignmentExpression(assign_expr) if matches!(&assign_expr.left, AssignmentTarget::ComputedMemberExpression(target) if target.span == node.span()))
+        || matches!(parent_kind, AstKind::AssignmentExpression(assign_expr) if matches!(&assign_expr.left, AssignmentTargetMaybeParenthesized::ComputedMemberExpression(target) if target.span == node.span()))
 }
 
 fn is_positive_number(expr: &Expression) -> bool {

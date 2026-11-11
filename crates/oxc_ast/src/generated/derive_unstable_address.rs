@@ -64,6 +64,8 @@ impl UnstableAddress for ConditionalExpression<'_> {}
 
 impl UnstableAddress for AssignmentExpression<'_> {}
 
+impl UnstableAddress for ParenthesizedIdentifierAssignmentTarget<'_> {}
+
 impl UnstableAddress for ArrayAssignmentTarget<'_> {}
 
 impl UnstableAddress for ObjectAssignmentTarget<'_> {}

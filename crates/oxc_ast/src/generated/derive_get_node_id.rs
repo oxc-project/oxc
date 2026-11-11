@@ -246,6 +246,20 @@ impl GetNodeId for AssignmentExpression<'_> {
     }
 }
 
+impl GetNodeId for AssignmentTargetMaybeParenthesized<'_> {
+    #[inline]
+    fn node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
+
+impl GetNodeId for ParenthesizedIdentifierAssignmentTarget<'_> {
+    #[inline]
+    fn node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
+
 impl GetNodeId for AssignmentTarget<'_> {
     #[inline]
     fn node_id(&self) -> NodeId {

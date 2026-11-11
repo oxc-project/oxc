@@ -1937,11 +1937,31 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             self.error(diagnostics::assignment_is_not_simple(lhs.span()));
         }
-        let left = AssignmentTarget::cover(lhs, self);
+        let left = match left_parenthesized_span {
+            // `(a) = f`. Parentheses around other targets have no effect, so are discarded.
+            Some(span) if lhs.without_parentheses().is_identifier_reference() => {
+                self.cover_parenthesized_identifier_assignment_target(lhs, span)
+            }
+            _ => AssignmentTarget::cover(lhs, self).into(),
+        };
         self.bump_any();
         let right =
             self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
         Expression::new_assignment_expression(self.end_span(start), operator, left, right, self)
+    }
+
+    #[cold]
+    fn cover_parenthesized_identifier_assignment_target(
+        &self,
+        lhs: Expression<'a>,
+        span: Span,
+    ) -> AssignmentTargetMaybeParenthesized<'a> {
+        let mut expr = lhs;
+        while let Expression::ParenthesizedExpression(paren_expr) = expr {
+            expr = paren_expr.unbox().expression;
+        }
+        let Expression::Identifier(ident) = expr else { unreachable!() };
+        AssignmentTargetMaybeParenthesized::new_parenthesized_identifier(span, ident.unbox(), self)
     }
 
     /// Section 13.16 Sequence Expression

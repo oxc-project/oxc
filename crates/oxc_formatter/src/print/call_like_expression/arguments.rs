@@ -1170,7 +1170,7 @@ fn is_decorated_function(argument: &AstNode<'_, '_, Argument<'_>>) -> bool {
             // Check if it's `module.exports = ...`
             matches!(
                 &assign.left,
-                AssignmentTarget::StaticMemberExpression(member)
+                AssignmentTargetMaybeParenthesized::StaticMemberExpression(member)
                 if matches!(&member.object, Expression::Identifier(ident) if ident.name == "module")
                     && member.property.name == "exports"
             )

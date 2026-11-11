@@ -270,6 +270,16 @@ const _: () = {
     assert!(offset_of!(AssignmentExpression, left) == 16);
     assert!(offset_of!(AssignmentExpression, right) == 32);
 
+    assert!(size_of::<AssignmentTargetMaybeParenthesized>() == 16);
+    assert!(align_of::<AssignmentTargetMaybeParenthesized>() == 8);
+
+    // Padding: 4 bytes
+    assert!(size_of::<ParenthesizedIdentifierAssignmentTarget>() == 48);
+    assert!(align_of::<ParenthesizedIdentifierAssignmentTarget>() == 8);
+    assert!(offset_of!(ParenthesizedIdentifierAssignmentTarget, span) == 0);
+    assert!(offset_of!(ParenthesizedIdentifierAssignmentTarget, node_id) == 8);
+    assert!(offset_of!(ParenthesizedIdentifierAssignmentTarget, target) == 16);
+
     assert!(size_of::<AssignmentTarget>() == 16);
     assert!(align_of::<AssignmentTarget>() == 8);
 
@@ -2114,6 +2124,16 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(AssignmentExpression, operator) == 12);
     assert!(offset_of!(AssignmentExpression, left) == 16);
     assert!(offset_of!(AssignmentExpression, right) == 24);
+
+    assert!(size_of::<AssignmentTargetMaybeParenthesized>() == 8);
+    assert!(align_of::<AssignmentTargetMaybeParenthesized>() == 4);
+
+    // Padding: 0 bytes
+    assert!(size_of::<ParenthesizedIdentifierAssignmentTarget>() == 40);
+    assert!(align_of::<ParenthesizedIdentifierAssignmentTarget>() == 4);
+    assert!(offset_of!(ParenthesizedIdentifierAssignmentTarget, span) == 0);
+    assert!(offset_of!(ParenthesizedIdentifierAssignmentTarget, node_id) == 8);
+    assert!(offset_of!(ParenthesizedIdentifierAssignmentTarget, target) == 12);
 
     assert!(size_of::<AssignmentTarget>() == 8);
     assert!(align_of::<AssignmentTarget>() == 4);

@@ -173,6 +173,15 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_parenthesized_identifier_assignment_target(
+        &mut self,
+        it: &mut ParenthesizedIdentifierAssignmentTarget<'a>,
+    ) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_parenthesized_identifier_assignment_target(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
     fn visit_array_assignment_target(&mut self, it: &mut ArrayAssignmentTarget<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_array_assignment_target(self, it);

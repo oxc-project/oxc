@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, BindingPattern, Expression, MemberExpression},
+    ast::{AssignmentTargetMaybeParenthesized, BindingPattern, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -342,11 +342,8 @@ impl Rule for PreferDestructuring {
     }
 }
 
-fn get_target_name<'a>(target: &'a AssignmentTarget<'a>) -> Option<&'a str> {
-    if let AssignmentTarget::AssignmentTargetIdentifier(ident) = target {
-        return Some(ident.name.as_str());
-    }
-    None
+fn get_target_name<'a>(target: &'a AssignmentTargetMaybeParenthesized<'a>) -> Option<&'a str> {
+    target.identifier().map(|ident| ident.name.as_str())
 }
 
 fn check_expr(expr: &MemberExpression) -> bool {
