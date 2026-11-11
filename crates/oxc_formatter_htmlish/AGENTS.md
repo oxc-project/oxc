@@ -41,6 +41,7 @@ Vue reads a value by its AST, but for its text in these places (`@vue/compiler-c
 | `v-for`     | split at `in` / `of` and the last commas                              | the alias printed as the params Vue splits (`JsRoot::FunctionParams { parens_when_many }`), as written holding `in` / `of`                                                              |
 | `:style`    | a leading `[`                                                         | no rule: no formatting moves the first token                                                                                                                                            |
 | every value | put in the render function as written                                 | a line comment closed, a top-level sequence in no parens as written (`JsEmbeddedIn::inlines_code`)                                                                                      |
+| every value | character references, decoded before the code is read                 | as written when it holds one (apps/oxfmt/DIVERGENCES.md#character-reference-in-code-as-written); a `{{ }}` is not checked                                                               |
 
 A Vue release reading more of the text adds a row here, and its rule.
 

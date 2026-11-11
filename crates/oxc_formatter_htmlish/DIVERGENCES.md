@@ -1051,3 +1051,32 @@ Prettier always breaks around a block, which turns `abc` into `a b c` (and adds 
 A block name holding a line break prints as written, on its own line, as an unknown block: Angular's compiler reports `Unrecognized block @else`.
 Prettier collapses the name to `else if` and joins it to the previous block, turning the error into an else-if branch.
 Whitespace without a line break (`@else   if`) is collapsed, as Angular reads it.
+
+## angular-ignored-block-chain
+
+- Why: invariant
+- Pin: `tests/fixtures/angular/angular-ignored-block-chain.component.html`
+
+```html
+<!-- input -->
+<!-- prettier-ignore -->
+@if (a) {   x } @else if (b) {   y } @else {   z }
+
+<!-- ours -->
+<!-- prettier-ignore -->
+@if (a) {   x } @else if (b) {   y } @else {   z }
+
+<!-- prettier -->
+<!-- prettier-ignore -->
+@if (a) {   x }
+@else if (b) {
+  y
+} @else {
+  z
+}
+```
+
+A `prettier-ignore` before a block covers the blocks that continue it (`@else if`, `@else`, `@empty`, `@placeholder`, …), up to the last `}`:
+Angular's compiler reads them as one block with branches, as an `if` statement with its `else` is in JS.
+Prettier ignores the first block only, so the comment loses the rest of its target.
+A comment between two of them ends the chain there, and what follows is formatted.
