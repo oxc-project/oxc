@@ -155,13 +155,20 @@ impl RequireHookConfig {
                 self.check_block_body(&program.body, ctx);
             }
             AstKind::CallExpression(call_expr) => {
+                if call_expr.arguments.len() < 2 {
+                    return;
+                }
+                let Some(possible_jest_node) =
+                    PossibleJestNode::from_call_expression(node, call_expr, ctx)
+                else {
+                    return;
+                };
                 if !is_type_of_jest_fn_call(
                     call_expr,
-                    &PossibleJestNode { node, original: None },
+                    &possible_jest_node,
                     ctx,
                     &[JestFnKind::General(JestGeneralFnKind::Describe)],
-                ) || call_expr.arguments.len() < 2
-                {
+                ) {
                     return;
                 }
 
@@ -222,13 +229,35 @@ impl RequireHookConfig {
                 return;
             };
 
-            if !(is_valid_vitest_call(&[fn_type])
+            if is_valid_vitest_call(&[fn_type])
                 || name.starts_with("jest.")
                 || name.starts_with("vi.")
-                || self.allowed_function_calls.contains(&name))
+                || self.allowed_function_calls.contains(&name)
             {
-                ctx.diagnostic(use_hook(call_expr.span));
+                return;
             }
+
+            let node = ctx.nodes().get_node(call_expr.node_id.get());
+            if let Some(possible_jest_node) =
+                PossibleJestNode::from_call_expression(node, call_expr, ctx)
+                && is_type_of_jest_fn_call(
+                    call_expr,
+                    &possible_jest_node,
+                    ctx,
+                    &[
+                        JestFnKind::General(JestGeneralFnKind::Test),
+                        JestFnKind::General(JestGeneralFnKind::Describe),
+                        JestFnKind::General(JestGeneralFnKind::Hook),
+                        JestFnKind::General(JestGeneralFnKind::Bench),
+                        JestFnKind::General(JestGeneralFnKind::Jest),
+                        JestFnKind::General(JestGeneralFnKind::Vitest),
+                    ],
+                )
+            {
+                return;
+            }
+
+            ctx.diagnostic(use_hook(call_expr.span));
         }
     }
 }
