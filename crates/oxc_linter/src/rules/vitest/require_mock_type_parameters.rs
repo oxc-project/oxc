@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, ChainElement, Expression},
+    ast::{Argument, CallExpression, ChainElement, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -53,6 +53,9 @@ declare_oxc_lint!(
     ///
     /// By default, only `vi.fn()` is checked. Set `checkImportFunctions` to `true` to also check `vi.importActual()` and `vi.importMock()`.
     ///
+    /// `vi.fn(impl)` needs no type parameter when `impl` is typed: a function whose parameters all
+    /// have type annotations (or that takes none), or any other value, gives the mock its type.
+    ///
     /// ### Why is this bad?
     ///
     /// Without explicit type parameters, `vi.fn()` creates a mock typed as `(...args: any[]) => any`.
@@ -92,6 +95,8 @@ declare_oxc_lint!(
     ///   const myMockedFnOne = vi.fn<(arg1: string, arg2: boolean) => number>()
     ///   const myMockedFnTwo = vi.fn<() => void>()
     ///   const myMockedFnThree = vi.fn<any>()
+    ///   // The implementation types the mock: `Mock<(id: string) => number>`.
+    ///   const myMockedFnFour = vi.fn((id: string) => id.length)
     /// })
     /// ```
     ///
@@ -201,13 +206,36 @@ fn find_member_call_type_arguments(
             .static_property_info()
             .is_some_and(|(span, _)| span.start == member.span.start && span.end == member.span.end)
         {
-            return Some(call_expr.type_arguments.is_some());
+            return Some(
+                call_expr.type_arguments.is_some()
+                    || (member.is_name_equal("fn") && has_typed_implementation(call_expr)),
+            );
         }
 
         return find_member_call_type_arguments_in_expression(member_expression.object(), member);
     }
 
     find_member_call_type_arguments_in_expression(&call_expr.callee, member)
+}
+
+/// Whether `vi.fn(impl)` takes its type from `impl` without `any`: `fn<T>(impl?: T)` infers `T`
+/// from the implementation (#29165). A function whose parameters all have type annotations (or that
+/// takes none) gives a precise type, and so does any other value, which brings its own type; a
+/// function with an unannotated parameter would still give it `any`.
+fn has_typed_implementation(call_expr: &CallExpression<'_>) -> bool {
+    let Some(implementation) = call_expr.arguments.first().and_then(Argument::as_expression) else {
+        return false;
+    };
+    // Only parentheses: `impl as Handler` and `impl satisfies Handler` are typed by the assertion.
+    let params = match implementation.without_parentheses() {
+        Expression::ArrowFunctionExpression(arrow) => &arrow.params,
+        Expression::FunctionExpression(func) => &func.params,
+        // `undefined` is no implementation: `T` falls back to `(...args: any[]) => any`.
+        Expression::Identifier(ident) if ident.name == "undefined" => return false,
+        _ => return true,
+    };
+    params.items.iter().all(|param| param.type_annotation.is_some())
+        && params.rest.as_ref().is_none_or(|rest| rest.type_annotation.is_some())
 }
 
 fn find_member_call_type_arguments_in_expression(
@@ -238,6 +266,16 @@ fn test() {
     use std::path::PathBuf;
 
     let pass = vec![
+        // An implementation types the mock (#29165).
+        ("vi.fn(() => {})", None, None, Some(PathBuf::from("test.tsx"))),
+        ("vi.fn(() => '0')", None, None, Some(PathBuf::from("test.ts"))),
+        ("vi.fn((id: string) => id.length)", None, None, Some(PathBuf::from("test.ts"))),
+        ("vi.fn((...args: string[]) => args.length)", None, None, Some(PathBuf::from("test.ts"))),
+        ("vi.fn(function (a: number) { return a; })", None, None, Some(PathBuf::from("test.ts"))),
+        ("vi.fn(realImplementation)", None, None, Some(PathBuf::from("test.ts"))),
+        ("vi.fn(((a) => a) as Handler)", None, None, Some(PathBuf::from("test.ts"))),
+        ("vi.fn(((a) => a) satisfies Handler)", None, None, Some(PathBuf::from("test.ts"))),
+        ("vi.fn(() => 1).mockName('one')", None, None, Some(PathBuf::from("test.ts"))),
         ("vi.fn<(...args: any[]) => any>()", None, None, Some(PathBuf::from("test.ts"))),
         ("vi.fn<(...args: string[]) => any>()", None, None, Some(PathBuf::from("test.ts"))),
         ("vi.fn<(arg1: string) => string>()", None, None, Some(PathBuf::from("test.ts"))),
@@ -303,7 +341,16 @@ fn test() {
 
     let fail = vec![
         ("vi.fn()", None, None, Some(PathBuf::from("test.ts"))),
-        ("vi.fn(() => {})", None, None, Some(PathBuf::from("test.tsx"))),
+        ("vi.fn((a) => a)", None, None, Some(PathBuf::from("test.ts"))),
+        (
+            "vi.fn(function (a, b: number) { return b; })",
+            None,
+            None,
+            Some(PathBuf::from("test.ts")),
+        ),
+        ("vi.fn((...args) => args.length)", None, None, Some(PathBuf::from("test.ts"))),
+        ("vi.fn(...impls)", None, None, Some(PathBuf::from("test.ts"))),
+        ("vi.fn(undefined)", None, None, Some(PathBuf::from("test.ts"))),
         (
             r#"vi.importActual("./example.js")"#,
             Some(serde_json::json!([{ "checkImportFunctions": true }])),
