@@ -67,6 +67,9 @@ use crate::{ParserConfig as Config, ParserImpl};
 pub struct CommentAttacher {
     pending: Vec<u32>,
     frames: Vec<Frame>,
+    /// Comments after the delimiters of the delimited lists being parsed, which lead the element
+    /// following them.
+    delimited: Vec<DelimitedComments>,
 }
 
 /// A node containing pending comments, which are assigned in it unless a child contains them.
@@ -383,6 +386,90 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline(never)]
     pub(crate) fn attach_comments_after_separator<T: GetSpan + GetNodeId>(&mut self, element: &T) {
         self.attach_comments_after_element(element.node_id(), element.span().end);
+    }
+
+    /// Assign comments after a delimited list separator which trail the preceding element, and
+    /// save the others to lead the following element when the list is complete.
+    ///
+    /// ```text
+    /// f(a, // x
+    ///   /* y */ b)
+    ///      // x ends the line   -> Trailing on a
+    ///      /* y */ precedes b   -> saved, Leading on b
+    /// ```
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn attach_comments_after_delimited_list_separator<T: GetSpan + GetNodeId>(
+        &mut self,
+        element: &T,
+    ) {
+        self.attach_comments_after_element(element.node_id(), element.span().end);
+        self.save_delimited_comments();
+    }
+
+    /// Start a delimited list after `opening_span`, saving comments after it to lead the first
+    /// element. Returns the state for [`Self::finish_delimited_list_comments`].
+    ///
+    /// Comments after a delimiter lead the following element, as with
+    /// [`Self::parse_after_delimiter`], but are assigned once the list is complete, which avoids
+    /// work for each element.
+    ///
+    /// ```text
+    /// f(/* x */ a, /* y */ b)
+    ///  |__________|__________ saved after `(` and `,`
+    ///             list complete -> /* x */ Leading on a, /* y */ Leading on b
+    /// ```
+    #[inline]
+    pub(crate) fn start_delimited_list_comments(&mut self, opening_span: Span) -> usize {
+        let saved = self.comment_attacher.delimited.len();
+        if self.cur_token().follows_comment() && self.prev_token_end == opening_span.end {
+            self.save_delimited_comments();
+        }
+        saved
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn save_delimited_comments(&mut self) {
+        if let Some(leading) = self.delimited_comments() {
+            self.comment_attacher.delimited.push(leading);
+        }
+    }
+
+    /// Assign comments saved after the delimiters of a completed list to the elements following
+    /// them. `saved` is the state from [`Self::start_delimited_list_comments`]. Nested lists are
+    /// complete first, so the comments saved since then are for this list, in source order.
+    #[inline]
+    pub(crate) fn finish_delimited_list_comments<T: GetSpan + GetNodeId>(
+        &mut self,
+        list: &[T],
+        saved: usize,
+    ) {
+        if self.comment_attacher.delimited.len() != saved {
+            self.finish_delimited_list_comments_cold(list, saved);
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn finish_delimited_list_comments_cold<T: GetSpan + GetNodeId>(
+        &mut self,
+        list: &[T],
+        saved: usize,
+    ) {
+        let mut index = 0;
+        for position in saved..self.comment_attacher.delimited.len() {
+            let leading = self.comment_attacher.delimited[position];
+            index += list[index..].partition_point(|element| element.span().start < leading.to);
+            if let Some(element) = list.get(index) {
+                self.attach_delimited_leading_comments(
+                    leading,
+                    element.span().start,
+                    element.node_id(),
+                );
+            }
+        }
+        self.comment_attacher.delimited.truncate(saved);
     }
 
     /// Assign comments after a separator which trail the preceding element, if it is not an array
@@ -746,7 +833,7 @@ impl<'w> Walker<'w, '_> {
         attacher: &'w mut CommentAttacher,
         source_text: &'w str,
     ) -> Self {
-        let CommentAttacher { pending, frames } = attacher;
+        let CommentAttacher { pending, frames, .. } = attacher;
         frames.clear();
         // The root node of the walk is the only child of this frame, and contains every comment.
         frames.push(Frame {

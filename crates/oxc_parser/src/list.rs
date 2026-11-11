@@ -180,6 +180,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let mut finished = self.at(close) || self.has_fatal_error();
         let mut trailing_separator = None;
+        let delimited_comments = self.start_delimited_list_comments(opening_span);
         let list = self.collect_list(|p| {
             if let Some(first) = first.take() {
                 return Some(first);
@@ -196,6 +197,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             Some(element)
         });
+        self.finish_delimited_list_comments(&list, delimited_comments);
         (list, trailing_separator)
     }
 
@@ -224,7 +226,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.attach_comments_before_token(element);
         self.advance(separator);
         if self.cur_token().follows_comment() {
-            self.attach_comments_after_separator(element);
+            self.attach_comments_after_delimited_list_separator(element);
         }
         let kind = self.cur_kind();
         if kind == close {
