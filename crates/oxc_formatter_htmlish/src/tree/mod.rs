@@ -52,8 +52,8 @@ pub struct Facts {
     pub ends_in_pre: bool,
     /// A CDATA section, or a text that merged one: its sections are never re-wrapped.
     pub has_cdata: bool,
-    /// The previous sibling is `<!-- prettier-ignore -->`.
-    pub prettier_ignore: bool,
+    /// The previous sibling is a suppression comment (`<!-- prettier-ignore -->`, `<!-- oxfmt-ignore -->`): the node prints as written.
+    pub suppressed: bool,
     /// An SVG / MathML element, or one under it (`DialectRules::lowercase_known_names` only).
     pub foreign: bool,
     /// The tag name prints lowercase, written otherwise in the start or end tag (`Tree::printed_name`).

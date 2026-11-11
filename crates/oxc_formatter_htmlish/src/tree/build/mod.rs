@@ -121,7 +121,7 @@ impl Builder<'_> {
             }
             // The blocks continuing an ignored one are ignored with it (DIVERGENCES.md#angular-ignored-block-chain)
             if let Some(prev) = prev
-                && self.tree[prev].prettier_ignore
+                && self.tree[prev].suppressed
                 && self.tree.continues_block(prev, id)
             {
                 let facts = self.facts(prev);
@@ -169,7 +169,7 @@ impl Builder<'_> {
                         && !comment.bogus
                     {
                         let content = comment.content.slice(self.tree.source);
-                        self.facts(id).prettier_ignore = is_suppression_marker(content);
+                        self.facts(id).suppressed = is_suppression_marker(content);
                         // Every block of a Vue file is a block
                         if let Some(display) = display_comment(content)
                             && !self.tree.is_sfc_block(id)
