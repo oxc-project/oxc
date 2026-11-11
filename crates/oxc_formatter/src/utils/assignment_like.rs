@@ -14,8 +14,8 @@ use crate::{
         trivia::{FormatTrailingComments, is_alignable_block_comment},
     },
     print::{
-        BinaryLikeExpression, alias_union_breaks_after_operator, embed_hug,
-        is_line_ending_trailing_jsdoc_comment, type_alias_left_end, union_prints_itself,
+        BinaryLikeExpression, alias_union_breaks_after_operator, alias_union_owns_break, embed_hug,
+        is_line_ending_trailing_jsdoc_comment, type_alias_left_end,
     },
     utils::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
@@ -430,19 +430,17 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
             return AssignmentLikeLayout::BreakLeftHandSide;
         }
 
-        // An alias-level union that runs its own printer owns the break and indentation under the `=`;
-        // a suppressed one prints verbatim and is laid out like any other type.
-        let alias_union_prints_itself = matches!(
+        let alias_union_owns_break = matches!(
             self,
             AssignmentLike::TSTypeAliasDeclaration(decl)
-                if union_prints_itself(&decl.type_annotation, f.comments())
+                if alias_union_owns_break(&decl.type_annotation, f)
         );
 
         if has_line_comment_on_operator_line
             || self.should_break_after_operator(
                 self.get_right_expression(),
                 is_left_short,
-                alias_union_prints_itself,
+                alias_union_owns_break,
                 f,
             )
         {
@@ -456,7 +454,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
         // The union's leading soft line break per member and one indent level;
         // the fluid group would stack a second indent on top when a long left-hand side makes it break before the union does.
         // (The end-of-line-comment case takes `BreakAfterOperator` above.)
-        if alias_union_prints_itself {
+        if alias_union_owns_break {
             return AssignmentLikeLayout::NeverBreakAfterOperator;
         }
 
@@ -690,7 +688,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
         &self,
         right_expression: Option<AstNode<'_, 'a, Expression<'a>>>,
         is_left_short: bool,
-        alias_union_prints_itself: bool,
+        alias_union_owns_break: bool,
         f: &mut JsFormatter<'_, 'a>,
     ) -> bool {
         let comments = f.context().comments();
@@ -716,7 +714,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                 }
                 // `TSUnionType` has its own indentation logic,
                 // EXCEPT when the union suppresses it and relies on the operator-side break + indent instead.
-                TSType::TSUnionType(_) if alias_union_prints_itself => {
+                TSType::TSUnionType(_) if alias_union_owns_break => {
                     alias_union_breaks_after_operator(
                         decl,
                         comments
