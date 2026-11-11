@@ -10,11 +10,10 @@ use crate::{
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
     bytes::{is_digit, is_word, is_ws},
-    disambiguate::{gt_run_split, lt_run_split},
+    disambiguate::{TokensView, gt_run_split, lt_run_split},
     lanes::Lanes,
     operators::{is_op_char, opmap_longest, opmap_pack2, opmap_pack3},
     scan::scan_number,
-    token_view,
 };
 
 mod keywords;
@@ -145,7 +144,7 @@ pub unsafe fn coalesce(
                     && (b1 == b'>' || (b1 == b'=' && p > 0 && !is_ws(*src.add(p - 1), cpu)))
                 {
                     let kw_final = (w & !(KWB - 1)) << 6;
-                    let tokens = token_view(
+                    let tokens = TokensView::new(
                         src,
                         st,
                         opch,
@@ -294,7 +293,7 @@ unsafe fn glue_number(
                 let end = bm_next0(opch, e2, n, cpu);
                 // Keyword kinds are final only below this window's batch.
                 let kw_final = ((e2 >> 6) & !(KWB - 1)) << 6;
-                let tokens = token_view(
+                let tokens = TokensView::new(
                     src,
                     st,
                     opch,
@@ -349,7 +348,7 @@ unsafe fn munch_walk(
         if let Some(opk) = opk {
             // Two list openers, not a shift: Array<<T>(x: T) => T>, a?.<<T>(x: T) => T>(b).
             if ts && opk == TokenKind::LShift {
-                let tokens = token_view(
+                let tokens = TokensView::new(
                     src,
                     st,
                     opch,

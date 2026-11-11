@@ -508,9 +508,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let end = expressions.last().unwrap().span().end;
             Expression::new_sequence_expression(Span::new(start, end), expressions, self)
         };
-        // Keep the wrapper until the caller distinguishes this from an arrow. The caller
-        // removes it when `preserve_parens` is disabled.
-        Some(Expression::new_parenthesized_expression(span, expression, self))
+        // Preserve the node ID sequence even when the wrapper is omitted.
+        let parenthesized = ParenthesizedExpression::new(span, expression, self);
+        Some(if self.options.preserve_parens {
+            Expression::ParenthesizedExpression(self.alloc(parenthesized))
+        } else {
+            parenthesized.expression
+        })
     }
 
     fn cover_parameter_as_expression(

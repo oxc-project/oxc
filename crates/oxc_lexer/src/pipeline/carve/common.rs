@@ -5,11 +5,10 @@ use crate::{error::DiagCode, token::tk};
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0},
     bytes::hex_val,
-    disambiguate::not_operator_position,
+    disambiguate::{TokensView, not_operator_position},
     find::find,
     lanes::Lanes,
     scan::{scan_quoted, scan_regex, scan_tmpl_text},
-    token_view,
 };
 
 use super::comments::{lex_block_comment, lex_line_comment};
@@ -113,7 +112,7 @@ pub(super) unsafe fn lex_slash(
     } else if d == b'*' {
         lex_block_comment(src, srcs, n, st, kind, s, lanes, cpu)
     } else if not_operator_position(
-        &token_view(
+        &TokensView::new(
             src,
             st,
             opch,

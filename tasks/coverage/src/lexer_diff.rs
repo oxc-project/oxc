@@ -24,7 +24,7 @@ use oxc::{
     span::{SourceType, Span},
 };
 use oxc_lexer::{
-    LexOptions, PAD, TokenKind, Tokens, diagnostics::to_oxc_diagnostic, testing::lex_with_cpu,
+    LexOptions, TokenKind, Tokens, diagnostics::to_oxc_diagnostic, testing::lex_with_cpu,
 };
 use oxc_simd::DynCpu;
 use rayon::prelude::*;
@@ -203,14 +203,6 @@ fn lexer_stream(
 /// Returns the output from the first CPU feature set.
 /// Returns `Err` if lexing panicked, or the outputs from each CPU feature set differ.
 fn lex_with_each_cpu(code: &str, source_type: SourceType) -> Result<Tokens, TestResult> {
-    let len = code.len();
-    let len_u32 = u32::try_from(len).expect("source longer than `u32::MAX`");
-
-    // lex_with_cpu requires at least PAD bytes of zeroed padding past the end of the source
-    let mut buf = Vec::with_capacity(len + PAD);
-    buf.extend_from_slice(code.as_bytes());
-    buf.resize(len + PAD, 0);
-
     let options = LexOptions {
         source_type_module: source_type.is_module(),
         jsx: source_type.is_jsx(),
@@ -221,7 +213,7 @@ fn lex_with_each_cpu(code: &str, source_type: SourceType) -> Result<Tokens, Test
     let mut outputs = vec![];
     let mut panicked = vec![];
     DynCpu::for_each_supported(|cpu| {
-        match catch_unwind(AssertUnwindSafe(|| lex_with_cpu(&buf, len_u32, options, cpu))) {
+        match catch_unwind(AssertUnwindSafe(|| lex_with_cpu(code, options, cpu))) {
             Ok(output) => outputs.push((cpu, output)),
             Err(_) => panicked.push(cpu.name()),
         }

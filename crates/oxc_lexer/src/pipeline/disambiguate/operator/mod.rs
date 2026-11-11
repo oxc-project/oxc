@@ -8,7 +8,7 @@
 //!
 //! - Operators and numbers such as `x++`, `a?.b` and `1.5e+3` aren't formed into their final
 //!   tokens until `coalesce`, which runs later, so the bytes around a punctuator are read
-//!   directly ([Tokens::property_name]).
+//!   directly ([`TokensView::property_name`]).
 //! - After `)`, what the parens closed decides it: `if (c) /re/` has a regex, but `f(c) / 2` has
 //!   a division ([`paren_close_is_regex`]).
 //!
@@ -28,7 +28,7 @@ use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
 use crate::pipeline::keywords::is_regex_keyword;
 
 use super::{
-    common::{Tokens, bits},
+    common::{TokensView, bits},
     context::{self, After, Walks},
 };
 
@@ -55,7 +55,12 @@ mod tests;
 /// The previous significant token decides most cases; `}`, `yield` / `await`, `of`, a TS `>` and
 /// the TS line-break cases depend on unbounded left context and ask [`context`].
 #[cpu_multiversion]
-pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: impl Cpu) -> bool {
+pub fn not_operator_position(
+    tokens: &TokensView,
+    walks: &mut Walks,
+    p: usize,
+    cpu: impl Cpu,
+) -> bool {
     let ts = tokens.ts;
     let module = tokens.module;
     let src = tokens.src;
@@ -152,7 +157,7 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: 
 /// Does a line break between e and p end the declaration the token at q completes?
 #[cpu_multiversion]
 fn ends_decl(
-    tokens: &Tokens,
+    tokens: &TokensView,
     walks: &mut Walks,
     q: usize,
     e: usize,
@@ -163,7 +168,7 @@ fn ends_decl(
 }
 
 #[cpu_multiversion]
-fn paren_close_is_regex(tokens: &Tokens, qi: usize, cpu: impl Cpu) -> bool {
+fn paren_close_is_regex(tokens: &TokensView, qi: usize, cpu: impl Cpu) -> bool {
     let word = |p: Option<usize>| {
         p.filter(|&w| tokens.kind[w] == tk!(Ident) && !tokens.property_name(w, cpu))
     };

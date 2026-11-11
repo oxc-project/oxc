@@ -1748,10 +1748,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         match self.try_parse_arrow_function_expression::<true>(
                             allow_return_type_in_arrow_function,
                         ) {
-                            Some(Expression::ParenthesizedExpression(parenthesized)) => {
+                            // Reused heads cannot produce an arrow expression.
+                            Some(expression)
+                                if !matches!(
+                                    expression,
+                                    Expression::ArrowFunctionExpression(_)
+                                ) =>
+                            {
                                 break 'parse_lhs self.parse_reused_parenthesized_expression_rest(
                                     start,
-                                    parenthesized,
+                                    expression,
                                     pure_comments,
                                 );
                             }
@@ -1825,14 +1831,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_reused_parenthesized_expression_rest(
         &mut self,
         start: u32,
-        parenthesized: ArenaBox<'a, ParenthesizedExpression<'a>>,
+        primary: Expression<'a>,
         pure_comments: Option<(u32, NonZeroU32)>,
     ) -> Expression<'a> {
-        let primary = if self.options.preserve_parens {
-            Expression::ParenthesizedExpression(parenthesized)
-        } else {
-            parenthesized.unbox().expression
-        };
         let lhs = self.parse_primary_expression_rest(start, primary, pure_comments);
         if kind_to_precedence(self.cur_kind()).is_none() {
             lhs
@@ -2062,15 +2063,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_decorators(&mut self) -> ArenaVec<'a, Decorator<'a>> {
-        if self.at(Kind::At) {
-            let mut decorators = ArenaVec::with_capacity_in(1, self);
-            while self.at(Kind::At) {
-                decorators.push(self.parse_decorator());
-            }
-            decorators
-        } else {
-            ArenaVec::new_in(self)
-        }
+        self.collect_list(|p| p.at(Kind::At).then(|| p.parse_decorator()))
     }
 
     /// `Decorator`[Yield, Await]:

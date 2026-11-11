@@ -1,3 +1,5 @@
+use std::cmp::Reverse;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, UnaryOperator},
@@ -139,9 +141,7 @@ impl RequireTestTimeout {
                     };
 
                     config_positions.push(call_expr.span);
-                    config_positions.sort_by(|config_a, config_b| {
-                        (config_a.end - config_b.end).cmp(&config_a.end)
-                    });
+                    config_positions.sort_by_key(|config| Reverse(config.end));
 
                     parse_timeout_value(&property.value, property.value.span(), ctx);
                 } else {
@@ -249,6 +249,8 @@ fn test() {
         r#"vi.setConfig({ testTimeout: 1000 }); test("a", () => {}); vi.setConfig({ testTimeout: 2000 }); test("b", () => {})"#,
         r#"vi.setConfig({ testTimeout: 1000 }); test("a", () => {}, 500)"#,
         r#"describe("suite", () => {})"#,
+        r#"vi.setConfig({ testTimeout: 1000 }); vi.setConfig({ testTimeout: 2000 }); vi.setConfig({ testTimeout: 3000 }); test("a", () => {})"#,
+        r#"vi.setConfig({ testTimeout: 1000, nested: [vi.setConfig({ testTimeout: 2000 }), test("a", () => {})] })"#,
     ];
 
     let fail = vec![

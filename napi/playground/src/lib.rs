@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     cell::Cell,
     path::{Path, PathBuf},
     sync::Arc,
@@ -299,6 +300,11 @@ impl Oxc {
                     .ok()
             })
             .unwrap_or_default();
+        if let Some(name) = &transform_options.helper_module_name
+            && !name.is_empty()
+        {
+            options.helper_loader.module_name = Cow::Owned(name.clone());
+        }
         options.assumptions.set_public_class_fields =
             !transform_options.use_define_for_class_fields;
         options.typescript.remove_class_fields_without_initializer =

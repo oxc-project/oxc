@@ -13,7 +13,7 @@
     "build-napi": "napi build --esm --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache",
     "build-napi-test": "pnpm run build-napi --profile coverage",
     "build-napi-release": "pnpm run build-napi --release --features allocator",
-    "build-js": "node scripts/build.js",
+    "build-js": "node scripts/build.ts",
     "test": "vitest run",
     "conformance": "pnpm run conformance:fixture && pnpm run conformance:prettier && pnpm run conformance:live",
     "conformance:fixture": "node conformance/run_fixture.ts",
