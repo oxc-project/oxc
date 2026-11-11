@@ -2696,7 +2696,6 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_estree",
- "oxc_str",
  "serde",
 ]
 
@@ -2711,6 +2710,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_data_structures",
  "oxc_estree",
+ "oxc_span",
  "serde",
 ]
 

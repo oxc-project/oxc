@@ -10,13 +10,16 @@ use std::{
     slice, str,
 };
 
+#[cfg(feature = "serialize")]
+use serde::{Serialize, Serializer as SerdeSerializer};
+
 use oxc_allocator::{
     Allocator, ArenaStringBuilder, CloneIn, CloneInSemanticIds, Dummy, FromIn, GetAllocator,
 };
+use oxc_span::ContentEq;
+
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, JsonSafeString, Serializer as ESTreeSerializer};
-#[cfg(feature = "serialize")]
-use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::{
     CompactStr, JSStr, Str,
@@ -452,6 +455,13 @@ impl Display for Ident<'_> {
 impl Debug for Ident<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         Debug::fmt(self.as_str(), f)
+    }
+}
+
+impl ContentEq for Ident<'_> {
+    #[inline]
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
     }
 }
 

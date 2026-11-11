@@ -23,15 +23,14 @@ doctest = true
 oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
 oxc_estree = { workspace = true }
-oxc_str = { workspace = true }
 
 schemars = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 
 [features]
 default = []
-serialize = ["dep:serde", "oxc_estree/serialize", "oxc_str/serialize"]
-schemars = ["dep:schemars", "oxc_str/schemars"]
+serialize = ["dep:serde", "oxc_estree/serialize"]
+schemars = ["dep:schemars"]
 
 [package.metadata.cargo-shear]
 ignored = ["schemars"]

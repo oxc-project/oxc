@@ -1,12 +1,14 @@
 use std::{
     borrow::{Borrow, Cow},
     fmt, hash,
-    ops::Deref,
+    ops::{Deref, Index},
 };
 
 use compact_str::CompactString;
 #[cfg(feature = "serialize")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+use oxc_span::Span;
 
 /// Maximum length for inline string, which can be created with [`CompactStr::new_const`].
 pub const MAX_INLINE_LEN: usize = 16;
@@ -109,6 +111,7 @@ impl From<CompactStr> for Cow<'_, str> {
         value.0.into()
     }
 }
+
 impl From<Cow<'_, str>> for CompactStr {
     fn from(value: Cow<'_, str>) -> Self {
         match value {
@@ -135,6 +138,14 @@ impl AsRef<str> for CompactStr {
 impl Borrow<str> for CompactStr {
     fn borrow(&self) -> &str {
         self.as_str()
+    }
+}
+
+impl Index<Span> for CompactStr {
+    type Output = str;
+
+    fn index(&self, index: Span) -> &Self::Output {
+        &self.as_str()[index.start as usize..index.end as usize]
     }
 }
 

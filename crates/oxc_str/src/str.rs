@@ -4,13 +4,16 @@ use std::{
     ops::Deref,
 };
 
+#[cfg(feature = "serialize")]
+use serde::{Serialize, Serializer as SerdeSerializer};
+
 use oxc_allocator::{
     Allocator, ArenaStringBuilder, CloneIn, CloneInSemanticIds, Dummy, FromIn, GetAllocator,
 };
+use oxc_span::ContentEq;
+
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
-#[cfg(feature = "serialize")]
-use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::CompactStr;
 
@@ -287,6 +290,13 @@ impl fmt::Debug for Str<'_> {
 impl fmt::Display for Str<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self.as_str(), f)
+    }
+}
+
+impl ContentEq for Str<'_> {
+    #[inline]
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
     }
 }
 
