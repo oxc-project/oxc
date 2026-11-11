@@ -26,6 +26,8 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
 } @placeholder (minimum 500ms) {
   <p>loading</p>
 }
+@defer (on   viewport;   prefetch on
+   idle) { <p>x</p> }
 
 ==================== Output ====================
 ------------------
@@ -65,6 +67,10 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
 } @placeholder (minimum 500ms) {
   <p>loading</p>
 }
+@defer (on   viewport; prefetch on
+   idle) {
+  <p>x</p>
+}
 
 -------------------
 { printWidth: 100 }
@@ -102,6 +108,10 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
   <x-chart />
 } @placeholder (minimum 500ms) {
   <p>loading</p>
+}
+@defer (on   viewport; prefetch on
+   idle) {
+  <p>x</p>
 }
 
 ===================== End =====================

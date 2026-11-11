@@ -65,7 +65,7 @@ pub fn write_root(f: &mut HtmlishFormatter<'_, '_>) {
 }
 
 fn write_child<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>) {
-    if !t[id].prettier_ignore {
+    if !t[id].suppressed {
         write_node(t, id, f);
         return;
     }

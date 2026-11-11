@@ -50,6 +50,8 @@ a comment after it is spaced (`, /* c */`, as in `a, /* c */ b`), also after the
 
 - Why: uniform-rule (same construct, same output: exported type alias)
 - Pin: `tests/fixtures/ts/semicolons/trailing-comments.ts`
+- Conformance:
+  - `externals/prettier/typescript/union/union-parens.ts` (`type Aa3`)
 
 ```ts
 // input
@@ -356,6 +358,34 @@ type NestedParens =
 
 Prettier does the same normalization except for nested single-member paren sources and multiline block comments starting their line, where it keeps `/* c */ | A` — an output it then reformats into `| /* c */ A` itself for the first shape (not a fixpoint); we normalize directly.
 
+## union-hug-comment-before-dropped-paren
+
+- Why: invariant
+- Pin: `tests/fixtures/ts/union/hug-comment-dropped-paren.ts`
+
+A single-line block comment before a hugged union's dropped `(` stops the hug on the first pass; the pin's output is not a fixpoint (idempotency).
+
+```ts
+// input
+type Alias = /* c */ ({ a: string; b: number } | null);
+
+// ours (broken)
+type Alias =
+  | /* c */ {
+      a: string;
+      b: number;
+    }
+  | null;
+
+// prettier (first pass; its second pass produces ours)
+type Alias = /* c */ {
+  a: string;
+  b: number;
+} | null;
+```
+
+Kept parentheses (`keyof (...)`, `(...)[]`) keep the comment outside and the hug, in both.
+
 ## deferred-own-line-comment-stays-own-line
 
 - Why: invariant
@@ -526,8 +556,30 @@ The shapes, each pinned by its fixture:
 ## union-annotation-flat-retry
 
 - Why: style-hold (oxc#25841)
-- Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts`
+- Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts`, `tests/fixtures/ts/union/alias-flat-retry.ts`
 - Conformance:
+  - `externals/ng-zorro-antd/components/button/button.component.ts`
+  - `externals/ng-zorro-antd/components/cdk/overflow/overflow-container.component.ts`
+  - `externals/ng-zorro-antd/components/date-picker/date-picker.component.ts`
+  - `externals/ng-zorro-antd/components/date-picker/date-range-popup.component.ts`
+  - `externals/ng-zorro-antd/components/date-picker/inner-popup.component.ts`
+  - `externals/ng-zorro-antd/components/drawer/drawer.component.ts`
+  - `externals/ng-zorro-antd/components/dropdown/dropdown-menu.component.ts`
+  - `externals/ng-zorro-antd/components/empty/embed-empty.component.ts`
+  - `externals/ng-zorro-antd/components/empty/empty.component.ts`
+  - `externals/ng-zorro-antd/components/form/form-control.component.ts`
+  - `externals/ng-zorro-antd/components/form/form-item.component.ts`
+  - `externals/ng-zorro-antd/components/modal/modal.component.ts`
+  - `externals/ng-zorro-antd/components/resizable/resize-handle.component.ts`
+  - `externals/ng-zorro-antd/components/slider/handle.component.ts`
+  - `externals/ng-zorro-antd/components/slider/slider.component.ts`
+  - `externals/ng-zorro-antd/components/steps/steps.component.ts`
+  - `externals/ng-zorro-antd/components/tabs/tab-body.component.ts`
+  - `externals/ng-zorro-antd/components/time-picker/time-picker-panel.component.ts`
+  - `externals/ng-zorro-antd/components/tree-select/tree-select.component.ts`
+  - `externals/ng-zorro-antd/components/upload/upload.component.ts`
+  - `externals/prettier/typescript/union/consistent-with-flow/81-characters.ts`
+  - `externals/prettier/typescript/union/union-parens.ts` (the `as (string | undefined)[]` cast)
   - `externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue`
   - `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`
   - `externals/webawesome/badge/badge.ts`
@@ -578,10 +630,34 @@ Prettier 3.9 changed this to first retry the whole union FLAT on the indented ne
 Community pushback on the 3.9 style (users migrated to Oxfmt over it) put following on hold:
 ours deliberately matches Prettier 3.8's output for this construct.
 
+The same hold at a type alias's `=`:
+
+```ts
+/* input */
+type Narrow = "primary" | "danger" | "warning" | "muted" | "success" | "information";
+
+/* ours */
+type Narrow =
+  | "primary"
+  | "danger"
+  | "warning"
+  | "muted"
+  | "success"
+  | "information";
+
+/* prettier */
+type Narrow =
+  "primary" | "danger" | "warning" | "muted" | "success" | "information";
+```
+
+A union that would hug (`X | null`) expands the same way once a member has a comment (`/* c */ X | null`).
+
 ## arrow-exact-fill-signature
 
 - Why: uniform-rule (same construct, same output: arrow with a non-conditional body)
 - Pin: `tests/fixtures/js/arrow-function/exact-fill-signature.js`
+- Conformance:
+  - `externals/ng-zorro-antd/components/auto-complete/autocomplete.component.ts`
 
 ```js
 /* input (printWidth 80) */

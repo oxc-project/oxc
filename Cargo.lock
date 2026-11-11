@@ -2692,12 +2692,10 @@ dependencies = [
 name = "oxc_span"
 version = "0.158.0"
 dependencies = [
- "compact_str",
  "oxc-schemars",
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_estree",
- "oxc_str",
  "serde",
 ]
 
@@ -2712,6 +2710,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_data_structures",
  "oxc_estree",
+ "oxc_span",
  "serde",
 ]
 

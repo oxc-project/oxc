@@ -25,7 +25,9 @@ import {
 
 const SUITE_DIR = join(CONFORMANCE_DIR, PRETTIER_SUITE);
 
-/** Extension of the filename oxfmt is given → its language (the `associations` name), in the report's order */
+const ANGULAR_EXT = ".component.html";
+
+/** Extension of the filename oxfmt is given (Angular's: a longer suffix) → its language (the `associations` name), in the report's order */
 const LANGUAGES: Record<string, Language> = {
   ".js": "javascript",
   ".mjs": "javascript",
@@ -47,8 +49,11 @@ const LANGUAGES: Record<string, Language> = {
   ".md": "markdown",
   ".html": "html",
   ".xhtml": "html",
+  [ANGULAR_EXT]: "angular-html",
   ".vue": "vue",
 };
+const languageOf = (filename: string) =>
+  LANGUAGES[filename.endsWith(ANGULAR_EXT) ? ANGULAR_EXT : extname(filename)];
 
 const withExt = (ext: string) => (name: string) => name.replace(/\.[^. ]*$/, "") + ext;
 // A JS/TS file keeps its own extension, as oxfmt parses it by that (e.g. a `.js` listing `typescript` stays JS);
@@ -79,9 +84,11 @@ const PARSERS: Record<string, (name: string) => string> = {
   yaml: withExt(".yaml"),
   markdown: withExt(".md"),
   // An HTML extension is kept, as oxfmt reads some differently (`.xhtml`)
-  html: (name) => (LANGUAGES[extname(name)] === "html" ? name : withExt(".html")(name)),
-  // The whole file goes to Prettier, but its `<script>` is formatted by oxc.
+  html: (name) => (languageOf(name) === "html" ? name : withExt(".html")(name)),
   vue: withExt(".vue"),
+  // Still Prettier's own output through oxfmt, the baseline before the native formatter;
+  // its `__ng_*` parsers format a bare expression, which no filename routes to
+  angular: withExt(ANGULAR_EXT),
 };
 
 /**
@@ -287,7 +294,7 @@ for (const snapPath of globSync("**/__snapshots__/format.test.js.snap", {
       const result = await runCase(`${dir}/${filename}`, input, options, expected);
       if (filter) printResult(`${path} [${parser}]`, options, expected, result);
 
-      const language = LANGUAGES[extname(filename)];
+      const language = languageOf(filename);
       const rows = rowsByLanguage.get(language) ?? new Map<string, Row>();
       rowsByLanguage.set(language, rows);
       // Named by its fixture path, as DIVERGENCES.md lists it

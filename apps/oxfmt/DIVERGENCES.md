@@ -985,6 +985,34 @@ Same rule as `crates/oxc_formatter_css/DIVERGENCES.md#keyframe-selector-comment-
 the `;` is a terminator, so the comment may sit where it was (`crates/oxc_formatter_css/AGENTS.md` "Placement invariants").
 Prettier prints the `;` when a comment follows: its last-declaration check counts the comment as a node.
 
+## character-reference-in-code-as-written
+
+- Why: semantics (the HTML parser reads `&amp;` as `&` before the code runs)
+- Pin: `conformance/fixtures/html/character-reference-in-code-as-written.html`
+
+```html
+<!-- input -->
+<button onclick="x=a &amp; b">a</button>
+
+<!-- ours -->
+<button onclick="x=a &amp; b">a</button>
+
+<!-- prettier -->
+<button
+  onclick="
+    x = a & amp;
+    b;
+  "
+>
+  a
+</button>
+```
+
+An attribute value formatted as code (`style`, `on*`, a Vue directive) prints as written when it holds a character reference, `&name;` or `&#…`:
+its reader decodes the reference first (`x = a & b`), and the child would format its text as code.
+`&quot;` and `&apos;` are read back before, so they still format.
+Prettier formats the text, which makes `amp` a name and its `;` the end of a statement.
+
 ## doctype-case-in-script
 
 - Why: semantics (an html-in-js template is a JS string, and code reads its case; oxc#28793)

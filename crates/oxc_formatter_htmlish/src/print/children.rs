@@ -57,7 +57,7 @@ fn between(t: &Tree<'_>, prev: NodeId, next: NodeId) -> Between {
     }
 
     if (p.borrows.next_opening_start
-        && (n.prettier_ignore
+        && (n.suppressed
             // 123<a
             //      ~
             //   ><b>

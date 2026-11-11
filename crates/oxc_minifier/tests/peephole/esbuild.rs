@@ -2225,37 +2225,38 @@ fn test_inline_single_use_variable() {
         "function wrapper(arg0, arg1) { let x = arg0.foo; x[bar]()}",
         "function wrapper(arg0, arg1) { arg0.foo[bar]();}",
     );
+    // esbuild keeps these; oxc inlines with `(0, ...)` to keep the call unbound.
     test(
         "function wrapper(arg0, arg1) { let x = arg0.foo; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0[foo]; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.foo; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0.foo; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0[foo]; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.foo; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.foo; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.[foo]; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x();}",
+        "function wrapper(arg0, arg1) { (0, arg0?.[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0(); arg1() + x}",
