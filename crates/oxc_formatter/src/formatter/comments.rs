@@ -320,19 +320,8 @@ impl<'a> Comments<'a> {
     }
 
     /// Returns end-of-line comments that are after the given position.
-    pub fn end_of_line_comments_after(&self, mut pos: u32) -> &'a [Comment] {
-        let comments = self.comments_after(pos);
-        for (index, comment) in comments.iter().enumerate() {
-            if self.source_text.all_bytes_match(pos, comment.span.start, is_end_of_line_gap_byte) {
-                if comment.is_line() || comment.followed_by_newline() {
-                    return &comments[..=index];
-                }
-                pos = comment.span.end;
-            } else {
-                break;
-            }
-        }
-        &[]
+    pub fn end_of_line_comments_after(&self, pos: u32) -> &'a [Comment] {
+        self.end_of_line_run(self.comments_after(pos), pos)
     }
 
     /// Returns comments that occur before the first instance of a specific character (a lexical byte scan, see the module doc).
@@ -708,6 +697,18 @@ impl<'a> Comments<'a> {
         &self.inner[self.inner.partition_point(|comment| comment.span.end <= pos)..]
     }
 
+    /// Position-based variant of [`Self::has_trailing_suppression_comment`].
+    pub fn has_any_trailing_suppression_comment(&self, pos: u32) -> bool {
+        self.source_text.next_byte_skipping(pos, is_end_of_line_gap_byte) == Some(b'/')
+            && self
+                .end_of_line_run(
+                    &self.inner[self.inner.partition_point(|c| c.span.end < pos)..],
+                    pos,
+                )
+                .iter()
+                .any(|comment| self.is_suppression_comment(comment))
+    }
+
     /// Position-based variant of [`Self::has_comment_in_range`].
     pub fn has_any_comment_in_range(&self, start: u32, end: u32) -> bool {
         self.all_comments_in_range(start, end).next().is_some()
@@ -828,6 +829,21 @@ impl<'a> Comments<'a> {
         let run = self.comment_run_after(comments, pos);
         let end = run.last()?.span.end;
         self.source_text.next_non_whitespace_byte_is(end, b')').then_some(run)
+    }
+
+    /// The comments after `pos` still on its line, up to the one ending it (a prefix of `comments`, or empty)
+    fn end_of_line_run(&self, comments: &'a [Comment], mut pos: u32) -> &'a [Comment] {
+        for (index, comment) in comments.iter().enumerate() {
+            if self.source_text.all_bytes_match(pos, comment.span.start, is_end_of_line_gap_byte) {
+                if comment.is_line() || comment.followed_by_newline() {
+                    return &comments[..=index];
+                }
+                pos = comment.span.end;
+            } else {
+                break;
+            }
+        }
+        &[]
     }
 
     /// The run of comments after `pos` separated only by whitespace (a prefix of `comments`).
