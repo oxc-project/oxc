@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.73.0] - 2026-10-13
+
+### 🚀 Features
+
+- a495e82 oxfmt: Support `associations` config to specify language over filepath (#27437) (leaysgur)
+- 5db28fa oxfmt: Support Astro via `prettier-plugin-astro@1.x` (#27386) (leaysgur)
+
+### 📚 Documentation
+
+- 408d87f oxfmt: Simplify oxfmtrc docs (#27432) (leaysgur)
+- 902e188 oxfmt: Update how `embeddedLanguageFormatting` option works (#27362) (leaysgur)
+
 ## [0.67.0] - 2026-09-07
 
 ### 🛡️ Security

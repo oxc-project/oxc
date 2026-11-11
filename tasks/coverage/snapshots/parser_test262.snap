@@ -1,9 +1,9 @@
-commit: 7ab7fafa
+commit: e4fbf577
 
 parser_test262 Summary:
-AST Parsed     : 47455/47455 (100.00%)
-Positive Passed: 47455/47455 (100.00%)
-Negative Passed: 4653/4653 (100.00%)
+AST Parsed     : 47628/47628 (100.00%)
+Positive Passed: 47628/47628 (100.00%)
+Negative Passed: 4669/4669 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -10839,6 +10839,78 @@ Negative Passed: 4653/4653 (100.00%)
  28 │ }
     ╰────
 
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-async-field-no-asi-before-method.js:18:14]
+ 17 │ var C = class {
+ 18 │   a\u0073ync value() {}
+    ·              ──┬──
+    ·                ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-async-static-field-no-asi-before-method.js:18:21]
+ 17 │ var C = class {
+ 18 │   static a\u0073ync value() {}
+    ·                     ──┬──
+    ·                       ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-get-field-no-asi-before-method.js:18:12]
+ 17 │ var C = class {
+ 18 │   g\u0065t value() {}
+    ·            ──┬──
+    ·              ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-get-static-field-no-asi-before-method.js:18:19]
+ 17 │ var C = class {
+ 18 │   static g\u0065t value() {}
+    ·                   ──┬──
+    ·                     ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-set-field-no-asi-before-method.js:18:12]
+ 17 │ var C = class {
+ 18 │   s\u0065t value(v) {}
+    ·            ──┬──
+    ·              ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-set-static-field-no-asi-before-method.js:18:19]
+ 17 │ var C = class {
+ 18 │   static s\u0065t value(v) {}
+    ·                   ──┬──
+    ·                     ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-static-field-no-asi-before-method.js:18:15]
+ 17 │ var C = class {
+ 18 │   st\u0061tic value() {}
+    ·               ──┬──
+    ·                 ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/escaped-static-static-field-no-asi-before-method.js:18:22]
+ 17 │ var C = class {
+ 18 │   static st\u0061tic value() {}
+    ·                      ──┬──
+    ·                        ╰── `;` expected
+ 19 │ }
+    ╰────
+
   × Expected `;` but found `{`
     ╭─[test262/test/language/expressions/class/elements/fields-asi-3.js:18:9]
  17 │   x = "string"
@@ -19723,11 +19795,15 @@ Negative Passed: 4653/4653 (100.00%)
  50 │     
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-escaped-async.js:26:5]
+  × Expected `,` or `}` but found `*`
+    ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-escaped-async.js:26:15]
+ 24 │ 
  25 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  26 │     \u0061sync* m(){}
-    ·     ──────────
+    ·               ┬
+    ·               ╰── `,` or `}` expected
  27 │ });
     ╰────
 
@@ -19897,11 +19973,15 @@ Negative Passed: 4653/4653 (100.00%)
  43 │     
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/async-meth-escaped-async.js:26:5]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/async-meth-escaped-async.js:26:16]
+ 24 │ 
  25 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  26 │     \u0061sync m(){}
-    ·     ──────────
+    ·                ┬
+    ·                ╰── `,` or `}` expected
  27 │ });
     ╰────
 
@@ -20042,67 +20122,99 @@ Negative Passed: 4653/4653 (100.00%)
  17 │ })
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-get-e.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-get-e.js:25:12]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   g\u0065t m() {}
-    ·   ────────
+    ·            ┬
+    ·            ╰── `,` or `}` expected
  26 │ });
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-get-g.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-get-g.js:25:12]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   \u0067et m() {}
-    ·   ────────
+    ·            ┬
+    ·            ╰── `,` or `}` expected
  26 │ });
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-get-t.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-get-t.js:25:12]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   ge\u0074 m() {}
-    ·   ────────
+    ·            ┬
+    ·            ╰── `,` or `}` expected
  26 │ });
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-get.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-get.js:25:22]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   \u0067\u0065\u0074 m() {}
-    ·   ──────────────────
+    ·                      ┬
+    ·                      ╰── `,` or `}` expected
  26 │ });
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-set-e.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-set-e.js:25:12]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   s\u0065t m(v) {}
-    ·   ────────
+    ·            ┬
+    ·            ╰── `,` or `}` expected
  26 │ });
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-set-s.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-set-s.js:25:12]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   \u0073et m(v) {}
-    ·   ────────
+    ·            ┬
+    ·            ╰── `,` or `}` expected
  26 │ });
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-set-t.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-set-t.js:25:12]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   se\u0074 m(v) {}
-    ·   ────────
+    ·            ┬
+    ·            ╰── `,` or `}` expected
  26 │ });
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/expressions/object/method-definition/escaped-set.js:25:3]
+  × Expected `,` or `}` but found `Identifier`
+    ╭─[test262/test/language/expressions/object/method-definition/escaped-set.js:25:22]
+ 23 │ 
  24 │ ({
+    ·  ┬
+    ·  ╰── Opened here
  25 │   \u0073\u0065\u0074 m(v) {}
-    ·   ──────────────────
+    ·                      ┬
+    ·                      ╰── `,` or `}` expected
  26 │ });
     ╰────
 
@@ -22809,13 +22921,12 @@ Negative Passed: 4653/4653 (100.00%)
     ·   ▲
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
+  × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/exponent-part.js:17:4]
  16 │ 
  17 │ 0e0n;
-    ·    ▲
+    ·    ─
     ╰────
-  help: Try inserting a semicolon here
 
   × Invalid Character `g`
     ╭─[test262/test/language/literals/bigint/hexadecimal-invalid-digit.js:27:3]
@@ -22894,26 +23005,29 @@ Negative Passed: 4653/4653 (100.00%)
     ·   ▲
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-bil-nsl-bd-dunder-err.js:45:5]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-bil-nsl-bd-dunder-err.js:45:4]
  44 │ 
  45 │ 0b0__0n;
-    ·     ▲
+    ·    ─
     ╰────
+  help: Remove the separator or place it between two digits
 
-  × Invalid Character `n`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-bil-nsl-bd-err.js:44:5]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-bil-nsl-bd-err.js:44:4]
  43 │ 
  44 │ 0b0_n;
-    ·     ▲
+    ·    ─
     ╰────
+  help: Remove the separator or place it between two digits
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-dd-nsl-dds-dunder-err.js:37:3]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-dd-nsl-dds-dunder-err.js:37:2]
  36 │ 
  37 │ 1__0123456789n;
-    ·   ▲
+    ·  ─
     ╰────
+  help: Remove the separator or place it between two digits
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-dd-nsl-dds-dunder-err.js:37:3]
@@ -22922,19 +23036,21 @@ Negative Passed: 4653/4653 (100.00%)
     ·   ─
     ╰────
 
-  × Invalid Character `n`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-dd-nsl-err.js:39:3]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-dd-nsl-err.js:39:2]
  38 │ 
  39 │ 1_n;
-    ·   ▲
+    ·  ─
     ╰────
+  help: Remove the separator or place it between two digits
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-dds-nsl-dds-dunder-err.js:37:4]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-dds-nsl-dds-dunder-err.js:37:3]
  36 │ 
  37 │ 10__0123456789n;
-    ·    ▲
+    ·   ─
     ╰────
+  help: Remove the separator or place it between two digits
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-dds-nsl-dds-dunder-err.js:37:4]
@@ -22943,12 +23059,13 @@ Negative Passed: 4653/4653 (100.00%)
     ·    ─
     ╰────
 
-  × Invalid Character `n`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-dds-nsl-err.js:40:4]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-dds-nsl-err.js:40:3]
  39 │ 
  40 │ 10_n;
-    ·    ▲
+    ·   ─
     ╰────
+  help: Remove the separator or place it between two digits
 
   × Invalid Character `_`
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-hd-nsl-hd-err.js:45:3]
@@ -22957,19 +23074,21 @@ Negative Passed: 4653/4653 (100.00%)
     ·   ▲
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-nsl-hd-dunder-err.js:45:5]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-nsl-hd-dunder-err.js:45:4]
  44 │ 
  45 │ 0x0__0n;
-    ·     ▲
+    ·    ─
     ╰────
+  help: Remove the separator or place it between two digits
 
-  × Invalid Character `n`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-nsl-hd-err.js:45:5]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-nsl-hd-err.js:45:4]
  44 │ 
  45 │ 0x0_n;
-    ·     ▲
+    ·    ─
     ╰────
+  help: Remove the separator or place it between two digits
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-lol-00-err.js:53:3]
@@ -23055,19 +23174,21 @@ Negative Passed: 4653/4653 (100.00%)
     ·  ─
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-nsl-od-dunder-err.js:45:5]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-nsl-od-dunder-err.js:45:4]
  44 │ 
  45 │ 0o0__0n;
-    ·     ▲
+    ·    ─
     ╰────
+  help: Remove the separator or place it between two digits
 
-  × Invalid Character `n`
-    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-nsl-od-err.js:45:5]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-nsl-od-err.js:45:4]
  44 │ 
  45 │ 0o0_n;
-    ·     ▲
+    ·    ─
     ╰────
+  help: Remove the separator or place it between two digits
 
   × Invalid Character `_`
     ╭─[test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-od-nsl-od-err.js:45:3]
@@ -23265,27 +23386,29 @@ Negative Passed: 4653/4653 (100.00%)
     ·   ▲
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-bil-nsl-bd-dunder-err.js:35:5]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-bil-nsl-bd-dunder-err.js:35:4]
  34 │ 
  35 │ 0b0__0
-    ·     ▲
+    ·    ─
     ╰────
+  help: Remove the separator or place it between two digits
 
-  × Invalid Character `
-  │ `
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-bil-nsl-bd-err.js:35:5]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-bil-nsl-bd-err.js:35:4]
  34 │ 
  35 │ 0b0_
-    ·     ▲
+    ·    ─
     ╰────
+  help: Remove the separator or place it between two digits
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dd-nsl-dds-dunder-err.js:27:3]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dd-nsl-dds-dunder-err.js:27:2]
  26 │ 
  27 │ 1__0123456789
-    ·   ▲
+    ·  ─
     ╰────
+  help: Remove the separator or place it between two digits
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dd-nsl-dds-dunder-err.js:27:3]
@@ -23294,20 +23417,21 @@ Negative Passed: 4653/4653 (100.00%)
     ·   ─
     ╰────
 
-  × Invalid Character `
-  │ `
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dd-nsl-err.js:29:3]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dd-nsl-err.js:29:2]
  28 │ 
  29 │ 1_
-    ·   ▲
+    ·  ─
     ╰────
+  help: Remove the separator or place it between two digits
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dds-nsl-dds-dunder-err.js:27:4]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dds-nsl-dds-dunder-err.js:27:3]
  26 │ 
  27 │ 10__0123456789
-    ·    ▲
+    ·   ─
     ╰────
+  help: Remove the separator or place it between two digits
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dds-nsl-dds-dunder-err.js:27:4]
@@ -23316,20 +23440,21 @@ Negative Passed: 4653/4653 (100.00%)
     ·    ─
     ╰────
 
-  × Invalid Character `
-  │ `
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dds-nsl-err.js:30:4]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dds-nsl-err.js:30:3]
  29 │ 
  30 │ 10_
-    ·    ▲
+    ·   ─
     ╰────
+  help: Remove the separator or place it between two digits
 
-  × Invalid Character `e`
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dil-dot-dds-nsl-ep-dd-err.js:29:6]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dil-dot-dds-nsl-ep-dd-err.js:29:5]
  28 │ 
  29 │ 10.0_e1
-    ·      ▲
+    ·     ─
     ╰────
+  help: Remove the separator or place it between two digits
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dil-dot-nsl-dd-err.js:29:4]
@@ -23352,12 +23477,13 @@ Negative Passed: 4653/4653 (100.00%)
     ·    ─
     ╰────
 
-  × Invalid Character `e`
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dot-dds-nsl-ep-err.js:31:4]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dot-dds-nsl-ep-err.js:31:3]
  30 │ 
  31 │ .0_e1
-    ·    ▲
+    ·   ─
     ╰────
+  help: Remove the separator or place it between two digits
 
   × Unexpected token
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-dot-nsl-ep-err.js:32:1]
@@ -23380,20 +23506,21 @@ Negative Passed: 4653/4653 (100.00%)
     ·   ▲
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-hil-nsl-hd-dunder-err.js:35:5]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-hil-nsl-hd-dunder-err.js:35:4]
  34 │ 
  35 │ 0x0__0
-    ·     ▲
+    ·    ─
     ╰────
+  help: Remove the separator or place it between two digits
 
-  × Invalid Character `
-  │ `
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-hil-nsl-hd-err.js:35:5]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-hil-nsl-hd-err.js:35:4]
  34 │ 
  35 │ 0x0_
-    ·     ▲
+    ·    ─
     ╰────
+  help: Remove the separator or place it between two digits
 
   × Invalid characters after number
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-lol-00-err.js:42:3]
@@ -23479,20 +23606,21 @@ Negative Passed: 4653/4653 (100.00%)
     ·  ─
     ╰────
 
-  × Invalid Character `_`
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-oil-nsl-od-dunder-err.js:35:5]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-oil-nsl-od-dunder-err.js:35:4]
  34 │ 
  35 │ 0o0__0
-    ·     ▲
+    ·    ─
     ╰────
+  help: Remove the separator or place it between two digits
 
-  × Invalid Character `
-  │ `
-    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-oil-nsl-od-err.js:35:5]
+  × Numeric separators must appear between digits
+    ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-oil-nsl-od-err.js:35:4]
  34 │ 
  35 │ 0o0_
-    ·     ▲
+    ·    ─
     ╰────
+  help: Remove the separator or place it between two digits
 
   × Invalid Character `_`
     ╭─[test262/test/language/literals/numeric/numeric-separators/numeric-separator-literal-oil-od-nsl-od-err.js:35:3]
@@ -24616,13 +24744,13 @@ Negative Passed: 4653/4653 (100.00%)
     ╰────
   help: Add the missing closing delimiter
 
-  × Invalid regular expression: Unterminated capturing group
-    ╭─[test262/test/language/literals/regexp/named-groups/invalid-identity-escape-in-capture-u.js:16:2]
+  × Invalid regular expression: Invalid escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-identity-escape-in-capture-u.js:16:7]
  15 │ 
  16 │ /(?<a>\a)/u;
-    ·  ──────
+    ·       ─
     ╰────
-  help: Add the missing closing delimiter
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-2-u.js:16:11]
@@ -24992,13 +25120,13 @@ Negative Passed: 4653/4653 (100.00%)
  34 │ ╰─▶ */
     ╰────
 
-  × Invalid regular expression: Could not parse the entire pattern
-    ╭─[test262/test/language/literals/regexp/u-invalid-class-escape.js:24:3]
+  × Invalid regular expression: Invalid escape sequence
+    ╭─[test262/test/language/literals/regexp/u-invalid-class-escape.js:24:2]
  23 │ 
  24 │ /\c0/u;
-    ·   ▲
+    ·  ─
     ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Could not parse the entire pattern
     ╭─[test262/test/language/literals/regexp/u-invalid-extended-pattern-char.js:21:2]
@@ -25008,13 +25136,13 @@ Negative Passed: 4653/4653 (100.00%)
     ╰────
   help: Check for unbalanced brackets or invalid escape sequences
 
-  × Invalid regular expression: Could not parse the entire pattern
-    ╭─[test262/test/language/literals/regexp/u-invalid-identity-escape.js:23:3]
+  × Invalid regular expression: Invalid escape sequence
+    ╭─[test262/test/language/literals/regexp/u-invalid-identity-escape.js:23:2]
  22 │ 
  23 │ /\M/u;
-    ·   ▲
+    ·  ─
     ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Invalid indexed reference
     ╭─[test262/test/language/literals/regexp/u-invalid-legacy-octal-escape.js:26:2]
@@ -25811,41 +25939,44 @@ Negative Passed: 4653/4653 (100.00%)
  22 │ 
     ╰────
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
     ╭─[test262/test/language/module-code/import-attributes/early-dup-attribute-key-export.js:21:3]
  20 │ export * from './import-attribute-3_FIXTURE.js' with {
  21 │   type: 'json',
     ·   ──┬─
-    ·     ╰── `type` has already been declared here
+    ·     ╰── `type` was already specified here
  22 │   'typ\u0065': ''
     ·   ─────┬─────
-    ·        ╰── It can not be redeclared here
+    ·        ╰── This key is repeated
  23 │ };
     ╰────
+  help: Each import attribute key must be unique
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
     ╭─[test262/test/language/module-code/import-attributes/early-dup-attribute-key-import-nobinding.js:22:3]
  21 │ import './import-attribute-2_FIXTURE.js' with {
  22 │   type: 'json',
     ·   ──┬─
-    ·     ╰── `type` has already been declared here
+    ·     ╰── `type` was already specified here
  23 │   'typ\u0065': ''
     ·   ─────┬─────
-    ·        ╰── It can not be redeclared here
+    ·        ╰── This key is repeated
  24 │ };
     ╰────
+  help: Each import attribute key must be unique
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
     ╭─[test262/test/language/module-code/import-attributes/early-dup-attribute-key-import-withbinding.js:22:3]
  21 │ import x from './import-attribute-1_FIXTURE.js' with {
  22 │   type: 'json',
     ·   ──┬─
-    ·     ╰── `type` has already been declared here
+    ·     ╰── `type` was already specified here
  23 │   'typ\u0065': ''
     ·   ─────┬─────
-    ·        ╰── It can not be redeclared here
+    ·        ╰── This key is repeated
  24 │ };
     ╰────
+  help: Each import attribute key must be unique
 
   × Private identifier '#x' is not allowed outside class bodies
     ╭─[test262/test/language/module-code/invalid-private-names-call-expression-bad-reference.js:40:14]
@@ -28163,11 +28294,12 @@ Negative Passed: 4653/4653 (100.00%)
     ╰────
   help: A `break` statement can only be used within an enclosing iteration or switch statement.
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/statements/class/async-gen-meth-escaped-async.js:26:5]
+  × Expected `;` but found `*`
+    ╭─[test262/test/language/statements/class/async-gen-meth-escaped-async.js:26:15]
  25 │ class C {
  26 │     \u0061sync* m(){}
-    ·     ──────────
+    ·               ┬
+    ·               ╰── `;` expected
  27 │ };
     ╰────
 
@@ -28631,11 +28763,12 @@ Negative Passed: 4653/4653 (100.00%)
     ╰────
   note: Classes are always strict mode code
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/statements/class/async-meth-escaped-async.js:26:5]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/async-meth-escaped-async.js:26:16]
  25 │ class C {
  26 │     \u0061sync m(){}
-    ·     ──────────
+    ·                ┬
+    ·                ╰── `;` expected
  27 │ };
     ╰────
 
@@ -30791,6 +30924,78 @@ Negative Passed: 4653/4653 (100.00%)
  27 │   x = {} == super();
     ·             ───────
  28 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-async-field-no-asi-before-method.js:18:14]
+ 17 │ class C {
+ 18 │   a\u0073ync value() {}
+    ·              ──┬──
+    ·                ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-async-static-field-no-asi-before-method.js:18:21]
+ 17 │ class C {
+ 18 │   static a\u0073ync value() {}
+    ·                     ──┬──
+    ·                       ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-get-field-no-asi-before-method.js:18:12]
+ 17 │ class C {
+ 18 │   g\u0065t value() {}
+    ·            ──┬──
+    ·              ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-get-static-field-no-asi-before-method.js:18:19]
+ 17 │ class C {
+ 18 │   static g\u0065t value() {}
+    ·                   ──┬──
+    ·                     ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-set-field-no-asi-before-method.js:18:12]
+ 17 │ class C {
+ 18 │   s\u0065t value(v) {}
+    ·            ──┬──
+    ·              ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-set-static-field-no-asi-before-method.js:18:19]
+ 17 │ class C {
+ 18 │   static s\u0065t value(v) {}
+    ·                   ──┬──
+    ·                     ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-static-field-no-asi-before-method.js:18:15]
+ 17 │ class C {
+ 18 │   st\u0061tic value() {}
+    ·               ──┬──
+    ·                 ╰── `;` expected
+ 19 │ }
+    ╰────
+
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/escaped-static-static-field-no-asi-before-method.js:18:22]
+ 17 │ class C {
+ 18 │   static st\u0061tic value() {}
+    ·                      ──┬──
+    ·                        ╰── `;` expected
+ 19 │ }
     ╰────
 
   × Expected `;` but found `{`
@@ -34766,11 +34971,12 @@ Negative Passed: 4653/4653 (100.00%)
     ·       ╰── It can not be redeclared here
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[test262/test/language/statements/class/syntax/escaped-static.js:25:3]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/syntax/escaped-static.js:25:15]
  24 │ class C {
  25 │   st\u0061tic m() {}
-    ·   ───────────
+    ·               ┬
+    ·               ╰── `;` expected
  26 │ }
     ╰────
 

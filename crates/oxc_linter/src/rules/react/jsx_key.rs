@@ -16,10 +16,11 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
-    ast_util::is_node_within_call_argument,
+    ast_util::{is_node_within_call_argument, outermost_paren},
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::default_true,
@@ -46,7 +47,8 @@ fn key_prop_must_be_placed_before_spread(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn duplicate_key_prop(key_value: &str, span: Span) -> OxcDiagnostic {
+fn duplicate_key_prop(key_value: JSStr<'_>, span: Span) -> OxcDiagnostic {
+    let key_value = key_value.display();
     OxcDiagnostic::warn(format!("Duplicate key '{key_value}' found in JSX elements"))
         .with_help("Each child in a list should have a unique 'key' prop")
         .with_label(span)
@@ -108,6 +110,7 @@ declare_oxc_lint!(
     JsxKey,
     react,
     correctness,
+    recommended,
     config = JsxKey,
     version = "0.0.14",
     short_description = "Enforce `key` prop for elements in an array.",
@@ -283,7 +286,7 @@ fn is_in_array_or_iter<'a, 'b>(
                 is_outside_containing_function = true;
             }
             AstKind::ArrayExpression(_) => {
-                if is_outside_containing_function {
+                if node.id() != outermost_paren(jsx_node, ctx).id() {
                     return None;
                 }
 
@@ -294,7 +297,7 @@ fn is_in_array_or_iter<'a, 'b>(
 
                 if let Some(member_expr) = callee.as_member_expression()
                     && let Some((span, ident)) = member_expr.static_property_info()
-                    && TARGET_METHODS.contains(&ident)
+                    && TARGET_METHODS.iter().any(|method| *method == ident)
                 {
                     // Early exit if no arguments to check
                     if v.arguments.is_empty() {
@@ -389,7 +392,10 @@ fn gen_diagnostic(span: Span, outer: &InsideArrayOrIterator) -> OxcDiagnostic {
     }
 }
 
-fn get_jsx_element_key_value(jsx_elem: &JSXElement) -> Option<(String, Span)> {
+fn get_jsx_element_key_value<'a>(
+    jsx_elem: &JSXElement<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<(JSStr<'a>, Span)> {
     for attr in &jsx_elem.opening_element.attributes {
         if let JSXAttributeItem::Attribute(attr) = attr
             && let JSXAttributeName::Identifier(ident) = &attr.name
@@ -399,21 +405,23 @@ fn get_jsx_element_key_value(jsx_elem: &JSXElement) -> Option<(String, Span)> {
             if let Some(value) = &attr.value {
                 match value {
                     JSXAttributeValue::StringLiteral(lit) => {
-                        return Some((lit.value.to_string(), attr.span));
+                        return Some((lit.value, attr.span));
                     }
                     JSXAttributeValue::ExpressionContainer(container) => {
                         // JSXExpression inherits from Expression, so we match the Expression variants directly
                         match &container.expression {
                             JSXExpression::StringLiteral(lit) => {
-                                return Some((lit.value.to_string(), attr.span));
+                                return Some((lit.value, attr.span));
                             }
                             JSXExpression::NumericLiteral(lit) => {
-                                return Some((lit.value.to_string(), attr.span));
+                                let value =
+                                    JSStr::from_str_in(&lit.value.to_string(), &ctx.allocator());
+                                return Some((value, attr.span));
                             }
-                            JSXExpression::TemplateLiteral(lit)
-                                if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
-                            {
-                                return Some((lit.quasis[0].value.raw.to_string(), attr.span));
+                            JSXExpression::TemplateLiteral(lit) => {
+                                if let Some(value) = lit.single_quasi() {
+                                    return Some((value, attr.span));
+                                }
                             }
                             _ => {}
                         }
@@ -427,28 +435,28 @@ fn get_jsx_element_key_value(jsx_elem: &JSXElement) -> Option<(String, Span)> {
 }
 
 fn check_duplicate_keys_in_array<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintContext<'a>) {
-    let mut seen_keys: FxHashSet<String> = FxHashSet::default();
+    let mut seen_keys: FxHashSet<JSStr<'a>> = FxHashSet::default();
 
     for element in &array_expr.elements {
         // ArrayExpressionElement also inherits from Expression
         if let ArrayExpressionElement::JSXElement(jsx_elem) = element
-            && let Some((key_value, span)) = get_jsx_element_key_value(jsx_elem)
-            && !seen_keys.insert(key_value.clone())
+            && let Some((key_value, span)) = get_jsx_element_key_value(jsx_elem, ctx)
+            && !seen_keys.insert(key_value)
         {
-            ctx.diagnostic(duplicate_key_prop(&key_value, span));
+            ctx.diagnostic(duplicate_key_prop(key_value, span));
         }
     }
 }
 
 fn check_duplicate_keys_in_children<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
-    let mut seen_keys: FxHashSet<String> = FxHashSet::default();
+    let mut seen_keys: FxHashSet<JSStr<'a>> = FxHashSet::default();
 
     for child in &jsx_elem.children {
         if let JSXChild::Element(child_elem) = child
-            && let Some((key_value, span)) = get_jsx_element_key_value(child_elem)
-            && !seen_keys.insert(key_value.clone())
+            && let Some((key_value, span)) = get_jsx_element_key_value(child_elem, ctx)
+            && !seen_keys.insert(key_value)
         {
-            ctx.diagnostic(duplicate_key_prop(&key_value, span));
+            ctx.diagnostic(duplicate_key_prop(key_value, span));
         }
     }
 }
@@ -466,6 +474,17 @@ fn test() {
         (r"[1, 2, 3].map(x => <App key={x} />);", None, None),
         (r"[1, 2 ,3].map(x => x && <App x={x} key={x} />);", None, None),
         (r#"[1, 2 ,3].map(x => x ? <App x={x} key="1" /> : <OtherApp x={x} key="2" />);"#, None, None),
+        // Different lone surrogates, and a pair versus its lead, are different keys.
+        (
+            r#"const spans = [<span key={"\uD800"}/>, <span key={"\uDC00"}/>];"#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        (
+            r#"const div = <div><span key={"\uD83D\uDE00"}/><span key={"\uD83D"}/></div>;"#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
         (r"[1, 2, 3].map(x => { return <App key={x} /> });", None, None),
         (r"Array.from([1, 2, 3], function(x) { return <App key={x} /> });", None, None),
         (r"Array.from([1, 2, 3], (x => <App key={x} />));", None, None),
@@ -595,10 +614,37 @@ fn test() {
         ("[1, 2, 3].map((item) => {
             return item === 'bar' ? <div key={item}>{item}</div> : <span key={item}>{item}</span>;
           })", None, None
-        )
+        ),
+        (
+            "declare const Counter: (props: { onCount: (n: number) => void }) => React.ReactNode;
+             export const useCount = (needed: boolean, set: (n: number) => void) =>
+               [needed ? 1 : undefined, needed ? <Counter onCount={set} /> : null] as const;",
+            None,
+            None,
+        ),
+        ("[condition ? <App /> : null];", None, None),
+        ("[condition ? null : <App />];", None, None),
+        ("[condition ? <App /> : <Other />];", None, None),
+        ("[condition && <App />];", None, None),
+        ("[(condition ? (<App />) : null)];", None, None),
+        (
+            "[condition ? <></> : null];",
+            Some(serde_json::json!([{ "checkFragmentShorthand": true }])),
+            None,
+        ),
     ];
 
     let fail = vec![
+        (
+            r#"const xs = [<span key={"a\uD800"} />, <span key={`a\uD800`} />];"#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        (
+            r#"const xs = [<span key={"foo"} />, <span key={`\u0066oo`} />];"#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
         ("[<App />];", None, None),
         ("[<App {...key} />];", None, None),
         ("[<App key={0}/>, <App />];", None, None),
@@ -648,6 +694,33 @@ fn test() {
                       <span key="notunique"/>,
                     ];
                   "#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        // A template key with a substitution leaves the element's later `key` to compare.
+        (
+            r#"const spans = [<span key={`${a}`} key="dup"/>, <span key={`${a}`} key="dup"/>];"#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        (
+            r#"const div = <div><span key={`${a}`} key="dup"/><span key="dup"/></div>;"#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        // Keys containing lone surrogates are compared by their JavaScript value.
+        (
+            r#"const spans = [<span key={"\uD800"}/>, <span key={"\uD800"}/>];"#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        (
+            r"const spans = [<span key={`a\uDC00`}/>, <span key={`a\uDC00`}/>];",
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        (
+            r#"const div = <div><span key={"\uD83D\uDE00"}/><span key={"\uD83D\uDE00"}/></div>;"#,
             Some(serde_json::json!([{ "warnOnDuplicates": true }])),
             None,
         ),
@@ -783,6 +856,8 @@ fn test() {
             None,
             None,
         ),
+        ("[((<App />))];", None, None),
+        ("[condition ? [<App />] : null];", None, None),
     ];
 
     Tester::new(JsxKey::NAME, JsxKey::PLUGIN, pass, fail).test_and_snapshot();

@@ -100,9 +100,8 @@ impl<'a> SymbolState<'a> {
 
     /// Whether runtime semantics have an implicit observation channel that
     /// remains even if every resolved reference disappears from the current
-    /// AST. Returns `false` when liveness state is absent; optimization
-    /// consumers may interpret that result only in configurations where
-    /// absence is safe.
+    /// AST. Returns `false` when liveness state is absent, which is only the
+    /// case when Normalize recorded no such binding.
     pub fn is_implicitly_observable(&self, symbol_id: SymbolId) -> bool {
         self.liveness.as_ref().is_some_and(|liveness| liveness.is_implicitly_observable(symbol_id))
     }

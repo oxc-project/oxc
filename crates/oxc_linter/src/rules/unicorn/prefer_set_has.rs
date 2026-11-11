@@ -1,12 +1,13 @@
 use itertools::Itertools;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression, VariableDeclarationKind},
+    ast::{Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{
     AstNode, ast_util::is_method_call, ast_util::variable_declaration_kind, context::LintContext,
@@ -69,6 +70,7 @@ declare_oxc_lint!(
     PreferSetHas,
     unicorn,
     perf,
+    recommended,
     dangerous_fix,
     version = "0.13.2",
     short_description = "Prefer `Set#has()` over `Array#includes()` when checking for existence or non-existence.",
@@ -93,7 +95,9 @@ fn is_kind_of_array_expr(expr: &Expression) -> bool {
                 return false;
             }
 
-            let Some(name) = callee.static_property_name() else { return false };
+            let Some(name) = callee.static_property_name().and_then(JSStr::as_str) else {
+                return false;
+            };
 
             is_array_of_or_from(callee) || ARRAY_METHODS_RETURNS_ARRAY.contains(&name)
         }
@@ -136,7 +140,10 @@ impl Rule for PreferSetHas {
             return;
         };
 
-        if variable_declaration_kind(declarator, ctx) == VariableDeclarationKind::Var {
+        let Some(kind) = variable_declaration_kind(declarator, ctx.nodes()) else {
+            return;
+        };
+        if kind.is_var() {
             return;
         }
 
@@ -223,50 +230,8 @@ impl Rule for PreferSetHas {
         ctx.diagnostic_with_fix(prefer_set_has_diagnostic(declarator.span), |fixer| {
             let fixer = fixer.for_multifix();
             let mut declaration_fix = fixer.new_fix_with_capacity(2);
-            let new_string = "new";
-            let set_start_string = "Set(";
-            let set_end_string = ")";
-            let set_array_string = format!("{set_start_string}[");
-            let net_set_array_string = format!("{new_string} {set_array_string}");
-            let new_set_start_string = format!("{new_string} {set_start_string}");
-            let array_end_string = format!("]{set_end_string}");
-            let array_parenthesis_len = 6; // Array( => 6
-            let new_space_len = 4; // new  => 4
-            match init {
-                Expression::ArrayExpression(init_node) => {
-                    declaration_fix
-                        .push(fixer.insert_text_before(&init_node.span, new_set_start_string));
-                    declaration_fix.push(fixer.insert_text_after(&init_node.span, set_end_string));
-                }
-                Expression::CallExpression(call_expr) => {
-                    if call_expr.callee.is_identifier_reference() {
-                        let start = call_expr.span.start;
-                        let end = start + 6;
-                        let span = Span::new(start, end);
-                        declaration_fix.push(fixer.replace(span, net_set_array_string));
-                        let start = call_expr.span.end - 1;
-                        let end = start + 1;
-                        let span = Span::new(start, end);
-                        declaration_fix.push(fixer.replace(span, array_end_string));
-                    } else {
-                        declaration_fix
-                            .push(fixer.insert_text_before(&call_expr.span, new_set_start_string));
-                        declaration_fix
-                            .push(fixer.insert_text_after(&call_expr.span, set_end_string));
-                    }
-                }
-                Expression::NewExpression(new_expr) => {
-                    let start = new_expr.span.start + new_space_len;
-                    let end = start + array_parenthesis_len;
-                    let span = Span::new(start, end);
-                    declaration_fix.push(fixer.replace(span, set_array_string));
-                    let start = new_expr.span.end - 1;
-                    let end = start + 1;
-                    let span = Span::new(start, end);
-                    declaration_fix.push(fixer.replace(span, array_end_string));
-                }
-                _ => {}
-            }
+            declaration_fix.push(fixer.insert_text_before(init, "new Set("));
+            declaration_fix.push(fixer.insert_text_after(init, ")"));
 
             let mut references_fix = fixer.new_fix_with_capacity(len);
             let references = symbol_table.get_resolved_references(symbol_id);
@@ -847,7 +812,7 @@ fn test() {
                 }
             ",
             "
-                const foo = new Set([1, 2]);
+                const foo = new Set(Array(1, 2));
                 function unicorn() {
                     return foo.has(1);
                 }
@@ -861,7 +826,7 @@ fn test() {
                 }
             ",
             "
-                const foo = new Set([1, 2]);
+                const foo = new Set(new Array(1, 2));
                 function unicorn() {
                     return foo.has(1);
                 }
@@ -902,4 +867,39 @@ fn test() {
     Tester::new(PreferSetHas::NAME, PreferSetHas::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_array_constructor_spans() {
+    use crate::tester::Tester;
+
+    let cases = vec![
+        (
+            "const a = new\u{3000}Array(1, 2); a.includes(1); a.includes(2);",
+            "const a = new Set(new\u{3000}Array(1, 2)); a.has(1); a.has(2);",
+        ),
+        (
+            "const a = Array\u{3000}(1, 2); a.includes(1); a.includes(2);",
+            "const a = new Set(Array\u{3000}(1, 2)); a.has(1); a.has(2);",
+        ),
+        (
+            "const a = new Array\u{3000}(1, 2); a.includes(1); a.includes(2);",
+            "const a = new Set(new Array\u{3000}(1, 2)); a.has(1); a.has(2);",
+        ),
+        (
+            "const a = new/*\u{3000}*/Array/*\u{3000}*/(1, 2); a.includes(1); a.includes(2);",
+            "const a = new Set(new/*\u{3000}*/Array/*\u{3000}*/(1, 2)); a.has(1); a.has(2);",
+        ),
+        (
+            "const a = new Array; a.includes(1); a.includes(2);",
+            "const a = new Set(new Array); a.has(1); a.has(2);",
+        ),
+        (
+            "const a = \\u0041rray(1, 2); a.includes(1); a.includes(2);",
+            "const a = new Set(\\u0041rray(1, 2)); a.has(1); a.has(2);",
+        ),
+    ];
+    let fail = cases.iter().map(|(source, _)| *source).collect();
+
+    Tester::new(PreferSetHas::NAME, PreferSetHas::PLUGIN, vec![], fail).expect_fix(cases).test();
 }

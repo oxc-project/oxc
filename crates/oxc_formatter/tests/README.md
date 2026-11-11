@@ -6,7 +6,7 @@ This directory contains snapshot-based tests for the oxc_formatter crate.
 
 The test infrastructure is designed to be simple and flexible:
 
-- **File-based testing**: Just create `.js`, `.jsx`, `.ts`, or `.tsx` files in the `fixtures/` directory
+- **File-based testing**: Just create `.{js,jsx,ts,tsx,mjs,cjs,mts,cts}` files in the `fixtures/` directory
 - **Hierarchical options**: Configure format options via `options.json` files at any directory level
 - **Automatic discovery**: Tests are automatically discovered via build script - no manual registration needed
 - **Nested modules**: Directory structure becomes module hierarchy, enabling targeted test execution
@@ -59,13 +59,11 @@ Create an `options.json` file in the same directory (or parent directory):
 [
   {
     "semi": true,
-    "singleQuote": false,
-    "arrowParens": "always"
+    "singleQuote": false
   },
   {
     "semi": false,
     "singleQuote": true,
-    "arrowParens": "avoid",
     "printWidth": 120
   }
 ]
@@ -86,19 +84,7 @@ The test will inherit options from the nearest `options.json` file in the direct
 
 ## Supported Options
 
-The following format options are supported in `options.json`:
-
-- `semi`: `true` | `false` - Semicolons (maps to `Semicolons::Always` / `Semicolons::AsNeeded`)
-- `singleQuote`: `true` | `false` - Quote style
-- `jsxSingleQuote`: `true` | `false` - JSX quote style
-- `arrowParens`: `"always"` | `"avoid"` - Arrow function parentheses
-- `trailingComma`: `"none"` | `"es5"` | `"all"` - Trailing commas
-- `printWidth`: number - Line width
-- `tabWidth`: number - Indentation width
-- `useTabs`: `true` | `false` - Use tabs for indentation
-- `bracketSpacing`: `true` | `false` - Object literal spacing
-- `bracketSameLine`: `true` | `false` - JSX bracket on same line
-- `jsxBracketSameLine`: `true` | `false` - (alias for bracketSameLine)
+The core options (`printWidth`, `tabWidth`, `useTabs`, `endOfLine`) and the keys `apply_option` in `tests/fixtures/mod.rs` maps are supported, any other key fails the test.
 
 ## Running Tests
 
@@ -130,7 +116,8 @@ cargo insta test --accept -p oxc_formatter --test mod
 ### Accept snapshots for specific tests
 
 ```bash
-FILTER="arrow" cargo insta test --accept -p oxc_formatter --test mod
+# Test names containing `arrow`
+cargo insta test --accept -p oxc_formatter --test mod -- arrow
 ```
 
 ### Review snapshots interactively
@@ -141,20 +128,19 @@ cargo insta review -p oxc_formatter
 
 ## How It Works
 
-1. **Build-time Discovery**: The build script (`build.rs`) scans `tests/fixtures/` for all `.{js,jsx,ts,tsx}` files
+1. **Build-time Discovery**: The build script (`build.rs`) scans `tests/fixtures/` for all `.{js,jsx,ts,tsx,mjs,cjs,mts,cts}` files
 2. **Module Generation**: Directories become nested modules matching the file system structure
 3. **Code Generation**: For each file, a test function is generated in the appropriate module
    - Example: `fixtures/js/comments/test.js` → `fixtures::js::comments::test()`
 4. **Test Execution**: Each generated test function calls the shared `test_file()` helper
-5. **Filtering**: If `FILTER` env var is set, only matching paths are tested
-6. **Option Resolution**: For each file, walk up the directory tree to find `options.json`
-7. **Formatting**: Format the file with each option set
-8. **Snapshot**: Generate a snapshot showing input + all outputs (stored next to test file)
-9. **Comparison**: Compare with existing snapshot (if any)
+5. **Option Resolution**: For each file, walk up the directory tree to find `options.json`
+6. **Formatting**: Format the file with each option set
+7. **Snapshot**: Generate a snapshot showing input + all outputs (stored next to test file)
+8. **Comparison**: Compare with existing snapshot (if any)
 
 ## Tips
 
-- **Auto-discovery**: Just add a `.js/.jsx/.ts/.tsx` file to `fixtures/` - no need to register it anywhere
+- **Auto-discovery**: Just add a `.{js,jsx,ts,tsx,mjs,cjs,mts,cts}` file to `fixtures/` - no need to register it anywhere
 - **Nested Modules**: Directories become modules, enabling targeted test execution:
   - `fixtures/js/comments/test.js` → `cargo test fixtures::js::comments::test`
   - `fixtures/js/comments/` → `cargo test fixtures::js::comments` (all tests in directory)

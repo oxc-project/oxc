@@ -8,6 +8,7 @@
 //! Contains feature flags and custom hook definitions that control compiler behavior.
 
 use crate::react_compiler_utils::FxIndexMap;
+use lazy_regex::Regex;
 use rustc_hash::FxHashMap;
 
 use crate::react_compiler_hir::Effect;
@@ -72,7 +73,7 @@ pub struct EnvironmentConfig {
 
     pub enable_preserve_existing_memoization_guarantees: bool,
     pub validate_preserve_existing_memoization_guarantees: bool,
-    /// Exhaustive manual memo dependency validation, disabled by default.
+    /// Exhaustive manual memo dependency validation, enabled by default.
     pub validate_exhaustive_memoization_dependencies: bool,
     pub validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode,
 
@@ -89,6 +90,9 @@ pub struct EnvironmentConfig {
     pub validate_no_jsx_in_try_statements: bool,
     pub validate_static_components: bool,
     pub validate_no_capitalized_calls: Option<Vec<String>>,
+    /// Oxlint extension to `validate_no_capitalized_calls`: names matching the
+    /// pattern are allowed, in addition to the exact entries above.
+    pub validate_no_capitalized_calls_pattern: Option<Regex>,
     pub validate_blocklisted_imports: Option<Vec<String>>,
     pub validate_source_locations: bool,
     pub validate_no_impure_functions_in_render: bool,
@@ -125,9 +129,9 @@ impl Default for EnvironmentConfig {
             module_type_provider: None,
             enable_preserve_existing_memoization_guarantees: true,
             validate_preserve_existing_memoization_guarantees: true,
-            // Keep public defaults compatible with babel-plugin-react-compiler 1.0;
-            // current React enables this validation by default.
-            validate_exhaustive_memoization_dependencies: false,
+            // Matches current React: skip functions whose manual memo dependencies
+            // cannot be preserved.
+            validate_exhaustive_memoization_dependencies: true,
             validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode::Off,
             enable_optional_dependencies: true,
             enable_name_anonymous_functions: false,
@@ -141,6 +145,7 @@ impl Default for EnvironmentConfig {
             validate_no_jsx_in_try_statements: false,
             validate_static_components: false,
             validate_no_capitalized_calls: None,
+            validate_no_capitalized_calls_pattern: None,
             validate_blocklisted_imports: None,
             validate_source_locations: false,
             validate_no_impure_functions_in_render: false,

@@ -44,8 +44,8 @@ export interface JSONSourceMap {
    * This value is prepended to the individual entries in the "source" field.
    */
   sourceRoot?: string
-  /** A list of original sources used by the "mappings" entry. */
-  sources: Array<string>
+  /** A list of original sources used by the "mappings" entry, with `None` for unknown names. */
+  sources: Array<string | undefined | null>
   /**
    * An optional list of source content, useful when the "source" can't be hosted.
    * The contents are listed in the same order as the sources in line 5. "null" may be used if some original sources should be retrieved by name.
@@ -69,7 +69,7 @@ export interface SourceMap {
   mappings: string
   names: Array<string>
   sourceRoot?: string
-  sources: Array<string>
+  sources: Array<string | undefined | null>
   sourcesContent?: Array<string>
   version: number
   ignoreList?: Array<number>

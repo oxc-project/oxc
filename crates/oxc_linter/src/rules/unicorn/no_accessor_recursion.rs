@@ -1,13 +1,14 @@
 use oxc_ast::{
-    AstKind, MemberExpressionKind,
+    AstKind, MemberExpressionKind, StaticPropertyName,
     ast::{
-        BindingPattern, MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKey,
-        PropertyKind, UpdateExpression,
+        BindingPattern, MethodDefinition, ObjectProperty, PropertyKey, PropertyKind,
+        SimpleAssignmentTarget, UpdateExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -71,6 +72,7 @@ declare_oxc_lint!(
     NoAccessorRecursion,
     unicorn,
     suspicious,
+    recommended,
     version = "0.16.5",
     short_description = "Disallow recursive access to `this` within getters and setters.",
 );
@@ -136,9 +138,9 @@ impl Rule for NoAccessorRecursion {
                         let is_same_key = {
                             if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&property.key, PropertyKey::PrivateIdentifier(_))
-                                    && prop_key_name.as_ref() == expr_key_name
+                                    && prop_key_name == expr_key_name
                             } else {
-                                prop_key_name.as_ref() == expr_key_name
+                                prop_key_name == expr_key_name
                             }
                         };
                         if !is_same_key {
@@ -166,24 +168,22 @@ impl Rule for NoAccessorRecursion {
                         let is_same_key = {
                             if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&method_def.key, PropertyKey::PrivateIdentifier(_))
-                                    && prop_key_name.as_ref() == expr_key_name
+                                    && prop_key_name == expr_key_name
                             } else {
-                                prop_key_name.as_ref() == expr_key_name
+                                prop_key_name == expr_key_name
                             }
                         };
                         if !is_same_key {
                             return;
                         }
-                        if method_def.kind == MethodDefinitionKind::Get {
+                        if method_def.kind.is_get() {
                             ctx.diagnostic(no_accessor_recursion_diagnostic(
                                 member_expr.span(),
                                 "getters",
                             ));
                         }
 
-                        if method_def.kind == MethodDefinitionKind::Set
-                            && is_property_write(target, ctx)
-                        {
+                        if method_def.kind.is_set() && is_property_write(target, ctx) {
                             ctx.diagnostic(no_accessor_recursion_diagnostic(
                                 member_expr.span(),
                                 "setters",
@@ -242,15 +242,15 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
             AstKind::AssignmentExpression(assign_expr) => {
                 if let Some(simple_target) = assign_expr.left.as_simple_assignment_target() {
                     let is_target = match simple_target {
-                        oxc_ast::ast::SimpleAssignmentTarget::ComputedMemberExpression(
-                            member_expr,
-                        ) => member_expr.span == node.span(),
-                        oxc_ast::ast::SimpleAssignmentTarget::StaticMemberExpression(
-                            member_expr,
-                        ) => member_expr.span == node.span(),
-                        oxc_ast::ast::SimpleAssignmentTarget::PrivateFieldExpression(
-                            member_expr,
-                        ) => member_expr.span == node.span(),
+                        SimpleAssignmentTarget::ComputedMemberExpression(member_expr) => {
+                            member_expr.span == node.span()
+                        }
+                        SimpleAssignmentTarget::StaticMemberExpression(member_expr) => {
+                            member_expr.span == node.span()
+                        }
+                        SimpleAssignmentTarget::PrivateFieldExpression(member_expr) => {
+                            member_expr.span == node.span()
+                        }
                         _ => false,
                     };
                     if is_target {
@@ -264,24 +264,19 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     false
 }
 
-fn get_member_expr_key_name<'a>(expr: &'a MemberExpressionKind) -> Option<&'a str> {
+fn get_member_expr_key_name<'a>(expr: &MemberExpressionKind<'a>) -> Option<JSStr<'a>> {
     match expr {
-        MemberExpressionKind::Computed(expr) => {
-            expr.static_property_name().map(|name| name.as_str())
-        }
-        MemberExpressionKind::Static(expr) => Some(expr.property.name.as_str()),
-        MemberExpressionKind::PrivateField(priv_field) => Some(priv_field.field.name.as_str()),
+        MemberExpressionKind::Computed(expr) => expr.static_property_name(),
+        MemberExpressionKind::Static(expr) => Some(expr.property.name.as_js_str()),
+        MemberExpressionKind::PrivateField(priv_field) => Some(priv_field.field.name.as_js_str()),
     }
 }
 
 fn is_property_or_method_def<'a>(parent: &'a AstNode<'a>) -> bool {
     match parent.kind() {
-        AstKind::ObjectProperty(obj_prop) => {
-            !obj_prop.computed && matches!(obj_prop.kind, PropertyKind::Get | PropertyKind::Set)
-        }
+        AstKind::ObjectProperty(obj_prop) => !obj_prop.computed && obj_prop.kind.is_accessor(),
         AstKind::MethodDefinition(method_def) => {
-            !method_def.computed
-                && matches!(method_def.kind, MethodDefinitionKind::Get | MethodDefinitionKind::Set)
+            !method_def.computed && method_def.kind.is_accessor()
         }
         _ => false,
     }
@@ -305,10 +300,10 @@ fn get_nearest_function<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a 
     if matches!(parent.kind(), AstKind::Function(_)) { Some(parent) } else { None }
 }
 
-fn get_property_or_method_def_name<'a>(parent: &'a AstNode<'a>) -> Option<String> {
+fn get_property_or_method_def_name<'a>(parent: &'a AstNode<'a>) -> Option<StaticPropertyName<'a>> {
     match parent.kind() {
         AstKind::ObjectProperty(ObjectProperty { key, .. })
-        | AstKind::MethodDefinition(MethodDefinition { key, .. }) => Some(key.name()?.to_string()),
+        | AstKind::MethodDefinition(MethodDefinition { key, .. }) => key.name(),
         _ => None,
     }
 }
@@ -470,6 +465,7 @@ fn test() {
                 }
             };
         ",
+        r#"const o = { get "\uD800"() { return this["\uDC00"]; } };"#,
     ];
 
     let fail = vec![
@@ -628,6 +624,8 @@ fn test() {
                 }
             }
         ",
+        r#"const o = { get "\uD800"() { return this["\uD800"]; } };"#,
+        r#"class Foo { get "\uD800"() { return this["\uD800"]; } }"#,
     ];
 
     Tester::new(NoAccessorRecursion::NAME, NoAccessorRecursion::PLUGIN, pass, fail)

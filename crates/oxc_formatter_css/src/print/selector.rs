@@ -13,7 +13,7 @@ use oxc_css_parser::ast::{
     PseudoElementSelectorArgKind, SelectorList, SimpleSelector, TypeSelector, WqName,
 };
 use oxc_formatter_core::{
-    Buffer, FormatElement, arena_cow_str,
+    FormatElement, arena_cow_str,
     builders::{group, hard_line_break, indent, soft_line_break, soft_line_break_or_space, text},
     write,
 };
@@ -87,12 +87,12 @@ pub(super) fn write_selector_list<'a>(
                 // A comment trailing the comma stays on the same line:
                 // a lone block comment (`a, /* b */ c`), or a run ending in a `//` (`a, /* b */ // c`).
                 // A `//` ends the line itself; the separator below then merges into its break.
-                let next_start = to_span(complex.span()).start;
+                let next_start = complex.span().start;
                 if let Some(comment) = f.context().comments().peek()
                     && comment.span.end <= next_start
                 {
                     let source = f.context().source_text();
-                    let prev_end = to_span(list.selectors[i - 1].span()).end;
+                    let prev_end = list.selectors[i - 1].span().end;
                     if comments::classify_gap(source.bytes_range(prev_end, comment.span.start))
                         == comments::Gap::None
                     {
@@ -111,13 +111,13 @@ pub(super) fn write_selector_list<'a>(
                 }
             }
             // Comments on their own line between selectors
-            let start = to_span(complex.span()).start;
+            let start = complex.span().start;
             for &comment in f.context().comments().take_before(start) {
                 write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
             }
             if placeholder_idx == Some(i) {
                 let source = f.context().source_text();
-                let end = to_span(list.selectors[list.selectors.len() - 1].span()).end;
+                let end = list.selectors[list.selectors.len() - 1].span().end;
                 let raw = source.slice_range(start, end);
                 // Comments inside the chunk are part of the verbatim text
                 let _ = f.context().comments().take_before(end);
@@ -213,7 +213,7 @@ fn write_combinator(
                 // Deprecated shadow-DOM combinators (`/deep/` and less.js's `/name/` (`/shadow/`));
                 // print as written: the tools give a meaning match it case-sensitively
                 CombinatorKind::Deep | CombinatorKind::Slashed => {
-                    let span = to_span(&combinator.span);
+                    let span = to_span(combinator.span);
                     write!(f, text(f.context().source_text().text_for(&span)));
                 }
                 CombinatorKind::ShadowChild => write!(f, "^"),
@@ -264,8 +264,9 @@ fn write_simple_selector<'a>(selector: &SimpleSelector<'a>, f: &mut CssFormatter
                 write_interpolable_ident(suffix, f);
             }
         }
-        SimpleSelector::SassPlaceholder(placeholder) => {
-            let span = to_span(placeholder.span());
+        // Sass `%placeholder` and Less `50%` (outside `@keyframes`): print as written, like Prettier
+        SimpleSelector::LessPercentage(_) | SimpleSelector::SassPlaceholder(_) => {
+            let span = to_span(selector.span());
             write!(f, text(source.text_for(&span)));
         }
     }
@@ -402,9 +403,8 @@ fn write_attribute_selector<'a>(attribute: &AttributeSelector<'a>, f: &mut CssFo
                 let span = to_span(istr.span());
                 value::write_requoted_verbatim(source.text_for(&span), f);
             }
-            // `[class^=~'...']`:
-            // postcss sees a plain string after the `~`,
-            // so it re-quotes per `singleQuote` like the value-position handler.
+            // `[class^=~'...']`: hugs and re-quotes like `value::write_less_escaped_str`
+            // (a comment in a selector takes the raw path, so none reaches here)
             AttributeSelectorValue::LessEscapedStr(escaped) => {
                 write!(f, "~");
                 value::write_attribute_str(&escaped.str, f);
@@ -492,12 +492,10 @@ fn write_pseudo_class_arg<'a>(kind: &PseudoClassSelectorArgKind<'a>, f: &mut Css
         PseudoClassSelectorArgKind::LessExtendList(list) => {
             less::write_less_extend_list(list, f);
         }
-        // Number, LanguageRangeList, TokenSeq:
-        // print the source verbatim (normalized below where needed).
-        // They are kept verbatim because `postcss-selector-parser` tokenizes them as opaque strings
-        // and Prettier emits them raw (matching that keeps `:lang(...)` etc.)
-        // byte-identical to Prettier output.
-        // Real-world usage is rare enough that the consistency cost is negligible.
+        // Number, LanguageRangeList, TokenSeq: print the source verbatim.
+        // An unknown name's arg is `<any-value>` per spec, so it is raw (AGENTS.md "Printing raw vs typed").
+        // NOTE: Prettier differs, `postcss-selector-parser` reparses every pseudo arg as selectors
+        // and normalizes them (`:lang('de')` -> `:lang("de")`, `:foo(.a [x='y'])` -> `[x="y"]`).
         _ => {
             let span = to_span(kind.span());
             write!(f, text(source.text_for(&span)));
@@ -526,10 +524,10 @@ fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
     }
     if let Some(matcher) = &nth.matcher {
         write!(f, " ");
-        let matcher_span = to_span(&matcher.span);
+        let matcher_span = to_span(matcher.span);
         if let Some(selector) = &matcher.selector {
             // The `of` keyword as written, then the selector list
-            let keyword_end = to_span(selector.span()).start;
+            let keyword_end = selector.span().start;
             let keyword = source.slice_range(matcher_span.start, keyword_end).trim_ascii_end();
             write!(f, [text(keyword), " "]);
             write_selector_list_inline(selector, f);

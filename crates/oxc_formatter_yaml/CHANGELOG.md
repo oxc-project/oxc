@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2026-11-02
+
+### ⚡ Performance
+
+- f680ee1 formatter_yaml: Use `multiline` flag for flow scalars (#28707) (leaysgur)
+
+### 📚 Documentation
+
+- a363c27 formatter_css,formatter_yaml: Point parser citations at AGENTS.md (#28466) (Yuji Sugiura)
+
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 4d8195c formatter_yaml: Keep a root plain scalar starting with a document marker verbatim (#27947) (leaysgur)
+- 52ee29d formatter_yaml: Never start col-0 line with document marker or BOM (#27818) (leaysgur)
+- 5b2acb0 formatter_core: Report error position releative to CRLF source (#27777) (leaysgur)
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+
+### ⚡ Performance
+
+- e5fdc9c formatter_core: Write into one element stack through a concrete `Formatter` (#27559) (leaysgur)
+
 ## [0.69.0] - 2026-09-21
 
 ### 📚 Documentation

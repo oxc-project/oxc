@@ -748,10 +748,32 @@ impl<'a> Symbol<'_, 'a> {
             return false;
         }
 
+        let mut is_call_result = false;
         for (parent, grandparent) in
             self.iter_relevant_parent_and_grandparent_kinds(reference.node_id())
         {
             let ref_span = || self.get_ref_span(reference);
+
+            if match parent {
+                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => true,
+                AstKind::PropertyDefinition(property) => {
+                    !property.r#static
+                        && property
+                            .value
+                            .as_ref()
+                            .is_some_and(|value| value.span().contains_inclusive(ref_span()))
+                }
+                AstKind::AccessorProperty(property) => {
+                    !property.r#static
+                        && property
+                            .value
+                            .as_ref()
+                            .is_some_and(|value| value.span().contains_inclusive(ref_span()))
+                }
+                _ => false,
+            } {
+                is_call_result = false;
+            }
 
             match (parent, grandparent) {
                 // (foo.bar = new Foo(a), f(b))
@@ -764,6 +786,7 @@ impl<'a> Symbol<'_, 'a> {
                     AstKind::CallExpression(_) | AstKind::NewExpression(_),
                 ) => {
                     if id.span == ref_span() {
+                        is_call_result = true;
                         continue;
                     }
                     break;
@@ -814,13 +837,14 @@ impl<'a> Symbol<'_, 'a> {
                     return false;
                 }
                 (parent, AstKind::SequenceExpression(seq)) => {
-                    if matches!(
-                        parent,
-                        AstKind::CallExpression(_)
-                            | AstKind::AwaitExpression(_)
-                            | AstKind::YieldExpression(_)
-                            | AstKind::ChainExpression(_)
-                    ) {
+                    if is_call_result
+                        || matches!(
+                            parent,
+                            AstKind::AwaitExpression(_)
+                                | AstKind::YieldExpression(_)
+                                | AstKind::ChainExpression(_)
+                        )
+                    {
                         continue;
                     }
 

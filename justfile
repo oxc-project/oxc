@@ -125,10 +125,6 @@ test-estree *args='':
 test-estree-tokens *args='':
   cargo run -p oxc_coverage --profile coverage -- estree_tokens {{args}}
 
-# Get code coverage
-codecov:
-  cargo codecov --html
-
 # ==================== AST & CODEGEN ====================
 
 # Generate AST related boilerplate code.
@@ -149,103 +145,84 @@ ast:
 
 # ==================== LEXER ====================
 
-# `oxc_lexer` compiles to one of two implementations, chosen at build time:
+# `oxc_lexer` has 3 implementations:
 #
-# * SIMD core, on x86_64 with `avx2` + `bmi2` + `popcnt` enabled
-# * Scalar fallback, everywhere else
+# - AVX2, on x86_64 with `avx2` + `bmi2` + `popcnt`
+# - Neon, on aarch64 (every aarch64 target with `std` enables `neon`)
+# - Generic, everywhere else
 #
-# Both need testing, and they should produce identical results. None of `avx2`, `bmi2` and `popcnt` is in the x86_64
-# baseline on any platform, so reaching the SIMD core always means asking for them explicitly - even on an x86_64 host.
-# The flags live in `.cargo/lexer-simd.toml`, passed with `cargo --config`, which avoids shell quoting entirely
-# (this justfile runs PowerShell on Windows).
+# Parts of the pipeline which have no AVX2 or Neon implementation use the generic one.
+# All 3 need testing, and they should produce identical results.
 #
-# `--target` is always passed, so that the flags land on the triple the config file names,
-# and so that the two builds get separate target dirs instead of invalidating each other.
+# On x86_64, a build contains both AVX2 and generic, and picks one at runtime, depending on what
+# the CPU supports. The tests and lexer conformance run with each implementation the CPU supports,
+# and conformance checks they agree. So an x86_64 build tests AVX2 (if the CPU supports it)
+# and generic, and an aarch64 build tests Neon.
 #
-# On an ARM host the SIMD build is cross-compiled and run under emulation - macOS provides that via Rosetta 2.
+# `lint-lexer` lints for the host. Every platform compiles the AVX2, Neon and generic code,
+# so that lints nearly all of it. Only the SIMD intrinsics for other platforms
+# and some `#[cfg]`s in `oxc_simd` are left out.
+#
+# Test and conformance each have 2 recipes:
+#
+# - `test-lexer` and `conformance-lexer` build for the host.
+# - `test-lexer-x86` and `conformance-lexer-x86` build for x86_64.
+#   On an x86_64 host, they're the same as the host recipes.
+#
+# Lexer conformance is also part of `just coverage`.
+#
+# On an ARM host the x86_64 builds are cross-compiled and run under emulation - macOS provides that
+# via Rosetta 2. Rosetta only reports AVX2 support when `ROSETTA_ADVERTISE_AVX=1`, so the x86_64
+# recipes set it on Mac.
+#
 # On Mac, ensure x86_64 target is installed: `rustup target add x86_64-apple-darwin`.
 # If it's not, you'll get a "can't find crate for std" error.
 #
-# On ARM Linux or ARM Windows it will fail, loudly, when linking or running.
-_lexer-simd-target := if os() == "macos" { "x86_64-apple-darwin" } else if os() == "windows" { "x86_64-pc-windows-msvc" } else { "x86_64-unknown-linux-gnu" }
-_lexer-simd := "--target " + _lexer-simd-target + " --config .cargo/lexer-simd.toml"
+# On ARM Linux or ARM Windows they will fail, loudly, when linking or running.
+_lexer-x86-target := if os() == "macos" { "x86_64-apple-darwin" } else if os() == "windows" { "x86_64-pc-windows-msvc" } else { "x86_64-unknown-linux-gnu" }
+_lexer-x86 := "--target " + _lexer-x86-target
+_lexer-x86-env := if os() == "macos" { "ROSETTA_ADVERTISE_AVX=1" } else { "" }
 
-# Run `oxc_lexer`'s tests against the scalar fallback
+# Run `oxc_lexer`'s and `oxc_simd`'s tests, built for the host
 test-lexer *args='':
-  cargo test -p oxc_lexer {{args}}
+  cargo test --all-features -p oxc_lexer -p oxc_simd {{args}}
 
-# Run `oxc_lexer`'s tests against the SIMD core
-test-lexer-simd *args='':
-  cargo test -p oxc_lexer {{_lexer-simd}} {{args}}
+# Run `oxc_lexer`'s and `oxc_simd`'s tests, built for x86_64.
+# Runs AVX2 if the CPU supports it, and generic.
+test-lexer-x86 *args='':
+  {{_lexer-x86-env}} cargo test --all-features -p oxc_lexer -p oxc_simd {{_lexer-x86}} {{args}}
 
-# Run lexer conformance against the scalar fallback
+# Run lexer conformance, built for the host
 conformance-lexer *args='':
-  cargo run -p oxc_coverage --profile coverage --features lexer -- lexer {{args}}
+  cargo run -p oxc_coverage --profile coverage -- lexer {{args}}
 
-# Run lexer conformance against the SIMD core
-conformance-lexer-simd *args='':
-  cargo run -p oxc_coverage --profile coverage {{_lexer-simd}} --features lexer -- lexer {{args}}
+# Run lexer conformance, built for x86_64 (runs AVX2 if the CPU supports it, and generic)
+conformance-lexer-x86 *args='':
+  {{_lexer-x86-env}} cargo run -p oxc_coverage --profile coverage {{_lexer-x86}} -- lexer {{args}}
 
-# Lint `oxc_lexer` and the conformance harness against the scalar fallback
-[unix]
+# Lint `oxc_lexer`, `oxc_simd` and `oxc_simd_macros`
 lint-lexer *args='':
-  CARGO_BUILD_WARNINGS=deny cargo clippy -p oxc_lexer -p oxc_coverage --all-targets --all-features {{args}}
-
-[windows]
-lint-lexer *args='':
-  $Env:CARGO_BUILD_WARNINGS='deny'; cargo clippy -p oxc_lexer -p oxc_coverage --all-targets --all-features {{args}}
-
-# Lint `oxc_lexer` and the conformance harness against the SIMD core
-lint-lexer-simd *args='':
-  just lint-lexer {{_lexer-simd}} {{args}}
-
-# The lexer benchmarks measure wallclock time. Unlike the other benchmarks, they don't run on CodSpeed.
-#
-# `oxc_parser`'s lexer is always built without the SIMD flags, so it's benchmarked in a separate build
-# from `oxc_lexer`. Its results are saved as criterion baseline `lexer_old`, and then `oxc_lexer`
-# is compared against that baseline.
-# The "change" which criterion reports for `oxc_lexer` is its time relative to `oxc_parser`'s.
-# The "change" reported for `oxc_parser` (if any) is relative to its previous run.
-#
-# Both benchmarks are built before either is run, so the 2 runs happen back-to-back,
-# without a build between them.
-#
-# `args` are passed to criterion, e.g. `just bench-lexer App.tsx` to run only that file.
-# The recipes set the baseline options themselves, so don't pass those.
-#
-# On an ARM host, `bench-lexer-simd` compares `oxc_parser` running natively against `oxc_lexer`
-# running under emulation, so the comparison is meaningless.
-_bench-lexer := "cargo bench -p oxc_benchmark --no-default-features --features lexer_wallclock --bench"
-
-# Benchmark `oxc_lexer`'s scalar fallback against `oxc_parser`'s lexer
-bench-lexer *args='':
-  {{_bench-lexer}} lexer_wallclock_old --bench lexer_wallclock_new --no-run
-  {{_bench-lexer}} lexer_wallclock_old -- --save-baseline lexer_old {{args}}
-  {{_bench-lexer}} lexer_wallclock_new -- --baseline lexer_old {{args}}
-
-# Benchmark `oxc_lexer`'s SIMD core against `oxc_parser`'s lexer
-bench-lexer-simd *args='':
-  {{_bench-lexer}} lexer_wallclock_old --no-run
-  {{_bench-lexer}} lexer_wallclock_new {{_lexer-simd}} --no-run
-  {{_bench-lexer}} lexer_wallclock_old -- --save-baseline lexer_old {{args}}
-  {{_bench-lexer}} lexer_wallclock_new {{_lexer-simd}} -- --baseline lexer_old {{args}}
+  just lint -p oxc_lexer -p oxc_simd -p oxc_simd_macros {{args}}
 
 # `ready-lexer` fails if any step fails, or if conformance changes the lexer snapshots.
 # Only the lexer snapshots are checked for changes, so it can be run with other uncommitted changes.
-# Snapshots are checked after each conformance run, because the SIMD run overwrites the snapshots from the scalar run.
+# Snapshots are checked after each conformance run, because each run overwrites the snapshots
+# from the one before.
+#
+# The `test-lexer-x86` and `conformance-lexer-x86` recipes are only run on non-x86_64 hosts.
+# On an x86_64 host, they're the same as the host recipes, which `ready-lexer` runs anyway.
 _lexer-snapshots := "tasks/coverage/snapshots/lexer_*"
 
-# Lint, test, and run conformance for `oxc_lexer` against both implementations, and check snapshots are unchanged
+# Lint, test, and run conformance for `oxc_lexer` against each implementation
 ready-lexer:
   just lint-lexer
-  just lint-lexer-simd
   just test-lexer
-  just test-lexer-simd
+  {{ if arch() == "x86_64" { "" } else { "just test-lexer-x86" } }}
   just conformance-lexer
   git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
-  just conformance-lexer-simd
+  {{ if arch() == "x86_64" { "" } else { "just conformance-lexer-x86" } }}
   git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
-  just doc -p oxc_lexer
+  just doc -p oxc_lexer -p oxc_simd -p oxc_simd_macros
 
 # ==================== LINTER ====================
 

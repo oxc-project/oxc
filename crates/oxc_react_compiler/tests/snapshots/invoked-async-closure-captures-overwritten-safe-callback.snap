@@ -1,0 +1,30 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/invoked-async-closure-captures-overwritten-safe-callback.js
+---
+function Component(t0) {
+	const { cond } = t0;
+	let count = 0;
+	let cb = _temp;
+	const run = async () => {
+		await 0;
+		cb();
+	};
+	run();
+	cb = () => count++;
+	if (cond) {
+		cb = _temp2;
+	} else {
+		cb = _temp3;
+	}
+	return null;
+}
+function _temp3() {
+	return 1;
+}
+function _temp2() {
+	return null;
+}
+function _temp() {
+	return null;
+}

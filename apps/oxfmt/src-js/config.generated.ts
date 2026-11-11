@@ -4,6 +4,33 @@
  */
 
 export type ArrowParensConfig = "always" | "avoid";
+/**
+ * A set of glob patterns.
+ * Patterns are matched against paths relative to the configuration file's directory.
+ */
+export type GlobSet = string[];
+export type Language =
+  | "javascript"
+  | "jsx"
+  | "typescript"
+  | "tsx"
+  | "json"
+  | "jsonc"
+  | "json5"
+  | "css"
+  | "scss"
+  | "less"
+  | "graphql"
+  | "yaml"
+  | "markdown"
+  | "toml"
+  | "html"
+  | "angular-html"
+  | "vue"
+  | "svelte"
+  | "astro"
+  | "handlebars"
+  | "mdx";
 export type AstroUserConfig = boolean | AstroConfig;
 export type AstroCompressHtmlConfig = "jsx" | "html" | "none";
 export type EmbeddedLanguageFormattingConfig = "auto" | "off";
@@ -14,11 +41,6 @@ export type JsdocUserConfig = boolean | JsdocConfig;
 export type CommentLineStrategyConfig = "singleLine" | "multiline" | "keep";
 export type LineWrappingStyleConfig = "greedy" | "balance";
 export type ObjectWrapConfig = "preserve" | "collapse";
-/**
- * A set of glob patterns.
- * Patterns are matched against paths relative to the configuration file's directory.
- */
-export type GlobSet = string[];
 export type ProseWrapConfig = "always" | "never" | "preserve";
 export type QuotePropsConfig = "as-needed" | "consistent" | "preserve";
 export type SortImportsUserConfig = boolean | SortImportsConfig;
@@ -63,6 +85,14 @@ export interface Oxfmtrc {
    * - Default: `"always"`
    */
   arrowParens?: ArrowParensConfig;
+  /**
+   * Format matched files as the given language, instead of detecting it from the file name.
+   * e.g. Angular templates named `*.html`, or `*.wxml` files formatted as HTML.
+   * When a file matches multiple associations, the later one takes precedence (array order matters).
+   *
+   * - Default: `[]`
+   */
+  associations?: OxfmtAssociationConfig[];
   /**
    * Options for `prettier-plugin-astro`.
    *
@@ -318,6 +348,21 @@ export interface Oxfmtrc {
    * - Default: `false`
    */
   vueIndentScriptAndStyle?: boolean;
+  [k: string]: unknown;
+}
+export interface OxfmtAssociationConfig {
+  /**
+   * Glob patterns to exclude from this association.
+   */
+  excludeFiles?: GlobSet;
+  /**
+   * Glob patterns to match files for this association.
+   */
+  files: GlobSet;
+  /**
+   * The language to format matched files as, named by its Shiki id (as in Markdown code fences).
+   */
+  language: Language;
   [k: string]: unknown;
 }
 export interface AstroConfig {

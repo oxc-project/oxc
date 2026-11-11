@@ -13,6 +13,7 @@ declare_oxc_lint!(
     ValidExpect,
     jest,
     correctness,
+    recommended,
     suggestion,
     config = ValidExpectConfig,
     docs = DOCUMENTATION,

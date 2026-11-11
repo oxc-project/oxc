@@ -43,6 +43,7 @@ declare_oxc_lint!(
     NoLonelyIf,
     unicorn,
     pedantic,
+    recommended,
     pending,
     version = "0.0.18",
     short_description = "Disallow `if` statements as the only statement in `if` blocks without `else`.",

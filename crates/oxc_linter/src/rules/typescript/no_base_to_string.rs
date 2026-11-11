@@ -78,6 +78,7 @@ declare_oxc_lint!(
     NoBaseToString(tsgolint),
     typescript,
     correctness,
+    recommended,
     config = NoBaseToStringConfig,
     version = "1.12.0",
     short_description = "This rule requires `toString()` and `toLocaleString()` calls to only be called on objects which provide useful information when stringified.",

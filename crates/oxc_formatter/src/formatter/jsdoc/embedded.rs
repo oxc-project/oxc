@@ -1,4 +1,4 @@
-use oxc_formatter_core::{FormatSession, LineWidth};
+use oxc_formatter_core::{FormatSession, LineEnding, LineWidth};
 use oxc_span::SourceType;
 
 use crate::options::TrailingCommas;
@@ -23,6 +23,22 @@ fn parse_and_build<'a>(
     let mut code = formatted.print().unwrap().into_code();
     code.truncate(code.trim_end().len());
     Some(code)
+}
+
+/// Options for a JS/TS snippet formatted to a string and re-embedded into the comment text.
+///
+/// - `line_ending` is `Lf`: the comment is IR text which only takes `\n`, the host converts once at the end
+/// - `jsdoc` / `sort_imports` / `sort_tailwindcss` are disabled (top-level concerns)
+pub(super) fn snippet_options(format_options: &JsFormatOptions, width: usize) -> JsFormatOptions {
+    let width = u16::try_from(width).unwrap_or(80).clamp(1, LineWidth::MAX);
+    JsFormatOptions {
+        line_ending: LineEnding::Lf,
+        line_width: LineWidth::try_from(width).unwrap(),
+        jsdoc: None,
+        sort_imports: None,
+        sort_tailwindcss: None,
+        ..format_options.clone()
+    }
 }
 
 /// Returns `true` if the fenced code block language is JS/TS/JSX/TSX (case-insensitive).
@@ -111,16 +127,7 @@ pub(super) fn format_jsdoc_js_snippet(
     format_options: &JsFormatOptions,
     session: &FormatSession<'_>,
 ) -> Option<String> {
-    let width = u16::try_from(print_width).unwrap_or(80).clamp(1, 320);
-    let line_width = LineWidth::try_from(width).unwrap();
-
-    let base_options = JsFormatOptions {
-        line_width,
-        jsdoc: None,
-        sort_imports: None,
-        sort_tailwindcss: None,
-        ..format_options.clone()
-    };
+    let base_options = snippet_options(format_options, print_width);
 
     // Try to parse and format with the given source type
     let try_format = |code: &str, source_type: SourceType| {

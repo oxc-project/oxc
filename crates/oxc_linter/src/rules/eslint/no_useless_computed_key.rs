@@ -210,9 +210,9 @@ fn check_computed_class_member(
         Expression::StringLiteral(lit) => {
             let key_name = lit.value.as_str();
             let allowed = if is_static {
-                allow_static.contains(&key_name)
+                key_name.is_some_and(|key_name| allow_static.contains(&key_name))
             } else {
-                allow_non_static.contains(&key_name)
+                key_name.is_some_and(|key_name| allow_non_static.contains(&key_name))
             };
             if !allowed {
                 report_useless_computed_key(

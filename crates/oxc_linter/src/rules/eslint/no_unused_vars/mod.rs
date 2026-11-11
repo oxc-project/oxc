@@ -202,6 +202,7 @@ declare_oxc_lint!(
     NoUnusedVars,
     eslint,
     correctness,
+    recommended,
     fix = conditional_dangerous_fix_or_suggestion,
     config = NoUnusedVarsConfig,
     version = "0.7.0",
@@ -382,7 +383,12 @@ impl NoUnusedVars {
                 if self.is_allowed_type_parameter(symbol, declaration.id()) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
+                Self::report_with_fix_mode(
+                    self.fix.variables,
+                    ctx,
+                    diagnostic::declared(symbol, &self.vars_ignore_pattern, false),
+                    |fixer| Self::remove_unused_type_parameter(fixer, symbol, declaration.id()),
+                );
             }
             // Mapped type keys are always used within the type definition
             AstKind::TSMappedType(_) => {}

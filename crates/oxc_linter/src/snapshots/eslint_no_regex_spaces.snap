@@ -183,3 +183,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ────
    ╰────
   help: Use a quantifier: ` {4}`
+
+  ⚠ eslint(no-regex-spaces): Multiple consecutive spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:25]
+ 1 │ var foo = RegExp('\uD800  bar');
+   ·                         ──
+   ╰────
+  help: Use a quantifier: ` {2}`
+
+  ⚠ eslint(no-regex-spaces): Multiple consecutive spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:26]
+ 1 │ var foo = new RegExp('bar  \uDC00');
+   ·                          ──
+   ╰────
+  help: Use a quantifier: ` {2}`

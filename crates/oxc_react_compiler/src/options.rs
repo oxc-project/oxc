@@ -154,6 +154,11 @@ pub struct PluginOptions {
     /// on top of the built-in `"use no memo"` / `"use no forget"`.
     pub custom_opt_out_directives: Option<Vec<String>>,
 
+    /// In lint output mode, skip the reactive-scope passes for functions without
+    /// `useMemo`/`useCallback`. Those passes only report `Todo` and `Invariant`
+    /// diagnostics, so set this only when those diagnostics are not needed.
+    pub lint_skip_reactive_scope_passes: bool,
+
     /// Compiler environment: feature flags, validation toggles, and custom hook/type
     /// definitions for the compilation passes. See [`EnvironmentConfig`].
     pub environment: EnvironmentConfig,
@@ -175,6 +180,7 @@ impl Default for PluginOptions {
             flow_suppressions: true,
             ignore_use_no_forget: false,
             custom_opt_out_directives: None,
+            lint_skip_reactive_scope_passes: false,
             environment: EnvironmentConfig::default(),
         }
     }

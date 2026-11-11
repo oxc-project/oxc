@@ -3,6 +3,27 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ jest(no-untyped-mock-factory): `jest.mock()` factories should not be used without an explicit type parameter.
+   ╭─[no_untyped_mock_factory.tsx:1:6]
+ 1 │ jest.mock('\uD800', () => ({}))
+   ·      ────
+   ╰────
+  help: Add a type parameter to the mock factory such as `typeof import("\ud800")`
+
+  ⚠ jest(no-untyped-mock-factory): `jest.mock()` factories should not be used without an explicit type parameter.
+   ╭─[no_untyped_mock_factory.tsx:1:6]
+ 1 │ jest.doMock('a\uDC00b', () => ({}))
+   ·      ──────
+   ╰────
+  help: Add a type parameter to the mock factory such as `typeof import("a\udc00b")`
+
+  ⚠ jest(no-untyped-mock-factory): `jest.mock()` factories should not be used without an explicit type parameter.
+   ╭─[no_untyped_mock_factory.tsx:1:6]
+ 1 │ jest.mock("it's", () => ({}))
+   ·      ────
+   ╰────
+  help: Add a type parameter to the mock factory such as `typeof import("it's")`
+
+  ⚠ jest(no-untyped-mock-factory): `jest.mock()` factories should not be used without an explicit type parameter.
    ╭─[no_untyped_mock_factory.tsx:2:22]
  1 │ 
  2 │                 jest.mock('../moduleName', () => {

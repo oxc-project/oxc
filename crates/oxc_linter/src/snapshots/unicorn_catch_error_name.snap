@@ -2,32 +2,32 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ unicorn(catch-error-name): The catch parameter "foo" should be named "error"
+  ⚠ unicorn(catch-error-name): The catch parameter "foo" should be named "error_"
    ╭─[catch_error_name.tsx:4:26]
  3 │                     doSomething();
  4 │                 } catch (foo) {
    ·                          ───
  5 │                     console.log(foo);
    ╰────
-  help: Rename `foo` to `error`
+  help: Rename `foo` to `error_`
 
-  ⚠ unicorn(catch-error-name): The catch parameter "foo" should be named "error"
+  ⚠ unicorn(catch-error-name): The catch parameter "foo" should be named "error_"
    ╭─[catch_error_name.tsx:5:26]
  4 │                     doSomething();
  5 │                 } catch (foo) {
    ·                          ───
  6 │                     console.log(foo);
    ╰────
-  help: Rename `foo` to `error`
+  help: Rename `foo` to `error_`
 
-  ⚠ unicorn(catch-error-name): The catch parameter "foo" should be named "error"
+  ⚠ unicorn(catch-error-name): The catch parameter "foo" should be named "error__"
    ╭─[catch_error_name.tsx:3:27]
  2 │                 const error_ = new Error('foo bar');
  3 │                 obj.catch(foo => { });
    ·                           ───
  4 │             }
    ╰────
-  help: Replace `foo` with `error`.
+  help: Replace `foo` with `error__`.
 
   ⚠ unicorn(catch-error-name): The catch parameter "err" should be named "error"
    ╭─[catch_error_name.tsx:1:11]
@@ -198,3 +198,52 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         alert("1There was a problem moving these items: " + e);
    ╰────
   help: Rename `e` to `error`
+
+  ⚠ unicorn(catch-error-name): The catch parameter "_err" should be named "error"
+   ╭─[catch_error_name.tsx:1:21]
+ 1 │ try { y(); } catch (_err) {}
+   ·                     ────
+   ╰────
+  help: Replace `_err` with `error`.
+
+  ⚠ unicorn(catch-error-name): The catch parameter "_err" should be named "error"
+   ╭─[catch_error_name.tsx:1:21]
+ 1 │ try { y(); } catch (_err) { console.log(_err); }
+   ·                     ────
+   ╰────
+  help: Rename `_err` to `error`
+
+  ⚠ unicorn(catch-error-name): The catch parameter "__" should be named "error"
+   ╭─[catch_error_name.tsx:1:15]
+ 1 │ try {} catch (__) {}
+   ·               ──
+   ╰────
+  help: Replace `__` with `error`.
+
+  ⚠ unicorn(catch-error-name): The catch parameter "_err" should be named "error"
+   ╭─[catch_error_name.tsx:1:15]
+ 1 │ promise.catch(_err => {})
+   ·               ────
+   ╰────
+  help: Replace `_err` with `error`.
+
+  ⚠ unicorn(catch-error-name): The catch parameter "_err" should be named "error"
+   ╭─[catch_error_name.tsx:1:25]
+ 1 │ promise.catch(function (_err) {})
+   ·                         ────
+   ╰────
+  help: Replace `_err` with `error`.
+
+  ⚠ unicorn(catch-error-name): The catch parameter "_err" should be named "error"
+   ╭─[catch_error_name.tsx:1:25]
+ 1 │ promise.then(undefined, _err => {})
+   ·                         ────
+   ╰────
+  help: Replace `_err` with `error`.
+
+  ⚠ unicorn(catch-error-name): The catch parameter "_err" should be named "error"
+   ╭─[catch_error_name.tsx:1:35]
+ 1 │ promise.then(undefined, function (_err) {})
+   ·                                   ────
+   ╰────
+  help: Replace `_err` with `error`.

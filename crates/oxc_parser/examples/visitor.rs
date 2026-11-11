@@ -16,7 +16,7 @@ use std::{env, path::Path};
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{Class, Function, TSImportType};
 use oxc_ast_visit::{Visit, walk};
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 use oxc_syntax::scope::ScopeFlags;
 
@@ -32,7 +32,9 @@ fn main() -> std::io::Result<()> {
     let source_text = std::fs::read_to_string(path)?;
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
-    let ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let ret = Parser::new(&allocator, &source_text, source_type)
+        .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
+        .parse();
 
     // Report any parsing errors
     for error in ret.diagnostics {

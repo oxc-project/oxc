@@ -1,5 +1,9 @@
 # Development Roadmap
 
+This document distinguishes implemented foundations from possible future work.
+Unchecked items are ideas, not committed features or delivery dates. The
+[optimization catalog](./OPTIMIZATIONS.md) describes current transforms.
+
 ## Phase 1: Foundation ✓
 
 - [x] Basic peephole optimizations
@@ -8,7 +12,7 @@
 - [x] Test infrastructure (minsize, coverage, e2e)
 - [x] Fixed-point iteration
 
-## Phase 2: Complete Optimization Suite ✓
+## Phase 2: Optimization Suite
 
 - [x] Port safe optimizations from Closure Compiler
 - [x] Port core optimizations from Terser/UglifyJS
@@ -17,24 +21,24 @@
 - [x] Template literal optimization
 - [x] Array/object patterns
 
-## Phase 3: Advanced Optimizations (Current)
+## Phase 3: Further Optimization Ideas
 
-- [ ] Function inlining (when provably safe)
-- [ ] Switch statement optimization
+- [ ] Broader function inlining (limited IIFE simplification is already implemented)
+- [x] Switch statement optimization (known-discriminant case removal and switch folding)
 - [ ] Advanced string concatenation (extending `oxc_ecmascript` string operations)
 - [ ] Enum unboxing
 - [ ] Property collapsing
 - [ ] Better RegExp optimization
-- [ ] Loop optimizations
+- [ ] Broader loop optimizations (while/for normalization and for-statement transforms exist)
 - [ ] Cross-module optimization
-- [ ] Perfect side effect analysis (extending `oxc_ecmascript` capabilities)
+- [ ] More precise side effect analysis (extending `oxc_ecmascript` capabilities)
 - [ ] Advanced DCE with escape analysis
-- [ ] Type-aware optimizations (from TS types)
+- [ ] Additional JavaScript value analysis (the minifier does not consume TypeScript types)
 - [ ] Framework-specific optimizations (React, Vue, Angular)
 
-## Phase 4: Production Ready
+## Further Infrastructure Ideas
 
-- [ ] Differential testing framework
+- [ ] Broader differential testing (test262 runtime checks and Node.js E2E tests already exist)
 - [ ] Fuzzing infrastructure
 - [ ] Performance optimization
 - [ ] Source map improvements
@@ -43,7 +47,7 @@
 ## Goals
 
 **Size**: Beat Closure Compiler, smallest output for top npm packages
-**Correctness**: 100% test262/Babel/TypeScript conformance
+**Correctness**: Preserve JavaScript behavior under documented assumptions, with test262/Babel idempotency and runtime regression coverage
 **Performance**: < 2x slower than esbuild, < 10x faster than Terser
 **Adoption**: Integration in major build tools
 

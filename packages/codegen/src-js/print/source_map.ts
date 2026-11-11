@@ -280,6 +280,8 @@ export function generateSourceMap(state: State, output: string, options: Options
 
 /**
  * Build UTF-16 offsets to the start of every ECMAScript source line.
+ *
+ * @param sourceText - Source text
  */
 function getLineStarts(sourceText: string): number[] {
   const lineStarts = [0];
@@ -294,6 +296,10 @@ function getLineStarts(sourceText: string): number[] {
 
 /**
  * Find the source line containing `sourceOffset`, starting close to the previous result.
+ *
+ * @param lineStarts - Offset of the start of every source line, from `getLineStarts`
+ * @param sourceOffset - UTF-16 offset in the source
+ * @param previousLine - Line the previous call found, where the search starts
  */
 function findSourceLine(lineStarts: number[], sourceOffset: number, previousLine: number): number {
   // Source mappings normally advance through the original file. Search the next few lines linearly,
@@ -324,6 +330,10 @@ function findSourceLine(lineStarts: number[], sourceOffset: number, previousLine
 
 /**
  * Write one signed source-map delta as base64 VLQ, returning the next buffer position.
+ *
+ * @param buffer - Buffer to write into
+ * @param index - Position in `buffer` to write at
+ * @param value - Signed delta to write
  */
 function writeVlq(buffer: Uint8Array, index: number, value: number): number {
   let vlq = value < 0 ? -value * 2 + 1 : value * 2;
@@ -352,6 +362,9 @@ function writeVlq(buffer: Uint8Array, index: number, value: number): number {
  * Grow the mappings buffer by doubling, preserving its written prefix.
  *
  * The returned buffer is guaranteed to have at least `MAX_MAPPING_SEGMENT_LENGTH` spare capacity.
+ *
+ * @param buffer - Mappings buffer
+ * @param writtenLength - Number of bytes written to `buffer` so far, which are copied into the new buffer
  */
 function growMappingBuffer(buffer: Uint8Array, writtenLength: number): Uint8Array {
   // Buffer starts with at least `MIN_MAPPING_BUFFER_LENGTH` bytes capacity.
@@ -364,6 +377,10 @@ function growMappingBuffer(buffer: Uint8Array, writtenLength: number): Uint8Arra
 
 /**
  * Find the UTF-16 offset after the next ECMAScript line terminator.
+ *
+ * @param output - Text to search - the generated code or the source text
+ * @param from - UTF-16 offset to search from
+ * @param useLineFeedFastPath - `true` if `\n` is the only line terminator to search for
  */
 function findNextLineStart(output: string, from: number, useLineFeedFastPath: boolean): number {
   if (useLineFeedFastPath) {
@@ -380,6 +397,8 @@ function findNextLineStart(output: string, from: number, useLineFeedFastPath: bo
 
 /**
  * Whether output contains a line terminator other than `\n`.
+ *
+ * @param output - Generated code
  */
 function hasUncommonLineTerminator(output: string): boolean {
   // V8's specialized substring search is substantially faster than a regexp scan here, even when
@@ -393,6 +412,8 @@ function hasUncommonLineTerminator(output: string): boolean {
 
 /**
  * Whether every source line terminator can be found by searching for `\n`.
+ *
+ * @param sourceText - Source text
  */
 function hasOnlyLineFeedsAndCrLf(sourceText: string): boolean {
   if (sourceText.indexOf("\u2028") !== -1 || sourceText.indexOf("\u2029") !== -1) return false;

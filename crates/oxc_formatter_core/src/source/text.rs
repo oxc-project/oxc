@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 
 /// Source text wrapper providing mechanical byte/offset access for the formatter.
 ///
@@ -71,6 +71,11 @@ impl<'a> SourceText<'a> {
         self.next_byte_skipping(position, |byte| byte.is_ascii_whitespace())
     }
 
+    /// Last non-whitespace byte before position
+    pub fn previous_non_whitespace_byte(&self, position: u32) -> Option<u8> {
+        self.bytes_to(position).find(|byte| !byte.is_ascii_whitespace())
+    }
+
     /// First byte at or after position that `skip` rejects
     #[inline]
     pub fn next_byte_skipping(&self, position: u32, skip: impl Fn(u8) -> bool) -> Option<u8> {
@@ -102,11 +107,5 @@ impl<'a> SourceText<'a> {
     /// Extract text for an object that has a span
     pub fn text_for<T: GetSpan>(&self, obj: &T) -> &'a str {
         obj.span().source_text(self.text)
-    }
-
-    // Utility methods
-    /// Get character count of span
-    pub fn span_width(&self, span: Span) -> usize {
-        self.text_for(&span).chars().count()
     }
 }

@@ -5,6 +5,7 @@
 ///
 /// The contract every formatter follows:
 /// ENTRIES own the strip, parse layers assume BOM-free input (spans and gap scans never see it).
+/// Their diagnostics point into the stripped text, so entries move them back with [`crate::rebase_labels`].
 /// A physical root entry keeps the flag and re-emits the BOM exactly once at byte 0 of its IR;
 /// an embedded entry (`format_to_ir`) never sees a leading U+FEFF at all:
 /// in an embedded position it is content, not a BOM,

@@ -6,8 +6,14 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 
 - Why: semantics (prettier/prettier#19839)
 - Pin: `tests/fixtures/markdown/leading-thematic-break.md`
-- Conformance: `markdown/thematicBreak/simple.md`, `markdown/commonmark-test-suite/snippet: example-11.md`, `example-50.md` to `example-54.md`
-- Oxfmt: `externals/prettier/markdown/thematicBreak/simple.md`
+- Conformance:
+  - `externals/prettier/markdown/thematicBreak/simple.md`
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-11.md*`
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-50.md*`
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-51.md*`
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-52.md*`
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-53.md*`
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-54.md*`
 
 ```markdown
 <!-- input -->
@@ -35,14 +41,14 @@ text
 A document whose first block is a thematic break gets `***`, never `---`:
 the next run (Prettier's and ours) would read `---` ... `---` as front matter and swallow `text` into it,
 which is what the input itself would be with a `---` at the end (`front-matter.md`).
-Prettier `main` prints `***` since #19839; the pin (3.9.9) still prints `---`.
+Prettier `main` prints `***` since #19839; the pin (3.9.10) still prints `---`.
 
 ## url-escaping
 
 - Why: semantics (prettier/prettier#19482, prettier/prettier#19849, prettier/prettier#19891)
 - Pin: `tests/fixtures/markdown/url-escaping.md`
-- Conformance: `markdown/link/encodedLink.md`
-- Oxfmt: `externals/prettier/markdown/link/encodedLink.md`
+- Conformance:
+  - `externals/prettier/markdown/link/encodedLink.md`
 
 ```markdown
 <!-- input -->
@@ -64,7 +70,8 @@ Titles get the same `\&` treatment.
 
 - Why: uniform-rule (same construct, same output: space-indented code block)
 - Pin: `tests/fixtures/markdown/indented-code-tab.md`
-- Conformance: `markdown/commonmark-test-suite/snippet: example-2.md`
+- Conformance:
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-2.md*`
 
 ````markdown
 <!-- input: two spaces, a tab -->
@@ -87,7 +94,8 @@ so an indent written as spaces plus a tab becomes a fenced block.
 
 - Why: uniform-rule (same construct, same output: a blockquote's trailing blank `>` line under `proseWrap: preserve`)
 - Pin: `tests/fixtures/markdown/prose-wrap/ignored-block-trailing-quote-line.md`
-- Oxfmt: `externals/prettier/markdown/blockquote/ignore-code.md`
+- Conformance:
+  - `externals/prettier/markdown/blockquote/ignore-code.md`
 
 ```markdown
 <!-- input -->
@@ -291,8 +299,8 @@ Prettier alternates from the marker it would have printed (`-`), prints `*` next
 
 - Why: semantics
 - Pin: `tests/fixtures/markdown/prose-wrap/container-directive.md`
-- Conformance: `markdown/paragraph/cjk.md`
-- Oxfmt: `externals/prettier/markdown/paragraph/cjk.md`
+- Conformance:
+  - `externals/prettier/markdown/paragraph/cjk.md`
 
 ```markdown
 <!-- input -->
@@ -326,8 +334,8 @@ so the closing fence is printed explicitly: a reader without directives (CommonM
 
 - Why: semantics
 - Pin: `tests/fixtures/markdown/prose-wrap/line-shapes.md`
-- Conformance: `markdown/blockquote/notext-end.md`
-- Oxfmt: `externals/prettier/markdown/blockquote/notext-end.md`
+- Conformance:
+  - `externals/prettier/markdown/blockquote/notext-end.md`
 
 ```markdown
 <!-- input -->
@@ -373,7 +381,6 @@ Prettier wraps it like any line: a break right after the destination makes it a 
 
 - Why: semantics (prettier/prettier#13634, prettier/prettier#19112, prettier/prettier#19847)
 - Pin: `tests/fixtures/markdown/prose-wrap/wrapped-block-starts.md`
-- Oxfmt: `externals/prettier/markdown/list/parser-regression/issue-17778.md`
 
 ```markdown
 <!-- input, proseWrap always -->
@@ -408,7 +415,8 @@ which its regex takes for a list marker (a marker has at most 9 digits).
 
 - Why: semantics (prettier/prettier#6035, prettier/prettier#17303, prettier/prettier#17353)
 - Pin: `tests/fixtures/markdown/prose-wrap/stray-delimiters.md`
-- Conformance: `markdown/commonmark-test-suite/snippet: example-412.md`
+- Conformance:
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-412.md*`
 
 ```markdown
 <!-- input -->
@@ -521,16 +529,22 @@ Prettier prints it as written (the leading blank line that kept it out of front 
 
 ## cj-line-break
 
-- Why: semantics (prettier/prettier#20143)
+- Why: semantics (prettier/prettier#20143, prettier/prettier#16805)
 - Pin: `tests/fixtures/markdown/prose-wrap/cj-line-break.md`
-- Conformance: `markdown/splitCjkText/symbolSpaceNewLine.md`
-- Oxfmt: `externals/prettier/markdown/splitCjkText/symbolSpaceNewLine.md`
+- Conformance:
+  - `externals/prettier/markdown/splitCjkText/symbolSpaceNewLine.md`
 
 ```markdown
 <!-- input, proseWrap always -->
 日本語の文章は
 改行しても
 そのままです。
+
+営業時間は月〜
+金の9時〜18時です。
+
+中文！
+한국어
 
 見て http://x.y2.
 。次
@@ -540,21 +554,53 @@ Prettier prints it as written (the leading blank line that kept it out of front 
 改行しても
 そのままです。
 
-見て http://x.y2.
-。次
+営業時間は月〜
+金の9時〜18時です。
+
+中文！ 한국어
+
+見て http://x.y2. 。次
 
 <!-- prettier -->
 日本語の文章は改行してもそのままです。
 
+営業時間は月〜金の9時〜18時です。
+
+中文！한국어
+
 見て http://x.y2.。次
 ```
 
-A line break next to Chinese / Japanese text is kept under every `proseWrap`,
-except between a Korean and a CJ letter, where it is a space.
-Browsers disagree on such a break (Firefox drops it, Chrome and Safari render a space),
-so removing it or making it a space changes the rendered text in some of them.
-Joined, an autolink literal also takes the CJ punctuation after it (`http://x.y2.。次`).
-Prettier `main` keeps the break since #20143; the pin (3.9.9) removes it or makes it a space.
+A line break between two Chinese / Japanese characters (letters or CJK punctuation) is kept under every `proseWrap`, and a space there never becomes one:
+Firefox 159 drops such a break and Chrome 138 renders a space. Next to one only, every browser renders a space, so a line break there is one.
+
+- The pin (3.9.10) removes some of these breaks, next to one CJ character only too (`中文！한국어`);
+  joined, an autolink literal also takes the CJ punctuation after it (`http://x.y2.。次`)
+- Prettier `main` keeps every break next to a CJ character (#20143)
+- Prettier 4 is to treat a break next to one only as a space, as here (#16805)
+
+## cj-adjacent-space-wraps
+
+- Why: uniform-rule (whitespace keeps its kind only between two CJ characters; prettier/prettier#16805)
+- Pin: `tests/fixtures/markdown/prose-wrap/cjk.md`
+- Conformance:
+  - `externals/prettier/markdown/splitCjkText/chinese-japanese.md`
+  - `externals/prettier/markdown/splitCjkText/space.md`
+
+```markdown
+<!-- input, proseWrap always, printWidth 80 -->
+漢字と English の間に空白を置く文書では、その空白で折り返せますが、漢字 と 漢字 の間の空白では折り返さずに一行のまま続きます。
+
+<!-- ours -->
+漢字と English
+の間に空白を置く文書では、その空白で折り返せますが、漢字 と 漢字 の間の空白では折り返さずに一行のまま続きます。
+
+<!-- prettier -->
+漢字と English の間に空白を置く文書では、その空白で折り返せますが、漢字 と 漢字 の間の空白では折り返さずに一行のまま続きます。
+```
+
+Under `proseWrap: always`, a space next to one Chinese / Japanese character only may wrap, as between Latin words (DIVERGENCES.md#cj-line-break).
+The rule applies in HTML too (`oxc_formatter_htmlish`'s DIVERGENCES.md#cj-whitespace), and Prettier itself wraps a space between a Korean and a CJ letter.
 
 ## wiki-link-risk-link-text
 
@@ -582,7 +628,6 @@ Ours keeps the line.
 
 - Why: uniform-rule (same construct, same output: a paragraph)
 - Pin: `tests/fixtures/markdown/prose-wrap/setext-heading-wrap.md`
-- Oxfmt: `externals/prettier/markdown/heading/setext/issue-6013-2.md`
 
 ```markdown
 <!-- input, proseWrap always -->

@@ -1240,3 +1240,47 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
   help: Expected the return expression to be started with `void`
+
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.reduce" may reach the end of an `if` without returning
+   ╭─[array_callback_return.tsx:1:8]
+ 1 │ [1, 2].reduce((total, x) => { if (x > 1) { return total + x; } }, 0)
+   ·        ───┬──            ──   ────────────────┬───────────────
+   ·           │               │                   ╰── This path may reach the end of the callback.
+   ·           ╰── "Array.prototype.reduce" is called here.
+   ╰────
+  help: This `if` has no `else` branch, so the callback may reach the end without a `return`. Add an `else`, or add a final `return`/`throw` after the `if`.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
+
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.reduceRight" may reach the end of an `if` without returning
+   ╭─[array_callback_return.tsx:1:8]
+ 1 │ [1, 2].reduceRight((total, x) => { if (x > 1) { return total + x; } }, 0)
+   ·        ─────┬─────            ──   ────────────────┬───────────────
+   ·             │                  │                   ╰── This path may reach the end of the callback.
+   ·             ╰── "Array.prototype.reduceRight" is called here.
+   ╰────
+  help: This `if` has no `else` branch, so the callback may reach the end without a `return`. Add an `else`, or add a final `return`/`throw` after the `if`.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
+
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.reduce" does not return on all code paths
+   ╭─[array_callback_return.tsx:1:23]
+ 1 │ foo.reduce(function() {}, 0)
+   ·                       ──
+   ╰────
+  help: "Array.prototype.reduce" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
+
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.map" does not return on all code paths
+   ╭─[array_callback_return.tsx:1:20]
+ 1 │ foo.map(function() {}, thisArg)
+   ·                    ──
+   ╰────
+  help: "Array.prototype.map" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
+
+  ⚠ eslint(array-callback-return): Callback for array method "Array.from" does not return on all code paths
+   ╭─[array_callback_return.tsx:1:26]
+ 1 │ Array.from(x, function() {}, thisArg)
+   ·                          ──
+   ╰────
+  help: "Array.from" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).

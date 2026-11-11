@@ -53,6 +53,7 @@ declare_oxc_lint!(
     NoUnnecessaryArraySpliceCount,
     unicorn,
     pedantic,
+    recommended,
     fix,
     version = "1.20.0",
     short_description = "Disallows passing `.length` or `Infinity` as the `deleteCount` or `skipCount` argument of `Array#splice()` or `Array#toSpliced()`.",

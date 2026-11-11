@@ -3,9 +3,11 @@ use std::path::Path;
 use phf::phf_set;
 
 use oxc_formatter_css::CssVariant;
+use oxc_formatter_htmlish::HtmlishVariant;
 use oxc_formatter_json::JsonVariant;
 use oxc_span::SourceType;
 
+use super::language::{Language, Route};
 #[cfg(feature = "napi")]
 use super::oxfmtrc::FormatConfig;
 
@@ -55,6 +57,12 @@ pub fn classify_file(path: &Path) -> Option<FormatStrategy> {
     if MARKDOWN_FILENAMES.contains(file_name) || MARKDOWN_EXTENSIONS.contains(ext) {
         return Some(FormatStrategy::Native(NativeLanguage::Markdown));
     }
+    // Angular templates share the extension, and stay with Prettier
+    if let Some(variant) = html_variant(ext)
+        && !file_name.ends_with(".component.html")
+    {
+        return Some(FormatStrategy::Native(NativeLanguage::Html(variant)));
+    }
 
     #[cfg(feature = "napi")]
     if let Some(language) = prettier_language(file_name, ext) {
@@ -64,8 +72,26 @@ pub fn classify_file(path: &Path) -> Option<FormatStrategy> {
     None
 }
 
+/// Classify a file explicitly assigned to `language` (e.g. by `associations`), regardless of its name.
+///
+/// Still `None` for excluded files (lock files), and in the pure Rust build for languages Prettier serves.
+pub fn classify_as(language: Language, path: &Path) -> Option<FormatStrategy> {
+    // Lock files must NEVER be formatted, even when explicitly assigned
+    // (e.g. `pnpm-lock.yaml` matched by a broad `associations` glob).
+    // This bypasses `classify_file`, so the same rule is checked here.
+    if EXCLUDE_FILENAMES.contains(path.file_name()?.to_str()?) {
+        return None;
+    }
+    match language.route() {
+        Route::Native(language) => Some(FormatStrategy::Native(language)),
+        #[cfg(feature = "napi")]
+        Route::Prettier(language) => Some(FormatStrategy::Prettier(language)),
+        _ => None,
+    }
+}
+
 /// How a whole file is formatted: which formatter, with any pre-process.
-/// The whole-file counterpart of [`Route`](super::language::Route) for embedded parts,
+/// The whole-file counterpart of [`Route`] for embedded parts,
 /// with `PackageJson` / `YamlRc` as file-only pre-processes.
 ///
 /// Consumed by the resolver to construct a [`super::FormatPlan`] with the resolved config.
@@ -110,6 +136,7 @@ pub enum NativeLanguage {
     Json(JsonVariant),
     Markdown,
     Toml,
+    Html(HtmlishVariant),
 }
 
 impl NativeLanguage {
@@ -123,6 +150,7 @@ impl NativeLanguage {
             Self::Json(_) => "json",
             Self::Markdown => "markdown",
             Self::Toml => "toml",
+            Self::Html(_) => "html",
         }
     }
 }
@@ -136,9 +164,7 @@ impl NativeLanguage {
 #[derive(Debug, Clone, Copy)]
 pub enum PrettierLanguage {
     Mdx,
-    Html,
     Angular,
-    Vue,
     /// Formatted only when `prettier-plugin-svelte` is enabled (`svelte` config key).
     Svelte,
     /// Formatted only when `prettier-plugin-astro` is enabled (`astro` config key).
@@ -159,9 +185,7 @@ impl PrettierLanguage {
     pub fn parser(self) -> &'static str {
         match self {
             Self::Mdx => "mdx",
-            Self::Html => "html",
             Self::Angular => "angular",
-            Self::Vue => "vue",
             Self::Svelte => "svelte",
             Self::Astro => "astro",
             Self::Mjml => "mjml",
@@ -179,12 +203,6 @@ impl PrettierLanguage {
             Self::Astro if !config.is_astro_enabled() => Some("astro"),
             _ => None,
         }
-    }
-
-    /// Whether the Doc→IR conversion must surface `HtmlEmbedMeta`
-    /// (`htmlHasMultipleRootElements`) to the embed site.
-    pub fn wants_html_meta(self) -> bool {
-        matches!(self, Self::Html | Self::Angular)
     }
 }
 
@@ -370,6 +388,18 @@ static MARKDOWN_EXTENSIONS: phf::Set<&'static str> = phf_set! {
 
 // ---
 
+fn html_variant(ext: &str) -> Option<HtmlishVariant> {
+    match ext {
+        "html" | "hta" | "htm" | "inc" => Some(HtmlishVariant::Html),
+        // An XML parser may read XHTML
+        "xhtml" | "xht" => Some(HtmlishVariant::Xhtml),
+        "vue" => Some(HtmlishVariant::Vue),
+        _ => None,
+    }
+}
+
+// ---
+
 /// Returns the [`PrettierLanguage`] for the file, if supported.
 /// See also `prettier --support-info | jq '.languages[]'`
 #[cfg(feature = "napi")]
@@ -378,8 +408,6 @@ fn prettier_language(file_name: &str, ext: &str) -> Option<PrettierLanguage> {
         return Some(PrettierLanguage::Angular);
     }
     Some(match ext {
-        "html" | "hta" | "htm" | "inc" | "xht" | "xhtml" => PrettierLanguage::Html,
-        "vue" => PrettierLanguage::Vue,
         // Formatting is gated by `ResolveOutcome::MissingPlugin` (requires `svelte` / `astro` config),
         // classified here so that each caller can surface a friendly error or skip.
         "svelte" => PrettierLanguage::Svelte,
@@ -509,16 +537,17 @@ mod tests {
             ("package.json", None),
             ("composer.json", None),
             ("config.importmap", None),
-            // HTML
-            ("index.html", Some("html")),
-            ("page.htm", Some("html")),
-            ("template.xhtml", Some("html")),
-            // Angular (must be detected before HTML)
+            // HTML files are routed to `oxc_formatter_htmlish` in `classify_file`
+            // and excluded from this map.
+            ("index.html", None),
+            ("page.htm", None),
+            // Angular
             ("app.component.html", Some("angular")),
             // MJML
             ("email.mjml", Some("mjml")),
-            // Vue
-            ("App.vue", Some("vue")),
+            // Vue files are routed to `oxc_formatter_htmlish` in `classify_file`
+            // and excluded from this map.
+            ("App.vue", None),
             // CSS files are routed to `oxc_formatter_css` in `classify_file`
             // and excluded from this map.
             ("styles.css", None),
@@ -671,6 +700,29 @@ mod tests {
                 "`{file_name}` should be routed to oxc_formatter_markdown"
             );
         }
+    }
+
+    #[test]
+    fn test_html_files_route_to_oxc_formatter_htmlish() {
+        for (file_name, expected) in [
+            ("index.html", HtmlishVariant::Html),
+            ("page.htm", HtmlishVariant::Html),
+            ("app.hta", HtmlishVariant::Html),
+            ("header.inc", HtmlishVariant::Html),
+            ("template.xhtml", HtmlishVariant::Xhtml),
+            ("page.xht", HtmlishVariant::Xhtml),
+            ("App.vue", HtmlishVariant::Vue),
+        ] {
+            let result = classify_file(Path::new(file_name));
+            assert!(
+                matches!(result, Some(FormatStrategy::Native(NativeLanguage::Html(variant))) if variant == expected),
+                "`{file_name}` should be routed to oxc_formatter_htmlish as {expected:?}"
+            );
+        }
+
+        // Angular templates stay with Prettier (and are not formatted in the pure Rust build)
+        let result = classify_file(Path::new("app.component.html"));
+        assert!(!matches!(result, Some(FormatStrategy::Native(_))));
     }
 
     #[test]

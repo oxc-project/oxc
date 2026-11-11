@@ -73,6 +73,7 @@ declare_oxc_lint!(
     PreferStructuredClone,
     unicorn,
     style,
+    recommended,
     suggestion,
     config = PreferStructuredCloneConfig,
     version = "0.9.0",

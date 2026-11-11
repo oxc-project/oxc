@@ -4,6 +4,69 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 7243594 minifier: Preserve throwing ArrayBuffer and URI calls (#29012) (camc314)
+- 595f3c2 minifier: Preserve left-hand side effects in instanceof checks (#29011) (camc314)
+- 9e3b3d1 ecmascript: Reject signs after nondecimal prefixes (#29034) (camc314)
+- 43c5273 ecmascript: Round nondecimal strings to numbers once (#29026) (camc314)
+- 0b48483 minifier: Preserve UTF-16 boundaries in empty-search replaceAll folding (#28807) (huuya)
+
+### 📚 Documentation
+
+- a74b7cd ecmascript: Clarify test locations (#29072) (camc314)
+
+## [0.157.0] - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- eaa8e90 ecmascript: Avoid numeric `+` folding when an operand may be a string (#28544) (camc314)
+
+### ⚡ Performance
+
+- 444f24a ecmascript: Short-circuit simple parameter checks for rest (#28503) (Boshen)
+- 8239dac parser: Replace dragonbox_ecma with zmij_ecma (#28282) (Boshen)
+
+## [0.156.0] - 2026-10-27
+
+### 💥 BREAKING CHANGES
+
+- cf8296f ecmascript: [**BREAKING**] Fold surrogate strings with JSStr constants (#27098) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- bd70a9b ecmascript: Use ECMAScript whitespace when folding `parseFloat`/`parseInt`/`trim` (#27719) (Dunqing)
+
+### ⚡ Performance
+
+- 3493ce3 minifier: Reuse is_error_constructor and simplify substitute_global_new_expression (#28149) (Armano)
+
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- a0a987c ast: [**BREAKING**] Preserve lone surrogates in static member names (#26677) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- bd37e78 ecmascript: Look through sequence expressions in `to_primitive` (#27837) (baltasarblanco)
+- 863b359 ecmascript: Correct parseFloat decimal prefix scanning (#27695) (camc314)
+- 3543672 ecmascript: Do not fold Number.isInteger / isSafeInteger of tiny non-integers to true (#27622) (Baltasar Blanco)
+- 6987a61 ecmascript: BigInt loose equality folding (unknown operands and `StringToBigInt`) (#27656) (Baltasar Blanco)
+- 022306f ecmascript: Do not fold `Math.cbrt` of a negative number to `NaN` (#27621) (Baltasar Blanco)
+
+### ⚡ Performance
+
+- 88b5c35 minifier: Reduce code branches when evaluating roots (#27906) (Armano)
+
+## [0.154.0] - 2026-10-13
+
+### ⚡ Performance
+
+- 19c227d minifier: Use ident when checking specific id names (#27208) (Armano)
+
 ## [0.150.0] - 2026-09-14
 
 ### 🚀 Features

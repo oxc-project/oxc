@@ -1,9 +1,11 @@
-use oxc_allocator::{ArenaBox, ArenaVec, Dummy, GetAllocator};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_span::{FileExtension, GetSpan};
+use oxc_span::{FileExtension, GetSpan, SPAN};
 
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext,
+    buffered_vec::BufferedVec,
+    diagnostics,
     js::{FunctionKind, VariableDeclarationParent},
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
@@ -72,7 +74,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_ts_enum_member_name(&mut self) -> TSEnumMemberName<'a> {
         match self.cur_kind() {
             Kind::Str => {
-                let literal = self.parse_literal_string();
+                let literal = self.parse_known_literal_string();
                 TSEnumMemberName::String(self.alloc(literal))
             }
             Kind::LBrack => match self.parse_computed_property_name() {
@@ -236,7 +238,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
         }
-        let (extends, implements) = self.parse_ts_interface_heritage_clause();
+        let (extends, implements) =
+            self.parse_heritage_clause(Self::parse_ts_interface_extends_clause);
         let body = self.parse_ts_interface_body();
         let extends = extends.unwrap_or_else(|| ArenaVec::new_in(self));
         self.verify_modifiers(
@@ -262,24 +265,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    #[expect(clippy::type_complexity)]
-    fn parse_ts_interface_heritage_clause(
-        &mut self,
-    ) -> (
-        Option<ArenaVec<'a, TSInterfaceHeritage<'a>>>,
-        Option<(Span, ArenaVec<'a, TSClassImplements<'a>>)>,
-    ) {
-        self.parse_heritage_clause(Self::parse_ts_interface_extends_clause)
-    }
-
     fn parse_ts_interface_extends_clause(&mut self) -> ArenaVec<'a, TSInterfaceHeritage<'a>> {
         let extends_span = self.cur_token().span();
         self.bump_any(); // bump `extends`
 
-        let mut extends = ArenaVec::with_capacity_in(1, self);
+        let mut extends = BufferedVec::new_in(self);
         if self.at(Kind::LCurly) {
             self.error(diagnostics::empty_extends_clause(extends_span));
-            return extends;
+            return extends.into_vec();
         }
         loop {
             let start = self.cur_start();
@@ -325,7 +318,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        extends
+        extends.into_vec()
     }
 
     fn parse_ts_interface_heritage_type_name(&mut self, start: u32) -> TSTypeName<'a> {
@@ -343,7 +336,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let expression = self.parse_assignment_expression_or_higher();
         let expression_span = expression.span();
         self.error(diagnostics::interface_extend(expression_span));
-        TSTypeName::dummy(self.allocator())
+        TSTypeName::new_this_expression(SPAN, self)
     }
 
     fn parse_ts_interface_body(&mut self) -> ArenaBox<'a, TSInterfaceBody<'a>> {
@@ -459,13 +452,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         modifiers: &Modifiers,
     ) -> ArenaBox<'a, TSExternalModuleDeclaration<'a>> {
-        let id = self.parse_literal_string();
+        let id = self.parse_known_literal_string();
         if !self.ctx.has_ambient() {
             self.error(diagnostics::quoted_module_name_only_allowed_in_ambient_module(id.span()));
         }
         let body = if self.at(Kind::LCurly) {
             // External module body (`declare module "x" {}`); `import`/`export` are allowed here.
-            Some(self.parse_ts_module_block(/* in_ts_namespace_body */ false))
+            let block = self.parse_ts_module_block(/* in_ts_namespace_body */ false);
+            Some(self.alloc(block))
         } else {
             self.asi();
             None
@@ -536,10 +530,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    fn parse_ts_module_block(
-        &mut self,
-        in_ts_namespace_body: bool,
-    ) -> ArenaBox<'a, TSModuleBlock<'a>> {
+    fn parse_ts_module_block(&mut self, in_ts_namespace_body: bool) -> TSModuleBlock<'a> {
         let start = self.cur_start();
         self.expect(Kind::LCurly);
         // Remove TopLevel context for module block
@@ -547,7 +538,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             p.parse_directives_and_statements(in_ts_namespace_body)
         });
         self.expect(Kind::RCurly);
-        TSModuleBlock::boxed(self.end_span(start), directives, statements, self)
+        TSModuleBlock::new(self.end_span(start), directives, statements, self)
     }
 
     fn parse_module_or_namespace_declaration(
@@ -565,7 +556,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // Internal namespace body — validate each statement inline as it is parsed
             // (see `check_namespace_body_statement`), avoiding a second pass over the body.
             let block = self.parse_ts_module_block(/* in_ts_namespace_body */ true);
-            TSNamespaceDeclarationBody::TSModuleBlock(block)
+            TSNamespaceDeclarationBody::TSModuleBlock(self.alloc(block))
         };
         self.verify_modifiers(
             modifiers,
@@ -592,7 +583,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::Global);
         let keyword_span = self.end_span(keyword_start);
 
-        let body = self.parse_ts_module_block(/* in_ts_namespace_body */ false).unbox();
+        let body = self.parse_ts_module_block(/* in_ts_namespace_body */ false);
 
         self.verify_modifiers(
             modifiers,
@@ -715,7 +706,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     && self.cur_kind().is_binding_identifier()
                 {
                     // `import type something ...`
-                    identifier = self.parse_binding_identifier();
+                    identifier = self.parse_known_binding_identifier();
                     import_kind = ImportOrExportKind::Type;
                 }
                 self.parse_ts_import_equals_declaration(import_kind, identifier, start)

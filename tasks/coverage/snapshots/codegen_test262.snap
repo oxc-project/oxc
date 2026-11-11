@@ -1,5 +1,5 @@
-commit: 7ab7fafa
+commit: e4fbf577
 
 codegen_test262 Summary:
-AST Parsed     : 47455/47455 (100.00%)
-Positive Passed: 47455/47455 (100.00%)
+AST Parsed     : 47628/47628 (100.00%)
+Positive Passed: 47628/47628 (100.00%)

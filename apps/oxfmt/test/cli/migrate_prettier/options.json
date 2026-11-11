@@ -12,7 +12,12 @@
   { "cwd": "svelte_plugin", "args": ["--migrate", "prettier"] },
   { "cwd": "unsupported_opts", "args": ["--migrate", "prettier"] },
   { "cwd": "overrides_json", "args": ["--migrate", "prettier"] },
-  { "cwd": "overrides_jsonc", "args": ["--migrate", "prettier"] },
-  { "cwd": "overrides_yaml", "args": ["--migrate", "prettier"] },
-  { "cwd": "astro_plugin", "args": ["--migrate", "prettier"] }
+  { "cwd": "json5_config", "args": ["--migrate", "prettier"] },
+  { "cwd": "yaml_config", "args": ["--migrate", "prettier"] },
+  { "cwd": "astro_plugin", "args": ["--migrate", "prettier"] },
+  { "cwd": "js_config", "args": ["--migrate", "prettier"] },
+  { "cwd": "package_json_shared", "args": ["--migrate", "prettier"] },
+  { "cwd": "yaml_prettierrc", "args": ["--migrate", "prettier"] },
+  { "cwd": "parent_config/sub", "args": ["--migrate", "prettier"] },
+  { "cwd": "already_exists_ts", "args": ["--migrate", "prettier"] }
 ]

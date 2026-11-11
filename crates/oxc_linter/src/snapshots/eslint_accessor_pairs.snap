@@ -1654,3 +1654,66 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────
    ╰────
   help: Define a setter for this property
+
+  ⚠ eslint(accessor-pairs): Getter is defined without a setter
+   ╭─[accessor_pairs.tsx:1:15]
+ 1 │ var o = { get "\uD800"() {}, set "\uDC00"(v) {} };
+   ·               ────────
+   ╰────
+  help: Define a setter for this property
+
+  ⚠ eslint(accessor-pairs): Setter is defined without a getter
+   ╭─[accessor_pairs.tsx:1:34]
+ 1 │ var o = { get "\uD800"() {}, set "\uDC00"(v) {} };
+   ·                                  ────────
+   ╰────
+  help: Define a getter for this property
+
+  ⚠ eslint(accessor-pairs): Getter is defined without a setter
+   ╭─[accessor_pairs.tsx:1:15]
+ 1 │ var o = { get "\uD800"() {}, set "\uD800\uDC00"(v) {} };
+   ·               ────────
+   ╰────
+  help: Define a setter for this property
+
+  ⚠ eslint(accessor-pairs): Setter is defined without a getter
+   ╭─[accessor_pairs.tsx:1:34]
+ 1 │ var o = { get "\uD800"() {}, set "\uD800\uDC00"(v) {} };
+   ·                                  ──────────────
+   ╰────
+  help: Define a getter for this property
+
+  ⚠ eslint(accessor-pairs): Setter is defined without a getter
+   ╭─[accessor_pairs.tsx:1:15]
+ 1 │ var o = { set "\uD800"(v) {} };
+   ·               ────────
+   ╰────
+  help: Define a getter for this property
+
+  ⚠ eslint(accessor-pairs): Getter is defined without a setter
+   ╭─[accessor_pairs.tsx:1:15]
+ 1 │ class C { get "\uD800"() {} static set "\uD800"(v) {} }
+   ·               ────────
+   ╰────
+  help: Define a setter for this property
+
+  ⚠ eslint(accessor-pairs): Setter is defined without a getter
+   ╭─[accessor_pairs.tsx:1:40]
+ 1 │ class C { get "\uD800"() {} static set "\uD800"(v) {} }
+   ·                                        ────────
+   ╰────
+  help: Define a getter for this property
+
+  ⚠ eslint(accessor-pairs): Getter is defined without a setter
+   ╭─[accessor_pairs.tsx:1:16]
+ 1 │ type T = { get "\uD800"(): any; set "\uDC00"(v: any); }
+   ·                ────────
+   ╰────
+  help: Define a setter for this property
+
+  ⚠ eslint(accessor-pairs): Setter is defined without a getter
+   ╭─[accessor_pairs.tsx:1:37]
+ 1 │ type T = { get "\uD800"(): any; set "\uDC00"(v: any); }
+   ·                                     ────────
+   ╰────
+  help: Define a getter for this property

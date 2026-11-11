@@ -81,6 +81,7 @@ declare_oxc_lint!(
     PreferObjectFromEntries,
     unicorn,
     style,
+    recommended,
     pending,
     config = PreferObjectFromEntriesConfig,
     version = "0.16.12",
@@ -108,7 +109,9 @@ impl Rule for PreferObjectFromEntries {
             return;
         }
 
-        if call_expr.optional || call_expr.callee.to_member_expression().optional() {
+        if call_expr.optional
+            || call_expr.callee.get_member_expr().is_none_or(MemberExpression::optional)
+        {
             return;
         }
 
@@ -117,7 +120,7 @@ impl Rule for PreferObjectFromEntries {
             .get(1)
             .expect("call expr must have exactly 2 arguments")
             .as_expression()
-            .map(oxc_ast::ast::Expression::get_inner_expression)
+            .map(Expression::get_inner_expression)
         else {
             return;
         };
@@ -131,7 +134,7 @@ impl Rule for PreferObjectFromEntries {
             .first()
             .expect("call expr must have exactly 2 arguments")
             .as_expression()
-            .map(oxc_ast::ast::Expression::get_inner_expression)
+            .map(Expression::get_inner_expression)
         else {
             return;
         };
@@ -164,7 +167,7 @@ impl Rule for PreferObjectFromEntries {
                 .first()
                 .expect("call expression should have 2 arguments")
                 .as_expression()
-                .map(oxc_ast::ast::Expression::get_inner_expression)
+                .map(Expression::get_inner_expression)
             else {
                 return;
             };
@@ -180,7 +183,7 @@ impl Rule for PreferObjectFromEntries {
                 .get(1)
                 .expect("call expression should have 2 arguments")
                 .as_expression()
-                .map(oxc_ast::ast::Expression::get_inner_expression)
+                .map(Expression::get_inner_expression)
             else {
                 return;
             };
@@ -250,7 +253,7 @@ fn is_empty_object(expr: &Expression) -> bool {
                 .first()
                 .expect("call expression must have 1 argument")
                 .as_expression()
-                .map(oxc_ast::ast::Expression::get_inner_expression)
+                .map(Expression::get_inner_expression)
                 .is_some_and(Expression::is_null) =>
         {
             true
@@ -264,6 +267,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("(x.reduce)(0,0);", None),
+        ("(pairs.reduce!)(0,0);", None),
         ("pairs.reduce(object => ({...object, key}));", None),
         ("pairs.reduce(object => ({...object, key}), {}, extraArgument);", None),
         ("pairs.reduce({}, object => ({...object, key}));", None),
@@ -271,6 +276,9 @@ fn test() {
         ("new reduce(object => ({...object, key}), {});", None),
         ("pairs.reduce?.(object => ({...object, key}), {});", None),
         ("pairs?.reduce(object => ({...object, key}), {});", None),
+        ("(pairs.reduce)?.(object => ({...object, key}), {});", None),
+        ("(pairs?.reduce)(object => ({...object, key}), {});", None),
+        ("((pairs?.['reduce']))(object => ({...object, key}), {});", None),
         ("pairs.notReduce(object => ({...object, key}), {});", None),
         ("pairs.reduce(object => ({...object, key}), {notEmpty});", None),
         ("pairs.reduce(object => ({...object, key}), []);", None),
@@ -352,6 +360,10 @@ fn test() {
 
     let fail = vec![
         ("pairs.reduce(object => ({...object, key}), {});", None),
+        ("(pairs.reduce)(object => ({...object, key}), {});", None),
+        ("((pairs['reduce']))(object => ({...object, key}), {});", None),
+        ("(pairs.reduce!)(object => ({...object, key}), {});", None),
+        ("(pairs.reduce)(object => Object.assign(object, {key}), {});", None),
         ("pairs.reduce(object => ({...object, key}), {},);", None),
         ("pairs.reduce(object => ({...object, key,}), {});", None),
         ("pairs.reduce(object => ({...object, key}), Object.create(null));", None),

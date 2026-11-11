@@ -78,6 +78,7 @@ declare_oxc_lint!(
     ValidNextTick,
     vue,
     correctness,
+    recommended,
     fix,
     version = "1.67.0",
     short_description = "Enforce valid `nextTick` function calls.",

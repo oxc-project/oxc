@@ -81,6 +81,8 @@ try {
 
 This also lets an unused `new Int8Array(n)` (or any TypedArray) with a numeric-literal `n` be dropped: a valid length allocates a zeroed buffer with no observable effect, and a too-large literal only throws a maximum-length `RangeError`. A non-literal, negative (`new Int8Array(-1)`), `BigInt` (`new Int8Array(0n)`), or object argument is kept.
 
+For `ArrayBuffer`, this assumption covers backing-store allocation failures after successful length conversion. The [constructor](https://tc39.es/ecma262/multipage/structured-data.html#sec-arraybuffer-length) converts its length with [ToIndex](https://tc39.es/ecma262/multipage/abstract-operations.html#sec-toindex) before allocating its backing store with [CreateByteDataBlock](https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-createbytedatablock). An unused `new ArrayBuffer(9007199254740991)` can therefore be dropped even if the engine cannot allocate it. Invalid lengths such as `-1`, `Infinity`, `9007199254740992`, `BigInt`, or `Symbol` are still kept. The current analysis also keeps unknown lengths and calls with an options argument.
+
 ### Coercion to a primitive does not throw for non-Symbol arguments
 
 Pure global functions and methods that coerce their arguments (`parseInt`, `isNaN`, `Math.*`, `Date.UTC`, `String.fromCharCode`, …) are treated as side-effect-free, so an unused call is dropped. A Symbol argument would make `ToString` / `ToNumber` throw a `TypeError`, but the minifier assumes a non-Symbol argument when it cannot prove the type — so `Math.abs(x)` / `parseInt(x)` stay droppable.
@@ -216,9 +218,26 @@ Property rewriting runs before compression. Computed keys that compression later
 such as `['f' + 'oo_']`, are not revisited and can diverge from an eligible `obj.foo_` occurrence.
 Exclude or reserve property names that are constructed this way.
 
-### No Reliance on Function.prototype.name
+### No Reliance on Function or Class Names
 
-Code doesn't depend on function names being preserved. This assumption is held by default. This can be changed by settings `keepNames` option.
+Code does not depend on function or class names being preserved by default.
+In the Rust API, set `CompressOptions::keep_names` and, when identifier mangling
+is enabled, `MangleOptions::keep_names` for the names you need to preserve.
+When both stages are enabled in the Node.js API, configure both options:
+
+- `compress.keepNames` takes an object with Boolean `function` and `class` fields.
+- `mangle.keepNames` takes a Boolean (for both kinds of names) or an object with
+  Boolean `function` and `class` fields.
+
+For example, to preserve both function and class names during compression and
+identifier mangling:
+
+```javascript
+const options = {
+  compress: { keepNames: { function: true, class: true } },
+  mangle: { keepNames: true },
+};
+```
 
 ```javascript
 // The minifier assumes this never happens:
@@ -231,6 +250,7 @@ if (myFunc.name !== "myFunc") throw Error();
 Optional assumptions can be configured in the minifier options if your code requires different behavior.
 
 ```rust
+// Selected fields; see src/options.rs for the complete definitions.
 pub struct CompressOptions {
     // Control optimization behavior
     pub drop_console: bool,
@@ -261,14 +281,10 @@ pub struct TreeShakeOptions {
 To ensure your code works with these assumptions:
 
 1. **Test thoroughly**: Run your test suite on minified code
-2. **Use conformance tests**: `cargo coverage` runs test262, Babel, TypeScript tests
-3. **Node.js compatibility**: The minifier is validated against Node.js compatibility tables
+2. **Check idempotency**: `cargo coverage minifier` checks selected test262 and Babel cases
+3. **Check runtime behavior**: `cargo coverage runtime` executes eligible test262 cases with Node.js
 4. **Try real-world code**: Test with your actual application
 5. **Report issues**: If valid code breaks, file an issue
-
-### Node.js Compatibility Testing
-
-The minifier includes comprehensive validation against Node.js compatibility tables to ensure optimizations work correctly across different Node.js versions and environments.
 
 ## When Assumptions Don't Hold
 

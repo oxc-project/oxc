@@ -6,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -79,7 +80,8 @@ impl Rule for PreferAwaitToCallbacks {
                     let callee_property_name = expr
                         .callee
                         .as_member_expression()
-                        .and_then(MemberExpression::static_property_name);
+                        .and_then(MemberExpression::static_property_name)
+                        .and_then(JSStr::as_str);
 
                     if matches!(
                         callee_property_name,

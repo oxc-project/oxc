@@ -9,7 +9,6 @@ use super::PeepholeOptimizations;
 impl<'a> PeepholeOptimizations {
     /// `mangleFor`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9801>
     pub fn minimize_for_statement(for_stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Get the first statement in the loop
         let mut first = &for_stmt.body;
         if let Statement::BlockStatement(block_stmt) = first {
             if let Some(b) = block_stmt.body.first() {

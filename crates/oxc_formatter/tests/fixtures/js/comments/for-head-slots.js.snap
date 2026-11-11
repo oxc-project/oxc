@@ -30,6 +30,16 @@ for (a // c1
 for (a; // t
 b; c) {}
 
+// Right after the `(`, a same-line run ending in a line comment moves to its own line as a whole (the opener exception),
+// and own-line comments sharing a line stay together
+for (// c
+;;) {}
+for (/* a */ // b
+;;) {}
+for (;
+/* a */ // b
+;) {}
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -49,10 +59,10 @@ for (a; ; /* c */) {}
 for (a /* c */; ;);
 for (a; b /* c */;) {}
 for (; /*t*/ b;);
-for ( /*s0*/;;);
+for (/*s0*/;;);
 for (; /*s1*/;) {}
 for (;; /*s2*/);
-for ( /*s0*/; /*s1*/; /*s2*/);
+for (/*s0*/; /*s1*/; /*s2*/);
 for (;;) /* after */ ;
 
 // A line comment around a `;` trails its slot's line and stays there
@@ -66,6 +76,22 @@ for (
   a; // t
   b;
   c
+) {}
+
+// Right after the `(`, a same-line run ending in a line comment moves to its own line as a whole (the opener exception),
+// and own-line comments sharing a line stay together
+for (
+  // c
+  ;;
+) {}
+for (
+  /* a */ // b
+  ;;
+) {}
+for (
+  ;
+  /* a */ // b
+  ;
 ) {}
 
 -------------------
@@ -86,10 +112,10 @@ for (a; ; /* c */) {}
 for (a /* c */; ;);
 for (a; b /* c */;) {}
 for (; /*t*/ b;);
-for ( /*s0*/;;);
+for (/*s0*/;;);
 for (; /*s1*/;) {}
 for (;; /*s2*/);
-for ( /*s0*/; /*s1*/; /*s2*/);
+for (/*s0*/; /*s1*/; /*s2*/);
 for (;;) /* after */ ;
 
 // A line comment around a `;` trails its slot's line and stays there
@@ -103,6 +129,22 @@ for (
   a; // t
   b;
   c
+) {}
+
+// Right after the `(`, a same-line run ending in a line comment moves to its own line as a whole (the opener exception),
+// and own-line comments sharing a line stay together
+for (
+  // c
+  ;;
+) {}
+for (
+  /* a */ // b
+  ;;
+) {}
+for (
+  ;
+  /* a */ // b
+  ;
 ) {}
 
 ===================== End =====================

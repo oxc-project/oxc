@@ -49,6 +49,7 @@ declare_oxc_lint!(
     Default,
     import,
     correctness,
+    recommended,
     version = "0.0.13",
     short_description = "If a default import is requested, this rule will report if there is no default export in the imported module.",
 );

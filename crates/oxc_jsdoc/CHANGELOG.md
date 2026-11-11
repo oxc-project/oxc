@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 6303df1 jsdoc: Preserve param tags after unmatched description delimiters (#28923) (Vishal Punjabi)
+- fd51bff jsdoc: Handle every line terminators as newline (#28902) (leaysgur)
+- 52f3e3d jsdoc: Do not treat `@word` containing `/` as tag (#28834) (leaysgur)
+
+## [0.155.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- a5d8184 jsdoc: Parse code spans after quotes in descriptions (#27955) (leaysgur)
+
 ## [0.152.0] - 2026-09-28
 
 ### 🐛 Bug Fixes

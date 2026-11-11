@@ -214,6 +214,8 @@ export interface OxcSortImportsOptions {
 
 export interface OxcTransformerOptions {
   target?: string
+  /** Overrides the runtime helper import prefix, passed to `TransformOptions.helper_loader.module_name`. */
+  helperModuleName?: string
   useDefineForClassFields: boolean
   experimentalDecorators: boolean
   emitDecoratorMetadata: boolean

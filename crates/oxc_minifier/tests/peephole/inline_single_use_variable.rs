@@ -320,6 +320,17 @@ fn test_inline_past_readonly_variable() {
 }
 
 #[test]
+fn test_inline_into_tag_keeps_this() {
+    test("function f(a) { let c = a?.b; return c`` }", "function f(a) { return (0, a?.b)`` }");
+    test("function f(a) { let c = a[b]; return c`` }", "function f(a) { return (0, a[b])`` }");
+    test(
+        "function f(a, t) { let c = a.b; return t`${c}` }",
+        "function f(a, t) { return t`${a.b}` }",
+    );
+    test("function f(a) { let c = a; return c.b`` }", "function f(a) { return a.b`` }");
+}
+
+#[test]
 fn test_inline_read_before_await_tdz() {
     // https://github.com/rolldown/rolldown/issues/9959
     // Merging `let num = await foo(); bar(v, num)` into `bar(v, await foo())`
@@ -495,6 +506,19 @@ fn keep_exposed_variables() {
 }
 
 #[test]
+fn keep_script_root_var_in_nested_statement() {
+    // A `var` nested in a statement still declares a Script-root binding that
+    // later scripts can read.
+    test_script_same("try { var x = foo(); throw x } catch {}");
+    test_script_same("l: { var x = foo(); if (x) break l; bar() }");
+    // The result does not depend on a function that the same run removes.
+    test_script(
+        "(function (a) {})(1); try { var x = foo(); throw x } catch {}",
+        "try { var x = foo(); throw x } catch {}",
+    );
+}
+
+#[test]
 fn keep_names() {
     test(
         "var x = function() {}; var y = x; console.log(y.name)",
@@ -560,7 +584,7 @@ fn integration() {
         ",
         "
         var bar = foo.bar;
-        (typeof bar != 'object' || !bar) && console.log('foo')
+        typeof bar == 'object' && bar || console.log('foo')
         ",
     );
 }

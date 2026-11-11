@@ -6,17 +6,18 @@ use oxc::{
     CompilerInterface,
     allocator::Allocator,
     ast::{
-        Comment,
-        ast::{Program, RegExpLiteral},
+        AstKind, Comment,
+        ast::{Program, RegExpLiteral, TemplateLiteral},
     },
-    ast_visit::{VisitJs, walk_js},
+    ast_visit::{Visit, walk},
     codegen::{CodegenOptions, CodegenReturn},
     diagnostics::{Diagnostics, OxcDiagnostic},
     minifier::CompressOptions,
     parser::{ParseOptions, ParserReturn},
-    regular_expression::{LiteralParser, Options},
+    regular_expression::{ConstructorParser, LiteralParser, Options},
     semantic::SemanticBuilderReturn,
     span::{ContentEq, SourceType, Span},
+    syntax::node::NodeId,
     transformer::{TransformOptions, TransformerReturn},
 };
 use oxc_tasks_transform_checker::{check_semantic_after_transform, check_semantic_ids};
@@ -81,7 +82,7 @@ impl CompilerInterface for Driver {
         let ParserReturn { program, fatal_error, diagnostics, .. } = parser_return;
         self.fatal_error = *fatal_error;
         self.source_type = Some(program.source_type);
-        self.check_ast_nodes(program);
+        self.check_ast_nodes(program, diagnostics.is_empty() && !*fatal_error);
         if self.check_comments(&program.comments) {
             return ControlFlow::Break(());
         }
@@ -164,8 +165,8 @@ impl Driver {
         false
     }
 
-    fn check_ast_nodes(&mut self, program: &Program<'_>) {
-        CheckASTNodes::new(self, program.source_text).check(program);
+    fn check_ast_nodes(&mut self, program: &Program<'_>, check_template_cooked_values: bool) {
+        CheckASTNodes::new(self, program.source_text, check_template_cooked_values).check(program);
     }
 }
 
@@ -173,11 +174,23 @@ struct CheckASTNodes<'a> {
     driver: &'a mut Driver,
     source_text: &'a str,
     allocator: Allocator,
+    node_ids: FxHashSet<NodeId>,
+    check_template_cooked_values: bool,
 }
 
 impl<'a> CheckASTNodes<'a> {
-    fn new(driver: &'a mut Driver, source_text: &'a str) -> Self {
-        Self { driver, source_text, allocator: Allocator::default() }
+    fn new(
+        driver: &'a mut Driver,
+        source_text: &'a str,
+        check_template_cooked_values: bool,
+    ) -> Self {
+        Self {
+            driver,
+            source_text,
+            allocator: Allocator::default(),
+            node_ids: FxHashSet::default(),
+            check_template_cooked_values,
+        }
     }
 
     fn check(&mut self, program: &Program<'a>) {
@@ -185,7 +198,38 @@ impl<'a> CheckASTNodes<'a> {
     }
 }
 
-impl<'a> VisitJs<'a> for CheckASTNodes<'a> {
+impl<'a> Visit<'a> for CheckASTNodes<'a> {
+    fn visit_template_literal(&mut self, template: &TemplateLiteral<'a>) {
+        walk::walk_template_literal(self, template);
+        if self.check_template_cooked_values
+            && template.expressions.is_empty()
+            && let [quasi] = template.quasis.as_slice()
+            && quasi.value.cooked.is_none()
+        {
+            // Tagged templates can contain NotEscapeSequence, but a standalone
+            // constructor argument needs a string value from an untagged template.
+            let raw = template.span.source_text(self.source_text);
+            assert!(
+                ConstructorParser::new(&self.allocator, raw, None, Options::default())
+                    .parse()
+                    .is_err(),
+                "RegExp constructor accepted a template without a cooked value: {raw:?}"
+            );
+        }
+    }
+
+    fn enter_node(&mut self, kind: AstKind<'a>) {
+        let id = kind.node_id();
+        // These are AST invariants, including for recovered syntax errors.
+        // Reporting them as diagnostics would let negative fixtures hide a failure.
+        assert_eq!(
+            id == NodeId::ROOT,
+            matches!(kind, AstKind::Program(_)),
+            "Only Program may have parser node ID zero: {kind:?}"
+        );
+        assert!(self.node_ids.insert(id), "Duplicate parser node ID: {kind:?}");
+    }
+
     // TODO: This is too slow
     // fn visit_span(&mut self, span: &Span) {
     // let Span { start, end, .. } = span;
@@ -198,7 +242,7 @@ impl<'a> VisitJs<'a> for CheckASTNodes<'a> {
 
     /// Idempotency test for printing regular expressions.
     fn visit_reg_exp_literal(&mut self, literal: &RegExpLiteral<'a>) {
-        walk_js::walk_reg_exp_literal(self, literal);
+        walk::walk_reg_exp_literal(self, literal);
 
         let Some(pattern) = &literal.regex.pattern.pattern else {
             return;

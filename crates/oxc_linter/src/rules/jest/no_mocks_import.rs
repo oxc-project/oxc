@@ -12,6 +12,7 @@ declare_oxc_lint!(
     NoMocksImport,
     jest,
     style,
+    recommended,
     docs = SharedNoMocksImport::DOCUMENTATION,
     version = "0.0.13",
 );
@@ -27,6 +28,9 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // A segment with a lone surrogate is not `__mocks__`.
+        (r"require('./\uD800__mocks__/x')", None),
+        (r"require('./__mocks__\uDC00/x')", None),
         ("import something from 'something'", None),
         ("require('somethingElse')", None),
         ("require('./__mocks__.js')", None),
@@ -40,6 +44,9 @@ fn test() {
     ];
 
     let fail = vec![
+        (r"require('./\uD83D\uDE00/__mocks__')", None),
+        (r"require('./__mocks__/\uD800')", None),
+        (r"require('\uDC00/__mocks__/x')", None),
         ("require('./__mocks__')", None),
         ("require('./__mocks__/')", None),
         ("require('./__mocks__/index')", None),

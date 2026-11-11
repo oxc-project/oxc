@@ -2,7 +2,7 @@
 //! variable definitions, types, and input value definitions.
 
 use oxc_formatter_core::{
-    Buffer, Format,
+    Format,
     builders::{
         block_indent, group, hard_line_break, indent, soft_block_indent, soft_line_break,
         soft_line_break_or_space, space, text,

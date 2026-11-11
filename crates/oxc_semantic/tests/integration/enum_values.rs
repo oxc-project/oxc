@@ -218,15 +218,42 @@ fn merged_enum_cross_declaration_reference() {
 
 #[test]
 fn unary_on_string() {
-    // Babel uses JS coercion: +"s" → "s" (identity), -"s" → NaN, ~"s" → -1
+    // TypeScript leaves unary-on-string initializers unevaluated, so the enum
+    // member keeps its verbatim initializer instead of folding to a wrong value.
     let source = r#"enum A { X = +"hello", Y = -"hello", Z = ~"hello" }"#;
-    debug_assert_eq!(
-        get_enum_member_value(source, "X"),
-        Some(ConstantValue::String("hello".into()))
-    );
-    match get_enum_member_value(source, "Y") {
-        Some(ConstantValue::Number(n)) => assert!(n.is_nan()),
-        other => panic!("Expected Some(Number(NaN)), got {other:?}"),
+    assert_eq!(get_enum_member_value(source, "X"), None);
+    assert_eq!(get_enum_member_value(source, "Y"), None);
+    assert_eq!(get_enum_member_value(source, "Z"), None);
+}
+
+#[test]
+fn unary_on_string_member_reference() {
+    // A unary operation on a member whose value is a string must decline for the
+    // same reason — `+"4"` would otherwise fold to the string "4" (tsc: number 4)
+    // and `-"3"`/`~"4"` to NaN/-1 instead of -3/-5, also breaking the reverse
+    // mapping and any auto-increment member after it.
+    let source = r#"enum A { X = "4", Y = -X, Z = ~X, W = +X }"#;
+    assert_eq!(get_enum_member_value(source, "X"), Some(ConstantValue::String("4".into())));
+    assert_eq!(get_enum_member_value(source, "Y"), None);
+    assert_eq!(get_enum_member_value(source, "Z"), None);
+    assert_eq!(get_enum_member_value(source, "W"), None);
+}
+
+#[test]
+fn surrogate_member_string_kind() {
+    let allocator = Allocator::default();
+    let source = r#"enum E { "\uD800" = "x", B = E["\uD800"], C = "\uD800", D = C }"#;
+    let parsed = Parser::new(&allocator, source, SourceType::ts()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let semantic = SemanticBuilder::new().with_enum_eval(true).build(&parsed.program);
+    assert!(semantic.diagnostics.is_empty());
+    let scoping = semantic.semantic.scoping();
+    let enum_symbol = scoping.symbol_ids().find(|&id| scoping.symbol_name(id) == "E").unwrap();
+    let scope = scoping.get_enum_body_scopes(enum_symbol).unwrap()[0];
+    let oxc_ast::ast::Statement::TSEnumDeclaration(decl) = &parsed.program.body[0] else {
+        panic!()
+    };
+    for member in &decl.body.members {
+        assert!(scoping.is_string_enum_member(scope, member.id.static_name()));
     }
-    debug_assert_eq!(get_enum_member_value(source, "Z"), Some(ConstantValue::Number(-1.0)));
 }

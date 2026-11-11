@@ -518,12 +518,20 @@ function markMapNamed(
   const { sourceText } = state;
   if (start > sourceText.length) return;
 
-  // `oxc_codegen` suppresses consecutive source positions as it records them. Do this before
-  // recovering a name or retaining the mapping, since member-level marks commonly duplicate keys.
+  // `oxc_codegen` suppresses consecutive source positions as it records them. A named child can
+  // still enrich its unnamed parent mapping, but a mapping which already has a name is complete.
   // On the first mapping the read is index -1, which on a typed array is `undefined` - never equal.
   let { mapPositions } = state;
-  const { mapPositionsLen } = state;
-  if (mapPositions[mapPositionsLen - 1] === start) return;
+  const { mapNames, mapPositionsLen } = state;
+  const mappingIndex = mapPositionsLen >> 1;
+  const duplicatePosition = mapPositions[mapPositionsLen - 1] === start;
+  if (duplicatePosition && mapNames[mapNames.length - 2] === mappingIndex - 1) return;
+
+  // If nothing was printed since the last mapping, this mapping replaces it. See `recordMapping`.
+  const replacesLast =
+    !duplicatePosition
+    && mapPositions[mapPositionsLen - 2] === state.spilledOutputLength + state.output.length;
+  if (replacesLast && mapNames[mapNames.length - 2] === mappingIndex - 1) mapNames.length -= 2;
 
   // A mapping carries a name only when the identifier printed differs from the one in the source.
   // When possible, the mapping records the name from source, but if the source range is invalid,
@@ -563,17 +571,21 @@ function markMapNamed(
     // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`.
     // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
     if (originalName === undefined || !isSameToken(originalName, printedName, hashLength)) {
-      state.mapNames.push(
-        mapPositionsLen >> 1,
+      mapNames.push(
+        duplicatePosition || replacesLast ? mappingIndex - 1 : mappingIndex,
         originalName === undefined ? printedName : originalName,
       );
     }
   }
 
-  if (mapPositionsLen === mapPositions.length) mapPositions = state.growMapPositions();
-  mapPositions[mapPositionsLen] = state.spilledOutputLength + state.output.length;
-  mapPositions[mapPositionsLen + 1] = start;
-  state.mapPositionsLen = mapPositionsLen + 2;
+  if (replacesLast) {
+    mapPositions[mapPositionsLen - 1] = start;
+  } else if (!duplicatePosition) {
+    if (mapPositionsLen === mapPositions.length) mapPositions = state.growMapPositions();
+    mapPositions[mapPositionsLen] = state.spilledOutputLength + state.output.length;
+    mapPositions[mapPositionsLen + 1] = start;
+    state.mapPositionsLen = mapPositionsLen + 2;
+  }
 }
 
 /**
@@ -607,25 +619,41 @@ function hasMappableSpan(start: number, end: number): boolean {
  */
 function recordMapping(state: State, sourceOffset: number): void {
   debugAssert(
-    state.mapPositions !== null && state.sourceText !== null,
-    "`mapPositions` and `sourceText` should be defined when source maps are enabled",
+    state.mapPositions !== null && state.mapNames !== null && state.sourceText !== null,
+    "`mapPositions`, `mapNames` and `sourceText` should be defined when source maps are enabled",
   );
 
   if (sourceOffset > state.sourceText.length) return;
 
   // On the first mapping the read is index -1, which on a typed array is `undefined` - never equal
   let { mapPositions } = state;
-  const { mapPositionsLen } = state;
+  const { mapNames, mapPositionsLen } = state;
   if (mapPositions[mapPositionsLen - 1] === sourceOffset) return;
 
+  // `oxc_codegen` keeps one mapping per generated position. If nothing was printed since the last
+  // mapping, the last mapping is for an outer node whose start is not printed (for example
+  // a removed `public` modifier or a removed `(`). Source map consumers use the first mapping
+  // at a generated position, so replace the last mapping with this one.
+  // On the first mapping the read is index -2, which is `undefined` too.
+  const outputOffset = state.spilledOutputLength + state.output.length;
+  if (mapPositions[mapPositionsLen - 2] === outputOffset) {
+    mapPositions[mapPositionsLen - 1] = sourceOffset;
+    if (mapNames[mapNames.length - 2] === (mapPositionsLen >> 1) - 1) mapNames.length -= 2;
+    return;
+  }
+
   if (mapPositionsLen === mapPositions.length) mapPositions = state.growMapPositions();
-  mapPositions[mapPositionsLen] = state.spilledOutputLength + state.output.length;
+  mapPositions[mapPositionsLen] = outputOffset;
   mapPositions[mapPositionsLen + 1] = sourceOffset;
   state.mapPositionsLen = mapPositionsLen + 2;
 }
 
 /**
  * Is `originalName` the same token as `printedName`, taking into account leading `#` if `hashLength === 1`.
+ *
+ * @param originalName - Name in the source
+ * @param printedName - Name as printed
+ * @param hashLength - `1` if `originalName` has a leading `#` which `printedName` doesn't, otherwise `0`
  */
 function isSameToken(originalName: string, printedName: string, hashLength: 0 | 1): boolean {
   if (hashLength === 0) return originalName === printedName;

@@ -4,6 +4,130 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.78.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 449e91f oxfmt: Format ts-in-astro as TSX (#29080) (leaysgur)
+- fd51bff jsdoc: Handle every line terminators as newline (#28902) (leaysgur)
+- 2f80765 formatter_toml: Format whitespace-only document to empty (#28899) (leaysgur)
+- 5e1e02c formatter_graphql: Allow empty document (#28898) (leaysgur)
+- 06e72c0 formatter/tailwind: Normalize CR in Tailwind template with `preserveWhitespace` (#28896) (leaysgur)
+
+### ⚡ Performance
+
+- 934ca98 formatter: Use `Arc` for tailwind options across embedding (#29079) (leaysgur)
+- dde9c5c formatter_htmlish: Skip `</script` escape if possible (#29078) (leaysgur)
+- dc4d918 formatter: Format embedded expr of one name without parsing (#29077) (leaysgur)
+
+## [0.77.0] - 2026-11-06
+
+### 💥 BREAKING CHANGES
+
+- 00d1a67 oxfmt: [**BREAKING**] Format `parser:vue` files by `oxc_formatter_htmlish` (#28848) (leaysgur)
+
+### 🚀 Features
+
+- 119d82f formatter: Format a template's expressions and handlers as `JsRoot` (#28846) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- fa66fde oxlint,oxfmt: Resolve Vite+ config root from the config file directory (#28801) (MK (fengmk2))
+- 4d4104d formatter_htmlish: Preserve `doctype` case in embedded (#28797) (leaysgur)
+- ebfd40a formatter: Sort Tailwind calls printed as member chains (#28800) (Yuji Sugiura)
+- e62e5cb formatter: Decide quotes of a Tailwind key printed as one class (#28798) (Yuji Sugiura)
+- 959edc1 formatter: Don't sort templates in nested non-Tailwind calls (#28794) (Yuji Sugiura)
+- 94fbef5 formatter_css: Treat comments in `style` attr as fill items (#28832) (leaysgur)
+- 255c5cc formatter: Measure Tailwind class argument after collapsing whitespace (#28745) (Lee Jaeha / Adam)
+- e6c4fef formatter: Decide template and object key layouts from collapsed Tailwind classes (#28791) (Yuji Sugiura)
+- 0b44164 formatter: Decide JSX opening element layout from collapsed Tailwind class string (#28744) (Lee Jaeha / Adam)
+
+### ⚡ Performance
+
+- 2766d07 oxfmt: Spawn Prettier workers on demand (#28789) (YT)
+- 07627f7 oxfmt: Use worker_threads for tinypool again (#28787) (Yuji Sugiura)
+
+## [0.76.0] - 2026-11-02
+
+### 💥 BREAKING CHANGES
+
+- 296623d oxfmt: [**BREAKING**] Format `parser:html` files by `oxc_formatter_htmlish` (#28273) (Yuji Sugiura)
+
+### 🚀 Features
+
+- 336b2c1 oxfmt: Support html-in-js templates closing a dynamic tag name (#28389) (Yuji Sugiura)
+- 36e5ddb oxfmt: Add debug span for reading files (#28204) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- fef809a formatter_htmlish: Handle XHTML (#28703) (leaysgur)
+- fb3aefa formatter: Keep source parens around html-in-js placeholders past comments (#28381) (Yuji Sugiura)
+- e738dae formatter: Quote keys added in an HTML event handler with single quotes (#28380) (Yuji Sugiura)
+- 2e7a629 oxfmt: Format HTML in a `<script>` body as an embedded part (#28379) (Yuji Sugiura)
+
+### 📚 Documentation
+
+- a82ce83 oxfmt: Update unclassified divergence (#28685) (Yuji Sugiura)
+- 01ed68a oxfmt,formatter_htmlish,formatter: Clean up behavior comments (#28384) (Yuji Sugiura)
+
+## [0.75.0] - 2026-10-27
+
+### ⚡ Performance
+
+- 7948f0b formatter_core: Shrink `FormatElement` to 16B (#28012) (leaysgur)
+
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 529b057 formatter_core: Keep front matter verbatim when body starts with indented delimiter (#27946) (leaysgur)
+- a64677e formatter: Print JSDoc embedded snippets with LF (#27821) (leaysgur)
+- 2c1cc20 formatter: Keep comment only Vue bindings as-is (#27820) (leaysgur)
+- 5605362 oxfmt: Validate editorconfig as like oxfmtrc (#27778) (leaysgur)
+- 5b2acb0 formatter_core: Report error position releative to CRLF source (#27777) (leaysgur)
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+- 3a980c9 formatter_toml: Handle BOM like other languages (#27775) (leaysgur)
+- 97c9fc4 oxfmt: Handle BOM in config JSON (#27774) (leaysgur)
+- 28eb4a7 oxfmt: Print trailing newline for `--list-different` (#27773) (leaysgur)
+
+### 📚 Documentation
+
+- 1325225 oxfmt: Update useless comment prefix (#27956) (leaysgur)
+- 8a3a6c8 oxfmt: Update stale notes on the JSDoc string-out channel and fixture origins (#27824) (leaysgur)
+
+## [0.73.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- 1ef2888 oxfmt: [**BREAKING**] Improve `--migrate prettier` (#27444) (leaysgur)
+- c2e6d5f formatter_toml: [**BREAKING**] Add `oxc_formatter_toml` crate wrapping `oxc-toml` (#27365) (leaysgur)
+
+### 🚀 Features
+
+- ce4e8dc oxfmt: Support `overrides[].parser` -> `associations[].language` migration (#27475) (leaysgur)
+- a495e82 oxfmt: Support `associations` config to specify language over filepath (#27437) (leaysgur)
+- 77f8156 oxfmt/lsp: Show root config errors to LSP client (#26014) (Sysix)
+- c1adce3 oxfmt/lsp: Support astro language (#27388) (leaysgur)
+- 4f024a1 oxfmt: Support astro plugin in `--migrate prettier` (#27387) (leaysgur)
+- 5db28fa oxfmt: Support Astro via `prettier-plugin-astro@1.x` (#27386) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 76ec31b formatter_css: Support css-in-js placeholders in property names and conditions (#27640) (leaysgur)
+- 99bb268 formatter_css: Keep css-in-js placeholder as media type (#27639) (leaysgur)
+- 372849e formatter: Fix crash on css-in-js comment containing interpolation (#27638) (leaysgur)
+- b6eb914 oxfmt: Normalize symlink targets in CLI snapshots (#27498) (camc314)
+- 5dae56f oxfmt/lsp: Return error on config resolving error (#26003) (Sysix)
+- 2349a31 oxfmt: Follow symlinked configs in discovery (#27389) (leaysgur)
+- db360de oxfmt: Load svelte plugin for svelte-in-mdx-in-md (#27369) (leaysgur)
+- 6e573f9 oxlint,oxfmt: Set stderr blocking (#27363) (leaysgur)
+- d730fdd formatter_core: Leave blank frontmatter without dispatcher (#27359) (leaysgur)
+
+### 📚 Documentation
+
+- 408d87f oxfmt: Simplify oxfmtrc docs (#27432) (leaysgur)
+- 902e188 oxfmt: Update how `embeddedLanguageFormatting` option works (#27362) (leaysgur)
+
 ## [0.72.0] - 2026-10-05
 
 ### 💥 BREAKING CHANGES

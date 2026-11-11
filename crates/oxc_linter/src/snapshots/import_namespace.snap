@@ -8,6 +8,12 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                             ─
    ╰────
 
+  ⚠ import(namespace): "\ud800" not found in imported namespace "./named-exports".
+   ╭─[index.js:1:61]
+ 1 │ import * as names from './named-exports'; console.log(names['\uD800']);
+   ·                                                             ────────
+   ╰────
+
   ⚠ import(namespace): Unable to validate computed reference to imported namespace "names".
    ╭─[index.js:1:55]
  1 │ import * as names from './named-exports'; console.log(names['a']);
@@ -57,6 +63,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[index.js:1:51]
  1 │ import * as names from "./named-exports"; const { c: { d } } = names
    ·                                                   ─
+   ╰────
+
+  ⚠ import(namespace): "\ud800" not found in imported namespace "./named-exports".
+   ╭─[index.js:1:51]
+ 1 │ import * as names from "./named-exports"; const { "\uD800": d } = names
+   ·                                                   ────────
    ╰────
 
   ⚠ import(namespace): "c" not found in imported namespace "./named-exports".

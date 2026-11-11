@@ -58,6 +58,7 @@ declare_oxc_lint!(
     PreferClasslistToggle,
     unicorn,
     style,
+    recommended,
     fix,
     version = "1.20.0",
     short_description = "Prefers the use of `element.classList.toggle(className, condition)` over conditional add/remove patterns.",
@@ -314,7 +315,7 @@ fn is_classlist_access(expr: &Expression) -> bool {
         }
         Expression::ChainExpression(chain) => {
             if let Some(member_expr) = chain.expression.as_member_expression() {
-                member_expr.static_property_name() == Some("classList")
+                member_expr.static_property_name().is_some_and(|name| name == "classList")
             } else {
                 false
             }

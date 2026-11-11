@@ -482,3 +482,66 @@ source: crates/oxc_linter/src/tester.rs
  8 │                 }
    ╰────
   help: Variable 'build' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
+
+  ⚠ eslint(block-scoped-var): 'x' is used outside of binding context.
+   ╭─[block_scoped_var.mjs:1:20]
+ 1 │ function f() { var x = 0; { var x; } }
+   ·                    ┬            ┬
+   ·                    │            ╰── 'x' is first declared here
+   ·                    ╰── it is redeclared here
+   ╰────
+  help: Variable 'x' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
+
+  ⚠ eslint(block-scoped-var): 'y' is used outside of binding context.
+   ╭─[block_scoped_var.mjs:1:15]
+ 1 │ function f(a, y = 0) { if (a) { var y; } }
+   ·               ┬                     ┬
+   ·               │                     ╰── 'y' is first declared here
+   ·               ╰── it is redeclared here
+   ╰────
+  help: Variable 'y' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
+
+  ⚠ eslint(block-scoped-var): 'y' is used outside of binding context.
+   ╭─[block_scoped_var.mjs:1:16]
+ 1 │ function f({x, y = 1}) { { var y; } }
+   ·                ┬               ┬
+   ·                │               ╰── 'y' is first declared here
+   ·                ╰── it is redeclared here
+   ╰────
+  help: Variable 'y' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
+
+  ⚠ eslint(block-scoped-var): 'x' is used outside of binding context.
+   ╭─[block_scoped_var.mjs:1:16]
+ 1 │ function f(...[x = 1]) { { var x; } }
+   ·                ┬               ┬
+   ·                │               ╰── 'x' is first declared here
+   ·                ╰── it is redeclared here
+   ╰────
+  help: Variable 'x' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
+
+  ⚠ eslint(block-scoped-var): 'x' is used outside of binding context.
+   ╭─[block_scoped_var.mjs:1:25]
+ 1 │ function f() { for (var x in {}) {} { var x; } }
+   ·                         ┬                 ┬
+   ·                         │                 ╰── 'x' is first declared here
+   ·                         ╰── it is redeclared here
+   ╰────
+  help: Variable 'x' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
+
+  ⚠ eslint(block-scoped-var): 'x' is used outside of binding context.
+   ╭─[block_scoped_var.mjs:1:25]
+ 1 │ function f() { for (var x of []) {} { var x; } }
+   ·                         ┬                 ┬
+   ·                         │                 ╰── 'x' is first declared here
+   ·                         ╰── it is redeclared here
+   ╰────
+  help: Variable 'x' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
+
+  ⚠ eslint(block-scoped-var): 'x' is used outside of binding context.
+   ╭─[block_scoped_var.mjs:1:21]
+ 1 │ function f() { var {x} = {}; { var x; } }
+   ·                     ┬              ┬
+   ·                     │              ╰── 'x' is first declared here
+   ·                     ╰── it is redeclared here
+   ╰────
+  help: Variable 'x' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.

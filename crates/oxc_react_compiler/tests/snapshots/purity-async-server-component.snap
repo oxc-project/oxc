@@ -1,0 +1,68 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/purity-async-server-component.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot call impure function during render", labels: [LabeledSpan { label: Some("Cannot call impure function"), span: Span { start: 1460, end: 1470 }, primary: true }], help: Some("`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Purity") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/purity") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot call impure function during render", labels: [LabeledSpan { label: Some("Cannot call impure function"), span: Span { start: 1521, end: 1534 }, primary: true }], help: Some("`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Purity") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/purity") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot call impure function during render", labels: [LabeledSpan { label: Some("Cannot call impure function"), span: Span { start: 1727, end: 1737 }, primary: true }], help: Some("`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Purity") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/purity") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot call impure function during render", labels: [LabeledSpan { label: Some("Cannot call impure function"), span: Span { start: 1854, end: 1864 }, primary: true }], help: Some("`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Purity") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/purity") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot call impure function during render", labels: [LabeledSpan { label: Some("Cannot call impure function"), span: Span { start: 1924, end: 1934 }, primary: true }], help: Some("`Date` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Purity") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/purity") } }
+
+// @validateNoImpureFunctionsInRender @outputMode:"lint" @compilationMode:"infer" @panicThreshold:"none"
+// Async function components are Server Components: they render once per request and never
+// re-render, so impure calls are not reported in them or in their nested callbacks.
+export default async function Posts() {
+	const posts = await getPosts();
+	return posts.map((p) => <p key={p.id}>{Date.now() - p.createdAt < 864e5 ? "new" : ""}</p>);
+}
+async function AsyncDeclaration() {
+	const date = Date.now();
+	const now = new Date();
+	const rand = Math.random();
+	return <Foo date={date} now={now} rand={rand} />;
+}
+const AsyncArrow = async () => {
+	return <p>{Date.now()}</p>;
+};
+const AsyncFunctionExpression = async function() {
+	return <p>{new Date().getTime()}</p>;
+};
+async function AsyncMapCallback({ posts }) {
+	return <ul>
+      {posts.map((p) => <li key={p.id}>{Date.now() - p.createdAt}</li>)}
+    </ul>;
+}
+async function AsyncHelperCallback({ posts }) {
+	const label = (post) => Date.now() - post.createdAt < 864e5 ? "new" : "";
+	return <ul>
+      {posts.map((p) => <li key={p.id}>{label(p)}</li>)}
+    </ul>;
+}
+async function AsyncNestedComponent() {
+	function Badge() {
+		return <span>{Date.now()}</span>;
+	}
+	return <Badge />;
+}
+// Non-async components are still reported, including after an async component.
+function ClientAfterServer() {
+	return <p>{Date.now()}</p>;
+}
+const ClientArrow = () => {
+	return <p>{Math.random()}</p>;
+};
+// Nested callbacks of a non-async component still run on every render.
+function ClientMapCallback({ posts }) {
+	return <ul>
+      {posts.map((p) => <li key={p.id}>{Date.now()}</li>)}
+    </ul>;
+}
+// Hooks stay checked, including async hooks.
+function useNow() {
+	return <span>{Date.now()}</span>;
+}
+async function useAsyncNow() {
+	return <span>{new Date().getTime()}</span>;
+}

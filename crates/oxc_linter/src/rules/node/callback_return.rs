@@ -163,7 +163,7 @@ impl Rule for CallbackReturn {
 
         if let Some(last_item) = block_body.last() {
             if is_callback_expression(call_expr, last_item)
-                && is_function_like(&ctx.nodes().parent_node(closest_block.id()).kind())
+                && ctx.nodes().parent_node(closest_block.id()).kind().is_function_like()
             {
                 return;
             }
@@ -230,11 +230,7 @@ fn find_closest_function_parent<'a, 'b>(
     ast_node: &AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b AstNode<'a>> {
-    ctx.nodes().ancestors(ast_node.id()).find(|parent| is_function_like(&parent.kind()))
-}
-
-fn is_function_like(kind: &AstKind) -> bool {
-    matches!(kind, AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
+    ctx.nodes().ancestors(ast_node.id()).find(|parent| parent.kind().is_function_like())
 }
 
 fn is_callback_expression(call_expr: &CallExpression, parent_node: &Statement) -> bool {

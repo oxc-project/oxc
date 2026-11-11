@@ -3,7 +3,7 @@ use std::{borrow::Cow, cmp::Ordering};
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, VariableDeclarator},
+    ast::{BindingIdentifier, BindingPattern, Expression, VariableDeclarator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -79,53 +79,39 @@ impl Rule for SortVars {
             return;
         }
 
-        let mut previous: Option<&VariableDeclarator> = None;
-        for current in var_decl
-            .declarations
-            .iter()
-            .filter(|decl| matches!(decl.id, BindingPattern::BindingIdentifier(_)))
-        {
-            if let Some(previous) = previous {
-                self.check_declaration_sort_with_fix(
-                    previous,
-                    current,
-                    &var_decl.declarations,
-                    ctx,
-                );
+        let mut maximum: Option<&BindingIdentifier> = None;
+        let mut checked_until = 0;
+        for (current_index, current) in var_decl.declarations.iter().enumerate() {
+            let Some(identifier) = current.id.get_binding_identifier() else {
+                continue;
+            };
+            if let Some(maximum) = maximum
+                && self.get_sortable_name(maximum).cmp(&self.get_sortable_name(identifier))
+                    == Ordering::Greater
+            {
+                let diagnostic = sort_vars_diagnostic(current.span);
+                if current.span.start >= checked_until
+                    && let Some((span, replacement)) = self.build_declarations_fix(
+                        current_index,
+                        &var_decl.declarations,
+                        ctx,
+                        &mut checked_until,
+                    )
+                {
+                    ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.replace(span, replacement));
+                } else {
+                    ctx.diagnostic(diagnostic);
+                }
+                continue;
             }
 
-            previous = Some(current);
+            maximum = Some(identifier);
         }
     }
 }
 
 impl SortVars {
-    fn check_declaration_sort_with_fix<'a>(
-        &self,
-        previous: &VariableDeclarator<'a>,
-        current: &VariableDeclarator<'a>,
-        declarations: &'a [VariableDeclarator<'a>],
-        ctx: &LintContext<'a>,
-    ) {
-        if self.get_sortable_name(previous).cmp(&self.get_sortable_name(current))
-            != Ordering::Greater
-        {
-            return;
-        }
-
-        let diagnostic = sort_vars_diagnostic(current.span);
-        if let Some((span, replacement)) = self.build_declarations_fix(current, declarations, ctx) {
-            ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.replace(span, replacement));
-        } else {
-            ctx.diagnostic(diagnostic);
-        }
-    }
-
-    fn get_sortable_name<'a>(&self, decl: &VariableDeclarator<'a>) -> Cow<'a, str> {
-        let BindingPattern::BindingIdentifier(ident) = &decl.id else {
-            unreachable!();
-        };
-
+    fn get_sortable_name<'a>(&self, ident: &BindingIdentifier<'a>) -> Cow<'a, str> {
         if self.ignore_case {
             return ident.name.as_str().cow_to_ascii_lowercase();
         }
@@ -135,17 +121,16 @@ impl SortVars {
 
     fn build_declarations_fix<'a>(
         &self,
-        current: &VariableDeclarator<'a>,
+        current_index: usize,
         declarations: &'a [VariableDeclarator<'a>],
         ctx: &LintContext<'a>,
+        checked_until: &mut u32,
     ) -> Option<(Span, String)> {
         // Only reorder a contiguous safe run:
         // `var {} = obj, b, a` can fix `b, a`, but must not move the destructuring.
-        if !is_fixable_declarator(current) {
+        if !is_fixable_declarator(&declarations[current_index]) {
             return None;
         }
-
-        let current_index = declarations.iter().position(|decl| std::ptr::eq(decl, current))?;
 
         let mut start_index = current_index;
         while start_index > 0 && is_fixable_declarator(&declarations[start_index - 1]) {
@@ -156,6 +141,7 @@ impl SortVars {
         while declarations.get(end_index + 1).is_some_and(is_fixable_declarator) {
             end_index += 1;
         }
+        *checked_until = declarations[end_index].span.end;
 
         if start_index == end_index {
             return None;
@@ -176,12 +162,17 @@ impl SortVars {
             .collect();
         paddings.push("");
 
-        let mut sorted_declarations: Vec<_> = declarations.iter().collect();
-        sorted_declarations
-            .sort_unstable_by(|a, b| self.get_sortable_name(a).cmp(&self.get_sortable_name(b)));
+        let mut sorted_declarations = Vec::with_capacity(declarations.len());
+        for declaration in declarations {
+            let identifier = declaration.id.get_binding_identifier()?;
+            sorted_declarations.push((declaration, identifier));
+        }
+        sorted_declarations.sort_unstable_by(|(_, a), (_, b)| {
+            self.get_sortable_name(a).cmp(&self.get_sortable_name(b))
+        });
 
         let mut replacement = String::new();
-        for (declaration, padding) in sorted_declarations.into_iter().zip(paddings) {
+        for ((declaration, _), padding) in sorted_declarations.into_iter().zip(paddings) {
             replacement.push_str(ctx.source_range(declaration.span));
             replacement.push_str(padding);
         }
@@ -299,6 +290,9 @@ fn test() {
         ("var b = f(), c, d, a;", None),
         ("var b = `${f()}`, c, d, a;", None), // { "ecmaVersion": 6 },
         ("var c, a = b = 0", None),
+        ("var c, a, b;", None),
+        ("var C, a, b;", Some(serde_json::json!([{ "ignoreCase": true }]))),
+        ("var c, a, e, d;", None),
     ];
 
     let fix = vec![
@@ -327,6 +321,10 @@ fn test() {
         ("var {} = 1, b, a", "var {} = 1, a, b", Some(serde_json::json!([{ "ignoreCase": true }]))),
         ("var b = f(), c, d, a;", "var b = f(), a, c, d;", None),
         ("var b, /* comment */ a", "var b, /* comment */ a", None),
+        ("var c, a, b;", "var a, b, c;", None),
+        ("var C, a, b;", "var a, b, C;", Some(serde_json::json!([{ "ignoreCase": true }]))),
+        ("var f, d, e, {} = obj, c, a, b;", "var d, e, f, {} = obj, a, b, c;", None),
+        ("var c, /* comment */ a, b;", "var c, /* comment */ a, b;", None),
     ];
 
     Tester::new(SortVars::NAME, SortVars::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

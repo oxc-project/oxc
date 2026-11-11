@@ -51,7 +51,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         in_jsx_child: bool,
     ) -> ArenaBox<'a, JSXFragment<'a>> {
-        self.expect_jsx_child(Kind::RAngle);
+        debug_assert!(self.at(Kind::RAngle));
+        self.advance_for_jsx_child();
         let opening_fragment = JSXOpeningFragment::new(self.end_span(start), self);
         let (children, closing) = self.parse_jsx_children_and_closing(in_jsx_child);
         let closing_fragment = match closing {
@@ -251,81 +252,63 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         in_jsx_child: bool,
     ) -> (ArenaVec<'a, JSXChild<'a>>, JSXClosing<'a>) {
-        let mut children = ArenaVec::new_in(self);
-        let closing = self.parse_jsx_children_and_closing_into(&mut children, in_jsx_child);
-        (children, closing)
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn parse_jsx_children_and_closing_into(
-        &mut self,
-        children: &mut ArenaVec<'a, JSXChild<'a>>,
-        in_jsx_child: bool,
-    ) -> JSXClosing<'a> {
-        loop {
-            if self.fatal_error.is_some() {
+        let mut closing = None;
+        let children = self.collect_list(|p| {
+            if p.fatal_error.is_some() {
                 // Return dummy closing fragment on fatal error
-                let closing = JSXClosingFragment::new(self.cur_token().span(), self);
-                return JSXClosing::Fragment(closing);
+                let fragment = JSXClosingFragment::new(p.cur_token().span(), p);
+                closing = Some(JSXClosing::Fragment(fragment));
+                return None;
             }
 
-            match self.cur_kind() {
+            let child = match p.cur_kind() {
                 Kind::LAngle => {
-                    let start = self.cur_start();
-                    self.bump_any(); // bump `<`
-                    let kind = self.cur_kind();
+                    let start = p.cur_start();
+                    p.bump_any(); // bump `<`
+                    let kind = p.cur_kind();
 
                     // <> open nested fragment
                     if kind == Kind::RAngle {
-                        let child = JSXChild::Fragment(self.parse_jsx_fragment(start, true));
-                        children.push(child);
-                        continue;
+                        JSXChild::Fragment(p.parse_jsx_fragment(start, true))
+                    } else if kind == Kind::Ident || kind.is_any_keyword() {
+                        // <ident open nested element
+                        JSXChild::Element(p.parse_jsx_element(start, true))
+                    } else if kind == Kind::Slash {
+                        // </ closing tag - parse it inline and return
+                        p.bump_any(); // bump `/`
+                        closing = Some(p.parse_jsx_closing_inline(start, in_jsx_child));
+                        return None;
+                    } else {
+                        // Unexpected token after `<`
+                        closing = Some(p.unexpected());
+                        return None;
                     }
-
-                    // <ident open nested element
-                    if kind == Kind::Ident || kind.is_any_keyword() {
-                        let child = JSXChild::Element(self.parse_jsx_element(start, true));
-                        children.push(child);
-                        continue;
-                    }
-
-                    // </ closing tag - parse it inline and return
-                    if kind == Kind::Slash {
-                        self.bump_any(); // bump `/`
-                        return self.parse_jsx_closing_inline(start, in_jsx_child);
-                    }
-
-                    // Unexpected token after `<`
-                    return self.unexpected();
                 }
                 Kind::LCurly => {
-                    let start = self.cur_start();
-                    self.bump_any(); // bump `{`
+                    let start = p.cur_start();
+                    p.bump_any(); // bump `{`
 
                     // {...expr}
-                    if self.eat(Kind::Dot3) {
-                        let child = JSXChild::Spread(self.parse_jsx_spread_child(start));
-                        children.push(child);
-                        continue;
+                    if p.eat(Kind::Dot3) {
+                        JSXChild::Spread(p.parse_jsx_spread_child(start))
+                    } else {
+                        // {expr}
+                        JSXChild::ExpressionContainer(
+                            p.parse_jsx_expression_container(start, /* in_jsx_child */ true),
+                        )
                     }
-                    // {expr}
-                    let child = JSXChild::ExpressionContainer(
-                        self.parse_jsx_expression_container(start, /* in_jsx_child */ true),
-                    );
-                    children.push(child);
                 }
                 // text
-                Kind::JSXText => {
-                    let child = JSXChild::Text(self.parse_jsx_text());
-                    children.push(child);
-                }
+                Kind::JSXText => JSXChild::Text(p.parse_jsx_text()),
                 _ => {
                     // Unexpected token in JSX children
-                    return self.unexpected();
+                    closing = Some(p.unexpected());
+                    return None;
                 }
-            }
-        }
+            };
+            Some(child)
+        });
+        (children, closing.unwrap())
     }
 
     /// Parses the closing element or fragment after `</` has been consumed.
@@ -337,9 +320,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.at(Kind::RAngle) {
             // Closing fragment: </>
             if in_jsx_child {
-                self.expect_jsx_child(Kind::RAngle);
+                self.advance_for_jsx_child();
             } else {
-                self.expect(Kind::RAngle);
+                self.advance(Kind::RAngle);
             }
             JSXClosing::Fragment(JSXClosingFragment::new(self.end_span(open_angle_start), self))
         } else {
@@ -366,9 +349,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaBox<'a, JSXExpressionContainer<'a>> {
         let expr = if self.at(Kind::RCurly) {
             if in_jsx_child {
-                self.expect_jsx_child(Kind::RCurly);
+                self.advance_for_jsx_child();
             } else {
-                self.expect(Kind::RCurly);
+                self.advance(Kind::RCurly);
             }
             let span = self.end_span(start);
 
@@ -414,23 +397,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///   `JSXSpreadAttribute` `JSXAttributes_opt`
     ///   `JSXAttribute` `JSXAttributes_opt`
     fn parse_jsx_attributes(&mut self) -> ArenaVec<'a, JSXAttributeItem<'a>> {
-        let mut attributes = ArenaVec::new_in(self);
-        loop {
-            let kind = self.cur_kind();
-            if matches!(kind, Kind::LAngle | Kind::RAngle | Kind::Slash)
-                || self.fatal_error.is_some()
+        self.collect_list(|p| {
+            let kind = p.cur_kind();
+            if matches!(kind, Kind::LAngle | Kind::RAngle | Kind::Slash) || p.fatal_error.is_some()
             {
-                break;
+                return None;
             }
             let attribute = match kind {
-                Kind::LCurly => {
-                    JSXAttributeItem::SpreadAttribute(self.parse_jsx_spread_attribute())
-                }
-                _ => JSXAttributeItem::Attribute(self.parse_jsx_attribute()),
+                Kind::LCurly => JSXAttributeItem::SpreadAttribute(p.parse_jsx_spread_attribute()),
+                _ => JSXAttributeItem::Attribute(p.parse_jsx_attribute()),
             };
-            attributes.push(attribute);
-        }
-        attributes
+            Some(attribute)
+        })
     }
 
     /// `JSXAttribute` :
@@ -481,7 +459,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_jsx_attribute_value(&mut self) -> JSXAttributeValue<'a> {
         match self.cur_kind() {
             Kind::Str => {
-                let str_lit = self.parse_literal_string();
+                let str_lit = self.parse_known_literal_string();
                 JSXAttributeValue::StringLiteral(self.alloc(str_lit))
             }
             Kind::LCurly => {

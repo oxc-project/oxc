@@ -1,7 +1,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -13,8 +13,13 @@ use crate::{
     utils::PROMISE_STATIC_METHODS,
 };
 
-fn spec_only(prop_name: &str, member_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Avoid using non-standard `Promise.{prop_name}` method."))
+fn spec_only(prop_name: JSStr, member_span: Span) -> OxcDiagnostic {
+    // A name with lone surrogates is shown in escaped computed form.
+    let member = match prop_name.as_str() {
+        Some(name) => format!("Promise.{name}"),
+        None => format!("Promise[{prop_name:?}]"),
+    };
+    OxcDiagnostic::warn(format!("Avoid using non-standard `{member}` method."))
         .with_label(member_span)
 }
 
@@ -78,17 +83,20 @@ impl Rule for SpecOnly {
             return;
         }
 
-        let Some(prop_name) = member_expr.static_property_name().map(|s| s.as_str()) else {
+        let Some(prop_name) = member_expr.static_property_name() else {
             return;
         };
-        if PROMISE_STATIC_METHODS.contains(&prop_name) {
-            return;
-        }
+        // A name with lone surrogates is never a spec method and is not matched against config.
+        if let Some(name) = prop_name.as_str() {
+            if PROMISE_STATIC_METHODS.contains(&name) {
+                return;
+            }
 
-        if let Some(allowed_methods) = &self.allowed_methods
-            && allowed_methods.contains(prop_name)
-        {
-            return;
+            if let Some(allowed_methods) = &self.allowed_methods
+                && allowed_methods.contains(name)
+            {
+                return;
+            }
         }
 
         ctx.diagnostic(spec_only(prop_name, member_expr.span()));
@@ -147,6 +155,7 @@ fn test() {
             "Promise.differingCase()",
             Some(serde_json::json!([{ "allowedMethods": ["differingcase"] }])),
         ),
+        (r#"Promise["\uD800"]()"#, None),
     ];
 
     Tester::new(SpecOnly::NAME, SpecOnly::PLUGIN, pass, fail).test_and_snapshot();

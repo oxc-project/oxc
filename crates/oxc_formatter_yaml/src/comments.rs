@@ -1,5 +1,5 @@
 use oxc_formatter_core::{
-    Buffer, Format, SourceText, SpanCursor,
+    Format, SourceText, SpanCursor,
     builders::{
         align, empty_line, expand_parent, hard_line_break, line_suffix, maybe_space, space, text,
     },

@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<!-- prettier-ignore-attribute -->
+<div   class="a   b"
+   title="x
+  y"   id="z"></div>
+<!-- prettier-ignore-attribute class -->
+<div   class="a   b"   CLASS="a  b" title="x"></div>
+<!-- oxfmt-ignore-attribute -->
+<div   class="a   b"></div>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<!-- prettier-ignore-attribute -->
+<div
+  class="a   b"
+  title="x
+  y"
+  id="z"
+></div>
+<!-- prettier-ignore-attribute class -->
+<div class="a   b" CLASS="a  b" title="x"></div>
+<!-- oxfmt-ignore-attribute -->
+<div class="a   b"></div>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<!-- prettier-ignore-attribute -->
+<div
+  class="a   b"
+  title="x
+  y"
+  id="z"
+></div>
+<!-- prettier-ignore-attribute class -->
+<div class="a   b" CLASS="a  b" title="x"></div>
+<!-- oxfmt-ignore-attribute -->
+<div class="a   b"></div>
+
+===================== End =====================

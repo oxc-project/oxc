@@ -157,6 +157,7 @@ declare_oxc_lint!(
     AltText,
     jsx_a11y,
     correctness,
+    recommended,
     config = AltTextConfigSchema,
     version = "0.0.16",
     short_description = "Enforce that all elements that require alternative text have meaningful information to relay back to the end user.",
