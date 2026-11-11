@@ -27,8 +27,6 @@ impl Rule for NoTestReturnStatement {
 fn test() {
     use crate::tester::Tester;
 
-    // Note: Both Jest and Vitest share the same unit tests
-
     let pass = vec![
         ("it('noop', () => {});", None),
         ("test('noop', () => {});", None),
@@ -82,6 +80,11 @@ fn test() {
                     }
                 });
             ",
+            None,
+        ),
+        (
+            r"const test = (name, callback) => callback();
+            test('foo', () => { return expect(1).toBe(1); });",
             None,
         ),
     ];
@@ -150,6 +153,19 @@ fn test() {
                     return expect(1).toBe(1);
                 }
             ",
+            None,
+        ),
+        (
+            r"import { test as customTest } from '@jest/globals';
+            customTest('foo', () => { return expect(1).toBe(1); });",
+            None,
+        ),
+        (
+            r"import { it as customTest } from '@jest/globals';
+            function callback() {
+                return expect(1).toBe(1);
+            }
+            customTest('foo', callback);",
             None,
         ),
     ];
