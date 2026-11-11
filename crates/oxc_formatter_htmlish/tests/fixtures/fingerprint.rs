@@ -117,7 +117,7 @@ fn walk(
             NodeKind::Block(block) => {
                 write!(out, "[@{}", words(block.name.slice(source))).unwrap();
                 for parameter in &block.parameters {
-                    write!(out, " ({})", words(parameter.slice(source))).unwrap();
+                    write!(out, " ({:?})", parameter.slice(source)).unwrap();
                 }
                 out.push('{');
                 walk(source, root, id, text, fold_names, out);

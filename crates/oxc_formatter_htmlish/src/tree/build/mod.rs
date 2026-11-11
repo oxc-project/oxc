@@ -119,6 +119,18 @@ impl Builder<'_> {
                 facts.span.start = node.span.start;
                 continue;
             }
+            // The blocks continuing an ignored one are ignored with it (DIVERGENCES.md#angular-ignored-block-chain)
+            if let Some(prev) = prev
+                && self.tree[prev].prettier_ignore
+                && self.tree.continues_block(prev, id)
+            {
+                let facts = self.facts(prev);
+                facts.span.end = node.span.end;
+                // The whitespace before it is now inside the ignored source
+                facts.has_trailing_spaces = false;
+                pending_space = false;
+                continue;
+            }
             let (leading, trailing, whitespace_only) = match &node.kind {
                 NodeKind::Text(text) if !whitespace_sensitive => (
                     text.leading != Whitespace::None,

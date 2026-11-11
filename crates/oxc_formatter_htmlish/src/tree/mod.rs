@@ -15,7 +15,7 @@ mod names;
 use oxc_allocator::{Allocator, ArenaVec, StringBuilder};
 use oxc_htmlish_parser::{
     Span,
-    ast::{Element, Namespace, NodeId, NodeKind, Root},
+    ast::{Block, Element, Namespace, NodeId, NodeKind, Root},
 };
 
 use crate::rules::DialectRules;
@@ -185,6 +185,30 @@ impl<'a> Tree<'a> {
     /// An Angular control flow block: transparent, its markers print no box (`@if (a) {` … `}`).
     pub fn is_block(&self, id: NodeId) -> bool {
         self.rules.has_blocks && matches!(self.kind(id), NodeKind::Block(_))
+    }
+
+    /// `next` is a block that continues `prev` (`@if` … `@else`), printed after its `}`.
+    pub fn continues_block(&self, prev: NodeId, next: NodeId) -> bool {
+        let (NodeKind::Block(prev), NodeKind::Block(next)) = (self.kind(prev), self.kind(next))
+        else {
+            return false;
+        };
+        let next = self.block_name(next);
+        match self.block_name(prev) {
+            "if" | "else if" => matches!(next, "else if" | "else"),
+            "for" => next == "empty",
+            "defer" | "placeholder" | "loading" | "error" => {
+                matches!(next, "placeholder" | "loading" | "error")
+            }
+            "boundary" => next == "error",
+            _ => false,
+        }
+    }
+
+    /// The block's name, whitespace collapsed unless it spans lines (`else\n if` is no `else if`, DIVERGENCES.md#angular-block-name-with-line-break).
+    pub fn block_name(&self, block: &Block<'_>) -> &'a str {
+        let name = block.name.slice(self.source);
+        if name.contains('\n') { name } else { self.collapsed(block.name) }
     }
 
     /// A `display: none` element in a parent that renders: the whitespace on both its sides is one run
