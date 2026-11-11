@@ -1,4 +1,4 @@
-use oxc_ast::ast::{TSType, TSUnionType};
+use oxc_ast::ast::{CommentKind, TSType, TSUnionType};
 use oxc_span::GetSpan;
 
 use crate::formatter::{JsFormatter, JsFormatterExt as _};
@@ -54,6 +54,24 @@ pub fn should_hug_type(node: &TSUnionType<'_>, f: &JsFormatter<'_, '_>) -> bool 
         .count();
 
     if types.len() - 1 != void_count {
+        return false;
+    }
+
+    // `/* comment */ { a: string } | null`
+    //  ^^^^^^^^^^^^^
+    // A single-line block comment on the union's line, still unprinted, is the first member's:
+    // it goes behind the leading `|` like any other member comment, so we should not hug.
+    // A `(` in between is one the union drops (DIVERGENCES.md#union-hug-comment-before-dropped-paren);
+    // the comments outside kept parentheses are printed by now.
+    // A suppressed union prints verbatim, and keeps its layout.
+    if f.comments().comments_before_iter(node.span.start).last().is_some_and(|comment| {
+        comment.kind == CommentKind::SingleLineBlock
+            && !comment.followed_by_newline()
+            && f.source_text().all_bytes_match(comment.span.end, node.span.start, |b| {
+                b.is_ascii_whitespace() || b == b'('
+            })
+            && !f.comments().is_span_suppressed(node.span)
+    }) {
         return false;
     }
 

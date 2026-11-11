@@ -1,11 +1,11 @@
 //! NOTE: This printer deliberately stays on Prettier 3.8-style expansion (one member per line with leading `|`)
 //! and will probably NOT follow Prettier 3.9's fit-to-width rewrite
-//! (prettier#18827: collapse when it fits, conditional-type `? |` hugging).
+//! (prettier#18827: collapse when it fits).
 //!
 //! Not final yet, but that is the working assumption:
 //! the per-member layout is the diff-friendly output, and the rewrite is still contested upstream (prettier#19733, open).
-//! The remaining `typescript/union/**` conformance failures are this collapse cluster plus the documented comment-placement divergences;
-//! once the collapse decision is final, reclassify that cluster as an entry too.
+//! The hold is DIVERGENCES.md#union-annotation-flat-retry (annotation and alias positions).
+//! The remaining `typescript/union/**` conformance failures are that cluster plus the documented comment-placement divergences.
 //! Current plan: intersection types unify INTO this printer's layout (see the NOTE in `intersection_type.rs`).
 
 use oxc_allocator::ArenaVec;
@@ -131,10 +131,15 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSUnionType<'a>> {
             &leading_comments[..0]
         };
 
-        // A `?`/`:` branch hugs its leading comments behind the operator,
-        // like conditional expressions do: no break before the comments, and no union indent on top of the conditional's alignment
-        // (the content must sit one level under `?`, not one level under the comment)
+        // A `?`/`:` branch hugs the operator, like conditional expressions do:
+        // its first `|`, or its leading comments, print right behind it,
+        // with no break before and no union indent on top of the conditional's alignment
+        // (the content must sit one level under `?`)
         // ```ts
+        // type T = X extends Y
+        //   ? | A
+        //     | B
+        //   : Z;
         // type T = X extends Y
         //   ? /** c */
         //     A | B
@@ -168,10 +173,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSUnionType<'a>> {
                 AstNodes::TSTypeAssertion(_)
                 | AstNodes::TSTupleType(_)
                 | AstNodes::TSTypeParameterInstantiation(_) => false,
-                // A check/extends-position union falls through to `_ => true`
-                AstNodes::TSConditionalType(_) if is_conditional_branch => {
-                    before_pipe_comments.is_empty()
-                }
+                AstNodes::TSConditionalType(_) => !is_conditional_branch,
                 _ => true,
             }
         };
@@ -321,7 +323,11 @@ fn alias_union_hugs(union: &TSUnionType<'_>, f: &JsFormatter<'_, '_>) -> bool {
     if !should_hug_type(union, f) {
         return false;
     }
-    // Own-line leading comments go through the normal union path,
+    // Several members keep the hug: a line-ending leading comment never changes how they are laid out.
+    if union.types.len() != 1 {
+        return true;
+    }
+    // A single member's line-ending leading comments go through the normal union path,
     // so they are printed with correct indentation.
     // ```ts
     // type A =

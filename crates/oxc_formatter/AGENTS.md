@@ -232,6 +232,28 @@ the `semi: false` ASI guard is decided from the guarded statement alone, never f
 Sound because no statement leaves its own trailing `;` (a suppressed one hands it back to the formatter),
 except a verbatim empty-statement body (`with (1) ;`, that `;` IS the body, i.e. content), where guard plus verbatim `;` re-parse as one extra inert `EmptyStatement`.
 
+### Comments and layout
+
+`uniform-rule (comment presence never changes layout)` (FORMATTER_POLICY, reason (3)) is about which layout rule applies, not about identical output:
+
+- A line comment rides a `line_suffix` and takes no width;
+  an inline block comment takes width like any token, so it can change what fits
+- Where Prettier lets a comment switch the rule and we follow it, the sites are a compat table (FORMATTER_POLICY "Comment placement invariants")
+
+Hugging (content glued to its opener, a union printed inline) is such a table.
+A same-line block comment right before the hugged content, pinned in `tests/fixtures/ts/comments/hug-block-comment.ts`:
+
+- stops the hug: a sole object or array argument, a last-argument arrow, a sole object-pattern parameter
+- keeps the hug: an object type after a `:` (parameter, return type), a sole type argument, the right side of `=`
+
+A union that hugs (`{ ... } | null`), pinned in `tests/fixtures/ts/union/hug-comments.ts`:
+
+- a member's comment stops the hug, and the union expands like any other (DIVERGENCES.md#union-annotation-flat-retry)
+- a single-line block comment right before the union, on its line, is the first member's
+  (`| /* c */ A`, DIVERGENCES.md#union-leading-pipe-comment-normalization),
+  with a dropped `(` in between too (DIVERGENCES.md#union-hug-comment-before-dropped-paren)
+- a line-ending or multiline comment before the union stays before it, and keeps the hug
+
 ### Couplings to keep in step
 
 Each item pairs a decision with the site that acts on it, on purpose.
@@ -276,6 +298,11 @@ Behavior our own rules want otherwise, mostly where it follows Prettier. Not acc
   Bounding them also moves a same-line comment right after the `(` own-line (`f<T>( // eslint-disable-line`), so it waits for the opener exception (FORMATTER_POLICY) to be revisited
 - A line comment right after the `<` of a hugged single type argument keeps the unbreakable hug: `f<// c` + break + `T>()` prints `T` at column 0.
   Breaking the hug also decides whether the comment goes own-line or stays on the `<` line, so it waits for the same revisit
+- A same-line block comment after a line-ending one stays before the union's `|` (`// a` + break + `/* b */ | A`),
+  where DIVERGENCES.md#union-leading-pipe-comment-normalization wants `| /* b */ A` (Prettier prints that):
+  the all-or-nothing split in `union_type.rs` keeps the whole list before the `|`
+- A type predicate's object type is not a fixpoint: `function f(x: unknown): x is { ... } {}` breaks the parameters on the first pass
+  and rejoins them on the second (Prettier too); a plain return type (`): { ... } {}`) is stable
 
 The flat JSX arrow body is a limitation, not a debt: the paren decision is a group fit, unknowable at comment time (DIVERGENCES.md#paren-comment-fixpoint).
 

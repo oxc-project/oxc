@@ -50,6 +50,8 @@ a comment after it is spaced (`, /* c */`, as in `a, /* c */ b`), also after the
 
 - Why: uniform-rule (same construct, same output: exported type alias)
 - Pin: `tests/fixtures/ts/semicolons/trailing-comments.ts`
+- Conformance:
+  - `externals/prettier/typescript/union/union-parens.ts` (`type Aa3`)
 
 ```ts
 // input
@@ -356,6 +358,34 @@ type NestedParens =
 
 Prettier does the same normalization except for nested single-member paren sources and multiline block comments starting their line, where it keeps `/* c */ | A` — an output it then reformats into `| /* c */ A` itself for the first shape (not a fixpoint); we normalize directly.
 
+## union-hug-comment-before-dropped-paren
+
+- Why: invariant
+- Pin: `tests/fixtures/ts/union/hug-comment-dropped-paren.ts`
+
+A single-line block comment before a hugged union's dropped `(` stops the hug on the first pass; the pin's output is not a fixpoint (idempotency).
+
+```ts
+// input
+type Alias = /* c */ ({ a: string; b: number } | null);
+
+// ours (broken)
+type Alias =
+  | /* c */ {
+      a: string;
+      b: number;
+    }
+  | null;
+
+// prettier (first pass; its second pass produces ours)
+type Alias = /* c */ {
+  a: string;
+  b: number;
+} | null;
+```
+
+Kept parentheses (`keyof (...)`, `(...)[]`) keep the comment outside and the hug, in both.
+
 ## deferred-own-line-comment-stays-own-line
 
 - Why: invariant
@@ -526,7 +556,7 @@ The shapes, each pinned by its fixture:
 ## union-annotation-flat-retry
 
 - Why: style-hold (oxc#25841)
-- Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts`
+- Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts`, `tests/fixtures/ts/union/alias-flat-retry.ts`
 - Conformance:
   - `externals/ng-zorro-antd/components/button/button.component.ts`
   - `externals/ng-zorro-antd/components/cdk/overflow/overflow-container.component.ts`
@@ -548,6 +578,8 @@ The shapes, each pinned by its fixture:
   - `externals/ng-zorro-antd/components/time-picker/time-picker-panel.component.ts`
   - `externals/ng-zorro-antd/components/tree-select/tree-select.component.ts`
   - `externals/ng-zorro-antd/components/upload/upload.component.ts`
+  - `externals/prettier/typescript/union/consistent-with-flow/81-characters.ts`
+  - `externals/prettier/typescript/union/union-parens.ts` (the `as (string | undefined)[]` cast)
   - `externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue`
   - `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`
   - `externals/webawesome/badge/badge.ts`
@@ -597,6 +629,28 @@ A union broken out of its `:`/`as` position expands to leading-`|` members right
 Prettier 3.9 changed this to first retry the whole union FLAT on the indented next line and only then expand.
 Community pushback on the 3.9 style (users migrated to Oxfmt over it) put following on hold:
 ours deliberately matches Prettier 3.8's output for this construct.
+
+The same hold at a type alias's `=`:
+
+```ts
+/* input */
+type Narrow = "primary" | "danger" | "warning" | "muted" | "success" | "information";
+
+/* ours */
+type Narrow =
+  | "primary"
+  | "danger"
+  | "warning"
+  | "muted"
+  | "success"
+  | "information";
+
+/* prettier */
+type Narrow =
+  "primary" | "danger" | "warning" | "muted" | "success" | "information";
+```
+
+A union that would hug (`X | null`) expands the same way once a member has a comment (`/* c */ X | null`).
 
 ## arrow-exact-fill-signature
 

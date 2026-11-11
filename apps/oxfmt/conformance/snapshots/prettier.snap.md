@@ -152,7 +152,7 @@
 
 ## typescript
 
-632/679 (93.08%)
+633/679 (93.23%)
 
 ### Failed
 
@@ -216,17 +216,11 @@
   - ❓unclassified
 - externals/prettier/typescript/union/comments/18106.ts (💥, 86.36%)
   - ❓unclassified
-- externals/prettier/typescript/union/consistent-with-flow/81-characters.ts (💥, 53.85%)
-  - ❓unclassified
 - externals/prettier/typescript/union/consistent-with-flow/comment.ts (💥, 87.50%)
-  - ❓unclassified
-- externals/prettier/typescript/union/consistent-with-flow/conditional.ts (💥, 54.55%)
   - ❓unclassified
 - externals/prettier/typescript/union/consistent-with-flow/leading-comments.ts (💥, 90.14%)
   - ❓unclassified
 - externals/prettier/typescript/union/consistent-with-flow/single-type.ts (💥, 97.50%)
-  - ❓unclassified
-- externals/prettier/typescript/union/union-parens.ts (💥, 97.67%)
   - ❓unclassified
 - externals/prettier/typescript/as/export_default_as.ts (💥, 0.00%)
   - crates/oxc_formatter/DIVERGENCES.md#export-default-leftmost-parens
@@ -240,8 +234,13 @@
   - crates/oxc_formatter/DIVERGENCES.md#export-default-leftmost-parens
 - externals/prettier/typescript/union/comments/18379.ts (💥, 92.31%)
   - crates/oxc_formatter/DIVERGENCES.md#union-suppression-whole
+- externals/prettier/typescript/union/consistent-with-flow/81-characters.ts (💥, 53.85%)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - externals/prettier/typescript/union/consistent-with-flow/prettier-ignore.ts (💥, 88.00%)
   - crates/oxc_formatter/DIVERGENCES.md#union-suppression-whole
+- externals/prettier/typescript/union/union-parens.ts (💥, 97.67%)
+  - crates/oxc_formatter/DIVERGENCES.md#type-alias-trailing-comment-move
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 
 ### Not idempotent
 
