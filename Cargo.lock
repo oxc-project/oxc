@@ -2692,7 +2692,6 @@ dependencies = [
 name = "oxc_span"
 version = "0.158.0"
 dependencies = [
- "compact_str",
  "oxc-schemars",
  "oxc_allocator",
  "oxc_ast_macros",
