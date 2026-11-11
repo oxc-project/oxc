@@ -22,7 +22,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         mut next: impl FnMut(&mut Self) -> Option<T>,
     ) -> ArenaVec<'a, T> {
-        self.collect_list_with_previous(|p, _| next(p))
+        let Some(first) = next(self) else { return ArenaVec::new_in(self) };
+        let Some(second) = next(self) else { return ArenaVec::from_value_in(first, self) };
+        let Some(third) = next(self) else {
+            return ArenaVec::from_array_in([first, second], self);
+        };
+        let Some(fourth) = next(self) else {
+            return ArenaVec::from_array_in([first, second, third], self);
+        };
+        let Some(fifth) = next(self) else {
+            return ArenaVec::from_array_in([first, second, third, fourth], self);
+        };
+        let mut list = ArenaVec::with_capacity_in(8, self);
+        list.extend([first, second, third, fourth, fifth]);
+        while let Some(element) = next(self) {
+            list.push(element);
+        }
+        list
     }
 
     /// Collect a parser list as [`Self::collect_list`] does, passing the last element collected to
@@ -181,27 +197,31 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut finished = self.at(close) || self.has_fatal_error();
         let mut trailing_separator = None;
         let delimited_comments = self.start_delimited_list_comments(opening_span);
-        let list = self.collect_list(|p| {
-            if let Some(first) = first.take() {
-                return Some(first);
-            }
-            if finished {
-                return None;
-            }
-            let element = parse_element(p);
-            if let ControlFlow::Break(trailing) =
-                p.parse_delimited_list_separator(&element, close, separator, opening_span)
-            {
-                trailing_separator = trailing;
-                finished = true;
-            }
-            Some(element)
-        });
+        let list = self.collect_list(
+            #[inline(always)]
+            |p| {
+                if let Some(first) = first.take() {
+                    return Some(first);
+                }
+                if finished {
+                    return None;
+                }
+                let element = parse_element(p);
+                if let ControlFlow::Break(trailing) =
+                    p.parse_delimited_list_separator(&element, close, separator, opening_span)
+                {
+                    trailing_separator = trailing;
+                    finished = true;
+                }
+                Some(element)
+            },
+        );
         self.finish_delimited_list_comments(&list, delimited_comments);
         (list, trailing_separator)
     }
 
-    #[inline]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_delimited_list_separator<T: GetSpan + GetNodeId>(
         &mut self,
         element: &T,

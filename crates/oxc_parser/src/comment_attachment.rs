@@ -338,10 +338,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// is the comma, so `a` no longer ends at `prev_token_end` and this helper skips the gap.
     #[inline]
     pub(crate) fn attach_comments_after_last<T: GetSpan + GetNodeId>(&mut self, list: &[T]) {
-        if self.cur_token().follows_comment()
-            && let Some(last) = list.last()
-        {
-            self.attach_comments_before_token(last);
+        if self.cur_token().follows_comment() {
+            self.attach_comments_after_last_cold(list);
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn attach_comments_after_last_cold<T: GetSpan + GetNodeId>(&mut self, list: &[T]) {
+        if let Some(last) = list.last() {
+            self.attach_comments_before_token_cold(last);
         }
     }
 
@@ -358,14 +364,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// ```
     #[inline]
     pub(crate) fn attach_comments_before_token<T: GetSpan + GetNodeId>(&mut self, node: &T) {
-        if self.cur_token().follows_comment() && node.span().end == self.prev_token_end {
-            self.attach_comments_before_token_cold(node.node_id());
+        if self.cur_token().follows_comment() {
+            self.attach_comments_before_token_cold(node);
         }
     }
 
     #[cold]
     #[inline(never)]
-    fn attach_comments_before_token_cold(&mut self, node_id: NodeId) {
+    fn attach_comments_before_token_cold<T: GetSpan + GetNodeId>(&mut self, node: &T) {
+        if node.span().end == self.prev_token_end {
+            self.attach_trailing_comments_before_token(node.node_id());
+        }
+    }
+
+    fn attach_trailing_comments_before_token(&mut self, node_id: NodeId) {
         let (start, end) = self.leading_comments();
         for index in start as usize..end as usize {
             if self.lexer.trivia_builder.comments[index].node_id.get() == NodeId::ROOT {
@@ -539,6 +551,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub(crate) fn parse_after_delimiter<T: GetSpan + GetNodeId>(
+        &mut self,
+        parse: impl FnOnce(&mut Self) -> T,
+    ) -> T {
+        if self.cur_token().follows_comment() {
+            self.parse_after_delimiter_cold(parse)
+        } else {
+            parse(self)
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn parse_after_delimiter_cold<T: GetSpan + GetNodeId>(
         &mut self,
         parse: impl FnOnce(&mut Self) -> T,
     ) -> T {

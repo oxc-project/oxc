@@ -831,36 +831,39 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         self.expect(Kind::Colon);
         let list_comments = self.start_list_comments();
-        let consequent = self.collect_list_with_previous(|p, previous| {
-            let kind = p.cur_kind();
-            if matches!(
-                kind,
-                Kind::Case | Kind::Default | Kind::RCurly | Kind::Eof | Kind::Undetermined
-            ) || p.fatal_error.is_some()
-            {
-                return None;
-            }
-            let stmt = p.parse_statement_in_list(
-                StatementContext::StatementList,
-                &list_comments,
-                &[],
-                previous,
-            );
-            if let Statement::VariableDeclaration(var_decl) = &stmt
-                && var_decl.kind.is_using()
-            {
-                // It is a Syntax Error if UsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
-                // It is a Syntax Error if AwaitUsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
-                p.error(if var_decl.kind.is_await_using() {
-                    diagnostics::await_using_declaration_not_allowed_in_switch_bare_case(
-                        stmt.span(),
-                    )
-                } else {
-                    diagnostics::using_declaration_not_allowed_in_switch_bare_case(stmt.span())
-                });
-            }
-            Some(stmt)
-        });
+        let consequent = self.collect_list_with_previous(
+            #[inline(always)]
+            |p, previous| {
+                let kind = p.cur_kind();
+                if matches!(
+                    kind,
+                    Kind::Case | Kind::Default | Kind::RCurly | Kind::Eof | Kind::Undetermined
+                ) || p.fatal_error.is_some()
+                {
+                    return None;
+                }
+                let stmt = p.parse_statement_in_list(
+                    StatementContext::StatementList,
+                    &list_comments,
+                    &[],
+                    previous,
+                );
+                if let Statement::VariableDeclaration(var_decl) = &stmt
+                    && var_decl.kind.is_using()
+                {
+                    // It is a Syntax Error if UsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
+                    // It is a Syntax Error if AwaitUsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
+                    p.error(if var_decl.kind.is_await_using() {
+                        diagnostics::await_using_declaration_not_allowed_in_switch_bare_case(
+                            stmt.span(),
+                        )
+                    } else {
+                        diagnostics::using_declaration_not_allowed_in_switch_bare_case(stmt.span())
+                    });
+                }
+                Some(stmt)
+            },
+        );
         SwitchCase::new(self.end_span(start), test, consequent, self)
     }
 
