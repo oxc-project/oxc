@@ -61,7 +61,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     recommended,
-    fix,
+    suggestion,
     version = "1.67.0",
     short_description = "Enforce that the `data` property of a Vue component definition is a function.",
 );
@@ -87,7 +87,7 @@ impl Rule for NoSharedComponentData {
             return;
         }
 
-        ctx.diagnostic_with_fix(no_shared_component_data_diagnostic(prop.span), |fixer| {
+        ctx.diagnostic_with_suggestion(no_shared_component_data_diagnostic(prop.span), |fixer| {
             let value_span = prop.value.span();
             let value_text = ctx.source_range(value_span);
             fixer
