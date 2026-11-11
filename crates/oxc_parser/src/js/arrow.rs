@@ -456,11 +456,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return None;
         }
         let checkpoint = self.checkpoint_with_error_recovery();
+        let comments = self.comment_checkpoint();
         let errors_len = self.errors.len();
         let (params, has_trailing_comma) = self.parse_cover_arrow_parameters();
         if !self.at(Kind::Arrow) {
             // Reuse the successful parameter parse, including its initializers and property
             // keys, when it also represents an ordinary parenthesized expression.
+            let span = params.span;
             if !self.has_fatal_error()
                 && self.errors.len() == errors_len
                 && !has_trailing_comma
@@ -468,6 +470,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 && !params.items.is_empty()
                 && let Some(expression) = self.cover_arrow_parameters_as_expression(params)
             {
+                self.discard_cover_parameter_comments(comments, span);
                 return Some(expression);
             }
             self.state.not_parenthesized_arrow.insert(pos);

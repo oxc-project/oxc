@@ -636,6 +636,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    /// Unassign comments in cover arrow parameters which are reused as a parenthesized expression
+    /// after `checkpoint`. The parameters are discarded, but calls and functions in them are kept.
+    ///
+    /// ```text
+    /// f((a, // x
+    ///    b))
+    ///    ^ parameter, discarded when rebuilt as a reference
+    /// // x: owner parameter a -> ROOT (pending) -> trails reference a
+    /// ```
+    #[inline]
+    pub(crate) fn discard_cover_parameter_comments(
+        &mut self,
+        checkpoint: CommentCheckpoint,
+        span: Span,
+    ) {
+        if self.assigned_comments != checkpoint.assigned_comments {
+            self.unassign_comments_keeping_annotations(span);
+        }
+    }
+
     /// Assign comments to the node an annotation applies to.
     ///
     /// ```text
