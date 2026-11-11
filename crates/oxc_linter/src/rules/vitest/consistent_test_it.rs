@@ -103,28 +103,6 @@ fn test() {
             Some(serde_json::json!([{ "withinDescribe": "test" }])),
         ),
         (
-            "import {describe, expect, test, it} from 'vitest';
-
-                describe('example', () => {
-                  const testExtended = test.extend<{ result: number }>({
-                    result: async ({}, use) => {
-                      await use(42);
-                    },
-                  });
-
-                  testExtended('works', ({ result }) => {
-                    expect(result).toBe(42);
-                  });
-
-                  it('works', () => {
-                    expect(42).toBe(42);
-                  })
-                });
-
-                ",
-            Some(serde_json::json!([{ "withinDescribe": "it" }])),
-        ),
-        (
             "
                 describe('suite', () => {});
 
@@ -167,6 +145,28 @@ fn test() {
         (
             "describe(\"suite\", () => { it(\"foo\") })",
             Some(serde_json::json!([{ "withinDescribe": "test" }])),
+        ),
+        (
+            "import {describe, expect, test, it} from 'vitest';
+
+                describe('example', () => {
+                  const testExtended = test.extend<{ result: number }>({
+                    result: async ({}, use) => {
+                      await use(42);
+                    },
+                  });
+
+                  testExtended('works', ({ result }) => {
+                    expect(result).toBe(42);
+                  });
+
+                  it('works', () => {
+                    expect(42).toBe(42);
+                  })
+                });
+
+                ",
+            Some(serde_json::json!([{ "withinDescribe": "it" }])),
         ),
     ];
 
