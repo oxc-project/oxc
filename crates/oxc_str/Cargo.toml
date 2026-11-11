@@ -22,6 +22,7 @@ doctest = true
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_estree = { workspace = true }
+oxc_span = { workspace = true }
 
 compact_str = { workspace = true }
 hashbrown = { workspace = true, default-features = false, features = ["inline-more"] }

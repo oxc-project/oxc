@@ -143,7 +143,10 @@ impl Hasher for IdentHasher {
 
 #[cfg(test)]
 mod test {
-    use std::hash::{BuildHasher, Hasher};
+    use std::{
+        hash::{BuildHasher, Hasher},
+        str,
+    };
 
     use super::{IdentBuildHasher, IdentHasher, hashbrown_state, ident_hash, unpack_len_hash};
 
@@ -165,12 +168,7 @@ mod test {
         for s in
             &[b"x" as &[u8], b"ab", b"abc", b"abcd", b"hello", b"useState", b"longIdentifierName"]
         {
-            assert_ne!(
-                ident_hash(s),
-                0,
-                "hash should be non-zero for {:?}",
-                std::str::from_utf8(s)
-            );
+            assert_ne!(ident_hash(s), 0, "hash should be non-zero for {:?}", str::from_utf8(s));
         }
     }
 

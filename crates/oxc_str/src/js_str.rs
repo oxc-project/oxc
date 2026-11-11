@@ -9,6 +9,8 @@ use std::{
 };
 
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy, GetAllocator};
+use oxc_span::ContentEq;
+
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, LoneSurrogatesString, Serializer as ESTreeSerializer};
 
@@ -492,6 +494,13 @@ impl Display for JSStrDisplay<'_> {
             }
         }
         Ok(())
+    }
+}
+
+impl ContentEq for JSStr<'_> {
+    #[inline]
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
     }
 }
 
