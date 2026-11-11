@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         CallExpression, Expression, ObjectExpression, ObjectPropertyKind, Statement, TSSignature,
     },
@@ -53,7 +53,11 @@ fn reserved_key_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Key `{name}` is reserved.")).with_label(span)
 }
 
-fn starts_with_underscore_diagnostic(key: &str, group: &str, span: Span) -> OxcDiagnostic {
+fn starts_with_underscore_diagnostic(
+    key: impl std::fmt::Display,
+    group: &str,
+    span: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Key `{key}` is reserved in `{group}` group.")).with_label(span)
 }
 
@@ -114,6 +118,7 @@ declare_oxc_lint!(
     NoReservedKeys,
     vue,
     correctness,
+    recommended,
     config = NoReservedKeys,
     version = "1.69.0",
     short_description = "Disallow overwriting reserved Vue instance keys (e.g. `$data`, `$emit`) or using `_`-prefixed keys inside `data` / `asyncData`.",
@@ -128,9 +133,11 @@ impl Rule for NoReservedKeys {
         match node.kind() {
             AstKind::CallExpression(call) => self.check_define_props(call, ctx),
             AstKind::ObjectProperty(prop) => {
-                let Some(group_name) = prop.key.static_name() else { return };
-                let group = group_name.as_ref();
-                if !self.is_target_group(group) {
+                let Some(group) = prop.key.static_name().and_then(StaticPropertyName::into_cow_str)
+                else {
+                    return;
+                };
+                if !self.is_target_group(&group) {
                     return;
                 }
 
@@ -145,16 +152,16 @@ impl Rule for NoReservedKeys {
                             let Some(Expression::StringLiteral(lit)) = elem.as_expression() else {
                                 continue;
                             };
-                            if self.is_reserved(lit.value.as_str()) {
-                                ctx.diagnostic(reserved_key_diagnostic(
-                                    lit.value.as_str(),
-                                    lit.span,
-                                ));
+                            let Some(value) = lit.value.as_str() else {
+                                continue;
+                            };
+                            if self.is_reserved(value) {
+                                ctx.diagnostic(reserved_key_diagnostic(value, lit.span));
                             }
                         }
                     }
                     Expression::ObjectExpression(obj) => {
-                        self.check_keys(group, obj, ctx);
+                        self.check_keys(&group, obj, ctx);
                     }
                     Expression::FunctionExpression(func) => {
                         let Some(body) = &func.body else { return };
@@ -164,7 +171,7 @@ impl Rule for NoReservedKeys {
                                 && let Expression::ObjectExpression(obj) =
                                     arg.get_inner_expression()
                             {
-                                self.check_keys(group, obj, ctx);
+                                self.check_keys(&group, obj, ctx);
                             }
                         }
                     }
@@ -175,7 +182,7 @@ impl Rule for NoReservedKeys {
                                 && let Expression::ObjectExpression(obj) =
                                     expression.get_inner_expression()
                             {
-                                self.check_keys(group, obj, ctx);
+                                self.check_keys(&group, obj, ctx);
                             }
                         } else {
                             // `() => { return {foo} }` block body
@@ -185,7 +192,7 @@ impl Rule for NoReservedKeys {
                                     && let Expression::ObjectExpression(obj) =
                                         arg.get_inner_expression()
                                 {
-                                    self.check_keys(group, obj, ctx);
+                                    self.check_keys(&group, obj, ctx);
                                 }
                             }
                         }
@@ -217,13 +224,17 @@ impl NoReservedKeys {
     fn check_keys<'a>(&self, group: &str, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
         for prop_kind in &obj.properties {
             let ObjectPropertyKind::ObjectProperty(p) = prop_kind else { continue };
-            let Some(name) = p.key.static_name() else { continue };
+            let Some(name) = p.key.static_name() else {
+                continue;
+            };
+            let name = name.as_js_str();
             let span = p.key.span();
-            let n = name.as_ref();
-            if self.is_reserved(n) {
+            if let Some(n) = name.as_str()
+                && self.is_reserved(n)
+            {
                 ctx.diagnostic(reserved_key_diagnostic(n, span));
-            } else if matches!(group, "data" | "asyncData") && n.starts_with('_') {
-                ctx.diagnostic(starts_with_underscore_diagnostic(n, group, span));
+            } else if matches!(group, "data" | "asyncData") && name.starts_with('_') {
+                ctx.diagnostic(starts_with_underscore_diagnostic(name.display(), group, span));
             }
         }
     }
@@ -243,18 +254,23 @@ impl NoReservedKeys {
                 Expression::ArrayExpression(arr) => {
                     for elem in &arr.elements {
                         if let Some(Expression::StringLiteral(lit)) = elem.as_expression()
-                            && self.is_reserved(lit.value.as_str())
+                            && let Some(value) = lit.value.as_str()
+                            && self.is_reserved(value)
                         {
-                            ctx.diagnostic(reserved_key_diagnostic(lit.value.as_str(), lit.span));
+                            ctx.diagnostic(reserved_key_diagnostic(value, lit.span));
                         }
                     }
                 }
                 Expression::ObjectExpression(obj) => {
                     for prop_kind in &obj.properties {
                         let ObjectPropertyKind::ObjectProperty(p) = prop_kind else { continue };
-                        let Some(name) = p.key.static_name() else { continue };
-                        if self.is_reserved(name.as_ref()) {
-                            ctx.diagnostic(reserved_key_diagnostic(name.as_ref(), p.key.span()));
+                        let Some(name) =
+                            p.key.static_name().and_then(StaticPropertyName::into_cow_str)
+                        else {
+                            continue;
+                        };
+                        if self.is_reserved(&name) {
+                            ctx.diagnostic(reserved_key_diagnostic(&name, p.key.span()));
                         }
                     }
                 }
@@ -279,9 +295,11 @@ impl NoReservedKeys {
             TSSignature::TSMethodSignature(method) => &method.key,
             _ => return,
         };
-        let Some(name) = key.static_name() else { return };
-        if self.is_reserved(name.as_ref()) {
-            ctx.diagnostic(reserved_key_diagnostic(name.as_ref(), key.span()));
+        let Some(name) = key.static_name().and_then(StaticPropertyName::into_cow_str) else {
+            return;
+        };
+        if self.is_reserved(&name) {
+            ctx.diagnostic(reserved_key_diagnostic(&name, key.span()));
         }
     }
 }
@@ -570,6 +588,18 @@ fn test() {
                 })
                 </script>
             ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r#"
+                <script>
+                new Vue({
+                  data: () => ({ "_\uD800": 1 })
+                })
+                </script>
+            "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),

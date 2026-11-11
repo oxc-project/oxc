@@ -1,45 +1,17 @@
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
+use oxc_simd::{Cpu, DynCpu, cpu_multiversion};
+
 mod avx2;
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
-use avx2::classify_impl;
-
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
 mod generic;
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
-use generic::classify_impl;
+mod luts;
+mod neon;
+mod punct;
 
-#[cfg(any(
-    test,
-    not(all(
-        target_arch = "x86_64",
-        target_feature = "avx2",
-        target_feature = "bmi2",
-        target_feature = "popcnt"
-    ))
-))]
-mod punct1;
+use avx2::classify_avx2;
+use generic::classify_generic;
+use neon::classify_neon;
 
-#[inline(never)]
+#[cpu_multiversion]
+#[inline(always)]
 pub(super) unsafe fn classify(
     ts: bool,
     src: *const u8,
@@ -53,8 +25,19 @@ pub(super) unsafe fn classify(
     dot: *mut u64,
     misc: *mut u64,
     kind: *mut u8,
+    cpu: impl Cpu,
 ) {
-    classify_impl(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind);
+    match DynCpu::from(cpu) {
+        DynCpu::Avx2(cpu) => {
+            classify_avx2(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu)
+        }
+        DynCpu::Neon(cpu) => {
+            classify_neon(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu)
+        }
+        DynCpu::Generic(_) => {
+            classify_generic(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind)
+        }
+    };
 
     *word.add(nb) = 0;
     *st.add(nb) = 0;

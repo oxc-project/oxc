@@ -1,7 +1,6 @@
 //! Selection set printers: fields, fragment spreads, inline fragments.
 
 use oxc_formatter_core::{
-    Buffer,
     builders::{block_indent, group, space},
     write,
 };

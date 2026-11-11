@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -82,6 +83,7 @@ declare_oxc_lint!(
     PreferNumberProperties,
     unicorn,
     restriction,
+    recommended,
     dangerous_fix,
     config = PreferNumberPropertiesConfig,
     version = "0.0.19",
@@ -106,13 +108,13 @@ impl Rule for PreferNumberProperties {
                 if !GLOBAL_OBJECT_NAMES.contains(&ident_name.name.as_str()) {
                     return;
                 }
-                let Some(name) = member_expr.static_property_name() else {
+                let Some(name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
                     return;
                 };
                 if (name == "NaN" && self.check_nan) || (name == "Infinity" && self.check_infinity)
                 {
                     ctx.diagnostic_with_fix(
-                        prefer_number_properties_diagnostic(member_expr.span(), name.as_str()),
+                        prefer_number_properties_diagnostic(member_expr.span(), name),
                         |fixer| fixer.replace(ident_name.span, "Number"),
                     );
                 }
@@ -131,27 +133,17 @@ impl Rule for PreferNumberProperties {
                     return;
                 }
 
-                let fixer = |fixer: RuleFixer<'_, 'a>| match &call_expr.callee {
-                    Expression::Identifier(ident) => {
-                        // Use replace on the full call expression span instead of insert_text_before.
-                        // This ensures the fix span overlaps with prefer_numeric_literals fixes,
-                        // so the fixer's conflict resolution will skip one of them instead of
-                        // applying both and producing invalid code like `Number.0o111`.
-                        let args_span = Span::new(ident.span.end, call_expr.span.end);
-                        let args_text = ctx.source_range(args_span);
-                        fixer.replace(call_expr.span, format!("Number.{ident_name}{args_text}"))
+                let fixer = |fixer: RuleFixer<'_, 'a>| {
+                    // Use replace on the full call expression span instead of insert_text_before.
+                    // This ensures the fix span overlaps with prefer_numeric_literals fixes,
+                    // so the fixer's conflict resolution will skip one of them instead of
+                    // applying both and producing invalid code like `Number.0o111`.
+                    let mut args_span = Span::new(call_expr.callee.span().end, call_expr.span.end);
+                    if let Some(s) = &call_expr.type_arguments {
+                        args_span = args_span.merge(s.span());
                     }
-                    match_member_expression!(Expression) => {
-                        let member_expr = call_expr.callee.to_member_expression();
-                        let mut args_span = Span::new(member_expr.span().end, call_expr.span.end);
-                        if let Some(s) = &call_expr.type_arguments {
-                            args_span = args_span.merge(s.span());
-                        }
-                        let args_text = ctx.source_range(args_span);
-
-                        fixer.replace(call_expr.span, format!("Number.{ident_name}{args_text}"))
-                    }
-                    _ => unreachable!(),
+                    let args_text = ctx.source_range(args_span);
+                    fixer.replace(call_expr.span, format!("Number.{ident_name}{args_text}"))
                 };
 
                 if ident_name == "isFinite" || ident_name == "isNaN" {
@@ -275,7 +267,7 @@ fn extract_ident_from_expression<'b>(expr: &'b Expression<'_>) -> Option<&'b str
             };
 
             if GLOBAL_OBJECT_NAMES.contains(&ident_name.name.as_str()) {
-                member_expr.static_property_name()
+                member_expr.static_property_name().and_then(JSStr::as_str)
             } else {
                 None
             }
@@ -576,6 +568,9 @@ function inner() {
             Some(json!([{"checkInfinity":true}])),
         ),
         (r#"parseInt("111", 8)"#, r#"Number.parseInt("111", 8)"#, None),
+        ("parseInt<number>(value)", "Number.parseInt<number>(value)", None),
+        ("window.parseInt<number>(value)", "Number.parseInt<number>(value)", None),
+        ("window['parseInt'](value)", "Number.parseInt(value)", None),
     ];
 
     Tester::new(PreferNumberProperties::NAME, PreferNumberProperties::PLUGIN, pass, fail)

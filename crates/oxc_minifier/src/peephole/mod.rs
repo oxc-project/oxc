@@ -7,6 +7,7 @@ mod minimize_conditions;
 mod minimize_expression_in_boolean_context;
 mod minimize_for_statement;
 mod minimize_if_statement;
+mod minimize_imports_exports;
 mod minimize_logical_expression;
 mod minimize_not_expression;
 mod minimize_sequences;

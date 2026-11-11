@@ -237,7 +237,7 @@ impl<'a> VisitJs<'a> for AwaitFinder {
     }
 
     fn visit_variable_declaration(&mut self, decl: &VariableDeclaration<'a>) {
-        if decl.kind.is_await() {
+        if decl.kind.is_await_using() {
             self.found = true;
         } else {
             walk_variable_declaration(self, decl);

@@ -1,8 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    BindingIdentifier, BindingPattern, IdentifierReference, ImportDeclaration, ModuleExportName,
-    PropertyKind,
+    BindingIdentifier, BindingPattern, IdentifierReference, ImportDeclaration, PropertyKind,
 };
 use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
 use oxc_span::{GetSpan, Span};
@@ -254,6 +253,11 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         }
     }
 
+    /// Ambient bindings describe external values, not runtime local declarations.
+    pub fn is_ambient_binding(&self, symbol_id: SymbolId) -> bool {
+        self.scoping().symbol_flags(symbol_id).is_ambient()
+    }
+
     /// Map the symbol's flags and declaration node to a Babel-style binding kind.
     pub fn binding_kind(&self, symbol_id: SymbolId) -> BindingKind {
         let flags = self.scoping().symbol_flags(symbol_id);
@@ -372,7 +376,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             AstKind::ImportDefaultSpecifier(_) => {
                 let import_decl = self.find_import_declaration(decl_node.id())?;
                 Some(ImportBindingData {
-                    source: Str::from_str_in(import_decl.source.value.as_str(), &self.allocator),
+                    source: Str::from_str_in(import_decl.source.value.as_str()?, &self.allocator),
                     kind: ImportBindingKind::Default,
                     imported: None,
                 })
@@ -380,20 +384,16 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             AstKind::ImportNamespaceSpecifier(_) => {
                 let import_decl = self.find_import_declaration(decl_node.id())?;
                 Some(ImportBindingData {
-                    source: Str::from_str_in(import_decl.source.value.as_str(), &self.allocator),
+                    source: Str::from_str_in(import_decl.source.value.as_str()?, &self.allocator),
                     kind: ImportBindingKind::Namespace,
                     imported: None,
                 })
             }
             AstKind::ImportSpecifier(spec) => {
                 let import_decl = self.find_import_declaration(decl_node.id())?;
-                let imported_name = match &spec.imported {
-                    ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
-                    ModuleExportName::IdentifierReference(ident) => ident.name.as_str(),
-                    ModuleExportName::StringLiteral(lit) => lit.value.as_str(),
-                };
+                let imported_name = spec.imported.name().as_str();
                 Some(ImportBindingData {
-                    source: Str::from_str_in(import_decl.source.value.as_str(), &self.allocator),
+                    source: Str::from_str_in(import_decl.source.value.as_str()?, &self.allocator),
                     kind: ImportBindingKind::Named,
                     imported: Some(Ident::from_str_in(imported_name, &self.allocator)),
                 })

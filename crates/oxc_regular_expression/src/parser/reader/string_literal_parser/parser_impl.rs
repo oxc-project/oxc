@@ -5,10 +5,11 @@ use crate::parser::reader::{
     CodePoint, Options,
     ast::EscapeKind,
     characters::{
-        CR, LF, LS, PS, is_line_terminator, is_non_escape_character, is_single_escape_character,
+        CR, LF, LS, PS, is_line_terminator, is_non_escape_character, map_single_escape_character,
     },
     string_literal_parser::{ast, diagnostics},
 };
+use crate::surrogate_pair;
 
 // Internal representation of escape sequence resolved unit in a string literal.
 // ((start, end), code_point, escape_kind)
@@ -57,6 +58,18 @@ impl Parser {
         combine_surrogate_pair: bool,
     ) {
         let span = Span::new(span_offset + offsets.0, span_offset + offsets.1);
+
+        // Unicode patterns decode adjacent UTF-16 surrogate halves into one code point.
+        // Both halves came from Unicode escapes, so retain the leading escape kind.
+        if combine_surrogate_pair
+            && surrogate_pair::is_trail_surrogate(cp)
+            && let Some(previous) = body.last_mut()
+            && surrogate_pair::is_lead_surrogate(previous.value)
+        {
+            previous.value = surrogate_pair::combine_surrogate_pair(previous.value, cp);
+            previous.span = previous.span.merge(span);
+            return;
+        }
 
         if combine_surrogate_pair || (0..=0xffff).contains(&cp) {
             // If the code point is in the BMP or if forced, just push it
@@ -117,7 +130,14 @@ impl Parser {
     // ```
     fn parse_string_characters(&mut self, single_or_double_quote: char) -> Result<Vec<CodePoint>> {
         let mut body = vec![];
-        while let Some(code_point) = self.parse_string_character(single_or_double_quote)? {
+        loop {
+            // A LineContinuation contributes no code units to the string value.
+            if self.parse_line_continuation() {
+                continue;
+            }
+            let Some(code_point) = self.parse_string_character(single_or_double_quote)? else {
+                break;
+            };
             Parser::handle_code_point(
                 &mut body,
                 code_point,
@@ -171,10 +191,6 @@ impl Parser {
             }
             self.rewind(checkpoint);
         }
-        if let Some(cp) = self.parse_line_terminator_sequence() {
-            return Ok(Some(((offset_start, self.offset()), cp, EscapeKind::None)));
-        }
-
         Ok(None)
     }
 
@@ -239,9 +255,9 @@ impl Parser {
     //   NonEscapeCharacter
     // ```
     fn parse_character_escape_sequence(&mut self) -> Option<u32> {
-        if let Some(ch) = self.peek().filter(|&ch| is_single_escape_character(ch)) {
+        if let Some(cp) = self.peek().and_then(map_single_escape_character) {
             self.advance();
-            return Some(ch as u32);
+            return Some(cp);
         }
         if let Some(ch) = self.peek().filter(|&ch| is_non_escape_character(ch)) {
             self.advance();
@@ -271,16 +287,16 @@ impl Parser {
     fn parse_legacy_octal_escape_sequence(&mut self) -> Option<u32> {
         if let Some(first) = self.consume_octal_digit() {
             // 0 [lookahead ∈ { 8, 9 }]
-            if first == 0 && self.peek().as_ref().is_some_and(|&ch| !matches!(ch, '8' | '9')) {
+            if first == 0 && self.peek().as_ref().is_some_and(|&ch| matches!(ch, '8' | '9')) {
                 return Some(first);
             }
 
             if let Some(second) = self.consume_octal_digit() {
-                if let Some(third) = self.consume_octal_digit() {
-                    // ZeroToThree OctalDigit OctalDigit
-                    if first <= 3 {
-                        return Some(first * 64 + second * 8 + third);
-                    }
+                // FourToSeven permits only two digits; leave a third for the next character.
+                if first <= 3
+                    && let Some(third) = self.consume_octal_digit()
+                {
+                    return Some(first * 64 + second * 8 + third);
                 }
 
                 // ZeroToThree OctalDigit [lookahead ∉ OctalDigit]
@@ -369,38 +385,17 @@ impl Parser {
     //   <PS>
     //   <CR> <LF>
     // ```
-    fn parse_line_terminator_sequence(&mut self) -> Option<u32> {
-        let checkpoint = self.checkpoint();
-
-        if self.eat('\\') {
-            if self.peek() == Some(LF) {
-                self.advance();
-                return Some(LF as u32);
-            }
-            if self.peek() == Some(CR) && self.peek2() != Some(LF) {
-                self.advance();
-                return Some(CR as u32);
-            }
-            if self.peek() == Some(LS) {
-                self.advance();
-                return Some(LS as u32);
-            }
-            if self.peek() == Some(PS) {
-                self.advance();
-                return Some(PS as u32);
-            }
-            // NOTE: CR+LF can not represent as a single code point.
-            // I don't know the best way to handle this.
-            // To distinguish this from CR and LF, structural change is needed...
-            if self.peek() == Some(CR) && self.peek2() == Some(LF) {
-                self.advance();
-                self.advance();
-                return Some(LF as u32);
-            }
+    fn parse_line_continuation(&mut self) -> bool {
+        if self.peek() != Some('\\') || !self.peek2().is_some_and(is_line_terminator) {
+            return false;
         }
-
-        self.rewind(checkpoint);
-        None
+        self.advance(); // backslash
+        let terminator = self.peek();
+        self.advance();
+        if terminator == Some(CR) {
+            self.eat(LF);
+        }
+        true
     }
 
     // ---

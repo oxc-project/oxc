@@ -61,6 +61,7 @@ declare_oxc_lint!(
     NoUnreachable,
     eslint,
     correctness,
+    recommended,
     version = "0.4.4",
     short_description = "Disallow unreachable code after `return`, `throw`, `continue`, and `break` statements.",
 );
@@ -301,6 +302,12 @@ fn test() {
             return 'Hello, tsdown!';
         }
         ",
+        "function f() { for (;;) { B: { break; } } return 'ok'; }",
+        "function f() { for (;;) { B: { break B; } return 'ok'; } }",
+        "function f() { for (;;) { B: C: { continue; } } }",
+        "function f() { do { continue; } while (condition); after(); }",
+        "function f() { a: b: do { while (other) { continue a; } } while (condition); after(); }",
+        "function q3() { var n = 0; a: b: c: do { n++; continue b; } while (n < 3); return n; }",
     ];
 
     let fail = vec![
@@ -374,6 +381,8 @@ fn test() {
         }
         ",
         "function foo() { while (true) { return ''; } return ''; }",
+        "function f() { for (;;) { B: { break; } throw 1; } return \"ok\"; }",
+        "function f(x) { switch (x) { default: B: { break; } throw 1; } return \"ok\"; }",
     ];
 
     Tester::new(NoUnreachable::NAME, NoUnreachable::PLUGIN, pass, fail).test_and_snapshot();

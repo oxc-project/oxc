@@ -11,5 +11,7 @@
   { "cwd": "quote_type", "args": ["test.js"] },
   { "cwd": "empty", "args": ["test.js"] },
   { "cwd": "nested_cwd/sub", "args": ["--check", "."] },
-  { "cwd": "unset_in_root", "args": ["test.js", "test.ts"] }
+  { "cwd": "unset_in_root", "args": ["test.js", "test.ts"] },
+  { "cwd": "indent_size_only", "args": ["test.js"] },
+  { "cwd": "out_of_range", "args": ["test.js"] }
 ]

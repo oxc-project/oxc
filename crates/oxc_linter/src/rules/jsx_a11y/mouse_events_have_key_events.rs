@@ -76,6 +76,7 @@ declare_oxc_lint!(
     MouseEventsHaveKeyEvents,
     jsx_a11y,
     correctness,
+    recommended,
     config = MouseEventsHaveKeyEventsConfig,
     version = "0.1.1",
     short_description = "Enforce `onMouseOver`/`onMouseOut` are accompanied by `onFocus`/`onBlur`.",

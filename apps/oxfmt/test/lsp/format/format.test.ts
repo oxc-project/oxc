@@ -32,6 +32,7 @@ describe("LSP formatting", () => {
       ["config-vue-indent/test.vue", "vue"],
       ["config-svelte/test.svelte", "svelte"],
       ["config-astro/test.astro", "astro"],
+      ["config-associations/test.html", "html"],
       ["config-sort-imports/test.js", "javascript"],
       ["config-sort-tailwindcss/test.tsx", "typescriptreact"],
       ["config-sort-tailwindcss/test.vue", "vue"],
@@ -111,6 +112,8 @@ describe("LSP formatting", () => {
       ["untitled://Untitled-4", "format/test.toml", "toml"],
       ["untitled://Untitled-5", "format/formatted.ts", "typescript"],
       ["untitled://Untitled-6", "format/test.txt", "plaintext"],
+      // `associations` (`**/*.html` as Angular) do not apply, the `languageId` decides
+      ["untitled://Untitled-7", "config-associations/test.html", "html"],
       // with path
       ["vscode-userdata:/c%3A/Users/User/settings.json", "format/test.tsx", "typescriptreact"],
     ])("should format uri %s", async (uri, path, languageId) => {

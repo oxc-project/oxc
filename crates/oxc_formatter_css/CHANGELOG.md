@@ -4,6 +4,64 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.0] - 2026-11-06
+
+### 🐛 Bug Fixes
+
+- 94fbef5 formatter_css: Treat comments in `style` attr as fill items (#28832) (leaysgur)
+- e4a80f7 formatter_css: Normalize selectors inside `:deep`, `:slotted` and `:local` (#28805) (leaysgur)
+
+## [0.76.0] - 2026-11-02
+
+### 💥 BREAKING CHANGES
+
+- 296623d oxfmt: [**BREAKING**] Format `parser:html` files by `oxc_formatter_htmlish` (#28273) (Yuji Sugiura)
+
+### ⚡ Performance
+
+- 633ee96 formatter_css: Use `u32` spans (#28708) (leaysgur)
+- ff7c203 formatter_css: Avoid repeated scans and allocations in values (#28706) (leaysgur)
+
+### 📚 Documentation
+
+- 01ed68a oxfmt,formatter_htmlish,formatter: Clean up behavior comments (#28384) (Yuji Sugiura)
+- a363c27 formatter_css,formatter_yaml: Point parser citations at AGENTS.md (#28466) (Yuji Sugiura)
+
+## [0.75.0] - 2026-10-27
+
+### ⚡ Performance
+
+- 7948f0b formatter_core: Shrink `FormatElement` to 16B (#28012) (leaysgur)
+
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 81c75e7 formatter/css: Keep glued css-in-js statement placeholders glued (#27814) (leaysgur)
+- 5b2acb0 formatter_core: Report error position releative to CRLF source (#27777) (leaysgur)
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+
+### ⚡ Performance
+
+- e5fdc9c formatter_core: Write into one element stack through a concrete `Formatter` (#27559) (leaysgur)
+
+## [0.73.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- c2e6d5f formatter_toml: [**BREAKING**] Add `oxc_formatter_toml` crate wrapping `oxc-toml` (#27365) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 76ec31b formatter_css: Support css-in-js placeholders in property names and conditions (#27640) (leaysgur)
+- 99bb268 formatter_css: Keep css-in-js placeholder as media type (#27639) (leaysgur)
+- 372849e formatter: Fix crash on css-in-js comment containing interpolation (#27638) (leaysgur)
+- d730fdd formatter_core: Leave blank frontmatter without dispatcher (#27359) (leaysgur)
+
+### 📚 Documentation
+
+- 4a28c91 formatter_css: Clarify `missed-semicolon-accepted` divergence (#27433) (leaysgur)
+
 ## [0.72.0] - 2026-10-05
 
 ### 💥 BREAKING CHANGES

@@ -10,7 +10,7 @@ use oxc::{
     allocator::Allocator,
     codegen::Codegen,
     diagnostics::{Diagnostics, NamedSource},
-    parser::Parser,
+    parser::{ParseOptions, Parser},
     span::{SourceType, Span},
 };
 
@@ -33,6 +33,7 @@ pub struct CompilerSettings {
     pub targets: Vec<String>,
     pub strict: Vec<bool>,
     pub check_js: Vec<bool>,
+    pub erasable_syntax_only: Vec<bool>,
     pub jsx: Vec<String>, // 'react', 'preserve'
     pub declaration: bool,
     pub emit_declaration_only: bool,
@@ -53,6 +54,10 @@ impl CompilerSettings {
             targets: Self::split_value_options(options.get("target")),
             strict: Self::split_boolean_options(options.get("strict"), false),
             check_js: Self::split_boolean_options(options.get("checkjs"), false),
+            erasable_syntax_only: Self::split_boolean_options(
+                options.get("erasablesyntaxonly"),
+                false,
+            ),
             jsx: Self::split_value_options(options.get("jsx")),
             declaration: Self::value_to_boolean(options.get("declaration"), false),
             emit_declaration_only: Self::value_to_boolean(
@@ -368,6 +373,7 @@ impl TestCaseContent {
         if options.check_js.len() > 1 && options.check_js.contains(&true) {
             suffixes.push(vec!["checkjs=true".to_string()]);
         }
+        suffixes.extend(create_suffixes("erasablesyntaxonly", &options.erasable_syntax_only));
         suffixes
             .extend(create_suffixes("experimentaldecorators", &options.experimental_decorators));
         suffixes.extend(create_suffixes("jsx", &options.jsx));
@@ -441,7 +447,9 @@ impl Baseline {
     pub fn print_oxc(&mut self) {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(Path::new(&self.name)).unwrap_or_default();
-        let ret = Parser::new(&allocator, &self.original, source_type).parse();
+        let ret = Parser::new(&allocator, &self.original, source_type)
+            .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
+            .parse();
         let printed = Codegen::new().build(&ret.program).code;
         self.oxc_printed = printed;
     }

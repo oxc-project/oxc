@@ -5,10 +5,28 @@ use super::{
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
+static NOT_REGULAR_WHITESPACE_TABLE: SafeByteMatchTable =
+    safe_byte_match_table!(|b| !matches!(b, b' ' | b'\t'));
+
 static NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| !matches!(b, b' ' | b'\t' | b'\r' | b'\n'));
 
 impl<C: Config> Lexer<'_, C> {
+    pub(super) fn whitespace_handler(&mut self) -> Kind {
+        // Single spaces between tokens are consumed directly by `read_next_token`.
+        // Scan additional spaces and tabs in one pass to avoid repeated token-loop
+        // checks, token-start updates, and indirect byte-handler calls.
+        // Leave line breaks and irregular whitespace to their handlers, which
+        // update newline state and record trivia.
+        byte_search! {
+            lexer: self,
+            table: NOT_REGULAR_WHITESPACE_TABLE,
+            handle_eof: 0,
+        };
+
+        Kind::Skip
+    }
+
     pub(super) fn line_break_handler(&mut self) -> Kind {
         self.token.set_is_on_new_line(true);
         self.trivia_builder.handle_newline();

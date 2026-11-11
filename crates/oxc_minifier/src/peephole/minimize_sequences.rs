@@ -1,6 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::{Expression, SequenceExpression};
-use oxc_span::GetSpan;
+use oxc_span::Span;
 
 use crate::TraverseCtx;
 
@@ -9,6 +9,7 @@ use super::PeepholeOptimizations;
 impl<'a> PeepholeOptimizations {
     /// Joins two expressions into a sequence, preserving evaluation order.
     pub fn join_sequence(
+        span: Span,
         a: Expression<'a>,
         b: Expression<'a>,
         ctx: &TraverseCtx<'a>,
@@ -16,9 +17,9 @@ impl<'a> PeepholeOptimizations {
         if let Expression::SequenceExpression(mut sequence_expr) = a {
             // `(a, b); c`
             sequence_expr.expressions.push(b);
+            sequence_expr.span = span;
             return Expression::SequenceExpression(sequence_expr);
         }
-        let span = a.span();
         let exprs = if let Expression::SequenceExpression(sequence_expr) = b {
             // `a; (b, c)`
             ArenaVec::from_iter_in(std::iter::once(a).chain(sequence_expr.unbox().expressions), ctx)

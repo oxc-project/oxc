@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 📚 Documentation
+
+- 8d30d9b traverse: Clarify ancestor access during traversal (#29074) (camc314)
+
+## [0.154.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- 7e6a050 semantic: Visit `TSMethodSignature` computed method keys in enclosing scope (#27357) (camc314)
+
 ## [0.149.0] - 2026-09-07
 
 ### 💥 BREAKING CHANGES

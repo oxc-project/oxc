@@ -1,0 +1,21 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/lint-reports-todo-from-reactive-scope-passes.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[PruneHoistedContexts] Rewrite hoisted function references", labels: [LabeledSpan { label: None, span: Span { start: 236, end: 239 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+
+// @outputMode:"lint" @panicThreshold:"none"
+import { Stringify } from "shared-runtime";
+// Lint reports the Todo that a pass after validation records for the hoisted
+// function reference.
+function Foo() {
+	function foo() {
+		return bar();
+	}
+	function bar() {
+		return 42;
+	}
+	return <Stringify fn1={foo} fn2={bar} />;
+}

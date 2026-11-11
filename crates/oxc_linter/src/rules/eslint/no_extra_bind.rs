@@ -74,12 +74,7 @@ impl Rule for NoExtraBind {
             return;
         }
 
-        let expr = call_expr.callee.get_inner_expression();
-
-        let Some(member_expr) = (match expr {
-            Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
-            _ => expr.as_member_expression(),
-        }) else {
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
             return;
         };
         let Some((span, _)) = member_expr.static_property_info() else {

@@ -1,9 +1,9 @@
 use oxc_ast::ast::{Comment, Declaration, ExportDefaultDeclarationKind, Expression, Statement};
-use oxc_formatter_core::{Buffer, Format};
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::{
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     formatter::{
         JsFormatContext, JsFormatter, JsFormatterExt as _,
         trivia::{FormatTrailingComments, format_leading_comments},
@@ -17,7 +17,7 @@ use crate::{
 };
 
 use super::{
-    function::function_content_end, import_declaration::module_source_end,
+    format_with, function::function_content_end, import_declaration::module_source_end,
     write_leading_comments_with_asi_guard,
 };
 
@@ -60,6 +60,16 @@ pub fn trailing_comments_to_move_behind_semicolon<'a>(
     {
         return None;
     }
+    end_of_line_comments_behind_semicolon(f, content_end)
+}
+
+/// The same-line comments after `content_end` that move behind a semicolon,
+/// `None` for a trailing suppression comment, which stays visible to the content so it keeps its text.
+fn end_of_line_comments_behind_semicolon<'a>(
+    f: &JsFormatter<'_, 'a>,
+    content_end: u32,
+) -> Option<&'a [Comment]> {
+    let comments = f.context().comments();
     let trailing_comments = comments.end_of_line_comments_after(content_end);
     if trailing_comments.iter().any(|comment| comments.is_suppression_comment(comment)) {
         return None;
@@ -187,7 +197,7 @@ fn arrow_body_keeps_trailing_comment_inside_parens(body: &Expression<'_>) -> boo
 /// only a sequence keeps its parens as an assignment's right-hand side.
 pub fn write_trailing_comments_inside_parens<'a>(
     f: &mut JsFormatter<'_, 'a>,
-    parent: &AstNodes<'a>,
+    parent: &AstNodes<'_, 'a>,
     node_end: u32,
     is_sequence: bool,
 ) {
@@ -246,10 +256,23 @@ where
     T: Format<'a, JsFormatContext<'a>>,
 {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let Some(trailing_comments) =
+        // The separator an embedded program writes (`TopLevelSemicolons::Separated`) is this statement's `;`,
+        // with or without a source one
+        let separator = f.context_mut().take_separator_at(self.node_end);
+        let semicolon = format_with(|f| {
+            if separator {
+                write!(f, ";");
+            } else {
+                write!(f, OptionalSemicolon);
+            }
+        });
+        let trailing_comments = if separator {
+            end_of_line_comments_behind_semicolon(f, self.content_end)
+        } else {
             trailing_comments_to_move_behind_semicolon(f, self.content_end, self.node_end)
-        else {
-            write!(f, [self.content, OptionalSemicolon]);
+        };
+        let Some(trailing_comments) = trailing_comments else {
+            write!(f, [self.content, semicolon]);
             return;
         };
 
@@ -257,7 +280,7 @@ where
         // So they are not printed before the semicolon.
         format_content_without_comments_after(self.content, self.content_end, f);
 
-        write!(f, [OptionalSemicolon, FormatTrailingComments::Comments(trailing_comments)]);
+        write!(f, [semicolon, FormatTrailingComments::Comments(trailing_comments)]);
     }
 }
 
@@ -271,7 +294,7 @@ where
 /// own-line ones are left for the next node's leading pass;
 /// the caller (the generated `Statement` fmt) prints the trailing comments.
 pub fn write_suppressed_statement<'a>(
-    stmt: &AstNode<'a, Statement<'a>>,
+    stmt: &AstNode<'_, 'a, Statement<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let span = statement_span(stmt.as_ref());
@@ -279,10 +302,12 @@ pub fn write_suppressed_statement<'a>(
     {
         return false;
     }
-    match stmt.as_ast_nodes() {
+    match &stmt.as_kind() {
         // The `semi: false` ASI guard goes before a leading type cast comment, verbatim or not:
         // Prettier's `printIgnored` puts it after and breaks the cast (DIVERGENCES.md#suppressed-cast-comment-asi-guard)
-        AstNodes::ExpressionStatement(stmt) => write_leading_comments_with_asi_guard(stmt, true, f),
+        AstNodeKind::ExpressionStatement(stmt) => {
+            write_leading_comments_with_asi_guard(stmt, true, f);
+        }
         _ => format_leading_comments(span).fmt(f),
     }
     if write_suppressed_content(span, suppressed_statement_content_end(stmt.as_ref(), f), f) {

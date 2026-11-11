@@ -3,9 +3,8 @@ use oxc_css_parser::{ParserBuilder, ParserOptions, TemplatePlaceholder, ast::Sty
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, InputKind,
-    VecBuffer,
-    builders::{empty_line, hard_line_break, text},
+    Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter, InputKind,
+    builders::{empty_line, hard_line_break, soft_block_indent, text},
     spec::{FrontMatter, blank_front_matter, parse_front_matter, split_bom},
     write,
 };
@@ -65,15 +64,14 @@ pub fn format_with_session<'a>(
     let ParsedCss { stylesheet, comments, source, has_bom, front_matter } =
         parse_for_format(session.allocator(), source_text, options, CssRoot::Stylesheet)?;
 
-    let context =
-        CssFormatContext::new(options, source, comments, /* template_placeholders */ false);
+    let context = CssFormatContext::new(options, source, comments, None);
     // A root `Document` owns a fresh Tailwind class scope
     let session = session.with_new_tailwind_scope();
     let mut state = FormatState::new_with_session(context, session.clone());
     // Pre-allocate: measured on 616 real-world files (bootstrap, vscode, saleor; css/scss/less),
     // 0.5x source bytes plus a 1024-element floor for tiny-file spikes avoids reallocation for 98% of the corpus.
     let capacity = (source.len() / 2).max(1024);
-    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
+    let mut buffer = Formatter::with_capacity(capacity, &mut state);
 
     write!(&mut buffer, FormatCssRoot { stylesheet: &stylesheet, has_bom, front_matter });
 
@@ -111,13 +109,17 @@ pub fn parse_for_format<'a>(
     options: CssFormatOptions,
     root: CssRoot,
 ) -> Result<ParsedCss<'a>, OxcDiagnostic> {
-    let (has_bom, source_text) = split_bom(source_text);
+    let (has_bom, stripped) = split_bom(source_text);
 
     // A document root owns front matter;
     // the session's dispatcher decides whether its body actually formats (`write_front_matter`).
-    let PreparedSource { source, parse_source, front_matter } =
-        prepare_source(allocator, source_text);
-    let (stylesheet, comments) = parse_stylesheet(allocator, parse_source, options, root)?;
+    let PreparedSource { source, parse_source, front_matter } = prepare_source(allocator, stripped);
+    let (stylesheet, comments) =
+        parse_stylesheet(allocator, parse_source, options, root).map_err(|mut err| {
+            oxc_formatter_core::restore_crlf_labels(&mut err.labels, stripped);
+            oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+            err
+        })?;
 
     Ok(ParsedCss { stylesheet, comments, source, has_bom, front_matter })
 }
@@ -129,8 +131,8 @@ pub fn parse_for_format<'a>(
 /// - allocates from the session's shared arena and `GroupId` space
 /// - emits neither a BOM nor the trailing newline
 /// - parses a fragment ([`CssRoot::Fragment`]), so root declarations are statements
-/// - `template_placeholders` enables the css-in-js parse mode ([`CssRoot::CssInJsTemplate`]);
-///   JSDoc / Markdown code blocks pass `false`
+/// - `embedded_in` is what the part is embedded in, for the parse mode and print rules that depend on it ([`CssEmbeddedIn`]);
+///   JSDoc / Markdown code blocks pass `None`
 ///
 /// `@apply` Tailwind classes go into the session's class scope (shared with the parent),
 /// the parent document owns the batch sort.
@@ -141,11 +143,15 @@ pub fn format_to_ir<'a>(
     session: &FormatSession<'a>,
     source_text: &str,
     options: CssFormatOptions,
-    template_placeholders: bool,
+    embedded_in: Option<CssEmbeddedIn>,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     // `FormatSession::dispatch` never hands a BOM-headed input to an embedded part,
     // so the BOM split inside `parse_for_format` is a no-op here.
-    let root = if template_placeholders { CssRoot::CssInJsTemplate } else { CssRoot::Fragment };
+    let root = if embedded_in == Some(CssEmbeddedIn::CssInJsTemplate) {
+        CssRoot::CssInJsTemplate
+    } else {
+        CssRoot::Fragment
+    };
     let ParsedCss { stylesheet, comments, source, front_matter, .. } =
         parse_for_format(session.allocator(), source_text, options, root)?;
     if front_matter.is_some() && !session.input_kind().owns_front_matter() {
@@ -156,13 +162,23 @@ pub fn format_to_ir<'a>(
         ));
     }
 
-    let context = CssFormatContext::new(options, source, comments, template_placeholders);
+    let context = CssFormatContext::new(options, source, comments, embedded_in);
     let mut state = FormatState::new_with_session(context, session.clone());
-    let mut buffer = VecBuffer::new(&mut state);
+    let mut buffer = Formatter::new(&mut state);
 
     write!(&mut buffer, FormatCssEmbedded { stylesheet: &stylesheet, front_matter });
 
     Ok(EmbeddedIr { ir: buffer.into_vec() })
+}
+
+/// What an embedded CSS part is embedded in (the host translates the parent's request into this).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CssEmbeddedIn {
+    /// A css-in-js template: SCSS grammar with `${}` placeholder markers ([`CssRoot::CssInJsTemplate`]).
+    CssInJsTemplate,
+    /// An HTML `style` attribute's value: its declarations print on one line when they fit,
+    /// the last `;` only when they do not.
+    HtmlStyleAttribute,
 }
 
 /// What a CSS source is parsed as.
@@ -251,7 +267,7 @@ fn parse_stylesheet<'a>(
 
     let comments: &'a [CssComment] = ArenaVec::from_iter_in(
         parser.comments().iter().map(|c| CssComment {
-            span: to_span(&c.span),
+            span: to_span(c.span),
             inline: matches!(c.kind, oxc_css_parser::token::CommentKind::Line),
         }),
         &allocator,
@@ -262,14 +278,11 @@ fn parse_stylesheet<'a>(
 }
 
 fn to_diagnostic(error: &oxc_css_parser::error::Error) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Syntax error: {}", error.kind)).with_label(to_span(&error.span))
+    OxcDiagnostic::error(format!("Syntax error: {}", error.kind)).with_label(to_span(error.span))
 }
 
-pub fn to_span(span: &oxc_css_parser::Span) -> Span {
-    Span::new(
-        u32::try_from(span.start).unwrap_or(u32::MAX),
-        u32::try_from(span.end).unwrap_or(u32::MAX),
-    )
+pub fn to_span(span: oxc_css_parser::Span) -> Span {
+    Span::new(span.start, span.end)
 }
 
 fn write_front_matter<'a>(fm: &FrontMatter<'a>, f: &mut CssFormatter<'_, 'a>) {
@@ -318,7 +331,7 @@ impl<'a> Format<'a, CssFormatContext<'a>> for FormatCssRoot<'_, 'a> {
 
 /// Emits the stylesheet only; no BOM, no final newline
 /// (front matter still prints for a `VirtualDocument`, whose complete-document envelope the host hands over;
-/// the surrounding layout stays the host's).
+/// the surrounding layout stays the host's, but a `style` attribute's, laid out here: the host only quotes it).
 struct FormatCssEmbedded<'b, 'a> {
     stylesheet: &'b Stylesheet<'a>,
     front_matter: Option<FrontMatter<'a>>,
@@ -326,6 +339,15 @@ struct FormatCssEmbedded<'b, 'a> {
 
 impl<'a> Format<'a, CssFormatContext<'a>> for FormatCssEmbedded<'_, 'a> {
     fn fmt(&self, f: &mut CssFormatter<'_, 'a>) {
+        // A `style` attribute's declarations go on their own indented lines when they break
+        if f.context().is_style_attribute() {
+            if has_content(self.stylesheet, f) {
+                let stylesheet =
+                    print::format_with(|f| print::write_stylesheet(self.stylesheet, f));
+                write!(f, soft_block_indent(&stylesheet));
+            }
+            return;
+        }
         if let Some(fm) = &self.front_matter {
             let has_content = has_content(self.stylesheet, f);
             write_front_matter(fm, f);

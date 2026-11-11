@@ -64,6 +64,7 @@ declare_oxc_lint!(
     NoArrayReverse,
     unicorn,
     suspicious,
+    recommended,
     suggestion,
     config = NoArrayReverse,
     version = "1.15.0",

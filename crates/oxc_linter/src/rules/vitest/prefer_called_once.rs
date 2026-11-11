@@ -1,10 +1,11 @@
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     utils::{PossibleJestNode, parse_expect_jest_fn_call},
 };
@@ -62,24 +63,27 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferCalledOnce {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &crate::utils::PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        Self::run(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        Self::run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
 impl PreferCalledOnce {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
-
+    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
-        let Some(parsed_expect) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
+        let Some(parsed_expect) = parse_expect_jest_fn_call(call_expr, &possible_jest_node, ctx)
         else {
             return;
         };
@@ -101,18 +105,17 @@ impl PreferCalledOnce {
         };
 
         if called_times_value.raw.is_some_and(|value| value.as_ref() == "1") {
-            let new_matcher_name = {
-                let span_matcher_without_suffix =
-                    Span::new(matcher_to_be_fixed.span.start, matcher_to_be_fixed.span.end - 5);
-
-                format!("{}Once", ctx.source_range(span_matcher_without_suffix))
+            let new_matcher_name = if matcher_to_be_fixed.is_name_equal("toBeCalledTimes") {
+                "toBeCalledOnce"
+            } else {
+                "toHaveBeenCalledOnce"
             };
 
             let matcher_and_args_span =
                 Span::new(matcher_to_be_fixed.span.start, call_expr.span.end);
 
             ctx.diagnostic_with_fix(
-                prefer_called_once_diagnostic(matcher_and_args_span, new_matcher_name.as_ref()),
+                prefer_called_once_diagnostic(matcher_and_args_span, new_matcher_name),
                 |fixer| {
                     let argument_without_parenthesis_span = ctx
                         .find_next_token_within(
@@ -128,7 +131,13 @@ impl PreferCalledOnce {
                     let multi_fix = fixer.for_multifix();
                     let mut fixes = multi_fix.new_fix_with_capacity(number_of_fixes);
 
-                    fixes.push(fixer.replace(matcher_to_be_fixed.span, new_matcher_name));
+                    let matcher_span = if matcher_to_be_fixed.element.is_string_literal() {
+                        matcher_to_be_fixed.span.shrink(1)
+                    } else {
+                        matcher_to_be_fixed.span
+                    };
+
+                    fixes.push(fixer.replace(matcher_span, new_matcher_name));
                     fixes.push(fixer.delete(&called_times_value.span));
 
                     if let Some(comma_span) = argument_without_parenthesis_span {
@@ -140,6 +149,54 @@ impl PreferCalledOnce {
             );
         }
     }
+}
+
+#[test]
+fn test_escaped_matchers() {
+    use crate::tester::Tester;
+
+    let mut fix: Vec<(String, String)> = vec![
+        ("expect(fn).toBeCalled\\u0054imes(1);".into(), "expect(fn).toBeCalledOnce();".into()),
+        (
+            "expect(fn).toHaveBeenCalled\\u0054imes(1);".into(),
+            "expect(fn).toHaveBeenCalledOnce();".into(),
+        ),
+    ];
+
+    for (matcher_prefix, replacement) in
+        [("toBeCalled", "toBeCalledOnce"), ("toHaveBeenCalled", "toHaveBeenCalledOnce")]
+    {
+        for quote in ['\'', '"', '`'] {
+            for suffix in [
+                "Times",
+                "Tim\\\u{2028}es",
+                "Tim\\\u{2029}es",
+                "Tim\\\nes",
+                "Tim\\\r\nes",
+                "\\u0054imes",
+                "\\x54imes",
+            ] {
+                fix.push((
+                    format!("expect(fn)[{quote}{matcher_prefix}{suffix}{quote}](1);"),
+                    format!("expect(fn)[{quote}{replacement}{quote}]();"),
+                ));
+            }
+        }
+    }
+
+    let mut pass = vec![
+        "expect(fn)['toBeCalledTimes'](2);".to_owned(),
+        "expect(fn)['toHaveBeenCalledTimes'](1, 2);".to_owned(),
+        "expect(fn)[`toBeCalledTimes${suffix()}`](1);".to_owned(),
+        "expect(fn)[matcher](1);".to_owned(),
+    ];
+    pass.extend(fix.iter().map(|(_, expected)| expected.clone()));
+    let fail = fix.iter().map(|(source, _)| source.clone()).collect();
+
+    Tester::new(PreferCalledOnce::NAME, PreferCalledOnce::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .with_vitest_plugin(true)
+        .test();
 }
 
 #[test]

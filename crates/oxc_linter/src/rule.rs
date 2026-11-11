@@ -2,6 +2,7 @@
 use std::borrow::Cow;
 use std::{fmt, hash::Hash};
 
+use bitflags::bitflags;
 use schemars::{
     JsonSchema, SchemaGenerator,
     schema::{InstanceType, Schema, SchemaObject},
@@ -13,7 +14,6 @@ use oxc_semantic::AstTypesBitset;
 use crate::{
     AstNode, FixKind,
     context::{ContextHost, LintContext},
-    utils::PossibleJestNode,
 };
 
 pub trait Rule: Sized + Default + fmt::Debug {
@@ -48,18 +48,6 @@ pub trait Rule: Sized + Default + fmt::Debug {
     #[expect(unused_variables)]
     #[inline]
     fn run_once(&self, ctx: &LintContext) {}
-
-    /// Run on each Jest node (e.g. `it`, `describe`, `test`, `expect`, etc.).
-    /// This is only called if the Jest plugin is enabled and the file is a test file.
-    /// It should be used to run rules that are specific to Jest or Vitest.
-    #[expect(unused_variables)]
-    #[inline]
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-    }
 
     /// Check if a rule should be run at all.
     ///
@@ -399,8 +387,6 @@ pub enum RuleRunFunctionsImplemented {
     Run,
     /// Only `run_once` is implemented
     RunOnce,
-    /// Only `run_on_jest_node` is implemented
-    RunOnJestNode,
 }
 
 impl RuleRunFunctionsImplemented {
@@ -411,10 +397,6 @@ impl RuleRunFunctionsImplemented {
     pub fn is_run_once_implemented(self) -> bool {
         matches!(self, Self::RunOnce | Self::Unknown)
     }
-
-    pub fn is_run_on_jest_node_implemented(self) -> bool {
-        matches!(self, Self::RunOnJestNode | Self::Unknown)
-    }
 }
 
 pub trait RuleMeta {
@@ -424,7 +406,10 @@ pub trait RuleMeta {
 
     const CATEGORY: RuleCategory;
 
-    const IS_TSGOLINT_RULE: bool = false;
+    /// Flags describing this rule's capabilities.
+    ///
+    /// Set by `declare_oxc_lint!` based on the rule's declaration.
+    const FLAGS: RuleFlags = RuleFlags::empty();
 
     /// What kind of auto-fixing can this rule do?
     const FIX: RuleFixMeta = RuleFixMeta::None;
@@ -438,12 +423,6 @@ pub trait RuleMeta {
         None
     }
 
-    /// Whether this rule declares a configuration struct in `declare_oxc_lint!`.
-    ///
-    /// Defaults to `false`. Rules that accept configuration options will have
-    /// this set to `true` by the macro-generated impl.
-    const HAS_CONFIG: bool = false;
-
     /// The version of oxlint in which this rule was first available.
     ///
     /// Set via `version = "x.y.z"` or `version = "next"` in `declare_oxc_lint!`.
@@ -453,6 +432,19 @@ pub trait RuleMeta {
     ///
     /// Set via `short_description = "..."` in `declare_oxc_lint!`.
     const INFO: RuleInfo = RuleInfo { short_description: "" };
+}
+
+bitflags! {
+    /// Flags describing a lint rule's capabilities.
+    #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct RuleFlags: u8 {
+        /// Whether this rule is exposed to the tsgolint integration.
+        const IS_TSGOLINT_RULE = 1 << 0;
+        /// Whether this rule declares a configuration type in `declare_oxc_lint!`.
+        const HAS_CONFIG = 1 << 1;
+        /// Whether this rule is recommended.
+        const IS_RECOMMENDED = 1 << 2;
+    }
 }
 
 /// Additional information describing a lint rule.
@@ -661,10 +653,12 @@ impl From<RuleFixMeta> for FixKind {
 
 #[cfg(test)]
 mod test {
+
     use crate::{
         RuleMeta, RuleRunner,
         rule::{DefaultRuleConfig, TupleRuleConfig},
     };
+    use oxc_ast::AstType;
 
     use super::RuleCategory;
     use rustc_hash::FxHashMap;
@@ -761,6 +755,10 @@ mod test {
         assert_rule_runs_on_node_types(
             &unicorn::consistent_assert::ConsistentAssert,
             &[ImportDeclaration],
+        );
+        assert_rule_runs_on_node_types(
+            &unicorn::prefer_string_replace_all::PreferStringReplaceAll,
+            &[CallExpression, VariableDeclarator],
         );
         assert_rule_runs_on_node_types(
             &promise::always_return::AlwaysReturn::default(),
@@ -947,10 +945,7 @@ mod test {
         assert_eq!(de.into_inner(), *expected);
     }
 
-    fn assert_rule_runs_on_node_types<R: RuleMeta + RuleRunner>(
-        rule: &R,
-        node_types: &[oxc_ast::AstType],
-    ) {
+    fn assert_rule_runs_on_node_types<R: RuleMeta + RuleRunner>(rule: &R, node_types: &[AstType]) {
         let types = rule.types_info();
         assert!(types.is_some(), "{}: NODE_TYPES is None", R::NAME);
         let types = types.unwrap();

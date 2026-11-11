@@ -8,24 +8,32 @@ use std::sync::{Arc, OnceLock};
 
 use tracing::{debug, debug_span};
 
-use oxc_formatter::{CssInJsTemplate, JsEmbeddedIn, JsFormatOptions, MarkdownInJsTemplate};
+use oxc_formatter::{
+    CssInJsTemplate, ExpressionLayout, ExpressionRoot, HtmlInJsTemplate, JsEmbeddedIn,
+    JsFormatOptions, JsRoot, MarkdownInJsTemplate, ProgramLayout, ProgramSemicolons,
+};
 use oxc_formatter_core::{
     DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher, FormatSession,
 };
 use oxc_formatter_core::{FormatOptions, PrinterOptions};
-use oxc_formatter_css::{CssFormatOptions, CssVariant};
+use oxc_formatter_css::{CssEmbeddedIn, CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
+use oxc_formatter_htmlish::{
+    CssInHtmlStyleAttribute, HtmlishEmbeddedIn, HtmlishFormatOptions, HtmlishVariant,
+    JsInHtmlEventHandler, JsInVueTemplate,
+};
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_formatter_markdown::{MarkdownFormatOptions, XxxInMarkdownCodeBlock};
 use oxc_formatter_toml::TomlFormatOptions;
 use oxc_formatter_yaml::YamlFormatOptions;
 
+use super::jsdoc_fence::XxxInJsdocFence;
 use crate::core::{
     language::{Route, route_embedded},
     options::{
         ValidatedOptions, to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql,
-        to_oxc_formatter_json, to_oxc_formatter_markdown, to_oxc_formatter_toml,
-        to_oxc_formatter_yaml,
+        to_oxc_formatter_htmlish, to_oxc_formatter_json, to_oxc_formatter_markdown,
+        to_oxc_formatter_toml, to_oxc_formatter_yaml,
     },
     oxfmtrc::FormatConfig,
     support::{NativeLanguage, PrettierLanguage},
@@ -48,6 +56,9 @@ pub struct ResolvedDispatchConfig {
     /// sorted like the host's own imports (and a Vue `<script>`'s).
     validated: Arc<ValidatedOptions>,
     js: OnceLock<JsFormatOptions>,
+    /// [`Self::js`] without `sort_imports`, for a part that is no block's program (an attribute's value, an interpolation),
+    /// which holds no import.
+    js_fragment: OnceLock<JsFormatOptions>,
     graphql: OnceLock<GraphqlFormatOptions>,
     /// One cell per [`CssVariant`]: JSDoc fences dispatch css/scss/less as-is, while css-in-js always uses Scss.
     css: [OnceLock<CssFormatOptions>; 3],
@@ -56,13 +67,14 @@ pub struct ResolvedDispatchConfig {
     json: [OnceLock<JsonFormatOptions>; 4],
     markdown: OnceLock<MarkdownFormatOptions>,
     toml: OnceLock<TomlFormatOptions>,
+    htmlish: OnceLock<HtmlishFormatOptions>,
     /// The options handed to Prettier; see [`PrettierOptions`].
     #[cfg(feature = "napi")]
     prettier: PrettierOptions,
 }
 
 /// The lazily-built options JSON handed to Prettier (+ plugins),
-/// consumed by the Doc→IR / string paths and the Tailwind sorter.
+/// consumed by the Doc→IR path and the Tailwind sorter.
 /// `path` is an ingredient, not a sibling datum: it becomes the JSON's `filepath` at last
 /// (see [`crate::core::options::build_prettier_options`]).
 ///
@@ -84,12 +96,14 @@ impl ResolvedDispatchConfig {
             config,
             validated,
             js: OnceLock::new(),
+            js_fragment: OnceLock::new(),
             graphql: OnceLock::new(),
             css: [OnceLock::new(), OnceLock::new(), OnceLock::new()],
             yaml: OnceLock::new(),
             json: [OnceLock::new(), OnceLock::new(), OnceLock::new(), OnceLock::new()],
             markdown: OnceLock::new(),
             toml: OnceLock::new(),
+            htmlish: OnceLock::new(),
             #[cfg(feature = "napi")]
             prettier: PrettierOptions::default(),
         }
@@ -142,6 +156,14 @@ impl ResolvedDispatchConfig {
             .clone()
     }
 
+    /// Cloned once per fragment, so the import sorting options are left out:
+    /// a fragment has no import, and they are the costly part to clone.
+    pub fn js_fragment_options(&self) -> JsFormatOptions {
+        self.js_fragment
+            .get_or_init(|| to_oxc_formatter(&self.config, self.validated.core, None))
+            .clone()
+    }
+
     pub fn graphql_options(&self) -> GraphqlFormatOptions {
         *self.graphql.get_or_init(|| to_oxc_formatter_graphql(&self.config, self.validated.core))
     }
@@ -175,6 +197,13 @@ impl ResolvedDispatchConfig {
 
     pub fn toml_options(&self) -> TomlFormatOptions {
         *self.toml.get_or_init(|| to_oxc_formatter_toml(&self.config, self.validated.core))
+    }
+
+    pub fn htmlish_options(&self, variant: HtmlishVariant) -> HtmlishFormatOptions {
+        let options = self
+            .htmlish
+            .get_or_init(|| to_oxc_formatter_htmlish(&self.config, self.validated.core));
+        HtmlishFormatOptions { variant, ..options.clone() }
     }
 
     /// Printer options from the shared resolved core bundle;
@@ -226,17 +255,17 @@ impl ResolvedDispatchConfig {
 }
 
 /// Fallback invoked for [`Route::Prettier`] languages.
-/// Same shape as `FormatDispatcher` minus the request envelope
-/// (the Doc path consumes neither `input_kind` nor `parent_context` today;
+/// Same shape as `FormatDispatcher`, plus the routed language
+/// (the Doc path consumes `parent_context` only for angular-in-js's [`HtmlInJsTemplate`], not `input_kind`;
 /// re-examine if it ever serves envelope-bearing inputs).
 ///
 /// Assembled only in napi builds ([`super::prettier_doc`]);
 /// the pure Rust build passes `None` and these languages are deliberately preserved as-is.
 pub type PrettierDocFallback = Arc<
-    dyn for<'a> Fn(
+    dyn for<'a, 'r> Fn(
             &FormatSession<'a>,
             PrettierLanguage,
-            &str,
+            &DispatchRequest<'r>,
         ) -> Result<DispatchResponse<'a>, String>
         + Send
         + Sync,
@@ -255,14 +284,22 @@ pub fn build_dispatcher(
             Route::Native(language) => {
                 Ok(format_native(language.trace_label(), || match language {
                     NativeLanguage::Js(source_type) => {
-                        let embedded_in = request
-                            .parent_context_as::<XxxInMarkdownCodeBlock>()
-                            .map(|_| JsEmbeddedIn::MarkdownCodeBlock);
+                        let (root, embedded_in) = js_root_of(&request);
+                        // A block's program may hold imports to sort
+                        let options = if matches!(
+                            root,
+                            JsRoot::Program { layout: ProgramLayout::Bare, .. }
+                        ) {
+                            dispatch_config.js_options()
+                        } else {
+                            dispatch_config.js_fragment_options()
+                        };
                         oxc_formatter::format_to_ir(
                             session,
                             text,
                             source_type,
-                            dispatch_config.js_options(),
+                            options,
+                            root,
                             embedded_in,
                         )
                     }
@@ -274,17 +311,21 @@ pub fn build_dispatcher(
                     NativeLanguage::Css(variant) => {
                         // css-in-js (typed `CssInJsTemplate` context) is always parsed as SCSS with `${}` placeholder markers.
                         // Any other caller gets the strict standalone grammar with the fence/request language's variant.
-                        let (variant, template_placeholders) =
-                            if request.parent_context_as::<CssInJsTemplate>().is_some() {
-                                (CssVariant::Scss, true)
-                            } else {
-                                (variant, false)
-                            };
+                        let (variant, embedded_in) = if request
+                            .parent_context_as::<CssInJsTemplate>()
+                            .is_some()
+                        {
+                            (CssVariant::Scss, Some(CssEmbeddedIn::CssInJsTemplate))
+                        } else if request.parent_context_as::<CssInHtmlStyleAttribute>().is_some() {
+                            (variant, Some(CssEmbeddedIn::HtmlStyleAttribute))
+                        } else {
+                            (variant, None)
+                        };
                         oxc_formatter_css::format_to_ir(
                             session,
                             text,
                             dispatch_config.css_options(variant),
-                            template_placeholders,
+                            embedded_in,
                         )
                     }
                     NativeLanguage::Yaml => oxc_formatter_yaml::format_to_ir(
@@ -316,6 +357,26 @@ pub fn build_dispatcher(
                         text,
                         dispatch_config.toml_options(),
                     ),
+                    NativeLanguage::Html(variant) => {
+                        // Every part is embedded in its parent, but a JSDoc code block, formatted on its own
+                        let embedded_in =
+                            if let Some(c) = request.parent_context_as::<HtmlInJsTemplate>() {
+                                Some(HtmlishEmbeddedIn {
+                                    indent_multiple_roots: c.indent_multiple_roots,
+                                    placeholder: Some(c.placeholder),
+                                })
+                            } else if request.parent_context_as::<XxxInJsdocFence>().is_some() {
+                                None
+                            } else {
+                                Some(HtmlishEmbeddedIn::default())
+                            };
+                        oxc_formatter_htmlish::format_to_ir(
+                            session,
+                            text,
+                            dispatch_config.htmlish_options(variant),
+                            embedded_in,
+                        )
+                    }
                 }))
             }
 
@@ -323,7 +384,7 @@ pub fn build_dispatcher(
             // deliberate skip otherwise (pure build).
             Route::Prettier(language) => {
                 if let Some(fallback) = &fallback {
-                    fallback(session, language, text)
+                    fallback(session, language, &request)
                 } else {
                     debug!(
                         "No fallback for Prettier language '{}' in this build, part stays as-is",
@@ -342,6 +403,63 @@ pub fn build_dispatcher(
     })
 }
 
+/// What the JS a request carries is ([`JsRoot`]) and what it is embedded in ([`JsEmbeddedIn`]), from the parent's marker.
+fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
+    // An attribute's statements, on their own lines when they break
+    let in_attribute = |semicolons| JsRoot::Program { semicolons, layout: ProgramLayout::Indented };
+    let expression = |layout| ExpressionRoot {
+        layout,
+        tailwind_classes: false,
+        ends_at_double_brace: false,
+        reads_as_statements: false,
+        in_parens: false,
+    };
+    if let Some(&part) = request.parent_context_as::<JsInVueTemplate>() {
+        let root = match part {
+            JsInVueTemplate::Interpolation => JsRoot::Expression(ExpressionRoot {
+                ends_at_double_brace: true,
+                ..expression(ExpressionLayout::Bare)
+            }),
+            JsInVueTemplate::Binding { tailwind_classes } => JsRoot::Expression(ExpressionRoot {
+                tailwind_classes,
+                ..expression(ExpressionLayout::Hug { literals: true })
+            }),
+            JsInVueTemplate::Expression { tailwind_classes, in_parens } => {
+                JsRoot::Expression(ExpressionRoot {
+                    tailwind_classes,
+                    in_parens,
+                    ..expression(ExpressionLayout::Hug { literals: false })
+                })
+            }
+            JsInVueTemplate::HandlerExpression => JsRoot::Expression(ExpressionRoot {
+                reads_as_statements: true,
+                // `$event => (…)`
+                in_parens: true,
+                ..expression(ExpressionLayout::Hug { literals: false })
+            }),
+            JsInVueTemplate::ForSource => JsRoot::Expression(expression(ExpressionLayout::Group)),
+            JsInVueTemplate::Handler => in_attribute(ProgramSemicolons::MarksStatements),
+            JsInVueTemplate::ForAlias => JsRoot::FunctionParams { parens_when_many: true },
+            JsInVueTemplate::SlotProps => JsRoot::FunctionParams { parens_when_many: false },
+            JsInVueTemplate::ScriptGeneric => JsRoot::TypeParameters,
+        };
+        // Every one but an interpolation is a `"`-quoted attribute value
+        let in_html_attribute = part != JsInVueTemplate::Interpolation;
+        return (root, JsEmbeddedIn { in_html_attribute, inlines_code: true });
+    }
+    if request.parent_context_as::<JsInHtmlEventHandler>().is_some() {
+        let root = in_attribute(ProgramSemicolons::LoneExpressionOmitted);
+        return (root, JsEmbeddedIn { in_html_attribute: true, inlines_code: false });
+    }
+    let semicolons = if request.parent_context_as::<XxxInMarkdownCodeBlock>().is_some() {
+        ProgramSemicolons::LoneJsxOmitted
+    } else {
+        ProgramSemicolons::AsOptions
+    };
+    let root = JsRoot::Program { semicolons, layout: ProgramLayout::Bare };
+    (root, JsEmbeddedIn::default())
+}
+
 /// Runs one native branch: a parse failure is a deliberate skip
 /// (the embedded part stays as-is), never an operational error.
 fn format_native<'a, E: std::fmt::Display>(
@@ -349,7 +467,7 @@ fn format_native<'a, E: std::fmt::Display>(
     format_to_ir: impl FnOnce() -> Result<EmbeddedIr<'a>, E>,
 ) -> DispatchResponse<'a> {
     debug_span!("oxfmt::embed::format_to_ir", language).in_scope(|| match format_to_ir() {
-        Ok(embedded) => DispatchResponse::Formatted(embedded.into()),
+        Ok(embedded) => DispatchResponse::Formatted(embedded),
         Err(err) => {
             debug!("native '{language}' format_to_ir failed, part stays as-is: {err}");
             DispatchResponse::PreserveOriginal
@@ -418,6 +536,8 @@ mod tests {
             "markdown",
             "md",
             "toml",
+            "html",
+            "vue",
         ] {
             let text = match language {
                 "graphql" | "gql" => "{ a }",
@@ -425,6 +545,8 @@ mod tests {
                 "yaml" | "yml" => "a: 1",
                 "json" | "jsonc" | "json5" => "{ \"a\": 1 }",
                 "markdown" | "md" => "#  a",
+                "html" => "<p>  a  </p>",
+                "vue" => "<template><p>{{ a }}</p></template>",
                 _ => "a  =  1",
             };
             let response = session.dispatch(DispatchRequest {
@@ -476,7 +598,7 @@ mod tests {
             },
         );
 
-        for (language, text) in [("html", "<div></div>"), ("ini", "a = 1")] {
+        for (language, text) in [("mdx", "# a"), ("ini", "a = 1")] {
             let response = session.dispatch(DispatchRequest {
                 language,
                 text,

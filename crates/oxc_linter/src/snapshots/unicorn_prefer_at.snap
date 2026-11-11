@@ -268,30 +268,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
    ╭─[prefer_at.tsx:1:1]
- 1 │ array.slice(-1)[0]
-   · ──────────────────
-   ╰────
-  help: Use `.at()` for index access.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
-
-  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
-   ╭─[prefer_at.tsx:1:1]
- 1 │ array.slice(-1)[0]
-   · ──────────────────
-   ╰────
-  help: Use `.at()` for index access.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
-
-  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
-   ╭─[prefer_at.tsx:1:1]
- 1 │ array?.slice(-1)[0]
-   · ───────────────────
-   ╰────
-  help: Use `.at()` for index access.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
-
-  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
-   ╭─[prefer_at.tsx:1:1]
  1 │ array?.slice(-1)[0]
    · ───────────────────
    ╰────
@@ -324,31 +300,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
    ╭─[prefer_at.tsx:1:1]
- 1 │ array.slice(-1)[(( 0 ))];
-   · ────────────────────────
-   ╰────
-  help: Use `.at()` for index access.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
-
-  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
-   ╭─[prefer_at.tsx:1:1]
  1 │ array.slice(-(( 1 )))[0];
-   · ────────────────────────
-   ╰────
-  help: Use `.at()` for index access.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
-
-  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
-   ╭─[prefer_at.tsx:1:1]
- 1 │ array.slice(-(( 1 )))[0];
-   · ────────────────────────
-   ╰────
-  help: Use `.at()` for index access.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
-
-  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
-   ╭─[prefer_at.tsx:1:1]
- 1 │ array.slice((( -1 )))[0];
    · ────────────────────────
    ╰────
   help: Use `.at()` for index access.
@@ -374,22 +326,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_at.tsx:1:1]
  1 │ (( array )).slice(-1)[0];
    · ────────────────────────
-   ╰────
-  help: Use `.at()` for index access.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
-
-  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
-   ╭─[prefer_at.tsx:1:1]
- 1 │ (( array )).slice(-1)[0];
-   · ────────────────────────
-   ╰────
-  help: Use `.at()` for index access.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
-
-  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
-   ╭─[prefer_at.tsx:1:4]
- 1 │ (( array.slice(-1)[0] ));
-   ·    ──────────────────
    ╰────
   help: Use `.at()` for index access.
   note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
@@ -436,32 +372,8 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
    ╭─[prefer_at.tsx:1:1]
- 1 │ array.slice(-1)[0].pop().shift().slice(-1)
-   · ──────────────────
-   ╰────
-  help: Use `.at()` for index access.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
-
-  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
-   ╭─[prefer_at.tsx:1:1]
  1 │ array.slice(-9, -8)[0]
    · ──────────────────────
-   ╰────
-  help: Use `.at()` for index access.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
-
-  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
-   ╭─[prefer_at.tsx:1:1]
- 1 │ array.slice(-9, -8)[0]
-   · ──────────────────────
-   ╰────
-  help: Use `.at()` for index access.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
-
-  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
-   ╭─[prefer_at.tsx:1:1]
- 1 │ array.slice(-9, -0o10)[0]
-   · ─────────────────────────
    ╰────
   help: Use `.at()` for index access.
   note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
@@ -516,22 +428,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
    ╭─[prefer_at.tsx:1:1]
- 1 │ array.slice(-9, unknown)[0]
-   · ───────────────────────────
-   ╰────
-  help: Use `.at()` for index access.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
-
-  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
-   ╭─[prefer_at.tsx:1:1]
- 1 │ array.slice(-0o11, -7)[0]
-   · ─────────────────────────
-   ╰────
-  help: Use `.at()` for index access.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
-
-  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
-   ╭─[prefer_at.tsx:1:1]
  1 │ array.slice(-0o11, -7)[0]
    · ─────────────────────────
    ╰────
@@ -558,14 +454,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_at.tsx:1:4]
  1 │ (( (( array.slice( ((-9)), ((unknown)), ).shift ))() ));
    ·    ─────────────────────────────────────────────────
-   ╰────
-  help: Use `.at()` for index access.
-  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
-
-  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
-   ╭─[prefer_at.tsx:1:1]
- 1 │ array.slice(-9, (a, really, _really, complicated, second) => argument)[0]
-   · ─────────────────────────────────────────────────────────────────────────
    ╰────
   help: Use `.at()` for index access.
   note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
@@ -926,6 +814,70 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_at.tsx:1:13]
  1 │ result[0] = array[array.length - 1];
    ·             ───────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
+   ╭─[prefer_at.tsx:1:33]
+ 1 │ export function f(arr) { return arr.slice(-1)[0]; }
+   ·                                 ────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
+   ╭─[prefer_at.tsx:1:37]
+ 1 │ export function f(arr) { let k; k = arr.slice(-1)[0]; return k; }
+   ·                                     ────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
+   ╭─[prefer_at.tsx:1:10]
+ 1 │ result = array?.slice(-1)[0]
+   ·          ───────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
+   ╭─[prefer_at.tsx:1:11]
+ 1 │ result += array.slice(-1)[0]
+   ·           ──────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
+   ╭─[prefer_at.tsx:1:10]
+ 1 │ result = (array.slice(-1))[0]
+   ·          ────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
+   ╭─[prefer_at.tsx:1:10]
+ 1 │ result = array.slice(-2, -1)[0]
+   ·          ──────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
+   ╭─[prefer_at.tsx:1:7]
+ 1 │ ([a = array.slice(-1)[0]] = [])
+   ·       ──────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `slice()[0]`.
+   ╭─[prefer_at.tsx:1:10]
+ 1 │ ({a: b = array.slice(-1)[0]} = {})
+   ·          ──────────────────
    ╰────
   help: Use `.at()` for index access.
   note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at

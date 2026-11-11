@@ -79,7 +79,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut identifier_after_import: Option<BindingIdentifier<'_>> =
             if self.cur_kind().is_binding_identifier() {
                 // `import something ...`
-                Some(self.parse_binding_identifier())
+                Some(self.parse_known_binding_identifier())
             } else {
                 // `import ...`
                 None
@@ -115,7 +115,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else if kind.is_binding_identifier() {
                 // `import type something ...`
                 let token = self.cur_token();
-                let identifier_after_type = self.parse_binding_identifier();
+                let identifier_after_type = self.parse_known_binding_identifier();
                 if token.kind() == Kind::From && self.at(Kind::Str) {
                     // `import type from 'source'`
                     if token.escaped() {
@@ -167,7 +167,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     token_after_import.span(),
                 ));
                 // Parse the identifier as the default specifier to continue recovery
-                identifier_after_import = Some(self.parse_binding_identifier());
+                identifier_after_import = Some(self.parse_known_binding_identifier());
                 phase = Some(ImportPhase::Defer);
             }
             // else: `import defer from 'source'` - defer is the binding name, no phase
@@ -175,7 +175,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if self.cur_kind().is_binding_identifier() {
                 // `import source something ...`
                 let token = self.cur_token();
-                let identifier_after_source = self.parse_binding_identifier();
+                let identifier_after_source = self.parse_known_binding_identifier();
                 if token.kind() == Kind::From {
                     // `import source from ...`
                     if self.at(Kind::From) {
@@ -280,22 +280,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         default_specifier: Option<BindingIdentifier<'a>>,
         import_kind: ImportOrExportKind,
     ) -> ArenaVec<'a, ImportDeclarationSpecifier<'a>> {
-        // If there is a default specifier, create a Vec with the default specifier in it,
-        // otherwise, create an empty Vec.
-        let mut specifiers = if default_specifier.is_some() {
-            ArenaVec::with_capacity_in(1, self)
-        } else {
-            ArenaVec::new_in(self)
-        };
-
-        if let Some(default_specifier) = default_specifier {
+        let specifiers = if let Some(default_specifier) = default_specifier {
             let default_span = default_specifier.span;
             let specifier = ImportDeclarationSpecifier::new_import_default_specifier(
                 default_specifier.span,
                 default_specifier,
                 self,
             );
-            specifiers.push(specifier);
             if self.eat(Kind::Comma) {
                 match self.cur_kind() {
                     // import defaultExport, * as name from "module-name";
@@ -305,8 +296,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 default_span,
                             ));
                         }
-                        let specifier = self.parse_import_namespace_specifier();
-                        specifiers.push(specifier);
+                        let namespace = self.parse_import_namespace_specifier();
+                        ArenaVec::from_array_in([specifier, namespace], self)
                     }
                     // import defaultExport, { export1 [ , [...] ] } from "module-name";
                     Kind::LCurly => {
@@ -315,30 +306,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 default_span,
                             ));
                         }
-                        self.parse_import_specifiers_into(&mut specifiers, import_kind);
+                        self.parse_import_specifiers(Some(specifier), import_kind)
                     }
                     _ => return self.unexpected(),
                 }
-            }
-
-            // If the default specifiers name was `type`, and it was not a type import
-            // then skip the `from` specifier expect. This is specifically to support an import
-            // like: `import type from 'source'`
-            if self.is_ts
-                && import_kind == ImportOrExportKind::Value
-                && specifiers.len() == 1
-                && specifiers[0].name() == "type"
-            {
-                return specifiers;
+            } else {
+                ArenaVec::from_value_in(specifier, self)
             }
         } else if self.at(Kind::Star) {
             // import * as name from "module-name";
             let specifier = self.parse_import_namespace_specifier();
-            specifiers.push(specifier);
+            ArenaVec::from_value_in(specifier, self)
         } else if self.at(Kind::LCurly) {
             // import { export1 , export2 as alias2 , [...] } from "module-name";
-            self.parse_import_specifiers_into(&mut specifiers, import_kind);
-        }
+            self.parse_import_specifiers(None, import_kind)
+        } else {
+            ArenaVec::new_in(self)
+        };
 
         self.expect(Kind::From);
         specifiers
@@ -355,23 +339,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
-    fn parse_import_specifiers_into(
+    fn parse_import_specifiers(
         &mut self,
-        specifiers: &mut ArenaVec<'a, ImportDeclarationSpecifier<'a>>,
+        default_specifier: Option<ImportDeclarationSpecifier<'a>>,
         import_kind: ImportOrExportKind,
-    ) {
+    ) -> ArenaVec<'a, ImportDeclarationSpecifier<'a>> {
+        debug_assert!(self.at(Kind::LCurly));
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
-        self.context_remove(self.ctx, |p| {
-            let _ = p.parse_delimited_list_into(
-                specifiers,
+        self.advance(Kind::LCurly);
+        let (specifiers, _) = self.context_remove(self.ctx, |p| {
+            p.parse_delimited_list_with_prefix(
+                default_specifier,
                 Kind::RCurly,
                 Kind::Comma,
                 opening_span,
                 |parser| parser.parse_import_specifier(import_kind),
-            );
+            )
         });
         self.expect(Kind::RCurly);
+        specifiers
     }
 
     /// [Import Attributes](https://tc39.es/proposal-import-attributes)
@@ -397,12 +383,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         });
         self.expect(Kind::RCurly);
 
-        let mut keys = FxHashMap::default();
-        for e in &with_entries {
-            let key = e.key.as_arena_str().as_str();
-            let span = e.key.span();
-            if let Some(old_span) = keys.insert(key, span) {
-                self.error(diagnostics::redeclaration(key, old_span, span));
+        if with_entries.len() > 1 {
+            let mut keys = FxHashMap::default();
+            for e in &with_entries {
+                let key = e.key.as_js_str();
+                let span = e.key.span();
+                if let Some(old_span) = keys.insert(key, span) {
+                    let name = key.as_str().unwrap_or_else(|| span.source_text(self.source_text));
+                    self.error(diagnostics::duplicate_import_attribute_key(name, old_span, span));
+                }
             }
         }
 
@@ -412,7 +401,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_import_attribute(&mut self) -> ImportAttribute<'a> {
         let start = self.cur_start();
         let key = match self.cur_kind() {
-            Kind::Str => ImportAttributeKey::StringLiteral(self.parse_literal_string()),
+            Kind::Str => ImportAttributeKey::StringLiteral(self.parse_known_literal_string()),
             _ => ImportAttributeKey::Identifier(self.parse_identifier_name()),
         };
         self.expect(Kind::Colon);
@@ -421,7 +410,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.cur_token().span(),
             ));
         }
-        let value = self.parse_literal_string();
+        let value = self.parse_known_literal_string();
         ImportAttribute::new(self.end_span(start), key, value, self)
     }
 
@@ -429,7 +418,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start: u32,
     ) -> ArenaBox<'a, TSExportAssignment<'a>> {
-        self.expect(Kind::Eq);
+        debug_assert!(self.at(Kind::Eq));
+        self.advance(Kind::Eq);
         let expression = self.parse_assignment_expression_or_higher();
         self.asi();
         if self.ctx.has_top_level() {
@@ -442,7 +432,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start: u32,
     ) -> ArenaBox<'a, TSNamespaceExportDeclaration<'a>> {
-        self.expect(Kind::As);
+        debug_assert!(self.at(Kind::As));
+        self.advance(Kind::As);
         self.expect(Kind::Namespace);
         let id = self.parse_identifier_name();
         self.asi();
@@ -477,6 +468,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Statement<'a> {
         self.check_module_declaration(stmt_ctx);
         self.bump_any(); // bump `export`
+        // export /* @__NO_SIDE_EFFECTS__ */ ...
+        let no_side_effects_comments =
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         // `export` is unambiguously module syntax (ECMA-262 §16.2.3): commit to the
         // Module goal so the declaration parses under `Await` on the first pass and
         // isn't reparsed. e.g. `@foo export default class C { x = await + 1 }`
@@ -535,20 +529,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Default => ModuleDeclaration::ExportDefaultDeclaration(
                 self.parse_export_default_declaration(start, decorators),
             ),
-            Kind::Star => {
-                ModuleDeclaration::ExportAllDeclaration(self.parse_export_all_declaration(start))
-            }
-            Kind::LCurly => self.parse_export_named_specifiers(start),
+            Kind::Star => ModuleDeclaration::ExportAllDeclaration(
+                self.parse_export_all_declaration(start, ImportOrExportKind::Value),
+            ),
+            Kind::LCurly => self.parse_export_named_specifiers(start, ImportOrExportKind::Value),
             Kind::Type if self.is_ts => {
                 let next_kind = self.lexer.peek_token().kind();
 
                 match next_kind {
                     // `export type { ...`
-                    Kind::LCurly => self.parse_export_named_specifiers(start),
+                    Kind::LCurly => {
+                        self.bump_any(); // bump `type`
+                        self.parse_export_named_specifiers(start, ImportOrExportKind::Type)
+                    }
                     // `export type * as ...`
-                    Kind::Star => ModuleDeclaration::ExportAllDeclaration(
-                        self.parse_export_all_declaration(start),
-                    ),
+                    Kind::Star => {
+                        self.bump_any(); // bump `type`
+                        ModuleDeclaration::ExportAllDeclaration(
+                            self.parse_export_all_declaration(start, ImportOrExportKind::Type),
+                        )
+                    }
                     _ => ModuleDeclaration::ExportDeclaration(
                         self.parse_exported_declaration(start, decorators),
                     ),
@@ -567,7 +567,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 )
             }
         };
-        Statement::from(decl)
+        let mut stmt = Statement::from(decl);
+        if let Some(comments) = no_side_effects_comments {
+            self.apply_no_side_effects_comments_to_statement(comments, &mut stmt);
+        }
+        stmt
     }
 
     // export NamedExports ;
@@ -581,8 +585,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     // ExportSpecifier :
     //   ModuleExportName
     //   ModuleExportName as ModuleExportName
-    fn parse_export_named_specifiers(&mut self, start: u32) -> ModuleDeclaration<'a> {
-        let export_kind = self.parse_import_or_export_kind();
+    fn parse_export_named_specifiers(
+        &mut self,
+        start: u32,
+        export_kind: ImportOrExportKind,
+    ) -> ModuleDeclaration<'a> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
         let (mut specifiers, _) = self.context_remove(self.ctx, |p| {
@@ -742,7 +749,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let next = self.lexer.peek_token();
             if !next.is_on_new_line() {
                 // export default abstract class C {}
-                if kind == Kind::Abstract && next.kind() == Kind::Class {
+                if self.is_ts && kind == Kind::Abstract && next.kind() == Kind::Class {
                     self.bump_any();
                     let modifiers = Modifiers::new_single(ModifierKind::Abstract, modifier_start);
                     return ExportDefaultDeclarationKind::ClassDeclaration(
@@ -767,7 +774,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     return ExportDefaultDeclarationKind::FunctionDeclaration(func);
                 }
                 // export default interface I {}
-                if kind == Kind::Interface {
+                if self.is_ts && kind == Kind::Interface {
                     self.bump_any();
                     for decorator in &decorators {
                         self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
@@ -824,8 +831,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_export_all_declaration(
         &mut self,
         start: u32,
+        export_kind: ImportOrExportKind,
     ) -> ArenaBox<'a, ExportAllDeclaration<'a>> {
-        let export_kind = self.parse_import_or_export_kind();
         self.bump_any(); // bump `star`
         let exported = self.eat(Kind::As).then(|| self.parse_module_export_name());
         self.expect(Kind::From);
@@ -871,7 +878,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut property_name: Option<ModuleExportName<'a>> = None;
         let mut name = self.parse_module_export_name();
 
-        if self.is_ts && name.is_identifier() && type_or_name_token_kind == Kind::Type {
+        if self.is_ts && type_or_name_token_kind == Kind::Type {
             // If the first token of an import/export specifier is 'type', there are a lot of possibilities,
             // especially if we see 'as' afterwards:
             //
@@ -881,10 +888,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // import { type as as as } from "mod"; - isTypeOnly: true,    name: as,    propertyName: as
             if self.at(Kind::As) {
                 // { type as ...? }
-                let first_as = self.parse_identifier_name();
+                let first_as = self.parse_known_identifier_name();
                 if self.at(Kind::As) {
                     // { type as as ...? }
-                    let second_as = self.parse_identifier_name();
+                    let second_as = self.parse_known_identifier_name();
                     if self.can_parse_module_export_name() {
                         // { type as as something }
                         // { type as as "something" }
@@ -957,8 +964,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     ));
                 }
 
-                let local =
-                    BindingIdentifier::new(name.span(), self.ident(name.name().as_str()), self);
+                let local_name = name.name().as_str();
+                let local = BindingIdentifier::new(name.span(), self.ident(local_name), self);
                 let imported = property_name.unwrap_or(name);
                 ImportOrExportSpecifier::Import(ImportSpecifier::new(
                     self.end_span(specifier_start),
@@ -997,7 +1004,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_module_export_name(&mut self) -> ModuleExportName<'a> {
         match self.cur_kind() {
             Kind::Str => {
-                let literal = self.parse_literal_string();
+                let literal = self.parse_known_literal_string();
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
                 // The error is fatal so that no AST ever carries an ill-formed export name.
@@ -1023,59 +1030,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 ModuleExportName::new_identifier_reference(ident.span, ident.name, self)
             }
             ModuleExportName::StringLiteral(literal) => {
-                ModuleExportName::new_string_literal_with_lone_surrogates(
-                    literal.span,
-                    literal.value,
-                    literal.raw,
-                    literal.lone_surrogates,
-                    self,
-                )
+                ModuleExportName::new_string_literal(literal.span, literal.value, literal.raw, self)
             }
         }
-    }
-
-    fn parse_import_or_export_kind(&mut self) -> ImportOrExportKind {
-        if !self.is_ts {
-            return ImportOrExportKind::Value;
-        }
-        // OK
-        // import type { bar } from 'foo';
-        // import type * as React from 'react';
-        // import type ident from 'foo';
-        // export type { bar } from 'foo';
-
-        // NO
-        // import type from 'foo';
-
-        // OK
-        // import type from from 'foo';
-        if !self.at(Kind::Type) {
-            return ImportOrExportKind::Value;
-        }
-
-        let next_kind = self.lexer.peek_token().kind();
-
-        if matches!(next_kind, Kind::LCurly | Kind::Star) {
-            self.bump_any();
-            return ImportOrExportKind::Type;
-        }
-
-        if !(next_kind == Kind::Ident) && !next_kind.is_contextual_keyword() {
-            return ImportOrExportKind::Value;
-        }
-
-        if next_kind != Kind::From
-            || self.lookahead(|p| {
-                p.bump_any();
-                p.bump_any();
-                p.at(Kind::From)
-            })
-        {
-            self.bump_any();
-            return ImportOrExportKind::Type;
-        }
-
-        ImportOrExportKind::Value
     }
 
     fn parse_export_specifier(

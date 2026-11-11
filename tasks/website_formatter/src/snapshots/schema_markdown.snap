@@ -23,6 +23,56 @@ Include parentheses around a sole arrow function parameter.
 - Default: `"always"`
 
 
+## associations
+
+type: `array`
+
+
+Format matched files as the given language, instead of detecting it from the file name.
+e.g. Angular templates named `*.html`, or `*.wxml` files formatted as HTML.
+When a file matches multiple associations, the later one takes precedence (array order matters).
+
+- Default: `[]`
+
+
+### associations[n]
+
+type: `object`
+
+
+
+
+
+#### associations[n].excludeFiles
+
+type: `string[]`
+
+
+Glob patterns to exclude from this association.
+
+A set of glob patterns.
+Patterns are matched against paths relative to the configuration file's directory.
+
+
+#### associations[n].files
+
+type: `string[]`
+
+
+Glob patterns to match files for this association.
+
+A set of glob patterns.
+Patterns are matched against paths relative to the configuration file's directory.
+
+
+#### associations[n].language
+
+type: `"javascript" | "jsx" | "typescript" | "tsx" | "json" | "jsonc" | "json5" | "css" | "scss" | "less" | "graphql" | "yaml" | "markdown" | "toml" | "html" | "angular-html" | "vue" | "svelte" | "astro" | "handlebars" | "mdx"`
+
+
+The language to format matched files as, named by its Shiki id (as in Markdown code fences).
+
+
 ## astro
 
 type: `object | boolean`

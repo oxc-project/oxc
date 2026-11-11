@@ -10,8 +10,9 @@ use oxc_ast::{
     AstKind, AstType,
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionBody, ArrowFunctionExpression,
-        BindingPattern, CallExpression, ChainElement, Expression, FormalParameters, Function,
-        FunctionBody, IdentifierReference, StaticMemberExpression, VariableDeclarationKind,
+        BindingIdentifier, BindingPattern, CallExpression, ChainElement, Expression,
+        FormalParameters, Function, FunctionBody, IdentifierReference, StaticMemberExpression,
+        VariableDeclarationKind,
     },
     match_expression,
 };
@@ -181,12 +182,17 @@ fn unnecessary_outer_scope_dependency_diagnostic(
     hook_name: &str,
     dep_name: &str,
     span: Span,
+    is_mutable: bool,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "React Hook {hook_name} has an unnecessary dependency: {dep_name}."
     ))
     .with_label(span)
-    .with_help("Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.")
+    .with_help(if is_mutable {
+        "Consider removing it from the dependency array. Mutable values aren't valid dependencies because mutating them doesn't re-render the component."
+    } else {
+        "Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component."
+    })
     .with_error_code_scope(SCOPE)
 }
 
@@ -270,6 +276,7 @@ declare_oxc_lint!(
     ExhaustiveDeps,
     react,
     correctness,
+    recommended,
     safe_fixes_and_dangerous_suggestions,
     config = ExhaustiveDepsConfig,
     version = "0.12.0",
@@ -451,8 +458,7 @@ impl Rule for ExhaustiveDeps {
                 match inner_expr {
                     Expression::ArrayExpression(array_expr) => Some(array_expr),
                     Expression::Identifier(ident)
-                        if ident.name == "undefined"
-                            && ctx.is_reference_to_global_variable(ident) =>
+                        if ident.is_undefined() && ctx.is_reference_to_global_variable(ident) =>
                     {
                         None
                     }
@@ -569,6 +575,7 @@ impl Rule for ExhaustiveDeps {
             declared_dependencies
         };
 
+        let mut unnecessary_dependencies = Vec::new();
         for dependency in &declared_dependencies {
             if let Some(symbol_id) = dependency.symbol_id {
                 let dependency_scope_id = ctx.scoping().symbol_scope_id(symbol_id);
@@ -591,13 +598,28 @@ impl Rule for ExhaustiveDeps {
                 }
             }
 
-            ctx.diagnostic_with_fix(
+            if !ctx.disable_directives().contains(ExhaustiveDeps::NAME, dependency.span) {
+                unnecessary_dependencies.push(dependency);
+            }
+        }
+
+        unnecessary_dependencies.sort_unstable_by_key(|dep| dep.span.start);
+        for dependency in &unnecessary_dependencies {
+            ctx.diagnostic_with_dangerous_suggestion(
                 unnecessary_outer_scope_dependency_diagnostic(
                     hook_name,
-                    &dependency.name,
+                    &dependency.to_string(),
                     dependency.span,
+                    dependency.chain.last().is_some_and(|part| part == "current"),
                 ),
-                |fixer| fix::remove_dependency(fixer, dependency, dependencies_node),
+                |fixer| {
+                    fix::remove_dependencies(
+                        fixer,
+                        unnecessary_dependencies.iter().map(|dep| dep.span),
+                        dependencies_node,
+                        ctx,
+                    )
+                },
             );
         }
 
@@ -735,7 +757,7 @@ impl Rule for ExhaustiveDeps {
                     dependency_changes_on_every_render_diagnostic(
                         hook_name, dep.span, name, decl_span,
                     ),
-                    |fixer| fix::remove_dependency(fixer, &dep, dependencies_node),
+                    |fixer| fix::remove_dependencies(fixer, [dep.span], dependencies_node, ctx),
                 );
             }
         }
@@ -1099,13 +1121,7 @@ fn is_stable_value<'a, 'b>(
     }
 
     match node.kind() {
-        AstKind::VariableDeclaration(declaration) => {
-            if declaration.kind == VariableDeclarationKind::Const {
-                return true;
-            }
-
-            false
-        }
+        AstKind::VariableDeclaration(declaration) => declaration.kind.is_const(),
         AstKind::VariableDeclarator(declaration) => {
             // if the variable does not have an initializer, then it's not a stable value
             let Some(init) = &declaration.init else {
@@ -1126,10 +1142,7 @@ fn is_stable_value<'a, 'b>(
                 if let Some(function_body) = function_body {
                     return is_function_stable(
                         function_body,
-                        declaration
-                            .id
-                            .get_binding_identifier()
-                            .map(oxc_ast::ast::BindingIdentifier::symbol_id),
+                        declaration.id.get_binding_identifier().map(BindingIdentifier::symbol_id),
                         ctx,
                         component_scope_id,
                         visited,
@@ -1138,7 +1151,8 @@ fn is_stable_value<'a, 'b>(
             }
 
             // if the variables is a constant, and the initializer is a literal, then it's a stable value. (excluding regex literals)
-            if variable_declaration_kind(declaration, ctx) == VariableDeclarationKind::Const
+            if variable_declaration_kind(declaration, ctx.nodes())
+                .is_some_and(VariableDeclarationKind::is_const)
                 && (matches!(
                     init.get_inner_expression(),
                     Expression::BooleanLiteral(_)
@@ -1202,18 +1216,23 @@ fn is_stable_value<'a, 'b>(
 
             false
         }
-        AstKind::ArrowFunctionExpression(_) | AstKind::Function(_) => {
-            let function_body = match node.kind() {
-                AstKind::ArrowFunctionExpression(arrow_func) => {
-                    Some(CallbackBody::Arrow(&arrow_func.body))
-                }
-                AstKind::Function(func) => func.body.as_deref().map(CallbackBody::Function),
-                _ => unreachable!(),
-            };
+        AstKind::ArrowFunctionExpression(arrow_func) => is_function_stable(
+            CallbackBody::Arrow(&arrow_func.body),
+            None,
+            ctx,
+            component_scope_id,
+            visited,
+        ),
+        AstKind::Function(func) => {
+            let Some(function_body) = func.body.as_deref() else { return false };
 
-            let Some(function_body) = function_body else { return false };
-
-            is_function_stable(function_body, None, ctx, component_scope_id, visited)
+            is_function_stable(
+                CallbackBody::Function(function_body),
+                None,
+                ctx,
+                component_scope_id,
+                visited,
+            )
         }
         _ => false,
     }
@@ -1472,17 +1491,17 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 
 mod fix {
     use super::Name;
-    use oxc_allocator::{Allocator, ArenaVec, CloneIn};
+    use oxc_allocator::{Allocator, CloneIn};
     use oxc_ast::{
         ast::{ArrayExpression, Expression},
         builder::AstBuilder,
     };
-    use oxc_span::{GetSpan, SPAN};
+    use oxc_span::{GetSpan, SPAN, Span};
     use oxc_str::Str;
 
     use crate::{
+        context::LintContext,
         fixer::{RuleFix, RuleFixer},
-        rules::react::exhaustive_deps::Dependency,
     };
 
     pub fn append_dependencies<'c, 'a: 'c>(
@@ -1513,28 +1532,51 @@ mod fix {
         fixer.replace(deps.span, codegen.into_source_text())
     }
 
-    pub fn remove_dependency<'c, 'a: 'c>(
+    /// Dependencies must be ordered by their position in the source.
+    pub fn remove_dependencies<'c, 'a: 'c>(
         fixer: RuleFixer<'c, 'a>,
-        dependency: &Dependency,
+        dependencies: impl IntoIterator<Item = Span>,
         deps: &ArrayExpression<'a>,
+        ctx: &LintContext<'a>,
     ) -> RuleFix {
-        let mut codegen = fixer.codegen();
-
-        let alloc = Allocator::default();
-        let ast_builder = AstBuilder::new(&alloc);
-
-        let new_deps = deps
-            .elements
-            .iter()
-            .filter(|el| (*el).span() != dependency.span)
-            .map(|el| el.clone_in(&alloc));
-
-        codegen.print_expression(&Expression::new_array_expression(
-            deps.span,
-            ArenaVec::from_iter_in(new_deps, &ast_builder),
-            &ast_builder,
-        ));
-        fixer.replace(deps.span, codegen.into_source_text())
+        let fixer = fixer.for_multifix();
+        let mut fix = fixer.new_fix_with_capacity(2);
+        let mut elements = deps.elements.iter().peekable();
+        for dependency in dependencies {
+            let Some(element) =
+                elements.by_ref().find(|element| element.span().contains_inclusive(dependency))
+            else {
+                continue;
+            };
+            let span = element.span();
+            if ctx.has_comments_between(span) {
+                let mut replacement = String::new();
+                let mut start = span.start;
+                for comment in ctx.comments_range(span.start..span.end) {
+                    replacement.extend(
+                        ctx.source_range(Span::new(start, comment.span.start))
+                            .chars()
+                            .filter(|ch| ch.is_whitespace()),
+                    );
+                    replacement.push_str(ctx.source_range(comment.span));
+                    start = comment.span.end;
+                }
+                replacement.extend(
+                    ctx.source_range(Span::new(start, span.end))
+                        .chars()
+                        .filter(|ch| ch.is_whitespace()),
+                );
+                fix.push(fixer.replace(span, replacement));
+            } else {
+                fix.push(fixer.delete_range(span));
+            }
+            let end = elements.peek().map_or(deps.span.end - 1, |el| el.span().start);
+            if let Some(offset) = ctx.find_next_token_within(span.end, end, ",") {
+                let start = span.end + offset;
+                fix.push(fixer.delete_range(Span::new(start, start + 1)));
+            }
+        }
+        fix.with_message("Remove unnecessary dependencies.")
     }
 }
 
@@ -1554,6 +1596,85 @@ fn invalid_configs_error_in_from_configuration() {
 
     let valid_regex = serde_json::json!([{ "additionalHooks": "useSpecialEffect" }]);
     assert!(ExhaustiveDeps::from_configuration(valid_regex).is_ok());
+}
+
+#[test]
+fn test_dependency_removals_preserve_source() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let cases = [
+        ("[section, OUTER]", "[section, ]"),
+        ("[OUTER, section]", "[ section]"),
+        ("[section, OUTER,]", "[section, ]"),
+        ("[OUTER]", "[]"),
+        ("[OUTER,]", "[]"),
+        ("[OUTER,OTHER]", "[]"),
+        ("[OUTER,OTHER,section]", "[section]"),
+        ("[section,ref.current,OUTER,OTHER]", "[section,]"),
+        ("[section, (OUTER)]", "[section, ]"),
+        ("[section, (OUTER as number)]", "[section, ]"),
+        ("[section, ref /* keep */ .current]", "[section,  /* keep */ ]"),
+        (
+            "[\n OUTER, // eslint-disable-line react-hooks/exhaustive-deps\n OTHER, section]",
+            "[\n OUTER, // eslint-disable-line react-hooks/exhaustive-deps\n  section]",
+        ),
+        ("[section, (/* keep */ OUTER)]", "[section, /* keep */ ]"),
+        ("[section, (// keep\n OUTER)]", "[section, // keep\n ]"),
+        ("[OUTER,, section]", "[, section]"),
+        ("[section, OUTER /* keep, this */ , OTHER]", "[section,  /* keep, this */  ]"),
+        ("[section, OUTER // keep, this\n, OTHER]", "[section,  // keep, this\n ]"),
+        (
+            "[\n  section, // re-run when the tab changes\n  OUTER,\n  OTHER,\n]",
+            "[\n  section, // re-run when the tab changes\n  \n  \n]",
+        ),
+        ("[section, OUTER /* 注释 , */, OTHER]", "[section,  /* 注释 , */ ]"),
+        ("[section, OUTER\u{2028}, OTHER]", "[section, \u{2028} ]"),
+    ];
+    let fix = cases
+        .into_iter()
+        .flat_map(|(before, after)| {
+            let source = |deps| format!("const OUTER = 1; const OTHER = 2; function Comp({{ section }}) {{ const ref = useRef(null); useEffect(() => {{}}, {deps}); }}");
+            [
+                (source(before), source(before), None, FixKind::SafeFix),
+                (source(before), source(before), None, FixKind::SafeFixOrSuggestion),
+                (source(before), source(after), None, FixKind::DangerousSuggestion),
+            ]
+        })
+        .collect();
+
+    Tester::new::<&str>(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, vec![], vec![])
+        .expect_fix(fix)
+        .test();
+}
+
+#[test]
+fn test_unnecessary_dependency_suggestions() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let cases = [
+        (
+            "function A({ section }) { const ref = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section, ref.current]); }",
+            "function A({ section }) { const ref = useRef(null); useEffect(() => { if (section === 'a') ref.current?.scrollIntoView(); }, [section, ]); }",
+        ),
+        (
+            "const OUTER = 1; function B({ section }) { useEffect(() => { console.log(section, OUTER); }, [section, OUTER]); }",
+            "const OUTER = 1; function B({ section }) { useEffect(() => { console.log(section, OUTER); }, [section, ]); }",
+        ),
+    ];
+
+    let fail = cases.iter().map(|(source, _)| *source).collect();
+    let fix = cases
+        .into_iter()
+        .flat_map(|(source, expected)| {
+            [
+                (source, source, None, FixKind::SafeFix),
+                (source, source, None, FixKind::SafeFixOrSuggestion),
+                (source, expected, None, FixKind::DangerousSuggestion),
+            ]
+        })
+        .collect();
+
+    Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, vec![], fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -4443,7 +4564,7 @@ const Component = ({ filter }) => {
         // Test duplicate dependency removal
         (
             "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [local, local]); }",
-            "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [local]); }",
+            "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [ local]); }",
         ),
         (
             "const x = {}; function Comp() { useEffect(() => {}, [x]) }",

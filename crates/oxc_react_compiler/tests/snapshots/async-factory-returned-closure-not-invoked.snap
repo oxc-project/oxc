@@ -1,0 +1,14 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-factory-returned-closure-not-invoked.js
+---
+function Component(t0) {
+	let count = 0;
+	const cb = () => count++;
+	const make = () => async () => {
+		await 0;
+		cb();
+	};
+	make();
+	return null;
+}

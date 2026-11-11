@@ -55,6 +55,7 @@ declare_oxc_lint!(
     NoUnsafeFunctionType,
     typescript,
     pedantic,
+    recommended,
     version = "0.11.1",
     short_description = "Disallow using the unsafe built-in Function type.",
 );

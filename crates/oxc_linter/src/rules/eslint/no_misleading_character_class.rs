@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_allocator::Allocator;
 use oxc_ast::{
     AstKind,
@@ -132,6 +133,7 @@ declare_oxc_lint!(
     NoMisleadingCharacterClass,
     eslint,
     correctness,
+    recommended,
     suggestion,
     config = NoMisleadingCharacterClass,
     version = "1.17.0",
@@ -248,43 +250,18 @@ fn regional_indicator_symbol_sequences(chars: &[&Character], ctx: &LintContext<'
     }
 }
 
-// Returns true if the code point is a combining mark (Unicode category Mn, Mc, or Me)
-//
-// Unicode Combining Character Ranges
-// A. General Combining Characters (Mn, Mc, Me)
-// Combining characters are those whose General Category falls under:
-// - Mn — Nonspacing Mark
-// - Mc — Spacing Mark
-// - Me — Enclosing Mark
-//
-// Some Unicode blocks dedicated (entirely or in part) to combining marks include :
-// - Combining Diacritical Marks: U+0300–U+036F
-// - Combining Diacritical Marks Extended: U+1AB0–U+1AFF
-// - Combining Diacritical Marks Supplement: U+1DC0–U+1DFF
-// - Combining Diacritical Marks for Symbols: U+20D0–U+20FF
-// - Combining Half Marks: U+FE20–U+FE2F
-//
-// Additional combining characters exist within script-specific blocks
-// (e.g., Devanagari signs, Hiragana/Katakana marks) and are not confined to a block,
-// but share the Mn/Mc/Me categories
-//
-// B. Variation Selectors (also Combining)
-//
-// Variation selectors are also combining characters. There are two blocks:
-// - Variation Selectors (Basic): U+FE00–U+FE0F
-// - Variation Selectors Supplement: U+E0100–U+E01EF (256 total)
+static COMBINING_MARK_REGEX: Lazy<Regex> = lazy_regex!(r"^\p{M}$");
+
 fn is_combining_character(value: u32) -> bool {
-    // Covers Mn (Nonspacing_Mark), Mc (Spacing_Mark), Me (Enclosing_Mark), and variation selectors
-    matches!(
-        value,
-        0x0300..=0x036F | // Combining Diacritical Marks
-        0x1AB0..=0x1AFF | // Combining Diacritical Marks Extended
-        0x1DC0..=0x1DFF | // Combining Diacritical Marks Supplement
-        0x20D0..=0x20FF | // Combining Diacritical Marks for Symbols
-        0xFE20..=0xFE2F | // Combining Half Marks
-        0xFE00..=0xFE0F | // Variation Selectors (Basic)
-        0xE0100..=0xE01EF  // Variation Selectors (Supplement)
-    )
+    if value < 0x80 {
+        return false;
+    }
+
+    let Some(character) = char::from_u32(value) else {
+        return false;
+    };
+    let mut buffer = [0; 4];
+    COMBINING_MARK_REGEX.is_match(character.encode_utf8(&mut buffer))
 }
 
 // Find combining mark sequences: previous is not combining, current is combining
@@ -823,6 +800,39 @@ fn test() {
         // https://github.com/oxc-project/oxc/issues/19090 -- without u flag it should fail
         // this should not be a `UnicodePropertyEscape`
         (r"/[\u200c\u200d\p{ID_Continue}.]/", None),
+        // https://github.com/oxc-project/oxc/issues/28729
+        ("/[ગુ]/", None),
+        ("/[कि]/", None),
+        ("/[ક્]/", None),
+        ("/[नमस्ते]/", None),
+        ("new RegExp('[ગુ]', 'u');", None),
+        // combining marks of other scripts (base letter + mark)
+        ("/[а҃]/u", None),  // Cyrillic
+        ("/[אָ]/u", None),  // Hebrew
+        ("/[بَ]/u", None),  // Arabic
+        ("/[ܐܰ]/u", None),  // Syriac
+        ("/[ހަ]/u", None),  // Thaana
+        ("/[ߊ߫]/u", None),  // NKo
+        ("/[কা]/u", None),  // Bengali
+        ("/[ਕਾ]/u", None), // Gurmukhi
+        ("/[କା]/u", None),  // Oriya
+        ("/[கா]/u", None),  // Tamil
+        ("/[కా]/u", None),  // Telugu
+        ("/[ಕಾ]/u", None), // Kannada
+        ("/[കാ]/u", None),  // Malayalam
+        ("/[කා]/u", None),  // Sinhala
+        ("/[กั]/u", None),  // Thai
+        ("/[ກັ]/u", None),  // Lao
+        ("/[ཀཱ]/u", None),  // Tibetan
+        ("/[ကါ]/u", None), // Myanmar
+        ("/[កា]/u", None), // Khmer
+        ("/[ᠠ᠋]/u", None),  // Mongolian
+        ("/[ᬆ]/u", None),  // Balinese
+        ("/[が]/u", None), // Kana
+        ("/[ꦏꦴ]/u", None), // Javanese
+        ("/[𑀓𑀸]/u", None),  // Brahmi
+        ("/[𐨕𐨁]/u", None),  // Kharoshthi
+        ("/[𑌕𑌾]/u", None),  // Grantha
     ];
 
     let fix = vec![

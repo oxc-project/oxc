@@ -131,7 +131,7 @@ fn constant_propagation_impl<'a>(
          * Finally, merge together any blocks that are now guaranteed to execute
          * consecutively
          */
-        merge_consecutive_blocks(func, &mut env.functions, env.allocator);
+        merge_consecutive_blocks(func, &mut env.functions, env.allocator)?;
 
         assert_consistent_identifiers(func, &env.identifiers)?;
         assert_terminal_successors_exist(func)?;
@@ -300,11 +300,14 @@ fn evaluate_instruction<'a>(
             let prop_value = read(constants, property);
             if let Some(Constant::Primitive { value: ref prim, .. }) = prop_value {
                 match prim {
-                    PrimitiveValue::String(s) if is_valid_identifier(s.as_str()) => {
+                    PrimitiveValue::String(s)
+                        if let Some(name) = s.as_str()
+                            && is_valid_identifier(name) =>
+                    {
                         let object = *object;
                         let property_span = property.span;
                         let span = *span;
-                        let new_property = PropertyLiteral::String(Ident::from(s.as_str()));
+                        let new_property = PropertyLiteral::String(Ident::from(name));
                         func.instructions[instr_id.index()].value =
                             InstructionValue::PropertyLoad {
                                 object,
@@ -331,7 +334,8 @@ fn evaluate_instruction<'a>(
                     PrimitiveValue::Null
                     | PrimitiveValue::Undefined
                     | PrimitiveValue::Boolean(_)
-                    | PrimitiveValue::String(_) => {}
+                    | PrimitiveValue::String(_)
+                    | PrimitiveValue::BigInt { .. } => {}
                 }
             }
             None
@@ -340,12 +344,15 @@ fn evaluate_instruction<'a>(
             let prop_value = read(constants, property);
             if let Some(Constant::Primitive { value: ref prim, .. }) = prop_value {
                 match prim {
-                    PrimitiveValue::String(s) if is_valid_identifier(s.as_str()) => {
+                    PrimitiveValue::String(s)
+                        if let Some(name) = s.as_str()
+                            && is_valid_identifier(name) =>
+                    {
                         let object = *object;
                         let property_span = property.span;
                         let store_value = *value;
                         let span = *span;
-                        let new_property = PropertyLiteral::String(Ident::from(s.as_str()));
+                        let new_property = PropertyLiteral::String(Ident::from(name));
                         func.instructions[instr_id.index()].value =
                             InstructionValue::PropertyStore {
                                 object,
@@ -375,12 +382,14 @@ fn evaluate_instruction<'a>(
                     PrimitiveValue::Null
                     | PrimitiveValue::Undefined
                     | PrimitiveValue::Boolean(_)
-                    | PrimitiveValue::String(_) => {}
+                    | PrimitiveValue::String(_)
+                    | PrimitiveValue::BigInt { .. } => {}
                 }
             }
             None
         }
-        InstructionValue::PostfixUpdate { lvalue, operation, value, span } => {
+        InstructionValue::PostfixUpdateLocal { lvalue, operation, value, span }
+        | InstructionValue::PostfixUpdateContext { lvalue, operation, value, span } => {
             let previous = read(constants, value);
             if let Some(Constant::Primitive { value: PrimitiveValue::Number(n), span: prev_span }) =
                 previous
@@ -407,7 +416,8 @@ fn evaluate_instruction<'a>(
             }
             None
         }
-        InstructionValue::PrefixUpdate { lvalue, operation, value, span } => {
+        InstructionValue::PrefixUpdateLocal { lvalue, operation, value, span }
+        | InstructionValue::PrefixUpdateContext { lvalue, operation, value, span } => {
             let previous = read(constants, value);
             if let Some(Constant::Primitive { value: PrimitiveValue::Number(n), .. }) = previous {
                 let prev_val = n.value();
@@ -491,7 +501,7 @@ fn evaluate_instruction<'a>(
                 && prop_name == "length"
             {
                 // Use UTF-16 code unit count to match JS .length semantics
-                let len = s.as_str().encode_utf16().count() as f64;
+                let len = s.as_str()?.encode_utf16().count() as f64;
                 let span = *span;
                 let result = Constant::Primitive {
                     value: PrimitiveValue::Number(FloatValue::new(len)),
@@ -510,11 +520,11 @@ fn evaluate_instruction<'a>(
                 // No subexpressions: join all cooked quasis
                 let mut result_string = String::new();
                 for q in quasis {
-                    result_string.push_str(q.cooked.as_ref()?);
+                    result_string.push_str(q.cooked?.as_str()?);
                 }
                 let span = *span;
                 let value =
-                    PrimitiveValue::String(Str::from_str_in(&result_string, &env.allocator));
+                    PrimitiveValue::String(Str::from_str_in(&result_string, &env.allocator).into());
                 let result = Constant::Primitive { value, span };
                 func.instructions[instr_id.index()].value =
                     InstructionValue::Primitive { value, span };
@@ -530,8 +540,7 @@ fn evaluate_instruction<'a>(
             }
 
             let mut quasi_index = 0usize;
-            let mut result_string =
-                quasis[quasi_index].cooked.as_ref().unwrap().as_str().to_string();
+            let mut result_string = quasis[quasi_index].cooked?.as_str()?.to_string();
             quasi_index += 1;
 
             for sub_expr in subexprs {
@@ -545,7 +554,8 @@ fn evaluate_instruction<'a>(
                     PrimitiveValue::Null => "null".to_string(),
                     PrimitiveValue::Boolean(b) => b.to_string(),
                     PrimitiveValue::Number(n) => n.value().to_js_string(),
-                    PrimitiveValue::String(s) => s.as_str().to_string(),
+                    PrimitiveValue::String(s) => s.as_str()?.to_string(),
+                    PrimitiveValue::BigInt { value, .. } => value.as_str().to_string(),
                     // TS rejects undefined subexpression values
                     PrimitiveValue::Undefined => return None,
                 };
@@ -554,11 +564,12 @@ fn evaluate_instruction<'a>(
                 quasi_index += 1;
 
                 result_string.push_str(&expression_str);
-                result_string.push_str(&suffix);
+                result_string.push_str(suffix.as_str()?);
             }
 
             let span = *span;
-            let value = PrimitiveValue::String(Str::from_str_in(&result_string, &env.allocator));
+            let value =
+                PrimitiveValue::String(Str::from_str_in(&result_string, &env.allocator).into());
             let result = Constant::Primitive { value, span };
             func.instructions[instr_id.index()].value = InstructionValue::Primitive { value, span };
             Some(result)
@@ -688,7 +699,8 @@ fn is_truthy(value: &PrimitiveValue) -> bool {
             let v = n.value();
             v != 0.0 && !v.is_nan()
         }
-        PrimitiveValue::String(s) => !s.as_str().is_empty(),
+        PrimitiveValue::String(s) => !s.is_empty(),
+        PrimitiveValue::BigInt { value, .. } => value.as_str() != "0" && !value.as_str().is_empty(),
     }
 }
 
@@ -708,7 +720,7 @@ fn evaluate_binary_op<'a>(
                 Some(PrimitiveValue::Number(FloatValue::new(l.value() + r.value())))
             }
             (PrimitiveValue::String(l), PrimitiveValue::String(r)) => Some(PrimitiveValue::String(
-                Str::from_strs_array_in([l.as_str(), r.as_str()], &allocator),
+                Str::from_strs_array_in([l.as_str()?, r.as_str()?], &allocator).into(),
             )),
             _ => None,
         },
@@ -812,8 +824,10 @@ fn evaluate_binary_op<'a>(
         BinaryOperator::StrictInequality => {
             Some(PrimitiveValue::Boolean(!js_strict_equal(lhs, rhs)))
         }
-        BinaryOperator::Equality => Some(PrimitiveValue::Boolean(js_abstract_equal(lhs, rhs))),
-        BinaryOperator::Inequality => Some(PrimitiveValue::Boolean(!js_abstract_equal(lhs, rhs))),
+        BinaryOperator::Equality => js_abstract_equal(lhs, rhs).map(PrimitiveValue::Boolean),
+        BinaryOperator::Inequality => {
+            js_abstract_equal(lhs, rhs).map(|eq| PrimitiveValue::Boolean(!eq))
+        }
         BinaryOperator::In | BinaryOperator::Instanceof => None,
     }
 }
@@ -846,34 +860,39 @@ fn js_strict_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> bool {
             av == bv
         }
         (PrimitiveValue::String(a), PrimitiveValue::String(b)) => a == b,
+        (PrimitiveValue::BigInt { value: a, .. }, PrimitiveValue::BigInt { value: b, .. }) => {
+            a == b
+        }
         // Different types => false
         _ => false,
     }
 }
 
-fn js_abstract_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> bool {
+fn js_abstract_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> Option<bool> {
     match (lhs, rhs) {
-        (PrimitiveValue::Null, PrimitiveValue::Null) => true,
-        (PrimitiveValue::Undefined, PrimitiveValue::Undefined) => true,
+        (PrimitiveValue::Null, PrimitiveValue::Null) => Some(true),
+        (PrimitiveValue::Undefined, PrimitiveValue::Undefined) => Some(true),
         (PrimitiveValue::Null, PrimitiveValue::Undefined)
-        | (PrimitiveValue::Undefined, PrimitiveValue::Null) => true,
-        (PrimitiveValue::Boolean(a), PrimitiveValue::Boolean(b)) => a == b,
+        | (PrimitiveValue::Undefined, PrimitiveValue::Null) => Some(true),
+        (PrimitiveValue::Boolean(a), PrimitiveValue::Boolean(b)) => Some(a == b),
         (PrimitiveValue::Number(a), PrimitiveValue::Number(b)) => {
             let av = a.value();
             let bv = b.value();
-            if av.is_nan() || bv.is_nan() {
-                return false;
-            }
-            av == bv
+            if av.is_nan() || bv.is_nan() { Some(false) } else { Some(av == bv) }
         }
-        (PrimitiveValue::String(a), PrimitiveValue::String(b)) => a == b,
+        (PrimitiveValue::String(a), PrimitiveValue::String(b)) => Some(a == b),
+        (PrimitiveValue::BigInt { value: a, .. }, PrimitiveValue::BigInt { value: b, .. }) => {
+            Some(a == b)
+        }
+        // Do not fold mixed-type BigInt comparisons (e.g. 1n == 1, 1n == "1", 0n == false)
+        (PrimitiveValue::BigInt { .. }, _) | (_, PrimitiveValue::BigInt { .. }) => None,
         // Cross-type coercions for primitives
         (PrimitiveValue::Number(n), PrimitiveValue::String(s))
         | (PrimitiveValue::String(s), PrimitiveValue::Number(n)) => {
             // String is coerced to number using JS ToNumber semantics.
-            let sv = s.as_str().string_to_number();
+            let sv = s.as_str().map_or(f64::NAN, |s| s.string_to_number());
             let nv = n.value();
-            if nv.is_nan() || sv.is_nan() { false } else { nv == sv }
+            if nv.is_nan() || sv.is_nan() { Some(false) } else { Some(nv == sv) }
         }
         (PrimitiveValue::Boolean(b), other) => {
             let num = if *b { 1.0 } else { 0.0 };
@@ -884,6 +903,6 @@ fn js_abstract_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> bool {
             js_abstract_equal(other, &PrimitiveValue::Number(FloatValue::new(num)))
         }
         // null/undefined vs number/string => false
-        _ => false,
+        _ => Some(false),
     }
 }

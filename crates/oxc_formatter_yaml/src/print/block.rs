@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
 use oxc_formatter_core::{
-    Buffer,
     builders::{
         align, dedent, dedent_to_root, exact_line_breaks, hard_line_break, literal_line_break,
         mark_as_root, soft_line_break_or_space, text,

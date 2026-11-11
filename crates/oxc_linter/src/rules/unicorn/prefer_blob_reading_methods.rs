@@ -55,6 +55,7 @@ declare_oxc_lint!(
     PreferBlobReadingMethods,
     unicorn,
     pedantic,
+    recommended,
     pending,
     version = "0.0.16",
     short_description = "Recommends using `Blob#text()` and `Blob#arrayBuffer()` over `FileReader#readAsText()` and `FileReader#readAsArrayBuffer()`.",
@@ -79,8 +80,10 @@ impl Rule for PreferBlobReadingMethods {
         }
 
         let (current, replacement, span) = match member_expr.static_property_info() {
-            Some((span, "readAsText")) => ("readAsText", "text", span),
-            Some((span, "readAsArrayBuffer")) => ("readAsArrayBuffer", "arrayBuffer", span),
+            Some((span, name)) if name == "readAsText" => ("readAsText", "text", span),
+            Some((span, name)) if name == "readAsArrayBuffer" => {
+                ("readAsArrayBuffer", "arrayBuffer", span)
+            }
             _ => return,
         };
 

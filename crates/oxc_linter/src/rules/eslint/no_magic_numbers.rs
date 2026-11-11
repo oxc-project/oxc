@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, VariableDeclarationKind},
+    ast::{AssignmentTarget, BigIntLiteral, Expression, NumericLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -256,13 +256,27 @@ struct InternConfig<'a> {
     raw: String,
 }
 
+#[derive(Clone, Copy)]
+enum NumberLiteral<'a> {
+    Number(&'a NumericLiteral<'a>),
+    BigInt(&'a BigIntLiteral<'a>),
+}
+
 impl InternConfig<'_> {
-    pub fn from<'a>(node: &'a AstNode<'a>, parent_node: &'a AstNode<'a>) -> InternConfig<'a> {
-        let is_unary = matches!(parent_node.kind(), AstKind::UnaryExpression(_));
+    pub fn from<'a>(
+        literal: NumberLiteral<'a>,
+        node: &'a AstNode<'a>,
+        parent_node: &'a AstNode<'a>,
+    ) -> InternConfig<'a> {
+        let is_unary = matches!(
+            parent_node.kind(),
+            AstKind::UnaryExpression(unary)
+                if matches!(unary.operator, UnaryOperator::UnaryNegation | UnaryOperator::UnaryPlus)
+        );
         let is_negative = matches!(parent_node.kind(), AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::UnaryNegation);
 
-        match node.kind() {
-            AstKind::NumericLiteral(numeric) => {
+        match literal {
+            NumberLiteral::Number(numeric) => {
                 if is_negative {
                     InternConfig {
                         node: parent_node,
@@ -277,7 +291,7 @@ impl InternConfig<'_> {
                     }
                 }
             }
-            AstKind::BigIntLiteral(bigint) => {
+            NumberLiteral::BigInt(bigint) => {
                 if is_negative {
                     let big_int_string = format!("-{}n", bigint.value);
                     InternConfig {
@@ -294,12 +308,6 @@ impl InternConfig<'_> {
                     }
                 }
             }
-            _ => {
-                unreachable!(
-                    "expected AstKind BigIntLiteral or NumericLiteral, got {:?}",
-                    node.kind().debug_name()
-                )
-            }
         }
     }
 }
@@ -310,13 +318,14 @@ impl Rule for NoMagicNumbers {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::NumericLiteral(_) | AstKind::BigIntLiteral(_) => {}
+        let literal = match node.kind() {
+            AstKind::NumericLiteral(numeric) => NumberLiteral::Number(numeric),
+            AstKind::BigIntLiteral(bigint) => NumberLiteral::BigInt(bigint),
             _ => return,
-        }
+        };
 
         let nodes = ctx.nodes();
-        let config = InternConfig::from(node, nodes.parent_node(node.id()));
+        let config = InternConfig::from(literal, node, nodes.parent_node(node.id()));
 
         if self.is_skippable(&config, nodes) {
             return;
@@ -523,7 +532,7 @@ impl NoMagicNumbers {
         match parent_kind {
             AstKind::VariableDeclarator(declarator) => {
                 if self.enforce_const
-                    && variable_declaration_kind(declarator, ctx) != VariableDeclarationKind::Const
+                    && !variable_declaration_kind(declarator, ctx.nodes())?.is_const()
                 {
                     return Some(NoMagicNumberReportReason::MustUseConst);
                 }
@@ -734,6 +743,8 @@ fn test() {
 			      ",
             Some(serde_json::json!([{ "ignoreTypeIndexes": true, "ignore": [0, 3] }])),
         ),
+        ("exports.c = -7;", None),
+        ("exports.d = +9;", None),
     ];
 
     let fail = vec![
@@ -951,6 +962,10 @@ fn test() {
             "type Foo = { bar: Bar[((1 & -2) | 3) | 4] };",
             Some(serde_json::json!([{ "ignoreNumericLiteralTypes": true }])),
         ),
+        ("exports.a = void 0;", None),
+        ("exports.b = ~5;", None),
+        ("exports.c = !3;", None),
+        ("var x = typeof 4;", None),
     ];
 
     Tester::new(NoMagicNumbers::NAME, NoMagicNumbers::PLUGIN, pass, fail).test_and_snapshot();

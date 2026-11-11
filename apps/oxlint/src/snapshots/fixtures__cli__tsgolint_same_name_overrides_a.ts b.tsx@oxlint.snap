@@ -1,0 +1,25 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: a.ts b.tsx
+working directory: fixtures/cli/tsgolint_same_name_overrides
+----------
+
+  ! typescript(prefer-string-starts-ends-with): Use 'String#startsWith' method instead.
+   ,-[a.ts:1:42]
+ 1 | export const f = (s: string): boolean => s.substring(0, 3) === 'abc';
+   :                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  ! typescript(prefer-string-starts-ends-with): Use 'String#startsWith' method instead.
+   ,-[b.tsx:1:42]
+ 1 | export const f = (s: string): boolean => s.substring(0, 3) === 'abc';
+   :                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+Found 2 warnings and 0 errors.
+Finished in <variable>ms on 2 files with 98 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

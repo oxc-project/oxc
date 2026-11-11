@@ -361,3 +361,30 @@ source: crates/oxc_linter/src/tester.rs
    ·            ╰── "foo" is previously declared here
    ╰────
   help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
+
+  ⚠ eslint(no-dupe-class-members): Duplicate class member: "\ud800"
+   ╭─[no_dupe_class_members.tsx:1:11]
+ 1 │ class A { "\uD800"() {}  "\uD800"() {} }
+   ·           ────┬───       ────┬───
+   ·               │              ╰── "\ud800" is re-declared here
+   ·               ╰── "\ud800" is previously declared here
+   ╰────
+  help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
+
+  ⚠ eslint(no-dupe-class-members): Duplicate class member: "\udc00"
+   ╭─[no_dupe_class_members.tsx:1:11]
+ 1 │ class A { "\uDC00"() {}  ["\uDC00"]() {} }
+   ·           ────┬───        ────┬───
+   ·               │               ╰── "\udc00" is re-declared here
+   ·               ╰── "\udc00" is previously declared here
+   ╰────
+  help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
+
+  ⚠ eslint(no-dupe-class-members): Duplicate class member: "a\ud800b"
+   ╭─[no_dupe_class_members.tsx:1:11]
+ 1 │ class A { "a\uD800b"() {}  [`a\uD800b`]() {} }
+   ·           ─────┬────        ─────┬────
+   ·                │                 ╰── "a\ud800b" is re-declared here
+   ·                ╰── "a\ud800b" is previously declared here
+   ╰────
+  help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained

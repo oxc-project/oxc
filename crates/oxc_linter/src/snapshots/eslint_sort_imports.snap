@@ -212,3 +212,31 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─
    ╰────
   help: Replace `c, a` with `a, c`.
+
+  ⚠ eslint(sort-imports): Expected 'Multiple' syntax before 'Single' syntax.
+   ╭─[sort_imports.tsx:3:13]
+ 2 │             import { format } from 'util';
+ 3 │             import { normalize, resolve } from 'path';
+   ·             ──────────────────────────────────────────
+ 4 │             export { _a, format, normalize, resolve };
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:3:13]
+ 2 │             foo();
+ 3 │             import a from 'a';
+   ·             ──────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:1:27]
+ 1 │ import b from 'b'; foo(); import a from 'a';
+   ·                           ──────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Member 'a' of the import declaration should be sorted alphabetically.
+   ╭─[sort_imports.tsx:1:19]
+ 1 │ var x; import {b, a} from 'a';
+   ·                   ─
+   ╰────
+  help: Replace `b, a` with `a, b`.

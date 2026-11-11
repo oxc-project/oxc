@@ -201,7 +201,6 @@ impl OxlintRules {
                     if external_plugin_store.is_enabled() {
                         match external_plugin_store.lookup_rule_id(plugin_name, rule_name) {
                             Ok(external_rule_id) => {
-                                // Add options to store and get options ID
                                 let options_id = external_plugin_store
                                     .add_options(external_rule_id, &rule_config.config);
 
@@ -545,15 +544,7 @@ impl JsonSchema for OxlintRules {
                     if r.plugin_name() == "eslint" {
                         (r.name().to_string(), schema)
                     } else {
-                        (
-                            format!(
-                                "{}/{}",
-                                // replace `jsx_a11y` with `jsx-a11y`, `react_perf` with `react-perf`.
-                                r.plugin_name().cow_replace('_', "-"),
-                                r.name()
-                            ),
-                            schema,
-                        )
+                        (format!("{}/{}", r.plugin_name().cow_replace('_', "-"), r.name()), schema)
                     }
                 });
 
@@ -697,24 +688,22 @@ fn parse_rule_value(
         }
 
         serde_json::Value::Array(mut v) => {
-            if v.is_empty() {
+            let Some((severity, config)) = v.split_first_mut() else {
                 return Err(failed_to_parse_rule_value(
                     &serde_json::Value::Array(v).to_string(),
                     "Type should be `[SeverityConf, ...any[]`",
                 )
                 .into());
-            }
+            };
 
-            // The first item should be SeverityConf
-            let severity = AllowWarnDeny::try_from(v.first().unwrap())?;
-            let config = match v.len() {
-                0 => unreachable!(),
+            let severity = AllowWarnDeny::try_from(&*severity)?;
+            let config = match config {
                 // e.g. ["warn"], [0]
-                1 => SmallVec::new(),
+                [] => SmallVec::new(),
                 // e.g. ["error", { type: "whatever" }]
                 // Separate branch for this common case which uses the faster `SmallVec::from_buf`,
                 // and avoids shifting the first element off the vector.
-                2 => SmallVec::from_buf([v.pop().unwrap()]),
+                [config] => SmallVec::from_buf([config.take()]),
                 // e.g. ["error", { type: "whatever" }, ["len", "also"]]
                 _ => {
                     v.remove(0);

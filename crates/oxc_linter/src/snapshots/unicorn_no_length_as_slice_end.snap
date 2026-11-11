@@ -55,3 +55,57 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── `.slice` called here.
    ╰────
   help: Remove the second argument.
+
+  ⚠ unicorn(no-length-as-slice-end): Passing `length` as the end argument of a `slice` call is unnecessary.
+   ╭─[no_length_as_slice_end.tsx:1:4]
+ 1 │ (a.slice)(0, a.length)
+   ·    ──┬──     ────┬───
+   ·      │           ╰── Invalid argument here
+   ·      ╰── `.slice` called here.
+   ╰────
+  help: Remove the second argument.
+
+  ⚠ unicorn(no-length-as-slice-end): Passing `length` as the end argument of a `slice` call is unnecessary.
+   ╭─[no_length_as_slice_end.tsx:1:5]
+ 1 │ ((a.slice))(0, a.length)
+   ·     ──┬──      ────┬───
+   ·       │            ╰── Invalid argument here
+   ·       ╰── `.slice` called here.
+   ╰────
+  help: Remove the second argument.
+
+  ⚠ unicorn(no-length-as-slice-end): Passing `length` as the end argument of a `slice` call is unnecessary.
+   ╭─[no_length_as_slice_end.tsx:1:5]
+ 1 │ (a?.slice)(0, a.length)
+   ·     ──┬──     ────┬───
+   ·       │           ╰── Invalid argument here
+   ·       ╰── `.slice` called here.
+   ╰────
+  help: Remove the second argument.
+
+  ⚠ unicorn(no-length-as-slice-end): Passing `length` as the end argument of a `slice` call is unnecessary.
+   ╭─[no_length_as_slice_end.tsx:1:4]
+ 1 │ (a["slice"])(0, a.length)
+   ·    ───┬───      ────┬───
+   ·       │             ╰── Invalid argument here
+   ·       ╰── `.slice` called here.
+   ╰────
+  help: Remove the second argument.
+
+  ⚠ unicorn(no-length-as-slice-end): Passing `length` as the end argument of a `slice` call is unnecessary.
+   ╭─[no_length_as_slice_end.tsx:1:4]
+ 1 │ (a.slice!)(0, a.length)
+   ·    ──┬──      ────┬───
+   ·      │            ╰── Invalid argument here
+   ·      ╰── `.slice` called here.
+   ╰────
+  help: Remove the second argument.
+
+  ⚠ unicorn(no-length-as-slice-end): Passing `length` as the end argument of a `slice` call is unnecessary.
+   ╭─[no_length_as_slice_end.tsx:1:4]
+ 1 │ (a.slice as typeof a.slice)(0, a.length)
+   ·    ──┬──                       ────┬───
+   ·      │                             ╰── Invalid argument here
+   ·      ╰── `.slice` called here.
+   ╰────
+  help: Remove the second argument.

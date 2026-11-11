@@ -28,7 +28,7 @@ use oxc_ast::Comment;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Buffer, Format, format_args,
+    Format, format_args,
     formatter::{
         JsFormatter,
         comments::gap_segments,
@@ -85,11 +85,7 @@ pub fn classify_type_cast<'a>(span: Span, f: &JsFormatter<'_, 'a>) -> TypeCast<'
     // The cast comment may already be printed:
     // by the re-entry from `format_type_cast_comment_node`,
     // or as the leading comment of an ancestor starting at the same position.
-    if !comments.is_handled_type_cast_comment()
-        && let Some(last_printed_comment) = comments.printed_comments().last()
-        && last_printed_comment.span.end <= span.start
-        && comments.is_type_cast_comment_followed_by_paren(last_printed_comment)
-    {
+    if let Some(last_printed_comment) = comments.printed_type_cast_comment_before(span.start) {
         match classify_cast_comment_gap(last_printed_comment.span.end, span.start, f) {
             CastCommentGap::ParensAndTrivia if comments.is_followed_by_closing_paren(span.end) => {
                 return TypeCast::Target { pending: &[], cast_comment: last_printed_comment };
@@ -132,10 +128,7 @@ pub fn is_cast_target(span: Span, f: &JsFormatter<'_, '_>) -> bool {
     // A target is preceded by its `(` or by the `/` closing a comment:
     // one byte peek rejects most nodes before the `)` peek (true for every last argument and parenthesized test)
     // and the comment lookup.
-    if !matches!(
-        source.bytes_to(span.start).find(|byte| !byte.is_ascii_whitespace()),
-        Some(b'(' | b'/')
-    ) {
+    if !matches!(source.previous_non_whitespace_byte(span.start), Some(b'(' | b'/')) {
         return false;
     }
     let comments = f.context().comments();
@@ -396,17 +389,28 @@ pub fn format_outer_leading_comments_and_open_paren(
         return;
     }
     let leading = f.context().comments().comments_before(span.start);
+    let outside_len = outer_leading_comments_len(leading, span.start, f);
+    write!(f, [FormatLeadingComments::Comments(&leading[..outside_len]), "("]);
+}
+
+/// How many of a node's leading comments (in source order, up to `start`) print outside its kept parentheses:
+/// up to the last one with a `(` after it, then the own-line ones following them.
+pub fn outer_leading_comments_len(
+    leading: &[Comment],
+    start: u32,
+    f: &JsFormatter<'_, '_>,
+) -> usize {
     let mut outside_len = 0;
     for (index, comment) in leading.iter().enumerate() {
-        let gap_end = leading.get(index + 1).map_or(span.start, |next| next.span.start);
+        let gap_end = leading.get(index + 1).map_or(start, |next| next.span.start);
         if f.source_text().bytes_contain(comment.span.end, gap_end, b'(') {
             outside_len = index + 1;
         }
     }
-    while leading.get(outside_len).is_some_and(|comment| comment.preceded_by_newline()) {
+    while leading.get(outside_len).is_some_and(Comment::preceded_by_newline) {
         outside_len += 1;
     }
-    write!(f, [FormatLeadingComments::Comments(&leading[..outside_len]), "("]);
+    outside_len
 }
 
 /// What the source between a cast comment and the node start contains.

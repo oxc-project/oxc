@@ -1,6 +1,6 @@
 use std::{ffi::c_void, marker::PhantomData};
 
-use crate::{Buffer, Format, Formatter};
+use crate::{Format, Formatter};
 
 /// Mono-morphed type to format an object. Used by the [crate::format_args!] and
 /// [crate::write!] macros.

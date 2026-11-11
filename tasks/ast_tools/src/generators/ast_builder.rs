@@ -92,7 +92,7 @@ impl Generator for AstBuilderGenerator {
 
             ///@@line_break
             use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, IntoIn};
-            use oxc_str::{Ident, Str};
+            use oxc_str::{Ident, JSStr, Str};
             use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
 
             ///@@line_break
@@ -333,7 +333,7 @@ fn get_struct_params<'s>(
 
             let generic_type = match type_def {
                 TypeDef::Primitive(primitive_def)
-                    if matches!(primitive_def.name(), "Str" | "Ident") =>
+                    if matches!(primitive_def.name(), "Str" | "Ident" | "JSStr") =>
                 {
                     Some(GenericType::Into)
                 }

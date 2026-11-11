@@ -201,6 +201,15 @@ impl Tool for FakeTool {
             })];
         }
 
+        if params.uri.as_ref().ends_with("code_action_version.config") {
+            return vec![CodeActionResponse::CodeAction(CodeAction {
+                title: format!("Document version {:?}", params.document_version),
+                kind: Some(CodeActionKind::QuickFix),
+                edit: Some(WorkspaceEdit::default()),
+                ..Default::default()
+            })];
+        }
+
         vec![]
     }
 
@@ -1910,6 +1919,41 @@ mod test_suite {
     }
 
     #[tokio::test]
+    async fn test_code_actions_receive_the_document_version() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize_request(InitializeRequestOptions::default()),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/code_action_version.config");
+
+        // `did_open` reports version 1, `did_change` version 2 and `did_save` carries none.
+        let mut id = 3;
+        for (notification, expected) in [
+            (None, "Document version None"),
+            (Some(did_open(&file, "some text")), "Document version Some(1)"),
+            (Some(did_change(&file, "changed text")), "Document version Some(2)"),
+            (Some(did_save(&file, "saved text")), "Document version Some(2)"),
+            (Some(did_close(&file)), "Document version None"),
+        ] {
+            if let Some(notification) = notification {
+                server.send_request(notification).await;
+            }
+            server.send_request(code_action(id, &file)).await;
+            let response = server.recv_response().await;
+            assert!(response.is_ok());
+            assert_eq!(response.id(), &Id::Number(id));
+            let actions: Vec<serde_json::Value> =
+                serde_json::from_value(response.result().unwrap().clone()).unwrap();
+            assert_eq!(actions[0]["title"], expected);
+            id += 1;
+        }
+
+        server.shutdown(id).await;
+    }
+
+    #[tokio::test]
     async fn test_diagnostic_on_open() {
         let mut server = TestServer::new_initialized(
             |client| {
@@ -2072,6 +2116,37 @@ mod test_suite {
         server.send_request(did_open(&file, "old text")).await;
         server.send_request(did_change(&file, content)).await;
         server.send_request(did_save(&file, content)).await;
+        server.shutdown(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_diagnostics_push_mode_request() {
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Push,
+                    )),
+                )
+            },
+            initialize_request(InitializeRequestOptions::default()),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/diagnostics.config");
+        server.send_request(diagnostic(3, &file)).await;
+
+        let diagnostic_response = server.recv_response().await;
+        assert!(diagnostic_response.is_ok());
+        assert_eq!(diagnostic_response.id(), &Id::Number(3));
+
+        let report: serde_json::Value =
+            serde_json::from_value(diagnostic_response.result().unwrap().clone()).unwrap();
+        assert_eq!(report["kind"], "full");
+        assert_eq!(report["items"].as_array().unwrap(), &[] as &[Value]);
+
         server.shutdown(4).await;
     }
 
@@ -2464,7 +2539,9 @@ mod test_suite {
                     Backend::new(
                         client,
                         server_info(),
-                        create_dynamic_workspace_manager(FakeToolBuilder::default()),
+                        create_dynamic_workspace_manager(FakeToolBuilder::new(
+                            DiagnosticMode::Pull,
+                        )),
                     )
                 },
                 initialize_request(init_options),

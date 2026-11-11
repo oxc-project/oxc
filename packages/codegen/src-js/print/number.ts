@@ -24,6 +24,12 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * `CAT_INT_DIGIT` goes only on plain digits. It is what forces the space in `0 .toExponential()`,
  * and every other form ends in, or contains, a `.`, an `e` or an `x` which separates it
  * from a following `.` already.
+ *
+ * @param state - Printer state
+ * @param value - Number to print, finite and not negative
+ * @param start - Start offset of `node` in the source, for the source mapping
+ * @param end - End offset of `node` in the source, for the source mapping
+ * @param node - Node the number is mapped to
  */
 export function printNonNegativeFloat(
   state: State,
@@ -50,6 +56,9 @@ export function printNonNegativeFloat(
  *
  * `String` gives plain digits below 1e21 and exponent notation from there up, which have different forms
  * available to them, so they are separate cases. Both can go hexadecimal.
+ *
+ * @param state - Printer state
+ * @param value - Integer to print, 1000 or more
  */
 function printShortestInteger(state: State, value: number): void {
   const formatted = String(value);
@@ -90,6 +99,9 @@ function printShortestInteger(state: State, value: number): void {
  * `String` gives `0.<digits>` from 1e-7 up to 1, `<digits>.<digits>` from 1 up, and exponent notation
  * below 1e-7. The first always loses its leading zero, and may trade a run of zeros after the point
  * for a negative exponent. The second is already as short as it gets.
+ *
+ * @param state - Printer state
+ * @param value - Non-integer to print
  */
 function printShortestFraction(state: State, value: number): void {
   const formatted = String(value);
@@ -189,6 +201,8 @@ function printExponent(state: State, formatted: string, exponentIndex: number): 
  * `BigInt` rather than `value.toString(16)`, whose result the specification leaves implementation-approximated
  * for every radix but 10, where the output here has to be exact.
  *
+ * @param state - Printer state
+ * @param value - Number to print
  * @param length - Length of the shortest text found for `value` so far
  */
 function printHexIfShorter(state: State, value: number, length: number): boolean {

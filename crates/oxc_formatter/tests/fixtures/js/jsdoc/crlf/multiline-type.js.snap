@@ -1,0 +1,46 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/**
+ * @returns {{ aaaaaaaaaaaaaaaa: string; bbbbbbbbbbbbbbbbbb: number }} x
+ * @example
+ * const x = { aaaaaaaaaaaaaaaa: 1, bbbbbbbbbbbbbbbbbb: 2 };
+ */
+function f() {}
+
+==================== Output ====================
+--------------------------------------------------
+{ endOfLine: "crlf", jsdoc: true, printWidth: 40 }
+--------------------------------------------------
+/**
+ * @example
+ *   const x = { aaaaaaaaaaaaaaaa: 1, bbbbbbbbbbbbbbbbbb: 2 };
+ * @returns {{
+ *   aaaaaaaaaaaaaaaa: string;
+ *   bbbbbbbbbbbbbbbbbb: number;
+ * }} X
+ */
+function f() {}
+
+--------------------------------------------------
+{ endOfLine: "crlf", jsdoc: true, printWidth: 80 }
+--------------------------------------------------
+/**
+ * @example
+ *   const x = { aaaaaaaaaaaaaaaa: 1, bbbbbbbbbbbbbbbbbb: 2 };
+ * @returns {{ aaaaaaaaaaaaaaaa: string; bbbbbbbbbbbbbbbbbb: number }} X
+ */
+function f() {}
+
+---------------------------------------------------
+{ endOfLine: "crlf", jsdoc: true, printWidth: 100 }
+---------------------------------------------------
+/**
+ * @example
+ *   const x = { aaaaaaaaaaaaaaaa: 1, bbbbbbbbbbbbbbbbbb: 2 };
+ * @returns {{ aaaaaaaaaaaaaaaa: string; bbbbbbbbbbbbbbbbbb: number }} X
+ */
+function f() {}
+
+===================== End =====================

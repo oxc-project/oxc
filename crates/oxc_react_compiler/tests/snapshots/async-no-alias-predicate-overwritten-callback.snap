@@ -1,0 +1,21 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-no-alias-predicate-overwritten-callback.js
+---
+function Component() {
+	let count = 0;
+	let cb = _temp;
+	[0].filter(async () => {
+		await 0;
+		cb();
+	});
+	cb = () => count++;
+	cb = _temp2;
+	return null;
+}
+function _temp2() {
+	return null;
+}
+function _temp() {
+	return null;
+}

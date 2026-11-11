@@ -1,0 +1,1 @@
+const A = <div className={`header ${isExtendable ? ' active' : ''}`} />;

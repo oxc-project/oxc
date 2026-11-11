@@ -44,8 +44,8 @@ export interface JSONSourceMap {
    * This value is prepended to the individual entries in the "source" field.
    */
   sourceRoot?: string
-  /** A list of original sources used by the "mappings" entry. */
-  sources: Array<string>
+  /** A list of original sources used by the "mappings" entry, with `None` for unknown names. */
+  sources: Array<string | undefined | null>
   /**
    * An optional list of source content, useful when the "source" can't be hosted.
    * The contents are listed in the same order as the sources in line 5. "null" may be used if some original sources should be retrieved by name.
@@ -69,7 +69,7 @@ export interface SourceMap {
   mappings: string
   names: Array<string>
   sourceRoot?: string
-  sources: Array<string>
+  sources: Array<string | undefined | null>
   sourcesContent?: Array<string>
   version: number
   ignoreList?: Array<number>
@@ -164,7 +164,7 @@ export interface ReactCompilerEnvironmentOptions {
   /**
    * Enable exhaustive manual memo dependency validation.
    *
-   * @default false
+   * @default true
    */
   validateExhaustiveMemoizationDependencies?: boolean
   validateExhaustiveEffectDependencies?: 'off' | 'all' | 'missing-only' | 'extra-only'
@@ -356,6 +356,12 @@ export interface TransformOptions {
    */
   jsx?: 'preserve' | JsxOptions
   /**
+   * Configure how Typescript is transformed.
+   *
+   * @see <https://oxc.rs/docs/guide/usage/transformer/typescript>
+   */
+  typescript?: TypeScriptOptions
+  /**
    * Configure React Compiler, or disable it with `false`.
    *
    * @default true
@@ -392,3 +398,26 @@ export interface TransformResult {
  * removed and configured JSX transforms run afterwards.
  */
 export declare function transformSync(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult
+
+/**
+ * Configure how Typescript is transformed.
+ *
+ * @see <https://oxc.rs/docs/guide/usage/transformer/typescript>
+ */
+export interface TypeScriptOptions {
+  /**
+   * Inlines const enum values and removes the declaration.
+   *
+   * @default false
+   */
+  optimizeConstEnums?: boolean
+  /**
+   * Inlines regular (non-const) enum member accesses when all members
+   * satisfy const enum constraints (i.e., their values are statically evaluable).
+   * Non-exported enum declarations are also removed when all members are
+   * evaluable and no references to the enum as a runtime value exist.
+   *
+   * @default false
+   */
+  optimizeEnums?: boolean
+}

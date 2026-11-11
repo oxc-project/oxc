@@ -1,0 +1,14 @@
+// A same-line block comment before hugged content: measured against Prettier (AGENTS.md "Comments and layout").
+
+// Stops the hug
+function soleObjectPattern(/* c */ { aaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbbbbbb, cccccccccccccccccccccc, dddddddddd }) {}
+soleObjectArgument(/* c */ { aaaaaaaaaaaaaaaaaaaa: 1, bbbbbbbbbbbbbbbbbbbbbbbb: 2, cccccccccccccccccccccc: 3, dddddd: 4 });
+soleArrayArgument(/* c */ [aaaaaaaaaaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, cccccccccccccccccccccccccccc]);
+lastArrowArgument(aaaaaaaaaaaaaaaaaaaa, /* c */ (bbbbbbbbbbbbbbbbbbbbbbbb, cccccccccccccccccccccccccccccc) => { return 1; });
+
+// Keeps the hug
+function soleObjectTypeParameter(a: /* c */ { aaaaaaaaaaaaaaaaaaaa: string; bbbbbbbbbbbbbbbbbbbbbbbb: number; c: 1 }) {}
+function returnType(): /* c */ { aaaaaaaaaaaaaaaaaaaa: string; bbbbbbbbbbbbbbbbbbbbbbbb: number; ccccccccccccc: 1 } {}
+type TypeArgument = Foo</* c */ { aaaaaaaaaaaaaaaaaaaa: string; bbbbbbbbbbbbbbbbbbbbbbbb: number; cccccccccccc: 1 }>;
+type Alias = /* c */ { aaaaaaaaaaaaaaaaaaaa: string; bbbbbbbbbbbbbbbbbbbbbbbb: number; ccccccccccccccccccccccc: 1 };
+const variable = /* c */ { aaaaaaaaaaaaaaaaaaaa: 1, bbbbbbbbbbbbbbbbbbbbbbbb: 2, cccccccccccccccccccccc: 3, d: 4 };

@@ -7,6 +7,8 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  *
  * Parsing with `preserveParens: false` produces none of these, but the printer accepts an AST
  * which has them, and decides parenthesisation from precedence rather than from what the source had.
+ *
+ * @param node - Expression
  */
 export function withoutParens(node: ESTree.Expression): ESTree.Expression {
   while (node.type === "ParenthesizedExpression") {

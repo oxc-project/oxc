@@ -10,8 +10,7 @@ use super::super::oxfmtrc::{
     ArrowParensConfig, AstroCompressHtmlConfig, AstroConfig, AstroUserConfig,
     EmbeddedLanguageFormattingConfig, EndOfLineConfig, FormatConfig,
     HtmlWhitespaceSensitivityConfig, ObjectWrapConfig, OperatorPositionConfig, ProseWrapConfig,
-    QuotePropsConfig, SortTailwindcssUserConfig, SvelteConfig, SvelteUserConfig,
-    TrailingCommaConfig,
+    QuotePropsConfig, SvelteConfig, SvelteUserConfig, TrailingCommaConfig,
 };
 #[cfg(feature = "napi")]
 use super::super::support::PrettierLanguage;
@@ -172,11 +171,6 @@ pub fn inject_parser(opts: &mut Value, parser_name: &str) {
     as_object_mut(opts).insert("parser".to_string(), Value::String(parser_name.to_string()));
 }
 
-/// Inject `printWidth` key, overriding the configured one.
-pub fn inject_print_width(opts: &mut Value, print_width: usize) {
-    as_object_mut(opts).insert("printWidth".to_string(), Value::from(print_width));
-}
-
 /// Inject `filepath` key.
 ///
 /// Some plugins (Tailwind sorter, etc.) depend on it.
@@ -194,8 +188,7 @@ pub fn inject_filepath(opts: &mut Value, path: &Path) {
 ///
 /// See: <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
 pub fn inject_tailwind_plugin_payload(opts: &mut Value, config: &FormatConfig) {
-    let Some(tw) = config.sort_tailwindcss.clone().and_then(SortTailwindcssUserConfig::into_config)
-    else {
+    let Some(tw) = config.tailwind_config() else {
         return;
     };
     let map = as_object_mut(opts);

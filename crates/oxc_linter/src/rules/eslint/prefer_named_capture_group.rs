@@ -1,16 +1,21 @@
+use std::borrow::Cow;
+
 use oxc_allocator::Allocator;
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
+    builder::AstBuilder,
 };
+use oxc_codegen::Codegen;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
-    LiteralParser, Options,
+    ConstructorParser, LiteralParser, Options,
     ast::Pattern,
     visit::{RegExpAstKind, Visit},
 };
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -110,27 +115,48 @@ fn check_static_arguments(arg0: Option<&Argument>, arg1: Option<&Argument>, ctx:
         return;
     };
 
-    let Some(pattern_text) = static_string_value(pattern_expr) else {
+    let Some(pattern_value) = static_string_value(pattern_expr, ctx.allocator()) else {
         return;
     };
-
-    let flags_text = arg1
+    let flags_value = arg1
         .and_then(Argument::as_expression)
         .map(Expression::get_inner_expression)
-        .and_then(static_string_value);
-
-    let allocator = Allocator::default();
-    let Ok(pattern) = LiteralParser::new(
-        &allocator,
-        &pattern_text,
-        flags_text.as_deref(),
-        Options { pattern_span_offset: pattern_expr.span().start, flags_span_offset: 0 },
-    )
-    .parse() else {
-        return;
+        .and_then(|expr| static_string_value(expr, ctx.allocator()));
+    let flags_text = match flags_value {
+        Some(value) => {
+            let Some(text) = value.as_str() else { return };
+            Some(text)
+        }
+        None => None,
     };
 
+    let allocator = Allocator::default();
+    let options = Options { pattern_span_offset: pattern_expr.span().start, flags_span_offset: 0 };
+    let pattern_text = pattern_value.as_str().map_or_else(
+        || Cow::Owned(string_literal_source(pattern_value, &allocator)),
+        Cow::Borrowed,
+    );
+    let flags_source = pattern_value
+        .has_lone_surrogate()
+        .then(|| flags_text.map(|text| string_literal_source(text.into(), &allocator)))
+        .flatten();
+    let parsed = if pattern_value.has_lone_surrogate() {
+        // Parse the generated string literal to retain the original UTF-16 values.
+        ConstructorParser::new(&allocator, &pattern_text, flags_source.as_deref(), options).parse()
+    } else {
+        LiteralParser::new(&allocator, &pattern_text, flags_text, options).parse()
+    };
+    let Ok(pattern) = parsed else { return };
+
     check_pattern(&pattern, ctx, Some(pattern_expr.span()));
+}
+
+fn string_literal_source(value: JSStr<'_>, allocator: &Allocator) -> String {
+    let expression =
+        Expression::new_string_literal(Span::default(), value, None, &AstBuilder::new(allocator));
+    let mut codegen = Codegen::new();
+    codegen.print_expression(&expression);
+    codegen.into_source_text()
 }
 
 fn is_directly_supported_regex_argument(expr: &Expression<'_>) -> bool {
@@ -161,6 +187,9 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        r#"new RegExp("(a)[" + "\uD801" + "-" + "\uD800" + "]");"#,
+        r#"new RegExp("(a)[" + "\uD801" + "-" + "\uD800" + "]", "u");"#,
+        r#"new RegExp("(a)" + "", "u\uD800");"#,
         "/normal_regex/",
         "/(?:[0-9]{4})/",
         "/(?<year>[0-9]{4})/",
@@ -193,6 +222,8 @@ fn test() {
     ];
 
     let fail = vec![
+        r#"new RegExp("(a)[" + "\uD800" + "-" + "\uE000" + "]");"#,
+        r#"new RegExp("(a)[" + "\uD800" + "-" + "\uE000" + "]", "u");"#,
         "/([0-9]{4})/",
         "new RegExp('([0-9]{4})')",
         "RegExp('([0-9]{4})')",
@@ -210,6 +241,7 @@ fn test() {
         "new RegExp('a(bc)d' + 'e')",
         r#"new RegExp("foo" + "(a)" + "(b)");"#,
         r#"new RegExp("foo" + "(?:a)" + "(b)");"#,
+        r#"new RegExp("(a)" + "\uD800");"#,
         "RegExp('(a)'+'')",
         "RegExp( '' + '(ab)')",
         "new RegExp(`(ab)${''}`)",

@@ -88,5 +88,17 @@ fn test_minimize_if() {
     test("function f(){if(!a)b();else return c;}", "function f(){if(!a)b();else return c;}");
     test("function f(){if(a)return c;else b();}", "function f(){if(a)return c;b();}");
     test("function f(){if((a(),b)){}else c();}", "function f(){a(),b||c();}");
-    test("function f(){if(a(),!(b||c)){}else d();}", "function f(){a(),!(b||c)||d();}");
+    test("function f(){if(a(),b){}else c();}", "function f(){a(),b||c();}");
+    test("function f(){if(a(),!b){}else c();}", "function f(){a(),b&&c();}");
+    test("function f(){if(a(),!b)c();}", "function f(){a(),b||c();}");
+    test("function f(){if(!a(),b)c();}", "function f(){a(),b&&c();}");
+    test("function f(){if(a(),!(b||c)){}else d();}", "function f(){a(),(b||c)&&d();}");
+
+    test("function f(a){if(a){}}", "function f(a){}");
+    test("function f(a){if(a);}", "function f(a){}");
+    test("function f(a,b){if(a===b){}}", "function f(a,b){}");
+
+    test("if (typeof a==='undefined'){}", "");
+    test("if (a){}", "a;");
+    test("if (b()){}", "b();");
 }

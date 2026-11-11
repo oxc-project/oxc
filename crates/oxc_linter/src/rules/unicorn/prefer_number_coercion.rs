@@ -40,6 +40,7 @@ declare_oxc_lint!(
     PreferNumberCoercion,
     unicorn,
     pedantic,
+    recommended,
     suggestion,
     version = "1.71.0",
     short_description = "Prefer `Number()` over `parseFloat()` and base-10 `parseInt()`.",
@@ -128,7 +129,7 @@ fn parse_target(callee: &Expression, ctx: &LintContext) -> Option<ParseTarget> {
             if !ctx.is_reference_to_global_variable(object) {
                 return None;
             }
-            match member_expr.static_property_name()? {
+            match member_expr.static_property_name()?.as_str()? {
                 "parseFloat" => Some(ParseTarget::ParseFloat),
                 "parseInt" => Some(ParseTarget::ParseInt),
                 _ => None,

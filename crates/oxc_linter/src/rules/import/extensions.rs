@@ -553,10 +553,12 @@ impl Rule for Extensions {
             return;
         }
         for argument in &call_expr.arguments {
-            if let Argument::StringLiteral(s) = argument {
+            if let Argument::StringLiteral(s) = argument
+                && let Some(source) = s.value.as_str()
+            {
                 self.process_import(
                     ctx,
-                    s.value.as_str(),
+                    source,
                     call_expr.span,
                     false, // require() is never a type import
                     true,  // treat require as import for diagnostics
@@ -876,6 +878,8 @@ fn test() {
     use serde_json::json;
 
     let pass = vec![
+        // A `require()` specifier with a lone surrogate is not checked.
+        (r#"const foo = require("./foo\uD800");"#, Some(json!(["always"]))),
         // Default config: no extension requirements, unconfigured extensions are ignored
         (r#"import a from "@/a""#, None),
         (r#"import a from "a""#, None),

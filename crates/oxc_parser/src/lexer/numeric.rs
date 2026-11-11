@@ -13,7 +13,8 @@ impl<C: Config> Lexer<'_, C> {
             Some(b'x' | b'X') => self.read_non_decimal(Kind::Hex),
             Some(b'e' | b'E') => {
                 self.consume_char();
-                self.read_decimal_exponent()
+                let kind = self.read_decimal_exponent();
+                self.check_after_numeric_literal(kind)
             }
             Some(b'.') => {
                 self.consume_char();
@@ -72,7 +73,10 @@ impl<C: Config> Lexer<'_, C> {
                     if self.peek_byte().is_some_and(|b| kind.matches_number_byte(b)) {
                         self.consume_char();
                     } else {
-                        self.unexpected_err();
+                        self.error(diagnostics::invalid_numeric_separator(Span::new(
+                            self.offset() - 1,
+                            self.offset(),
+                        )));
                         self.advance_to_end();
                         return Kind::Eof;
                     }
@@ -117,10 +121,11 @@ impl<C: Config> Lexer<'_, C> {
                 self.consume_char();
                 self.decimal_literal_after_decimal_point_after_digits()
             }
-            // allow 08e1 and 09e1
-            Some(b'e') if kind == Kind::Decimal => {
+            // allow 08e1, 09e1, and their uppercase exponent forms
+            Some(b'e' | b'E') if kind == Kind::Decimal => {
                 self.consume_char();
-                self.read_decimal_exponent()
+                let kind = self.read_decimal_exponent();
+                self.check_after_numeric_literal(kind)
             }
             _ => self.check_after_numeric_literal(kind),
         }
@@ -166,7 +171,10 @@ impl<C: Config> Lexer<'_, C> {
                     if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
                         self.consume_char();
                     } else {
-                        self.unexpected_err();
+                        self.error(diagnostics::invalid_numeric_separator(Span::new(
+                            self.offset() - 1,
+                            self.offset(),
+                        )));
                         return;
                     }
                 }
@@ -179,7 +187,10 @@ impl<C: Config> Lexer<'_, C> {
     }
 
     pub(super) fn decimal_literal_after_decimal_point(&mut self) -> Kind {
-        self.read_decimal_digits();
+        // `read_dot` has already established the required first decimal digit.
+        debug_assert!(self.peek_byte().is_some_and(|b| b.is_ascii_digit()));
+        self.consume_char();
+        self.read_decimal_digits_after_first_digit();
         self.optional_exponent();
         self.check_after_numeric_literal(Kind::Float)
     }

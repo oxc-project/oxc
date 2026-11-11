@@ -102,9 +102,13 @@ fn validate_context_variable_lvalues_impl(
                 InstructionValue::LoadLocal { place, .. } => {
                     visit(identifier_kinds, place, VarRefKind::Local, identifiers, errors)?;
                 }
-                InstructionValue::PostfixUpdate { lvalue, .. }
-                | InstructionValue::PrefixUpdate { lvalue, .. } => {
+                InstructionValue::PostfixUpdateLocal { lvalue, .. }
+                | InstructionValue::PrefixUpdateLocal { lvalue, .. } => {
                     visit(identifier_kinds, lvalue, VarRefKind::Local, identifiers, errors)?;
+                }
+                InstructionValue::PostfixUpdateContext { lvalue, .. }
+                | InstructionValue::PrefixUpdateContext { lvalue, .. } => {
+                    visit(identifier_kinds, lvalue, VarRefKind::Context, identifiers, errors)?;
                 }
                 InstructionValue::Destructure { lvalue, .. } => {
                     for place in each_pattern_operand(&lvalue.pattern) {

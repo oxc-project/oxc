@@ -116,7 +116,7 @@ impl Rule for Radix {
             Expression::ChainExpression(chain_expr) => {
                 if let Some(member_expr) = chain_expr.expression.as_member_expression()
                     && let Expression::Identifier(ident) = member_expr.object()
-                    && member_expr.static_property_name() == Some("parseInt")
+                    && member_expr.static_property_name().is_some_and(|name| name == "parseInt")
                     && Self::is_global_number_ident(ident, ctx)
                 {
                     Self::check_arguments(call_expr, ctx);

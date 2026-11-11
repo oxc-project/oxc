@@ -147,19 +147,29 @@ async function readAllFiles(
 ): Promise<{ files: Map<string, string>; symlinks: Map<string, string> }> {
   const files = new Map<string, string>();
   const symlinks = new Map<string, string>(); // path -> link target
-  const entries = await fs.readdir(dir, { withFileTypes: true, recursive: true });
 
-  for (const entry of entries) {
-    const fullPath = join(entry.parentPath, entry.name);
-    const relPath = relative(dir, fullPath).replace(/\\/g, "/");
+  for (const { entry, fullPath, relPath } of await readEntries(dir)) {
     if (entry.isFile()) {
       files.set(relPath, await fs.readFile(fullPath, "utf8"));
     } else if (entry.isSymbolicLink()) {
-      symlinks.set(relPath, await fs.readlink(fullPath));
+      symlinks.set(relPath, (await fs.readlink(fullPath)).replace(/\\/g, "/"));
     }
   }
 
   return { files, symlinks };
+}
+
+// `fs/promises` `readdir` with `recursive` also descends into symlinked directories since Node v26.9.0 (nodejs/node#65524).
+// Skip the entries reached through one.
+async function readEntries(dir: string) {
+  const entries = (await fs.readdir(dir, { withFileTypes: true, recursive: true })).map((entry) => {
+    const fullPath = join(entry.parentPath, entry.name);
+    return { entry, fullPath, relPath: relative(dir, fullPath).replace(/\\/g, "/") };
+  });
+  const linkDirs = entries
+    .filter(({ entry }) => entry.isSymbolicLink())
+    .map(({ relPath }) => `${relPath}/`);
+  return entries.filter(({ relPath }) => !linkDirs.some((link) => relPath.startsWith(link)));
 }
 
 // --- Diff detection and restore ---
@@ -199,11 +209,8 @@ async function detectAndRestoreChanges(
   }
 
   // Detect newly created files
-  const entriesAfter = await fs.readdir(dir, { withFileTypes: true, recursive: true });
-  for (const entry of entriesAfter) {
+  for (const { entry, fullPath, relPath } of await readEntries(dir)) {
     if (!entry.isFile()) continue;
-    const fullPath = join(entry.parentPath, entry.name);
-    const relPath = relative(dir, fullPath).replace(/\\/g, "/");
     if (!filesBefore.has(relPath)) {
       const content = await fs.readFile(fullPath, "utf8");
       created.push({ path: relPath, content });
@@ -333,10 +340,12 @@ function normalizeOutput(output: string, cwd: string): string {
 
   return (
     output
-      // Collapse Vite+ diagnostics first, they contain ANSI codes of their own
+      // Collapse Vite+ diagnostics first, they contain ANSI codes of their own.
+      // e.g. `vite.config.ts (1:2) [UNRESOLVED_IMPORT] ...`, followed by a code frame box.
+      // When the checkout path makes the source line long, ` - ...` detail lines replace the box.
       .replace(
         // oxlint-disable-next-line no-control-regex
-        /vite\.config\.ts \(\d+:\d+\) [\s\S]*?─╯(?:\x1b\[[0-9;]*m)*\n?/g,
+        /vite\.config\.ts \(\d+:\d+\) [^\n]*(?:(?:\n - [^\n]*)+|\n[ \t]*(?:\x1b\[[0-9;]*m)*╭[\s\S]*?─╯(?:\x1b\[[0-9;]*m)*)?\n?/g,
         "<Vite+ diagnostic>\n",
       )
       // Make ANSI style codes visible so snapshots can pin color behavior

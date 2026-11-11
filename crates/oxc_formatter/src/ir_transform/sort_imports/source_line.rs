@@ -58,16 +58,31 @@ impl<'a> SourceLine<'a> {
         // (`with { type: "json" }` must not count as named specifiers).
         let mut seen_from_keyword = false;
 
+        // Comments are not part of the head: a comment `Text` is neither a binding nor the source.
+        let mut inside_comment = false;
+
         let import_label = LabelId::of(JsLabels::ImportDeclaration);
+        let comment_label = LabelId::of(JsLabels::Comment);
         for idx in range.clone() {
             let element = &elements[idx];
 
-            // Special marker for `ImportDeclaration`
-            if let FormatElement::Tag(Tag::StartLabelled(id)) = element {
-                if *id == import_label {
-                    has_import = true;
+            match element {
+                // Special marker for `ImportDeclaration`
+                FormatElement::Tag(Tag::StartLabelled(id)) => {
+                    if *id == import_label {
+                        has_import = true;
+                    } else if *id == comment_label {
+                        inside_comment = true;
+                    }
+                    continue;
                 }
-                continue;
+                // A comment does not nest, so its `EndLabelled` comes before the import's
+                FormatElement::Tag(Tag::EndLabelled) if inside_comment => {
+                    inside_comment = false;
+                    continue;
+                }
+                _ if inside_comment => continue,
+                _ => {}
             }
             if !has_import {
                 continue;
@@ -75,7 +90,7 @@ impl<'a> SourceLine<'a> {
 
             // Everything before the `import` keyword (e.g. leading comments) is not the head.
             if !seen_import_keyword {
-                if matches!(element, FormatElement::Token { text: "import" }) {
+                if matches!(element, FormatElement::Token { text } if text.as_str() == "import") {
                     seen_import_keyword = true;
                     expect_type_keyword = true;
                 }
@@ -85,7 +100,7 @@ impl<'a> SourceLine<'a> {
             match element {
                 FormatElement::Token { text } => {
                     if !seen_from_keyword {
-                        match *text {
+                        match text.as_str() {
                             "type" if expect_type_keyword => is_type_import = true,
                             "*" => has_namespace_specifier = true,
                             "{" => has_named_specifier = true,
@@ -100,7 +115,7 @@ impl<'a> SourceLine<'a> {
                 }
                 FormatElement::Text { text, .. } => {
                     if source.is_none() {
-                        source = Some(text);
+                        source = Some(text.as_str());
                         // The first `Text` after `from` is the source;
                         // nothing after it (import attributes, trailing comments) affects the metadata.
                         if seen_from_keyword {

@@ -77,7 +77,8 @@ declare_oxc_lint!(
     RequireParamDescription,
     jsdoc,
     pedantic,
-    pending,
+    recommended,
+    fix,
     config = RequireParamDescriptionConfig,
     version = "0.4.4",
     short_description = "Requires that each `@param` tag has a description value.",
@@ -159,9 +160,17 @@ impl Rule for RequireParamDescription {
 
                 if self.0.set_default_destructured_root_description
                     && is_destructured_root
-                    && name_part.is_some()
+                    && let Some(name_part) = name_part
                 {
-                    ctx.diagnostic(missing_root_description_diagnostic(tag.kind.span));
+                    ctx.diagnostic_with_fix(
+                        missing_root_description_diagnostic(tag.kind.span),
+                        |fixer| {
+                            fixer.insert_text_after_range(
+                                name_part.span,
+                                format!(" {}", self.0.default_destructured_root_description),
+                            )
+                        },
+                    );
                 } else {
                     ctx.diagnostic(missing_type_diagnostic(tag.kind.span));
                 }
@@ -343,6 +352,59 @@ fn test() {
         ),
     ];
 
+    let fix = vec![
+        (
+            "
+			          /**
+			           * @param {number} foo Foo description
+			           * @param {object} root
+			           * @param {boolean} baz Baz description
+			           */
+			          function quux (foo, {bar}, baz) {
+
+			          }
+			      ",
+            "
+			          /**
+			           * @param {number} foo Foo description
+			           * @param {object} root The root object
+			           * @param {boolean} baz Baz description
+			           */
+			          function quux (foo, {bar}, baz) {
+
+			          }
+			      ",
+            Some(serde_json::json!([{ "setDefaultDestructuredRootDescription": true }])),
+        ),
+        (
+            "
+			          /**
+			           * @param {number} foo Foo description
+			           * @param {object} root
+			           * @param {boolean} baz Baz description
+			           */
+			          function quux (foo, {bar}, baz) {
+
+			          }
+			      ",
+            "
+			          /**
+			           * @param {number} foo Foo description
+			           * @param {object} root Root description
+			           * @param {boolean} baz Baz description
+			           */
+			          function quux (foo, {bar}, baz) {
+
+			          }
+			      ",
+            Some(serde_json::json!([{
+                "defaultDestructuredRootDescription": "Root description",
+                "setDefaultDestructuredRootDescription": true
+            }])),
+        ),
+    ];
+
     Tester::new(RequireParamDescription::NAME, RequireParamDescription::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

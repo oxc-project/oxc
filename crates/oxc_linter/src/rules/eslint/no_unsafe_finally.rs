@@ -53,6 +53,7 @@ declare_oxc_lint!(
     NoUnsafeFinally,
     eslint,
     correctness,
+    recommended,
     version = "0.0.5",
     short_description = "Disallow control flow statements in `finally` blocks.",
 );

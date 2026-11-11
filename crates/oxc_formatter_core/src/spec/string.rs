@@ -17,10 +17,14 @@ pub fn normalize_string(
     preferred_quote: u8,
     quotes_will_change: bool,
 ) -> Cow<'_, str> {
+    // Most strings have no byte to rewrite: find the first one all at once
+    let Some(first) = memchr::memchr3(b'\\', b'\r', preferred_quote, raw_content.as_bytes()) else {
+        return Cow::Borrowed(raw_content);
+    };
     let alternate_quote = if preferred_quote == b'"' { b'\'' } else { b'"' };
     let mut reduced_string = String::new();
     let mut copy_start = 0;
-    let mut bytes = raw_content.bytes().enumerate().peekable();
+    let mut bytes = raw_content.bytes().enumerate().skip(first).peekable();
     while let Some((byte_index, byte)) = bytes.next() {
         match byte {
             // If the next character is escaped

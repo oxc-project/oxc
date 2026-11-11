@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use oxc_ast::Comment;
-use oxc_formatter_core::{FormatSession, LineWidth};
+use oxc_formatter_core::FormatSession;
 use oxc_jsdoc::JSDoc;
 use oxc_span::Span;
 
@@ -10,7 +10,7 @@ use crate::options::{JsdocOptions, QuoteStyle};
 use crate::{JsFormatOptions, write};
 
 use super::{
-    imports::process_import_tags, line_buffer::LineBuffer,
+    embedded::snippet_options, imports::process_import_tags, line_buffer::LineBuffer,
     mdast_serialize::format_description_mdast, normalize::normalize_tag_kind,
     param_order::reorder_param_tags,
 };
@@ -80,14 +80,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         // `commentContentPrintWidth` to Prettier's TS formatter. This lets the
         // formatter wrap complex types (object literals, function types) across
         // multiple lines when they exceed the available width.
-        let type_width = u16::try_from(wrap_width).unwrap_or(80).clamp(1, LineWidth::MAX);
-        let type_format_options = JsFormatOptions {
-            line_width: LineWidth::try_from(type_width).unwrap(),
-            jsdoc: None,
-            sort_imports: None,
-            sort_tailwindcss: None,
-            ..format_options.clone()
-        };
+        let type_format_options = snippet_options(format_options, wrap_width);
         Self {
             options,
             format_options,
@@ -163,7 +156,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         if merged_desc.is_empty()
             && effective_tags.len() == 1
             && effective_tags[0].1 == "type"
-            && !content.contains('\n')
+            && !comment.is_multiline_block()
             && effective_tags[0].0.comment().parsed().trim().is_empty()
         {
             return None;
@@ -362,7 +355,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             crate::options::CommentLineStrategy::Multiline => false,
             crate::options::CommentLineStrategy::Keep => {
                 // Preserve original: only use single-line if original was single-line
-                second.is_none() && !content.contains('\n')
+                second.is_none() && !comment.is_multiline_block()
             }
         };
         if use_single_line {
@@ -1179,14 +1172,7 @@ mod tests {
     }
 
     fn fmt_type_width(type_str: &str, width: u16) -> Option<String> {
-        let opts = JsFormatOptions {
-            line_width: LineWidth::try_from(width).unwrap(),
-            jsdoc: None,
-            sort_imports: None,
-            sort_tailwindcss: None,
-            ..JsFormatOptions::default()
-        };
-        fmt_type_with_opts(type_str, &opts)
+        fmt_type_with_opts(type_str, &snippet_options(&JsFormatOptions::default(), width.into()))
     }
 
     #[test]

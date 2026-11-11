@@ -13,6 +13,11 @@ declare const TS: boolean;
 // (see `src/asserts.ts`). Release builds strip them in `tsdown_plugins/remove_asserts.ts`.
 declare const DEBUG: boolean;
 
+// `true` if build produces minified output.
+// Always `false` at present - the printer only produces pretty output. Code which only a minifying printer
+// would need sits behind it, so it costs pretty builds nothing, but is kept ready for a minify mode.
+declare const MINIFY: boolean;
+
 // `true` if is benchmark build.
 // Built with `pnpm run bench`, which sets `BENCHMARKS=true`. Benchmark builds honor the
 // `skipSourcemapGeneration` option, so a benchmark can measure the print pass without the final

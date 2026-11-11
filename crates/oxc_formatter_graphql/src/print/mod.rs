@@ -1,5 +1,5 @@
 use oxc_formatter_core::{
-    Buffer, Format, Formatter,
+    Format, Formatter,
     builders::{FormatWith, empty_line, hard_line_break, if_group_fits_on_line, soft_line_break},
     write,
 };

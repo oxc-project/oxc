@@ -3,13 +3,16 @@ use std::borrow::Cow;
 use cow_utils::CowUtils;
 
 use oxc_formatter_core::{
-    Buffer, arena_cow_str,
-    builders::{exact_line_breaks, hard_line_break, soft_line_break_or_space, text},
+    arena_cow_str,
+    builders::{Line, exact_line_breaks, hard_line_break, indent, soft_line_break_or_space, text},
     write,
 };
 use oxc_span::Span;
 
-use crate::{options::ProseWrap, print::YamlFormatter};
+use crate::{
+    options::ProseWrap,
+    print::{YamlFormatter, format_with, starts_with_document_marker},
+};
 
 /// Which flow scalar shape is being folded (affects word-merge rules and quoting).
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -20,13 +23,18 @@ pub enum FlowScalarKind {
 }
 
 /// Emits a plain scalar: raw slice content, line-folded per `proseWrap`.
-pub fn write_plain(span: Span, f: &mut YamlFormatter<'_, '_>) {
+pub fn write_plain(span: Span, multiline: bool, f: &mut YamlFormatter<'_, '_>) {
     let content = f.context().source_text().text_for(&span);
-    write_flow_scalar_content(FlowScalarKind::Plain, content, f);
+    write_flow_scalar_content(FlowScalarKind::Plain, content, multiline, f);
 }
 
 /// Emits a quoted scalar with Prettier's `quoteDouble`/`quoteSingle` case.
-pub fn write_quoted(kind: FlowScalarKind, span: Span, f: &mut YamlFormatter<'_, '_>) {
+pub fn write_quoted(
+    kind: FlowScalarKind,
+    span: Span,
+    multiline: bool,
+    f: &mut YamlFormatter<'_, '_>,
+) {
     let source = f.context().source_text();
     // Inner content between the quotes
     let raw = source.text_for(&Span::new(span.start + 1, span.end - 1));
@@ -44,7 +52,7 @@ pub fn write_quoted(kind: FlowScalarKind, span: Span, f: &mut YamlFormatter<'_, 
     if has_unreencodable_escape {
         let quote = if kind == FlowScalarKind::QuoteDouble { "\"" } else { "'" };
         write!(f, text(quote));
-        write_flow_scalar_content(kind, raw, f);
+        write_flow_scalar_content(kind, raw, multiline, f);
         write!(f, text(quote));
         return;
     }
@@ -57,9 +65,9 @@ pub fn write_quoted(kind: FlowScalarKind, span: Span, f: &mut YamlFormatter<'_, 
             // (The guarding `contains('"')` means the first replace always matches,
             // so the chain is owned; copy it into the arena once.)
             let content = raw.cow_replace("\\\"", "\"").cow_replace('\'', "''").into_owned();
-            write_flow_scalar_content(kind, f.allocator().alloc_str(&content), f);
+            write_flow_scalar_content(kind, f.allocator().alloc_str(&content), multiline, f);
         } else {
-            write_flow_scalar_content(kind, raw, f);
+            write_flow_scalar_content(kind, raw, multiline, f);
         }
         write!(f, text("'"));
         return;
@@ -71,9 +79,9 @@ pub fn write_quoted(kind: FlowScalarKind, span: Span, f: &mut YamlFormatter<'_, 
         if kind == FlowScalarKind::QuoteSingle {
             // `''` unescapes to `'` (nothing else needs escaping in double quotes here)
             let content = raw.cow_replace("''", "'");
-            write_flow_scalar_content(kind, arena_cow_str(&content, f), f);
+            write_flow_scalar_content(kind, arena_cow_str(&content, f), multiline, f);
         } else {
-            write_flow_scalar_content(kind, raw, f);
+            write_flow_scalar_content(kind, raw, multiline, f);
         }
         write!(f, text("\""));
         return;
@@ -81,22 +89,24 @@ pub fn write_quoted(kind: FlowScalarKind, span: Span, f: &mut YamlFormatter<'_, 
 
     let quote = f.options().single_quote.as_str();
     write!(f, text(quote));
-    write_flow_scalar_content(kind, raw, f);
+    write_flow_scalar_content(kind, raw, multiline, f);
     write!(f, text(quote));
 }
 
 /// Prettier's `printFlowScalarContent`:
 /// each reflow group becomes a `fill(join(line, words))`, groups joined by hardlines.
+/// `multiline` is the parser's flag for the scalar crossing a line break.
 pub fn write_flow_scalar_content<'a>(
     kind: FlowScalarKind,
     content: &'a str,
+    multiline: bool,
     f: &mut YamlFormatter<'_, 'a>,
 ) {
     let prose_wrap = f.options().prose_wrap;
     // Fast path:
     // a single-line scalar under `preserve` (the default) prints verbatim,
     // skip the line-contents machinery and its allocations.
-    if prose_wrap == ProseWrap::Preserve && !content.contains('\n') {
+    if prose_wrap == ProseWrap::Preserve && !multiline {
         if !content.is_empty() {
             write!(f, text(content));
         }
@@ -117,6 +127,18 @@ pub fn write_flow_scalar_content<'a>(
         })
         .collect();
 
+    // Outside block collections, continuation lines start at column 0:
+    // a line starting with a document marker is indented instead (see AGENTS.md "Line starts")
+    let guards_line_start = f.context().collection_depth().get() == 0;
+    let line_before = |line: Line, word: &'a str| {
+        format_with(move |f| {
+            if guards_line_start && starts_with_document_marker(word) {
+                write!(f, indent(&line));
+            } else {
+                write!(f, line);
+            }
+        })
+    };
     let mut blanks = 0usize;
     let mut wrote_any = false;
     for words in &line_groups {
@@ -127,15 +149,15 @@ pub fn write_flow_scalar_content<'a>(
         if blanks > 0 {
             // N blank groups = N separators before this group
             // (plus the one separating it from the previous non-empty group, if any).
-            write!(f, exact_line_breaks(blanks + usize::from(wrote_any)));
+            write!(f, line_before(exact_line_breaks(blanks + usize::from(wrote_any)), words[0]));
         } else if wrote_any {
-            write!(f, hard_line_break());
+            write!(f, line_before(hard_line_break(), words[0]));
         }
         blanks = 0;
         wrote_any = true;
         let mut fill = f.fill();
         for &word in words {
-            fill.entry(&soft_line_break_or_space(), &text(word));
+            fill.entry(&line_before(soft_line_break_or_space(), word), &text(word));
         }
         fill.finish();
     }
