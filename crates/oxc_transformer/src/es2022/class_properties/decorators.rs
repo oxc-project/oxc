@@ -18,10 +18,12 @@
 
 use std::mem;
 
+use rustc_hash::{FxHashMap, FxHashSet};
+
 use oxc_allocator::{Address, ArenaVec, GetAddress, TakeIn};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_str::Str;
+use oxc_str::{JSStr, Str};
 use oxc_syntax::{
     number::NumberBase,
     reference::ReferenceFlags,
@@ -52,6 +54,39 @@ const KIND_ACCESSOR: u32 = 4;
 const KIND_FIELD: u32 = 5;
 const FLAG_STATIC: u32 = 8;
 const FLAG_PRIVATE: u32 = 16;
+
+/// Decorator state shared across the class-properties traversal.
+///
+/// Node metadata survives visits to nested classes. Exit-phase scratch buffers are reused
+/// for each class; per-class state lives in [`ClassDecoratorState`] on the class stack.
+#[derive(Default)]
+pub(super) struct DecoratorTransformState<'a> {
+    /// Initializer slot index of decorated fields and decorated `accessor` storage fields.
+    pub(super) fields: FxHashMap<Address, u32>,
+    /// Storage fields created for decorated `accessor`s.
+    pub(super) accessor_storage: FxHashSet<Address>,
+    /// Getters created for decorated `accessor`s.
+    pub(super) accessor_getters: FxHashSet<Address>,
+    /// `__decorateElement` calls (exit phase only), see `DecoratorBucket`.
+    pub(super) elements: [Vec<Expression<'a>>; 4],
+    /// `_Class_decorators` binding (exit phase only).
+    pub(super) class_decorators: Option<BoundIdentifier<'a>>,
+    /// Original key names of `accessor` storage fields, for named evaluation.
+    pub(super) accessor_names: FxHashMap<Address, JSStr<'a>>,
+    /// Names of anonymous class expressions in instance field initializers, for named evaluation.
+    pub(super) named_classes: FxHashMap<Address, Expression<'a>>,
+    /// Keys of decorated instance fields, captured before they are moved into constructor.
+    pub(super) instance_keys: FxHashMap<Address, Expression<'a>>,
+    /// Decorated class declarations to convert to `let _Foo = class Foo {}`, keyed by class address.
+    /// Values are `(inner binding, outer binding)`.
+    pub(super) declaration_rewrites: FxHashMap<Address, (BoundIdentifier<'a>, BoundIdentifier<'a>)>,
+    /// Length of `insert_before` after class decorators (exit phase only).
+    pub(super) class_prefix_len: usize,
+    /// Inferred name of anonymous decorated class expression (exit phase only).
+    pub(super) class_name: Option<Expression<'a>>,
+    /// Super class temp var binding (exit phase only).
+    pub(super) super_class: Option<BoundIdentifier<'a>>,
+}
 
 /// Decorator state for a decorated class. Stored in `ClassDetails`.
 pub(super) struct ClassDecoratorState<'a> {
@@ -364,10 +399,10 @@ impl<'a> ClassProperties<'a> {
             );
             if let ClassElement::PropertyDefinition(prop) = &storage {
                 if is_decorated {
-                    self.decorator_accessor_storage.insert(prop.address());
+                    self.decorator_state.accessor_storage.insert(prop.address());
                 }
                 if let Some(name) = &original_name {
-                    self.decorator_accessor_names.insert(prop.address(), *name);
+                    self.decorator_state.accessor_names.insert(prop.address(), *name);
                 }
             }
             new_body.push(storage);
@@ -385,7 +420,7 @@ impl<'a> ClassProperties<'a> {
                 ctx,
             );
             if is_decorated && let ClassElement::MethodDefinition(method) = &getter {
-                self.decorator_accessor_getters.insert(method.address());
+                self.decorator_state.accessor_getters.insert(method.address());
             }
             new_body.push(getter);
 
@@ -421,7 +456,7 @@ impl<'a> ClassProperties<'a> {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
                     let address = prop.address();
-                    if self.decorator_accessor_storage.contains(&address) {
+                    if self.decorator_state.accessor_storage.contains(&address) {
                         groups[usize::from(!prop.r#static)].push(address);
                     } else if !prop.decorators.is_empty() && !prop.declare {
                         groups[2 + usize::from(!prop.r#static)].push(address);
@@ -430,7 +465,7 @@ impl<'a> ClassProperties<'a> {
                 ClassElement::MethodDefinition(method)
                     if !method.decorators.is_empty()
                         && !method.kind.is_constructor()
-                        && !self.decorator_accessor_getters.contains(&method.address()) =>
+                        && !self.decorator_state.accessor_getters.contains(&method.address()) =>
                 {
                     if method.r#static {
                         static_method_extras = true;
@@ -445,7 +480,7 @@ impl<'a> ClassProperties<'a> {
         let mut index = 0;
         for group in groups {
             for address in group {
-                self.decorated_fields.insert(address, index);
+                self.decorator_state.fields.insert(address, index);
                 index += 1;
             }
         }
@@ -469,7 +504,7 @@ impl<'a> ClassProperties<'a> {
         &mut self,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<&BoundIdentifier<'a>> {
-        self.decorator_class_decorators.as_ref()?;
+        self.decorator_state.class_decorators.as_ref()?;
         let state = self.current_class_mut().decorators.as_mut().unwrap();
         Some(state.original_class.get_or_insert_with(|| {
             let binding = ctx.generate_uid(
@@ -493,7 +528,7 @@ impl<'a> ClassProperties<'a> {
             && !key_needs_temp_var(key, ctx)
         {
             let key = Self::decorator_key_expr(&prop.key, ctx);
-            self.decorator_instance_keys.insert(prop.address(), key);
+            self.decorator_state.instance_keys.insert(prop.address(), key);
         }
     }
 
@@ -502,7 +537,7 @@ impl<'a> ClassProperties<'a> {
         &self,
         prop: &ArenaBox<'a, PropertyDefinition<'a>>,
     ) -> Option<u32> {
-        self.decorated_fields.get(&prop.address()).copied()
+        self.decorator_state.fields.get(&prop.address()).copied()
     }
 
     fn decorator_init(&self) -> BoundIdentifier<'a> {
@@ -576,16 +611,16 @@ impl<'a> ClassProperties<'a> {
             );
             let array = Expression::new_array_expression(SPAN, elements, ctx);
             self.insert_before.push(create_assignment(&binding, array, SPAN, ctx));
-            self.decorator_class_decorators = Some(binding);
+            self.decorator_state.class_decorators = Some(binding);
         }
-        self.decorator_class_prefix_len = self.insert_before.len();
+        self.decorator_state.class_prefix_len = self.insert_before.len();
 
         if let Some(heritage) = &mut class.heritage {
             let binding = ctx.generate_uid_in_current_hoist_scope("superclass");
             ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
             let expr = heritage.expression.take_in(ctx);
             heritage.expression = create_assignment(&binding, expr, SPAN, ctx);
-            self.decorator_super_class = Some(binding);
+            self.decorator_state.super_class = Some(binding);
         }
     }
 
@@ -597,8 +632,9 @@ impl<'a> ClassProperties<'a> {
         class: &mut Class<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let start = mem::take(&mut self.decorator_class_prefix_len);
-        let (Some(heritage), Some(binding)) = (&mut class.heritage, &self.decorator_super_class)
+        let start = mem::take(&mut self.decorator_state.class_prefix_len);
+        let (Some(heritage), Some(binding)) =
+            (&mut class.heritage, &self.decorator_state.super_class)
         else {
             return;
         };
@@ -720,7 +756,7 @@ impl<'a> ClassProperties<'a> {
         } else {
             Self::decorator_key_expr(key, ctx)
         };
-        self.decorator_named_classes.insert(class.address(), name);
+        self.decorator_state.named_classes.insert(class.address(), name);
     }
 
     pub(in crate::es2022) fn capture_object_property_class_name(
@@ -743,7 +779,7 @@ impl<'a> ClassProperties<'a> {
         class_address: Address,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if let Some(name) = self.decorator_named_classes.remove(&class_address) {
+        if let Some(name) = self.decorator_state.named_classes.remove(&class_address) {
             return Some(name);
         }
         let parent = ctx
@@ -751,7 +787,7 @@ impl<'a> ClassProperties<'a> {
             .find(|ancestor| !matches!(ancestor, Ancestor::ParenthesizedExpressionExpression(_)))?;
         let name = match parent {
             Ancestor::PropertyDefinitionValue(prop) => {
-                self.decorator_accessor_names.get(&parent.address()).copied().or_else(|| {
+                self.decorator_state.accessor_names.get(&parent.address()).copied().or_else(|| {
                     if *prop.computed() { None } else { Self::static_key_name(prop.key(), ctx) }
                 })
             }
@@ -885,11 +921,11 @@ impl<'a> ClassProperties<'a> {
         } else if let Some((_, binding)) = writebacks.first() {
             call = create_assignment(binding, call, SPAN, ctx);
         }
-        self.decorator_elements[bucket as usize].push(call);
+        self.decorator_state.elements[bucket as usize].push(call);
     }
 
     pub(super) fn method_decorator_kind(&self, method: &ArenaBox<'a, MethodDefinition<'a>>) -> u32 {
-        if self.decorator_accessor_getters.contains(&method.address()) {
+        if self.decorator_state.accessor_getters.contains(&method.address()) {
             return KIND_ACCESSOR;
         }
         match method.kind {
@@ -923,7 +959,7 @@ impl<'a> ClassProperties<'a> {
         }
 
         // `_init = __decoratorStart(base)`
-        let base = match &self.decorator_super_class.take() {
+        let base = match &self.decorator_state.super_class.take() {
             Some(binding) => binding.create_read_expression(ctx),
             None => Expression::new_null_literal(SPAN, ctx),
         };
@@ -940,7 +976,7 @@ impl<'a> ClassProperties<'a> {
             exprs.push(create_assignment(brand, weakset, SPAN, ctx));
         }
 
-        for bucket in &mut self.decorator_elements {
+        for bucket in &mut self.decorator_state.elements {
             exprs.append(bucket);
         }
 
@@ -962,10 +998,10 @@ impl<'a> ClassProperties<'a> {
             ));
         }
 
-        let class_decorators = self.decorator_class_decorators.take();
+        let class_decorators = self.decorator_state.class_decorators.take();
         if let Some(decorators) = &class_decorators {
             // `Class = __decorateElement(_init, 0, "Class", _Class_decorators, Class)`
-            let inferred_name = self.decorator_class_name.take();
+            let inferred_name = self.decorator_state.class_name.take();
             let name = match &class.id {
                 Some(id) => Expression::new_string_literal(SPAN, id.name, None, ctx),
                 None => inferred_name
@@ -1026,7 +1062,6 @@ impl<'a> ClassProperties<'a> {
 }
 
 use oxc_allocator::{ArenaBox, CloneIn, GetAllocator};
-use rustc_hash::FxHashSet;
 
 /// Rewrite references to the class's own name inside class body to `replacement`.
 ///
@@ -1112,7 +1147,8 @@ impl<'a> ClassProperties<'a> {
             },
             _ => return,
         };
-        let Some((inner, outer)) = self.decorator_declaration_rewrites.remove(&class.address())
+        let Some((inner, outer)) =
+            self.decorator_state.declaration_rewrites.remove(&class.address())
         else {
             return;
         };

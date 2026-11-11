@@ -198,9 +198,8 @@
 //! * Class properties TC39 proposal: <https://github.com/tc39/proposal-class-fields>
 
 use indexmap::IndexMap;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
-use oxc_allocator::Address;
 use serde::Deserialize;
 
 use oxc_ast::ast::*;
@@ -293,34 +292,8 @@ pub struct ClassProperties<'a> {
     /// Statements to insert after class declaration
     insert_after_stmts: Vec<Statement<'a>>,
 
-    // ----- Standard decorators state -----
-    //
-    /// Initializer slot index of decorated fields and decorated `accessor` storage fields.
-    decorated_fields: FxHashMap<Address, u32>,
-    /// Storage fields created for decorated `accessor`s.
-    decorator_accessor_storage: FxHashSet<Address>,
-    /// Getters created for decorated `accessor`s.
-    decorator_accessor_getters: FxHashSet<Address>,
-    /// `__decorateElement` calls (exit phase only), see `DecoratorBucket`.
-    decorator_elements: [Vec<Expression<'a>>; 4],
-    /// `_Class_decorators` binding (exit phase only).
-    decorator_class_decorators: Option<oxc_traverse::BoundIdentifier<'a>>,
-    /// Original key names of `accessor` storage fields, for named evaluation.
-    decorator_accessor_names: FxHashMap<Address, oxc_str::JSStr<'a>>,
-    /// Names of anonymous class expressions in instance field initializers, for named evaluation.
-    decorator_named_classes: FxHashMap<Address, Expression<'a>>,
-    /// Keys of decorated instance fields, captured before they are moved into constructor.
-    decorator_instance_keys: FxHashMap<Address, Expression<'a>>,
-    /// Decorated class declarations to convert to `let _Foo = class Foo {}`, keyed by class address.
-    /// Values are `(inner binding, outer binding)`.
-    decorator_declaration_rewrites:
-        FxHashMap<Address, (oxc_traverse::BoundIdentifier<'a>, oxc_traverse::BoundIdentifier<'a>)>,
-    /// Length of `insert_before` after class decorators (exit phase only).
-    decorator_class_prefix_len: usize,
-    /// Inferred name of anonymous decorated class expression (exit phase only).
-    decorator_class_name: Option<Expression<'a>>,
-    /// Super class temp var binding (exit phase only).
-    decorator_super_class: Option<oxc_traverse::BoundIdentifier<'a>>,
+    /// Shared standard decorator metadata and exit-phase scratch state.
+    decorator_state: decorators::DecoratorTransformState<'a>,
 }
 
 impl ClassProperties<'_> {
@@ -346,18 +319,7 @@ impl ClassProperties<'_> {
             insert_before: vec![],
             insert_after_exprs: vec![],
             insert_after_stmts: vec![],
-            decorated_fields: FxHashMap::default(),
-            decorator_accessor_storage: FxHashSet::default(),
-            decorator_accessor_getters: FxHashSet::default(),
-            decorator_elements: Default::default(),
-            decorator_class_decorators: None,
-            decorator_super_class: None,
-            decorator_accessor_names: FxHashMap::default(),
-            decorator_class_name: None,
-            decorator_named_classes: FxHashMap::default(),
-            decorator_instance_keys: FxHashMap::default(),
-            decorator_class_prefix_len: 0,
-            decorator_declaration_rewrites: FxHashMap::default(),
+            decorator_state: decorators::DecoratorTransformState::default(),
         }
     }
 }
@@ -385,7 +347,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
 
     #[inline]
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.decorator_declaration_rewrites.is_empty() {
+        if !self.decorator_state.declaration_rewrites.is_empty() {
             self.rewrite_decorated_class_statement(stmt, ctx);
         }
     }

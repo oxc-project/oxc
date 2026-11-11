@@ -543,7 +543,7 @@ impl<'a> ClassProperties<'a> {
         // Pop off stack. We're done!
         let class_details = self.classes_stack.pop();
         if let Some(rewrite) = class_details.declaration_rewrite.clone() {
-            self.decorator_declaration_rewrites.insert(class.unstable_address(), rewrite);
+            self.decorator_state.declaration_rewrites.insert(class.unstable_address(), rewrite);
         }
         if !class_details.passthrough
             && let Some(private_props) = &class_details.private_props
@@ -566,7 +566,7 @@ impl<'a> ClassProperties<'a> {
             && class.id.is_none()
             && matches!(ctx.parent(), Ancestor::ExportDefaultDeclarationDeclaration(_))
         {
-            self.decorator_class_name =
+            self.decorator_state.class_name =
                 Some(Expression::new_string_literal(SPAN, "default", None, ctx));
         }
 
@@ -826,7 +826,7 @@ impl<'a> ClassProperties<'a> {
             None
         };
         if !class.decorators.is_empty() {
-            self.decorator_class_name = inferred_name.take();
+            self.decorator_state.class_name = inferred_name.take();
         }
 
         // Transform static properties, remove static and instance properties, and move computed keys
@@ -1097,8 +1097,7 @@ impl<'a> ClassProperties<'a> {
                         }
                     } else {
                         if let Some(decorators) = &decorators {
-                            let key = self
-                                .decorator_instance_keys
+                            let key = self.decorator_state.instance_keys
                                 .remove(&prop_address)
                                 .unwrap_or_else(|| Self::decorator_key_expr(&prop.key, ctx));
                             self.push_decorate_element(
