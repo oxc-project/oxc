@@ -1,0 +1,22 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-closure-captures-overwritten-safe-callback.js
+---
+import { c as _c } from "react/compiler-runtime";
+function Component() {
+	const $ = _c(1);
+	let wrapper;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		let count = 0;
+		let cb = () => count++;
+		wrapper = async () => cb();
+		cb = _temp;
+		$[0] = wrapper;
+	} else {
+		wrapper = $[0];
+	}
+	return wrapper;
+}
+function _temp() {
+	return null;
+}

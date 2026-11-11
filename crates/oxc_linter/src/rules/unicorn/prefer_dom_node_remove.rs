@@ -67,42 +67,25 @@ fn is_non_dom_node(expr: &Expression) -> bool {
 
 impl Rule for PreferDomNodeRemove {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-
-        if call_expr.optional {
-            return;
-        }
-
-        if !is_method_call(call_expr, None, Some(&["removeChild"]), Some(1), Some(1)) {
-            return;
-        }
-
-        // Check if the callee object (the thing `.removeChild()` is called on) is a non-DOM type
-        if let Some(member_expr) = call_expr.callee.get_member_expr() {
-            if member_expr.is_computed() {
+        if let AstKind::CallExpression(call_expr) = node.kind()
+            && !call_expr.optional
+            && is_method_call(call_expr, None, Some(&["removeChild"]), Some(1), Some(1))
+        {
+            // Check if the callee object (the thing `.removeChild()` is called on) is a non-DOM type
+            if let Some(member_expr) = call_expr.callee.get_member_expr()
+                && (member_expr.is_computed()
+                    || is_non_dom_node(member_expr.object().without_parentheses()))
+            {
                 return;
             }
 
-            let object = member_expr.object().without_parentheses();
-            if is_non_dom_node(object) {
-                return;
+            if let Some(expr) = call_expr.arguments[0].as_expression()
+                && !is_non_dom_node(expr.without_parentheses())
+                && let Some((span, _)) = call_expr_method_callee_info(call_expr)
+            {
+                ctx.diagnostic(prefer_dom_node_remove_diagnostic(span));
             }
         }
-
-        let Some(expr) = call_expr.arguments[0].as_expression() else {
-            return;
-        };
-
-        let expr = expr.without_parentheses();
-        if is_non_dom_node(expr) {
-            return;
-        }
-
-        ctx.diagnostic(prefer_dom_node_remove_diagnostic(
-            call_expr_method_callee_info(call_expr).unwrap().0,
-        ));
     }
 }
 
@@ -172,6 +155,10 @@ fn test() {
         "foo.removeChild({})",
         "foo.removeChild(`templateLiteral`)",
         "foo.removeChild(undefined)",
+        "(parentNode?.removeChild)(child);",
+        "((parentNode?.removeChild))(child);",
+        "(foo?.parentNode.removeChild)(child);",
+        "(parentNode?.removeChild)?.(child);",
     ];
 
     let fail = vec![

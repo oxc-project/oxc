@@ -1,6 +1,9 @@
 use oxc_formatter_core::{
     Format, SourceText, SpanCursor,
-    builders::{empty_line, expand_parent, hard_line_break, line_suffix, maybe_space, space, text},
+    builders::{
+        empty_line, expand_parent, hard_line_break, line_suffix, maybe_space,
+        soft_line_break_or_space, space, text,
+    },
     spec::is_suppression_marker,
     write,
 };
@@ -129,38 +132,32 @@ pub fn write_gap(gap: &[u8], f: &mut CssFormatter<'_, '_>) {
     }
 }
 
-/// Emit comments that precede a node. Comments are statement-level nodes in
-/// postcss, so each one ends with a line break (a blank line is preserved);
-/// same-line gaps still produce a hardline.
-pub fn write_leading_comments(
-    comments: &[CssComment],
-    value_start: u32,
-    f: &mut CssFormatter<'_, '_>,
-) {
-    let source = f.context().source_text();
-    for (i, &comment) in comments.iter().enumerate() {
-        write_comment_text(comment, f);
-        match comments.get(i + 1) {
-            // Comment followed by another comment: keep same-line pairs
-            // (`*/ /*!`) together.
-            Some(next) => write_gap(source.bytes_range(comment.span.end, next.span.start), f),
-            // Comment followed by the node: always on its own line (a blank
-            // line in the source is preserved, otherwise a single hardline).
-            None => {
-                if classify_gap(source.bytes_range(comment.span.end, value_start)) == Gap::Blank {
-                    write!(f, empty_line());
-                } else {
-                    write!(f, hard_line_break());
-                }
-            }
-        }
+/// The separator before a statement or a statement-level comment: a hardline,
+/// or `soft_line_break_or_space` where statements share a line (`share_line`, a `style` attribute); a blank line is kept.
+pub fn write_statement_separator(gap: Gap, share_line: bool, f: &mut CssFormatter<'_, '_>) {
+    if share_line {
+        write!(f, soft_line_break_or_space());
+    } else {
+        write!(f, hard_line_break());
+    }
+    if gap == Gap::Blank {
+        write!(f, empty_line());
     }
 }
 
-/// Drains and emits all pending comments ending at or before `value_start` as leading comments.
-pub fn flush_leading_comments(value_start: u32, f: &mut CssFormatter<'_, '_>) {
-    let leading = f.context().comments().take_before(value_start);
-    write_leading_comments(leading, value_start, f);
+/// Emit a run of statement-level comments (same-line pairs `*/ /*!` stay together, others take the statement separator);
+/// the break after the last one is the caller's, a `//` still ends its line.
+pub fn write_comments(comments: &[CssComment], share_line: bool, f: &mut CssFormatter<'_, '_>) {
+    let source = f.context().source_text();
+    for (i, &comment) in comments.iter().enumerate() {
+        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
+        if let Some(next) = comments.get(i + 1) {
+            match classify_gap(source.bytes_range(comment.span.end, next.span.start)) {
+                Gap::None => write!(f, space()),
+                gap => write_statement_separator(gap, share_line, f),
+            }
+        }
+    }
 }
 
 /// Drains and emits the run of pending comments sitting on the same line

@@ -30,7 +30,7 @@ just watch 'cargo run -p oxc_transform_conformance'
 To filter for a specific test case, apply the `--filter path` option, e.g.
 
 ```bash
-cargo run -p oxc_transform_conformance -- --filter react/arrow-functions
+cargo run -p oxc_transform_conformance -- --filter babel-plugin-transform-arrow-functions
 ```
 
 ### --exec

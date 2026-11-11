@@ -87,13 +87,6 @@ macro_rules! parser_diagnostics {
 }
 
 parser_diagnostics! {
-    redeclaration(name: &'a str, declare_span: Span, redeclare_span: Span) => {
-        OxcDiagnostic::error(format!("Identifier `{name}` has already been declared")).with_labels([
-            declare_span.label(format!("`{name}` has already been declared here")),
-            redeclare_span.label("It can not be redeclared here"),
-        ])
-    };
-
     overlong_source() => {
         OxcDiagnostic::error("Source length exceeds 4 GiB limit")
     };
@@ -214,6 +207,12 @@ parser_diagnostics! {
 
     unicode_escape_sequence(span: Span) => {
         OxcDiagnostic::error("Invalid Unicode escape sequence").with_label(span)
+    };
+
+    invalid_numeric_separator(span: Span) => {
+        OxcDiagnostic::error("Numeric separators must appear between digits")
+            .with_label(span)
+            .with_help("Remove the separator or place it between two digits")
     };
 
     invalid_character(c: char, span: Span) => {
@@ -474,11 +473,6 @@ parser_diagnostics! {
             "The left-hand side of an assignment expression must be a variable or a property access.",
         )
         .with_label(span)
-    };
-
-    new_optional_chain(span: Span) => {
-        OxcDiagnostic::error("Optional chaining cannot appear in the callee of new expressions")
-            .with_label(span)
     };
 
     invalid_new_optional_chain(span: Span) => {
@@ -843,10 +837,6 @@ parser_diagnostics! {
             .with_label(span)
     };
 
-    private_in_private(span: Span) => {
-        OxcDiagnostic::error("Unexpected right-hand side of private-in expression").with_label(span)
-    };
-
     unexpected_private_identifier(span: Span) => {
         OxcDiagnostic::error("Unexpected private identifier").with_label(span)
     };
@@ -1202,6 +1192,11 @@ parser_diagnostics! {
             .with_label(span)
     };
 
+    optional_class_member_in_ts(span: Span) => {
+        OxcDiagnostic::error("Optional class members can only be used in TypeScript files.")
+            .with_label(span)
+    };
+
     parameter_modifiers_in_ts(modifier: Modifier, allowed: Option<ModifierKinds>) => {
         ts_error("8012", "Parameter modifiers can only be used in TypeScript files.")
             .with_label(modifier.span())
@@ -1357,6 +1352,15 @@ parser_diagnostics! {
         OxcDiagnostic::error("Only string literals are allowed as module attribute values.")
             .with_label(span)
             .with_help("Wrap this with quotes")
+    };
+
+    duplicate_import_attribute_key(name: &'a str, previous_span: Span, duplicate_span: Span) => {
+        OxcDiagnostic::error(format!("Duplicate import attribute key `{name}`"))
+            .with_labels([
+                previous_span.label(format!("`{name}` was already specified here")),
+                duplicate_span.label("This key is repeated"),
+            ])
+            .with_help("Each import attribute key must be unique")
     };
 
     // TS18058

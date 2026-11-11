@@ -14,16 +14,18 @@ use oxc_ast::{
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
 use oxc_str::CompactStr;
 
-use crate::LintContext;
 pub use crate::utils::jest::parse_jest_fn::{
     ExpectError, KnownMemberExpressionParentKind, KnownMemberExpressionProperty,
     MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
     ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
 };
+use crate::{LintContext, ast_util::get_symbol_id_of_variable};
 pub use padding_around_block::report_missing_padding_before_jest_block;
 
 mod padding_around_block;
 mod parse_jest_fn;
+
+use parse_jest_fn::resolve_first_ident;
 
 const JEST_METHOD_NAMES: [&str; 19] = [
     "afterAll",
@@ -170,6 +172,56 @@ pub struct PossibleJestNode<'a, 'b> {
     pub original: Option<&'a str>, // if this node is imported from 'jest/globals', this field will be Some(original_name), otherwise None
 }
 
+impl<'a, 'b> PossibleJestNode<'a, 'b> {
+    /// Resolve a call rooted in a Jest/Vitest global or import, preserving imported aliases.
+    ///
+    /// This does not allocate or scan other calls in the file. Rules using `Rule::run` should
+    /// apply their syntactic checks before resolving a potential test-framework call.
+    pub fn from_call_expression(
+        node: &'b AstNode<'a>,
+        call_expr: &'a CallExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) -> Option<Self> {
+        let mut expr = &call_expr.callee;
+        let ident = loop {
+            expr = match expr {
+                Expression::Identifier(ident) => break ident,
+                Expression::StaticMemberExpression(member) => &member.object,
+                Expression::ComputedMemberExpression(member) => &member.object,
+                Expression::CallExpression(call) => &call.callee,
+                Expression::TaggedTemplateExpression(tagged) => &tagged.tag,
+                _ => return None,
+            };
+        };
+
+        let reference = ctx.scoping().get_reference(ident.reference_id());
+        let original = if let Some(symbol_id) = reference.symbol_id() {
+            if !ctx.scoping().symbol_flags(symbol_id).is_import() {
+                return None;
+            }
+            let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+            let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id)
+            else {
+                return None;
+            };
+            if !matches!(
+                import_decl.source.value.as_str(),
+                Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
+            ) {
+                return None;
+            }
+            find_original_name(import_decl, ident.name.as_str())
+        } else {
+            if !JEST_METHOD_NAMES.contains(&ident.name.as_str()) {
+                return None;
+            }
+            None
+        };
+
+        Some(Self { node, original })
+    }
+}
+
 /// Collect all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be a collection of node `expect(1)` and node `expect(1).toBe(1)`.
 pub fn collect_possible_jest_call_node<'a, 'c>(
@@ -255,6 +307,51 @@ fn collect_ids_referenced_to_import<'a, 'c>(
             None
         })
         .flatten()
+}
+
+/// Trace a test-like call like `myOwnTest(...)` back to the original import declaration from Vitest
+/// or another library that provides test-like functions. Then, returns the name it was originally imported
+/// as `Some("test")` or None if no original import was found.
+pub fn resolve_extended_vitest_test<'a>(
+    callee: &'a Expression<'a>,
+    semantic: &Semantic<'a>,
+) -> Option<&'a str> {
+    let ident = resolve_first_ident(callee)?;
+    let mut symbol_id = get_symbol_id_of_variable(ident, semantic)?;
+    // Arbitrarily bound iterations to 100 to prevent infinite loops in cyclical cases
+    for _ in 0..100 {
+        let declarator = semantic.symbol_declaration(symbol_id).kind().as_variable_declarator()?;
+        if !declarator.id.is_binding_identifier() {
+            return None;
+        }
+        let Expression::CallExpression(call) = declarator.init.as_ref()? else {
+            return None;
+        };
+        let Expression::StaticMemberExpression(member) = &call.callee else {
+            return None;
+        };
+        if member.property.name != "extend" {
+            return None;
+        }
+        let Expression::Identifier(base) = &member.object else {
+            return None;
+        };
+        symbol_id = get_symbol_id_of_variable(base, semantic)?;
+        if semantic.scoping().symbol_flags(symbol_id).is_import() {
+            let declaration_id = semantic.scoping().symbol_declaration(symbol_id);
+            let import_decl =
+                semantic.nodes().parent_kind(declaration_id).as_import_declaration()?;
+            if !matches!(
+                import_decl.source.value.as_str(),
+                Some("vitest" | "vite-plus/test" | "@effect/vitest")
+            ) {
+                return None;
+            }
+            return find_original_name(import_decl, base.name.as_str())
+                .filter(|name| matches!(*name, "test" | "it"));
+        }
+    }
+    None
 }
 
 /// Find name in the Import Declaration, not use name because of lifetime not long enough.

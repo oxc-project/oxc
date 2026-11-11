@@ -33,10 +33,12 @@ pub fn best_match<'a>(
     threshold: usize,
 ) -> Option<&'a str> {
     let mut best: Option<(&'a str, usize)> = None;
+    let needle_len = needle.chars().count();
 
     for candidate in candidates {
-        // no need to calculate distance if length difference exceeds threshold
-        if candidate.len().abs_diff(needle.len()) > threshold {
+        // The distance counts Unicode scalar values, not UTF-8 bytes.
+        // No need to calculate it if the character length difference exceeds the threshold.
+        if candidate.chars().count().abs_diff(needle_len) > threshold {
             continue;
         }
         let distance = min_edit_distance(candidate, needle);
@@ -67,6 +69,8 @@ mod tests {
         assert_eq!(min_edit_distance("abc", ""), 3);
         assert_eq!(min_edit_distance("abc", "def"), 3);
         assert_eq!(min_edit_distance("sitting", "kitten"), 3);
+        assert_eq!(min_edit_distance("a", "𐐀"), 1);
+        assert_eq!(min_edit_distance("a𐐀", "a"), 1);
     }
 
     #[test]
@@ -86,5 +90,16 @@ mod tests {
         // Empty candidates
         let empty: Vec<&str> = vec![];
         assert_eq!(best_match("test", empty, 2), None);
+    }
+
+    #[test]
+    fn test_best_match_unicode() {
+        assert_eq!(best_match("a", ["𐐀"], 1), Some("𐐀"));
+        assert_eq!(best_match("𐐀", ["a"], 1), Some("a"));
+        assert_eq!(best_match("a", ["a𐐀"], 1), Some("a𐐀"));
+        assert_eq!(best_match("a𐐀", ["a"], 1), Some("a"));
+        assert_eq!(best_match("a", ["é"], 0), None);
+        assert_eq!(best_match("𐐀", ["𐐀"], 1), None);
+        assert_eq!(best_match("a", ["𐐀𐐀𐐀"], 1), None);
     }
 }

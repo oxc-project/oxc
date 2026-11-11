@@ -1,0 +1,104 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/logical-assignment-captures-member-reference.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { Stringify } from "shared-runtime";
+// A getter may reassign the receiver or the computed key after the reference
+// for `??=` / `||=` / `&&=` is evaluated. The store must use that original
+// reference, not a second read of the binding.
+function Component(t0) {
+	const $ = _c(17);
+	const { value } = t0;
+	let obj;
+	let other;
+	let stored;
+	let t1;
+	if ($[0] !== value) {
+		obj = {};
+		other = { x: "other" };
+		stored = {};
+		Object.defineProperty(obj, "x", {
+			get() {
+				obj = other;
+				return null;
+			},
+			set(v) {
+				stored.x = v;
+			},
+			configurable: true
+		});
+		const t2 = obj;
+		t1 = t2.x ?? (t2.x = value);
+		$[0] = value;
+		$[1] = obj;
+		$[2] = other;
+		$[3] = stored;
+		$[4] = t1;
+	} else {
+		obj = $[1];
+		other = $[2];
+		stored = $[3];
+		t1 = $[4];
+	}
+	const fromGetter = t1;
+	let key;
+	let keyedStore;
+	let t2;
+	if ($[5] !== value) {
+		key = "a";
+		const keyed = {};
+		keyedStore = {};
+		Object.defineProperty(keyed, "a", {
+			get() {
+				key = "b";
+				return null;
+			},
+			set(v_0) {
+				keyedStore.a = v_0;
+			},
+			configurable: true
+		});
+		Object.defineProperty(keyed, "b", {
+			get() {
+				return "b-get";
+			},
+			set(v_1) {
+				keyedStore.b = v_1;
+			},
+			configurable: true
+		});
+		const t3 = keyed;
+		const t4 = key;
+		t2 = t3[t4] ?? (t3[t4] = value);
+		$[5] = value;
+		$[6] = key;
+		$[7] = keyedStore;
+		$[8] = t2;
+	} else {
+		key = $[6];
+		keyedStore = $[7];
+		t2 = $[8];
+	}
+	const fromKey = t2;
+	const t3 = obj === other;
+	let t4;
+	if ($[9] !== fromGetter || $[10] !== fromKey || $[11] !== key || $[12] !== keyedStore || $[13] !== other.x || $[14] !== stored.x || $[15] !== t3) {
+		t4 = <Stringify fromGetter={fromGetter} storedX={stored.x} objIsOther={t3} otherX={other.x} fromKey={fromKey} keyedStore={keyedStore} key={key} />;
+		$[9] = fromGetter;
+		$[10] = fromKey;
+		$[11] = key;
+		$[12] = keyedStore;
+		$[13] = other.x;
+		$[14] = stored.x;
+		$[15] = t3;
+		$[16] = t4;
+	} else {
+		t4 = $[16];
+	}
+	return t4;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{ value: 42 }]
+};

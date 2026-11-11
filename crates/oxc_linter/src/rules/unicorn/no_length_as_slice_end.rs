@@ -6,9 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{
-    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_expression,
-};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_expression};
 
 fn no_length_as_slice_end_diagnostic(call_span: Span, arg_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Passing `length` as the end argument of a `slice` call is unnecessary.")
@@ -53,52 +51,31 @@ declare_oxc_lint!(
 
 impl Rule for NoLengthAsSliceEnd {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-
-        if !is_method_call(call_expr, None, Some(&["slice"]), Some(2), Some(2))
-            || call_expr.optional
+        if let AstKind::CallExpression(call_expr) = node.kind()
+            && !call_expr.optional
+            && call_expr.arguments.len() == 2
+            && let Some(member_expr) = call_expr.callee.get_member_expr()
+            && let Some((method_span, method_name)) = member_expr.static_property_info()
+            && method_name == "slice"
+            && !call_expr.arguments.iter().any(Argument::is_spread)
+            && let Some(MemberExpression::StaticMemberExpression(second_argument)) = call_expr
+                .arguments[1]
+                .as_expression()
+                .map(Expression::without_parentheses)
+                .and_then(|e| e.get_member_expr())
+            && second_argument.property.name == "length"
+            && is_same_expression(member_expr.object(), &second_argument.object, ctx)
         {
-            return;
+            ctx.diagnostic_with_fix(
+                no_length_as_slice_end_diagnostic(method_span, second_argument.span),
+                |fixer| {
+                    let start = call_expr.arguments[0].span().end;
+                    let end = call_expr.arguments[1].span().end;
+                    let span = Span::new(start, end);
+                    fixer.delete(&span)
+                },
+            );
         }
-
-        if call_expr.arguments.iter().any(Argument::is_spread) {
-            return;
-        }
-
-        let Some(MemberExpression::StaticMemberExpression(second_argument)) = call_expr.arguments
-            [1]
-        .as_expression()
-        .map(Expression::without_parentheses)
-        .and_then(|e| e.get_member_expr()) else {
-            return;
-        };
-
-        if second_argument.property.name != "length" {
-            return;
-        }
-
-        if !is_same_expression(
-            call_expr.callee.as_member_expression().unwrap().object(),
-            &second_argument.object,
-            ctx,
-        ) {
-            return;
-        }
-
-        ctx.diagnostic_with_fix(
-            no_length_as_slice_end_diagnostic(
-                call_expr.callee.get_member_expr().unwrap().static_property_info().unwrap().0,
-                second_argument.span,
-            ),
-            |fixer| {
-                let start = call_expr.arguments[0].span().end;
-                let end = call_expr.arguments[1].span().end;
-                let span = Span::new(start, end);
-                fixer.delete(&span)
-            },
-        );
     }
 }
 
@@ -123,6 +100,8 @@ fn test() {
         "foo.slice(1, foo[length])",
         "foo.slice(1, bar.length)",
         "foo().slice(1, foo().length)",
+        "(a.slice)(0, b.length)",
+        "(a.slice)?.(0, a.length)",
     ];
 
     let fail = vec![
@@ -132,6 +111,12 @@ fn test() {
         "foo.slice(1, (( foo.length )))",
         "foo.slice(1, foo?.length)",
         "foo?.slice(1, foo?.length)",
+        "(a.slice)(0, a.length)",
+        "((a.slice))(0, a.length)",
+        "(a?.slice)(0, a.length)",
+        "(a[\"slice\"])(0, a.length)",
+        "(a.slice!)(0, a.length)",
+        "(a.slice as typeof a.slice)(0, a.length)",
     ];
 
     let fix = vec![
@@ -141,6 +126,12 @@ fn test() {
         ("foo.slice(1, (( foo.length )))", "foo.slice(1)"),
         ("foo.slice(1, foo?.length)", "foo.slice(1)"),
         ("foo?.slice(1, foo?.length)", "foo?.slice(1)"),
+        ("(a.slice)(0, a.length)", "(a.slice)(0)"),
+        ("((a.slice))(0, a.length)", "((a.slice))(0)"),
+        ("(a?.slice)(0, a.length)", "(a?.slice)(0)"),
+        ("(a[\"slice\"])(0, a.length)", "(a[\"slice\"])(0)"),
+        ("(a.slice!)(0, a.length)", "(a.slice!)(0)"),
+        ("(a.slice as typeof a.slice)(0, a.length)", "(a.slice as typeof a.slice)(0)"),
     ];
 
     Tester::new(NoLengthAsSliceEnd::NAME, NoLengthAsSliceEnd::PLUGIN, pass, fail)

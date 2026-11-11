@@ -10,6 +10,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶                   }
  6 │                     })
    ╰────
+  help: Wrap `data` in a function that returns the object
 
   ⚠ vue(no-shared-component-data): `data` property in component must be a function.
    ╭─[no_shared_component_data.tsx:3:19]
@@ -19,6 +20,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶                   }
  6 │                     })
    ╰────
+  help: Wrap `data` in a function that returns the object
 
   ⚠ vue(no-shared-component-data): `data` property in component must be a function.
    ╭─[no_shared_component_data.tsx:4:19]
@@ -28,6 +30,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │ ╰─▶                   }
  7 │                     }
    ╰────
+  help: Wrap `data` in a function that returns the object
 
   ⚠ vue(no-shared-component-data): `data` property in component must be a function.
    ╭─[no_shared_component_data.tsx:4:19]
@@ -37,6 +40,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │ ╰─▶                   })
  7 │                     }
    ╰────
+  help: Wrap `data` in a function that returns the object
 
   ⚠ vue(no-shared-component-data): `data` property in component must be a function.
    ╭─[no_shared_component_data.tsx:4:19]
@@ -45,6 +49,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────────────────
  5 │                 })
    ╰────
+  help: Wrap `data` in a function that returns the object
 
   ⚠ vue(no-shared-component-data): `data` property in component must be a function.
    ╭─[no_shared_component_data.tsx:4:19]
@@ -53,6 +58,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────────────────
  5 │                 })
    ╰────
+  help: Wrap `data` in a function that returns the object
 
   ⚠ vue(no-shared-component-data): `data` property in component must be a function.
    ╭─[no_shared_component_data.tsx:4:19]
@@ -61,6 +67,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────────────────
  5 │                 })
    ╰────
+  help: Wrap `data` in a function that returns the object
 
   ⚠ vue(no-shared-component-data): `data` property in component must be a function.
    ╭─[no_shared_component_data.tsx:4:19]
@@ -69,3 +76,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────────────────
  5 │                 })
    ╰────
+  help: Wrap `data` in a function that returns the object

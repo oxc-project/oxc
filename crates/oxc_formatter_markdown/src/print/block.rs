@@ -31,8 +31,18 @@ pub enum Parent {
         loose: bool,
         after_checkbox: bool,
     },
-    /// Blockquote or container directive.
-    Container,
+    /// Blockquote, footnote definition or container directive.
+    /// `top_level`: no prefix / indent above (a directive at the root, or in such a directive).
+    Container {
+        top_level: bool,
+    },
+}
+
+impl Parent {
+    /// No prefix / indent above: the root, or a `top_level` container.
+    const fn is_top_level(self) -> bool {
+        matches!(self, Self::Root | Self::Container { top_level: true })
+    }
 }
 
 /// Emits sibling blocks with a blank line between them, except where one line break is the rule
@@ -53,8 +63,9 @@ pub fn write_blocks<'a>(
         }
 
         // `<!-- prettier-ignore-start -->` ... `<!-- prettier-ignore-end -->`: the range is source text.
-        // Only at the document root; nested, the comments are plain HTML.
-        if parent == Parent::Root
+        // Only at the document root and in directives with no prefix / indent above them
+        // (top-level for Prettier, which has no directives); nested elsewhere, the comments are plain HTML.
+        if parent.is_top_level()
             && let Some(end) = ignore_range_end(blocks, index, f)
         {
             let source = f.context().source_text();
@@ -221,7 +232,7 @@ pub fn write_block<'a>(
         Block::Paragraph(p) => {
             let parent = inline::InlineParent {
                 paragraph: true,
-                first_in_container: parent == Parent::Container && index == 0,
+                first_in_container: matches!(parent, Parent::Container { .. }) && index == 0,
                 first_in_document: front_matter_risk(parent, siblings, index, f),
                 after_checkbox: matches!(parent, Parent::ListItem { after_checkbox: true, .. }),
                 ..inline::InlineParent::default()
@@ -255,7 +266,8 @@ pub fn write_block<'a>(
             write_verbatim(d.opening, f);
             if !d.children.is_empty() {
                 super::write_gap(after_opening, f);
-                write_blocks(&d.children, Parent::Container, f);
+                let inner = Parent::Container { top_level: parent.is_top_level() };
+                write_blocks(&d.children, inner, f);
             }
             if let Some(closing) = d.closing {
                 super::write_gap(before_closing, f);
@@ -331,7 +343,7 @@ fn write_footnote_definition<'a>(
 ) {
     write!(f, [token("[^"), text(f.context().slice(def.label)), token("]:")]);
     let children = &def.children;
-    let parent = Parent::Container;
+    let parent = Parent::Container { top_level: false };
     let first = format_with(|f| write_block(&children[0], children, 0, parent, f)).memoized();
     let on_label_line = matches!(children.as_slice(), [Block::Paragraph(_)])
         && f.options().prose_wrap != ProseWrap::Always

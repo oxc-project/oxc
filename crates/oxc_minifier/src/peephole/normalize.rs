@@ -3,7 +3,7 @@ use oxc_allocator::{ArenaVec, ReplaceWith};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantValue, DetermineValueType, ValueType},
-    side_effects::{is_typed_array_constructor, is_valid_regexp},
+    side_effects::{MayHaveSideEffects, is_pure_global_constructor, is_typed_array_constructor},
 };
 use oxc_semantic::IsGlobalReference;
 use oxc_syntax::scope::ScopeFlags;
@@ -54,7 +54,7 @@ impl<'a> Normalize {
 impl<'a> Traverse<'a> for Normalize {
     fn exit_program(&mut self, node: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         if self.options.remove_unnecessary_use_strict && node.source_type.is_module() {
-            node.directives.drain_filter(|d| d.directive.as_str() == "use strict");
+            node.directives.drain_filter(|d| d.is_use_strict());
         }
     }
 
@@ -476,14 +476,22 @@ impl<'a> Normalize {
                     ValueType::Object,
                 ],
             ),
-            "ArrayBuffer" | "Date" => (false, false, &[ValueType::BigInt]),
+            "Date" => (false, false, &[ValueType::BigInt]),
             "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError" | "SyntaxError"
             | "TypeError" | "URIError" | "Number" | "Object" | "String" => (false, false, &[]),
-            // RegExp needs special validation using the regex parser
-            "RegExp" => {
-                if Self::can_set_pure(ident, ctx) && is_valid_regexp(&new_expr.arguments, ctx) {
-                    new_expr.pure = true;
+            "ArrayBuffer" | "RegExp" => {
+                if !Self::can_set_pure(ident, ctx) {
+                    return;
                 }
+                // Preserve ArrayBuffer's conservative flagging: unlike RegExp,
+                // it previously required argument evaluation to be effect-free too.
+                if ident.name == "ArrayBuffer"
+                    && new_expr.arguments.iter().any(|arg| arg.may_have_side_effects(ctx))
+                {
+                    return;
+                }
+                new_expr.pure =
+                    is_pure_global_constructor(ident.name.as_str(), &new_expr.arguments, ctx);
                 return;
             }
             // Typed arrays allocate a zeroed buffer and run no user code when the
@@ -680,7 +688,7 @@ impl<'a> Normalize {
                 .map(|scope_id| ctx.scoping().scope_flags(scope_id))
                 .is_some_and(ScopeFlags::is_strict_mode)
         {
-            body.directives.drain_filter(|d| d.directive.as_str() == "use strict");
+            body.directives.drain_filter(|d| d.is_use_strict());
         }
     }
 }

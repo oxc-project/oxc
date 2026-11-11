@@ -11,7 +11,38 @@ use oxc_regular_expression::{
     has_unsupported_regular_expression_flags, has_unsupported_regular_expression_pattern,
 };
 
+use oxc_syntax::operator::UnaryOperator;
+
+use crate::{
+    DetermineValueType, GlobalContext, ToBigInt, ToJsString, ToNumber, ValueType,
+    to_primitive::{ToPrimitive, ToPrimitiveResult},
+};
+
 use super::context::MayHaveSideEffectsContext;
+
+/// Whether ToIndex succeeds for a known length, with no options argument.
+/// Backing-store allocation failures are ignored under the minifier's allocation assumption.
+fn is_valid_array_buffer<'a>(args: &[Argument<'a>], ctx: &impl GlobalContext<'a>) -> bool {
+    let value = match args {
+        [] => return true,
+        [arg] => {
+            let Some(expr) = arg.as_expression() else { return false };
+            match expr {
+                Expression::UnaryExpression(unary) if unary.operator.is_arithmetic() => {
+                    unary.argument.to_number(ctx).map(|value| {
+                        if unary.operator == UnaryOperator::UnaryNegation { -value } else { value }
+                    })
+                }
+                Expression::UnaryExpression(unary) if unary.operator.is_void() => Some(f64::NAN),
+                _ => expr.to_number(ctx),
+            }
+        }
+        _ => return false,
+    };
+    value.is_some_and(|value| {
+        value.is_nan() || (0.0..=9_007_199_254_740_991.0).contains(&value.trunc())
+    })
+}
 
 /// Validate that a RegExp constructor call cannot throw on the target engines.
 ///
@@ -114,48 +145,118 @@ fn supports_es_feature<'a>(ctx: &impl MayHaveSideEffectsContext<'a>, feature: ES
     ctx.engine_targets().is_some_and(|target| target.supports_es_feature(feature))
 }
 
-#[rustfmt::skip]
-pub(super) fn is_pure_global_function(name: &str) -> bool {
-    matches!(name, "decodeURI" | "decodeURIComponent" | "encodeURI" | "encodeURIComponent"
-            | "escape" | "isFinite" | "isNaN" | "parseFloat" | "parseInt")
+/// Whether invoking a known global as a function is side-effect-free for these arguments.
+/// The caller must establish that the callee is this global and check argument evaluation separately.
+pub(super) fn is_pure_global_function<'a>(
+    name: &str,
+    args: &[Argument<'a>],
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    match name {
+        // Number(Symbol()), Symbol(Symbol()), and Error(Symbol()) throw on coercion.
+        "Number" | "Symbol" => !first_arg_may_be_symbol(args, ctx),
+        name if is_error_constructor(name) => !first_arg_may_be_symbol(args, ctx),
+        "BigInt" => {
+            // BigInt requires a valid value and can execute user code during ToPrimitive.
+            let Some(expr) = args.first().and_then(Argument::as_expression) else { return false };
+            !matches!(
+                expr.to_primitive(ctx),
+                ToPrimitiveResult::Undetermined
+                    | ToPrimitiveResult::Undefined
+                    | ToPrimitiveResult::Null
+                    | ToPrimitiveResult::Symbol
+            ) && expr.to_big_int(ctx).is_some()
+        }
+        "decodeURI" | "decodeURIComponent" => is_pure_uri_call(args, true, ctx),
+        "encodeURI" | "encodeURIComponent" => is_pure_uri_call(args, false, ctx),
+        // ToNumber throws on a BigInt; ToString-coercing globals accept it.
+        "isNaN" | "isFinite" => !any_arg_throws_to_number(args, ctx),
+        "RegExp" => is_valid_regexp(args, ctx),
+        // String() accepts Symbols, Date() ignores its arguments, and the other
+        // coercions are pure under the existing coercion-method assumptions.
+        "Date" | "Boolean" | "Object" | "String" | "escape" | "parseFloat" | "parseInt" => true,
+        _ => false,
+    }
 }
 
-/// Constructors that are side-effect-free when called as functions (not `new`),
-/// provided all arguments are side-effect-free.
-///
-/// Note: `Number`, `Symbol`, `BigInt`, and Error types are NOT included here because
-/// they require special-case argument validation in `CallExpression`:
-/// - `Number(Symbol())` throws TypeError (`ToNumeric` on Symbol)
-/// - `Symbol(Symbol())` throws TypeError (`ToString` on Symbol)
-/// - `Error(Symbol())` throws TypeError (`ToString` on Symbol)
-/// - `BigInt(1.5)`, `BigInt(undefined)`, etc. throw for invalid values
-///
-/// `String` IS included because `String()` has special Symbol handling
-/// (`String(Symbol())` returns `"Symbol()"` without throwing), and per the
-/// "Coercion Methods Are Pure" assumption, `ToPrimitive` on objects is safe.
-///
-/// `Date` IS included because `Date()` as a function ignores all arguments
-/// and just returns the current date as a string.
-#[rustfmt::skip]
-pub(super) fn is_pure_callable_constructor(name: &str) -> bool {
-    matches!(name, "Date" | "Boolean" | "Object" | "String")
+fn is_pure_uri_call<'a>(args: &[Argument<'a>], decode: bool, ctx: &impl GlobalContext<'a>) -> bool {
+    args.first().is_none_or(|arg| {
+        arg.as_expression().and_then(|expr| expr.to_js_string(ctx)).is_some_and(|value| {
+            // ToJsString returns UTF-8, so success excludes the lone surrogates
+            // that make encoding throw. Decoding percent escapes additionally
+            // needs UTF-8 validation; leave it to constant folding.
+            !decode || !value.contains('%')
+        })
+    })
 }
 
-/// Constructors that are unconditionally side-effect-free with any arguments.
+/// Whether invoking a known global with `new` is side-effect-free for these arguments.
 ///
-/// - `Object`: wraps/returns any argument, no coercion
-/// - `Boolean`: `ToBoolean` is a purely internal operation, no user code
+/// The caller must establish that the callee is this global. This excludes argument
+/// evaluation: callers must preserve its effects separately.
+/// Returns false for unknown constructors and arguments that cannot be proven safe,
+/// subject to the existing coercion and allocation assumptions.
+pub fn is_pure_global_constructor<'a>(
+    name: &str,
+    args: &[Argument<'a>],
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    match name {
+        // ToString(Symbol) and ToNumeric(Symbol) throw. Both constructors accept BigInt.
+        "String" | "Number" => !first_arg_may_be_symbol(args, ctx),
+        "ArrayBuffer" => is_valid_array_buffer(args, ctx),
+        // Date's ToNumber conversion also throws on BigInt.
+        "Date" => args.first().is_none_or(|arg| {
+            arg.as_expression()
+                .is_some_and(|expr| expr.to_primitive(ctx).is_symbol_or_bigint() == Some(false))
+        }),
+        name if is_error_constructor(name) => !first_arg_may_be_symbol(args, ctx),
+        name if is_typed_array_constructor(name) => {
+            // Object arguments can call @@iterator; BigInt throws during ToNumber.
+            args.first().is_none_or(|arg| {
+                arg.as_expression().is_some_and(|expr| {
+                    matches!(
+                        expr.value_type(ctx),
+                        ValueType::Number
+                            | ValueType::String
+                            | ValueType::Boolean
+                            | ValueType::Null
+                            | ValueType::Undefined
+                    )
+                })
+            })
+        }
+        "RegExp" => is_valid_regexp(args, ctx),
+        "Object" | "Boolean" => true,
+        _ => is_pure_collection_constructor(name, args, ctx),
+    }
+}
+
+/// Whether the first argument can produce a Symbol from ToPrimitive.
+/// Object coercions are governed by the existing coercion-method assumptions.
+fn first_arg_may_be_symbol<'a>(args: &[Argument<'a>], ctx: &impl GlobalContext<'a>) -> bool {
+    args.first().is_some_and(|arg| {
+        arg.as_expression().is_none_or(|expr| expr.to_primitive(ctx).is_symbol() != Some(false))
+    })
+}
+
+/// Whether any argument is provably a BigInt, for which `ToNumber` throws a `TypeError`.
 ///
-/// Note: Error types call `ToString(msg)` which throws on Symbol. They need argument
-/// validation (Symbol check). `String`, `Number`, `Date`, `ArrayBuffer` also need checks.
-#[rustfmt::skip]
-pub(super) fn is_unconditionally_pure_constructor(name: &str) -> bool {
-    matches!(name, "Object" | "Boolean")
+/// A Symbol argument also throws, but oxc can never prove a value is a Symbol (there is
+/// no `ValueType::Symbol`), so — like esbuild — that case is left droppable to avoid
+/// keeping every `Math.abs(x)` / `isNaN(x)` on an undetermined argument.
+pub(super) fn any_arg_throws_to_number<'a>(
+    args: &[Argument<'a>],
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    args.iter().any(|arg| arg.as_expression().is_some_and(|e| e.value_type(ctx).is_bigint()))
 }
 
 /// Whether the name is an Error constructor.
+///
+/// See <https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-native-error-types-used-in-this-standard> for the list of native errors.
 #[rustfmt::skip]
-pub(super) fn is_error_constructor(name: &str) -> bool {
+pub fn is_error_constructor(name: &str) -> bool {
     matches!(name, "Error" | "EvalError" | "RangeError" | "ReferenceError"
             | "SyntaxError" | "TypeError" | "URIError")
 }

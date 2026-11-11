@@ -1,5 +1,7 @@
-commit: 5237fd46
+commit: f7973164
 
 lexer_typescript Summary:
-AST Parsed     : 12665/12665 (100.00%)
-Positive Passed: 12665/12665 (100.00%)
+AST Parsed     : 12734/12734 (100.00%)
+Positive Passed: 12733/12734 (99.99%)
+Comments: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/unicodeLineSeparatorInMultilineComment.ts
+

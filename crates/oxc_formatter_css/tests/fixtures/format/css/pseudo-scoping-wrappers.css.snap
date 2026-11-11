@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* `:local()` (CSS Modules), `:deep()` / `:slotted()` (Vue SFC) take selectors like `:global()` */
+:global(.a [role='tab']) {}
+:local(  .a   >   .b , .c ) {}
+.drawer :deep(.sticky-tabs-header [role='tablist']) {}
+:slotted(div[data-x='1']) {}
+.very-long-selector-name-aaaaaaaaaaaaaa :deep(.another-long-selector-bbbbbbbbbbbbbbbbbbbbbb [role='tablist']) {}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* `:local()` (CSS Modules), `:deep()` / `:slotted()` (Vue SFC) take selectors like `:global()` */
+:global(.a [role="tab"]) {
+}
+:local(.a > .b, .c) {
+}
+.drawer :deep(.sticky-tabs-header [role="tablist"]) {
+}
+:slotted(div[data-x="1"]) {
+}
+.very-long-selector-name-aaaaaaaaaaaaaa
+  :deep(.another-long-selector-bbbbbbbbbbbbbbbbbbbbbb [role="tablist"]) {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* `:local()` (CSS Modules), `:deep()` / `:slotted()` (Vue SFC) take selectors like `:global()` */
+:global(.a [role="tab"]) {
+}
+:local(.a > .b, .c) {
+}
+.drawer :deep(.sticky-tabs-header [role="tablist"]) {
+}
+:slotted(div[data-x="1"]) {
+}
+.very-long-selector-name-aaaaaaaaaaaaaa
+  :deep(.another-long-selector-bbbbbbbbbbbbbbbbbbbbbb [role="tablist"]) {
+}
+
+===================== End =====================

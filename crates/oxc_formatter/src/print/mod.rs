@@ -10,8 +10,8 @@ mod block_statement;
 mod call_like_expression;
 mod class;
 mod decorators;
+mod embedded;
 mod export_declarations;
-mod fragment;
 mod function;
 mod function_type;
 mod import_declaration;
@@ -23,7 +23,6 @@ mod object_like;
 mod object_pattern_like;
 mod parameters;
 mod program;
-pub use program::FormatProgramBody;
 mod return_or_throw_statement;
 pub mod semicolon;
 mod sequence_expression;
@@ -39,11 +38,12 @@ pub use arrow_function_expression::{
     FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
 pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
-pub use fragment::{FormatFunctionParams, FormatTypeParameters};
+pub use embedded::{FormatName, FormatRoot, check_root, object_prints_double_brace, root_wrapper};
 pub use semicolon::write_comments_before_closing_paren;
 pub use template::embed_hug;
 pub use union_type::{
-    alias_union_breaks_after_operator, is_line_ending_trailing_jsdoc_comment, type_alias_left_end,
+    alias_union_breaks_after_operator, alias_union_owns_break,
+    is_line_ending_trailing_jsdoc_comment, should_hug_type, type_alias_left_end,
     union_prints_itself,
 };
 
@@ -58,7 +58,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodeKind, AstNodes},
     best_fitting, format_args,
     formatter::{
-        JsFormatter,
+        JsFormatter, TopLevelSemicolons,
         prelude::*,
         separated::FormatSeparatedIter,
         token::number::{format_number_token, format_trimmed_number, is_simple_number},
@@ -89,7 +89,7 @@ use crate::{
             write_trailing_comments_before,
         },
         string::{FormatLiteralStringToken, StringLiteralParentKind},
-        tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
+        tailwindcss::{tailwind_context_for_class_list, write_tailwind_string_literal},
         typecast::is_cast_target,
     },
     write,
@@ -144,7 +144,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, IdentifierName<'a>> {
                 | AstNodes::TSEnumMember(_)
         );
         if is_property_key_parent && f.context().is_quote_needed() {
-            let quote_str = f.options().quote_style.as_str();
+            let quote_str = f.context().string_quote_style().as_str();
             write!(f, [quote_str, text, quote_str]);
         } else {
             write!(f, text);
@@ -454,11 +454,8 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, AwaitExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let format_inner = format_with(|f| write!(f, ["await", space(), self.argument()]));
 
-        let is_callee_or_object = match self.parent() {
-            AstNodes::StaticMemberExpression(_) => true,
-            AstNodes::ComputedMemberExpression(member) => member.object.span() == self.span(),
-            _ => self.parent().is_call_like_callee_span(self.span),
-        };
+        let is_callee_or_object = self.parent().is_member_object_span(self.span)
+            || self.parent().is_call_like_callee_span(self.span);
 
         if !is_callee_or_object {
             write!(f, [format_inner]);
@@ -531,15 +528,6 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, EmptyStatement> {
     }
 }
 
-/// Whether the embedding decided this program's sole statement prints without its semicolon (see `crate::format_to_ir`):
-/// no trailing one, and no ASI guard under `semi: false` either.
-fn is_semicolon_omitted_by_embedding(
-    stmt: &AstNode<'_, '_, ExpressionStatement<'_>>,
-    f: &JsFormatter<'_, '_>,
-) -> bool {
-    f.context().embedding_omits_semicolon() && matches!(stmt.parent(), AstNodes::Program(_))
-}
-
 /// Returns `true` if the expression needs a leading semicolon to prevent ASI issues.
 ///
 /// `verbatim` is set for a suppressed statement, whose printed form is the source text:
@@ -549,7 +537,14 @@ fn expression_statement_needs_semicolon<'a>(
     f: &JsFormatter<'_, 'a>,
     verbatim: bool,
 ) -> bool {
-    if is_semicolon_omitted_by_embedding(stmt, f) {
+    // The embedded program omits its semicolon (`TopLevelSemicolons::Omitted`): no ASI guard either
+    if f.context().top_level_semicolons() == TopLevelSemicolons::Omitted(stmt.span) {
+        return false;
+    }
+    // The program writes the `;` that ends the previous statement (`TopLevelSemicolons::Separated`)
+    if f.context().top_level_semicolons() == TopLevelSemicolons::Separated
+        && matches!(stmt.parent(), AstNodes::Program(_))
+    {
         return false;
     }
 
@@ -676,7 +671,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ExpressionStatement<'a>> {
         write_leading_comments_with_asi_guard(self, false, f);
 
         let expression = self.expression();
-        if is_semicolon_omitted_by_embedding(self, f) {
+        if f.context().top_level_semicolons() == TopLevelSemicolons::Omitted(self.span) {
             write!(f, expression);
             return;
         }
@@ -1106,8 +1101,17 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, BindingPattern<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameterRest<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, [self.rest()]);
-        write!(f, self.type_annotation());
+        let content = format_with(|f| {
+            write!(f, [self.rest()]);
+            write!(f, self.type_annotation());
+        });
+        // Decorators are laid out as on `FormalParameter`, an undecorated rest parameter stays ungrouped
+        let decorators = self.decorators();
+        if decorators.is_empty() {
+            write!(f, [content]);
+        } else {
+            write!(f, [group(&decorators), group(&content)]);
+        }
     }
 }
 
@@ -1226,7 +1230,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, NumericLiteral<'a>> {
                 };
 
             if should_quote {
-                let quote_str = f.options().quote_style.as_str();
+                let quote_str = f.context().string_quote_style().as_str();
                 write!(f, [quote_str, text(f.allocator().alloc_str(&formatted)), quote_str]);
                 return;
             }
@@ -1240,7 +1244,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, StringLiteral<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         // Check if we're in a Tailwind context via stack (O(1) lookup)
         // This handles nested string literals inside JSXAttribute/CallExpression values
-        if let Some(ctx) = tailwind_context_for_string_literal(self, f) {
+        if let Some(ctx) = tailwind_context_for_class_list(self, f) {
             // We're inside a Tailwind context - sort this string literal as Tailwind classes
             write_tailwind_string_literal(self, ctx, f);
         } else {

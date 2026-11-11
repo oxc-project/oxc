@@ -14,6 +14,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use cow_utils::CowUtils;
 use similar::TextDiff;
 use walkdir::WalkDir;
 
@@ -47,19 +48,23 @@ fn jsdoc() {
         let expected = fs::read_to_string(&expected_path).unwrap();
 
         let (jsdoc_options, quote_style, line_width) = load_jsdoc_options(&input_path);
-        let Some(actual) =
-            run_formatter(&source_text, &input_path, &jsdoc_options, quote_style, line_width)
-        else {
-            println!("PARSE ERROR: {rel_path}");
-            failures.push(rel_path);
-            continue;
-        };
-
-        if actual != expected {
-            println!("FAIL: {rel_path}");
-            print_text_diff(&TextDiff::from_lines(&expected, &actual));
-            println!();
-            failures.push(rel_path);
+        // Line endings are not content, so every one formats to the same output
+        for (name, line_ending) in [("LF", "\n"), ("CRLF", "\r\n"), ("CR", "\r")] {
+            let source_text = source_text.cow_replace('\n', line_ending);
+            let Some(actual) =
+                run_formatter(&source_text, &input_path, &jsdoc_options, quote_style, line_width)
+            else {
+                println!("PARSE ERROR ({name}): {rel_path}");
+                failures.push(format!("{rel_path} ({name})"));
+                break;
+            };
+            if actual != expected {
+                println!("FAIL ({name}): {rel_path}");
+                print_text_diff(&TextDiff::from_lines(&expected, &actual));
+                println!();
+                failures.push(format!("{rel_path} ({name})"));
+                break;
+            }
         }
     }
 

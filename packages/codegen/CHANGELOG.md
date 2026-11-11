@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- c00dc61 codegen: Keep one source map mapping per generated position (#28844) (YT)
+- 1e57a4e codegen: Print infinite numeric literals as `1e400` instead of `Infinity` (#28812) (Dominic Elm)
+- 3fd78d7 codegen: Preserve names in duplicate source mappings (#26051) (camc314)
+
+## [0.156.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- 0e2934f codegen: Preserve default import names in source maps (#28058) (camc314)
+
 ## [0.155.0] - 2026-10-19
 
 ### ⚡ Performance

@@ -1,0 +1,13 @@
+# Input
+
+`````graphql
+
+`````
+
+# Output
+
+## `{}`
+
+`````graphql
+
+`````

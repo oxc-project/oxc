@@ -237,3 +237,52 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        ──────────────────
    ╰────
   help: Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
+   ╭─[no_fallthrough.tsx:1:58]
+ 1 │ switch(foo) { case 0: while (true) { if (bar()) break; } case 1: baz(); }
+   ·                                                          ──────────────
+   ╰────
+  help: Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
+   ╭─[no_fallthrough.tsx:1:62]
+ 1 │ switch(foo) { case 0: do { if (bar()) break; } while (true); case 1: baz(); }
+   ·                                                              ──────────────
+   ╰────
+  help: Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
+   ╭─[no_fallthrough.tsx:1:54]
+ 1 │ switch(foo) { case 0: for (;;) { if (bar()) break; } case 1: baz(); }
+   ·                                                      ──────────────
+   ╰────
+  help: Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
+   ╭─[no_fallthrough.tsx:1:40]
+ 1 │ switch(foo) { case 0: while (bar()) {} case 1: baz(); }
+   ·                                        ──────────────
+   ╰────
+  help: Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
+   ╭─[no_fallthrough.tsx:1:54]
+ 1 │ switch(foo) { case 0: if (bar()) { while (true) {} } case 1: baz(); }
+   ·                                                      ──────────────
+   ╰────
+  help: Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
+   ╭─[no_fallthrough.tsx:1:60]
+ 1 │ switch(foo) { case 0: label: while (true) { break label; } case 1: baz(); }
+   ·                                                            ──────────────
+   ╰────
+  help: Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.
+
+  ⚠ eslint(no-fallthrough): Found a comment that would permit fallthrough, but case cannot fall through.
+   ╭─[no_fallthrough.tsx:1:38]
+ 1 │ switch(foo) { case 0: while (true) {} /* falls through */ case 1: baz(); }
+   ·                                      ─────────────────────
+   ╰────
+  help: Remove the fallthrough comment or add code that allows fallthrough (e.g. remove `break`).

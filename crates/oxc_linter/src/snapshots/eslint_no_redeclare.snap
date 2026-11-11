@@ -258,3 +258,292 @@ source: crates/oxc_linter/src/tester.rs
    ·       ╰── 'foo' is already defined.
    ╰────
   help: Use a different variable name or remove the duplicate declaration.
+
+  × Identifier `A` has already been declared
+   ╭─[no_redeclare..cts:1:7]
+ 1 │ class A {} class A {} namespace A {}
+   ·       ┬          ┬
+   ·       │          ╰── It can not be redeclared here
+   ·       ╰── `A` has already been declared here
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:10]
+ 1 │ function A() {} function A() {} namespace A {}
+   ·          ┬               ┬
+   ·          │               ╰── It can not be redeclared here.
+   ·          ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:6]
+ 1 │ enum A {} namespace A {} enum A {}
+   ·      ┬                        ┬
+   ·      │                        ╰── It can not be redeclared here.
+   ·      ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:10]
+ 1 │ function A() {} class A {}
+   ·          ┬            ┬
+   ·          │            ╰── It can not be redeclared here.
+   ·          ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:10]
+ 1 │ function A() {} class A {} namespace A {}
+   ·          ┬            ┬
+   ·          │            ╰── It can not be redeclared here.
+   ·          ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:23]
+ 1 │ function A() {} class A {} namespace A {}
+   ·                       ┬              ┬
+   ·                       │              ╰── It can not be redeclared here.
+   ·                       ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'something' is already defined.
+   ╭─[no_redeclare..cts:1:6]
+ 1 │ type something = string; const something = 2;
+   ·      ────┬────                 ────┬────
+   ·          │                         ╰── It can not be redeclared here.
+   ·          ╰── 'something' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:11]
+ 1 │ interface A {} const A = 2;
+   ·           ┬          ┬
+   ·           │          ╰── It can not be redeclared here.
+   ·           ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  × Identifier `A` has already been declared
+   ╭─[no_redeclare..cts:1:11]
+ 1 │ interface A {} class A {} const A = 2;
+   ·           ┬                     ┬
+   ·           │                     ╰── It can not be redeclared here
+   ·           ╰── `A` has already been declared here
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:10]
+ 1 │ function A() {} class A {} namespace A {}
+   ·          ┬            ┬
+   ·          │            ╰── It can not be redeclared here.
+   ·          ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:23]
+ 1 │ function A() {} class A {} namespace A {}
+   ·                       ┬              ┬
+   ·                       │              ╰── It can not be redeclared here.
+   ·                       ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  × Identifier `A` has already been declared
+   ╭─[no_redeclare..cts:1:6]
+ 1 │ enum A {} interface A {} namespace A {}
+   ·      ┬              ┬
+   ·      │              ╰── It can not be redeclared here
+   ·      ╰── `A` has already been declared here
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'Object' is already defined as a built-in global variable.
+   ╭─[no_redeclare..cts:1:5]
+ 1 │ var Object; namespace Object {}
+   ·     ──────
+   ╰────
+  help: Use a different variable name to avoid shadowing the built-in global.
+
+  ⚠ eslint(no-redeclare): 'Object' is already defined as a built-in global variable.
+   ╭─[no_redeclare..cts:1:23]
+ 1 │ var Object; namespace Object {}
+   ·                       ──────
+   ╰────
+  help: Use a different variable name to avoid shadowing the built-in global.
+
+  × Identifier `A` has already been declared
+   ╭─[no_redeclare..cts:1:7]
+ 1 │ class A {} interface A {} class A {} namespace A {}
+   ·       ┬                         ┬
+   ·       │                         ╰── It can not be redeclared here
+   ·       ╰── `A` has already been declared here
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:30]
+ 1 │ function A(): void; function A() {} namespace A {} function A() {}
+   ·                              ┬                              ┬
+   ·                              │                              ╰── It can not be redeclared here.
+   ·                              ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:11]
+ 1 │ interface A {} interface A {}
+   ·           ┬              ┬
+   ·           │              ╰── It can not be redeclared here.
+   ·           ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:11]
+ 1 │ interface A {} class A {}
+   ·           ┬          ┬
+   ·           │          ╰── It can not be redeclared here.
+   ·           ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:7]
+ 1 │ class A {} namespace A {}
+   ·       ┬              ┬
+   ·       │              ╰── It can not be redeclared here.
+   ·       ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:11]
+ 1 │ interface A {} class A {} namespace A {}
+   ·           ┬          ┬
+   ·           │          ╰── It can not be redeclared here.
+   ·           ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:22]
+ 1 │ interface A {} class A {} namespace A {}
+   ·                      ┬              ┬
+   ·                      │              ╰── It can not be redeclared here.
+   ·                      ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:6]
+ 1 │ enum A {} namespace A {}
+   ·      ┬              ┬
+   ·      │              ╰── It can not be redeclared here.
+   ·      ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:10]
+ 1 │ function A() {} namespace A {}
+   ·          ┬                ┬
+   ·          │                ╰── It can not be redeclared here.
+   ·          ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:11]
+ 1 │ namespace A {} namespace A {}
+   ·           ┬              ┬
+   ·           │              ╰── It can not be redeclared here.
+   ·           ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:11]
+ 1 │ interface A {} namespace A {}
+   ·           ┬              ┬
+   ·           │              ╰── It can not be redeclared here.
+   ·           ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:11]
+ 1 │ namespace A { export const a = 1; } namespace A { export const b = 2; }
+   ·           ┬                                   ┬
+   ·           │                                   ╰── It can not be redeclared here.
+   ·           ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:11]
+ 1 │ namespace A {} class A {} interface A {}
+   ·           ┬          ┬
+   ·           │          ╰── It can not be redeclared here.
+   ·           ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:22]
+ 1 │ namespace A {} class A {} interface A {}
+   ·                      ┬              ┬
+   ·                      │              ╰── It can not be redeclared here.
+   ·                      ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:11]
+ 1 │ namespace A {} function A() {}
+   ·           ┬             ┬
+   ·           │             ╰── It can not be redeclared here.
+   ·           ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:11]
+ 1 │ namespace A {} enum A {}
+   ·           ┬         ┬
+   ·           │         ╰── It can not be redeclared here.
+   ·           ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:15]
+ 1 │ declare class A {} interface A {}
+   ·               ┬              ┬
+   ·               │              ╰── It can not be redeclared here.
+   ·               ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:16]
+ 1 │ async function A() {} namespace A {}
+   ·                ┬                ┬
+   ·                │                ╰── It can not be redeclared here.
+   ·                ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'A' is already defined.
+   ╭─[no_redeclare..cts:1:54]
+ 1 │ function A(): string; function A(): number; function A() {} namespace A {}
+   ·                                                      ┬                ┬
+   ·                                                      │                ╰── It can not be redeclared here.
+   ·                                                      ╰── 'A' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.

@@ -1,8 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, JSXAttribute, JSXAttributeName, JSXAttributeValue, JSXExpression,
-        JSXExpressionContainer,
+        JSXAttribute, JSXAttributeName, JSXAttributeValue, JSXExpression, JSXExpressionContainer,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -131,11 +130,12 @@ impl Rule for NoStringRefs {
             {
                 ctx.diagnostic(string_in_ref_deprecated(attr.span));
             }
-            member_expr if member_expr.is_member_expression_kind() => {
-                let Some(member_expr) = member_expr.as_member_expression_kind() else {
+            AstKind::ThisExpression(this) => {
+                let node = ctx.nodes().parent_node(node.id());
+                let Some(member_expr) = node.kind().as_member_expression_kind() else {
                     return;
                 };
-                if matches!(member_expr.object(), Expression::ThisExpression(_))
+                if member_expr.object().span() == this.span
                     && member_expr.static_property_name().is_some_and(|name| name == "refs")
                     && get_parent_component(node, ctx).is_some()
                 {
@@ -156,6 +156,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("class C extends React.Component { method() { return other[this]; } }", None),
+        ("class C extends React.Component { method() { return (this).refs; } }", None),
         (
             "
                     var Hello = function() {
@@ -226,6 +228,8 @@ fn test() {
     ];
 
     let fail = vec![
+        ("class C extends React.Component { method() { return this['refs']; } }", None),
+        ("class C extends React.Component { method() { return this?.refs; } }", None),
         (
             "
               var Hello = createReactClass({

@@ -10,8 +10,8 @@ declare class Class {}
 declare function Function(): Reference;
 declare const variable: number;
 declare enum Enum {
-	A = 0,
-	B = 1,
-	C = 2
+	A,
+	B,
+	C
 }
 export { Class, Function, variable, Enum };

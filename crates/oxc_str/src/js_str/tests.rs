@@ -1,6 +1,9 @@
 use std::{
     collections::hash_map::DefaultHasher,
+    fmt::Display,
     hash::{Hash, Hasher},
+    iter, mem,
+    ops::Deref,
 };
 
 use oxc_allocator::{Allocator, CloneIn, Dummy};
@@ -61,9 +64,9 @@ fn layouts_and_traits() {
     assert!(implements!(JSStr: Send));
     assert!(implements!(JSStr: Sync));
     assert!(implements!(JSStr: Copy));
-    assert!(implements!(JSStr: !std::fmt::Display));
+    assert!(implements!(JSStr: !Display));
     assert!(implements!(JSStr: !AsRef<str>));
-    assert!(implements!(JSStr: !std::ops::Deref));
+    assert!(implements!(JSStr: !Deref));
     assert!(implements!(JSStr: !Ord));
 
     assert!(implements!(JSStrBuilder: !Send));
@@ -306,7 +309,7 @@ fn randomized_appends_and_associativity() {
         let mut builder = JSStrBuilder::new_in(&&allocator);
         for _ in 0..if cfg!(miri) { 6 } else { 32 } {
             let len = next() as usize % 9;
-            let units = std::iter::repeat_with(|| {
+            let units = iter::repeat_with(|| {
                 let value = next();
                 if value.is_multiple_of(4) {
                     0xD800 | u16::try_from((value >> 8) & 0x7FF).unwrap()
@@ -785,7 +788,7 @@ fn rfind_calls_the_predicate_from_the_end() {
 
     // Like `str::rfind`, a predicate that matches on its first call finds the last code point.
     let mut first = true;
-    assert_eq!(value.rfind(|_: char| std::mem::take(&mut first)), Some(4));
+    assert_eq!(value.rfind(|_: char| mem::take(&mut first)), Some(4));
     let mut first = true;
-    assert_eq!("ab".rfind(|_: char| std::mem::take(&mut first)), Some(1));
+    assert_eq!("ab".rfind(|_: char| mem::take(&mut first)), Some(1));
 }
