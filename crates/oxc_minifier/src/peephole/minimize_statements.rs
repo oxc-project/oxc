@@ -1637,55 +1637,46 @@ impl<'a> PeepholeOptimizations {
                         }
                     }
                 }
-            Expression::NewExpression(new_expr)
-                // Don't substitute something into a call target that could change "this"
-                if !((replacement.is_member_expression()
-                    || matches!(replacement, Expression::ChainExpression(_)))
-                    && new_expr.callee.is_identifier_reference())
-                => {
-                    if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
-                        &mut new_expr.callee,
-                        search_for,
-                        replacement,
-                        replacement_has_side_effect,
-                        ctx,
-                    ) {
-                        return Some(changed);
-                    }
+            Expression::NewExpression(new_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut new_expr.callee,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
 
-                    for arg in &mut new_expr.arguments {
-                        match arg {
-                            Argument::SpreadElement(spread_elem) => {
-                                if let Some(changed) =
-                                    Self::substitute_single_use_symbol_in_expression(
-                                        &mut spread_elem.argument,
-                                        search_for,
-                                        replacement,
-                                        replacement_has_side_effect,
-                                        ctx,
-                                    )
-                                {
-                                    return Some(changed);
-                                }
-                                // spread element may have sideeffects
-                                return Some(false);
+                for arg in &mut new_expr.arguments {
+                    match arg {
+                        Argument::SpreadElement(spread_elem) => {
+                            if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                                &mut spread_elem.argument,
+                                search_for,
+                                replacement,
+                                replacement_has_side_effect,
+                                ctx,
+                            ) {
+                                return Some(changed);
                             }
-                            match_expression!(Argument) => {
-                                if let Some(changed) =
-                                    Self::substitute_single_use_symbol_in_expression(
-                                        arg.to_expression_mut(),
-                                        search_for,
-                                        replacement,
-                                        replacement_has_side_effect,
-                                        ctx,
-                                    )
-                                {
-                                    return Some(changed);
-                                }
+                            // spread element may have sideeffects
+                            return Some(false);
+                        }
+                        match_expression!(Argument) => {
+                            if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                                arg.to_expression_mut(),
+                                search_for,
+                                replacement,
+                                replacement_has_side_effect,
+                                ctx,
+                            ) {
+                                return Some(changed);
                             }
                         }
                     }
                 }
+            }
             Expression::ArrayExpression(array_expr) => {
                 for elem in &mut array_expr.elements {
                     match elem {

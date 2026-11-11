@@ -168,25 +168,37 @@ fn test_inline_single_use_variable() {
         "function wrapper(arg0, arg1) { let x = arg0.foo; new x[bar]()}",
         "function wrapper(arg0, arg1) { new arg0.foo[bar]();}",
     );
-    test_same("function wrapper(arg0, arg1) { let x = arg0.foo; new x()}");
-    test_same("function wrapper(arg0, arg1) { let x = arg0[foo]; new x()}");
-    test_same("function wrapper(arg0, arg1) { let x = arg0?.foo; new x()}");
-    test_same("function wrapper(arg0, arg1) { let x = arg0?.[foo]; new x()}");
+    test(
+        "function wrapper(arg0, arg1) { let x = arg0.foo; new x()}",
+        "function wrapper(arg0, arg1) { new arg0.foo();}",
+    );
+    test(
+        "function wrapper(arg0, arg1) { let x = arg0[foo]; new x()}",
+        "function wrapper(arg0, arg1) { new arg0[foo]();}",
+    );
+    test(
+        "function wrapper(arg0, arg1) { let x = arg0?.foo; new x()}",
+        "function wrapper(arg0, arg1) { new (arg0?.foo)();}",
+    );
+    test(
+        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; new x()}",
+        "function wrapper(arg0, arg1) { new (arg0?.[foo])();}",
+    );
     test(
         "function wrapper(arg0, arg1) { let x = arg0.foo; new (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0.foo; new x();}",
+        "function wrapper(arg0, arg1) { new arg0.foo();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0[foo]; new (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0[foo]; new x();}",
+        "function wrapper(arg0, arg1) { new arg0[foo]();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.foo; new (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.foo; new x();}",
+        "function wrapper(arg0, arg1) { new (arg0?.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.[foo]; new (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; new x();}",
+        "function wrapper(arg0, arg1) { new (arg0?.[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; return (x(), 1);}",
@@ -358,6 +370,18 @@ fn test_inline_into_call_arguments() {
     test_same("function f(o, g) { var a = o.a; return g.h(a) }");
     // An optional call can skip evaluating its arguments.
     test_same("function f(o, g) { var a = o.a; return g?.(a) }");
+}
+
+#[test]
+fn test_inline_into_new_arguments() {
+    test(
+        "function f(o, C) { var a = o.a; return new C(a) }",
+        "function f(o, C) { return new C(o.a) }",
+    );
+    test(
+        "function f(o) { var C = o.C, a = o.a; return new C(a) }",
+        "function f(o) { return new o.C(o.a) }",
+    );
 }
 
 #[test]
