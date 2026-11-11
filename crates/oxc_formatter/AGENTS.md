@@ -149,6 +149,11 @@ each node's generated `fmt` prints its leading and trailing runs (`formatter/tri
   - the cursor-based ones (`comments_before` and friends, the unprinted view) are for PRINTING
   - the position-based ones (`all_comments_*`) are for LAYOUT DECISIONS
 - A decision evaluated more than once for a node (cached bodies, a re-entered `fmt`) must not depend on the cursor
+  - A range inside the node's own span (between its members, before its closer) reads the same in both views
+  - Whether the node prints a comment before it itself (no parent printed it first) is derived from the tree, not read off the cursor:
+    a parent starting after the comment prints it as its leading comment, kept parentheses print those outside them
+    (`leading_comments` in `print/union_type.rs`, a coupling to list below)
+  - Or the parent asks only when it prints nothing between its decision and the node's print, so both asks see the same cursor (a coupling to list below)
 - A parent hands a decision to a node by a position-keyed mark when the cursor cannot carry it (`mark_as_type_cast_node`, `mark_suppressed_after_operator`);
   marks are never cleared, node starts are unique
 
@@ -278,6 +283,13 @@ The second line of each item is the drift symptom.
   - the right-hand side after `= // prettier-ignore` is reformatted
 - `union_prints_itself` (the layout arms of `AssignmentLike` and the cast site) ⇄ the union's generated `fmt` suppression check
   - a suppressed union prints from column 0, its leading comment hoisted onto the operator's line
+- the union's leading comments derived from the tree (`leading_comments` in `print/union_type.rs`) ⇄ what its parents print before it
+  (their generated `fmt`'s leading pass, kept parentheses, `AssignmentLike`'s operator line run);
+  `TSUnionType::write` asserts in debug builds that the first member's comment is the one left to print
+  - a new parent that prints the comments before a union another way (no leading pass of its own, a claim of its own) fires the assertion
+- `alias_union_hugs` and `alias_union_breaks_after_operator` asked by `AssignmentLike::layout` ⇄ asked again by `TSUnionType::write`:
+  the layout returns `BreakAfterOperator` before asking when it prints the operator's line run, the only comments it prints in between
+  - the `=` is laid out for one answer and the union prints the other (hug or expand, who indents)
 - `Comments::is_quiet` (the generated `fmt` fast path) ⇄ the bound of `get_trailing_comments` (the parent's end), `is_span_suppressed`, `classify_type_cast`
   - a comment near no other one is dropped or misplaced
 
@@ -301,6 +313,9 @@ Behavior our own rules want otherwise, mostly where it follows Prettier. Not acc
 - A same-line block comment after a line-ending one stays before the union's `|` (`// a` + break + `/* b */ | A`),
   where DIVERGENCES.md#union-leading-pipe-comment-normalization wants `| /* b */ A` (Prettier prints that):
   the all-or-nothing split in `union_type.rs` keeps the whole list before the `|`
+- An own-line comment right after a kept union's `(` prints outside it (`keyof (` + break + `/* c */ X | null)` -> `keyof /* c */ (X | null)`),
+  crossing the `(` onto the previous line (`outer_leading_comments_len`); Prettier keeps it inside, behind the first `|`.
+  The hug decision follows that placement (`first_member_comment`), so a fix changes both
 - A type predicate's object type is not a fixpoint: `function f(x: unknown): x is { ... } {}` breaks the parameters on the first pass
   and rejoins them on the second (Prettier too); a plain return type (`): { ... } {}`) is stable
 

@@ -14,7 +14,7 @@ use oxc_formatter_core::SourceText;
 use oxc_span::GetSpan;
 
 use crate::{
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     format_args,
     formatter::{
         Comments, JsFormatter,
@@ -26,7 +26,7 @@ use crate::{
     },
     parentheses::NeedsParentheses,
     print::FormatWrite,
-    utils::{suppressed::write_suppressed_expression, typescript::should_hug_type},
+    utils::{suppressed::write_suppressed_expression, typecast::outer_leading_comments_len},
     write,
 };
 
@@ -37,6 +37,23 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSUnionType<'a>> {
         // one inside, after a `|`, covers that member (`format_union_types`).
         let types = self.types();
         let is_alias_level = matches!(self.parent(), AstNodes::TSTypeAliasDeclaration(_));
+        // The tree-derived comment (layout decisions ask before printing) is the one left to print:
+        // a parent that prints a comment before the union by other means than its generated `fmt` breaks this
+        debug_assert_eq!(
+            first_member_comment(self, f).map(|comment| comment.span),
+            f.comments()
+                .comments_before(self.span.start)
+                .last()
+                .filter(|comment| {
+                    comment.kind == CommentKind::SingleLineBlock
+                        && !comment.followed_by_newline()
+                        && f.source_text().all_bytes_match(comment.span.end, self.span.start, |b| {
+                            b.is_ascii_whitespace() || b == b'('
+                        })
+                })
+                .map(|comment| comment.span),
+            "the union's first member comment from the tree disagrees with the comments left to print"
+        );
         // ```ts
         // {
         //   a: string
@@ -293,6 +310,103 @@ pub fn is_line_ending_trailing_jsdoc_comment(comment: &Comment) -> bool {
     is_jsdoc_comment(comment) && comment.is_trailing() && comment.followed_by_newline()
 }
 
+pub fn should_hug_type(node: &AstNode<'_, '_, TSUnionType<'_>>, f: &JsFormatter<'_, '_>) -> bool {
+    let types = &node.types;
+
+    if types.len() == 1 {
+        return true;
+    }
+
+    let has_object_type =
+        types.iter().any(|t| matches!(t, TSType::TSTypeLiteral(_) | TSType::TSTypeReference(_)));
+
+    if !has_object_type {
+        return false;
+    }
+
+    let void_count = types
+        .iter()
+        .filter(|t| matches!(t, TSType::TSVoidKeyword(_) | TSType::TSNullKeyword(_)))
+        .count();
+
+    if types.len() - 1 != void_count {
+        return false;
+    }
+
+    // `/* comment */ { a: string } | null`
+    //  ^^^^^^^^^^^^^
+    // A single-line block comment on the union's line goes behind the leading `|` like any other member comment,
+    // so we should not hug (`first_member_comment`).
+    // A suppressed union prints verbatim, and keeps its layout.
+    if first_member_comment(node, f).is_some() && !is_suppressed(node, f) {
+        return false;
+    }
+
+    // `{ a: string } /* comment */ | null | /* comment */ */ undefined`
+    //                ^^^^^^^^^^^^           ^^^^^^^^^^^^
+    // Check whether there are comments between the types, if so, we should not hug
+    let mut start = node.span.start;
+    for t in types {
+        if f.comments().has_any_comment_in_range(start, t.span().start) {
+            return false;
+        }
+        start = t.span().end;
+    }
+
+    true
+}
+
+/// The union's leading comments, derived from the tree (no cursor), so a layout decision gets the same answer before and after printing:
+/// the run of comments right before it, only trivia and `(` between each and the next,
+/// that end after its parent's start (the parent prints the ones before, as its leading comments:
+/// a type predicate's annotation, a conditional type with the union as its check type).
+/// A union parent starts after a comment only at the child's kept `(`, which prints it outside.
+/// Comments outside kept parentheses are included, the generated `fmt` prints them (`outer_leading_comments_len`).
+fn leading_comments<'a>(
+    node: &AstNode<'_, '_, TSUnionType<'_>>,
+    f: &JsFormatter<'_, 'a>,
+) -> &'a [Comment] {
+    let start = node.span.start;
+    let parent_start = node.parent().span().start;
+    let before = f.context().comments().all_comments_before(start);
+    let mut first = before.len();
+    let mut gap_end = start;
+    while let Some(comment) = first.checked_sub(1).map(|index| &before[index])
+        && comment.span.end > parent_start
+        && f.source_text()
+            .all_bytes_match(comment.span.end, gap_end, |b| b.is_ascii_whitespace() || b == b'(')
+    {
+        first -= 1;
+        gap_end = comment.span.start;
+    }
+    &before[first..]
+}
+
+/// The comment the union prints behind its leading `|`, as its first member's:
+/// its last leading comment, a single-line block on its line, inside kept parentheses.
+/// A `(` in between is one the union drops (DIVERGENCES.md#union-hug-comment-before-dropped-paren).
+/// `TSUnionType::write` asserts in debug builds that it is the comment left for it to print.
+pub fn first_member_comment<'a>(
+    node: &AstNode<'_, '_, TSUnionType<'_>>,
+    f: &JsFormatter<'_, 'a>,
+) -> Option<&'a Comment> {
+    let mut leading = leading_comments(node, f);
+    if node.needs_parentheses(f) {
+        leading = &leading[outer_leading_comments_len(leading, node.span.start, f)..];
+    }
+    leading.last().filter(|comment| {
+        comment.kind == CommentKind::SingleLineBlock && !comment.followed_by_newline()
+    })
+}
+
+/// Position-based variant of the generated `fmt`'s `is_span_suppressed`
+/// (`AssignmentLike`'s operator line run is among the leading comments, its mark is not needed).
+fn is_suppressed(node: &AstNode<'_, '_, TSUnionType<'_>>, f: &JsFormatter<'_, '_>) -> bool {
+    let comments = f.comments();
+    leading_comments(node, f).iter().any(|comment| comments.is_suppression_comment(comment))
+        || comments.has_any_trailing_suppression_comment(node.span.end)
+}
+
 /// Whether `ty` is a union that runs this printer.
 /// A suppressed one prints verbatim through the generic path,
 /// and its parent lays it out like any other type (`AssignmentLike`, the cast site).
@@ -304,9 +418,9 @@ pub fn union_prints_itself(ty: &TSType<'_>, comments: &Comments) -> bool {
 /// Prettier's `isUnionType(rightNode) && !shouldHugUnionType(rightNode)`.
 /// A suppressed one prints verbatim, a hugged one (`X | null`) inline,
 /// and `AssignmentLike` lays both out like any other type.
-pub fn alias_union_owns_break(ty: &TSType<'_>, f: &JsFormatter<'_, '_>) -> bool {
-    matches!(ty, TSType::TSUnionType(union)
-        if union_prints_itself(ty, f.comments()) && !alias_union_hugs(union, f))
+pub fn alias_union_owns_break(ty: &AstNode<'_, '_, TSType<'_>>, f: &JsFormatter<'_, '_>) -> bool {
+    matches!(ty.as_kind(), AstNodeKind::TSUnionType(union)
+        if union_prints_itself(ty, f.comments()) && !alias_union_hugs(&union, f))
 }
 
 /// The member of `type A = | "VALUE"`, a single-member union that is not parenthesized or nested.
@@ -319,7 +433,7 @@ fn single_plain_member<'a, 'b>(union: &'b TSUnionType<'a>) -> Option<&'b TSType<
 
 /// Whether an alias-level union prints inline through the hug shortcut (`X | null`),
 /// with no break or indentation of its own.
-fn alias_union_hugs(union: &TSUnionType<'_>, f: &JsFormatter<'_, '_>) -> bool {
+fn alias_union_hugs(union: &AstNode<'_, '_, TSUnionType<'_>>, f: &JsFormatter<'_, '_>) -> bool {
     if !should_hug_type(union, f) {
         return false;
     }

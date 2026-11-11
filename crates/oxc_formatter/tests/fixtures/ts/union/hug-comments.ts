@@ -28,3 +28,7 @@ type OwnLineObject =
 type OwnLineFits =
   // c
   Foo | null;
+
+// A comment a parent prints first is not the first member's: the hug stays
+type CheckPosition<T> = /* c */ { aaaaaaaaaaaaaaaaaaaa: string; bbbbbbbbbbbbbbbbbbbbbbbb: number; cccccccccccccccccccccccc: 1 } | null extends T ? A : B;
+interface Predicate { isFoo(): this is /* c */ { aaaaaaaaaaaaaaaaaaaa: string; bbbbbbbbbbbbbbbbbbbbbbbb: number; cccccccccccccccccc: 1 } | null }

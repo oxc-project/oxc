@@ -43,7 +43,8 @@ pub use semicolon::write_comments_before_closing_paren;
 pub use template::embed_hug;
 pub use union_type::{
     alias_union_breaks_after_operator, alias_union_owns_break,
-    is_line_ending_trailing_jsdoc_comment, type_alias_left_end, union_prints_itself,
+    is_line_ending_trailing_jsdoc_comment, should_hug_type, type_alias_left_end,
+    union_prints_itself,
 };
 
 use cow_utils::CowUtils;

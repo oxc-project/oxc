@@ -430,20 +430,24 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
             return AssignmentLikeLayout::BreakLeftHandSide;
         }
 
+        // Before the alias union's predicates: they read the comments still to print,
+        // and only this layout prints any between here and the union (the operator's line run, after a line comment)
+        if has_line_comment_on_operator_line {
+            return AssignmentLikeLayout::BreakAfterOperator;
+        }
+
         let alias_union_owns_break = matches!(
             self,
             AssignmentLike::TSTypeAliasDeclaration(decl)
-                if alias_union_owns_break(&decl.type_annotation, f)
+                if alias_union_owns_break(&decl.type_annotation(), f)
         );
 
-        if has_line_comment_on_operator_line
-            || self.should_break_after_operator(
-                self.get_right_expression(),
-                is_left_short,
-                alias_union_owns_break,
-                f,
-            )
-        {
+        if self.should_break_after_operator(
+            self.get_right_expression(),
+            is_left_short,
+            alias_union_owns_break,
+            f,
+        ) {
             return AssignmentLikeLayout::BreakAfterOperator;
         }
 
