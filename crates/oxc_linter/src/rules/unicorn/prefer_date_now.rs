@@ -245,6 +245,13 @@ fn test() {
         ("Number(new Date()        )", "Date.now()"),
         ("BigInt(new             Date());", "BigInt(Date.now());"),
         ("BigInt(new Date());", "BigInt(Date.now());"),
+        ("+new Date()", "Date.now()"),
+        ("-new Date()", "-Date.now()"),
+        ("- new Date()", "- Date.now()"),
+        ("-new Date", "-Date.now()"),
+        ("-(new Date())", "-(Date.now())"),
+        ("function foo(){return+new Date}", "function foo(){return Date.now()}"),
+        ("function foo(){return-new Date}", "function foo(){return-Date.now()}"),
     ];
 
     Tester::new(PreferDateNow::NAME, PreferDateNow::PLUGIN, pass, fail)
