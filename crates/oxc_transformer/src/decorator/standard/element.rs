@@ -13,16 +13,14 @@ use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
     common::{
+        class_lowering::ClassLoweringCache,
         computed_key::{create_computed_key_temp_var, key_needs_temp_var},
         duplicate::duplicate_expression,
         helper_loader::{Helper, helper_call_expr},
     },
     context::TraverseCtx,
     es2020::OptionalChaining,
-    utils::{
-        ast_builder::create_assignment,
-        decorated_class::{class_body_has_auto_accessors, class_lowered_for_decorators},
-    },
+    utils::ast_builder::create_assignment,
 };
 
 use super::{ClassDecoratorState, DecoratorElementKind, StandardDecoratorState};
@@ -41,6 +39,7 @@ impl<'a> StandardDecoratorState<'a> {
         struct DecoratedClassFinder<'s> {
             found: bool,
             loop_classes: &'s mut FxHashMap<Address, bool>,
+            class_lowerings: &'s mut ClassLoweringCache,
         }
         impl<'a> Visit<'a> for DecoratedClassFinder<'_> {
             fn visit_statement(&mut self, statement: &Statement<'a>) {
@@ -70,8 +69,8 @@ impl<'a> StandardDecoratorState<'a> {
             }
 
             fn visit_class(&mut self, class: &Class<'a>) {
-                self.found |= class_lowered_for_decorators(class)
-                    || class_body_has_auto_accessors(&class.body);
+                self.found |=
+                    self.class_lowerings.get_or_compute(class).handles_standard_decorators();
                 if !self.found {
                     oxc_ast_visit::walk::walk_class(self, class);
                 }
@@ -93,10 +92,16 @@ impl<'a> StandardDecoratorState<'a> {
             return;
         }
 
-        let mut finder =
-            DecoratedClassFinder { found: false, loop_classes: &mut self.loop_classes };
-        finder.visit_statement(statement);
-        if finder.found {
+        let found = {
+            let mut finder = DecoratedClassFinder {
+                found: false,
+                loop_classes: &mut self.loop_classes,
+                class_lowerings: &mut ctx.state.class_lowerings,
+            };
+            finder.visit_statement(statement);
+            finder.found
+        };
+        if found {
             let scope_id = ctx.insert_scope_below_statement(statement, ScopeFlags::empty());
             let body = statement.take_in(ctx);
             *statement = Statement::new_block_statement_with_scope_id(SPAN, [body], scope_id, ctx);

@@ -42,7 +42,7 @@ mod plugins;
 
 use common::Common;
 use context::TraverseCtx;
-use decorator::{Decorator, DecoratorMode};
+use decorator::Decorator;
 use es2015::ES2015;
 use es2016::ES2016;
 use es2017::ES2017;
@@ -161,13 +161,10 @@ impl<'a> Transformer<'a> {
             common: Common::new(&self.env),
             decorator: Decorator::new(self.decorator, decorator_mode),
             plugins: Plugins::new(self.plugins),
-            x0_typescript: program.source_type.is_typescript().then(|| {
-                TypeScript::new(
-                    &self.typescript,
-                    decorator_mode == DecoratorMode::Preserve,
-                    &self.state,
-                )
-            }),
+            x0_typescript: program
+                .source_type
+                .is_typescript()
+                .then(|| TypeScript::new(&self.typescript, &self.state)),
             x1_jsx: Jsx::new(
                 self.jsx,
                 self.env.es2018.object_rest_spread,

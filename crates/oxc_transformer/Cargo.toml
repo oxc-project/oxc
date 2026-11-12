@@ -50,6 +50,7 @@ memchr = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+smallvec = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }

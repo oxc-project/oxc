@@ -12,16 +12,13 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
-    common::helper_loader::{Helper, helper_call_expr},
+    common::{
+        class_lowering::ClassLoweringMode,
+        helper_loader::{Helper, helper_call_expr},
+    },
     context::TraverseCtx,
     decorator::standard::{ClassNameRewriter, DecoratorElementKind, StandardDecoratorState},
-    utils::{
-        ast_builder::{create_assignment, create_new_weakset, create_variable_declaration},
-        decorated_class::{
-            class_body_has_auto_accessors, class_body_lowered_for_decorators,
-            class_lowered_for_decorators,
-        },
-    },
+    utils::ast_builder::{create_assignment, create_new_weakset, create_variable_declaration},
 };
 
 use super::{
@@ -53,16 +50,17 @@ impl<'a> ClassProperties<'a> {
         class: &mut Class<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        // Record the lowering decision before any transform rewrites the class.
+        let lowering = ctx.state.class_lowering(class);
         if !self.only_decorated_classes
             || !self.decorator_state.enabled()
             || class.declare
-            || class_lowered_for_decorators(class)
+            || lowering.lowered_for_decorators()
         {
             return;
         }
-        let has_auto_accessor = class_body_has_auto_accessors(&class.body);
         self.decorator_state.prepare_native_auto_accessors(class, ctx);
-        if has_auto_accessor {
+        if lowering.has_auto_accessor() {
             let binding = class.id.as_ref().map(BoundIdentifier::from_binding_ident);
             let scope_id = class.scope_id();
             self.decorator_state.lower_auto_accessors(
@@ -102,7 +100,6 @@ impl<'a> ClassProperties<'a> {
 
         // Get basic details about class
         let is_declaration = *class.r#type() == ClassType::ClassDeclaration;
-        let class_has_decorators = !class.decorators().is_empty();
         let mut class_name_binding = class.id().as_ref().map(BoundIdentifier::from_binding_ident);
         let class_scope_id = class.scope_id().get().unwrap();
         let has_super_class = class.heritage().is_some();
@@ -110,13 +107,12 @@ impl<'a> ClassProperties<'a> {
         let private_method_helpers_in_class_sequence =
             !is_declaration && Self::should_emit_private_method_helpers_in_class_sequence(ctx);
 
-        // Standard decorators. A decorated class has all fields, private names and static blocks lowered.
-        let standard = self.decorator_state.enabled() || self.preserve_standard_decorators;
-        let body_has_decorators =
-            standard && class_body_lowered_for_decorators(class_has_decorators, body);
-        let body_has_auto_accessor = standard && class_body_has_auto_accessors(body);
-        let is_decorated = self.decorator_state.enabled() && body_has_decorators;
-        let has_auto_accessor = self.decorator_state.enabled() && body_has_auto_accessor;
+        // Standard decorators. A decorated class has all fields, private names and static blocks
+        // lowered. The decision was recorded when the class was entered, before decorators and
+        // auto-accessors are removed.
+        let lowering = ctx.state.class_lowering_of(class_scope_id);
+        let is_decorated = self.decorator_state.enabled() && lowering.lowered_for_decorators();
+        let has_auto_accessor = self.decorator_state.enabled() && lowering.has_auto_accessor();
         if self.decorator_state.enabled() {
             for element in &mut body.body {
                 let (key, computed, value) = match element {
@@ -135,10 +131,7 @@ impl<'a> ClassProperties<'a> {
                 }
             }
         }
-        if (self.only_decorated_classes && !is_decorated)
-            || (self.preserve_standard_decorators
-                && (body_has_decorators || body_has_auto_accessor))
-        {
+        if matches!(lowering.mode(), ClassLoweringMode::Native | ClassLoweringMode::Preserve) {
             // Register private names only when they can shadow a lowered name in an enclosing
             // class. Other unresolved names belong to untouched classes and are left as-is.
             let mut private_names = IdentIndexMap::default();

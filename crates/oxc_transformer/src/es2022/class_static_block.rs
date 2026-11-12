@@ -56,15 +56,15 @@ use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    common::helper_loader::{Helper, helper_call_expr},
+    common::{
+        class_lowering::ClassLoweringMode,
+        helper_loader::{Helper, helper_call_expr},
+    },
     context::TraverseCtx,
     state::TransformState,
-    utils::{
-        ast_builder::{
-            create_assignment, wrap_expression_in_arrow_function_iife,
-            wrap_statements_in_arrow_function_iife,
-        },
-        decorated_class::{class_body_lowered_for_decorators, class_lowered_for_decorators},
+    utils::ast_builder::{
+        create_assignment, wrap_expression_in_arrow_function_iife,
+        wrap_statements_in_arrow_function_iife,
     },
 };
 
@@ -114,13 +114,14 @@ impl<'a> InferredName<'a> {
     }
 }
 
-impl ClassStaticBlock<'_> {
+impl<'a> ClassStaticBlock<'a> {
     pub fn new(skip_decorated_classes: bool) -> Self {
         Self { skip_decorated_classes, classes: Vec::new(), pending_classes: FxHashMap::default() }
     }
 
-    fn is_skipped(&self, class: &Class<'_>) -> bool {
-        self.skip_decorated_classes && class_lowered_for_decorators(class)
+    fn is_skipped(&self, class: &Class<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+        self.skip_decorated_classes
+            && ctx.state.class_lowering(class).mode() == ClassLoweringMode::LowerForDecorators
     }
 
     /// Pop state of a class expression which class properties transform replaced.
@@ -134,14 +135,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
             Statement::ClassDeclaration(class)
-                if !self.is_skipped(class) && Self::needs_declaration_initializer(class) =>
+                if !self.is_skipped(class, ctx) && Self::needs_declaration_initializer(class) =>
             {
                 let declaration = Self::class_declaration_initializer(class.take_in(ctx), ctx);
                 *stmt = Statement::VariableDeclaration(declaration);
             }
             Statement::ExportDeclaration(export) => {
                 if let Declaration::ClassDeclaration(class) = &mut export.declaration
-                    && !self.is_skipped(class)
+                    && !self.is_skipped(class, ctx)
                     && Self::needs_declaration_initializer(class)
                 {
                     let declaration = Self::class_declaration_initializer(class.take_in(ctx), ctx);
@@ -153,7 +154,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 else {
                     return;
                 };
-                if self.is_skipped(class) || !Self::needs_declaration_initializer(class) {
+                if self.is_skipped(class, ctx) || !Self::needs_declaration_initializer(class) {
                     return;
                 }
                 let mut class = class.take_in(ctx);
@@ -187,7 +188,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::ClassExpression(class) = expr.get_inner_expression()
-            && self.is_skipped(class)
+            && self.is_skipped(class, ctx)
         {
             return;
         }
@@ -293,8 +294,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
         // Class properties transform lowers this class, including its static blocks.
         if self.skip_decorated_classes {
             let Ancestor::ClassBody(class) = ctx.parent() else { unreachable!() };
-            if !*class.declare()
-                && class_body_lowered_for_decorators(!class.decorators().is_empty(), body)
+            let scope_id = class.scope_id().get().unwrap();
+            if ctx.state.class_lowering_of(scope_id).mode() == ClassLoweringMode::LowerForDecorators
             {
                 self.classes.push(ClassState { inferred_name: None, deferred: None });
                 return;

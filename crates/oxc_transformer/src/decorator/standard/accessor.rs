@@ -12,10 +12,7 @@ use oxc_traverse::{Ancestor, BoundIdentifier};
 use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
-    utils::{
-        ast_builder::wrap_expression_in_arrow_function_iife,
-        decorated_class::class_lowered_for_decorators,
-    },
+    utils::ast_builder::wrap_expression_in_arrow_function_iife,
 };
 
 use super::StandardDecoratorState;
@@ -28,8 +25,9 @@ impl<'a> StandardDecoratorState<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ClassExpression(class) = expression else { return };
+        let lowering = ctx.state.class_lowering(class);
         if !self.enabled()
-            || class_lowered_for_decorators(class)
+            || lowering.lowered_for_decorators()
             || !class.body.body.iter().any(|element| {
                 matches!(element, ClassElement::AccessorProperty(prop) if prop.computed && !prop.r#type.is_abstract())
             })
@@ -63,10 +61,11 @@ impl<'a> StandardDecoratorState<'a> {
         class: &mut Class<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        let lowering = ctx.state.class_lowering(class);
         if !self.enabled()
             || class.declare
             || class.id.is_some()
-            || class_lowered_for_decorators(class)
+            || lowering.lowered_for_decorators()
             || (!self.named_classes.contains_key(&class.unstable_address())
                 && !class.body.body.iter().any(|element| {
                     matches!(element, ClassElement::AccessorProperty(prop) if prop.r#static && !prop.r#type.is_abstract())

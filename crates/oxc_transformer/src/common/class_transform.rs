@@ -1,11 +1,4 @@
-use oxc_ast::ast::Class;
-
-use crate::{
-    decorator::DecoratorMode,
-    es2022::ClassPropertiesOptions,
-    options::EnvOptions,
-    utils::decorated_class::{class_body_has_auto_accessors, class_lowered_for_decorators},
-};
+use crate::{decorator::DecoratorMode, es2022::ClassPropertiesOptions, options::EnvOptions};
 
 /// Program-wide ownership of class field and static block lowering.
 ///
@@ -44,20 +37,6 @@ impl ClassTransform {
             Self::StaticBlocks
         } else {
             Self::None
-        }
-    }
-
-    /// Whether class-properties owns fields for this class at class entry.
-    ///
-    /// Callers must retain the result if they need it after decorators and accessors are removed.
-    pub fn handles_class_fields(self, class: &Class<'_>) -> bool {
-        match self {
-            Self::ClassProperties { decorator_mode: DecoratorMode::Preserve, .. } => {
-                !class_lowered_for_decorators(class) && !class_body_has_auto_accessors(&class.body)
-            }
-            Self::ClassProperties { .. } => true,
-            Self::StandardDecorators { .. } => class_lowered_for_decorators(class),
-            Self::None | Self::StaticBlocks => false,
         }
     }
 
