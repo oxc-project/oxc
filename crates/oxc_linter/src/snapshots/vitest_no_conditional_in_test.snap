@@ -429,3 +429,48 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     })
    ╰────
   help: Replace conditionals with separate test cases for each branch to keep tests deterministic and easy to understand.
+
+  ⚠ vitest(no-conditional-in-test): Avoid having conditionals in tests.
+   ╭─[no_conditional_in_test.tsx:5:13]
+ 4 │         customTest.only('foo', () => {
+ 5 │             if (condition) {}
+   ·             ─────────────────
+ 6 │             switch (value) {}
+   ╰────
+  help: Replace conditionals with separate test cases for each branch to keep tests deterministic and easy to understand.
+
+  ⚠ vitest(no-conditional-in-test): Avoid having conditionals in tests.
+   ╭─[no_conditional_in_test.tsx:6:13]
+ 5 │             if (condition) {}
+ 6 │             switch (value) {}
+   ·             ─────────────────
+ 7 │             const result = condition ? 1 : 0;
+   ╰────
+  help: Replace conditionals with separate test cases for each branch to keep tests deterministic and easy to understand.
+
+  ⚠ vitest(no-conditional-in-test): Avoid having conditionals in tests.
+   ╭─[no_conditional_in_test.tsx:7:28]
+ 6 │             switch (value) {}
+ 7 │             const result = condition ? 1 : 0;
+   ·                            ─────────────────
+ 8 │             condition && doSomething();
+   ╰────
+  help: Replace conditionals with separate test cases for each branch to keep tests deterministic and easy to understand.
+
+  ⚠ vitest(no-conditional-in-test): Avoid having conditionals in tests.
+   ╭─[no_conditional_in_test.tsx:8:13]
+ 7 │             const result = condition ? 1 : 0;
+ 8 │             condition && doSomething();
+   ·             ──────────────────────────
+ 9 │         });
+   ╰────
+  help: Replace conditionals with separate test cases for each branch to keep tests deterministic and easy to understand.
+
+  ⚠ vitest(no-conditional-in-test): Avoid having conditionals in tests.
+   ╭─[no_conditional_in_test.tsx:3:13]
+ 2 │         customTest.each([true])('foo', value => {
+ 3 │             if (value) {}
+   ·             ─────────────
+ 4 │         });
+   ╰────
+  help: Replace conditionals with separate test cases for each branch to keep tests deterministic and easy to understand.
