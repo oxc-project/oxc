@@ -2,7 +2,6 @@
 
 mod driver;
 mod load;
-mod pgo;
 mod runtime;
 
 mod babel;

@@ -1,12 +1,11 @@
 # NAPI profile-guided optimization
 
 Parser, transformer, and minifier releases train their native Linux GNU x64/ARM64,
-macOS x64/ARM64, and Windows x64 bindings on the full ecosystem and conformance
+macOS x64/ARM64, and Windows x64 bindings on the full ecosystem source
 corpus. Other targets use their existing release builds.
 
 ```sh
 rustup component add llvm-tools-preview
-just submodules
 just pgo all --ecosystem-root /path/to/oxc-ecosystem-ci
 ```
 
@@ -21,10 +20,9 @@ just pgo minify --corpus target/pgo/corpus
 ```
 
 Preparation reads committed JS/TS/JSX files without modifying local checkouts or
-installing ecosystem dependencies. Conformance inputs use the existing loaders,
-exclusions, and source modes, including TypeScript virtual files and strict variants.
-Supported TS/JSX is lowered to JavaScript for minifier training. Inputs with
-diagnostics or no runtime output still train parser and transformer.
+installing ecosystem dependencies. Supported TS/JSX is lowered to JavaScript for
+minifier training. Inputs with diagnostics or no runtime output still train parser
+and transformer.
 
 The corpus lives in `target/pgo/corpus` as gzip-compressed JSONL shards. Its manifest
 records source revisions, counts, and checksums, and must match the current Oxc

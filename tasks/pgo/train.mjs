@@ -9,7 +9,7 @@ import { largeStackWorker, root } from "./utils.mjs";
 
 function consumeParse(result) {
   // The public parser wrapper deserializes these lazily.
-  // Negative conformance inputs can contain invalid escape sequences in a
+  // Invalid inputs can contain invalid escape sequences in a
   // recovered AST. Exercise native diagnostics without deserializing that AST.
   const errors = result.errors.length;
   return [errors ? 0 : result.program.body.length, result.module, result.comments.length, errors];
@@ -73,7 +73,7 @@ async function trainRecord(name, binding, record, index) {
   if (typeof result.code !== "string" || !Array.isArray(result.errors)) {
     throw new Error(`Invalid minifier result: ${filename}`);
   }
-  // Some parser conformance fixtures deliberately contain semantic errors,
+  // Some ecosystem fixtures contain semantic errors,
   // e.g. repeated default exports, even after TS/JSX syntax has been removed.
   // Their diagnostics are useful training data, rather than harness failures.
   return result.errors.length ? "diagnostics" : "trained";

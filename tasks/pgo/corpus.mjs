@@ -7,16 +7,6 @@ import { pipeline } from "node:stream/promises";
 import { createGzip, createGunzip } from "node:zlib";
 import { sha256 } from "./utils.mjs";
 
-const requiredSuites = [
-  "test262",
-  "babel-parser",
-  "typescript",
-  "misc",
-  "acorn-jsx",
-  "babel-transform",
-  "oxc-transform",
-];
-
 // Split on LF bytes so JSON strings, Unicode line separators, and UTF-8 sequences
 // remain intact across stream chunks.
 export async function* jsonRecords(input) {
@@ -104,8 +94,13 @@ export async function verifyCorpus(directory, revision) {
   if (revision && manifest.oxcRevision !== revision) {
     throw new Error("PGO corpus belongs to a different Oxc revision");
   }
-  if (requiredSuites.some((suite) => !manifest.counts[suite])) {
-    throw new Error("PGO corpus is missing a conformance suite");
+  if (
+    Object.keys(manifest.counts).length !== manifest.repositories.length
+    || manifest.repositories.some(
+      (repo) => !(repo.files > 0) || manifest.counts[`ecosystem/${repo.path}`] !== repo.files,
+    )
+  ) {
+    throw new Error("PGO corpus does not match its ecosystem repositories");
   }
   const seen = new Set();
   for (const shard of manifest.shards) {

@@ -1,11 +1,10 @@
 // oxlint-disable no-console, no-await-in-loop -- Prepare repositories sequentially to bound disk usage.
 import { spawn } from "node:child_process";
-import { createReadStream } from "node:fs";
 import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { workerData } from "node:worker_threads";
-import { CorpusWriter, jsonRecords, verifyCorpus } from "./corpus.mjs";
+import { CorpusWriter, verifyCorpus } from "./corpus.mjs";
 import { git, root, run } from "./utils.mjs";
 
 const sourceExtension = /\.(?:[cm]?[jt]s|[jt]sx)$/i;
@@ -129,33 +128,7 @@ const matrices = await Promise.all(
   ),
 );
 const entries = repositories(matrices);
-const coverage = join(temporary, "coverage.jsonl");
-const transforms = join(temporary, "transforms.jsonl");
-await run("cargo", [
-  "run",
-  "--locked",
-  "--profile",
-  "coverage",
-  "-p",
-  "oxc_coverage",
-  "--",
-  "pgo-corpus",
-  "--output",
-  coverage,
-]);
-await run("cargo", [
-  "run",
-  "--locked",
-  "--profile",
-  "coverage",
-  "-p",
-  "oxc_transform_conformance",
-  "--",
-  "--export-pgo",
-  transforms,
-]);
-// Preparation must accept the same inputs as shipping bindings, including
-// negative conformance fixtures that violate debug-only transformer checks.
+// Use the shipping release profile when lowering ecosystem TS/JSX for minification.
 await run("cargo", [
   "build",
   "--locked",
@@ -175,11 +148,6 @@ const helper = join(temporary, "transform.node");
 await copyFile(join(root, "target/release", library), helper);
 const { transformSync } = createRequire(import.meta.url)(helper);
 const writer = new CorpusWriter(directory);
-for (const path of [coverage, transforms]) {
-  for await (const record of jsonRecords(createReadStream(path))) {
-    await writer.add(record, transformSync);
-  }
-}
 const revisions = [];
 for (const entry of entries) {
   const checkout = fetchRepositories
@@ -213,7 +181,6 @@ for (const entry of entries) {
         filename: `ecosystem/${entry.path}/${filename}`,
         code,
         options: { lang: language(filename), sourceType: sourceType(filename) },
-        expectedFailure: false,
       },
       transformSync,
     );
@@ -224,10 +191,6 @@ for (const entry of entries) {
   if (fetchRepositories) await rm(checkout, { force: true, recursive: true });
 }
 await writer.closeShard();
-const suites = {};
-for (const name of ["test262", "babel", "typescript", "estree-conformance"]) {
-  suites[name] = await git(join(root, "tasks/coverage", name), ["rev-parse", "HEAD"]);
-}
 await writeFile(
   join(directory, "manifest.json"),
   JSON.stringify(
@@ -235,7 +198,6 @@ await writeFile(
       version: 1,
       oxcRevision: await git(root, ["rev-parse", "HEAD"]),
       ecosystemRevision,
-      suites,
       repositories: revisions,
       counts: writer.counts,
       preparation: writer.preparation,
