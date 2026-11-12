@@ -18,7 +18,7 @@ use crate::{
     utils::ast_builder::wrap_expression_in_arrow_function_iife,
 };
 
-use super::StandardDecoratorState;
+use super::{ClassDecoratorTables, StandardDecoratorState};
 
 impl<'a> StandardDecoratorState<'a> {
     /// Keep computed accessor keys local to each evaluation of a parameter initializer.
@@ -112,6 +112,7 @@ impl<'a> StandardDecoratorState<'a> {
         class_scope_id: ScopeId,
         static_binding: Option<&BoundIdentifier<'a>>,
         native_fields: bool,
+        mut tables: Option<&mut ClassDecoratorTables<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         super::super::accessor::lower_auto_accessors(
@@ -120,9 +121,11 @@ impl<'a> StandardDecoratorState<'a> {
             static_binding,
             native_fields,
             |storage, getter, key, name, ctx| {
-                if !getter.decorators.is_empty() {
-                    self.accessor_storage.insert(storage.address());
-                    self.accessor_getters.insert(getter.address());
+                if !getter.decorators.is_empty()
+                    && let Some(tables) = &mut tables
+                {
+                    tables.accessor_storage.insert(storage.address());
+                    tables.accessor_getters.insert(getter.address());
                 }
                 if let Some(name) = name {
                     self.accessor_names.insert(storage.address(), name);

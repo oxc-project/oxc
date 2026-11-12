@@ -17,7 +17,9 @@ use crate::{
         helper_loader::{Helper, helper_call_expr},
     },
     context::TraverseCtx,
-    decorator::standard::{ClassNameRewriter, DecoratorElementKind, StandardDecoratorState},
+    decorator::standard::{
+        ClassDecoratorTables, ClassNameRewriter, DecoratorElementKind, StandardDecoratorState,
+    },
     utils::ast_builder::{create_assignment, create_new_weakset, create_variable_declaration},
 };
 
@@ -64,6 +66,8 @@ impl<'a> ClassProperties<'a> {
                 scope_id,
                 binding.as_ref(),
                 true,
+                // Nothing reads accessor tables for a native class.
+                None,
                 ctx,
             );
         }
@@ -176,17 +180,20 @@ impl<'a> ClassProperties<'a> {
         if is_decorated {
             StandardDecoratorState::coerce_decorated_keys(body, ctx);
         }
+        // Element tables are read only for a decorated class, so only one fills them.
+        let mut tables = ClassDecoratorTables::default();
         if is_decorated || has_auto_accessor {
             self.decorator_state.lower_auto_accessors(
                 body,
                 class_scope_id,
                 static_accessor_binding.as_ref(),
                 false,
+                is_decorated.then_some(&mut tables),
                 ctx,
             );
         }
         let decorator_state = if is_decorated {
-            Some(self.decorator_state.prepare_class_decorators(body, ctx))
+            Some(StandardDecoratorState::prepare_class_decorators(body, tables, ctx))
         } else {
             None
         };
@@ -498,10 +505,13 @@ impl<'a> ClassProperties<'a> {
                     // Ignore `declare` properties as they don't have any runtime effect,
                     // and will be removed in the TypeScript transform later
                     if !prop.r#static && !prop.declare {
-                        if self.decorator_state.enabled() {
-                            self.decorator_state.record_instance_field_for_decorators(prop, ctx);
+                        if let Some(decorators) = self.current_class_mut().decorators.as_mut() {
+                            decorators.tables.record_instance_field_for_decorators(prop, ctx);
                         }
-                        let decorated_index = self.decorator_state.decorated_field_index(prop);
+                        let decorated_index =
+                            self.current_class().decorators.as_ref().and_then(|decorators| {
+                                decorators.tables.decorated_field_index(prop)
+                            });
                         if let Some(index) = decorated_index {
                             let value = prop.value.take();
                             prop.value = Some(
@@ -1076,7 +1086,11 @@ impl<'a> ClassProperties<'a> {
         class.body.body.retain_mut(|element| {
             match element {
                 ClassElement::PropertyDefinition(prop_box) => {
-                    let decorated_index = self.decorator_state.decorated_field_index(prop_box);
+                    let decorated_index = self
+                        .current_class()
+                        .decorators
+                        .as_ref()
+                        .and_then(|decorators| decorators.tables.decorated_field_index(prop_box));
                     let prop_address = prop_box.address();
                     let prop = &mut **prop_box;
                     debug_assert!(
@@ -1121,8 +1135,16 @@ impl<'a> ClassProperties<'a> {
                         }
                     } else {
                         if let Some(decorators) = &decorators {
-                            let key = self.decorator_state.take_instance_key(prop_address)
-                                .unwrap_or_else(|| StandardDecoratorState::decorator_key_expr(&prop.key, ctx));
+                            let key = self
+                                .current_class_mut()
+                                .decorators
+                                .as_mut()
+                                .unwrap()
+                                .tables
+                                .take_instance_key(prop_address)
+                                .unwrap_or_else(|| {
+                                    StandardDecoratorState::decorator_key_expr(&prop.key, ctx)
+                                });
                             self.push_decorate_element(
                                 DecoratorElementKind::Field,
                                 false,
@@ -1145,7 +1167,6 @@ impl<'a> ClassProperties<'a> {
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
-                    let kind = self.decorator_state.method_decorator_kind(method);
                     let method_ref = &mut **method;
                     let decorators = if is_decorated && !method_ref.decorators.is_empty() {
                         Some(StandardDecoratorState::take_element_decorators(&mut method_ref.decorators, &method_ref.key, &mut self.insert_before, ctx))
@@ -1158,6 +1179,13 @@ impl<'a> ClassProperties<'a> {
                     };
                     self.substitute_temp_var_for_method_computed_key(method, ctx);
                     if let Some(decorators) = &decorators {
+                        let kind = self
+                            .current_class()
+                            .decorators
+                            .as_ref()
+                            .unwrap()
+                            .tables
+                            .method_decorator_kind(method);
                         let key = StandardDecoratorState::decorator_key_expr(&method.key, ctx);
                         self.push_decorate_element(kind, method.r#static, key, decorators, private_name, ctx);
                     }

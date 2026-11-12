@@ -351,6 +351,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
     #[inline(always)] // Because this is a no-op in release mode
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         debug_assert_eq!(self.private_field_count, 0);
+        debug_assert!(
+            !self.decorator_state.has_leftover_class_entries(),
+            "per-class decorator data outlived its class"
+        );
     }
 
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {

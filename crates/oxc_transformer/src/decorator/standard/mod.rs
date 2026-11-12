@@ -85,18 +85,10 @@ pub struct StandardDecoratorState<'a> {
     enabled: bool,
     /// Whether loop subtrees contain a class that needs decorator lowering.
     loop_classes: FxHashMap<Address, bool>,
-    /// Initializer slot index of decorated fields and decorated `accessor` storage fields.
-    fields: FxHashMap<Address, u32>,
-    /// Storage fields created for decorated `accessor`s.
-    accessor_storage: FxHashSet<Address>,
-    /// Getters created for decorated `accessor`s.
-    accessor_getters: FxHashSet<Address>,
     /// Original key names of `accessor` storage fields, for named evaluation.
     accessor_names: FxHashMap<Address, JSStr<'a>>,
     /// Names of anonymous class expressions in instance field initializers, for named evaluation.
     named_classes: FxHashMap<Address, Expression<'a>>,
-    /// Keys of decorated instance fields, captured before they are moved into constructor.
-    instance_keys: FxHashMap<Address, Expression<'a>>,
     /// Decorated class declarations to convert to `let _Foo = class Foo {}`, keyed by class address.
     /// Values are `(inner binding, outer binding)`.
     declaration_rewrites: FxHashMap<Address, (BoundIdentifier<'a>, BoundIdentifier<'a>)>,
@@ -119,6 +111,23 @@ struct DecoratorExitState<'a> {
     super_class: Option<BoundIdentifier<'a>>,
 }
 
+/// Element tables of one class, filled during the entry phase before the class is pushed onto
+/// the class stack.
+///
+/// The entry phase lowers auto-accessors before the class is entered, so these tables are
+/// collected first and moved into [`ClassDecoratorState`] when it is created.
+#[derive(Default)]
+pub struct ClassDecoratorTables<'a> {
+    /// Initializer slot index of decorated fields and decorated `accessor` storage fields.
+    fields: FxHashMap<Address, u32>,
+    /// Storage fields created for decorated `accessor`s.
+    accessor_storage: FxHashSet<Address>,
+    /// Getters created for decorated `accessor`s.
+    accessor_getters: FxHashSet<Address>,
+    /// Keys of decorated instance fields, captured before they are moved into constructor.
+    instance_keys: FxHashMap<Address, Expression<'a>>,
+}
+
 /// Decorator state for a decorated class. Stored in `ClassDetails`.
 pub struct ClassDecoratorState<'a> {
     /// `_init` var holding the decorator context array.
@@ -127,6 +136,8 @@ pub struct ClassDecoratorState<'a> {
     pub(crate) instance_method_extras: bool,
     /// Class contains a decorated static method / getter / setter.
     pub(crate) static_method_extras: bool,
+    /// Element tables of this class.
+    pub(crate) tables: ClassDecoratorTables<'a>,
 }
 
 /// Bucket indexes for `__decorateElement` calls, in the order they are evaluated.
@@ -173,5 +184,13 @@ impl<'a> StandardDecoratorState<'a> {
         self.exit.class_prefix_len = 0;
         self.exit.class_name = name;
         self.exit.super_class = None;
+    }
+
+    /// Whether an entry consumed by the class that owns it is still recorded.
+    ///
+    /// Per-class element tables live in [`ClassDecoratorState`] and die with their class. The
+    /// remaining class-keyed maps must be drained by that class's exit.
+    pub(crate) fn has_leftover_class_entries(&self) -> bool {
+        !self.named_classes.is_empty() || !self.declaration_rewrites.is_empty()
     }
 }

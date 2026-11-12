@@ -23,13 +23,11 @@ use crate::{
     utils::ast_builder::create_assignment,
 };
 
-use super::{ClassDecoratorState, DecoratorElementKind, StandardDecoratorState};
+use super::{
+    ClassDecoratorState, ClassDecoratorTables, DecoratorElementKind, StandardDecoratorState,
+};
 
 impl<'a> StandardDecoratorState<'a> {
-    pub(crate) fn take_instance_key(&mut self, property: Address) -> Option<Expression<'a>> {
-        self.instance_keys.remove(&property)
-    }
-
     /// Give an unbraced loop body a scope for per-evaluation decorator state.
     pub(crate) fn wrap_decorated_loop_body(
         &mut self,
@@ -210,8 +208,8 @@ impl<'a> StandardDecoratorState<'a> {
     /// Order matches the order `__decorateElement` is called in:
     /// static accessors, instance accessors, static fields, instance fields.
     pub(crate) fn prepare_class_decorators(
-        &mut self,
         body: &ClassBody<'a>,
+        mut tables: ClassDecoratorTables<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ClassDecoratorState<'a> {
         let mut groups: [Vec<Address>; 4] = Default::default();
@@ -221,7 +219,7 @@ impl<'a> StandardDecoratorState<'a> {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
                     let address = prop.address();
-                    if self.accessor_storage.contains(&address) {
+                    if tables.accessor_storage.contains(&address) {
                         groups[DecoratorElementKind::Accessor.bucket(prop.r#static) as usize]
                             .push(address);
                     } else if !prop.decorators.is_empty() && !prop.declare {
@@ -232,7 +230,7 @@ impl<'a> StandardDecoratorState<'a> {
                 ClassElement::MethodDefinition(method)
                     if !method.decorators.is_empty()
                         && !method.kind.is_constructor()
-                        && !self.accessor_getters.contains(&method.address()) =>
+                        && !tables.accessor_getters.contains(&method.address()) =>
                 {
                     if method.r#static {
                         static_method_extras = true;
@@ -247,7 +245,7 @@ impl<'a> StandardDecoratorState<'a> {
         let mut index = 0;
         for group in groups {
             for address in group {
-                self.fields.insert(address, index);
+                tables.fields.insert(address, index);
                 index += 1;
             }
         }
@@ -258,30 +256,7 @@ impl<'a> StandardDecoratorState<'a> {
             SymbolFlags::BlockScopedVariable,
         );
         ctx.state.var_declarations.insert_let(&init, None, &ctx.ast);
-        ClassDecoratorState { init, instance_method_extras, static_method_extras }
-    }
-
-    /// Capture a decorated instance field's key before it is moved into the constructor.
-    pub(crate) fn record_instance_field_for_decorators(
-        &mut self,
-        prop: &ArenaBox<'a, PropertyDefinition<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if !prop.decorators.is_empty()
-            && let Some(key) = prop.key.as_expression()
-            && !key_needs_temp_var(key, ctx)
-        {
-            let key = Self::decorator_key_expr(&prop.key, ctx);
-            self.instance_keys.insert(prop.address(), key);
-        }
-    }
-
-    /// Initializer slot index of a decorated field or accessor storage, if it has one.
-    pub(crate) fn decorated_field_index(
-        &self,
-        prop: &ArenaBox<'a, PropertyDefinition<'a>>,
-    ) -> Option<u32> {
-        self.fields.get(&prop.address()).copied()
+        ClassDecoratorState { init, instance_method_extras, static_method_extras, tables }
     }
 
     /// Exit phase: evaluate class decorators into `_Class_decorators = [...]` before class,
@@ -407,6 +382,36 @@ impl<'a> StandardDecoratorState<'a> {
             }
             key => key.to_expression().clone_in(ctx.ast.allocator()),
         }
+    }
+}
+
+impl<'a> ClassDecoratorTables<'a> {
+    /// Capture a decorated instance field's key before it is moved into the constructor.
+    pub(crate) fn record_instance_field_for_decorators(
+        &mut self,
+        prop: &ArenaBox<'a, PropertyDefinition<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !prop.decorators.is_empty()
+            && let Some(key) = prop.key.as_expression()
+            && !key_needs_temp_var(key, ctx)
+        {
+            let key = StandardDecoratorState::decorator_key_expr(&prop.key, ctx);
+            self.instance_keys.insert(prop.address(), key);
+        }
+    }
+
+    /// Initializer slot index of a decorated field or accessor storage, if it has one.
+    pub(crate) fn decorated_field_index(
+        &self,
+        prop: &ArenaBox<'a, PropertyDefinition<'a>>,
+    ) -> Option<u32> {
+        self.fields.get(&prop.address()).copied()
+    }
+
+    /// Key of a decorated instance field, if it was captured before the field was moved.
+    pub(crate) fn take_instance_key(&mut self, property: Address) -> Option<Expression<'a>> {
+        self.instance_keys.remove(&property)
     }
 
     pub(crate) fn method_decorator_kind(
