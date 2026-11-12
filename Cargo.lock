@@ -2568,6 +2568,7 @@ dependencies = [
  "insta",
  "oxc_allocator",
  "oxc_ast_macros",
+ "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_span",
  "oxc_str",

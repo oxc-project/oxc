@@ -1,4 +1,5 @@
 use oxc_allocator::{Allocator, ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator};
+use oxc_data_structures::buffered_vec::BufferedVec;
 use oxc_diagnostics::Result;
 use oxc_str::Str;
 
@@ -6,7 +7,6 @@ use crate::{
     ast, diagnostics,
     parser::{
         pattern_parser::{
-            buffered_vec::BufferedVec,
             character,
             state::State,
             unicode_escape::{UnicodeEscape, decode},
@@ -911,7 +911,7 @@ impl<'a> PatternParser<'a> {
         &mut self,
     ) -> Result<(ast::CharacterClassContentsKind, ArenaVec<'a, ast::CharacterClassContents<'a>>)>
     {
-        let mut body = BufferedVec::new_in(self);
+        let mut body = BufferedVec::<_, 4>::new(ArenaVec::new_in(self));
 
         loop {
             let range_span_start = self.reader.offset();
@@ -1202,7 +1202,7 @@ impl<'a> PatternParser<'a> {
         class_set_range_or_class_set_operand: ast::CharacterClassContents<'a>,
     ) -> Result<(ast::CharacterClassContentsKind, ArenaVec<'a, ast::CharacterClassContents<'a>>)>
     {
-        let mut body = BufferedVec::new_in(self);
+        let mut body = BufferedVec::<_, 4>::new(ArenaVec::new_in(self));
         body.push(class_set_range_or_class_set_operand);
 
         loop {
@@ -1227,7 +1227,7 @@ impl<'a> PatternParser<'a> {
         class_set_operand: ast::CharacterClassContents<'a>,
     ) -> Result<(ast::CharacterClassContentsKind, ArenaVec<'a, ast::CharacterClassContents<'a>>)>
     {
-        let mut body = BufferedVec::new_in(self);
+        let mut body = BufferedVec::<_, 4>::new(ArenaVec::new_in(self));
         body.push(class_set_operand);
 
         loop {
@@ -1269,7 +1269,7 @@ impl<'a> PatternParser<'a> {
         class_set_operand: ast::CharacterClassContents<'a>,
     ) -> Result<(ast::CharacterClassContentsKind, ArenaVec<'a, ast::CharacterClassContents<'a>>)>
     {
-        let mut body = BufferedVec::new_in(self);
+        let mut body = BufferedVec::<_, 4>::new(ArenaVec::new_in(self));
         body.push(class_set_operand);
 
         loop {
@@ -1465,7 +1465,7 @@ impl<'a> PatternParser<'a> {
     fn parse_class_string_disjunction_contents(
         &mut self,
     ) -> Result<(ArenaVec<'a, ast::ClassString<'a>>, bool)> {
-        let mut body = BufferedVec::new_in(self);
+        let mut body = BufferedVec::<_, 4>::new(ArenaVec::new_in(self));
         let mut strings = false;
 
         loop {
@@ -1497,7 +1497,7 @@ impl<'a> PatternParser<'a> {
     fn parse_class_string(&mut self) -> Result<ast::ClassString<'a>> {
         let span_start = self.reader.offset();
 
-        let mut body = BufferedVec::new_in(self);
+        let mut body = BufferedVec::<_, 4>::new(ArenaVec::new_in(self));
         while let Some(class_set_character) = self.parse_class_set_character()? {
             body.push(class_set_character);
         }
