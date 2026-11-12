@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::pad_fix_with_token_boundary};
 
 fn prefer_date_now(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `Date.now()` over `new Date()`")
@@ -114,7 +114,22 @@ impl Rule for PreferDateNow {
                 }
                 if is_new_date(&unary_expr.argument) {
                     ctx.diagnostic_with_fix(prefer_date_now(unary_expr.argument.span()), |fixer| {
-                        fixer.replace(unary_expr.span, "Date.now()")
+                        // `-new Date()` is the negated timestamp, so keep the `-` and replace only
+                        // the `new Date()` operand.
+                        let replacement_span =
+                            if unary_expr.operator == UnaryOperator::UnaryNegation {
+                                unary_expr.argument.get_inner_expression().span()
+                            } else {
+                                unary_expr.span
+                            };
+                        // `return+new Date` must not become `returnDate.now()`.
+                        let mut replacement = "Date.now()".to_string();
+                        pad_fix_with_token_boundary(
+                            fixer.source_text(),
+                            replacement_span,
+                            &mut replacement,
+                        );
+                        fixer.replace(replacement_span, replacement)
                     });
                 }
             }
