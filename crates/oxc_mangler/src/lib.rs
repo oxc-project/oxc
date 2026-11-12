@@ -332,7 +332,7 @@ impl<'t> Mangler<'t> {
 
     /// # Panics
     ///
-    /// Panics if the child_ids does not exist in scope_tree.
+    /// Panics if a class and its enclosing classes have more than `u32::MAX` elements.
     pub fn build_with_semantic(
         self,
         semantic: &mut Semantic<'_>,
@@ -534,7 +534,7 @@ impl<'a> Constraints<'a> {
             (ArenaIdentHashSet::new_in(allocator), None)
         };
         let (keep_name_names, keep_name_symbols) =
-            collect_keep_name_symbols(options.keep_names, allocator, scoping, program);
+            collect_keep_name_symbols(options.keep_names, allocator, scoping);
         let reserved = ArenaIdentHashSet::from_iter_in(
             options.reserved.iter().map(|name| Ident::from(name.as_str())),
             allocator,
@@ -890,12 +890,11 @@ fn collect_keep_name_symbols<'alloc>(
     keep_names: MangleOptionsKeepNames,
     allocator: &'alloc Allocator,
     scoping: &'alloc Scoping,
-    program: &Program<'_>,
 ) -> (ArenaIdentHashSet<'alloc>, Option<BitSet<'alloc>>) {
     if !keep_names.function && !keep_names.class {
         return (ArenaIdentHashSet::new_in(allocator), None);
     }
-    let ids = collect_name_symbols(keep_names, allocator, scoping, program);
+    let ids = collect_name_symbols(keep_names, allocator, scoping);
     let names = ArenaIdentHashSet::from_iter_in(
         ids.ones().map(|id| scoping.symbol_ident(SymbolId::from_usize(id))),
         allocator,

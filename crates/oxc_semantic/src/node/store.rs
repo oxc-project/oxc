@@ -24,12 +24,12 @@ pub struct AstNodeStore<'a> {
 /// by construction** — the full [`AstNodes`] store and the ancestry stack can
 /// never both be maintained at the same time:
 ///
-/// - [`AstNodeStoreKind::Full`] — linter. The full node store is built
-///   and ancestry is read from it.
+/// - [`AstNodeStoreKind::Full`] — consumers that read [`AstNodes`], such as the
+///   linter. The full node store is built and ancestry is read from it.
 /// - [`AstNodeStoreKind::Ancestry`] — compiler pipeline. Only the lightweight
 ///   ancestry stack is maintained; the full store is never built.
 pub enum AstNodeStoreKind<'a> {
-    /// Full AST node store (linter).
+    /// Full AST node store (e.g. linter).
     Full(AstNodes<'a>),
     /// Ancestry stack only (compiler pipeline).
     Ancestry(AncestryStack<'a>),

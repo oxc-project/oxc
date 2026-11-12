@@ -72,7 +72,7 @@ bitflags! {
         // https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/types.ts#L819-L820
         const Ambient                 = 1 << 16;
 
-        // The following are not part of TypeScript's `SymbolFlags`. They record the syntactic kind
+        // The next two are not part of TypeScript's `SymbolFlags`. They record the syntactic kind
         // of a function binding so the semantic builder's redeclaration checks can consult them
         // (on `symbol_flags`, and per-declaration via `Redeclaration::flags`) instead of reading the
         // declaration's AST node. The transformer keeps them in sync when it rewrites functions.
@@ -81,6 +81,18 @@ bitflags! {
         const FunctionExpression       = 1 << 17;
         /// An `async` and/or generator function.
         const AsyncOrGeneratorFunction = 1 << 18;
+        /// A binding that gives an anonymous function or arrow function its `name` by
+        /// [NamedEvaluation](https://tc39.es/ecma262/#sec-runtime-semantics-namedevaluation),
+        /// e.g. `f` in `var f = () => {}`, `f = function () {}` or `[f = () => {}] = []`.
+        ///
+        /// Recorded by the semantic builder. The transformer does not maintain it.
+        const AnonymousFunctionName    = 1 << 19;
+        /// A binding that gives an anonymous class its `name` by
+        /// [NamedEvaluation](https://tc39.es/ecma262/#sec-runtime-semantics-namedevaluation),
+        /// e.g. `C` in `let C = class {}`.
+        ///
+        /// Recorded by the semantic builder. The transformer does not maintain it.
+        const AnonymousClassName       = 1 << 20;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();

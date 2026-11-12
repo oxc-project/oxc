@@ -24,7 +24,7 @@ pub type UnresolvedReferences<'a> = ArenaIdentHashMap<'a, ArenaVec<'a, Reference
 pub struct Redeclaration {
     pub span: Span,
     pub declaration: NodeId,
-    /// The scope containing this declaration.
+    /// The scope that was current when this declaration was bound.
     ///
     /// See [`Scoping::symbol_declaration_scope_id`].
     pub scope_id: ScopeId,
@@ -455,12 +455,13 @@ impl Scoping {
         *self.symbol_table.symbol_declarations(symbol_id)
     }
 
-    /// Get the ID of the scope containing a symbol's declaration.
+    /// Get the ID of the scope that was current when a symbol's binding was declared.
     ///
-    /// This is usually the same as [`Scoping::symbol_scope_id`]. They differ when the binding is
-    /// hoisted out of the scope containing its declaration, e.g. `var x` inside a block, or an
-    /// Annex B function declaration inside a block. In that case, this returns the block scope,
-    /// while [`Scoping::symbol_scope_id`] returns the scope the binding was hoisted to.
+    /// This is usually the same as [`Scoping::symbol_scope_id`]. They differ when the binding
+    /// belongs to an outer scope: a `var` or an Annex B function declaration inside a block (this
+    /// returns the block scope, [`Scoping::symbol_scope_id`] the scope it was hoisted to), or
+    /// `infer T` (this returns the scope containing the `infer`, [`Scoping::symbol_scope_id`] the
+    /// conditional type's scope).
     ///
     /// Moving a binding with [`Scoping::set_symbol_scope_id`] or
     /// [`Scoping::move_binding_by_symbol_id`] does not change this scope.

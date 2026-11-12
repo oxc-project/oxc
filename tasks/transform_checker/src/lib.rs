@@ -103,7 +103,7 @@ use oxc_str::CompactStr;
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
-    symbol::SymbolId,
+    symbol::{SymbolFlags, SymbolId},
 };
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
@@ -375,7 +375,10 @@ impl PostTransformChecker<'_, '_> {
             let symbol_name = names.rebuilt;
             let mismatch_title = |field| format!("Symbol {field} mismatch for {symbol_name:?}");
 
-            let flags = self.get_pair(symbol_ids, Scoping::symbol_flags);
+            let flags = self.get_pair(symbol_ids, |scoping, symbol_id| {
+                scoping.symbol_flags(symbol_id)
+                    - (SymbolFlags::AnonymousFunctionName | SymbolFlags::AnonymousClassName)
+            });
             if flags.is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("flags"), symbol_ids, flags);
             }

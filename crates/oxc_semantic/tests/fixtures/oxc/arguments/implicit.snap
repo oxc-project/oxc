@@ -62,7 +62,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/implicit.ts
             "references": []
           },
           {
-            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | AnonymousFunctionName)",
             "id": 4,
             "name": "inherited",
             "node": "VariableDeclarator(inherited)",
@@ -136,7 +136,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/implicit.ts
             ]
           },
           {
-            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | AnonymousFunctionName)",
             "id": 9,
             "name": "inherited",
             "node": "VariableDeclarator(inherited)",
@@ -195,7 +195,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/implicit.ts
             ]
           },
           {
-            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | AnonymousFunctionName)",
             "id": 14,
             "name": "inherited",
             "node": "VariableDeclarator(inherited)",
@@ -225,7 +225,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/implicit.ts
         "node": "Function(defaults)",
         "symbols": [
           {
-            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable | AnonymousFunctionName)",
             "id": 17,
             "name": "value",
             "node": "FormalParameter(value)",
@@ -298,7 +298,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/implicit.ts
         ]
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | AnonymousFunctionName)",
         "id": 1,
         "name": "arrow",
         "node": "VariableDeclarator(arrow)",

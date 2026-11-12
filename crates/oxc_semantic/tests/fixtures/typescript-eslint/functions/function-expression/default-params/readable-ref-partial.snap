@@ -41,7 +41,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         ]
       },
       {
-        "flags": "SymbolFlags(BlockScopedVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | AnonymousFunctionName)",
         "id": 1,
         "name": "foo",
         "node": "VariableDeclarator(foo)",

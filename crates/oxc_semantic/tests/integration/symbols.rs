@@ -800,7 +800,7 @@ fn test_implicit_arguments_unresolved_references() {
 #[test]
 fn test_symbol_declaration_scope_id() {
     let tester = SemanticTester::js(
-        "function f() { { var x; } var y; { var y; } { function g() {} } (function h() {}); }",
+        "function f() { { var x; } var y; { var y; } { var z; } var z; { function g() {} } (function h() {}); }",
     )
     .with_script(true);
     let semantic = tester.build();
@@ -847,4 +847,50 @@ fn test_symbol_declaration_scope_id() {
         scoping.scope_parent_id(redeclaration_scope_ids[1]),
         Some(scoping.symbol_scope_id(y))
     );
+
+    let z = scoping.symbol_ids().find(|&symbol_id| scoping.symbol_name(symbol_id) == "z").unwrap();
+    let redeclaration_scope_ids: Vec<_> = scoping
+        .symbol_redeclarations(z)
+        .iter()
+        .map(|redeclaration| redeclaration.scope_id)
+        .collect();
+    assert_eq!(redeclaration_scope_ids.len(), 2);
+    assert_eq!(
+        scoping.scope_parent_id(redeclaration_scope_ids[0]),
+        Some(scoping.symbol_scope_id(z))
+    );
+    assert_eq!(redeclaration_scope_ids[1], scoping.symbol_scope_id(z));
+}
+
+#[test]
+fn test_anonymous_function_names() {
+    let let_flags = SymbolFlags::BlockScopedVariable;
+    let function_name = SymbolFlags::AnonymousFunctionName;
+    let class_name = SymbolFlags::AnonymousClassName;
+    for (source, name, flags) in [
+        ("let f = () => {}", "f", let_flags | function_name),
+        ("let f = (function () {})", "f", let_flags | function_name),
+        ("let C = class {}", "C", let_flags | class_name),
+        ("let f = function g() {}", "f", let_flags),
+        ("let C = class D {}", "C", let_flags),
+        ("let f = 1", "f", let_flags),
+        ("let f; f = () => {}", "f", let_flags | function_name),
+        ("let f; f ??= () => {}", "f", let_flags | function_name),
+        ("let f; f += () => {}", "f", let_flags),
+        ("let f; (() => { f = () => {}; })", "f", let_flags | function_name),
+        ("let C; [C = class {}] = []", "C", let_flags | class_name),
+        ("let f; ({ f = () => {} } = {})", "f", let_flags | function_name),
+        ("let f; ({ x: f = () => {} } = {})", "f", let_flags | function_name),
+        ("let { f = () => {} } = {}", "f", let_flags | function_name),
+        ("let [[C = class {}]] = []", "C", let_flags | class_name),
+        ("(f = () => {}) => {}", "f", SymbolFlags::FunctionScopedVariable | function_name),
+        ("(...[f = () => {}]) => {}", "f", SymbolFlags::FunctionScopedVariable | function_name),
+        (
+            "try {} catch ([f = () => {}]) {}",
+            "f",
+            SymbolFlags::BlockScopedVariable | SymbolFlags::CatchVariable | function_name,
+        ),
+    ] {
+        SemanticTester::js(source).has_some_symbol(name).equal_flags(flags).test();
+    }
 }
