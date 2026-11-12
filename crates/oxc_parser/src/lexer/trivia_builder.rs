@@ -14,7 +14,7 @@ use super::{Kind, Token};
 /// Buffer short comment lists before allocating their final arena storage.
 #[derive(Debug)]
 pub struct Comments<'a> {
-    inline: [Comment; 4],
+    inline: [Comment; 16],
     len: usize,
     vec: ArenaVec<'a, Comment>,
 }
@@ -38,7 +38,7 @@ impl<'a> Comments<'a> {
             self.inline[self.len] = comment;
         } else {
             if self.len == self.inline.len() {
-                self.vec.reserve(8);
+                self.vec.reserve(self.inline.len() * 2);
                 self.vec.extend(self.inline.iter().cloned());
             }
             self.vec.push(comment);
