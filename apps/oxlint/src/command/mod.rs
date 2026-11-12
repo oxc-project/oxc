@@ -8,8 +8,8 @@ use bpaf::Bpaf;
 pub use self::{
     ignore::IgnoreOptions,
     lint::{
-        DebugOption, LintCommand, OutputOptions, ReportUnusedDirectives, WarningOptions,
-        lint_command,
+        DebugOption, EnablePlugins, LintCommand, OutputOptions, ReportUnusedDirectives,
+        WarningOptions, lint_command,
     },
 };
 
