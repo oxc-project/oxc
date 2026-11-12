@@ -378,6 +378,10 @@ linter-schema-json:
 linter-config-ts:
   pnpm --filter oxlint-app generate-config-types
 
+# Generate per-plugin recommended presets from Rust rule metadata.
+linter-presets:
+  pnpm --filter oxlint-app generate-presets
+
 # Generate formatter schema json for `npm/oxfmt/configuration_schema.json`
 formatter-schema-json:
   cargo run -p website_formatter schema-json > npm/oxfmt/configuration_schema.json
