@@ -12,7 +12,8 @@ use oxc_config::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::{
-    Config, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore, LintFilter, Oxlintrc,
+    Config, ConfigBuilderError, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
+    LintFilter, Oxlintrc,
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
@@ -294,6 +295,20 @@ impl<'a> ConfigLoader<'a> {
         self
     }
 
+    pub(crate) fn create_config_builder(
+        &mut self,
+        config: Oxlintrc,
+    ) -> Result<ConfigStoreBuilder, ConfigBuilderError> {
+        ConfigStoreBuilder::from_oxlintrc(
+            false,
+            config,
+            self.external_linter,
+            self.external_plugin_store,
+            self.workspace_uri,
+        )
+        .map(|builder| builder.with_filters(self.filters))
+    }
+
     /// Load a single config from a file path
     fn load(path: &Path) -> Result<Oxlintrc, ConfigLoadError> {
         Oxlintrc::from_file(path)
@@ -443,13 +458,7 @@ impl<'a> ConfigLoader<'a> {
                 }
             }
 
-            let builder = match ConfigStoreBuilder::from_oxlintrc(
-                false,
-                config,
-                self.external_linter,
-                self.external_plugin_store,
-                self.workspace_uri,
-            ) {
+            let builder = match self.create_config_builder(config) {
                 Ok(builder) => builder,
                 Err(e) => {
                     errors.push(ConfigLoadError::Build { path, error: e.to_string() });
@@ -460,7 +469,6 @@ impl<'a> ConfigLoader<'a> {
             let extended_paths = builder.extended_paths.clone();
 
             match builder
-                .with_filters(self.filters)
                 .build(self.external_plugin_store)
                 .map_err(|e| ConfigLoadError::Build { path: path.clone(), error: e.to_string() })
             {
@@ -746,7 +754,7 @@ fn nested_respect_eslint_disable_directives_not_supported(path: &Path) -> OxcDia
 mod test {
     use std::path::PathBuf;
 
-    use oxc_linter::{ConfigStoreBuilder, ExternalPluginStore};
+    use oxc_linter::ExternalPluginStore;
 
     use super::{ConfigLoadError, ConfigLoader};
     #[cfg(feature = "napi")]
@@ -1022,22 +1030,13 @@ mod test {
             }
         });
 
-        let oxlintrc = {
-            let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
-            let loader = loader.with_js_config_loader(Some(&js_loader));
-            loader
-                .load_root_config(root_dir.path(), Some(&PathBuf::from("oxlint.config.ts")))
-                .unwrap()
-        };
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let mut loader = loader.with_js_config_loader(Some(&js_loader));
+        let oxlintrc = loader
+            .load_root_config(root_dir.path(), Some(&PathBuf::from("oxlint.config.ts")))
+            .unwrap();
 
-        let err = ConfigStoreBuilder::from_oxlintrc(
-            false,
-            oxlintrc,
-            None,
-            &mut external_plugin_store,
-            None,
-        )
-        .unwrap_err();
+        let err = loader.create_config_builder(oxlintrc).unwrap_err();
 
         assert_eq!(err.to_string(), "Rule 'no-console-typo' not found in plugin 'eslint'");
     }
