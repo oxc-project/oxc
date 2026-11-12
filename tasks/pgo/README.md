@@ -38,11 +38,12 @@ directory outside Oxc's workspace; individual training repos are removed after
 collection to bound disk usage.
 
 Each package uses a separate instrumented release build on a matching native host
-and target. Training exercises the published synchronous/asynchronous APIs and
-parser raw transfer without executing input code. Transformer inputs train `esnext`
-and `es2015`, except inputs containing `accessor`, which omit unsupported downlevel
-lowering. Native diagnostics are counted; crashes, corrupt inputs, and empty
-profiles fail the build.
+and target. Training exercises the published synchronous/asynchronous APIs without
+executing input code. Parser training uses raw transfer exclusively, excluding
+JSON AST serialization and JavaScript `JSON.parse`. Transformer inputs train
+`esnext` and `es2015`, except inputs containing `accessor`, which omit unsupported
+downlevel lowering. Native diagnostics are counted; crashes, corrupt inputs, and
+empty profiles fail the build.
 
 Preparation and training reserve a 512 MiB worker stack for deeply nested inputs.
 Async calls use small inputs because libuv stacks have a fixed size. Training

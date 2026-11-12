@@ -7,14 +7,6 @@ import { isMainThread } from "node:worker_threads";
 import { readShard } from "./corpus.mjs";
 import { largeStackWorker, root } from "./utils.mjs";
 
-function consumeParse(result) {
-  // The public parser wrapper deserializes these lazily.
-  // Invalid inputs can contain invalid escape sequences in a
-  // recovered AST. Exercise native diagnostics without deserializing that AST.
-  const errors = result.errors.length;
-  return [errors ? 0 : result.program.body.length, result.module, result.comments.length, errors];
-}
-
 async function trainRecord(name, binding, record, index) {
   const { filename, code, options } = record;
   // Async NAPI tasks run on libuv's fixed-size stacks, rather than our large
@@ -22,20 +14,13 @@ async function trainRecord(name, binding, record, index) {
   const asynchronous = index % 8 === 0 && code.length < 16 * 1024;
   if (name === "parser") {
     const parse = asynchronous ? binding.parse : binding.parseSync;
-    let diagnostics =
-      consumeParse(
-        await parse(filename, code, {
-          ...options,
-          range: index % 2 === 0,
-          showSemanticErrors: index % 16 === 0,
-        }),
-      )[3] > 0;
-    if (binding.rawTransferSupported()) {
-      diagnostics =
-        consumeParse(await parse(filename, code, { ...options, experimentalRawTransfer: true }))[3]
-          > 0 || diagnostics;
-    }
-    return diagnostics ? "diagnostics" : "trained";
+    const result = await parse(filename, code, {
+      ...options,
+      experimentalRawTransfer: true,
+      range: index % 2 === 0,
+      showSemanticErrors: index % 16 === 0,
+    });
+    return result.errors.length ? "diagnostics" : "trained";
   }
   if (name === "transform") {
     const transform = asynchronous ? binding.transform : binding.transformSync;
