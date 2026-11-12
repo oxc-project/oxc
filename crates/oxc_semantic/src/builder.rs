@@ -201,7 +201,7 @@ impl<'a> SemanticBuilder<'a> {
     /// be overridden with the `with_*` methods.
     ///
     /// Tools that need the node store but not the linter analyses or syntax
-    /// checking (e.g. the mangler) should use `new().with_build_nodes(true)`
+    /// checking (e.g. the React Compiler) should use `new().with_build_nodes(true)`
     /// instead.
     #[must_use]
     pub fn new_linter() -> Self {
@@ -230,7 +230,7 @@ impl<'a> SemanticBuilder<'a> {
     /// Disabled by default: [`Semantic::nodes`] is empty and only the ancestry
     /// stack and node-id counter are maintained while traversing — cheaper for
     /// the compiler pipeline, which does not need random access to nodes. Enable
-    /// it for the linter and mangler, which read [`Semantic::nodes`].
+    /// it for consumers that read [`Semantic::nodes`], such as the linter.
     #[must_use]
     pub fn with_build_nodes(mut self, yes: bool) -> Self {
         self.node_store.set_build_nodes(yes);
@@ -562,6 +562,7 @@ impl<'a> SemanticBuilder<'a> {
             scope_id,
             scope_id,
             self.node_store.current_node_id,
+            self.current_scope_id,
         )
     }
 
@@ -652,6 +653,7 @@ impl<'a> SemanticBuilder<'a> {
             self.current_scope_id,
             scope_id,
             self.node_store.current_node_id,
+            self.current_scope_id,
         )
     }
 
@@ -865,6 +867,7 @@ impl<'a> SemanticBuilder<'a> {
             symbol_id,
             flags,
             self.node_store.current_node_id,
+            self.current_scope_id,
             span,
         );
     }

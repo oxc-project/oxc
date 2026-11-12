@@ -14,7 +14,7 @@ use oxc_allocator::{Allocator, ArenaVec, BitSet};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_ecmascript::BoundNames;
-use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, Stats, SymbolId};
+use oxc_semantic::{Reference, Scoping, Semantic, SemanticBuilder, Stats, SymbolFlags, SymbolId};
 use oxc_span::SourceType;
 use oxc_str::{ArenaIdentHashSet, CompactStr, Ident};
 
@@ -321,7 +321,7 @@ impl<'t> Mangler<'t> {
     /// Pass the returned scoping and class private mappings to `oxc_codegen` to generate the mangled code.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
-        let mut builder = SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
+        let mut builder = SemanticBuilder::new().with_class_table(true);
         if let Some(stats) = self.stats {
             builder = builder.with_stats(stats);
         }
@@ -395,14 +395,13 @@ impl<'t> Mangler<'t> {
         program: &Program<'_>,
         generate_name: G,
     ) {
-        let (scoping, ast_nodes) = semantic.scoping_mut_and_nodes();
+        let scoping = semantic.scoping_mut();
         let allocator = self.temp_allocator.as_ref();
 
         // ── Phase 1: collect constraints — names we must not reuse or shadow. ──
-        let constraints =
-            Constraints::collect(allocator, scoping, ast_nodes, program, &self.options);
+        let constraints = Constraints::collect(allocator, scoping, program, &self.options);
         // ── Phase 2: assign slots — give bindings that can share a name the same slot. ──
-        let slots = SlotAssignment::compute(allocator, scoping, ast_nodes, &constraints);
+        let slots = SlotAssignment::compute(allocator, scoping, &constraints);
         // ── Phase 3: rank slots by reference frequency (hottest first). ──
         let ranking = SlotRanking::tally(allocator, scoping, &slots);
         // ── Phase 4: generate that many short, collision-free names. ──
@@ -525,7 +524,6 @@ impl<'a> Constraints<'a> {
     fn collect(
         allocator: &'a Allocator,
         scoping: &'a Scoping,
-        ast_nodes: &AstNodes,
         program: &'a Program<'a>,
         options: &'a MangleOptions,
     ) -> Self {
@@ -536,7 +534,7 @@ impl<'a> Constraints<'a> {
             (ArenaIdentHashSet::new_in(allocator), None)
         };
         let (keep_name_names, keep_name_symbols) =
-            collect_keep_name_symbols(options.keep_names, allocator, scoping, ast_nodes);
+            collect_keep_name_symbols(options.keep_names, allocator, scoping, program);
         let reserved = ArenaIdentHashSet::from_iter_in(
             options.reserved.iter().map(|name| Ident::from(name.as_str())),
             allocator,
@@ -590,12 +588,7 @@ impl<'a> SlotAssignment<'a> {
     /// when none are free. `slot_liveness[slot]` records the scopes a slot passes through live so
     /// descendant scopes can tell what's free. Invariant on the result: two symbols sharing a slot
     /// never have overlapping live ranges, so giving them one name is always safe.
-    fn compute(
-        allocator: &'a Allocator,
-        scoping: &'a Scoping,
-        ast_nodes: &AstNodes,
-        constraints: &Constraints,
-    ) -> Self {
+    fn compute(allocator: &'a Allocator, scoping: &'a Scoping, constraints: &Constraints) -> Self {
         // Names of bindings in direct-`eval` scopes — collected here, reserved in Phase 4.
         // TODO: eval reservation is conservative — ideally we'd reserve names per-slot.
         let mut eval_reserved_names = ArenaIdentHashSet::new_in(allocator);
@@ -687,12 +680,9 @@ impl<'a> SlotAssignment<'a> {
 
                 // `var` is hoisted, so include the scope where it is declared
                 // (for cases like `function foo() { { var x; let y; } }`).
-                let declared_scope_id =
-                    ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
-                let redeclared_scope_ids = scoping
-                    .symbol_redeclarations(symbol_id)
-                    .iter()
-                    .map(|r| ast_nodes.get_node(r.declaration).scope_id());
+                let declared_scope_id = scoping.symbol_declaration_scope_id(symbol_id);
+                let redeclared_scope_ids =
+                    scoping.symbol_redeclarations(symbol_id).iter().map(|r| r.scope_id);
                 let referenced_scope_ids =
                     scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
 
@@ -726,24 +716,28 @@ impl<'a> SlotAssignment<'a> {
                     }
                 }
             }
+        }
 
-            // Repair an orphaned named-fn-expr name: a same-named body declaration
-            // (`var foo`, parameter `foo`) overwrites the fn-expr's binding-map entry,
-            // so the fn-expr symbol never appears in `bindings` and the main pass leaves
-            // its slot at `SLOT_UNASSIGNED`. Copy the shadower's slot so both render with
-            // the same mangled name — safe because every body reference resolves to the
-            // shadower, not the orphan. Only function expressions can host this orphaning;
-            // a function declaration's name lives in the parent scope and is unaffected.
-            if scoping.scope_flags(scope_id).is_function()
-                && let Some(func) = ast_nodes.kind(scoping.get_node_id(scope_id)).as_function()
-                && func.is_expression()
-                && let Some(id) = &func.id
-                && let Some(&shadower) = bindings.get(&id.name)
-                && shadower != id.symbol_id()
-                && constraints.is_mangle_candidate(id.symbol_id(), scoping)
+        // Repair an orphaned named-fn-expr name: a same-named body declaration
+        // (`var foo`, parameter `foo`) overwrites the fn-expr's binding-map entry,
+        // so the fn-expr symbol never appears in `bindings` and the main pass leaves
+        // its slot at `SLOT_UNASSIGNED`. Copy the shadower's slot so both render with
+        // the same mangled name — safe because every body reference resolves to the
+        // shadower, not the orphan. Only function expressions can host this orphaning;
+        // a function declaration's name lives in the parent scope and is unaffected.
+        for symbol_id in scoping.symbol_ids() {
+            if slots[symbol_id.index()] != SLOT_UNASSIGNED
+                || !scoping.symbol_flags(symbol_id).contains(SymbolFlags::FunctionExpression)
+            {
+                continue;
+            }
+            let scope_id = scoping.symbol_scope_id(symbol_id);
+            if let Some(shadower) = scoping.get_binding(scope_id, scoping.symbol_ident(symbol_id))
+                && shadower != symbol_id
+                && constraints.is_mangle_candidate(symbol_id, scoping)
                 && slots[shadower.index()] != SLOT_UNASSIGNED
             {
-                slots[id.symbol_id().index()] = slots[shadower.index()];
+                slots[symbol_id.index()] = slots[shadower.index()];
             }
         }
 
@@ -896,12 +890,12 @@ fn collect_keep_name_symbols<'alloc>(
     keep_names: MangleOptionsKeepNames,
     allocator: &'alloc Allocator,
     scoping: &'alloc Scoping,
-    nodes: &AstNodes,
+    program: &Program<'_>,
 ) -> (ArenaIdentHashSet<'alloc>, Option<BitSet<'alloc>>) {
     if !keep_names.function && !keep_names.class {
         return (ArenaIdentHashSet::new_in(allocator), None);
     }
-    let ids = collect_name_symbols(keep_names, allocator, scoping, nodes);
+    let ids = collect_name_symbols(keep_names, allocator, scoping, program);
     let names = ArenaIdentHashSet::from_iter_in(
         ids.ones().map(|id| scoping.symbol_ident(SymbolId::from_usize(id))),
         allocator,

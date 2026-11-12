@@ -179,8 +179,7 @@ impl<'a> Minifier {
             .unwrap_or_default();
         let (scoping, class_private_mappings) = mangle
             .map(|options| {
-                let mut builder =
-                    SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
+                let mut builder = SemanticBuilder::new().with_class_table(true);
                 if let Some(stats) = stats {
                     builder = builder.with_stats(stats);
                 }
