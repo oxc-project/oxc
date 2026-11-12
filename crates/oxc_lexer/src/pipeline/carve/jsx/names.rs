@@ -3,7 +3,7 @@ use std::ptr;
 use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::pipeline::{
-    bitmap::bm_next0,
+    bitmap::Bitmap,
     bytes::{is_word, is_ws, unicode_ws_len_at_unchecked},
     carve::common::find_line_terminator,
     scan::scan_block_comment,
@@ -13,14 +13,14 @@ use crate::pipeline::{
 #[inline]
 pub(super) unsafe fn jsx_names_equal_fast(
     src: *const u8,
-    word: *const u64,
+    word: Bitmap,
     n: usize,
     a: usize,
     b: usize,
     lim_b: usize,
     cpu: impl Cpu,
 ) -> bool {
-    let e = bm_next0(word, a, n, cpu);
+    let e = word.next0(a, n, cpu);
     let len = e - a;
     let ce = *src.add(e);
     // The fast path compares one plain word; a comment or Unicode whitespace after it

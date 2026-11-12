@@ -2,11 +2,7 @@ use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::token::tk;
 
-use crate::pipeline::{
-    bitmap::{bm_clear_range, bm_set},
-    find::find,
-    lanes::Lanes,
-};
+use crate::pipeline::{bitmap::Bitmap, find::find, lanes::Lanes};
 
 use super::{
     comments::{
@@ -22,10 +18,10 @@ use super::{
 pub(super) unsafe fn carve_js(
     srcs: &[u8],
     n: usize,
-    st: *mut u64,
+    st: Bitmap,
     kind: *mut u8,
-    opch: *mut u64,
-    word: *const u64,
+    opch: Bitmap,
+    word: Bitmap,
     ts: bool,
     lanes: &mut Lanes,
     cpu: impl Cpu,
@@ -36,9 +32,9 @@ pub(super) unsafe fn carve_js(
     if n >= 2 && *src == b'#' && *src.add(1) == b'!' {
         let end = find_line_terminator(src, n, 2, cpu);
         *kind = tk!(Hashbang);
-        bm_clear_range(st, 1, end - 1, cpu);
+        st.clear_range(1, end - 1, cpu);
         if end < n {
-            bm_set(st, end, cpu);
+            st.set(end, cpu);
         }
         i = end;
     }

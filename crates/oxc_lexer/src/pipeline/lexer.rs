@@ -11,6 +11,7 @@ use crate::{
 };
 
 use crate::pipeline::{
+    bitmap::Bitmap,
     carve::carve,
     classify::classify,
     coalesce::{KWB, coalesce},
@@ -181,13 +182,13 @@ impl Lexer {
 
         let nb = n.div_ceil(64);
         let sp = src.as_ptr();
-        let word = self.word.as_mut_ptr();
-        let st = self.st.as_mut_ptr();
-        let kwinit = self.kwinit.as_mut_ptr();
-        let opch = self.opch.as_mut_ptr();
-        let digit = self.digit.as_mut_ptr();
-        let dot = self.dot.as_mut_ptr();
-        let misc = self.misc.as_mut_ptr();
+        let word = Bitmap::new(self.word.as_mut_ptr());
+        let st = Bitmap::new(self.st.as_mut_ptr());
+        let kwinit = Bitmap::new(self.kwinit.as_mut_ptr());
+        let opch = Bitmap::new(self.opch.as_mut_ptr());
+        let digit = Bitmap::new(self.digit.as_mut_ptr());
+        let dot = Bitmap::new(self.dot.as_mut_ptr());
+        let misc = Bitmap::new(self.misc.as_mut_ptr());
         let kind = self.kind.as_mut_ptr();
         let kwpos = self.kwpos.as_mut_ptr();
 

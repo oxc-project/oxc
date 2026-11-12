@@ -3,7 +3,7 @@ use oxc_span::Span;
 
 use crate::token::{SPAN_SENTINELS, tk};
 
-use crate::pipeline::lanes::Lanes;
+use crate::pipeline::{bitmap::Bitmap, lanes::Lanes};
 
 mod avx2;
 mod common;
@@ -21,7 +21,7 @@ pub unsafe fn compress(
     src: &[u8],
     n: usize,
     nb: usize,
-    st: *const u64,
+    st: Bitmap,
     kind: *const u8,
     stage_pos: *mut u32,
     stage_kind: *mut u8,
@@ -77,7 +77,7 @@ pub(super) fn init_pair_luts(cpu: DynCpu) {
 #[cpu_multiversion]
 #[inline(always)]
 unsafe fn compress_blocks(
-    st: *const u64,
+    st: Bitmap,
     kind: *const u8,
     b0: usize,
     b1: usize,
@@ -86,8 +86,8 @@ unsafe fn compress_blocks(
     cpu: impl Cpu,
 ) -> usize {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => compress_blocks_avx2(st, kind, b0, b1, starts, kinds, cpu),
-        _ => compress_blocks_generic(st, kind, b0, b1, starts, kinds),
+        DynCpu::Avx2(cpu) => compress_blocks_avx2(st.as_ptr(), kind, b0, b1, starts, kinds, cpu),
+        _ => compress_blocks_generic(st.as_ptr(), kind, b0, b1, starts, kinds),
     }
 }
 
