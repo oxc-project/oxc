@@ -1,5 +1,6 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
+use oxc_data_structures::buffered_vec::BufferedVec;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, Span};
@@ -11,7 +12,10 @@ pub struct ModuleRecordBuilder<'a> {
     allocator: &'a Allocator,
     source_type: SourceType,
     module_record: ModuleRecord<'a>,
-    export_entries: ArenaVec<'a, ExportEntry<'a>>,
+    import_entries: BufferedVec<ArenaVec<'a, ImportEntry<'a>>, 4>,
+    dynamic_imports: BufferedVec<ArenaVec<'a, DynamicImport>, 4>,
+    import_metas: BufferedVec<ArenaVec<'a, Span>, 4>,
+    export_entries: BufferedVec<ArenaVec<'a, ExportEntry<'a>>, 4>,
     exported_bindings_duplicated: ArenaVec<'a, NameSpan<'a>>,
     /// `default` exports of declarations skipped because their module request is not UTF-8.
     /// They still count towards the duplicate default export check.
@@ -24,18 +28,41 @@ impl<'a> ModuleRecordBuilder<'a> {
             allocator,
             source_type,
             module_record: ModuleRecord::new(allocator),
-            export_entries: ArenaVec::new_in(&allocator),
+            import_entries: BufferedVec::new(ArenaVec::new_in(&allocator)),
+            dynamic_imports: BufferedVec::new(ArenaVec::new_in(&allocator)),
+            import_metas: BufferedVec::new(ArenaVec::new_in(&allocator)),
+            export_entries: BufferedVec::new(ArenaVec::new_in(&allocator)),
             exported_bindings_duplicated: ArenaVec::new_in(&allocator),
             skipped_default_exports: ArenaVec::new_in(&allocator),
         }
     }
 
-    pub fn build(mut self) -> (ModuleRecord<'a>, Vec<OxcDiagnostic>) {
+    pub fn build(self) -> (ModuleRecord<'a>, Vec<OxcDiagnostic>) {
+        let Self {
+            allocator,
+            source_type,
+            mut module_record,
+            import_entries,
+            dynamic_imports,
+            import_metas,
+            export_entries,
+            exported_bindings_duplicated,
+            skipped_default_exports,
+        } = self;
+
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
         // resolved before resolving export entries.
-        self.resolve_export_entries();
-        let errors = self.errors();
-        (self.module_record, errors)
+        module_record.import_entries = import_entries.into_vec();
+        Self::resolve_export_entries(allocator, &mut module_record, export_entries.into_vec());
+        let errors = Self::errors(
+            source_type,
+            &module_record,
+            &exported_bindings_duplicated,
+            &skipped_default_exports,
+        );
+        module_record.dynamic_imports = dynamic_imports.into_vec();
+        module_record.import_metas = import_metas.into_vec();
+        (module_record, errors)
     }
 
     /// Returns true if the file contains module syntax (import/export declarations or import.meta).
@@ -43,15 +70,18 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record.has_module_syntax
     }
 
-    pub fn errors(&self) -> Vec<OxcDiagnostic> {
+    fn errors(
+        source_type: SourceType,
+        module_record: &ModuleRecord<'a>,
+        exported_bindings_duplicated: &[NameSpan<'a>],
+        skipped_default_exports: &[Span],
+    ) -> Vec<OxcDiagnostic> {
         let mut errors = vec![];
 
-        let module_record = &self.module_record;
-
         // Skip checking for exports in TypeScript
-        if !self.source_type.is_typescript() {
+        if !source_type.is_typescript() {
             // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
-            for name_span in &self.exported_bindings_duplicated {
+            for name_span in exported_bindings_duplicated {
                 let old_span = module_record.exported_bindings[&name_span.name];
                 errors.push(diagnostics::duplicate_export(
                     &name_span.name,
@@ -73,7 +103,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                         .iter()
                         .filter_map(|export_entry| export_entry.export_name.default_export_span()),
                 )
-                .chain(self.skipped_default_exports.iter().copied());
+                .chain(skipped_default_exports.iter().copied());
             if default_exports.clone().count() > 1 {
                 errors.push(diagnostics::duplicate_default_export(default_exports.collect()));
             }
@@ -91,7 +121,7 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     fn add_import_entry(&mut self, entry: ImportEntry<'a>) {
-        self.module_record.import_entries.push(entry);
+        self.import_entries.push(entry);
     }
 
     fn add_export_entry(&mut self, entry: ExportEntry<'a>) {
@@ -106,11 +136,11 @@ impl<'a> ModuleRecordBuilder<'a> {
 
     /// [ParseModule](https://tc39.es/ecma262/#sec-parsemodule)
     /// Step 10.
-    fn resolve_export_entries(&mut self) {
-        let mut export_entries =
-            std::mem::replace(&mut self.export_entries, ArenaVec::new_in(&self.allocator));
-        let module_record = &mut self.module_record;
-
+    fn resolve_export_entries(
+        allocator: &'a Allocator,
+        module_record: &mut ModuleRecord<'a>,
+        mut export_entries: ArenaVec<'a, ExportEntry<'a>>,
+    ) {
         if let Some(first) = export_entries.first() {
             let is_star = first.import_name.is_all_but_default();
             if export_entries.iter().all(|entry| {
@@ -151,7 +181,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                 let import_name = match &import.import_name {
                     ImportImportName::Name(name) => ExportImportName::Name(name.clone()),
                     ImportImportName::Default(span) => ExportImportName::Name(NameSpan::new(
-                        self.allocator.alloc_str("default").into(),
+                        allocator.alloc_str("default").into(),
                         *span,
                     )),
                     // ParseModule 10.a.ii.3: normalize to `export * as name from 'mod'`.
@@ -182,14 +212,12 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_import_expression(&mut self, e: &ImportExpression<'a>) {
-        self.module_record
-            .dynamic_imports
-            .push(DynamicImport { span: e.span, module_request: e.source.span() });
+        self.dynamic_imports.push(DynamicImport { span: e.span, module_request: e.source.span() });
     }
 
     pub fn visit_import_meta(&mut self, span: Span) {
         self.module_record.has_module_syntax = true;
-        self.module_record.import_metas.push(span);
+        self.import_metas.push(span);
     }
 
     pub fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
@@ -199,7 +227,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         let module_request = NameSpan::new(source.into(), decl.source.span);
 
         if let Some(specifiers) = &decl.specifiers {
-            reserve_entries(&mut self.module_record.import_entries, specifiers.len());
+            self.import_entries.reserve(specifiers.len());
             for specifier in specifiers {
                 let local = specifier.local();
                 let local_name = NameSpan::new(local.name.into(), local.span);
@@ -337,7 +365,7 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
-        reserve_entries(&mut self.export_entries, decl.specifiers.len());
+        self.export_entries.reserve(decl.specifiers.len());
         for specifier in &decl.specifiers {
             let export_name = ExportExportName::Name(NameSpan::new(
                 specifier.exported.name(),
@@ -389,7 +417,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             },
         );
 
-        reserve_entries(&mut self.export_entries, decl.specifiers.len());
+        self.export_entries.reserve(decl.specifiers.len());
         for specifier in &decl.specifiers {
             let export_name = ExportExportName::Name(NameSpan::new(
                 specifier.exported.name(),
@@ -414,16 +442,6 @@ impl<'a> ModuleRecordBuilder<'a> {
 
     pub fn set_module_syntax(&mut self) {
         self.module_record.has_module_syntax = true;
-    }
-}
-
-fn reserve_entries<T>(entries: &mut ArenaVec<'_, T>, additional: usize) {
-    let len = entries.len();
-    let required = len + additional;
-    if required > entries.capacity() {
-        // Match normal push growth so reserving a batch does not change later capacities.
-        let capacity = required.next_power_of_two();
-        entries.reserve(capacity - len);
     }
 }
 
