@@ -45,6 +45,28 @@ fn is_import_expression_or_member_access_on_import_expression(callee: &Expressio
     }
 }
 
+/// Whether `expr`, parsed from `start`, is an instantiation without its own parentheses:
+/// under `preserve_parens: false` a parenthesized one (`(a<b>)`) starts after its `(`.
+fn is_unparenthesized_instantiation(expr: &Expression<'_>, start: u32) -> bool {
+    matches!(expr, Expression::TSInstantiationExpression(expr) if expr.span.start == start)
+}
+
+/// Splits an unparenthesized instantiation into its expression and type arguments
+/// for the enclosing `new` or `extends` (`new A<T>;`, `extends B<T>,`).
+/// A parenthesized one stays whole (`new (A<T>)`, `extends (B<T>)`), as in TypeScript.
+pub(super) fn split_unparenthesized_instantiation(
+    expr: Expression<'_>,
+    start: u32,
+) -> (Expression<'_>, Option<ArenaBox<'_, TSTypeParameterInstantiation<'_>>>) {
+    if is_unparenthesized_instantiation(&expr, start)
+        && let Expression::TSInstantiationExpression(instantiation) = expr
+    {
+        let instantiation = instantiation.unbox();
+        return (instantiation.expression, Some(instantiation.type_arguments));
+    }
+    (expr, None)
+}
+
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_paren_expression(&mut self) -> Expression<'a> {
         let opening_span = self.cur_token().span();
@@ -925,7 +947,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         lhs: &Expression<'a>,
         lhs_start: u32,
     ) {
-        if matches!(lhs, Expression::TSInstantiationExpression(e) if e.span.start == lhs_start) {
+        if is_unparenthesized_instantiation(lhs, lhs_start) {
             self.error(
                 diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
                     self.end_span(lhs_start),
@@ -978,8 +1000,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             lhs = self.parse_computed_member_expression(lhs_start, lhs, true);
                         } else {
                             // ?.template`...`
-                            lhs =
-                                self.parse_tagged_template_rest(lhs_start, lhs, *in_optional_chain);
+                            lhs = self.parse_tagged_template(
+                                lhs_start,
+                                lhs,
+                                *in_optional_chain,
+                                None,
+                            );
                         }
                     } else {
                         // This is not a valid optional chain pattern, don't consume ?.
@@ -993,7 +1019,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     lhs = self.parse_computed_member_expression(lhs_start, lhs, false);
                 }
                 kind if kind.is_template_start_of_tagged_template() => {
-                    lhs = self.parse_tagged_template_rest(lhs_start, lhs, *in_optional_chain);
+                    lhs = self.parse_tagged_template(lhs_start, lhs, *in_optional_chain, None);
                 }
                 Kind::Bang if self.is_ts && !self.cur_token().is_on_new_line() => {
                     self.bump_any();
@@ -1038,24 +1064,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 _ => return (lhs, None),
             }
         }
-    }
-
-    /// Parse the tagged template continuation of a member expression,
-    /// unwrapping a `TSInstantiationExpression` lhs (`` foo<T>`...` ``) into its type arguments.
-    fn parse_tagged_template_rest(
-        &mut self,
-        lhs_start: u32,
-        lhs: Expression<'a>,
-        in_optional_chain: bool,
-    ) -> Expression<'a> {
-        let (expr, type_arguments) =
-            if let Expression::TSInstantiationExpression(instantiation_expr) = lhs {
-                let expr = instantiation_expr.unbox();
-                (expr.expression, Some(expr.type_arguments))
-            } else {
-                (lhs, None)
-            };
-        self.parse_tagged_template(lhs_start, expr, in_optional_chain, type_arguments)
     }
 
     /// Section 13.3 `MemberExpression`
@@ -1131,7 +1139,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let rhs_start = self.cur_start();
         let is_import = self.at(Kind::Import); // Syntax Error for `new import('mod')` but not `new (import('mod'))`.
         let mut optional = false;
-        let (mut callee, mut type_arguments) = {
+        let (callee, type_arguments) = {
             let lhs = self.parse_primary_expression();
             self.parse_member_expression_rest(
                 rhs_start,
@@ -1141,13 +1149,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             )
         };
 
-        if type_arguments.is_none()
-            && let Expression::TSInstantiationExpression(instantiation_expr) = callee
-        {
-            let instantiation_expr = instantiation_expr.unbox();
-            type_arguments.replace(instantiation_expr.type_arguments);
-            callee = instantiation_expr.expression;
-        }
+        // `new A<T>;` has no `(` for `parse_member_expression_rest` to split the type arguments at
+        let (callee, type_arguments) = match type_arguments {
+            None => split_unparenthesized_instantiation(callee, rhs_start),
+            type_arguments => (callee, type_arguments),
+        };
 
         if self.at(Kind::QuestionDot) {
             let error = diagnostics::invalid_new_optional_chain(self.cur_token().span());
@@ -1248,15 +1254,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
 
             if type_arguments.is_some() || self.at(Kind::LParen) {
-                if !question_dot
-                    && type_arguments.is_none()
-                    && let Expression::TSInstantiationExpression(expr) = lhs
-                {
-                    let expr = expr.unbox();
-                    type_arguments.replace(expr.type_arguments);
-                    lhs = expr.expression;
-                }
-
                 lhs =
                     self.parse_call_arguments(lhs_start, lhs, question_dot, type_arguments.take());
                 continue;
