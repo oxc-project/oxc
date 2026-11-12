@@ -3,9 +3,13 @@
 // oxlint-disable-next-line typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
+import { readdirSync, readFileSync } from "node:fs";
+import { join as pathJoin } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
-import { parseSync } from "../src-js/index.js";
+import { experimentalGetLazyVisitor, parseSync, visitorKeys } from "../src-js/index.js";
+import { NODE_TYPE_IDS_MAP } from "../src-js/generated/lazy/type_ids.js";
 
 function parseSyncLazy(filename, code, options = null) {
   return parseSync(filename, code, { ...options, experimentalLazy: true });
@@ -749,6 +753,220 @@ describe("NodeArray", () => {
       expect(Object.isSealed(body)).toBe(false);
       // Check same as array
       expect(Object.isSealed([...body])).toBe(false);
+    });
+  });
+});
+
+describe("Visitor", () => {
+  const Visitor = experimentalGetLazyVisitor();
+  const lazyTypeNames = [...NODE_TYPE_IDS_MAP.keys()];
+
+  // Visit `sourceText` with lazy visitor, and call `visit(typeName, node)` for every node visited
+  function visitLazy(filename, sourceText, visit) {
+    const ret = parseSyncLazy(filename, sourceText);
+    const visitors = {};
+    for (const typeName of lazyTypeNames) {
+      visitors[typeName] = (node) => visit(typeName, node);
+    }
+    ret.visit(new Visitor(visitors));
+    ret.dispose();
+  }
+
+  // Fields which are not serialized as their own ESTree property (`#[estree(skip)]`,
+  // `#[estree(prepend_to)]`, `#[estree(append_to)]`) but whose contents are in the ESTree AST
+  it.each([
+    ["Class superclass", "x.js", "class A extends f('a') {}"],
+    ["Class superclass type args", "x.ts", "class A extends B<typeof import('a')> {}"],
+    ["Class expression superclass", "x.js", "const C = class extends g('a') {};"],
+    ["VariableDeclarator type annotation", "x.ts", "const p: typeof import('a') = 1;"],
+    ["VariableDeclarator pattern type annotation", "x.ts", "const { x }: typeof import('a') = 1;"],
+    ["CatchParameter type annotation", "x.ts", "try {} catch (e: typeof import('a')) {}"],
+    ["Function this param", "x.ts", "function f(this: typeof import('a')) {}"],
+    ["TSFunctionType this param", "x.ts", "type F = (this: typeof import('a')) => void;"],
+    ["TSMethodSignature this param", "x.ts", "interface I { m(this: typeof import('a')): void }"],
+    [
+      "TSCallSignatureDeclaration this param",
+      "x.ts",
+      "interface I { (this: typeof import('a')): void }",
+    ],
+    ["FormalParameters rest", "x.js", "function f(...[a = g()]) {}"],
+    ["FormalParameters rest type annotation", "x.ts", "function f(...r: typeof import('a')) {}"],
+    ["ArrayPattern rest", "x.js", "const [...[a = g()]] = b;"],
+    ["ObjectPattern rest", "x.js", "const { ...a } = b;", "BindingRestElement"],
+    ["ArrayAssignmentTarget rest", "x.js", "[...a[g()]] = b;"],
+    ["ObjectAssignmentTarget rest", "x.js", "({ ...a[g()] } = b);"],
+  ])("visits nodes in %s", (_name, filename, sourceText, expectedTypeName = null) => {
+    let count = 0;
+    visitLazy(filename, sourceText, (typeName) => {
+      if (
+        expectedTypeName === null
+          ? typeName === "CallExpression" || typeName === "TSImportType"
+          : typeName === expectedTypeName
+      ) {
+        count++;
+      }
+    });
+    expect(count).toBe(1);
+  });
+
+  it("visits directives", () => {
+    const directives = [];
+    visitLazy(
+      "x.ts",
+      "'use strict'; function f() { 'use asm'; } namespace N { 'use foo'; }",
+      (typeName, node) => {
+        if (typeName === "Directive") directives.push(node.directive);
+      },
+    );
+    expect(directives).toStrictEqual(["use strict", "use asm", "use foo"]);
+  });
+
+  it("visits fields in source order", () => {
+    const names = [];
+    visitLazy(
+      "x.ts",
+      `
+        class A extends B<C> implements D { e = F; }
+        const g: H = I;
+        function j(this: K, l: M, ...n: O): P {}
+        try {} catch (q: R) {}
+      `,
+      (typeName, node) => {
+        if (typeName === "IdentifierReference") names.push(node.name);
+      },
+    );
+    expect(names).toStrictEqual(["B", "C", "D", "F", "H", "I", "K", "M", "O", "P", "R"]);
+  });
+
+  // Check that lazy visitor visits the same nodes as a full walk of the eager ESTree AST.
+  //
+  // Lazy visitor is keyed by Rust type names, and some Rust types are represented differently in ESTree.
+  // Map those which differ only in name, and skip those where the ESTree representation is
+  // restructured so that nodes don't correspond 1-to-1.
+  // Nodes are compared by type and start offset, because converters adjust some nodes' end offsets
+  // (e.g. a declarator's `id` is extended to cover its type annotation).
+  describe("visits same nodes as eager AST", () => {
+    const LAZY_TO_ESTREE_TYPES = {
+      FunctionBody: "BlockStatement",
+      Directive: "ExpressionStatement",
+      ExportDeclaration: "ExportNamedDeclaration",
+      ExportFromDeclaration: "ExportNamedDeclaration",
+      ObjectAssignmentTarget: "ObjectPattern",
+      ArrayAssignmentTarget: "ArrayPattern",
+      PrivateInExpression: "BinaryExpression",
+    };
+    const ESTREE_TYPE_ALIASES = {
+      TSAbstractMethodDefinition: "MethodDefinition",
+      TSAbstractPropertyDefinition: "PropertyDefinition",
+      TSAbstractAccessorProperty: "AccessorProperty",
+    };
+    const SKIPPED_TYPES = new Set([
+      // Element names are `IdentifierReference`s etc in Rust AST
+      "JSXIdentifier",
+      // Created from defaults of `FormalParameter`s and assignment target properties
+      "AssignmentPattern",
+      // Start offset is adjusted
+      "TemplateElement",
+    ]);
+
+    const comparedTypes = new Set(
+      lazyTypeNames
+        .map((typeName) => LAZY_TO_ESTREE_TYPES[typeName] ?? typeName)
+        .filter((typeName) => Object.hasOwn(visitorKeys, typeName) && !SKIPPED_TYPES.has(typeName)),
+    );
+
+    function addNode(nodes, typeName, node) {
+      if (comparedTypes.has(typeName)) nodes.push(`${typeName} @ ${node.start}`);
+    }
+
+    function getEagerNodes(filename, sourceText) {
+      const nodes = [];
+      function walk(value) {
+        if (Array.isArray(value)) {
+          for (const element of value) walk(element);
+        } else if (value !== null && typeof value === "object") {
+          if (typeof value.type === "string") {
+            addNode(nodes, ESTREE_TYPE_ALIASES[value.type] ?? value.type, value);
+          }
+          for (const key of Object.keys(value)) {
+            if (key !== "parent") walk(value[key]);
+          }
+        }
+      }
+      walk(parseSync(filename, sourceText).program);
+      return nodes.sort((a, b) => a.localeCompare(b));
+    }
+
+    function getLazyNodes(filename, sourceText) {
+      const nodes = [];
+      visitLazy(filename, sourceText, (typeName, node) => {
+        addNode(nodes, LAZY_TO_ESTREE_TYPES[typeName] ?? typeName, node);
+      });
+      return nodes.sort((a, b) => a.localeCompare(b));
+    }
+
+    it.each([
+      [
+        "x.js",
+        `
+          'use strict';
+          import a, { b as c } from 'd';
+          export { e as f } from 'g';
+          export * as h from 'i';
+          export const j = 1;
+          export default class K extends L(M) {
+            #n = 1;
+            static { this.#n; }
+            o({ p, ...q } = {}, [r, , ...s] = [], ...[t = u]) { 'use asm'; return #n in this; }
+            get v() { return super.w?.(x)[y]; }
+          }
+          ({ z, ...aa } = bb);
+          [cc = dd, ...ee] = ff;
+          label: for (const [gg, ...hh] of ii) { try { continue label; } catch ({ jj = kk }) {} }
+          const ll = async function* () { yield* await mm\`nn\${oo}pp\`; };
+          new.target, import.meta, import('qq');
+        `,
+      ],
+      ["x.jsx", "const a = <B c={d} {...e}><F.G /><>{h}</></B>;"],
+      [
+        "x.ts",
+        `
+          class A<T> extends B<T> implements C<T>, D {
+            constructor(private readonly e: T, public f?: number) { super(); }
+            g(this: H, i: J, ...k: L[]): M { return this as N; }
+            declare o: P;
+          }
+          abstract class Q { abstract r(): void; abstract s: string; abstract accessor t: number; }
+          const u: V = w, { x }: Y = z, [aa]: BB = cc;
+          let dd!: EE;
+          try {} catch (ff: unknown) {}
+          function gg(this: typeof import('hh'), ...ii: typeof import('jj')[]): asserts kk is LL {}
+          type MM = (this: NN, oo: PP) => QQ;
+          type RR = new (this: SS) => TT;
+          interface UU extends VV<WW> { xx(this: YY): ZZ; (this: AAA): BBB; new (ccc: DDD): EEE; [fff: string]: GGG; }
+          namespace HHH { 'use strict'; export const iii = 1; }
+          declare module 'jjj' { export default kkk; }
+          enum LLL { mmm = 1, 'nnn' }
+          export = ooo;
+          export import ppp = qqq.rrr;
+          let sss = <TTT>uuu satisfies VVV;
+        `,
+      ],
+    ])("%s", (filename, sourceText) => {
+      expect(getLazyNodes(filename, sourceText)).toStrictEqual(getEagerNodes(filename, sourceText));
+    });
+
+    // Check against some larger real-world files from this repo
+    const dirPaths = [pathJoin(import.meta.dirname, "../src-js/raw-transfer"), import.meta.dirname];
+    const paths = dirPaths.flatMap((dirPath) =>
+      readdirSync(dirPath)
+        .filter((filename) => /\.[jt]s$/.test(filename))
+        .map((filename) => pathJoin(dirPath, filename)),
+    );
+
+    it.each(paths)("%s", (path) => {
+      const sourceText = readFileSync(path, "utf8");
+      expect(getLazyNodes(path, sourceText)).toStrictEqual(getEagerNodes(path, sourceText));
     });
   });
 });
