@@ -54,6 +54,11 @@ jobs:
           OXLINT_VERSION: ${{ steps.run.outputs.OXLINT_VERSION }}
         run: node .github/scripts/update-rule-versions.mts --release-version "$OXLINT_VERSION" --write
 
+      - name: Update embedded CLI specs
+        env:
+          UPDATE_USAGE_SPEC: "1"
+        run: cargo test -p oxlint -p oxfmt --all-features embedded_spec_file_matches_the_live_serializer
+
       - name: Rebuild NAPI bindings
         run: |
           pnpm --filter oxlint-app run build-dev

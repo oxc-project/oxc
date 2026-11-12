@@ -132,8 +132,6 @@ test-estree-tokens *args='':
 
 # ==================== AST & CODEGEN ====================
 
-# Generate AST related boilerplate code.
-# If fails first time, run with JS generators disabled first, and then again with JS generators enabled.
 # Regenerate each app's embedded `cli.usage.kdl`, the answer its `__usage_spec__` endpoint
 # gives. Run after changing CLI metadata (flags, help text, completions) or after a version bump.
 [unix]
@@ -144,6 +142,8 @@ usage-spec:
 usage-spec:
   $Env:UPDATE_USAGE_SPEC='1'; cargo test -p oxlint -p oxfmt --all-features embedded_spec_file_matches_the_live_serializer
 
+# Generate AST related boilerplate code.
+# If fails first time, run with JS generators disabled first, and then again with JS generators enabled.
 # This is necessary because JS generators use `oxc_*` crates (e.g. `oxc_minifier`), and those crates may not compile
 # unless Rust code is generated first.
 # See: https://github.com/oxc-project/oxc/issues/15564
