@@ -109,6 +109,7 @@ macro_rules! handle_string_literal_escape {
         // code point (or no text for a line continuation).
         let escape_start_offset = $lexer.offset();
         $lexer.consume_char();
+        let after_backslash = $lexer.source.position();
         let mut is_valid_escape_sequence = true;
         let first = $lexer.decode_string_escape_sequence(false, &mut is_valid_escape_sequence);
         if !is_valid_escape_sequence {
@@ -134,6 +135,29 @@ macro_rules! handle_string_literal_escape {
                 $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
                 Kind::Undetermined
             });
+        }
+
+        if b == $delimiter && is_valid_escape_sequence {
+            // Identity escapes and one-sided line continuations can leave the decoded
+            // value in one contiguous source span.
+            let borrowed = match first {
+                None if so_far.is_empty() => Some(chunk),
+                None if chunk.is_empty() => Some(so_far),
+                Some(value) if so_far.is_empty() => value.to_char().and_then(|c| {
+                    let source_value = $lexer.source.str_from_pos_to_current(after_backslash);
+                    let escape_len = source_value.len() - chunk.len();
+                    // Check the whole escape payload, so `\u0075` cannot borrow `u0075`.
+                    (escape_len == c.len_utf8() && source_value.starts_with(c))
+                        .then_some(source_value)
+                }),
+                _ => None,
+            };
+            if let Some(value) = borrowed {
+                // SAFETY: The closing quote is ASCII, so consuming it preserves a UTF-8 boundary.
+                $lexer.source.next_byte_unchecked();
+                $lexer.save_js_string(value.into());
+                return Kind::Str;
+            }
         }
 
         // With no further escape, the final size is known. The source chunks are UTF-8,
