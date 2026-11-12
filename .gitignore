@@ -3,6 +3,9 @@ target/
 **/*.rs.bk
 /tasks/track_memory_allocations/allocs_linter.yaml
 
+# Automated issue investigation scratch files and reports
+/triage/
+
 # Wasm
 **/*.wasm
 
