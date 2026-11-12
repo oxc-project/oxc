@@ -72,6 +72,7 @@ pub mod config;
 mod context;
 mod cursor;
 mod error_handler;
+mod list;
 mod modifiers;
 mod module_record;
 mod state;
