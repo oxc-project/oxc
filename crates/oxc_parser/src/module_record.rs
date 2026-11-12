@@ -499,7 +499,10 @@ fn resolve_large_exports<'a>(
                         .iter()
                         .position(|import| import.local_name.name == name)
                         .map(|position| position + 1);
-                    searched = searched.saturating_add(position.unwrap_or(imports.len()));
+                    let work = position.unwrap_or(imports.len());
+                    if work > 2 {
+                        searched = searched.saturating_add(work);
+                    }
                     position.map(|position| &imports[position])
                 }
             }
@@ -547,7 +550,13 @@ fn index_pending_exports<'a>(
     exports: &[ExportEntry<'a>],
     queries_left: usize,
 ) -> ArenaHashMap<'a, Str<'a>, usize> {
-    let mut index = ArenaHashMap::with_capacity_in(queries_left, allocator);
+    let mut index = ArenaHashMap::with_capacity_in(queries_left.min(imports.len()), allocator);
+    if imports.len() < queries_left {
+        for (position, import) in imports.iter().enumerate() {
+            index.entry(import.local_name.name).or_insert(position);
+        }
+        return index;
+    }
     for entry in exports {
         if entry.module_request.is_none()
             && let ExportLocalName::Name(name) = &entry.local_name
