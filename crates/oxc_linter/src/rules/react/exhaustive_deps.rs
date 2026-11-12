@@ -277,7 +277,7 @@ declare_oxc_lint!(
     react,
     correctness,
     recommended,
-    safe_fixes_and_dangerous_suggestions,
+    dangerous_suggestion,
     config = ExhaustiveDepsConfig,
     version = "0.12.0",
     short_description = "Verifies the list of dependencies for Hooks like `useEffect` and similar.",
@@ -323,10 +323,9 @@ impl Rule for ExhaustiveDeps {
 
         if dependencies_node.is_none() && !is_effect {
             if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(&hook_name) {
-                ctx.diagnostic_with_fix(
-                    dependency_array_required_diagnostic(hook_name, call_expr.span()),
-                    |fixer| fixer.insert_text_after(callback_node, ", []"),
-                );
+                // Adding `[]` changes a per-render callback into a memoized one and can
+                // capture stale values. Report the missing array without guessing dependencies.
+                ctx.diagnostic(dependency_array_required_diagnostic(hook_name, call_expr.span()));
             }
             return;
         }
@@ -4447,17 +4446,10 @@ const Component = ({ filter }) => {
     )];
 
     let fix = vec![
-        (
-            "const useHook = x => useCallback(() => x)",
-            "const useHook = x => useCallback(() => x, [])",
-            // None,
-            // FixKind::SafeFix,
-        ),
+        ("const useHook = x => useCallback(() => x)", "const useHook = x => useCallback(() => x)"),
         (
             "const useHook = x => useCallback(() => { return x; })",
-            "const useHook = x => useCallback(() => { return x; }, [])",
-            // None,
-            // FixKind::SafeFix,
+            "const useHook = x => useCallback(() => { return x; })",
         ),
         (
             r"const useHook = () => {
@@ -4547,14 +4539,14 @@ const Component = ({ filter }) => {
             "function MyComponent(props) { const local = someFunc(); useEffect(() => { console.log(props.foo, local); }, [props.foo]); }",
             "function MyComponent(props) { const local = someFunc(); useEffect(() => { console.log(props.foo, local); }, [props.foo, local]); }",
         ),
-        // Test dependency array creation for hooks that require it
+        // Missing dependency arrays are reported without a fix.
         (
             "function MyComponent() { const fn = useCallback(() => { alert('foo'); }); }",
-            "function MyComponent() { const fn = useCallback(() => { alert('foo'); }, []); }",
+            "function MyComponent() { const fn = useCallback(() => { alert('foo'); }); }",
         ),
         (
             "function MyComponent() { const value = useMemo(() => { return 2*2; }); }",
-            "function MyComponent() { const value = useMemo(() => { return 2*2; }, []); }",
+            "function MyComponent() { const value = useMemo(() => { return 2*2; }); }",
         ),
         // Test unnecessary dependency removal for non-effect hooks
         (
@@ -4590,4 +4582,38 @@ const Component = ({ filter }) => {
     )
     .expect_fix(fix)
     .test_and_snapshot();
+}
+
+#[test]
+fn test_missing_dependency_array_has_no_fix() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let cases = [
+        "function A({ compute }) { return useMemo(() => compute()); }",
+        "function A({ onDone }) { return useCallback(() => onDone()); }",
+        "function A({ value }) { return React.useMemo(() => value); }",
+        "function A({ value }) { return React.useCallback(function () { return value; }); }",
+        "function A({ compute }) { return useMemo(compute); }",
+        "function A({ onDone }) { return useCallback(onDone); }",
+        "function A({ value }) { return useMemo(() => value,); }",
+        "function A({ value }) { return useCallback(() => value /* keep */); }",
+        "function A({ value }) { return useMemo((() => value)); }",
+        "function A({ value }) { return useCallback(() => value, /* keep */); }",
+    ];
+    let pass = vec![
+        "function A({ value }) { useEffect(() => console.log(value)); }",
+        "function A({ value }) { return useMemo(() => value, [value]); }",
+        "function A({ value }) { return useCallback(() => value, [value]); }",
+    ];
+    let fix = cases
+        .iter()
+        .flat_map(|source| {
+            [FixKind::SafeFix, FixKind::SafeFixOrSuggestion, FixKind::All]
+                .map(|kind| (*source, *source, None, kind))
+        })
+        .collect();
+
+    Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, pass, cases.to_vec())
+        .expect_fix(fix)
+        .test();
 }
