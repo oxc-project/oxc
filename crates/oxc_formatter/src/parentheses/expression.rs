@@ -977,9 +977,12 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, TSInstantiationExpression<'_>> {
             AstNodes::TSNonNullExpression(_) | AstNodes::TSInstantiationExpression(_) => {
                 return true;
             }
-            AstNodes::CallExpression(expr) if expr.type_arguments.is_some() => &expr.callee,
-            AstNodes::NewExpression(expr) if expr.type_arguments.is_some() => &expr.callee,
-            AstNodes::TaggedTemplateExpression(expr) if expr.type_arguments.is_some() => &expr.tag,
+            // `(f<T>)()`, `new (f<T>)()`, `` (f<T>)`` `` and `extends (f<T>)`,
+            // since `f<T>()` and the others take `<T>` as their own type arguments
+            AstNodes::CallExpression(expr) => &expr.callee,
+            AstNodes::NewExpression(expr) => &expr.callee,
+            AstNodes::TaggedTemplateExpression(expr) => &expr.tag,
+            parent if is_class_extends(self.span, parent) => return true,
             _ => return is_followed_by_comparison_or_sign(self, f),
         };
 
