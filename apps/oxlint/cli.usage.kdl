@@ -1,6 +1,6 @@
 name oxlint
 bin oxlint
-version "1.88.0"
+version "1.93.0"
 usage "oxlint [-c=./.oxlintrc.json] [PATH]..."
 help_template #"""
 {{usage}}
@@ -124,7 +124,7 @@ flag --threads help="Number of threads to use. Set to 1 for using only 1 CPU cor
 flag --print-config help="This option outputs the configuration to be used. When present, no linting is performed and only config-related options are valid." help_heading=Miscellaneous
 flag --disable-nested-config help="Disable the automatic loading of nested configuration files"
 flag --type-aware help="Enable rules that require type information"
-flag --type-check help="Enable experimental type checking (includes TypeScript compiler diagnostics)"
+flag --type-check help="Enable type checking (includes TypeScript compiler diagnostics)"
 flag --type-check-only help="Run only TypeScript type checking diagnostics without regular lint diagnostics" hide=#true
 flag --report-unused-disable-directives help="Report directive comments like `// oxlint-disable-line`, when no errors would have been reported on that line anyway" help_heading="Inline Configuration Comments"
 flag --report-unused-disable-directives-severity help="Same as `--report-unused-disable-directives`, but allows you to specify the severity level of the reported errors. Only one of these two options can be used at a time." help_heading="Inline Configuration Comments" {

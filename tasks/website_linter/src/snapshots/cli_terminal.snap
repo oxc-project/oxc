@@ -160,8 +160,8 @@ Flags:
       --disable-nested-config     Disable the automatic loading of nested
                                   configuration files
       --type-aware                Enable rules that require type information
-      --type-check                Enable type checking (includes
-                                  TypeScript compiler diagnostics)
+      --type-check                Enable type checking (includes TypeScript
+                                  compiler diagnostics)
   -h, --help                      Print help
   -V, --version                   Print version
 

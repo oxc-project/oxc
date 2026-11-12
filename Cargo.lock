@@ -4187,15 +4187,15 @@ dependencies = [
 
 [[package]]
 name = "usage-argv"
-version = "7.0.1"
+version = "7.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abb8c23c513e4d5d7d382ac237fcd3dd155bc6c2059c8d85f48b02e8626d4e26"
+checksum = "e4876429514ea5b79a0a41546c5087db5c19d502405321098868874ea940ebab"
 
 [[package]]
 name = "usage-derive"
-version = "7.0.1"
+version = "7.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2ea142f48bb8f0ec2a44d029c07792f3784eb909307fc9c2341369830e9408f"
+checksum = "ccf026069d7f6a6cc0e691a277906829279e702c1b73c8666f9931928be5a8bf"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4204,9 +4204,9 @@ dependencies = [
 
 [[package]]
 name = "usage-lib"
-version = "7.0.1"
+version = "7.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2626dbb6491c6a81e9e9ac00281160c8633b8b4920cac576aac0b43e1864cb4c"
+checksum = "9e644dea82644dda72c2401d752ce93eefc4b45ea260c2671f56ac7963a38584"
 dependencies = [
  "indexmap",
  "itertools",
@@ -4226,9 +4226,9 @@ dependencies = [
 
 [[package]]
 name = "usage-rs"
-version = "7.0.1"
+version = "7.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "039e2ccde153e2cbdf4d7cd20ec6af84b12f6622a0a8ba2f4419f6f6aad491db"
+checksum = "1d8a33544b3cf4d61ee879878737cb8baca7ffbcf149631ff611447c9aa83bec"
 dependencies = [
  "usage-argv",
  "usage-derive",
@@ -4237,9 +4237,9 @@ dependencies = [
 
 [[package]]
 name = "usage-test"
-version = "7.0.1"
+version = "7.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "516d3aa137d647f8a24575bc707b7dd18c23f59bbf5e9ce04227a465d2aebc97"
+checksum = "300900090803c08c8f04456302ed54aa2f32da5caa4cdbbeb1607a9ec7dd313d"
 dependencies = [
  "usage-argv",
 ]
