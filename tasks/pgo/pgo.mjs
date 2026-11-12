@@ -24,20 +24,17 @@ const pgoRustflags = [
 const { values, positionals } = parseArgs({
   allowPositionals: true,
   options: {
-    "ecosystem-root": { type: "string" },
     corpus: { type: "string" },
     target: { type: "string" },
-    fetch: { type: "boolean", default: false },
     help: { type: "boolean", default: false },
   },
 });
 if (values.help) {
   console.log(`Usage:
-  just pgo <parser|transform|minify|all> --ecosystem-root /path/to/oxc-ecosystem-ci
-  just pgo prepare --fetch [--corpus target/pgo/corpus]
+  just pgo prepare [--corpus target/pgo/corpus]
   just pgo <package> --corpus target/pgo/corpus [--target <native-triple>]
 
-The local ecosystem root is read-only. --fetch clones inputs under target/pgo.
+Preparation clones and installs corpus projects in a temporary directory.
 Install the pinned toolchain's profiler with: rustup component add llvm-tools-preview`);
   process.exit(0);
 }
@@ -45,18 +42,10 @@ const [command] = positionals;
 if (positionals.length !== 1 || ![...packages, "all", "prepare"].includes(command)) {
   throw new Error("Choose parser, transform, minify, all, or prepare; see --help");
 }
-if (values.fetch && values["ecosystem-root"]) throw new Error("Choose --fetch or --ecosystem-root");
 const directory = resolve(root, values.corpus ?? "target/pgo/corpus");
-if (command === "prepare" || values["ecosystem-root"] || values.fetch) {
-  if (!values.fetch && !values["ecosystem-root"]) {
-    throw new Error("Preparation requires --ecosystem-root or --fetch");
-  }
+if (command === "prepare") {
   await largeStackWorker(new URL("./prepare.mjs", import.meta.url), {
-    workerData: {
-      directory,
-      ecosystemRoot: values["ecosystem-root"] && resolve(values["ecosystem-root"]),
-      fetch: values.fetch,
-    },
+    workerData: { directory },
   });
 }
 if (command === "prepare") process.exit(0);

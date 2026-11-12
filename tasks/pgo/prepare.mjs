@@ -1,13 +1,19 @@
-// oxlint-disable no-console, no-await-in-loop -- Prepare repositories sequentially to bound disk usage.
-import { spawn } from "node:child_process";
-import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
+// oxlint-disable no-console, no-await-in-loop -- Install and collect one repository at a time to bound disk usage.
+import { copyFile, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
-import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { extname, join } from "node:path";
 import { workerData } from "node:worker_threads";
 import { CorpusWriter, verifyCorpus } from "./corpus.mjs";
 import { git, root, run } from "./utils.mjs";
 
-const sourceExtension = /\.(?:[cm]?[jt]s|[jt]sx)$/i;
+const { directory } = workerData;
+// Keep checkouts outside Oxc's pnpm workspace so package managers use their own config.
+const temporary = await mkdtemp(join(tmpdir(), "oxc-pgo-"));
+const writer = new CorpusWriter(directory);
+const repositories = [];
+const extensions = {};
+const json = async (path) => JSON.parse(await readFile(path, "utf8"));
 
 function language(filename) {
   if (/\.d\.[cm]?ts$/i.test(filename)) return "dts";
@@ -16,119 +22,102 @@ function language(filename) {
   return /\.jsx$/i.test(filename) ? "jsx" : "js";
 }
 
-function sourceType(filename) {
-  if (/\.[cm][jt]s$/i.test(filename)) {
-    return /\.c[jt]s$/i.test(filename) ? "commonjs" : "module";
+async function clone(repository, checkout, ref) {
+  await rm(checkout, { force: true, recursive: true });
+  const url = `https://github.com/${repository}.git`;
+  await run("git", ["clone", "--depth=1", "--no-tags", url, checkout]);
+  if (ref) {
+    await git(checkout, ["fetch", "--depth=1", "origin", ref]);
+    await git(checkout, ["checkout", "--detach", "FETCH_HEAD"]);
   }
-  return "unambiguous";
 }
 
-function repositories(matrices) {
-  const result = new Map();
-  for (const item of matrices.flat()) {
-    if (
-      !/^[\w.-]+\/[\w.-]+$/.test(item.repository)
-      || !item.ref
-      || !item.path
-      || item.path.split(/[\\/]/).some((part) => part === ".." || part === "")
-    ) {
-      throw new Error(`Invalid ecosystem entry: ${JSON.stringify(item)}`);
-    }
-    const previous = result.get(item.path);
-    if (previous && (previous.repository !== item.repository || previous.ref !== item.ref)) {
-      throw new Error(`Conflicting ecosystem entries for ${item.path}`);
-    }
-    result.set(item.path, item);
-  }
-  if (!result.size) throw new Error("Empty ecosystem matrices");
-  return [...result.values()].sort((a, b) => a.path.localeCompare(b.path, "en"));
+async function install(checkout) {
+  const files = await readdir(checkout);
+  if (!files.includes("package.json")) return;
+  const { packageManager } = await json(join(checkout, "package.json"));
+  const manager =
+    packageManager?.split("@")[0]
+    ?? (files.includes("pnpm-lock.yaml")
+      ? "pnpm"
+      : files.includes("yarn.lock")
+        ? "yarn"
+        : files.some((file) => /^bun.lockb?$/.test(file))
+          ? "bun"
+          : "npm");
+  const args =
+    manager === "bun" ? [packageManager ?? "bun", "install"] : ["corepack", manager, "install"];
+  const modernYarn =
+    manager === "yarn"
+    && (files.includes(".yarnrc.yml") || (packageManager && !packageManager.startsWith("yarn@1.")));
+  args.push(modernYarn ? "--mode=skip-build" : "--ignore-scripts");
+  if (manager === "pnpm" && !files.includes("pnpm-workspace.yaml")) args.push("--ignore-workspace");
+  await run("npx", ["--yes", "--prefix", temporary, ...args], {
+    cwd: checkout,
+    env: {
+      ...process.env,
+      NODE_ENV: "development",
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0",
+      npm_config_engine_strict: "false",
+      YARN_ENABLE_SCRIPTS: "false",
+      YARN_ENABLE_IMMUTABLE_INSTALLS: "false",
+      YARN_NODE_LINKER: "node-modules",
+    },
+  });
 }
 
-// Read committed blobs in one git process per repository, including files outside
-// a sparse checkout. Installed dependencies and uncommitted changes are excluded.
-async function* sourceFiles(directory, revision) {
-  const tree = await git(directory, ["ls-tree", "-r", "-z", revision]);
-  const entries = tree
-    .split("\0")
-    .filter(Boolean)
-    .map((line) => {
-      const match = /^(100644|100755) blob ([a-f0-9]+)\t(.+)$/s.exec(line);
-      return match && sourceExtension.test(match[3]) ? { oid: match[2], filename: match[3] } : null;
-    })
-    .filter(Boolean);
-  const child = spawn("git", ["-C", directory, "cat-file", "--batch"], {
-    stdio: ["pipe", "pipe", "inherit"],
-  });
-  const completed = new Promise((resolvePromise, reject) => {
-    child.on("error", reject);
-    child.on("close", (code) =>
-      code === 0 ? resolvePromise() : reject(new Error(`git cat-file failed (${code})`)),
-    );
-  });
-  // Attach a rejection handler before consuming the stream.
-  completed.catch(() => {});
-  const iterator = child.stdout[Symbol.asyncIterator]();
-  let buffer = Buffer.alloc(0);
-  async function read(size) {
-    while (buffer.length < size) {
-      const next = await iterator.next();
-      if (next.done) throw new Error("Truncated git blob stream");
-      buffer = Buffer.concat([buffer, next.value]);
-    }
-    const result = buffer.subarray(0, size);
-    buffer = buffer.subarray(size);
-    return result;
-  }
-  try {
-    for (const { oid, filename } of entries) {
-      child.stdin.write(`${oid}\n`);
-      let header = "";
-      while (!header.endsWith("\n")) header += (await read(1)).toString();
-      const match = /^[a-f0-9]+ blob (\d+)\n$/.exec(header);
-      if (!match) throw new Error(`Invalid git blob header: ${header}`);
-      const bytes = await read(Number(match[1]));
+async function collect(checkout, suite, prefix = "") {
+  for (const entry of await readdir(join(checkout, prefix), { withFileTypes: true })) {
+    const filename = join(prefix, entry.name);
+    if (entry.isDirectory() && entry.name !== ".git") {
+      await collect(checkout, suite, filename);
+    } else if (entry.isFile() && /\.(?:[cm]?[jt]s|[jt]sx)$/i.test(filename)) {
+      const extension = extname(filename).toLowerCase();
+      const sourceType =
+        { ".cjs": "commonjs", ".cts": "commonjs", ".mjs": "module", ".mts": "module" }[extension]
+        ?? "unambiguous";
+      const bytes = await readFile(join(checkout, filename));
       const encoding =
-        bytes[0] === 0xff && bytes[1] === 0xfe
-          ? "utf-16le"
-          : bytes[0] === 0xfe && bytes[1] === 0xff
-            ? "utf-16be"
-            : "utf-8";
-      yield { filename, code: new TextDecoder(encoding).decode(bytes) };
-      if ((await read(1))[0] !== 10) throw new Error("Invalid git blob delimiter");
+        { fffe: "utf-16le", feff: "utf-16be" }[bytes.subarray(0, 2).toString("hex")] ?? "utf-8";
+      await writer.add(
+        {
+          suite,
+          filename: `${suite}/${filename}`,
+          code: new TextDecoder(encoding).decode(bytes),
+          options: { lang: language(filename), sourceType },
+        },
+        transformSync,
+      );
+      extensions[extension] = (extensions[extension] ?? 0) + 1;
     }
-    child.stdin.end();
-    await completed;
-  } finally {
-    child.stdin.destroy();
-    if (child.exitCode === null) child.kill();
   }
 }
 
-const { directory, fetch: fetchRepositories } = workerData;
-let { ecosystemRoot } = workerData;
+async function prepare(repository, path, checkout) {
+  console.log(`Preparing ${repository}`);
+  let installationError;
+  try {
+    await install(checkout);
+  } catch (error) {
+    installationError = error.message;
+    console.warn(`Dependency installation failed for ${repository}: ${installationError}`);
+  }
+  await collect(checkout, path);
+  const files = writer.counts[path];
+  if (!files) throw new Error(`No JS/TS sources in ${repository}`);
+  repositories.push({
+    repository,
+    path,
+    revision: await git(checkout, ["rev-parse", "HEAD"]),
+    files,
+    installationError,
+  });
+  console.log(`${repository}: collected ${files} files`);
+}
+
 await mkdir(directory, { recursive: true });
 // A failed preparation must not leave an old manifest that looks usable.
 await rm(join(directory, "manifest.json"), { force: true });
-const temporary = join(root, "target/pgo/prepare");
-await mkdir(temporary, { recursive: true });
-if (fetchRepositories) {
-  ecosystemRoot = join(temporary, "ecosystem");
-  await rm(ecosystemRoot, { force: true, recursive: true });
-  await run("git", [
-    "clone",
-    "--depth=1",
-    "https://github.com/oxc-project/oxc-ecosystem-ci.git",
-    ecosystemRoot,
-  ]);
-}
-const ecosystemRevision = await git(ecosystemRoot, ["rev-parse", "HEAD"]);
-const matrices = await Promise.all(
-  ["oxlint", "oxfmt"].map(async (tool) =>
-    JSON.parse(await git(ecosystemRoot, ["show", `HEAD:${tool}-matrix.json`])),
-  ),
-);
-const entries = repositories(matrices);
-// Use the shipping release profile when lowering ecosystem TS/JSX for minification.
 await run("cargo", [
   "build",
   "--locked",
@@ -147,59 +136,39 @@ const library =
 const helper = join(temporary, "transform.node");
 await copyFile(join(root, "target/release", library), helper);
 const { transformSync } = createRequire(import.meta.url)(helper);
-const writer = new CorpusWriter(directory);
-const revisions = [];
-for (const entry of entries) {
-  const checkout = fetchRepositories
-    ? join(temporary, "checkout")
-    : join(ecosystemRoot, "repos", entry.path);
-  if (fetchRepositories) {
-    await rm(checkout, { force: true, recursive: true });
-    await run("git", [
-      "clone",
-      "--depth=1",
-      "--filter=blob:none",
-      "--no-checkout",
-      "--branch",
-      entry.ref,
-      `https://github.com/${entry.repository}.git`,
-      checkout,
-    ]);
-    await git(checkout, ["sparse-checkout", "set", "--no-cone", "--stdin"], {
-      input:
-        ["*.js", "*.jsx", "*.mjs", "*.cjs", "*.ts", "*.tsx", "*.mts", "*.cts"].join("\n") + "\n",
-    });
-    await git(checkout, ["checkout", "--detach"]);
-  }
-  const revision = await git(checkout, ["rev-parse", "HEAD"]);
-  let files = 0;
-  console.log(`Preparing ${entry.repository}@${revision}`);
-  for await (const { filename, code } of sourceFiles(checkout, revision)) {
-    await writer.add(
-      {
-        suite: `ecosystem/${entry.path}`,
-        filename: `ecosystem/${entry.path}/${filename}`,
-        code,
-        options: { lang: language(filename), sourceType: sourceType(filename) },
-      },
-      transformSync,
-    );
-    files++;
-  }
-  if (!files) throw new Error(`No JS/TS sources in ${entry.repository}`);
-  revisions.push({ repository: entry.repository, path: entry.path, revision, files });
-  if (fetchRepositories) await rm(checkout, { force: true, recursive: true });
+
+for (const name of ["oxc-ecosystem-ci", "monitor-oxc"]) {
+  const checkout = join(temporary, name);
+  await clone(`oxc-project/${name}`, checkout);
+  await prepare(`oxc-project/${name}`, name, checkout);
+}
+const ecosystem = join(temporary, "oxc-ecosystem-ci");
+const monitor = join(temporary, "monitor-oxc");
+const matrices = (
+  await Promise.all(["oxlint", "oxfmt"].map((tool) => json(join(ecosystem, `${tool}-matrix.json`))))
+).flat();
+const entries = [...new Map(matrices.map((entry) => [entry.path, entry])).values()];
+for (const entry of entries) entry.path = `oxc-ecosystem-ci/repos/${entry.path}`;
+for (const entry of await json(join(monitor, "runtime-repos.json"))) {
+  const path = `monitor-oxc/repos/${entry.name}`;
+  entries.push({ repository: entry.repo, ref: entry.sha, path });
+}
+for (const { repository, path, ref } of entries) {
+  const checkout = join(temporary, "checkout");
+  await clone(repository, checkout, ref);
+  await prepare(repository, path, checkout);
+  await rm(checkout, { force: true, recursive: true });
 }
 await writer.closeShard();
 await writeFile(
   join(directory, "manifest.json"),
   JSON.stringify(
     {
-      version: 1,
+      version: 2,
       oxcRevision: await git(root, ["rev-parse", "HEAD"]),
-      ecosystemRevision,
-      repositories: revisions,
+      repositories,
       counts: writer.counts,
+      extensions,
       preparation: writer.preparation,
       shards: writer.shards,
     },
@@ -208,7 +177,12 @@ await writeFile(
   ) + "\n",
 );
 const manifest = await verifyCorpus(directory);
+console.table(extensions);
 console.log(
   `Prepared ${Object.values(manifest.counts).reduce((a, b) => a + b, 0)} inputs in ${manifest.shards.length} shards`,
 );
+console.log(
+  `Dependency installation failures: ${repositories.filter((repo) => repo.installationError).length}`,
+);
 console.log(`Minifier preparation: ${JSON.stringify(manifest.preparation)}`);
+await rm(temporary, { force: true, recursive: true });

@@ -50,8 +50,8 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-      - name: Prepare full ecosystem corpus
-        run: pnpm node tasks/pgo/pgo.mjs prepare --fetch
+      - name: Prepare ecosystem and npm corpus
+        run: pnpm node tasks/pgo/pgo.mjs prepare
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: pgo-corpus

@@ -88,7 +88,7 @@ export class CorpusWriter {
 
 export async function verifyCorpus(directory, revision) {
   const manifest = JSON.parse(await readFile(join(directory, "manifest.json"), "utf8"));
-  if (manifest.version !== 1 || !manifest.shards?.length || !manifest.repositories?.length) {
+  if (manifest.version !== 2 || !manifest.shards?.length || !manifest.repositories?.length) {
     throw new Error("Invalid or empty PGO corpus manifest");
   }
   if (revision && manifest.oxcRevision !== revision) {
@@ -97,10 +97,10 @@ export async function verifyCorpus(directory, revision) {
   if (
     Object.keys(manifest.counts).length !== manifest.repositories.length
     || manifest.repositories.some(
-      (repo) => !(repo.files > 0) || manifest.counts[`ecosystem/${repo.path}`] !== repo.files,
+      (repo) => !(repo.files > 0) || manifest.counts[repo.path] !== repo.files,
     )
   ) {
-    throw new Error("PGO corpus does not match its ecosystem repositories");
+    throw new Error("PGO corpus does not match its repositories");
   }
   const seen = new Set();
   for (const shard of manifest.shards) {
@@ -118,7 +118,10 @@ export async function verifyCorpus(directory, revision) {
     }
   }
   const total = manifest.shards.reduce((sum, shard) => sum + shard.records, 0);
-  if (total !== Object.values(manifest.counts).reduce((sum, count) => sum + count, 0)) {
+  if (
+    total !== Object.values(manifest.counts).reduce((sum, count) => sum + count, 0)
+    || total !== Object.values(manifest.extensions ?? {}).reduce((sum, count) => sum + count, 0)
+  ) {
     throw new Error("PGO corpus record counts do not match");
   }
   return manifest;
