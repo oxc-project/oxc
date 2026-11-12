@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
 
 use crate::{
-    Context, ParserConfig as Config, ParserImpl,
+    ParserConfig as Config, ParserImpl,
     diagnostics::{self, ParserDiagnostic},
     error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
@@ -351,46 +351,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.rewind(checkpoint);
         answer
     }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // inline because this is always on a hot path
-    pub(crate) fn context_add<F, T>(&mut self, add_flags: Context, cb: F) -> T
-    where
-        F: FnOnce(&mut Self) -> T,
-    {
-        let ctx = self.ctx;
-        self.ctx = ctx.union(add_flags);
-        let result = cb(self);
-        self.ctx = ctx;
-        result
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // inline because this is always on a hot path
-    pub(crate) fn context_remove<F, T>(&mut self, remove_flags: Context, cb: F) -> T
-    where
-        F: FnOnce(&mut Self) -> T,
-    {
-        let ctx = self.ctx;
-        self.ctx = ctx.difference(remove_flags);
-        let result = cb(self);
-        self.ctx = ctx;
-        result
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // inline because this is always on a hot path
-    pub(crate) fn context<F, T>(&mut self, add_flags: Context, remove_flags: Context, cb: F) -> T
-    where
-        F: FnOnce(&mut Self) -> T,
-    {
-        let ctx = self.ctx;
-        self.ctx = ctx.difference(remove_flags).union(add_flags);
-        let result = cb(self);
-        self.ctx = ctx;
-        result
-    }
-
     /// Collect a parser list with one exact allocation for up to four elements.
     /// Longer lists spill directly into an arena vector with capacity eight.
     #[inline]
