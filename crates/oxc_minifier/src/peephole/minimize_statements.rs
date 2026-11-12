@@ -292,6 +292,9 @@ impl<'a> PeepholeOptimizations {
             false,
         );
 
+        // `function a() {} b.a = a;` => `b.a = function a() {};`
+        Self::inline_single_use_function_declaration(&mut expr_stmt.expression, result, ctx);
+
         // In a derived constructor, `this` after an unconditional `super()` is safe to drop.
         // Walk backwards through preceding sibling statements looking for `super()`.
         // Only consider top-level expression statements — `super()` inside `if`/loops
@@ -435,6 +438,98 @@ impl<'a> PeepholeOptimizations {
             }
             _ => false,
         }
+    }
+
+    /// Move a single-use function declaration from earlier in this statement list
+    /// into the assignment that uses it.
+    /// `function a() {} b.a = a;` => `b.a = function a() {};`
+    /// `function a() {} function b() {} x.a = a, x.b = b;` => `x.a = function a() {}, x.b = function b() {};`
+    fn inline_single_use_function_declaration(
+        expr: &mut Expression<'a>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if ctx.is_tree_shake_only()
+            || Self::is_script_root_scope(ctx)
+            || ctx.current_scope_flags().contains_direct_eval()
+        {
+            return;
+        }
+
+        if let Expression::SequenceExpression(sequence) = expr {
+            for expr in &mut sequence.expressions {
+                Self::inline_function_declaration_into_assignment(expr, result, ctx);
+            }
+        } else {
+            Self::inline_function_declaration_into_assignment(expr, result, ctx);
+        }
+    }
+
+    fn inline_function_declaration_into_assignment(
+        expr: &mut Expression<'a>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::AssignmentExpression(assignment) = expr else { return };
+        // `a = b = f`
+        if matches!(assignment.right, Expression::AssignmentExpression(_)) {
+            Self::inline_function_declaration_into_assignment(&mut assignment.right, result, ctx);
+            return;
+        }
+        if assignment.operator != AssignmentOperator::Assign {
+            return;
+        }
+        let Expression::Identifier(reference) = &assignment.right else { return };
+        let reference_id = reference.reference_id();
+        let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
+            return;
+        };
+        // check if symbol: is referenced once, is implicitly observable, as function is dead, has redeclarations
+        if ctx.scoping().get_resolved_reference_ids(symbol_id) != [reference_id]
+            || ctx.state.symbols.is_implicitly_observable(symbol_id)
+            || ctx.state.symbols.function_is_dead(symbol_id)
+            || !ctx.scoping().symbol_redeclarations(symbol_id).is_empty()
+        {
+            return;
+        }
+        // Creating a function has no side effects, and this assignment holds the only
+        // reference, so no statement in between can observe the move. Searching the
+        // whole list keeps the result independent of which statements a pass has
+        // already merged or removed, since those steps do not request another pass.
+        let Some(index) = result.iter().rposition(|stmt| {
+            matches!(stmt, Statement::FunctionDeclaration(function)
+                if function.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id))
+        }) else {
+            return;
+        };
+        let Statement::FunctionDeclaration(function) = &result[index] else { unreachable!() };
+
+        // A sloppy block declaration can also initialize an enclosing var binding.
+        // Converting it to an expression loses that Annex B write. Check this even
+        // when `unused: false` disables function-liveness registration.
+        let binding_scope_flags =
+            ctx.scoping().scope_flags(ctx.scoping().symbol_scope_id(symbol_id));
+        if !function.r#async
+            && !function.generator
+            && !binding_scope_flags.is_var()
+            && !binding_scope_flags.is_strict_mode()
+        {
+            return;
+        }
+
+        let Some(scope_id) = function.scope_id.get() else { return };
+        if let Some(liveness) = ctx.state.symbols.liveness_mut() {
+            liveness.unregister_function_declaration(scope_id, symbol_id);
+        }
+
+        let Statement::FunctionDeclaration(mut function) = result.remove(index) else {
+            unreachable!();
+        };
+        function.r#type = FunctionType::FunctionExpression;
+        // After the sole reference is removed, the retained name's original outer
+        // symbol has no live uses. Compression can keep that metadata; mangling
+        // rebuilds the function-expression binding from the transformed AST.
+        ctx.replace_expression(&mut assignment.right, Expression::FunctionExpression(function));
     }
 
     /// Check if a switch case can be inlined by verifying:
