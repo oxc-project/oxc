@@ -79,31 +79,9 @@ impl ConfigStoreBuilder {
         Self { rules, external_rules, config, categories, overrides, extended_paths }
     }
 
-    /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
-    /// `start_empty` will configure the builder to contain only the
-    /// configuration settings from the config. When this is `false`, the config
-    /// will be applied on top of a default [`Oxlintrc`].
-    ///
-    /// # Example
-    /// Here's how to create a [`Config`] from a `.oxlintrc.json` file.
-    /// ```ignore
-    /// use oxc_linter::{ConfigBuilder, Oxlintrc};
-    /// let oxlintrc = Oxlintrc::from_file("path/to/.oxlintrc.json").unwrap();
-    /// let config_store = ConfigStoreBuilder::from_oxlintrc(true, oxlintrc).build();
-    /// // you can use `From` as a shorthand for `from_oxlintrc(false, oxlintrc)`
-    /// let config_store = ConfigStoreBuilder::from(oxlintrc).build();
-    /// ```
-    ///
-    /// # Errors
-    ///
-    /// Returns [`ConfigBuilderError::InvalidConfigFile`] if a referenced config file is not valid.
-    pub fn from_oxlintrc(
-        start_empty: bool,
+    fn resolve_oxlintrc(
         oxlintrc: Oxlintrc,
-        external_linter: Option<&ExternalLinter>,
-        external_plugin_store: &mut ExternalPluginStore,
-        workspace_uri: Option<&str>,
-    ) -> Result<Self, ConfigBuilderError> {
+    ) -> Result<(Oxlintrc, Vec<PathBuf>), ConfigBuilderError> {
         // TODO: this can be cached to avoid re-computing the same oxlintrc
         fn is_relative_plugin_specifier(specifier: &str) -> bool {
             specifier == "."
@@ -228,7 +206,35 @@ impl ConfigStoreBuilder {
 
         validate_ignore_patterns(&oxlintrc)?;
 
-        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false, &mut Vec::new())?;
+        resolve_oxlintrc_config(oxlintrc, false, &mut Vec::new())
+    }
+
+    /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
+    /// `start_empty` will configure the builder to contain only the
+    /// configuration settings from the config. When this is `false`, the config
+    /// will be applied on top of a default [`Oxlintrc`].
+    ///
+    /// # Example
+    /// Here's how to create a [`Config`] from a `.oxlintrc.json` file.
+    /// ```ignore
+    /// use oxc_linter::{ConfigBuilder, Oxlintrc};
+    /// let oxlintrc = Oxlintrc::from_file("path/to/.oxlintrc.json").unwrap();
+    /// let config_store = ConfigStoreBuilder::from_oxlintrc(true, oxlintrc).build();
+    /// // you can use `From` as a shorthand for `from_oxlintrc(false, oxlintrc)`
+    /// let config_store = ConfigStoreBuilder::from(oxlintrc).build();
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ConfigBuilderError::InvalidConfigFile`] if a referenced config file is not valid.
+    pub fn from_oxlintrc(
+        start_empty: bool,
+        oxlintrc: Oxlintrc,
+        external_linter: Option<&ExternalLinter>,
+        external_plugin_store: &mut ExternalPluginStore,
+        workspace_uri: Option<&str>,
+    ) -> Result<Self, ConfigBuilderError> {
+        let (oxlintrc, extended_paths) = Self::resolve_oxlintrc(oxlintrc)?;
 
         // Collect external plugins from both base config and overrides
         let mut external_plugins: FxHashSet<&ExternalPluginEntry> = FxHashSet::default();
