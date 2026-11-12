@@ -627,7 +627,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 (quasis, ArenaVec::new_in(self))
             }
             Kind::TemplateHead => {
-                let mut expressions = BufferedVec::new_in(self);
+                let mut expressions = BufferedVec::<_, 4>::new_in(self);
                 let mut first = Some(self.parse_template_element(tagged));
                 // TemplateHead Expression[+In, ?Yield, ?Await]
                 let expr = self.context_add(Context::In, Self::parse_expr);
@@ -718,8 +718,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let cooked = self.cur_template_string();
             // TRV normalizes line endings even when an invalid escape makes TV undefined.
             if raw.contains('\r') {
-                raw =
-                    Str::from_str_in(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"), self);
+                raw = if raw.contains('\\') {
+                    Str::from_str_in(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"), self)
+                } else {
+                    // Without escapes, TV and TRV only normalize line endings, so reuse
+                    // the cooked string instead of allocating the same text twice.
+                    Str::from(cooked.unwrap().as_str().unwrap())
+                };
             }
             cooked
         } else {

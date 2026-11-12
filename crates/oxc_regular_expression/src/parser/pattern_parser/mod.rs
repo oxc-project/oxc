@@ -1,3 +1,4 @@
+mod buffered_vec;
 mod character;
 mod group_name;
 mod pattern_parser_impl;

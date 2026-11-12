@@ -104,6 +104,9 @@ macro_rules! handle_string_literal_escape {
         // We don't know how long string will end up being. Take a guess that total length
         // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
         let so_far = $lexer.source.str_from_pos_to_current($after_opening_quote);
+        if so_far.is_empty() && $lexer.read_single_character_escape::<$delimiter>() {
+            return Kind::Str;
+        }
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_STR_LEN);
         let mut str = JSStrBuilder::with_capacity_in(capacity, &$lexer.allocator);
 
@@ -171,6 +174,43 @@ macro_rules! handle_string_literal_escape {
 
 /// 12.9.4 String Literals
 impl<'a, C: Config> Lexer<'a, C> {
+    /// Decode a single common escape without growing an arena string.
+    #[inline]
+    fn read_single_character_escape<const DELIMITER: u8>(&mut self) -> bool {
+        let remaining = self.source.remaining();
+        let [b'\\', escape, delimiter, ..] = remaining.as_bytes() else {
+            return false;
+        };
+        if *delimiter != DELIMITER {
+            return false;
+        }
+        let value = match escape {
+            b'\'' => "'",
+            b'\"' => "\"",
+            b'\\' => "\\",
+            b'b' => "\u{8}",
+            b'f' => "\u{c}",
+            b'n' => "\n",
+            b'r' => "\r",
+            b't' => "\t",
+            b'v' => "\u{b}",
+            // The closing quote guarantees this cannot start an octal escape.
+            b'0' => "\0",
+            _ => return false,
+        };
+        // Raw transfer requires nonempty strings to reside in the source or arena.
+        let value = if matches!(escape, b'\'' | b'"' | b'\\') {
+            JSStr::from(&remaining[1..2])
+        } else {
+            JSStr::from_str_in(value, &self.allocator)
+        };
+        // SAFETY: The matched escape and closing quote are three in-bounds ASCII bytes.
+        let end = unsafe { self.source.position().add(3) };
+        self.source.set_position(end);
+        self.save_js_string(value);
+        true
+    }
+
     /// Read string literal delimited with `"`.
     /// # SAFETY
     /// Next character must be `"`.

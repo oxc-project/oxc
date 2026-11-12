@@ -269,7 +269,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let extends_span = self.cur_token().span();
         self.bump_any(); // bump `extends`
 
-        let mut extends = BufferedVec::new_in(self);
+        let mut extends = BufferedVec::<_, 1>::new_in(self);
         if self.at(Kind::LCurly) {
             self.error(diagnostics::empty_extends_clause(extends_span));
             return extends.into_vec();

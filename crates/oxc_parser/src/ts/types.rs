@@ -794,8 +794,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_template_type(&mut self, tagged: bool) -> TSType<'a> {
         let start = self.cur_start();
-        let mut types = BufferedVec::new_in(self);
-        let mut quasis = BufferedVec::new_in(self);
+        let mut types = BufferedVec::<_, 4>::new_in(self);
+        let mut quasis = BufferedVec::<_, 4>::new_in(self);
         match self.cur_kind() {
             Kind::NoSubstitutionTemplate => {
                 quasis.push(self.parse_template_element(tagged));
