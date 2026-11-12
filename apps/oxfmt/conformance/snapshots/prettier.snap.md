@@ -152,7 +152,11 @@
 
 ## typescript
 
+<<<<<<< Updated upstream
 633/679 (93.23%)
+=======
+641/699 (91.70%)
+>>>>>>> Stashed changes
 
 ### Failed
 
@@ -168,7 +172,11 @@
   - ❓unclassified
 - externals/prettier/typescript/cast/18406.ts (💥, 84.21%)
   - ❓unclassified
+<<<<<<< Updated upstream
 - externals/prettier/typescript/class-comment/class-implements.ts (💥, 93.33%)
+=======
+- externals/prettier/typescript/class-comment/class-implements.ts (💥, 85.71%)
+>>>>>>> Stashed changes
   - ❓unclassified
 - externals/prettier/typescript/class-comment/declare.ts (💥, 72.00%)
   - ❓unclassified
@@ -248,6 +256,10 @@
 - externals/prettier/typescript/method-chain/object/issue-17239.ts
 - externals/prettier/typescript/prettier-ignore/issue-14238.ts
 - externals/prettier/typescript/prettier-ignore/mapped-types.ts
+<<<<<<< Updated upstream
+=======
+- externals/prettier/typescript/property-signature/consistent-with-flow/comments.ts
+>>>>>>> Stashed changes
 
 ## tsx
 
