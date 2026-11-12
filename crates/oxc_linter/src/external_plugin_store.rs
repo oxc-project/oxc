@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 
 use oxc_index::{IndexVec, define_index_type, index_vec};
@@ -39,7 +39,7 @@ impl ExternalOptionsId {
 
 #[derive(Debug)]
 pub struct ExternalPluginStore {
-    registered_plugin_paths: FxHashSet<PathBuf>,
+    registered_plugin_paths: FxHashMap<PathBuf, ExternalPluginId>,
 
     plugins: IndexVec<ExternalPluginId, ExternalPlugin>,
     plugin_names: FxHashMap<String, ExternalPluginId>,
@@ -62,7 +62,7 @@ impl ExternalPluginStore {
         let options = index_vec![(ExternalRuleId::DUMMY, SmallVec::new())];
 
         Self {
-            registered_plugin_paths: FxHashSet::default(),
+            registered_plugin_paths: FxHashMap::default(),
             plugins: IndexVec::default(),
             plugin_names: FxHashMap::default(),
             rules: IndexVec::default(),
@@ -81,8 +81,9 @@ impl ExternalPluginStore {
         self.plugins.is_empty()
     }
 
-    pub fn is_plugin_registered(&self, plugin_path: &Path) -> bool {
-        self.registered_plugin_paths.contains(plugin_path)
+    /// Get the ID of the plugin registered at `plugin_path`, if any.
+    pub fn registered_plugin_id(&self, plugin_path: &Path) -> Option<ExternalPluginId> {
+        self.registered_plugin_paths.get(plugin_path).copied()
     }
 
     /// Register plugin.
@@ -97,13 +98,12 @@ impl ExternalPluginStore {
         plugin_name: String,
         offset: usize,
         rule_names: Vec<String>,
-    ) {
-        let newly_inserted = self.registered_plugin_paths.insert(plugin_path);
-        assert!(newly_inserted, "register_plugin: plugin already registered");
-
+    ) -> ExternalPluginId {
         let plugin_id = self
             .plugins
             .push(ExternalPlugin { name: plugin_name.clone(), rules: FxHashMap::default() });
+        let previous = self.registered_plugin_paths.insert(plugin_path, plugin_id);
+        assert!(previous.is_none(), "register_plugin: plugin already registered");
         self.plugin_names.insert(plugin_name, plugin_id);
 
         assert!(
@@ -117,6 +117,13 @@ impl ExternalPluginStore {
             let rule_id = self.rules.push(ExternalRule { name: rule_name.clone(), plugin_id });
             self.plugins[plugin_id].rules.insert(rule_name, rule_id);
         }
+
+        plugin_id
+    }
+
+    /// Get the ID of the plugin that `rule_id` belongs to.
+    pub fn rule_plugin_id(&self, rule_id: ExternalRuleId) -> ExternalPluginId {
+        self.rules[rule_id].plugin_id
     }
 
     /// # Errors
@@ -159,6 +166,12 @@ impl ExternalPluginStore {
         } else {
             self.options.push((rule_id, options.clone()))
         }
+    }
+
+    /// Get options previously added with [`add_options`](Self::add_options).
+    /// [`ExternalOptionsId::NONE`] yields empty options.
+    pub fn options(&self, options_id: ExternalOptionsId) -> &SmallVec<[serde_json::Value; 1]> {
+        &self.options[options_id].1
     }
 
     /// Send options to JS side.
