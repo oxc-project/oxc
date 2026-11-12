@@ -315,7 +315,22 @@ fn build_object_fix<'a>(
         sorted_text.push(',');
     }
 
-    Some((Span::new(props[0].span.start, props[props.len() - 1].span.end), sorted_text))
+    let orig_last_end = props[props.len() - 1].span.end;
+    let mut replace_end = orig_last_end;
+    // If the new last property ends with a `// ...` line comment and the closing
+    // `}` sits on the same line as the original last property, emit a line break
+    // so the closing brace isn't swallowed into the comment.
+    if indices.last().is_some_and(|&new_last| props[new_last].consumed_trailing_comma) {
+        let after_last = ctx.source_range(Span::new(orig_last_end, object.span.end));
+        if !after_last.contains(['\n', '\r', '\u{2028}', '\u{2029}']) {
+            if let Some(comma_offset) = after_last.find(',') {
+                replace_end = orig_last_end + u32::try_from(comma_offset + 1).ok()?;
+            }
+            sorted_text.push_str(if canonical_ws.contains("\r\n") { "\r\n" } else { "\n" });
+        }
+    }
+
+    Some((Span::new(props[0].span.start, replace_end), sorted_text))
 }
 
 fn collect_fixable_properties<'a>(
@@ -1637,6 +1652,30 @@ fn test() {
   b: 2, // b
   c: 3, // c
 };",
+        ),
+        // Same-line closing brace after a moved trailing `//` comment gets a line break
+        (
+            "export const config = { b: 1, // bee
+  a: 2 };",
+            "export const config = { a: 2,
+  b: 1, // bee
+ };",
+        ),
+        (
+            "export const config = { b: 1, // bee
+  a: 2, };",
+            "export const config = { a: 2,
+  b: 1, // bee
+ };",
+        ),
+        (
+            "const values = { c: 3, // c
+  b: 2, // b
+  a: 1 };",
+            "const values = { a: 1,
+  b: 2, // b
+  c: 3, // c
+ };",
         ),
         // jsdoc comments are carried with their property when reordered
         (
