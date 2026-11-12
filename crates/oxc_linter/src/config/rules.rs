@@ -15,7 +15,7 @@ use schemars::schema::SingleOrVec;
 use serde::{
     Deserialize, Serialize, Serializer,
     de::{self, Deserializer, Visitor},
-    ser::SerializeMap,
+    ser::{SerializeMap, SerializeSeq},
 };
 use smallvec::SmallVec;
 
@@ -598,17 +598,30 @@ impl Serialize for OxlintRules {
 
         for rule in &self.rules {
             let key = rule.full_name();
-            if rule.config.is_empty() {
-                // e.g. unicorn/some-rule: "warn"
-                rules.serialize_entry(&key, rule.severity.as_str())?;
-            } else {
-                // e.g. unicorn/some-rule: ["warn", { foo: "bar" }]
-                let value = (rule.severity.as_str(), &rule.config);
-                rules.serialize_entry(&key, &value)?;
-            }
+            rules.serialize_entry(&key, &RuleValueSer(rule))?;
         }
 
         rules.end()
+    }
+}
+
+struct RuleValueSer<'a>(&'a ESLintRule);
+
+impl Serialize for RuleValueSer<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let rule = self.0;
+        if rule.config.is_empty() {
+            // Serialize a rule with no options as a single severity string.
+            return serializer.serialize_str(rule.severity.as_str());
+        }
+
+        // Otherwise: serialize an array with severity and options.
+        let mut seq = serializer.serialize_seq(Some(1 + rule.config.len()))?;
+        seq.serialize_element(rule.severity.as_str())?;
+        for option in &rule.config {
+            seq.serialize_element(option)?;
+        }
+        seq.end()
     }
 }
 
@@ -775,6 +788,30 @@ mod test {
     };
 
     use super::{OxlintRules, RuleConfig, RuleSet};
+
+    #[test]
+    fn test_serialize_rule_options_round_trip() {
+        let rules: OxlintRules = serde_json::from_value(json!({
+            "no-debugger": "off",
+            "no-console": ["warn", { "allow": ["warn"] }],
+            "eqeqeq": ["error", "always", { "null": "ignore" }],
+            "custom/no-options": ["error"],
+            "@scope/custom/options": ["warn", ["first", "second"], null, true, 42]
+        }))
+        .unwrap();
+        let serialized = serde_json::to_value(&rules).unwrap();
+        assert_eq!(
+            serialized,
+            json!({
+                "no-debugger": "allow",
+                "no-console": ["warn", { "allow": ["warn"] }],
+                "eqeqeq": ["deny", "always", { "null": "ignore" }],
+                "custom/no-options": "deny",
+                "@scope/custom/options": ["warn", ["first", "second"], null, true, 42]
+            })
+        );
+        assert_eq!(serde_json::from_value::<OxlintRules>(serialized).unwrap(), rules);
+    }
 
     #[test]
     fn test_parse_rules() {
