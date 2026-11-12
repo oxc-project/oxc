@@ -64,6 +64,11 @@ impl<T> BufferedVecBacking for Vec<'_, T> {
     }
 
     #[inline]
+    fn capacity(&self) -> usize {
+        self.0.capacity()
+    }
+
+    #[inline]
     fn reserve(&mut self, additional: usize) {
         self.0.reserve(additional);
     }
