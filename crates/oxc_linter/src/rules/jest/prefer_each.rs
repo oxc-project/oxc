@@ -48,6 +48,21 @@ fn test() {
                 expect(numbers[i]).toBeGreaterThan(7);
               }
             });"#,
+        r"import { test as customTest } from '@jest/globals';
+            customTest('outer', () => {
+                for (const value of values) {
+                    customTest('inner', () => {});
+                }
+            });",
+        r"test('outer', () => {
+                for (const value of values) {
+                    test('inner', () => {});
+                }
+            });",
+        r"function test() {}
+            for (const value of values) {
+                test('not a test', () => {});
+            }",
     ];
 
     let fail = vec![
@@ -158,6 +173,14 @@ fn test() {
                 }
               });
             }"#,
+        r"import { test as customTest } from '@jest/globals';
+            for (const value of values) {
+                customTest('foo', () => {});
+            }",
+        r"import { describe as suite } from '@jest/globals';
+            for (const value of values) {
+                suite('foo', () => {});
+            }",
     ];
 
     Tester::new(PreferEach::NAME, PreferEach::PLUGIN, pass, fail).test_and_snapshot();

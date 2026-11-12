@@ -252,3 +252,39 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   beforeEach(() => setupSomething(input));
    ╰────
   help: Prefer using `describe.each` rather than a manual loop.
+
+  ⚠ vitest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:3:13]
+ 2 │             const customTest = test.extend({});
+ 3 │             for (const value of values) {
+   ·             ────────────────────────────
+ 4 │                 customTest('foo', () => {});
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ vitest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:4:13]
+ 3 │             const customTest = extendedTest.extend({});
+ 4 │             for (const value in values) {
+   ·             ────────────────────────────
+ 5 │                 customTest.only('foo', () => {});
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ vitest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:2:13]
+ 1 │ import { test as customTest } from 'vitest';
+ 2 │             for (let i = 0; i < 2; i++) {
+   ·             ────────────────────────────
+ 3 │                 customTest('foo', () => {});
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ vitest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:4:17]
+ 3 │             test.only('not a test', () => {
+ 4 │                 for (const value of values) {
+   ·                 ────────────────────────────
+ 5 │                     customTest('foo', () => {});
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
