@@ -1903,6 +1903,10 @@ mod test {
             assert!(rule_obj.contains_key("fix"), "Rule should contain 'fix' field");
             assert!(rule_obj.contains_key("default"), "Rule should contain 'default' field");
             assert!(rule_obj.contains_key("docs_url"), "Rule should contain 'docs_url' field");
+            assert!(
+                rule_obj.contains_key("recommended"),
+                "Rule should contain 'recommended' field"
+            );
         }
 
         // Verify that the rules list is sorted by scope and value.
