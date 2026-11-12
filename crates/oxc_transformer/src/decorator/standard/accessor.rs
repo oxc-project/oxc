@@ -10,7 +10,10 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
-    common::helper_loader::{Helper, helper_call_expr},
+    common::{
+        class_lowering::ClassLoweringMode,
+        helper_loader::{Helper, helper_call_expr},
+    },
     context::TraverseCtx,
     utils::ast_builder::wrap_expression_in_arrow_function_iife,
 };
@@ -25,9 +28,7 @@ impl<'a> StandardDecoratorState<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ClassExpression(class) = expression else { return };
-        let lowering = ctx.state.class_lowering(class);
         if !self.enabled()
-            || lowering.lowered_for_decorators()
             || !class.body.body.iter().any(|element| {
                 matches!(element, ClassElement::AccessorProperty(prop) if prop.computed && !prop.r#type.is_abstract())
             })
@@ -42,6 +43,10 @@ impl<'a> StandardDecoratorState<'a> {
                 })
                 .any(|ancestor| matches!(ancestor, Ancestor::FormalParameterInitializer(_)))
         {
+            return;
+        }
+        // A class which lowers its own decorators and accessors wraps them when it is entered.
+        if ctx.state.class_lowering(class).mode() != ClassLoweringMode::Native {
             return;
         }
         if class.id.is_none()
@@ -62,10 +67,9 @@ impl<'a> StandardDecoratorState<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let lowering = ctx.state.class_lowering(class);
-        if !self.enabled()
+        if lowering.mode() != ClassLoweringMode::Native
             || class.declare
             || class.id.is_some()
-            || lowering.lowered_for_decorators()
             || (!self.named_classes.contains_key(&class.unstable_address())
                 && !class.body.body.iter().any(|element| {
                     matches!(element, ClassElement::AccessorProperty(prop) if prop.r#static && !prop.r#type.is_abstract())

@@ -52,11 +52,7 @@ impl<'a> ClassProperties<'a> {
     ) {
         // Record the lowering decision before any transform rewrites the class.
         let lowering = ctx.state.class_lowering(class);
-        if !self.only_decorated_classes
-            || !self.decorator_state.enabled()
-            || class.declare
-            || lowering.lowered_for_decorators()
-        {
+        if lowering.mode() != ClassLoweringMode::Native || class.declare {
             return;
         }
         self.decorator_state.prepare_native_auto_accessors(class, ctx);
@@ -111,9 +107,10 @@ impl<'a> ClassProperties<'a> {
         // lowered. The decision was recorded when the class was entered, before decorators and
         // auto-accessors are removed.
         let lowering = ctx.state.class_lowering_of(class_scope_id);
-        let is_decorated = self.decorator_state.enabled() && lowering.lowered_for_decorators();
-        let has_auto_accessor = self.decorator_state.enabled() && lowering.has_auto_accessor();
-        if self.decorator_state.enabled() {
+        let standard = self.decorator_state.enabled();
+        let is_decorated = standard && lowering.lowered_for_decorators();
+        let has_auto_accessor = standard && lowering.has_auto_accessor();
+        if standard {
             for element in &mut body.body {
                 let (key, computed, value) = match element {
                     ClassElement::PropertyDefinition(prop) => {
@@ -149,6 +146,7 @@ impl<'a> ClassProperties<'a> {
                 }
             }
             self.classes_stack.push(ClassDetails {
+                mode: lowering.mode(),
                 is_declaration,
                 private_method_helpers_in_class_sequence: false,
                 is_transform_required: false,
@@ -340,6 +338,7 @@ impl<'a> ClassProperties<'a> {
             && !is_decorated
         {
             self.classes_stack.push(ClassDetails {
+                mode: lowering.mode(),
                 is_declaration,
                 private_method_helpers_in_class_sequence,
                 is_transform_required: false,
@@ -438,6 +437,7 @@ impl<'a> ClassProperties<'a> {
 
         // Add entry to `classes_stack`
         self.classes_stack.push(ClassDetails {
+            mode: lowering.mode(),
             is_declaration,
             private_method_helpers_in_class_sequence,
             is_transform_required: true,

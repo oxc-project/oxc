@@ -3,6 +3,7 @@ use oxc_data_structures::stack::NonEmptyStack;
 use oxc_traverse::BoundIdentifier;
 
 use crate::{
+    common::class_lowering::ClassLoweringMode,
     context::TraverseCtx,
     decorator::standard::{ClassDecoratorState, StandardDecoratorState},
     utils::ast_builder::create_variable_declaration,
@@ -14,6 +15,8 @@ use super::{ClassBindings, ClassProperties, IdentIndexMap};
 ///
 /// These are stored in `ClassesStack`.
 pub(super) struct ClassDetails<'a> {
+    /// Which transform owns this class, recorded before the class was rewritten.
+    pub mode: ClassLoweringMode,
     /// `true` for class declaration, `false` for class expression
     pub is_declaration: bool,
     /// `true` if private method helpers must be emitted in the class expression sequence.
@@ -34,8 +37,9 @@ impl<'a> ClassDetails<'a> {
     /// Create dummy `ClassDetails`.
     ///
     /// Used for dummy entry at top of `ClassesStack`.
-    pub fn dummy(is_declaration: bool) -> Self {
+    pub fn dummy(mode: ClassLoweringMode, is_declaration: bool) -> Self {
         Self {
+            mode,
             is_declaration,
             private_method_helpers_in_class_sequence: false,
             is_transform_required: false,
@@ -157,9 +161,9 @@ pub(super) struct ClassesStack<'a> {
 
 impl<'a> ClassesStack<'a> {
     /// Create new `ClassesStack`.
-    pub fn new() -> Self {
+    pub fn new(dummy_mode: ClassLoweringMode) -> Self {
         // Default stack capacity is 4. That's is probably good. More than 4 nested classes is rare.
-        Self { stack: NonEmptyStack::new(ClassDetails::dummy(false)) }
+        Self { stack: NonEmptyStack::new(ClassDetails::dummy(dummy_mode, false)) }
     }
 
     /// Push an entry to stack.

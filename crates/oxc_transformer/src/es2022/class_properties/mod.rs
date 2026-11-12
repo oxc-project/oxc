@@ -208,6 +208,7 @@ use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::Traverse;
 
 use crate::{
+    common::class_lowering::ClassLoweringMode,
     context::TraverseCtx,
     decorator::{DecoratorMode, standard::StandardDecoratorState},
     state::TransformState,
@@ -259,11 +260,6 @@ pub struct ClassProperties<'a> {
     ///
     /// This option is controlled by [`crate::TypeScriptOptions::remove_class_fields_without_initializer`].
     remove_class_fields_without_initializer: bool,
-    /// If `true`, only transform classes which have decorators.
-    /// Used when target supports class fields, but decorators need lowering.
-    only_decorated_classes: bool,
-    /// Leave classes with standard decorators or auto-accessors native.
-    preserve_standard_decorators: bool,
 
     // ----- State used during all phases of transform -----
     //
@@ -310,14 +306,19 @@ impl ClassProperties<'_> {
         decorator_mode: DecoratorMode,
         only_decorated_classes: bool,
     ) -> Self {
+        // A class which is never entered still answers queries about private names. It is lowered
+        // only when this transform owns every class.
+        let dummy_mode = if only_decorated_classes || decorator_mode == DecoratorMode::Preserve {
+            ClassLoweringMode::Native
+        } else {
+            ClassLoweringMode::LowerAll
+        };
         Self {
             set_public_class_fields: options.loose,
             private_fields_as_properties: options.loose,
             transform_static_blocks,
             remove_class_fields_without_initializer,
-            only_decorated_classes,
-            preserve_standard_decorators: decorator_mode == DecoratorMode::Preserve,
-            classes_stack: ClassesStack::new(),
+            classes_stack: ClassesStack::new(dummy_mode),
             private_field_count: 0,
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
             clashing_constructor_symbols: FxHashMap::default(),
@@ -388,7 +389,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
     // `#[inline]` for fast exit for expressions which are not any of the transformed types
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.only_decorated_classes && matches!(expr, Expression::ClassExpression(_)) {
+        if self.decorator_state.enabled() && matches!(expr, Expression::ClassExpression(_)) {
             self.decorator_state.wrap_native_accessor_expression(expr, ctx);
         }
         // All of transforms below only act on `PrivateFieldExpression`s or `PrivateInExpression`s.
@@ -406,7 +407,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
         target: &mut AssignmentTarget<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if (self.only_decorated_classes || self.preserve_standard_decorators)
+        if self.private_name_may_stay_native()
             && let AssignmentTarget::PrivateFieldExpression(field) = target
             && !self.private_field_needs_lowering(&field.field)
         {
@@ -449,13 +450,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
 }
 
 impl<'a> ClassProperties<'a> {
-    /// Native private names can share an optional chain with private names that need lowering.
+    /// Whether a private name used in the current class may stay native, so it needs resolving to
+    /// the class that owns it.
+    fn private_name_may_stay_native(&self) -> bool {
+        self.current_class().mode != ClassLoweringMode::LowerAll
+    }
+
+    /// Whether the private name is owned by a class which lowers its private properties.
     fn private_field_needs_lowering(&mut self, ident: &PrivateIdentifier<'a>) -> bool {
-        !(self.only_decorated_classes || self.preserve_standard_decorators)
-            || matches!(
-                self.classes_stack.resolve_private_name(ident),
-                ResolvedPrivateName::Lowered { .. }
-            )
+        matches!(
+            self.classes_stack.resolve_private_name(ident),
+            ResolvedPrivateName::Lowered { .. }
+        )
     }
 
     /// Private identifier directly referenced by an expression which this transform rewrites.
@@ -491,7 +497,7 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if (self.only_decorated_classes || self.preserve_standard_decorators)
+        if self.private_name_may_stay_native()
             && let Some(ident) = Self::direct_private_ident(expr)
             && !self.private_field_needs_lowering(ident)
         {

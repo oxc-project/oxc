@@ -114,6 +114,9 @@ impl ClassLoweringCache {
 
     /// Record the lowering of a class which no transform has rewritten yet.
     pub fn get_or_compute(&mut self, class: &Class<'_>) -> ClassLowering {
+        if self.mode_is_config_decided() {
+            return self.unrecorded();
+        }
         let scope_id = class.scope_id();
         if let Some(recorded) = self.recorded(scope_id) {
             debug_assert_eq!(
@@ -130,6 +133,14 @@ impl ClassLoweringCache {
             self.record(scope_id, lowering);
         }
         lowering
+    }
+
+    /// Whether only the target decides how a class is lowered, without inspecting the class.
+    ///
+    /// Legacy decorators run their own lowering, so no query inspects the standard decorator
+    /// state of a class.
+    fn mode_is_config_decided(&self) -> bool {
+        self.decorator_mode == DecoratorMode::Legacy
     }
 
     /// The lowering of a class whose decision was not recorded.

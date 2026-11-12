@@ -35,12 +35,12 @@ impl<'a> StandardDecoratorState<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ClassExpression(class) = value.without_parentheses() else { return };
-        let lowering = ctx.state.class_lowering(class);
-        if !self.enabled
-            || class.id.is_some()
-            || self.named_classes.contains_key(&class.address())
-            || !lowering.handles_standard_decorators()
+        if !self.enabled || class.id.is_some() || self.named_classes.contains_key(&class.address())
         {
+            return;
+        }
+        let lowering = ctx.state.class_lowering(class);
+        if !lowering.handles_standard_decorators() {
             return;
         }
         let name = if computed {
