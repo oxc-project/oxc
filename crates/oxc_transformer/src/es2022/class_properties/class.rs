@@ -14,9 +14,7 @@ use oxc_traverse::{Ancestor, BoundIdentifier};
 use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
-    decorator::standard::{
-        ClassDecoratorState, ClassNameRewriter, DecoratorElementKind, StandardDecoratorState,
-    },
+    decorator::standard::{ClassNameRewriter, DecoratorElementKind, StandardDecoratorState},
     utils::{
         ast_builder::{create_assignment, create_new_weakset, create_variable_declaration},
         decorated_class::class_body_has_decorators,
@@ -659,11 +657,7 @@ impl<'a> ClassProperties<'a> {
                         .is_some_and(|name| name.symbol_id == temp_binding.symbol_id)
                         && ident.symbol_id() != temp_binding.symbol_id)
                 {
-                    ClassDecoratorState::declare_binding(
-                        class_details.decorators.as_ref(),
-                        temp_binding,
-                        ctx,
-                    );
+                    class_details.declare_temp(temp_binding, ctx);
                 }
 
                 // Insert `_Class = Class` after class.
@@ -744,17 +738,11 @@ impl<'a> ClassProperties<'a> {
                         has_method = true;
                         let binding = class_details.bindings.brand();
                         let value = create_new_weakset(ctx);
-                        stmts.push(ClassDecoratorState::create_binding_declaration(
-                            class_details.decorators.as_ref(),
-                            binding,
-                            value,
-                            ctx,
-                        ));
+                        stmts.push(class_details.create_temp_declaration(binding, value, ctx));
                     } else {
                         // `var _prop = new WeakMap();`
                         let value = create_new_weakmap(&mut weakmap_symbol_id, ctx);
-                        stmts.push(ClassDecoratorState::create_binding_declaration(
-                            class_details.decorators.as_ref(),
+                        stmts.push(class_details.create_temp_declaration(
                             &prop.binding,
                             value,
                             ctx,
@@ -926,21 +914,13 @@ impl<'a> ClassProperties<'a> {
                         has_method = true;
                         // `_C_brand = new WeakSet()`
                         let binding = class_details.bindings.brand();
-                        ClassDecoratorState::declare_binding(
-                            class_details.decorators.as_ref(),
-                            binding,
-                            ctx,
-                        );
+                        class_details.declare_temp(binding, ctx);
                         let value = create_new_weakset(ctx);
                         return Some(create_assignment(binding, value, SPAN, ctx));
                     }
 
                     // Insert `var _prop;` declaration
-                    ClassDecoratorState::declare_binding(
-                        class_details.decorators.as_ref(),
-                        &prop.binding,
-                        ctx,
-                    );
+                    class_details.declare_temp(&prop.binding, ctx);
 
                     if prop.is_static && !prop.uses_weakmap {
                         return None;
@@ -966,11 +946,7 @@ impl<'a> ClassProperties<'a> {
                 };
                 let id = func.id.take().expect("private method binding always has an id");
                 let binding = BoundIdentifier::from_binding_ident(&id);
-                ClassDecoratorState::declare_binding(
-                    class_details.decorators.as_ref(),
-                    &binding,
-                    ctx,
-                );
+                class_details.declare_temp(&binding, ctx);
                 func.r#type = FunctionType::FunctionExpression;
                 let assignment =
                     create_assignment(&binding, Expression::FunctionExpression(func), SPAN, ctx);

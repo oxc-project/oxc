@@ -12,7 +12,7 @@ use crate::{
     context::TraverseCtx,
     utils::ast_builder::{
         create_assignment, create_export_default_class_reference,
-        create_export_named_class_reference, create_new_weakset, create_variable_declaration,
+        create_export_named_class_reference, create_new_weakset,
     },
 };
 
@@ -324,35 +324,6 @@ fn number<'a>(value: u32, ctx: &TraverseCtx<'a>) -> Argument<'a> {
 }
 
 impl<'a> ClassDecoratorState<'a> {
-    /// Declare a class-scoped temporary.
-    ///
-    /// A decorated class uses `let`, because a class decorator can replace the binding.
-    pub(crate) fn declare_binding(
-        decorators: Option<&ClassDecoratorState<'a>>,
-        binding: &BoundIdentifier<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if decorators.is_some() {
-            ctx.state.var_declarations.insert_let(binding, None, &ctx.ast);
-        } else {
-            ctx.state.var_declarations.insert_var(binding, &ctx.ast);
-        }
-    }
-
-    /// Declare and initialize a class-scoped temporary, using `let` for a decorated class.
-    pub(crate) fn create_binding_declaration(
-        decorators: Option<&ClassDecoratorState<'a>>,
-        binding: &BoundIdentifier<'a>,
-        init: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> Statement<'a> {
-        if decorators.is_some() {
-            StandardDecoratorState::create_let(binding, init, ctx)
-        } else {
-            create_variable_declaration(binding, init, ctx)
-        }
-    }
-
     /// `__runInitializers(_init, ((5 + 2 * index) << 1) | 1, this)`
     pub(crate) fn decorated_field_extra_initializers(
         &self,

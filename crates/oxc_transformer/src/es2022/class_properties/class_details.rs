@@ -2,7 +2,11 @@ use oxc_ast::ast::*;
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_traverse::BoundIdentifier;
 
-use crate::decorator::standard::ClassDecoratorState;
+use crate::{
+    context::TraverseCtx,
+    decorator::standard::{ClassDecoratorState, StandardDecoratorState},
+    utils::ast_builder::create_variable_declaration,
+};
 
 use super::{ClassBindings, ClassProperties, IdentIndexMap};
 
@@ -26,7 +30,7 @@ pub(super) struct ClassDetails<'a> {
     pub has_auto_accessor: bool,
 }
 
-impl ClassDetails<'_> {
+impl<'a> ClassDetails<'a> {
     /// Create dummy `ClassDetails`.
     ///
     /// Used for dummy entry at top of `ClassesStack`.
@@ -39,6 +43,31 @@ impl ClassDetails<'_> {
             bindings: ClassBindings::dummy(false),
             decorators: None,
             has_auto_accessor: false,
+        }
+    }
+
+    /// Declare a class-scoped temporary binding.
+    ///
+    /// A decorated class uses `let`, because a class decorator can replace the binding.
+    pub fn declare_temp(&self, binding: &BoundIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.decorators.is_some() {
+            ctx.state.var_declarations.insert_let(binding, None, &ctx.ast);
+        } else {
+            ctx.state.var_declarations.insert_var(binding, &ctx.ast);
+        }
+    }
+
+    /// Create a class-scoped temporary declaration, using `let` for a decorated class.
+    pub fn create_temp_declaration(
+        &self,
+        binding: &BoundIdentifier<'a>,
+        init: Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        if self.decorators.is_some() {
+            StandardDecoratorState::create_let(binding, init, ctx)
+        } else {
+            create_variable_declaration(binding, init, ctx)
         }
     }
 }

@@ -50,6 +50,13 @@ pub enum DecoratorMode {
     Standard,
 }
 
+impl DecoratorMode {
+    /// Whether the legacy (`experimentalDecorators`) semantics are selected.
+    pub(crate) fn is_legacy(self) -> bool {
+        matches!(self, Self::Legacy)
+    }
+}
+
 impl DecoratorOptions {
     pub(crate) fn mode(self) -> DecoratorMode {
         if self.legacy { DecoratorMode::Legacy } else { DecoratorMode::Standard }
