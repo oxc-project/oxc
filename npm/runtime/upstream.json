@@ -210,8 +210,13 @@
   },
   "customHelpers": [
     "decorate.js",
+    "decorateElement.js",
     "decorateMetadata.js",
-    "decorateParam.js"
+    "decorateParam.js",
+    "decoratorMetadata.js",
+    "decoratorStart.js",
+    "runInitializers.js",
+    "setClassName.js"
   ],
   "legacyHelpers": [
     "AwaitValue.js",
@@ -235,15 +240,10 @@
     "classStaticPrivateFieldSpecGet.js",
     "classStaticPrivateFieldSpecSet.js",
     "classStaticPrivateMethodSet.js",
-    "decorateElement.js",
-    "decoratorMetadata.js",
-    "decoratorStart.js",
     "defineEnumerableProperties.js",
     "dispose.js",
     "objectSpread.js",
     "regeneratorRuntime.js",
-    "runInitializers.js",
-    "setClassName.js",
     "using.js"
   ]
 }

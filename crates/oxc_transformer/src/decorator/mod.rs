@@ -1,3 +1,4 @@
+mod accessor;
 pub mod legacy;
 mod options;
 pub mod standard;

@@ -160,10 +160,14 @@ impl<'a> Transformer<'a> {
             common: Common::new(&self.env),
             decorator: Decorator::new(self.decorator),
             plugins: Plugins::new(self.plugins),
-            x0_typescript: program
-                .source_type
-                .is_typescript()
-                .then(|| TypeScript::new(&self.typescript, &self.state)),
+            x0_typescript: program.source_type.is_typescript().then(|| {
+                TypeScript::new(
+                    &self.typescript,
+                    !self.decorator.legacy
+                        && (!self.decorator.lower || !self.env.standard_decorators),
+                    &self.state,
+                )
+            }),
             x1_jsx: Jsx::new(
                 self.jsx,
                 self.env.es2018.object_rest_spread,

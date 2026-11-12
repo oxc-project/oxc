@@ -66,17 +66,31 @@ fn standard_decorators_opt_out() {
             "@decorate class Example { @decorate value = 1; @decorate accessor count = 2; @decorate method(value) { return value; } }",
         ),
         ("class Plain { accessor value: number = 1; }", "class Plain { accessor value = 1; }"),
+        (
+            "class Example { @decorate static value: number = 1; @decorate item: number = 2; }",
+            "class Example { @decorate static value = 1; @decorate item = 2; }",
+        ),
+        (
+            "@decorate class Example { #value: number = 1; read(obj: Example) { obj.#value = 4; return obj.#value; } }",
+            "@decorate class Example { #value = 1; read(obj) { obj.#value = 4; return obj.#value; } }",
+        ),
     ];
     for decorator in [
-        DecoratorOptions { standard: false, ..DecoratorOptions::default() },
-        serde_json::from_str::<DecoratorOptions>(r#"{"standard":false}"#).unwrap(),
+        DecoratorOptions { lower: false, ..DecoratorOptions::default() },
+        serde_json::from_str::<DecoratorOptions>(r#"{"lower":false}"#).unwrap(),
     ] {
-        let options = TransformOptions { decorator, ..TransformOptions::from(ESTarget::ESNext) };
-        for (source, expected) in cases {
-            assert_eq!(
-                test_with_source_type(source, SourceType::ts(), &options),
-                Ok(codegen(expected, SourceType::mjs())),
-            );
+        for target in [ESTarget::ES2015, ESTarget::ES2020, ESTarget::ES2022, ESTarget::ESNext] {
+            for set_public_class_fields in [false, true] {
+                let mut options = TransformOptions { decorator, ..TransformOptions::from(target) };
+                options.assumptions.set_public_class_fields = set_public_class_fields;
+                for (source, expected) in cases {
+                    assert_eq!(
+                        test_with_source_type(source, SourceType::ts(), &options),
+                        Ok(codegen(expected, SourceType::mjs())),
+                        "{target}, set_public_class_fields={set_public_class_fields}",
+                    );
+                }
+            }
         }
     }
 }
@@ -90,7 +104,7 @@ fn standard_decorators_default_and_legacy_selection() {
     assert!(standard_output.contains("decorateElement"));
     for decorator in [
         serde_json::from_str::<DecoratorOptions>("{}").unwrap(),
-        serde_json::from_str::<DecoratorOptions>(r#"{"standard":true}"#).unwrap(),
+        serde_json::from_str::<DecoratorOptions>(r#"{"lower":true}"#).unwrap(),
     ] {
         let options = TransformOptions { decorator, ..default_options.clone() };
         assert_eq!(test(source, &options), Ok(standard_output.clone()));
@@ -102,15 +116,38 @@ fn standard_decorators_default_and_legacy_selection() {
     assert!(!legacy_output.contains("@decorate"));
     assert!(legacy_output.contains("_decorate("));
     assert!(!legacy_output.contains("decorateElement"));
-    legacy_options.decorator.standard = false;
+    legacy_options.decorator.lower = false;
     assert_eq!(test(source, &legacy_options), Ok(legacy_output));
+}
+
+#[test]
+fn standard_decorators_compat_targets() {
+    let source =
+        "@decorate class Example { accessor value = 1; } class Plain { accessor value = 2; }";
+    for options in [
+        TransformOptions::default(),
+        TransformOptions::from_target("esnext").unwrap(),
+        TransformOptions::from_target("es2015").unwrap(),
+        TransformOptions::from_target("safari16").unwrap(),
+        TransformOptions::from_target("chrome999").unwrap(),
+    ] {
+        assert!(options.env.standard_decorators);
+        let output = test(source, &options).unwrap();
+        assert!(!output.contains("@decorate"));
+        assert!(!output.contains("accessor value"));
+        assert!(output.contains("decorateElement"));
+        let plain = "class Plain { value = 1; #private = 2; read() { return this.#private; } static { effect(); } }";
+        let mut preserve_options = options.clone();
+        preserve_options.decorator.lower = false;
+        assert_eq!(test(plain, &options), test(plain, &preserve_options));
+    }
 }
 
 #[test]
 fn standard_decorators_opt_out_keeps_other_transforms() {
     let source = "function run() { using resource = acquire(); @decorate class Example { @decorate method() {} } return Example; }";
     let mut options = TransformOptions::from(ESTarget::ES2022);
-    options.decorator.standard = false;
+    options.decorator.lower = false;
     let output = test(source, &options).unwrap();
     assert!(output.contains("@decorate"));
     assert!(!output.contains("using resource"));
@@ -118,10 +155,23 @@ fn standard_decorators_opt_out_keeps_other_transforms() {
 }
 
 #[test]
-fn standard_decorators_opt_out_rejects_class_field_lowering() {
+fn standard_decorators_opt_out_keeps_plain_class_field_lowering() {
     let mut options = TransformOptions::from(ESTarget::ES2015);
-    options.decorator.standard = false;
-    assert!(test("class Example { @decorate value = 1; }", &options).is_err());
+    options.decorator.lower = false;
+    let output =
+        test("class Plain { value = 1; } class Example { @decorate value = 1; }", &options)
+            .unwrap();
+    assert!(output.contains("constructor()"));
+    assert!(output.contains("@decorate value = 1;"));
+    let output = test_with_source_type(
+        "class Outer { #value = 1; make() { return class Inner { accessor x = 2; #value = 3; read(obj: Inner) { obj.#value = 4; return obj.#value; } }; } }",
+        SourceType::ts(),
+        &options,
+    ).unwrap();
+    assert!(output.contains("accessor x = 2;"));
+    assert!(output.contains("#value = 3;"));
+    assert!(output.contains("obj.#value = 4;"));
+    assert!(output.contains("return obj.#value;"));
 }
 
 #[test]

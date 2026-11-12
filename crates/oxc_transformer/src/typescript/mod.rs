@@ -3,7 +3,11 @@ use oxc_ast::ast::*;
 use oxc_syntax::scope::ScopeId;
 use oxc_traverse::Traverse;
 
-use crate::{context::TraverseCtx, state::TransformState};
+use crate::{
+    context::TraverseCtx,
+    state::TransformState,
+    utils::decorated_class::{class_body_has_auto_accessors, class_lowered_for_decorators},
+};
 
 mod annotations;
 mod class;
@@ -50,14 +54,19 @@ pub struct TypeScript<'a> {
     rewrite_extensions: Option<TypeScriptRewriteExtensions>,
     // Options
     source_type_is_typescript_definition: bool,
-    /// Classes whose fields are handled for decorators when the target supports class fields.
+    /// Classes whose fields are lowered for decorators or preserved for a later transform.
     class_fields_handled_scopes: Vec<ScopeId>,
+    preserve_standard_decorators: bool,
     set_public_class_fields: bool,
     remove_class_fields_without_initializer: bool,
 }
 
 impl<'a> TypeScript<'a> {
-    pub fn new(options: &TypeScriptOptions, state: &TransformState<'a>) -> Self {
+    pub fn new(
+        options: &TypeScriptOptions,
+        preserve_standard_decorators: bool,
+        state: &TransformState<'a>,
+    ) -> Self {
         Self {
             annotations: TypeScriptAnnotations::new(options),
             r#enum: TypeScriptEnum::new(options.optimize_const_enums, options.optimize_enums),
@@ -66,6 +75,7 @@ impl<'a> TypeScript<'a> {
             rewrite_extensions: TypeScriptRewriteExtensions::new(options),
             source_type_is_typescript_definition: state.source_type.is_typescript_definition(),
             class_fields_handled_scopes: Vec::new(),
+            preserve_standard_decorators,
             set_public_class_fields: state.assumptions.set_public_class_fields,
             remove_class_fields_without_initializer: !options.allow_declare_fields
                 || options.remove_class_fields_without_initializer,
@@ -119,6 +129,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
 
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.enter_class(class, ctx);
+
+        if self.preserve_standard_decorators
+            && (class_lowered_for_decorators(class) || class_body_has_auto_accessors(&class.body))
+        {
+            // Keep field decorators and initializer order for the downstream decorator transform,
+            // even when TypeScript normally moves fields into constructor assignments.
+            self.class_fields_handled_scopes.push(class.scope_id());
+            self.remove_uninitialized_class_fields(class, ctx);
+            Self::add_parameter_property_fields(class, ctx);
+            return;
+        }
 
         // Class-properties owns field lowering and initialization order when enabled.
         // It also handles decorated classes when the target supports class fields.

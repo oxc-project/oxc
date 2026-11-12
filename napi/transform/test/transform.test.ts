@@ -319,7 +319,7 @@ describe("standard decorators", () => {
         }
         class Plain { accessor value: number = 1; }
       `,
-      { target: "esnext", decorator: { standard: false } },
+      { target: "esnext", decorator: { lower: false } },
     );
     expect(ret.errors).toEqual([]);
     expect(ret.helpersUsed).toEqual({});
@@ -339,7 +339,7 @@ describe("standard decorators", () => {
     expect(implicit.errors).toEqual([]);
     expect(implicit.code).not.toContain("@decorate");
     expect(implicit.code).toContain("decorateElement");
-    for (const decorator of [{}, { standard: true }]) {
+    for (const decorator of [{}, { lower: true }]) {
       const explicit = transformSync("test.js", code, { target: "esnext", decorator });
       expect(explicit.errors).toEqual([]);
       expect(explicit.code).toEqual(implicit.code);
@@ -351,7 +351,7 @@ describe("standard decorators", () => {
     const ret = transformSync(
       "test.js",
       "function run() { using resource = acquire(); @decorate class Example { @decorate method() {} } return Example; }",
-      { target: "es2022", decorator: { standard: false } },
+      { target: "es2022", decorator: { lower: false } },
     );
     expect(ret.errors).toEqual([]);
     expect(ret.code).toContain("@decorate");
@@ -360,13 +360,22 @@ describe("standard decorators", () => {
     expect(ret.code).not.toContain("decorateElement");
   });
 
-  it("reports incompatible class field lowering when preserving decorators", () => {
-    const ret = transformSync("test.js", "class Example { @decorate value = 1; }", {
-      target: "es2015",
-      decorator: { standard: false },
-    });
-    expect(ret.errors.length).toBeGreaterThan(0);
-  });
+  test.each(["es2015", "es2020", "es2022", "esnext"])(
+    "preserves decorated fields targeting %s",
+    (target) => {
+      for (const setPublicClassFields of [false, true]) {
+        const ret = transformSync(
+          "test.ts",
+          "class Example { @decorate static value: number = 1; @decorate item: number = 2; }",
+          { target, decorator: { lower: false }, assumptions: { setPublicClassFields } },
+        );
+        expect(ret.errors).toEqual([]);
+        expect(ret.code).toContain("@decorate static value = 1;");
+        expect(ret.code).toContain("@decorate item = 2;");
+        expect(ret.helpersUsed).toEqual({});
+      }
+    },
+  );
 
   it("selects legacy decorators regardless of the standard option", () => {
     const code = "@decorate class Example { @decorate method() {} }";
@@ -376,7 +385,7 @@ describe("standard decorators", () => {
     });
     const disabledStandard = transformSync("test.js", code, {
       target: "esnext",
-      decorator: { legacy: true, standard: false },
+      decorator: { legacy: true, lower: false },
     });
     expect(legacy.errors).toEqual([]);
     expect(disabledStandard.errors).toEqual([]);

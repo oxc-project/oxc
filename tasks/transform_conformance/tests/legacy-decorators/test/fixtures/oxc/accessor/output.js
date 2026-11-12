@@ -21,19 +21,19 @@ class C {
   set c(value) {
     this.#_c_accessor_storage = value;
   }
-  #_a_computed_accessor_storage;
+  #_0_accessor_storage;
   get [_a = a]() {
-    return this.#_a_computed_accessor_storage;
+    return this.#_0_accessor_storage;
   }
   set [a](value) {
-    this.#_a_computed_accessor_storage = value;
+    this.#_0_accessor_storage = value;
   }
-  #_foo$bar_computed_accessor_storage;
+  #_1_accessor_storage;
   get [_foo$bar2 = _foo$bar = foo.bar]() {
-    return this.#_foo$bar_computed_accessor_storage;
+    return this.#_1_accessor_storage;
   }
   set [_foo$bar](value) {
-    this.#_foo$bar_computed_accessor_storage = value;
+    this.#_1_accessor_storage = value;
   }
   #_d_accessor_storage;
   get d() {

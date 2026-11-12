@@ -96,7 +96,7 @@ impl TransformOptions {
             typescript: TypeScriptOptions::default(),
             decorator: DecoratorOptions {
                 legacy: true,
-                standard: true,
+                lower: true,
                 emit_decorator_metadata: true,
                 strict_null_checks: true,
             },
@@ -307,6 +307,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             jsx,
             env: EnvOptions {
                 module,
+                standard_decorators: env.standard_decorators,
                 es2026: ES2026Options {
                     explicit_resource_management: options.plugins.explicit_resource_management,
                 },

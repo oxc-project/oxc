@@ -872,6 +872,7 @@
     "./package.json": "./package.json"
   },
   "scripts": {
+    "generate": "node scripts/generate-decorator-helpers.mjs",
     "test": "node --test test/*.test.mjs"
   },
   "engines": {

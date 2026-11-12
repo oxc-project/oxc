@@ -9,7 +9,7 @@ Failures:
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-block-super-exec.test.js
 ReferenceError: originalB is not defined
     at dec (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-block-super-exec.test.js:30:16)
-    at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:78:34)
+    at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:121:34)
     at A.[Symbol.iterator] (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-block-super-exec.test.js:56:17)
     at [Symbol.iterator].next (<anonymous>)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-block-super-exec.test.js:63:15
@@ -25,7 +25,7 @@ AssertionError: expected false to be true // Object.is equality
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-method-private-environment-super-exec.test.js
 ReferenceError: originalB is not defined
     at dec (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-method-private-environment-super-exec.test.js:33:16)
-    at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:78:34)
+    at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:121:34)
     at A.[Symbol.iterator] (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-method-private-environment-super-exec.test.js:65:17)
     at [Symbol.iterator].next (<anonymous>)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-method-private-environment-super-exec.test.js:72:15
@@ -52,7 +52,7 @@ Error: Transform error
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-property-super-exec.test.js
 ReferenceError: originalB is not defined
     at dec (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-property-super-exec.test.js:32:16)
-    at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:78:34)
+    at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:121:34)
     at A.[Symbol.iterator] (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-property-super-exec.test.js:59:17)
     at [Symbol.iterator].next (<anonymous>)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes--to-es2015-replacement-static-property-super-exec.test.js:67:15
@@ -83,7 +83,7 @@ At file: /fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-block-super-exec.test.js
 ReferenceError: originalB is not defined
     at dec (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-block-super-exec.test.js:25:16)
-    at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:78:34)
+    at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:121:34)
     at A.[Symbol.iterator] (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-block-super-exec.test.js:46:17)
     at [Symbol.iterator].next (<anonymous>)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-block-super-exec.test.js:53:15
@@ -91,7 +91,7 @@ ReferenceError: originalB is not defined
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js
 ReferenceError: originalB is not defined
     at dec (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js:43:16)
-    at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:78:34)
+    at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:121:34)
     at A.[Symbol.iterator] (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js:75:17)
     at [Symbol.iterator].next (<anonymous>)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js:83:15
@@ -99,7 +99,7 @@ ReferenceError: originalB is not defined
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-method-private-environment-super-exec.test.js
 ReferenceError: originalB is not defined
     at dec (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-method-private-environment-super-exec.test.js:28:16)
-    at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:78:34)
+    at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:121:34)
     at A.[Symbol.iterator] (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-method-private-environment-super-exec.test.js:55:17)
     at [Symbol.iterator].next (<anonymous>)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-method-private-environment-super-exec.test.js:62:15
@@ -126,7 +126,7 @@ Error: Transform error
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-property-super-exec.test.js
 ReferenceError: originalB is not defined
     at dec (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-property-super-exec.test.js:27:16)
-    at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:78:34)
+    at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:121:34)
     at A.[Symbol.iterator] (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-property-super-exec.test.js:49:17)
     at [Symbol.iterator].next (<anonymous>)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-property-super-exec.test.js:57:15

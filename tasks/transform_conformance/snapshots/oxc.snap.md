@@ -211,7 +211,36 @@ x Output mismatch
 
 # legacy-decorators (20/106)
 * oxc/accessor/input.ts
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "_a", "_foo$bar", "_foo$bar2", "a", "dec", "foo"]
+rebuilt        : ScopeId(0): ["C", "_a", "_foo$bar", "_foo$bar2"]
+Reference symbol mismatch for "a":
+after transform: SymbolId(4) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(4) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "foo":
+after transform: SymbolId(5) "foo"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["babelHelpers"]
+rebuilt        : ["a", "babelHelpers", "dec", "foo"]
 
 * oxc/accessor-name-collision/input.ts
 Bindings mismatch:
@@ -235,8 +264,8 @@ rebuilt        : ["babelHelpers", "property"]
 
 * oxc/accessor-with-class-properties/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["C", "_a", "_a2", "_a_accessor_storage", "_a_computed_accessor_storage", "_b_accessor_storage", "_c_accessor_storage", "a", "dec"]
-rebuilt        : ScopeId(0): ["C", "_a", "_a2", "_a_accessor_storage", "_a_computed_accessor_storage", "_b_accessor_storage", "_c_accessor_storage"]
+after transform: ScopeId(0): ["C", "_0_accessor_storage", "_a", "_a2", "_a_accessor_storage", "_b_accessor_storage", "_c_accessor_storage", "a", "dec"]
+rebuilt        : ScopeId(0): ["C", "_0_accessor_storage", "_a", "_a2", "_a_accessor_storage", "_b_accessor_storage", "_c_accessor_storage"]
 Reference symbol mismatch for "a":
 after transform: SymbolId(4) "a"
 rebuilt        : <None>

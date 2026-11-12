@@ -5,6 +5,10 @@ use oxc_compat_data::generate;
 use oxc_tasks_common::project_root;
 
 fn main() {
+    if std::env::args().any(|arg| arg == "--generate-only") {
+        generate();
+        return;
+    }
     let cwd = project_root().join("tasks/compat_data");
 
     if !cwd.join("compat-table").exists() {

@@ -150,16 +150,13 @@ export interface DecoratorOptions {
   /**
    * Lower standard decorators and auto-accessors.
    *
-   * Set to `false` with an `esnext` target to preserve this syntax for a later transform
-   * while stripping TypeScript types. `legacy: true` takes precedence over this option.
-   *
-   * Target-selected transforms still run. Preserving this syntax requires targets that
-   * keep class fields native; targets that lower class fields report an error for classes
-   * with decorators or auto-accessors.
+   * Set to `false` to preserve this syntax for a later transform at any target while
+   * stripping TypeScript types. Other target-selected transforms still run on unrelated
+   * syntax. `legacy: true` takes precedence over this option.
    *
    * @default true
    */
-  standard?: boolean
+  lower?: boolean
   /**
    * Enables emitting decorator metadata.
    *

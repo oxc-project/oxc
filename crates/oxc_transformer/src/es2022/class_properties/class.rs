@@ -3,7 +3,6 @@
 
 use oxc_allocator::{Address, ArenaVec, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::ast::*;
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SPAN;
 use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
@@ -19,7 +18,8 @@ use crate::{
     utils::{
         ast_builder::{create_assignment, create_new_weakset, create_variable_declaration},
         decorated_class::{
-            class_body_has_auto_accessors, class_body_has_decorators, class_lowered_for_decorators,
+            class_body_has_auto_accessors, class_body_lowered_for_decorators,
+            class_lowered_for_decorators,
         },
     },
 };
@@ -113,13 +113,8 @@ impl<'a> ClassProperties<'a> {
         // Standard decorators. A decorated class has all fields, private names and static blocks lowered.
         let standard = self.decorator_state.enabled() || self.preserve_standard_decorators;
         let body_has_decorators =
-            standard && (class_has_decorators || class_body_has_decorators(body));
+            standard && class_body_lowered_for_decorators(class_has_decorators, body);
         let body_has_auto_accessor = standard && class_body_has_auto_accessors(body);
-        if self.preserve_standard_decorators && (body_has_decorators || body_has_auto_accessor) {
-            ctx.state.error(OxcDiagnostic::error(
-                "Cannot lower class fields while preserving standard decorators or auto-accessors",
-            ).with_help("Use a target with native class fields or enable standard decorator lowering"));
-        }
         let is_decorated = self.decorator_state.enabled() && body_has_decorators;
         let has_auto_accessor = self.decorator_state.enabled() && body_has_auto_accessor;
         if self.decorator_state.enabled() {
@@ -140,7 +135,10 @@ impl<'a> ClassProperties<'a> {
                 }
             }
         }
-        if self.only_decorated_classes && !is_decorated {
+        if (self.only_decorated_classes && !is_decorated)
+            || (self.preserve_standard_decorators
+                && (body_has_decorators || body_has_auto_accessor))
+        {
             // Register private names only when they can shadow a lowered name in an enclosing
             // class. Other unresolved names belong to untouched classes and are left as-is.
             let mut private_names = IdentIndexMap::default();

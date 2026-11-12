@@ -16,19 +16,19 @@ export class Foo {
   set _prop(value) {
     this.#__prop_accessor_storage = value;
   }
-  #_prop_computed_accessor_storage;
+  #_0_accessor_storage;
   get [_prop2 = prop]() {
-    return this.#_prop_computed_accessor_storage;
+    return this.#_0_accessor_storage;
   }
   set [prop](value) {
-    this.#_prop_computed_accessor_storage = value;
+    this.#_0_accessor_storage = value;
   }
-  #__prop_computed_accessor_storage;
+  #_1_accessor_storage;
   get [_prop3 = _prop]() {
-    return this.#__prop_computed_accessor_storage;
+    return this.#_1_accessor_storage;
   }
   set [_prop](value) {
-    this.#__prop_computed_accessor_storage = value;
+    this.#_1_accessor_storage = value;
   }
 }
 babelHelpers.decorate([property()], Foo.prototype, "prop", null);

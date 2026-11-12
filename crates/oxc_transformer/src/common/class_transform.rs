@@ -2,8 +2,9 @@ use oxc_ast::ast::Class;
 
 use crate::{
     decorator::DecoratorMode,
-    es2022::{ClassPropertiesOptions, ES2022Options},
-    utils::decorated_class::class_lowered_for_decorators,
+    es2022::ClassPropertiesOptions,
+    options::EnvOptions,
+    utils::decorated_class::{class_body_has_auto_accessors, class_lowered_for_decorators},
 };
 
 /// Program-wide ownership of class field and static block lowering.
@@ -29,7 +30,14 @@ pub enum ClassTransform {
 }
 
 impl ClassTransform {
-    pub fn new(options: ES2022Options, decorator_mode: DecoratorMode) -> Self {
+    pub fn new(env: &EnvOptions, decorator_mode: DecoratorMode) -> Self {
+        let options = env.es2022;
+        let decorator_mode =
+            if decorator_mode == DecoratorMode::Standard && !env.standard_decorators {
+                DecoratorMode::Preserve
+            } else {
+                decorator_mode
+            };
         if let Some(properties_options) = options.class_properties {
             Self::ClassProperties {
                 options: properties_options,
@@ -49,9 +57,14 @@ impl ClassTransform {
     ///
     /// Callers must retain the result if they need it after decorators and accessors are removed.
     pub fn handles_class_fields(self, class: &Class<'_>) -> bool {
-        self.transforms_fields()
-            || (matches!(self, Self::StandardDecorators { .. })
-                && class_lowered_for_decorators(class))
+        match self {
+            Self::ClassProperties { decorator_mode: DecoratorMode::Preserve, .. } => {
+                !class_lowered_for_decorators(class) && !class_body_has_auto_accessors(&class.body)
+            }
+            Self::ClassProperties { .. } => true,
+            Self::StandardDecorators { .. } => class_lowered_for_decorators(class),
+            Self::None | Self::StaticBlocks => false,
+        }
     }
 
     /// Whether class-properties owns field lowering and initialization order for all classes.
@@ -59,6 +72,6 @@ impl ClassTransform {
     /// TypeScript must leave field lowering to it, and legacy decorators must leave class-alias
     /// initialization to it instead of inserting an alias assignment in a static block.
     pub fn transforms_fields(self) -> bool {
-        matches!(self, Self::ClassProperties { .. })
+        matches!(self, Self::ClassProperties { decorator_mode, .. } if decorator_mode != DecoratorMode::Preserve)
     }
 }

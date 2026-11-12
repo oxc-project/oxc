@@ -77,6 +77,10 @@ impl EngineTargets {
     /// Use [`Self::supports_es_feature`] for a strict positive capability query.
     pub fn has_feature(&self, feature: ESFeature) -> bool {
         let feature_engine_targets = &features()[&feature];
+        // Proposals have no ES edition. Missing engine support requires lowering, including esnext.
+        if !feature_engine_targets.contains_key(&Engine::Es) {
+            return !self.supports_es_feature(feature);
+        }
         for (engine, feature_version) in feature_engine_targets.iter() {
             if let Some(target_version) = self.get(engine) {
                 if *engine == Engine::Es {
@@ -101,6 +105,14 @@ impl EngineTargets {
 
         let feature_engine_targets = &features()[&feature];
         self.iter().all(|(engine, target_version)| {
+            // Browser targets include an implicit esnext. For proposals, only the engines decide
+            // support; an edition-only target still cannot support an unstandardized feature.
+            if *engine == Engine::Es
+                && self.len() > 1
+                && !feature_engine_targets.contains_key(engine)
+            {
+                return true;
+            }
             feature_engine_targets.get(engine).is_some_and(|feature_version| {
                 if *engine == Engine::Es {
                     target_version.0 >= feature_version.0
@@ -183,6 +195,16 @@ fn test_displayed_value_is_parsable() {
     let s = target.to_string();
     let parsed = EngineTargets::from_target(&s).unwrap();
     assert_eq!(target.0, parsed.0);
+}
+
+#[test]
+fn test_standard_decorators_require_lowering() {
+    assert!(EngineTargets::default().has_feature(ESFeature::StandardDecorators));
+    for target in ["es2015", "esnext", "safari16", "chrome999", "es2022,node16"] {
+        let targets = EngineTargets::from_target(target).unwrap();
+        assert!(targets.has_feature(ESFeature::StandardDecorators), "{target}");
+        assert!(!targets.supports_es_feature(ESFeature::StandardDecorators), "{target}");
+    }
 }
 
 #[test]

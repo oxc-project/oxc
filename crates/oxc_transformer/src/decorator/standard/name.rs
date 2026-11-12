@@ -3,7 +3,7 @@
 use oxc_allocator::{Address, ArenaVec, GetAddress, TakeIn};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_str::{JSStr, Str};
+use oxc_str::JSStr;
 use oxc_traverse::Ancestor;
 
 use crate::{
@@ -26,14 +26,7 @@ impl<'a> StandardDecoratorState<'a> {
         key: &PropertyKey<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<JSStr<'a>> {
-        match key {
-            PropertyKey::StaticIdentifier(ident) => Some(ident.name.into()),
-            PropertyKey::StringLiteral(lit) => Some(lit.value),
-            PropertyKey::PrivateIdentifier(ident) => {
-                Some(Str::from_strs_array_in(["#", &ident.name], ctx).into())
-            }
-            _ => None,
-        }
+        super::super::accessor::static_key_name(key, ctx)
     }
 
     /// Preserve named evaluation before a property initializer is moved or its key is rewritten.

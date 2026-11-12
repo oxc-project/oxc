@@ -262,7 +262,7 @@ pub struct ClassProperties<'a> {
     /// If `true`, only transform classes which have decorators.
     /// Used when target supports class fields, but decorators need lowering.
     only_decorated_classes: bool,
-    /// Diagnose field lowering which cannot preserve standard proposal syntax.
+    /// Leave classes with standard decorators or auto-accessors native.
     preserve_standard_decorators: bool,
 
     // ----- State used during all phases of transform -----
@@ -406,7 +406,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
         target: &mut AssignmentTarget<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.only_decorated_classes
+        if (self.only_decorated_classes || self.preserve_standard_decorators)
             && let AssignmentTarget::PrivateFieldExpression(field) = target
             && !self.private_field_needs_lowering(&field.field)
         {
@@ -451,7 +451,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
 impl<'a> ClassProperties<'a> {
     /// Native private names can share an optional chain with private names that need lowering.
     fn private_field_needs_lowering(&mut self, ident: &PrivateIdentifier<'a>) -> bool {
-        !self.only_decorated_classes
+        !(self.only_decorated_classes || self.preserve_standard_decorators)
             || matches!(
                 self.classes_stack.resolve_private_name(ident),
                 ResolvedPrivateName::Lowered { .. }
@@ -491,7 +491,7 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.only_decorated_classes
+        if (self.only_decorated_classes || self.preserve_standard_decorators)
             && let Some(ident) = Self::direct_private_ident(expr)
             && !self.private_field_needs_lowering(ident)
         {

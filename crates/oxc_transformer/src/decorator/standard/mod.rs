@@ -15,6 +15,19 @@
 //! __runInitializers(_init, 1, Class);                     // class extra initializers
 //! ```
 //!
+//! Undecorated auto-accessors are rewritten in place when class fields are native. Standard and
+//! legacy decorators share the storage/getter/setter builder. Static accessors use a class reference
+//! as their receiver, so inherited accessors continue to access the defining class's storage.
+//!
+//! The `StandardDecorators` compatibility feature covers decorators and auto-accessors. It has no
+//! ES edition or engine support yet, so default and `esnext` targets lower both. `decorator.lower:
+//! false` preserves both at any target while other syntax transforms and TypeScript erasure run.
+//!
+//! Babel's 2023-* decorator fixtures are execution oracles, not output snapshots: their helper
+//! protocol differs from ours. Local output fixtures cover Oxc's lowering choices. Optional calls
+//! on lowered private fields use `?.bind`, so an undefined private callee short-circuits. This also
+//! affects undecorated classes at targets which lower private fields.
+//!
 //! `StandardDecoratorState` is split by concern: `element` collects decorators, `accessor`
 //! lowers `accessor` properties, `name` handles named evaluation, and `sequence` emits the
 //! decorator calls. Class-properties drives them in evaluation order; see
