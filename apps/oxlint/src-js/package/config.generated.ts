@@ -352,6 +352,7 @@ export type ReturnAwaitOption = "in-try-catch" | "always" | "error-handling-corr
 export type PathOption = "always" | "never";
 export type TypesOption = "always" | "never" | "prefer-import";
 export type BomOptionType = "always" | "never";
+export type ConsistentConditionalObjectSpreadConfig = "logical" | "ternary";
 export type NonZero = "greater-than" | "not-equal";
 export type ExplicitTimerDelayMode = "always" | "never";
 export type ModuleStylesOverride =
@@ -1539,6 +1540,8 @@ export interface DummyRuleMap {
   "unicode-bom"?: RuleNoConfig | [AllowWarnDeny, BomOptionType];
   "unicorn/catch-error-name"?: RuleNoConfig | [AllowWarnDeny, CatchErrorNameConfig];
   "unicorn/consistent-assert"?: RuleNoConfig;
+  "unicorn/consistent-conditional-object-spread"?:
+    RuleNoConfig | [AllowWarnDeny, ConsistentConditionalObjectSpreadConfig];
   "unicorn/consistent-date-clone"?: RuleNoConfig;
   "unicorn/consistent-empty-array-spread"?: RuleNoConfig;
   "unicorn/consistent-existence-index-check"?: RuleNoConfig;
@@ -2097,6 +2100,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, UnifiedSignaturesOptions]
     | [AllowWarnDeny, BomOptionType]
     | [AllowWarnDeny, CatchErrorNameConfig]
+    | [AllowWarnDeny, ConsistentConditionalObjectSpreadConfig]
     | [AllowWarnDeny, ConsistentFunctionScoping]
     | [AllowWarnDeny, ExplicitLengthCheck]
     | [AllowWarnDeny, ExplicitTimerDelayMode]
