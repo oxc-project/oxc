@@ -103,6 +103,10 @@ example tool *args='':
 benchmark:
   cargo benchmark
 
+# Build parser, transform, or minify with profile-guided optimization (or use `all`)
+pgo *args:
+  pnpm node tasks/pgo/pgo.mjs {{args}}
+
 # Run benchmarks for a single component
 benchmark-one *args:
   cargo benchmark --bench {{args}} --no-default-features --features {{ if args == "linter" { "linter" } else { "compiler" } }}
