@@ -196,6 +196,9 @@ impl<'a, 'b> PossibleJestNode<'a, 'b> {
         let reference = ctx.scoping().get_reference(ident.reference_id());
         let original = if let Some(symbol_id) = reference.symbol_id() {
             if !ctx.scoping().symbol_flags(symbol_id).is_import() {
+                if !ctx.frameworks().is_vitest() {
+                    return None;
+                }
                 return Some(Self {
                     node,
                     original: Some(resolve_extended_vitest_test(ctx.semantic(), symbol_id)?),
@@ -229,14 +232,15 @@ impl<'a, 'b> PossibleJestNode<'a, 'b> {
 pub fn collect_possible_jest_call_node<'a, 'c>(
     ctx: &'c LintContext<'a>,
 ) -> Vec<PossibleJestNode<'a, 'c>> {
-    iter_possible_jest_call_node(ctx.semantic()).collect()
+    iter_possible_jest_call_node(ctx).collect()
 }
 
 /// Iterate over all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be an iter over node `expect(1)` and node `expect(1).toBe(1)`.
 pub fn iter_possible_jest_call_node<'a, 'c>(
-    semantic: &'c Semantic<'a>,
+    ctx: &'c LintContext<'a>,
 ) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
+    let semantic = ctx.semantic();
     // Some people may write codes like below, we need lookup imported test function and global test function.
     // ```
     // import { jest as Jest } from '@jest/globals';
@@ -245,11 +249,12 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
     //     expect(1 + 2).toEqual(3);
     // });
     // ```
-    let reference_id_with_original_list = collect_ids_referenced_to_import(semantic).chain(
-        collect_ids_referenced_to_global(semantic)
-            // set the original of global test function to None
-            .map(|id| (id, None)),
-    );
+    let reference_id_with_original_list =
+        collect_ids_referenced_to_import(semantic, ctx.frameworks().is_vitest()).chain(
+            collect_ids_referenced_to_global(semantic)
+                // set the original of global test function to None
+                .map(|id| (id, None)),
+        );
 
     // get the longest valid chain of Jest Call Expression
     reference_id_with_original_list.flat_map(move |(reference_id, original)| {
@@ -280,12 +285,13 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
 
 fn collect_ids_referenced_to_import<'a, 'c>(
     semantic: &'c Semantic<'a>,
+    resolve_extended: bool,
 ) -> impl Iterator<Item = (ReferenceId, Option<&'a str>)> + 'c {
     semantic
         .scoping()
         .resolved_references()
         .enumerate()
-        .filter_map(|(symbol_id, reference_ids)| {
+        .filter_map(move |(symbol_id, reference_ids)| {
             let symbol_id = SymbolId::from_usize(symbol_id);
             let original = if semantic.scoping().symbol_flags(symbol_id).is_import() {
                 let id = semantic.scoping().symbol_declaration(symbol_id);
@@ -303,6 +309,9 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 }
                 find_original_name(import_decl, name)
             } else {
+                if !resolve_extended {
+                    return None;
+                }
                 Some(resolve_extended_vitest_test(semantic, symbol_id)?)
             };
 
