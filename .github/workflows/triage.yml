@@ -1,9 +1,9 @@
 # Automatically investigates bug reports and can open a pull request with a verified fix.
 # Repository setup required before this job will run:
-#   - Install the oxc-guard GitHub App on this repository with Contents, Issues,
+#   - Install the oxc-captain GitHub App on this repository with Contents, Issues,
 #     and Pull requests write access.
-#   - CAPTAIN_ID: the oxc-guard GitHub App's client ID, as a repository secret.
-#   - CAPTAIN_KEY: the oxc-guard GitHub App's private key.
+#   - CAPTAIN_ID: the oxc-captain GitHub App's client ID, as a repository secret.
+#   - CAPTAIN_KEY: the oxc-captain GitHub App's private key.
 #   - CLOUDFLARE_API_KEY: a Workers AI API token with Workers AI Read and Edit.
 #   - CLOUDFLARE_ACCOUNT_ID: the Cloudflare account ID.
 
@@ -31,7 +31,7 @@ jobs:
       !github.event.issue.pull_request &&
       (github.event.action != 'created' ||
        (github.event.comment.user.login != 'github-actions[bot]' &&
-        github.event.comment.user.login != 'oxc-guard[bot]'))
+        github.event.comment.user.login != 'oxc-captain[bot]'))
     runs-on: ubuntu-latest
     # GitHub App installation tokens expire after one hour.
     timeout-minutes: 55
@@ -57,7 +57,7 @@ jobs:
           tools: just,cargo-shear@1.13.1,cargo-insta,typos-cli,ast-grep
           components: clippy rustfmt
 
-      - name: Create oxc-guard token
+      - name: Create oxc-captain token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         id: app-token
         with:
@@ -71,9 +71,9 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          bot_user_id="$(gh api 'users/oxc-guard[bot]' --jq .id)"
-          git config user.name "oxc-guard[bot]"
-          git config user.email "${bot_user_id}+oxc-guard[bot]@users.noreply.github.com"
+          bot_user_id="$(gh api 'users/oxc-captain[bot]' --jq .id)"
+          git config user.name "oxc-captain[bot]"
+          git config user.email "${bot_user_id}+oxc-captain[bot]@users.noreply.github.com"
 
       # The pinned action expects its state labels plus at least one "- P" and
       # "pkg:" label, but does not create them itself.
@@ -96,4 +96,4 @@ jobs:
           triage-skill: .agents/skills/triage
           pr-skill: .agents/skills/pr-writer
           auto-pr-on-fix: true
-          bot-logins: oxc-guard[bot]
+          bot-logins: oxc-captain[bot]
