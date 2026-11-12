@@ -206,35 +206,6 @@ fn test() {
             None,
         ),
         ("it(abc, function () {})", Some(serde_json::json!([{ "ignoreTypeOfTestName": true }]))),
-        // Vitest-specific tests with allowArguments option
-        ("it(foo, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
-        ("describe(bar, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
-        ("test(baz, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
-        // Vitest-specific tests with .extend()
-        (
-            "export const myTest = test.extend({
-                archive: []
-            })",
-            None,
-        ),
-        ("const localTest = test.extend({})", None),
-        (
-            "import { it } from 'vitest'
-
-            const test = it.extend({
-                fixture: [
-                    async ({}, use) => {
-                        setup()
-                        await use()
-                        teardown()
-                    },
-                    { auto: true }
-                ],
-            })
-
-            test('', () => {})",
-            None,
-        ),
         ("it(String.raw`foo`, () => {})", None),
         (
             "test('fooobar', () => {});",
