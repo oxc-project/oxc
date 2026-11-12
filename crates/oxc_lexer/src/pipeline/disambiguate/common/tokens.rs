@@ -10,6 +10,7 @@ use crate::{
 };
 
 use crate::pipeline::{
+    bitmap::Bitmap,
     bytes::{is_digit, line_break_in},
     keywords::kw_match_at,
     operators::opmap_longest,
@@ -92,8 +93,8 @@ impl<'a> TokensView<'a> {
     #[inline(always)]
     pub unsafe fn new(
         src: *const u8,
-        st: *const u64,
-        opch: *const u64,
+        st: Bitmap,
+        opch: Bitmap,
         kind: *const u8,
         n: usize,
         ts: bool,
@@ -106,8 +107,8 @@ impl<'a> TokensView<'a> {
         let nb = n.div_ceil(64) + 1;
         Self {
             src: slice::from_raw_parts(src, n + PAD),
-            st: slice::from_raw_parts(st, nb),
-            opch: slice::from_raw_parts(opch, nb),
+            st: slice::from_raw_parts(st.as_ptr(), nb),
+            opch: slice::from_raw_parts(opch.as_ptr(), nb),
             kind: slice::from_raw_parts(kind, nb * 64),
             n,
             ts,

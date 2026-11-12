@@ -1,165 +1,123 @@
 use oxc_simd::{Avx2, Cpu, DynCpu, Vec256, cpu_multiversion, cpu_version};
 
-/// Get bit `i`.
-///
-/// Returns `true` if the bit is set, `false` if it is clear.
-///
-/// # SAFETY
-///
-/// - `bm` must be aligned for `u64`.
-/// - `bm` must be valid for reads of `(i / 64) + 1` words.
-#[cpu_multiversion]
-#[inline(always)]
-pub(super) unsafe fn bm_get(bm: *const u64, i: usize, _cpu: impl Cpu) -> bool {
-    (*bm.add(i >> 6) >> (i & 63)) & 1 != 0
-}
+/// One bit per source byte, a u64 per 64-byte block; no method checks bounds.
+#[derive(Clone, Copy)]
+pub(super) struct Bitmap(*mut u64);
 
-/// Get index of the first clear bit at or after `i`.
-///
-/// If every bit in `i..n` is set, returns `n`.
-///
-/// # SAFETY
-///
-/// - `i` must be `<= n`.
-/// - `bm` must be aligned for `u64`.
-/// - `bm` must be valid for reads of `n.div_ceil(64) + 1` words.
-///   The last word is read only when `i` is `n` and `n` is a multiple of 64.
-#[cpu_multiversion]
-#[inline(always)]
-pub(super) unsafe fn bm_next0(bm: *const u64, i: usize, n: usize, _cpu: impl Cpu) -> usize {
-    let mut w = i >> 6;
-    let mut inv = !*bm.add(w) & !((1u64 << (i & 63)).wrapping_sub(1));
-    while inv == 0 {
-        w += 1;
-        if (w << 6) >= n {
-            return n;
+impl Bitmap {
+    pub(super) fn new(ptr: *mut u64) -> Self {
+        Self(ptr)
+    }
+
+    pub(super) fn as_ptr(self) -> *mut u64 {
+        self.0
+    }
+
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) unsafe fn block(self, block_idx: usize, _cpu: impl Cpu) -> u64 {
+        *self.0.add(block_idx)
+    }
+
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) unsafe fn get(self, i: usize, _cpu: impl Cpu) -> bool {
+        (*self.0.add(i >> 6) >> (i & 63)) & 1 != 0
+    }
+
+    /// First clear bit at or after i, or n if bits i..n are all set.
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) unsafe fn next0(self, i: usize, n: usize, _cpu: impl Cpu) -> usize {
+        let mut w = i >> 6;
+        // Reads one block past the source when i == n and n is a multiple of 64.
+        let mut inv = !*self.0.add(w) & !((1u64 << (i & 63)).wrapping_sub(1));
+        while inv == 0 {
+            w += 1;
+            if (w << 6) >= n {
+                return n;
+            }
+            inv = !*self.0.add(w);
         }
-        inv = !*bm.add(w);
+        let r = (w << 6) + inv.trailing_zeros() as usize;
+        if r < n { r } else { n }
     }
-    let r = (w << 6) + inv.trailing_zeros() as usize;
-    if r < n { r } else { n }
-}
 
-/// Get index of the last set bit before `p`.
-///
-/// If bits `0..p` are all clear, returns `-1`.
-///
-/// The scan always runs down to bit 0, so there is no lower bound parameter.
-/// Reporting absence as `-1` is why the return type is `i64`, not `usize`.
-///
-/// # SAFETY
-///
-/// - `bm` must be aligned for `u64`.
-/// - `bm` must be valid for reads of `p.div_ceil(64)` words.
-///   Nothing is read when `p` is 0.
-#[cpu_multiversion]
-#[inline(always)]
-pub(super) unsafe fn bm_prev1(bm: *const u64, p: usize, _cpu: impl Cpu) -> i64 {
-    if p == 0 {
-        return -1;
-    }
-    let i = p - 1;
-    let mut w = (i >> 6) as i64;
-    let lim = i & 63;
-    let mask = if lim == 63 { !0u64 } else { (1u64 << (lim + 1)) - 1 };
-    let x = *bm.add(w as usize) & mask;
-    if x != 0 {
-        return (w << 6) + (63 - x.leading_zeros() as i64);
-    }
-    w -= 1;
-    while w >= 0 {
-        let x = *bm.add(w as usize);
+    /// Last set bit before p, or -1 if there is none.
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) unsafe fn prev1(self, p: usize, _cpu: impl Cpu) -> i64 {
+        if p == 0 {
+            return -1;
+        }
+        let i = p - 1;
+        let mut w = (i >> 6) as i64;
+        let lim = i & 63;
+        let mask = if lim == 63 { !0u64 } else { (1u64 << (lim + 1)) - 1 };
+        let x = *self.0.add(w as usize) & mask;
         if x != 0 {
             return (w << 6) + (63 - x.leading_zeros() as i64);
         }
         w -= 1;
+        while w >= 0 {
+            let x = *self.0.add(w as usize);
+            if x != 0 {
+                return (w << 6) + (63 - x.leading_zeros() as i64);
+            }
+            w -= 1;
+        }
+        -1
     }
-    -1
-}
 
-/// Set bit `i`.
-///
-/// # SAFETY
-///
-/// - `bm` must be aligned for `u64`.
-/// - `bm` must be valid for reads and writes of `(i / 64) + 1` words.
-#[cpu_multiversion]
-#[inline(always)]
-pub(super) unsafe fn bm_set(bm: *mut u64, i: usize, _cpu: impl Cpu) {
-    *bm.add(i >> 6) |= 1u64 << (i & 63);
-}
-
-/// Clear bit `i`.
-///
-/// # SAFETY
-///
-/// - `bm` must be aligned for `u64`.
-/// - `bm` must be valid for reads and writes of `(i / 64) + 1` words.
-#[cpu_multiversion]
-#[inline(always)]
-pub(super) unsafe fn bm_clear(bm: *mut u64, i: usize, _cpu: impl Cpu) {
-    *bm.add(i >> 6) &= !(1u64 << (i & 63));
-}
-
-/// Clear bits `a` to `b` inclusive.
-///
-/// If `a > b`, this is a no-op - no bits are cleared.
-///
-/// # SAFETY
-///
-/// - `bm` must be aligned for `u64`.
-/// - `bm` must be valid for reads and writes of `(b / 64) + 1` words.
-///   Nothing is accessed when `a > b`.
-#[cpu_multiversion]
-#[inline(always)]
-pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize, _cpu: impl Cpu) {
-    if a > b {
-        return;
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) unsafe fn set(self, i: usize, _cpu: impl Cpu) {
+        *self.0.add(i >> 6) |= 1u64 << (i & 63);
     }
-    let wa = a >> 6;
-    let wb = b >> 6;
-    let lo = (!0u64) << (a & 63);
-    let hi = if (b & 63) == 63 { !0u64 } else { (1u64 << ((b & 63) + 1)) - 1 };
-    if wa == wb {
-        *bm.add(wa) &= !(lo & hi);
-        return;
-    }
-    *bm.add(wa) &= !lo;
-    let mut w = wa + 1;
-    while w < wb {
-        *bm.add(w) = 0;
-        w += 1;
-    }
-    *bm.add(wb) &= !hi;
-}
 
-/// Check if any bit is set in the first `nw` words.
-///
-/// Returns `true` if any bit is set, `false` if no bits are set.
-///
-/// The unit is words, not the bit indices all other functions in this file take.
-///
-/// # SAFETY
-///
-/// - `bm` must be aligned for `u64`.
-/// - `bm` must be valid for reads of `nw` words.
-#[cpu_multiversion]
-#[inline(always)]
-pub(super) unsafe fn bm_any(bm: *const u64, nw: usize, cpu: impl Cpu) -> bool {
-    match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => bm_any_avx2(bm, nw, cpu),
-        _ => bm_any_generic(bm, nw),
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) unsafe fn clear(self, i: usize, _cpu: impl Cpu) {
+        *self.0.add(i >> 6) &= !(1u64 << (i & 63));
+    }
+
+    /// Clears bits a..=b, or nothing if a > b.
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) unsafe fn clear_range(self, a: usize, b: usize, _cpu: impl Cpu) {
+        if a > b {
+            return;
+        }
+        let wa = a >> 6;
+        let wb = b >> 6;
+        let lo = (!0u64) << (a & 63);
+        let hi = if (b & 63) == 63 { !0u64 } else { (1u64 << ((b & 63) + 1)) - 1 };
+        if wa == wb {
+            *self.0.add(wa) &= !(lo & hi);
+            return;
+        }
+        *self.0.add(wa) &= !lo;
+        let mut w = wa + 1;
+        while w < wb {
+            *self.0.add(w) = 0;
+            w += 1;
+        }
+        *self.0.add(wb) &= !hi;
+    }
+
+    #[cpu_multiversion]
+    #[inline(always)]
+    pub(super) unsafe fn any(self, block_count: usize, cpu: impl Cpu) -> bool {
+        match DynCpu::from(cpu) {
+            DynCpu::Avx2(cpu) => any_avx2(self.0, block_count, cpu),
+            _ => any_generic(self.0, block_count),
+        }
     }
 }
 
-/// [`bm_any`] for AVX2.
-///
-/// # SAFETY
-///
-/// Same as [`bm_any`].
 #[cpu_version(Avx2)]
 #[inline]
-unsafe fn bm_any_avx2(bm: *const u64, nw: usize, cpu: Avx2) -> bool {
+unsafe fn any_avx2(bm: *const u64, nw: usize, cpu: Avx2) -> bool {
     let mut w = 0usize;
     while w + 4 <= nw {
         let v = Vec256::load_unaligned(bm.add(w).cast::<u8>(), cpu);
@@ -177,14 +135,9 @@ unsafe fn bm_any_avx2(bm: *const u64, nw: usize, cpu: Avx2) -> bool {
     false
 }
 
-/// [`bm_any`] for all other CPUs.
-///
-/// # SAFETY
-///
-/// Same as [`bm_any`].
 #[cpu_version(Generic)]
 #[inline]
-unsafe fn bm_any_generic(bm: *const u64, nw: usize) -> bool {
+unsafe fn any_generic(bm: *const u64, nw: usize) -> bool {
     let mut w = 0usize;
     while w + 4 <= nw {
         if (*bm.add(w) | *bm.add(w + 1) | *bm.add(w + 2) | *bm.add(w + 3)) != 0 {

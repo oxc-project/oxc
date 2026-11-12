@@ -10,7 +10,7 @@ use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::token::TokenKind;
 
-use crate::pipeline::keywords::kw_match;
+use crate::pipeline::{bitmap::Bitmap, keywords::kw_match};
 
 pub const KWB: usize = 64;
 
@@ -21,7 +21,7 @@ pub const KWB: usize = 64;
 pub(super) unsafe fn kw_flush(
     ts: bool,
     src: *const u8,
-    word: *const u64,
+    word: Bitmap,
     kind: *mut u8,
     kwpos: *const u32,
     k: usize,
@@ -45,7 +45,7 @@ pub(super) unsafe fn kw_flush(
 #[inline(never)]
 unsafe fn kw_verify_batch<const IS_TS: bool>(
     src: *const u8,
-    word: *const u64,
+    word: Bitmap,
     kind: *mut u8,
     pos: *const u32,
     k: usize,
@@ -78,7 +78,7 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
 pub(super) unsafe fn kw_match_word(
     ts: bool,
     src: *const u8,
-    word: *const u64,
+    word: Bitmap,
     pos: usize,
     cpu: impl Cpu,
 ) -> TokenKind {
@@ -103,8 +103,9 @@ pub(super) unsafe fn kw_match_word(
 /// `word` must be valid for reading 8 bytes from byte `pos / 8`.
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn word_len(word: *const u64, pos: usize, _cpu: impl Cpu) -> usize {
-    let x = ptr::read_unaligned((word as *const u8).add(pos >> 3) as *const u64) >> (pos & 7);
+unsafe fn word_len(word: Bitmap, pos: usize, _cpu: impl Cpu) -> usize {
+    let x =
+        ptr::read_unaligned((word.as_ptr() as *const u8).add(pos >> 3) as *const u64) >> (pos & 7);
     (!(x as u16)).trailing_zeros() as usize
 }
 
@@ -150,7 +151,7 @@ mod tests {
                 kw_flush(
                     is_ts,
                     src.as_ptr(),
-                    word_bitmap.as_ptr(),
+                    Bitmap::new(word_bitmap.as_mut_ptr()),
                     kinds.as_mut_ptr(),
                     positions.as_ptr(),
                     positions.len(),
