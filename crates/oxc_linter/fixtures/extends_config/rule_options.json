@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "no-console": ["error", { "allow": ["warn"] }],
+    "@typescript-eslint/no-unused-vars": ["warn", { "args": "none" }]
+  }
+}

@@ -13,12 +13,7 @@ working directory:
   ],
   "categories": {},
   "rules": {
-    "eqeqeq": [
-      "deny",
-      [
-        "always"
-      ]
-    ]
+    "eqeqeq": "deny"
   },
   "settings": {
     "jsx-a11y": {
