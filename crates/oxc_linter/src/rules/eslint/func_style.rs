@@ -246,10 +246,17 @@ impl FuncStyle {
         let FuncStyle(style, config) = self;
 
         if func.body.is_none()
-            || func
-                .id
-                .as_ref()
-                .is_some_and(|id| !ctx.scoping().symbol_redeclarations(id.symbol_id()).is_empty())
+            || func.id.as_ref().is_some_and(|id| {
+                ctx.scoping().symbol_redeclarations(id.symbol_id()).iter().any(|rd| {
+                    rd.flags.is_function()
+                        && ctx
+                            .nodes()
+                            .get_node(rd.declaration)
+                            .kind()
+                            .as_function()
+                            .is_some_and(Function::is_ts_declare_function)
+                })
+            })
         {
             return;
         }
@@ -897,4 +904,56 @@ fn test() {
     ];
 
     Tester::new(FuncStyle::NAME, FuncStyle::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn test_shared_type_names() {
+    use crate::tester::Tester;
+
+    let fail = vec![
+        (
+            "
+            export type input = string;
+            export function input() {
+              return '';
+            }
+            ",
+            Some(serde_json::json!(["expression"])),
+        ),
+        (
+            "
+            interface Output {
+              value: string;
+            }
+            function Output() {
+              return 1;
+            }
+            ",
+            Some(serde_json::json!(["expression"])),
+        ),
+        (
+            "
+            namespace Ns {
+              export type Value = number;
+            }
+            function Ns() {
+              return 1;
+            }
+            ",
+            Some(serde_json::json!(["expression"])),
+        ),
+        (
+            "
+            namespace Merged {
+              export const value = 1;
+            }
+            export function Merged() {
+              return 1;
+            }
+            ",
+            Some(serde_json::json!(["expression"])),
+        ),
+    ];
+
+    Tester::new(FuncStyle::NAME, FuncStyle::PLUGIN, vec![], fail).test();
 }
