@@ -12,14 +12,15 @@ use crate::{
 };
 
 use super::{
-    GlobSet, LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, categories::OxlintCategories,
+    GlobSet, LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, RuleConfig,
+    categories::OxlintCategories,
 };
 
 // TODO: support `categories` et. al. in overrides.
 #[derive(Debug, Clone)]
 pub struct ResolvedLinterState {
     // TODO: Arc + Vec -> SyncVec? It would save a pointer dereference.
-    pub rules: Arc<[(RuleEnum, AllowWarnDeny)]>,
+    pub rules: Arc<[(RuleEnum, RuleConfig)]>,
     pub config: Arc<LintConfig>,
 
     pub external_rules: Arc<[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)]>,
@@ -54,7 +55,7 @@ pub struct ResolvedOxlintOverride {
 
 #[derive(Debug, Clone)]
 pub struct ResolvedOxlintOverrideRules {
-    pub(crate) builtin_rules: Vec<(RuleEnum, AllowWarnDeny)>,
+    pub(crate) builtin_rules: Vec<(RuleEnum, RuleConfig)>,
     pub(crate) external_rules: Vec<(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)>,
 }
 
@@ -67,7 +68,7 @@ pub struct Config {
     /// Used as the base config for applying overrides
     /// NOTE: `AllowWarnDeny::Allow` should exist here to allow us to correctly
     ///       keep a rule disabled when an override is applied with a different plugin set
-    pub(crate) base_rules: Vec<(RuleEnum, AllowWarnDeny)>,
+    pub(crate) base_rules: Vec<(RuleEnum, RuleConfig)>,
 
     /// Categories specified at the root. This is used to resolve which rules
     /// should be enabled when a different plugin is enabled as part of an override.
@@ -83,7 +84,7 @@ impl Config {
     }
 
     pub fn new(
-        rules: Vec<(RuleEnum, AllowWarnDeny)>,
+        rules: Vec<(RuleEnum, RuleConfig)>,
         mut external_rules: Vec<(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)>,
         categories: OxlintCategories,
         config: LintConfig,
@@ -94,7 +95,7 @@ impl Config {
                 rules: Arc::from(
                     rules
                         .iter()
-                        .filter(|(_, severity)| severity.is_warn_deny())
+                        .filter(|(_, config)| config.severity.is_warn_deny())
                         .cloned()
                         .collect::<Vec<_>>()
                         .into_boxed_slice(),
@@ -115,7 +116,7 @@ impl Config {
         self.base.config.plugins
     }
 
-    pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
+    pub fn rules(&self) -> &Arc<[(RuleEnum, RuleConfig)]> {
         &self.base.rules
     }
 
@@ -219,18 +220,18 @@ impl Config {
                             None
                         }
                     }) {
-                        rules.entry(rule).or_insert(*severity);
+                        rules.entry(rule).or_insert_with(|| RuleConfig::new(*severity));
                     }
                     configured_plugins |= unconfigured_plugins;
                 }
             }
 
-            for (rule, severity) in &override_config.rules.builtin_rules {
-                if *severity == AllowWarnDeny::Allow {
+            for (rule, config) in &override_config.rules.builtin_rules {
+                if config.severity == AllowWarnDeny::Allow {
                     rules.remove(rule);
                 } else {
                     let _ = rules.remove(rule);
-                    rules.insert(rule.clone(), *severity);
+                    rules.insert(rule.clone(), config.clone());
                 }
             }
 
@@ -263,8 +264,10 @@ impl Config {
             Arc::new(config)
         };
 
-        let rules =
-            rules.into_iter().filter(|(_, severity)| severity.is_warn_deny()).collect::<Vec<_>>();
+        let rules = rules
+            .into_iter()
+            .filter(|(_, config)| config.severity.is_warn_deny())
+            .collect::<Vec<_>>();
 
         let external_rules = external_rules
             .into_iter()
@@ -333,8 +336,8 @@ impl ConfigStore {
             .collect::<FxHashSet<_>>();
 
         for override_config in self.base.overrides.iter() {
-            for (rule, severity) in &override_config.rules.builtin_rules {
-                if !severity.is_warn_deny() {
+            for (rule, config) in &override_config.rules.builtin_rules {
+                if !config.severity.is_warn_deny() {
                     continue;
                 }
                 if !type_aware_enabled && rule.is_tsgolint_rule() {
@@ -353,7 +356,7 @@ impl ConfigStore {
         Some(builtin_rules.len() + external_rules.len())
     }
 
-    pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
+    pub fn rules(&self) -> &Arc<[(RuleEnum, RuleConfig)]> {
         &self.base.base.rules
     }
 
@@ -441,12 +444,13 @@ mod test {
     };
 
     use rustc_hash::FxHashMap;
-    use serde_json::Value;
+    use serde_json::{Value, json};
     use smallvec::smallvec;
 
     use super::{ConfigStore, ExternalRuleId, ResolvedOxlintOverrides};
     use crate::{
-        AllowWarnDeny, ExternalOptionsId, ExternalPluginStore, LintPlugins, RuleCategory, RuleEnum,
+        AllowWarnDeny, ExternalOptionsId, ExternalPluginStore, LintPlugins, RuleCategory,
+        RuleConfig, RuleEnum,
         config::{
             ConfigStoreBuilder, GlobSet, LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
             categories::OxlintCategories,
@@ -467,8 +471,11 @@ mod test {
     }
 
     #[expect(clippy::default_trait_access)]
-    fn no_explicit_any() -> (RuleEnum, AllowWarnDeny) {
-        (RuleEnum::TypescriptNoExplicitAny(Default::default()), AllowWarnDeny::Warn)
+    fn no_explicit_any() -> (RuleEnum, RuleConfig) {
+        (
+            RuleEnum::TypescriptNoExplicitAny(Default::default()),
+            RuleConfig::new(AllowWarnDeny::Warn),
+        )
     }
 
     /// an empty ruleset is a no-op
@@ -553,7 +560,7 @@ mod test {
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
-                    AllowWarnDeny::Allow,
+                    RuleConfig::new(AllowWarnDeny::Allow),
                 )],
                 external_rules: vec![],
             },
@@ -591,7 +598,7 @@ mod test {
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
-                    AllowWarnDeny::Warn,
+                    RuleConfig::new(AllowWarnDeny::Warn),
                 )],
                 external_rules: vec![],
             },
@@ -628,11 +635,11 @@ mod test {
                 builtin_rules: vec![
                     (
                         RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
-                        AllowWarnDeny::Warn,
+                        RuleConfig::new(AllowWarnDeny::Warn),
                     ),
                     (
                         RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
-                        AllowWarnDeny::Warn,
+                        RuleConfig::new(AllowWarnDeny::Warn),
                     ),
                 ],
                 external_rules: vec![],
@@ -644,7 +651,7 @@ mod test {
             Config::new(
                 vec![(
                     RuleEnum::EslintAccessorPairs(EslintAccessorPairs::default()),
-                    AllowWarnDeny::Warn,
+                    RuleConfig::new(AllowWarnDeny::Warn),
                 )],
                 vec![],
                 OxlintCategories::default(),
@@ -669,10 +676,13 @@ mod test {
                 globals: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![
-                        (RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Warn),
+                        (
+                            RuleEnum::EslintCurly(EslintCurly::default()),
+                            RuleConfig::new(AllowWarnDeny::Warn),
+                        ),
                         (
                             RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
-                            AllowWarnDeny::Warn,
+                            RuleConfig::new(AllowWarnDeny::Warn),
                         ),
                     ],
                     external_rules: vec![],
@@ -687,7 +697,7 @@ mod test {
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![(
                         RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
-                        AllowWarnDeny::Deny,
+                        RuleConfig::new(AllowWarnDeny::Deny),
                     )],
                     external_rules: vec![],
                 },
@@ -720,7 +730,7 @@ mod test {
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
-                    AllowWarnDeny::Deny,
+                    RuleConfig::new(AllowWarnDeny::Deny),
                 )],
                 external_rules: vec![],
             },
@@ -755,7 +765,7 @@ mod test {
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
-                    AllowWarnDeny::Deny,
+                    RuleConfig::new(AllowWarnDeny::Deny),
                 )],
                 external_rules: vec![],
             },
@@ -776,11 +786,11 @@ mod test {
 
         let app = store.resolve("App.tsx".as_ref()).rules;
         assert_eq!(app.len(), 1);
-        assert_eq!(app[0].1, AllowWarnDeny::Warn);
+        assert_eq!(app[0].1.severity, AllowWarnDeny::Warn);
 
         let src_app = store.resolve("src/App.tsx".as_ref()).rules;
         assert_eq!(src_app.len(), 1);
-        assert_eq!(src_app[0].1, AllowWarnDeny::Deny);
+        assert_eq!(src_app[0].1.severity, AllowWarnDeny::Deny);
     }
 
     #[test]
@@ -1026,7 +1036,7 @@ mod test {
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![(
                         RuleEnum::ReactJsxFilenameExtension(ReactJsxFilenameExtension::default()),
-                        AllowWarnDeny::Allow,
+                        RuleConfig::new(AllowWarnDeny::Allow),
                     )],
                     external_rules: vec![],
                 },
@@ -1048,7 +1058,7 @@ mod test {
         // Create base rules - jsx-filename-extension should be enabled by restriction category
         let base_rules = vec![(
             RuleEnum::ReactJsxFilenameExtension(ReactJsxFilenameExtension::default()),
-            AllowWarnDeny::Warn,
+            RuleConfig::new(AllowWarnDeny::Warn),
         )];
 
         let store = ConfigStore::new(
@@ -1123,7 +1133,7 @@ mod test {
     fn test_rule_config_override_replaces_properly() {
         let base_rules = vec![(
             RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
-            AllowWarnDeny::Deny,
+            RuleConfig::new(AllowWarnDeny::Deny),
         )];
         let override_rule =
             EslintNoUnusedVars::from_configuration(Value::from_str(r#"["local"]"#).unwrap())
@@ -1137,7 +1147,7 @@ mod test {
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::EslintNoUnusedVars(override_rule),
-                    AllowWarnDeny::Deny,
+                    RuleConfig::new(AllowWarnDeny::Deny),
                 )],
                 external_rules: vec![],
             },
@@ -1204,7 +1214,7 @@ mod test {
         // Base rules with jsx-filename-extension disabled
         let base_rules = vec![(
             RuleEnum::ReactJsxFilenameExtension(ReactJsxFilenameExtension::default()),
-            AllowWarnDeny::Allow, // Disabled at root
+            RuleConfig::new(AllowWarnDeny::Allow), // Disabled at root
         )];
 
         // Override adds typescript plugin
@@ -1242,11 +1252,11 @@ mod test {
         let base_config = LintConfig::default();
 
         let base_rules = vec![
-            (RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Deny),
+            (RuleEnum::EslintCurly(EslintCurly::default()), RuleConfig::new(AllowWarnDeny::Deny)),
             (
                 // This is a type-aware, tsgolint rule
                 RuleEnum::TypescriptNoMisusedPromises(TypescriptNoMisusedPromises::default()),
-                AllowWarnDeny::Deny,
+                RuleConfig::new(AllowWarnDeny::Deny),
             ),
         ];
 
@@ -1288,7 +1298,10 @@ mod test {
     #[test]
     fn test_number_of_rules_includes_external_rules() {
         let base_config = LintConfig::default();
-        let base_rules = vec![(RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Deny)];
+        let base_rules = vec![(
+            RuleEnum::EslintCurly(EslintCurly::default()),
+            RuleConfig::new(AllowWarnDeny::Deny),
+        )];
         let base = Config::new(
             base_rules,
             vec![(ExternalRuleId::from_usize(1), ExternalOptionsId::NONE, AllowWarnDeny::Warn)],
@@ -1521,6 +1534,61 @@ mod test {
     }
 
     #[test]
+    fn test_resolved_rule_options() {
+        let root = config_from_str_with_defaults(
+            r#"{
+                "rules": { "no-console": ["error", { "allow": ["warn"] }] },
+                "overrides": [
+                    {
+                        "files": ["**/*.ts"],
+                        "excludeFiles": ["**/*.skip.ts"],
+                        "rules": { "no-console": ["warn", { "allow": ["info"] }] }
+                    },
+                    {
+                        "files": ["**/*.test.ts"],
+                        "rules": { "no-console": ["error", { "allow": ["error"] }] }
+                    },
+                    {
+                        "files": ["**/*.disabled.ts", "**/*.reenabled.ts"],
+                        "rules": { "no-console": "off" }
+                    },
+                    {
+                        "files": ["**/*.defaults.ts", "**/*.reenabled.ts"],
+                        "rules": { "no-console": "warn" }
+                    }
+                ]
+            }"#,
+        );
+        let nested = config_from_str_with_defaults(
+            r#"{ "rules": { "no-console": ["error", { "allow": ["debug"] }] } }"#,
+        );
+        let store = ConfigStore::new(
+            root,
+            FxHashMap::from_iter([(PathBuf::from("nested"), nested)]),
+            ExternalPluginStore::default(),
+        );
+
+        for (path, severity, options) in [
+            ("file.js", AllowWarnDeny::Deny, Some(json!([{ "allow": ["warn"] }]))),
+            ("file.ts", AllowWarnDeny::Warn, Some(json!([{ "allow": ["info"] }]))),
+            ("file.skip.ts", AllowWarnDeny::Deny, Some(json!([{ "allow": ["warn"] }]))),
+            ("file.test.ts", AllowWarnDeny::Deny, Some(json!([{ "allow": ["error"] }]))),
+            ("file.defaults.ts", AllowWarnDeny::Warn, None),
+            ("file.reenabled.ts", AllowWarnDeny::Warn, None),
+            ("nested/file.ts", AllowWarnDeny::Deny, Some(json!([{ "allow": ["debug"] }]))),
+        ] {
+            let resolved = store.resolve(Path::new(path));
+            let (_, config) =
+                resolved.rules.iter().find(|(rule, _)| rule.name() == "no-console").unwrap();
+            assert_eq!(config.severity, severity, "{path}");
+            assert_eq!(config.options.as_deref().map(|options| json!(options)), options, "{path}");
+        }
+
+        let disabled = store.resolve(Path::new("file.disabled.ts"));
+        assert!(!disabled.rules.iter().any(|(rule, _)| rule.name() == "no-console"));
+    }
+
+    #[test]
     fn test_override_exclude_files_exclude_only_that_override() {
         let config = config_from_str_with_defaults(
             r#"
@@ -1573,7 +1641,7 @@ mod test {
 
         let base_rules = vec![(
             RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
-            AllowWarnDeny::Warn,
+            RuleConfig::new(AllowWarnDeny::Warn),
         )];
 
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {

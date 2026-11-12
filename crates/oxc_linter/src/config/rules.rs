@@ -76,7 +76,7 @@ impl From<ExternalRuleLookupError> for OverrideRulesError {
 pub(super) type RuleSet = FxHashMap<RuleEnum, RuleConfig>;
 
 /// Keeps original JSON options with the compiled rule's severity for config printing.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RuleConfig {
     pub severity: AllowWarnDeny,
     pub options: Option<Arc<[serde_json::Value]>>,

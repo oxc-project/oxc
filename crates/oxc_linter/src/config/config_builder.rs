@@ -505,7 +505,6 @@ impl ConfigStoreBuilder {
                 LintPlugins::try_from(r.plugin_name())
                     .is_ok_and(|plugin_name| plugins.contains(plugin_name))
             })
-            .map(|(rule, config)| (rule, config.severity))
             .collect();
         rules.sort_unstable_by_key(|(r, _)| r.id());
 
@@ -545,8 +544,7 @@ impl ConfigStoreBuilder {
                 )?;
 
                 // Convert to vectors
-                builtin_rules
-                    .extend(rules_map.into_iter().map(|(rule, config)| (rule, config.severity)));
+                builtin_rules.extend(rules_map);
                 external_rules.extend(
                     external_rules_map
                         .into_iter()
@@ -1299,10 +1297,10 @@ mod test {
             "override should enable the promise plugin"
         );
         assert!(resolved.rules.len() == 1, "only rules from the override should be applied");
-        let (rule, severity) = &resolved.rules[0];
+        let (rule, config) = &resolved.rules[0];
         assert_eq!(rule.plugin_name(), "typescript");
         assert_eq!(rule.name(), "no-inferrable-types");
-        assert_eq!(*severity, AllowWarnDeny::Deny);
+        assert_eq!(config.severity, AllowWarnDeny::Deny);
     }
 
     #[test]
@@ -1340,26 +1338,25 @@ mod test {
             update_rules_config
                 .rules()
                 .iter()
-                .any(|(r, severity)| r.name() == "no-debugger" && *severity == AllowWarnDeny::Warn)
+                .any(|(r, config)| r.name() == "no-debugger"
+                    && config.severity == AllowWarnDeny::Warn)
         );
         assert!(
             update_rules_config
                 .rules()
                 .iter()
-                .any(|(r, severity)| r.name() == "no-console" && *severity == AllowWarnDeny::Warn)
+                .any(|(r, config)| r.name() == "no-console"
+                    && config.severity == AllowWarnDeny::Warn)
         );
         assert!(
             !update_rules_config
                 .rules()
                 .iter()
-                .any(|(r, severity)| r.name() == "no-null" && *severity == AllowWarnDeny::Allow)
+                .any(|(r, config)| r.name() == "no-null" && config.severity == AllowWarnDeny::Allow)
         );
         assert!(
-            update_rules_config
-                .rules()
-                .iter()
-                .any(|(r, severity)| r.name() == "prefer-as-const"
-                    && *severity == AllowWarnDeny::Warn)
+            update_rules_config.rules().iter().any(|(r, config)| r.name() == "prefer-as-const"
+                && config.severity == AllowWarnDeny::Warn)
         );
     }
 
@@ -1376,7 +1373,7 @@ mod test {
         }
         "#,
         );
-        assert!(warn_all.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Warn));
+        assert!(warn_all.rules().iter().all(|(_, config)| config.severity == AllowWarnDeny::Warn));
 
         let deny_all = config_store_from_str(
             r#"
@@ -1389,7 +1386,7 @@ mod test {
         }
         "#,
         );
-        assert!(deny_all.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Deny));
+        assert!(deny_all.rules().iter().all(|(_, config)| config.severity == AllowWarnDeny::Deny));
 
         let allow_all = config_store_from_str(
             r#"
@@ -1402,7 +1399,9 @@ mod test {
         }
         "#,
         );
-        assert!(allow_all.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Allow));
+        assert!(
+            allow_all.rules().iter().all(|(_, config)| config.severity == AllowWarnDeny::Allow)
+        );
         assert_eq!(allow_all.number_of_rules(), 0);
 
         let allow_and_override_config = config_store_from_str(
@@ -1424,20 +1423,20 @@ mod test {
             allow_and_override_config
                 .rules()
                 .iter()
-                .any(|(r, severity)| r.name() == "no-var" && *severity == AllowWarnDeny::Warn)
+                .any(|(r, config)| r.name() == "no-var" && config.severity == AllowWarnDeny::Warn)
         );
         assert!(
             allow_and_override_config
                 .rules()
                 .iter()
-                .any(|(r, severity)| r.name() == "approx-constant"
-                    && *severity == AllowWarnDeny::Deny)
+                .any(|(r, config)| r.name() == "approx-constant"
+                    && config.severity == AllowWarnDeny::Deny)
         );
         assert!(
             allow_and_override_config
                 .rules()
                 .iter()
-                .any(|(r, severity)| r.name() == "no-null" && *severity == AllowWarnDeny::Deny)
+                .any(|(r, config)| r.name() == "no-null" && config.severity == AllowWarnDeny::Deny)
         );
     }
 
