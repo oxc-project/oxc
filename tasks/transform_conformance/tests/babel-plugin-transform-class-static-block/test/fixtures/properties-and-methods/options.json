@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    "transform-class-static-block",
+    [
+      "proposal-decorators",
+      {
+        "version": "2023-11"
+      }
+    ]
+  ]
+}

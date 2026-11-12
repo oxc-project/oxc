@@ -32,12 +32,6 @@ pub enum ClassTransform {
 impl ClassTransform {
     pub fn new(env: &EnvOptions, decorator_mode: DecoratorMode) -> Self {
         let options = env.es2022;
-        let decorator_mode =
-            if decorator_mode == DecoratorMode::Standard && !env.standard_decorators {
-                DecoratorMode::Preserve
-            } else {
-                decorator_mode
-            };
         if let Some(properties_options) = options.class_properties {
             Self::ClassProperties {
                 options: properties_options,

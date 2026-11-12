@@ -28,7 +28,10 @@ pub struct EnvOptions {
     /// Evaluated by the TypeScript transform (`import =` / `export =` and namespaces).
     pub module: Module,
 
-    /// Lower standard decorators and auto-accessors when the targets do not support them.
+    /// Lower standard decorators and auto-accessors when the targets need it.
+    ///
+    /// False for an unspecified target and for `esnext`, which assume proposal syntax is
+    /// supported. The `decorator.lower` option overrides this decision.
     pub standard_decorators: bool,
 
     /// ES2026 transform options.

@@ -333,18 +333,30 @@ describe("standard decorators", () => {
     expect(ret.code).not.toContain(": T");
   });
 
-  it("lowers standard decorators by default", () => {
+  it("follows the target and honors the lower override", () => {
     const code = "@decorate class Example { @decorate method() {} }";
-    const implicit = transformSync("test.js", code, { target: "esnext" });
+
+    for (const options of [{}, { target: "esnext" }]) {
+      const preserved = transformSync("test.js", code, options);
+      expect(preserved.errors).toEqual([]);
+      expect(preserved.code).toContain("@decorate");
+      expect(preserved.code).not.toContain("decorateElement");
+      expect(preserved.helpersUsed).toEqual({});
+    }
+
+    const implicit = transformSync("test.js", code, { target: "es2015" });
     expect(implicit.errors).toEqual([]);
     expect(implicit.code).not.toContain("@decorate");
     expect(implicit.code).toContain("decorateElement");
-    for (const decorator of [{}, { lower: true }]) {
-      const explicit = transformSync("test.js", code, { target: "esnext", decorator });
-      expect(explicit.errors).toEqual([]);
-      expect(explicit.code).toEqual(implicit.code);
-      expect(explicit.helpersUsed).toEqual(implicit.helpersUsed);
-    }
+
+    const explicit = transformSync("test.js", code, {
+      target: "esnext",
+      decorator: { lower: true },
+    });
+    expect(explicit.errors).toEqual([]);
+    expect(explicit.code).not.toContain("@decorate");
+    expect(explicit.code).toContain("decorateElement");
+    expect(explicit.helpersUsed).toEqual(implicit.helpersUsed);
   });
 
   it("keeps unrelated target transforms enabled when standard lowering is disabled", () => {
@@ -415,7 +427,12 @@ describe("standard decorators", () => {
         };
         const result = [calls, new Decorated().value, Decorated.count];
       `,
-      { target, sourceType: "script", helpers: { mode: HelperMode.External } },
+      {
+        target,
+        decorator: target === "esnext" ? { lower: true } : undefined,
+        sourceType: "script",
+        helpers: { mode: HelperMode.External },
+      },
     );
     expect(ret.errors).toEqual([]);
     const require = createRequire(import.meta.url);

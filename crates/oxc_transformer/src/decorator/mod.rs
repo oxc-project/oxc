@@ -19,8 +19,8 @@ pub struct Decorator<'a> {
 }
 
 impl Decorator<'_> {
-    pub fn new(options: DecoratorOptions) -> Self {
-        Self { legacy_decorator: LegacyDecorator::new(options), mode: options.mode() }
+    pub fn new(options: DecoratorOptions, mode: DecoratorMode) -> Self {
+        Self { legacy_decorator: LegacyDecorator::new(options), mode }
     }
 }
 

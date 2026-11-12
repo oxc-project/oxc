@@ -76,7 +76,7 @@ fn standard_decorators_opt_out() {
         ),
     ];
     for decorator in [
-        DecoratorOptions { lower: false, ..DecoratorOptions::default() },
+        DecoratorOptions { lower: Some(false), ..DecoratorOptions::default() },
         serde_json::from_str::<DecoratorOptions>(r#"{"lower":false}"#).unwrap(),
     ] {
         for target in [ESTarget::ES2015, ESTarget::ES2020, ESTarget::ES2022, ESTarget::ESNext] {
@@ -96,27 +96,38 @@ fn standard_decorators_opt_out() {
 }
 
 #[test]
-fn standard_decorators_default_and_legacy_selection() {
+fn standard_decorators_follow_target() {
     let source = "@decorate class Example { @decorate method() {} }";
-    let default_options = TransformOptions::from(ESTarget::ESNext);
-    let standard_output = test(source, &default_options).unwrap();
-    assert!(!standard_output.contains("@decorate"));
-    assert!(standard_output.contains("decorateElement"));
-    for decorator in [
-        serde_json::from_str::<DecoratorOptions>("{}").unwrap(),
-        serde_json::from_str::<DecoratorOptions>(r#"{"lower":true}"#).unwrap(),
-    ] {
-        let options = TransformOptions { decorator, ..default_options.clone() };
-        assert_eq!(test(source, &options), Ok(standard_output.clone()));
+
+    // An unspecified target and `esnext` preserve proposal syntax.
+    for options in [TransformOptions::default(), TransformOptions::from(ESTarget::ESNext)] {
+        for decorator in [
+            DecoratorOptions::default(),
+            DecoratorOptions { lower: Some(false), ..DecoratorOptions::default() },
+        ] {
+            let options = TransformOptions { decorator, ..options.clone() };
+            let preserved = test(source, &options).unwrap();
+            assert!(preserved.contains("@decorate"));
+            assert!(!preserved.contains("decorateElement"));
+        }
     }
 
-    let mut legacy_options = default_options;
+    let explicit = TransformOptions {
+        decorator: serde_json::from_str::<DecoratorOptions>(r#"{"lower":true}"#).unwrap(),
+        ..TransformOptions::from(ESTarget::ESNext)
+    };
+    let lowered = test(source, &explicit).unwrap();
+    assert!(!lowered.contains("@decorate"));
+    assert!(lowered.contains("decorateElement"));
+
+    // Legacy decorators lower regardless of the standard option.
+    let mut legacy_options = TransformOptions::from(ESTarget::ESNext);
     legacy_options.decorator.legacy = true;
     let legacy_output = test(source, &legacy_options).unwrap();
     assert!(!legacy_output.contains("@decorate"));
     assert!(legacy_output.contains("_decorate("));
     assert!(!legacy_output.contains("decorateElement"));
-    legacy_options.decorator.lower = false;
+    legacy_options.decorator.lower = Some(false);
     assert_eq!(test(source, &legacy_options), Ok(legacy_output));
 }
 
@@ -124,21 +135,21 @@ fn standard_decorators_default_and_legacy_selection() {
 fn standard_decorators_compat_targets() {
     let source =
         "@decorate class Example { accessor value = 1; } class Plain { accessor value = 2; }";
-    for options in [
-        TransformOptions::default(),
-        TransformOptions::from_target("esnext").unwrap(),
-        TransformOptions::from_target("es2015").unwrap(),
-        TransformOptions::from_target("safari16").unwrap(),
-        TransformOptions::from_target("chrome999").unwrap(),
+    let plain = "class Plain { value = 1; #private = 2; read() { return this.#private; } static { effect(); } }";
+    for (options, lowers) in [
+        (TransformOptions::default(), false),
+        (TransformOptions::from_target("esnext").unwrap(), false),
+        (TransformOptions::from_target("es2015").unwrap(), true),
+        (TransformOptions::from_target("safari16").unwrap(), true),
+        (TransformOptions::from_target("chrome999").unwrap(), true),
     ] {
-        assert!(options.env.standard_decorators);
+        assert_eq!(options.env.standard_decorators, lowers);
         let output = test(source, &options).unwrap();
-        assert!(!output.contains("@decorate"));
-        assert!(!output.contains("accessor value"));
-        assert!(output.contains("decorateElement"));
-        let plain = "class Plain { value = 1; #private = 2; read() { return this.#private; } static { effect(); } }";
+        assert_eq!(output.contains("@decorate"), !lowers);
+        assert_eq!(output.contains("accessor value"), !lowers);
+        assert_eq!(output.contains("decorateElement"), lowers);
         let mut preserve_options = options.clone();
-        preserve_options.decorator.lower = false;
+        preserve_options.decorator.lower = Some(false);
         assert_eq!(test(plain, &options), test(plain, &preserve_options));
     }
 }
@@ -147,7 +158,7 @@ fn standard_decorators_compat_targets() {
 fn standard_decorators_opt_out_keeps_other_transforms() {
     let source = "function run() { using resource = acquire(); @decorate class Example { @decorate method() {} } return Example; }";
     let mut options = TransformOptions::from(ESTarget::ES2022);
-    options.decorator.lower = false;
+    options.decorator.lower = Some(false);
     let output = test(source, &options).unwrap();
     assert!(output.contains("@decorate"));
     assert!(!output.contains("using resource"));
@@ -157,7 +168,7 @@ fn standard_decorators_opt_out_keeps_other_transforms() {
 #[test]
 fn standard_decorators_opt_out_keeps_plain_class_field_lowering() {
     let mut options = TransformOptions::from(ESTarget::ES2015);
-    options.decorator.lower = false;
+    options.decorator.lower = Some(false);
     let output =
         test("class Plain { value = 1; } class Example { @decorate value = 1; }", &options)
             .unwrap();

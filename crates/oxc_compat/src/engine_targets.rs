@@ -77,9 +77,11 @@ impl EngineTargets {
     /// Use [`Self::supports_es_feature`] for a strict positive capability query.
     pub fn has_feature(&self, feature: ESFeature) -> bool {
         let feature_engine_targets = &features()[&feature];
-        // Proposals have no ES edition. Missing engine support requires lowering, including esnext.
+        // Proposals have no ES edition of their own. An unspecified target and `esnext` assume
+        // the runtime will support them; concrete targets lower them until the table records
+        // support.
         if !feature_engine_targets.contains_key(&Engine::Es) {
-            return !self.supports_es_feature(feature);
+            return !self.assumes_latest_edition() && !self.supports_es_feature(feature);
         }
         for (engine, feature_version) in feature_engine_targets.iter() {
             if let Some(target_version) = self.get(engine) {
@@ -92,6 +94,15 @@ impl EngineTargets {
             }
         }
         false
+    }
+
+    /// Whether every configured target is an ES edition at least as new as `esnext`.
+    ///
+    /// An empty target set names no runtime, so it is treated the same as `esnext`.
+    fn assumes_latest_edition(&self) -> bool {
+        self.iter().all(|(engine, version)| {
+            *engine == Engine::Es && version.0 >= ESTarget::ESNext.version().0
+        })
     }
 
     /// Check whether every target engine is known to support the given ES feature.
@@ -198,9 +209,18 @@ fn test_displayed_value_is_parsable() {
 }
 
 #[test]
-fn test_standard_decorators_require_lowering() {
-    assert!(EngineTargets::default().has_feature(ESFeature::StandardDecorators));
-    for target in ["es2015", "esnext", "safari16", "chrome999", "es2022,node16"] {
+fn test_standard_decorators_follow_target() {
+    // No target and `esnext` assume the runtime supports proposals.
+    for target in [None, Some("esnext")] {
+        let targets = match target {
+            Some(target) => EngineTargets::from_target(target).unwrap(),
+            None => EngineTargets::default(),
+        };
+        assert!(!targets.has_feature(ESFeature::StandardDecorators), "{target:?}");
+        assert!(!targets.supports_es_feature(ESFeature::StandardDecorators), "{target:?}");
+    }
+    // Concrete targets lower until the table records support.
+    for target in ["es2015", "es2026", "safari16", "chrome999", "es2022,node16"] {
         let targets = EngineTargets::from_target(target).unwrap();
         assert!(targets.has_feature(ESFeature::StandardDecorators), "{target}");
         assert!(!targets.supports_es_feature(ESFeature::StandardDecorators), "{target}");

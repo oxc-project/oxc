@@ -1,3 +1,16 @@
 {
-  "plugins": [["transform-typescript", { "removeClassFieldsWithoutInitializer": true }]]
+  "plugins": [
+    [
+      "proposal-decorators",
+      {
+        "version": "2023-11"
+      }
+    ],
+    [
+      "transform-typescript",
+      {
+        "removeClassFieldsWithoutInitializer": true
+      }
+    ]
+  ]
 }

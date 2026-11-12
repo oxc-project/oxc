@@ -13,13 +13,15 @@ pub struct DecoratorOptions {
     #[serde(skip)]
     pub legacy: bool,
 
-    /// Lower standard decorators and auto-accessors. Defaults to `true`.
+    /// Lower standard decorators and auto-accessors.
     ///
-    /// Set to `false` to preserve this syntax for a later transform at any target while
-    /// stripping TypeScript types. Other target-selected transforms still run on unrelated
-    /// syntax. `legacy: true` takes precedence over this option.
-    #[serde(default = "default_as_true")]
-    pub lower: bool,
+    /// When omitted, lowering follows the target: a concrete target lowers them, and `esnext`
+    /// or no target preserves them. Set to `false` to preserve this syntax for a later transform
+    /// at any target while stripping TypeScript types. Set to `true` to lower it regardless of
+    /// target. Other target-selected transforms still run on unrelated syntax.
+    /// `legacy: true` takes precedence over this option.
+    #[serde(default)]
+    pub lower: Option<bool>,
 
     /// Enables emitting decorator metadata.
     ///
@@ -41,7 +43,7 @@ impl Default for DecoratorOptions {
     fn default() -> Self {
         Self {
             legacy: false,
-            lower: default_as_true(),
+            lower: None,
             emit_decorator_metadata: false,
             strict_null_checks: default_as_true(),
         }
@@ -68,10 +70,10 @@ impl DecoratorMode {
 }
 
 impl DecoratorOptions {
-    pub(crate) fn mode(self) -> DecoratorMode {
+    pub(crate) fn mode(self, standard_decorators: bool) -> DecoratorMode {
         if self.legacy {
             DecoratorMode::Legacy
-        } else if self.lower {
+        } else if self.lower.unwrap_or(standard_decorators) {
             DecoratorMode::Standard
         } else {
             DecoratorMode::Preserve

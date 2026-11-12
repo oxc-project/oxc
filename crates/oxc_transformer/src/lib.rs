@@ -42,7 +42,7 @@ mod plugins;
 
 use common::Common;
 use context::TraverseCtx;
-use decorator::Decorator;
+use decorator::{Decorator, DecoratorMode};
 use es2015::ES2015;
 use es2016::ES2016;
 use es2017::ES2017;
@@ -135,6 +135,7 @@ impl<'a> Transformer<'a> {
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
+        let decorator_mode = self.decorator.mode(self.env.standard_decorators);
 
         let ast_builder = AstBuilder::new(allocator);
 
@@ -158,13 +159,12 @@ impl<'a> Transformer<'a> {
 
         let mut transformer = TransformerImpl {
             common: Common::new(&self.env),
-            decorator: Decorator::new(self.decorator),
+            decorator: Decorator::new(self.decorator, decorator_mode),
             plugins: Plugins::new(self.plugins),
             x0_typescript: program.source_type.is_typescript().then(|| {
                 TypeScript::new(
                     &self.typescript,
-                    !self.decorator.legacy
-                        && (!self.decorator.lower || !self.env.standard_decorators),
+                    decorator_mode == DecoratorMode::Preserve,
                     &self.state,
                 )
             }),

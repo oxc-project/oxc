@@ -20,8 +20,9 @@
 //! as their receiver, so inherited accessors continue to access the defining class's storage.
 //!
 //! The `StandardDecorators` compatibility feature covers decorators and auto-accessors. It has no
-//! ES edition or engine support yet, so default and `esnext` targets lower both. `decorator.lower:
-//! false` preserves both at any target while other syntax transforms and TypeScript erasure run.
+//! ES edition or engine support yet, so concrete targets lower both while `esnext` and an
+//! unspecified target preserve them. `decorator.lower` overrides that decision at any target
+//! while other syntax transforms and TypeScript erasure still run.
 //!
 //! Babel's 2023-* decorator fixtures are execution oracles, not output snapshots: their helper
 //! protocol differs from ours. Local output fixtures cover Oxc's lowering choices. Optional calls
