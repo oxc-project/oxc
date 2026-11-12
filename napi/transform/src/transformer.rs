@@ -413,6 +413,18 @@ pub struct DecoratorOptions {
     /// @default false
     pub legacy: Option<bool>,
 
+    /// Lower standard decorators and auto-accessors.
+    ///
+    /// Set to `false` with an `esnext` target to preserve this syntax for a later transform
+    /// while stripping TypeScript types. `legacy: true` takes precedence over this option.
+    ///
+    /// Target-selected transforms still run. Preserving this syntax requires targets that
+    /// keep class fields native; targets that lower class fields report an error for classes
+    /// with decorators or auto-accessors.
+    ///
+    /// @default true
+    pub standard: Option<bool>,
+
     /// Enables emitting decorator metadata.
     ///
     /// This option the same as [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata)
@@ -438,6 +450,7 @@ impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
     fn from(options: DecoratorOptions) -> Self {
         oxc::transformer::DecoratorOptions {
             legacy: options.legacy.unwrap_or_default(),
+            standard: options.standard.unwrap_or(true),
             emit_decorator_metadata: options.emit_decorator_metadata.unwrap_or_default(),
             strict_null_checks: options.strict_null_checks.unwrap_or(true),
         }

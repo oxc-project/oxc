@@ -12,7 +12,10 @@ use crate::{
         helper_loader::{Helper, helper_call_expr},
     },
     context::TraverseCtx,
-    utils::{class_name::contextual_class_name, decorated_class::class_lowered_for_decorators},
+    utils::{
+        class_name::contextual_class_name,
+        decorated_class::{class_body_has_auto_accessors, class_lowered_for_decorators},
+    },
 };
 
 use super::StandardDecoratorState;
@@ -42,7 +45,11 @@ impl<'a> StandardDecoratorState<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ClassExpression(class) = value.without_parentheses() else { return };
-        if !self.enabled || class.id.is_some() || !class_lowered_for_decorators(class) {
+        if !self.enabled
+            || class.id.is_some()
+            || self.named_classes.contains_key(&class.address())
+            || (!class_lowered_for_decorators(class) && !class_body_has_auto_accessors(&class.body))
+        {
             return;
         }
         let name = if computed {

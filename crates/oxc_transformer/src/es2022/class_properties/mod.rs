@@ -262,6 +262,8 @@ pub struct ClassProperties<'a> {
     /// If `true`, only transform classes which have decorators.
     /// Used when target supports class fields, but decorators need lowering.
     only_decorated_classes: bool,
+    /// Diagnose field lowering which cannot preserve standard proposal syntax.
+    preserve_standard_decorators: bool,
 
     // ----- State used during all phases of transform -----
     //
@@ -314,6 +316,7 @@ impl ClassProperties<'_> {
             transform_static_blocks,
             remove_class_fields_without_initializer,
             only_decorated_classes,
+            preserve_standard_decorators: decorator_mode == DecoratorMode::Preserve,
             classes_stack: ClassesStack::new(),
             private_field_count: 0,
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
@@ -349,6 +352,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
         debug_assert_eq!(self.private_field_count, 0);
     }
 
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.transform_native_auto_accessors_on_entry(class, ctx);
+    }
+
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         // Combine loose option with assumptions (assumptions don't change, so this is idempotent)
         self.set_public_class_fields =
@@ -381,6 +388,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
     // `#[inline]` for fast exit for expressions which are not any of the transformed types
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.only_decorated_classes && matches!(expr, Expression::ClassExpression(_)) {
+            self.decorator_state.wrap_native_accessor_expression(expr, ctx);
+        }
         // All of transforms below only act on `PrivateFieldExpression`s or `PrivateInExpression`s.
         // If we're not inside a class which has private fields, `#prop` can't be present here,
         // so skip the slow path - fast path for common case.

@@ -1,9 +1,9 @@
 use std::str::FromStr;
 
 use oxc_span::SourceType;
-use oxc_transformer::{ESTarget, TransformOptions};
+use oxc_transformer::{DecoratorOptions, ESTarget, TransformOptions};
 
-use crate::{codegen, test};
+use crate::{codegen, test, test_with_source_type};
 
 #[test]
 fn es_target() {
@@ -56,6 +56,72 @@ fn es_target() {
             insta::assert_snapshot!("es_target", snapshot);
         });
     }
+}
+
+#[test]
+fn standard_decorators_opt_out() {
+    let cases = [
+        (
+            "@decorate class Example<T> { @decorate value: number = 1; @decorate accessor count: number = 2; @decorate method(value: T): T { return value; } }",
+            "@decorate class Example { @decorate value = 1; @decorate accessor count = 2; @decorate method(value) { return value; } }",
+        ),
+        ("class Plain { accessor value: number = 1; }", "class Plain { accessor value = 1; }"),
+    ];
+    for decorator in [
+        DecoratorOptions { standard: false, ..DecoratorOptions::default() },
+        serde_json::from_str::<DecoratorOptions>(r#"{"standard":false}"#).unwrap(),
+    ] {
+        let options = TransformOptions { decorator, ..TransformOptions::from(ESTarget::ESNext) };
+        for (source, expected) in cases {
+            assert_eq!(
+                test_with_source_type(source, SourceType::ts(), &options),
+                Ok(codegen(expected, SourceType::mjs())),
+            );
+        }
+    }
+}
+
+#[test]
+fn standard_decorators_default_and_legacy_selection() {
+    let source = "@decorate class Example { @decorate method() {} }";
+    let default_options = TransformOptions::from(ESTarget::ESNext);
+    let standard_output = test(source, &default_options).unwrap();
+    assert!(!standard_output.contains("@decorate"));
+    assert!(standard_output.contains("decorateElement"));
+    for decorator in [
+        serde_json::from_str::<DecoratorOptions>("{}").unwrap(),
+        serde_json::from_str::<DecoratorOptions>(r#"{"standard":true}"#).unwrap(),
+    ] {
+        let options = TransformOptions { decorator, ..default_options.clone() };
+        assert_eq!(test(source, &options), Ok(standard_output.clone()));
+    }
+
+    let mut legacy_options = default_options;
+    legacy_options.decorator.legacy = true;
+    let legacy_output = test(source, &legacy_options).unwrap();
+    assert!(!legacy_output.contains("@decorate"));
+    assert!(legacy_output.contains("_decorate("));
+    assert!(!legacy_output.contains("decorateElement"));
+    legacy_options.decorator.standard = false;
+    assert_eq!(test(source, &legacy_options), Ok(legacy_output));
+}
+
+#[test]
+fn standard_decorators_opt_out_keeps_other_transforms() {
+    let source = "function run() { using resource = acquire(); @decorate class Example { @decorate method() {} } return Example; }";
+    let mut options = TransformOptions::from(ESTarget::ES2022);
+    options.decorator.standard = false;
+    let output = test(source, &options).unwrap();
+    assert!(output.contains("@decorate"));
+    assert!(!output.contains("using resource"));
+    assert!(!output.contains("decorateElement"));
+}
+
+#[test]
+fn standard_decorators_opt_out_rejects_class_field_lowering() {
+    let mut options = TransformOptions::from(ESTarget::ES2015);
+    options.decorator.standard = false;
+    assert!(test("class Example { @decorate value = 1; }", &options).is_err());
 }
 
 #[test]

@@ -137,9 +137,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
         }
     }
 
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_class(class, ctx);
+        }
+    }
+
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Static block transform first, to see decorators and `accessor`s before class properties
-        // transform lowers them.
+        // Static block transform first, so it can skip decorated classes before their decorators
+        // are lowered. Plain auto-accessors were already lowered on entering the class.
         if let Some(class_static_block) = &mut self.class_static_block {
             class_static_block.enter_class_body(body, ctx);
         }

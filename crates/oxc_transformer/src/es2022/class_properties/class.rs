@@ -3,6 +3,7 @@
 
 use oxc_allocator::{Address, ArenaVec, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::ast::*;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SPAN;
 use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
@@ -17,7 +18,9 @@ use crate::{
     decorator::standard::{ClassNameRewriter, DecoratorElementKind, StandardDecoratorState},
     utils::{
         ast_builder::{create_assignment, create_new_weakset, create_variable_declaration},
-        decorated_class::class_body_has_decorators,
+        decorated_class::{
+            class_body_has_auto_accessors, class_body_has_decorators, class_lowered_for_decorators,
+        },
     },
 };
 
@@ -44,6 +47,34 @@ use super::{
 // Or alternatively could insert static property initializers into static blocks.
 
 impl<'a> ClassProperties<'a> {
+    /// Lower plain auto-accessors before the standalone static-block transform scans the class.
+    pub(super) fn transform_native_auto_accessors_on_entry(
+        &mut self,
+        class: &mut Class<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !self.only_decorated_classes
+            || !self.decorator_state.enabled()
+            || class.declare
+            || class_lowered_for_decorators(class)
+        {
+            return;
+        }
+        let has_auto_accessor = class_body_has_auto_accessors(&class.body);
+        self.decorator_state.prepare_native_auto_accessors(class, ctx);
+        if has_auto_accessor {
+            let binding = class.id.as_ref().map(BoundIdentifier::from_binding_ident);
+            let scope_id = class.scope_id();
+            self.decorator_state.lower_auto_accessors(
+                &mut class.body,
+                scope_id,
+                binding.as_ref(),
+                true,
+                ctx,
+            );
+        }
+    }
+
     /// Perform first phase of transformation of class.
     ///
     /// This is the only entry point into the transform upon entering class body.
@@ -80,14 +111,17 @@ impl<'a> ClassProperties<'a> {
             !is_declaration && Self::should_emit_private_method_helpers_in_class_sequence(ctx);
 
         // Standard decorators. A decorated class has all fields, private names and static blocks lowered.
-        let is_decorated = self.decorator_state.enabled()
-            && (class_has_decorators || class_body_has_decorators(body));
-        // `accessor` is not supported by any engine, so lower it in every class.
-        let has_auto_accessor = self.decorator_state.enabled()
-            && body
-                .body
-                .iter()
-                .any(|e| matches!(e, ClassElement::AccessorProperty(p) if !p.r#type.is_abstract()));
+        let standard = self.decorator_state.enabled() || self.preserve_standard_decorators;
+        let body_has_decorators =
+            standard && (class_has_decorators || class_body_has_decorators(body));
+        let body_has_auto_accessor = standard && class_body_has_auto_accessors(body);
+        if self.preserve_standard_decorators && (body_has_decorators || body_has_auto_accessor) {
+            ctx.state.error(OxcDiagnostic::error(
+                "Cannot lower class fields while preserving standard decorators or auto-accessors",
+            ).with_help("Use a target with native class fields or enable standard decorator lowering"));
+        }
+        let is_decorated = self.decorator_state.enabled() && body_has_decorators;
+        let has_auto_accessor = self.decorator_state.enabled() && body_has_auto_accessor;
         if self.decorator_state.enabled() {
             for element in &mut body.body {
                 let (key, computed, value) = match element {
@@ -106,7 +140,7 @@ impl<'a> ClassProperties<'a> {
                 }
             }
         }
-        if self.only_decorated_classes && !is_decorated && !has_auto_accessor {
+        if self.only_decorated_classes && !is_decorated {
             // Register private names only when they can shadow a lowered name in an enclosing
             // class. Other unresolved names belong to untouched classes and are left as-is.
             let mut private_names = IdentIndexMap::default();
@@ -158,6 +192,7 @@ impl<'a> ClassProperties<'a> {
                 body,
                 class_scope_id,
                 static_accessor_binding.as_ref(),
+                false,
                 ctx,
             );
         }

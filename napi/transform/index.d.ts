@@ -153,6 +153,19 @@ export interface DecoratorOptions {
    */
   legacy?: boolean
   /**
+   * Lower standard decorators and auto-accessors.
+   *
+   * Set to `false` with an `esnext` target to preserve this syntax for a later transform
+   * while stripping TypeScript types. `legacy: true` takes precedence over this option.
+   *
+   * Target-selected transforms still run. Preserving this syntax requires targets that
+   * keep class fields native; targets that lower class fields report an error for classes
+   * with decorators or auto-accessors.
+   *
+   * @default true
+   */
+  standard?: boolean
+  /**
    * Enables emitting decorator metadata.
    *
    * This option the same as [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata)

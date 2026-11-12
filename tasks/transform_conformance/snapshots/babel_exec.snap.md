@@ -60,19 +60,19 @@ ReferenceError: originalB is not defined
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-expressions-named-evaluation-exec.test.js
 RolldownError: Parse failure: Parse failed with 2 errors:
 'export statement' declaration can only be used at the top level of a module
-23:   const dec = decFactory(logs);
-24:   _Class_decorators = [[void 0, dec]];
-25:   export default class _Class {}
+21:   const dec = decFactory(logs);
+22:   _Class_decorators = [[void 0, dec]];
+23:   export default class _Class {}
       ^
-26:   _init = _decoratorStart(null);
-27:   _Class = _decorateElement(_init, 0, "default", _Class_decorators, _Class);'export statement' declaration can only be used at the top level of a module
-27:   _Class = _decorateElement(_init, 0, "default", _Class_decorators, _Class);
-28:   _runInitializers(_init, 1, _Class);
-29:   export const atypical = (_Class_decorators2 = [[void 0, dec]], _Class2 = class {}, _init2 = _decoratorStart(null), ...
+24:   _init = _decoratorStart(null);
+25:   _Class = _decorateElement(_init, 0, "default", _Class_decorators, _Class);'export statement' declaration can only be used at the top level of a module
+25:   _Class = _decorateElement(_init, 0, "default", _Class_decorators, _Class);
+26:   _runInitializers(_init, 1, _Class);
+27:   export const atypical = (_Class_decorators2 = [[void 0, dec]], _Class2 = class {}, _init2 = _decoratorStart(null), ...
       ^
-30:   expect(logs).toEqual(["default", "atypical"]);
-31:   const noop = () => {};
-At file: /fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-expressions-named-evaluation-exec.test.js:25:1
+28:   expect(logs).toEqual(["default", "atypical"]);
+29:   const noop = () => {};
+At file: /fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-expressions-named-evaluation-exec.test.js:23:1
     at error (./node_modules/rolldown/dist/shared/logs-D6uA606S.mjs:166:24)
     at normalizeParseError (./node_modules/rolldown/dist/parse-ast-index.mjs:25:9)
     at wrap (./node_modules/rolldown/dist/parse-ast-index.mjs:5:39)
@@ -90,11 +90,11 @@ ReferenceError: originalB is not defined
 
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js
 ReferenceError: originalB is not defined
-    at dec (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js:42:16)
+    at dec (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js:43:16)
     at _decorateElement (./npm/runtime/src/helpers/decorateElement.js:78:34)
-    at A.[Symbol.iterator] (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js:74:17)
+    at A.[Symbol.iterator] (./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js:75:17)
     at [Symbol.iterator].next (<anonymous>)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js:84:15
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js:83:15
 
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-method-private-environment-super-exec.test.js
 ReferenceError: originalB is not defined

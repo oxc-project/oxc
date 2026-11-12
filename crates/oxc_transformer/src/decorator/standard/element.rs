@@ -19,7 +19,10 @@ use crate::{
     },
     context::TraverseCtx,
     es2020::OptionalChaining,
-    utils::{ast_builder::create_assignment, decorated_class::class_lowered_for_decorators},
+    utils::{
+        ast_builder::create_assignment,
+        decorated_class::{class_body_has_auto_accessors, class_lowered_for_decorators},
+    },
 };
 
 use super::{ClassDecoratorState, DecoratorElementKind, StandardDecoratorState};
@@ -67,7 +70,8 @@ impl<'a> StandardDecoratorState<'a> {
             }
 
             fn visit_class(&mut self, class: &Class<'a>) {
-                self.found |= class_lowered_for_decorators(class);
+                self.found |= class_lowered_for_decorators(class)
+                    || class_body_has_auto_accessors(&class.body);
                 if !self.found {
                     oxc_ast_visit::walk::walk_class(self, class);
                 }

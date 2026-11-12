@@ -5,8 +5,7 @@
 
 use oxc_ast::ast::{Class, ClassBody, ClassElement};
 
-/// Returns `true` if class properties transform lowers this class because of standard decorators:
-/// class is decorated, or contains `accessor` properties.
+/// Returns `true` if class properties transform lowers this class because of standard decorators.
 ///
 /// Other transforms (TypeScript) use this to know class fields of this class are handled by
 /// class properties transform, even when the target supports class fields.
@@ -16,12 +15,14 @@ pub fn class_lowered_for_decorators(class: &Class<'_>) -> bool {
 
 /// Same as [`class_lowered_for_decorators`], for use when only the class body is accessible.
 pub fn class_body_lowered_for_decorators(has_class_decorators: bool, body: &ClassBody<'_>) -> bool {
-    has_class_decorators
-        || class_body_has_decorators(body)
-        || body
-            .body
-            .iter()
-            .any(|e| matches!(e, ClassElement::AccessorProperty(p) if !p.r#type.is_abstract()))
+    has_class_decorators || class_body_has_decorators(body)
+}
+
+/// Whether a class contains runtime auto-accessors.
+pub fn class_body_has_auto_accessors(body: &ClassBody<'_>) -> bool {
+    body.body.iter().any(|element| {
+        matches!(element, ClassElement::AccessorProperty(prop) if !prop.r#type.is_abstract())
+    })
 }
 
 /// Returns `true` if any class element is decorated.
