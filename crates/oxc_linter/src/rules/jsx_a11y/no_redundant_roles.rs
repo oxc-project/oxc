@@ -153,6 +153,7 @@ fn get_redundant_implicit_role(
         // dependent. eslint-plugin-jsx-a11y omits these elements from its
         // implicit-role lookup for the same reason. See #22743.
         "header" | "footer" | "main" | "address" => None,
+        "a" | "area" => get_link_implicit_role(jsx_el, explicit_role),
         "body" => explicit_role.eq_ignore_ascii_case("document").then_some("document"),
         "img" => get_img_implicit_role(jsx_el)
             .filter(|implicit_role| explicit_role.eq_ignore_ascii_case(implicit_role)),
@@ -165,6 +166,15 @@ fn get_redundant_implicit_role(
             .into_iter()
             .find(|implicit_role| explicit_role.eq_ignore_ascii_case(implicit_role)),
     }
+}
+
+fn get_link_implicit_role(jsx_el: &JSXOpeningElement, explicit_role: &str) -> Option<&'static str> {
+    // Per ARIA in HTML, `<a>` and `<area>` only have the implicit role `link`
+    // when an `href` attribute is present. Without `href`, their implicit role
+    // is `generic`, so `role="link"` is not redundant.
+    has_jsx_prop_ignore_case(jsx_el, "href")
+        .is_some_and(|_| explicit_role.eq_ignore_ascii_case("link"))
+        .then_some("link")
 }
 
 fn get_img_implicit_role(jsx_el: &JSXOpeningElement) -> Option<&'static str> {
@@ -362,6 +372,11 @@ fn test() {
         (r#"<main role="main" />"#, None, None),
         (r#"<main role="main"><p>Content</p></main>"#, None, None),
         (r#"<address role="group" />"#, None, None),
+        // `<a>` and `<area>` only have implicit role `link` when `href` is
+        // present. Without `href`, their implicit role is `generic`. See #29383.
+        (r#"<a role="link" />"#, None, None),
+        (r#"<a role="link" aria-disabled="true" />"#, None, None),
+        (r#"<area role="link" />"#, None, None),
         // <input>: combobox is implicit only when a `list` attribute is
         // set; otherwise the implicit role is `textbox` (HTML-AAM §3.5.76).
         (r#"<input role="combobox" />"#, None, None),
@@ -429,6 +444,9 @@ fn test() {
         (r#"<ul role="list" />"#, Some(serde_json::json!([{ "li": ["listitem"] }])), None),
         // A user-provided option overrides the default exception for that element.
         (r#"<nav role="navigation" />"#, Some(serde_json::json!([{ "nav": [] }])), None),
+        // `<a>` and `<area>` with `href` have implicit role `link`. See #29383.
+        (r#"<a href="/" role="link" />"#, None, None),
+        (r#"<area href="/" role="link" />"#, None, None),
         // Attribute-narrowed implicit roles for <input>:
         (r#"<input list="opts" role="combobox" />"#, None, None),
         (r#"<input type="search" list="opts" role="combobox" />"#, None, None),
@@ -466,6 +484,9 @@ fn test() {
         (r#"<input type="checkbox" role="checkbox" />"#, r#"<input type="checkbox"  />"#),
         (r#"<input list="opts" role="combobox" />"#, r#"<input list="opts"  />"#),
         (r#"<input type="submit" role="button" />"#, r#"<input type="submit"  />"#),
+        // `<a>` and `<area>` are only redundant with `href`. See #29383.
+        (r#"<a href="/" role="link" />"#, r#"<a href="/"  />"#),
+        (r#"<area href="/" role="link" />"#, r#"<area href="/"  />"#),
     ];
 
     Tester::new(NoRedundantRoles::NAME, NoRedundantRoles::PLUGIN, pass, fail)
