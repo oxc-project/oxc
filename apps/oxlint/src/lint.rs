@@ -28,8 +28,7 @@ use crate::{
         CliRunResult, DebugOption, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions,
     },
     config_loader::{
-        CliConfigLoadError, ConfigLoadError, ConfigLoader, config_discovery,
-        materialize_default_plugins,
+        CliConfigLoadError, ConfigLoadError, ConfigLoader, LoadedConfigs, config_discovery,
     },
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
@@ -262,10 +261,16 @@ impl CliRunner {
             basic_options.config.as_ref(),
             &paths,
             search_for_nested_configs,
+            &enable_plugins,
         );
 
-        let (mut root_config, nested_configs, nested_ignore_patterns) = match config_result {
-            Ok(loaded) => (loaded.root, loaded.nested, loaded.nested_ignore_patterns),
+        let LoadedConfigs {
+            root: root_config,
+            root_builder: config_builder,
+            nested: nested_configs,
+            nested_ignore_patterns,
+        } = match config_result {
+            Ok(loaded) => loaded,
             Err(error) => {
                 match error {
                     CliConfigLoadError::RootConfig(error) => {
@@ -274,6 +279,15 @@ impl CliRunner {
                             &format!(
                                 "Failed to parse oxlint configuration file.\n{}\n",
                                 render_report(&handler, &error)
+                            ),
+                        );
+                    }
+                    CliConfigLoadError::RootConfigBuild(error) => {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!(
+                                "Failed to parse oxlint configuration file.\n{}\n",
+                                render_config_builder_error(&handler, error)
                             ),
                         );
                     }
@@ -312,25 +326,6 @@ impl CliRunner {
                     }
                 }
 
-                return CliRunResult::InvalidOptionConfig;
-            }
-        };
-
-        materialize_default_plugins(&mut root_config);
-        let mut plugins = root_config.plugins.unwrap_or_default();
-        enable_plugins.apply_overrides(&mut plugins);
-        root_config.plugins = Some(plugins);
-
-        let config_builder = match config_loader.create_config_builder(root_config.clone()) {
-            Ok(builder) => builder,
-            Err(e) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "Failed to parse oxlint configuration file.\n{}\n",
-                        render_config_builder_error(&handler, e)
-                    ),
-                );
                 return CliRunResult::InvalidOptionConfig;
             }
         };
