@@ -24,6 +24,7 @@ mod byte_handlers;
 mod comment;
 mod identifier;
 mod jsx;
+mod keyword;
 mod kind;
 mod number;
 mod numeric;

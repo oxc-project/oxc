@@ -58,8 +58,8 @@ macro_rules! byte_handlers {
             ZER, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, COL, UER, LSS, EQL, GTR, QST, // 3
             AT_, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, // 4
             IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, BTO, ESC, BTC, CRT, IDT, // 5
-            TPL, L_A, L_B, L_C, L_D, L_E, L_F, L_G, IDT, L_I, IDT, L_K, L_L, L_M, L_N, L_O, // 6
-            L_P, IDT, L_R, L_S, L_T, L_U, L_V, L_W, IDT, L_Y, IDT, BEO, PIP, BEC, TLD, ERR, // 7
+            TPL, KWD, KWD, KWD, KWD, KWD, KWD, KWD, IDT, KWD, IDT, KWD, KWD, KWD, KWD, KWD, // 6
+            KWD, IDT, KWD, KWD, KWD, KWD, KWD, KWD, IDT, KWD, IDT, BEO, PIP, BEC, TLD, ERR, // 7
             UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // 8
             UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // 9
             UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // A
@@ -133,51 +133,6 @@ macro_rules! ascii_byte_handler {
     };
 }
 
-/// Macro for defining byte handler for an ASCII character which is start of an identifier
-/// (`a`-`z`, `A`-`Z`, `$` or `_`).
-///
-/// Macro calls `Lexer::identifier_name_handler` to get the text of the identifier,
-/// minus its first character.
-///
-/// `Lexer::identifier_name_handler` is an unsafe function, but if byte being consumed is ASCII,
-/// its requirements are met.
-///
-/// # SAFETY
-/// Only use this macro to define byte handlers for ASCII characters.
-///
-/// ```rust,ignore
-/// ascii_identifier_handler!(L_G(id_without_first_char) match id_without_first_char.as_bytes() {
-///     b"et" => Kind::Get,
-///     b"lobal" => Kind::Global,
-///     _ => Kind::Ident,
-/// });
-/// ```
-///
-/// expands to:
-///
-/// ```rust,ignore
-/// #[expect(non_snake_case)]
-/// fn L_G<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
-///     // SAFETY: This macro is only used for ASCII characters
-///     let id_without_first_char = unsafe { lexer.identifier_name_handler() };
-///     match id_without_first_char.as_bytes() {
-///         b"et" => Kind::Get,
-///         b"lobal" => Kind::Global,
-///         _ => Kind::Ident,
-///     }
-/// }
-/// ```
-macro_rules! ascii_identifier_handler {
-    ($id:ident($str:ident) $body:expr) => {
-        #[expect(non_snake_case)]
-        fn $id<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
-            // SAFETY: This macro is only used for ASCII characters
-            let $str = unsafe { lexer.identifier_name_handler() };
-            $body
-        }
-    };
-}
-
 // `\0` `\1` etc
 ascii_byte_handler!(ERR(lexer) {
     let c = lexer.consume_char();
@@ -240,10 +195,19 @@ ascii_byte_handler!(HAS(lexer) {
     lexer.private_identifier()
 });
 
-// `A..=Z`, `a..=z` (except special cases below), `_`, `$`
-ascii_identifier_handler!(IDT(_id_without_first_char) {
-    Kind::Ident
-});
+// `A..=Z`, `h`, `j`, `q`, `x`, `z`, `_`, `$`: no keyword starts with these bytes.
+#[expect(non_snake_case)]
+fn IDT<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+    // SAFETY: This handler is only selected for ASCII identifier-start bytes.
+    unsafe { lexer.identifier_name_handler::<false>() }
+}
+
+// Share one indirect-call target for all first letters which can begin a keyword.
+#[expect(non_snake_case)]
+fn KWD<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+    // SAFETY: This handler is only selected for ASCII identifier-start bytes.
+    unsafe { lexer.identifier_name_handler::<true>() }
+}
 
 // %
 ascii_byte_handler!(PRC(lexer) {
@@ -491,179 +455,6 @@ ascii_byte_handler!(BEC(lexer) {
 ascii_byte_handler!(TLD(lexer) {
     lexer.consume_char();
     Kind::Tilde
-});
-
-// Byte patterns let the compiler compare fixed-size chunks without calling a string comparison
-// routine for keyword lengths that are not a power of two.
-ascii_identifier_handler!(L_A(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"wait" => Kind::Await,
-    b"sync" => Kind::Async,
-    b"bstract" => Kind::Abstract,
-    b"ccessor" => Kind::Accessor,
-    b"ny" => Kind::Any,
-    b"s" => Kind::As,
-    b"ssert" => Kind::Assert,
-    b"sserts" => Kind::Asserts,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_B(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"reak" => Kind::Break,
-    b"oolean" => Kind::Boolean,
-    b"igint" => Kind::BigInt,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_C(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"onst" => Kind::Const,
-    b"lass" => Kind::Class,
-    b"ontinue" => Kind::Continue,
-    b"atch" => Kind::Catch,
-    b"ase" => Kind::Case,
-    b"onstructor" => Kind::Constructor,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_D(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"o" => Kind::Do,
-    b"elete" => Kind::Delete,
-    b"eclare" => Kind::Declare,
-    b"efault" => Kind::Default,
-    b"ebugger" => Kind::Debugger,
-    b"efer" => Kind::Defer,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_E(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"lse" => Kind::Else,
-    b"num" => Kind::Enum,
-    b"xport" => Kind::Export,
-    b"xtends" => Kind::Extends,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_F(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"unction" => Kind::Function,
-    b"alse" => Kind::False,
-    b"or" => Kind::For,
-    b"inally" => Kind::Finally,
-    b"rom" => Kind::From,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_G(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"et" => Kind::Get,
-    b"lobal" => Kind::Global,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_I(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"f" => Kind::If,
-    b"nstanceof" => Kind::Instanceof,
-    b"n" => Kind::In,
-    b"mplements" => Kind::Implements,
-    b"mport" => Kind::Import,
-    b"nfer" => Kind::Infer,
-    b"nterface" => Kind::Interface,
-    b"ntrinsic" => Kind::Intrinsic,
-    b"s" => Kind::Is,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_K(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"eyof" => Kind::KeyOf,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_L(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"et" => Kind::Let,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_M(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"eta" => Kind::Meta,
-    b"odule" => Kind::Module,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_N(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"ull" => Kind::Null,
-    b"ew" => Kind::New,
-    b"umber" => Kind::Number,
-    b"amespace" => Kind::Namespace,
-    b"ever" => Kind::Never,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_O(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"f" => Kind::Of,
-    b"bject" => Kind::Object,
-    b"ut" => Kind::Out,
-    b"verride" => Kind::Override,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_P(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"ackage" => Kind::Package,
-    b"rivate" => Kind::Private,
-    b"rotected" => Kind::Protected,
-    b"ublic" => Kind::Public,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_R(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"eturn" => Kind::Return,
-    b"equire" => Kind::Require,
-    b"eadonly" => Kind::Readonly,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_S(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"et" => Kind::Set,
-    b"uper" => Kind::Super,
-    b"witch" => Kind::Switch,
-    b"tatic" => Kind::Static,
-    b"ymbol" => Kind::Symbol,
-    b"tring" => Kind::String,
-    b"atisfies" => Kind::Satisfies,
-    b"ource" => Kind::Source,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_T(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"his" => Kind::This,
-    b"rue" => Kind::True,
-    b"hrow" => Kind::Throw,
-    b"ry" => Kind::Try,
-    b"ypeof" => Kind::Typeof,
-    b"arget" => Kind::Target,
-    b"ype" => Kind::Type,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_U(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"ndefined" => Kind::Undefined,
-    b"sing" => Kind::Using,
-    b"nique" => Kind::Unique,
-    b"nknown" => Kind::Unknown,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_V(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"ar" => Kind::Var,
-    b"oid" => Kind::Void,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_W(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"hile" => Kind::While,
-    b"ith" => Kind::With,
-    _ => Kind::Ident,
-});
-
-ascii_identifier_handler!(L_Y(id_without_first_char) match id_without_first_char.as_bytes() {
-    b"ield" => Kind::Yield,
-    _ => Kind::Ident,
 });
 
 // Non-ASCII characters.
