@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, ArenaVec};
+use oxc_allocator::{Allocator, ArenaHashMap, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
@@ -125,6 +125,16 @@ impl<'a> ModuleRecordBuilder<'a> {
                 }
                 return;
             }
+        }
+
+        if module_record.import_entries.len() >= 64
+            && export_entries.len() >= 16
+            && module_record.import_entries.len().saturating_mul(export_entries.len()) >= 4096
+        {
+            let local_exports =
+                resolve_large_exports(self.allocator, module_record, export_entries);
+            module_record.local_export_entries = local_exports;
+            return;
         }
 
         // Retain local exports in their original buffer, avoiding a second arena allocation.
@@ -436,6 +446,133 @@ where
     } else if let Some(ident) = decl.id() {
         f(ident);
     }
+}
+
+// Keep the adaptive machinery out of the ordinary module-resolution loop.
+#[inline(never)]
+fn resolve_large_exports<'a>(
+    allocator: &'a Allocator,
+    module_record: &mut ModuleRecord<'a>,
+    mut exports: ArenaVec<'a, ExportEntry<'a>>,
+) -> ArenaVec<'a, ExportEntry<'a>> {
+    let imports = &module_record.import_entries;
+    let first = &imports[0];
+    let first_name = first.local_name.name;
+    let mut index = None;
+    let mut can_index = true;
+    let mut searched = 0usize;
+    let budget = imports.len().saturating_sub(1).saturating_mul(8);
+    let mut retained = 0;
+    for read in 0..exports.len() {
+        let entry = &exports[read];
+        let name = if entry.module_request.is_none() {
+            match &entry.local_name {
+                ExportLocalName::Name(name) => Some(name.name),
+                _ => None,
+            }
+        } else {
+            None
+        };
+        let import = if let Some(name) = name {
+            if name == first_name {
+                Some(first)
+            } else {
+                if can_index && searched >= budget && exports.len() - read >= 8 {
+                    let queries_left = exports[read..].iter().filter(|entry| {
+                        entry.module_request.is_none()
+                            && matches!(&entry.local_name, ExportLocalName::Name(name) if name.name != first_name)
+                    }).count();
+                    if queries_left >= 8 {
+                        index = Some(index_pending_exports(
+                            allocator,
+                            imports,
+                            &exports[read..],
+                            queries_left,
+                        ));
+                    }
+                    can_index = false;
+                }
+                if let Some(index) = &index {
+                    find_indexed_import(index, imports, name)
+                } else {
+                    let position = imports[1..]
+                        .iter()
+                        .position(|import| import.local_name.name == name)
+                        .map(|position| position + 1);
+                    searched = searched.saturating_add(position.unwrap_or(imports.len()));
+                    position.map(|position| &imports[position])
+                }
+            }
+        } else {
+            None
+        };
+        let entry = &mut exports[read];
+        if entry.module_request.is_none() {
+            let Some(import) = import else {
+                // The unprocessed suffix remains available for indexing; the prefix preserves order.
+                if retained != read {
+                    exports.swap(retained, read);
+                }
+                retained += 1;
+                continue;
+            };
+            entry.statement_span = import.statement_span;
+            entry.module_request = Some(import.module_request.clone());
+            entry.import_name = match &import.import_name {
+                ImportImportName::Name(name) => ExportImportName::Name(name.clone()),
+                ImportImportName::Default(span) => ExportImportName::Name(NameSpan::new(
+                    allocator.alloc_str("default").into(),
+                    *span,
+                )),
+                ImportImportName::NamespaceObject => ExportImportName::All,
+            };
+            entry.local_name = ExportLocalName::default();
+            entry.is_type |= import.is_type;
+        }
+        if entry.import_name.is_all_but_default() {
+            debug_assert!(entry.export_name.is_null());
+            module_record.star_export_entries.push(std::mem::take(entry));
+        } else {
+            module_record.indirect_export_entries.push(std::mem::take(entry));
+        }
+    }
+    exports.truncate(retained);
+    exports
+}
+
+#[inline(never)]
+fn index_pending_exports<'a>(
+    allocator: &'a Allocator,
+    imports: &[ImportEntry<'a>],
+    exports: &[ExportEntry<'a>],
+    queries_left: usize,
+) -> ArenaHashMap<'a, Str<'a>, usize> {
+    let mut index = ArenaHashMap::with_capacity_in(queries_left, allocator);
+    for entry in exports {
+        if entry.module_request.is_none()
+            && let ExportLocalName::Name(name) = &entry.local_name
+            && name.name != imports[0].local_name.name
+        {
+            index.entry(name.name).or_insert(usize::MAX);
+        }
+    }
+    for (position, import) in imports.iter().enumerate() {
+        if let Some(slot) = index.get_mut(&import.local_name.name)
+            && *slot == usize::MAX
+        {
+            *slot = position;
+        }
+    }
+    index
+}
+
+#[inline(never)]
+fn find_indexed_import<'a, 'b>(
+    index: &ArenaHashMap<'a, Str<'a>, usize>,
+    imports: &'b [ImportEntry<'a>],
+    name: Str<'a>,
+) -> Option<&'b ImportEntry<'a>> {
+    index.get(&name).and_then(|&position| imports.get(position))
 }
 
 #[cfg(test)]
