@@ -1,4 +1,4 @@
-//! ECMAScript Grammar Contexts: `[In`] `[Yield]` `[Await]`
+//! ECMAScript Grammar Contexts: `[In]` `[Yield]` `[Await]`
 
 use bitflags::bitflags;
 
