@@ -40,6 +40,7 @@ export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
 export type JsdocUserConfig = boolean | JsdocConfig;
 export type CommentLineStrategyConfig = "singleLine" | "multiline" | "keep";
 export type LineWrappingStyleConfig = "greedy" | "balance";
+export type MarkdownTableStyleConfig = "auto" | "compact";
 export type ObjectWrapConfig = "preserve" | "collapse";
 export type ProseWrapConfig = "always" | "never" | "preserve";
 export type QuotePropsConfig = "as-needed" | "consistent" | "preserve";
@@ -199,6 +200,16 @@ export interface Oxfmtrc {
    * - Default: `false`
    */
   jsxSingleQuote?: boolean;
+  /**
+   * Control Markdown table formatting.
+   *
+   * - `"auto"`: Follow the existing layout rules, with compact output for wide tables when `proseWrap` is `"never"`
+   * - `"compact"`: Use one space around each cell and short delimiters, without aligning columns
+   *
+   * - Languages: Markdown
+   * - Default: `"auto"`
+   */
+  markdownTableStyle?: MarkdownTableStyleConfig;
   /**
    * How to wrap object literals when they could fit on one line or span multiple lines.
    *
@@ -590,6 +601,16 @@ export interface FormatConfig {
    * - Default: `false`
    */
   jsxSingleQuote?: boolean;
+  /**
+   * Control Markdown table formatting.
+   *
+   * - `"auto"`: Follow the existing layout rules, with compact output for wide tables when `proseWrap` is `"never"`
+   * - `"compact"`: Use one space around each cell and short delimiters, without aligning columns
+   *
+   * - Languages: Markdown
+   * - Default: `"auto"`
+   */
+  markdownTableStyle?: MarkdownTableStyleConfig;
   /**
    * How to wrap object literals when they could fit on one line or span multiple lines.
    *

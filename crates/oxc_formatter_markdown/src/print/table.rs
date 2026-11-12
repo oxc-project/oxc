@@ -3,6 +3,7 @@
 //! Every cell is printed to a string first (Prettier's `printDocToString` at infinite width),
 //! then each column is padded to its widest cell (3 at least, the delimiter's `---`).
 //! With `proseWrap: never`, a table whose header row does not fit is printed compact instead.
+//! `markdownTableStyle: compact` always uses that compact layout.
 
 use oxc_allocator::{Allocator, ArenaVec, StringBuilder};
 use oxc_formatter_core::{
@@ -11,7 +12,7 @@ use oxc_formatter_core::{
 };
 use oxc_markdown_parser::ast::{Table, TableAlign};
 
-use crate::options::ProseWrap;
+use crate::options::{MarkdownTableStyle, ProseWrap};
 
 use super::{
     MarkdownFormatter, format_with,
@@ -39,6 +40,12 @@ pub fn write_table<'a>(table: &'a Table<'a>, f: &mut MarkdownFormatter<'_, 'a>) 
             cells.push(Cell { text, width });
         }
         rows.push(cells);
+    }
+
+    if f.options().table_style == MarkdownTableStyle::Compact {
+        let compact = print_lines(&rows, &widths, &table.align, true, allocator);
+        write_lines(compact, hard_line_break(), f);
+        return;
     }
 
     let aligned = print_lines(&rows, &widths, &table.align, false, allocator);

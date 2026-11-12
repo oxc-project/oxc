@@ -376,6 +376,20 @@ Use single quotes instead of double quotes in JSX.
 - Default: `false`
 
 
+## markdownTableStyle
+
+type: `"auto" | "compact"`
+
+
+Control Markdown table formatting.
+
+- `"auto"`: Follow the existing layout rules, with compact output for wide tables when `proseWrap` is `"never"`
+- `"compact"`: Use one space around each cell and short delimiters, without aligning columns
+
+- Languages: Markdown
+- Default: `"auto"`
+
+
 ## objectWrap
 
 type: `"preserve" | "collapse"`

@@ -1,0 +1,75 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+| Value                                                     | Description                                                                                                                         |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| short value                                               | short description                                                                                                                   |
+| longer value, still quite ok                              | and some longer description here                                                                                                    |
+| a much much longer value that will really stretch the row | and a very long description that goes well beyond the standard screen width which will make the formatted table really hard to read |
+
+==================== Output ====================
+------------------------------------------------------------------------
+{ markdownTableStyle: "compact", printWidth: 20, proseWrap: "preserve" }
+------------------------------------------------------------------------
+| Value | Description |
+| --- | --- |
+| short value | short description |
+| longer value, still quite ok | and some longer description here |
+| a much much longer value that will really stretch the row | and a very long description that goes well beyond the standard screen width which will make the formatted table really hard to read |
+
+------------------------------------------------------------------------
+{ markdownTableStyle: "compact", printWidth: 80, proseWrap: "preserve" }
+------------------------------------------------------------------------
+| Value | Description |
+| --- | --- |
+| short value | short description |
+| longer value, still quite ok | and some longer description here |
+| a much much longer value that will really stretch the row | and a very long description that goes well beyond the standard screen width which will make the formatted table really hard to read |
+
+-------------------------------------------------------------------------
+{ markdownTableStyle: "compact", printWidth: 100, proseWrap: "preserve" }
+-------------------------------------------------------------------------
+| Value | Description |
+| --- | --- |
+| short value | short description |
+| longer value, still quite ok | and some longer description here |
+| a much much longer value that will really stretch the row | and a very long description that goes well beyond the standard screen width which will make the formatted table really hard to read |
+
+----------------------------------------------------------------------
+{ markdownTableStyle: "compact", printWidth: 80, proseWrap: "always" }
+----------------------------------------------------------------------
+| Value | Description |
+| --- | --- |
+| short value | short description |
+| longer value, still quite ok | and some longer description here |
+| a much much longer value that will really stretch the row | and a very long description that goes well beyond the standard screen width which will make the formatted table really hard to read |
+
+-----------------------------------------------------------------------
+{ markdownTableStyle: "compact", printWidth: 100, proseWrap: "always" }
+-----------------------------------------------------------------------
+| Value | Description |
+| --- | --- |
+| short value | short description |
+| longer value, still quite ok | and some longer description here |
+| a much much longer value that will really stretch the row | and a very long description that goes well beyond the standard screen width which will make the formatted table really hard to read |
+
+---------------------------------------------------------------------
+{ markdownTableStyle: "compact", printWidth: 80, proseWrap: "never" }
+---------------------------------------------------------------------
+| Value | Description |
+| --- | --- |
+| short value | short description |
+| longer value, still quite ok | and some longer description here |
+| a much much longer value that will really stretch the row | and a very long description that goes well beyond the standard screen width which will make the formatted table really hard to read |
+
+----------------------------------------------------------------------
+{ markdownTableStyle: "compact", printWidth: 100, proseWrap: "never" }
+----------------------------------------------------------------------
+| Value | Description |
+| --- | --- |
+| short value | short description |
+| longer value, still quite ok | and some longer description here |
+| a much much longer value that will really stretch the row | and a very long description that goes well beyond the standard screen width which will make the formatted table really hard to read |
+
+===================== End =====================

@@ -16,6 +16,19 @@ pub struct MarkdownFormatOptions {
     pub prose_wrap: ProseWrap,
     /// Preferred quote for re-quotable titles. Mirrors Prettier's `singleQuote`.
     pub single_quote: SingleQuote,
+    /// Whether tables use the existing layout rules or are always printed compactly.
+    pub table_style: MarkdownTableStyle,
+}
+
+/// How Markdown table cells and delimiters are spaced.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum MarkdownTableStyle {
+    /// Use the existing layout rules, including the compact fallback for wide tables
+    /// with `proseWrap: never` (default).
+    #[default]
+    Auto,
+    /// Use one space around each cell and short delimiters, regardless of width.
+    Compact,
 }
 
 /// How paragraph text is re-flowed.

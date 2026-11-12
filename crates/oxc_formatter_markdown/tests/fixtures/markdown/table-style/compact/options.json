@@ -1,0 +1,5 @@
+[
+  { "markdownTableStyle": "compact", "proseWrap": "preserve", "printWidth": 20 },
+  { "markdownTableStyle": "compact", "proseWrap": "always" },
+  { "markdownTableStyle": "compact", "proseWrap": "never" }
+]

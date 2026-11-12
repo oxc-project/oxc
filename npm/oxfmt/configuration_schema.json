@@ -103,6 +103,15 @@
       "type": "boolean",
       "markdownDescription": "Use single quotes instead of double quotes in JSX.\n\n- Languages: JSX, TSX\n- Default: `false`"
     },
+    "markdownTableStyle": {
+      "description": "Control Markdown table formatting.\n\n- `\"auto\"`: Follow the existing layout rules, with compact output for wide tables when `proseWrap` is `\"never\"`\n- `\"compact\"`: Use one space around each cell and short delimiters, without aligning columns\n\n- Languages: Markdown\n- Default: `\"auto\"`",
+      "allOf": [
+        {
+          "$ref": "#/definitions/MarkdownTableStyleConfig"
+        }
+      ],
+      "markdownDescription": "Control Markdown table formatting.\n\n- `\"auto\"`: Follow the existing layout rules, with compact output for wide tables when `proseWrap` is `\"never\"`\n- `\"compact\"`: Use one space around each cell and short delimiters, without aligning columns\n\n- Languages: Markdown\n- Default: `\"auto\"`"
+    },
     "objectWrap": {
       "description": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5\n- Default: `\"preserve\"`",
       "allOf": [
@@ -441,6 +450,15 @@
           "type": "boolean",
           "markdownDescription": "Use single quotes instead of double quotes in JSX.\n\n- Languages: JSX, TSX\n- Default: `false`"
         },
+        "markdownTableStyle": {
+          "description": "Control Markdown table formatting.\n\n- `\"auto\"`: Follow the existing layout rules, with compact output for wide tables when `proseWrap` is `\"never\"`\n- `\"compact\"`: Use one space around each cell and short delimiters, without aligning columns\n\n- Languages: Markdown\n- Default: `\"auto\"`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MarkdownTableStyleConfig"
+            }
+          ],
+          "markdownDescription": "Control Markdown table formatting.\n\n- `\"auto\"`: Follow the existing layout rules, with compact output for wide tables when `proseWrap` is `\"never\"`\n- `\"compact\"`: Use one space around each cell and short delimiters, without aligning columns\n\n- Languages: Markdown\n- Default: `\"auto\"`"
+        },
         "objectWrap": {
           "description": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5\n- Default: `\"preserve\"`",
           "allOf": [
@@ -711,6 +729,13 @@
       "enum": [
         "greedy",
         "balance"
+      ]
+    },
+    "MarkdownTableStyleConfig": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "compact"
       ]
     },
     "NewlinesBetweenMarker": {

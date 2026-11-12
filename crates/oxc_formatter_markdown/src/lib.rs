@@ -22,6 +22,6 @@ mod print;
 pub use crate::{
     context::MarkdownFormatContext,
     format::{ParsedMarkdown, format, format_to_ir, format_with_session, parse_for_format},
-    options::{MarkdownFormatOptions, ProseWrap, SingleQuote},
+    options::{MarkdownFormatOptions, MarkdownTableStyle, ProseWrap, SingleQuote},
     print::XxxInMarkdownCodeBlock,
 };

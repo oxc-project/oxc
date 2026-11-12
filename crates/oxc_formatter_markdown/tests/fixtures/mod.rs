@@ -1,8 +1,9 @@
 use std::path::Path;
 
+use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_formatter_markdown::{
-    MarkdownFormatOptions, ProseWrap, SingleQuote, format, parse_for_format,
+    MarkdownFormatOptions, MarkdownTableStyle, ProseWrap, SingleQuote, format, parse_for_format,
 };
 use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
 
@@ -17,6 +18,14 @@ impl FixtureFormatter for MarkdownHarness {
 
     fn apply_option(options: &mut Self::Options, key: &str, value: &OptionValue) -> bool {
         match key {
+            "markdownTableStyle" => {
+                if let Some(s) = value.as_str() {
+                    options.table_style = match s {
+                        "compact" => MarkdownTableStyle::Compact,
+                        _ => MarkdownTableStyle::Auto,
+                    };
+                }
+            }
             "proseWrap" => {
                 if let Some(s) = value.as_str() {
                     options.prose_wrap = match s {
@@ -95,4 +104,34 @@ fn bom_is_preserved() {
         .expect("print should succeed")
         .into_code();
     assert_eq!(formatted, "\u{feff}# Title\n");
+}
+
+/// Changing one cell in a compact table must not re-pad any other row.
+#[test]
+fn compact_table_edit_only_changes_its_row() {
+    let source = include_str!("markdown/table-style/compact/tables.md");
+    let edited =
+        source.cow_replace("short value", "a value longer than every other cell in this column");
+    for prose_wrap in [ProseWrap::Preserve, ProseWrap::Always, ProseWrap::Never] {
+        let options = MarkdownFormatOptions {
+            table_style: MarkdownTableStyle::Compact,
+            prose_wrap,
+            ..Default::default()
+        };
+        let format_source = |source: &str| {
+            let allocator = Allocator::default();
+            format(&allocator, source, options).unwrap().print().unwrap().into_code()
+        };
+        let before = format_source(source);
+        let after = format_source(&edited);
+        assert_eq!(before.lines().count(), after.lines().count());
+        let changed_rows: Vec<_> = before
+            .lines()
+            .zip(after.lines())
+            .enumerate()
+            .filter_map(|(i, (before, after))| (before != after).then_some(i))
+            .collect();
+        assert_eq!(changed_rows, [2], "{prose_wrap:?}");
+        assert_eq!(format_source(&after), after, "{prose_wrap:?}");
+    }
 }

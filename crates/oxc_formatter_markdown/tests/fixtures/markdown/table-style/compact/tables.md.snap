@@ -1,0 +1,171 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+| Value        | Description        |
+| ------------ | ------------------ |
+| short value  | short description  |
+| a much longer value that stretches the row | a long description that should not add padding to any other row |
+
+| None   | Left   | Center   | Right   |
+| ------ | :----- | :------: | ------: |
+| x      | left   | middle   | right   |
+|        |        |          |         |
+| 中文   | a\|b   | `code`   | **bold** |
+
+> | a    | b      |
+> | ---- | -----: |
+> | text | longer |
+
+| Header only |
+| ----------- |
+
+==================== Output ====================
+------------------------------------------------------------------------
+{ markdownTableStyle: "compact", printWidth: 20, proseWrap: "preserve" }
+------------------------------------------------------------------------
+| Value | Description |
+| --- | --- |
+| short value | short description |
+| a much longer value that stretches the row | a long description that should not add padding to any other row |
+
+| None | Left | Center | Right |
+| --- | :-- | :-: | --: |
+| x | left | middle | right |
+|  |  |  |  |
+| 中文 | a\|b | `code` | **bold** |
+
+> | a | b |
+> | --- | --: |
+> | text | longer |
+
+| Header only |
+| --- |
+
+------------------------------------------------------------------------
+{ markdownTableStyle: "compact", printWidth: 80, proseWrap: "preserve" }
+------------------------------------------------------------------------
+| Value | Description |
+| --- | --- |
+| short value | short description |
+| a much longer value that stretches the row | a long description that should not add padding to any other row |
+
+| None | Left | Center | Right |
+| --- | :-- | :-: | --: |
+| x | left | middle | right |
+|  |  |  |  |
+| 中文 | a\|b | `code` | **bold** |
+
+> | a | b |
+> | --- | --: |
+> | text | longer |
+
+| Header only |
+| --- |
+
+-------------------------------------------------------------------------
+{ markdownTableStyle: "compact", printWidth: 100, proseWrap: "preserve" }
+-------------------------------------------------------------------------
+| Value | Description |
+| --- | --- |
+| short value | short description |
+| a much longer value that stretches the row | a long description that should not add padding to any other row |
+
+| None | Left | Center | Right |
+| --- | :-- | :-: | --: |
+| x | left | middle | right |
+|  |  |  |  |
+| 中文 | a\|b | `code` | **bold** |
+
+> | a | b |
+> | --- | --: |
+> | text | longer |
+
+| Header only |
+| --- |
+
+----------------------------------------------------------------------
+{ markdownTableStyle: "compact", printWidth: 80, proseWrap: "always" }
+----------------------------------------------------------------------
+| Value | Description |
+| --- | --- |
+| short value | short description |
+| a much longer value that stretches the row | a long description that should not add padding to any other row |
+
+| None | Left | Center | Right |
+| --- | :-- | :-: | --: |
+| x | left | middle | right |
+|  |  |  |  |
+| 中文 | a\|b | `code` | **bold** |
+
+> | a | b |
+> | --- | --: |
+> | text | longer |
+
+| Header only |
+| --- |
+
+-----------------------------------------------------------------------
+{ markdownTableStyle: "compact", printWidth: 100, proseWrap: "always" }
+-----------------------------------------------------------------------
+| Value | Description |
+| --- | --- |
+| short value | short description |
+| a much longer value that stretches the row | a long description that should not add padding to any other row |
+
+| None | Left | Center | Right |
+| --- | :-- | :-: | --: |
+| x | left | middle | right |
+|  |  |  |  |
+| 中文 | a\|b | `code` | **bold** |
+
+> | a | b |
+> | --- | --: |
+> | text | longer |
+
+| Header only |
+| --- |
+
+---------------------------------------------------------------------
+{ markdownTableStyle: "compact", printWidth: 80, proseWrap: "never" }
+---------------------------------------------------------------------
+| Value | Description |
+| --- | --- |
+| short value | short description |
+| a much longer value that stretches the row | a long description that should not add padding to any other row |
+
+| None | Left | Center | Right |
+| --- | :-- | :-: | --: |
+| x | left | middle | right |
+|  |  |  |  |
+| 中文 | a\|b | `code` | **bold** |
+
+> | a | b |
+> | --- | --: |
+> | text | longer |
+
+| Header only |
+| --- |
+
+----------------------------------------------------------------------
+{ markdownTableStyle: "compact", printWidth: 100, proseWrap: "never" }
+----------------------------------------------------------------------
+| Value | Description |
+| --- | --- |
+| short value | short description |
+| a much longer value that stretches the row | a long description that should not add padding to any other row |
+
+| None | Left | Center | Right |
+| --- | :-- | :-: | --: |
+| x | left | middle | right |
+|  |  |  |  |
+| 中文 | a\|b | `code` | **bold** |
+
+> | a | b |
+> | --- | --: |
+> | text | longer |
+
+| Header only |
+| --- |
+
+===================== End =====================

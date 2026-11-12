@@ -245,6 +245,16 @@ pub struct FormatConfig {
     // ============================================================================================
     // Below are our own extensions, handled by Oxfmt
     // ============================================================================================
+    /// Control Markdown table formatting.
+    ///
+    /// - `"auto"`: Follow the existing layout rules, with compact output for wide tables when `proseWrap` is `"never"`
+    /// - `"compact"`: Use one space around each cell and short delimiters, without aligning columns
+    ///
+    /// - Languages: Markdown
+    /// - Default: `"auto"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub markdown_table_style: Option<MarkdownTableStyleConfig>,
+
     /// Whether to insert a final newline at the end of the file.
     ///
     /// - Languages: All
@@ -479,6 +489,13 @@ pub enum ProseWrapConfig {
     Always,
     Never,
     Preserve,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum MarkdownTableStyleConfig {
+    Auto,
+    Compact,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
