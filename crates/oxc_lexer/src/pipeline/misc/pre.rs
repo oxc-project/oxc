@@ -59,15 +59,30 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
     // bounds the diag Vec on binary input).
     let mut skip_lo: u64 = 0;
     let mut utf8_bad = false;
-    for w in 0..nw {
-        let mut m = if VUTF8 { misc.block(w, cpu) & !skip_lo } else { misc.block(w, cpu) };
+    let mut w = 0usize;
+    loop {
+        // Skip empty words in a tight loop, as the walk below keeps the word index on the stack
+        let from = w;
+        while w < nw && misc.block(w, cpu) == 0 {
+            w += 1;
+        }
+        if w == nw {
+            break;
+        }
+        if VUTF8 && w != from {
+            // A skipped word consumed the carried continuation bits
+            skip_lo = 0;
+        }
+        let blk = w;
+        w += 1;
+        let mut m = if VUTF8 { misc.block(blk, cpu) & !skip_lo } else { misc.block(blk, cpu) };
         if VUTF8 {
             skip_lo = 0;
         }
         while m != 0 {
             let bit = m.trailing_zeros() as usize;
             m &= m - 1;
-            let p = (w << 6) + bit;
+            let p = (blk << 6) + bit;
             let c = *src.add(p);
             // Multi-byte Unicode whitespace was bulk-classified as an
             // identifier char; re-mark it as a whitespace token boundary.

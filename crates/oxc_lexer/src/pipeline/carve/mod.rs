@@ -8,6 +8,7 @@ mod js;
 mod jsx;
 
 use js::carve_js;
+pub(super) use jsx::JFrame;
 use jsx::carve_jsx;
 
 #[cpu_multiversion]

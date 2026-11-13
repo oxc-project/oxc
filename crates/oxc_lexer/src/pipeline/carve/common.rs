@@ -19,6 +19,12 @@ pub(super) const OPENER_BYTES: [u8; 6] = [b'"', b'`', b'\'', b'/', b'<', b'>'];
 /// Ordered for speed, pairing `'` with `/` and `<` with `>` (see `any_of` in `find/avx2.rs`).
 pub(super) const OPENER8_BYTES: [u8; 8] = [b'"', b'`', b'\'', b'/', b'{', b'}', b'<', b'>'];
 
+/// [`OPENER_BYTES`] without the closing angle bracket, which only scripts need.
+pub(super) const OPENER_MODULE_BYTES: [u8; 5] = [b'"', b'`', b'\'', b'/', b'<'];
+
+/// [`OPENER8_BYTES`] without the closing angle bracket, which only scripts need.
+pub(super) const OPENER8_MODULE_BYTES: [u8; 7] = [b'"', b'`', b'\'', b'/', b'{', b'}', b'<'];
+
 /// Lex the string literal opening at `s`. Returns the resume index. Shared
 /// by `carve` and `carve_jsx` JS mode.
 #[cpu_multiversion]
