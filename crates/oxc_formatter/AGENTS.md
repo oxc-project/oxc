@@ -227,7 +227,7 @@ A suppression comment protects content; the token classes above still apply to w
   a node without a terminator of its own prints its whole span.
   Prettier re-adds a statement's `;` only when the source had one and prints class members whole (DIVERGENCES.md#suppressed-terminator-per-semi)
   - A statement is decided before its own generated `fmt`, so leading and trailing comments take one path and a pre-`export` decorator is inside the ignored range (`statement_span`)
-  - A `for` head declaration has no terminator of its own and stays verbatim (DIVERGENCES.md#suppressed-for-head-declaration)
+  - A `for` head declaration has no terminator of its own and stays verbatim
 - Expressions: `write_suppressed_expression` (`utils/suppressed.rs`) owns the whole sequence for expression-shaped nodes
   (the generated `fmt` and the arrow sequence-body site call it before anything of the node is printed),
   so a cast target keeps its source cast parens (`utils/typecast.rs`'s `write_suppressed_cast_target`) and in-paren comments print in place via the verbatim range

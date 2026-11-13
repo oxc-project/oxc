@@ -1,4 +1,4 @@
-// Every line deviates from Prettier (DIVERGENCES.md#instantiation-expression-parens).
+// The parens an instantiation expression needs to parse; the ones Prettier still drops: DIVERGENCES.md#instantiation-expression-parens.
 const a = (make<T>)!;
 (make<T>)!.b;
 (make<T>)!();

@@ -178,6 +178,15 @@ const IGNORE = [
   "js/import-attributes/multi-types.js",
   "js/multiparser-invalid/text.js",
   "js/new-target/outside-functions.js",
+  "js/commonjs/snippet: new-target.mjs",
+  "js/commonjs/snippet: new-target.unknown",
+  "js/commonjs/snippet: return/in-static-block.",
+  // An escaped `of` as a `using` binding: not supported, the round-trip costs too much (oxc#18386)
+  "js/explicit-resource-management/for-using-of-escaped-of-binding.js",
+  "js/explicit-resource-management/valid-for-await-using-binding-escaped-of-of.js",
+  "js/explicit-resource-management/valid-for-using-binding-escaped-of-of.js",
+  // Decorators on parameters are TypeScript's legacy syntax, not JS
+  "js/decorators/rest-parameters/",
   "typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts",
   "typescript/module/keyword.ts",
   "typescript/namespace/invalid-await.ts",
@@ -186,6 +195,10 @@ const IGNORE = [
   "typescript/tsx/comma/snippet: test.js",
   "typescript/tsx/comma/snippet: test.cjs",
   "typescript/tsx/comma/snippet: test.mjs",
+  // JSX in a `.ts` file, which Prettier retries as TSX
+  "misc/filename-matters/jsx-file-extension/snippet: test.ts",
+  "misc/filename-matters/jsx-file-extension/snippet: test.cts",
+  "misc/filename-matters/jsx-file-extension/snippet: test.mts",
   // No known filepath for Prettier, which keeps `<T,>` and the doctype case, but run here as `.ts` / `.html`
   "typescript/tsx/comma/snippet: test.unknown",
   "typescript/tsx/comma/snippet: unnamed",

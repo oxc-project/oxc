@@ -1,6 +1,6 @@
 ## javascript
 
-1174/1295 (90.66%)
+1174/1284 (91.43%)
 
 ### Failed
 
@@ -203,38 +203,13 @@
 - externals/prettier/js/shebang/shebang.js (BOM)
 - externals/prettier/js/shebang/snippet: Empty file with shebang (BOM)
 
-### Error
-
-- externals/prettier/js/commonjs/snippet: new-target.mjs: Unexpected new.target expression
-  - ❓unclassified
-- externals/prettier/js/commonjs/snippet: new-target.unknown: Unexpected new.target expression
-  - ❓unclassified
-- externals/prettier/js/commonjs/snippet: return/in-static-block.cjs: A 'return' statement cannot be used inside a class static block.
-  - ❓unclassified
-- externals/prettier/js/commonjs/snippet: return/in-static-block.mjs: A 'return' statement cannot be used inside a class static block.
-  - ❓unclassified
-- externals/prettier/js/commonjs/snippet: return/in-static-block.unknown: A 'return' statement cannot be used inside a class static block.
-  - ❓unclassified
-- externals/prettier/js/decorators/rest-parameters/constructor.js: Decorators are not valid here.
-  - ❓unclassified
-- externals/prettier/js/decorators/rest-parameters/method.js: Decorators are not valid here.
-  - ❓unclassified
-- externals/prettier/js/decorators/rest-parameters/setter.js: Decorators are not valid here.
-  - ❓unclassified
-- externals/prettier/js/explicit-resource-management/for-using-of-escaped-of-binding.js: Keywords cannot contain escape characters
-  - ❓unclassified
-- externals/prettier/js/explicit-resource-management/valid-for-await-using-binding-escaped-of-of.js: Keywords cannot contain escape characters
-  - ❓unclassified
-- externals/prettier/js/explicit-resource-management/valid-for-using-binding-escaped-of-of.js: Keywords cannot contain escape characters
-  - ❓unclassified
-
 ## jsx
 
 44/44 (100.00%)
 
 ## typescript
 
-636/702 (90.60%)
+636/699 (90.99%)
 
 ### Failed
 
@@ -281,10 +256,6 @@
 - externals/prettier/typescript/index-signature/comment.ts (💥, 80.00%)
   - ❓unclassified
 - externals/prettier/typescript/instantiation-expression/before-operator.ts (💥, 39.39%)
-  - ❓unclassified
-- externals/prettier/typescript/instantiation-expression/export-default-class.ts (💥, 0.00%)
-  - ❓unclassified
-- externals/prettier/typescript/instantiation-expression/export-default-function.ts (💥, 0.00%)
   - ❓unclassified
 - externals/prettier/typescript/instantiation-expression/operand.ts (💥, 95.45%)
   - ❓unclassified
@@ -342,6 +313,10 @@
   - crates/oxc_formatter/DIVERGENCES.md#eol-comment-after-assign-colon
 - externals/prettier/typescript/export-default/function_as.ts (💥, 0.00%)
   - crates/oxc_formatter/DIVERGENCES.md#export-default-leftmost-parens
+- externals/prettier/typescript/instantiation-expression/export-default-class.ts (💥, 0.00%)
+  - crates/oxc_formatter/DIVERGENCES.md#export-default-leftmost-parens
+- externals/prettier/typescript/instantiation-expression/export-default-function.ts (💥, 0.00%)
+  - crates/oxc_formatter/DIVERGENCES.md#export-default-leftmost-parens
 - externals/prettier/typescript/satisfies-operators/export-default-as.ts (💥💥, 0.00%)
   - crates/oxc_formatter/DIVERGENCES.md#export-default-leftmost-parens
 - externals/prettier/typescript/union/comments/18379.ts (💥, 92.31%)
@@ -365,18 +340,12 @@
 
 ### Error
 
-- externals/prettier/misc/filename-matters/jsx-file-extension/snippet: test.cts: Expected `>` but found `/`
-  - ❓unclassified
-- externals/prettier/misc/filename-matters/jsx-file-extension/snippet: test.mts: Expected `>` but found `/`
-  - ❓unclassified
-- externals/prettier/misc/filename-matters/jsx-file-extension/snippet: test.ts: Expected `>` but found `/`
-  - ❓unclassified
 - externals/prettier/typescript/instantiation-expression/super-class.ts: Expected `{` but found `<`
   - ❓unclassified
 
 ## tsx
 
-22/22 (100.00%)
+21/21 (100.00%)
 
 ## json
 

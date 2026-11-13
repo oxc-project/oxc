@@ -274,7 +274,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
         let parts = split_into_left_and_right_sides(*self, false, f);
         // Every operator of the flattened chain inlines its right side (`a ?? [..] ?? [..]`),
         // so the chain never breaks at an operator and an indent would only shift the last literal.
-        // See DIVERGENCES.md#inline-logical-chain-indent
         let inline_chain = inline_logical_expression
             && parts.iter().all(|part| match part {
                 BinaryLeftOrRightSide::Left { .. } => true,
