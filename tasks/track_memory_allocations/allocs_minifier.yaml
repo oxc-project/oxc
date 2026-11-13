@@ -7,7 +7,7 @@ checker.ts:
   sys peak growth: 10169560 # 10.17 MB
   arena allocs: 56208
   arena reallocs: 5056
-  arena size: 15542232 # 15.54 MB
+  arena size: 15541176 # 15.54 MB
 
 App.tsx:
   file size: 415342 # 415.34 kB
@@ -73,4 +73,4 @@ kitchen-sink.tsx:
   sys peak growth: 3707425 # 3.71 MB
   arena allocs: 31060
   arena reallocs: 3005
-  arena size: 7975304 # 7.98 MB
+  arena size: 7975296 # 7.98 MB
