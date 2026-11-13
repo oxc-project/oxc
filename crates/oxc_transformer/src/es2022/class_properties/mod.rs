@@ -411,8 +411,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
         target: &mut AssignmentTarget<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.private_name_may_stay_native()
-            && let AssignmentTarget::PrivateFieldExpression(field) = target
+        if let AssignmentTarget::PrivateFieldExpression(field) = target
             && !self.private_field_needs_lowering(&field.field)
         {
             return;
@@ -454,12 +453,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
 }
 
 impl<'a> ClassProperties<'a> {
-    /// Whether a private name used in the current class may stay native, so it needs resolving to
-    /// the class that owns it.
-    fn private_name_may_stay_native(&self) -> bool {
-        self.current_class().mode != ClassLoweringMode::LowerAll
-    }
-
     /// Whether the private name is owned by a class which lowers its private properties.
     fn private_field_needs_lowering(&mut self, ident: &PrivateIdentifier<'a>) -> bool {
         matches!(
@@ -501,8 +494,8 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.private_name_may_stay_native()
-            && let Some(ident) = Self::direct_private_ident(expr)
+        // A lowered class can still access a preserved enclosing class's private names.
+        if let Some(ident) = Self::direct_private_ident(expr)
             && !self.private_field_needs_lowering(ident)
         {
             return;

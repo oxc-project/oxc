@@ -169,6 +169,11 @@ impl<'a> ClassesStack<'a> {
     /// Push an entry to stack.
     #[inline]
     pub fn push(&mut self, class: ClassDetails<'a>) {
+        debug_assert_eq!(
+            matches!(class.mode, ClassLoweringMode::Native | ClassLoweringMode::Preserve),
+            matches!(class.private_props, PrivateProps::Native(_)),
+            "class lowering mode must agree with its private-name storage"
+        );
         self.stack.push(class);
     }
 
