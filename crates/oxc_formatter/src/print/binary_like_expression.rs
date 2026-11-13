@@ -674,7 +674,14 @@ pub fn should_flatten(parent_operator: BinaryLikeOperator, operator: BinaryLikeO
         return false;
     }
 
-    match (parent_operator.precedence(), operator.precedence()) {
+    match (parent_precedence, precedence) {
+        // `(a < b) > c`: TypeScript reads `a < b > (c)` as a call of `a<b>`
+        (Precedence::Compare, Precedence::Compare)
+            if parent_operator == BinaryOperator::GreaterThan.into()
+                && operator == BinaryOperator::LessThan.into() =>
+        {
+            false
+        }
         // `**` is right associative
         (Precedence::Exponentiation, _) |
         // `a == b == c` => `(a == b) == c`

@@ -1,6 +1,6 @@
 ## javascript
 
-1174/1284 (91.43%)
+1175/1284 (91.51%)
 
 ### Failed
 
@@ -19,8 +19,6 @@
 - externals/prettier/js/binary-expression/mutiple-comments/17192.js (💥✨, 95.83%)
   - ❓unclassified
 - externals/prettier/js/binary-expression/return.js (💥💥, 98.15%)
-  - ❓unclassified
-- externals/prettier/js/binary-math/parens.js (💥, 92.31%)
   - ❓unclassified
 - externals/prettier/js/call-expression/no-argument/no-arguments.js (💥, 79.49%)
   - ❓unclassified
@@ -209,7 +207,7 @@
 
 ## typescript
 
-636/699 (90.99%)
+637/699 (91.13%)
 
 ### Failed
 
@@ -222,8 +220,6 @@
 - externals/prettier/typescript/as/comments/17407.ts (💥, 47.06%)
   - ❓unclassified
 - externals/prettier/typescript/as/comments/18160.ts (💥, 73.24%)
-  - ❓unclassified
-- externals/prettier/typescript/binary-expressions/less-than-greater-than.ts (💥, 0.00%)
   - ❓unclassified
 - externals/prettier/typescript/cast/18406.ts (💥, 84.21%)
   - ❓unclassified
@@ -332,7 +328,6 @@
 ### Not idempotent
 
 - externals/prettier/typescript/as/comments/17407.ts
-- externals/prettier/typescript/binary-expressions/less-than-greater-than.ts
 - externals/prettier/typescript/method-chain/object/issue-17239.ts
 - externals/prettier/typescript/prettier-ignore/issue-14238.ts
 - externals/prettier/typescript/prettier-ignore/mapped-types.ts
