@@ -1357,12 +1357,10 @@ fn test() {
             export {foo as 'foo'};",
         r#"import {'foo' as foo} from 'foo';
             export {foo as "foo"};"#,
-        // spellchecker:off
         "import {'fo\u{20}o' as foo} from 'foo';
             export {foo as \"fo o\"};",
         "import {'fo\\no' as foo} from 'foo';
            export {foo as \"fo\\u000ao\"};",
-        // spellchecker:on
         "import {'default' as foo} from 'foo';
             export {foo};",
         "import {'default' as foo} from 'foo';
@@ -1626,7 +1624,6 @@ fn test() {
             export {foo as "foo"};"#,
             "export { \"foo\" } from 'foo';\n",
         ),
-        // spellchecker:off
         (
             "import {'fo\u{20}o' as foo} from 'foo';
             export {foo as \"fo o\"};",
@@ -1642,7 +1639,6 @@ fn test() {
             export {foo as \"foo\"};",
             "export { 'fo o' as \"foo\" } from 'foo';\n",
         ),
-        // spellchecker:on
         (
             "import {'default' as foo} from 'foo';
             export {foo};",

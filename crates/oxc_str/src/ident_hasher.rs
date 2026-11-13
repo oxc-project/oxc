@@ -183,7 +183,7 @@ mod test {
         assert_ne!(ident_hash(b"useState"), ident_hash(b"useEffect"));
         assert_ne!(ident_hash(b"fooBar"), ident_hash(b"fooBaz"));
         assert_ne!(ident_hash(b"a"), ident_hash(b"b"));
-        assert_ne!(ident_hash(b"ab"), ident_hash(b"ba")); // spellchecker:disable-line
+        assert_ne!(ident_hash(b"ab"), ident_hash(b"ba"));
     }
 
     #[test]
@@ -210,7 +210,7 @@ mod test {
         // Strings that differ only in the middle — the 17+ path must catch this
         assert_ne!(
             ident_hash(b"privateInterfaceWithPrivatePropertyTypes"),
-            ident_hash(b"privateInterfaceWithPrivateParmeterTypes"), // spellchecker:disable-line
+            ident_hash(b"privateInterfaceWithPrivateParmeterTypes"),
         );
     }
 

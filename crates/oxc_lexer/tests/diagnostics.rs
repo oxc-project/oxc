@@ -368,7 +368,6 @@ fn invalid_unicode_character(cpu: DynCpu) {
 fn valid_unicode_never_flagged(cpu: DynCpu) {
     // identifier chars, whitespace, and anything inside literal content
     for src in [
-        // spellchecker:disable-next-line
         "var caf\u{E9} = 1;",                   // é: ID_Continue
         "var \u{4F60}\u{597D} = 1;",            // CJK idents
         "let \u{3C0} = 3.14;",                  // π
@@ -439,7 +438,6 @@ fn valid_utf8_never_flagged(cpu: DynCpu) {
     let codes_v =
         |s: &str| diags_bytes(s.as_bytes(), cpu).iter().map(|d| d.code).collect::<Vec<_>>();
     for src in [
-        // spellchecker:disable-next-line
         "let caf\u{e9} = 1;",        // 2-byte
         "x = '\u{1F600}';",          // 4-byte emoji in string
         "a\u{a0}b",                  // NBSP (ws-reclass path preserved)

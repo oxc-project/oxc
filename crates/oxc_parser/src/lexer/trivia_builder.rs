@@ -577,7 +577,6 @@ fn contains_license_or_preserve_comment(s: &str) -> bool {
         // SAFETY: `search_len` only includes candidate starts with at least `LICENSE_LEN` bytes
         // remaining, so `i + 1` and the full `@license` range are in bounds.
         match unsafe { hay.get_unchecked(i + 1) } {
-            // spellchecker:off
             b'l'
                 // SAFETY: The candidate bound proves the full `@license` range is in bounds.
                 if unsafe { hay.get_unchecked(i + 2..i + LICENSE_LEN) } == b"icense" =>
@@ -590,7 +589,6 @@ fn contains_license_or_preserve_comment(s: &str) -> bool {
             {
                 return true;
             }
-            // spellchecker:on
             _ => {}
         }
     }
@@ -1319,9 +1317,7 @@ function bar() {}";
             ("/* foo @license*/", CommentContent::Legal),
             ("/* foo @licensed*/", CommentContent::Legal),
             ("/* foo @License*/", CommentContent::None),
-            // spellchecker:disable-next-line
             ("/* foo @licens*/", CommentContent::None),
-            // spellchecker:disable-next-line
             ("/* foo @preserv*/", CommentContent::None),
             ("/* @foo @preserve */", CommentContent::Legal),
             ("/* @foo @license */", CommentContent::Legal),
