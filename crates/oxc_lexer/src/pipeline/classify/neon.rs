@@ -1,6 +1,6 @@
-use oxc_simd::{Neon, Vec128, Vec256, VecData128, cpu_version};
+use oxc_simd::{Neon, Vec128, Vec256, cpu_version};
 
-use crate::token::tk;
+use crate::{pipeline::chunk::mm64, token::tk};
 
 use super::{
     luts::{
@@ -151,18 +151,4 @@ fn punct_kinds(v: Vec128<Neon>, lo: Vec128<Neon>, hn: Vec128<Neon>, l: &Luts) ->
     let ord = l.punct_kinds.shuffle_u8s(h);
     let ctl = v.lt_i8(0x20);
     ord.blend(tk!(Invalid), ctl)
-}
-
-/// Bit i is the top bit of byte i of a-d, gathered by summing the lane bit values.
-#[cpu_version(Neon)]
-#[inline(always)]
-fn mm64(a: Vec128<Neon>, b: Vec128<Neon>, c: Vec128<Neon>, d: Vec128<Neon>) -> u64 {
-    const BITS: VecData128 =
-        VecData128::from_bytes([1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128]);
-
-    let m = BITS.read(a.cpu());
-    let ab = (a & m).pairwise_add_u8(b & m);
-    let cd = (c & m).pairwise_add_u8(d & m);
-    let s = ab.pairwise_add_u8(cd);
-    s.pairwise_add_u8(s).get_u64::<0>()
 }

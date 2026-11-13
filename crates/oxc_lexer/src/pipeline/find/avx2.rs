@@ -2,8 +2,7 @@ use std::mem::{self, MaybeUninit};
 
 use oxc_simd::{Avx2, Vec256, cpu_version};
 
-/// Ordered for speed, pairing `(` with `)`, `[` with `{` and `]` with `}` (see [`any_of`]).
-const BRACKET_BYTES: [u8; 6] = [b'(', b')', b'[', b'{', b']', b'}'];
+use super::BRACKET_BYTES;
 
 /// First byte at or after i that is one of needles, or n.
 ///
