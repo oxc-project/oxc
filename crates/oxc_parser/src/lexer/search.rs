@@ -359,6 +359,8 @@ macro_rules! byte_search {
                 }
             } else {
                 // Not enough bytes remaining for a batch. Process byte-by-byte.
+                // Only happens near end of source.
+                oxc_data_structures::branch_hints::cold_path();
                 // Same as above, `'inner: loop {}` is not a real loop here - always exits on first turn.
                 'inner: loop {
                     // SAFETY: `$pos` is before or equal to end of source
