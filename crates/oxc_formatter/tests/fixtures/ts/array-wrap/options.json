@@ -1,0 +1,6 @@
+[
+  { "arrayWrap": "auto" },
+  { "arrayWrap": "preserve" },
+  { "arrayWrap": "collapse" },
+  { "arrayWrap": { "wrapThreshold": 2 } }
+]
