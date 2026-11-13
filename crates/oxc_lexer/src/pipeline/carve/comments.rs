@@ -25,7 +25,7 @@ pub(super) unsafe fn lex_line_comment(
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
-    let (end, lic_q) = scan_line_comment(src, s + 2, cpu);
+    let (end, license_at) = scan_line_comment(src, s + 2, cpu);
     kinds.set(s, tk!(LineComment));
     if end > s + 1 {
         token_start.clear_range(s + 1, end - 1, cpu);
@@ -33,10 +33,14 @@ pub(super) unsafe fn lex_line_comment(
     if end < src.len() {
         token_start.set(end, cpu);
     }
-    let lic = lic_q >= 0 && (lic_q as usize) + 8 < end;
+    let legal = license_at >= 0 && (license_at as usize) + 8 < end;
     let body = comment_body(src.bytes(), s as u32, end as u32, false, cpu);
-    let m = classify(body, false, lic, cpu);
-    debug_assert_eq!(m, classify_exact(body, false, cpu), "LCOM content fused != exact at {s}");
+    let m = comment_content(body, false, legal, cpu);
+    debug_assert_eq!(
+        m,
+        comment_content_exact(body, false, cpu),
+        "LCOM content fused != exact at {s}"
+    );
     push_comment_record(src, s as u32, end as u32, CommentKind::Line, true, m, lanes, cpu);
     end
 }
@@ -53,7 +57,7 @@ pub(super) unsafe fn lex_block_comment(
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
-    let (e, mut saw_nl, lic_q) = scan_block_comment(src, s + 2, cpu);
+    let (e, mut saw_nl, license_at) = scan_block_comment(src, s + 2, cpu);
     let end = if e < src.len() { e + 1 } else { src.len() };
     if e >= src.len() {
         lanes.push_diag(s as u32, (src.len() - s) as u32, DiagCode::UnterminatedBlockComment);
@@ -65,14 +69,18 @@ pub(super) unsafe fn lex_block_comment(
 
     let body = comment_body(src.bytes(), s as u32, end as u32, true, cpu);
     let m = if e < src.len() {
-        let lic = lic_q >= 0 && (lic_q as usize) + 8 < e - 1;
-        let m = classify(body, true, lic, cpu);
-        debug_assert_eq!(m, classify_exact(body, true, cpu), "BCOM content fused != exact at {s}");
+        let legal = license_at >= 0 && (license_at as usize) + 8 < e - 1;
+        let m = comment_content(body, true, legal, cpu);
+        debug_assert_eq!(
+            m,
+            comment_content_exact(body, true, cpu),
+            "BCOM content fused != exact at {s}"
+        );
         debug_assert_eq!(saw_nl, has_nl_cr(body, cpu), "BCOM saw_nl != exact at {s}");
         m
     } else {
         saw_nl = has_nl_cr(body, cpu);
-        classify_exact(body, true, cpu)
+        comment_content_exact(body, true, cpu)
     };
 
     let comment_kind =
@@ -153,7 +161,7 @@ pub(super) unsafe fn lex_html_open_comment(
     // `comment_body` skips a 2-byte delimiter; pass s + 2 so the 4-byte
     // `<!--` is skipped. The record keeps (s, end).
     let body = comment_body(src.bytes(), (s + 2) as u32, end as u32, false, cpu);
-    let m = classify_exact(body, false, cpu);
+    let m = comment_content_exact(body, false, cpu);
     push_comment_record(src, s as u32, end as u32, CommentKind::HtmlOpen, true, m, lanes, cpu);
     end
 }
@@ -204,7 +212,7 @@ pub(super) unsafe fn lex_html_close_comment(
     // `-->` is a 3-byte delimiter; pass start + 1 so the 2-byte-delimiter
     // body resolves to [s + 1, end).
     let body = comment_body(src.bytes(), (start + 1) as u32, end as u32, false, cpu);
-    let m = classify_exact(body, false, cpu);
+    let m = comment_content_exact(body, false, cpu);
     push_comment_record(src, start as u32, end as u32, CommentKind::HtmlClose, true, m, lanes, cpu);
     end
 }
@@ -258,9 +266,9 @@ fn html_close_at_line_start(src: Source, mut q: usize, _cpu: impl Cpu) -> bool {
 
 #[cpu_multiversion]
 #[inline]
-fn classify_exact(body: &[u8], is_block: bool, cpu: impl Cpu) -> CommentContent {
-    let lic = contains_license_or_preserve(body, cpu);
-    classify(body, is_block, lic, cpu)
+fn comment_content_exact(body: &[u8], is_block: bool, cpu: impl Cpu) -> CommentContent {
+    let legal = contains_license_or_preserve(body, cpu);
+    comment_content(body, is_block, legal, cpu)
 }
 
 #[cpu_multiversion]
@@ -298,7 +306,7 @@ fn contains_license_or_preserve(hay: &[u8], _cpu: impl Cpu) -> bool {
 
 #[cpu_multiversion]
 #[inline]
-fn classify(bytes: &[u8], is_block: bool, lic: bool, cpu: impl Cpu) -> CommentContent {
+fn comment_content(bytes: &[u8], is_block: bool, legal: bool, cpu: impl Cpu) -> CommentContent {
     if bytes.is_empty() {
         return CommentContent::None;
     }
@@ -306,7 +314,7 @@ fn classify(bytes: &[u8], is_block: bool, lic: bool, cpu: impl Cpu) -> CommentCo
         b'!' => return CommentContent::Legal,
         b'*' if is_block => {
             if !bytes.iter().all(|&c| c == b'*') {
-                return if lic { CommentContent::JsdocLegal } else { CommentContent::Jsdoc };
+                return if legal { CommentContent::JsdocLegal } else { CommentContent::Jsdoc };
             }
             return CommentContent::None;
         }
@@ -349,7 +357,7 @@ fn classify(bytes: &[u8], is_block: bool, lic: bool, cpu: impl Cpu) -> CommentCo
             {
                 return CommentContent::Webpack;
             }
-            return if lic { CommentContent::Legal } else { CommentContent::None };
+            return if legal { CommentContent::Legal } else { CommentContent::None };
         }
         b't' => {
             if bytes[start..].starts_with(b"turbopack")
@@ -358,7 +366,7 @@ fn classify(bytes: &[u8], is_block: bool, lic: bool, cpu: impl Cpu) -> CommentCo
             {
                 return CommentContent::Turbopack;
             }
-            return if lic { CommentContent::Legal } else { CommentContent::None };
+            return if legal { CommentContent::Legal } else { CommentContent::None };
         }
         b'v' | b'c' | b'n' | b'i' => {
             let rest = &bytes[start..];
@@ -373,9 +381,9 @@ fn classify(bytes: &[u8], is_block: bool, lic: bool, cpu: impl Cpu) -> CommentCo
                     CommentContent::CoverageIgnore
                 };
             }
-            return if lic { CommentContent::Legal } else { CommentContent::None };
+            return if legal { CommentContent::Legal } else { CommentContent::None };
         }
-        _ => return if lic { CommentContent::Legal } else { CommentContent::None },
+        _ => return if legal { CommentContent::Legal } else { CommentContent::None },
     }
 
     if start < bytes.len() && bytes[start..].starts_with(b"__") {
@@ -387,7 +395,7 @@ fn classify(bytes: &[u8], is_block: bool, lic: bool, cpu: impl Cpu) -> CommentCo
         }
     }
 
-    if lic { CommentContent::Legal } else { CommentContent::None }
+    if legal { CommentContent::Legal } else { CommentContent::None }
 }
 
 #[cpu_multiversion]
@@ -538,7 +546,7 @@ mod tests {
     use oxc_ast::ast::CommentContent;
     use oxc_simd::{Cpu, test_cpus};
 
-    use super::classify;
+    use super::comment_content;
 
     #[test_cpus]
     fn coverage_ignore_file(cpu: impl Cpu) {
@@ -549,7 +557,10 @@ mod tests {
             (b"istanbul ignore file".as_slice(), true),
             (b"istanbul ignore file -- generated".as_slice(), false),
         ] {
-            assert_eq!(classify(source, is_block, false, cpu), CommentContent::CoverageIgnoreFile);
+            assert_eq!(
+                comment_content(source, is_block, false, cpu),
+                CommentContent::CoverageIgnoreFile
+            );
         }
 
         for source in [
@@ -558,7 +569,7 @@ mod tests {
             b"c8 ignore file",
             b"istanbul ignore next",
         ] {
-            assert_eq!(classify(source, true, false, cpu), CommentContent::CoverageIgnore);
+            assert_eq!(comment_content(source, true, false, cpu), CommentContent::CoverageIgnore);
         }
     }
 
@@ -570,13 +581,13 @@ mod tests {
             b"\t@__KEY__\n",
             "\u{a0}@__KEY__\u{a0}".as_bytes(),
         ] {
-            assert_eq!(classify(source, true, false, cpu), CommentContent::PropertyKey);
+            assert_eq!(comment_content(source, true, false, cpu), CommentContent::PropertyKey);
         }
 
         for source in
             [b"__KEY__".as_slice(), b"@ __KEY__", b"@__key__", b"@__KEY___", b"@__KEY__ extra"]
         {
-            assert_eq!(classify(source, true, false, cpu), CommentContent::None);
+            assert_eq!(comment_content(source, true, false, cpu), CommentContent::None);
         }
     }
 
@@ -588,14 +599,17 @@ mod tests {
             (b"\tturbopackIgnore: true\n".as_slice(), true),
             (b" turbopackIgnore: true".as_slice(), false),
         ] {
-            assert_eq!(classify(source, is_block, false, cpu), CommentContent::Turbopack);
+            assert_eq!(comment_content(source, is_block, false, cpu), CommentContent::Turbopack);
         }
 
         for source in [b" turbopack ".as_slice(), b" turbopack", b" turbopackignore: true"] {
-            assert_eq!(classify(source, true, false, cpu), CommentContent::None);
+            assert_eq!(comment_content(source, true, false, cpu), CommentContent::None);
         }
 
         // Without a magic comment, @license or @preserve still makes it legal
-        assert_eq!(classify(b" turbopack @license ", true, true, cpu), CommentContent::Legal);
+        assert_eq!(
+            comment_content(b" turbopack @license ", true, true, cpu),
+            CommentContent::Legal
+        );
     }
 }

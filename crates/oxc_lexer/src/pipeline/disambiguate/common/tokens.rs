@@ -33,9 +33,9 @@ pub struct TokensView<'a> {
     pub kinds: &'a [u8],
     /// Source length.
     pub n: usize,
-    pub ts: bool,
+    pub is_ts: bool,
     /// The source is a module (`await` and `yield` are reserved at the top level).
-    pub module: bool,
+    pub is_module: bool,
     /// Token starts below this position carry their final keyword kind (`coalesce` has flushed
     /// them): a `tk!(Ident)` there is a plain name.
     pub kw_final: usize,
@@ -101,8 +101,8 @@ impl<'a> TokensView<'a> {
             op_char: slice::from_raw_parts(op_char.as_ptr(), blocks),
             kinds: slice::from_raw_parts(kinds.as_ptr(), blocks * 64),
             n: src.len(),
-            ts: shared.is_ts,
-            module: shared.is_module,
+            is_ts: shared.is_ts,
+            is_module: shared.is_module,
             kw_final,
             brackets: &shared.brackets,
             closers: &shared.closers,
@@ -141,7 +141,7 @@ impl<'a> TokensView<'a> {
         if !self.src[pos].is_ascii_lowercase() {
             return 0;
         }
-        let k = kw_match_at(self.ts, self.src, pos, len, cpu);
+        let k = kw_match_at(self.is_ts, self.src, pos, len, cpu);
         if k != TokenKind::Ident { k as u8 } else { 0 }
     }
 

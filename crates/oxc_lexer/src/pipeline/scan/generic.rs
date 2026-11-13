@@ -2,7 +2,7 @@ use oxc_simd::{BASELINE, cpu_version};
 
 use crate::pipeline::chunk::{eqm, load64};
 
-use super::common::lic_verify_at;
+use super::common::is_license_at;
 
 #[cpu_version(Generic)]
 pub unsafe fn scan_block_comment_generic(
@@ -13,7 +13,7 @@ pub unsafe fn scan_block_comment_generic(
     let cpu = BASELINE;
 
     let mut saw_nl = false;
-    let mut lic_q: i64 = -1;
+    let mut license_at: i64 = -1;
     while i + 8 <= n {
         let x = load64(src, i);
         let y = load64(src, i + 1);
@@ -24,17 +24,17 @@ pub unsafe fn scan_block_comment_generic(
             let j = (term.trailing_zeros() >> 3) as usize;
             let bodymask: u64 = if j > 0 { (1u64 << (j * 8)) - 1 } else { 0 };
             saw_nl |= (nl & bodymask) != 0;
-            if lic_q < 0 {
+            if license_at < 0 {
                 let am = at & bodymask;
                 if am != 0 {
-                    lic_q = lic_first8(src, i, am);
+                    license_at = first_license_at8(src, i, am);
                 }
             }
-            return (i + j + 1, saw_nl, lic_q);
+            return (i + j + 1, saw_nl, license_at);
         }
         saw_nl |= nl != 0;
-        if lic_q < 0 && at != 0 {
-            lic_q = lic_first8(src, i, at);
+        if license_at < 0 && at != 0 {
+            license_at = first_license_at8(src, i, at);
         }
         i += 8;
     }
@@ -42,17 +42,17 @@ pub unsafe fn scan_block_comment_generic(
     while i < n {
         let c = *src.add(i);
         if c == b'*' && *src.add(i + 1) == b'/' {
-            return (i + 1, saw_nl, lic_q);
+            return (i + 1, saw_nl, license_at);
         }
         if c == b'\n' || c == b'\r' {
             saw_nl = true;
         }
-        if c == b'@' && lic_q < 0 && lic_verify_at(src, i, cpu) {
-            lic_q = i as i64;
+        if c == b'@' && license_at < 0 && is_license_at(src, i, cpu) {
+            license_at = i as i64;
         }
         i += 1;
     }
-    (n, saw_nl, lic_q)
+    (n, saw_nl, license_at)
 }
 
 /// Scan a `//` line comment to its LineTerminator (LF, CR, or LS/PS),
@@ -64,7 +64,7 @@ pub unsafe fn scan_block_comment_generic(
 pub unsafe fn scan_line_comment_generic(src: *const u8, n: usize, mut i: usize) -> (usize, i64) {
     let cpu = BASELINE;
 
-    let mut lic_q: i64 = -1;
+    let mut license_at: i64 = -1;
     while i + 8 <= n {
         let x = load64(src, i);
         let mut term = eqm(x, b'\n') | eqm(x, b'\r') | eqm(x, 0xE2);
@@ -79,47 +79,47 @@ pub unsafe fn scan_line_comment_generic(src: *const u8, n: usize, mut i: usize) 
                 term &= term - 1;
                 continue;
             }
-            if lic_q < 0 {
+            if license_at < 0 {
                 let am = at & if t > 0 { (1u64 << (t * 8)) - 1 } else { 0 };
                 if am != 0 {
-                    lic_q = lic_first8(src, i, am);
+                    license_at = first_license_at8(src, i, am);
                 }
             }
-            return (i + t, lic_q);
+            return (i + t, license_at);
         }
-        if lic_q < 0 && at != 0 {
-            lic_q = lic_first8(src, i, at);
+        if license_at < 0 && at != 0 {
+            license_at = first_license_at8(src, i, at);
         }
         i += 8;
     }
     while i < n {
         let c = *src.add(i);
         if c == b'\n' || c == b'\r' {
-            return (i, lic_q);
+            return (i, license_at);
         }
         if c == 0xE2
             && *src.add(i + 1) == 0x80
             && (*src.add(i + 2) == 0xA8 || *src.add(i + 2) == 0xA9)
         {
-            return (i, lic_q);
+            return (i, license_at);
         }
-        if c == b'@' && lic_q < 0 && lic_verify_at(src, i, cpu) {
-            lic_q = i as i64;
+        if c == b'@' && license_at < 0 && is_license_at(src, i, cpu) {
+            license_at = i as i64;
         }
         i += 1;
     }
-    (n, lic_q)
+    (n, license_at)
 }
 
 #[cpu_version(Generic)]
 #[inline(always)]
-unsafe fn lic_first8(src: *const u8, base: usize, mut am: u64) -> i64 {
+unsafe fn first_license_at8(src: *const u8, base: usize, mut am: u64) -> i64 {
     let cpu = BASELINE;
 
     while am != 0 {
         let q = base + (am.trailing_zeros() >> 3) as usize;
         am &= am - 1;
-        if lic_verify_at(src, q, cpu) {
+        if is_license_at(src, q, cpu) {
             return q as i64;
         }
     }

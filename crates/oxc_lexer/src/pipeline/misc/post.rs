@@ -6,8 +6,14 @@ use crate::pipeline::{bitmap::Bitmaps, kinds::Kinds, source::Source};
 
 #[cpu_multiversion]
 #[inline]
-pub unsafe fn misc_post(src: Source, bitmaps: &Bitmaps, kinds: Kinds, nesc: usize, cpu: impl Cpu) {
-    if nesc != 0 {
+pub unsafe fn misc_post(
+    src: Source,
+    bitmaps: &Bitmaps,
+    kinds: Kinds,
+    escaped_ident_count: usize,
+    cpu: impl Cpu,
+) {
+    if escaped_ident_count != 0 {
         misc_post_impl(src, bitmaps, kinds, cpu)
     }
 }
@@ -16,8 +22,8 @@ pub unsafe fn misc_post(src: Source, bitmaps: &Bitmaps, kinds: Kinds, nesc: usiz
 #[inline(never)]
 unsafe fn misc_post_impl(src: Source, bitmaps: &Bitmaps, kinds: Kinds, cpu: impl Cpu) {
     let Bitmaps { token_start, word, misc, .. } = *bitmaps;
-    let nw = src.block_count();
-    for w in 0..nw {
+    let block_count = src.block_count();
+    for w in 0..block_count {
         let mut m = misc.block(w, cpu);
         while m != 0 {
             let bit = m.trailing_zeros() as usize;

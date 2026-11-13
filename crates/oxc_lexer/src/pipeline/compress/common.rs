@@ -62,11 +62,11 @@ pub(super) unsafe fn invalid_diags(
     out_kinds: *const u8,
     out_spans: *const Span,
     m: usize,
-    nn: u32,
+    src_len: u32,
     lanes: &mut Lanes,
 ) {
     let char_after = |cs: u32| -> u32 {
-        if cs >= nn {
+        if cs >= src_len {
             return 0;
         }
         let b = src[cs as usize];
@@ -81,7 +81,7 @@ pub(super) unsafe fn invalid_diags(
         } else {
             1
         };
-        l.min(nn - cs)
+        l.min(src_len - cs)
     };
     for j in 0..m {
         if *out_kinds.add(j) == tk!(Invalid) {

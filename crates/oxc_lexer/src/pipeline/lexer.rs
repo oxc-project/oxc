@@ -33,8 +33,8 @@ pub struct Lexer {
     dot: Vec<u64>,
     misc: Vec<u64>,
     kinds: Vec<u8>,
-    kwpos: Vec<u32>,
-    evpos: Vec<u32>,
+    kw_candidates: Vec<u32>,
+    events: Vec<u32>,
     block_capacity: usize,
     stage_pos: Vec<u32>,
     stage_kind: Vec<u8>,
@@ -78,8 +78,8 @@ impl Lexer {
             dot: Vec::new(),
             misc: Vec::new(),
             kinds: Vec::new(),
-            kwpos: Vec::new(),
-            evpos: Vec::new(),
+            kw_candidates: Vec::new(),
+            events: Vec::new(),
             block_capacity: 0,
             stage_pos: vec![0; STAGE_CAP],
             stage_kind: vec![0; STAGE_CAP],
@@ -175,17 +175,17 @@ impl Lexer {
             misc: Bitmap::new(self.misc.as_mut_ptr()),
         };
         let kinds = Kinds::new(self.kinds.as_mut_ptr());
-        let kwpos = self.kwpos.as_mut_ptr();
-        let evpos = self.evpos.as_mut_ptr();
+        let kw_candidates = self.kw_candidates.as_mut_ptr();
+        let events = self.events.as_mut_ptr();
 
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // keyword_initial letter class) only ever sees TS input, so JS lexing is
         // byte-identical to a build without it.
         classify(src, bitmaps, kinds, &options, cpu);
-        let nesc = misc_pre(src, bitmaps, kinds, &options, &mut self.lanes, cpu);
+        let escaped_ident_count = misc_pre(src, bitmaps, kinds, &options, &mut self.lanes, cpu);
         carve(src, bitmaps, kinds, &options, &mut self.lanes, cpu);
-        coalesce(src, bitmaps, kinds, kwpos, evpos, &options, &mut self.lanes, cpu);
-        misc_post(src, bitmaps, kinds, nesc, cpu);
+        coalesce(src, bitmaps, kinds, kw_candidates, events, &options, &mut self.lanes, cpu);
+        misc_post(src, bitmaps, kinds, escaped_ident_count, cpu);
         if !self.lanes.out.irregular_whitespaces.is_empty() {
             let spans = &mut self.lanes.out.irregular_whitespaces;
             retain_code_whitespace(&self.token_start, &self.kinds, spans);
@@ -219,9 +219,9 @@ impl Lexer {
             self.kinds.resize(blocks * 64, 0);
             self.block_capacity = blocks;
         }
-        if self.kwpos.is_empty() {
-            self.kwpos.resize(KWB * 64 + 8, 0);
-            self.evpos.resize(KWB * 64 + 8, 0);
+        if self.kw_candidates.is_empty() {
+            self.kw_candidates.resize(KWB * 64 + 8, 0);
+            self.events.resize(KWB * 64 + 8, 0);
         }
     }
 }

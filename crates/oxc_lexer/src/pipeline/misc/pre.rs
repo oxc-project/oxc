@@ -29,14 +29,14 @@ pub unsafe fn misc_pre(
     }
 }
 
-/// `VUTF8` (`LexOptions::validate_utf8`) adds UTF-8 well-formedness
+/// VALIDATE_UTF8 (LexOptions::validate_utf8) adds UTF-8 well-formedness
 /// validation to the non-ASCII walk. Monomorphized so the default `false`
 /// copy pays nothing for it.
 ///
 /// `#[inline(always)]` so it gets compiled as part of each of [`misc_pre`]'s entry points.
 #[cpu_multiversion]
 #[inline(always)]
-unsafe fn misc_pre_impl<const VUTF8: bool>(
+unsafe fn misc_pre_impl<const VALIDATE_UTF8: bool>(
     src: Source,
     bitmaps: &Bitmaps,
     kinds: Kinds,
@@ -44,9 +44,9 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
     cpu: impl Cpu,
 ) -> usize {
     let Bitmaps { token_start, word, misc, .. } = *bitmaps;
-    let mut nesc = 0usize;
-    let nw = src.block_count();
-    // VUTF8 only: continuation bits spilling into the next word, and the
+    let mut escaped_ident_count = 0usize;
+    let block_count = src.block_count();
+    // VALIDATE_UTF8 only: continuation bits spilling into the next word, and the
     // once-per-file latch for the UTF-8 diagnostic (parser parity; also
     // bounds the diag Vec on binary input).
     let mut skip_lo: u64 = 0;
@@ -55,20 +55,21 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
     loop {
         // Skip empty words in a tight loop, as the walk below keeps the word index on the stack
         let from = w;
-        while w < nw && misc.block(w, cpu) == 0 {
+        while w < block_count && misc.block(w, cpu) == 0 {
             w += 1;
         }
-        if w == nw {
+        if w == block_count {
             break;
         }
-        if VUTF8 && w != from {
+        if VALIDATE_UTF8 && w != from {
             // A skipped word consumed the carried continuation bits
             skip_lo = 0;
         }
         let blk = w;
         w += 1;
-        let mut m = if VUTF8 { misc.block(blk, cpu) & !skip_lo } else { misc.block(blk, cpu) };
-        if VUTF8 {
+        let mut m =
+            if VALIDATE_UTF8 { misc.block(blk, cpu) & !skip_lo } else { misc.block(blk, cpu) };
+        if VALIDATE_UTF8 {
             skip_lo = 0;
         }
         while m != 0 {
@@ -84,7 +85,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
             // identifier char; re-mark it as a whitespace token boundary.
             // Continuation bytes and non-ws leads fall through cheaply.
             if c >= 0x80 {
-                if VUTF8 {
+                if VALIDATE_UTF8 {
                     let (ok, cont) = utf8_seq_check(src, p, cpu);
                     if ok {
                         // Consume the verified continuation bits so they are
@@ -146,7 +147,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                     if src[e0] == b'\\' && src[e0 + 1] == b'u' && !holds_unicode_ws(src, p + 1, e0)
                     {
                         kinds.set(p, tk!(PrivateIdentEscaped));
-                        nesc += 1;
+                        escaped_ident_count += 1;
                         scan_ident_esc(src, e0, cpu)
                     } else {
                         kinds.set(p, tk!(PrivateIdent));
@@ -158,13 +159,13 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                     continue;
                 }
                 kinds.set(p, tk!(IdentEscaped));
-                nesc += 1;
+                escaped_ident_count += 1;
                 let e = scan_ident_esc(src, p, cpu);
                 token_start.clear_range(p + 1, e - 1, cpu);
             }
         }
     }
-    nesc
+    escaped_ident_count
 }
 
 /// Drop the irregular whitespace candidates that carve put inside a literal, comment or JSX text.

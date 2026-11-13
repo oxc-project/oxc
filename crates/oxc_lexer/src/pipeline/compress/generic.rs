@@ -69,7 +69,7 @@ pub(super) unsafe fn lanes_post_generic(
     out_kinds: *const u8,
     out_spans: *const Span,
     m: usize,
-    nn: u32,
+    src_len: u32,
     lanes: &mut Lanes,
 ) {
     let cpu = BASELINE;
@@ -106,6 +106,6 @@ pub(super) unsafe fn lanes_post_generic(
         i += 1;
     }
     if inv_dirty {
-        invalid_diags(src, out_kinds, out_spans, m, nn, lanes);
+        invalid_diags(src, out_kinds, out_spans, m, src_len, lanes);
     }
 }

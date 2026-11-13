@@ -268,7 +268,7 @@ fn scan_fraction_exponent(src: Source, mut i: usize, cpu: impl Cpu) -> (usize, b
 
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lic_verify_at(src: *const u8, q: usize, _cpu: impl Cpu) -> bool {
+pub(super) unsafe fn is_license_at(src: *const u8, q: usize, _cpu: impl Cpu) -> bool {
     let c1 = *src.add(q + 1);
     (c1 == b'l' && slice::from_raw_parts(src.add(q + 2), 6) == b"icense")
         || (c1 == b'p' && slice::from_raw_parts(src.add(q + 2), 7) == b"reserve")
@@ -278,11 +278,16 @@ pub(super) unsafe fn lic_verify_at(src: *const u8, q: usize, _cpu: impl Cpu) -> 
 /// Returns -1 if there is none.
 #[cpu_multiversion]
 #[inline(always)]
-pub(super) unsafe fn lic_first(src: *const u8, base: usize, mut am: u32, cpu: impl Cpu) -> i64 {
+pub(super) unsafe fn first_license_at(
+    src: *const u8,
+    base: usize,
+    mut am: u32,
+    cpu: impl Cpu,
+) -> i64 {
     while am != 0 {
         let q = base + am.trailing_zeros() as usize;
         am &= am - 1;
-        if lic_verify_at(src, q, cpu) {
+        if is_license_at(src, q, cpu) {
             return q as i64;
         }
     }

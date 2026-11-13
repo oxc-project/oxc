@@ -1,9 +1,3 @@
-//! Keyword recognition for `coalesce`.
-//!
-//! `coalesce` collects the positions of words which may be keywords (candidates) in `kwpos`,
-//! and every [`KWB`] words of the bitmaps calls [`kw_flush`] to check them with [`kw_match`].
-//! A candidate which is a keyword has its kind changed from `Ident` to the keyword's [`TokenKind`].
-
 use std::ptr;
 
 use oxc_simd::{Cpu, cpu_multiversion};
@@ -19,18 +13,18 @@ pub const KWB: usize = 64;
 #[cpu_multiversion]
 #[inline(always)]
 pub(super) unsafe fn kw_flush(
-    ts: bool,
+    is_ts: bool,
     src: Source,
     word: Bitmap,
     kinds: Kinds,
-    kwpos: *const u32,
+    kw_candidates: *const u32,
     k: usize,
     cpu: impl Cpu,
 ) {
-    if ts {
-        kw_verify_batch::<true>(src, word, kinds, kwpos, k, cpu);
+    if is_ts {
+        kw_verify_batch::<true>(src, word, kinds, kw_candidates, k, cpu);
     } else {
-        kw_verify_batch::<false>(src, word, kinds, kwpos, k, cpu);
+        kw_verify_batch::<false>(src, word, kinds, kw_candidates, k, cpu);
     }
 }
 
@@ -76,14 +70,14 @@ unsafe fn kw_verify_batch<const IS_TS: bool>(
 #[cpu_multiversion]
 #[inline]
 pub(super) unsafe fn kw_match_word(
-    ts: bool,
+    is_ts: bool,
     src: Source,
     word: Bitmap,
     pos: usize,
     cpu: impl Cpu,
 ) -> TokenKind {
     let len = word_len(word, pos, cpu);
-    if ts {
+    if is_ts {
         kw_match::<true>(src.as_ptr().add(pos), len, cpu)
     } else {
         kw_match::<false>(src.as_ptr().add(pos), len, cpu)

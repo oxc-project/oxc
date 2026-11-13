@@ -175,7 +175,7 @@ pub(super) unsafe fn lanes_post_avx2(
     out_kinds: *const u8,
     out_spans: *const Span,
     m: usize,
-    nn: u32,
+    src_len: u32,
     lanes: &mut Lanes,
     cpu: Avx2,
 ) {
@@ -216,7 +216,7 @@ pub(super) unsafe fn lanes_post_avx2(
         i += 32;
     }
     if inv_dirty {
-        invalid_diags(src, out_kinds, out_spans, m, nn, lanes);
+        invalid_diags(src, out_kinds, out_spans, m, src_len, lanes);
     }
 }
 

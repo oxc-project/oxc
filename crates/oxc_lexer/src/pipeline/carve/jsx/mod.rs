@@ -46,33 +46,33 @@ const JSX_TAG_BYTES: [u8; 6] = [b'"', b'{', b'\'', b'/', b'<', b'>'];
 const JSX_TEXT_BYTES: [u8; 4] = [b'<', b'>', b'{', b'}'];
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum JMode {
+enum JsxMode {
     Js,
     Tag,
     Text,
 }
 
 #[derive(Clone, Copy)]
-pub(in crate::pipeline) struct JFrame {
-    kind: JFrameKind,
+pub(in crate::pipeline) struct JsxFrame {
+    kind: JsxFrameKind,
     /// Mode to restore when this frame pops.
-    parent: JMode,
-    /// Nested-brace counter (TemplateSub / JsxCont only).
+    parent: JsxMode,
+    /// Nested-brace counter (TemplateSub / Container only).
     depth: u32,
     start: u32,
-    name_s: u32,
+    name_pos: u32,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum JFrameKind {
+enum JsxFrameKind {
     /// `${...}` of a split template literal (mode JS; `depth` counts nested `{}`).
     TemplateSub,
     /// `{...}` JSX expression container (mode JS; `depth` counts nested `{}`).
-    JsxCont,
+    Container,
     /// A `<...>` opening tag being lexed (mode TAG).
-    JsxTag,
+    Tag,
     /// An opened element whose children are being lexed (mode TEXT).
-    JsxElem,
+    Element,
 }
 
 /// JSX-aware carve: a 3-mode (JS / TAG / TEXT) pushdown over a single frame
@@ -97,7 +97,7 @@ pub(super) unsafe fn carve_jsx(
     // Reuse the previous lex's allocation, which matters for small inputs
     let mut stack = mem::take(&mut lanes.jsx_stack);
     stack.clear();
-    let mut mode = JMode::Js;
+    let mut mode = JsxMode::Js;
     let mut text_start = 0usize;
     let mut i = 0usize;
     if src.len() >= 2 && src[0] == b'#' && src[1] == b'!' {
@@ -111,9 +111,9 @@ pub(super) unsafe fn carve_jsx(
     }
     loop {
         match mode {
-            JMode::Js => {
+            JsxMode::Js => {
                 let in_brace = stack.last().is_some_and(|f| {
-                    matches!(f.kind, JFrameKind::TemplateSub | JFrameKind::JsxCont)
+                    matches!(f.kind, JsxFrameKind::TemplateSub | JsxFrameKind::Container)
                 });
                 // The finders that also stop at `>` are only switched on by a `<!--` in a
                 // script (see `html_close`).
@@ -143,12 +143,12 @@ pub(super) unsafe fn carve_jsx(
                             cpu,
                         );
                         if opened_sub {
-                            stack.push(JFrame {
-                                kind: JFrameKind::TemplateSub,
-                                parent: JMode::Js,
+                            stack.push(JsxFrame {
+                                kind: JsxFrameKind::TemplateSub,
+                                parent: JsxMode::Js,
                                 depth: 0,
                                 start: s as u32,
-                                name_s: 0,
+                                name_pos: 0,
                             });
                         }
                         i = end;
@@ -171,7 +171,7 @@ pub(super) unsafe fn carve_jsx(
                                 f.depth -= 1;
                             }
                             i = s + 1;
-                        } else if top_kind == Some(JFrameKind::TemplateSub) {
+                        } else if top_kind == Some(JsxFrameKind::TemplateSub) {
                             stack.pop();
                             let (end, opened_sub) = lex_template_segment(
                                 src,
@@ -184,20 +184,20 @@ pub(super) unsafe fn carve_jsx(
                                 cpu,
                             );
                             if opened_sub {
-                                stack.push(JFrame {
-                                    kind: JFrameKind::TemplateSub,
-                                    parent: JMode::Js,
+                                stack.push(JsxFrame {
+                                    kind: JsxFrameKind::TemplateSub,
+                                    parent: JsxMode::Js,
                                     depth: 0,
                                     start: s as u32,
-                                    name_s: 0,
+                                    name_pos: 0,
                                 });
                             }
                             i = end;
-                        } else if top_kind == Some(JFrameKind::JsxCont) {
-                            let parent = stack.last().map_or(JMode::Js, |f| f.parent);
+                        } else if top_kind == Some(JsxFrameKind::Container) {
+                            let parent = stack.last().map_or(JsxMode::Js, |f| f.parent);
                             stack.pop();
                             mode = parent;
-                            if mode == JMode::Text {
+                            if mode == JsxMode::Text {
                                 text_start = s + 1;
                             }
                             i = s + 1;
@@ -237,35 +237,35 @@ pub(super) unsafe fn carve_jsx(
                         {
                             // Operand position: candidate JSX. Whitespace (Unicode too) and
                             // comments may separate `<` from the name.
-                            let tpos = jsx_skip_trivia_fast(src, s + 1, cpu);
-                            let tc = if tpos < src.len() { src[tpos] } else { 0 };
-                            if tc == b'>' {
+                            let name_pos = jsx_skip_trivia_fast(src, s + 1, cpu);
+                            let name_byte = if name_pos < src.len() { src[name_pos] } else { 0 };
+                            if name_byte == b'>' {
                                 // fragment `<>`
                                 jsx_punct(kinds, op_char, s, tk!(JsxLt), cpu);
-                                stack.push(JFrame {
-                                    kind: JFrameKind::JsxTag,
-                                    parent: JMode::Js,
+                                stack.push(JsxFrame {
+                                    kind: JsxFrameKind::Tag,
+                                    parent: JsxMode::Js,
                                     depth: 0,
                                     start: s as u32,
-                                    name_s: tpos as u32,
+                                    name_pos: name_pos as u32,
                                 });
-                                mode = JMode::Tag;
-                            } else if is_id_start(tc, cpu)
+                                mode = JsxMode::Tag;
+                            } else if is_id_start(name_byte, cpu)
                                 && jsx_over_type_params(
-                                    src, bitmaps, kinds, s, tpos, options.ts, lanes, cpu,
+                                    src, bitmaps, kinds, s, name_pos, options.ts, lanes, cpu,
                                 )
                             {
                                 // Element - unless `.tsx` says this is a
                                 // type-parameter list, which stays a less-than.
                                 jsx_punct(kinds, op_char, s, tk!(JsxLt), cpu);
-                                stack.push(JFrame {
-                                    kind: JFrameKind::JsxTag,
-                                    parent: JMode::Js,
+                                stack.push(JsxFrame {
+                                    kind: JsxFrameKind::Tag,
+                                    parent: JsxMode::Js,
                                     depth: 0,
                                     start: s as u32,
-                                    name_s: tpos as u32,
+                                    name_pos: name_pos as u32,
                                 });
-                                mode = JMode::Tag;
+                                mode = JsxMode::Tag;
                             }
                             i = s + 1;
                         } else {
@@ -286,7 +286,7 @@ pub(super) unsafe fn carve_jsx(
                     }
                 }
             }
-            JMode::Tag => {
+            JsxMode::Tag => {
                 let s = find(src, i, JSX_TAG_BYTES, cpu);
                 if s >= src.len() {
                     break;
@@ -300,14 +300,14 @@ pub(super) unsafe fn carve_jsx(
                 if c == b'<' {
                     let prev = lanes.disambiguate.prev_sig(src, bitmaps, kinds, s, cpu);
                     if prev.is_some_and(|q| src[q] == b'=') {
-                        let tpos = jsx_skip_trivia(src, s + 1, cpu);
+                        let name_pos = jsx_skip_trivia(src, s + 1, cpu);
                         jsx_punct(kinds, op_char, s, tk!(JsxLt), cpu);
-                        stack.push(JFrame {
-                            kind: JFrameKind::JsxTag,
-                            parent: JMode::Tag,
+                        stack.push(JsxFrame {
+                            kind: JsxFrameKind::Tag,
+                            parent: JsxMode::Tag,
                             depth: 0,
                             start: s as u32,
-                            name_s: tpos as u32,
+                            name_pos: name_pos as u32,
                         });
                         i = s + 1;
                         continue;
@@ -456,14 +456,14 @@ pub(super) unsafe fn carve_jsx(
                         i = end;
                     }
                     b'{' => {
-                        stack.push(JFrame {
-                            kind: JFrameKind::JsxCont,
-                            parent: JMode::Tag,
+                        stack.push(JsxFrame {
+                            kind: JsxFrameKind::Container,
+                            parent: JsxMode::Tag,
                             depth: 0,
                             start: s as u32,
-                            name_s: 0,
+                            name_pos: 0,
                         });
-                        mode = JMode::Js;
+                        mode = JsxMode::Js;
                         i = s + 1;
                     }
                     b'/' => {
@@ -476,17 +476,17 @@ pub(super) unsafe fn carve_jsx(
                         } else {
                             // `/>` closes the tag, with any trivia (comments, Unicode
                             // whitespace) between the two.
-                            let gp = if d == b'>' {
+                            let gt = if d == b'>' {
                                 Some(s + 1)
                             } else {
                                 let w = jsx_skip_trivia(src, s + 1, cpu);
                                 (w < src.len() && src[w] == b'>').then_some(w)
                             };
-                            if let Some(gp) = gp {
+                            if let Some(gt) = gt {
                                 // Carve any comment between `/` and `>`: the tag resumes past
                                 // the `>`.
                                 let mut q = s + 1;
-                                while q < gp {
+                                while q < gt {
                                     q = match (src[q], src[q + 1]) {
                                         (b'/', b'*') => lex_block_comment(
                                             src,
@@ -502,14 +502,14 @@ pub(super) unsafe fn carve_jsx(
                                         _ => q + 1,
                                     };
                                 }
-                                jsx_punct(kinds, op_char, gp, tk!(JsxTagEnd), cpu);
-                                let parent = stack.last().map_or(JMode::Js, |f| f.parent);
+                                jsx_punct(kinds, op_char, gt, tk!(JsxTagEnd), cpu);
+                                let parent = stack.last().map_or(JsxMode::Js, |f| f.parent);
                                 stack.pop();
                                 mode = parent;
-                                if mode == JMode::Text {
-                                    text_start = gp + 1;
+                                if mode == JsxMode::Text {
+                                    text_start = gt + 1;
                                 }
-                                i = gp + 1;
+                                i = gt + 1;
                             } else {
                                 // lone `/` (malformed) - stays a slash.
                                 i = s + 1;
@@ -518,12 +518,12 @@ pub(super) unsafe fn carve_jsx(
                     }
                     b'>' => {
                         // opening tag ends; children begin
-                        if let Some(f @ JFrame { kind: JFrameKind::JsxTag, .. }) = stack.last_mut()
+                        if let Some(f @ JsxFrame { kind: JsxFrameKind::Tag, .. }) = stack.last_mut()
                         {
-                            f.kind = JFrameKind::JsxElem;
+                            f.kind = JsxFrameKind::Element;
                         }
                         jsx_punct(kinds, op_char, s, tk!(Gt), cpu);
-                        mode = JMode::Text;
+                        mode = JsxMode::Text;
                         text_start = s + 1;
                         i = s + 1;
                     }
@@ -532,7 +532,7 @@ pub(super) unsafe fn carve_jsx(
                     }
                 }
             }
-            JMode::Text => {
+            JsxMode::Text => {
                 let s = find(src, i, JSX_TEXT_BYTES, cpu);
                 let runend = if s < src.len() { s } else { src.len() };
                 if runend > text_start {
@@ -556,14 +556,14 @@ pub(super) unsafe fn carve_jsx(
                     if s >= 2 && src[s - 1] == b'u' && src[s - 2] == b'\\' {
                         restore_escaped_container(src, token_start, word, kinds, s);
                     }
-                    stack.push(JFrame {
-                        kind: JFrameKind::JsxCont,
-                        parent: JMode::Text,
+                    stack.push(JsxFrame {
+                        kind: JsxFrameKind::Container,
+                        parent: JsxMode::Text,
                         depth: 0,
                         start: s as u32,
-                        name_s: 0,
+                        name_pos: 0,
                     });
-                    mode = JMode::Js;
+                    mode = JsxMode::Js;
                     i = s + 1;
                 } else if c == b'>' || c == b'}' {
                     // A stray > or } ends the run; clearing op_char stops coalesce fusing strays.
@@ -579,14 +579,14 @@ pub(super) unsafe fn carve_jsx(
                     let direct = c1 == b'>'
                         || (c1 == b'/' && c2 != b'*' && c2 != b'/')
                         || (c1 < 0x80 && is_id_start(c1, cpu));
-                    let tpos = if direct { s + 1 } else { jsx_skip_trivia(src, s + 1, cpu) };
-                    let tc = if tpos < src.len() { src[tpos] } else { 0 };
-                    if tc == b'/' {
+                    let name_pos = if direct { s + 1 } else { jsx_skip_trivia(src, s + 1, cpu) };
+                    let name_byte = if name_pos < src.len() { src[name_pos] } else { 0 };
+                    if name_byte == b'/' {
                         // closing tag `</name>` or `</>`; the name stays IDENT
                         // A comment between `<` and `/` is trivia to carve: the branch resumes
                         // past the `>` and would otherwise leave its bytes as operators.
                         let mut q = s + 1;
-                        while q < tpos {
+                        while q < name_pos {
                             q = match (src[q], src[q + 1]) {
                                 (b'/', b'*') => {
                                     lex_block_comment(src, token_start, kinds, q, lanes, cpu)
@@ -597,44 +597,44 @@ pub(super) unsafe fn carve_jsx(
                                 _ => q + 1,
                             };
                         }
-                        let mut gp = tpos + 1;
+                        let mut gt = name_pos + 1;
                         loop {
-                            gp = find(src, gp, [b'>', b'/'], cpu);
-                            if gp >= src.len() || src[gp] == b'>' {
+                            gt = find(src, gt, [b'>', b'/'], cpu);
+                            if gt >= src.len() || src[gt] == b'>' {
                                 break;
                             }
-                            gp = match src[gp + 1] {
-                                b'*' => lex_block_comment(src, token_start, kinds, gp, lanes, cpu),
-                                b'/' => lex_line_comment(src, token_start, kinds, gp, lanes, cpu),
-                                _ => gp + 1,
+                            gt = match src[gt + 1] {
+                                b'*' => lex_block_comment(src, token_start, kinds, gt, lanes, cpu),
+                                b'/' => lex_line_comment(src, token_start, kinds, gt, lanes, cpu),
+                                _ => gt + 1,
                             };
                         }
-                        if gp > tpos + 1 {
-                            keyword_initial.clear_range(tpos + 1, gp - 1, cpu);
+                        if gt > name_pos + 1 {
+                            keyword_initial.clear_range(name_pos + 1, gt - 1, cpu);
                             // `</data-x>`: the name region holds no
                             // expression container, so hyphens in it are
                             // always part of the JSXIdentifier.
-                            jsx_glue_hyphens(src, bitmaps, tpos + 1, gp, cpu);
+                            jsx_glue_hyphens(src, bitmaps, name_pos + 1, gt, cpu);
                         }
                         jsx_punct(kinds, op_char, s, tk!(JsxLt), cpu);
-                        if gp < src.len() {
-                            jsx_punct(kinds, op_char, gp, tk!(JsxTagEnd), cpu);
+                        if gt < src.len() {
+                            jsx_punct(kinds, op_char, gt, tk!(JsxTagEnd), cpu);
                         }
-                        let after = if gp < src.len() { gp + 1 } else { src.len() };
-                        if gp >= src.len() {
+                        let after = if gt < src.len() { gt + 1 } else { src.len() };
+                        if gt >= src.len() {
                             lanes.push_diag(
                                 s as u32,
                                 (src.len() - s) as u32,
                                 DiagCode::UnterminatedJsxTag,
                             );
                         } else if let Some(f) = stack.last() {
-                            let c2 = src[tpos + 1];
+                            let c2 = src[name_pos + 1];
                             let cs = if (c2 < 0x80 && is_word(c2, cpu)) || c2 == b'>' {
-                                tpos + 1
+                                name_pos + 1
                             } else {
-                                jsx_skip_trivia(src.until(gp), tpos + 1, cpu)
+                                jsx_skip_trivia(src.until(gt), name_pos + 1, cpu)
                             };
-                            if !jsx_names_equal_fast(src, word, f.name_s as usize, cs, gp, cpu) {
+                            if !jsx_names_equal_fast(src, word, f.name_pos as usize, cs, gt, cpu) {
                                 lanes.push_diag(
                                     s as u32,
                                     (after - s) as u32,
@@ -642,24 +642,24 @@ pub(super) unsafe fn carve_jsx(
                                 );
                             }
                         }
-                        let parent = stack.last().map_or(JMode::Js, |f| f.parent);
+                        let parent = stack.last().map_or(JsxMode::Js, |f| f.parent);
                         stack.pop();
                         mode = parent;
-                        if mode == JMode::Text {
+                        if mode == JsxMode::Text {
                             text_start = after;
                         }
                         i = after;
-                    } else if tc == b'>' || is_id_start(tc, cpu) {
+                    } else if name_byte == b'>' || is_id_start(name_byte, cpu) {
                         // child element / fragment
                         jsx_punct(kinds, op_char, s, tk!(JsxLt), cpu);
-                        stack.push(JFrame {
-                            kind: JFrameKind::JsxTag,
-                            parent: JMode::Text,
+                        stack.push(JsxFrame {
+                            kind: JsxFrameKind::Tag,
+                            parent: JsxMode::Text,
                             depth: 0,
                             start: s as u32,
-                            name_s: tpos as u32,
+                            name_pos: name_pos as u32,
                         });
-                        mode = JMode::Tag;
+                        mode = JsxMode::Tag;
                         i = s + 1;
                     } else {
                         // Malformed lone < in text: clear op_char so no << is fused.
@@ -673,21 +673,21 @@ pub(super) unsafe fn carve_jsx(
     }
     if let Some(f) = stack.last() {
         match f.kind {
-            JFrameKind::JsxTag => {
+            JsxFrameKind::Tag => {
                 lanes.push_diag(f.start, src.len() as u32 - f.start, DiagCode::UnterminatedJsxTag);
             }
-            JFrameKind::JsxElem => {
-                let ne = jsx_name_end(src, f.name_s as usize, cpu) as u32;
+            JsxFrameKind::Element => {
+                let ne = jsx_name_end(src, f.name_pos as usize, cpu) as u32;
                 lanes.push_diag(f.start, ne - f.start, DiagCode::UnterminatedJsxElement);
             }
-            JFrameKind::JsxCont => {
+            JsxFrameKind::Container => {
                 lanes.push_diag(
                     f.start,
                     src.len() as u32 - f.start,
                     DiagCode::UnterminatedJsxContainer,
                 );
             }
-            JFrameKind::TemplateSub => {}
+            JsxFrameKind::TemplateSub => {}
         }
     }
     lanes.jsx_stack = stack;

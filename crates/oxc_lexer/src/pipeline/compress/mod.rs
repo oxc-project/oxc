@@ -144,13 +144,13 @@ unsafe fn lanes_post(
     out_kinds: *const u8,
     out_spans: *const Span,
     m: usize,
-    nn: u32,
+    src_len: u32,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) {
     match DynCpu::from(cpu) {
-        DynCpu::Avx2(cpu) => lanes_post_avx2(src, out_kinds, out_spans, m, nn, lanes, cpu),
-        DynCpu::Neon(cpu) => lanes_post_neon(src, out_kinds, out_spans, m, nn, lanes, cpu),
-        DynCpu::Generic(_) => lanes_post_generic(src, out_kinds, out_spans, m, nn, lanes),
+        DynCpu::Avx2(cpu) => lanes_post_avx2(src, out_kinds, out_spans, m, src_len, lanes, cpu),
+        DynCpu::Neon(cpu) => lanes_post_neon(src, out_kinds, out_spans, m, src_len, lanes, cpu),
+        DynCpu::Generic(_) => lanes_post_generic(src, out_kinds, out_spans, m, src_len, lanes),
     };
 }
