@@ -12,8 +12,8 @@ use crate::{
 };
 
 use super::{
-    GlobSet, LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, RuleConfig,
-    categories::OxlintCategories,
+    GlobSet, LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, OxlintRules, Oxlintrc, RuleConfig,
+    categories::OxlintCategories, external_plugins::ExternalPluginEntry, overrides::OxlintOverride,
 };
 
 // TODO: support `categories` et. al. in overrides.
@@ -50,6 +50,7 @@ pub struct ResolvedOxlintOverride {
     pub env: Option<OxlintEnv>,
     pub globals: Option<OxlintGlobals>,
     pub plugins: Option<LintPlugins>,
+    pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
     pub rules: ResolvedOxlintOverrideRules,
 }
 
@@ -122,6 +123,55 @@ impl Config {
 
     pub fn number_of_rules(&self) -> usize {
         self.base.rules.len()
+    }
+
+    /// Serializes the built configuration, retaining source metadata such as ignore patterns.
+    ///
+    /// # Panics
+    /// Panics if the configuration cannot be serialized as JSON.
+    pub fn to_config_file(
+        &self,
+        oxlintrc: Oxlintrc,
+        external_plugin_store: &ExternalPluginStore,
+    ) -> String {
+        let LintConfig { plugins, settings, env, globals, path: _, options } =
+            self.base.config.as_ref();
+        let mut overrides = oxlintrc.overrides;
+        overrides.clear();
+        overrides.extend(self.overrides.iter().map(|override_config| OxlintOverride {
+            files: override_config.files.clone(),
+            exclude_files: override_config.exclude_files.clone(),
+            env: override_config.env.clone(),
+            globals: override_config.globals.clone(),
+            plugins: override_config.plugins,
+            external_plugins: override_config.external_plugins.clone(),
+            rules: OxlintRules::from_resolved(
+                &override_config.rules.builtin_rules,
+                &override_config.rules.external_rules,
+                external_plugin_store,
+            ),
+        }));
+        let oxlintrc = Oxlintrc {
+            schema: oxlintrc.schema,
+            plugins: Some(*plugins),
+            external_plugins: oxlintrc.external_plugins,
+            categories: oxlintrc.categories,
+            rules: OxlintRules::from_resolved(
+                &self.base_rules,
+                &self.base.external_rules,
+                external_plugin_store,
+            ),
+            settings: settings.clone(),
+            env: env.clone(),
+            globals: globals.clone(),
+            overrides,
+            options: options.clone(),
+            path: oxlintrc.path,
+            ignore_patterns: oxlintrc.ignore_patterns,
+            extends: oxlintrc.extends,
+            extends_configs: oxlintrc.extends_configs,
+        };
+        serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
 
     pub fn apply_overrides(&self, path: &Path) -> ResolvedLinterState {
@@ -483,6 +533,7 @@ mod test {
     fn test_no_rules() {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             env: None,
             files: GlobSet::new(vec!["*.test.{ts,tsx}"]),
             exclude_files: GlobSet::default(),
@@ -515,6 +566,7 @@ mod test {
     fn test_no_rules_and_new_plugins() {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             env: None,
             files: GlobSet::new(vec!["*.test.{ts,tsx}"]),
             exclude_files: GlobSet::default(),
@@ -552,6 +604,7 @@ mod test {
     fn test_remove_rule() {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             env: None,
             files: GlobSet::new(vec!["*.test.{ts,tsx}"]),
             exclude_files: GlobSet::default(),
@@ -590,6 +643,7 @@ mod test {
     fn test_add_rule() {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             env: None,
             files: GlobSet::new(vec!["src/**/*.{ts,tsx}"]),
             exclude_files: GlobSet::default(),
@@ -627,6 +681,7 @@ mod test {
     #[test]
     fn test_number_of_rules_override_only() {
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             env: None,
             files: GlobSet::new(vec!["src/**/*.{ts,tsx}"]),
             plugins: None,
@@ -670,6 +725,7 @@ mod test {
     fn test_number_of_rules_dedupes_same_rule_across_overrides() {
         let overrides = ResolvedOxlintOverrides::new(vec![
             ResolvedOxlintOverride {
+                external_plugins: None,
                 env: None,
                 files: GlobSet::new(vec!["*.ts"]),
                 plugins: None,
@@ -690,6 +746,7 @@ mod test {
                 exclude_files: GlobSet::default(),
             },
             ResolvedOxlintOverride {
+                external_plugins: None,
                 env: None,
                 files: GlobSet::new(vec!["*.tsx"]),
                 plugins: None,
@@ -723,6 +780,7 @@ mod test {
     #[test]
     fn test_number_of_rules_dedupes_root_and_override_same_rule() {
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             env: None,
             files: GlobSet::new(vec!["*.ts"]),
             plugins: None,
@@ -757,6 +815,7 @@ mod test {
     fn test_change_rule_severity() {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             env: None,
             files: GlobSet::new(vec!["src/**/*.{ts,tsx}"]),
             exclude_files: GlobSet::default(),
@@ -798,6 +857,7 @@ mod test {
         let base_config = LintConfig { plugins: LintPlugins::IMPORT, ..Default::default() };
         let overrides = ResolvedOxlintOverrides::new(vec![
             ResolvedOxlintOverride {
+                external_plugins: None,
                 env: None,
                 files: GlobSet::new(vec!["*.jsx", "*.tsx"]),
                 exclude_files: GlobSet::default(),
@@ -809,6 +869,7 @@ mod test {
                 },
             },
             ResolvedOxlintOverride {
+                external_plugins: None,
                 env: None,
                 files: GlobSet::new(vec!["*.ts", "*.tsx"]),
                 exclude_files: GlobSet::default(),
@@ -846,6 +907,7 @@ mod test {
     fn test_add_env() {
         let base_config = LintConfig { plugins: LintPlugins::ESLINT, ..Default::default() };
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             env: Some(OxlintEnv::from_iter(["es2024".to_string()])),
             files: GlobSet::new(vec!["*.tsx"]),
             exclude_files: GlobSet::default(),
@@ -870,6 +932,7 @@ mod test {
         let base_config =
             LintConfig { env: OxlintEnv::from_iter(["es2024".into()]), ..Default::default() };
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             files: GlobSet::new(vec!["*.tsx"]),
             exclude_files: GlobSet::default(),
             env: Some(from_json!({ "es2024": false })),
@@ -894,6 +957,7 @@ mod test {
         let base_config = LintConfig { plugins: LintPlugins::ESLINT, ..Default::default() };
 
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             files: GlobSet::new(vec!["*.tsx"]),
             exclude_files: GlobSet::default(),
             env: None,
@@ -933,6 +997,7 @@ mod test {
         let rule_id = external_plugin_store.lookup_rule_id("custom", "no-debugger").unwrap();
 
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             files: GlobSet::new(vec!["*.ts"]),
             exclude_files: GlobSet::default(),
             env: None,
@@ -971,6 +1036,7 @@ mod test {
         };
 
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             files: GlobSet::new(vec!["*.tsx"]),
             exclude_files: GlobSet::default(),
             env: None,
@@ -1016,6 +1082,7 @@ mod test {
         let overrides = ResolvedOxlintOverrides::new(vec![
             // First override: typescript plugin for *.{ts,tsx,mts}
             ResolvedOxlintOverride {
+                external_plugins: None,
                 env: None,
                 files: GlobSet::new(vec!["*.{ts,tsx,mts}"]),
                 exclude_files: GlobSet::default(),
@@ -1028,6 +1095,7 @@ mod test {
             },
             // Second override: react plugin for *.{ts,tsx} with jsx-filename-extension turned off
             ResolvedOxlintOverride {
+                external_plugins: None,
                 env: None,
                 files: GlobSet::new(vec!["*.{ts,tsx}"]),
                 exclude_files: GlobSet::default(),
@@ -1043,6 +1111,7 @@ mod test {
             },
             // Third override: unicorn plugin for *.{ts,tsx,mts}
             ResolvedOxlintOverride {
+                external_plugins: None,
                 env: None,
                 files: GlobSet::new(vec!["*.{ts,tsx,mts}"]),
                 exclude_files: GlobSet::default(),
@@ -1105,6 +1174,7 @@ mod test {
 
         // Override adds react plugin (new plugin not in root)
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             env: None,
             files: GlobSet::new(vec!["*.tsx"]),
             exclude_files: GlobSet::default(),
@@ -1139,6 +1209,7 @@ mod test {
             EslintNoUnusedVars::from_configuration(Value::from_str(r#"["local"]"#).unwrap())
                 .unwrap();
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             env: None,
             files: GlobSet::new(vec!["*.tsx"]),
             exclude_files: GlobSet::default(),
@@ -1219,6 +1290,7 @@ mod test {
 
         // Override adds typescript plugin
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             env: None,
             files: GlobSet::new(vec!["*.tsx"]),
             exclude_files: GlobSet::default(),
@@ -1339,6 +1411,7 @@ mod test {
             OxlintCategories::default(),
             LintConfig::default(),
             ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+                external_plugins: None,
                 files: GlobSet::new(vec!["*.js"]),
                 exclude_files: GlobSet::default(),
                 env: None,
@@ -1534,6 +1607,111 @@ mod test {
     }
 
     #[test]
+    fn test_print_config_uses_built_config() {
+        let mut oxlintrc: Oxlintrc = serde_json::from_value(json!({
+            "$schema": "test-schema",
+            "plugins": ["unicorn"],
+            "ignorePatterns": ["dist"],
+            "env": { "browser": true },
+            "globals": { "configuredGlobal": "readonly" },
+            "rules": { "unicorn/no-null": "error", "no-console": "off" }
+        }))
+        .unwrap();
+        oxlintrc.extends_configs.push(
+            serde_json::from_value(json!({
+                "options": { "maxWarnings": 3 },
+                "overrides": [{
+                    "files": ["*.ts"],
+                    "excludeFiles": ["*.generated.ts"],
+                    "plugins": ["typescript"],
+                    "jsPlugins": [{ "name": "custom", "specifier": "eslint-plugin-custom" }],
+                    "rules": { "@typescript-eslint/no-unused-vars": ["warn", { "args": "none" }] }
+                }]
+            }))
+            .unwrap(),
+        );
+        let mut store = ExternalPluginStore::new(false);
+        let config =
+            ConfigStoreBuilder::from_oxlintrc(true, oxlintrc.clone(), None, &mut store, None)
+                .unwrap()
+                .with_builtin_plugins(LintPlugins::empty())
+                .build(&mut store)
+                .unwrap();
+        let printed: Value =
+            serde_json::from_str(&config.to_config_file(oxlintrc, &store)).unwrap();
+
+        assert_eq!(printed["$schema"], "test-schema");
+        assert_eq!(printed["ignorePatterns"], json!(["dist"]));
+        assert_eq!(printed["plugins"], json!([]));
+        assert_eq!(printed["rules"], json!({ "no-console": "allow" }));
+        assert_eq!(printed["env"]["browser"], true);
+        assert_eq!(printed["globals"]["configuredGlobal"], "readonly");
+        assert_eq!(printed["options"]["maxWarnings"], 3);
+        assert_eq!(
+            printed["overrides"],
+            json!([{
+                "files": ["**/*.ts"],
+                "excludeFiles": ["**/*.generated.ts"],
+                "plugins": ["typescript"],
+                "jsPlugins": [{ "name": "custom", "specifier": "eslint-plugin-custom" }],
+                "env": null,
+                "globals": null,
+                "rules": { "no-unused-vars": ["warn", { "args": "none" }] }
+            }])
+        );
+    }
+
+    #[test]
+    fn test_print_config_external_rule_options() {
+        let mut store = ExternalPluginStore::default();
+        store.register_plugin(
+            PathBuf::from("path/to/custom"),
+            "custom".to_string(),
+            0,
+            vec!["my-rule".to_string(), "no-options".to_string()],
+        );
+        let oxlintrc: Oxlintrc = serde_json::from_value(json!({
+            "rules": {
+                "custom/my-rule": ["warn", { "base": true }],
+                "custom/no-options": "error"
+            },
+            "overrides": [
+                {
+                    "files": ["*.ts"],
+                    "rules": { "custom/my-rule": ["error", ["nested"], null, true, 3] }
+                },
+                {
+                    "files": ["*.test.ts"],
+                    "rules": { "custom/my-rule": "off" }
+                }
+            ]
+        }))
+        .unwrap();
+        let config =
+            ConfigStoreBuilder::from_oxlintrc(true, oxlintrc.clone(), None, &mut store, None)
+                .unwrap()
+                .build(&mut store)
+                .unwrap();
+        let printed: Value =
+            serde_json::from_str(&config.to_config_file(oxlintrc, &store)).unwrap();
+
+        assert_eq!(
+            printed["rules"],
+            json!({
+                "custom/my-rule": ["warn", { "base": true }],
+                "custom/no-options": "deny"
+            })
+        );
+        assert_eq!(
+            printed["overrides"][0]["rules"],
+            json!({
+                "custom/my-rule": ["deny", ["nested"], null, true, 3]
+            })
+        );
+        assert_eq!(printed["overrides"][1]["rules"], json!({ "custom/my-rule": "allow" }));
+    }
+
+    #[test]
     fn test_resolved_rule_options() {
         let root = config_from_str_with_defaults(
             r#"{
@@ -1645,6 +1823,7 @@ mod test {
         )];
 
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
             env: None,
             files: GlobSet::new(vec!["**/*.ts"]),
             exclude_files: GlobSet::default(),

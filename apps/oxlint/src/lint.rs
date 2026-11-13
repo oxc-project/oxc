@@ -330,10 +330,6 @@ impl CliRunner {
             }
         };
 
-        if misc_options.print_config {
-            return crate::mode::run_print_config(&config_builder, root_config, stdout);
-        }
-
         let lint_config = match config_builder.build(&mut external_plugin_store) {
             Ok(config) => config,
             Err(e) => {
@@ -347,6 +343,15 @@ impl CliRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
+
+        if misc_options.print_config {
+            return crate::mode::run_print_config(
+                &lint_config,
+                root_config,
+                &external_plugin_store,
+                stdout,
+            );
+        }
 
         if self.options.list_rules {
             return crate::mode::run_rules(&lint_config, &output_formatter, stdout);
@@ -1398,6 +1403,31 @@ mod test {
             "--print-config",
         ];
         Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_print_config_validates_overrides() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join("test.ts"), "").unwrap();
+        fs::write(
+            temp_dir.path().join(DEFAULT_OXLINTRC_NAME),
+            r#"{
+                "overrides": [{
+                    "files": ["*.ts"],
+                    "rules": { "not-a-real-rule": "error" }
+                }]
+            }"#,
+        )
+        .unwrap();
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        let (lint_output, lint_result) = tester.test_output(&["test.ts"]);
+        let (print_output, print_result) = tester.test_output(&["--print-config"]);
+
+        assert!(matches!(lint_result, CliRunResult::InvalidOptionConfig));
+        assert!(matches!(print_result, CliRunResult::InvalidOptionConfig));
+        assert!(print_output.contains("Failed to build configuration."));
+        assert!(print_output.contains("not-a-real-rule"));
+        assert_eq!(print_output, lint_output);
     }
 
     #[test]
