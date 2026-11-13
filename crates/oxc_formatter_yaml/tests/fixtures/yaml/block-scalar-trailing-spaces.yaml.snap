@@ -4,8 +4,6 @@ source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
 ==================== Input ====================
 # Trailing whitespace in a block scalar is part of the VALUE and is preserved:
 # last-line spaces/tabs, and space-only lines more-indented than the block.
-# DIVERGES from the pinned Prettier (drops them, corrupting the value);
-# see DIVERGENCES.md#block-scalar-trailing-whitespace (prettier#19764).
 strip-chomped-last-line: |-
   value  
 folded-tab: >-
@@ -32,8 +30,6 @@ tail: 2
 ------------------
 # Trailing whitespace in a block scalar is part of the VALUE and is preserved:
 # last-line spaces/tabs, and space-only lines more-indented than the block.
-# DIVERGES from the pinned Prettier (drops them, corrupting the value);
-# see DIVERGENCES.md#block-scalar-trailing-whitespace (prettier#19764).
 strip-chomped-last-line: |-
   value  
 folded-tab: >-
@@ -59,8 +55,6 @@ tail: 2
 -------------------
 # Trailing whitespace in a block scalar is part of the VALUE and is preserved:
 # last-line spaces/tabs, and space-only lines more-indented than the block.
-# DIVERGES from the pinned Prettier (drops them, corrupting the value);
-# see DIVERGENCES.md#block-scalar-trailing-whitespace (prettier#19764).
 strip-chomped-last-line: |-
   value  
 folded-tab: >-

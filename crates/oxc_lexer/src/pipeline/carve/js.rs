@@ -1,3 +1,5 @@
+use std::mem;
+
 use oxc_simd::{Cpu, cpu_multiversion};
 
 use crate::token::tk;
@@ -9,8 +11,9 @@ use super::{
         html_close_comment_at, html_open_comment_at, lex_html_close_comment, lex_html_open_comment,
     },
     common::{
-        OPENER_BYTES, OPENER8_BYTES, find_line_terminator, lex_slash, lex_string,
-        lex_template_segment, skip_unicode_brace_escape,
+        OPENER_BYTES, OPENER_MODULE_BYTES, OPENER8_BYTES, OPENER8_MODULE_BYTES,
+        find_line_terminator, lex_slash, lex_string, lex_template_segment,
+        skip_unicode_brace_escape,
     },
 };
 
@@ -27,7 +30,9 @@ pub(super) unsafe fn carve_js(
     cpu: impl Cpu,
 ) {
     let src = srcs.as_ptr();
-    let mut depth: Vec<u32> = Vec::with_capacity(64);
+    // Reuse the previous lex's allocation, which matters for small inputs
+    let mut depth = mem::take(&mut lanes.template_depth);
+    depth.clear();
     let mut i = 0usize;
     if n >= 2 && *src == b'#' && *src.add(1) == b'!' {
         let end = find_line_terminator(src, n, 2, cpu);
@@ -39,11 +44,12 @@ pub(super) unsafe fn carve_js(
         i = end;
     }
     loop {
-        let nsub = depth.len();
-        let s = if nsub != 0 {
-            find(src, n, i, OPENER8_BYTES, cpu)
-        } else {
-            find(src, n, i, OPENER_BYTES, cpu)
+        // HTML close comments only exist in scripts, so modules needn't stop at closing brackets
+        let s = match (depth.is_empty(), lanes.module) {
+            (true, false) => find(src, n, i, OPENER_BYTES, cpu),
+            (true, true) => find(src, n, i, OPENER_MODULE_BYTES, cpu),
+            (false, false) => find(src, n, i, OPENER8_BYTES, cpu),
+            (false, true) => find(src, n, i, OPENER8_MODULE_BYTES, cpu),
         };
         if s >= n {
             break;
@@ -129,4 +135,5 @@ pub(super) unsafe fn carve_js(
             }
         }
     }
+    lanes.template_depth = depth;
 }

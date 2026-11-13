@@ -29,12 +29,12 @@ jobs:
     runs-on: windows-latest
     env:
       # Pin Miri to a known-good nightly
-      MIRI_TOOLCHAIN: nightly-2026-05-01
+      MIRI_TOOLCHAIN: nightly-2026-10-04
       # Override the workspace's `rust-toolchain.toml` so `cargo` invocations that don't carry
       # an explicit `+TOOLCHAIN` (notably `cargo metadata` inside `Swatinem/rust-cache`)
       # don't trigger `rustup` to auto-install the workspace Rust version.
       # Must match `MIRI_TOOLCHAIN` above to be effective.
-      RUSTUP_TOOLCHAIN: nightly-2026-05-01
+      RUSTUP_TOOLCHAIN: nightly-2026-10-04
     steps:
       # Windows runner setup (longpaths, checkout, Dev Drive, rust-cache)
       # copied from `test-windows` job in `ci.yml`

@@ -4,7 +4,7 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 ==================== Input ====================
 function *a() {
   yield task
-    // No extra parens
+    // An own-line comment in the argument wraps it in parens, as for `return`
     .run();
 }
 
@@ -13,18 +13,22 @@ function *a() {
 { printWidth: 80 }
 ------------------
 function* a() {
-  yield task
-    // No extra parens
-    .run();
+  yield (
+    task
+      // An own-line comment in the argument wraps it in parens, as for `return`
+      .run()
+  );
 }
 
 -------------------
 { printWidth: 100 }
 -------------------
 function* a() {
-  yield task
-    // No extra parens
-    .run();
+  yield (
+    task
+      // An own-line comment in the argument wraps it in parens, as for `return`
+      .run()
+  );
 }
 
 ===================== End =====================

@@ -1,9 +1,12 @@
-use serde::Deserialize;
 use std::path::PathBuf;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::Oxlintrc;
 
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+use serde::Deserialize;
+
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use crate::run::JsLoadJsConfigsCb;
 
 /// Callback type for loading JavaScript/TypeScript config files.
@@ -19,6 +22,7 @@ pub struct JsConfigResult {
 }
 
 /// Response from JS side when loading JS configs.
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 enum LoadJsConfigsResponse {
@@ -36,12 +40,14 @@ enum LoadJsConfigsResponse {
     },
 }
 
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 #[derive(Debug, Deserialize)]
 struct LoadJsConfigsResponseFailure {
     path: String,
     error: String,
 }
 
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 #[derive(Debug, Deserialize)]
 struct JsConfigResultJson {
     path: String,
@@ -52,6 +58,7 @@ struct JsConfigResultJson {
 ///
 /// The returned function blocks the current thread until the JS callback resolves.
 /// It will panic if called outside of a Tokio runtime.
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 pub fn create_js_config_loader(cb: JsLoadJsConfigsCb) -> JsConfigLoaderCb {
     Box::new(move |paths: Vec<String>| {
         let cb = &cb;
@@ -69,6 +76,7 @@ pub fn create_js_config_loader(cb: JsLoadJsConfigsCb) -> JsConfigLoaderCb {
     })
 }
 
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 fn parse_js_oxlintrc(mut value: serde_json::Value) -> Result<Oxlintrc, OxcDiagnostic> {
     let Some(map) = value.as_object_mut() else {
         return Err(OxcDiagnostic::error(
@@ -107,6 +115,7 @@ fn parse_js_oxlintrc(mut value: serde_json::Value) -> Result<Oxlintrc, OxcDiagno
 }
 
 /// Parse the JSON response from JS side into `JsConfigResult` structs.
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDiagnostic>> {
     let response: LoadJsConfigsResponse = serde_json::from_str(json).map_err(|e| {
         vec![OxcDiagnostic::error(format!("Failed to parse JS config response: {e}"))]

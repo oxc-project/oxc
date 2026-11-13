@@ -4,9 +4,6 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ==================== Input ====================
 // A blank line after a map item is preserved per the shared blank-line rule
 // regardless of the value's shape.
-// DIVERGES from Prettier (DIVERGENCES.md#map-paren-value-blank-lines):
-// it drops the blank when the item's value is paren-ish (a call / paren group),
-// an artifact of its comma-group splitting (prettier/prettier#16824).
 $colors: (
   a: rgba(#fff, 0.1),
 
@@ -26,9 +23,6 @@ $plain: (
 ------------------
 // A blank line after a map item is preserved per the shared blank-line rule
 // regardless of the value's shape.
-// DIVERGES from Prettier (DIVERGENCES.md#map-paren-value-blank-lines):
-// it drops the blank when the item's value is paren-ish (a call / paren group),
-// an artifact of its comma-group splitting (prettier/prettier#16824).
 $colors: (
   a: rgba(#fff, 0.1),
 
@@ -47,9 +41,6 @@ $plain: (
 -------------------
 // A blank line after a map item is preserved per the shared blank-line rule
 // regardless of the value's shape.
-// DIVERGES from Prettier (DIVERGENCES.md#map-paren-value-blank-lines):
-// it drops the blank when the item's value is paren-ish (a call / paren group),
-// an artifact of its comma-group splitting (prettier/prettier#16824).
 $colors: (
   a: rgba(#fff, 0.1),
 

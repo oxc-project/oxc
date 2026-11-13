@@ -25,8 +25,8 @@ literal: |
 ---
 last: value # trailing
 
-# one blank stays one; Prettier doubles it when the final item
-# has a trailing comment (the prettier#9130 shape, still alive there)
+# one blank stays one, also when the final item
+# has a trailing comment
 
 ==================== Output ====================
 ------------------
@@ -52,8 +52,8 @@ literal: |
 ---
 last: value # trailing
 
-# one blank stays one; Prettier doubles it when the final item
-# has a trailing comment (the prettier#9130 shape, still alive there)
+# one blank stays one, also when the final item
+# has a trailing comment
 
 -------------------
 { printWidth: 100 }
@@ -78,7 +78,7 @@ literal: |
 ---
 last: value # trailing
 
-# one blank stays one; Prettier doubles it when the final item
-# has a trailing comment (the prettier#9130 shape, still alive there)
+# one blank stays one, also when the final item
+# has a trailing comment
 
 ===================== End =====================

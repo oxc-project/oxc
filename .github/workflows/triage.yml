@@ -54,7 +54,7 @@ jobs:
           # Issue events can restore main's caches but cannot save into that scope.
           save-cache: false
           cache-key: warm
-          tools: just,cargo-shear@1.13.1,cargo-insta,typos-cli,ast-grep
+          tools: just,cargo-shear@1.13.1,cargo-insta,ast-grep
           components: clippy rustfmt
 
       - name: Create oxc-captain token
@@ -95,5 +95,6 @@ jobs:
           verification-model: cloudflare-workers-ai/@cf/moonshotai/kimi-k2.6
           triage-skill: .agents/skills/triage
           pr-skill: .agents/skills/pr-writer
-          auto-pr-on-fix: true
+          # Leave assigned issues with their assignees; only auto-open PRs for unassigned issues.
+          auto-pr-on-fix: ${{ !github.event.issue.assignees[0] }}
           bot-logins: oxc-captain[bot]

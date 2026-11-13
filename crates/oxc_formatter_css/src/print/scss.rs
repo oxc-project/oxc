@@ -2,10 +2,10 @@
 //! control directives, mixins/includes/functions, module system.
 
 use oxc_css_parser::ast::{
-    ComponentValue, InterpolableStr, SassEach, SassFor, SassForBoundaryKind, SassForward,
-    SassForwardVisibilityModifierKind, SassFunction, SassIfAtRule, SassInclude, SassList, SassMap,
-    SassMixin, SassModuleConfig, SassParameters, SassUnaryOperatorKind, SassUse,
-    SassUseNamespaceKind, SassVariableDeclaration, SimpleBlock,
+    ComponentValue, InterpolableStr, SassBinaryOperatorKind, SassEach, SassFor,
+    SassForBoundaryKind, SassForward, SassForwardVisibilityModifierKind, SassFunction,
+    SassIfAtRule, SassInclude, SassList, SassMap, SassMixin, SassModuleConfig, SassParameters,
+    SassUnaryOperatorKind, SassUse, SassUseNamespaceKind, SassVariableDeclaration, SimpleBlock,
 };
 use oxc_formatter_core::{
     builders::{
@@ -382,8 +382,7 @@ pub(super) fn write_sass_map<'a>(
                 write!(f, group(&indent(&pair)));
             }
         }
-        // NOTE: Comment presence never changes the comma (Prettier drops it after a leading comment on the FIRST item);
-        // see DIVERGENCES.md#map-leading-comment-layout.
+        // Comment presence never changes the comma.
         if trailing {
             write!(f, ",");
         }
@@ -743,20 +742,39 @@ pub(super) fn write_control_condition<'a>(
 enum CondPart<'b, 'a> {
     Value(&'b ComponentValue<'a>),
     /// Operator/keyword raw text (`and`, `or`, `not`, `==`, `*`, ...).
-    Op(Span),
+    Op(Span, OpClass),
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum OpClass {
+    /// `and` / `or` / `not`
+    Logical,
+    /// `==` / `!=` / `<` / `<=` / `>` / `>=`
+    Comparison,
+    Other,
 }
 
 fn flatten_condition<'b, 'a>(cond: &'b ComponentValue<'a>, out: &mut Vec<CondPart<'b, 'a>>) {
     match cond {
         ComponentValue::SassBinaryExpression(binary) => {
             flatten_condition(&binary.left, out);
-            out.push(CondPart::Op(to_span(binary.op.span)));
+            let class = match binary.op.kind {
+                SassBinaryOperatorKind::And | SassBinaryOperatorKind::Or => OpClass::Logical,
+                SassBinaryOperatorKind::EqualsEquals
+                | SassBinaryOperatorKind::ExclamationEquals
+                | SassBinaryOperatorKind::GreaterThan
+                | SassBinaryOperatorKind::GreaterThanOrEqual
+                | SassBinaryOperatorKind::LessThan
+                | SassBinaryOperatorKind::LessThanOrEqual => OpClass::Comparison,
+                _ => OpClass::Other,
+            };
+            out.push(CondPart::Op(to_span(binary.op.span), class));
             flatten_condition(&binary.right, out);
         }
         ComponentValue::SassUnaryExpression(unary)
             if matches!(unary.op.kind, SassUnaryOperatorKind::Not) =>
         {
-            out.push(CondPart::Op(to_span(unary.op.span)));
+            out.push(CondPart::Op(to_span(unary.op.span), OpClass::Logical));
             flatten_condition(&unary.expr, out);
         }
         other => out.push(CondPart::Value(other)),
@@ -766,6 +784,8 @@ fn flatten_condition<'b, 'a>(cond: &'b ComponentValue<'a>, out: &mut Vec<CondPar
 /// Prettier's control-directive condition layout (`group(indent(parts))`, NOT a fill):
 /// a space before every operator/keyword,
 /// a breakable line after it — breaking is all-or-nothing.
+/// With a logical keyword (`and` / `or` / `not`) in the chain, a comparison stays on one line
+/// and the chain breaks at the keywords only (`$a == $b and⏎$c == $d`).
 fn write_condition_chain<'a>(
     prefix: Option<&'static str>,
     condition: &ComponentValue<'a>,
@@ -773,19 +793,20 @@ fn write_condition_chain<'a>(
 ) {
     let mut parts = Vec::new();
     flatten_condition(condition, &mut parts);
+    let has_logical = parts.iter().any(|p| matches!(p, CondPart::Op(_, OpClass::Logical)));
     let parts_ref = &parts;
     let inner = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         if let Some(word) = prefix {
             write!(f, text(word));
             // Separator to the first part: space when it's an operator
-            if let Some(CondPart::Op(_)) = parts_ref.first() {
+            if let Some(CondPart::Op(..)) = parts_ref.first() {
                 write!(f, space());
             } else {
                 write!(f, soft_line_break_or_space());
             }
         }
         let part_span = |p: &CondPart<'_, 'a>| match p {
-            CondPart::Op(span) => *span,
+            CondPart::Op(span, _) => *span,
             CondPart::Value(v) => to_span(v.span()),
         };
         for (i, part) in parts_ref.iter().enumerate() {
@@ -794,15 +815,18 @@ fn write_condition_chain<'a>(
                 // `$type==ocean` as ONE word and prints it verbatim).
                 let glued = part_span(&parts_ref[i - 1]).end == part_span(part).start;
                 if !glued {
-                    match part {
-                        CondPart::Op(_) => write!(f, space()),
-                        CondPart::Value(_) => write!(f, soft_line_break_or_space()),
+                    let after_comparison = has_logical
+                        && matches!(parts_ref[i - 1], CondPart::Op(_, OpClass::Comparison));
+                    if matches!(part, CondPart::Op(..)) || after_comparison {
+                        write!(f, space());
+                    } else {
+                        write!(f, soft_line_break_or_space());
                     }
                 }
             }
             // Each part owns its leading comments, or they would leak into the block
             match part {
-                CondPart::Op(span) => value::write_text_with_leading_comments(*span, f),
+                CondPart::Op(span, _) => value::write_text_with_leading_comments(*span, f),
                 CondPart::Value(v) => {
                     value::write_list_element(v, ValueContext::default(), f);
                 }

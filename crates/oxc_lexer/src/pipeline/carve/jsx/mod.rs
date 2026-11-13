@@ -1,3 +1,5 @@
+use std::mem;
+
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
 use crate::{error::DiagCode, token::tk};
@@ -50,7 +52,7 @@ enum JMode {
 }
 
 #[derive(Clone, Copy)]
-struct JFrame {
+pub(in crate::pipeline) struct JFrame {
     kind: JFrameKind,
     /// Mode to restore when this frame pops.
     parent: JMode,
@@ -101,7 +103,9 @@ pub(super) unsafe fn carve_jsx(
     // legacy comments come in, and `<!--` is caught free on the `<` path), so a module or a
     // JSX script without HTML comments never pays; a `-->` before any `<!--` stays operators.
     let mut html_close = false;
-    let mut stack: Vec<JFrame> = Vec::with_capacity(64);
+    // Reuse the previous lex's allocation, which matters for small inputs
+    let mut stack = mem::take(&mut lanes.jsx_stack);
+    stack.clear();
     let mut mode = JMode::Js;
     let mut text_start = 0usize;
     let mut i = 0usize;
@@ -705,6 +709,7 @@ pub(super) unsafe fn carve_jsx(
             JFrameKind::TemplateSub => {}
         }
     }
+    lanes.jsx_stack = stack;
 }
 
 /// Cold: misc_pre read a backslash-u in JSX text as an escape running into the container at s.

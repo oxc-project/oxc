@@ -38,8 +38,16 @@ pub(super) fn resolve_unicode_leads(
     let mut leads = mem::take(&mut lanes.unicode_leads);
     let mut ti = 0usize;
     for &off in &leads {
-        while ti + 1 < k && spans_all[ti].end <= off {
-            ti += 1;
+        // Leads can be many tokens apart, so gallop then binary search past the current token
+        if ti + 1 < k && spans_all[ti].end <= off {
+            let rest = &spans_all[ti + 1..k - 1];
+            let (mut lo, mut step) = (0, 1);
+            while lo + step <= rest.len() && rest[lo + step - 1].end <= off {
+                lo += step;
+                step *= 2;
+            }
+            let hi = rest.len().min(lo + step);
+            ti += 1 + lo + rest[lo..hi].partition_point(|span| span.end <= off);
         }
         if off < spans_all[ti].start
             || off >= spans_all[ti].end

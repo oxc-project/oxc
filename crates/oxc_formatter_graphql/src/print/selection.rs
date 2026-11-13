@@ -26,7 +26,6 @@ pub(super) fn write_selection_set<'a>(
 
     write!(f, "{");
     if selections.is_empty() {
-        // Grammar requires at least one selection; reachable only defensively.
         common::write_empty_delimited(r_curly, "}", f);
         return;
     }

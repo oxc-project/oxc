@@ -50,8 +50,6 @@ pub struct Facts {
     /// The node is pre-like without an end tag, or ends in one through its last children without end tags:
     /// what follows it up to the end tag that closes them is `pre` content.
     pub ends_in_pre: bool,
-    /// A CDATA section, or a text that merged one: its sections are never re-wrapped.
-    pub has_cdata: bool,
     /// The previous sibling is a suppression comment (`<!-- prettier-ignore -->`, `<!-- oxfmt-ignore -->`): the node prints as written.
     pub suppressed: bool,
     /// An SVG / MathML element, or one under it (`DialectRules::lowercase_known_names` only).
@@ -224,14 +222,13 @@ impl<'a> Tree<'a> {
         matches!(self.kind(id), NodeKind::Interpolation(_))
     }
 
-    /// A text, a CDATA section or `{{ }}`: what renders as text, no markup.
+    /// A text or `{{ }}`: what renders as text, no markup.
     pub fn is_text_content(&self, id: NodeId) -> bool {
         self.is_text(id) || self.is_interpolation(id)
     }
 
-    /// A text or a CDATA section, which print as one text next to each other.
     pub fn is_text(&self, id: NodeId) -> bool {
-        matches!(self.kind(id), NodeKind::Text(_) | NodeKind::Cdata)
+        matches!(self.kind(id), NodeKind::Text(_))
     }
 
     pub fn element(&self, id: NodeId) -> Option<&'a Element<'a>> {

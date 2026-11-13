@@ -4,7 +4,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ==================== Input ====================
 /* `@custom-media` preludes always print structured: `--name <media-query-list>`.
    Known divergence (DIVERGENCES.md#custom-media-glued-prelude): with the name GLUED to the `(` (line 1),
-   Prettier 3.9.1 keeps the whole prelude verbatim
+   Prettier keeps the whole prelude verbatim
    (`--viewport-medium(width<=50rem)`, one postcss-media-query-parser token);
    we print `--viewport-medium (width <= 50rem)` like the spaced form. */
 @custom-media --viewport-medium(width<=50rem);
@@ -20,7 +20,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ------------------
 /* `@custom-media` preludes always print structured: `--name <media-query-list>`.
    Known divergence (DIVERGENCES.md#custom-media-glued-prelude): with the name GLUED to the `(` (line 1),
-   Prettier 3.9.1 keeps the whole prelude verbatim
+   Prettier keeps the whole prelude verbatim
    (`--viewport-medium(width<=50rem)`, one postcss-media-query-parser token);
    we print `--viewport-medium (width <= 50rem)` like the spaced form. */
 @custom-media --viewport-medium (width <= 50rem);
@@ -35,7 +35,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 -------------------
 /* `@custom-media` preludes always print structured: `--name <media-query-list>`.
    Known divergence (DIVERGENCES.md#custom-media-glued-prelude): with the name GLUED to the `(` (line 1),
-   Prettier 3.9.1 keeps the whole prelude verbatim
+   Prettier keeps the whole prelude verbatim
    (`--viewport-medium(width<=50rem)`, one postcss-media-query-parser token);
    we print `--viewport-medium (width <= 50rem)` like the spaced form. */
 @custom-media --viewport-medium (width <= 50rem);

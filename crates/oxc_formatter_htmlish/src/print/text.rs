@@ -45,7 +45,7 @@ pub fn write_text<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 
         return;
     }
 
-    let mut words = words(value, t[id].has_cdata).peekable();
+    let mut words = words(value).peekable();
     let mut fill = f.fill();
     let mut prev_word = "";
     while let Some((word, after_line_break)) = words.next() {
@@ -91,9 +91,8 @@ pub fn write_dedented_lines<'a>(value: &'a str, f: &mut HtmlishFormatter<'_, 'a>
     }
 }
 
-/// Whitespace-separated words; with `cdata`, a CDATA section is part of one word, whatever it holds
-/// (DIVERGENCES.md#cdata-as-written); each with whether a line break precedes it.
-fn words(value: &str, cdata: bool) -> impl Iterator<Item = (&str, bool)> {
+/// Whitespace-separated words, each with whether a line break precedes it
+fn words(value: &str) -> impl Iterator<Item = (&str, bool)> {
     let bytes = value.as_bytes();
     let mut pos = 0;
     std::iter::from_fn(move || {
@@ -104,13 +103,7 @@ fn words(value: &str, cdata: bool) -> impl Iterator<Item = (&str, bool)> {
             return None;
         }
         let start = pos;
-        while pos < bytes.len() && !bytes[pos].is_ascii_whitespace() {
-            pos = if cdata && bytes[pos..].starts_with(b"<![CDATA[") {
-                memchr::memmem::find(&bytes[pos..], b"]]>").map_or(bytes.len(), |end| pos + end + 3)
-            } else {
-                pos + 1
-            };
-        }
+        pos += bytes[pos..].iter().take_while(|b| !b.is_ascii_whitespace()).count();
         Some((&value[start..pos], after_line_break))
     })
 }

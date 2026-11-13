@@ -91,7 +91,7 @@ b(); c()"
       b();
       c();
     "
-    @dragstart="a()"
+    @dragstart="a();"
     @dragend="if (a) b()"
     @drop="function () { a(); }"
     @contextmenu="
@@ -167,7 +167,7 @@ b(); c()"
       b();
       c()
     "
-    @dragstart="a()"
+    @dragstart="a();"
     @dragend="if (a) b()"
     @drop="function () { a(); }"
     @contextmenu="

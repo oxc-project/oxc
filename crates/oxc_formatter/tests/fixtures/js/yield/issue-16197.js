@@ -1,5 +1,5 @@
 function *a() {
   yield task
-    // No extra parens
+    // An own-line comment in the argument wraps it in parens, as for `return`
     .run();
 }

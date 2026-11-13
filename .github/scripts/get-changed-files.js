@@ -7,6 +7,7 @@
  * This module provides a reusable function for detecting changed files.
  */
 
+const fs = require("fs");
 const https = require("https");
 const process = require("process");
 
@@ -73,6 +74,42 @@ async function getPrChangedFiles(repository, prNumber) {
 }
 
 /**
+ * If this PR is in a native GitHub stack, above its lowest unmerged PR, get the commits to compare
+ * to find all the stack's changes up to this PR.
+ *
+ * CI skips most jobs on PRs in the middle of a stack, and relies on the top PR's run to cover their changes
+ * (see comment above `jobs` in `.github/workflows/ci.yml`). But a stacked PR's own diff is only against
+ * the PR below it, so it'd miss changes made in the PRs below.
+ *
+ * @returns {{ base: string, head: string } | null} Commits to compare, or `null` if PR's own diff is sufficient
+ */
+function getStackComparison() {
+  const eventPath = process.env.GITHUB_EVENT_PATH;
+  if (!eventPath) return null;
+  const pr = JSON.parse(fs.readFileSync(eventPath, "utf8")).pull_request;
+  const stack = pr?.stack;
+  if (!stack || pr.base.ref === stack.base.ref) return null;
+  return { base: stack.base.sha || stack.base.ref, head: pr.head.sha };
+}
+
+/**
+ * Get all files changed between 2 commits (3-dot diff, like a PR's diff)
+ * @param {string} repository - Repository name (owner/repo)
+ * @param {string} base - Base commit SHA or ref
+ * @param {string} head - Head commit SHA
+ * @returns {Promise<string[]>} Array of changed file paths
+ */
+async function getComparisonChangedFiles(repository, base, head) {
+  // `compare` API lists at most 300 files. If it hits that limit, the list may be incomplete.
+  const MAX_FILES = 300;
+  const comparison = await githubApi(`/repos/${repository}/compare/${base}...${head}`);
+  if (!Array.isArray(comparison.files) || comparison.files.length >= MAX_FILES) {
+    throw new Error(`Comparison of ${base}...${head} may not list all changed files`);
+  }
+  return comparison.files.map((f) => f.filename);
+}
+
+/**
  * Get changed files based on the GitHub event type
  * @returns {Promise<string[] | null>} Array of changed file paths, or null to signal "run all"
  */
@@ -97,9 +134,17 @@ async function getChangedFiles() {
 
   try {
     if (eventName === "pull_request" && prNumber) {
-      // For PR, use GitHub API to get changed files (paginated)
-      console.error(`Getting changed files for PR #${prNumber}`);
-      files = await getPrChangedFiles(repository, prNumber);
+      const stack = getStackComparison();
+      if (stack) {
+        console.error(
+          `PR #${prNumber} is above the bottom of a stack. Getting changed files since stack base ${stack.base}`,
+        );
+        files = await getComparisonChangedFiles(repository, stack.base, stack.head);
+      } else {
+        // For PR, use GitHub API to get changed files (paginated)
+        console.error(`Getting changed files for PR #${prNumber}`);
+        files = await getPrChangedFiles(repository, prNumber);
+      }
     } else if (sha && repository) {
       // For push to main, get the commit and compare with parent
       console.error(`Getting changed files for commit ${sha}`);
