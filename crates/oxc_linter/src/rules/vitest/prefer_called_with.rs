@@ -11,7 +11,14 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct PreferCalledWith;
 
-declare_oxc_lint!(PreferCalledWith, vitest, style, fix, docs = DOCUMENTATION, version = "0.2.5",);
+declare_oxc_lint!(
+    PreferCalledWith,
+    vitest,
+    style,
+    suggestion,
+    docs = DOCUMENTATION,
+    version = "0.2.5",
+);
 
 impl Rule for PreferCalledWith {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -26,6 +33,7 @@ impl Rule for PreferCalledWith {
 
 #[test]
 fn test() {
+    use crate::fixer::FixKind;
     use crate::tester::Tester;
 
     let mut pass = vec![
@@ -51,9 +59,19 @@ fn test() {
     ];
 
     let mut fix = vec![
-        ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None),
-        ("expect(fn).resolves.toBeCalled();", "expect(fn).resolves.toBeCalledWith();", None),
-        ("expect(fn).toHaveBeenCalled();", "expect(fn).toHaveBeenCalledWith();", None),
+        ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None, FixKind::Suggestion),
+        (
+            "expect(fn).resolves.toBeCalled();",
+            "expect(fn).resolves.toBeCalledWith();",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "expect(fn).toHaveBeenCalled();",
+            "expect(fn).toHaveBeenCalledWith();",
+            None,
+            FixKind::Suggestion,
+        ),
     ];
 
     let vitest_pass = vec![
@@ -79,14 +97,38 @@ fn test() {
     ];
 
     let vitest_fix = vec![
-        ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None),
-        ("expect(fn).resolves.toBeCalled();", "expect(fn).resolves.toBeCalledWith();", None),
-        ("expect(fn).toHaveBeenCalled();", "expect(fn).toHaveBeenCalledWith();", None),
+        ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None, FixKind::Suggestion),
+        (
+            "expect(fn).resolves.toBeCalled();",
+            "expect(fn).resolves.toBeCalledWith();",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "expect(fn).toHaveBeenCalled();",
+            "expect(fn).toHaveBeenCalledWith();",
+            None,
+            FixKind::Suggestion,
+        ),
     ];
 
     pass.extend(vitest_pass);
     fail.extend(vitest_fail);
     fix.extend(vitest_fix);
+
+    // Regression coverage: plain `--fix` must not rewrite the matcher, while
+    // `--fix-suggestions` may.
+    fix.extend([
+        ("expect(fn).toBeCalled();", "expect(fn).toBeCalled();", None, FixKind::Fix),
+        ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None, FixKind::Suggestion),
+        ("expect(fn).toHaveBeenCalled();", "expect(fn).toHaveBeenCalled();", None, FixKind::Fix),
+        (
+            "expect(fn).toHaveBeenCalled();",
+            "expect(fn).toHaveBeenCalledWith();",
+            None,
+            FixKind::Suggestion,
+        ),
+    ]);
 
     Tester::new(PreferCalledWith::NAME, PreferCalledWith::PLUGIN, pass, fail)
         .expect_fix(fix)
