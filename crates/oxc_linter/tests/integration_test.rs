@@ -3,6 +3,39 @@ use oxc_macros::declare_oxc_lint_test;
 
 struct TestRule;
 
+#[test]
+fn rule_documentation_url_environment() {
+    const EXPECTED_URL_ENV: &str = "OXC_TEST_EXPECTED_RULE_DOCUMENTATION_URL";
+    if let Ok(expected) = std::env::var(EXPECTED_URL_ENV) {
+        assert_eq!(oxc_linter::rule_documentation_url("eslint", "no-debugger"), expected);
+        return;
+    }
+
+    for (configured, expected) in [
+        (None, "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"),
+        (Some(""), "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"),
+        (Some("https://example.com/rules"), "https://example.com/rules/eslint/no-debugger.html"),
+        (Some("https://example.com/rules///"), "https://example.com/rules/eslint/no-debugger.html"),
+        (
+            Some(
+                "https://github.com/oxc-project/website/blob/main/src/docs/guide/usage/linter/rules/{plugin}/{rule}.md",
+            ),
+            "https://github.com/oxc-project/website/blob/main/src/docs/guide/usage/linter/rules/eslint/no-debugger.md",
+        ),
+    ] {
+        let mut command = std::process::Command::new(std::env::current_exe().unwrap());
+        command.args(["--exact", "rule_documentation_url_environment"]);
+        command.env(EXPECTED_URL_ENV, expected);
+        if let Some(value) = configured {
+            command.env("OXLINT_RULES_URL", value);
+        } else {
+            command.env_remove("OXLINT_RULES_URL");
+        }
+        let output = command.output().unwrap();
+        assert!(output.status.success(), "{configured:?}: {output:?}");
+    }
+}
+
 mod shared_config {
     #[derive(schemars::JsonSchema)]
     pub struct Config;

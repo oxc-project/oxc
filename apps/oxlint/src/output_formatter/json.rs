@@ -9,7 +9,7 @@ use oxc_diagnostics::{
     Error, JSONReportHandler,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
-use oxc_linter::{RuleCategory, rules::RULES};
+use oxc_linter::{RuleCategory, rule_documentation_url, rules::RULES};
 
 use crate::output_formatter::InternalFormatter;
 
@@ -55,12 +55,7 @@ impl InternalFormatter for JsonOutputFormatter {
                 type_aware: rule.is_tsgolint_rule(),
                 fix: rule.fix().to_string(),
                 default: default_rules.contains(&(rule.plugin_name(), rule.name())),
-                docs_url: format!(
-                    "https://oxc.rs/docs/guide/usage/linter/rules/{}/{}.html",
-                    rule.plugin_name(),
-                    rule.name()
-                )
-                .into(),
+                docs_url: rule_documentation_url(rule.plugin_name(), rule.name()).into(),
             })
             .collect();
 
