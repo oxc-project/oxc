@@ -17,15 +17,13 @@ use crate::{
         helper_loader::{Helper, helper_call_expr},
     },
     context::TraverseCtx,
-    decorator::standard::{
-        ClassDecoratorTables, ClassNameRewriter, DecoratorElementKind, StandardDecoratorState,
-    },
+    decorator::standard::StandardDecoratorState,
     utils::ast_builder::{create_assignment, create_new_weakset, create_variable_declaration},
 };
 
 use super::{
     ClassBindings, ClassDetails, ClassProperties, IdentIndexMap, PrivateProp, PrivateProps,
-    utils::exprs_into_stmts,
+    decorators::InstanceFieldPhase, utils::exprs_into_stmts,
 };
 
 // TODO(improve-on-babel): If outer scope is sloppy mode, all code which is moved to outside
@@ -103,35 +101,12 @@ impl<'a> ClassProperties<'a> {
         let mut class_name_binding = class.id().as_ref().map(BoundIdentifier::from_binding_ident);
         let class_scope_id = class.scope_id().get().unwrap();
         let has_super_class = class.heritage().is_some();
-        let class_address = class.address();
         let private_method_helpers_in_class_sequence =
             !is_declaration && Self::should_emit_private_method_helpers_in_class_sequence(ctx);
 
-        // Standard decorators. A decorated class has all fields, private names and static blocks
-        // lowered. The decision was recorded when the class was entered, before decorators and
-        // auto-accessors are removed.
         let lowering = ctx.state.class_lowering_of(class_scope_id);
-        let standard = self.decorator_state.enabled();
-        let is_decorated = standard && lowering.lowered_for_decorators();
-        let has_auto_accessor = standard && lowering.has_auto_accessor();
-        if standard {
-            for element in &mut body.body {
-                let (key, computed, value) = match element {
-                    ClassElement::PropertyDefinition(prop) => {
-                        let prop = &mut **prop;
-                        (&mut prop.key, prop.computed, &prop.value)
-                    }
-                    ClassElement::AccessorProperty(prop) => {
-                        let prop = &mut **prop;
-                        (&mut prop.key, prop.computed, &prop.value)
-                    }
-                    _ => continue,
-                };
-                if let Some(value) = value {
-                    self.decorator_state.capture_class_initializer_name(key, computed, value, ctx);
-                }
-            }
-        }
+        let mut entry = self.on_body_entry(body, &mut class_name_binding, ctx);
+        let has_auto_accessor = entry.has_auto_accessor;
         if matches!(lowering.mode(), ClassLoweringMode::Native | ClassLoweringMode::Preserve) {
             // Register private names only when they can shadow a lowered name in an enclosing
             // class. Other unresolved names belong to untouched classes and are left as-is.
@@ -161,69 +136,9 @@ impl<'a> ClassProperties<'a> {
             });
             return;
         }
-        let static_accessor_binding = (has_auto_accessor
-            && body.body.iter().any(|element| {
-                matches!(element, ClassElement::AccessorProperty(prop) if prop.r#static && !prop.r#type.is_abstract())
-            }))
-        .then(|| {
-            if is_decorated {
-                let name = class_name_binding.as_ref().map_or("Class", |binding| binding.name.as_str());
-                ctx.generate_uid(name, ctx.current_block_scope_id(), SymbolFlags::BlockScopedVariable)
-            } else {
-                ClassBindings::create_temp_binding(
-                    class_name_binding.as_ref(),
-                    ctx.current_hoist_scope_id(),
-                    ctx,
-                )
-            }
-        });
-        if is_decorated {
-            StandardDecoratorState::coerce_decorated_keys(body, ctx);
-        }
-        // Element tables are read only for a decorated class, so only one fills them.
-        let mut tables = ClassDecoratorTables::default();
-        if is_decorated || has_auto_accessor {
-            self.decorator_state.lower_auto_accessors(
-                body,
-                class_scope_id,
-                static_accessor_binding.as_ref(),
-                false,
-                is_decorated.then_some(&mut tables),
-                ctx,
-            );
-        }
-        let decorator_state = if is_decorated {
-            Some(StandardDecoratorState::prepare_class_decorators(body, tables, ctx))
-        } else {
-            None
-        };
-
-        // Point references to the class name inside a decorated class declaration at a new
-        // `let _Foo` binding, which the class decorator can reassign. `class Foo {}` statement
-        // is converted to `let _Foo = class Foo {}` in exit phase.
-        if is_decorated
-            && is_declaration
-            && let Some(name_binding) = &class_name_binding
-        {
-            let outer_scope_id = ctx.scoping().scope_parent_id(class_scope_id).unwrap();
-            let inner = ClassNameRewriter::new(
-                name_binding.symbol_id,
-                name_binding.name,
-                None,
-                Some(outer_scope_id),
-                ctx,
-            )
-            .rewrite(body);
-            if let Some(inner) = inner {
-                self.decorator_state.record_declaration_rewrite(
-                    class_address,
-                    (inner.clone(), name_binding.clone()),
-                );
-                class_name_binding = Some(inner);
-            }
-        }
         let instance_method_extras =
-            decorator_state.as_ref().is_some_and(|state| state.instance_method_extras);
+            entry.state.as_ref().is_some_and(|state| state.instance_method_extras);
+        let transform_static_blocks = self.transform_static_blocks || entry.lowers_static_blocks();
 
         // Check if class has any properties, private methods, or static blocks
         let mut instance_prop_count = 0;
@@ -246,15 +161,7 @@ impl<'a> ClassProperties<'a> {
                     // Create binding for private property key
                     if let Some(name) = prop.key.private_name() {
                         // Note: Current scope is outside class.
-                        let binding = if is_decorated {
-                            ctx.generate_uid(
-                                &name,
-                                ctx.current_block_scope_id(),
-                                SymbolFlags::BlockScopedVariable,
-                            )
-                        } else {
-                            ctx.generate_uid_in_current_hoist_scope(&name)
-                        };
+                        let binding = entry.create_binding(&name, ctx);
                         private_props
                             .insert(name, PrivateProp::new(binding, prop.r#static, None, false));
                     }
@@ -267,7 +174,7 @@ impl<'a> ClassProperties<'a> {
                 }
                 ClassElement::StaticBlock(_) => {
                     // Static block only necessitates transforming class if it's being transformed
-                    if self.transform_static_blocks || is_decorated || has_auto_accessor {
+                    if transform_static_blocks {
                         has_static_private_method_or_static_block = true;
                     }
                 }
@@ -285,15 +192,8 @@ impl<'a> ClassProperties<'a> {
                             MethodDefinitionKind::Set => &format!("set_{private_name}"),
                             MethodDefinitionKind::Constructor => unreachable!(),
                         };
-                        let (scope_id, flags) = if private_method_helpers_in_class_sequence {
-                            if is_decorated {
-                                (ctx.current_block_scope_id(), SymbolFlags::BlockScopedVariable)
-                            } else {
-                                (ctx.current_hoist_scope_id(), SymbolFlags::FunctionScopedVariable)
-                            }
-                        } else {
-                            (ctx.current_block_scope_id(), SymbolFlags::Function)
-                        };
+                        let (scope_id, flags) = entry
+                            .private_method_scope(private_method_helpers_in_class_sequence, ctx);
                         let binding = ctx.generate_uid(name, scope_id, flags);
 
                         if let Some(prop) = private_props.get_mut(&private_name) {
@@ -330,11 +230,7 @@ impl<'a> ClassProperties<'a> {
             }
         }
 
-        if is_decorated {
-            for prop in private_props.values_mut() {
-                prop.uses_weakmap = prop.is_static && !prop.is_method();
-            }
-        }
+        entry.configure_private_props(&mut private_props);
         self.private_field_count += private_props.len();
 
         // Exit if nothing to transform
@@ -342,7 +238,7 @@ impl<'a> ClassProperties<'a> {
             && !has_static_prop
             && !has_static_private_method_or_static_block
             && !has_instance_private_method
-            && !is_decorated
+            && !entry.is_decorated()
         {
             self.classes_stack.push(ClassDetails {
                 mode: lowering.mode(),
@@ -360,29 +256,16 @@ impl<'a> ClassProperties<'a> {
         // Initialize class binding vars.
         // Static prop in class expression or anonymous `export default class {}` always require
         // temp var for class. Static prop in class declaration doesn't.
-        let need_temp_var = is_decorated
-            || static_accessor_binding.is_some()
+        let need_temp_var = entry.is_decorated()
+            || entry.static_accessor_binding.is_some()
             || (has_static_prop && (!is_declaration || class_name_binding.is_none()));
 
         let outer_hoist_scope_id = ctx.current_hoist_scope_id();
         let class_temp_binding = if need_temp_var {
-            let temp_binding = if let Some(binding) = static_accessor_binding {
-                binding
-            } else if is_decorated {
-                let name =
-                    class_name_binding.as_ref().map_or("Class", |binding| binding.name.as_str());
-                ctx.generate_uid(
-                    name,
-                    ctx.current_block_scope_id(),
-                    SymbolFlags::BlockScopedVariable,
-                )
-            } else {
-                ClassBindings::create_temp_binding(
-                    class_name_binding.as_ref(),
-                    outer_hoist_scope_id,
-                    ctx,
-                )
-            };
+            let temp_binding = entry
+                .static_accessor_binding
+                .take()
+                .unwrap_or_else(|| entry.create_temp_binding(class_name_binding.as_ref(), ctx));
             if is_declaration && class_name_binding.is_none() {
                 // Anonymous `export default class {}`. Set class name binding to temp var.
                 // Actual class name will be set to this later.
@@ -392,11 +275,7 @@ impl<'a> ClassProperties<'a> {
                 // TODO(improve-on-babel): Inserting the temp var `var _Class` statement here is only
                 // to match Babel's output. It'd be simpler just to insert it at the end and get rid of
                 // `temp_var_is_created` that tracks whether it's done already or not.
-                if is_decorated {
-                    ctx.state.var_declarations.insert_let(&temp_binding, None, &ctx.ast);
-                } else {
-                    ctx.state.var_declarations.insert_var(&temp_binding, &ctx.ast);
-                }
+                entry.declare_temp(&temp_binding, ctx);
             }
             Some(temp_binding)
         } else {
@@ -407,15 +286,7 @@ impl<'a> ClassProperties<'a> {
             // `_Class_brand`
             let name = class_name_binding.as_ref().map_or_else(|| "Class", |binding| &binding.name);
             let name = &format!("_{name}_brand");
-            if is_decorated {
-                ctx.generate_uid(
-                    name,
-                    ctx.current_block_scope_id(),
-                    SymbolFlags::BlockScopedVariable,
-                )
-            } else {
-                ctx.generate_uid_in_current_hoist_scope(name)
-            }
+            entry.create_binding(name, ctx)
         });
 
         let static_private_fields_use_temp = !is_declaration;
@@ -426,21 +297,11 @@ impl<'a> ClassProperties<'a> {
             outer_hoist_scope_id,
             static_private_fields_use_temp,
             need_temp_var,
-            self.private_fields_as_properties && !is_decorated,
+            self.private_fields_as_properties && !entry.is_decorated(),
         );
 
-        if is_decorated {
-            class_bindings.force_private_spec = true;
-            if private_props.values().any(|prop| prop.is_static && prop.is_method()) {
-                let brand = ctx.generate_uid(
-                    "staticBrand",
-                    ctx.current_block_scope_id(),
-                    SymbolFlags::BlockScopedVariable,
-                );
-                ctx.state.var_declarations.insert_let(&brand, None, &ctx.ast);
-                class_bindings.decorator_static_brand = Some(brand);
-            }
-        }
+        entry.configure_bindings(&mut class_bindings, &private_props, ctx);
+        entry.rewrite_expression_name(body, &class_bindings, is_declaration, ctx);
 
         // Add entry to `classes_stack`
         self.classes_stack.push(ClassDetails {
@@ -450,18 +311,9 @@ impl<'a> ClassProperties<'a> {
             is_transform_required: true,
             private_props: PrivateProps::Lowered(private_props),
             bindings: class_bindings,
-            decorators: decorator_state,
+            decorators: entry.state,
             has_auto_accessor,
         });
-
-        // Class expression: references to class name inside class body use temp var for class
-        if is_decorated && !is_declaration {
-            let bindings = &self.current_class().bindings;
-            if let (Some(name), Some(temp)) = (&bindings.name, &bindings.temp) {
-                let (symbol_id, name, temp) = (name.symbol_id, name.name, temp.clone());
-                ClassNameRewriter::new(symbol_id, name, Some(temp), None, ctx).rewrite(body);
-            }
-        }
 
         // Exit if no instance properties (public or private)
         if instance_prop_count == 0 && !has_instance_private_method && !instance_method_extras {
@@ -486,16 +338,7 @@ impl<'a> ClassProperties<'a> {
         if has_instance_private_method {
             instance_inits.push(self.create_class_private_method_init_spec(ctx));
         }
-        if instance_method_extras {
-            let this = Expression::new_this_expression(SPAN, ctx);
-            instance_inits.push(
-                self.current_class()
-                    .decorators
-                    .as_ref()
-                    .unwrap()
-                    .run_initializers_call(5, this, ctx),
-            );
-        }
+        self.push_instance_method_initializers(&mut instance_inits, ctx);
 
         let mut constructor_index = None;
         for (index, element) in body.body.iter_mut().enumerate() {
@@ -505,33 +348,11 @@ impl<'a> ClassProperties<'a> {
                     // Ignore `declare` properties as they don't have any runtime effect,
                     // and will be removed in the TypeScript transform later
                     if !prop.r#static && !prop.declare {
-                        if let Some(decorators) = self.current_class_mut().decorators.as_mut() {
-                            decorators.tables.record_instance_field_for_decorators(prop, ctx);
-                        }
-                        let decorated_index =
-                            self.current_class().decorators.as_ref().and_then(|decorators| {
-                                decorators.tables.decorated_field_index(prop)
-                            });
-                        if let Some(index) = decorated_index {
-                            let value = prop.value.take();
-                            prop.value = Some(
-                                self.current_class()
-                                    .decorators
-                                    .as_ref()
-                                    .unwrap()
-                                    .wrap_decorated_field_value(value, index, ctx),
-                            );
-                        }
-                        self.convert_instance_property(prop, &mut instance_inits, ctx);
-                        if let Some(index) = decorated_index {
-                            instance_inits.push(
-                                self.current_class()
-                                    .decorators
-                                    .as_ref()
-                                    .unwrap()
-                                    .decorated_field_extra_initializers(index, ctx),
-                            );
-                        }
+                        self.on_instance_field(
+                            prop,
+                            InstanceFieldPhase::Entry(&mut instance_inits),
+                            ctx,
+                        );
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
@@ -617,16 +438,7 @@ impl<'a> ClassProperties<'a> {
         // Static properties and static blocks
         self.current_class_mut().bindings.static_private_fields_use_temp = true;
 
-        if self.current_class().decorators.is_some() {
-            let name = (class.id.is_none()
-                && matches!(ctx.parent(), Ancestor::ExportDefaultDeclarationDeclaration(_)))
-            .then(|| Expression::new_string_literal(SPAN, "default", None, ctx));
-            self.decorator_state.begin_class_exit(name);
-        }
-
-        // Transform static properties, remove static and instance properties, and move computed keys
-        // to before class
-        self.transform_class_elements(class, ctx);
+        self.on_class_exit(class, ctx);
 
         // Computed keys move outside the class. Reparent their first-level scopes as well,
         // including functions containing brand checks against the lexical alias.
@@ -859,21 +671,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ClassExpression(class) = expr else { unreachable!() };
-        let mut inferred_name = if class.id.is_none()
-            && (self.current_class().decorators.is_some() || self.current_class().has_auto_accessor)
-        {
-            self.decorator_state.infer_class_expression_name(class.address(), ctx)
-        } else {
-            None
-        };
-        if self.current_class().decorators.is_some() {
-            let name = if class.decorators.is_empty() { None } else { inferred_name.take() };
-            self.decorator_state.begin_class_exit(name);
-        }
-
-        // Transform static properties, remove static and instance properties, and move computed keys
-        // to before class
-        self.transform_class_elements(class, ctx);
+        let inferred_name = self.on_class_exit(class, ctx);
 
         // Insert expressions before / after class.
         // `C = class { [x()] = 1; static y = 2 };`
@@ -1074,89 +872,28 @@ impl<'a> ClassProperties<'a> {
     /// * Transform private methods and insert after class.
     /// * Extract computed key assignments and insert them before class.
     /// * Remove all properties, private methods and static blocks from class body.
-    fn transform_class_elements(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        let is_decorated = self.current_class().decorators.is_some();
-        if is_decorated {
-            self.decorator_state.take_class_decorators(class, &mut self.insert_before, ctx);
-        }
-        let transform_static_blocks =
-            self.transform_static_blocks || is_decorated || self.current_class().has_auto_accessor;
+    pub(super) fn transform_class_elements(
+        &mut self,
+        class: &mut Class<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> usize {
+        let details = self.current_class();
+        let transform_static_blocks = self.transform_static_blocks
+            || details.decorators.is_some()
+            || details.has_auto_accessor;
 
         let mut class_methods = vec![];
         class.body.body.retain_mut(|element| {
             match element {
-                ClassElement::PropertyDefinition(prop_box) => {
-                    let decorated_index = self
-                        .current_class()
-                        .decorators
-                        .as_ref()
-                        .and_then(|decorators| decorators.tables.decorated_field_index(prop_box));
-                    let prop_address = prop_box.address();
-                    let prop = &mut **prop_box;
+                ClassElement::PropertyDefinition(prop) => {
                     debug_assert!(
                         !prop.declare,
                         "`declare` property should have been removed in the TypeScript plugin's `exit_class`"
                     );
-                    // Element decorators are evaluated before element's computed key
-                    let private_name = match &prop.key {
-                        PropertyKey::PrivateIdentifier(ident) => Some(ident.name),
-                        _ => None,
-                    };
-                    let decorators = if is_decorated && !prop.decorators.is_empty() {
-                        Some(StandardDecoratorState::take_element_decorators(&mut prop.decorators, &prop.key, &mut self.insert_before, ctx))
-                    } else {
-                        None
-                    };
-
                     if prop.r#static {
-                        if decorators.is_some() {
-                            StandardDecoratorState::memoize_decorated_key(&mut prop.key, &mut self.insert_before, ctx);
-                        }
-                        let key = decorators.as_ref().map(|_| StandardDecoratorState::decorator_key_expr(&prop.key, ctx));
-                        if let Some(index) = decorated_index {
-                            let value = prop.value.take();
-                            prop.value = Some(self.current_class().decorators.as_ref().unwrap().wrap_decorated_field_value(value, index, ctx));
-                        }
-                        self.convert_static_property(prop, ctx);
-                        if let Some(index) = decorated_index {
-                            let mut extra = self.current_class().decorators.as_ref().unwrap().decorated_field_extra_initializers(index, ctx);
-                            self.transform_static_initializer(&mut extra, ctx);
-                            self.insert_expr_after_class(extra, ctx);
-                        }
-                        if let (Some(decorators), Some(key)) = (&decorators, key) {
-                            self.push_decorate_element(
-                                DecoratorElementKind::Field,
-                                true,
-                                key,
-                                decorators,
-                                private_name,
-                                ctx,
-                            );
-                        }
+                        self.on_static_field(prop, ctx);
                     } else {
-                        if let Some(decorators) = &decorators {
-                            let key = self
-                                .current_class_mut()
-                                .decorators
-                                .as_mut()
-                                .unwrap()
-                                .tables
-                                .take_instance_key(prop_address)
-                                .unwrap_or_else(|| {
-                                    StandardDecoratorState::decorator_key_expr(&prop.key, ctx)
-                                });
-                            self.push_decorate_element(
-                                DecoratorElementKind::Field,
-                                false,
-                                key,
-                                decorators,
-                                private_name,
-                                ctx,
-                            );
-                        }
-                        if prop.computed {
-                            self.extract_instance_prop_computed_key(prop, ctx);
-                        }
+                        self.on_instance_field(prop, InstanceFieldPhase::Exit, ctx);
                     }
                     return false;
                 }
@@ -1167,29 +904,7 @@ impl<'a> ClassProperties<'a> {
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
-                    let method_ref = &mut **method;
-                    let decorators = if is_decorated && !method_ref.decorators.is_empty() {
-                        Some(StandardDecoratorState::take_element_decorators(&mut method_ref.decorators, &method_ref.key, &mut self.insert_before, ctx))
-                    } else {
-                        None
-                    };
-                    let private_name = match &method.key {
-                        PropertyKey::PrivateIdentifier(ident) => Some(ident.name),
-                        _ => None,
-                    };
-                    self.substitute_temp_var_for_method_computed_key(method, ctx);
-                    if let Some(decorators) = &decorators {
-                        let kind = self
-                            .current_class()
-                            .decorators
-                            .as_ref()
-                            .unwrap()
-                            .tables
-                            .method_decorator_kind(method);
-                        let key = StandardDecoratorState::decorator_key_expr(&method.key, ctx);
-                        self.push_decorate_element(kind, method.r#static, key, decorators, private_name, ctx);
-                    }
-                    if let Some(statement) = self.convert_private_method(method, ctx) {
+                    if let Some(statement) = self.on_method(method, ctx) {
                         class_methods.push(statement);
                         return false;
                     }
@@ -1208,33 +923,7 @@ impl<'a> ClassProperties<'a> {
         let class_methods_count = class_methods.len();
         self.insert_after_stmts.splice(0..0, class_methods);
 
-        if is_decorated {
-            self.decorator_state.fold_element_decorators_into_heritage(
-                class,
-                &mut self.insert_before,
-                ctx,
-            );
-        }
-
-        // Standard decorators are applied after class definition, before static members are initialized.
-        if is_decorated {
-            let (exprs, class_extras) = self.build_decorator_sequence(class, ctx);
-            if self.current_class().is_declaration {
-                let stmts = exprs
-                    .into_iter()
-                    .map(|expr| Statement::new_expression_statement(SPAN, expr, ctx));
-                self.insert_after_stmts.splice(class_methods_count..class_methods_count, stmts);
-                if let Some(expr) = class_extras {
-                    self.insert_after_stmts
-                        .push(Statement::new_expression_statement(SPAN, expr, ctx));
-                }
-            } else {
-                self.insert_after_exprs.splice(0..0, exprs);
-                if let Some(expr) = class_extras {
-                    self.insert_after_exprs.push(expr);
-                }
-            }
-        }
+        class_methods_count
     }
 
     /// Flag that static private fields should be transpiled using temp binding,
