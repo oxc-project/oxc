@@ -343,7 +343,7 @@ fn is_surrogate_pair(hi: u32, lo: u32) -> bool {
 // tries to align how `oxc_parser` uses `unicode_code_point`
 fn is_unicode_code_point_escape(char: &Character, source_text: &str) -> bool {
     let char_source = char.span.source_text(source_text);
-    let Some(hex) = char_source.strip_prefix("\\u{").and_then(|s| s.strip_suffix('}')) else {
+    let Some(hex) = char_source.strip_circumfix("\\u{", '}') else {
         return false;
     };
 

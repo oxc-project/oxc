@@ -269,8 +269,7 @@ impl Oxc {
         isolated_declarations_options: Option<OxcIsolatedDeclarationsOptions>,
     ) {
         let id_options = isolated_declarations_options
-            .map(|o| IsolatedDeclarationsOptions { strip_internal: o.strip_internal })
-            .unwrap_or_default();
+            .map_or_default(|o| IsolatedDeclarationsOptions { strip_internal: o.strip_internal });
         let ret = IsolatedDeclarations::new(allocator, id_options).build(program);
         if ret.diagnostics.is_empty() {
             self.codegen(path, &ret.program, None, run_options, codegen_options);
@@ -557,31 +556,24 @@ impl Oxc {
                 .and_then(|o| o.parse::<SortOrder>().ok())
                 .unwrap_or_default();
 
-            let custom_groups = sort_imports_config
-                .custom_groups
-                .as_ref()
-                .map(|cgs| {
-                    cgs.iter()
-                        .filter_map(|cg| {
-                            let group_name = cg.group_name.clone()?;
-                            Some(CustomGroupDefinition {
-                                group_name,
-                                element_name_pattern: cg
-                                    .element_name_pattern
-                                    .clone()
-                                    .unwrap_or_default(),
-                                selector: cg
-                                    .selector
-                                    .as_ref()
-                                    .and_then(|s| ImportSelector::parse(s)),
-                                modifiers: cg.modifiers.as_ref().map_or_else(Vec::new, |mods| {
-                                    mods.iter().filter_map(|m| ImportModifier::parse(m)).collect()
-                                }),
-                            })
+            let custom_groups = sort_imports_config.custom_groups.as_ref().map_or_default(|cgs| {
+                cgs.iter()
+                    .filter_map(|cg| {
+                        let group_name = cg.group_name.clone()?;
+                        Some(CustomGroupDefinition {
+                            group_name,
+                            element_name_pattern: cg
+                                .element_name_pattern
+                                .clone()
+                                .unwrap_or_default(),
+                            selector: cg.selector.as_ref().and_then(|s| ImportSelector::parse(s)),
+                            modifiers: cg.modifiers.as_ref().map_or_else(Vec::new, |mods| {
+                                mods.iter().filter_map(|m| ImportModifier::parse(m)).collect()
+                            }),
                         })
-                        .collect()
-                })
-                .unwrap_or_default();
+                    })
+                    .collect()
+            });
 
             // Parse groups with inline newlinesBetween markers, matching oxfmtrc format
             let (groups, newline_boundary_overrides) =
@@ -698,7 +690,7 @@ impl Oxc {
             ..CodegenOptions::default()
         };
         let (scoping, class_private_mappings) =
-            minifier_return.map(|m| (m.scoping, m.class_private_mappings)).unwrap_or_default();
+            minifier_return.map_or_default(|m| (m.scoping, m.class_private_mappings));
         let codegen_result = Codegen::new()
             .with_scoping(scoping)
             .with_private_member_mappings(class_private_mappings)

@@ -1,13 +1,12 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
+use oxc_data_structures::buffered_vec::BufferedVec;
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::Ident;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    Context, ParserConfig as Config, ParserImpl,
-    buffered_vec::BufferedVec,
-    diagnostics,
+    Context, ParserConfig as Config, ParserImpl, diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
@@ -795,8 +794,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_template_type(&mut self, tagged: bool) -> TSType<'a> {
         let start = self.cur_start();
-        let mut types = BufferedVec::new_in(self);
-        let mut quasis = BufferedVec::new_in(self);
+        let mut types = BufferedVec::<_, 4>::new(ArenaVec::new_in(self));
+        let mut quasis = BufferedVec::<_, 4>::new(ArenaVec::new_in(self));
         match self.cur_kind() {
             Kind::NoSubstitutionTemplate => {
                 quasis.push(self.parse_template_element(tagged));

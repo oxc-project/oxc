@@ -126,10 +126,10 @@ pub fn compile_fn<'a, const EMIT: bool>(
         return Err(env.take_invariant_errors());
     }
 
-    // Lowering flags this when the function uses `using`/`await using`, whose disposal
-    // semantics aren't preserved yet. Skip compiling it silently — no diagnostic — so
-    // other functions in the file still compile.
-    if env.skip_compilation {
+    // Lowering flags syntax whose semantics are not yet preserved by a rewrite.
+    // Keep the source without a diagnostic so other functions still compile.
+    // A rewrite bailout must not suppress read-only lint validation.
+    if env.skip_compilation && env.output_mode != OutputMode::Lint {
         return Ok(None);
     }
 

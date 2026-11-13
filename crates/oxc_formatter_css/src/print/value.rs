@@ -1165,16 +1165,14 @@ pub(super) fn write_comma_group<'a>(
             f.context().comments().iter_before(upper_bound).copied().collect();
         let tail_bound = ctx.tail_bound;
         let ctx = ValueContext { tail_bound: None, ..ctx };
-        let tail_comments: Vec<comments::CssComment> = tail_bound
-            .map(|bound| {
-                f.context()
-                    .comments()
-                    .iter_before(bound)
-                    .filter(|c| c.span.start >= upper_bound)
-                    .copied()
-                    .collect()
-            })
-            .unwrap_or_default();
+        let tail_comments: Vec<comments::CssComment> = tail_bound.map_or_default(|bound| {
+            f.context()
+                .comments()
+                .iter_before(bound)
+                .filter(|c| c.span.start >= upper_bound)
+                .copied()
+                .collect()
+        });
         let mut filler = f.fill();
         let mut i = 0;
         while i < values.len() {

@@ -321,15 +321,14 @@ impl UnifiedSignatures {
         type_parameters: Option<&'a TSTypeParameterDeclaration<'a>>,
         ctx: &LintContext<'a>,
     ) {
-        let outer_type_parameters: FxHashSet<&'a str> = type_parameters
-            .map(|type_parameters| {
+        let outer_type_parameters: FxHashSet<&'a str> =
+            type_parameters.map_or_default(|type_parameters| {
                 type_parameters
                     .params
                     .iter()
                     .map(|type_parameter| type_parameter.name.name.as_str())
                     .collect()
-            })
-            .unwrap_or_default();
+            });
 
         for signatures in overloads.values() {
             if signatures.len() < 2 {

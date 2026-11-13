@@ -1,0 +1,5 @@
+{
+  "original": "export const value=42;",
+  "compiled": "export const value=42;",
+  "expected": "invalid"
+}

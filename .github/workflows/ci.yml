@@ -281,6 +281,34 @@ jobs:
         run: |
           git diff --exit-code # Must commit everything
 
+  test-react-compiler:
+    name: Test React Compiler Runtime
+    runs-on: namespace-profile-linux-x64-default
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: $/.github/actions/check-changes
+        id: filter
+        with:
+          packages: oxc_sprout
+          paths: tasks/sprout/,crates/oxc_react_compiler/fixtures/,crates/oxc_react_compiler/tests/,pnpm-workspace.yaml,pnpm-lock.yaml,justfile
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+        if: steps.filter.outputs.changed == 'true'
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          path: /home/runner/.rustup
+          cache: |
+            rust
+            pnpm
+      - name: Check Sprout
+        if: steps.filter.outputs.changed == 'true'
+        run: |
+          pnpm --dir tasks/sprout test-harness
+          pnpm --dir tasks/sprout test
+          git diff --exit-code
+
   test-napi-shared:
     name: Test NAPI Shared
     runs-on: namespace-profile-linux-x64-default

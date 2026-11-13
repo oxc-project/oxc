@@ -85,7 +85,7 @@ pub fn uri_to_file_path(uri: &Uri) -> Option<Cow<'_, Path>> {
     };
 
     if cfg!(windows) {
-        let auth_host = uri.authority().map(|auth| auth.host()).unwrap_or_default();
+        let auth_host = uri.authority().map_or_default(|auth| auth.host());
 
         if auth_host.is_empty() {
             // very high chance this is a `file:///c:/...` uri

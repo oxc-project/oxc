@@ -100,16 +100,90 @@ macro_rules! handle_string_literal {
 
 macro_rules! handle_string_literal_escape {
     ($lexer:ident, $delimiter:literal, $table:ident, $after_opening_quote:ident) => {{
-        // Create arena string to hold unescaped string.
-        // We don't know how long string will end up being. Take a guess that total length
-        // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
         let so_far = $lexer.source.str_from_pos_to_current($after_opening_quote);
-        let capacity = max(so_far.len() * 2, MIN_ESCAPED_STR_LEN);
+        if so_far.is_empty() && $lexer.read_single_character_escape::<$delimiter>() {
+            return Kind::Str;
+        }
+
+        // Decode the first escape before allocating. Each escape produces at most one
+        // code point (or no text for a line continuation).
+        let escape_start_offset = $lexer.offset();
+        $lexer.consume_char();
+        let after_backslash = $lexer.source.position();
+        let mut is_valid_escape_sequence = true;
+        let first = $lexer.decode_string_escape_sequence(false, &mut is_valid_escape_sequence);
+        if !is_valid_escape_sequence {
+            let range = Span::new(escape_start_offset, $lexer.offset());
+            $lexer.error(diagnostics::invalid_escape_sequence(range));
+        }
+
+        let chunk_start = $lexer.source.position();
+        let remaining = $lexer.source.remaining().as_bytes();
+        let Some(end) = find_string_chunk_end::<$delimiter>(remaining, &$table) else {
+            $lexer.source.advance_to_end();
+            $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
+            return Kind::Undetermined;
+        };
+        let b = remaining[end];
+        // SAFETY: The match is an in-bounds ASCII byte, hence a UTF-8 character boundary.
+        $lexer.source.set_position(chunk_start.add(end));
+        let chunk = $lexer.source.str_from_pos_to_current(chunk_start);
+        if b != $delimiter && b != b'\\' {
+            return cold_branch(|| {
+                debug_assert!(matches!(b, b'\r' | b'\n'));
+                $lexer.consume_char();
+                $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
+                Kind::Undetermined
+            });
+        }
+
+        if b == $delimiter && is_valid_escape_sequence {
+            // Identity escapes and one-sided line continuations can leave the decoded
+            // value in one contiguous source span.
+            let borrowed = match first {
+                None if so_far.is_empty() => Some(chunk),
+                None if chunk.is_empty() => Some(so_far),
+                Some(value) if so_far.is_empty() => value.to_char().and_then(|c| {
+                    let source_value = $lexer.source.str_from_pos_to_current(after_backslash);
+                    let escape_len = source_value.len() - chunk.len();
+                    // Check the whole escape payload, so `\u0075` cannot borrow `u0075`.
+                    (escape_len == c.len_utf8() && source_value.starts_with(c))
+                        .then_some(source_value)
+                }),
+                _ => None,
+            };
+            if let Some(value) = borrowed {
+                // SAFETY: The closing quote is ASCII, so consuming it preserves a UTF-8 boundary.
+                $lexer.source.next_byte_unchecked();
+                $lexer.save_js_string(value.into());
+                return Kind::Str;
+            }
+        }
+
+        // With no further escape, the final size is known. The source chunks are UTF-8,
+        // so neither can form a surrogate pair with the decoded escape.
+        let capacity = if b == $delimiter {
+            so_far.len() + first.map_or(0, |c| c.len_bytes()) + chunk.len()
+        } else {
+            max(so_far.len() * 2, MIN_ESCAPED_STR_LEN)
+        };
         let mut str = JSStrBuilder::with_capacity_in(capacity, &$lexer.allocator);
-
-        // Push chunk before `\` into `str`.
         str.push_str(so_far);
+        if let Some(first) = first {
+            if let Some(c) = first.to_char() {
+                str.push(c);
+            } else {
+                str.push_js_char(first);
+            }
+        }
+        str.push_str(chunk);
 
+        if b == $delimiter {
+            // SAFETY: The closing quote is ASCII, so consuming it preserves a UTF-8 boundary.
+            $lexer.source.next_byte_unchecked();
+            $lexer.save_js_string(str.into_js_str());
+            return Kind::Str;
+        }
         loop {
             // Consume `\`
             let escape_start_offset = $lexer.offset();
@@ -171,6 +245,43 @@ macro_rules! handle_string_literal_escape {
 
 /// 12.9.4 String Literals
 impl<'a, C: Config> Lexer<'a, C> {
+    /// Decode a single common escape without growing an arena string.
+    #[inline]
+    fn read_single_character_escape<const DELIMITER: u8>(&mut self) -> bool {
+        let remaining = self.source.remaining();
+        let [b'\\', escape, delimiter, ..] = remaining.as_bytes() else {
+            return false;
+        };
+        if *delimiter != DELIMITER {
+            return false;
+        }
+        let value = match escape {
+            b'\'' => "'",
+            b'\"' => "\"",
+            b'\\' => "\\",
+            b'b' => "\u{8}",
+            b'f' => "\u{c}",
+            b'n' => "\n",
+            b'r' => "\r",
+            b't' => "\t",
+            b'v' => "\u{b}",
+            // The closing quote guarantees this cannot start an octal escape.
+            b'0' => "\0",
+            _ => return false,
+        };
+        // Raw transfer requires nonempty strings to reside in the source or arena.
+        let value = if matches!(escape, b'\'' | b'"' | b'\\') {
+            JSStr::from(&remaining[1..2])
+        } else {
+            JSStr::from_str_in(value, &self.allocator)
+        };
+        // SAFETY: The matched escape and closing quote are three in-bounds ASCII bytes.
+        let end = unsafe { self.source.position().add(3) };
+        self.source.set_position(end);
+        self.save_js_string(value);
+        true
+    }
+
     /// Read string literal delimited with `"`.
     /// # SAFETY
     /// Next character must be `"`.

@@ -113,15 +113,14 @@ impl Rule for PreferAt {
             get_last_element_functions: config
                 .and_then(|c| c.get("getLastElementFunctions"))
                 .and_then(|v| v.as_array())
-                .map(|arr| {
+                .map_or_default(|arr| {
                     arr.iter()
                         .filter_map(|v| v.as_str())
                         .map(str::trim)
                         .filter(|s| !s.is_empty())
                         .map(str::to_string)
                         .collect()
-                })
-                .unwrap_or_default(),
+                }),
         })))
     }
 

@@ -41,7 +41,7 @@ function Component(props) {
   );
 }
 
-export const TODO_FIXTURE_ENTRYPOINT = {
+export const FIXTURE_ENTRYPOINT = {
   fn: Component,
   params: [
     {

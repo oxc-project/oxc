@@ -67,7 +67,6 @@
 use std::any::Any;
 
 mod ast_builder;
-mod buffered_vec;
 pub mod config;
 mod context;
 mod cursor;
@@ -787,7 +786,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self.lexer.finalize_tokens()
         };
 
-        program.comments = self.lexer.trivia_builder.comments;
+        program.comments = self.lexer.trivia_builder.comments.into_vec();
 
         ParserReturn {
             program,

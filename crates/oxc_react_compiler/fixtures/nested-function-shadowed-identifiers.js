@@ -1,3 +1,4 @@
+import {useState} from 'react';
 function Component(props) {
   const [x, setX] = useState(null);
 
@@ -9,8 +10,16 @@ function Component(props) {
   return <input value={x} onChange={onChange} />;
 }
 
+const sproutInputs = [
+  [{}],
+  [{value:1}],
+];
+
 export const FIXTURE_ENTRYPOINT = {
-  fn: Component,
-  params: ['TodoAdd'],
-  isComponent: 'TodoAdd',
+  fn: args => {
+    "use no memo";
+    return Component(...args);
+  },
+  params: [sproutInputs[0]],
+  sequentialRenders: [sproutInputs[0], sproutInputs[0], sproutInputs[1], sproutInputs[1], sproutInputs[0]],
 };

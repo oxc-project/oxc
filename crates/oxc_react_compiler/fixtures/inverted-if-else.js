@@ -10,8 +10,16 @@ function foo(a, b, c) {
   return x;
 }
 
+const sproutInputs = [
+  [true,1,2],
+  [false,3,4],
+];
+
 export const FIXTURE_ENTRYPOINT = {
-  fn: foo,
-  params: ['TodoAdd'],
-  isComponent: 'TodoAdd',
+  fn: args => {
+    "use no memo";
+    return foo(...args);
+  },
+  params: [sproutInputs[0]],
+  sequentialRenders: [sproutInputs[0], sproutInputs[0], sproutInputs[1], sproutInputs[1], sproutInputs[0]],
 };

@@ -34,7 +34,6 @@ use crate::react_compiler_hir::{
     PropertyNameKind, ReactFunctionType, Terminal, Type, TypeId,
 };
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
-use oxc_ast::ast::BinaryOperator;
 use oxc_span::Span;
 
 // =============================================================================
@@ -145,27 +144,6 @@ fn pre_resolve_globals_recursive<'a>(
     for child_id in child_func_ids {
         pre_resolve_globals_recursive(child_id, env, global_types);
     }
-}
-
-fn is_primitive_binary_op(op: &BinaryOperator) -> bool {
-    matches!(
-        op,
-        BinaryOperator::Addition
-            | BinaryOperator::Subtraction
-            | BinaryOperator::Division
-            | BinaryOperator::Remainder
-            | BinaryOperator::Multiplication
-            | BinaryOperator::Exponential
-            | BinaryOperator::BitwiseAnd
-            | BinaryOperator::BitwiseOR
-            | BinaryOperator::ShiftRight
-            | BinaryOperator::ShiftLeft
-            | BinaryOperator::BitwiseXOR
-            | BinaryOperator::GreaterThan
-            | BinaryOperator::LessThan
-            | BinaryOperator::GreaterEqualThan
-            | BinaryOperator::LessEqualThan
-    )
 }
 
 /// Resolve a property type from the shapes registry.
@@ -510,15 +488,11 @@ fn generate_instruction_types<'a>(
             unifier.unify(left, value_type, shapes)?;
         }
 
-        InstructionValue::BinaryExpression {
-            operator, left: bin_left, right: bin_right, ..
-        } => {
-            if is_primitive_binary_op(operator) {
-                let left_operand_type = get_type(bin_left.identifier, identifiers);
-                unifier.unify(left_operand_type, Type::Primitive, shapes)?;
-                let right_operand_type = get_type(bin_right.identifier, identifiers);
-                unifier.unify(right_operand_type, Type::Primitive, shapes)?;
-            }
+        InstructionValue::BinaryExpression { .. } => {
+            // Unlike the TS implementation, do not infer operand types from
+            // coercing operators. A value used in arithmetic in one branch can
+            // still be a mutable object in another branch; global unification
+            // would otherwise suppress its mutations and reuse stale caches.
             unifier.unify(left, Type::Primitive, shapes)?;
         }
 
