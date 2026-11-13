@@ -88,11 +88,15 @@ impl Lexer {
     /// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `n`.
     #[cpu_version(Generic)]
     pub fn lex(&mut self, src: &[u8], n: usize, options: LexOptions, tokens: &mut Tokens) {
+        // `n.saturating_add(PAD)` not `n + PAD` to ensure this assertion catches
+        // e.g. `src.len() == 100, n == usize::MAX`, where `n + PAD` would wrap around to `PAD - 1`
+        // so `src.len() >= n + PAD` would be true.
+        // Slices are at most `isize::MAX` bytes, so cannot be >= a saturated `usize::MAX`.
         assert!(
-            src.len() >= n + PAD,
-            "lexer: src must have >= {PAD} bytes of padding past len {n} (got {})",
-            src.len()
+            src.len() >= n.saturating_add(PAD),
+            "lexer: src must have >= {PAD} bytes of padding past len {n}"
         );
+        // Can't wrap. `n + PAD <= src.len() <= isize::MAX`, and `SPAN_SENTINELS` is small.
         let capacity = n + PAD + SPAN_SENTINELS;
         tokens.kinds.clear();
         tokens.kinds.reserve(capacity);
@@ -243,5 +247,22 @@ impl Default for Lexer {
     #[cpu_version(Generic)]
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_simd::{DynCpu, test_cpus};
+
+    use crate::{LexOptions, PAD, Tokens};
+
+    use super::Lexer;
+
+    #[test_cpus]
+    #[should_panic(expected = "bytes of padding past len")]
+    fn lex_panics_if_n_plus_pad_overflows(cpu: DynCpu) {
+        let src = [0; PAD];
+        let mut tokens = Tokens::new();
+        Lexer::new_with_cpu(cpu).lex(&src, usize::MAX, LexOptions::default(), &mut tokens);
     }
 }
