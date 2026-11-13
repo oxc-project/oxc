@@ -230,11 +230,13 @@ it reads neither value of `setup` and `vars` (`@vue/compiler-sfc` 3.5.45 compile
 <!-- input -->
 <template>
   <div v-pre :a="b+c">{{a+b}} <span @click="x+y">{{c}}</span></div>
+  <p v-pre:arg>{{a+b}}</p>
 </template>
 
 <!-- ours -->
 <template>
   <div v-pre :a="b+c">{{a+b}} <span @click="x+y">{{c}}</span></div>
+  <p v-pre:arg>{{a+b}}</p>
 </template>
 
 <!-- prettier -->
@@ -242,11 +244,13 @@ it reads neither value of `setup` and `vars` (`@vue/compiler-sfc` 3.5.45 compile
   <div v-pre :a="b + c">
     {{ a + b }} <span @click="x + y">{{ c }}</span>
   </div>
+  <p v-pre:arg>{{ a + b }}</p>
 </template>
 ```
 
 In a `v-pre` element and its content, `{{ }}` is text and a directive a plain attribute, as Vue's compiler reads them:
 they print as written, and lay out as text and attributes do.
+`v-pre:arg` and `v-pre.mod` are `v-pre` too: Vue reads a directive by its name (`pre`), and renders `{{a+b}}` as written.
 Prettier formats them, which changes what renders (`{{ a + b }}`) and the attribute values (`:a` is `b + c`), as `@vue/compiler-dom` 3.5.45 compiles them.
 
 ## js-in-vue-interpolation-ends-at-first-close
