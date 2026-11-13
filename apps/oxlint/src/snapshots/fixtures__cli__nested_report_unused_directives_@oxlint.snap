@@ -1,0 +1,20 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/nested_report_unused_directives
+----------
+
+  ! Unused oxlint-disable directive (no problems were reported).
+   ,-[reporting/index.js:1:1]
+ 1 | // oxlint-disable-next-line no-debugger
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 2 | const value = 1;
+   `----
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 2 files using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

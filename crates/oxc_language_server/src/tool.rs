@@ -1,3 +1,5 @@
+use std::{borrow::Cow, path::PathBuf};
+
 use tower_lsp_server::{
     gen_lsp_types::{
         CodeActionResponse, Diagnostic, MessageType, Pattern, ServerCapabilities, TextEdit, Uri,
@@ -6,7 +8,9 @@ use tower_lsp_server::{
     jsonrpc::ErrorCode,
 };
 
-use crate::{CodeActionParams, TextDocument, capabilities::Capabilities};
+use crate::{
+    CodeActionParams, TextDocument, capabilities::Capabilities, uri_utils::uri_to_file_path,
+};
 
 pub trait ToolBuilder: Send + Sync {
     /// Modify the server capabilities to include capabilities provided by this tool.
@@ -19,6 +23,30 @@ pub trait ToolBuilder: Send + Sync {
 
     /// Build a boxed instance of the tool for the given root URI and options.
     fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult;
+
+    /// Build a boxed instance of the tool with the extra [`BuildContext`] of its worker.
+    ///
+    /// The default implementation ignores the context, which is correct for tools which only
+    /// resolve their configuration upwards from their root and never walk it eagerly.
+    ///
+    /// The builder a [`Tool`] receives forwards [`Self::build`] to this method with the context
+    /// of its worker, so a tool which rebuilds itself through it keeps the context.
+    ///
+    /// A method added to this trait must also be forwarded by `ContextBuilder`.
+    fn build_with_context(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+        _context: BuildContext<'_>,
+    ) -> ToolBuildResult {
+        self.build(root_uri, options)
+    }
+
+    /// Whether the `workingDirectories` option is honoured. When `false`, the option is ignored
+    /// and no sub worker is created for it.
+    fn use_working_directories(&self) -> bool {
+        false
+    }
 
     /// Shutdown hook for the tool. Implementors may perform any necessary cleanup here.
     fn shutdown(&self, _root_uri: &Uri) {
@@ -136,6 +164,81 @@ pub trait Tool: Send + Sync {
     /// Remove internal cache for the given URI, if any.
     fn remove_uri_cache(&self, _uri: &Uri) {
         // Default implementation does nothing.
+    }
+}
+
+/// Extra context a worker passes to [`ToolBuilder::build_with_context`].
+#[derive(Debug, Default, Clone, Copy)]
+#[non_exhaustive]
+pub struct BuildContext<'a> {
+    /// Roots below the worker root which are owned by another worker, i.e. the resolved
+    /// `workingDirectories` of this worker.
+    ///
+    /// A tool which eagerly walks its root directory (config discovery, ignore file collection,
+    /// ...) must skip those directories, otherwise the same file would be handled twice, with two
+    /// different configurations.
+    pub excluded_roots: &'a [Uri],
+    /// The workspace folder this worker belongs to, when it is a `workingDirectories` sub worker.
+    ///
+    /// A sub worker still has to honour the ignore files of that folder, as the tool does when it
+    /// is run from inside the directory.
+    pub parent_root: Option<&'a Uri>,
+    /// Whether this is the first build of the tool of the worker.
+    ///
+    /// A problem which is about the root itself, and so does not change from one build to the
+    /// next, is reported by that build only: the worker is rebuilt on every configuration change.
+    pub first_build: bool,
+}
+
+impl BuildContext<'_> {
+    /// The file paths of [`BuildContext::excluded_roots`], without the ones which are not files.
+    pub fn excluded_root_paths(&self) -> Vec<PathBuf> {
+        self.excluded_roots
+            .iter()
+            .filter_map(|uri| uri_to_file_path(uri).map(Cow::into_owned))
+            .collect()
+    }
+
+    /// The file path of [`BuildContext::parent_root`].
+    pub fn parent_root_path(&self) -> Option<PathBuf> {
+        self.parent_root.and_then(|uri| uri_to_file_path(uri).map(Cow::into_owned))
+    }
+}
+
+/// The [`ToolBuilder`] a worker hands to its [`Tool`]: it builds with the context of the worker.
+pub struct ContextBuilder<'a> {
+    pub inner: &'a dyn ToolBuilder,
+    pub context: BuildContext<'a>,
+}
+
+impl ToolBuilder for ContextBuilder<'_> {
+    fn server_capabilities(
+        &self,
+        capabilities: &mut ServerCapabilities,
+        backend_capabilities: &mut Capabilities,
+    ) {
+        self.inner.server_capabilities(capabilities, backend_capabilities);
+    }
+
+    fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult {
+        self.inner.build_with_context(root_uri, options, self.context)
+    }
+
+    fn build_with_context(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+        context: BuildContext<'_>,
+    ) -> ToolBuildResult {
+        self.inner.build_with_context(root_uri, options, context)
+    }
+
+    fn use_working_directories(&self) -> bool {
+        self.inner.use_working_directories()
+    }
+
+    fn shutdown(&self, root_uri: &Uri) {
+        self.inner.shutdown(root_uri);
     }
 }
 

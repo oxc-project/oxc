@@ -2266,11 +2266,13 @@ version = "1.41.0"
 dependencies = [
  "cow-utils",
  "futures-util",
+ "oxc-schemars",
  "papaya",
  "percent-encoding",
  "rustc-hash",
  "serde",
  "serde_json",
+ "tempfile",
  "tokio",
  "tower-lsp-server",
  "tracing",
@@ -2344,6 +2346,7 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "smallvec",
+ "tempfile",
  "unicode-segmentation",
  "url",
 ]
@@ -2984,6 +2987,7 @@ dependencies = [
 name = "oxlint"
 version = "1.93.0"
 dependencies = [
+ "bitflags",
  "bpaf",
  "cow-utils",
  "ignore",

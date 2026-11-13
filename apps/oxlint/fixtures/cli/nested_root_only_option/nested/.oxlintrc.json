@@ -1,0 +1,11 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "options": {
+    "denyWarnings": true
+  },
+  "rules": {
+    "no-debugger": "warn"
+  }
+}

@@ -5,7 +5,25 @@ source: apps/oxlint/src/tester.rs
 arguments: --type-aware
 working directory: fixtures/cli/tsgolint_failure
 ----------
-Error running tsgolint: "exit status: exit status: 1"
+
+  x `<cwd>/fixtures/cli/tsgolint_failure/node_modules/.bin/tsgolint` could not lint this file: Error running tsgolint: exit status: 1
+  | Add the `tsrs` or `oxlint-tsgolint` package to the corresponding project, or set the `OXLINT_TSGOLINT_PATH` environment variable to a type-aware linter executable.
+   ,-[index.ts:1:1]
+ 1 | debugger;
+   : ^
+ 2 | Promise.resolve();
+   `----
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[index.ts:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+ 2 | Promise.resolve();
+   `----
+  help: Remove the debugger statement
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 1 file with 2 rules using 1 threads.
 ----------
 CLI result: TsGoLintError
 ----------
