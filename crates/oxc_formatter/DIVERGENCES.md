@@ -442,8 +442,10 @@ const arrowPlainBody = (a) => b /* c3 */;
 - The chain passes through arrow expression bodies, and a dropped `)` counts as the terminator even without a source `;`
   - Prettier moves it on the first pass for an assignment chain, a sequence and a block-bodied arrow (prettier/prettier#19893, #19930, #19956), not for a plain leaf or an expression body; ours is one uniform rule
 - The walk stops where the comment stays inside re-added parens (sequence, assignment, JSX); conditional bodies move
+  - Prettier keeps a conditional body's comment inside its parens since 3.10 (`(a) => (a ? b : c /* c */)`, a fixpoint there); ours keeps the one rule
 - Applied at every semicolon-terminated site: expression statements, export defaults, variable declarations, class property values, return arguments
 - A class member's same-line comment moves even when an own-line comment sits between it and the `;` (the pinned Prettier cancels the move on its first pass, then moves on its second — the `dmixed` pin); the own-line one defers to the next element, like statements
+  - Prettier 3.10 pulls that own-line comment onto the next member's line (`/* own line */ e = 5;`), changing its line
 - A comment inside a sequence's parenthesized first element leads the sequence, outside the formatter-added parens
 
 Known limitation, shared with upstream: whether these parens survive is a group-fit decision, unknowable when the content end is chosen, so the comment settles only on the second pass when they end up dropped — a short JSX arrow body (`x = (a) => (<div /> /* c */)`), or a `;`-less return argument whose parenthesized binary fits flat (the `asiReturn` pin).
@@ -695,7 +697,8 @@ class C {
 
 A suppression comment protects content; a terminator the formatter owns (a statement's or class member's `;`, the token-class table in AGENTS.md) follows `semi` as it does everywhere else.
 Prettier prints that way for statements whose source had a `;` (its `__contentEnd`), but leaves a `;`-less statement alone (the output above re-parses as `stmt(   )(a) => a`, a syntax error),
-and prints class members, type aliases and `declare function`s whole, `;` included, so `semi: false` keeps a `;` there and `semi: true` never adds one.
+and prints a class property whole under `semi: true`, so it never adds one there (under `semi: false` it drops the source `;` since prettier/prettier#20429),
+and type aliases, `declare function`s, abstract methods and index signatures whole under both, `;` included.
 One rule instead, the statement's, for every terminator-owned node.
 
 ## suppressed-cast-comment-asi-guard
