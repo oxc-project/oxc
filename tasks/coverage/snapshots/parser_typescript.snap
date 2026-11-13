@@ -3,7 +3,7 @@ commit: f7973164
 parser_typescript Summary:
 AST Parsed     : 9901/9914 (99.87%)
 Positive Passed: 9889/9914 (99.75%)
-Negative Passed: 1720/2823 (60.93%)
+Negative Passed: 1721/2823 (60.96%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -413,8 +413,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportInterfaceClassAndValueWithDuplicatesInImportList.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportStarFromEmptyModule.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/extBaseClass2.ts
 
@@ -8347,6 +8345,180 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
+  × TS(8020): JSDoc types can only be used inside documentation comments.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:9:21]
+  8 │ 
+  9 │ const WhatFoo = foo<?>;
+    ·                     ─
+ 10 │ const HuhFoo = foo<string?>;
+    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:10:20]
+  9 │ const WhatFoo = foo<?>;
+ 10 │ const HuhFoo = foo<string?>;
+    ·                    ───────
+ 11 │ const NopeFoo = foo<?string>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:11:21]
+ 10 │ const HuhFoo = foo<string?>;
+ 11 │ const NopeFoo = foo<?string>;
+    ·                     ───────
+ 12 │ const ComeOnFoo = foo<?string?>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:12:24]
+ 11 │ const NopeFoo = foo<?string>;
+ 12 │ const ComeOnFoo = foo<?string?>;
+    ·                        ───────
+ 13 │ 
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:12:23]
+ 11 │ const NopeFoo = foo<?string>;
+ 12 │ const ComeOnFoo = foo<?string?>;
+    ·                       ────────
+ 13 │ 
+    ╰────
+  help: Did you mean to write 'string? | null | undefined'?
+
+  × TS(8020): JSDoc types can only be used inside documentation comments.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:14:28]
+ 13 │ 
+ 14 │ type TWhatFoo = typeof foo<?>;
+    ·                            ─
+ 15 │ type THuhFoo = typeof foo<string?>;
+    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:15:27]
+ 14 │ type TWhatFoo = typeof foo<?>;
+ 15 │ type THuhFoo = typeof foo<string?>;
+    ·                           ───────
+ 16 │ type TNopeFoo = typeof foo<?string>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:16:28]
+ 15 │ type THuhFoo = typeof foo<string?>;
+ 16 │ type TNopeFoo = typeof foo<?string>;
+    ·                            ───────
+ 17 │ type TComeOnFoo = typeof foo<?string?>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:17:31]
+ 16 │ type TNopeFoo = typeof foo<?string>;
+ 17 │ type TComeOnFoo = typeof foo<?string?>;
+    ·                               ───────
+ 18 │ 
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:17:30]
+ 16 │ type TNopeFoo = typeof foo<?string>;
+ 17 │ type TComeOnFoo = typeof foo<?string?>;
+    ·                              ────────
+ 18 │ 
+    ╰────
+  help: Did you mean to write 'string? | null | undefined'?
+
+  × TS(8020): JSDoc types can only be used inside documentation comments.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:19:21]
+ 18 │ 
+ 19 │ const WhatBar = Bar<?>;
+    ·                     ─
+ 20 │ const HuhBar = Bar<string?>;
+    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:20:20]
+ 19 │ const WhatBar = Bar<?>;
+ 20 │ const HuhBar = Bar<string?>;
+    ·                    ───────
+ 21 │ const NopeBar = Bar<?string>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:21:21]
+ 20 │ const HuhBar = Bar<string?>;
+ 21 │ const NopeBar = Bar<?string>;
+    ·                     ───────
+ 22 │ const ComeOnBar = Bar<?string?>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:22:24]
+ 21 │ const NopeBar = Bar<?string>;
+ 22 │ const ComeOnBar = Bar<?string?>;
+    ·                        ───────
+ 23 │ 
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:22:23]
+ 21 │ const NopeBar = Bar<?string>;
+ 22 │ const ComeOnBar = Bar<?string?>;
+    ·                       ────────
+ 23 │ 
+    ╰────
+  help: Did you mean to write 'string? | null | undefined'?
+
+  × TS(8020): JSDoc types can only be used inside documentation comments.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:24:28]
+ 23 │ 
+ 24 │ type TWhatBar = typeof Bar<?>;
+    ·                            ─
+ 25 │ type THuhBar = typeof Bar<string?>;
+    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:25:27]
+ 24 │ type TWhatBar = typeof Bar<?>;
+ 25 │ type THuhBar = typeof Bar<string?>;
+    ·                           ───────
+ 26 │ type TNopeBar = typeof Bar<?string>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:26:28]
+ 25 │ type THuhBar = typeof Bar<string?>;
+ 26 │ type TNopeBar = typeof Bar<?string>;
+    ·                            ───────
+ 27 │ type TComeOnBar = typeof Bar<?string?>;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:27:31]
+ 26 │ type TNopeBar = typeof Bar<?string>;
+ 27 │ type TComeOnBar = typeof Bar<?string?>;
+    ·                               ───────
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionWithJSDocTypeArguments.ts:27:30]
+ 26 │ type TNopeBar = typeof Bar<?string>;
+ 27 │ type TComeOnBar = typeof Bar<?string?>;
+    ·                              ────────
+    ╰────
+  help: Did you mean to write 'string? | null | undefined'?
+
   × await expression not allowed in formal parameter
    ╭─[typescript/tsc/testdata/tests/cases/compiler/expressionsForbiddenInParameterInitializers.ts:1:35]
  1 │ export async function foo({ foo = await import("./bar") }) {
@@ -11916,6 +12088,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
   help: Did you mean to write 'string'?
 
   × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:18:16]
+ 17 │ 
+ 18 │ const a = 1 as any!;
+    ·                ────
+ 19 │ const b: number! = 1;
+    ╰────
+  help: Did you mean to write 'any'?
+
+  × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:19:10]
  18 │ const a = 1 as any!;
  19 │ const b: number! = 1;
@@ -11923,6 +12104,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  20 │ 
     ╰────
   help: Did you mean to write 'number'?
+
+  × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:21:16]
+ 20 │ 
+ 21 │ const c = 1 as !any;
+    ·                ────
+ 22 │ const d: !number = 1;
+    ╰────
+  help: Did you mean to write 'any'?
 
   × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:22:10]
@@ -11986,6 +12176,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
   help: Did you mean to write 'string | null | undefined'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:15:16]
+ 14 │ 
+ 15 │ const a = 1 as any?;
+    ·                ────
+ 16 │ const b: number? = 1;
+    ╰────
+  help: Did you mean to write 'any | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:16:10]
  15 │ const a = 1 as any?;
  16 │ const b: number? = 1;
@@ -11993,6 +12192,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  17 │ 
     ╰────
   help: Did you mean to write 'number | null | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:18:16]
+ 17 │ 
+ 18 │ const c = 1 as ?any;
+    ·                ────
+ 19 │ const d: ?number = 1;
+    ╰────
+  help: Did you mean to write 'any | null | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:19:10]
@@ -33031,6 +33239,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·                ╰── Optional element seen here
  4 │ type T03 = [...string[]];
    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/restTupleElements1.ts:10:16]
+  9 │ type T08 = [...string];  // Error
+ 10 │ type T09 = [...string?];  // Error
+    ·                ───────
+ 11 │ type T10 = [string, ...[...string[]]];
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
 
   × TS(1257): A required element cannot follow an optional element.
     ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:9:21]

@@ -99,7 +99,11 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::VariableDeclarator(decl) if !ctx.source_type.is_typescript() => {
             js::check_variable_declarator_redeclaration(decl, ctx);
         }
-        AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),
+        AstKind::JSDocNullableType(ty) => ts::check_jsdoc_type('?', ty.postfix, ty.span, ctx),
+        AstKind::JSDocNonNullableType(ty) => ts::check_jsdoc_type('!', ty.postfix, ty.span, ctx),
+        AstKind::JSDocUnknownType(ty) => {
+            ctx.error(crate::diagnostics::jsdoc_type_outside_comment(ty.span));
+        }
         AstKind::TSTypePredicate(predicate) => ts::check_ts_type_predicate(predicate, ctx),
         AstKind::TSExternalModuleDeclaration(decl) => {
             ts::check_ts_external_module_declaration(decl, ctx);

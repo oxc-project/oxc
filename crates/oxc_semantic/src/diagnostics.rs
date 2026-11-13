@@ -336,6 +336,11 @@ pub fn jsdoc_type_in_annotation(
 }
 
 #[cold]
+pub fn jsdoc_type_outside_comment(span: Span) -> OxcDiagnostic {
+    ts_error("8020", "JSDoc types can only be used inside documentation comments.").with_label(span)
+}
+
+#[cold]
 pub fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
     ts_error(
         "1235",

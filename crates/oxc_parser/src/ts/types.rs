@@ -556,7 +556,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = token.span();
         // A keyword and a qualified name both consume the first token, so decide
         // between them afterwards instead of lexing the following token twice.
-        if self.at(Kind::Dot) {
+        // `null` is a literal type in TypeScript, so `null.x` is not a qualified name.
+        if self.at(Kind::Dot) && token.kind() != Kind::Null {
             let ident = IdentifierName::new(span, self.ident(self.token_source(&token)), self);
             let name = TSTypeName::new_identifier_reference(ident.span, ident.name, self);
             let name = self.parse_ts_qualified_type_name(span.start, name);
@@ -916,7 +917,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Kind::RAngle,
                 Kind::Comma,
                 opening_span,
-                Self::parse_ts_type,
+                Self::parse_type_argument,
             );
             self.expect(Kind::RAngle);
             let span = self.end_span(start);
@@ -958,7 +959,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Kind::RAngle,
                 Kind::Comma,
                 opening_span,
-                Self::parse_ts_type,
+                Self::parse_type_argument,
             );
             self.expect(Kind::RAngle);
             let span = self.end_span(start);
@@ -996,8 +997,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         debug_assert!(self.at(Kind::LAngle));
         self.advance(Kind::LAngle);
-        let (params, _) =
-            self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, Self::parse_ts_type);
+        let (params, _) = self.parse_delimited_list(
+            Kind::RAngle,
+            Kind::Comma,
+            opening_span,
+            Self::parse_type_argument,
+        );
         // `a < b> = c` is valid but `a < b >= c` is BinaryExpression
         if matches!(self.re_lex_right_angle(), Kind::GtEq) {
             self.rewind(checkpoint);
@@ -1014,6 +1019,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::ts_empty_type_argument_list(span));
         }
         Some(TSTypeParameterInstantiation::boxed(span, params, self))
+    }
+
+    /// Parse one element of a type-argument list. Like TypeScript's `isListElement` for
+    /// `ParsingContext.TypeArguments`, the element must start a type, so `f<class>(h)` is not a
+    /// call with type arguments.
+    fn parse_type_argument(&mut self) -> TSType<'a> {
+        // `is_start_of_type` treats `await` and `yield` as reserved, but they are always accepted
+        // here as type names. TypeScript parses types outside the await/yield context, so `A<await>`
+        // is valid in a type even inside an async function, and `f<await>(h)` is a call in a module.
+        if !self.is_start_of_type(/* in_start_of_parameter */ false)
+            && !matches!(self.cur_kind(), Kind::Await | Kind::Yield)
+        {
+            return self.unexpected();
+        }
+        self.parse_ts_type()
     }
 
     fn can_follow_type_arguments_in_expr(&mut self) -> bool {
