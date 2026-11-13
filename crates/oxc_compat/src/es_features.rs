@@ -58,6 +58,7 @@ pub enum ESFeature {
     ES2020ExportNamespaceFrom,
     ES2020ArbitraryModuleNamespaceNames,
     ES2022TopLevelAwait,
+    StandardDecorators,
 }
 pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
     use ESFeature::*;
@@ -959,6 +960,7 @@ pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
                     (Es, Version(2022u16, 0, 0)),
                 ])),
             ),
+            (StandardDecorators, EngineTargets::new(FxHashMap::from_iter([]))),
         ])
     })
 }
