@@ -239,6 +239,8 @@
   - ❓unclassified
 - externals/prettier/typescript/instantiation-expression/operand.ts (💥, 95.45%)
   - ❓unclassified
+- externals/prettier/typescript/instantiation-expression/super-class.ts (💥, 55.56%)
+  - ❓unclassified
 - externals/prettier/typescript/interface/comments-generic.ts (💥💥, 91.80%)
   - ❓unclassified
 - externals/prettier/typescript/interface2/comments-declare.ts (💥, 60.00%)
@@ -308,15 +310,13 @@
 ### Not idempotent
 
 - externals/prettier/typescript/as/comments/17407.ts
+- externals/prettier/typescript/chain-expression/new-expression.ts (second pass errored)
+- externals/prettier/typescript/chain-expression/tagged-template-literals.ts (second pass errored)
+- externals/prettier/typescript/instantiation-expression/super-class.ts (second pass errored)
 - externals/prettier/typescript/method-chain/object/issue-17239.ts
 - externals/prettier/typescript/prettier-ignore/issue-14238.ts
 - externals/prettier/typescript/prettier-ignore/mapped-types.ts
 - externals/prettier/typescript/property-signature/consistent-with-flow/comments.ts
-
-### Error
-
-- externals/prettier/typescript/instantiation-expression/super-class.ts: Expected `{` but found `<`
-  - ❓unclassified
 
 ## tsx
 
