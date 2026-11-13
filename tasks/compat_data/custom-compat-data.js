@@ -66,4 +66,7 @@ const customEs2022 = [
   },
 ].map(f("ES2022"));
 
-module.exports = [...customEs2020, ...customEs2022];
+// Standard decorators and auto-accessors are not yet standardized or supported by any engine.
+const proposals = [{ name: "StandardDecorators", es: null, targets: {} }];
+
+module.exports = [...customEs2020, ...customEs2022, ...proposals];

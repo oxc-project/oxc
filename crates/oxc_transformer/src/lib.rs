@@ -135,6 +135,7 @@ impl<'a> Transformer<'a> {
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
+        let decorator_mode = self.decorator.mode(self.env.standard_decorators);
 
         let ast_builder = AstBuilder::new(allocator);
 
@@ -158,7 +159,7 @@ impl<'a> Transformer<'a> {
 
         let mut transformer = TransformerImpl {
             common: Common::new(&self.env),
-            decorator: Decorator::new(self.decorator),
+            decorator: Decorator::new(self.decorator, decorator_mode),
             plugins: Plugins::new(self.plugins),
             x0_typescript: program
                 .source_type
@@ -341,6 +342,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_class(class, ctx);
         }
+        self.x2_es2022.enter_class(class, ctx);
     }
 
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -542,6 +544,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         self.decorator.exit_method_definition(def, ctx);
     }
 
+    fn enter_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_es2022.enter_object_property(prop, ctx);
+    }
+
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_new_expression(expr, ctx);
@@ -623,6 +629,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
             typescript.exit_statement(stmt, ctx);
         }
         self.decorator.exit_statement(stmt, ctx);
+        self.x2_es2022.exit_statement(stmt, ctx);
         self.x2_es2018.exit_statement(stmt, ctx);
         self.x2_es2017.exit_statement(stmt, ctx);
     }
@@ -772,6 +779,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.decorator.enter_decorator(node, ctx);
+        self.x2_es2022.enter_decorator(node, ctx);
     }
 
     fn enter_formal_parameter_rest(

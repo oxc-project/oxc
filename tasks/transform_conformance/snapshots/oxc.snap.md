@@ -1,6 +1,6 @@
 commit: d7a0cccb
 
-Passed: 321/450
+Passed: 328/454
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -17,6 +17,7 @@ Passed: 321/450
 * babel-preset-typescript
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
+* babel-plugin-proposal-decorators
 * regexp
 * plugin-tagged-template-transform
 
@@ -48,12 +49,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (44/64)
-* allow-declare-fields-false/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
-
+# babel-plugin-transform-typescript (47/64)
 * computed-constant-value/input.ts
 x Output mismatch
 
@@ -183,11 +179,6 @@ Symbol redeclarations mismatch for "B":
 after transform: SymbolId(2): [Span { start: 289, end: 290 }, Span { start: 304, end: 305 }]
 rebuilt        : SymbolId(2): []
 
-* remove-class-properties-without-initializer/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
-
 * remove-unused-import-equals/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["D", "a", "b", "bar", "c"]
@@ -199,15 +190,8 @@ rebuilt        : [ReferenceId(0)]
 * ts-declaration-empty-output/input.d.ts
 x Output mismatch
 
-* use-define-for-class-fields/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
-
 * use-define-for-class-fields-without-class-properties/input.ts
-Unresolved reference IDs mismatch for "dce":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(17)]
-rebuilt        : [ReferenceId(5)]
+x Output mismatch
 
 
 # babel-plugin-transform-react-jsx (55/58)
@@ -227,7 +211,36 @@ x Output mismatch
 
 # legacy-decorators (20/106)
 * oxc/accessor/input.ts
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "_a", "_foo$bar", "_foo$bar2", "a", "dec", "foo"]
+rebuilt        : ScopeId(0): ["C", "_a", "_foo$bar", "_foo$bar2"]
+Reference symbol mismatch for "a":
+after transform: SymbolId(4) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(4) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "foo":
+after transform: SymbolId(5) "foo"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["babelHelpers"]
+rebuilt        : ["a", "babelHelpers", "dec", "foo"]
 
 * oxc/accessor-name-collision/input.ts
 Bindings mismatch:
@@ -251,8 +264,8 @@ rebuilt        : ["babelHelpers", "property"]
 
 * oxc/accessor-with-class-properties/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["C", "_a", "_a2", "_a_accessor_storage", "_a_computed_accessor_storage", "_b_accessor_storage", "_c_accessor_storage", "a", "dec"]
-rebuilt        : ScopeId(0): ["C", "_a", "_a2", "_a_accessor_storage", "_a_computed_accessor_storage", "_b_accessor_storage", "_c_accessor_storage"]
+after transform: ScopeId(0): ["C", "_0_accessor_storage", "_a", "_a2", "_a_accessor_storage", "_b_accessor_storage", "_c_accessor_storage", "a", "dec"]
+rebuilt        : ScopeId(0): ["C", "_0_accessor_storage", "_a", "_a2", "_a_accessor_storage", "_b_accessor_storage", "_c_accessor_storage"]
 Reference symbol mismatch for "a":
 after transform: SymbolId(4) "a"
 rebuilt        : <None>

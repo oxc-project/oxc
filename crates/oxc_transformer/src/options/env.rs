@@ -16,7 +16,7 @@ use crate::{
 use super::{Module, babel::BabelEnvOptions};
 use oxc_compat::{ESFeature, EngineTargets};
 
-#[derive(Debug, Default, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(try_from = "BabelEnvOptions")]
 /// Feature toggles selected from target runtime support.
 ///
@@ -27,6 +27,12 @@ pub struct EnvOptions {
     ///
     /// Evaluated by the TypeScript transform (`import =` / `export =` and namespaces).
     pub module: Module,
+
+    /// Lower standard decorators and auto-accessors when the targets need it.
+    ///
+    /// False for an unspecified target and for `esnext`, which assume proposal syntax is
+    /// supported. The `decorator.lower` option overrides this decision.
+    pub standard_decorators: bool,
 
     /// ES2026 transform options.
     pub es2026: ES2026Options,
@@ -61,6 +67,12 @@ pub struct EnvOptions {
     pub regexp: RegExpOptions,
 }
 
+impl Default for EnvOptions {
+    fn default() -> Self {
+        Self::from(EngineTargets::default())
+    }
+}
+
 impl EnvOptions {
     /// Explicitly enable all plugins that are ready, mainly for testing purposes.
     ///
@@ -69,6 +81,7 @@ impl EnvOptions {
     pub fn enable_all(include_unfinished_plugins: bool) -> Self {
         Self {
             module: Module::default(),
+            standard_decorators: true,
             es2026: ES2026Options { explicit_resource_management: true },
             es2022: ES2022Options {
                 class_static_block: true,
@@ -151,6 +164,7 @@ impl From<EngineTargets> for EnvOptions {
         use ESFeature::*;
         Self {
             module: Module::default(),
+            standard_decorators: o.has_feature(StandardDecorators),
             es2026: ES2026Options {
                 explicit_resource_management: o.has_feature(ES2026ExplicitResourceManagement),
             },

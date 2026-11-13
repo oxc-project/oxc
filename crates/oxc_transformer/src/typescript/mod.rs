@@ -2,7 +2,9 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
-use crate::{context::TraverseCtx, state::TransformState};
+use crate::{
+    common::class_lowering::ClassLoweringMode, context::TraverseCtx, state::TransformState,
+};
 
 mod annotations;
 mod class;
@@ -114,17 +116,34 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     }
 
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Record ownership before TypeScript or class-properties rewrites the class.
+        let lowering = ctx.state.class_lowering(class);
         self.annotations.enter_class(class, ctx);
 
+        if lowering.mode() == ClassLoweringMode::Preserve {
+            // Keep field decorators and initializer order for the downstream decorator transform,
+            // even when TypeScript normally moves fields into constructor assignments.
+            self.remove_uninitialized_class_fields(class, ctx);
+            Self::add_parameter_property_fields(class, ctx);
+            return;
+        }
+
         // Class-properties owns field lowering and initialization order when enabled.
+        // It also handles decorated classes when the target supports class fields.
         if !ctx.state.class_transform.transforms_fields() {
-            if self.set_public_class_fields {
-                self.transform_class_fields(class, ctx);
+            if lowering.mode() == ClassLoweringMode::Native {
+                if self.set_public_class_fields {
+                    self.transform_class_fields(class, ctx);
+                } else {
+                    // Default oxc behavior matches `useDefineForClassFields: true`. Emit an
+                    // uninitialized field declaration for each constructor parameter property so
+                    // downstream `[[Define]]` semantics see the property, matching TypeScript's
+                    // output.
+                    Self::add_parameter_property_fields(class, ctx);
+                }
             } else {
-                // Default oxc behavior matches `useDefineForClassFields: true`. Emit an uninitialized
-                // field declaration for each constructor parameter property so downstream `[[Define]]`
-                // semantics see the property, matching TypeScript's output.
-                Self::add_parameter_property_fields(class, ctx);
+                // Erase type-only fields before class-properties moves instance initializers.
+                self.remove_uninitialized_class_fields(class, ctx);
             }
         }
     }
@@ -132,9 +151,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.exit_class(class, ctx);
 
-        // Class-properties owns field lowering and initialization order when enabled.
-        if !ctx.state.class_transform.transforms_fields() {
-            self.transform_class_on_exit(class, ctx);
+        let lowering = ctx.state.class_lowering_of(class.scope_id());
+        if !ctx.state.class_transform.transforms_fields()
+            && lowering.mode() == ClassLoweringMode::Native
+        {
+            self.remove_uninitialized_class_fields(class, ctx);
         }
     }
 
@@ -185,7 +206,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.annotations.enter_method_definition(def, ctx);
-        if ctx.state.class_transform.transforms_fields() || !self.set_public_class_fields {
+        let class_fields_handled =
+            ctx.state.class_lowering_of(ctx.current_scope_id()).mode() != ClassLoweringMode::Native;
+        if class_fields_handled || !self.set_public_class_fields {
             Self::transform_class_constructor(def, ctx);
         }
     }

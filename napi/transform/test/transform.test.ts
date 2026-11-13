@@ -1,3 +1,5 @@
+import { createRequire } from "node:module";
+import { runInNewContext } from "node:vm";
 import { Worker } from "node:worker_threads";
 import { describe, expect, it, test } from "vitest";
 
@@ -302,6 +304,143 @@ describe("inject plugin", () => {
       },
     });
     expect(ret.code).toEqual('import a from "foo\\"";\nconsole.log(a);\n');
+  });
+});
+
+describe("standard decorators", () => {
+  it("preserves decorators and auto-accessors while stripping types when disabled", () => {
+    const ret = transformSync(
+      "test.ts",
+      `
+        @decorate class Example<T> {
+          @decorate value: number = 1;
+          @decorate accessor count: number = 2;
+          @decorate method(value: T): T { return value; }
+        }
+        class Plain { accessor value: number = 1; }
+      `,
+      { target: "esnext", decorator: { lower: false } },
+    );
+    expect(ret.errors).toEqual([]);
+    expect(ret.helpersUsed).toEqual({});
+    expect(ret.code.match(/@decorate/g)).toHaveLength(4);
+    expect(ret.code).toContain("class Example {");
+    expect(ret.code).toContain("value = 1;");
+    expect(ret.code).toContain("accessor count = 2;");
+    expect(ret.code).toContain("accessor value = 1;");
+    expect(ret.code).toContain("method(value) {");
+    expect(ret.code).not.toContain(": number");
+    expect(ret.code).not.toContain(": T");
+  });
+
+  it("follows the target and honors the lower override", () => {
+    const code = "@decorate class Example { @decorate method() {} }";
+
+    for (const options of [{}, { target: "esnext" }]) {
+      const preserved = transformSync("test.js", code, options);
+      expect(preserved.errors).toEqual([]);
+      expect(preserved.code).toContain("@decorate");
+      expect(preserved.code).not.toContain("decorateElement");
+      expect(preserved.helpersUsed).toEqual({});
+    }
+
+    const implicit = transformSync("test.js", code, { target: "es2015" });
+    expect(implicit.errors).toEqual([]);
+    expect(implicit.code).not.toContain("@decorate");
+    expect(implicit.code).toContain("decorateElement");
+
+    const explicit = transformSync("test.js", code, {
+      target: "esnext",
+      decorator: { lower: true },
+    });
+    expect(explicit.errors).toEqual([]);
+    expect(explicit.code).not.toContain("@decorate");
+    expect(explicit.code).toContain("decorateElement");
+    expect(explicit.helpersUsed).toEqual(implicit.helpersUsed);
+  });
+
+  it("keeps unrelated target transforms enabled when standard lowering is disabled", () => {
+    const ret = transformSync(
+      "test.js",
+      "function run() { using resource = acquire(); @decorate class Example { @decorate method() {} } return Example; }",
+      { target: "es2022", decorator: { lower: false } },
+    );
+    expect(ret.errors).toEqual([]);
+    expect(ret.code).toContain("@decorate");
+    expect(ret.code).toContain("usingCtx");
+    expect(ret.code).not.toContain("using resource");
+    expect(ret.code).not.toContain("decorateElement");
+  });
+
+  test.each(["es2015", "es2020", "es2022", "esnext"])(
+    "preserves decorated fields targeting %s",
+    (target) => {
+      for (const setPublicClassFields of [false, true]) {
+        const ret = transformSync(
+          "test.ts",
+          "class Example { @decorate static value: number = 1; @decorate item: number = 2; }",
+          { target, decorator: { lower: false }, assumptions: { setPublicClassFields } },
+        );
+        expect(ret.errors).toEqual([]);
+        expect(ret.code).toContain("@decorate static value = 1;");
+        expect(ret.code).toContain("@decorate item = 2;");
+        expect(ret.helpersUsed).toEqual({});
+      }
+    },
+  );
+
+  it("selects legacy decorators regardless of the standard option", () => {
+    const code = "@decorate class Example { @decorate method() {} }";
+    const legacy = transformSync("test.js", code, {
+      target: "esnext",
+      decorator: { legacy: true },
+    });
+    const disabledStandard = transformSync("test.js", code, {
+      target: "esnext",
+      decorator: { legacy: true, lower: false },
+    });
+    expect(legacy.errors).toEqual([]);
+    expect(disabledStandard.errors).toEqual([]);
+    expect(legacy.code).not.toContain("@decorate");
+    expect(legacy.code).not.toContain("decorateElement");
+    expect(legacy.code).toContain("_decorate(");
+    expect(disabledStandard.code).toEqual(legacy.code);
+    expect(disabledStandard.helpersUsed).toEqual(legacy.helpersUsed);
+  });
+
+  test.each(["esnext", "es2015"])("runs through the public API targeting %s", (target) => {
+    const ret = transformSync(
+      "test.js",
+      `
+        const calls = [];
+        const holder = {
+          decorate(value, context) {
+            if (this !== holder) throw new Error("Lost decorator receiver");
+            calls.push(context.name);
+            return value;
+          }
+        };
+        const Decorated = @holder.decorate class {
+          @holder.decorate #value = 1;
+          static accessor count = 2;
+          get value() { return this.#value; }
+        };
+        const result = [calls, new Decorated().value, Decorated.count];
+      `,
+      {
+        target,
+        decorator: target === "esnext" ? { lower: true } : undefined,
+        sourceType: "script",
+        helpers: { mode: HelperMode.External },
+      },
+    );
+    expect(ret.errors).toEqual([]);
+    const require = createRequire(import.meta.url);
+    const helpers = Object.fromEntries(
+      Object.entries(ret.helpersUsed).map(([name, path]) => [name, require(path)]),
+    );
+    const result = runInNewContext(`${ret.code}\nresult;`, { babelHelpers: helpers });
+    expect(result).toEqual([["#value", "Decorated"], 1, 2]);
   });
 });
 

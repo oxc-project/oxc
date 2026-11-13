@@ -56,7 +56,10 @@ use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    common::helper_loader::{Helper, helper_call_expr},
+    common::{
+        class_lowering::ClassLoweringMode,
+        helper_loader::{Helper, helper_call_expr},
+    },
     context::TraverseCtx,
     state::TransformState,
     utils::ast_builder::{
@@ -65,9 +68,11 @@ use crate::{
     },
 };
 
-use super::class_name::contextual_class_name;
+use crate::utils::class_name::contextual_class_name;
 
 pub struct ClassStaticBlock<'a> {
+    /// If `true`, skip classes which class properties transform lowers for standard decorators.
+    skip_decorated_classes: bool,
     classes: Vec<ClassState<'a>>,
     pending_classes: FxHashMap<Address, PendingClass<'a>>,
 }
@@ -109,21 +114,35 @@ impl<'a> InferredName<'a> {
     }
 }
 
-impl ClassStaticBlock<'_> {
-    pub fn new() -> Self {
-        Self { classes: Vec::new(), pending_classes: FxHashMap::default() }
+impl<'a> ClassStaticBlock<'a> {
+    pub fn new(skip_decorated_classes: bool) -> Self {
+        Self { skip_decorated_classes, classes: Vec::new(), pending_classes: FxHashMap::default() }
+    }
+
+    fn is_skipped(&self, class: &Class<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+        self.skip_decorated_classes
+            && ctx.state.class_lowering(class).mode() == ClassLoweringMode::LowerForDecorators
+    }
+
+    /// Pop state of a class expression which class properties transform replaced.
+    pub fn exit_skipped_class_expression(&mut self) {
+        let state = self.classes.pop().expect("class body must be entered first");
+        debug_assert!(state.inferred_name.is_none() && state.deferred.is_none());
     }
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
-            Statement::ClassDeclaration(class) if Self::needs_declaration_initializer(class) => {
+            Statement::ClassDeclaration(class)
+                if !self.is_skipped(class, ctx) && Self::needs_declaration_initializer(class) =>
+            {
                 let declaration = Self::class_declaration_initializer(class.take_in(ctx), ctx);
                 *stmt = Statement::VariableDeclaration(declaration);
             }
             Statement::ExportDeclaration(export) => {
                 if let Declaration::ClassDeclaration(class) = &mut export.declaration
+                    && !self.is_skipped(class, ctx)
                     && Self::needs_declaration_initializer(class)
                 {
                     let declaration = Self::class_declaration_initializer(class.take_in(ctx), ctx);
@@ -135,7 +154,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 else {
                     return;
                 };
-                if !Self::needs_declaration_initializer(class) {
+                if self.is_skipped(class, ctx) || !Self::needs_declaration_initializer(class) {
                     return;
                 }
                 let mut class = class.take_in(ctx);
@@ -168,6 +187,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Expression::ClassExpression(class) = expr.get_inner_expression()
+            && self.is_skipped(class, ctx)
+        {
+            return;
+        }
         // Parameter evaluation has no statement list for per-call temporaries. Wrap before
         // capturing object keys so their declarations are inserted inside the fresh scope.
         if matches!(ctx.parent(), Ancestor::FormalParameterInitializer(_))
@@ -266,6 +290,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
             .pending_classes
             .remove(&body.unstable_address())
             .and_then(|pending| pending.inferred_name);
+
+        // Class properties transform lowers this class, including its static blocks.
+        if self.skip_decorated_classes {
+            let Ancestor::ClassBody(class) = ctx.parent() else { unreachable!() };
+            let scope_id = class.scope_id().get().unwrap();
+            if ctx.state.class_lowering_of(scope_id).mode() == ClassLoweringMode::LowerForDecorators
+            {
+                self.classes.push(ClassState { inferred_name: None, deferred: None });
+                return;
+            }
+        }
+
         self.classes.push(ClassState { inferred_name, deferred: None });
 
         // Loop through class body elements and:

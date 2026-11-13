@@ -96,6 +96,7 @@ impl TransformOptions {
             typescript: TypeScriptOptions::default(),
             decorator: DecoratorOptions {
                 legacy: true,
+                lower: Some(true),
                 emit_decorator_metadata: true,
                 strict_null_checks: true,
             },
@@ -182,6 +183,9 @@ impl TryFrom<&BabelOptions> for TransformOptions {
 
         let decorator = DecoratorOptions {
             legacy: options.plugins.legacy_decorator.is_some(),
+            // Babel asks for a transform by listing its plugin; without one the syntax passes
+            // through for a later tool, the same as an unspecified target.
+            lower: options.plugins.proposal_decorators.is_some().then_some(true),
             emit_decorator_metadata: options
                 .plugins
                 .legacy_decorator
@@ -305,6 +309,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             jsx,
             env: EnvOptions {
                 module,
+                standard_decorators: env.standard_decorators,
                 es2026: ES2026Options {
                     explicit_resource_management: options.plugins.explicit_resource_management,
                 },

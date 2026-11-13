@@ -52,6 +52,13 @@ pub(super) struct ClassBindings<'a> {
     pub shadowed_name: Option<BoundIdentifier<'a>>,
     /// Temp var for WeakSet.
     pub brand: Option<BoundIdentifier<'a>>,
+    /// Original constructor bearing a decorated class's static private methods and accessors.
+    /// Class decorators may replace `name` / `temp`, but do not transfer this brand.
+    pub decorator_static_brand: Option<BoundIdentifier<'a>>,
+    /// Decorated classes retain their original constructor's private environment.
+    pub force_private_spec: bool,
+    /// Effective private-storage mode selected when the owning class is entered.
+    private_fields_as_properties: bool,
     /// `ScopeId` of hoist scope outside class (which temp `var` binding would be created in)
     pub outer_hoist_scope_id: ScopeId,
     /// `true` if should use temp binding for references to class in transpiled static private fields,
@@ -70,12 +77,16 @@ impl<'a> ClassBindings<'a> {
         outer_scope_id: ScopeId,
         static_private_fields_use_temp: bool,
         temp_var_is_created: bool,
+        private_fields_as_properties: bool,
     ) -> Self {
         Self {
             name: name_binding,
             temp: temp_binding,
             shadowed_name: None,
             brand: brand_binding,
+            decorator_static_brand: None,
+            force_private_spec: false,
+            private_fields_as_properties,
             outer_hoist_scope_id: outer_scope_id,
             static_private_fields_use_temp,
             temp_var_is_created,
@@ -85,8 +96,8 @@ impl<'a> ClassBindings<'a> {
     /// Create dummy `ClassBindings`.
     ///
     /// Used when class needs no transform, and for dummy entry at top of `ClassesStack`.
-    pub fn dummy() -> Self {
-        Self::new(None, None, None, ScopeId::new(0), false, false)
+    pub fn dummy(private_fields_as_properties: bool) -> Self {
+        Self::new(None, None, None, ScopeId::new(0), false, false, private_fields_as_properties)
     }
 
     /// Get `SymbolId` of name binding.
@@ -144,6 +155,23 @@ impl<'a> ClassBindings<'a> {
                 ctx.generate_uid(&name.name, scope_id, SymbolFlags::BlockScopedVariable)
             })
         }
+    }
+
+    /// Whether private names owned by this class use loose property storage.
+    pub fn private_fields_as_properties(&self) -> bool {
+        self.private_fields_as_properties
+    }
+
+    /// Brand for static private uses. Decorated methods retain the original constructor;
+    /// decorated fields use WeakMaps and do not call this selector.
+    pub fn get_or_init_static_private_binding(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> &BoundIdentifier<'a> {
+        if self.decorator_static_brand.is_none() {
+            return self.get_or_init_static_binding(ctx);
+        }
+        self.decorator_static_brand.as_ref().unwrap()
     }
 
     /// Generate binding for temp var.

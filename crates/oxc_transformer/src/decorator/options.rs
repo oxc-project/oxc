@@ -13,6 +13,16 @@ pub struct DecoratorOptions {
     #[serde(skip)]
     pub legacy: bool,
 
+    /// Lower standard decorators and auto-accessors.
+    ///
+    /// When omitted, lowering follows the target: a concrete target lowers them, and `esnext`
+    /// or no target preserves them. Set to `false` to preserve this syntax for a later transform
+    /// at any target while stripping TypeScript types. Set to `true` to lower it regardless of
+    /// target. Other target-selected transforms still run on unrelated syntax.
+    /// `legacy: true` takes precedence over this option.
+    #[serde(default)]
+    pub lower: Option<bool>,
+
     /// Enables emitting decorator metadata.
     ///
     /// This option is the same as [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata)
@@ -33,6 +43,7 @@ impl Default for DecoratorOptions {
     fn default() -> Self {
         Self {
             legacy: false,
+            lower: None,
             emit_decorator_metadata: false,
             strict_null_checks: default_as_true(),
         }
@@ -41,4 +52,31 @@ impl Default for DecoratorOptions {
 
 fn default_as_true() -> bool {
     true
+}
+
+/// Decorator semantics selected by the public transform options.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum DecoratorMode {
+    Preserve,
+    Legacy,
+    Standard,
+}
+
+impl DecoratorMode {
+    /// Whether the legacy (`experimentalDecorators`) semantics are selected.
+    pub(crate) fn is_legacy(self) -> bool {
+        matches!(self, Self::Legacy)
+    }
+}
+
+impl DecoratorOptions {
+    pub(crate) fn mode(self, standard_decorators: bool) -> DecoratorMode {
+        if self.legacy {
+            DecoratorMode::Legacy
+        } else if self.lower.unwrap_or(standard_decorators) {
+            DecoratorMode::Standard
+        } else {
+            DecoratorMode::Preserve
+        }
+    }
 }

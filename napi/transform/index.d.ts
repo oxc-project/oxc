@@ -153,6 +153,18 @@ export interface DecoratorOptions {
    */
   legacy?: boolean
   /**
+   * Lower standard decorators and auto-accessors.
+   *
+   * When omitted, lowering follows the target: a concrete target lowers them, and `esnext`
+   * or no target preserves them. Set to `false` to preserve this syntax for a later transform
+   * at any target while stripping TypeScript types. Set to `true` to lower it regardless of
+   * target. Other target-selected transforms still run on unrelated syntax.
+   * `legacy: true` takes precedence over this option.
+   *
+   * @default undefined
+   */
+  lower?: boolean
+  /**
    * Enables emitting decorator metadata.
    *
    * This option the same as [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata)

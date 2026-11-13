@@ -77,6 +77,12 @@ impl EngineTargets {
     /// Use [`Self::supports_es_feature`] for a strict positive capability query.
     pub fn has_feature(&self, feature: ESFeature) -> bool {
         let feature_engine_targets = &features()[&feature];
+        // Proposals have no ES edition of their own. An unspecified target and `esnext` assume
+        // the runtime will support them; concrete targets lower them until the table records
+        // support.
+        if !feature_engine_targets.contains_key(&Engine::Es) {
+            return !self.assumes_latest_edition() && !self.supports_es_feature(feature);
+        }
         for (engine, feature_version) in feature_engine_targets.iter() {
             if let Some(target_version) = self.get(engine) {
                 if *engine == Engine::Es {
@@ -90,6 +96,15 @@ impl EngineTargets {
         false
     }
 
+    /// Whether every configured target is an ES edition at least as new as `esnext`.
+    ///
+    /// An empty target set names no runtime, so it is treated the same as `esnext`.
+    fn assumes_latest_edition(&self) -> bool {
+        self.iter().all(|(engine, version)| {
+            *engine == Engine::Es && version.0 >= ESTarget::ESNext.version().0
+        })
+    }
+
     /// Check whether every target engine is known to support the given ES feature.
     ///
     /// Unlike [`Self::has_feature`], this is a strict capability query: an empty target or an
@@ -101,6 +116,14 @@ impl EngineTargets {
 
         let feature_engine_targets = &features()[&feature];
         self.iter().all(|(engine, target_version)| {
+            // Browser targets include an implicit esnext. For proposals, only the engines decide
+            // support; an edition-only target still cannot support an unstandardized feature.
+            if *engine == Engine::Es
+                && self.len() > 1
+                && !feature_engine_targets.contains_key(engine)
+            {
+                return true;
+            }
             feature_engine_targets.get(engine).is_some_and(|feature_version| {
                 if *engine == Engine::Es {
                     target_version.0 >= feature_version.0
@@ -183,6 +206,25 @@ fn test_displayed_value_is_parsable() {
     let s = target.to_string();
     let parsed = EngineTargets::from_target(&s).unwrap();
     assert_eq!(target.0, parsed.0);
+}
+
+#[test]
+fn test_standard_decorators_follow_target() {
+    // No target and `esnext` assume the runtime supports proposals.
+    for target in [None, Some("esnext")] {
+        let targets = match target {
+            Some(target) => EngineTargets::from_target(target).unwrap(),
+            None => EngineTargets::default(),
+        };
+        assert!(!targets.has_feature(ESFeature::StandardDecorators), "{target:?}");
+        assert!(!targets.supports_es_feature(ESFeature::StandardDecorators), "{target:?}");
+    }
+    // Concrete targets lower until the table records support.
+    for target in ["es2015", "es2026", "safari16", "chrome999", "es2022,node16"] {
+        let targets = EngineTargets::from_target(target).unwrap();
+        assert!(targets.has_feature(ESFeature::StandardDecorators), "{target}");
+        assert!(!targets.supports_es_feature(ESFeature::StandardDecorators), "{target}");
+    }
 }
 
 #[test]

@@ -3,15 +3,21 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use oxc_ast::ast::Class;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
+use oxc_syntax::scope::ScopeId;
 
 use crate::{
     CompilerAssumptions, HelperLoaderOptions, Module, TransformOptions,
     common::{
-        class_transform::ClassTransform, helper_loader::HelperLoaderStore,
-        module_imports::ModuleImportsStore, statement_injector::StatementInjectorStore,
-        top_level_statements::TopLevelStatementsStore, var_declarations::VarDeclarationsStore,
+        class_lowering::{ClassLowering, ClassLoweringCache},
+        class_transform::ClassTransform,
+        helper_loader::HelperLoaderStore,
+        module_imports::ModuleImportsStore,
+        statement_injector::StatementInjectorStore,
+        top_level_statements::TopLevelStatementsStore,
+        var_declarations::VarDeclarationsStore,
     },
 };
 
@@ -47,6 +53,8 @@ pub struct TransformState<'a> {
     // State for multiple plugins interacting
     /// Ownership of class field and static block lowering, shared by cooperating transforms.
     pub class_transform: ClassTransform,
+    /// Recorded lowering decisions per class, shared by cooperating transforms.
+    pub class_lowerings: ClassLoweringCache,
 }
 
 impl Default for TransformState<'_> {
@@ -65,15 +73,19 @@ impl Default for TransformState<'_> {
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
             class_transform: ClassTransform::default(),
+            class_lowerings: ClassLoweringCache::default(),
         }
     }
 }
 
-impl TransformState<'_> {
+impl<'a> TransformState<'a> {
     pub fn new(source_path: &Path, options: &TransformOptions) -> Self {
         let filename = source_path
             .file_stem() // omit file extension
             .map_or_else(|| String::from("unknown"), |name| name.to_string_lossy().to_string());
+
+        let decorator_mode = options.decorator.mode(options.env.standard_decorators);
+        let class_transform = ClassTransform::new(&options.env, decorator_mode);
 
         Self {
             errors: vec![],
@@ -88,8 +100,19 @@ impl TransformState<'_> {
             var_declarations: VarDeclarationsStore::new(),
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
-            class_transform: ClassTransform::new(options.env.es2022),
+            class_transform,
+            class_lowerings: ClassLoweringCache::new(class_transform, decorator_mode),
         }
+    }
+
+    /// Record and return the lowering of a class which no transform has rewritten yet.
+    pub fn class_lowering(&mut self, class: &Class<'a>) -> ClassLowering {
+        self.class_lowerings.get_or_compute(class)
+    }
+
+    /// The lowering of a class which has already been entered.
+    pub fn class_lowering_of(&self, scope_id: ScopeId) -> ClassLowering {
+        self.class_lowerings.get(scope_id)
     }
 
     pub fn take_errors(&mut self) -> Vec<OxcDiagnostic> {
