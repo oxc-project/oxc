@@ -435,6 +435,9 @@ importers:
         specifier: workspace:^
         version: link:../../npm/oxc-types
     devDependencies:
+      '@babel/parser':
+        specifier: ^8.1.0
+        version: 8.1.0
       '@codspeed/vitest-plugin':
         specifier: ^6.0.0
         version: 6.1.0(debug@4.4.3)(tinybench@6.2.2)(vite@8.3.4(@types/node@26.6.6)(esbuild@0.28.2)(terser@5.44.1)(tsx@4.23.13))(vitest@5.0.3)

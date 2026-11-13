@@ -1,0 +1,3 @@
+switch (x) {
+  // only
+}

@@ -10,5 +10,5 @@
     "noImplicitAny": true,
     "strict": false
   },
-  "exclude": ["test-browser", "vitest.config.browser.ts"]
+  "exclude": ["test-browser", "vitest.config.browser.ts", "scripts/fixtures"]
 }

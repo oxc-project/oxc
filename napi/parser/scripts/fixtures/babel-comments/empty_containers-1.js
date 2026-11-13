@@ -1,0 +1,1 @@
+function f(/* params */) { /* body */ }

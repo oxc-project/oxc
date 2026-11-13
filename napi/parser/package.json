@@ -75,12 +75,14 @@
     "test": "pnpm run test-node run",
     "test-node": "vitest --dir ./test",
     "test-browser": "vitest -c vitest.config.browser.ts",
-    "bench": "vitest bench --run ./bench.bench.js"
+    "bench": "vitest bench --run ./bench.bench.js",
+    "compare-babel-comments": "node scripts/compare-babel-comments.js"
   },
   "dependencies": {
     "@oxc-project/types": "workspace:^"
   },
   "devDependencies": {
+    "@babel/parser": "^8.1.0",
     "@codspeed/vitest-plugin": "^6.0.0",
     "@emnapi/core": "catalog:",
     "@emnapi/runtime": "catalog:",
