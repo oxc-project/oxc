@@ -1664,6 +1664,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-string-starts-ends-with"?: RuleNoConfig;
   "unicorn/prefer-string-trim-start-end"?: RuleNoConfig;
   "unicorn/prefer-structured-clone"?: RuleNoConfig | [AllowWarnDeny, PreferStructuredCloneConfig];
+  "unicorn/prefer-temporal"?: RuleNoConfig | [AllowWarnDeny, PreferTemporal];
   "unicorn/prefer-ternary"?: RuleNoConfig | [AllowWarnDeny, PreferTernaryOption];
   "unicorn/prefer-top-level-await"?: RuleNoConfig;
   "unicorn/prefer-type-error"?: RuleNoConfig;
@@ -2120,6 +2121,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, PreferQuerySelector]
     | [AllowWarnDeny, PreferSingleCallConfig]
     | [AllowWarnDeny, PreferStructuredCloneConfig]
+    | [AllowWarnDeny, PreferTemporal]
     | [AllowWarnDeny, PreferTernaryOption]
     | [AllowWarnDeny, RelativeUrlStyleConfig]
     | [AllowWarnDeny, SwitchCaseBracesConfig]
@@ -7056,6 +7058,21 @@ export interface PreferStructuredCloneConfig {
    * List of functions that are allowed to be used for deep cloning instead of structuredClone.
    */
   functions?: string[];
+}
+export interface PreferTemporal {
+  /**
+   * Whether to also flag `Date.now()`.
+   */
+  checkDateNow?: boolean;
+  /**
+   * Whether to also flag methods called on `Date` instances, such as `date.getFullYear()`.
+   * This option needs type information, which oxlint does not have, so it does nothing.
+   */
+  checkMethods?: boolean;
+  /**
+   * Whether to also flag bare references to `Date`, such as `x instanceof Date`.
+   */
+  checkReferences?: boolean;
 }
 export interface TextEncodingIdentifierCase {
   /**
