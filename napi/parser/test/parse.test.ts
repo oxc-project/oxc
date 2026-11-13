@@ -739,6 +739,73 @@ describe("parse", () => {
       expect(ret.program.body[0].range).toBeUndefined();
     });
   });
+
+  describe("experimentalNodeComments", () => {
+    const options = { experimentalNodeComments: true };
+
+    it("is not included by default", () => {
+      const ret = parseSync("test.js", "/* a */ x");
+      expect(ret.program).not.toHaveProperty("comments");
+      expect(ret.program.body[0]).not.toHaveProperty("comments");
+    });
+
+    it("adds leading, trailing and dangling comments", () => {
+      const ret = parseSync("test.js", "// a\nfoo(); // b\nlet x = [/* c */];", options);
+      const [statement, declaration] = ret.program.body as any[];
+      expect(ret.program).toHaveProperty("comments", null);
+      expect(statement.comments).toEqual({
+        leading: [{ type: "Line", value: " a", start: 0, end: 4 }],
+        trailing: [{ type: "Line", value: " b", start: 12, end: 16 }],
+        dangling: null,
+      });
+      expect(statement.expression.comments).toBeNull();
+      expect(declaration.declarations[0].init.comments).toEqual({
+        leading: null,
+        trailing: null,
+        dangling: [{ type: "Block", value: " c ", start: 26, end: 33 }],
+      });
+    });
+
+    it("assigns dangling comments to `Program`", () => {
+      const ret = parseSync("test.js", "/* a */", options);
+      expect((ret.program as any).comments).toEqual({
+        leading: null,
+        trailing: null,
+        dangling: [{ type: "Block", value: " a ", start: 0, end: 7 }],
+      });
+    });
+
+    it("uses UTF-16 spans and `range`", () => {
+      const ret = parseSync("test.js", "'💩'; /* a */ x", { ...options, range: true });
+      expect((ret.program.body[1] as any).comments.leading).toEqual([
+        { type: "Block", value: " a ", start: 6, end: 13, range: [6, 13] },
+      ]);
+    });
+
+    it("adds comments of nodes replaced by a child", () => {
+      const ret = parseSync("test.js", "function f(a /* a */, b) {}", options);
+      const param = (ret.program.body[0] as any).params[0];
+      expect(param.type).toBe("Identifier");
+      expect(param.comments.trailing).toEqual([
+        { type: "Block", value: " a ", start: 13, end: 20 },
+      ]);
+    });
+
+    it("is `null` on nodes created by the serializer", () => {
+      const ret = parseSync("test.js", "/* a */ import.meta", { ...options, sourceType: "module" });
+      const { expression } = ret.program.body[0] as any;
+      expect(expression.meta.comments).toBeNull();
+      expect(expression.property.comments).toBeNull();
+    });
+
+    it("is not supported with raw transfer", () => {
+      for (const rawOption of ["experimentalRawTransfer", "experimentalLazy"]) {
+        expect(() => parseSync("test.js", "x", { ...options, [rawOption]: true } as any)).toThrow(
+          "`experimentalNodeComments` option is not supported",
+        );
+      }
+    });
+  });
 });
 
 describe("UTF-16 span", () => {

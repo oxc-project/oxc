@@ -48,6 +48,18 @@ pub struct ParserOptions {
     /// @default true
     pub preserve_parens: Option<bool>,
 
+    /// Add a `comments` field to every AST node, containing the comments Oxc assigned to it.
+    ///
+    /// The field is `null` if the node owns no comments. Otherwise it is an object with `leading`,
+    /// `trailing` and `dangling` properties, each `null` or a non-empty array of comments.
+    ///
+    /// This option is experimental, and not supported with `experimentalRawTransfer` or
+    /// `experimentalLazy`.
+    ///
+    /// @default false
+    #[napi(js_name = "experimentalNodeComments")]
+    pub node_comments: Option<bool>,
+
     /// Produce semantic errors with an additional AST pass.
     /// Semantic errors depend on symbols and scopes, where the parser does not construct.
     /// This adds a small performance overhead.

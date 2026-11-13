@@ -14,6 +14,7 @@ use oxc::{
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
 
 mod convert;
+mod node_comments;
 mod types;
 pub use types::*;
 
@@ -121,6 +122,9 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
     let mut comments =
         convert_utf8_to_utf16(source_text, &mut program, &mut module_record, &mut errors);
 
+    let node_comments = (options.node_comments == Some(true))
+        .then(|| node_comments::build_node_comments(&program.comments, &comments, ranges));
+
     if ast_type == AstType::JavaScript {
         // Add hashbang to start of comments.
         // Note: `@typescript-eslint/parser` ignores hashbangs, despite appearances to the contrary in AST explorers.
@@ -140,7 +144,15 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
     }
 
     let include_ts_fields = ast_type == AstType::TypeScript;
-    let program_and_fixes = program.to_estree_json_with_fixes(include_ts_fields, ranges);
+    let program_and_fixes = if let Some(node_comments) = node_comments {
+        program.to_estree_json_with_fixes_and_node_comments(
+            include_ts_fields,
+            ranges,
+            node_comments,
+        )
+    } else {
+        program.to_estree_json_with_fixes(include_ts_fields, ranges)
+    };
 
     let module = EcmaScriptModule::from(&module_record);
 

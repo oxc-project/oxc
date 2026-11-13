@@ -55,6 +55,7 @@ function loadRawTransferLazy() {
  *   and raw transfer is not supported on this platform
  */
 export function parseSync(filename, sourceText, options) {
+  assertNodeCommentsSupported(options);
   if (options?.experimentalRawTransfer) {
     loadRawTransfer();
     return parseSyncRaw(filename, sourceText, options);
@@ -87,6 +88,7 @@ export function parseSync(filename, sourceText, options) {
  *   and raw transfer is not supported on this platform
  */
 export async function parse(filename, sourceText, options) {
+  assertNodeCommentsSupported(options);
   if (options?.experimentalRawTransfer) {
     loadRawTransfer();
     return await parseRaw(filename, sourceText, options);
@@ -105,4 +107,22 @@ export async function parse(filename, sourceText, options) {
 export function experimentalGetLazyVisitor() {
   loadRawTransferLazy();
   return LazyVisitor;
+}
+
+/**
+ * Throw if `experimentalNodeComments` option is combined with raw transfer.
+ * @param {Object|undefined} options - Parsing options
+ * @returns {undefined}
+ * @throws {Error} - If `experimentalNodeComments` option is enabled with `experimentalRawTransfer`
+ *   or `experimentalLazy` option
+ */
+function assertNodeCommentsSupported(options) {
+  if (
+    options?.experimentalNodeComments &&
+    (options.experimentalRawTransfer || options.experimentalLazy)
+  ) {
+    throw new Error(
+      "`experimentalNodeComments` option is not supported with `experimentalRawTransfer` or `experimentalLazy`",
+    );
+  }
 }
