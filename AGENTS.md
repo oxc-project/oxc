@@ -87,7 +87,7 @@ Before selecting verification checks, read the [verification guidance](.agents/v
 
 - Select checks from changed code and affected consumers; for a stack, use each PR's diff against its parent.
 - Reuse passing results while tested inputs remain unchanged. Reserve `just ready` for stable integration checkpoints when broad validation is needed.
-- Preserve required subsystem checks and per-PR CI; a passing stack tip does not establish that intermediate PRs pass.
+- Preserve required subsystem checks; a passing stack tip does not establish that intermediate PRs pass. In a native GitHub stack, CI runs every job only on the lowest unmerged and top PRs; PRs in between get `Lint` and `Test Linux` (see `.github/workflows/ci.yml`).
 
 ## Manual Testing & Examples
 

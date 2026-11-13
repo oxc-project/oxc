@@ -20,6 +20,18 @@ env:
   # Workflow-level, so every job's `Swatinem/rust-cache` key hashes the same `CARGO_*` env vars.
   CARGO_BUILD_WARNINGS: deny
 
+# Native GitHub stacked PRs (`gh stack`): pushing a stack pushes every PR in it, so running every job on every PR
+# would fill the runner pool. Jobs marked `if: *not-mid-stack` run only on the lowest unmerged PR of a stack
+# (the next to merge) and on its top PR (all of the stack's changes). PRs in between run "Test Linux", "Lint"
+# and "Spell Check". Skipped jobs count as passing required checks.
+# When the PRs below a middle PR merge, GitHub rebases it to target `main`, so it runs every job before it can merge
+# on its own. Merging a whole stack via its top PR is covered by the top PR's run: there, change detection
+# (`check-changes`, `generate-benchmark-matrix.js`) compares against the stack's base, so it sees the changes of
+# the PRs below too, and "AST Changes" always runs. For the same reason, a workflow which skips middle PRs
+# (also `miri.yml`, `benchmark.yml`) must not filter `pull_request` by `paths`: GitHub applies that to the PR's own diff.
+# Without stack metadata (standalone PRs, chained PRs not created with `gh stack`, pushes), every job runs.
+# https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/optimizing-ci-for-stacked-pull-requests
+
 jobs:
   test-ubuntu:
     name: Test Linux
@@ -186,6 +198,11 @@ jobs:
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
+    # Skip on PRs in the middle of a native GitHub stack. See comment above `jobs`.
+    if: &not-mid-stack >-
+      ${{ github.event.pull_request.stack == null
+      || github.event.pull_request.base.ref == github.event.pull_request.stack.base.ref
+      || github.event.pull_request.stack.position == github.event.pull_request.stack.size }}
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -234,6 +251,7 @@ jobs:
 
   test-napi-compiler:
     name: Test NAPI Compiler
+    if: *not-mid-stack
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -285,6 +303,7 @@ jobs:
 
   test-react-compiler:
     name: Test React Compiler Runtime
+    if: *not-mid-stack
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -313,6 +332,7 @@ jobs:
 
   test-napi-shared:
     name: Test NAPI Shared
+    if: *not-mid-stack
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -336,6 +356,7 @@ jobs:
 
   test-napi-oxlint:
     name: Test NAPI Oxlint
+    if: *not-mid-stack
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -365,6 +386,7 @@ jobs:
 
   test-napi-oxfmt:
     name: Test NAPI Oxfmt
+    if: *not-mid-stack
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -631,6 +653,7 @@ jobs:
 
   doc:
     name: Doc
+    if: *not-mid-stack
     runs-on: namespace-profile-linux-x64-default
     env:
       TOOLCHAIN: nightly-2026-09-30
@@ -646,6 +669,7 @@ jobs:
 
   conformance:
     name: Conformance
+    if: *not-mid-stack
     runs-on: namespace-profile-linux-x64-default
     env:
       # Fail if the CPU doesn't support AVX2, so AVX2 can't quietly go untested.
@@ -719,7 +743,11 @@ jobs:
     # so warnings in code which is only compiled on aarch64 are caught too.
     name: Lexer ARM64
     runs-on: ubuntu-24.04-arm
-    if: ${{ github.ref_name != 'main' }}
+    # Skip on `main`, and on PRs in the middle of a native GitHub stack (same as `*not-mid-stack`, see comment above `jobs`)
+    if: >-
+      ${{ github.ref_name != 'main' && (github.event.pull_request.stack == null
+      || github.event.pull_request.base.ref == github.event.pull_request.stack.base.ref
+      || github.event.pull_request.stack.position == github.event.pull_request.stack.size) }}
     env:
       # Fail if the CPU doesn't support Neon, so Neon can't quietly go untested.
       # See `DynCpu::for_each_supported` in `oxc_simd` crate.
@@ -764,6 +792,7 @@ jobs:
 
   test-codegen:
     name: Test Codegen
+    if: *not-mid-stack
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -806,6 +835,7 @@ jobs:
 
   minification:
     name: Minification Size
+    if: *not-mid-stack
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -873,6 +903,7 @@ jobs:
 
   allocs:
     name: Allocations
+    if: *not-mid-stack
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -899,7 +930,12 @@ jobs:
 
   ast_changes:
     name: AST Changes
+    if: *not-mid-stack
     runs-on: namespace-profile-linux-x64-default
+    env:
+      # `paths-filter` only sees this PR's own diff. Above the bottom of a native GitHub stack, that misses
+      # the changes in the PRs below it (which skip this job), so run regardless. See comment above `jobs`.
+      STACK_ABOVE_BOTTOM: ${{ github.event.pull_request.stack != null && github.event.pull_request.base.ref != github.event.pull_request.stack.base.ref }}
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
@@ -909,10 +945,10 @@ jobs:
           filters: ".github/generated/ast_changes_watch_list.yml"
 
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.src == 'true' || env.STACK_ABOVE_BOTTOM == 'true'
 
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.src == 'true' || env.STACK_ABOVE_BOTTOM == 'true'
         with:
           path: /home/runner/.rustup
           cache: |
@@ -920,10 +956,10 @@ jobs:
             pnpm
 
       - run: rustup component add rustfmt
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.src == 'true' || env.STACK_ABOVE_BOTTOM == 'true'
 
       - name: Check AST Changes
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.src == 'true' || env.STACK_ABOVE_BOTTOM == 'true'
         run: |
           cargo run -p oxc_ast_tools
           git diff --exit-code ||
@@ -931,6 +967,7 @@ jobs:
 
   lintgen:
     name: Linter changes
+    if: *not-mid-stack
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2

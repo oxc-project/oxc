@@ -4,20 +4,14 @@ permissions: {}
 
 on:
   workflow_dispatch:
+  # No `paths` filter for PRs: GitHub applies it to a PR's own diff, so on the top PR of a native GitHub stack it'd miss
+  # the changes in the PRs below, which skip this job (see `if` below). `check-changes` step filters on PRs instead.
   pull_request:
     types: [opened, synchronize]
-    paths:
-      - "crates/oxc_allocator/**"
-      - "crates/oxc_ast/src/utf8_to_utf16.rs"
-      - "crates/oxc_ast/src/generated/utf8_to_utf16_converter.rs"
-      - "crates/oxc_data_structures/**"
-      - "crates/oxc_parser/**"
-      - "crates/oxc_str/**"
-      - "crates/oxc_traverse/**"
-      - ".github/workflows/miri.yml"
   push:
     branches:
       - main
+    # Keep in sync with `paths` of `check-changes` step below.
     paths:
       - "crates/oxc_allocator/**"
       - "crates/oxc_ast/src/utf8_to_utf16.rs"
@@ -35,6 +29,11 @@ concurrency:
 jobs:
   miri:
     name: Miri
+    # Skip on PRs in the middle of a native GitHub stack. Same as `*not-mid-stack` in `ci.yml`, see comment there.
+    if: >-
+      ${{ github.event.pull_request.stack == null
+      || github.event.pull_request.base.ref == github.event.pull_request.stack.base.ref
+      || github.event.pull_request.stack.position == github.event.pull_request.stack.size }}
     # GitHub-hosted, not Namespace: this long job would hold a slot in the Namespace pool which "CI" workflow's jobs
     # queue for. Its compile is small, so a GitHub Actions cache is enough (see "Restore cache" below).
     runs-on: ubuntu-latest
@@ -51,7 +50,8 @@ jobs:
       - name: Checkout
         uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      # Same as `paths` of the triggers above. Paths-only mode doesn't run `cargo tree`, so it needs no Rust toolchain.
+      # Same as `paths` of the `push` trigger above. Paths-only mode doesn't run `cargo tree`, so it needs no Rust toolchain.
+      # On a stacked PR, it sees the changes in the PRs below too.
       - uses: $/.github/actions/check-changes
         id: filter
         with:
