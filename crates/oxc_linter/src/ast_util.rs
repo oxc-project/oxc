@@ -319,9 +319,22 @@ pub fn get_symbol_id_of_variable(
 }
 
 pub fn extract_regex_flags<'a>(args: &'a ArenaVec<'a, Argument<'a>>) -> Option<RegExpFlags> {
-    if args.len() <= 1 {
+    if args.is_empty() {
         return Some(RegExpFlags::empty());
     }
+
+    if args.len() == 1 {
+        return match &args[0] {
+            // `new RegExp(/pattern/flags)` preserves the source regex's flags.
+            Argument::RegExpLiteral(regexp_literal) => Some(regexp_literal.regex.flags),
+            // `new RegExp("...")` / `new RegExp(`...`)` have no flags when no second
+            // argument is supplied.
+            Argument::StringLiteral(_) | Argument::TemplateLiteral(_) => Some(RegExpFlags::empty()),
+            // Unknown / non-literal argument: flags cannot be statically determined.
+            _ => None,
+        };
+    }
+
     let flag_arg = match &args[1] {
         Argument::StringLiteral(flag_arg) => flag_arg.value,
         Argument::TemplateLiteral(template) => template.single_quasi()?,

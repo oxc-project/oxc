@@ -82,6 +82,10 @@ fn test() {
         r"withSpaces();",
         // new RegExp
         r"withSpaces.replaceAll(new RegExp('\s+', 'g'), ',');",
+        // `new RegExp(regexp)` preserves the source's flags.
+        r"withSpaces.replaceAll(new RegExp(/\s+/g), ',');",
+        // Unknown / non-literal first argument with no explicit flags.
+        r"function test(pattern) { withSpaces.replaceAll(new RegExp(pattern), ','); }",
         // new replaceAll
         r"new replaceAll(/\s+/, ',');",
         // resolved vars
@@ -98,6 +102,8 @@ fn test() {
         r"withSpaces.replaceAll(/\s+/i, ',');",
         r"withSpaces.replaceAll(new RegExp('\s+'), ',');",
         r"withSpaces.replaceAll(new RegExp('\s+','i'), ',');",
+        // A known non-global RegExp source is still reported.
+        r"withSpaces.replaceAll(new RegExp(/\s+/), ',');",
         // resolved vars
         r"
             const foo = /\s+/;

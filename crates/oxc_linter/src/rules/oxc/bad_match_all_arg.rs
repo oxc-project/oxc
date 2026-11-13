@@ -81,6 +81,10 @@ fn test() {
         r#""".matchAll(new RegExp("a", "g"));"#,
         r#""".matchAll(RegExp("a", "g"));"#,
         r#""".matchAll(globalThis.RegExp("a", "g"));"#,
+        // `new RegExp(regexp)` preserves the source's flags.
+        r#""".matchAll(new RegExp(/a/g));"#,
+        // Unknown / non-literal first argument with no explicit flags.
+        r#"function test(pattern) { "".matchAll(new RegExp(pattern)); }"#,
         // Calls that cannot throw for a known non-global regular expression.
         r#""".matchAll("a");"#,
         r#""".matchAll();"#,
@@ -101,6 +105,9 @@ fn test() {
         r#""".matchAll(/a/u);"#,
         r#""".matchAll(new RegExp("a"));"#,
         r#""".matchAll(new RegExp("a", "i"));"#,
+        // A known non-global RegExp source (no explicit flags) is still reported.
+        r#""".matchAll(new RegExp(/a/));"#,
+        r#""".matchAll(new RegExp(/a/i));"#,
         r#""".matchAll(RegExp("a"));"#,
         r#""".matchAll(globalThis.RegExp("a", "i"));"#,
         r#"""["matchAll"](/a/);"#,
