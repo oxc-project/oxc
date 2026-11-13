@@ -740,7 +740,7 @@ var p = /** @type {D} */ ((a), b);
 ```
 
 A cast comment types the parenthesized expression directly after it.
-When the comment binds to an inner expression and the formatter adds parentheses around the whole (a `??` in a conditional branch, a sequence, a return argument), it prints inside the added pair so the cast keeps its target.
+When the comment binds to an inner expression and the formatter adds parentheses around the whole (a `??` in a conditional branch, a sequence), it prints inside the added pair so the cast keeps its target.
 Printed outside, the cast covers the whole expression and tsc types the inner expression as its uncast type again.
 Prettier keeps it inside for a `??` in a conditional branch since #19652, and still moves it outside a sequence.
 

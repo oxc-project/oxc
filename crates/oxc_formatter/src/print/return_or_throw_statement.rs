@@ -13,7 +13,6 @@ use crate::{
     utils::{
         expression::LeftSide,
         format_node_without_trailing_comments::format_content_without_comments_after,
-        typecast::format_leading_comments_and_open_paren,
     },
     write,
 };
@@ -137,21 +136,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
         let argument = self.0;
 
         if !argument.is_jsx() && has_argument_leading_comments(argument, f) {
-            // When we have leading comments and a sequence expression, we need inner parentheses
-            // e.g. `return ( // comment\n a, b )` -> `return (\n  // comment\n  (a, b)\n)`
-            let inner = format_with(|f| {
-                if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
-                    // The argument's parentheses survive here,
-                    // so even a comment inside the first element's source parens stays inside:
-                    // bound at the span start.
-                    let span = argument.span();
-                    format_leading_comments_and_open_paren(span, span.start, true, f);
-                    write!(f, [argument, token(")")]);
-                } else {
-                    write!(f, argument);
-                }
-            });
-            write!(f, [token("("), &block_indent(&inner), token(")")]);
+            write!(f, [token("("), &block_indent(&argument), token(")")]);
         } else if argument.is_binaryish() {
             write!(
                 f,

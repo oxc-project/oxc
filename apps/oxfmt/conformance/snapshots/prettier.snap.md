@@ -1,6 +1,6 @@
 ## javascript
 
-1175/1284 (91.51%)
+1178/1284 (91.74%)
 
 ### Failed
 
@@ -48,9 +48,9 @@
   - ❓unclassified
 - externals/prettier/js/comments/in-list/dangling-comment-in-list.js (💥, 95.91%)
   - ❓unclassified
-- externals/prettier/js/comments/return-statement-2.js (💥💥, 87.32%)
+- externals/prettier/js/comments/return-statement-2.js (💥💥, 94.37%)
   - ❓unclassified
-- externals/prettier/js/comments/return-statement.js (💥💥, 97.25%)
+- externals/prettier/js/comments/return-statement.js (💥💥, 98.35%)
   - ❓unclassified
 - externals/prettier/js/comments/try.js (💥💥, 66.67%)
   - ❓unclassified
@@ -132,10 +132,6 @@
   - ❓unclassified
 - externals/prettier/js/return-statement/binaryish.js (💥, 86.84%)
   - ❓unclassified
-- externals/prettier/js/sequence-expression/unary.js (💥, 16.67%)
-  - ❓unclassified
-- externals/prettier/js/sequence-expression/yield.js (💥, 68.42%)
-  - ❓unclassified
 - externals/prettier/js/switch/comments.js (💥, 94.74%)
   - ❓unclassified
 - externals/prettier/js/template-literals/expressions.js (💥, 97.64%)
@@ -145,8 +141,6 @@
 - externals/prettier/js/trailing-comma/trailing_whitespace.js (💥💥💥, 96.55%)
   - ❓unclassified
 - externals/prettier/js/try-statement/try.js (💥, 44.44%)
-  - ❓unclassified
-- externals/prettier/js/yield-exprsssion/comment.js (💥, 97.73%)
   - ❓unclassified
 - externals/prettier/jsx/comments/in-opening-tag-name.js (💥, 42.86%)
   - ❓unclassified
