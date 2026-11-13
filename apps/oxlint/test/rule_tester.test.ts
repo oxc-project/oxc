@@ -3961,6 +3961,64 @@ describe("RuleTester", () => {
       });
       expect(runCases()).toEqual([null, null]);
     });
+
+    // `Context` objects are reused across files, and `context.settings` should be too.
+    // Plugins commonly derive expensive state from settings once and cache it in a
+    // `WeakMap` keyed on the settings object. Handing out a fresh object per file
+    // silently disables that cache, and the plugin redoes the work for every file.
+    it("is the same object across files when settings are unchanged", () => {
+      const seenSettings: Readonly<object>[] = [];
+      const settingsCollectorRule: Rule = {
+        create(context) {
+          return {
+            Program() {
+              seenSettings.push(context.settings);
+            },
+          };
+        },
+      };
+
+      const tester = new RuleTester();
+      tester.run("no-foo", settingsCollectorRule, {
+        valid: [
+          { code: "a", settings: { foo: 123, nested: { bar: true } } },
+          { code: "b", settings: { foo: 123, nested: { bar: true } } },
+        ],
+        invalid: [],
+      });
+      expect(runCases()).toEqual([null, null]);
+
+      expect(seenSettings).toHaveLength(2);
+      expect(seenSettings[1]).toBe(seenSettings[0]);
+    });
+
+    it("is a different object across files when settings change", () => {
+      const seenSettings: Readonly<object>[] = [];
+      const settingsCollectorRule: Rule = {
+        create(context) {
+          return {
+            Program() {
+              seenSettings.push(context.settings);
+            },
+          };
+        },
+      };
+
+      const tester = new RuleTester();
+      tester.run("no-foo", settingsCollectorRule, {
+        valid: [
+          { code: "a", settings: { foo: 123 } },
+          { code: "b", settings: { foo: 456 } },
+        ],
+        invalid: [],
+      });
+      expect(runCases()).toEqual([null, null]);
+
+      expect(seenSettings).toHaveLength(2);
+      expect(seenSettings[1]).not.toBe(seenSettings[0]);
+      expect(seenSettings[0]).toEqual({ foo: 123 });
+      expect(seenSettings[1]).toEqual({ foo: 456 });
+    });
   });
 
   describe("`cwd` option", () => {
