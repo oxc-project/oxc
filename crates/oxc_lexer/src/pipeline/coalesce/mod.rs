@@ -1,4 +1,4 @@
-use std::{ptr, slice};
+use std::{mem::MaybeUninit, ptr, slice};
 
 use oxc_simd::{Cpu, cpu_multiversion, prefetch};
 
@@ -37,11 +37,16 @@ pub unsafe fn coalesce(
     kwinit: Bitmap,
     kind: *mut u8,
     kwpos: *mut u32,
+    evpos: *mut u32,
     ts: bool,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) {
     lanes.disambiguate.restart(lanes.module, cpu);
+    // Events are collected branchlessly and handled per batch. Unset masks are never read
+    let mut rarem = [const { MaybeUninit::<u64>::uninit() }; KWB];
+    let mut e = 0usize;
+    let mut prev_empty = false;
     let nw = (n + 63) >> 6;
     let mut opprev: u64 = 0;
     let mut dtprev: u64 = 0;
@@ -74,21 +79,40 @@ pub unsafe fn coalesce(
         let r8 = r4 & (r4 >> 4);
         kwc &= !(r8 & (r2 >> 8) & (wd >> 10));
         dtprev = dt;
-        if kwc != 0 {
+        let multi = op & !((op << 1) | (opprev >> 63)) & ((op >> 1) | (opnext << 63)) & stw;
+        let dote = stw & dt & ((dg >> 1) | (dgnext << 63));
+        let mut dige = stw & dg;
+        if dige != 0 {
+            // Runs ending at a word char or dot need gluing, found by carrying back reversed
+            let bad = !dg & (dg << 1) & (wd | dt);
+            let rdg = dg.reverse_bits();
+            let (sum, out) = rdg.overflowing_add((bad >> 1).reverse_bits());
+            let mut glue = ((sum & !rdg).reverse_bits() << 1) | u64::from(out);
+            if dg >> 63 != 0 {
+                let tail = (!dgnext).trailing_zeros();
+                let dtnext = if w + 1 < nw { dot.block(w + 1, cpu) } else { 0 };
+                if tail == 64 || ((wnext | dtnext) >> tail) & 1 != 0 {
+                    glue |= 1u64 << (64 - (!dg).leading_zeros());
+                }
+            }
+            dige &= glue;
+        }
+        let ev = multi | dige | dote;
+        let rare = dige | dote;
+        opprev = op;
+        // Only skip within runs of empty blocks, so an isolated empty block never mispredicts
+        let empty = (kwc | ev) == 0;
+        if !(empty && prev_empty) {
             let base = (w << 6) as u32;
             let cnt = kwc.count_ones() as usize;
             prefetch(src.add(base as usize), cpu);
             prefetch(kind.add(base as usize) as *const u8, cpu);
-            *kwpos.add(k) = base + kwc.trailing_zeros();
-            kwc &= kwc.wrapping_sub(1);
-            *kwpos.add(k + 1) = base + kwc.trailing_zeros();
-            kwc &= kwc.wrapping_sub(1);
-            *kwpos.add(k + 2) = base + kwc.trailing_zeros();
-            kwc &= kwc.wrapping_sub(1);
-            *kwpos.add(k + 3) = base + kwc.trailing_zeros();
-            kwc &= kwc.wrapping_sub(1);
-            if cnt > 4 {
-                let mut kk = k + 4;
+            for j in 0..8 {
+                *kwpos.add(k + j) = base + kwc.trailing_zeros();
+                kwc &= kwc.wrapping_sub(1);
+            }
+            if cnt > 8 {
+                let mut kk = k + 8;
                 while kwc != 0 {
                     *kwpos.add(kk) = base + kwc.trailing_zeros();
                     kk += 1;
@@ -96,132 +120,158 @@ pub unsafe fn coalesce(
                 }
             }
             k += cnt;
-        }
-        let multi = op & !((op << 1) | (opprev >> 63)) & ((op >> 1) | (opnext << 63)) & stw;
-        let dige0 = stw & dg;
-        let dote = stw & dt & ((dg >> 1) | (dgnext << 63));
-        let mut dige = dige0;
-        if dige != 0 {
-            let dend = !dg & (dg << 1);
-            let bad = dend & (wd | dt);
-            let mut keep: u64 = if bad != 0 { !0u64 } else { 0 };
-            if dg >> 63 != 0 {
-                keep |= 1u64 << (64 - (!dg).leading_zeros());
+            rarem[w & (KWB - 1)].write(rare);
+            let cnt = ev.count_ones() as usize;
+            let mut evm = ev;
+            for j in 0..2 {
+                *evpos.add(e + j) = base + evm.trailing_zeros();
+                evm &= evm.wrapping_sub(1);
             }
-            dige &= keep;
-        }
-        let mut ev = multi | dige | dote;
-        let rare = dige | dote;
-        opprev = op;
-        while ev != 0 {
-            let bit = ev.trailing_zeros() as usize;
-            ev &= ev - 1;
-            let p = (w << 6) + bit;
-            if p < cursor {
-                continue;
+            if cnt > 2 {
+                let mut ee = e + 2;
+                while evm != 0 {
+                    *evpos.add(ee) = base + evm.trailing_zeros();
+                    ee += 1;
+                    evm &= evm - 1;
+                }
             }
-            if (rare >> bit) & 1 != 0 {
-                if (dige >> bit) & 1 != 0 {
-                    let x = (wd >> bit) | ((wnext << (63 - bit)) << 1);
-                    let y = (dg >> bit) | ((dgnext << (63 - bit)) << 1);
-                    let wl = (!x).trailing_zeros() as usize;
-                    let dl = (!y).trailing_zeros() as usize;
-                    if wl == dl && wl < 64 && *src.add(p + wl) != b'.' {
-                        continue;
-                    }
-                }
-                cursor = glue_number(ts, src, n, st, opch, word, kind, p, lanes, cpu);
-            } else {
-                let y2 = (op >> bit) | ((opnext << (63 - bit)) << 1);
-                let run = (!y2).trailing_zeros() as usize;
-                let q = ptr::read_unaligned(src.add(p) as *const u32);
-                let b0 = q as u8;
-                let b1 = (q >> 8) as u8;
-                // In TS, `>` may close nested type args including `Foo<T>= 1`, so fusing can diverge.
-                // Cheap inline byte checks handle this
-                if b0 == b'>'
-                    && ts
-                    && (b1 == b'>' || (b1 == b'=' && p > 0 && !is_ws(*src.add(p - 1), cpu)))
-                {
-                    let kw_final = (w & !(KWB - 1)) << 6;
-                    let tokens = TokensView::new(
-                        src,
-                        st,
-                        opch,
-                        kind,
-                        n,
-                        true,
-                        kw_final,
-                        lanes.module,
-                        &lanes.disambiguate.brackets,
-                        &lanes.disambiguate.closers,
-                        cpu,
-                    );
-                    let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, p, run, cpu);
-                    if g != 0 {
-                        // Only `>`s stay split; the rest still munches, or `>>&&` would emit two `&`s.
-                        cursor = munch_walk(ts, src, n, st, opch, kind, p + g, lanes, cpu);
-                        continue;
-                    }
-                }
-                // A << may open two lists; longer runs always reach munch_walk.
-                if b1 == b'<' && ts && (b0 == b'<' || (q >> 16) as u8 == b'<') {
-                    cursor = munch_walk(ts, src, n, st, opch, kind, p, lanes, cpu);
-                    continue;
-                }
-                if run == 2 {
-                    let key = q & 0xFFFF;
-                    let pack = opmap_pack2(key, cpu);
-                    let mut ok = pack as u16 == q as u16;
-                    let kk = (pack >> 24) as u8;
-                    ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8, cpu));
-                    let hm: u8 = 0u8.wrapping_sub(ok as u8);
-                    *kind.add(p) = (*kind.add(p) & !hm) | (kk & hm);
-                    let clr = (ok as u64) << ((p + 1) & 63);
-                    *st.as_ptr().add((p + 1) >> 6) &= !clr;
-                    cursor = p + 1 + ok as usize;
-                    continue;
-                }
-                if run > 3 {
-                    cursor = munch_walk(ts, src, n, st, opch, kind, p, lanes, cpu);
-                    continue;
-                }
-                let b2 = (q >> 16) as u8;
-                let key3 = q & 0xFF_FFFF;
-                let p3 = opmap_pack3(key3, cpu);
-                let ok3 = ((p3 ^ q) & 0xFF_FFFF) == 0;
-                let key2a = q & 0xFFFF;
-                let pa = opmap_pack2(key2a, cpu);
-                let ka = (pa >> 24) as u8;
-                let mut ok2a = pa as u16 == q as u16;
-                ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2, cpu));
-                let key2b = key3 >> 8;
-                let pb = opmap_pack2(key2b, cpu);
-                let kb = (pb >> 24) as u8;
-                let mut ok2b = pb as u16 == key2b as u16;
-                ok2b &= !((kb == tk!(OptionalChain)) && is_digit((q >> 24) as u8, cpu));
-                let c1 = ok3 | ok2a; // token at `p` is 2+ bytes
-                let sel2b = !c1 & ok2b; // 2-byte token starts at `p + 1`
-                let c2 = ok3 | sel2b; // `p + 2` is not a token start
-                let m0: u8 = 0u8.wrapping_sub(c1 as u8);
-                let k0v: u8 = if ok3 { (p3 >> 24) as u8 } else { ka };
-                *kind.add(p) = (*kind.add(p) & !m0) | (k0v & m0);
-                let m1: u8 = 0u8.wrapping_sub(sel2b as u8);
-                *kind.add(p + 1) = (*kind.add(p + 1) & !m1) | (kb & m1);
-                let clr1 = (c1 as u64) << ((p + 1) & 63);
-                *st.as_ptr().add((p + 1) >> 6) &= !clr1;
-                let clr2 = (c2 as u64) << ((p + 2) & 63);
-                *st.as_ptr().add((p + 2) >> 6) &= !clr2;
-                // `run == 3` in this arm
-                cursor = p + 2 + c2 as usize;
-            }
+            e += cnt;
         }
+        prev_empty = empty;
         if w & (KWB - 1) == KWB - 1 {
+            if e != 0 {
+                cursor = coalesce_events(
+                    ts, src, n, st, opch, word, kind, lanes, evpos, e, &rarem, cursor, cpu,
+                );
+                e = 0;
+            }
             kw_flush(ts, src, word, kind, kwpos, k, cpu);
             k = 0;
         }
     }
+    if e != 0 {
+        coalesce_events(ts, src, n, st, opch, word, kind, lanes, evpos, e, &rarem, cursor, cpu);
+    }
     kw_flush(ts, src, word, kind, kwpos, k, cpu);
+}
+
+/// Handle a batch's events in order. Rereading opch is safe, as events only clear it below cursor.
+#[cpu_multiversion]
+#[inline(never)]
+unsafe fn coalesce_events(
+    ts: bool,
+    src: *const u8,
+    n: usize,
+    st: Bitmap,
+    opch: Bitmap,
+    word: Bitmap,
+    kind: *mut u8,
+    lanes: &mut Lanes,
+    evpos: *const u32,
+    count: usize,
+    rarem: &[MaybeUninit<u64>; KWB],
+    mut cursor: usize,
+    cpu: impl Cpu,
+) -> usize {
+    let nw = (n + 63) >> 6;
+    for i in 0..count {
+        let p = *evpos.add(i) as usize;
+        if p < cursor {
+            continue;
+        }
+        let (w, bit) = (p >> 6, p & 63);
+        let rare = rarem[w & (KWB - 1)].assume_init();
+        let has_next = w + 1 < nw;
+        if (rare >> bit) & 1 != 0 {
+            cursor = glue_number(ts, src, n, st, opch, word, kind, p, lanes, cpu);
+        } else {
+            let op = opch.block(w, cpu);
+            let opnext = if has_next { opch.block(w + 1, cpu) } else { 0 };
+            let y2 = (op >> bit) | ((opnext << (63 - bit)) << 1);
+            let run = (!y2).trailing_zeros() as usize;
+            let q = ptr::read_unaligned(src.add(p) as *const u32);
+            let b0 = q as u8;
+            let b1 = (q >> 8) as u8;
+            // In TS, `>` may close nested type args including `Foo<T>= 1`, so fusing can diverge.
+            // Cheap inline byte checks handle this
+            if b0 == b'>'
+                && ts
+                && (b1 == b'>' || (b1 == b'=' && p > 0 && !is_ws(*src.add(p - 1), cpu)))
+            {
+                let kw_final = (w & !(KWB - 1)) << 6;
+                let tokens = TokensView::new(
+                    src,
+                    st,
+                    opch,
+                    kind,
+                    n,
+                    true,
+                    kw_final,
+                    lanes.module,
+                    &lanes.disambiguate.brackets,
+                    &lanes.disambiguate.closers,
+                    cpu,
+                );
+                let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, p, run, cpu);
+                if g != 0 {
+                    // Only `>`s stay split; the rest still munches, or `>>&&` would emit two `&`s.
+                    cursor = munch_walk(ts, src, n, st, opch, kind, p + g, lanes, cpu);
+                    continue;
+                }
+            }
+            // A << may open two lists; longer runs always reach munch_walk.
+            if b1 == b'<' && ts && (b0 == b'<' || (q >> 16) as u8 == b'<') {
+                cursor = munch_walk(ts, src, n, st, opch, kind, p, lanes, cpu);
+                continue;
+            }
+            if run == 2 {
+                let key = q & 0xFFFF;
+                let pack = opmap_pack2(key, cpu);
+                let mut ok = pack as u16 == q as u16;
+                let kk = (pack >> 24) as u8;
+                ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8, cpu));
+                let hm: u8 = 0u8.wrapping_sub(ok as u8);
+                *kind.add(p) = (*kind.add(p) & !hm) | (kk & hm);
+                let clr = (ok as u64) << ((p + 1) & 63);
+                *st.as_ptr().add((p + 1) >> 6) &= !clr;
+                cursor = p + 1 + ok as usize;
+                continue;
+            }
+            if run > 3 {
+                cursor = munch_walk(ts, src, n, st, opch, kind, p, lanes, cpu);
+                continue;
+            }
+            let b2 = (q >> 16) as u8;
+            let key3 = q & 0xFF_FFFF;
+            let p3 = opmap_pack3(key3, cpu);
+            let ok3 = ((p3 ^ q) & 0xFF_FFFF) == 0;
+            let key2a = q & 0xFFFF;
+            let pa = opmap_pack2(key2a, cpu);
+            let ka = (pa >> 24) as u8;
+            let mut ok2a = pa as u16 == q as u16;
+            ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2, cpu));
+            let key2b = key3 >> 8;
+            let pb = opmap_pack2(key2b, cpu);
+            let kb = (pb >> 24) as u8;
+            let mut ok2b = pb as u16 == key2b as u16;
+            ok2b &= !((kb == tk!(OptionalChain)) && is_digit((q >> 24) as u8, cpu));
+            let c1 = ok3 | ok2a; // token at `p` is 2+ bytes
+            let sel2b = !c1 & ok2b; // 2-byte token starts at `p + 1`
+            let c2 = ok3 | sel2b; // `p + 2` is not a token start
+            let m0: u8 = 0u8.wrapping_sub(c1 as u8);
+            let k0v: u8 = if ok3 { (p3 >> 24) as u8 } else { ka };
+            *kind.add(p) = (*kind.add(p) & !m0) | (k0v & m0);
+            let m1: u8 = 0u8.wrapping_sub(sel2b as u8);
+            *kind.add(p + 1) = (*kind.add(p + 1) & !m1) | (kb & m1);
+            let clr1 = (c1 as u64) << ((p + 1) & 63);
+            *st.as_ptr().add((p + 1) >> 6) &= !clr1;
+            let clr2 = (c2 as u64) << ((p + 2) & 63);
+            *st.as_ptr().add((p + 2) >> 6) &= !clr2;
+            // `run == 3` in this arm
+            cursor = p + 2 + c2 as usize;
+        }
+    }
+    cursor
 }
 
 #[cpu_multiversion]

@@ -66,21 +66,30 @@ pub(super) unsafe fn compress_blocks_neon(
             continue;
         }
 
+        // Byte popcounts and running sums in general registers, avoiding vector round trips
+        let x = mword - ((mword >> 1) & 0x5555_5555_5555_5555);
+        let x = (x & 0x3333_3333_3333_3333) + ((x >> 2) & 0x3333_3333_3333_3333);
+        let bc = (x + (x >> 4)) & 0x0f0f_0f0f_0f0f_0f0f;
+        let sums = bc.wrapping_mul(0x0101_0101_0101_0101);
         let o0 = 0;
-        let o1 = o0 + (mword & 0xffff).count_ones();
-        let o2 = o1 + ((mword >> 16) & 0xffff).count_ones();
-        let o3 = o2 + ((mword >> 32) & 0xffff).count_ones();
-        let o4 = o3 + (mword >> 48).count_ones();
+        let o1 = ((sums >> 8) & 0xff) as u32;
+        let o2 = ((sums >> 24) & 0xff) as u32;
+        let o3 = ((sums >> 40) & 0xff) as u32;
+        let o4 = (sums >> 56) as u32;
 
         let base = b * 64;
         let mut basev = Vec256::splat_u32(base as u32, cpu);
 
-        let ka = compress_pair(0, mword, o0, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
-        let kb = compress_pair(1, mword, o1, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
+        let ka =
+            compress_pair(0, mword, bc, o0, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
+        let kb =
+            compress_pair(1, mword, bc, o1, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
         ka.store_unaligned(kinds.add(m + o0 as usize));
         kb.store_unaligned(kinds.add(m + o1 as usize));
-        let kc = compress_pair(2, mword, o2, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
-        let kd = compress_pair(3, mword, o3, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
+        let kc =
+            compress_pair(2, mword, bc, o2, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
+        let kd =
+            compress_pair(3, mword, bc, o3, lut0z, lutpad, kind, base, starts, m, &mut basev, cpu);
         kc.store_unaligned(kinds.add(m + o2 as usize));
         kd.store_unaligned(kinds.add(m + o3 as usize));
 
@@ -107,6 +116,7 @@ pub(super) unsafe fn compress_blocks_neon(
 unsafe fn compress_pair(
     p: usize,
     mword: u64,
+    bc: u64,
     off: u32,
     lut0z: &[[u8; 8]; 256],
     lutpad: *const u8,
@@ -119,7 +129,7 @@ unsafe fn compress_pair(
 ) -> Vec128<Neon> {
     let sub0 = ((mword >> (16 * p)) & 0xff) as usize;
     let sub1 = ((mword >> (16 * p + 8)) & 0xff) as usize;
-    let pc0 = sub0.count_ones() as usize;
+    let pc0 = ((bc >> (16 * p)) & 0xff) as usize;
     let row0 = Vec128::read_low_unaligned(&lut0z[sub0], cpu);
     let row1 = Vec128::load_unaligned(lutpad.add(sub1 * 32 + 8 - pc0), cpu);
     let ctrl = row0 | row1;
@@ -167,16 +177,14 @@ pub(super) unsafe fn build_spans_neon(
             k8.store_low_unaligned(sig_kinds.add(w));
             w += 8;
         } else {
-            let lo4 = sig & 0xf;
+            // Popcounts of each 4 bits from a constant, avoiding a vector round trip
+            let (lo4, hi4) = (sig & 0xf, sig >> 4);
+            let lo_count = ((0x4332_3221_3221_2110u64 >> (lo4 * 4)) & 0xf) as usize;
+            let hi_count = ((0x4332_3221_3221_2110u64 >> (hi4 * 4)) & 0xf) as usize;
             compact_spans(sp.add(w), stage_pos.add(j), lo4, cpu);
-            compact_spans(
-                sp.add(w + lo4.count_ones() as usize),
-                stage_pos.add(j + 4),
-                sig >> 4,
-                cpu,
-            );
+            compact_spans(sp.add(w + lo_count), stage_pos.add(j + 4), hi4, cpu);
             k8.shuffle_u8s(BCOMPACT[sig].read(cpu)).store_low_unaligned(sig_kinds.add(w));
-            w += sig.count_ones() as usize;
+            w += lo_count + hi_count;
         }
         j += 8;
     }

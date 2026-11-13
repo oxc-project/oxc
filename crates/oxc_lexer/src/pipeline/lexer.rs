@@ -32,6 +32,7 @@ pub struct Lexer {
     misc: Vec<u64>,
     kind: Vec<u8>,
     kwpos: Vec<u32>,
+    evpos: Vec<u32>,
     nb_cap: usize,
     stage_pos: Vec<u32>,
     stage_kind: Vec<u8>,
@@ -76,6 +77,7 @@ impl Lexer {
             misc: Vec::new(),
             kind: Vec::new(),
             kwpos: Vec::new(),
+            evpos: Vec::new(),
             nb_cap: 0,
             stage_pos: vec![0; STAGE_CAP],
             stage_kind: vec![0; STAGE_CAP],
@@ -201,6 +203,7 @@ impl Lexer {
         let misc = Bitmap::new(self.misc.as_mut_ptr());
         let kind = self.kind.as_mut_ptr();
         let kwpos = self.kwpos.as_mut_ptr();
+        let evpos = self.evpos.as_mut_ptr();
 
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // kwinit letter class) only ever sees TS input, so JS lexing is
@@ -208,7 +211,22 @@ impl Lexer {
         classify(ts, sp, n, nb, word, st, kwinit, opch, digit, dot, misc, kind, cpu);
         let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes, cpu);
         carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes, cpu);
-        coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes, cpu);
+        coalesce(
+            sp,
+            n,
+            st,
+            opch,
+            word,
+            digit,
+            dot,
+            kwinit,
+            kind,
+            kwpos,
+            evpos,
+            ts,
+            &mut self.lanes,
+            cpu,
+        );
         misc_post(sp, n, st, word, misc, kind, nesc, cpu);
         if !self.lanes.out.irregular_whitespaces.is_empty() {
             retain_code_whitespace(&self.st, &self.kind, &mut self.lanes.out.irregular_whitespaces);
@@ -245,6 +263,7 @@ impl Lexer {
         }
         if self.kwpos.is_empty() {
             self.kwpos.resize(KWB * 64 + 8, 0);
+            self.evpos.resize(KWB * 64 + 8, 0);
         }
     }
 }
